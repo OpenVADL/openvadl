@@ -19,6 +19,7 @@ package vadl.iss.codegen;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
+import vadl.iss.passes.nodes.IssSelectNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
 import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
@@ -69,6 +70,14 @@ public interface IssCMixins {
     default void handle(CGenContext<Node> ctx, IssGhostCastNode toHandle) {
       // just emit the inner value
       ctx.gen(toHandle.value());
+    }
+
+    @Handler
+    @SuppressWarnings("MissingJavadocMethod")
+    default void handle(CGenContext<Node> ctx, IssSelectNode toHandle) {
+      // IssSelectNodes are always turned into TCG nodes (TcgConstSelect or TcgMovCond).
+      // If the original SelectNode was not scheduled, it got not converted to an IssSelectNode.
+      throw new IllegalStateException("The IssSelectNode should never be generated as C code.");
     }
 
     @Handler

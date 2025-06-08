@@ -39,10 +39,9 @@ public class IssLoweringTest extends AbstractTest {
     var logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(HtmlDumpPass.class);
     logger.setLevel(Level.DEBUG);
   }
-
-  // TODO: Remove this (it is just for testing purposes)
+  
   @Test
-  void issLoweringTest() throws IOException, DuplicatedPassKeyException {
+  void issRiscvLoweringTest() throws IOException, DuplicatedPassKeyException {
     var config =
         new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), true));
 

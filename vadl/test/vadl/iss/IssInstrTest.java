@@ -185,7 +185,7 @@ public abstract class IssInstrTest extends QemuIssTest {
                   log.getValue().stream().map((l) -> "- " + l)
                       .forEach(System.out::println);
                 }
-                for (var log : e.simLogs().entrySet()) {
+                for (var log : e.refLogs().entrySet()) {
                   System.out.println("[REF] Logs of " + log.getKey() + ": ");
                   log.getValue().stream().map((l) -> "- " + l)
                       .forEach(System.out::println);

@@ -28,8 +28,11 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.IssGhostCastNode;
+import vadl.iss.passes.nodes.IssSelectNode;
+import vadl.iss.passes.tcgLowering.TcgCondition;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
@@ -45,11 +48,11 @@ import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.DependencyNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
-import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.CfgTraverser;
 import vadl.viam.passes.GraphProcessor;
 
@@ -155,8 +158,7 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
     new IssTcgScheduler(pc).traverseBranch(start);
 
     // unschedule unnecessary conditions again
-    unscheduleConditions(graph);
-
+    cleanUpUnusedScheduledNodes(graph);
     graph.deleteUnusedDependencies();
   }
 
@@ -266,6 +268,9 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
         ghostCast.usages().toList().forEach(u -> u.replaceInput(ghostCast, ghostCast.value()));
         // remove the schedule node of the ghostCast's value node.
         return Optional.of(inputScheduleNode);
+      } else if (mustBeScheduled && node instanceof SelectNode selectNode) {
+        // the select node is scheduled, so we transform it to an IssSelectNode
+        node = turnIntoIssSelect(selectNode);
       }
 
       return mustBeScheduled
@@ -276,6 +281,31 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
           .addContext(toProcess);
     }
   }
+
+  private IssSelectNode turnIntoIssSelect(SelectNode selectNode) {
+    if (selectNode.condition() instanceof BuiltInCall call) {
+      var cond = TcgPassUtils.conditionOf(call.builtIn());
+      if (cond != null) {
+        // we can inline the condition into the IssSelectNode
+        var node = new IssSelectNode(cond, call.arg(0), call.arg(1), selectNode.trueCase(),
+            selectNode.falseCase());
+        return selectNode.replaceAndDelete(node);
+      }
+    }
+
+    // We couldn't inline the select node, so we must produce a comparison to true
+    return selectNode.replaceAndDelete(
+        new IssSelectNode(
+            TcgCondition.EQ,
+            selectNode.condition(),
+            Constant.Value.of(true).toNode(),
+            selectNode.trueCase(),
+            selectNode.falseCase()
+        )
+    );
+
+  }
+
 
   /**
    * Schedules a dependency node by inserting a {@link ScheduledNode} before the current root user.
@@ -322,70 +352,20 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
   }
 
   /**
-   * This will check for all conditions (of if/select nodes),
-   * if it can be omitted to place them as TCG instruction.
+   * Remove all nodes that might where scheduled but than not used.
+   * This might happen if a {@link SelectNode} is turned into a {@link IssSelectNode}.
    */
-  private static void unscheduleConditions(Graph graph) {
-    graph.getNodes(Set.of(IfNode.class, SelectNode.class))
-        .map(n -> n instanceof IfNode ifNode
-            ? ifNode.condition()
-            : ((SelectNode) n).condition()
-        )
-        .filter(BuiltInCall.class::isInstance)
-        .map(BuiltInCall.class::cast)
-        .forEach(IssTcgScheduler::unscheduleCondition);
-  }
-
-  /**
-   * This will unschedule the condition of the if/select node, if it can be
-   * directly checked in the TCG brcond/movcond op.
-   * This optimizes unnecessary setconds and moves in the resulting TCG ops.
-   *
-   * <p>it is possible if the condition is not used as input by others than the scheduled node
-   * and write nodes that use it as condition only.</p>
-   */
-  private static void unscheduleCondition(BuiltInCall cond) {
-    if (TcgPassUtils.conditionOf(cond.builtIn()) == null) {
-      // can not be expressed by tcg condition
-      return;
-    }
-    var condScheduleNode = cond.usages()
-        .filter(t -> t instanceof ScheduledNode)
-        .map(ScheduledNode.class::cast)
-        .findAny().orElse(null);
-
-    if (condScheduleNode == null) {
-      // it isn't even scheduled, so we can't unscheduled it anyway
-      return;
-    }
-
-    // we can handle the condition directly in the brcond tcg instruction
-    // so we want to unschedule the condition if possible.
-    // it is possible if the condition is not used as input by others than the scheduled node
-    // and write nodes that use it as condition only.
-    var mustBeTcg = cond.usages()
-        // ignore scheduled node
-        .filter(t -> !(t instanceof ScheduledNode))
-        // ignore if nodes and select node usages
-        .filter(t -> !(t instanceof IfNode || t instanceof SelectNode))
-        // ignore writes where it is not used as address or value (e.i. as condition only)
-        .anyMatch(t -> {
-          if (!(t instanceof WriteResourceNode write)) {
-            // it has some other user -> required to be TCGv
-            return true;
+  private static void cleanUpUnusedScheduledNodes(Graph graph) {
+    graph.getNodes(ExpressionNode.class)
+        .filter(e -> {
+          var usages = e.usages().toList();
+          return usages.size() == 1 && usages.getFirst() instanceof ScheduledNode;
+        })
+        .forEach(n -> {
+          ((ScheduledNode) n.usages().findFirst().get()).replaceByNothingAndDelete();
+          if (n.isActive()) {
+            n.safeDelete();
           }
-          if (write.value() == cond) {
-            // it is used as value -> required to be TCGv
-            return true;
-          }
-
-          return write.indices().stream()
-              .anyMatch(ind -> ind == cond);
         });
-
-    if (!mustBeTcg) {
-      // we can unschedule the node
-      condScheduleNode.replaceByNothingAndDelete();
-    }
   }
 }

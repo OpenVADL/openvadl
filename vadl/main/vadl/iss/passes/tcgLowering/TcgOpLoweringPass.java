@@ -35,6 +35,7 @@ import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssLoadNode;
+import vadl.iss.passes.nodes.IssSelectNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssStoreNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
@@ -45,6 +46,7 @@ import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAndNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgClzNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgConstSelectNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgDepositNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgDivNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtractNode;
@@ -332,6 +334,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     });
   }
 
+  @SuppressWarnings("UnusedMethod")
   private TcgVRefNode constant(Constant.Value value) {
     var constNode = graph.add(new ConstantNode(value));
     return assignments.singleDestOf(constNode);
@@ -351,7 +354,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   private void replaceCurrent(TcgNode... replacements) {
     if (replacements.length == 0) {
-      toReplace.replaceByNothingAndDelete();
+      // we don't delete it yet, so the isTcg still works as expected
+      toReplace.replaceByNothing();
     } else {
       for (var i = 0; i < replacements.length - 1; i++) {
         // Add all but the last replacement before the scheduled node
@@ -633,42 +637,40 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     throw new UnsupportedOperationException("Type LetNode not yet implemented");
   }
 
-  /**
-   * Handles the {@link SelectNode}. Currently not implemented.
-   *
-   * @param toHandle The node to handle.
-   * @throws UnsupportedOperationException Always thrown.
-   */
-  // TODO: This should be moved to the branch lowering pass.
-  //   Currently all expressions are executed even if they are not required.
   @Handler
   void handle(SelectNode toHandle) {
-    // determine if condition can be expressed by tcg condition
-    var tcgCond = toHandle.condition() instanceof BuiltInCall builtInCall
-        ? TcgPassUtils.conditionOf(builtInCall.builtIn())
-        : null;
+    // this should have been turned into an IssSelectNode (see below)
+    throw failShouldNotHappen(toHandle);
+  }
 
-
+  // TODO: This should be moved to the branch lowering pass.
+  //   Currently all expressions are executed even if they are not required.
+  //   The question is: How complex must the expression be so that jumps are less expensive.
+  @Handler
+  void handle(IssSelectNode toHandle) {
     var dest = singleDestOf(toHandle);
     var trueSrc = singleDestOf(toHandle.trueCase());
     var falseSrc = singleDestOf(toHandle.falseCase());
 
-    TcgMovCondNode movCondNode;
-    if (tcgCond != null) {
-      // integrate test in tcg condition
-      var condCall = (BuiltInCall) toHandle.condition();
-      var cond1Src = singleDestOf(condCall.arguments().get(0));
-      var cond2Src = singleDestOf(condCall.arguments().get(1));
-      movCondNode = new TcgMovCondNode(dest, cond1Src, cond2Src, trueSrc, falseSrc, tcgCond);
-    } else {
-      // use tcg condition as argument to test
-      var cond1Src = singleDestOf(toHandle.condition());
-      var cond2Src = constant(Constant.Value.of(true));
-      movCondNode =
-          new TcgMovCondNode(dest, cond1Src, cond2Src, trueSrc, falseSrc, TcgCondition.EQ);
+    var isTcgCondition = isTcg(toHandle.c1()) || isTcg(toHandle.c2());
+    if (!isTcgCondition) {
+      // if the condition (both c1 and c2) are not TCG, we can produce an optimized
+      // TcgConstSelectNode that does only emit a mov instead of a movCond.
+      replaceCurrent(new TcgConstSelectNode(dest, toHandle.conditionExpr(), trueSrc, falseSrc));
+      return;
     }
 
-    replaceCurrent(movCondNode);
+    var c1 = singleDestOf(toHandle.c1());
+    var c2 = singleDestOf(toHandle.c2());
+
+    replaceCurrent(new TcgMovCondNode(
+        dest,
+        c1,
+        c2,
+        trueSrc,
+        falseSrc,
+        toHandle.condition()
+    ));
   }
 
   /**
