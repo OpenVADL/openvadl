@@ -97,19 +97,29 @@ public abstract class DirectionalNode extends ControlNode {
 
 
   /**
-   * Replaces this node with its successor, and then safely deletes this node.
+   * Replaces this node with its successor and then safely deletes this node.
    *
-   * <p>The method ensures that the node to be deleted has a predecessor, then it updates
+   * <p>The method ensures that the node to be deleted has a predecessor; then it updates
    * the predecessor's successor to bypass this node. Finally, it safely deletes this node
    * from the graph to maintain consistency.
    */
   public void replaceByNothingAndDelete() {
+    replaceByNothing();
+    safeDelete();
+  }
+
+  /**
+   * Replaces this node with its successor.
+   *
+   * <p>The method ensures that the node to be replaced has a predecessor; then it updates
+   * the predecessor's successor to bypass this node.
+   */
+  public void replaceByNothing() {
     ensure(this.predecessor() != null, "Can only remove this node if the predecessor is set!");
     // set successor to successor of predecessor
     var successor = this.next();
     replaceSuccessor(successor, null);
     predecessor().replaceSuccessor(this, successor);
-    safeDelete();
   }
 
   /**

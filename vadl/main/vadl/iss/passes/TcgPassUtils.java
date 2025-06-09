@@ -87,4 +87,25 @@ public class TcgPassUtils {
       return null;
     }
   }
+
+  /**
+   * Returns a {@link BuiltInTable.BuiltIn} for a given {@link TcgCondition}.
+   * E.g., on LT it returns the SLTH built-in.
+   */
+  public static BuiltInTable.BuiltIn builtInOf(TcgCondition condition) {
+    return switch (condition) {
+      case EQ -> BuiltInTable.EQU;
+      case NE -> BuiltInTable.NEQ;
+      case LT -> BuiltInTable.SLTH;
+      case GE -> BuiltInTable.SGEQ;
+      case LE -> BuiltInTable.SLEQ;
+      case GT -> BuiltInTable.SGTH;
+      case LTU -> BuiltInTable.ULTH;
+      case GEU -> BuiltInTable.UGEQ;
+      case LEU -> BuiltInTable.ULEQ;
+      case GTU -> BuiltInTable.UGTH;
+      case TSTNE -> BuiltInTable.AND;
+      case TSTEQ -> throw new IllegalArgumentException("No built-in for TSTEQ");
+    };
+  }
 }
