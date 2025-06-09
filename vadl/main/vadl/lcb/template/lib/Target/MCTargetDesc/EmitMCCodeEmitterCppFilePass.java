@@ -136,7 +136,6 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
               operandPositions(tableGenInstruction, encodingWrapper);
 
           return new Aggregate(encodingWrapper.identifier.lower(),
-              //immediateRecord.rawEncoderMethod().lower(),
               operands);
         })
         .toList();

@@ -29,6 +29,8 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.common.GcbAccessOrPredicateFunctionCodeGenerator;
 import vadl.cppCodeGen.common.GcbEncodingFunctionCodeGenerator;
+import vadl.cppCodeGen.model.GcbCppAccessFunction;
+import vadl.cppCodeGen.model.GcbCppEncodeFunction;
 import vadl.cppCodeGen.model.GcbCppEncodingWrapperFunction;
 import vadl.cppCodeGen.model.GcbCppFunctionBodyLess;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
@@ -60,9 +62,9 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
     return new PassName("CreateFunctionsFromImmediatesPass");
   }
 
-  public record Output(Map<TableGenImmediateRecord, GcbCppFunctionWithBody> encodings,
+  public record Output(Map<Instruction, List<GcbCppEncodeFunction>> encodings,
                        Map<Instruction, GcbCppEncodingWrapperFunction> encodingsWrappers,
-                       Map<TableGenImmediateRecord, GcbCppFunctionWithBody> decodings,
+                       Map<TableGenImmediateRecord, GcbCppAccessFunction> decodings,
                        Map<TableGenImmediateRecord, GcbCppFunctionBodyLess> decodingWrappers,
                        Map<TableGenImmediateRecord, GcbCppFunctionWithBody> predicates) {
 
@@ -117,11 +119,11 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
       ```
      */
 
-    var decodings = new IdentityHashMap<TableGenImmediateRecord, GcbCppFunctionWithBody>();
+    var decodings = new IdentityHashMap<TableGenImmediateRecord, GcbCppAccessFunction>();
     var decodingWrappers = new IdentityHashMap<TableGenImmediateRecord, GcbCppFunctionBodyLess>();
 
     // Same applies to encoding and encodingWrappers
-    var encodings = new IdentityHashMap<TableGenImmediateRecord, GcbCppFunctionWithBody>();
+    var encodings = new IdentityHashMap<Instruction, List<GcbCppEncodeFunction>>();
     var encodingWrappers = new IdentityHashMap<Instruction, GcbCppEncodingWrapperFunction>();
 
     var predicates = new IdentityHashMap<TableGenImmediateRecord, GcbCppFunctionWithBody>();
@@ -134,8 +136,6 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
         continue;
       }
 
-      var tableGenInstruction =
-          Objects.requireNonNull(tableGenInstructions.get(immediate.instructionRef()));
       var stackPointer = abi.stackPointer();
       var stackPointerType =
           Objects.requireNonNull(stackPointer.registerFile().resultType().fittingCppType());
@@ -143,51 +143,63 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
         encodingWrappers.put(instruction,
             encodingWrappers(instruction, tableGenInstructions, immediate.encoderMethod()));
       }
-      encodings.put(immediate, encoding(tableGenInstruction, immediate));
+
       decodingWrappers.put(immediate, decodingWrapper(immediate));
       decodings.put(immediate, decoding(stackPointerType, immediate));
       predicates.put(immediate, predicate(stackPointerType, immediate));
+    }
+
+    for (var pair : tableGenMachineInstructions.entrySet()) {
+      var instruction = (Instruction) pair.getKey();
+      var tableGenInstruction = pair.getValue();
+
+      var fieldAccesses = tableGenInstruction.immediateInputOperands().stream()
+          .map(x -> x.immediateOperand().fieldAccessRef()).collect(
+              Collectors.toSet());
+      var fieldEncodings = instruction.format().fieldEncodingsOf(fieldAccesses);
+      encodings.put(instruction, encoding(instruction, tableGenInstruction, fieldEncodings));
     }
 
     return new Output(encodings, encodingWrappers, decodings, decodingWrappers, predicates);
   }
 
   @Nonnull
-  private GcbCppFunctionWithBody encoding(TableGenInstruction tableGenInstruction,
-                                          TableGenImmediateRecord immediate) {
-    // Why do we need to handle the operands?
-    // The problem is that it might happen that we are given a MCInst
-    // and the encoding function cannot handle it because it needs to also used by the parser
-    // which does not have a MCInst.
-    // Our solution to that is that each operand from the instruction is a parameter. It's also
-    // in the same order. Then the encoding wrapper function can extract the operands from MCInst,
-    // but the parser can also use this function regularly because they are raw types.
-    var inputOperands = tableGenInstruction.getInOperands()
-        .stream()
-        .filter(operand -> operand instanceof ReferencesImmediateOperand)
-        .map(operand -> (ReferencesImmediateOperand) operand)
-        .toList();
+  private List<GcbCppEncodeFunction> encoding(
+      Instruction instruction,
+      TableGenInstruction tableGenInstruction,
+      List<Format.FieldEncoding> encodings) {
+    return encodings.stream().map(encoding -> {
+      // Why do we need to handle the operands?
+      // The problem is that it might happen that we are given a MCInst
+      // and the encoding function cannot handle it because it needs to also used by the parser
+      // which does not have a MCInst.
+      // Our solution to that is that each operand from the instruction is a parameter. It's also
+      // in the same order. Then the encoding wrapper function can extract the operands from MCInst,
+      // but the parser can also use this function regularly because they are raw types.
+      var inputOperands = tableGenInstruction.getInOperands()
+          .stream()
+          .filter(operand -> operand instanceof ReferencesImmediateOperand)
+          .map(operand -> (ReferencesImmediateOperand) operand)
+          .toList();
 
-    List<Parameter> parameters = inputOperands.stream()
-        .map(operand -> new Parameter(
-            new Identifier(operand.immediateOperand().fieldAccessRef().identifier.simpleName(),
-                operand.immediateOperand().fieldAccessRef().location()),
-            operand.immediateOperand().rawType()))
-        .toList();
+      List<Parameter> parameters = inputOperands.stream()
+          .map(operand -> new Parameter(
+              new Identifier(operand.immediateOperand().fieldAccessRef().identifier.simpleName(),
+                  operand.immediateOperand().fieldAccessRef().location()),
+              operand.immediateOperand().rawType()))
+          .toList();
 
-    var encodingBodyLessFunction = new GcbCppFunctionBodyLess(
-        immediate.rawEncoderMethod(),
-        parameters.toArray(Parameter[]::new),
-        CppTypeMap.upcast(
-            Objects.requireNonNull(immediate.fieldAccessRef().encoding()).targetField().type()),
-        immediate.fieldAccessRef().encoding().behavior(),
-        immediate.fieldAccessRef());
-    return new GcbCppFunctionWithBody(encodingBodyLessFunction,
-        new GcbEncodingFunctionCodeGenerator(
-            tableGenInstruction,
-            encodingBodyLessFunction,
-            immediate.fieldAccessRef(),
-            immediate.rawEncoderMethod().lower()).genFunctionDefinition());
+      var identifier = instruction.identifier.append(encoding.targetField().simpleName());
+      var encodingBodyLessFunction = new GcbCppFunctionBodyLess(
+          identifier,
+          parameters.toArray(Parameter[]::new),
+          CppTypeMap.upcast(encoding.targetField().type()),
+          encoding.behavior());
+      return new GcbCppEncodeFunction(encodingBodyLessFunction,
+          encoding.targetField(),
+          new GcbEncodingFunctionCodeGenerator(
+              encodingBodyLessFunction).genFunctionDefinition());
+    }).toList();
   }
 
   @Nonnull
@@ -218,13 +230,12 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
         immediate.decoderMethod(),
         new Parameter[] {},
         CppTypeMap.upcast(immediate.fieldAccessRef().accessFunction().returnType()),
-        immediate.fieldAccessRef().accessFunction().behavior(),
-        immediate.fieldAccessRef());
+        immediate.fieldAccessRef().accessFunction().behavior());
   }
 
   @Nonnull
-  private GcbCppFunctionWithBody decoding(Type stackPointerType,
-                                          TableGenImmediateRecord immediate) {
+  private GcbCppAccessFunction decoding(Type stackPointerType,
+                                        TableGenImmediateRecord immediate) {
     var bodyLessFunction = new GcbCppFunctionBodyLess(
         immediate.rawDecoderMethod(),
         // We use the size of the stack pointer to decide what the parameter's type is.
@@ -232,9 +243,9 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
             new Parameter(new Identifier("param", SourceLocation.INVALID_SOURCE_LOCATION),
                 stackPointerType)},
         CppTypeMap.upcast(immediate.fieldAccessRef().accessFunction().returnType()),
-        immediate.fieldAccessRef().accessFunction().behavior(),
-        immediate.fieldAccessRef());
-    return new GcbCppFunctionWithBody(bodyLessFunction,
+        immediate.fieldAccessRef().accessFunction().behavior());
+    return new GcbCppAccessFunction(bodyLessFunction,
+        immediate.fieldAccessRef(),
         generateCode(immediate.rawDecoderMethod(),
             immediate.fieldAccessRef(),
             bodyLessFunction));
@@ -249,8 +260,7 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
             new Parameter(new Identifier("param", SourceLocation.INVALID_SOURCE_LOCATION),
                 stackPointerType)},
         Type.bool(),
-        immediate.fieldAccessRef().predicate().behavior(),
-        immediate.fieldAccessRef());
+        immediate.fieldAccessRef().predicate().behavior());
     return new GcbCppFunctionWithBody(bodyLessFunction,
         generateCode(immediate.predicateMethod(),
             immediate.fieldAccessRef(),

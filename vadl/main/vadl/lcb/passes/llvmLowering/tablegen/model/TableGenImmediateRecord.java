@@ -16,7 +16,6 @@
 
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
-import java.util.List;
 import java.util.Objects;
 import vadl.gcb.valuetypes.VariantKind;
 import vadl.lcb.codegen.model.llvm.ValueType;
@@ -56,13 +55,11 @@ public class TableGenImmediateRecord {
       Format.FieldAccess fieldAccess,
       ValueType llvmType) {
     this.instructionRef = instruction;
-    var fieldRef = fieldAccess.fieldRef().identifier.tail();
-    var encodingIdentifier = instruction.identifier();
     var decodingIdentifier =
         Objects.requireNonNull(fieldAccess).accessFunction().identifier.dropLast().last();
     var predicateIdentifier = fieldAccess.predicate().identifier.last();
-    this.rawName = fieldRef.prepend(instruction.identifier()).lower();
-    this.rawEncoderMethod = encodingIdentifier.prepend(instruction.identifier());
+    this.rawName = fieldAccess.identifier.last().prepend(instruction.identifier()).lower();
+    this.rawEncoderMethod = instruction.identifier();
     this.encoderMethod = rawEncoderMethod.append(EmitMCCodeEmitterCppFilePass.WRAPPER);
     this.rawDecoderMethod = decodingIdentifier.prepend(instruction.identifier()).append("decode");
     this.decoderMethod = rawDecoderMethod.append(EmitDisassemblerCppFilePass.WRAPPER);

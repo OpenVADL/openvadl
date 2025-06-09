@@ -18,20 +18,15 @@ package vadl.cppCodeGen.model;
 
 import vadl.viam.Format;
 
-public class GcbCppFunctionWithBody /* (GcbCppFunctionBodyLess header, Format.Field field, String code) */ {
-  private final GcbCppFunctionBodyLess header;
-  private final String code;
+public class GcbCppEncodeFunction extends GcbCppFunctionWithBody {
+  private final Format.Field field;
 
-  public GcbCppFunctionWithBody(GcbCppFunctionBodyLess header, String code) {
-    this.header = header;
-    this.code = code;
+  public GcbCppEncodeFunction(GcbCppFunctionBodyLess header, Format.Field field, String code) {
+    super(header, code);
+    this.field = field;
   }
 
-  public GcbCppFunctionBodyLess header() {
-    return header;
-  }
-
-  public String code() {
-    return code;
+  public Format.Field field() {
+    return field;
   }
 }

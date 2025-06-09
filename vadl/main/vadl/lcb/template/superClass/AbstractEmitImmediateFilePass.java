@@ -21,6 +21,7 @@ import static vadl.lcb.template.utils.ImmediateEncodingFunctionProvider.generate
 import static vadl.lcb.template.utils.ImmediatePredicateFunctionProvider.generatePredicateFunctions;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppFunctionName;
@@ -63,7 +64,9 @@ public abstract class AbstractEmitImmediateFilePass extends LcbTemplateRendering
             .toList(),
         "decodeFunctionNames", decodeFunctionNames,
         "encodeFunctions",
-        encodeFunctions.values().stream()
+        encodeFunctions.values()
+            .stream()
+            .flatMap(Collection::stream)
             .map(GcbCppFunctionWithBody::code)
             .sorted()
             .toList(),

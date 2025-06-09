@@ -63,7 +63,7 @@ namespace llvm
 
         void emitFixups(const MCInst MI, unsigned OpNo, const MCExpr *Expr, SmallVectorImpl<MCFixup> &Fixups) const;
 
-        [# th:each="imm : ${immediates}" ]
+        [# th:each="imm : ${encoderMethods}" ]
         unsigned [(${imm.encodeWrapper})](const MCInst &MI, unsigned OpNo, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const;
         [/]
     };

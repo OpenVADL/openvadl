@@ -17,6 +17,7 @@
 package vadl.lcb.template.utils;
 
 import java.util.Map;
+import vadl.cppCodeGen.model.GcbCppAccessFunction;
 import vadl.cppCodeGen.model.GcbCppFunctionBodyLess;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
@@ -30,7 +31,7 @@ public class ImmediateDecodingFunctionProvider {
   /**
    * Get the decoding functions.
    */
-  public static Map<TableGenImmediateRecord, GcbCppFunctionWithBody> generateDecodeFunctions(
+  public static Map<TableGenImmediateRecord, GcbCppAccessFunction> generateDecodeFunctions(
       PassResults passResults) {
     return ((CreateFunctionsFromImmediatesPass.Output)
         passResults.lastResultOf(CreateFunctionsFromImmediatesPass.class)).decodings();

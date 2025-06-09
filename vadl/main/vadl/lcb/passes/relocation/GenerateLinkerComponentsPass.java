@@ -19,6 +19,7 @@ package vadl.lcb.passes.relocation;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -148,7 +149,7 @@ public class GenerateLinkerComponentsPass extends Pass {
         viam.isa().map(isa -> isa.ownRelocations().stream()).orElseGet(Stream::empty).toList();
 
     var instructions =
-        viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty).toList();
+        viam.isa().stream().flatMap(isa -> isa.ownInstructions().stream()).toList();
 
     // Fixups and relocations for user defined relocations
     var candidates = new ArrayList<Pair<UserSpecifiedRelocation, Format.Field>>();
@@ -172,8 +173,9 @@ public class GenerateLinkerComponentsPass extends Pass {
 
       variantStore.addUserDefined(userSpecifiedRelocation, variantKind);
 
-      for (var encoding : immediates.encodings().keySet()) {
-        candidates.add(Pair.of(userSpecifiedRelocation, encoding.fieldAccessRef().fieldRef()));
+      for (var encoding : immediates.encodings().values().stream().flatMap(Collection::stream)
+          .toList()) {
+        candidates.add(Pair.of(userSpecifiedRelocation, encoding.field()));
       }
     }
 

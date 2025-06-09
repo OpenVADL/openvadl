@@ -16,11 +16,11 @@
 
 package vadl.lcb.template.utils;
 
+import java.util.List;
 import java.util.Map;
+import vadl.cppCodeGen.model.GcbCppEncodeFunction;
 import vadl.cppCodeGen.model.GcbCppEncodingWrapperFunction;
-import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.pass.PassResults;
 import vadl.viam.Instruction;
 
@@ -31,7 +31,7 @@ public class ImmediateEncodingFunctionProvider {
   /**
    * Get the encoding functions.
    */
-  public static Map<TableGenImmediateRecord, GcbCppFunctionWithBody> generateEncodeFunctions(
+  public static Map<Instruction, List<GcbCppEncodeFunction>> generateEncodeFunctions(
       PassResults passResults) {
     return ((CreateFunctionsFromImmediatesPass.Output)
         passResults.lastResultOf(CreateFunctionsFromImmediatesPass.class)).encodings();

@@ -31,6 +31,9 @@ import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.GcbConfiguration;
 import vadl.cppCodeGen.common.GcbAccessOrPredicateFunctionCodeGenerator;
+import vadl.cppCodeGen.common.GcbEncodingFunctionCodeGenerator;
+import vadl.cppCodeGen.model.GcbCppAccessFunction;
+import vadl.cppCodeGen.model.GcbCppEncodeFunction;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
@@ -92,6 +95,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
                   accessFunction,
                   encodeFunction);
             })
+        // We can only test functions which have a 1:1 mapping.
+        .filter(x -> ((List<GcbCppEncodeFunction>) x.fourth()).size() == 1)
         .toList();
 
     List<Pair<String, String>> copyMappings = new ArrayList<>();
@@ -100,10 +105,11 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
       arbitrary.sampleStream().limit(15).forEach(sample -> {
         var fileName = entry.first() + "_sample_" + sample + ".cpp";
         var filePath = path + "/inputs/" + fileName;
+        var encodingFunctions = (List<GcbCppEncodeFunction>) entry.fourth();
         var testCase = render(fileName,
             sample,
             entry.third(),
-            entry.fourth());
+            encodingFunctions.getFirst());
         copyMappings.add(Pair.of(filePath, "/inputs/" + fileName));
         try {
           var fs = new FileWriter(filePath);
@@ -133,17 +139,14 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
 
   TestCase render(String testName,
                   int sample,
-                  GcbCppFunctionWithBody accessFunction,
+                  GcbCppAccessFunction accessFunction,
                   GcbCppFunctionWithBody encodingFunction) {
     var decodeFunctionGenerator =
         new GcbAccessOrPredicateFunctionCodeGenerator(accessFunction.header(),
-            accessFunction.header()
-                .fieldAccess(),
+            accessFunction.fieldAccess(),
             accessFunction.header().identifier.lower());
     var encodeFunctionGenerator =
-        new GcbAccessOrPredicateFunctionCodeGenerator(encodingFunction.header(),
-            encodingFunction.header().fieldAccess(),
-            encodingFunction.header().identifier.lower());
+        new GcbEncodingFunctionCodeGenerator(encodingFunction.header());
 
     var decodeFunction = decodeFunctionGenerator.genFunctionDefinition();
     var encodeFunction = encodeFunctionGenerator.genFunctionDefinition();

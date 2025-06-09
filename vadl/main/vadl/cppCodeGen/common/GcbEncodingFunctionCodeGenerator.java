@@ -16,44 +16,57 @@
 
 package vadl.cppCodeGen.common;
 
-import static vadl.utils.GraphUtils.getSingleNode;
+import static vadl.error.DiagUtils.throwNotAllowed;
 
-import java.util.List;
-import java.util.stream.Stream;
 import vadl.cppCodeGen.CppTypeMap;
+import vadl.cppCodeGen.FunctionCodeGenerator;
 import vadl.cppCodeGen.context.CGenContext;
-import vadl.cppCodeGen.model.GcbCppFunctionBodyLess;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionBareSymbolOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.types.BitsType;
-import vadl.viam.Format;
+import vadl.viam.Function;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
+import vadl.viam.graph.dependency.ReadMemNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SliceNode;
 
 /**
  * It generates code for encodings fields from instructions.
  */
-public class GcbEncodingFunctionCodeGenerator extends AccessFunctionCodeGenerator {
+public class GcbEncodingFunctionCodeGenerator extends FunctionCodeGenerator {
 
-  private final TableGenInstruction tableGenInstruction;
+  private final String functionName;
 
   /**
    * Constructor.
    */
   public GcbEncodingFunctionCodeGenerator(
-      TableGenInstruction tableGenInstruction,
-      GcbCppFunctionBodyLess accessFunction,
-      Format.FieldAccess fieldAccess,
-      String functionName) {
-    super(accessFunction, fieldAccess, functionName);
-    this.tableGenInstruction = tableGenInstruction;
+      Function function) {
+    super(function);
+    this.functionName = function.identifier.lower();
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, ReadRegTensorNode toHandle) {
+    throwNotAllowed(toHandle, "Register reads");
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, ReadMemNode toHandle) {
+    throwNotAllowed(toHandle, "Memory reads");
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, ReadArtificialResNode toHandle) {
+    throwNotAllowed(toHandle, "Artificial resource reads");
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle) {
+    throwNotAllowed(toHandle, "Asm builtin calls");
   }
 
   @Override
@@ -98,6 +111,11 @@ public class GcbEncodingFunctionCodeGenerator extends AccessFunctionCodeGenerato
     // We can simply use the accessFunction's name because
     // generated variables to reference between from the MCInst.
     ctx.wr(toHandle.fieldAccess().simpleName());
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, FieldRefNode toHandle) {
+    throwNotAllowed(toHandle, "Asm builtin calls");
   }
 
   /*

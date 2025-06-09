@@ -33,6 +33,7 @@ import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.context.CNodeWithBaggageContext;
+import vadl.cppCodeGen.model.GcbCppAccessFunction;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
@@ -84,7 +85,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
   private final TargetName targetName;
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
-  private final Map<TableGenImmediateRecord, GcbCppFunctionWithBody> immediateDecodings;
+  private final Map<TableGenImmediateRecord, GcbCppAccessFunction> immediateDecodings;
   private final Map<FieldInInstruction, GcbCppFunctionWithBody> immediateDecodingsByField;
   private final List<HasRelocationComputationAndUpdate> relocations;
   private final CompilerInstruction compilerInstruction;
@@ -103,7 +104,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   public CompilerInstructionExpansionCodeGenerator(
       TargetName targetName,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
-      Map<TableGenImmediateRecord, GcbCppFunctionWithBody> immediateDecodings,
+      Map<TableGenImmediateRecord, GcbCppAccessFunction> immediateDecodings,
       List<HasRelocationComputationAndUpdate> relocations,
       GenerateLinkerComponentsPass.VariantKindStore variantKindStore,
       CompilerInstruction compilerInstruction,
