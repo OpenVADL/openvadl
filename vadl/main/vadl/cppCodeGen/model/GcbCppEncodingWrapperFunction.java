@@ -31,18 +31,21 @@ public class GcbCppEncodingWrapperFunction extends Function {
   private final Instruction instruction;
   private final Set<Format.FieldAccess> fieldAccesses;
   private final List<Format.FieldEncoding> encodings;
+  private final List<GcbCppEncodeFunction> encodingFunctions;
 
   public GcbCppEncodingWrapperFunction(Identifier identifier,
                                        Parameter[] parameters,
                                        Type returnType,
                                        Instruction instruction,
                                        Set<Format.FieldAccess> fieldAccesses,
-                                       List<Format.FieldEncoding> encodings) {
+                                       List<Format.FieldEncoding> encodings,
+                                       List<GcbCppEncodeFunction> encodingFunctions) {
     super(identifier, parameters, returnType, new Graph("empty graph"));
 
     this.instruction = instruction;
     this.fieldAccesses = fieldAccesses;
     this.encodings = encodings;
+    this.encodingFunctions = encodingFunctions;
   }
 
   public List<Format.FieldEncoding> encodings() {
@@ -55,5 +58,9 @@ public class GcbCppEncodingWrapperFunction extends Function {
 
   public Instruction instruction() {
     return instruction;
+  }
+
+  public List<GcbCppEncodeFunction> encodingFunctions() {
+    return encodingFunctions;
   }
 }

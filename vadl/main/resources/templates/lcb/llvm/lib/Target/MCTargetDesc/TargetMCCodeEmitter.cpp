@@ -108,20 +108,26 @@ void [(${namespace})]MCCodeEmitter::emitFixups
 [# th:each="imm : ${encodings}" ]
 unsigned [(${namespace})]MCCodeEmitter::[(${imm.encodeWrapper})](const MCInst &MI, unsigned OpNo, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
 {
-    const MCOperand &MO = MI.getOperand(OpNo);
+    auto result = 0;
+    [# th:each="fieldAccess : ${imm.operands}" ]
+    const MCOperand &[(${fieldAccess.fieldAccessName})] = MI.getOperand([(${fieldAccess.opIndex})]);
+    [/]
 
-    //if (MO.isImm())
-        // return [(${imm.encode})](MO.getImm());
+    [# th:each="enc : ${imm.encodings}" ]
+    result |= (project_range<0, [(${enc.fieldSize})]>(std::bitset<64>([(${enc.encodingFunction})]([(${enc.params})])))) << [(${enc.offset})];
+    [/]
 
+    return result;
+
+    /*
     int64_t imm;
     if (AsmUtils::evaluateConstantImm(&MO, imm))
         return [(${imm.encode})](imm);
 
     assert(MO.isExpr() && "[(${imm.encodeWrapper})] expects only expressions or immediates");
+    */
 
-    emitFixups(MI, OpNo, MO.getExpr(), Fixups);
-
-    return 0;
+    //emitFixups(MI, OpNo, MO.getExpr(), Fixups);
 }
 [/]
 

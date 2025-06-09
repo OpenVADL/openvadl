@@ -139,10 +139,6 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
       var stackPointer = abi.stackPointer();
       var stackPointerType =
           Objects.requireNonNull(stackPointer.registerFile().resultType().fittingCppType());
-      if (!encodingWrappers.containsKey(instruction)) {
-        encodingWrappers.put(instruction,
-            encodingWrappers(instruction, tableGenInstructions, immediate.encoderMethod()));
-      }
 
       decodingWrappers.put(immediate, decodingWrapper(immediate));
       decodings.put(immediate, decoding(stackPointerType, immediate));
@@ -157,7 +153,11 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
           .map(x -> x.immediateOperand().fieldAccessRef()).collect(
               Collectors.toSet());
       var fieldEncodings = instruction.format().fieldEncodingsOf(fieldAccesses);
-      encodings.put(instruction, encoding(instruction, tableGenInstruction, fieldEncodings));
+      var encodingsFunctions = encoding(instruction, tableGenInstruction, fieldEncodings);
+      encodings.put(instruction, encodingsFunctions);
+
+      encodingWrappers.put(instruction,
+          encodingWrappers(instruction, tableGenInstructions, encodingsFunctions));
     }
 
     return new Output(encodings, encodingWrappers, decodings, decodingWrappers, predicates);
@@ -206,8 +206,8 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
   private GcbCppEncodingWrapperFunction encodingWrappers(
       Instruction instruction,
       Map<PrintableInstruction, TableGenInstruction> tableGenInstructions,
-      /* The method's name for wrapper is generated in the TableGenImmediateRecord  */
-      Identifier encoderMethod) {
+      List<GcbCppEncodeFunction> encodingsFunctions) {
+    var encoderMethod = TableGenImmediateRecord.createEncoderMethod(instruction);
     var tableGenInstruction = Objects.requireNonNull(tableGenInstructions.get(instruction));
     var operands = tableGenInstruction.immediateInputOperands();
     var fieldAccesses =
@@ -221,7 +221,8 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
         Type.bits(64),
         instruction,
         fieldAccesses,
-        fieldEncodings);
+        fieldEncodings,
+        encodingsFunctions);
   }
 
   @Nonnull

@@ -20,6 +20,7 @@ import static vadl.viam.ViamError.ensureNonNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -39,6 +40,7 @@ import vadl.lcb.template.utils.ImmediateEncodingFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.utils.Triple;
+import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
@@ -82,15 +84,29 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
-  record Aggregate(String encodeWrapper, List<OperandPosition> operands)
+  record Encoding(String encodingFunction, String params, int fieldSize, int offset)
+      implements Renderable {
+
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "encodingFunction", encodingFunction,
+          "params", params,
+          "fieldSize", fieldSize,
+          "offset", offset
+      );
+    }
+  }
+
+  record Aggregate(String encodeWrapper, List<OperandPosition> operands, List<Encoding> encodings)
       implements Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
       return Map.of(
           "encodeWrapper", encodeWrapper,
-          //"encode", encode,
-          "operands", operands
+          "operands", operands,
+          "encodings", encodings
       );
     }
   }
@@ -120,25 +136,48 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
     );
   }
 
-
   private List<Aggregate> generateWrapperEncodings(
       Map<Instruction, TableGenMachineInstruction> machineInstructions,
       CreateFunctionsFromImmediatesPass.Output functions,
       PassResults passResults) {
-    return ImmediateEncodingFunctionProvider.generateEncodeWrapperFunctions(passResults)
-        .keySet()
-        .stream()
-        .map(instruction -> {
-          var tableGenInstruction = Objects.requireNonNull(machineInstructions.get(instruction));
-          var encodingWrapper =
-              Objects.requireNonNull(functions.encodingsWrappers().get(instruction));
-          var operands =
-              operandPositions(tableGenInstruction, encodingWrapper);
+    List<Aggregate> list = new ArrayList<>();
+    for (Instruction instruction1 : ImmediateEncodingFunctionProvider.generateEncodeWrapperFunctions(
+            passResults)
+        .keySet()) {
+      var tableGenInstruction = Objects.requireNonNull(machineInstructions.get(instruction1));
+      var encodingWrapper =
+          Objects.requireNonNull(functions.encodingsWrappers().get(instruction1));
+      var operands =
+          operandPositions(tableGenInstruction, encodingWrapper);
+      var encodings = encodings(tableGenInstruction, encodingWrapper);
 
-          return new Aggregate(encodingWrapper.identifier.lower(),
-              operands);
-        })
-        .toList();
+      Aggregate apply = new Aggregate(encodingWrapper.identifier.lower(),
+          operands, encodings);
+      list.add(apply);
+    }
+    return list;
+  }
+
+  private List<Encoding> encodings(
+      TableGenMachineInstruction tableGenInstruction,
+      GcbCppEncodingWrapperFunction wrapperFunction) {
+    var encodings = new ArrayList<Encoding>();
+
+    var offset = 0;
+    for (var encoding : wrapperFunction.encodingFunctions()) {
+      // It's much easier to join the parameters to string here than in the template.
+      var params =
+          Arrays.stream(encoding.header().parameters())
+              .map(Definition::simpleName)
+              .collect(Collectors.joining(", "));
+
+      encodings.add(
+          new Encoding(encoding.header().identifier.lower(), params, encoding.field().size(),
+              offset));
+      offset += encoding.field().size();
+    }
+
+    return encodings;
   }
 
   private List<OperandPosition> operandPositions(

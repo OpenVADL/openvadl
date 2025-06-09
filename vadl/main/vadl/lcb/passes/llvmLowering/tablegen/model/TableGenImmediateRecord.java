@@ -60,8 +60,9 @@ public class TableGenImmediateRecord {
     var predicateIdentifier = fieldAccess.predicate().identifier.last();
     this.rawName = fieldAccess.identifier.last().prepend(instruction.identifier()).lower();
     this.rawEncoderMethod = instruction.identifier();
-    this.encoderMethod = rawEncoderMethod.append(EmitMCCodeEmitterCppFilePass.WRAPPER);
-    this.rawDecoderMethod = decodingIdentifier.prepend(instruction.identifier()).append("decode");
+    this.encoderMethod = createEncoderMethod(instruction);
+    this.rawDecoderMethod =
+        decodingIdentifier.prepend(instruction.identifier()).append("decode");
     this.decoderMethod = rawDecoderMethod.append(EmitDisassemblerCppFilePass.WRAPPER);
     this.predicateMethod = predicateIdentifier.prepend(instruction.identifier());
     this.llvmType = llvmType;
@@ -70,6 +71,10 @@ public class TableGenImmediateRecord {
     this.relativeVariantKind = VariantKind.relative(fieldAccess.fieldRef());
     this.rawType = (BitsType) fieldAccessRef.type();
     this.formatFieldBitSize = fieldAccessRef.fieldRef().size();
+  }
+
+  public static Identifier createEncoderMethod(PrintableInstruction instruction) {
+    return instruction.identifier().append(EmitMCCodeEmitterCppFilePass.WRAPPER);
   }
 
   public PrintableInstruction instructionRef() {
