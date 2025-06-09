@@ -21,16 +21,25 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Abi;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.control.InstrCallNode;
 
@@ -52,8 +61,8 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
   @Override
   public List<TableGenImmediateRecord> execute(PassResults passResults,
                                                Specification viam) throws IOException {
-    var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
-
+    var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().orElseThrow();
+    var tableGenInstructions = tableGenInstructions(passResults);
     var immediates = new ArrayList<TableGenImmediateRecord>();
 
     // We do it first for machine instructions.
@@ -108,5 +117,24 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
         });
 
     return immediates;
+  }
+
+  private Map<PrintableInstruction, TableGenInstruction> tableGenInstructions(
+      PassResults passResults) {
+    var tableGenMachineInstructions = ((List<TableGenMachineInstruction>) passResults.lastResultOf(
+        GenerateTableGenMachineInstructionRecordPass.class))
+        .stream()
+        .collect(Collectors.toMap(x -> (PrintableInstruction) x.instruction(),
+            x -> (TableGenInstruction) x));
+    var tableGenPseudoInstructions = ((List<TableGenPseudoInstruction>) passResults.lastResultOf(
+        GenerateTableGenPseudoInstructionRecordPass.class))
+        .stream()
+        .collect(Collectors.toMap(x -> (PrintableInstruction) x.pseudoInstruction(),
+            x -> (TableGenInstruction) x));
+
+    return
+        Stream.concat(tableGenMachineInstructions.entrySet().stream(),
+                tableGenPseudoInstructions.entrySet().stream())
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 }

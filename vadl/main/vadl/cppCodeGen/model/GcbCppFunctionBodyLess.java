@@ -46,3 +46,4 @@ public class GcbCppFunctionBodyLess extends Function {
     return fieldAccess;
   }
 }
+

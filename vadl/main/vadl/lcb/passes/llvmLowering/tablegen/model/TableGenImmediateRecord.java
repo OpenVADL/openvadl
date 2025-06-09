@@ -16,6 +16,7 @@
 
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
+import java.util.List;
 import java.util.Objects;
 import vadl.gcb.valuetypes.VariantKind;
 import vadl.lcb.codegen.model.llvm.ValueType;
@@ -56,7 +57,7 @@ public class TableGenImmediateRecord {
       ValueType llvmType) {
     this.instructionRef = instruction;
     var fieldRef = fieldAccess.fieldRef().identifier.tail();
-    var encodingIdentifier = Objects.requireNonNull(fieldAccess.encoding()).identifier.last();
+    var encodingIdentifier = instruction.identifier();
     var decodingIdentifier =
         Objects.requireNonNull(fieldAccess).accessFunction().identifier.dropLast().last();
     var predicateIdentifier = fieldAccess.predicate().identifier.last();

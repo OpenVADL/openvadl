@@ -16,25 +16,30 @@
 
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
-import static vadl.lcb.template.utils.ImmediateEncodingFunctionProvider.generateEncodeFunctions;
 import static vadl.viam.ViamError.ensureNonNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
+import vadl.cppCodeGen.model.GcbCppEncodingWrapperFunction;
 import vadl.gcb.passes.RelocationKindCtx;
 import vadl.gcb.passes.relocation.model.AutomaticallyGeneratedRelocation;
+import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.utils.ImmediateEncodingFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.utils.Triple;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
 /**
@@ -66,13 +71,26 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
    */
   public static final String WRAPPER = "wrapper";
 
-  record Aggregate(String encodeWrapper, String encode) implements Renderable {
+  record OperandPosition(String fieldAccessName, int opIndex) implements Renderable {
+
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "fieldAccessName", fieldAccessName,
+          "opIndex", opIndex
+      );
+    }
+  }
+
+  record Aggregate(String encodeWrapper, List<OperandPosition> operands)
+      implements Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
       return Map.of(
           "encodeWrapper", encodeWrapper,
-          "encode", encode
+          //"encode", encode,
+          "operands", operands
       );
     }
   }
@@ -80,35 +98,63 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var immediates = generateImmediates(passResults);
+    var tableGenMachineInstructions =
+        (List<TableGenMachineInstruction>) passResults.lastResultOf(
+            GenerateTableGenMachineInstructionRecordPass.class);
+    var tableGenMachineInstructionsByInstruction = tableGenMachineInstructions
+        .stream()
+        .collect(Collectors.toMap(TableGenMachineInstruction::instruction, x -> x));
+    var functions = (CreateFunctionsFromImmediatesPass.Output) passResults.lastResultOf(
+        CreateFunctionsFromImmediatesPass.class);
+    var encodingWrappers =
+        generateWrapperEncodings(tableGenMachineInstructionsByInstruction, functions, passResults);
 
     var symbolRefFixups = generateSymbolRefFixupMappings(passResults);
-    var targetFixups = generateTargetFixupMappings(passResults);
+    var targetFixups = generateTargetFixupMappings(tableGenMachineInstructions, passResults);
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
-        "immediates", immediates,
+        "encodings", encodingWrappers,
         "symbolRefFixups", symbolRefFixups,
         "targetFixups", targetFixups
     );
   }
 
 
-  private List<Aggregate> generateImmediates(PassResults passResults) {
-    return generateEncodeFunctions(passResults)
+  private List<Aggregate> generateWrapperEncodings(
+      Map<Instruction, TableGenMachineInstruction> machineInstructions,
+      CreateFunctionsFromImmediatesPass.Output functions,
+      PassResults passResults) {
+    return ImmediateEncodingFunctionProvider.generateEncodeWrapperFunctions(passResults)
         .keySet()
         .stream()
-        .map(gcbCppFunctionWithBody -> new Aggregate(gcbCppFunctionWithBody.encoderMethod().lower(),
-            gcbCppFunctionWithBody.rawEncoderMethod().lower()))
+        .map(instruction -> {
+          var tableGenInstruction = Objects.requireNonNull(machineInstructions.get(instruction));
+          var encodingWrapper =
+              Objects.requireNonNull(functions.encodingsWrappers().get(instruction));
+          var operands =
+              operandPositions(tableGenInstruction, encodingWrapper);
+
+          return new Aggregate(encodingWrapper.identifier.lower(),
+              //immediateRecord.rawEncoderMethod().lower(),
+              operands);
+        })
         .toList();
   }
 
-  private List<Map<String, Object>> generateTargetFixupMappings(PassResults passResults) {
+  private List<OperandPosition> operandPositions(
+      TableGenMachineInstruction tableGenInstruction,
+      GcbCppEncodingWrapperFunction wrapperFunction) {
+    var fieldAccesses = wrapperFunction.fieldAccesses().stream().toList();
 
-    var tableGenMachineInstructions =
-        (List<TableGenMachineInstruction>) passResults.lastResultOf(
-            GenerateTableGenMachineInstructionRecordPass.class);
+    return fieldAccesses.stream()
+        .map(fieldAccess -> new OperandPosition(fieldAccess.simpleName(),
+            tableGenInstruction.indexInOperands(fieldAccess)))
+        .toList();
+  }
 
+  private List<Map<String, Object>> generateTargetFixupMappings(
+      List<TableGenMachineInstruction> tableGenMachineInstructions, PassResults passResults) {
     var linkerComponents = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
         GenerateLinkerComponentsPass.class);
 

@@ -100,6 +100,7 @@ public class GcbEncodingFunctionCodeGenerator extends AccessFunctionCodeGenerato
     ctx.wr(toHandle.fieldAccess().simpleName());
   }
 
+  /*
   @Override
   public String genFunctionDefinition() {
     var returnNode = getSingleNode(function().behavior(), ReturnNode.class);
@@ -157,6 +158,7 @@ public class GcbEncodingFunctionCodeGenerator extends AccessFunctionCodeGenerato
         operand.name(),
         index).ln();
   }
+   */
 
   @Override
   public String genFunctionName() {
@@ -171,6 +173,6 @@ public class GcbEncodingFunctionCodeGenerator extends AccessFunctionCodeGenerato
     function.ensure(function.behavior().isPureFunction(), "Function is not pure.");
 
     return CppTypeMap.getCppTypeNameByVadlType(returnType)
-        + " %s(const MCInst &MI)".formatted(functionName);
+        + " %s(%s)".formatted(functionName, genFunctionParameters(function().parameters()));
   }
 }

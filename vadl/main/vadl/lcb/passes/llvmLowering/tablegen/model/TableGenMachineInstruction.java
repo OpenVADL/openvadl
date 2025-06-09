@@ -65,7 +65,6 @@ public class TableGenMachineInstruction extends TableGenInstruction {
     this.llvmLoweringRecord = llvmLoweringRecord;
   }
 
-
   public int getSize() {
     return size;
   }

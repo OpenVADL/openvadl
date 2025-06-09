@@ -57,7 +57,7 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
     super(fieldAccess, originalType);
     this.instruction = instruction;
     this.immediateOperand =
-        new TableGenImmediateRecord(instruction, fieldAccess, llvmType);
+        new TableGenImmediateRecord(instruction, fieldAccess,  llvmType);
     this.llvmType = llvmType;
   }
 

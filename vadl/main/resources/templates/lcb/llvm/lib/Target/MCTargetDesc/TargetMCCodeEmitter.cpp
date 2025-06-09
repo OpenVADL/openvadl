@@ -105,13 +105,13 @@ void [(${namespace})]MCCodeEmitter::emitFixups
     }
 }
 
-[# th:each="imm : ${immediates}" ]
+[# th:each="imm : ${encodings}" ]
 unsigned [(${namespace})]MCCodeEmitter::[(${imm.encodeWrapper})](const MCInst &MI, unsigned OpNo, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
 {
     const MCOperand &MO = MI.getOperand(OpNo);
 
-    if (MO.isImm())
-        return [(${imm.encode})](MO.getImm());
+    //if (MO.isImm())
+        // return [(${imm.encode})](MO.getImm());
 
     int64_t imm;
     if (AsmUtils::evaluateConstantImm(&MO, imm))
