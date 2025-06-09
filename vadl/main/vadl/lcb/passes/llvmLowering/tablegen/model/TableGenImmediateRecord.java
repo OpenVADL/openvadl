@@ -57,7 +57,7 @@ public class TableGenImmediateRecord {
     this.instructionRef = instruction;
     var decodingIdentifier =
         Objects.requireNonNull(fieldAccess).accessFunction().identifier.dropLast().last();
-    var predicateIdentifier = fieldAccess.predicate().identifier.last();
+    var predicateIdentifier = fieldAccess.predicate().identifier;
     this.rawName = fieldAccess.identifier.last().prepend(instruction.identifier()).lower();
     this.rawEncoderMethod = instruction.identifier();
     this.encoderMethod = createEncoderMethod(instruction);
