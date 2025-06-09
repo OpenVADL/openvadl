@@ -67,6 +67,10 @@ public class TensorType extends Type {
     return new TensorType(dimensions.subList(1, dimensions.size()), innerType);
   }
 
+  int outerMostDimension() {
+    return dimensions.getFirst();
+  }
+
   BitsType flattenBitsType() {
     var bitWidth = dimensions.stream().reduce(1, (a, b) -> a * b) * innerType.bitWidth();
     return innerType.withBitWidth(bitWidth);

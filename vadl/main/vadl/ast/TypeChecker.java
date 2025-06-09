@@ -2688,42 +2688,89 @@ public class TypeChecker
 
     var lastSlice = sliceGroups.getLast();
 
-    // FIXME: Adjust for vectors in the future
-    if (!(typeBeforeSlice instanceof BitsType targetBitsType)) {
+    if (!(typeBeforeSlice instanceof BitsType) && !(typeBeforeSlice instanceof TensorType)) {
       var loc = expr.target.location().join(lastSlice.location);
       throw error("Type Mismatch", loc)
           .description("Only bit types can be sliced but the target was a `%s`", typeBeforeSlice)
           .build();
     }
 
-    BitsType currType = targetBitsType;
+    Type currType = typeBeforeSlice;
     for (var slice : sliceGroups) {
-      // construct BitSlice for each slice group
-      var parts = new ArrayList<Constant.BitSlice.Part>();
-      for (var partExpr : slice.values) {
-        // for each part construct a BitSlice.Part
-        var part = partExpr instanceof RangeExpr rangeSlice
-            ? checkSliceRange(rangeSlice, currType)
-            : checkIndexSlice(partExpr, currType);
-        parts.add(part);
-      }
+      if (currType instanceof BitsType currBitsType) {
+        // construct BitSlice for each slice group
+        var parts = new ArrayList<Constant.BitSlice.Part>();
+        for (var partExpr : slice.values) {
+          // for each part construct a BitSlice.Part
+          var part = partExpr instanceof RangeExpr rangeSlice
+              ? checkSliceRange(rangeSlice, currBitsType)
+              : checkIndexSlice(partExpr, currBitsType);
+          parts.add(part);
+        }
 
-      var bitSlice = new Constant.BitSlice(parts.toArray(new Constant.BitSlice.Part[0]));
-      if (bitSlice.hasOverlappingParts()) {
-        // Currently, we don't allow overlapping slices for both slices on read values
-        // and write targets.
-        // In the future we might want to allow overlapping slices on read values.
-        // For written values (`X(1, 1) := 2`) this must not be allowed, as the same value position
-        // is written twice.
-        throw error("Overlapping slice parts", slice.location)
-            .locationDescription(slice.location, "Some parts of the slice are overlapping.")
-            .note("Slices must have distinct, non-overlapping parts.")
-            .build();
-      }
+        var bitSlice = new Constant.BitSlice(parts.toArray(new Constant.BitSlice.Part[0]));
+        if (bitSlice.hasOverlappingParts()) {
+          // Currently, we don't allow overlapping slices for both slices on read values
+          // and write targets.
+          // In the future we might want to allow overlapping slices on read values.
+          // For written values (`X(1, 1) := 2`) this must not be allowed, as the same value
+          // position is written twice.
+          throw error("Overlapping slice parts", slice.location)
+              .locationDescription(slice.location, "Some parts of the slice are overlapping.")
+              .note("Slices must have distinct, non-overlapping parts.")
+              .build();
+        }
 
-      currType = Type.bits(bitSlice.bitSize());
-      slice.computedBitSlice = bitSlice;
-      slice.type = currType;
+        currType = Type.bits(bitSlice.bitSize());
+        slice.computedBitSlice = bitSlice;
+        slice.type = currType;
+      }
+      if (currType instanceof TensorType currTensoType) {
+        if (slice.values.size() != 1) {
+          var loc = slice.values.getFirst().location().join(slice.values.getLast().location());
+          throw error("Invalid Tensor Indexing", loc)
+              .locationDescription(loc,
+                  "Indexing tensos only allows one argument per parenthesis group.")
+              .build();
+        }
+
+        var indexExpr = slice.values.getFirst();
+        if (indexExpr instanceof RangeExpr) {
+          throw error("Invalid Tensor Slice", indexExpr)
+              .locationDescription(indexExpr, "Tensors cannot be sliced.")
+              .build();
+        }
+
+        int index;
+        try {
+          index = constantEvaluator.eval(indexExpr).value().intValueExact();
+        } catch (EvaluationError e) {
+          throw error("Invalid constant value", indexExpr)
+              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
+              .description("Tensor indexing must be a constant value.")
+              .build();
+        }
+
+        if (index < 0 || index >= currTensoType.outerMostDimension()) {
+          throw error("Tensor Index out of bounds", indexExpr)
+              .locationDescription(indexExpr,
+                  "Invalid index `%d` for tensor `%s`", index, currTensoType)
+              .build();
+        }
+
+        // Note: the computed bitslice here is already for the lowering where we assume all tensors
+        // are flattened
+        currType = currTensoType.pop();
+        var bitWidth = switch (currType) {
+          case BitsType bt -> bt.bitWidth();
+          case TensorType tt -> tt.flattenBitsType().bitWidth();
+          default -> throw new IllegalStateException();
+        };
+        slice.computedBitSlice =
+            Constant.BitSlice.of(bitWidth * index + bitWidth - 1, bitWidth * index);
+        slice.type = currType;
+
+      }
     }
 
     expr.type = currType;
