@@ -149,7 +149,7 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
           Objects.requireNonNull(functions.encodingsWrappers().get(instruction1));
       var operands =
           operandPositions(tableGenInstruction, encodingWrapper);
-      var encodings = encodings(tableGenInstruction, encodingWrapper);
+      var encodings = encodings(encodingWrapper);
 
       Aggregate apply = new Aggregate(encodingWrapper.identifier.lower(),
           operands, encodings);
@@ -159,7 +159,6 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<Encoding> encodings(
-      TableGenMachineInstruction tableGenInstruction,
       GcbCppEncodingWrapperFunction wrapperFunction) {
     var encodings = new ArrayList<Encoding>();
 
@@ -167,9 +166,11 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
     for (var encoding : wrapperFunction.encodingFunctions()) {
       // It's much easier to join the parameters to string here than in the template.
       var params =
-          Arrays.stream(encoding.header().parameters())
-              .map(Definition::simpleName)
-              .collect(Collectors.joining(", "));
+          encoding.header().parameters().length == 1 ?
+              encoding.header().parameters()[0].simpleName() + ".getImm()" :
+              Arrays.stream(encoding.header().parameters())
+                  .map(Definition::simpleName)
+                  .collect(Collectors.joining(".getImm(), "));
 
       encodings.add(
           new Encoding(encoding.header().identifier.lower(), params, encoding.field().size(),
