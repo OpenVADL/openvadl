@@ -143,14 +143,24 @@ public class TableGenMachineInstruction extends TableGenInstruction {
     private final String sourceBitBlockName;
     private final int sourceHigh;
     private final int sourceLow;
+    /*
+    To support multiple encodings with multiple field access functions, we merge the encoded
+    fields together. Therefore, the extraction must add the `immediateOffset` since its packed.
+     */
+    private final int immediateOffset;
 
-    private FieldEncoding(int targetHigh, int targetLow, String sourceBitBlockName, int sourceHigh,
-                          int sourceLow) {
+    private FieldEncoding(int targetHigh,
+                          int targetLow,
+                          String sourceBitBlockName,
+                          int sourceHigh,
+                          int sourceLow,
+                          int immediateOffset) {
       this.targetHigh = targetHigh;
       this.targetLow = targetLow;
       this.sourceBitBlockName = sourceBitBlockName;
       this.sourceHigh = sourceHigh;
       this.sourceLow = sourceLow;
+      this.immediateOffset = immediateOffset;
     }
 
     /**
@@ -159,15 +169,23 @@ public class TableGenMachineInstruction extends TableGenInstruction {
     public static List<FieldEncoding> from(vadl.viam.Encoding encoding) {
       ArrayList<FieldEncoding> encodings = new ArrayList<>();
       for (var field : encoding.format().fields()) {
-        var offset = 0;
+        var sourceOffset = 0;
         var parts = new ArrayList<>(field.bitSlice().parts().toList());
         Collections.reverse(parts);
+        boolean isImmediate =
+            Arrays.stream(encoding.nonEncodedFormatFields()).anyMatch(y -> y == field);
+        var immediateOffset = 0;
         for (var part : parts) {
           encodings.add(
               new FieldEncoding(part.msb(), part.lsb(), field.simpleName(),
-                  offset + part.size() - 1,
-                  offset));
-          offset += part.size();
+                  sourceOffset + part.size() - 1,
+                  sourceOffset,
+                  immediateOffset));
+          sourceOffset += part.size();
+
+          if (isImmediate) {
+            immediateOffset += part.size();
+          }
         }
       }
       return encodings;
@@ -191,6 +209,10 @@ public class TableGenMachineInstruction extends TableGenInstruction {
 
     public int getSourceLow() {
       return sourceLow;
+    }
+
+    public int immediateOffset() {
+      return immediateOffset;
     }
   }
 }

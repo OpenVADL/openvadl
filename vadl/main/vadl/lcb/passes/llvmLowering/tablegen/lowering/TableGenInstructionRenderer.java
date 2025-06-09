@@ -103,7 +103,7 @@ public final class TableGenInstructionRenderer {
         instruction.getFormatSize(),
         instruction.getBitBlocks().stream().map(TableGenInstructionRenderer::lower)
             .collect(Collectors.joining("\n")),
-        instruction.getFieldEncodings().stream().map(TableGenInstructionRenderer::lower)
+        instruction.getFieldEncodings().stream().map(x -> lower(instruction, x))
             .collect(Collectors.joining("\n")),
         toInt(instruction.getFlags().isTerminator()),
         toInt(instruction.getFlags().isBranch()),
@@ -310,17 +310,22 @@ public final class TableGenInstructionRenderer {
       return String.format("bits<%s> %s = 0b%s;", bitBlock.getSize(), bitBlock.getName(),
           toBinaryString(bitBlock.getBitSet().get(), bitBlock.getSize()));
     } else {
-      return String.format("bits<%s> %s;", bitBlock.getSize(), bitBlock.getName());
+      return String.format("bits<%s> %s;", 64, bitBlock.getName());
     }
   }
 
-  private static String lower(TableGenMachineInstruction.FieldEncoding fieldEncoding) {
+  private static String lower(TableGenMachineInstruction instruction,
+                              TableGenMachineInstruction.FieldEncoding fieldEncoding) {
     var inst = fieldEncoding.getTargetHigh() != fieldEncoding.getTargetLow()
         ? fieldEncoding.getTargetHigh() + "-"
         + fieldEncoding.getTargetLow() : fieldEncoding.getTargetHigh();
+
+    var sourceHigh = fieldEncoding.getSourceHigh() + fieldEncoding.immediateOffset();
+    var sourceLow = fieldEncoding.getSourceLow() + fieldEncoding.immediateOffset();
+
     var source = fieldEncoding.getSourceHigh() != fieldEncoding.getSourceLow()
-        ? fieldEncoding.getSourceHigh() + "-" + fieldEncoding.getSourceLow() :
-        fieldEncoding.getSourceHigh();
+        ? sourceHigh + "-" + sourceLow :
+        sourceHigh;
 
     return String.format("let Inst{%s} = %s{%s};", inst,
         fieldEncoding.getSourceBitBlockName(),
