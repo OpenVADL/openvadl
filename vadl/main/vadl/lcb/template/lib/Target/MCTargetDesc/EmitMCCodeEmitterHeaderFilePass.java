@@ -16,10 +16,9 @@
 
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
-import static vadl.lcb.template.utils.ImmediateEncodingFunctionProvider.generateEncodeFunctions;
+import static vadl.lcb.template.utils.ImmediateEncodingFunctionProvider.generateEncodeWrapperFunctions;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
@@ -69,12 +68,11 @@ public class EmitMCCodeEmitterHeaderFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<Aggregate> generateEncoderMethodWrappers(PassResults passResults) {
-    return generateEncodeFunctions(passResults)
+    return generateEncodeWrapperFunctions(passResults)
         .values()
         .stream()
-        .flatMap(Collection::stream)
-        .map(gcbCppFunctionWithBody -> new Aggregate(
-            gcbCppFunctionWithBody.header().identifier.lower()))
+        .map(wrapperFunction -> new Aggregate(
+            wrapperFunction.identifier.lower()))
         .toList();
   }
 }
