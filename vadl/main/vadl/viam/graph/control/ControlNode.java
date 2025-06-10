@@ -46,5 +46,4 @@ public abstract class ControlNode extends Node {
     var prevDir = (DirectionalNode) predecessor;
     return prevDir.addAfter(newNode);
   }
-
 }

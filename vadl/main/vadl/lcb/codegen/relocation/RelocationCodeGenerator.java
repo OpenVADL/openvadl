@@ -33,11 +33,13 @@ import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TensorNode;
 
 /**
  * Code generator to generate the extraction of immediates and updating of immediates in a
@@ -153,6 +155,16 @@ public class RelocationCodeGenerator
       acc += part.msb() - part.lsb() + 1;
     }
     ctx.wr(").to_ulong()");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, FoldNode toHandle) {
+    throwNotAllowed(toHandle, "forall fold expressions");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, TensorNode toHandle) {
+    throwNotAllowed(toHandle, "forall tensor expressions");
   }
 
   @Override
