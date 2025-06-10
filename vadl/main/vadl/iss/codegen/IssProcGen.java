@@ -31,7 +31,9 @@ import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
 /**
@@ -130,5 +132,16 @@ abstract class IssProcGen implements CDefaultMixins.All,
   void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle) {
     throwNotAllowed(toHandle, "Assembler built-in calls");
   }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, FoldNode toHandle) {
+    throwNotAllowed(toHandle, "forall fold expressions");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, TensorNode toHandle) {
+    throwNotAllowed(toHandle, "forall tensor expressions");
+  }
+
 
 }
