@@ -96,8 +96,8 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
       The decodings are pure extraction function like what you would expect from your field access
       function.
 
-      ``` (not entirely correct)
-        static int64_t RV3264Base_ADDI_decode_wrapper() {
+      ```
+        static int64_t RV3264Base_ADDI_decode_wrapper(int param) {
            return VADL_sextract(param, 12);
       ```
 

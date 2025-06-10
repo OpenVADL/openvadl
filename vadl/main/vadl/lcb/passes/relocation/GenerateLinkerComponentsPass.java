@@ -23,7 +23,9 @@ import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
@@ -39,11 +41,15 @@ import vadl.gcb.passes.relocation.model.RelocationsBeforeElfExpansion;
 import vadl.gcb.passes.relocation.model.UserSpecifiedRelocation;
 import vadl.gcb.valuetypes.VariantKind;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.viam.Format;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
 /**
@@ -91,7 +97,7 @@ public class GenerateLinkerComponentsPass extends Pass {
    */
   public record VariantKindStore(
       Map<RelocationsBeforeElfExpansion, VariantKind> relocationVariantKinds,
-      Map<Format.FieldAccess, VariantKind> decodeVariantKinds
+      Map<Pair<Instruction, Format.FieldAccess>, VariantKind> decodeVariantKinds
   ) {
     public static VariantKindStore empty() {
       return new VariantKindStore(new IdentityHashMap<>(), new IdentityHashMap<>());
@@ -106,14 +112,16 @@ public class GenerateLinkerComponentsPass extends Pass {
     }
 
     /**
-     * Get the decode variant kinds for a given {@link Format.Field}. There is a distinct
-     * {@link VariantKind} for every {@link Format.FieldAccess} of a field.
+     * Get the decode variant kinds for a given {@link Instruction} and {@link Format.Field}.
+     * There is a distinct {@link VariantKind} for every {@link Format.FieldAccess} of a field.
      */
-    public List<VariantKind> decodeVariantKindsByField(Format.Field field) {
+    public List<VariantKind> decodeVariantKindsByField(Instruction instruction,
+                                                       Format.Field field) {
       return this.decodeVariantKinds
           .entrySet()
           .stream()
-          .filter(x -> x.getKey().fieldRef().equals(field))
+          .filter(x -> x.getKey().left().equals(instruction)
+              && x.getKey().right().fieldRef().equals(field))
           .map(Map.Entry::getValue)
           .toList();
     }
@@ -128,6 +136,11 @@ public class GenerateLinkerComponentsPass extends Pass {
             IdentifyFieldUsagePass.class);
     var immediates = (CreateFunctionsFromImmediatesPass.Output) passResults.lastResultOf(
         CreateFunctionsFromImmediatesPass.class);
+    var tableGenMachineInstructions = ((List<TableGenMachineInstruction>) passResults.lastResultOf(
+        GenerateTableGenMachineInstructionRecordPass.class))
+        .stream()
+        .collect(Collectors.toMap(TableGenMachineInstruction::instruction,
+            x -> (TableGenInstruction) x));
 
     final var modifiers = new ArrayList<Modifier>();
     final var variantKinds = new ArrayList<VariantKind>();
@@ -235,13 +248,23 @@ public class GenerateLinkerComponentsPass extends Pass {
 
     // Finally, we need to generate variant kinds
     // to apply the correct decode function after pseudo expansion.
-    var fieldAccesses = viam.isa().map(isa -> isa.ownFormats().stream()).orElseGet(
-        Stream::empty).flatMap(formats -> formats.fieldAccesses().stream()).toList();
+    for (var instruction : viam.isa().stream().flatMap(isa -> isa.ownInstructions().stream())
+        .toList()) {
+      {
+        // But we only need the field accesses which are actually used in the instruction.
+        // In more complicated ISAs a format might have more field accesses defined than the instruction
+        // actually uses.
+        var tableGenDefinition =
+            Objects.requireNonNull(tableGenMachineInstructions.get(instruction));
+        var fieldAccesses = tableGenDefinition.immediateInputOperands().stream()
+            .map(x -> x.immediateOperand().fieldAccessRef()).toList();
 
-    for (var fieldAccess : fieldAccesses) {
-      var variantKind = VariantKind.decode(fieldAccess);
-      variantKinds.add(variantKind);
-      variantStore.decodeVariantKinds.put(fieldAccess, variantKind);
+        for (var fieldAccess : fieldAccesses) {
+          var variantKind = VariantKind.decode(instruction, fieldAccess);
+          variantKinds.add(variantKind);
+          variantStore.decodeVariantKinds.put(Pair.of(instruction, fieldAccess), variantKind);
+        }
+      }
     }
 
     var modifier = new Modifier("MO_PLT", CompilerRelocation.Kind.ABSOLUTE, Optional.empty());

@@ -16,11 +16,11 @@
 
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
-import static vadl.viam.ViamError.ensure;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.VariantKind;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
@@ -30,6 +30,7 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.BaseInfoFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
+import vadl.utils.Pair;
 import vadl.viam.Specification;
 
 /**
@@ -102,17 +103,24 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
    * see: {@link EmitMCInstExpanderCppFilePass}, {@link EmitMCCodeEmitterCppFilePass}
    */
   private List<DecodeMapping> decodeMappings(GenerateLinkerComponentsPass.Output output,
-                                     CreateFunctionsFromImmediatesPass.Output immediates) {
+                                             CreateFunctionsFromImmediatesPass.Output immediates) {
 
     var decodeVariantKinds = output.variantKindStore().decodeVariantKinds();
 
-    return immediates.decodings().keySet().stream()
-        .map(immediateRecord -> {
-          var fieldAccess = immediateRecord.fieldAccessRef();
-          var decodeFunction = immediateRecord.rawDecoderMethod().lower();
-          var variantKind = decodeVariantKinds.get(fieldAccess);
-          ensure(variantKind != null, "No variant kind found for field access: %s",
-              fieldAccess);
+    var immediateRecords = immediates.decodings()
+        .keySet()
+        .stream()
+        .collect(Collectors.toMap(x -> Pair.of(x.instructionRef(), x.fieldAccessRef()), x -> x));
+
+    return decodeVariantKinds.entrySet()
+        .stream()
+        .map(entry -> {
+          var instruction = entry.getKey().left();
+          var fieldAccess = entry.getKey().right();
+          var imm = Objects.requireNonNull(immediateRecords.get(Pair.of(instruction, fieldAccess)));
+          var variantKind = entry.getValue();
+
+          var decodeFunction = imm.rawDecoderMethod().lower();
           return new DecodeMapping(variantKind.value(),
               decodeFunction);
         }).toList();

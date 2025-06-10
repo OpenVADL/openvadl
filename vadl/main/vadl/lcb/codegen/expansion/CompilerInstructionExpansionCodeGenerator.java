@@ -174,7 +174,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
         String variant = "VK_None";
 
         if (!instructionCallNode.isParameterFieldAccess(field)) {
-          var variants = variantKindStore.decodeVariantKindsByField(field);
+          var variants = variantKindStore.decodeVariantKindsByField(instruction, field);
 
           ensure(variants.size() == 1, () -> Diagnostic.error(
               "There are unexpectedly multiple variant kinds for the pseudo expansion available.",
@@ -333,6 +333,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
   private void handleRelocationOperand(CGenContext<Node> ctx, String argumentSymbol,
                                        Relocation relocation) {
+    final var instruction = ((CNodeWithBaggageContext) ctx).get(INSTRUCTION, Instruction.class);
     final var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
     final var field = ((CNodeWithBaggageContext) ctx).get(FIELD, Format.Field.class);
     final var instructionCallNode =
@@ -352,7 +353,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     // build a nested MCExpr with the decode variant
     // to call the decoding function
     if (!instructionCallNode.isParameterFieldAccess(field)) {
-      var decodeVariants = variantKindStore.decodeVariantKindsByField(field);
+      var decodeVariants = variantKindStore.decodeVariantKindsByField(instruction, field);
       ensure(decodeVariants.size() == 1, () -> Diagnostic.error(
           "There are unexpectedly multiple variant kinds for the pseudo expansion available.",
           field.location()));
