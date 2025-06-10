@@ -52,6 +52,9 @@ import vadl.viam.Parameter;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.Specification;
 
+/**
+ * A pass that creates various functions which are required for the immediates in LLVM.
+ */
 public class CreateFunctionsFromImmediatesPass extends Pass {
   public CreateFunctionsFromImmediatesPass(GeneralConfiguration configuration) {
     super(configuration);
@@ -62,6 +65,9 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
     return new PassName("CreateFunctionsFromImmediatesPass");
   }
 
+  /**
+   * Output of the pass.
+   */
   public record Output(Map<Instruction, List<GcbCppEncodeFunction>> encodings,
                        Map<Instruction, GcbCppEncodingWrapperFunction> encodingsWrappers,
                        Map<TableGenImmediateRecord, GcbCppAccessFunction> decodings,

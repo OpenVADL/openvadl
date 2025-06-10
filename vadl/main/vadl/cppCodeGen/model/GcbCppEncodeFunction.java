@@ -18,6 +18,9 @@ package vadl.cppCodeGen.model;
 
 import vadl.viam.Format;
 
+/**
+ * A {@link GcbCppFunctionWithBody} which embodies an encoding function with a body.
+ */
 public class GcbCppEncodeFunction extends GcbCppFunctionWithBody {
   private final Format.Field field;
 

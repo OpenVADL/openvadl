@@ -141,8 +141,8 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
       CreateFunctionsFromImmediatesPass.Output functions,
       PassResults passResults) {
     List<Aggregate> list = new ArrayList<>();
-    for (Instruction instruction1 : ImmediateEncodingFunctionProvider.generateEncodeWrapperFunctions(
-            passResults)
+    for (Instruction instruction1 : ImmediateEncodingFunctionProvider
+        .generateEncodeWrapperFunctions(passResults)
         .keySet()) {
       var tableGenInstruction = Objects.requireNonNull(machineInstructions.get(instruction1));
       var encodingWrapper =
@@ -166,11 +166,11 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
     for (var encoding : wrapperFunction.encodingFunctions()) {
       // It's much easier to join the parameters to string here than in the template.
       var params =
-          encoding.header().parameters().length == 1 ?
-              encoding.header().parameters()[0].simpleName() + ".getImm()" :
-              Arrays.stream(encoding.header().parameters())
-                  .map(Definition::simpleName)
-                  .collect(Collectors.joining(".getImm(), "));
+          encoding.header().parameters().length == 1
+              ? encoding.header().parameters()[0].simpleName() + ".getImm()"
+              : Arrays.stream(encoding.header().parameters())
+              .map(Definition::simpleName)
+              .collect(Collectors.joining(".getImm(), "));
 
       encodings.add(
           new Encoding(encoding.header().identifier.lower(), params, encoding.field().size(),

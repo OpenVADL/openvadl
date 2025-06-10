@@ -18,6 +18,9 @@ package vadl.cppCodeGen.model;
 
 import vadl.viam.Format;
 
+/**
+ * A {@link GcbCppFunctionWithBody} which embodies a field access function with an implementation.
+ */
 public class GcbCppAccessFunction extends GcbCppFunctionWithBody {
   private final Format.FieldAccess fieldAccess;
 

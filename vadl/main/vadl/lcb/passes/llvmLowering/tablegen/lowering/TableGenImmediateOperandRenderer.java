@@ -45,7 +45,9 @@ public final class TableGenImmediateOperandRenderer {
 
             def ${fullName}
                 : ${rawName}<${type}>
-                , ImmLeaf<${type}, [{ return Imm >= ${lowestPossibleValue} && Imm <= ${highestPossibleValue} && ${predicateMethod}(Imm); }]>;
+                , ImmLeaf<${type}, [{ return Imm >= ${lowestPossibleValue}
+                  && Imm <= ${highestPossibleValue}
+                  && ${predicateMethod}(Imm); }]>;
 
             def ${rawName}AsLabel : ${rawName}<OtherVT>;
             """,

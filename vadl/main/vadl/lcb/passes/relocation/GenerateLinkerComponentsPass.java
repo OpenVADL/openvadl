@@ -131,16 +131,17 @@ public class GenerateLinkerComponentsPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     // The hierarchy is variant kind > fixup > relocation.
-    var fieldUsages =
+    final var fieldUsages =
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
             IdentifyFieldUsagePass.class);
     var immediates = (CreateFunctionsFromImmediatesPass.Output) passResults.lastResultOf(
         CreateFunctionsFromImmediatesPass.class);
-    var tableGenMachineInstructions = ((List<TableGenMachineInstruction>) passResults.lastResultOf(
-        GenerateTableGenMachineInstructionRecordPass.class))
-        .stream()
-        .collect(Collectors.toMap(TableGenMachineInstruction::instruction,
-            x -> (TableGenInstruction) x));
+    final var tableGenMachineInstructions =
+        ((List<TableGenMachineInstruction>) passResults.lastResultOf(
+            GenerateTableGenMachineInstructionRecordPass.class))
+            .stream()
+            .collect(Collectors.toMap(TableGenMachineInstruction::instruction,
+                x -> (TableGenInstruction) x));
 
     final var modifiers = new ArrayList<Modifier>();
     final var variantKinds = new ArrayList<VariantKind>();
@@ -250,20 +251,18 @@ public class GenerateLinkerComponentsPass extends Pass {
     // to apply the correct decode function after pseudo expansion.
     for (var instruction : viam.isa().stream().flatMap(isa -> isa.ownInstructions().stream())
         .toList()) {
-      {
-        // But we only need the field accesses which are actually used in the instruction.
-        // In more complicated ISAs a format might have more field accesses defined than the instruction
-        // actually uses.
-        var tableGenDefinition =
-            Objects.requireNonNull(tableGenMachineInstructions.get(instruction));
-        var fieldAccesses = tableGenDefinition.immediateInputOperands().stream()
-            .map(x -> x.immediateOperand().fieldAccessRef()).toList();
+      // But we only need the field accesses which are actually used in the instruction.
+      // In more complicated ISAs a format might have more field accesses defined than the
+      // instruction actually uses.
+      var tableGenDefinition =
+          Objects.requireNonNull(tableGenMachineInstructions.get(instruction));
+      var fieldAccesses = tableGenDefinition.immediateInputOperands().stream()
+          .map(x -> x.immediateOperand().fieldAccessRef()).toList();
 
-        for (var fieldAccess : fieldAccesses) {
-          var variantKind = VariantKind.decode(instruction, fieldAccess);
-          variantKinds.add(variantKind);
-          variantStore.decodeVariantKinds.put(Pair.of(instruction, fieldAccess), variantKind);
-        }
+      for (var fieldAccess : fieldAccesses) {
+        var variantKind = VariantKind.decode(instruction, fieldAccess);
+        variantKinds.add(variantKind);
+        variantStore.decodeVariantKinds.put(Pair.of(instruction, fieldAccess), variantKind);
       }
     }
 

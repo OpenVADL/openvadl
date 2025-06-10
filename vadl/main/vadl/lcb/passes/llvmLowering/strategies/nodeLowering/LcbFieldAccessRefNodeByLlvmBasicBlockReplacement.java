@@ -38,6 +38,9 @@ public class LcbFieldAccessRefNodeByLlvmBasicBlockReplacement
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
   private final ValueType architectureType;
 
+  /**
+   * Constructor.
+   */
   public LcbFieldAccessRefNodeByLlvmBasicBlockReplacement(
       PrintableInstruction instruction,
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer,

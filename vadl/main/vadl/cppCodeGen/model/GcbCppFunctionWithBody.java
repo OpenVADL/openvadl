@@ -16,12 +16,16 @@
 
 package vadl.cppCodeGen.model;
 
-import vadl.viam.Format;
-
-public class GcbCppFunctionWithBody /* (GcbCppFunctionBodyLess header, Format.Field field, String code) */ {
+/**
+ * A function that has an implementation.
+ */
+public class GcbCppFunctionWithBody {
   private final GcbCppFunctionBodyLess header;
   private final String code;
 
+  /**
+   * Constructor.
+   */
   public GcbCppFunctionWithBody(GcbCppFunctionBodyLess header, String code) {
     this.header = header;
     this.code = code;

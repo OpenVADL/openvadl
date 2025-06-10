@@ -34,6 +34,9 @@ public class LcbFieldAccessRefNodeReplacement
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
   private final ValueType architectureType;
 
+  /**
+   * Constructor.
+   */
   public LcbFieldAccessRefNodeReplacement(
       PrintableInstruction instruction,
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer,

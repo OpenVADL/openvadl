@@ -14,9 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.include.llvm.BinaryFormat.ELFRelocs;
+package vadl.lcb.template.include.llvm.BinaryFormat.ELFRelocs;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
@@ -51,7 +53,9 @@ public class EmitTargetElfRelocsDefFilePass extends LcbTemplateRenderingPass {
     var output =
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
             GenerateLinkerComponentsPass.class);
-    var relocations = output.elfRelocations();
+    var relocations = new ArrayList<>(output.elfRelocations());
+    relocations.sort(
+        Comparator.comparing(o -> o.elfRelocationName().value()));
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         CommonVarNames.RELOCATIONS, relocations);

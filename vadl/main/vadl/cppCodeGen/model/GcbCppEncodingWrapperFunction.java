@@ -26,6 +26,9 @@ import vadl.viam.Instruction;
 import vadl.viam.Parameter;
 import vadl.viam.graph.Graph;
 
+/**
+ * An extension to {@link Function} which embodies an encoding wrapper function.
+ */
 public class GcbCppEncodingWrapperFunction extends Function {
 
   private final Instruction instruction;
@@ -33,6 +36,9 @@ public class GcbCppEncodingWrapperFunction extends Function {
   private final List<Format.FieldEncoding> encodings;
   private final List<GcbCppEncodeFunction> encodingFunctions;
 
+  /**
+   * Constructor.
+   */
   public GcbCppEncodingWrapperFunction(Identifier identifier,
                                        Parameter[] parameters,
                                        Type returnType,

@@ -66,8 +66,7 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
   public static final String WRAPPER = "wrapper";
 
   record Immediate(String wrapperName,
-      /* this is actually rawDecoderMethodName */
-                   String decodeMethodName,
+                   String decodeMethodName, /* this is actually rawDecoderMethodName */
                    int bitWidth,
                    long mask) implements
       Renderable {

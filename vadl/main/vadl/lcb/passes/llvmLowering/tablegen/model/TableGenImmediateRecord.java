@@ -55,7 +55,7 @@ public class TableGenImmediateRecord {
       Format.FieldAccess fieldAccess,
       ValueType llvmType) {
     this.instructionRef = instruction;
-    var decodingIdentifier =
+    final var decodingIdentifier =
         Objects.requireNonNull(fieldAccess).accessFunction().identifier.dropLast().last();
     this.rawName = fieldAccess.identifier.last().prepend(instruction.identifier()).lower();
     this.rawEncoderMethod = instruction.identifier();
