@@ -103,7 +103,7 @@ public final class TableGenInstructionRenderer {
         instruction.getFormatSize(),
         instruction.getBitBlocks().stream().map(TableGenInstructionRenderer::lower)
             .collect(Collectors.joining("\n")),
-        instruction.getFieldEncodings().stream().map(x -> lower(instruction, x))
+        instruction.getFieldEncodings().stream().map(TableGenInstructionRenderer::lower)
             .collect(Collectors.joining("\n")),
         toInt(instruction.getFlags().isTerminator()),
         toInt(instruction.getFlags().isBranch()),
@@ -314,8 +314,7 @@ public final class TableGenInstructionRenderer {
     }
   }
 
-  private static String lower(TableGenMachineInstruction instruction,
-                              TableGenMachineInstruction.FieldEncoding fieldEncoding) {
+  private static String lower(TableGenMachineInstruction.FieldEncoding fieldEncoding) {
     var inst = fieldEncoding.getTargetHigh() != fieldEncoding.getTargetLow()
         ? fieldEncoding.getTargetHigh() + "-"
         + fieldEncoding.getTargetLow() : fieldEncoding.getTargetHigh();

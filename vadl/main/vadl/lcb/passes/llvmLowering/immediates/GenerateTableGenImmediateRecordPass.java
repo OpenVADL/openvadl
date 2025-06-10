@@ -62,7 +62,6 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
   public List<TableGenImmediateRecord> execute(PassResults passResults,
                                                Specification viam) throws IOException {
     var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().orElseThrow();
-    var tableGenInstructions = tableGenInstructions(passResults);
     var immediates = new ArrayList<TableGenImmediateRecord>();
 
     // We do it first for machine instructions.
@@ -117,24 +116,5 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
         });
 
     return immediates;
-  }
-
-  private Map<PrintableInstruction, TableGenInstruction> tableGenInstructions(
-      PassResults passResults) {
-    var tableGenMachineInstructions = ((List<TableGenMachineInstruction>) passResults.lastResultOf(
-        GenerateTableGenMachineInstructionRecordPass.class))
-        .stream()
-        .collect(Collectors.toMap(x -> (PrintableInstruction) x.instruction(),
-            x -> (TableGenInstruction) x));
-    var tableGenPseudoInstructions = ((List<TableGenPseudoInstruction>) passResults.lastResultOf(
-        GenerateTableGenPseudoInstructionRecordPass.class))
-        .stream()
-        .collect(Collectors.toMap(x -> (PrintableInstruction) x.pseudoInstruction(),
-            x -> (TableGenInstruction) x));
-
-    return
-        Stream.concat(tableGenMachineInstructions.entrySet().stream(),
-                tableGenPseudoInstructions.entrySet().stream())
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 }

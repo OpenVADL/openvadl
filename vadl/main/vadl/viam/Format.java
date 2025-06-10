@@ -155,7 +155,7 @@ public class Format extends Definition implements DefProp.WithType {
   /**
    * Used by VIAM builder only.
    */
-  public void setFieldEncodings(ArrayList<FieldEncoding> fieldEncodings) {
+  public void setFieldEncodings(List<FieldEncoding> fieldEncodings) {
     this.fieldEncodings = fieldEncodings;
   }
 

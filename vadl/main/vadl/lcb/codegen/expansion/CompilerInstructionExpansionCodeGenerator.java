@@ -85,7 +85,6 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
   private final TargetName targetName;
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
-  private final Map<TableGenImmediateRecord, GcbCppAccessFunction> immediateDecodings;
   private final Map<FieldInInstruction, GcbCppFunctionWithBody> immediateDecodingsByField;
   private final List<HasRelocationComputationAndUpdate> relocations;
   private final CompilerInstruction compilerInstruction;
@@ -119,14 +118,13 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     this.variantKindStore = variantKindStore;
     this.machineInstructionRecords = machineInstructionRecords;
     this.labelSymbolNameLookup = new IdentityHashMap<>();
-    this.immediateDecodings = immediateDecodings;
     this.immediateDecodingsByField = immediateDecodings
         .entrySet()
         .stream().map(x -> new Pair<>(
             new FieldInInstruction(x.getKey().instructionRef(),
                 x.getKey().fieldAccessRef().fieldRef()),
             x.getValue()))
-        .collect(Collectors.toMap(x -> x.left(), Pair::right));
+        .collect(Collectors.toMap(Pair::left, Pair::right));
   }
 
   @Override
