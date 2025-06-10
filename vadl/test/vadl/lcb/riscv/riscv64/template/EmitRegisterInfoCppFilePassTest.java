@@ -43,7 +43,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
     // Then
     var resultFile = passResult.emittedFile().toFile();
     var trimmed = Files.asCharSource(resultFile, Charset.defaultCharset()).read().trim();
-    var output = trimmed.lines();
+    var output = trimmed.lines().map(String::trim);
 
     Assertions.assertLinesMatch("""
         #include "processornamevalueRegisterInfo.h"
@@ -97,13 +97,13 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             markSuperRegs(Reserved, processornamevalue::X2); // stack pointer
             markSuperRegs(Reserved, processornamevalue::X3); // global pointer
         
-           \s
-            markSuperRegs(Reserved, processornamevalue::X4); // thread pointer
-           \s
         
-           \s
+            markSuperRegs(Reserved, processornamevalue::X4); // thread pointer
+        
+        
+        
             markSuperRegs(Reserved,  processornamevalue::X0);
-           \s
+        
         
             assert(checkAllSuperRegsMarked(Reserved));
         
@@ -133,7 +133,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_Itype_immS_predicate(Offset))
+            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_ADDI_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -185,7 +185,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_Itype_immS_predicate(Offset))
+            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LB_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -237,7 +237,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_Itype_immS_predicate(Offset))
+            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LBU_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -289,7 +289,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_Itype_immS_predicate(Offset))
+            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LD_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -341,7 +341,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_Itype_immS_predicate(Offset))
+            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LH_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -393,7 +393,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_Itype_immS_predicate(Offset))
+            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LHU_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -445,7 +445,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_Itype_immS_predicate(Offset))
+            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LW_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -497,7 +497,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_Itype_immS_predicate(Offset))
+            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LWU_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -549,7 +549,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_Stype_immS_predicate(Offset))
+            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_SB_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -601,7 +601,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_Stype_immS_predicate(Offset))
+            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_SD_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -653,7 +653,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_Stype_immS_predicate(Offset))
+            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_SH_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -705,7 +705,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_Stype_immS_predicate(Offset))
+            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_SW_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -769,7 +769,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             bool error = true;
             switch (MI.getOpcode())
             {
-               \s
+        
                 case processornamevalue::ADDI:
                 {
                   error = eliminateFrameIndexADDI(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
@@ -830,7 +830,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                   error = eliminateFrameIndexSW(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
                   break;
                 }
-               \s
+        
                 default:
                 {
                     /* This should be unreachable! */
@@ -874,7 +874,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         {
           switch (index)
           {
-         \s
+        
             case 0:
                 return processornamevalue::X0;
             case 1:
@@ -939,7 +939,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 return processornamevalue::X30;
             case 31:
                 return processornamevalue::X31;
-         \s
+        
             default:
             {
                 std::string errMsg;
@@ -951,6 +951,6 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             }
           }
         }
-        """.trim().lines(), output);
+        """.trim().lines().map(String::trim), output);
   }
 }

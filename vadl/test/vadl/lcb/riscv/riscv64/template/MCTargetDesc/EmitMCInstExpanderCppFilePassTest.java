@@ -363,7 +363,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            b.addOperand(instruction.getOperand(0));
            const MCExpr* c = MCOperandToMCExpr(instruction.getOperand(1));
            const MCExpr* d = processorNameValueMCExpr::create(c, processorNameValueMCExpr::VariantKind::VK_GOT_RV3264Base_got_pcrel_hi, Ctx);
-           const MCExpr* e = processorNameValueMCExpr::create(d, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Utype_immUp, Ctx);
+           const MCExpr* e = processorNameValueMCExpr::create(d, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_AUIPC_immUp, Ctx);
            MCOperand f = MCOperand::createExpr(e);
            b.addOperand(f);
            result.push_back(b);
@@ -374,7 +374,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            g.addOperand(instruction.getOperand(0));
            const MCExpr* h = MCOperandToMCExpr(MCOperand::createExpr(MCSymbolRefExpr::create(a, Ctx)));
            const MCExpr* i = processorNameValueMCExpr::create(h, processorNameValueMCExpr::VariantKind::VK_PCREL_RV3264Base_pcrel_lo, Ctx);
-           const MCExpr* j = processorNameValueMCExpr::create(i, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Itype_immS, Ctx);
+           const MCExpr* j = processorNameValueMCExpr::create(i, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LD_immS, Ctx);
            MCOperand k = MCOperand::createExpr(j);
            g.addOperand(k);
            result.push_back(g);
@@ -392,7 +392,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            a.addOperand(MCOperand::createReg(processorNameValue::X1));
            const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(0));
            const MCExpr* c = processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx);
-           const MCExpr* d = processorNameValueMCExpr::create(c, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Utype_immUp, Ctx);
+           const MCExpr* d = processorNameValueMCExpr::create(c, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx);
            MCOperand e = MCOperand::createExpr(d);
            a.addOperand(e);
            result.push_back(a);
@@ -403,7 +403,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            f.addOperand(MCOperand::createReg(processorNameValue::X1));
            const MCExpr* g = MCOperandToMCExpr(instruction.getOperand(0));
            const MCExpr* h = processorNameValueMCExpr::create(g, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx);
-           const MCExpr* i = processorNameValueMCExpr::create(h, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Itype_immS, Ctx);
+           const MCExpr* i = processorNameValueMCExpr::create(h, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_JALR_immS, Ctx);
            MCOperand j = MCOperand::createExpr(i);
            f.addOperand(j);
            result.push_back(f);
@@ -421,7 +421,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            a.addOperand(MCOperand::createReg(processorNameValue::X6));
            const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(0));
            const MCExpr* c = processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx);
-           const MCExpr* d = processorNameValueMCExpr::create(c, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Utype_immUp, Ctx);
+           const MCExpr* d = processorNameValueMCExpr::create(c, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_AUIPC_immUp, Ctx);
            MCOperand e = MCOperand::createExpr(d);
            a.addOperand(e);
            result.push_back(a);
@@ -432,7 +432,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            f.addOperand(MCOperand::createReg(processorNameValue::X6));
            const MCExpr* g = MCOperandToMCExpr(instruction.getOperand(0));
            const MCExpr* h = processorNameValueMCExpr::create(g, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx);
-           const MCExpr* i = processorNameValueMCExpr::create(h, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Itype_immS, Ctx);
+           const MCExpr* i = processorNameValueMCExpr::create(h, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_JALR_immS, Ctx);
            MCOperand j = MCOperand::createExpr(i);
            f.addOperand(j);
            result.push_back(f);
@@ -449,7 +449,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            a.setOpcode(processorNameValue::JALR);
            a.addOperand(MCOperand::createReg(processorNameValue::X0));
            a.addOperand(MCOperand::createReg(processorNameValue::X1));
-           a.addOperand(MCOperand::createImm(RV3264Base_Itype_immS_decode(0)));
+           a.addOperand(MCOperand::createImm(RV3264Base_JALR_immS_decode(0)));
            result.push_back(a);
            callback(a);
            return result;
@@ -480,7 +480,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            a.setOpcode(processorNameValue::ADDI);
            a.addOperand(MCOperand::createReg(processorNameValue::X0));
            a.addOperand(MCOperand::createReg(processorNameValue::X0));
-           a.addOperand(MCOperand::createImm(RV3264Base_Itype_immS_decode(0)));
+           a.addOperand(MCOperand::createImm(RV3264Base_ADDI_immS_decode(0)));
            result.push_back(a);
            callback(a);
            return result;
@@ -495,7 +495,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            a.setOpcode(processorNameValue::ADDI);
            a.addOperand(instruction.getOperand(0));
            a.addOperand(instruction.getOperand(1));
-           a.addOperand(MCOperand::createImm(RV3264Base_Itype_immS_decode(0)));
+           a.addOperand(MCOperand::createImm(RV3264Base_ADDI_immS_decode(0)));
            result.push_back(a);
            callback(a);
            return result;
@@ -510,7 +510,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            a.setOpcode(processorNameValue::XORI);
            a.addOperand(instruction.getOperand(0));
            a.addOperand(instruction.getOperand(1));
-           a.addOperand(MCOperand::createImm(RV3264Base_Itype_immS_decode(4095)));
+           a.addOperand(MCOperand::createImm(RV3264Base_XORI_immS_decode(4095)));
            result.push_back(a);
            callback(a);
            return result;
@@ -688,7 +688,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            a.addOperand(instruction.getOperand(0));
            const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
            const MCExpr* c = processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx);
-           const MCExpr* d = processorNameValueMCExpr::create(c, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Utype_immUp, Ctx);
+           const MCExpr* d = processorNameValueMCExpr::create(c, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx);
            MCOperand e = MCOperand::createExpr(d);
            a.addOperand(e);
            result.push_back(a);
@@ -699,7 +699,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            f.addOperand(instruction.getOperand(0));
            const MCExpr* g = MCOperandToMCExpr(instruction.getOperand(1));
            const MCExpr* h = processorNameValueMCExpr::create(g, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx);
-           const MCExpr* i = processorNameValueMCExpr::create(h, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Itype_immS, Ctx);
+           const MCExpr* i = processorNameValueMCExpr::create(h, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx);
            MCOperand j = MCOperand::createExpr(i);
            f.addOperand(j);
            result.push_back(f);
@@ -717,7 +717,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            a.addOperand(instruction.getOperand(0));
            const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
            const MCExpr* c = processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_GOT_RV3264Base_got_pcrel_hi, Ctx);
-           const MCExpr* d = processorNameValueMCExpr::create(c, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Utype_immUp, Ctx);
+           const MCExpr* d = processorNameValueMCExpr::create(c, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_AUIPC_immUp, Ctx);
            MCOperand e = MCOperand::createExpr(d);
            a.addOperand(e);
            result.push_back(a);
@@ -728,7 +728,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            f.addOperand(instruction.getOperand(0));
            const MCExpr* g = MCOperandToMCExpr(instruction.getOperand(1));
            const MCExpr* h = processorNameValueMCExpr::create(g, processorNameValueMCExpr::VariantKind::VK_PCREL_RV3264Base_pcrel_lo, Ctx);
-           const MCExpr* i = processorNameValueMCExpr::create(h, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Itype_immS, Ctx);
+           const MCExpr* i = processorNameValueMCExpr::create(h, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LW_immS, Ctx);
            MCOperand j = MCOperand::createExpr(i);
            f.addOperand(j);
            result.push_back(f);
@@ -748,7 +748,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            b.addOperand(instruction.getOperand(0));
            const MCExpr* c = MCOperandToMCExpr(instruction.getOperand(1));
            const MCExpr* d = processorNameValueMCExpr::create(c, processorNameValueMCExpr::VariantKind::VK_PCREL_RV3264Base_pcrel_hi, Ctx);
-           const MCExpr* e = processorNameValueMCExpr::create(d, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Utype_immUp, Ctx);
+           const MCExpr* e = processorNameValueMCExpr::create(d, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_AUIPC_immUp, Ctx);
            MCOperand f = MCOperand::createExpr(e);
            b.addOperand(f);
            result.push_back(b);
@@ -759,7 +759,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            g.addOperand(instruction.getOperand(0));
            const MCExpr* h = MCOperandToMCExpr(MCOperand::createExpr(MCSymbolRefExpr::create(a, Ctx)));
            const MCExpr* i = processorNameValueMCExpr::create(h, processorNameValueMCExpr::VariantKind::VK_PCREL_RV3264Base_pcrel_lo, Ctx);
-           const MCExpr* j = processorNameValueMCExpr::create(i, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Itype_immS, Ctx);
+           const MCExpr* j = processorNameValueMCExpr::create(i, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx);
            MCOperand k = MCOperand::createExpr(j);
            g.addOperand(k);
            result.push_back(g);
@@ -777,7 +777,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            a.addOperand(instruction.getOperand(0));
            const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
            const MCExpr* c = processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx);
-           const MCExpr* d = processorNameValueMCExpr::create(c, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Utype_immUp, Ctx);
+           const MCExpr* d = processorNameValueMCExpr::create(c, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx);
            MCOperand e = MCOperand::createExpr(d);
            a.addOperand(e);
            result.push_back(a);
@@ -788,7 +788,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            f.addOperand(instruction.getOperand(0));
            const MCExpr* g = MCOperandToMCExpr(instruction.getOperand(1));
            const MCExpr* h = processorNameValueMCExpr::create(g, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx);
-           const MCExpr* i = processorNameValueMCExpr::create(h, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Itype_immS, Ctx);
+           const MCExpr* i = processorNameValueMCExpr::create(h, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx);
            MCOperand j = MCOperand::createExpr(i);
            f.addOperand(j);
            result.push_back(f);
@@ -806,7 +806,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            a.addOperand(instruction.getOperand(0));
            const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
            const MCExpr* c = processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx);
-           const MCExpr* d = processorNameValueMCExpr::create(c, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Utype_immUp, Ctx);
+           const MCExpr* d = processorNameValueMCExpr::create(c, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx);
            MCOperand e = MCOperand::createExpr(d);
            a.addOperand(e);
            result.push_back(a);
@@ -817,7 +817,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            f.addOperand(instruction.getOperand(0));
            const MCExpr* g = MCOperandToMCExpr(instruction.getOperand(1));
            const MCExpr* h = processorNameValueMCExpr::create(g, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx);
-           const MCExpr* i = processorNameValueMCExpr::create(h, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Itype_immS, Ctx);
+           const MCExpr* i = processorNameValueMCExpr::create(h, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx);
            MCOperand j = MCOperand::createExpr(i);
            f.addOperand(j);
            result.push_back(f);
@@ -835,7 +835,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            a.addOperand(instruction.getOperand(0));
            const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
            const MCExpr* c = processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx);
-           const MCExpr* d = processorNameValueMCExpr::create(c, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Utype_immUp, Ctx);
+           const MCExpr* d = processorNameValueMCExpr::create(c, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx);
            MCOperand e = MCOperand::createExpr(d);
            a.addOperand(e);
            result.push_back(a);
@@ -846,7 +846,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            f.addOperand(instruction.getOperand(0));
            const MCExpr* g = MCOperandToMCExpr(instruction.getOperand(1));
            const MCExpr* h = processorNameValueMCExpr::create(g, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx);
-           const MCExpr* i = processorNameValueMCExpr::create(h, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Itype_immS, Ctx);
+           const MCExpr* i = processorNameValueMCExpr::create(h, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx);
            MCOperand j = MCOperand::createExpr(i);
            f.addOperand(j);
            result.push_back(f);
@@ -864,7 +864,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            a.addOperand(instruction.getOperand(0));
            a.addOperand(MCOperand::createReg(processorNameValue::X0));
            const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-           MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Itype_immS, Ctx));
+           MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx));
            a.addOperand(c);
            result.push_back(a);
            callback(a);
@@ -881,7 +881,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            a.addOperand(instruction.getOperand(0));
            a.addOperand(instruction.getOperand(1));
            const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
-           MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_Itype_immS, Ctx));
+           MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx));
            a.addOperand(c);
            result.push_back(a);
            callback(a);

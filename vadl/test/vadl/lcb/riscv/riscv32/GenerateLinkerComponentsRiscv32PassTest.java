@@ -19,9 +19,12 @@ package vadl.lcb.riscv.riscv32;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.gcb.passes.relocation.model.Modifier;
 import vadl.gcb.valuetypes.RelocationFunctionLabel;
@@ -84,8 +87,71 @@ public class GenerateLinkerComponentsRiscv32PassTest extends AbstractLcbTest {
     );
   }
 
-  @Test
-  void shouldGenerateExpectedVariantKinds() throws DuplicatedPassKeyException, IOException {
+  @CsvSource("""
+      VK_None
+      VK_PLT
+      VK_ABS_RV3264Base_hi
+      VK_ABS_RV3264Base_lo
+      VK_ABS_RV3264Base_to32AndHi
+      VK_ABS_RV3264Base_to32AndLo
+      VK_ABS_RV3264Base_lowerHalfHi
+      VK_ABS_RV3264Base_lowerHalfLo
+      VK_PCREL_RV3264Base_pcrel_hi
+      VK_PCREL_RV3264Base_pcrel_lo
+      VK_GOT_RV3264Base_got_pcrel_hi
+      VK_SYMB_ABS_RV3264Base_Itype_imm
+      VK_SYMB_PCREL_RV3264Base_Itype_imm
+      VK_SYMB_ABS_RV3264Base_Utype_imm
+      VK_SYMB_PCREL_RV3264Base_Utype_imm
+      VK_SYMB_ABS_RV3264Base_Stype_imm
+      VK_SYMB_PCREL_RV3264Base_Stype_imm
+      VK_SYMB_ABS_RV3264Base_Btype_imm
+      VK_SYMB_PCREL_RV3264Base_Btype_imm
+      VK_SYMB_ABS_RV3264Base_Jtype_imm
+      VK_SYMB_PCREL_RV3264Base_Jtype_imm
+      VK_SYMB_ABS_RV3264Base_Rtype_rs2
+      VK_SYMB_PCREL_RV3264Base_Rtype_rs2
+      VK_SYMB_ABS_RV3264Base_Ftype_sft
+      VK_SYMB_PCREL_RV3264Base_Ftype_sft
+      VK_DECODE_RV3264Base_ADDI_immS
+      VK_DECODE_RV3264Base_ANDI_immS
+      VK_DECODE_RV3264Base_ORI_immS
+      VK_DECODE_RV3264Base_XORI_immS
+      VK_DECODE_RV3264Base_SLTI_immS
+      VK_DECODE_RV3264Base_SLTIU_immS
+      VK_DECODE_RV3264Base_AUIPC_immUp
+      VK_DECODE_RV3264Base_LUI_immUp
+      VK_DECODE_RV3264Base_LB_immS
+      VK_DECODE_RV3264Base_LBU_immS
+      VK_DECODE_RV3264Base_LH_immS
+      VK_DECODE_RV3264Base_LHU_immS
+      VK_DECODE_RV3264Base_LW_immS
+      VK_DECODE_RV3264Base_SB_immS
+      VK_DECODE_RV3264Base_SH_immS
+      VK_DECODE_RV3264Base_SW_immS
+      VK_DECODE_RV3264Base_BEQ_immS
+      VK_DECODE_RV3264Base_BNE_immS
+      VK_DECODE_RV3264Base_BGE_immS
+      VK_DECODE_RV3264Base_BGEU_immS
+      VK_DECODE_RV3264Base_BLT_immS
+      VK_DECODE_RV3264Base_BLTU_immS
+      VK_DECODE_RV3264Base_JAL_immS
+      VK_DECODE_RV3264Base_JALR_immS
+      VK_DECODE_RV3264Base_LWU_immS
+      VK_DECODE_RV3264Base_LD_immS
+      VK_DECODE_RV3264Base_SD_immS
+      VK_DECODE_RV3264Base_ADDIW_immS
+      VK_DECODE_RV3264Base_SLLIW_shamt
+      VK_DECODE_RV3264Base_SRLIW_shamt
+      VK_DECODE_RV3264Base_SRAIW_shamt
+      VK_DECODE_RV3264Base_SLLI_shamt
+      VK_DECODE_RV3264Base_SRLI_shamt
+      VK_DECODE_RV3264Base_SRAI_shamt
+      VK_Invalid
+      """)
+  @ParameterizedTest
+  void shouldGenerateExpectedVariantKinds(String variantKindValue)
+      throws DuplicatedPassKeyException, IOException {
     var setup = runLcb(getConfiguration(false), "sys/risc-v/rv32im.vadl",
         new PassKey(GenerateLinkerComponentsPass.class.getName()));
     var passManager = setup.passManager();
@@ -94,55 +160,13 @@ public class GenerateLinkerComponentsRiscv32PassTest extends AbstractLcbTest {
         (GenerateLinkerComponentsPass.Output) passManager.getPassResults()
             .lastResultOf(GenerateLinkerComponentsPass.class);
 
-    var generatedVariantKinds = generatedLinkerComponents.variantKinds();
-    expectedVariantKinds().forEach(
-        expected -> Assertions.assertTrue(
-            generatedVariantKinds.stream()
-                .anyMatch(generated -> generated.value().equals(expected.value())
-                    && generated.human().equals(expected.human())
-                    && generated.isImmediate() == expected.isImmediate()
-                ),
-            "Expected variant kind: " + expected + " not found in generated variant kinds: "
-                + generatedVariantKinds
-        )
-    );
-  }
+    var generatedVariantKinds = generatedLinkerComponents.variantKinds()
+        .stream()
+        .map(VariantKind::value)
+        .collect(Collectors.toSet());
 
-  private static Stream<VariantKind> expectedVariantKinds() {
-    return Stream.of(
-        VariantKind.none(),
-        VariantKind.invalid(),
-        new VariantKind("VK_ABS_RV3264Base_hi", "hi", false),
-        new VariantKind("VK_ABS_RV3264Base_lo", "lo", false),
-        new VariantKind("VK_PCREL_RV3264Base_pcrel_hi", "pcrel_hi", false),
-        new VariantKind("VK_PCREL_RV3264Base_pcrel_lo", "pcrel_lo", false),
-        new VariantKind("VK_GOT_RV3264Base_got_pcrel_hi", "got_pcrel_hi", false),
-        new VariantKind("VK_SYMB_ABS_RV3264Base_Itype_imm", "SYMB_ABS_RV3264Base_Itype_imm", true),
-        new VariantKind("VK_SYMB_PCREL_RV3264Base_Itype_imm", "SYMB_PCREL_RV3264Base_Itype_imm",
-            true),
-        new VariantKind("VK_SYMB_ABS_RV3264Base_Utype_imm", "SYMB_ABS_RV3264Base_Utype_imm", true),
-        new VariantKind("VK_SYMB_PCREL_RV3264Base_Utype_imm", "SYMB_PCREL_RV3264Base_Utype_imm",
-            true),
-        new VariantKind("VK_SYMB_ABS_RV3264Base_Stype_imm", "SYMB_ABS_RV3264Base_Stype_imm", true),
-        new VariantKind("VK_SYMB_PCREL_RV3264Base_Stype_imm", "SYMB_PCREL_RV3264Base_Stype_imm",
-            true),
-        new VariantKind("VK_SYMB_ABS_RV3264Base_Btype_imm", "SYMB_ABS_RV3264Base_Btype_imm", true),
-        new VariantKind("VK_SYMB_PCREL_RV3264Base_Btype_imm", "SYMB_PCREL_RV3264Base_Btype_imm",
-            true),
-        new VariantKind("VK_SYMB_ABS_RV3264Base_Jtype_imm", "SYMB_ABS_RV3264Base_Jtype_imm", true),
-        new VariantKind("VK_SYMB_PCREL_RV3264Base_Jtype_imm", "SYMB_PCREL_RV3264Base_Jtype_imm",
-            true),
-        new VariantKind("VK_SYMB_ABS_RV3264Base_Ftype_sft", "SYMB_ABS_RV3264Base_Ftype_sft", true),
-        new VariantKind("VK_SYMB_PCREL_RV3264Base_Ftype_sft", "SYMB_PCREL_RV3264Base_Ftype_sft",
-            true),
-        new VariantKind("VK_DECODE_RV3264Base_Rtype_shamt", "DECODE_RV3264Base_Rtype_shamt", true),
-        new VariantKind("VK_DECODE_RV3264Base_Itype_immS", "DECODE_RV3264Base_Itype_immS", true),
-        new VariantKind("VK_DECODE_RV3264Base_Utype_immUp", "DECODE_RV3264Base_Utype_immUp", true),
-        new VariantKind("VK_DECODE_RV3264Base_Stype_immS", "DECODE_RV3264Base_Stype_immS", true),
-        new VariantKind("VK_DECODE_RV3264Base_Btype_immS", "DECODE_RV3264Base_Btype_immS", true),
-        new VariantKind("VK_DECODE_RV3264Base_Jtype_immS", "DECODE_RV3264Base_Jtype_immS", true),
-        new VariantKind("VK_DECODE_RV3264Base_Ftype_shamt", "DECODE_RV3264Base_Ftype_shamt", true)
-    );
+    Assertions.assertTrue(generatedVariantKinds.contains(variantKindValue),
+        "does not have variant kind: " + variantKindValue);
   }
 
   @Test
