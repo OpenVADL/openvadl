@@ -52,14 +52,20 @@ public class VdtLoweringPass extends Pass {
   public @Nullable Node execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    Object entries = passResults.lastNullableResultOf(VdtInputPreparationPass.class);
+    final List<DecodeEntry> entries;
+    if (passResults.hasRunPassOnce(VdtConstraintSynthesisPass.class)) {
+      entries =
+          (List<DecodeEntry>) passResults.lastNullableResultOf(VdtConstraintSynthesisPass.class);
+    } else {
+      entries = (List<DecodeEntry>) passResults.lastNullableResultOf(VdtInputPreparationPass.class);
+    }
+
     if (entries == null) {
       // just skip if there are no instructions.
       // this will only happen if we use the check command
       return null;
     }
 
-    final List<DecodeEntry> insns = (List<DecodeEntry>) entries;
-    return new IrregularDecodeTreeGenerator().generate(insns);
+    return new IrregularDecodeTreeGenerator().generate(entries);
   }
 }

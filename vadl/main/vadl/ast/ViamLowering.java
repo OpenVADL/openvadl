@@ -218,11 +218,17 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * @return the viam node.
    */
   Optional<vadl.viam.Definition> fetch(Definition definition) {
+    return fetchWith(definition, d -> d.accept(this));
+  }
+
+  private <D extends Definition> Optional<vadl.viam.Definition> fetchWith(
+      D definition,
+      java.util.function.Function<D, Optional<vadl.viam.Definition>> visitMethod) {
     if (definitionCache.containsKey(definition)) {
       return definitionCache.get(definition);
     }
 
-    var result = definition.accept(this);
+    var result = visitMethod.apply(definition);
     result.ifPresent(value -> {
       value.setSourceLocationIfNotSet(definition.location());
       value.setPrettyPrintSourceFunc(() -> {
@@ -1111,7 +1117,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     return Optional.empty();
   }
 
-  private <T extends Definition & IdentifiableNode> Assembly visitAssembly(
+  private <T extends Definition & IdentifiableNode> Optional<vadl.viam.Definition> visitAssembly(
       AssemblyDefinition definition,
       T instructionDefinition) {
 
@@ -1129,14 +1135,15 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // FIXME: Add to cache? But how, because one assemby ast node might be used for multiple
     // assembly in the VIAM.
 
-    return new Assembly(
+    return Optional.of(new Assembly(
         new vadl.viam.Identifier(identifierName, identifierLoc),
         new Function(funcIdentifier, new vadl.viam.Parameter[0], Type.string(), behavior)
-    );
+    ));
   }
 
-  private Encoding visitEncoding(EncodingDefinition definition,
-                                 InstructionDefinition instructionDefinition) {
+  private Optional<vadl.viam.Definition> visitEncoding(
+      EncodingDefinition definition,
+      InstructionDefinition instructionDefinition) {
     var fields = new ArrayList<Encoding.Field>();
     for (var item : definition.encodings.items) {
       var encodingDef = (EncodingDefinition.EncodingField) item;
@@ -1152,13 +1159,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       fields.add(field);
     }
 
-    // FIXME: Add to cache?
-
-    return new Encoding(
+    return Optional.of(new Encoding(
         generateIdentifier(instructionDefinition.viamId + "::encoding", definition.identifier()),
         (Format) fetch(requireNonNull(definition.formatNode)).orElseThrow(),
         fields.toArray(new Encoding.Field[0])
-    );
+    ));
   }
 
   @Override
@@ -1166,10 +1171,13 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     fetch(requireNonNull(definition.formatNode));
     var behavior = new BehaviorLowering(this).getInstructionGraph(definition);
 
-    var assembly = visitAssembly(requireNonNull(definition.assemblyDefinition),
-        definition);
+    var assembly = fetchWith(requireNonNull(definition.assemblyDefinition),
+        (d) -> visitAssembly(d, definition))
+        .map(Assembly.class::cast).get();
     var encoding =
-        visitEncoding(requireNonNull(definition.encodingDefinition), definition);
+        fetchWith(requireNonNull(definition.encodingDefinition),
+            (d) -> visitEncoding(d, definition))
+            .map(Encoding.class::cast).get();
 
     var instruction = new Instruction(
         generateIdentifier(definition.viamId, definition.identifier()),
@@ -1396,7 +1404,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     var graph =
         new BehaviorLowering(this).getInstructionSequenceGraph(definition.identifier(), definition);
-    var assembly = visitAssembly(requireNonNull(definition.assemblyDefinition), definition);
+    var assembly = fetchWith(requireNonNull(definition.assemblyDefinition),
+        (d) -> visitAssembly(d, definition))
+        .map(Assembly.class::cast).get();
 
     return Optional.of(new PseudoInstruction(
         identifier,

@@ -28,6 +28,10 @@ import java.util.stream.Collectors;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import net.jqwik.api.arbitraries.BigIntegerArbitrary;
+import org.junit.jupiter.api.Assertions;
+import vadl.ast.TypeChecker;
+import vadl.ast.VadlParser;
+import vadl.ast.ViamLowering;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 import vadl.types.BitsType;
@@ -47,6 +51,7 @@ import vadl.viam.Processor;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
+import vadl.viam.passes.verification.ViamVerifier;
 
 public class TestUtils {
 
@@ -90,6 +95,20 @@ public class TestUtils {
           .as("Expected error message not found: %s", expectedMessage)
           .isTrue();
     }
+  }
+
+  /**
+   * Creates the VIAM for the given source code string.
+   */
+  public static Specification compileToViam(String sourceCode) {
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(sourceCode), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    typechecker.verify(ast);
+    var lowering = new ViamLowering();
+    var spec = Assertions.assertDoesNotThrow(() -> lowering.generate(ast), "Cannot generate VIAM");
+    ViamVerifier.verifyAllIn(spec);
+    return spec;
   }
 
   /**

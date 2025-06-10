@@ -16,30 +16,42 @@
 
 package vadl.vdt.passes;
 
+import static vadl.types.BuiltInTable.NOT;
+import static vadl.utils.GraphUtils.getSingleNode;
 import static vadl.vdt.utils.PatternUtils.toFixedBitPattern;
 
 import java.io.IOException;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.error.Diagnostic;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.types.BuiltInTable;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.impl.irregular.model.ExclusionCondition;
+import vadl.vdt.passes.transform.EncodingConstraintDNFTransformer;
+import vadl.vdt.passes.transform.EncodingConstraintNNFTransformer;
 import vadl.vdt.utils.BitPattern;
+import vadl.vdt.utils.PatternUtils;
 import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.Graph;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.SliceNode;
 
 /**
  * Prepares the instruction definitions for the VDT generation.
@@ -78,92 +90,167 @@ public class VdtInputPreparationPass extends Pass {
     // TODO: get the byte order from the VADL specification -> Implement memory annotations
     final ByteOrder bo = ByteOrder.LITTLE_ENDIAN;
 
-    // Prepare a lookup map for possible constraint synthesis
-    final var grouped = groupedInstructions(isa.ownInstructions());
-
     return isa.ownInstructions()
         .stream()
         .map(i -> {
+
           final var pattern = toFixedBitPattern(i, bo);
-          final var constraints = getSynthesizedExclusions(bo, grouped, i);
-          return new DecodeEntry(i, pattern.width(), pattern, constraints);
+          final var exclusions = getExclusionsFromConstraints(bo, i);
+
+          return new DecodeEntry(i, pattern.width(), pattern, exclusions);
         })
         .toList();
   }
 
   /**
-   * Synthesize possible exclusion conditions. For now this considers subsumed instructions within
-   * the same format definition. E.g.: If instruction {@code A} specifies fixed encodings of format
-   * fields {@code a = 0}, {@code b = 1} and instruction {@code B} (of the same format) specifies
-   * fixed encodings of format field {@code a = 0}, then we will automatically add a constraint to
-   * {@code B} to exclude the encoding of {@code b = 1 }.
-   * <br>
-   * As a result, if {@code b == 1} the decoder matches instruction {@code A} and in any other case
-   * it will match instruction {@code B}.
+   * Prepare the exclusion constraints as specified by the encoding constraints (if present).
    *
-   * @param bo      The byte order
-   * @param grouped The instruction encodings grouped by format
-   * @param i       The current instruction to consider
-   * @return The exclusion conditions, if any.
+   * @param bo The byte order
+   * @param i  The current instruction to resolve the exclusion conditions for
+   * @return The (possibly empty) set of exclusion conditions.
    */
-  private Set<ExclusionCondition> getSynthesizedExclusions(
-      ByteOrder bo, Map<Format, List<InstructionEncoding>> grouped, Instruction i) {
+  private Set<ExclusionCondition> getExclusionsFromConstraints(ByteOrder bo, Instruction i) {
 
-    if (!grouped.containsKey(i.format())) {
+    final var constraint = i.encoding().constraint();
+    if (constraint == null) {
       return Set.of();
     }
 
-    final Set<ExclusionCondition> constraints = new HashSet<>();
-    final Set<FixedEncoding> encodedFields = getFixedFields(i);
+    final List<List<Node>> conditions = decomposeConstraint(constraint);
+    final Set<ExclusionCondition> exclusionConditions = new HashSet<>();
 
-    grouped.get(i.format()).stream()
-        .filter(p -> isActualSubset(p.fields(), encodedFields))
-        .forEach(p -> {
+    for (List<Node> exclusion : conditions) {
+      exclusionConditions.add(getExclusionCondition(bo, i, exclusion));
+    }
 
-          // Determine the encodings to exclude
-          var exclusions = new HashSet<>(p.fields());
-          exclusions.removeAll(encodedFields);
-
-          // Add one exclusion condition per encoding
-          for (var encoding : exclusions) {
-            BitPattern exclusionPattern = toFixedBitPattern(encoding.field(), encoding.value(), bo);
-            constraints.add(new ExclusionCondition(exclusionPattern, Set.of()));
-          }
-        });
-
-    return constraints;
+    return exclusionConditions;
   }
 
-  private boolean isActualSubset(Set<FixedEncoding> superset,
-                                 Set<FixedEncoding> subset) {
-    return superset.containsAll(subset) && superset.size() > subset.size();
-  }
+  /**
+   * Split up the constraint into lists of disjuncts and conjuncts.
+   *
+   * @param constraint The constraint graph
+   * @return The atomic formulas as disjuncts of conjuncts (DNF form)
+   */
+  @SuppressWarnings("java:S6204")
+  private List<List<Node>> decomposeConstraint(Graph constraint) {
 
-  private Map<Format, List<InstructionEncoding>> groupedInstructions(List<Instruction> insns) {
-    final Map<Format, List<InstructionEncoding>> result = new HashMap<>();
+    // The constraint is a positive assertion, so we have to negate it to interpret it as an
+    // exclusion condition, then transform it to its DNF form for use in the decoder generator.
 
-    for (Instruction i : insns) {
-      var encoding = new InstructionEncoding(i, getFixedFields(i));
+    // Negate the constraint
+    var root = getSingleNode(constraint, ReturnNode.class).value();
+    root.replace(BuiltInCall.of(NOT, root));
 
-      result.merge(i.format(), List.of(encoding), (a, b) -> {
-        var merged = new ArrayList<>(a);
-        merged.addAll(b);
-        return merged;
-      });
+    // Transform the constraint to NNF and then to DNF
+    var nnfConstraint = new EncodingConstraintNNFTransformer(constraint).transform();
+    var dnfConstraint = new EncodingConstraintDNFTransformer(nnfConstraint).transform();
+
+    var dnfRoot = getSingleNode(dnfConstraint, ReturnNode.class).value();
+
+    final List<List<Node>> result = new ArrayList<>();
+    final var conjuncts = decomposeBy(dnfRoot, BuiltInTable.OR);
+    for (var c : conjuncts) {
+      final var atomic = decomposeBy(c, BuiltInTable.AND);
+      result.add(atomic);
     }
 
     return result;
   }
 
-  private Set<FixedEncoding> getFixedFields(Instruction insn) {
-    return Arrays.stream(insn.encoding().fieldEncodings())
-        .map(e -> new FixedEncoding(e.formatField(), e.constant()))
-        .collect(Collectors.toSet());
+  private List<Node> decomposeBy(Node root, BuiltInTable.BuiltIn builtIn) {
+
+    if (!(root instanceof BuiltInCall bc) || !bc.builtIn().equals(builtIn)) {
+      return List.of(root);
+    }
+
+    final List<Node> results = new ArrayList<>();
+
+    for (Node n : root.inputs().toList()) {
+      if (!(n instanceof ExpressionNode e)) {
+        results.add(n);
+        continue;
+      }
+      results.addAll(decomposeBy(e, builtIn));
+    }
+
+    return results;
   }
 
-  private record FixedEncoding(Format.Field field, Constant.Value value) {
+  private ExclusionCondition getExclusionCondition(ByteOrder bo, Instruction i,
+                                                   List<Node> atomicFormulas) {
+
+    final List<BuiltInCall> matchingFormulas = atomicFormulas.stream()
+        .filter(filterBuiltIn(BuiltInTable.EQU))
+        .map(BuiltInCall.class::cast)
+        .toList();
+    final List<BuiltInCall> unmatchingFormulas = atomicFormulas.stream()
+        .filter(filterBuiltIn(BuiltInTable.NEQ))
+        .map(BuiltInCall.class::cast)
+        .toList();
+
+    final int bitWidth = i.format().type().bitWidth();
+
+    BitPattern matchingPattern = BitPattern.empty(bitWidth);
+    for (BuiltInCall m : matchingFormulas) {
+
+      BitPattern currentPattern = atomicFormulaToBitPattern(bo, m);
+
+      try {
+        matchingPattern = PatternUtils.combinePatterns(matchingPattern, currentPattern);
+      } catch (Exception e) {
+        // If we cannot combine the patterns, the expression is invalid.
+        throw Diagnostic.error("Invalid encoding constraints", i.encoding()).build();
+      }
+    }
+
+    final Set<BitPattern> unmatchingPatterns = new HashSet<>();
+
+    for (BuiltInCall u : unmatchingFormulas) {
+      unmatchingPatterns.add(atomicFormulaToBitPattern(bo, u));
+    }
+
+    return new ExclusionCondition(matchingPattern, unmatchingPatterns);
   }
 
-  private record InstructionEncoding(Instruction source, Set<FixedEncoding> fields) {
+  private static BitPattern atomicFormulaToBitPattern(ByteOrder bo, BuiltInCall m) {
+    final var args = m.arguments();
+
+    final Format.Field field;
+    final Constant.Value constant;
+    Constant.BitSlice slice = null;
+
+    if (args.getFirst() instanceof FieldRefNode r) {
+      field = r.formatField();
+    } else if (args.getFirst() instanceof SliceNode s) {
+      slice = s.bitSlice();
+      field = ((FieldRefNode) s.value()).formatField();
+    } else if (args.getLast() instanceof FieldRefNode r) {
+      field = r.formatField();
+    } else if (args.getLast() instanceof SliceNode s) {
+      slice = s.bitSlice();
+      field = ((FieldRefNode) s.value()).formatField();
+    } else {
+      throw new IllegalArgumentException("Unexpected structure of atomic formula. Expected one "
+          + "argument to contain a field reference");
+    }
+
+    if (args.getFirst() instanceof ConstantNode c) {
+      constant = c.constant().asVal();
+    } else {
+      constant = ((ConstantNode) args.getLast()).constant().asVal();
+    }
+
+    if (slice == null) {
+      slice = field.bitSlice();
+    } else {
+      slice = field.bitSlice().apply(slice);
+    }
+
+    return toFixedBitPattern(field.format(), slice, constant, bo);
+  }
+
+  private Predicate<Node> filterBuiltIn(BuiltInTable.BuiltIn builtIn) {
+    return n -> n instanceof BuiltInCall bc && bc.builtIn().equals(builtIn);
   }
 }

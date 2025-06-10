@@ -16,6 +16,7 @@
 
 package vadl.vdt.utils;
 
+import static vadl.vdt.utils.PBit.Value.DONT_CARE;
 import static vadl.vdt.utils.PBit.Value.ONE;
 import static vadl.vdt.utils.PBit.Value.ZERO;
 
@@ -109,10 +110,25 @@ public class PatternUtils {
    */
   public static BitPattern toFixedBitPattern(Format.Field field, Constant.Value value,
                                              ByteOrder byteOrder) {
+    return toFixedBitPattern(field.format(), field.bitSlice(), value, byteOrder);
+  }
+
+  /**
+   * Returns the bit pattern for the given encoding field, where all bits not encoded by this field
+   * are set to <i>don't care</i>.
+   *
+   * @param format    The instruction format
+   * @param slice     The bit slice of the field to encode
+   * @param value     The encoded value
+   * @param byteOrder The architecture's byte order
+   * @return The bit pattern
+   */
+  public static BitPattern toFixedBitPattern(Format format, BitSlice slice, Constant.Value value,
+                                             ByteOrder byteOrder) {
 
     // Instruction definitions are in natural order (big endian), i.e. with the most significant
     // byte first.
-    final int insnWidth = field.format().type().bitWidth();
+    final int insnWidth = format.type().bitWidth();
     final int alignedWidth = insnWidth % 8 != 0 ? insnWidth + (8 - insnWidth % 8) : insnWidth;
     final PBit[] bits = new PBit[alignedWidth];
 
@@ -125,7 +141,7 @@ public class PatternUtils {
     BigInteger fixedValue = value.integer();
 
     // Start with the least significant part
-    final List<BitSlice.Part> parts = field.bitSlice()
+    final List<BitSlice.Part> parts = slice
         .parts().toList().reversed();
 
     int offset = 0;
@@ -153,6 +169,34 @@ public class PatternUtils {
       }
     }
 
+    return new BitPattern(bits);
+  }
+
+  /**
+   * Combine the two bit-patterns (of the same size) to one. If the patterns have different fixed
+   * bits at the same position, this throws an exception.
+   *
+   * @param p1 The first pattern
+   * @param p2 The second pattern
+   * @return The combined pattern.
+   */
+  public static BitPattern combinePatterns(BitPattern p1, BitPattern p2) {
+    if (p1.width() != p2.width()) {
+      throw new IllegalArgumentException("Patterns of different widths cannot be combined");
+    }
+    final PBit[] bits = new PBit[p1.width()];
+    for (int i = 0; i < bits.length; i++) {
+      final PBit.Value v1 = p1.get(i).getValue();
+      final PBit.Value v2 = p2.get(i).getValue();
+      if (v1 != v2 && v1 != DONT_CARE && v2 != DONT_CARE) {
+        throw new IllegalArgumentException("Patterns have different fixed bits at position " + i);
+      }
+      if (v1 != DONT_CARE) {
+        bits[i] = new PBit(v1);
+      } else {
+        bits[i] = new PBit(v2);
+      }
+    }
     return new BitPattern(bits);
   }
 }
