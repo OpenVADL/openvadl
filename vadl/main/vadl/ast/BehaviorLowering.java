@@ -205,6 +205,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
 
+  private static Type getViamType(Type astType) {
+    return ViamLowering.getViamType(astType);
+  }
+
   /**
    * Produces a boolean expression that returns whether the given constraint values
    * are different from the given indices expressions.
@@ -302,7 +306,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return new Function(
         identifier,
         params.toArray(vadl.viam.Parameter[]::new),
-        resultType,
+        getViamType(resultType),
         graph
     );
   }
@@ -345,7 +349,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         viamLowering.generateIdentifier(
             identifier.name() + "::value",
             identifier.location()),
-        resultType);
+        getViamType(resultType));
     params.add(valueParam);
 
     // FIXME: Support pre-indexed registers, for example:
@@ -482,17 +486,17 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (computedTarget instanceof TypedFormatField typedFormatField) {
       return new FieldRefNode(
           (Format.Field) viamLowering.fetch(typedFormatField).orElseThrow(),
-          (DataType) Objects.requireNonNull(expr.type));
+          (DataType) getViamType(Objects.requireNonNull(expr.type)));
     }
     if (computedTarget instanceof RangeFormatField rangeFormatField) {
       return new FieldRefNode(
           (Format.Field) viamLowering.fetch(rangeFormatField).orElseThrow(),
-          (DataType) Objects.requireNonNull(expr.type));
+          (DataType) getViamType(Objects.requireNonNull(expr.type)));
     }
     if (computedTarget instanceof DerivedFormatField derivedFormatField) {
       return new FieldAccessRefNode(
           (Format.FieldAccess) viamLowering.fetch(derivedFormatField).orElseThrow(),
-          (DataType) Objects.requireNonNull(expr.type));
+          (DataType) getViamType(Objects.requireNonNull(expr.type)));
     }
 
     // Register
@@ -501,7 +505,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return new ReadRegTensorNode(
           register,
           new NodeList<>(),
-          (DataType) Objects.requireNonNull(expr.type),
+          (DataType) getViamType(Objects.requireNonNull(expr.type)),
           null);
     }
 
@@ -535,7 +539,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
         return new ReadRegTensorNode((RegisterTensor) counter.registerTensor(),
             new NodeList<>(),
-            (DataType) Objects.requireNonNull(expr.type),
+            (DataType) getViamType(Objects.requireNonNull(expr.type)),
             null);
       }
       throw new IllegalStateException("Unsupported counter kind: " + counterDefinition.kind);
@@ -546,7 +550,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var expression = fetch(letStatement.valueExpr);
       var index = letStatement.getIndexOf(innerName);
       if (letStatement.identifiers.size() > 1) {
-        expression = new TupleGetFieldNode(index, expression, letStatement.getTypeOf(innerName));
+        expression = new TupleGetFieldNode(index, expression,
+            getViamType(letStatement.getTypeOf(innerName)));
       }
       return new LetNode(new LetNode.Name(innerName, letStatement.location()), expression);
     }
@@ -554,7 +559,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var expression = fetch(letExpr.valueExpr);
       var index = letExpr.getIndexOf(innerName);
       if (letExpr.identifiers.size() > 1) {
-        expression = new TupleGetFieldNode(index, expression, letExpr.getTypeOf(innerName));
+        expression =
+            new TupleGetFieldNode(index, expression, getViamType(letExpr.getTypeOf(innerName)));
       }
       return new LetNode(new LetNode.Name(innerName, letExpr.location()), expression);
     }
@@ -568,7 +574,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Function call without arguments (and no parenthesis)
     if (computedTarget instanceof FunctionDefinition functionDefinition) {
       var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
-      return new FuncCallNode(function, new NodeList<>(), Objects.requireNonNull(expr.type));
+      return new FuncCallNode(function, new NodeList<>(),
+          getViamType(Objects.requireNonNull(expr.type)));
     }
 
     // Builtin Call
@@ -580,7 +587,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (matchingBuiltins.size() == 1) {
       var builtin = matchingBuiltins.get(0);
       return new BuiltInCall(builtin, new NodeList<ExpressionNode>(),
-          Objects.requireNonNull(expr.type));
+          getViamType(Objects.requireNonNull(expr.type)));
     }
 
     throw new RuntimeException(
@@ -599,7 +606,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var builtin = AstUtils.getBinOpBuiltIn(expr);
     var left = fetch(expr.left);
     var right = fetch(expr.right);
-    return new BuiltInCall(builtin, new NodeList<>(left, right), Objects.requireNonNull(expr.type));
+    return new BuiltInCall(builtin, new NodeList<>(left, right),
+        getViamType(Objects.requireNonNull(expr.type)));
   }
 
   @Override
@@ -624,7 +632,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var call = new BuiltInCall(concatBuiltin,
         new NodeList<>(expr.expressions.get(0).accept(this),
             expr.expressions.get(1).accept(this)),
-        type);
+        getViamType(type));
 
     for (int i = 2; i < expr.expressions.size(); i++) {
       type = expr.type().equals(Type.string()) ? expr.type() :
@@ -633,7 +641,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       call = new BuiltInCall(concatBuiltin,
           new NodeList<>(call,
               expr.expressions.get(i).accept(this)),
-          type);
+          getViamType(type));
     }
 
     return call;
@@ -647,8 +655,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(BinaryLiteral expr) {
-    return new ConstantNode(Constant.Value.fromInteger(expr.number,
-        (DataType) Objects.requireNonNull(expr.type)));
+    return new ConstantNode(
+        Constant.Value.fromInteger(
+            expr.number,
+            (DataType) getViamType(Objects.requireNonNull(expr.type))));
   }
 
   @Override
@@ -665,7 +675,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   @Override
   public ExpressionNode visit(TensorLiteral expr) {
     throw new IllegalStateException("Not yet implemented");
-    //return null;
   }
 
   @Override
@@ -703,7 +712,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return new BuiltInCall(
         Objects.requireNonNull(expr.computedTarget),
         new NodeList<>(value),
-        Objects.requireNonNull(expr.type));
+        getViamType(Objects.requireNonNull(expr.type)));
   }
 
   /**
@@ -724,7 +733,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         var bitSlice = subCall.computedBitSlice;
         var slice =
             new SliceNode(resultExpr, bitSlice,
-                (DataType) Objects.requireNonNull(subCall.formatFieldType));
+                (DataType) getViamType(Objects.requireNonNull(subCall.formatFieldType)));
         resultExpr = visitSliceIndexCall(slice, subCall.argsIndices);
       } else if (subCall.computedStatusIndex != null) {
         var indexing = new TupleGetFieldNode(subCall.computedStatusIndex, resultExpr, Type.bool());
@@ -786,7 +795,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     List<Expr> argExprs = AstUtils.flatArguments(expr.args());
     var args = argExprs.stream().map(this::fetch).toList();
-    var typeBeforeSlice = expr.typeBeforeSlice();
+    var typeBeforeSlice = getViamType(expr.typeBeforeSlice());
 
     ExpressionNode exprBeforeSlice;
 
@@ -866,8 +875,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // check the different rules and apply them accordingly
     var source = fetch(expr.value);
-    var sourceType = Objects.requireNonNull(expr.value.type);
-    var targetType = Objects.requireNonNull(expr.type);
+    var sourceType = getViamType(Objects.requireNonNull(expr.value.type));
+    var targetType = getViamType(Objects.requireNonNull(expr.type));
     if (sourceType.isTrivialCastTo(targetType)) {
       // match 1. rule: same bit representation
       // -> no casting needs to be applied
