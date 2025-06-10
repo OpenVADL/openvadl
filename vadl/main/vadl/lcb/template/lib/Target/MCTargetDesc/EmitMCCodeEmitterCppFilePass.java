@@ -84,7 +84,7 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
-  record Encoding(String encodingFunction, String params, int fieldSize, int offset)
+  record Encoding(String encodingFunction, String params, String checks, int fieldSize, int offset)
       implements Renderable {
 
     @Override
@@ -92,6 +92,7 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
       return Map.of(
           "encodingFunction", encodingFunction,
           "params", params,
+          "checks", checks,
           "fieldSize", fieldSize,
           "offset", offset
       );
@@ -164,6 +165,14 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
 
     var offset = 0;
     for (var encoding : wrapperFunction.encodingFunctions()) {
+
+      /*
+        const MCOperand &MO = MI.getOperand(OpNo);
+
+        if (MO.isImm()) <-- checks
+          return RV3264Base_Jtype_immS_encoding(MO.getImm()); <-- params
+       */
+
       // It's much easier to join the parameters to string here than in the template.
       var params =
           encoding.header().parameters().length == 1
@@ -172,8 +181,15 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
               .map(Definition::simpleName)
               .collect(Collectors.joining(".getImm(), "));
 
+      var checks =
+          encoding.header().parameters().length == 1
+              ? encoding.header().parameters()[0].simpleName() + ".isImm()"
+              : Arrays.stream(encoding.header().parameters())
+              .map(Definition::simpleName)
+              .collect(Collectors.joining(".isImm() && "));
+
       encodings.add(
-          new Encoding(encoding.header().identifier.lower(), params, encoding.field().size(),
+          new Encoding(encoding.header().identifier.lower(), params, checks, encoding.field().size(),
               offset));
       offset += encoding.field().size();
     }

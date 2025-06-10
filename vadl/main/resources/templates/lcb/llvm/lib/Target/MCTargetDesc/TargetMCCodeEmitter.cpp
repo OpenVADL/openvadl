@@ -109,25 +109,28 @@ void [(${namespace})]MCCodeEmitter::emitFixups
 unsigned [(${namespace})]MCCodeEmitter::[(${imm.encodeWrapper})](const MCInst &MI, unsigned OpNo, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
 {
     auto result = 0;
+    auto changed = false;
     [# th:each="fieldAccess : ${imm.operands}" ]
     const MCOperand &[(${fieldAccess.fieldAccessName})] = MI.getOperand([(${fieldAccess.opIndex})]);
     [/]
 
     [# th:each="enc : ${imm.encodings}" ]
-    result |= (project_range<0, [(${enc.fieldSize})]>(std::bitset<64>([(${enc.encodingFunction})]([(${enc.params})])))).to_ulong() << [(${enc.offset})];
+    if([(${enc.checks})]) {
+      result |= (project_range<0, [(${enc.fieldSize})]>(std::bitset<64>([(${enc.encodingFunction})]([(${enc.params})])))).to_ulong() << [(${enc.offset})];
+      changed = true;
+    }
     [/]
 
-    return result;
+    if(changed)
+      return result;
 
-    /*
+    const MCOperand &MO = MI.getOperand(OpNo);
     int64_t imm;
     if (AsmUtils::evaluateConstantImm(&MO, imm))
         return [(${imm.encode})](imm);
 
-    assert(MO.isExpr() && "[(${imm.encodeWrapper})] expects only expressions or immediates");
-    */
-
-    //emitFixups(MI, OpNo, MO.getExpr(), Fixups);
+    assert(MO.isExpr() && "expects only expressions or immediates");
+    emitFixups(MI, OpNo, MO.getExpr(), Fixups);
 }
 [/]
 
