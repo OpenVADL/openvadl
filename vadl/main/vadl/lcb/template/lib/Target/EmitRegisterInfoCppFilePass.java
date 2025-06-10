@@ -35,6 +35,7 @@ import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionFrameRegisterOperand;
@@ -215,7 +216,8 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
         long maxValue = isSigned ? (long) Math.pow(2, fieldBitWidth - 1) - 1 :
             (long) Math.pow(2, fieldBitWidth);
         var entry = new FrameIndexElimination(label, instruction, immediate,
-            immediate.fieldAccess().predicate().identifier.lower(),
+            TableGenImmediateRecord.createPredicateMethod(instruction, immediate.fieldAccess())
+                .lower(),
             instruction.behavior().getNodes(ReadRegTensorNode.class)
                 .filter(x -> x.regTensor().isRegisterFile())
                 .findFirst().get()

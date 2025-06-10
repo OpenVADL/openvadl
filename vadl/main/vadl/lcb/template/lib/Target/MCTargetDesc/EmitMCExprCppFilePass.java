@@ -109,7 +109,7 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
     return immediates.decodings().keySet().stream()
         .map(immediateRecord -> {
           var fieldAccess = immediateRecord.fieldAccessRef();
-          var decodeFunction = immediateRecord.decoderMethod().lower();
+          var decodeFunction = immediateRecord.rawDecoderMethod().lower();
           var variantKind = decodeVariantKinds.get(fieldAccess);
           ensure(variantKind != null, "No variant kind found for field access: %s",
               fieldAccess);

@@ -114,7 +114,7 @@ unsigned [(${namespace})]MCCodeEmitter::[(${imm.encodeWrapper})](const MCInst &M
     [/]
 
     [# th:each="enc : ${imm.encodings}" ]
-    result |= (project_range<0, [(${enc.fieldSize})]>(std::bitset<64>([(${enc.encodingFunction})]([(${enc.params})])))) << [(${enc.offset})];
+    result |= (project_range<0, [(${enc.fieldSize})]>(std::bitset<64>([(${enc.encodingFunction})]([(${enc.params})])))).to_ulong() << [(${enc.offset})];
     [/]
 
     return result;
