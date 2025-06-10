@@ -124,6 +124,11 @@ instruction set architecture AArch64Base = {
     , XSize = SizeX                   // 64 is size for XSize operations
     }
 
+  enumeration ShiftSize =             // shift size values for operation size, do not rename elements
+    { WSize = 5                       // 5 is size for WSize shift immediate values
+    , XSize = 6                       // 6 is size for XSize shift immediate values
+    }
+
   enumeration FF: Bits1 =             // flag field values, do not change order
     { OffFlags                        // flag setting is off
     , SetFlags                        // operation sets flags
@@ -326,7 +331,7 @@ instruction set architecture AArch64Base = {
     }
 
   model ExtInstrStr (i: InstrWithFunct, ext: Str): InstrWithFunct = {
-    (AsId ($i.id,  $ext); $i.mnemo; $i.opcode; $i.funct)
+    (AsId ($i.id, $ext); $i.mnemo; $i.opcode; $i.funct)
     }
 
   model AddSubImmInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
@@ -1290,6 +1295,39 @@ instruction set architecture AArch64Base = {
     $MemoryRegPairInstr ($i; XSize; false; MEM<8> (addr) := X(rt)              MEM<8> (addr + 8) := X(rt2))
     }
 
+
+// pseudo instruction models ***************************************************
+
+  model PseudoMulInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    pseudo instruction $i.id (rd: Index, rn: Index, rm: Index) = {
+      $i.funct {rd = rd, rn = rn, rm = rm, ra = $i.opcode}
+      }
+    assembly $i.id = ($i.mnemo, " ", $size(rd), ", ", $size(rn), ", ", $size(rm))
+    }
+
+  model Pseudo3OpInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    pseudo instruction $i.id (rd: Index, rn: Index, rm: Index) = {
+      $i.funct {rd = rd, rn = rn, rm = rm}
+      }
+    assembly $i.id = ($i.mnemo, " ", $size(rd), ", ", $size(rn), ", ", $size(rm))
+    }
+
+  model PseudoShiftRightInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    pseudo instruction $i.id (rd: Index, rn: Index, shift: Bits6) = {
+      $i.funct {rd = rd, rn = rn, immr = shift as Bits<ShiftSize::$size> as Bits6, imms = Size::$size - 1}
+      }
+    assembly $i.id = ($i.mnemo, " ", $size(rd), ", ", $size(rn), ", #", decimal(shift))
+    }
+
+  model PseudoShiftLeftInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    pseudo instruction $i.id (rd: Index, rn: Index, shift: Bits6) = {
+      $i.funct{rd = rd, rn = rn, immr = - shift as Bits<ShiftSize::$size> as Bits6,
+                 imms = Size::$size - 1 - shift as Bits<ShiftSize::$size> as Bits6}
+      }
+    assembly $i.id = ($i.mnemo, " ", $size(rd), ", ", $size(rn), ", #", decimal(shift))
+    }
+
+
 // instruction enriching models ************************************************
 
   model InstrWX (modelid: InstrWithFunctSize, i: InstrWithFunct): IsaDefs = {
@@ -1307,6 +1345,15 @@ instruction set architecture AArch64Base = {
   model InstrWXRegShift (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct): IsaDefs = {
     $LogicRegShiftInstr ($modelid; $ExtInstrStr ($i; "W"); WSize)
     $LogicRegShiftInstr ($modelid; $ExtInstrStr ($i; "X"); XSize)
+    }
+
+  model ExtPseudoStr (i: InstrWithFunct, ext: Str): InstrWithFunct = {
+    (AsId ($i.id, $ext); $i.mnemo; $i.opcode; AsId ($i.funct, $ext))
+    }
+
+  model PseudoWX (modelid: InstrWithFunctSize, i: InstrWithFunct): IsaDefs = {
+    $modelid ($ExtPseudoStr ($i;  "W"); WSize)
+    $modelid ($ExtPseudoStr ($i;  "X"); XSize)
     }
 
 
@@ -1412,6 +1459,14 @@ instruction set architecture AArch64Base = {
   $LoadPairInstrX      (                        (LDPX   ; "ldp"   ; 0b1001                ; BitsX      ))
   $StorePairInstrW     (                        (STPW   ; "stp"   ; 0b0000                ; BitsX      ))
   $StorePairInstrX     (                        (STPX   ; "stp"   ; 0b1000                ; BitsX      ))
+
+  $PseudoWX            (PseudoMulInstr        ; (MUL    ; "mul"   ; 0b1'1111              ; MADD       ))
+  $PseudoWX            (Pseudo3OpInstr        ; (ASRV   ; "asr"   ; 0                     ; ASR        ))
+  $PseudoWX            (Pseudo3OpInstr        ; (LSRV   ; "lsr"   ; 0                     ; LSR        ))
+  $PseudoWX            (Pseudo3OpInstr        ; (LSLV   ; "lsl"   ; 0                     ; LSL        ))
+  $PseudoWX            (PseudoShiftRightInstr ; (ASRI   ; "asr"   ; 0b11'1111             ; SBFM       ))
+  $PseudoWX            (PseudoShiftRightInstr ; (LSRI   ; "lsr"   ; 0b11'1111             ; UBFM       ))
+  $PseudoWX            (PseudoShiftLeftInstr  ; (LSLI   ; "lsl"   ; 0b11'1111             ; UBFM       ))
 
 //}
 //
