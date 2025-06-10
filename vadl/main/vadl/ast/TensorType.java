@@ -19,14 +19,16 @@ package vadl.ast;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import vadl.types.BitsType;
+import vadl.types.DataType;
 import vadl.types.Type;
 
 /**
  * A type for multidimensional bit vectors. For example {@code Bits<4><8>} in which case
  * innerType would be {@code Bits<8>} and dimensions {@code List.of(4)}.
  */
-public class TensorType extends Type {
+public class TensorType extends DataType {
 
   private final List<Integer> dimensions;
   private final BitsType innerType;
@@ -109,5 +111,22 @@ public class TensorType extends Type {
     int result = dimensions.hashCode();
     result = 31 * result + innerType.hashCode();
     return result;
+  }
+
+  @Override
+  public int bitWidth() {
+    return flattenBitsType().bitWidth();
+  }
+
+  @Override
+  public int useableBitWidth() {
+    // Note: Does this even make sense?
+    return toBitsType().useableBitWidth();
+  }
+
+  @Nullable
+  @Override
+  public DataType fittingCppType() {
+    throw new UnsupportedOperationException();
   }
 }
