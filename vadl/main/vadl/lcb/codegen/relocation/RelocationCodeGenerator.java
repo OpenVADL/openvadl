@@ -49,7 +49,9 @@ import vadl.viam.graph.dependency.SliceNode;
     include = {"vadl.viam", "vadl.cppCodeGen.model.nodes"}
 )
 public class RelocationCodeGenerator
-    implements CDefaultMixins.AllExpressions, CDefaultMixins.Utils, CInvalidMixins.ReadStageOutput {
+    implements CDefaultMixins.AllExpressions, CDefaultMixins.Utils, CInvalidMixins.ReadStageOutput,
+    CInvalidMixins.ReadSignal {
+
   protected final Function function;
   protected final CNodeContext context;
   protected final StringBuilder builder;

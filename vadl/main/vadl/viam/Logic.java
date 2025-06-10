@@ -17,18 +17,30 @@
 package vadl.viam;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import vadl.viam.graph.Graph;
 
 /**
  * Logic definition in MiA description.
  */
-public abstract class Logic extends Definition {
+public abstract class Logic extends Definition implements DefProp.WithBehavior {
 
   @LazyInit
   @SuppressWarnings("unused")
   private MicroArchitecture mia;
 
+  private final List<Signal> signals;
+  private final List<RegisterTensor> registers;
+
+  private Graph behavior;
+
   public Logic(Identifier identifier) {
     super(identifier);
+    this.signals = new ArrayList<>();
+    this.registers = new ArrayList<>();
+    this.behavior = new Graph(identifier.simpleName());
   }
 
   public void setMia(MicroArchitecture mia) {
@@ -43,6 +55,42 @@ public abstract class Logic extends Definition {
   @Override
   public String toString() {
     return identifier.simpleName() + ": " + getClass().getSimpleName();
+  }
+
+  public List<Signal> signals() {
+    return signals;
+  }
+
+  public void addSignal(Signal signal) {
+    signals.add(signal);
+  }
+
+  public List<RegisterTensor> registers() {
+    return registers;
+  }
+
+  public void addRegister(RegisterTensor register) {
+    registers.add(register);
+  }
+
+  public Graph behavior() {
+    return behavior;
+  }
+
+  @Override
+  public List<Graph> behaviors() {
+    return Collections.singletonList(behavior);
+  }
+
+  /**
+   * Logic definition for control logic (created by MiA synthesis).
+   */
+  public static class Control extends Logic {
+
+    public Control(Identifier identifier) {
+      super(identifier);
+    }
+
   }
 
   /**

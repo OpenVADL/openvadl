@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import vadl.rtl.utils.GraphMergeUtils;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
@@ -286,6 +287,20 @@ public class InstructionProgressGraph extends Graph {
      */
     public Optional<String> shortestNameHint() {
       return nameHints.stream()
+          .min(Comparator.comparing(String::length));
+    }
+
+    /**
+     * Get the shortest name hint in terms of string length.
+     *
+     * @param existing existing names to not consider
+     * @return shortest name hint
+     */
+    public Optional<String> shortestNameHint(Set<String> existing, int maxLength) {
+      return nameHints.stream()
+          .filter(name -> !existing.contains(name))
+          .map(name -> StringUtils.truncate(name, maxLength))
+          .map(name -> StringUtils.stripEnd(name, "_"))
           .min(Comparator.comparing(String::length));
     }
 

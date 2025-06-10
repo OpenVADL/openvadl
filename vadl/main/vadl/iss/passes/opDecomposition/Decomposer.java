@@ -39,6 +39,7 @@ import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
@@ -301,6 +302,11 @@ class Decomposer
   @Handler
   void handle(Request rq, SelectNode toHandle) {
     throw new UnsupportedOperationException("Type SelectNode not yet implemented");
+  }
+
+  @Handler
+  void handle(Request rq, ReadSignalNode toHandle) {
+    throw new UnsupportedOperationException("Type ReadSignalNode not yet implemented");
   }
 
 }

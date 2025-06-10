@@ -43,6 +43,8 @@ public class Stage extends Definition implements DefProp.WithBehavior {
 
   private final List<StageOutput> outputs;
 
+  private final List<RegisterTensor> registers;
+
   private @Nullable Stage prev;
 
   private @Nullable List<Stage> next;
@@ -58,6 +60,7 @@ public class Stage extends Definition implements DefProp.WithBehavior {
     super(identifier);
     this.behavior = behavior;
     this.outputs = new ArrayList<>(outputs);
+    this.registers = new ArrayList<>();
 
     this.behavior.setParentDefinition(this);
   }
@@ -121,6 +124,18 @@ public class Stage extends Definition implements DefProp.WithBehavior {
 
   public void removeOutput(StageOutput output) {
     outputs.remove(output);
+  }
+
+  public List<RegisterTensor> registers() {
+    return registers;
+  }
+
+  public void addRegister(RegisterTensor register) {
+    registers.add(register);
+  }
+
+  public void removeRegister(RegisterTensor register) {
+    registers.remove(register);
   }
 
   @Override

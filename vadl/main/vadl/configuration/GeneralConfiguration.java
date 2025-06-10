@@ -34,6 +34,7 @@ public class GeneralConfiguration {
 
   public GeneralConfiguration(GeneralConfiguration generalConfig) {
     this(generalConfig.outputPath, generalConfig.doDump);
+    this.dryRun = generalConfig.dryRun;
   }
 
   public Path outputPath() {

@@ -22,6 +22,7 @@ import java.io.IOException;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.RtlConfiguration;
 import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
 
@@ -42,7 +43,8 @@ public class RtlCommand extends BaseCommand {
 
   @Override
   PassOrder passOrder(GeneralConfiguration configuration) throws IOException {
-    configuration.setDryRun(dryRun);
-    return PassOrders.rtl(configuration);
+    var rtlConfig = new RtlConfiguration(configuration);
+    rtlConfig.setDryRun(dryRun);
+    return PassOrders.rtl(rtlConfig);
   }
 }

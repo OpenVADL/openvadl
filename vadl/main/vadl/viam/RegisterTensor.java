@@ -80,6 +80,21 @@ public class RegisterTensor extends Resource {
   private final List<Constraint> constraints;
 
   /**
+   * Create new register tensor without addressing (i.e., for a data type of give bit-width).
+   *
+   * @param identifier identifier
+   * @param bitWidth bit-width of the register
+   * @return register tensor with one dimension and result type of bit-width
+   */
+  public static RegisterTensor of(Identifier identifier, int bitWidth) {
+    var addr = BitsType.minimalRequiredWidthFor(bitWidth - 1);
+    return new RegisterTensor(
+        identifier,
+        List.of(new Dimension(0, Type.bits(addr), bitWidth))
+    );
+  }
+
+  /**
    * Constructs the register tensor.
    */
   public RegisterTensor(Identifier identifier,

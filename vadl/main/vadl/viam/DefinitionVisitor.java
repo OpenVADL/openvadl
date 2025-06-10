@@ -318,6 +318,8 @@ public interface DefinitionVisitor {
     @Override
     public void visit(Logic logic) {
       beforeTraversal(logic);
+      logic.signals().forEach(signal -> signal.accept(this));
+      logic.registers().forEach(register -> register.accept(this));
       afterTraversal(logic);
     }
 
@@ -331,6 +333,7 @@ public interface DefinitionVisitor {
     public void visit(Stage stage) {
       beforeTraversal(stage);
       stage.outputs().forEach(output -> output.accept(this));
+      stage.registers().forEach(register -> register.accept(this));
       afterTraversal(stage);
     }
 
