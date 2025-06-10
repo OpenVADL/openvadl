@@ -59,6 +59,8 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FoldNode;
+import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LabelNode;
@@ -70,6 +72,7 @@ import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
@@ -776,6 +779,21 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   private ViamError graphError(Node node, String fmt, Object... args) {
     return new ViamGraphError(fmt, args)
         .addContext(node);
+  }
+
+  @Handler
+  void handle(FoldNode toHandle) {
+    throw new UnsupportedOperationException("Type FoldNode not yet implemented");
+  }
+
+  @Handler
+  void handle(ForIdxNode toHandle) {
+    throw new UnsupportedOperationException("Type ForIdxNode not yet implemented");
+  }
+
+  @Handler
+  void handle(TensorNode toHandle) {
+    throw new UnsupportedOperationException("Type TensorNode not yet implemented");
   }
 
 }

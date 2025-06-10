@@ -16,6 +16,7 @@
 
 package vadl.iss.codegen;
 
+import static vadl.error.DiagUtils.throwNotAllowed;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import vadl.configuration.IssConfiguration;
@@ -34,6 +35,8 @@ import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FoldNode;
+import vadl.viam.graph.dependency.TensorNode;
 
 /**
  * The code generator for the {@code target/gen-arch/translate.c}.
@@ -138,6 +141,16 @@ public class IssTranslateCodeGenerator implements
   @Handler
   void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle) {
     throw new UnsupportedOperationException("Type AsmBuiltInCall not allowed");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, FoldNode toHandle) {
+    throwNotAllowed(toHandle, "forall fold expressions");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, TensorNode toHandle) {
+    throwNotAllowed(toHandle, "forall tensor expressions");
   }
 
 }

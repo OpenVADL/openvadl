@@ -33,6 +33,8 @@ import vadl.viam.Parameter;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.BeginNode;
 import vadl.viam.graph.control.BranchEndNode;
+import vadl.viam.graph.control.ForallEndNode;
+import vadl.viam.graph.control.ForallNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.MergeNode;
@@ -43,6 +45,7 @@ import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LabelNode;
@@ -148,7 +151,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface AllControl
       extends Scheduled, InstrExit, IfElse, Begin, Start, Merge, BranchEnd, Return, InstrEnd,
-      ProcEnd, NewLabel {
+      ProcEnd, NewLabel, Forall {
 
   }
 
@@ -255,6 +258,28 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
+  interface Forall {
+    @Handler
+    @SuppressWarnings("MissingJavadocMethod")
+    default void handle(CGenContext<Node> ctx, ForallNode node) {
+      var from = node.idx().fromIdx();
+      var to = node.idx().toIdx();
+      var cmp = from < to ? "<=" : ">=";
+      var cnt = from < to ? "++" : "--";
+      var i = "i" + node.idx().id().numericId();
+      ctx.wr("for (int" + i + " = " + from + "; i " + cmp + " " + to + "; " + cnt)
+          .spacedIn()
+          .ln(") {")
+          .gen(node.next());
+    }
+
+    @Handler
+    default void handle(CGenContext<Node> ctx, ForallEndNode node) {
+      ctx.spaceOut().ln("}").gen(node.next());
+    }
+  }
+
   ///  DEPENDENCY HANDLERS ///
 
   @SuppressWarnings("MissingJavadocType")
@@ -265,7 +290,7 @@ public interface CDefaultMixins {
 
   @SuppressWarnings("MissingJavadocType")
   interface AllExpressions
-      extends TypeCasts, Constant, FuncCall, BuiltIns, Slice, LetNode, Select, FuncParam,
+      extends TypeCasts, Constant, FuncCall, BuiltIns, Slice, LetNode, Select, FuncParam, ForallIdx,
       TupleAccess, Label {
 
   }
@@ -404,6 +429,14 @@ public interface CDefaultMixins {
     @Handler
     default void handle(CGenContext<Node> ctx, FuncParamNode toHandle) {
       ctx.wr(toHandle.parameter().simpleName());
+    }
+  }
+
+  @SuppressWarnings("checkstyle:MissingJavadocType")
+  interface ForallIdx {
+    @Handler
+    default void handle(CGenContext<Node> ctx, ForIdxNode toHandle) {
+      ctx.wr("i" + toHandle.id().numericId());
     }
   }
 

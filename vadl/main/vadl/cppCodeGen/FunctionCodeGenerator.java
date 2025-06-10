@@ -16,6 +16,7 @@
 
 package vadl.cppCodeGen;
 
+import static vadl.error.DiagUtils.throwNotAllowed;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import vadl.cppCodeGen.context.CGenContext;
@@ -31,9 +32,11 @@ import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.TensorNode;
 
 /**
  * Abstract base class responsible for generating C code from a given function's expression nodes.
@@ -80,6 +83,16 @@ public abstract class FunctionCodeGenerator extends AbstractFunctionCodeGenerato
 
   @Handler
   protected abstract void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle);
+
+  @Handler
+  void handle(CGenContext<Node> ctx, FoldNode toHandle) {
+    throwNotAllowed(toHandle, "forall fold expressions");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, TensorNode toHandle) {
+    throwNotAllowed(toHandle, "forall tensor expressions");
+  }
 
   public String genReturnExpression() {
     var returnNode = getSingleNode(function.behavior(), ReturnNode.class);
