@@ -27,6 +27,7 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.viam.Encoding;
 import vadl.viam.Instruction;
 
 /**
@@ -60,7 +61,7 @@ public class TableGenMachineInstruction extends TableGenInstruction {
     this.size = instruction.encoding().format().type().bitWidth() / 8;
     this.codeSize = instruction.encoding().format().type().bitWidth() / 8;
     this.bitBlocks = BitBlock.from(instruction.encoding());
-    this.fieldEncodings = FieldEncoding.from(instruction.encoding());
+    this.fieldEncodings = FieldEncoding.from(instruction.encoding(), inOperands);
     this.instruction = instruction;
     this.llvmLoweringRecord = llvmLoweringRecord;
   }
@@ -166,26 +167,32 @@ public class TableGenMachineInstruction extends TableGenInstruction {
     /**
      * Convert an encoding to a TableGen model.
      */
-    public static List<FieldEncoding> from(vadl.viam.Encoding encoding) {
+    public static List<FieldEncoding> from(Encoding encoding,
+                                           List<TableGenInstructionOperand> inOperands) {
       ArrayList<FieldEncoding> encodings = new ArrayList<>();
+      var immediateOffset = 0;
       for (var field : encoding.format().fields()) {
         var sourceOffset = 0;
         var parts = new ArrayList<>(field.bitSlice().parts().toList());
         Collections.reverse(parts);
         boolean isImmediate =
-            Arrays.stream(encoding.nonEncodedFormatFields()).anyMatch(y -> y == field);
-        var immediateOffset = 0;
+            inOperands.stream()
+                .filter(x -> x instanceof ReferencesImmediateOperand)
+                .flatMap(x ->
+                    ((ReferencesImmediateOperand) x).immediateOperand().fieldAccessRef().fieldRefs()
+                        .stream())
+                .anyMatch(y -> y == field);
         for (var part : parts) {
           encodings.add(
               new FieldEncoding(part.msb(), part.lsb(), field.simpleName(),
                   sourceOffset + part.size() - 1,
                   sourceOffset,
-                  immediateOffset));
+                  isImmediate ? immediateOffset : 0)); // only field access functions have offset
           sourceOffset += part.size();
+        }
 
-          if (isImmediate) {
-            immediateOffset += part.size();
-          }
+        if (isImmediate) {
+          immediateOffset += field.size();
         }
       }
       return encodings;
