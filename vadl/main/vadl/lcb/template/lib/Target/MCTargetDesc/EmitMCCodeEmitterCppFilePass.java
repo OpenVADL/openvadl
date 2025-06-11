@@ -189,7 +189,8 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
               .collect(Collectors.joining(".isImm() && "));
 
       encodings.add(
-          new Encoding(encoding.header().identifier.lower(), params, checks, encoding.field().size(),
+          new Encoding(encoding.header().identifier.lower(), params, checks,
+              encoding.field().size(),
               offset));
       offset += encoding.field().size();
     }

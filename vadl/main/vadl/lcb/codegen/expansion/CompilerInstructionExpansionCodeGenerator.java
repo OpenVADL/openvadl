@@ -320,8 +320,8 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
       var pseudoInstructionIndex =
           getOperandIndexFromCompilerInstruction(field, toHandle, parameterName);
       var relocationRef =
-          ensurePresent(relocations.stream().filter(x -> x.relocation() == relocation).findFirst()
-              , () -> Diagnostic.error("Cannot find relocation", relocation.location()));
+          ensurePresent(relocations.stream().filter(x -> x.relocation() == relocation).findFirst(),
+              () -> Diagnostic.error("Cannot find relocation", relocation.location()));
 
       ctx.ln("if(instruction.getOperand(%d).isImm()) {", pseudoInstructionIndex)
           .spacedIn();
@@ -353,7 +353,8 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
                 toHandle.location())).value();
 
         ctx.ln(
-            "MCOperand %s = MCOperand::createExpr(%sMCExpr::create(MCConstantExpr::create(%s, Ctx), "
+            "MCOperand %s = MCOperand::createExpr("
+                + "%sMCExpr::create(MCConstantExpr::create(%s, Ctx), "
                 + "%sMCExpr::VariantKind::%s, " + "Ctx));", argumentImmSymbol,
             targetName.value(),
             appliedSymbol, targetName.value(),
