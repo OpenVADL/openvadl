@@ -48,67 +48,67 @@ public class CheckMachineInstructionTableGenOperandsRiscv64PassTest extends Abst
     @Override
     public boolean equals(Object obj) {
       return obj instanceof Entry entry && instruction.equals(entry.instruction)
-          && entry.operands.equals(((Entry) obj).operands);
+          && this.operands.equals(((Entry) obj).operands);
     }
   }
 
   static {
     inputOperands.add(new Entry("ADD", List.of("X:$rs1", "X:$rs2")));
-    inputOperands.add(new Entry("ADDI", List.of("X:$rs1", "RV3264Base_Itype_immAsInt64:$imm")));
+    inputOperands.add(new Entry("ADDI", List.of("X:$rs1", "RV3264Base_ADDI_immSAsInt64:$imm")));
     inputOperands.add(new Entry("AND", List.of("X:$rs1", "X:$rs2")));
-    inputOperands.add(new Entry("ANDI", List.of("X:$rs1", "RV3264Base_Itype_immAsInt64:$imm")));
+    inputOperands.add(new Entry("ANDI", List.of("X:$rs1", "RV3264Base_ANDI_immSAsInt64:$imm")));
     inputOperands.add(
-        new Entry("BEQ", List.of("X:$rs1", "X:$rs2", "RV3264Base_Btype_immAsLabel:$imm")));
+        new Entry("BEQ", List.of("X:$rs1", "X:$rs2", "RV3264Base_BEQ_immSAsLabel:$imm")));
     inputOperands.add(
-        new Entry("BGE", List.of("X:$rs1", "X:$rs2", "RV3264Base_Btype_immAsLabel:$imm")));
+        new Entry("BGE", List.of("X:$rs1", "X:$rs2", "RV3264Base_BGE_immSAsLabel:$imm")));
     inputOperands.add(
-        new Entry("BGEU", List.of("X:$rs1", "X:$rs2", "RV3264Base_Btype_immAsLabel:$imm")));
+        new Entry("BGEU", List.of("X:$rs1", "X:$rs2", "RV3264Base_BGEU_immSAsLabel:$imm")));
     inputOperands.add(
-        new Entry("BLT", List.of("X:$rs1", "X:$rs2", "RV3264Base_Btype_immAsLabel:$imm")));
+        new Entry("BLT", List.of("X:$rs1", "X:$rs2", "RV3264Base_BLT_immSAsLabel:$imm")));
     inputOperands.add(
-        new Entry("BLTU", List.of("X:$rs1", "X:$rs2", "RV3264Base_Btype_immAsLabel:$imm")));
+        new Entry("BLTU", List.of("X:$rs1", "X:$rs2", "RV3264Base_BLTU_immSAsLabel:$imm")));
     inputOperands.add(
-        new Entry("BNE", List.of("X:$rs1", "X:$rs2", "RV3264Base_Btype_immAsLabel:$imm")));
+        new Entry("BNE", List.of("X:$rs1", "X:$rs2", "RV3264Base_BNE_immSAsLabel:$imm")));
     inputOperands.add(new Entry("DIV", List.of("X:$rs1", "X:$rs2")));
     inputOperands.add(new Entry("DIVU", List.of("X:$rs1", "X:$rs2")));
-    inputOperands.add(new Entry("JAL", List.of("RV3264Base_Jtype_immAsInt64:$imm")));
-    inputOperands.add(new Entry("JALR", List.of("X:$rs1", "RV3264Base_Itype_immAsInt64:$imm")));
-    inputOperands.add(new Entry("LB", List.of("X:$rs1", "RV3264Base_Itype_immAsInt64:$imm")));
-    inputOperands.add(new Entry("LBU", List.of("X:$rs1", "RV3264Base_Itype_immAsInt64:$imm")));
-    inputOperands.add(new Entry("LH", List.of("X:$rs1", "RV3264Base_Itype_immAsInt64:$imm")));
-    inputOperands.add(new Entry("LHU", List.of("X:$rs1", "RV3264Base_Itype_immAsInt64:$imm")));
-    inputOperands.add(new Entry("LW", List.of("X:$rs1", "RV3264Base_Itype_immAsInt64:$imm")));
-    inputOperands.add(new Entry("LWU", List.of("X:$rs1", "RV3264Base_Itype_immAsInt64:$imm")));
-    inputOperands.add(new Entry("LUI", List.of("RV3264Base_Utype_immAsInt64:$imm")));
+    inputOperands.add(new Entry("JAL", List.of("RV3264Base_JAL_immSAsInt64:$imm")));
+    inputOperands.add(new Entry("JALR", List.of("X:$rs1", "RV3264Base_JALR_immSAsInt64:$imm")));
+    inputOperands.add(new Entry("LB", List.of("X:$rs1", "RV3264Base_LB_immSAsInt64:$imm")));
+    inputOperands.add(new Entry("LBU", List.of("X:$rs1", "RV3264Base_LBU_immSAsInt64:$imm")));
+    inputOperands.add(new Entry("LH", List.of("X:$rs1", "RV3264Base_LH_immSAsInt64:$imm")));
+    inputOperands.add(new Entry("LHU", List.of("X:$rs1", "RV3264Base_LHU_immSAsInt64:$imm")));
+    inputOperands.add(new Entry("LW", List.of("X:$rs1", "RV3264Base_LW_immSAsInt64:$imm")));
+    inputOperands.add(new Entry("LWU", List.of("X:$rs1", "RV3264Base_LWU_immSAsInt64:$imm")));
+    inputOperands.add(new Entry("LUI", List.of("RV3264Base_LUI_immUpAsInt64:$imm")));
     inputOperands.add(new Entry("MUL", List.of("X:$rs1", "X:$rs2")));
     inputOperands.add(new Entry("MULH", List.of("X:$rs1", "X:$rs2")));
     inputOperands.add(new Entry("MULHSU", List.of("X:$rs1", "X:$rs2")));
     inputOperands.add(new Entry("MULHU", List.of("X:$rs1", "X:$rs2")));
     inputOperands.add(new Entry("OR", List.of("X:$rs1", "X:$rs2")));
-    inputOperands.add(new Entry("ORI", List.of("X:$rs1", "RV3264Base_Itype_immAsInt64:$imm")));
+    inputOperands.add(new Entry("ORI", List.of("X:$rs1", "RV3264Base_ORI_immSAsInt64:$imm")));
     inputOperands.add(new Entry("REM", List.of("X:$rs1", "X:$rs2")));
     inputOperands.add(new Entry("REMU", List.of("X:$rs1", "X:$rs2")));
     inputOperands.add(
-        new Entry("SW", List.of("X:$rs1", "X:$rs2", "RV3264Base_Stype_immAsInt64:$imm")));
+        new Entry("SW", List.of("X:$rs1", "X:$rs2", "RV3264Base_SW_immSAsInt64:$imm")));
     inputOperands.add(
-        new Entry("SB", List.of("X:$rs1", "X:$rs2", "RV3264Base_Stype_immAsInt64:$imm")));
+        new Entry("SB", List.of("X:$rs1", "X:$rs2", "RV3264Base_SB_immSAsInt64:$imm")));
     inputOperands.add(
-        new Entry("SD", List.of("X:$rs1", "X:$rs2", "RV3264Base_Stype_immAsInt64:$imm")));
+        new Entry("SD", List.of("X:$rs1", "X:$rs2", "RV3264Base_SD_immSAsInt64:$imm")));
     inputOperands.add(
-        new Entry("SH", List.of("X:$rs1", "X:$rs2", "RV3264Base_Stype_immAsInt64:$imm")));
+        new Entry("SH", List.of("X:$rs1", "X:$rs2", "RV3264Base_SH_immSAsInt64:$imm")));
     inputOperands.add(new Entry("SLL", List.of("X:$rs1", "X:$rs2")));
-    inputOperands.add(new Entry("SLLI", List.of("X:$rs1", "RV3264Base_Ftype_sftAsInt64:$sft")));
+    inputOperands.add(new Entry("SLLI", List.of("X:$rs1", "RV3264Base_SLLI_shamtAsInt64:$sft")));
     inputOperands.add(new Entry("SLT", List.of("X:$rs1", "X:$rs2")));
-    inputOperands.add(new Entry("SLTI", List.of("X:$rs1", "RV3264Base_Itype_immAsInt64:$imm")));
-    inputOperands.add(new Entry("SLTIU", List.of("X:$rs1", "RV3264Base_Itype_immAsInt64:$imm")));
+    inputOperands.add(new Entry("SLTI", List.of("X:$rs1", "RV3264Base_SLTI_immSAsInt64:$imm")));
+    inputOperands.add(new Entry("SLTIU", List.of("X:$rs1", "RV3264Base_SLTIU_immSAsInt64:$imm")));
     inputOperands.add(new Entry("SLTU", List.of("X:$rs1", "X:$rs2")));
     inputOperands.add(new Entry("SRA", List.of("X:$rs1", "X:$rs2")));
-    inputOperands.add(new Entry("SRAI", List.of("X:$rs1", "RV3264Base_Ftype_sftAsInt64:$sft")));
+    inputOperands.add(new Entry("SRAI", List.of("X:$rs1", "RV3264Base_SRAI_shamtAsInt64:$sft")));
     inputOperands.add(new Entry("SRL", List.of("X:$rs1", "X:$rs2")));
-    inputOperands.add(new Entry("SRLI", List.of("X:$rs1", "RV3264Base_Ftype_sftAsInt64:$sft")));
+    inputOperands.add(new Entry("SRLI", List.of("X:$rs1", "RV3264Base_SRLI_shamtAsInt64:$sft")));
     inputOperands.add(new Entry("SUB", List.of("X:$rs1", "X:$rs2")));
     inputOperands.add(new Entry("XOR", List.of("X:$rs1", "X:$rs2")));
-    inputOperands.add(new Entry("XORI", List.of("X:$rs1", "RV3264Base_Itype_immAsInt64:$imm")));
+    inputOperands.add(new Entry("XORI", List.of("X:$rs1", "RV3264Base_XORI_immSAsInt64:$imm")));
 
     outputOperands.add(new Entry("ADD", List.of("X:$rd")));
     outputOperands.add(new Entry("ADDI", List.of("X:$rd")));
