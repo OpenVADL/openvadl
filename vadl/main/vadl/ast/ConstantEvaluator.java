@@ -273,14 +273,6 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   }
 
   @Override
-  public ConstantValue visit(TensorLiteral expr) {
-    return new ConstantValue(
-        concat(expr.children.stream().map(this::eval).toList()).value(),
-        expr.type()
-    );
-  }
-
-  @Override
   public ConstantValue visit(PlaceholderExpr expr) {
     throw new IllegalStateException(
         "The constant evaluator should never see a %s".formatted(expr.getClass().getSimpleName()));
@@ -367,7 +359,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     }
 
     // FIXME: User Defined Functions
-    if (!(expr.computedTarget() instanceof TypedNode)) {
+    if (!(expr.target.path() instanceof TypedNode)) {
       throw new EvaluationError("Cannot evaluate function calls (yet).", expr);
     }
 

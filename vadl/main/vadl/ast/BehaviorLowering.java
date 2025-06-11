@@ -673,11 +673,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
   @Override
-  public ExpressionNode visit(TensorLiteral expr) {
-    throw new IllegalStateException("Not yet implemented");
-  }
-
-  @Override
   public ExpressionNode visit(PlaceholderExpr expr) {
     throw new RuntimeException(
         "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
