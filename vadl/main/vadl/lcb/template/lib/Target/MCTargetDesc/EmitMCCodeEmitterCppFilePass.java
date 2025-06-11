@@ -84,7 +84,13 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
-  record Encoding(String encodingFunction, String params, String checks, int fieldSize, int offset)
+  record Encoding(String encodingFunction,
+                  String params,
+                  String checks,
+                  String checksExpr,
+                  String fieldAccesses,
+                  int fieldSize,
+                  int offset)
       implements Renderable {
 
     @Override
@@ -93,6 +99,8 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
           "encodingFunction", encodingFunction,
           "params", params,
           "checks", checks,
+          "checksExpr", checksExpr,
+          "fieldAccesses", fieldAccesses,
           "fieldSize", fieldSize,
           "offset", offset
       );
@@ -188,8 +196,26 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
               .map(Definition::simpleName)
               .collect(Collectors.joining(".isImm() && "));
 
+      var checksExpr =
+          encoding.header().parameters().length == 1
+              ? encoding.header().parameters()[0].simpleName() + ".isExpr()"
+              : Arrays.stream(encoding.header().parameters())
+              .map(Definition::simpleName)
+              .collect(Collectors.joining(".isExpr() && "));
+
+      var fieldAccesses =
+          encoding.header().parameters().length == 1
+              ? "&" + encoding.header().parameters()[0].simpleName()
+              : Arrays.stream(encoding.header().parameters())
+              .map(Definition::simpleName)
+              .collect(Collectors.joining(", &"));
+
       encodings.add(
-          new Encoding(encoding.header().identifier.lower(), params, checks,
+          new Encoding(encoding.header().identifier.lower(),
+              params,
+              checks,
+              checksExpr,
+              fieldAccesses,
               encoding.field().size(),
               offset));
       offset += encoding.field().size();

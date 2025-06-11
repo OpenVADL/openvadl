@@ -114,9 +114,13 @@ unsigned [(${namespace})]MCCodeEmitter::[(${imm.encodeWrapper})](const MCInst &M
     const MCOperand &[(${fieldAccess.fieldAccessName})] = MI.getOperand([(${fieldAccess.opIndex})]);
     [/]
 
+    int64_t imm;
     [# th:each="enc : ${imm.encodings}" ]
     if([(${enc.checks})]) {
       result |= (project_range<0, [(${enc.fieldSize})]>(std::bitset<64>([(${enc.encodingFunction})]([(${enc.params})])))).to_ulong() << [(${enc.offset})];
+      changed = true;
+    } else if([(${enc.checksExpr})] && AsmUtils::evaluateConstantImm([(${enc.fieldAccesses})], imm)) { // works only for one
+      result |= (project_range<0, [(${enc.fieldSize})]>(std::bitset<64>([(${enc.encodingFunction})](imm)))).to_ulong() << [(${enc.offset})];
       changed = true;
     }
     [/]
@@ -125,10 +129,6 @@ unsigned [(${namespace})]MCCodeEmitter::[(${imm.encodeWrapper})](const MCInst &M
       return result;
 
     const MCOperand &MO = MI.getOperand(OpNo);
-    int64_t imm;
-    if (AsmUtils::evaluateConstantImm(&MO, imm))
-        return [(${imm.encode})](imm);
-
     assert(MO.isExpr() && "expects only expressions or immediates");
     emitFixups(MI, OpNo, MO.getExpr(), Fixups);
 

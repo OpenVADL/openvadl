@@ -339,7 +339,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
           pseudoInstructionIndex
       );
 
-      if (instructionCallNode.isParameterFieldAccess(field)) {
+      if (!instructionCallNode.isParameterFieldAccess(field)) {
         var variants = variantKindStore.decodeVariantKindsByField(instruction, field);
 
         ensure(variants.size() == 1, () -> Diagnostic.error(
