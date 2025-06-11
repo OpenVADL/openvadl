@@ -1109,9 +1109,9 @@ public class TypecheckerTest {
         using Dim_3_a = Dim_2_a<2>
         using Dim_3_b = Bits<2><4><16>         // equivalent to Dim_3_a
         
-        constant d2 : Dim_2_a = [3 as Dim_1_a, 2, 1, 0]   // specified with highest index first
-        constant d3 : Dim_3_a = [[7 as Bits<16>, 6, 5, 4], // d3(1)
-                                 [3 as Bits<16>, 2, 1, 0]] // d3(0)
+        constant d2 = (3 as Dim_1_a, 2, 1, 0) as Dim_2_a                // specified with highest index first
+        constant d3 = ((7 as Bits<16>, 6, 5, 4) as Dim_2_a,             // cast here is redundant but more readable
+                       (3 as Bits<16>, 2, 1, 0) as Dim_2_a) as Dim_3_a 
         
         constant a = d2(3)                     // is 3 as Dim_1_a (Bits<16>)
         constant b = d2(3)(15)                 // is 0 as Bits<1>
