@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.cppCodeGen;
+package vadl.lcb;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -30,6 +30,9 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.GcbConfiguration;
+import vadl.configuration.LcbConfiguration;
+import vadl.cppCodeGen.AbstractCppCodeGenTest;
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.common.GcbAccessOrPredicateFunctionCodeGenerator;
 import vadl.cppCodeGen.common.GcbEncodingFunctionCodeGenerator;
 import vadl.cppCodeGen.model.GcbCppAccessFunction;
@@ -42,13 +45,14 @@ import vadl.types.BitsType;
 import vadl.utils.Pair;
 import vadl.utils.Quadruple;
 import vadl.utils.VadlFileUtils;
+import vadl.viam.Instruction;
 
-public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGenTest {
+public class EncodingCodeGeneratorCppVerificationTest extends AbstractLcbTest {
   @TestFactory
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
     var configuration =
-        new GcbConfiguration(getConfiguration(false), new TargetName("processorNameValue"));
-    var setup = runGcbAndCppCodeGen(configuration, "sys/risc-v/rv64im.vadl");
+        new LcbConfiguration(getConfiguration(false), new TargetName("processorNameValue"));
+    var setup = runLcb(configuration, "sys/risc-v/rv64im.vadl");
 
     // Move files into Docker Context
     {
@@ -87,7 +91,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
         .map(
             tableGenImmediateRecord -> {
               var accessFunction = decodings.get(tableGenImmediateRecord);
-              var encodeFunction = encodings.get(tableGenImmediateRecord);
+              var encodeFunction = encodings.get((Instruction) tableGenImmediateRecord.instructionRef());
               var inputType =
                   Arrays.stream(accessFunction.header().parameters()).findFirst().get().type();
               return new Quadruple<>(accessFunction.header().identifier.lower(),
@@ -96,7 +100,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
                   encodeFunction);
             })
         // We can only test functions which have a 1:1 mapping.
-        .filter(x -> ((List<GcbCppEncodeFunction>) x.fourth()).size() == 1)
+        .filter(x -> x.fourth().size() == 1)
         .toList();
 
     List<Pair<String, String>> copyMappings = new ArrayList<>();
@@ -105,7 +109,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
       arbitrary.sampleStream().limit(15).forEach(sample -> {
         var fileName = entry.first() + "_sample_" + sample + ".cpp";
         var filePath = path + "/inputs/" + fileName;
-        var encodingFunctions = (List<GcbCppEncodeFunction>) entry.fourth();
+        var encodingFunctions = entry.fourth();
         var testCase = render(fileName,
             sample,
             entry.third(),
