@@ -121,7 +121,14 @@ def report_from_diffs(diffs: list[ClientDiff]) -> Report:
 
 Trace: TypeAlias = list[dict[str, Any]]
 
-def diff_cpus(cpus1: list[SHMCPU], init_mask1: int, cpus2: list[SHMCPU], init_mask2: int, config: Config) -> list[ClientDiff]:
+
+def diff_cpus(
+    cpus1: list[SHMCPU],
+    init_mask1: int,
+    cpus2: list[SHMCPU],
+    init_mask2: int,
+    config: Config,
+) -> list[ClientDiff]:
     diffs: list[ClientDiff] = []
 
     if init_mask1 != init_mask2:
@@ -142,6 +149,7 @@ def diff_cpus(cpus1: list[SHMCPU], init_mask1: int, cpus2: list[SHMCPU], init_ma
 
     return diffs
 
+
 def diff_cpu(
     cpu1: SHMCPU, cpu2: SHMCPU, cpu_index: int, config: Config
 ) -> list[ClientDiff]:
@@ -153,7 +161,7 @@ def diff_cpu(
     ):
         diffs.append(
             ClientDiff(
-                f"cpu.{cpu_index}.registers.size",
+                f"cpu[{cpu_index}].registers.size",
                 f"{cpu1.registers_size}",
                 f"{cpu2.registers_size}",
                 "different number of CPU registers",
@@ -186,7 +194,7 @@ def diff_register(
     if reg1.size != reg2.size:
         diffs.append(
             ClientDiff(
-                f"cpu.{cpu_index}.registers.{reg_index}.size",
+                f"cpu[{cpu_index}].registers[{reg_index}].size",
                 f"{reg1.size}",
                 f"{reg2.size}",
                 "reg sizes differ",
@@ -196,7 +204,7 @@ def diff_register(
     if r1name != r2name:
         diffs.append(
             ClientDiff(
-                f"cpu.{cpu_index}.registers.{reg_index}.name",
+                f"cpu[{cpu_index}].registers[{reg_index}].name",
                 f"{r1name}",
                 f"{r2name}",
                 "reg names differ",
@@ -208,7 +216,7 @@ def diff_register(
     if r1data != r2data:
         diffs.append(
             ClientDiff(
-                f"cpu.{cpu_index}.registers.{reg_index}.data",
+                f"cpu[{cpu_index}].registers[{reg_index}].data",
                 f"{r1data}",
                 f"{r2data}",
                 "reg data differ",
@@ -263,7 +271,7 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
         traces.append(trace_entry)
 
         for i in range(len(clients)):
-            for j in range(i+1, len(clients)):
+            for j in range(i + 1, len(clients)):
                 c1 = clients[i]
                 c2 = clients[j]
 
@@ -271,15 +279,30 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
                     c1shm = c1.shm_struct.shm_exec
                     c2shm = c2.shm_struct.shm_exec
 
-
-                    diffs.extend(diff_cpus(c1shm.cpus, c1shm.init_mask, c2shm.cpus, c2shm.init_mask, config))
+                    diffs.extend(
+                        diff_cpus(
+                            c1shm.cpus,
+                            c1shm.init_mask,
+                            c2shm.cpus,
+                            c2shm.init_mask,
+                            config,
+                        )
+                    )
 
                     return diffs
                 else:
                     c1shm = c1.shm_struct.shm_tb
                     c2shm = c2.shm_struct.shm_tb
 
-                    diffs.extend(diff_cpus(c1shm.cpus, c1shm.init_mask, c2shm.cpus, c2shm.init_mask, config))
+                    diffs.extend(
+                        diff_cpus(
+                            c1shm.cpus,
+                            c1shm.init_mask,
+                            c2shm.cpus,
+                            c2shm.init_mask,
+                            config,
+                        )
+                    )
                     # NOTE: also diff instruction info especially for "tb-strict"
 
                     return diffs
@@ -315,11 +338,13 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
 
     # Lockstepping logic:
     # Release each client once and then compare their states
-    # TODO: A client might need to be released multiple times for tb-level testing
     # NOTE: Maybe parallelize this for exec-level and tb-strict-level testing,
     #       for tb-level testing this might not be possible due to the differently generated TBs
-    
-    if config.testing.protocol.layer == "insn" or config.testing.protocol.layer == "tb-strict":
+
+    if (
+        config.testing.protocol.layer == "insn"
+        or config.testing.protocol.layer == "tb-strict"
+    ):
         while any(map(lambda c: c.is_open, clients)):
             for client in clients:
                 if client.is_open:
@@ -356,16 +381,22 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
             # NOTE: These asserts are assumptions by the syncing algorithm
             #       If they fail then that indicates a bug in the algorithm and not in any of the QEMU-clients
             for i, client_tbs in enumerate(clients_tbs):
-                assert client_tbs[0] < client_tbs[1], f"Jumps should not occur inside a TB: #{i}: ({client_tbs})"
+                assert client_tbs[0] < client_tbs[1], (
+                    f"Jumps should not occur inside a TB: #{i}: ({client_tbs})"
+                )
 
-            for i in range(len(clients_tbs)-1):
-                assert clients_tbs[i][0] == clients_tbs[i+1][0], f"Clients should initially be synced: {clients_tbs}"
+            for i in range(len(clients_tbs) - 1):
+                assert clients_tbs[i][0] == clients_tbs[i + 1][0], (
+                    f"Clients should initially be synced: {clients_tbs}"
+                )
 
             max_pc2 = max(map(lambda tbs: tbs[1], clients_tbs))
             clients_queue = deque(filter(lambda tbs: tbs[1] < max_pc2, clients_tbs))
 
             while len(clients_queue) > 0:
-                logger.debug(f"queue-len: {len(clients_queue)}, queue: {clients_queue}, tbs: {clients_tbs}, max: {max_pc2}")
+                logger.debug(
+                    f"queue-len: {len(clients_queue)}, queue: {clients_queue}, tbs: {clients_tbs}, max: {max_pc2}"
+                )
                 client_entry = clients_queue.popleft()
                 client = clients[client_entry[2]]
 
@@ -389,6 +420,7 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
 
                     if this_pc2 > max_pc2:
                         raise ValueError("Client diverged irrecoverably, fail test.")
+
                 except ipc.BusyError:
                     # NOTE: In case a client closes before it synced we just ignore it in case this is the expected behavior
                     #       If this is unexpected then a test-fail will be caught when diffing the client state
@@ -397,7 +429,6 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
                         f"BusyError: noticed that client #{client.id} shutdown. marking as closed"
                     )
                     client.is_open = False
-                
 
         while any(map(lambda c: c.is_open, clients)):
             clients_tbs: list[tuple[int, int, int]] = []
@@ -422,7 +453,7 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
             except ValueError as err:
                 # Some client diverged
                 logger.exception(err, exc_info=True)
-                return report_from_diffs(diffs) 
+                return report_from_diffs(diffs)
 
             if not execute_remaining:
                 if stop_after > 0:
@@ -435,7 +466,6 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
             # early exit for lockstepping
             if len(diffs) > 0:
                 return report_from_diffs(diffs)
-
 
     # if the loop has exited and no diffs were found then the test passed
     return report_from_diffs(diffs)
@@ -505,7 +535,10 @@ def start(config: Config):
 
         plugin_path = config.qemu.plugin
         client_mode = ""
-        if config.testing.protocol.layer == "tb" or config.testing.protocol.layer == "tb-strict":
+        if (
+            config.testing.protocol.layer == "tb"
+            or config.testing.protocol.layer == "tb-strict"
+        ):
             client_mode = "tb"
         else:
             client_mode = config.testing.protocol.layer
