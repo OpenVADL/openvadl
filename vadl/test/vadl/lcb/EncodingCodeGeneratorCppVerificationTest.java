@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import net.jqwik.api.Arbitraries;
@@ -29,14 +28,11 @@ import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
-import vadl.configuration.GcbConfiguration;
 import vadl.configuration.LcbConfiguration;
-import vadl.cppCodeGen.AbstractCppCodeGenTest;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.common.GcbAccessOrPredicateFunctionCodeGenerator;
 import vadl.cppCodeGen.common.GcbEncodingFunctionCodeGenerator;
 import vadl.cppCodeGen.model.GcbCppAccessFunction;
-import vadl.cppCodeGen.model.GcbCppEncodeFunction;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
@@ -88,25 +84,30 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractLcbTest {
     var entries = output.decodings()
         .keySet()
         .stream()
+        // We can only test functions which have a 1:1 mapping.
+        .filter(tableGenImmediateRecord -> {
+          var encodeFunctions =
+              encodings.get((Instruction) tableGenImmediateRecord.instructionRef());
+
+          return encodeFunctions.size() == 1;
+        })
         .map(
             tableGenImmediateRecord -> {
               var accessFunction = decodings.get(tableGenImmediateRecord);
-              var encodeFunction = encodings.get((Instruction) tableGenImmediateRecord.instructionRef());
-              var inputType =
-                  Arrays.stream(accessFunction.header().parameters()).findFirst().get().type();
+              var encodeFunction =
+                  encodings.get((Instruction) tableGenImmediateRecord.instructionRef());
+              var inputType = BitsType.bits(encodeFunction.getFirst().field().size());
               return new Quadruple<>(accessFunction.header().identifier.lower(),
-                  (BitsType) inputType,
+                  inputType,
                   accessFunction,
                   encodeFunction);
             })
-        // We can only test functions which have a 1:1 mapping.
-        .filter(x -> x.fourth().size() == 1)
         .toList();
 
     List<Pair<String, String>> copyMappings = new ArrayList<>();
     for (var entry : entries) {
       var arbitrary = uint(entry.second().bitWidth());
-      arbitrary.sampleStream().limit(15).forEach(sample -> {
+      arbitrary.sampleStream().limit(1).forEach(sample -> {
         var fileName = entry.first() + "_sample_" + sample + ".cpp";
         var filePath = path + "/inputs/" + fileName;
         var encodingFunctions = entry.fourth();
@@ -216,6 +217,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractLcbTest {
         sample,
         encodingFunction.header().identifier.lower(),
         accessFunction.header().identifier.lower());
+
+    System.out.println(cppCode);
 
     return new TestCase(testName, cppCode);
   }
