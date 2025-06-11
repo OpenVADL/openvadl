@@ -200,7 +200,6 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
               () -> Diagnostic.error(
                   "Expected a variant for an immediate. But haven't " + "found any",
                   toHandle.location())).value();
-
         }
 
         ctx.ln(
@@ -208,7 +207,9 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
                 + "%sMCExpr::VariantKind::%s, " + "Ctx));", argumentImmSymbol, targetName.value(),
             argumentSymbol, targetName.value(),
             requireNonNull(variant));
-        ctx.ln(String.format("%s.addOperand(%s);", instructionSymbol, argumentImmSymbol))
+        ctx.ln(String.format("%s.addOperand(%s);", instructionSymbol, argumentImmSymbol));
+
+        ctx
             .spaceOut()
             .ln("}");
       }
@@ -297,6 +298,10 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
   @Override
   public void handle(CGenContext<Node> ctx, FuncCallNode toHandle) {
+    var instruction = ((CNodeWithBaggageContext) ctx).get(INSTRUCTION, Instruction.class);
+    var instructionCallNode =
+        ((CNodeWithBaggageContext) ctx).get(INSTRUCTION_CALL_NODE, InstrCallNode.class);
+    var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
     var field = ((CNodeWithBaggageContext) ctx).get(FIELD, Format.Field.class);
     var relocation = (Relocation) toHandle.function();
 
@@ -314,13 +319,72 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
       var parameterName = funcParamNode.parameter().identifier;
       var pseudoInstructionIndex =
           getOperandIndexFromCompilerInstruction(field, toHandle, parameterName);
+      var relocationRef =
+          ensurePresent(relocations.stream().filter(x -> x.relocation() == relocation).findFirst()
+              , () -> Diagnostic.error("Cannot find relocation", relocation.location()));
+
+      ctx.ln("if(instruction.getOperand(%d).isImm()) {", pseudoInstructionIndex)
+          .spacedIn();
+
+      // There two cases now.
+      // (1) If the parameter in the grammar is not a field access function then we need to decode
+      // (2) Otherwise, we don't do anything.
+
+      // This is the first case where we emit a variant
+      var argumentImmSymbol = symbolTable.getNextVariable();
+      var appliedSymbol = symbolTable.getNextVariable();
+      ctx.ln("auto %s = %sBaseInfo::%s(instruction.getOperand(%d).getImm());", appliedSymbol,
+          targetName.value(),
+          relocationRef.valueRelocation().functionName().lower(),
+          pseudoInstructionIndex
+      );
+
+      if (instructionCallNode.isParameterFieldAccess(field)) {
+        var variants = variantKindStore.decodeVariantKindsByField(instruction, field);
+
+        ensure(variants.size() == 1, () -> Diagnostic.error(
+            "There are unexpectedly multiple variant kinds for the pseudo expansion available.",
+            toHandle.location()));
+
+        var variant = ensurePresent(
+            requireNonNull(variants).stream().filter(VariantKind::isImmediate).findFirst(),
+            () -> Diagnostic.error(
+                "Expected a variant for an immediate. But haven't " + "found any",
+                toHandle.location())).value();
+
+        ctx.ln(
+            "MCOperand %s = MCOperand::createExpr(%sMCExpr::create(MCConstantExpr::create(%s, Ctx), "
+                + "%sMCExpr::VariantKind::%s, " + "Ctx));", argumentImmSymbol,
+            targetName.value(),
+            appliedSymbol, targetName.value(),
+            requireNonNull(variant));
+
+        // -- end (1) case
+      } else {
+        // This is the second case where we don't emit anything
+        // only the raw value of the pseudo instruction
+
+        ctx.ln(
+            "MCOperand %s = MCOperand::createExpr(MCConstantExpr::create(%s, Ctx));",
+            argumentImmSymbol, appliedSymbol);
+
+        // -- end (2) case
+      }
+
+      ctx.ln(String.format("%s.addOperand(%s);", instructionSymbol, argumentImmSymbol));
+
+      ctx.spaceOut()
+          .ln("}")
+          .ln("else {")
+          .spacedIn();
 
       var argumentSymbol = symbolTable.getNextVariable();
-
       ctx.ln("const MCExpr* %s = MCOperandToMCExpr(instruction.getOperand(%d));", argumentSymbol,
           pseudoInstructionIndex);
-
       handleRelocationOperand(ctx, argumentSymbol, relocation);
+
+      ctx.spaceOut()
+          .ln("}");
     } else if (toHandle.arguments().get(0) instanceof LabelNode labelNode) {
       /*
       Here is the argument to `pcrel_lo` the `LabelNode`.
