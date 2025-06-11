@@ -131,6 +131,8 @@ unsigned [(${namespace})]MCCodeEmitter::[(${imm.encodeWrapper})](const MCInst &M
 
     assert(MO.isExpr() && "expects only expressions or immediates");
     emitFixups(MI, OpNo, MO.getExpr(), Fixups);
+
+    return 0;
 }
 [/]
 
