@@ -192,7 +192,9 @@ class RV3264Base_ADD_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_ADD_shamtAsInt64
     : RV3264Base_ADD_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_ADD_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_ADD_shamt_predicate(Imm); }]>;
 
 def RV3264Base_ADD_shamtAsLabel : RV3264Base_ADD_shamt<OtherVT>;
 
@@ -204,7 +206,9 @@ class RV3264Base_SUB_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_SUB_shamtAsInt64
     : RV3264Base_SUB_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_SUB_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_SUB_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SUB_shamtAsLabel : RV3264Base_SUB_shamt<OtherVT>;
 
@@ -216,7 +220,9 @@ class RV3264Base_AND_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_AND_shamtAsInt64
     : RV3264Base_AND_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_AND_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_AND_shamt_predicate(Imm); }]>;
 
 def RV3264Base_AND_shamtAsLabel : RV3264Base_AND_shamt<OtherVT>;
 
@@ -228,7 +234,9 @@ class RV3264Base_OR_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_OR_shamtAsInt64
     : RV3264Base_OR_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_OR_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_OR_shamt_predicate(Imm); }]>;
 
 def RV3264Base_OR_shamtAsLabel : RV3264Base_OR_shamt<OtherVT>;
 
@@ -240,7 +248,9 @@ class RV3264Base_XOR_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_XOR_shamtAsInt64
     : RV3264Base_XOR_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_XOR_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_XOR_shamt_predicate(Imm); }]>;
 
 def RV3264Base_XOR_shamtAsLabel : RV3264Base_XOR_shamt<OtherVT>;
 
@@ -252,7 +262,9 @@ class RV3264Base_SLT_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_SLT_shamtAsInt64
     : RV3264Base_SLT_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_SLT_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_SLT_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SLT_shamtAsLabel : RV3264Base_SLT_shamt<OtherVT>;
 
@@ -264,7 +276,9 @@ class RV3264Base_SLTU_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_SLTU_shamtAsInt64
     : RV3264Base_SLTU_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_SLTU_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_SLTU_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SLTU_shamtAsLabel : RV3264Base_SLTU_shamt<OtherVT>;
 
@@ -276,7 +290,9 @@ class RV3264Base_SLL_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_SLL_shamtAsInt64
     : RV3264Base_SLL_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_SLL_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_SLL_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SLL_shamtAsLabel : RV3264Base_SLL_shamt<OtherVT>;
 
@@ -288,7 +304,9 @@ class RV3264Base_SRL_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_SRL_shamtAsInt64
     : RV3264Base_SRL_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_SRL_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_SRL_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SRL_shamtAsLabel : RV3264Base_SRL_shamt<OtherVT>;
 
@@ -300,7 +318,9 @@ class RV3264Base_SRA_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_SRA_shamtAsInt64
     : RV3264Base_SRA_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_SRA_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_SRA_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SRA_shamtAsLabel : RV3264Base_SRA_shamt<OtherVT>;
 
@@ -312,7 +332,9 @@ class RV3264Base_ADDI_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_ADDI_immSAsInt64
     : RV3264Base_ADDI_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_ADDI_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_ADDI_immS_predicate(Imm); }]>;
 
 def RV3264Base_ADDI_immSAsLabel : RV3264Base_ADDI_immS<OtherVT>;
 
@@ -324,7 +346,9 @@ class RV3264Base_ANDI_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_ANDI_immSAsInt64
     : RV3264Base_ANDI_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_ANDI_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_ANDI_immS_predicate(Imm); }]>;
 
 def RV3264Base_ANDI_immSAsLabel : RV3264Base_ANDI_immS<OtherVT>;
 
@@ -336,7 +360,9 @@ class RV3264Base_ORI_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_ORI_immSAsInt64
     : RV3264Base_ORI_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_ORI_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_ORI_immS_predicate(Imm); }]>;
 
 def RV3264Base_ORI_immSAsLabel : RV3264Base_ORI_immS<OtherVT>;
 
@@ -348,7 +374,9 @@ class RV3264Base_XORI_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_XORI_immSAsInt64
     : RV3264Base_XORI_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_XORI_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_XORI_immS_predicate(Imm); }]>;
 
 def RV3264Base_XORI_immSAsLabel : RV3264Base_XORI_immS<OtherVT>;
 
@@ -360,7 +388,9 @@ class RV3264Base_SLTI_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_SLTI_immSAsInt64
     : RV3264Base_SLTI_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_SLTI_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_SLTI_immS_predicate(Imm); }]>;
 
 def RV3264Base_SLTI_immSAsLabel : RV3264Base_SLTI_immS<OtherVT>;
 
@@ -372,7 +402,9 @@ class RV3264Base_SLTIU_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_SLTIU_immSAsInt64
     : RV3264Base_SLTIU_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_SLTIU_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_SLTIU_immS_predicate(Imm); }]>;
 
 def RV3264Base_SLTIU_immSAsLabel : RV3264Base_SLTIU_immS<OtherVT>;
 
@@ -384,7 +416,9 @@ class RV3264Base_AUIPC_immUp<ValueType ty> : Operand<ty>
 
 def RV3264Base_AUIPC_immUpAsInt64
     : RV3264Base_AUIPC_immUp<i64>
-    , ImmLeaf<i64, [{ return Imm >= -524288 && Imm <= 524287 && RV3264Base_AUIPC_immUp_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -524288
+      && Imm <= 524287
+      && RV3264Base_AUIPC_immUp_predicate(Imm); }]>;
 
 def RV3264Base_AUIPC_immUpAsLabel : RV3264Base_AUIPC_immUp<OtherVT>;
 
@@ -396,7 +430,9 @@ class RV3264Base_LUI_immUp<ValueType ty> : Operand<ty>
 
 def RV3264Base_LUI_immUpAsInt64
     : RV3264Base_LUI_immUp<i64>
-    , ImmLeaf<i64, [{ return Imm >= -524288 && Imm <= 524287 && RV3264Base_LUI_immUp_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -524288
+      && Imm <= 524287
+      && RV3264Base_LUI_immUp_predicate(Imm); }]>;
 
 def RV3264Base_LUI_immUpAsLabel : RV3264Base_LUI_immUp<OtherVT>;
 
@@ -408,7 +444,9 @@ class RV3264Base_LB_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_LB_immSAsInt64
     : RV3264Base_LB_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_LB_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_LB_immS_predicate(Imm); }]>;
 
 def RV3264Base_LB_immSAsLabel : RV3264Base_LB_immS<OtherVT>;
 
@@ -420,7 +458,9 @@ class RV3264Base_LBU_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_LBU_immSAsInt64
     : RV3264Base_LBU_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_LBU_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_LBU_immS_predicate(Imm); }]>;
 
 def RV3264Base_LBU_immSAsLabel : RV3264Base_LBU_immS<OtherVT>;
 
@@ -432,7 +472,9 @@ class RV3264Base_LH_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_LH_immSAsInt64
     : RV3264Base_LH_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_LH_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_LH_immS_predicate(Imm); }]>;
 
 def RV3264Base_LH_immSAsLabel : RV3264Base_LH_immS<OtherVT>;
 
@@ -444,7 +486,9 @@ class RV3264Base_LHU_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_LHU_immSAsInt64
     : RV3264Base_LHU_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_LHU_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_LHU_immS_predicate(Imm); }]>;
 
 def RV3264Base_LHU_immSAsLabel : RV3264Base_LHU_immS<OtherVT>;
 
@@ -456,7 +500,9 @@ class RV3264Base_LW_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_LW_immSAsInt64
     : RV3264Base_LW_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_LW_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_LW_immS_predicate(Imm); }]>;
 
 def RV3264Base_LW_immSAsLabel : RV3264Base_LW_immS<OtherVT>;
 
@@ -468,7 +514,9 @@ class RV3264Base_SB_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_SB_immSAsInt64
     : RV3264Base_SB_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_SB_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_SB_immS_predicate(Imm); }]>;
 
 def RV3264Base_SB_immSAsLabel : RV3264Base_SB_immS<OtherVT>;
 
@@ -480,7 +528,9 @@ class RV3264Base_SH_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_SH_immSAsInt64
     : RV3264Base_SH_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_SH_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_SH_immS_predicate(Imm); }]>;
 
 def RV3264Base_SH_immSAsLabel : RV3264Base_SH_immS<OtherVT>;
 
@@ -492,7 +542,9 @@ class RV3264Base_SW_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_SW_immSAsInt64
     : RV3264Base_SW_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_SW_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_SW_immS_predicate(Imm); }]>;
 
 def RV3264Base_SW_immSAsLabel : RV3264Base_SW_immS<OtherVT>;
 
@@ -504,7 +556,9 @@ class RV3264Base_BEQ_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_BEQ_immSAsInt64
     : RV3264Base_BEQ_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_BEQ_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_BEQ_immS_predicate(Imm); }]>;
 
 def RV3264Base_BEQ_immSAsLabel : RV3264Base_BEQ_immS<OtherVT>;
 
@@ -516,7 +570,9 @@ class RV3264Base_BNE_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_BNE_immSAsInt64
     : RV3264Base_BNE_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_BNE_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_BNE_immS_predicate(Imm); }]>;
 
 def RV3264Base_BNE_immSAsLabel : RV3264Base_BNE_immS<OtherVT>;
 
@@ -528,7 +584,9 @@ class RV3264Base_BGE_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_BGE_immSAsInt64
     : RV3264Base_BGE_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_BGE_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_BGE_immS_predicate(Imm); }]>;
 
 def RV3264Base_BGE_immSAsLabel : RV3264Base_BGE_immS<OtherVT>;
 
@@ -540,7 +598,9 @@ class RV3264Base_BGEU_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_BGEU_immSAsInt64
     : RV3264Base_BGEU_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_BGEU_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_BGEU_immS_predicate(Imm); }]>;
 
 def RV3264Base_BGEU_immSAsLabel : RV3264Base_BGEU_immS<OtherVT>;
 
@@ -552,7 +612,9 @@ class RV3264Base_BLT_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_BLT_immSAsInt64
     : RV3264Base_BLT_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_BLT_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_BLT_immS_predicate(Imm); }]>;
 
 def RV3264Base_BLT_immSAsLabel : RV3264Base_BLT_immS<OtherVT>;
 
@@ -564,7 +626,9 @@ class RV3264Base_BLTU_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_BLTU_immSAsInt64
     : RV3264Base_BLTU_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_BLTU_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_BLTU_immS_predicate(Imm); }]>;
 
 def RV3264Base_BLTU_immSAsLabel : RV3264Base_BLTU_immS<OtherVT>;
 
@@ -576,7 +640,9 @@ class RV3264Base_JAL_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_JAL_immSAsInt64
     : RV3264Base_JAL_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -524288 && Imm <= 524287 && RV3264Base_JAL_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -524288
+      && Imm <= 524287
+      && RV3264Base_JAL_immS_predicate(Imm); }]>;
 
 def RV3264Base_JAL_immSAsLabel : RV3264Base_JAL_immS<OtherVT>;
 
@@ -588,7 +654,9 @@ class RV3264Base_JALR_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_JALR_immSAsInt64
     : RV3264Base_JALR_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_JALR_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_JALR_immS_predicate(Imm); }]>;
 
 def RV3264Base_JALR_immSAsLabel : RV3264Base_JALR_immS<OtherVT>;
 
@@ -600,7 +668,9 @@ class RV3264Base_LWU_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_LWU_immSAsInt64
     : RV3264Base_LWU_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_LWU_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_LWU_immS_predicate(Imm); }]>;
 
 def RV3264Base_LWU_immSAsLabel : RV3264Base_LWU_immS<OtherVT>;
 
@@ -612,7 +682,9 @@ class RV3264Base_LD_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_LD_immSAsInt64
     : RV3264Base_LD_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_LD_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_LD_immS_predicate(Imm); }]>;
 
 def RV3264Base_LD_immSAsLabel : RV3264Base_LD_immS<OtherVT>;
 
@@ -624,7 +696,9 @@ class RV3264Base_SD_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_SD_immSAsInt64
     : RV3264Base_SD_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_SD_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_SD_immS_predicate(Imm); }]>;
 
 def RV3264Base_SD_immSAsLabel : RV3264Base_SD_immS<OtherVT>;
 
@@ -636,7 +710,9 @@ class RV3264Base_ADDIW_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_ADDIW_immSAsInt64
     : RV3264Base_ADDIW_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_ADDIW_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_ADDIW_immS_predicate(Imm); }]>;
 
 def RV3264Base_ADDIW_immSAsLabel : RV3264Base_ADDIW_immS<OtherVT>;
 
@@ -648,7 +724,9 @@ class RV3264Base_SLLIW_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_SLLIW_shamtAsInt64
     : RV3264Base_SLLIW_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_SLLIW_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_SLLIW_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SLLIW_shamtAsLabel : RV3264Base_SLLIW_shamt<OtherVT>;
 
@@ -660,7 +738,9 @@ class RV3264Base_SRLIW_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_SRLIW_shamtAsInt64
     : RV3264Base_SRLIW_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_SRLIW_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_SRLIW_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SRLIW_shamtAsLabel : RV3264Base_SRLIW_shamt<OtherVT>;
 
@@ -672,7 +752,9 @@ class RV3264Base_SRAIW_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_SRAIW_shamtAsInt64
     : RV3264Base_SRAIW_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_SRAIW_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_SRAIW_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SRAIW_shamtAsLabel : RV3264Base_SRAIW_shamt<OtherVT>;
 
@@ -684,7 +766,9 @@ class RV3264Base_ADDW_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_ADDW_shamtAsInt64
     : RV3264Base_ADDW_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_ADDW_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_ADDW_shamt_predicate(Imm); }]>;
 
 def RV3264Base_ADDW_shamtAsLabel : RV3264Base_ADDW_shamt<OtherVT>;
 
@@ -696,7 +780,9 @@ class RV3264Base_SUBW_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_SUBW_shamtAsInt64
     : RV3264Base_SUBW_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_SUBW_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_SUBW_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SUBW_shamtAsLabel : RV3264Base_SUBW_shamt<OtherVT>;
 
@@ -708,7 +794,9 @@ class RV3264Base_SLLW_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_SLLW_shamtAsInt64
     : RV3264Base_SLLW_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_SLLW_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_SLLW_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SLLW_shamtAsLabel : RV3264Base_SLLW_shamt<OtherVT>;
 
@@ -720,7 +808,9 @@ class RV3264Base_SRLW_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_SRLW_shamtAsInt64
     : RV3264Base_SRLW_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_SRLW_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_SRLW_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SRLW_shamtAsLabel : RV3264Base_SRLW_shamt<OtherVT>;
 
@@ -732,7 +822,9 @@ class RV3264Base_SRAW_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_SRAW_shamtAsInt64
     : RV3264Base_SRAW_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_SRAW_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264Base_SRAW_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SRAW_shamtAsLabel : RV3264Base_SRAW_shamt<OtherVT>;
 
@@ -744,7 +836,9 @@ class RV3264Base_SLLI_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_SLLI_shamtAsInt64
     : RV3264Base_SLLI_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 63 && RV3264Base_SLLI_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 63
+      && RV3264Base_SLLI_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SLLI_shamtAsLabel : RV3264Base_SLLI_shamt<OtherVT>;
 
@@ -756,7 +850,9 @@ class RV3264Base_SRLI_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_SRLI_shamtAsInt64
     : RV3264Base_SRLI_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 63 && RV3264Base_SRLI_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 63
+      && RV3264Base_SRLI_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SRLI_shamtAsLabel : RV3264Base_SRLI_shamt<OtherVT>;
 
@@ -768,7 +864,9 @@ class RV3264Base_SRAI_shamt<ValueType ty> : Operand<ty>
 
 def RV3264Base_SRAI_shamtAsInt64
     : RV3264Base_SRAI_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 63 && RV3264Base_SRAI_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 63
+      && RV3264Base_SRAI_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SRAI_shamtAsLabel : RV3264Base_SRAI_shamt<OtherVT>;
 
@@ -780,7 +878,9 @@ class RV3264I_ECALL_immS<ValueType ty> : Operand<ty>
 
 def RV3264I_ECALL_immSAsInt64
     : RV3264I_ECALL_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264I_ECALL_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264I_ECALL_immS_predicate(Imm); }]>;
 
 def RV3264I_ECALL_immSAsLabel : RV3264I_ECALL_immS<OtherVT>;
 
@@ -792,7 +892,9 @@ class RV3264I_EBREAK_immS<ValueType ty> : Operand<ty>
 
 def RV3264I_EBREAK_immSAsInt64
     : RV3264I_EBREAK_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264I_EBREAK_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264I_EBREAK_immS_predicate(Imm); }]>;
 
 def RV3264I_EBREAK_immSAsLabel : RV3264I_EBREAK_immS<OtherVT>;
 
@@ -804,7 +906,9 @@ class RV3264M_MUL_shamt<ValueType ty> : Operand<ty>
 
 def RV3264M_MUL_shamtAsInt64
     : RV3264M_MUL_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264M_MUL_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264M_MUL_shamt_predicate(Imm); }]>;
 
 def RV3264M_MUL_shamtAsLabel : RV3264M_MUL_shamt<OtherVT>;
 
@@ -816,7 +920,9 @@ class RV3264M_MULH_shamt<ValueType ty> : Operand<ty>
 
 def RV3264M_MULH_shamtAsInt64
     : RV3264M_MULH_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264M_MULH_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264M_MULH_shamt_predicate(Imm); }]>;
 
 def RV3264M_MULH_shamtAsLabel : RV3264M_MULH_shamt<OtherVT>;
 
@@ -828,7 +934,9 @@ class RV3264M_MULHSU_shamt<ValueType ty> : Operand<ty>
 
 def RV3264M_MULHSU_shamtAsInt64
     : RV3264M_MULHSU_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264M_MULHSU_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264M_MULHSU_shamt_predicate(Imm); }]>;
 
 def RV3264M_MULHSU_shamtAsLabel : RV3264M_MULHSU_shamt<OtherVT>;
 
@@ -840,7 +948,9 @@ class RV3264M_MULHU_shamt<ValueType ty> : Operand<ty>
 
 def RV3264M_MULHU_shamtAsInt64
     : RV3264M_MULHU_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264M_MULHU_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264M_MULHU_shamt_predicate(Imm); }]>;
 
 def RV3264M_MULHU_shamtAsLabel : RV3264M_MULHU_shamt<OtherVT>;
 
@@ -852,7 +962,9 @@ class RV3264M_DIV_shamt<ValueType ty> : Operand<ty>
 
 def RV3264M_DIV_shamtAsInt64
     : RV3264M_DIV_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264M_DIV_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264M_DIV_shamt_predicate(Imm); }]>;
 
 def RV3264M_DIV_shamtAsLabel : RV3264M_DIV_shamt<OtherVT>;
 
@@ -864,7 +976,9 @@ class RV3264M_DIVU_shamt<ValueType ty> : Operand<ty>
 
 def RV3264M_DIVU_shamtAsInt64
     : RV3264M_DIVU_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264M_DIVU_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264M_DIVU_shamt_predicate(Imm); }]>;
 
 def RV3264M_DIVU_shamtAsLabel : RV3264M_DIVU_shamt<OtherVT>;
 
@@ -876,7 +990,9 @@ class RV3264M_REM_shamt<ValueType ty> : Operand<ty>
 
 def RV3264M_REM_shamtAsInt64
     : RV3264M_REM_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264M_REM_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264M_REM_shamt_predicate(Imm); }]>;
 
 def RV3264M_REM_shamtAsLabel : RV3264M_REM_shamt<OtherVT>;
 
@@ -888,7 +1004,9 @@ class RV3264M_REMU_shamt<ValueType ty> : Operand<ty>
 
 def RV3264M_REMU_shamtAsInt64
     : RV3264M_REMU_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264M_REMU_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264M_REMU_shamt_predicate(Imm); }]>;
 
 def RV3264M_REMU_shamtAsLabel : RV3264M_REMU_shamt<OtherVT>;
 
@@ -900,7 +1018,9 @@ class RV3264M_MULW_shamt<ValueType ty> : Operand<ty>
 
 def RV3264M_MULW_shamtAsInt64
     : RV3264M_MULW_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264M_MULW_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264M_MULW_shamt_predicate(Imm); }]>;
 
 def RV3264M_MULW_shamtAsLabel : RV3264M_MULW_shamt<OtherVT>;
 
@@ -912,7 +1032,9 @@ class RV3264M_DIVW_shamt<ValueType ty> : Operand<ty>
 
 def RV3264M_DIVW_shamtAsInt64
     : RV3264M_DIVW_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264M_DIVW_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264M_DIVW_shamt_predicate(Imm); }]>;
 
 def RV3264M_DIVW_shamtAsLabel : RV3264M_DIVW_shamt<OtherVT>;
 
@@ -924,7 +1046,9 @@ class RV3264M_DIVUW_shamt<ValueType ty> : Operand<ty>
 
 def RV3264M_DIVUW_shamtAsInt64
     : RV3264M_DIVUW_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264M_DIVUW_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264M_DIVUW_shamt_predicate(Imm); }]>;
 
 def RV3264M_DIVUW_shamtAsLabel : RV3264M_DIVUW_shamt<OtherVT>;
 
@@ -936,7 +1060,9 @@ class RV3264M_REMW_shamt<ValueType ty> : Operand<ty>
 
 def RV3264M_REMW_shamtAsInt64
     : RV3264M_REMW_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264M_REMW_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264M_REMW_shamt_predicate(Imm); }]>;
 
 def RV3264M_REMW_shamtAsLabel : RV3264M_REMW_shamt<OtherVT>;
 
@@ -948,7 +1074,9 @@ class RV3264M_REMUW_shamt<ValueType ty> : Operand<ty>
 
 def RV3264M_REMUW_shamtAsInt64
     : RV3264M_REMUW_shamt<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264M_REMUW_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= 0
+      && Imm <= 31
+      && RV3264M_REMUW_shamt_predicate(Imm); }]>;
 
 def RV3264M_REMUW_shamtAsLabel : RV3264M_REMUW_shamt<OtherVT>;
 
@@ -960,7 +1088,9 @@ class RV3264Base_J_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_J_immSAsInt64
     : RV3264Base_J_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -524288 && Imm <= 524287 && RV3264Base_J_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -524288
+      && Imm <= 524287
+      && RV3264Base_J_immS_predicate(Imm); }]>;
 
 def RV3264Base_J_immSAsLabel : RV3264Base_J_immS<OtherVT>;
 
@@ -972,7 +1102,9 @@ class RV3264Base_BEQZ_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_BEQZ_immSAsInt64
     : RV3264Base_BEQZ_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_BEQZ_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_BEQZ_immS_predicate(Imm); }]>;
 
 def RV3264Base_BEQZ_immSAsLabel : RV3264Base_BEQZ_immS<OtherVT>;
 
@@ -984,7 +1116,9 @@ class RV3264Base_BNEZ_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_BNEZ_immSAsInt64
     : RV3264Base_BNEZ_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_BNEZ_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_BNEZ_immS_predicate(Imm); }]>;
 
 def RV3264Base_BNEZ_immSAsLabel : RV3264Base_BNEZ_immS<OtherVT>;
 
@@ -996,7 +1130,9 @@ class RV3264Base_BLEZ_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_BLEZ_immSAsInt64
     : RV3264Base_BLEZ_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_BLEZ_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_BLEZ_immS_predicate(Imm); }]>;
 
 def RV3264Base_BLEZ_immSAsLabel : RV3264Base_BLEZ_immS<OtherVT>;
 
@@ -1008,7 +1144,9 @@ class RV3264Base_BGEZ_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_BGEZ_immSAsInt64
     : RV3264Base_BGEZ_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_BGEZ_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_BGEZ_immS_predicate(Imm); }]>;
 
 def RV3264Base_BGEZ_immSAsLabel : RV3264Base_BGEZ_immS<OtherVT>;
 
@@ -1020,7 +1158,9 @@ class RV3264Base_BLTZ_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_BLTZ_immSAsInt64
     : RV3264Base_BLTZ_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_BLTZ_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_BLTZ_immS_predicate(Imm); }]>;
 
 def RV3264Base_BLTZ_immSAsLabel : RV3264Base_BLTZ_immS<OtherVT>;
 
@@ -1032,7 +1172,9 @@ class RV3264Base_BGTZ_immS<ValueType ty> : Operand<ty>
 
 def RV3264Base_BGTZ_immSAsInt64
     : RV3264Base_BGTZ_immS<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_BGTZ_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return Imm >= -2048
+      && Imm <= 2047
+      && RV3264Base_BGTZ_immS_predicate(Imm); }]>;
 
 def RV3264Base_BGTZ_immSAsLabel : RV3264Base_BGTZ_immS<OtherVT>;
 
@@ -1423,9 +1565,9 @@ bits<64> rs2;
 bits<64> rs1;
 
 let Inst{11-8} = imm{3-0};
-let Inst{30-25} = imm{13-8};
-let Inst{7} = imm{20};
-let Inst{31} = imm{22};
+let Inst{30-25} = imm{9-4};
+let Inst{7} = imm{10};
+let Inst{31} = imm{11};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -1477,9 +1619,9 @@ bits<64> rs2;
 bits<64> rs1;
 
 let Inst{11-8} = imm{3-0};
-let Inst{30-25} = imm{13-8};
-let Inst{7} = imm{20};
-let Inst{31} = imm{22};
+let Inst{30-25} = imm{9-4};
+let Inst{7} = imm{10};
+let Inst{31} = imm{11};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -1531,9 +1673,9 @@ bits<64> rs2;
 bits<64> rs1;
 
 let Inst{11-8} = imm{3-0};
-let Inst{30-25} = imm{13-8};
-let Inst{7} = imm{20};
-let Inst{31} = imm{22};
+let Inst{30-25} = imm{9-4};
+let Inst{7} = imm{10};
+let Inst{31} = imm{11};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -1585,9 +1727,9 @@ bits<64> rs2;
 bits<64> rs1;
 
 let Inst{11-8} = imm{3-0};
-let Inst{30-25} = imm{13-8};
-let Inst{7} = imm{20};
-let Inst{31} = imm{22};
+let Inst{30-25} = imm{9-4};
+let Inst{7} = imm{10};
+let Inst{31} = imm{11};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -1639,9 +1781,9 @@ bits<64> rs2;
 bits<64> rs1;
 
 let Inst{11-8} = imm{3-0};
-let Inst{30-25} = imm{13-8};
-let Inst{7} = imm{20};
-let Inst{31} = imm{22};
+let Inst{30-25} = imm{9-4};
+let Inst{7} = imm{10};
+let Inst{31} = imm{11};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -1693,9 +1835,9 @@ bits<64> rs2;
 bits<64> rs1;
 
 let Inst{11-8} = imm{3-0};
-let Inst{30-25} = imm{13-8};
-let Inst{7} = imm{20};
-let Inst{31} = imm{22};
+let Inst{30-25} = imm{9-4};
+let Inst{7} = imm{10};
+let Inst{31} = imm{11};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -2059,9 +2201,9 @@ bits<64> imm;
 bits<64> rd;
 
 let Inst{30-21} = imm{9-0};
-let Inst{20} = imm{20};
-let Inst{19-12} = imm{29-22};
-let Inst{31} = imm{38};
+let Inst{20} = imm{10};
+let Inst{19-12} = imm{18-11};
+let Inst{31} = imm{19};
 let Inst{11-7} = rd{4-0};
 let Inst{6-0} = opcode{6-0};
 
@@ -3147,7 +3289,7 @@ bits<64> rs2;
 bits<64> rs1;
 
 let Inst{11-7} = imm{4-0};
-let Inst{31-25} = imm{16-10};
+let Inst{31-25} = imm{11-5};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -3199,7 +3341,7 @@ bits<64> rs2;
 bits<64> rs1;
 
 let Inst{11-7} = imm{4-0};
-let Inst{31-25} = imm{16-10};
+let Inst{31-25} = imm{11-5};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -3251,7 +3393,7 @@ bits<64> rs2;
 bits<64> rs1;
 
 let Inst{11-7} = imm{4-0};
-let Inst{31-25} = imm{16-10};
+let Inst{31-25} = imm{11-5};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -4259,7 +4401,7 @@ bits<64> rs2;
 bits<64> rs1;
 
 let Inst{11-7} = imm{4-0};
-let Inst{31-25} = imm{16-10};
+let Inst{31-25} = imm{11-5};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
