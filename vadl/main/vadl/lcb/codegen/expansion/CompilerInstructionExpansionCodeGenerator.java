@@ -163,6 +163,23 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
     switch (usage.get(0)) {
       case IMMEDIATE -> {
+        // There are two cases:
+        // (1) in one case, the operand is an immediate then we must create an immediate operand.
+
+        ctx.ln("if(instruction.getOperand(%d).isImm()) {", pseudoInstructionIndex)
+            .spacedIn()
+            .ln(
+                String.format(
+                    "%s.addOperand(MCOperand::createImm(instruction.getOperand(%d).getImm()));",
+                    instructionSymbol,
+                    pseudoInstructionIndex))
+            .spaceOut()
+            .ln("}")
+            .ln("else {")
+            .spacedIn();
+
+        // (2) the other case is when it is a label or an immediate with a modifier.
+
         var argumentSymbol = symbolTable.getNextVariable();
         ctx.ln("const MCExpr* %s = MCOperandToMCExpr(instruction.getOperand(%d));", argumentSymbol,
             pseudoInstructionIndex);
@@ -183,6 +200,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
               () -> Diagnostic.error(
                   "Expected a variant for an immediate. But haven't " + "found any",
                   toHandle.location())).value();
+
         }
 
         ctx.ln(
@@ -190,7 +208,9 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
                 + "%sMCExpr::VariantKind::%s, " + "Ctx));", argumentImmSymbol, targetName.value(),
             argumentSymbol, targetName.value(),
             requireNonNull(variant));
-        ctx.ln(String.format("%s.addOperand(%s);", instructionSymbol, argumentImmSymbol));
+        ctx.ln(String.format("%s.addOperand(%s);", instructionSymbol, argumentImmSymbol))
+            .spaceOut()
+            .ln("}");
       }
       case REGISTER -> ctx.ln("%s.addOperand(instruction.getOperand(%d));", instructionSymbol,
           pseudoInstructionIndex);
