@@ -103,8 +103,6 @@ interface ExprVisitor<R> {
 
   R visit(StringLiteral expr);
 
-  R visit(TensorLiteral expr);
-
   R visit(PlaceholderExpr expr);
 
   R visit(MacroInstanceExpr expr);
@@ -815,64 +813,6 @@ class StringLiteral extends Expr {
   @Override
   public int hashCode() {
     return token.hashCode();
-  }
-}
-
-/**
- * A literal to create a tensor.
- *
- * <p><pre>{@code
- * constant a: Bits<4><8> = [1 as Bits<8>, 2, 3, 4]
- * constant b: Bits<2><4><8> = [[1 as Bits<8>, 2, 3, 4], [5 as Bits<8>, 6, 7, 8]]
- * }</pre>
- */
-class TensorLiteral extends Expr {
-  @Child
-  List<Expr> children;
-  SourceLocation loc;
-
-  public TensorLiteral(List<Expr> children, SourceLocation loc) {
-    this.children = children;
-    this.loc = loc;
-  }
-
-  @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    builder.append('[');
-    prettyPrintJoin(",", children, indent, builder);
-    builder.append(']');
-  }
-
-  @Override
-  <R> R accept(ExprVisitor<R> visitor) {
-    return visitor.visit(this);
-  }
-
-  @Override
-  SyntaxType syntaxType() {
-    return BasicSyntaxType.EX;
-  }
-
-  @Override
-  public SourceLocation location() {
-    return loc;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    TensorLiteral that = (TensorLiteral) o;
-    return children.equals(that.children) && loc.equals(that.loc);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = children.hashCode();
-    result = 31 * result + loc.hashCode();
-    return result;
   }
 }
 

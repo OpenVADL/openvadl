@@ -37,7 +37,6 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
@@ -2379,53 +2378,6 @@ public class TypeChecker
   public Void visit(StringLiteral expr) {
     expr.type = Type.string();
     return null;
-  }
-
-  @Override
-  public Void visit(TensorLiteral expr) {
-    var childTypes = expr.children.stream().map(this::check).toList();
-
-    // FIXME: If all types are constant we cannot do anything here for now because bidirectional
-    // typechecking would be required for that.
-    if (childTypes.stream().allMatch(x -> x instanceof ConstantType)) {
-      throw error("Unknown tensor literal type", expr)
-          .locationDescription(expr,
-              "At the moment the compiler cannot figure out the type of the tensor if all "
-                  + "values are constant.")
-          .locationHelp(expr, "Try casting one of the values to a specific type.")
-          .build();
-    }
-
-    // If at least one argument has a non constant type use that.
-    var uniqueTypes =
-        childTypes.stream().filter(x -> !(x instanceof ConstantType)).collect(Collectors.toSet());
-    if (uniqueTypes.size() > 1) {
-      throw error("Type Mismatch", expr)
-          .locationDescription(expr,
-              "Vectors must only hold a single type, but you specified: %s",
-              String.join(" ,", uniqueTypes.stream().map(Type::toString).toList()))
-          .build();
-    }
-
-    var childType = uniqueTypes.iterator().next();
-
-    expr.children = expr.children.stream()
-        .map(child -> tryWrapImplicitCast(child, childType))
-        .toList();
-
-    if (childType instanceof BitsType childBitsType) {
-      expr.type = new TensorType(List.of(expr.children.size()), childBitsType);
-      return null;
-    }
-
-    if (childType instanceof TensorType childTensorType) {
-      expr.type = new TensorType(List.of(expr.children.size()), childTensorType);
-      return null;
-    }
-
-    throw error("Invalid Tensor Type", expr)
-        .locationDescription(expr, "Tensors can only be created of Bits type.")
-        .build();
   }
 
   @Override
