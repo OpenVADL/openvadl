@@ -1640,7 +1640,7 @@ PRODUCTIONS
     macroReplacement<out Node n> (. expr = castExpr(this, n); .)
   .
 
-  groupedExpression<out GroupedExpr expr> (. expr = new GroupedExpr(new ArrayList<>(), lastTokenLoc()); .)
+  groupedExpression<out GroupedExpr expr> (. expr = new GroupedExpr(new ArrayList<>(), nextTokenLoc()); .)
   = SYM_PAREN_OPEN
     expression<out Expr inner, BIN_OPS>   (. expr.expressions.add(inner); .)
     {

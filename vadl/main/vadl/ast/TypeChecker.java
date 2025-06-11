@@ -2315,6 +2315,34 @@ public class TypeChecker
     }
 
     // Bits concatination
+
+    // If there are constants values and only one "concrete" type we can cast the constants to that
+    // one.
+    if (types.stream().anyMatch(x -> x instanceof ConstantType)) {
+      var concreteTypes =
+          types.stream().filter(x -> !(x instanceof ConstantType)).distinct().toList();
+      if (concreteTypes.isEmpty()) {
+        throw error("Type Mismatch", expr)
+            .locationDescription(expr,
+                "At least one value has to have a concrete bitwidth for a concatination")
+            .build();
+      }
+      if (concreteTypes.size() > 1) {
+        throw error("Type Mismatch", expr)
+            .locationDescription(expr,
+                "The concatination operation can only concat bits or strings.")
+            .locationNote(expr, "Provided types: %s",
+                String.join(", ", types.stream().map(Type::toString).toList()))
+            .locationHelp(expr,
+                "Constant types can be implicitly casted to a concrete type if only one such "
+                    + "concrete type appears.")
+            .build();
+      }
+
+      expr.expressions.replaceAll(e -> wrapImplicitCast(e, concreteTypes.get(0)));
+      types = expr.expressions.stream().map(this::check).toList();
+    }
+
     if (types.stream().allMatch(x -> x instanceof DataType)) {
       var width = types.stream().map(t -> ((DataType) t).bitWidth()).reduce(0, Integer::sum);
       expr.type = Type.bits(width);
