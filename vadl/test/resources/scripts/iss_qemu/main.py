@@ -20,7 +20,7 @@ def reset_terminal():
         try:
             subprocess.run(["stty", "sane"], check=True)
         except subprocess.CalledProcessError as e:
-            print(f"Warning: Failed to reset terminal state: {e}", file=sys.stderr)
+          pass
 
 async def main(testsuite_path: argparse.FileType):
     test_config = load_config(testsuite_path)
