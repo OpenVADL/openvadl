@@ -9,7 +9,7 @@ tablegen(LLVM [(${namespace})]GenMCCodeEmitter.inc -gen-emitter)
 tablegen(LLVM [(${namespace})]GenDAGISel.inc -gen-dag-isel)
 tablegen(LLVM [(${namespace})]GenSubtargetInfo.inc -gen-subtarget)
 tablegen(LLVM [(${namespace})]GenMCPseudoLowering.inc -gen-pseudo-lowering)
-tablegen(LLVM [(${namespace})]GenDisassemblerTables.inc -gen-disassembler)
+# tablegen(LLVM [(${namespace})]GenDisassemblerTables.inc -gen-disassembler)
 
 add_public_tablegen_target([(${namespace})]CommonTableGen)
 
@@ -44,4 +44,4 @@ add_llvm_target([(${namespace})]CodeGen
 add_subdirectory(AsmParser)
 add_subdirectory(TargetInfo)
 add_subdirectory(MCTargetDesc)
-add_subdirectory(Disassembler)
+# add_subdirectory(Disassembler)
