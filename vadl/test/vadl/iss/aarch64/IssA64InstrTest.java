@@ -19,6 +19,7 @@ package vadl.iss.aarch64;
 import java.io.IOException;
 import java.nio.ByteOrder;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -49,6 +50,8 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
   InstructionSetArchitecture isa;
   @LazyInit
   AutoAssembler autoAssembler;
+
+  HashSet<Instruction> testedInstrs = new HashSet<>();
 
   @Override
   public int getTestPerInstruction() {
@@ -82,6 +85,15 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
           .allowRegisterIndices(3, 31);
     }
   }
+
+  @Test
+  void testAutoAssembler() {
+    // just test that all instructions can be assembled
+    for (var instr : isa.ownInstructions()) {
+      System.out.println(autoAssembler.produce(instr).assembly());
+    }
+  }
+
 
   @TestFactory
   Stream<DynamicTest> testADC() throws IOException {
@@ -169,6 +181,17 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
 
 
   @TestFactory
+  Stream<DynamicTest> testSBC() throws IOException {
+    return runTestsWith(makeTestCases("SBCW", "SBCX"));
+  }
+
+  @TestFactory
+  Stream<DynamicTest> testSBCS() throws IOException {
+    return runTestsWith(makeTestCasesFromPrefixes("SBCS"));
+  }
+
+
+  @TestFactory
   Stream<DynamicTest> testSUBExt() throws IOException {
     // SUB (extended register): Subtract extended and scaled register.
     return runTestsWith(makeTestCasesFromPrefixes("SUBWUX", "SUBWSX", "SUBXUX", "SUBXSX"));
@@ -209,16 +232,6 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
     ));
   }
 
-
-  @Test
-  void testAutoAssembler() {
-    // just test that all instructions can be assembled
-    for (var instr : isa.ownInstructions()) {
-      System.out.println(autoAssembler.produce(instr).assembly());
-    }
-  }
-
-
   private List<Function<Integer, IssTestUtils.TestCase>> makeTestCasesFromPrefixes(
       String... instrPrefix) {
     var instrs = findInstrsWithPrefixes(instrPrefix).toArray(String[]::new);
@@ -247,6 +260,11 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
   private IssTestUtils.TestCase makeTestCase(String instrName, int id) {
     var instr =
         TestUtils.findDefinitionByNameIn("AArch64Base::" + instrName, isa, Instruction.class);
+
+    if (testedInstrs.contains(instr)) {
+      throw new IllegalStateException("Instruction was already tested: " + instr);
+    }
+
     var result = autoAssembler.produce(instr);
     var builder = getBuilder(instrName + "_", id);
 
