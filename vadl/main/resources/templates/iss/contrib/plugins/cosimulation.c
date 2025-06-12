@@ -224,7 +224,7 @@ static SHMCPU get_cpu_state(unsigned int cpu_index) {
       memcpy(shm_reg.data, buf->data, shm_reg.size);
     }
 
-    g_free(buf);
+    g_byte_array_unref(buf);
 
     shm_cpu.registers[reg_idx] = shm_reg;
   }
