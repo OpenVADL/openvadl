@@ -149,6 +149,20 @@ def diff_cpus(
 
     return diffs
 
+# assumes that the name exists
+def reg_by_name(
+    registers: list[SHMRegister], name: str, config: Config
+) -> SHMRegister:
+    for reg in registers:
+        reg_name = reg.fname(config.qemu.gdb_reg_map)
+        if reg_name == name:
+            return reg
+        
+        if name in config.qemu.gdb_reg_map and reg_name == config.qemu.gdb_reg_map[name]:
+            return reg
+
+    assert False, "reg_by_name called but no register with that name found"
+
 
 def diff_cpu(
     cpu1: SHMCPU, cpu2: SHMCPU, cpu_index: int, config: Config
@@ -167,6 +181,19 @@ def diff_cpu(
                 "different number of CPU registers",
             )
         )
+
+    if cpu1.registers_size < cpu2.registers_size:
+        for reg_index in range(cpu1.registers_size):
+            c1reg = cpu1.registers[reg_index]
+            c2reg = reg_by_name(cpu2.registers, c1reg.name, config)
+
+            diffs.extend(diff_register(c1reg, c2reg, cpu_index, reg_index, config))
+    else:
+        for reg_index in range(cpu2.registers_size):
+            c2reg = cpu2.registers[reg_index]
+            c1reg = reg_by_name(cpu1.registers, c2reg.name.fstr(), config)
+
+            diffs.extend(diff_register(c1reg, c2reg, cpu_index, reg_index, config))
 
     for reg_index in range(min(cpu1.registers_size, cpu2.registers_size)):
         c1reg = cpu1.registers[reg_index]
