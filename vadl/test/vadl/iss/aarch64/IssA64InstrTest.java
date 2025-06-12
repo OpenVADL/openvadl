@@ -145,9 +145,23 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
     ));
   }
 
+  // TODO: Test ANDSImm (decoding to complicated to find correct constraint)
+
+  @TestFactory
+  Stream<DynamicTest> testANDSShifted() throws IOException {
+    // ANDS (shifted register): Bitwise AND (shifted register), setting flags
+    return runTestsWith(makeTestCasesFromPrefixes("ANDSW", "ANDSX"));
+  }
+
   @TestFactory
   Stream<DynamicTest> testASR() throws IOException {
     return runTestsWith(makeTestCasesFromPrefixes("ASRW", "ASRX"));
+  }
+
+  @TestFactory
+  Stream<DynamicTest> testBICS() throws IOException {
+    // Bitwise bit clear (shifted register), setting flags
+    return runTestsWith(makeTestCasesFromPrefixes("BICS"));
   }
 
   @TestFactory
