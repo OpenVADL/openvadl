@@ -41,9 +41,6 @@ import vadl.gcb.passes.NormalizeFieldsToFieldAccessFunctionsPass;
 import vadl.gcb.passes.SetMissingConfigurationValuesPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingFunctionPass;
-import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass;
-import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass;
-import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessFunctionFromPredicateFunctionPass;
 import vadl.iss.passes.IssBuiltInArgTruncOptPass;
 import vadl.iss.passes.IssConfigurationPass;
 import vadl.iss.passes.IssExtractOptimizationPass;
@@ -76,6 +73,7 @@ import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslateCPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaRelocationMatchingPass;
+import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenAbiSequenceInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
@@ -88,6 +86,7 @@ import vadl.lcb.passes.pseudo.AbiSequencesCompilerInstructionExpansionFunctionGe
 import vadl.lcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass;
+import vadl.lcb.template.include.llvm.BinaryFormat.ELFRelocs.EmitTargetElfRelocsDefFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.lcb.template.lib.Target.EmitVadlBuiltinHeaderFilePass;
@@ -220,9 +219,6 @@ public class PassOrders {
     order.add(new GenerateValueRangeImmediatePass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
     order.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
-    order.add(new CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass(gcbConfiguration));
-    order.add(new CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass(gcbConfiguration));
-    order.add(new CreateGcbFieldAccessFunctionFromPredicateFunctionPass(gcbConfiguration));
     order.add(new AssemblyConcatBuiltinMergingPass(gcbConfiguration));
     order.add(new InstructionPatternPruningPass(gcbConfiguration));
 
@@ -254,6 +250,7 @@ public class PassOrders {
     order.add(new GenerateTableGenPseudoInstructionRecordPass(configuration));
     order.add(new GenerateTableGenAbiSequenceInstructionRecordPass(configuration));
     order.add(new GenerateTableGenImmediateRecordPass(configuration));
+    order.add(new CreateFunctionsFromImmediatesPass(configuration));
     order.add(new CompensationPatternPass(configuration));
     order.add(new ISelLoweringOperationActionPass(configuration));
     order.add(new GenerateLinkerComponentsPass(configuration));
@@ -289,7 +286,7 @@ public class PassOrders {
     order.add(new vadl.lcb.template.lld.ELF.Arch.EmitLldArchFilePass(configuration));
     order.add(new vadl.lcb.template.lld.ELF.EmitLldTargetCppFilePass(configuration));
     order.add(new vadl.lcb.template.EmitLcbMakeFilePass(configuration));
-    order.add(new vadl.lcb.include.llvm.BinaryFormat.ELFRelocs.EmitTargetElfRelocsDefFilePass(
+    order.add(new EmitTargetElfRelocsDefFilePass(
         configuration));
     order.add(new vadl.lcb.include.llvm.BinaryFormat.EmitElfHeaderFilePass(configuration));
     order.add(new vadl.lcb.include.llvm.Object.EmitELFObjectHeaderFilePass(configuration));

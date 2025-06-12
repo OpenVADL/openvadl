@@ -27,6 +27,7 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.viam.Encoding;
 import vadl.viam.Instruction;
 
 /**
@@ -60,11 +61,10 @@ public class TableGenMachineInstruction extends TableGenInstruction {
     this.size = instruction.encoding().format().type().bitWidth() / 8;
     this.codeSize = instruction.encoding().format().type().bitWidth() / 8;
     this.bitBlocks = BitBlock.from(instruction.encoding());
-    this.fieldEncodings = FieldEncoding.from(instruction.encoding());
+    this.fieldEncodings = FieldEncoding.from(instruction.encoding(), inOperands);
     this.instruction = instruction;
     this.llvmLoweringRecord = llvmLoweringRecord;
   }
-
 
   public int getSize() {
     return size;
@@ -144,31 +144,55 @@ public class TableGenMachineInstruction extends TableGenInstruction {
     private final String sourceBitBlockName;
     private final int sourceHigh;
     private final int sourceLow;
+    /*
+    To support multiple encodings with multiple field access functions, we merge the encoded
+    fields together. Therefore, the extraction must add the `immediateOffset` since its packed.
+     */
+    private final int immediateOffset;
 
-    private FieldEncoding(int targetHigh, int targetLow, String sourceBitBlockName, int sourceHigh,
-                          int sourceLow) {
+    private FieldEncoding(int targetHigh,
+                          int targetLow,
+                          String sourceBitBlockName,
+                          int sourceHigh,
+                          int sourceLow,
+                          int immediateOffset) {
       this.targetHigh = targetHigh;
       this.targetLow = targetLow;
       this.sourceBitBlockName = sourceBitBlockName;
       this.sourceHigh = sourceHigh;
       this.sourceLow = sourceLow;
+      this.immediateOffset = immediateOffset;
     }
 
     /**
      * Convert an encoding to a TableGen model.
      */
-    public static List<FieldEncoding> from(vadl.viam.Encoding encoding) {
+    public static List<FieldEncoding> from(Encoding encoding,
+                                           List<TableGenInstructionOperand> inOperands) {
       ArrayList<FieldEncoding> encodings = new ArrayList<>();
+      var immediateOffset = 0;
       for (var field : encoding.format().fields()) {
-        var offset = 0;
+        var sourceOffset = 0;
         var parts = new ArrayList<>(field.bitSlice().parts().toList());
         Collections.reverse(parts);
+        boolean isImmediate =
+            inOperands.stream()
+                .filter(x -> x instanceof ReferencesImmediateOperand)
+                .flatMap(x ->
+                    ((ReferencesImmediateOperand) x).immediateOperand().fieldAccessRef().fieldRefs()
+                        .stream())
+                .anyMatch(y -> y == field);
         for (var part : parts) {
           encodings.add(
               new FieldEncoding(part.msb(), part.lsb(), field.simpleName(),
-                  offset + part.size() - 1,
-                  offset));
-          offset += part.size();
+                  sourceOffset + part.size() - 1,
+                  sourceOffset,
+                  isImmediate ? immediateOffset : 0)); // only field access functions have offset
+          sourceOffset += part.size();
+        }
+
+        if (isImmediate) {
+          immediateOffset += field.size();
         }
       }
       return encodings;
@@ -192,6 +216,10 @@ public class TableGenMachineInstruction extends TableGenInstruction {
 
     public int getSourceLow() {
       return sourceLow;
+    }
+
+    public int immediateOffset() {
+      return immediateOffset;
     }
   }
 }

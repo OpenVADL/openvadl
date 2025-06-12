@@ -63,6 +63,11 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
+  public Definition visit(FormatDefinition.AuxiliaryField definition) {
+    return definition;
+  }
+
+  @Override
   public Definition visit(InstructionSetDefinition definition) {
     definition.definitions.removeIf(this::shouldRemove);
     return definition;

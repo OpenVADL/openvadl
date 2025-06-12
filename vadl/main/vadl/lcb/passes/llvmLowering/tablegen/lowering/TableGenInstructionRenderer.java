@@ -310,7 +310,7 @@ public final class TableGenInstructionRenderer {
       return String.format("bits<%s> %s = 0b%s;", bitBlock.getSize(), bitBlock.getName(),
           toBinaryString(bitBlock.getBitSet().get(), bitBlock.getSize()));
     } else {
-      return String.format("bits<%s> %s;", bitBlock.getSize(), bitBlock.getName());
+      return String.format("bits<%s> %s;", 64, bitBlock.getName());
     }
   }
 
@@ -318,9 +318,13 @@ public final class TableGenInstructionRenderer {
     var inst = fieldEncoding.getTargetHigh() != fieldEncoding.getTargetLow()
         ? fieldEncoding.getTargetHigh() + "-"
         + fieldEncoding.getTargetLow() : fieldEncoding.getTargetHigh();
+
+    var sourceHigh = fieldEncoding.getSourceHigh() + fieldEncoding.immediateOffset();
+    var sourceLow = fieldEncoding.getSourceLow() + fieldEncoding.immediateOffset();
+
     var source = fieldEncoding.getSourceHigh() != fieldEncoding.getSourceLow()
-        ? fieldEncoding.getSourceHigh() + "-" + fieldEncoding.getSourceLow() :
-        fieldEncoding.getSourceHigh();
+        ? sourceHigh + "-" + sourceLow :
+        sourceHigh;
 
     return String.format("let Inst{%s} = %s{%s};", inst,
         fieldEncoding.getSourceBitBlockName(),

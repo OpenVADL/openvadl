@@ -20,6 +20,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -29,12 +30,18 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
  */
 public class LcbFieldAccessRefNodeReplacement
     implements GraphVisitor.NodeApplier<FieldAccessRefNode, LlvmFieldAccessRefNode> {
+  private final PrintableInstruction printableInstruction;
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
   private final ValueType architectureType;
 
+  /**
+   * Constructor.
+   */
   public LcbFieldAccessRefNodeReplacement(
+      PrintableInstruction instruction,
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer,
       ValueType architectureType) {
+    this.printableInstruction = instruction;
     this.replacer = replacer;
     this.architectureType = architectureType;
   }
@@ -45,7 +52,9 @@ public class LcbFieldAccessRefNodeReplacement
     var originalType = fieldAccessRefNode.fieldAccess().accessFunction().returnType();
 
     return
-        new LlvmFieldAccessRefNode(fieldAccessRefNode.fieldAccess(),
+        new LlvmFieldAccessRefNode(
+            printableInstruction,
+            fieldAccessRefNode.fieldAccess(),
             originalType,
             architectureType,
             LlvmFieldAccessRefNode.Usage.Immediate);

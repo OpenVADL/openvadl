@@ -33,13 +33,15 @@ import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.context.CNodeWithBaggageContext;
-import vadl.cppCodeGen.model.GcbCppFunctionForFieldAccess;
+import vadl.cppCodeGen.model.GcbCppAccessFunction;
+import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.gcb.valuetypes.VariantKind;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.utils.Pair;
 import vadl.viam.CompilerInstruction;
@@ -47,6 +49,7 @@ import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Relocation;
 import vadl.viam.graph.HasRegisterTensor;
@@ -82,7 +85,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
   private final TargetName targetName;
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
-  private final Map<Format.Field, GcbCppFunctionForFieldAccess> immediateDecodings;
+  private final Map<FieldInInstruction, GcbCppFunctionWithBody> immediateDecodingsByField;
   private final List<HasRelocationComputationAndUpdate> relocations;
   private final CompilerInstruction compilerInstruction;
   private final SymbolTable symbolTable;
@@ -90,6 +93,9 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   private final IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords;
   private final IdentityHashMap<NewLabelNode, String> labelSymbolNameLookup;
 
+  record FieldInInstruction(PrintableInstruction instruction, Format.Field field) {
+
+  }
 
   /**
    * Constructor.
@@ -97,7 +103,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   public CompilerInstructionExpansionCodeGenerator(
       TargetName targetName,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
-      Map<Format.Field, GcbCppFunctionForFieldAccess> immediateDecodings,
+      Map<TableGenImmediateRecord, GcbCppAccessFunction> immediateDecodings,
       List<HasRelocationComputationAndUpdate> relocations,
       GenerateLinkerComponentsPass.VariantKindStore variantKindStore,
       CompilerInstruction compilerInstruction,
@@ -106,13 +112,19 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     super(function);
     this.targetName = targetName;
     this.fieldUsages = fieldUsages;
-    this.immediateDecodings = immediateDecodings;
     this.relocations = relocations;
     this.compilerInstruction = compilerInstruction;
     this.symbolTable = new SymbolTable();
     this.variantKindStore = variantKindStore;
     this.machineInstructionRecords = machineInstructionRecords;
     this.labelSymbolNameLookup = new IdentityHashMap<>();
+    this.immediateDecodingsByField = immediateDecodings
+        .entrySet()
+        .stream().map(x -> new Pair<>(
+            new FieldInInstruction(x.getKey().instructionRef(),
+                x.getKey().fieldAccessRef().fieldRef()),
+            x.getValue()))
+        .collect(Collectors.toMap(Pair::left, Pair::right));
   }
 
   @Override
@@ -151,6 +163,23 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
     switch (usage.get(0)) {
       case IMMEDIATE -> {
+        // There are two cases:
+        // (1) in one case, the operand is an immediate then we must create an immediate operand.
+
+        ctx.ln("if(instruction.getOperand(%d).isImm()) {", pseudoInstructionIndex)
+            .spacedIn()
+            .ln(
+                String.format(
+                    "%s.addOperand(MCOperand::createImm(instruction.getOperand(%d).getImm()));",
+                    instructionSymbol,
+                    pseudoInstructionIndex))
+            .spaceOut()
+            .ln("}")
+            .ln("else {")
+            .spacedIn();
+
+        // (2) the other case is when it is a label or an immediate with a modifier.
+
         var argumentSymbol = symbolTable.getNextVariable();
         ctx.ln("const MCExpr* %s = MCOperandToMCExpr(instruction.getOperand(%d));", argumentSymbol,
             pseudoInstructionIndex);
@@ -160,7 +189,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
         String variant = "VK_None";
 
         if (!instructionCallNode.isParameterFieldAccess(field)) {
-          var variants = variantKindStore.decodeVariantKindsByField(field);
+          var variants = variantKindStore.decodeVariantKindsByField(instruction, field);
 
           ensure(variants.size() == 1, () -> Diagnostic.error(
               "There are unexpectedly multiple variant kinds for the pseudo expansion available.",
@@ -179,6 +208,10 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
             argumentSymbol, targetName.value(),
             requireNonNull(variant));
         ctx.ln(String.format("%s.addOperand(%s);", instructionSymbol, argumentImmSymbol));
+
+        ctx
+            .spaceOut()
+            .ln("}");
       }
       case REGISTER -> ctx.ln("%s.addOperand(instruction.getOperand(%d));", instructionSymbol,
           pseudoInstructionIndex);
@@ -219,15 +252,15 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
           field.location()).build();
     });
 
-    switch (usage.get(0)) {
+    switch (usage.getFirst()) {
       case IMMEDIATE -> {
-
         var immediateValueString = String.valueOf(toHandle.constant().asVal().intValue());
 
         if (!instructionCallNode.isParameterFieldAccess(field)) {
-          var decodingFunction = immediateDecodings.get(field);
+          var decodingFunction =
+              immediateDecodingsByField.get(new FieldInInstruction(instruction, field));
           ensure(decodingFunction != null, "decodingFunction must not be null");
-          var decodingFunctionName = decodingFunction.functionName().lower();
+          var decodingFunctionName = decodingFunction.header().functionName().lower();
           immediateValueString = decodingFunctionName + "(" + immediateValueString + ")";
         }
 
@@ -265,6 +298,10 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
   @Override
   public void handle(CGenContext<Node> ctx, FuncCallNode toHandle) {
+    var instruction = ((CNodeWithBaggageContext) ctx).get(INSTRUCTION, Instruction.class);
+    var instructionCallNode =
+        ((CNodeWithBaggageContext) ctx).get(INSTRUCTION_CALL_NODE, InstrCallNode.class);
+    var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
     var field = ((CNodeWithBaggageContext) ctx).get(FIELD, Format.Field.class);
     var relocation = (Relocation) toHandle.function();
 
@@ -282,13 +319,73 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
       var parameterName = funcParamNode.parameter().identifier;
       var pseudoInstructionIndex =
           getOperandIndexFromCompilerInstruction(field, toHandle, parameterName);
+      var relocationRef =
+          ensurePresent(relocations.stream().filter(x -> x.relocation() == relocation).findFirst(),
+              () -> Diagnostic.error("Cannot find relocation", relocation.location()));
+
+      ctx.ln("if(instruction.getOperand(%d).isImm()) {", pseudoInstructionIndex)
+          .spacedIn();
+
+      // There two cases now.
+      // (1) If the parameter in the grammar is not a field access function then we need to decode
+      // (2) Otherwise, we don't do anything.
+
+      // This is the first case where we emit a variant
+      var argumentImmSymbol = symbolTable.getNextVariable();
+      var appliedSymbol = symbolTable.getNextVariable();
+      ctx.ln("auto %s = %sBaseInfo::%s(instruction.getOperand(%d).getImm());", appliedSymbol,
+          targetName.value(),
+          relocationRef.valueRelocation().functionName().lower(),
+          pseudoInstructionIndex
+      );
+
+      if (!instructionCallNode.isParameterFieldAccess(field)) {
+        var variants = variantKindStore.decodeVariantKindsByField(instruction, field);
+
+        ensure(variants.size() == 1, () -> Diagnostic.error(
+            "There are unexpectedly multiple variant kinds for the pseudo expansion available.",
+            toHandle.location()));
+
+        var variant = ensurePresent(
+            requireNonNull(variants).stream().filter(VariantKind::isImmediate).findFirst(),
+            () -> Diagnostic.error(
+                "Expected a variant for an immediate. But haven't " + "found any",
+                toHandle.location())).value();
+
+        ctx.ln(
+            "MCOperand %s = MCOperand::createExpr("
+                + "%sMCExpr::create(MCConstantExpr::create(%s, Ctx), "
+                + "%sMCExpr::VariantKind::%s, " + "Ctx));", argumentImmSymbol,
+            targetName.value(),
+            appliedSymbol, targetName.value(),
+            requireNonNull(variant));
+
+        // -- end (1) case
+      } else {
+        // This is the second case where we don't emit anything
+        // only the raw value of the pseudo instruction
+
+        ctx.ln(
+            "MCOperand %s = MCOperand::createExpr(MCConstantExpr::create(%s, Ctx));",
+            argumentImmSymbol, appliedSymbol);
+
+        // -- end (2) case
+      }
+
+      ctx.ln(String.format("%s.addOperand(%s);", instructionSymbol, argumentImmSymbol));
+
+      ctx.spaceOut()
+          .ln("}")
+          .ln("else {")
+          .spacedIn();
 
       var argumentSymbol = symbolTable.getNextVariable();
-
       ctx.ln("const MCExpr* %s = MCOperandToMCExpr(instruction.getOperand(%d));", argumentSymbol,
           pseudoInstructionIndex);
-
       handleRelocationOperand(ctx, argumentSymbol, relocation);
+
+      ctx.spaceOut()
+          .ln("}");
     } else if (toHandle.arguments().get(0) instanceof LabelNode labelNode) {
       /*
       Here is the argument to `pcrel_lo` the `LabelNode`.
@@ -319,6 +416,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
   private void handleRelocationOperand(CGenContext<Node> ctx, String argumentSymbol,
                                        Relocation relocation) {
+    final var instruction = ((CNodeWithBaggageContext) ctx).get(INSTRUCTION, Instruction.class);
     final var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
     final var field = ((CNodeWithBaggageContext) ctx).get(FIELD, Format.Field.class);
     final var instructionCallNode =
@@ -338,7 +436,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     // build a nested MCExpr with the decode variant
     // to call the decoding function
     if (!instructionCallNode.isParameterFieldAccess(field)) {
-      var decodeVariants = variantKindStore.decodeVariantKindsByField(field);
+      var decodeVariants = variantKindStore.decodeVariantKindsByField(instruction, field);
       ensure(decodeVariants.size() == 1, () -> Diagnostic.error(
           "There are unexpectedly multiple variant kinds for the pseudo expansion available.",
           field.location()));

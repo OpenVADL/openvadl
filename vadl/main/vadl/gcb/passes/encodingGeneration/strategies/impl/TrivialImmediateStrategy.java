@@ -19,11 +19,12 @@ package vadl.gcb.passes.encodingGeneration.strategies.impl;
 import vadl.gcb.passes.encodingGeneration.strategies.EncodingGenerationStrategy;
 import vadl.viam.Constant;
 import vadl.viam.Format;
-import vadl.viam.ViamError;
+import vadl.viam.PrintableInstruction;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.SliceNode;
 
 /**
@@ -54,28 +55,22 @@ public class TrivialImmediateStrategy implements EncodingGenerationStrategy {
   }
 
   @Override
-  public void generateEncoding(Format.FieldAccess fieldAccess) {
-    var parameter = setupEncodingForFieldAccess(fieldAccess);
-
+  public void generateEncoding(PrintableInstruction instruction, Format.FieldAccess fieldAccess) {
     var fieldRef = fieldAccess.fieldRef();
     // The field takes up a certain slice.
     // But we need to take a slice of the immediate of the same size.
     var fieldAccessBitSlice = fieldRef.bitSlice();
     var invertedSlice = new Constant.BitSlice(
         Constant.BitSlice.Part.of(fieldAccessBitSlice.bitSize() - 1, 0));
-    var invertedSliceNode = new SliceNode(new FuncParamNode(
-        parameter),
+    var invertedSliceNode = new SliceNode(new FieldAccessRefNode(fieldAccess, fieldAccess.type()),
         invertedSlice,
         fieldRef.type());
     var returnNode = new ReturnNode(invertedSliceNode);
     var startNode = new StartNode(returnNode);
 
-    var encoding = fieldAccess.encoding();
-    if (encoding != null && encoding.behavior() != null) {
-      encoding.behavior().addWithInputs(returnNode);
-      encoding.behavior().add(startNode);
-    } else {
-      throw new ViamError("An encoding must already exist");
-    }
+    var behavior = new Graph("Generated encoding of " + fieldAccess.simpleName());
+    behavior.addWithInputs(returnNode);
+    behavior.add(startNode);
+    setFieldEncoding(instruction, fieldAccess, behavior);
   }
 }

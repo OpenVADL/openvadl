@@ -2,6 +2,7 @@
 
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
 #include "Utils/ImmediateUtils.h"
+#include "Utils/[(${namespace})]BaseInfo.h"
 
 #include "MCTargetDesc/[(${namespace})]MCExpr.h"
 #include "llvm/MC/MCInst.h"

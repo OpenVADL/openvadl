@@ -14,24 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.template.utils;
+package vadl.cppCodeGen.model;
 
-import java.util.Map;
-import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
-import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.pass.PassResults;
+import vadl.viam.Format;
 
 /**
- * Utility class for predicates.
+ * A {@link GcbCppFunctionWithBody} which embodies an encoding function with a body.
  */
-public class ImmediatePredicateFunctionProvider {
-  /**
-   * Get the predicates.
-   */
-  public static Map<TableGenImmediateRecord, GcbCppFunctionWithBody> generatePredicateFunctions(
-      PassResults passResults) {
-    return ((CreateFunctionsFromImmediatesPass.Output)
-        passResults.lastResultOf(CreateFunctionsFromImmediatesPass.class)).predicates();
+public class GcbCppEncodeFunction extends GcbCppFunctionWithBody {
+  private final Format.Field field;
+
+  public GcbCppEncodeFunction(GcbCppFunctionBodyLess header, Format.Field field, String code) {
+    super(header, code);
+    this.field = field;
+  }
+
+  public Format.Field field() {
+    return field;
   }
 }

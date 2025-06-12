@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -33,12 +34,18 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
  */
 public class LcbFieldAccessRefNodeByLlvmBasicBlockReplacement
     implements GraphVisitor.NodeApplier<FieldAccessRefNode, LlvmBasicBlockSD> {
+  private final PrintableInstruction instruction;
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
   private final ValueType architectureType;
 
+  /**
+   * Constructor.
+   */
   public LcbFieldAccessRefNodeByLlvmBasicBlockReplacement(
+      PrintableInstruction instruction,
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer,
       ValueType architectureType) {
+    this.instruction = instruction;
     this.replacer = replacer;
     this.architectureType = architectureType;
   }
@@ -48,7 +55,8 @@ public class LcbFieldAccessRefNodeByLlvmBasicBlockReplacement
   public LlvmBasicBlockSD visit(FieldAccessRefNode fieldAccessRefNode) {
     var originalType = fieldAccessRefNode.fieldAccess().accessFunction().returnType();
 
-    return new LlvmBasicBlockSD(fieldAccessRefNode.fieldAccess(),
+    return new LlvmBasicBlockSD(instruction,
+        fieldAccessRefNode.fieldAccess(),
         originalType,
         architectureType);
   }

@@ -16,8 +16,7 @@
 
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
-import static vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass.WRAPPER;
-import static vadl.lcb.template.utils.ImmediateEncodingFunctionProvider.generateEncodeFunctions;
+import static vadl.lcb.template.utils.ImmediateEncodingFunctionProvider.generateEncodeWrapperFunctions;
 
 import java.io.IOException;
 import java.util.List;
@@ -50,13 +49,12 @@ public class EmitMCCodeEmitterHeaderFilePass extends LcbTemplateRenderingPass {
         + processorName + "MCCodeEmitter.h";
   }
 
-  record Aggregate(String encodeWrapper, String encode) implements Renderable {
+  record Aggregate(String encodeWrapper) implements Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
       return Map.of(
-          "encodeWrapper", encodeWrapper,
-          "encode", encode
+          "encodeWrapper", encodeWrapper
       );
     }
   }
@@ -66,15 +64,15 @@ public class EmitMCCodeEmitterHeaderFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
-        "immediates", generateImmediates(passResults));
+        "encoderMethods", generateEncoderMethodWrappers(passResults));
   }
 
-  private List<Aggregate> generateImmediates(PassResults passResults) {
-    return generateEncodeFunctions(passResults)
+  private List<Aggregate> generateEncoderMethodWrappers(PassResults passResults) {
+    return generateEncodeWrapperFunctions(passResults)
         .values()
         .stream()
-        .map(f -> new Aggregate(f.identifier.append(WRAPPER).lower(),
-            f.identifier.lower()))
+        .map(wrapperFunction -> new Aggregate(
+            wrapperFunction.identifier.lower()))
         .toList();
   }
 }

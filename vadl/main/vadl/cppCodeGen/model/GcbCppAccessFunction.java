@@ -16,30 +16,19 @@
 
 package vadl.cppCodeGen.model;
 
-import vadl.types.Type;
 import vadl.viam.Format;
-import vadl.viam.Function;
-import vadl.viam.Identifier;
-import vadl.viam.Parameter;
-import vadl.viam.graph.Graph;
 
 /**
- * An extension of a {@link Function} which has more information about the generated code.
+ * A {@link GcbCppFunctionWithBody} which embodies a field access function with an implementation.
  */
-public class GcbCppFunctionForFieldAccess extends Function {
+public class GcbCppAccessFunction extends GcbCppFunctionWithBody {
   private final Format.FieldAccess fieldAccess;
 
-  public GcbCppFunctionForFieldAccess(Identifier identifier,
-                                      Parameter[] parameters,
-                                      Type returnType,
-                                      Graph behavior,
-                                      Format.FieldAccess fieldAccess) {
-    super(identifier, parameters, returnType, behavior);
+  public GcbCppAccessFunction(GcbCppFunctionBodyLess header,
+                              Format.FieldAccess fieldAccess,
+                              String code) {
+    super(header, code);
     this.fieldAccess = fieldAccess;
-  }
-
-  public CppFunctionName functionName() {
-    return new CppFunctionName(identifier);
   }
 
   public Format.FieldAccess fieldAccess() {

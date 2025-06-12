@@ -14,24 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.template.utils;
+package vadl.cppCodeGen.model;
 
-import java.util.Map;
-import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
-import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.pass.PassResults;
+import vadl.types.Type;
+import vadl.viam.Function;
+import vadl.viam.Identifier;
+import vadl.viam.Parameter;
+import vadl.viam.graph.Graph;
 
 /**
- * Utility class for predicates.
+ * An extension of a {@link Function} which has more information about the generated code.
  */
-public class ImmediatePredicateFunctionProvider {
-  /**
-   * Get the predicates.
-   */
-  public static Map<TableGenImmediateRecord, GcbCppFunctionWithBody> generatePredicateFunctions(
-      PassResults passResults) {
-    return ((CreateFunctionsFromImmediatesPass.Output)
-        passResults.lastResultOf(CreateFunctionsFromImmediatesPass.class)).predicates();
+public class GcbCppFunctionBodyLess extends Function {
+  public GcbCppFunctionBodyLess(Identifier identifier,
+                                Parameter[] parameters,
+                                Type returnType,
+                                Graph behavior) {
+    super(identifier, parameters, returnType, behavior);
+  }
+
+  public CppFunctionName functionName() {
+    return new CppFunctionName(identifier);
   }
 }
+

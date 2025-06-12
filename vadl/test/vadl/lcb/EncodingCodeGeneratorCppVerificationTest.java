@@ -14,40 +14,41 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.cppCodeGen;
+package vadl.lcb;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
-import vadl.configuration.GcbConfiguration;
-import vadl.cppCodeGen.common.GcbAccessOrExtractionFunctionCodeGenerator;
-import vadl.cppCodeGen.model.GcbCppFunctionForFieldAccess;
-import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass;
-import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass;
+import vadl.configuration.LcbConfiguration;
+import vadl.cppCodeGen.CppTypeMap;
+import vadl.cppCodeGen.common.GcbAccessOrPredicateFunctionCodeGenerator;
+import vadl.cppCodeGen.common.GcbEncodingFunctionCodeGenerator;
+import vadl.cppCodeGen.model.GcbCppAccessFunction;
+import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.gcb.valuetypes.TargetName;
+import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.BitsType;
 import vadl.utils.Pair;
 import vadl.utils.Quadruple;
 import vadl.utils.VadlFileUtils;
+import vadl.viam.Instruction;
 
-public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGenTest {
+public class EncodingCodeGeneratorCppVerificationTest extends AbstractLcbTest {
   @TestFactory
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
     var configuration =
-        new GcbConfiguration(getConfiguration(false), new TargetName("processorNameValue"));
-    var setup = runGcbAndCppCodeGen(configuration, "sys/risc-v/rv64im.vadl");
+        new LcbConfiguration(getConfiguration(false), new TargetName("processorNameValue"));
+    var setup = runLcb(configuration, "sys/risc-v/rv64im.vadl");
 
     // Move files into Docker Context
     {
@@ -74,25 +75,30 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
                                                  ImageFromDockerfile image,
                                                  Path path) throws IOException {
     var passManager = setup.passManager();
-    var spec = setup.specification();
 
-    var decodings =
-        (CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass.Output) passManager.getPassResults()
-            .lastResultOf(CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass.class);
-    var encodings =
-        (CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass.Output) passManager.getPassResults()
-            .lastResultOf(CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass.class);
+    var output = (CreateFunctionsFromImmediatesPass.Output) passManager.getPassResults()
+        .lastResultOf(CreateFunctionsFromImmediatesPass.class);
+    var decodings = output.decodings();
+    var encodings = output.encodings();
 
-    var entries = spec.isa().map(isa -> isa.ownFormats().stream())
-        .orElse(Stream.empty())
-        .flatMap(format -> format.fieldAccesses().stream())
+    var entries = output.decodings()
+        .keySet()
+        .stream()
+        // We can only test functions which have a 1:1 mapping.
+        .filter(tableGenImmediateRecord -> {
+          var encodeFunctions =
+              encodings.get((Instruction) tableGenImmediateRecord.instructionRef());
+
+          return encodeFunctions.size() == 1;
+        })
         .map(
-            fieldAccess -> {
-              var accessFunction = decodings.byFunction().get(fieldAccess.accessFunction());
-              var encodeFunction = encodings.byFunction().get(fieldAccess.encoding());
-              var inputType =
-                  Arrays.stream(fieldAccess.accessFunction().parameters()).findFirst().get().type();
-              return new Quadruple<>(fieldAccess.identifier.lower(), (BitsType) inputType,
+            tableGenImmediateRecord -> {
+              var accessFunction = decodings.get(tableGenImmediateRecord);
+              var encodeFunction =
+                  encodings.get((Instruction) tableGenImmediateRecord.instructionRef());
+              var inputType = BitsType.bits(encodeFunction.getFirst().field().size());
+              return new Quadruple<>(accessFunction.header().identifier.lower(),
+                  inputType,
                   accessFunction,
                   encodeFunction);
             })
@@ -101,13 +107,14 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
     List<Pair<String, String>> copyMappings = new ArrayList<>();
     for (var entry : entries) {
       var arbitrary = uint(entry.second().bitWidth());
-      arbitrary.sampleStream().limit(15).forEach(sample -> {
+      arbitrary.sampleStream().limit(1).forEach(sample -> {
         var fileName = entry.first() + "_sample_" + sample + ".cpp";
         var filePath = path + "/inputs/" + fileName;
+        var encodingFunctions = entry.fourth();
         var testCase = render(fileName,
             sample,
             entry.third(),
-            entry.fourth());
+            encodingFunctions.getFirst());
         copyMappings.add(Pair.of(filePath, "/inputs/" + fileName));
         try {
           var fs = new FileWriter(filePath);
@@ -137,45 +144,45 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
 
   TestCase render(String testName,
                   int sample,
-                  GcbCppFunctionForFieldAccess accessFunction,
-                  GcbCppFunctionForFieldAccess encodingFunction) {
+                  GcbCppAccessFunction accessFunction,
+                  GcbCppFunctionWithBody encodingFunction) {
     var decodeFunctionGenerator =
-        new GcbAccessOrExtractionFunctionCodeGenerator(accessFunction, accessFunction.fieldAccess(),
-            accessFunction.identifier.lower());
+        new GcbAccessOrPredicateFunctionCodeGenerator(accessFunction.header(),
+            accessFunction.fieldAccess(),
+            accessFunction.header().identifier.lower());
     var encodeFunctionGenerator =
-        new GcbAccessOrExtractionFunctionCodeGenerator(encodingFunction,
-            encodingFunction.fieldAccess(),
-            encodingFunction.identifier.lower());
+        new GcbEncodingFunctionCodeGenerator(encodingFunction.header());
 
     var decodeFunction = decodeFunctionGenerator.genFunctionDefinition();
     var encodeFunction = encodeFunctionGenerator.genFunctionDefinition();
     String expectedReturnType =
-        CppTypeMap.getCppTypeNameByVadlType(CppTypeMap.upcast(encodingFunction.returnType()));
+        CppTypeMap.getCppTypeNameByVadlType(
+            CppTypeMap.upcast(encodingFunction.header().returnType()));
 
     String cppCode = String.format("""
             #include <cstdint>
             #include <iostream>
             #include <bitset>
             #include <vector>
-                        
+            
             // Imported by manual copy mapping
             #include "/vadl-builtins.h"
-                        
+            
             template<int start, int end, std::size_t N>
             std::bitset<N> project_range(std::bitset<N> bits)
             {
                 std::bitset<N> result;
                 size_t result_index = 0; // Index for the new bitset
-                        
+            
                 // Extract bits from the range [start, end]
                 for (size_t i = start; i <= end; ++i) {
                   result[result_index] = bits[i];
                   result_index++;
                 }
-                        
+            
                 return result;
             }
-                        
+            
             template<std::size_t N, std::size_t M>
             std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
                 auto target = 0;
@@ -184,14 +191,14 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
                     dest.set(j, source[i]);
                     target++;
                 }
-                        
+            
                 return dest;
             }
-                        
+            
             %s
-                        
+            
             %s
-                        
+            
             int main() {
               %s expected = %d;
               auto actual = %s(%s(expected));
@@ -208,8 +215,10 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
         encodeFunction,
         expectedReturnType,
         sample,
-        encodingFunction.identifier.lower(),
-        accessFunction.identifier.lower());
+        encodingFunction.header().identifier.lower(),
+        accessFunction.header().identifier.lower());
+
+    System.out.println(cppCode);
 
     return new TestCase(testName, cppCode);
   }

@@ -17,9 +17,11 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.List;
+import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 
@@ -96,5 +98,41 @@ public abstract class TableGenInstruction {
    */
   public int indexInOperands(TableGenInstructionOperand operand) {
     return outOperands.size() + inOperands.indexOf(operand);
+  }
+
+  /**
+   * Get the operand index in {@link #inOperands}. It is offset by the number of operands
+   * in {@link #outOperands}.
+   */
+  public int indexInOperands(Format.FieldAccess operand) {
+    int offset = outOperands.size();
+    int index = 0;
+
+    while (index < offset + inOperands.size()) {
+      if (inOperands.get(index) instanceof ReferencesImmediateOperand immediateOperand
+          && immediateOperand.immediateOperand().fieldAccessRef().equals(operand)) {
+        break;
+      }
+
+      index++;
+    }
+
+    if (index == offset + inOperands.size()) {
+      throw Diagnostic.error("Cannot find operand in the inputs", operand.location()).build();
+    }
+
+    return index + offset;
+  }
+
+  /**
+   * Get the operands which are immediates from the input operand list.
+   *
+   * @return a list of {@link ReferencesImmediateOperand}.
+   */
+  public List<ReferencesImmediateOperand> immediateInputOperands() {
+    return inOperands.stream()
+        .filter(x -> x instanceof ReferencesImmediateOperand)
+        .map(x -> (ReferencesImmediateOperand) x)
+        .toList();
   }
 }

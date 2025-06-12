@@ -43,7 +43,7 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
     // Then
     var resultFile = passResult.emittedFile().toFile();
     var trimmed = Files.asCharSource(resultFile, Charset.defaultCharset()).read().trim();
-    var output = trimmed.lines();
+    var output = trimmed.lines().map(String::trim);
 
     Assertions.assertLinesMatch("""
         #include "processornamevalueDisassembler.h"
@@ -61,7 +61,7 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
         /* == Register Classes == */
         
         static const unsigned XDecoderTable[] = {
-         \s
+        
             processornamevalue::X0,
             processornamevalue::X1,
             processornamevalue::X2,
@@ -94,58 +94,457 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
             processornamevalue::X29,
             processornamevalue::X30,
             processornamevalue::X31
-         \s
+        
         };
         
         
         /* == Immediate Decoding == */
         
-        DecodeStatus RV3264Base_Btype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV3264Base_ADDIW_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 4095;
-            Imm = RV3264Base_Btype_immS_decode(Imm);
+            Imm = RV3264Base_ADDIW_immS_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        DecodeStatus RV3264Base_Ftype_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
-        {
-            Imm = Imm & 63;
-            Imm = RV3264Base_Ftype_shamt_decode(Imm);
-            Inst.addOperand(MCOperand::createImm(Imm));
-            return MCDisassembler::Success;
-        }
-        DecodeStatus RV3264Base_Itype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV3264Base_ADDI_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 4095;
-            Imm = RV3264Base_Itype_immS_decode(Imm);
+            Imm = RV3264Base_ADDI_immS_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        DecodeStatus RV3264Base_Jtype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
-        {
-            Imm = Imm & 1048575;
-            Imm = RV3264Base_Jtype_immS_decode(Imm);
-            Inst.addOperand(MCOperand::createImm(Imm));
-            return MCDisassembler::Success;
-        }
-        DecodeStatus RV3264Base_Rtype_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV3264Base_ADDW_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 31;
-            Imm = RV3264Base_Rtype_shamt_decode(Imm);
+            Imm = RV3264Base_ADDW_shamt_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        DecodeStatus RV3264Base_Stype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV3264Base_ADD_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_ADD_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_ANDI_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 4095;
-            Imm = RV3264Base_Stype_immS_decode(Imm);
+            Imm = RV3264Base_ANDI_immS_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        DecodeStatus RV3264Base_Utype_immUp_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV3264Base_AND_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_AND_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_AUIPC_immUp_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 1048575;
-            Imm = RV3264Base_Utype_immUp_decode(Imm);
+            Imm = RV3264Base_AUIPC_immUp_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_BEQ_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_BEQ_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_BGEU_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_BGEU_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_BGE_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_BGE_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_BLTU_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_BLTU_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_BLT_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_BLT_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_BNE_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_BNE_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_JALR_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_JALR_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_JAL_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 1048575;
+            Imm = RV3264Base_JAL_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_LBU_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_LBU_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_LB_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_LB_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_LD_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_LD_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_LHU_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_LHU_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_LH_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_LH_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_LUI_immUp_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 1048575;
+            Imm = RV3264Base_LUI_immUp_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_LWU_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_LWU_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_LW_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_LW_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_ORI_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_ORI_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_OR_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_OR_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SB_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_SB_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SD_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_SD_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SH_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_SH_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SLLIW_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_SLLIW_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SLLI_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 63;
+            Imm = RV3264Base_SLLI_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SLLW_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_SLLW_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SLL_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_SLL_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SLTIU_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_SLTIU_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SLTI_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_SLTI_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SLTU_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_SLTU_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SLT_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_SLT_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SRAIW_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_SRAIW_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SRAI_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 63;
+            Imm = RV3264Base_SRAI_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SRAW_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_SRAW_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SRA_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_SRA_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SRLIW_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_SRLIW_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SRLI_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 63;
+            Imm = RV3264Base_SRLI_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SRLW_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_SRLW_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SRL_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_SRL_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SUBW_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_SUBW_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SUB_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_SUB_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_SW_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_SW_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_XORI_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_XORI_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264Base_XOR_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264Base_XOR_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264I_EBREAK_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264I_EBREAK_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264I_ECALL_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264I_ECALL_immS_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264M_DIVUW_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264M_DIVUW_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264M_DIVU_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264M_DIVU_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264M_DIVW_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264M_DIVW_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264M_DIV_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264M_DIV_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264M_MULHSU_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264M_MULHSU_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264M_MULHU_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264M_MULHU_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264M_MULH_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264M_MULH_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264M_MULW_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264M_MULW_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264M_MUL_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264M_MUL_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264M_REMUW_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264M_REMUW_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264M_REMU_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264M_REMU_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264M_REMW_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264M_REMW_shamt_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus RV3264M_REM_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264M_REM_shamt_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
@@ -186,8 +585,8 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
             }
         
             uint32_t Instr;
-           \s
-           \s
+        
+        
                 if (IsBigEndian)
                 {
                     Instr = support::endian::read32be(Bytes.data());
@@ -196,7 +595,7 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
                 {
                     Instr = support::endian::read32le(Bytes.data());
                 }
-           \s
+        
         
             auto Result = decodeInstruction(DecoderTable32, MI, Instr, Address, this, STI);
             Size = 4;
@@ -213,6 +612,6 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
             // Register Target Disassembler
             TargetRegistry::RegisterMCDisassembler(getTheprocessornamevalueTarget(), createprocessornamevalueDisassembler);
         }
-        """.trim().lines(), output);
+        """.trim().lines().map(String::trim), output);
   }
 }

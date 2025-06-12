@@ -24,12 +24,13 @@ import vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass;
 import vadl.types.BitsType;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
+import vadl.viam.PrintableInstruction;
 
 /**
  * Represents an immediate record in TableGen.
  */
 public class TableGenImmediateRecord {
-  private final String name;
+  private final String rawName;
   // The `encoderMethod` will be used by tablegen and has different arguments.
   private final Identifier encoderMethod;
   // The `rawEncoderMethod` is the method for the raw logic.
@@ -44,65 +45,65 @@ public class TableGenImmediateRecord {
   private final VariantKind absoluteVariantKind;
   private final VariantKind relativeVariantKind;
 
-  /**
-   * Constructor for an immediate operand.
-   */
-  private TableGenImmediateRecord(Identifier identifier,
-                                  Identifier encoderIdentifier,
-                                  Identifier rawEncoderIdentifier,
-                                  Identifier decoderIdentifier,
-                                  Identifier rawDecoderIdentifier,
-                                  Identifier predicateIdentifier,
-                                  ValueType llvmType,
-                                  Format.FieldAccess fieldAccessRef) {
-    this.name = identifier.lower();
-    this.encoderMethod = encoderIdentifier;
-    this.rawEncoderMethod = rawEncoderIdentifier;
-    this.decoderMethod = decoderIdentifier;
-    this.rawDecoderMethod = rawDecoderIdentifier;
-    this.predicateMethod = predicateIdentifier;
-    this.llvmType = llvmType;
-    this.rawType = (BitsType) fieldAccessRef.type();
-    this.formatFieldBitSize = fieldAccessRef.fieldRef().size();
-    this.fieldAccessRef = fieldAccessRef;
-    this.absoluteVariantKind = VariantKind.absolute(fieldAccessRef.fieldRef());
-    this.relativeVariantKind = VariantKind.relative(fieldAccessRef.fieldRef());
-  }
+  private final PrintableInstruction instructionRef;
 
   /**
    * Constructor.
    */
-  public TableGenImmediateRecord(Format.FieldAccess fieldAccess,
-                                 ValueType llvmType) {
-    this(fieldAccess.fieldRef().identifier,
-        Objects.requireNonNull(fieldAccess.encoding()).identifier.append(
-            EmitMCCodeEmitterCppFilePass.WRAPPER),
-        Objects.requireNonNull(fieldAccess.encoding()).identifier,
-        fieldAccess.accessFunction().identifier.append(EmitDisassemblerCppFilePass.WRAPPER),
-        fieldAccess.accessFunction().identifier,
-        fieldAccess.predicate().identifier,
-        llvmType,
-        fieldAccess);
+  public TableGenImmediateRecord(
+      PrintableInstruction instruction,
+      Format.FieldAccess fieldAccess,
+      ValueType llvmType) {
+    this.instructionRef = instruction;
+    final var decodingIdentifier =
+        Objects.requireNonNull(fieldAccess).accessFunction().identifier.dropLast().last();
+    this.rawName = fieldAccess.identifier.last().prepend(instruction.identifier()).lower();
+    this.rawEncoderMethod = instruction.identifier();
+    this.encoderMethod = createEncoderMethod(instruction);
+    this.rawDecoderMethod =
+        decodingIdentifier.prepend(instruction.identifier()).append("decode");
+    this.decoderMethod = rawDecoderMethod.append(EmitDisassemblerCppFilePass.WRAPPER);
+    this.predicateMethod = createPredicateMethod(instruction, fieldAccess);
+    this.llvmType = llvmType;
+    this.fieldAccessRef = fieldAccess;
+    this.absoluteVariantKind = VariantKind.absolute(fieldAccessRef.fieldRef());
+    this.relativeVariantKind = VariantKind.relative(fieldAccess.fieldRef());
+    this.rawType = (BitsType) fieldAccessRef.type();
+    this.formatFieldBitSize = fieldAccessRef.fieldRef().size();
+  }
+
+  public static Identifier createEncoderMethod(PrintableInstruction instruction) {
+    return instruction.identifier().append(EmitMCCodeEmitterCppFilePass.WRAPPER);
+  }
+
+  public static Identifier createPredicateMethod(PrintableInstruction instruction,
+                                                 Format.FieldAccess fieldAccess) {
+    return fieldAccess.predicate().identifier.dropLast().last().prepend(instruction.identifier())
+        .append("predicate");
+  }
+
+  public PrintableInstruction instructionRef() {
+    return instructionRef;
   }
 
   public String rawName() {
-    return name;
+    return rawName;
   }
 
-  public String encoderMethod() {
-    return encoderMethod.lower();
+  public Identifier encoderMethod() {
+    return encoderMethod;
   }
 
-  public String rawEncoderMethod() {
-    return rawEncoderMethod.lower();
+  public Identifier rawEncoderMethod() {
+    return rawEncoderMethod;
   }
 
-  public String decoderMethod() {
-    return decoderMethod.lower();
+  public Identifier decoderMethod() {
+    return decoderMethod;
   }
 
-  public String rawDecoderMethod() {
-    return rawDecoderMethod.lower();
+  public Identifier rawDecoderMethod() {
+    return rawDecoderMethod;
   }
 
   public ValueType llvmType() {
@@ -114,11 +115,11 @@ public class TableGenImmediateRecord {
   }
 
   public String fullname() {
-    return String.format("%sAs%s", this.name, llvmType.getTableGen());
+    return String.format("%sAs%s", this.rawName, llvmType.getTableGen());
   }
 
-  public String predicateMethod() {
-    return predicateMethod.lower();
+  public Identifier predicateMethod() {
+    return predicateMethod;
   }
 
   public int formatFieldBitSize() {
@@ -134,7 +135,7 @@ public class TableGenImmediateRecord {
       return false;
     }
     TableGenImmediateRecord that = (TableGenImmediateRecord) o;
-    return Objects.equals(name, that.name)
+    return Objects.equals(rawName, that.rawName)
         && Objects.equals(encoderMethod, that.encoderMethod)
         && Objects.equals(decoderMethod, that.decoderMethod)
         && Objects.equals(predicateMethod, that.predicateMethod)
@@ -143,7 +144,7 @@ public class TableGenImmediateRecord {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, encoderMethod, decoderMethod, predicateMethod, llvmType);
+    return Objects.hash(rawName, encoderMethod, decoderMethod, predicateMethod, llvmType);
   }
 
   public Format.FieldAccess fieldAccessRef() {

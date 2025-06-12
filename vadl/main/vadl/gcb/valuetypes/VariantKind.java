@@ -20,6 +20,7 @@ import java.util.Map;
 import vadl.gcb.passes.relocation.model.UserSpecifiedRelocation;
 import vadl.template.Renderable;
 import vadl.viam.Format;
+import vadl.viam.Instruction;
 import vadl.viam.Relocation;
 
 /**
@@ -92,10 +93,10 @@ public record VariantKind(String value, String human, boolean isImmediate) imple
   /**
    * Create a variant kind for a field access to be used as mapping for the decoding function.
    */
-  public static VariantKind decode(Format.FieldAccess fieldAccess) {
+  public static VariantKind decode(Instruction instruction, Format.FieldAccess fieldAccess) {
     return new VariantKind(
-        "VK_DECODE_" + fieldAccess.identifier.lower(),
-        "DECODE_" + fieldAccess.identifier.lower(), true);
+        "VK_DECODE_" + fieldAccess.identifier.last().prepend(instruction.identifier()).lower(),
+        "DECODE_" + fieldAccess.identifier.last().prepend(instruction.identifier()).lower(), true);
   }
 
   @Override

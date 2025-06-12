@@ -183,9 +183,10 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
                     instruction.simpleName(),
                     fieldAccess != null ? fieldAccess.simpleName() : "",
                     castedTableGenOperand.name(),
-                    immediateOperand.rawEncoderMethod(),
-                    immediateOperand.rawDecoderMethod(),
-                    immediateOperand.predicateMethod(),
+                    immediateOperand.rawEncoderMethod().lower()
+                        + "_" + castedTableGenOperand.name(),
+                    immediateOperand.rawDecoderMethod().lower(),
+                    immediateOperand.predicateMethod().lower(),
                     valueRange.lowest(),
                     valueRange.highest(),
                     opIndex

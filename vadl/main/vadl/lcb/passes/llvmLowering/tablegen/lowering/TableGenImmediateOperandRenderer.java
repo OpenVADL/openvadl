@@ -17,6 +17,8 @@
 package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 
+import java.util.Map;
+import org.apache.commons.text.StringSubstitutor;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 
@@ -34,30 +36,28 @@ public final class TableGenImmediateOperandRenderer {
         GenerateValueRangeImmediatePass.highestPossibleValue(operand.formatFieldBitSize(), rawType);
     var lowestPossibleValue =
         GenerateValueRangeImmediatePass.lowestPossibleValue(operand.formatFieldBitSize(), rawType);
-    return String.format("""
-            class %s<ValueType ty> : Operand<ty>
+    return StringSubstitutor.replace("""
+            class ${rawName}<ValueType ty> : Operand<ty>
             {
-              let EncoderMethod = "%s";
-              let DecoderMethod = "%s";
+              let EncoderMethod = "${encoderMethod}";
+              let DecoderMethod = "${decoderMethod}";
             }
-                    
-            def %s
-                : %s<%s>
-                , ImmLeaf<%s, [{ return Imm >= %s && Imm <= %s && %s(Imm); }]>;
-                
-            def %sAsLabel : %s<OtherVT>;
-            """, operand.rawName(),
-        operand.encoderMethod(),
-        operand.decoderMethod(),
-        operand.fullname(),
-        operand.rawName(),
-        operand.llvmType().getLlvmType(),
-        operand.llvmType().getLlvmType(),
-        lowestPossibleValue,
-        highestPossibleValue,
-        operand.predicateMethod(),
-        operand.rawName(),
-        operand.rawName()
-    );
+
+            def ${fullName}
+                : ${rawName}<${type}>
+                , ImmLeaf<${type}, [{ return Imm >= ${lowestPossibleValue}
+                  && Imm <= ${highestPossibleValue}
+                  && ${predicateMethod}(Imm); }]>;
+
+            def ${rawName}AsLabel : ${rawName}<OtherVT>;
+            """,
+        Map.of("rawName", operand.rawName(),
+            "fullName", operand.fullname(),
+            "encoderMethod", operand.encoderMethod().lower(),
+            "decoderMethod", operand.decoderMethod().lower(),
+            "type", operand.llvmType().getLlvmType(),
+            "lowestPossibleValue", lowestPossibleValue,
+            "highestPossibleValue", highestPossibleValue,
+            "predicateMethod", operand.predicateMethod().lower()));
   }
 }

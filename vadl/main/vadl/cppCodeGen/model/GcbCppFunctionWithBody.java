@@ -14,24 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.template.utils;
-
-import java.util.Map;
-import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
-import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.pass.PassResults;
+package vadl.cppCodeGen.model;
 
 /**
- * Utility class for predicates.
+ * A function that has an implementation.
  */
-public class ImmediatePredicateFunctionProvider {
+public class GcbCppFunctionWithBody {
+  private final GcbCppFunctionBodyLess header;
+  private final String code;
+
   /**
-   * Get the predicates.
+   * Constructor.
    */
-  public static Map<TableGenImmediateRecord, GcbCppFunctionWithBody> generatePredicateFunctions(
-      PassResults passResults) {
-    return ((CreateFunctionsFromImmediatesPass.Output)
-        passResults.lastResultOf(CreateFunctionsFromImmediatesPass.class)).predicates();
+  public GcbCppFunctionWithBody(GcbCppFunctionBodyLess header, String code) {
+    this.header = header;
+    this.code = code;
+  }
+
+  public GcbCppFunctionBodyLess header() {
+    return header;
+  }
+
+  public String code() {
+    return code;
   }
 }
