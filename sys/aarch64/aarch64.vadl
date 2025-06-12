@@ -567,7 +567,7 @@ instruction set architecture AArch64Base = {
 // imm13Encode encodes an unsigned 64 bit integer into the 13 bit N|immr|imms
 // representation for a valid pattern, otherwise it returns 0 as Bits13
 
-  function imm13Encode (val: BitsX) -> Bits13 =
+  function imm13EncodeXSize (val: BitsX) -> Bits13 =
     let size = patternSize (val) in
     if size = 0 then 0 else
     let mask = ~(0 as BitsX) >> (64 - size) in
@@ -581,31 +581,32 @@ instruction set architecture AArch64Base = {
           nImmrImms(size, 64 - leadingOnes, (leadingOnes + VADL::cto(immNmask) as SIntW) - (64 - size))
       else 0 as Bits13
 
-  function imm13EncodeWSize (val: BitsX) -> Bits13 =
-    let trunc = val as BitsW as BitsX in
-      if trunc != val then 0
-      else imm13Encode (val << Size::WSize | val)
+  function imm13EncodeWSize (val: BitsW) -> Bits13 =
+    imm13EncodeXSize ((val, val))
 
-  format LogicImmFormat: Instr =      // logic immediate format
-    { sf       : Bits1                // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
-    , op       : Bits8                // opcode
-    , imm13    : Bits13               // N, imms and immr fields
-    , rn       : Index                // source register
-    , rd       : Index                // destination register
-    , immX     = imm13Decode (imm13)  // decoded immediate value
-    // TODO encode
-    // TODO predicate
+  format LogicImmFormat: Instr =               // logic immediate format
+    { sf       :  Bits1                        // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       :  Bits8                        // opcode
+    , imm13    :  Bits13                       // N, imms and immr fields
+    , rn       :  Index                        // source register
+    , rd       :  Index                        // destination register
+    , immWSize =  imm13Decode (imm13) as BitsW // decoded BitsW immediate value
+    , immXSize =  imm13Decode (imm13)          // decoded BitsX immediate value
+    , imm13    := imm13EncodeWSize(immWSize)
+    , imm13    := imm13EncodeXSize(immXSize)
+    , immWSize :- imm13EncodeWSize(immWSize) != 0
+    , immXSize :- imm13EncodeXSize(immXSize) != 0
     }
 
   model LogicImmEncAsm (i: InstrWithFunct, size: Id, ext: Str): IsaDefs = {
     encoding $i.id = { op = $i.opcode, sf = SF::$size }
-    assembly $i.id = ($i.mnemo, ' ', AsId($size, $ext)(rd), ', ', $size(rn), ', #', decimal(immX))
+    assembly $i.id = ($i.mnemo, ' ', AsId($size, $ext)(rd), ', ', $size(rn), ', #', decimal(AsId(imm, $size)))
     }
 
   model LogicImmFlagInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     [undefined when : sf = 0 && imm13(12) = 1]
     instruction $i.id: LogicImmFormat =
-      let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, immX as Bits<Size::$size>) in {
+      let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, AsId(imm, $size)) in {
         X(rd) := result as Bits<Size::$size> as BitsX
         $SetNZClearCVFlags ()
         }
@@ -614,7 +615,7 @@ instruction set architecture AArch64Base = {
 
   model LogicImmInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: LogicImmFormat =
-      let result = VADL::$i.funct (X(rn) as Bits<Size::$size>, immX as Bits<Size::$size>) in
+      let result = VADL::$i.funct (X(rn) as Bits<Size::$size>, AsId(imm, $size)) in
         S(rd) := result as Bits<Size::$size> as BitsX
     $LogicImmEncAsm ($i; $size; "SP")
     }
@@ -793,22 +794,22 @@ instruction set architecture AArch64Base = {
 // followed by a shift right.
 
   format BitFieldMoveFormat: Instr =  // bit field move format
-    { sf         : Bits1              // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
-    , op         : Bits8              // opcode
-    , N          : Bits1              // must be equal to sf, otherwise undefined
-    , immr       : Bits6              // rotate right count (bit field low position)
-    , imms       : Bits6              // bit field length -1 or high position
-    , rn         : Index              // source register
-    , rd         : Index              // destination register
-    , leftWSize  = -1 as Bits5 - imms as Bits5
-    , leftXSize  = -1 as Bits6 - imms
-    , rightWSize = immr as Bits5 - imms as Bits5 - 1
-    , rightXSize = immr - imms - 1
-    , imms := (-1 as Bits5 - leftWSize) as Bits6
-    , imms :=  -1 as Bits6 - leftXSize
-    , immr := (rightWSize  - leftWSize) as Bits6
-    , immr :=  rightXSize  - leftXSize
-    // true
+    { sf         :  Bits1             // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op         :  Bits8             // opcode
+    , N          :  Bits1             // must be equal to sf, otherwise undefined
+    , immr       :  Bits6             // rotate right count (bit field low position)
+    , imms       :  Bits6             // bit field length -1 or high position
+    , rn         :  Index             // source register
+    , rd         :  Index             // destination register
+    , leftWSize  =  -1 as Bits5 - imms as Bits5
+    , leftXSize  =  -1 as Bits6 - imms
+    , rightWSize =  immr as Bits5 - imms as Bits5 - 1
+    , rightXSize =  immr - imms - 1
+    , imms       := (-1 as Bits5 - leftWSize) as Bits6
+    , imms       :=  -1 as Bits6 - leftXSize
+    , immr       := (rightWSize  - leftWSize) as Bits6
+    , immr       :=  rightXSize  - leftXSize
+    // predicates are valid for the whole range of Bits5 or Bits6
     }
 
   model BitfieldMoveInstr (i: InstrWithFunct, size: Id): IsaDefs = {
