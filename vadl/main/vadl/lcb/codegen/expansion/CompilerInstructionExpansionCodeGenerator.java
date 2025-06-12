@@ -24,6 +24,8 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +47,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.utils.Pair;
 import vadl.viam.CompilerInstruction;
+import vadl.viam.Definition;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
@@ -82,6 +85,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   private static final String INSTRUCTION_CALL_NODE = "instructionCallNode";
   private static final String INSTRUCTION = "instruction";
   private static final String INSTRUCTION_SYMBOL = "instructionSymbol";
+  private static final String FIELD_VALUES = "fieldValues";
 
   private final TargetName targetName;
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
@@ -166,13 +170,17 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
         // There are two cases:
         // (1) in one case, the operand is an immediate then we must create an immediate operand.
 
-        ctx.ln("if(instruction.getOperand(%d).isImm()) {", pseudoInstructionIndex)
+        ctx.ln("// We don't know whether the operand is an immediate or label?")
+            .ln("// We find it out during parsing.")
+            .ln("if(instruction.getOperand(%d).isImm()) {", pseudoInstructionIndex)
             .spacedIn()
             .ln(
                 String.format(
-                    "%s.addOperand(MCOperand::createImm(instruction.getOperand(%d).getImm()));",
+                    "%s.addOperand(MCOperand::createImm(instruction.getOperand(%d).getImm())); "
+                        + "// %s",
                     instructionSymbol,
-                    pseudoInstructionIndex))
+                    pseudoInstructionIndex,
+                    field.identifier.simpleName()))
             .spaceOut()
             .ln("}")
             .ln("else {")
@@ -207,14 +215,21 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
                 + "%sMCExpr::VariantKind::%s, " + "Ctx));", argumentImmSymbol, targetName.value(),
             argumentSymbol, targetName.value(),
             requireNonNull(variant));
-        ctx.ln(String.format("%s.addOperand(%s);", instructionSymbol, argumentImmSymbol));
+        ctx.ln(String.format("%s.addOperand(%s); // %s", instructionSymbol, argumentImmSymbol,
+            field.identifier.simpleName()));
 
         ctx
             .spaceOut()
             .ln("}");
       }
-      case REGISTER -> ctx.ln("%s.addOperand(instruction.getOperand(%d));", instructionSymbol,
-          pseudoInstructionIndex);
+      case REGISTER -> {
+        ctx.ln("%s = instruction.getOperand(%d).getImm();", field.identifier.simpleName(),
+            pseudoInstructionIndex);
+        ctx.ln("%s.addOperand(instruction.getOperand(%d)); // %s",
+            instructionSymbol,
+            pseudoInstructionIndex,
+            field.identifier.simpleName());
+      }
       default -> throw Diagnostic.error("Cannot detect the usage of this field",
           instructionCallNode.location().join(field.location())).build();
     }
@@ -264,8 +279,10 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
           immediateValueString = decodingFunctionName + "(" + immediateValueString + ")";
         }
 
-        context.ln("%s.addOperand(MCOperand::createImm(%s));", instructionSymbol,
+        context.ln("%s = %s; // Assign to field", field.identifier.simpleName(),
             immediateValueString);
+        context.ln("%s.addOperand(MCOperand::createImm(%s)); // %s", instructionSymbol,
+            field.identifier.simpleName(), field.identifier.simpleName());
       }
       case REGISTER -> {
         // We know that `field` is used as a register index.
@@ -287,9 +304,13 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
         var registerFile =
             ensurePresent(registerFiles.stream().findFirst(), "Expected one register file");
 
-        context.ln("%s.addOperand(MCOperand::createReg(%s::%s%s));", instructionSymbol,
-            targetName.value(), registerFile.identifier.simpleName(),
+        context.ln("%s = %s::%s%s;", field.identifier.simpleName(),
+            targetName.value(),
+            registerFile.identifier.simpleName(),
             toHandle.constant().asVal().intValue());
+        context.ln("%s.addOperand(MCOperand::createReg(%s)); // %s", instructionSymbol,
+            field.identifier.simpleName(),
+            field.identifier.simpleName());
       }
       default -> throw Diagnostic.error("Cannot generate cpp code for this argument",
           field.location()).build();
@@ -333,33 +354,25 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
       // This is the first case where we emit a variant
       var argumentImmSymbol = symbolTable.getNextVariable();
       var appliedSymbol = symbolTable.getNextVariable();
-      ctx.ln("auto %s = %sBaseInfo::%s(instruction.getOperand(%d).getImm());", appliedSymbol,
+      ctx.ln("%s = instruction.getOperand(%d).getImm();", field.identifier.simpleName(),
+          pseudoInstructionIndex);
+      ctx.ln("auto %s = %sBaseInfo::%s(%s);",
+          appliedSymbol,
           targetName.value(),
           relocationRef.valueRelocation().functionName().lower(),
-          pseudoInstructionIndex
+          field.identifier.simpleName()
       );
 
+      // We want to store the decoded value into the MCInst.
+      // So when the pseudo instruction defines argument is a field
+      // then we need to decode it.
+      // If the argument is a field access then we don't need to do anything.
       if (!instructionCallNode.isParameterFieldAccess(field)) {
-        var variants = variantKindStore.decodeVariantKindsByField(instruction, field);
+        var immediateValueString = generateDecodingFunctionExpr(immediateDecodingsByField,
+            new FieldInInstruction(instruction, field));
 
-        ensure(variants.size() == 1, () -> Diagnostic.error(
-            "There are unexpectedly multiple variant kinds for the pseudo expansion available.",
-            toHandle.location()));
-
-        var variant = ensurePresent(
-            requireNonNull(variants).stream().filter(VariantKind::isImmediate).findFirst(),
-            () -> Diagnostic.error(
-                "Expected a variant for an immediate. But haven't " + "found any",
-                toHandle.location())).value();
-
-        ctx.ln(
-            "MCOperand %s = MCOperand::createExpr("
-                + "%sMCExpr::create(MCConstantExpr::create(%s, Ctx), "
-                + "%sMCExpr::VariantKind::%s, " + "Ctx));", argumentImmSymbol,
-            targetName.value(),
-            appliedSymbol, targetName.value(),
-            requireNonNull(variant));
-
+        ctx.ln("MCOperand %s = MCOperand::createExpr(MCConstantExpr::create(%s, Ctx));",
+            argumentImmSymbol, immediateValueString);
         // -- end (1) case
       } else {
         // This is the second case where we don't emit anything
@@ -372,7 +385,8 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
         // -- end (2) case
       }
 
-      ctx.ln(String.format("%s.addOperand(%s);", instructionSymbol, argumentImmSymbol));
+      ctx.ln(String.format("%s.addOperand(%s); // %s", instructionSymbol, argumentImmSymbol,
+          field.identifier.simpleName()));
 
       ctx.spaceOut()
           .ln("}")
@@ -412,6 +426,39 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     } else {
       throw Diagnostic.error("Cannot handle node", toHandle.location()).build();
     }
+  }
+
+  private String generateDecodingFunctionExpr(
+      Map<FieldInInstruction, GcbCppFunctionWithBody> immediateDecodingsByField,
+      FieldInInstruction fieldInInstruction) {
+    var decodingFunction =
+        immediateDecodingsByField.get(fieldInInstruction);
+    ensure(decodingFunction != null, "decodingFunction must not be null");
+    var fieldAccess = ((GcbCppAccessFunction) decodingFunction).fieldAccess();
+    var decodingFunctionName = decodingFunction.header().functionName().lower();
+
+    // Generate the field values which are used by the field access function.
+    fieldAccess.fieldRefs().forEach(requiredField -> {
+
+    });
+
+    // Check whether the order is the same.
+    Streams.zip(fieldAccess.fieldRefs().stream(),
+            Arrays.stream(decodingFunction.header().parameters()),
+            (a, b) -> Pair.of(a.identifier.simpleName(), b.simpleName()))
+        .forEach(pair -> {
+          ensure(pair.left().equals(pair.right()), () -> Diagnostic.error(
+              "Something odd happened. We encountered an error where the order of "
+                  + "the parameters is not correct. The encoding would be wrongly calculated",
+              fieldInInstruction.field().location()));
+        });
+
+    // Generate the function call to decode with all arguments.
+    // An argument is a field.
+    var arguments = fieldAccess.fieldRefs().stream()
+        .map(Definition::simpleName)
+        .collect(Collectors.joining(", "));
+    return decodingFunctionName + "(" + arguments + ")";
   }
 
   private void handleRelocationOperand(CGenContext<Node> ctx, String argumentSymbol,
@@ -457,7 +504,8 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
     var operandSymbol = symbolTable.getNextVariable();
     ctx.ln("MCOperand %s = MCOperand::createExpr(%s);", operandSymbol, mcExprSymbol);
-    ctx.ln(String.format("%s.addOperand(%s);", instructionSymbol, operandSymbol));
+    ctx.ln(String.format("%s.addOperand(%s); // %s", instructionSymbol, operandSymbol,
+        field.identifier.simpleName()));
   }
 
   /**
@@ -496,17 +544,30 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
       @Override
       public ControlNode onDirectional(DirectionalNode dir) {
         if (dir instanceof InstrCallNode instrCallNode) {
+          // We compute the values for the fields, and we would like to store them.
+          var symbolTableFieldValues = new HashMap<Format.Field, String>();
+
           var sym = symbolTable.getNextVariable();
           context.ln("MCInst %s = MCInst();", sym)
               .ln("%s.setOpcode(%s::%s);", sym, targetName.value(),
-                  instrCallNode.target().identifier.simpleName());
-          writeInstructionCall(context, instrCallNode, sym);
-          context.ln("result.push_back(%s);", sym);
-          context.ln("callback(%s);", sym);
+                  instrCallNode.target().identifier.simpleName())
+              .ln("{")
+              .spacedIn()
+              .ln("// " + instrCallNode.target().simpleName());
+
+          instrCallNode.getParamFields().forEach(field -> {
+            context.ln("auto %s = 0;", field.identifier.simpleName());
+          });
+
+          writeInstructionCall(context, symbolTableFieldValues, instrCallNode, sym);
+          context.spaceOut()
+              .ln("}")
+              .ln("result.push_back(%s);", sym)
+              .ln("callback(%s);", sym);
         } else if (dir instanceof NewLabelNode newLabelNode) {
           var sym = symbolTable.getNextVariable();
-          context.ln("MCSymbol *%s = Ctx.createTempSymbol();", sym);
-          context.ln("callbackSymbol(%s);", sym);
+          context.ln("MCSymbol *%s = Ctx.createTempSymbol();", sym)
+              .ln("callbackSymbol(%s);", sym);
           labelSymbolNameLookup.put(newLabelNode, sym);
         }
 
@@ -522,7 +583,9 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     return builder.toString();
   }
 
-  private void writeInstructionCall(CNodeContext context, InstrCallNode instrCallNode,
+  private void writeInstructionCall(CNodeContext context,
+                                    HashMap<Format.Field, String> symbolTableFieldValues,
+                                    InstrCallNode instrCallNode,
                                     String instructionSymbol) {
     var pairs =
         Streams.zip(instrCallNode.getParamFields().stream(), instrCallNode.arguments().stream(),
@@ -546,7 +609,8 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
       var newContext = new CNodeWithBaggageContext(context).put(FIELD, field)
           .put(INSTRUCTION_CALL_NODE, instrCallNode).put(INSTRUCTION, instrCallNode.target())
-          .put(INSTRUCTION_SYMBOL, instructionSymbol);
+          .put(INSTRUCTION_SYMBOL, instructionSymbol)
+          .put(FIELD_VALUES, symbolTableFieldValues);
 
       if (argument instanceof ConstantNode cn) {
         handle(newContext, cn);
