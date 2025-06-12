@@ -437,12 +437,14 @@ SDValue [(${namespace})]TargetLowering::LowerCall(TargetLowering::CallLoweringIn
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     {
         const GlobalValue *GV = G->getGlobal();
-        OpFlag = [(${namespace})]BaseInfo::MO_PLT;
+        if(isPositionIndependent())
+          OpFlag = [(${namespace})]BaseInfo::MO_PLT;
         Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, getPointerTy(DAG.getDataLayout()), /* Offset */ 0, OpFlag);
     }
     else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     {
-        OpFlag = [(${namespace})]BaseInfo::MO_PLT;
+        if(isPositionIndependent())
+          OpFlag = [(${namespace})]BaseInfo::MO_PLT;
         Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy(DAG.getDataLayout()), OpFlag);
     }
 
