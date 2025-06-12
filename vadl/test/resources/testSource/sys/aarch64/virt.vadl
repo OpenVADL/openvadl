@@ -9,7 +9,7 @@ processor Virt implements A64 = {
   reset = {
     PC := 0x0
     // in upstream QEMU the ZF is set to 1 by default
-    NZCV.Z := 1
+    NZCV_Z := 1
   }
 
   [ firmware ]
