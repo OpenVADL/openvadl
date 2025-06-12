@@ -27,7 +27,6 @@ import vadl.configuration.GcbConfiguration;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.configuration.LcbConfiguration;
-import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.DetectRegisterIndicesPass;
@@ -218,7 +217,6 @@ public class PassOrders {
     order.add(new DetermineRelocationTypeForFieldPass(gcbConfiguration));
     order.add(new GenerateValueRangeImmediatePass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
-    order.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
     order.add(new AssemblyConcatBuiltinMergingPass(gcbConfiguration));
     order.add(new InstructionPatternPruningPass(gcbConfiguration));
 
