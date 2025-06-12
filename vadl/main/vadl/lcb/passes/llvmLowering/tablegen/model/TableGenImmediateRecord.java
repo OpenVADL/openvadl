@@ -19,7 +19,6 @@ package vadl.lcb.passes.llvmLowering.tablegen.model;
 import java.util.Objects;
 import vadl.gcb.valuetypes.VariantKind;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass;
 import vadl.types.BitsType;
 import vadl.viam.Format;
@@ -47,6 +46,8 @@ public class TableGenImmediateRecord {
 
   private final PrintableInstruction instructionRef;
 
+  public static String DISASSEMBLER_WRAPPER = "wrapper";
+
   /**
    * Constructor.
    */
@@ -62,7 +63,7 @@ public class TableGenImmediateRecord {
     this.encoderMethod = createEncoderMethod(instruction);
     this.rawDecoderMethod =
         decodingIdentifier.prepend(instruction.identifier()).append("decode");
-    this.decoderMethod = rawDecoderMethod.append(EmitDisassemblerCppFilePass.WRAPPER);
+    this.decoderMethod = rawDecoderMethod.append(DISASSEMBLER_WRAPPER);
     this.predicateMethod = createPredicateMethod(instruction, fieldAccess);
     this.llvmType = llvmType;
     this.fieldAccessRef = fieldAccess;

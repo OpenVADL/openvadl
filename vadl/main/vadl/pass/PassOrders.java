@@ -323,12 +323,6 @@ public class PassOrders {
     order.add(new vadl.lcb.template.lib.Target.EmitSubTargetHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitFrameLoweringHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitPassConfigHeaderFilePass(configuration));
-    order.add(
-        new vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerCppFilePass(configuration));
-    order.add(new vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerHeaderFilePass(
-        configuration));
-    order.add(
-        new vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerCMakeFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitISelLoweringCppFilePass(configuration));
     order.add(
         new vadl.lcb.template.lib.Target.TargetInfo.EmitTargetInfoHeaderFilePass(configuration));
