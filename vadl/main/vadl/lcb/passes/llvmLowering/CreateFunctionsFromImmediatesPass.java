@@ -147,7 +147,7 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
           Objects.requireNonNull(stackPointer.registerFile().resultType().fittingCppType());
 
       decodingWrappers.put(immediate, decodingWrapper(immediate));
-      decodings.put(immediate, decoding(stackPointerType, immediate));
+      decodings.put(immediate, decoding(immediate));
       predicates.put(immediate, predicate(stackPointerType, immediate));
     }
 
@@ -188,12 +188,7 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
           .map(operand -> (ReferencesImmediateOperand) operand)
           .toList();
 
-      List<Parameter> parameters = inputOperands.stream()
-          .map(operand -> new Parameter(
-              new Identifier(operand.immediateOperand().fieldAccessRef().identifier.simpleName(),
-                  operand.immediateOperand().fieldAccessRef().location()),
-              operand.immediateOperand().rawType()))
-          .toList();
+      List<Parameter> parameters = createParametersForEncodingFunction(inputOperands);
 
       var identifier = instruction.identifier.append(encoding.targetField().simpleName());
       var encodingBodyLessFunction = new GcbCppFunctionBodyLess(
@@ -207,6 +202,34 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
               encodingBodyLessFunction).genFunctionDefinition());
     }).toList();
   }
+
+  @Nonnull
+  private static List<Parameter> createParametersForEncodingFunction(
+      List<ReferencesImmediateOperand> inputOperands) {
+    List<Parameter> parameters = inputOperands.stream()
+        .map(operand -> new Parameter(
+            new Identifier(operand.immediateOperand().fieldAccessRef().identifier.simpleName(),
+                operand.immediateOperand().fieldAccessRef().location()),
+            operand.immediateOperand().rawType()))
+        .toList();
+    return parameters;
+  }
+
+  /**
+   * Creates parameters from the given {@link vadl.viam.Format.FieldAccess} list. Note,
+   * that the orders matters!
+   */
+  @Nonnull
+  private static List<Parameter> createParametersForAccessFunction(
+      List<Format.Field> fields) {
+    return fields.stream()
+        .map(field -> new Parameter(
+            new Identifier(field.identifier.simpleName(),
+                field.location()),
+            CppTypeMap.upcast(field.type())))
+        .toList();
+  }
+
 
   @Nonnull
   private GcbCppEncodingWrapperFunction encodingWrappers(
@@ -241,14 +264,12 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
   }
 
   @Nonnull
-  private GcbCppAccessFunction decoding(Type stackPointerType,
-                                        TableGenImmediateRecord immediate) {
+  private GcbCppAccessFunction decoding(TableGenImmediateRecord immediate) {
+    var parameters = createParametersForAccessFunction(immediate.fieldAccessRef().fieldRefs());
     var bodyLessFunction = new GcbCppFunctionBodyLess(
         immediate.rawDecoderMethod(),
         // We use the size of the stack pointer to decide what the parameter's type is.
-        new Parameter[] {
-            new Parameter(new Identifier("param", SourceLocation.INVALID_SOURCE_LOCATION),
-                stackPointerType)},
+        parameters.toArray(Parameter[]::new),
         CppTypeMap.upcast(immediate.fieldAccessRef().accessFunction().returnType()),
         immediate.fieldAccessRef().accessFunction().behavior());
     return new GcbCppAccessFunction(bodyLessFunction,
