@@ -55,7 +55,7 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
     }
 
     isa.registerTensors().forEach(r -> {
-      r.attachExtension(new RegInfo());
+      r.attachExtension(new RegInfo(configuration()));
     });
 
     return null;
