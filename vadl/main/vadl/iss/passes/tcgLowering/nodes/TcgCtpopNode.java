@@ -20,29 +20,28 @@ import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.viam.graph.Node;
 
 /**
- * Represents the {@code tcg_gen_clz} TCG instruction in the TCG VIAM lowering.
- * The semantics are: {@code t0 = t1 ? clz(t1) : t2}, where t2 represents the fallback
+ * Represents the {@code tcg_gen_ctpop} TCG instruction in the TCG VIAM lowering.
+ * The semantics are: {@code t0 = t1 ? clz/ctz(t1) : t2}, where t2 represents the fallback
  * if t1 is 0. In VADL t2 would be the size of t1.
  */
-public class TcgClzNode extends TcgBinaryOpNode {
+public class TcgCtpopNode extends TcgUnaryOpNode {
 
-  public TcgClzNode(TcgVRefNode t0, TcgVRefNode t1, TcgVRefNode t2) {
-    super(t0, t1, t2, t0.width());
+  public TcgCtpopNode(TcgVRefNode dest, TcgVRefNode arg) {
+    super(dest, arg);
   }
 
   @Override
   public String tcgFunctionName() {
-    return "tcg_gen_clz";
+    return "tcg_gen_ctpop_" + width();
   }
 
   @Override
   public Node copy() {
-    return new TcgClzNode(firstDest().copy(TcgVRefNode.class), arg1.copy(TcgVRefNode.class),
-        arg2.copy(TcgVRefNode.class));
+    return new TcgCtpopNode(firstDest().copy(), arg().copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgClzNode(firstDest(), arg1, arg2);
+    return new TcgCtpopNode(firstDest(), arg());
   }
 }

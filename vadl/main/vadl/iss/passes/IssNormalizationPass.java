@@ -648,12 +648,21 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Override
   public void handleCOB(BuiltInCall input) {
-    throw graphError(input, "Normalization not yet implemented for this built-in");
+    // nothing to do, the number of ones is the same, even in the bigger container.
+    // the equivalent TCG operation is CTPOP
   }
 
   @Override
   public void handleCZB(BuiltInCall input) {
-    throw graphError(input, "Normalization not yet implemented for this built-in");
+    var val = input.arg(0);
+    var valT = val.type().asDataType();
+
+    // replacement is <size> - cob(val)
+    var replacement = sub(
+        bits(valT.bitWidth(), valT.bitWidth()).toNode(),
+        BuiltInTable.COB.call(val)
+    );
+    input.replaceAndDelete(replacement);
   }
 
   @Override
