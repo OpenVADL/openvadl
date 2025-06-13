@@ -24,87 +24,18 @@ The broker communicates with each QEMU-client using IPC.
 import atexit
 import json
 import logging
-import mmap
-import multiprocessing
 import os
-import subprocess
 from collections import deque
-from ctypes import sizeof
 from dataclasses import asdict, dataclass, field
 from typing import Any, Optional, TypeAlias
 
-import posix_ipc as ipc  # type: ignore[import-not-found]
-
+from src import qemu_ipc
 from src.config import Config
-from src.cstructs import SHMCPU, BrokerSHM, BrokerSHM_Exec, SHMRegister
+from src.cstructs import SHMCPU, BrokerSHM_Exec, SHMRegister
+from src.qemu_ipc import QEMUClient
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class Client:
-    id: int
-    shm: ipc.SharedMemory
-    shm_struct: BrokerSHM
-    sem_server: ipc.Semaphore
-    sem_client: ipc.Semaphore
-    is_open: bool
-    process: Optional[multiprocessing.Process]
-    name: Optional[str]
-
-    def run(self) -> bool:
-        """
-        Releases the client to run for one execution-step.
-        Returns True if the client successfully ran,
-        False indicates that the client crashed or finished executing
-        in both cases the client is marked as closed
-        by setting self.is_open = False
-        """
-        try:
-            self.sem_client.release()
-
-            # wait at most 0.1 second, if an error occurs: assume that the client finished (crashing = finishing)
-            self.sem_server.acquire(0.1)
-            return True
-        except ipc.BusyError:
-            logger.debug(
-                f"BusyError: noticed that client #{self.id} shutdown. marking as closed"
-            )
-            self.is_open = False
-            return False
-
-
-clients: list[Client] = []
-
-
-def run_with_callback(
-    command, on_complete, config: Config, client: Client
-) -> multiprocessing.Process:
-    """
-    Starts a QEMU-client using pythons multiprocessing.Process
-    After completion, the client is marked as done using client.is_open = False
-    Both stdout and stderr for each client is redirected to a dedicated file.
-    """
-
-    def runner():
-        stdout_path = os.path.join(config.logging.dir, f"client-{client.id}-stdout.txt")
-        stderr_path = os.path.join(config.logging.dir, f"client-{client.id}-stderr.txt")
-        stdout_file = open(stdout_path, "w")
-        stderr_file = open(stderr_path, "w")
-        process = subprocess.Popen(command, stdout=stdout_file, stderr=stderr_file)
-        process.wait()
-        stdout_file.close()
-        stderr_file.close()
-        on_complete(process.returncode, config, client)
-
-    p = multiprocessing.Process(target=runner)
-    p.start()
-    return p
-
-
-def on_client_complete(returncode: int, config: Config, client: Client):
-    logger.info(f"Process (client: {client.id}) finished with code: {returncode}")
-    client.is_open = False
+clients: list[QEMUClient] = []
 
 
 @dataclass
@@ -369,9 +300,7 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
     skip_per_client = [client.skip_n_instructions for client in config.qemu.clients]
 
     # Skip first n instructions per client
-    while any(map(lambda c: c.is_open, clients)) and any(
-        map(lambda skip: skip > 0, skip_per_client)
-    ):
+    while any_client_open(clients) and any(map(lambda skip: skip > 0, skip_per_client)):
         for i, client in enumerate(clients):
             if client.is_open and skip_per_client[i] > 0:
                 skip_per_client[i] -= 1
@@ -391,7 +320,7 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
         config.testing.protocol.layer == "insn"
         or config.testing.protocol.layer == "tb-strict"
     ):
-        while any(map(lambda c: c.is_open, clients)):
+        while any_client_open(clients):
             for client in clients:
                 if client.is_open:
                     client.run()
@@ -408,84 +337,7 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
             if len(diffs) > 0:
                 return report_from_diffs(diffs)
     else:
-
-        @dataclass
-        class ClientSyncInfo:
-            start_pc: int
-            end_pc: int
-            tb_size: int
-            client_idx: int
-
-            def is_jump(self) -> bool:
-                return self.start_pc + self.tb_size * 4 != self.end_pc
-
-            def __str__(self):
-                return (
-                    f"ClientSyncInfo(start_pc={hex(self.start_pc)}, end_pc={hex(self.end_pc)}, "
-                    f"tb_size={self.tb_size}, client_idx={self.client_idx})"
-                )
-
-            def __repr__(self):
-                return str(self)
-
-        # TB-Syncing:
-        # Why?: Necessary to ensure that on a TB-level cosimulation, the state of all clients is compared at the same PC
-        # Syncing is only done for the "tb" layer,
-        #   the "tb-strict" layer assumes that all TBs across all clients are equal.
-        def sync_clients(clients_sync_infos: list[ClientSyncInfo]):
-            logger.debug(f"starting to sync clients: {clients_sync_infos}")
-
-            if len(clients_sync_infos) == 0:
-                return
-
-            for i in range(len(clients_sync_infos) - 1):
-                assert (
-                    clients_sync_infos[i].start_pc == clients_sync_infos[i + 1].start_pc
-                ), f"Clients should initially be synced: {clients_sync_infos}"
-
-            jumped_client: Optional[ClientSyncInfo] = None
-            for client_sync_info in clients_sync_infos:
-                if client_sync_info.is_jump():
-                    logger.debug(f"noticed that client jumped: {client_sync_info}")
-                    jumped_client = client_sync_info
-                    break
-
-            target_pc = (
-                jumped_client.end_pc
-                if jumped_client is not None
-                else max(map(lambda tbs: tbs.end_pc, clients_sync_infos))
-            )
-            clients_queue = deque(
-                filter(lambda tbs: tbs.end_pc != target_pc, clients_sync_infos)
-            )
-
-            while len(clients_queue) > 0:
-                logger.debug(
-                    f"queue: {clients_queue}, tbs: {clients_sync_infos}, max: {target_pc}"
-                )
-                client_entry = clients_queue.popleft()
-                client = clients[client_entry.client_idx]
-
-                start_pc = client.shm_struct.shm_tb.tb_info.pc
-                tb_size = client.shm_struct.shm_tb.tb_info.insns_info_size
-
-                # NOTE: closed clients won't be readded to the queue
-                if client.run():
-                    end_pc = client.shm_struct.shm_tb.tb_info.pc
-                    sync_info = ClientSyncInfo(
-                        start_pc=start_pc,
-                        end_pc=end_pc,
-                        tb_size=tb_size,
-                        client_idx=client_entry.client_idx,
-                    )
-
-                    if jumped_client is None and end_pc > target_pc:
-                        raise ValueError("Client diverged irrecoverably, fail test.")
-
-                    if end_pc != target_pc:
-                        clients_queue.append(sync_info)
-
-        while any(map(lambda c: c.is_open, clients)):
+        while any_client_open(clients):
             clients_tbs: list[ClientSyncInfo] = []
             for i, client in enumerate(clients):
                 if client.is_open:
@@ -525,106 +377,13 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
     return report_from_diffs(diffs)
 
 
-"""
-Cleanup functions for the created IPCs
-TODO: Maybe put IPC related logic in a separate file
-"""
-
-
-def cleanup_sem(config: Config, client: Client):
-    logger.debug(f"cleanup_sem of client #{client.id} start")
-    try:
-        client.sem_client.unlink()
-        client.sem_server.unlink()
-        client.sem_client.close()
-        client.sem_server.close()
-    except ipc.ExistentialError:
-        pass  # ignore
-    logger.debug(f"cleanup_sem of client #{client.id} done")
-
-
-def cleanup_smh(config: Config, client: Client):
-    try:
-        client.shm.close_fd()
-        client.shm.unlink()
-    except ipc.ExistentialError:
-        pass  # ignore
-
-
-def close_client(config: Config, client: Client):
-    logger.info(f"Closing client: {client.id}")
-    if client.process is not None:
-        client.process.terminate()
-
-
-def cleanup_client(config: Config, client: Client):
-    cleanup_sem(config, client)
-    cleanup_smh(config, client)
-    close_client(config, client)
-
-
-def cleanup(config: Config):
-    logger.info("cleaning up shm and sems for each client")
-    for client in clients:
-        cleanup_client(config, client)
-
-
 def start(config: Config):
     logger.debug(f"starting broker: config={config}")
-    atexit.register(cleanup, config)
+    atexit.register(qemu_ipc.cleanup, config, clients)
 
     # create shared memory and semaphores per client
     for i, client_cfg in enumerate(config.qemu.clients):
-        shm = ipc.SharedMemory(
-            f"/cosimulation-shm-{i}", ipc.O_CREX, size=sizeof(BrokerSHM)
-        )
-        mm = mmap.mmap(shm.fd, sizeof(BrokerSHM))
-        shm_struct = BrokerSHM.from_buffer(mm)
-
-        sem_server = ipc.Semaphore(f"/cosimulation-sem-server-{i}", ipc.O_CREX)
-        sem_client = ipc.Semaphore(f"/cosimulation-sem-client-{i}", ipc.O_CREX)
-        logger.info(f"created shm and sems, spawning client with id: {i}")
-
-        executable_path = client_cfg.exec
-
-        plugin_path = config.qemu.plugin
-        client_mode = ""
-        if (
-            config.testing.protocol.layer == "tb"
-            or config.testing.protocol.layer == "tb-strict"
-        ):
-            client_mode = "tb"
-        else:
-            client_mode = config.testing.protocol.layer
-
-        plugin_args = [f"client-id={i}", f"mode={client_mode}"]
-        if client_cfg.name is not None:
-            plugin_args += [f"client-name={client_cfg.name}"]
-
-        plugin = ",".join([plugin_path] + plugin_args)
-
-        default_args = [
-            f"-{client_cfg.pass_test_exec_to}",
-            config.testing.test_exec,
-            "-plugin",
-            plugin,
-        ]
-        args = default_args + client_cfg.additional_args
-        logger.info(f"starting client: {' '.join([executable_path, *args])}")
-        client = Client(
-            i,
-            shm,
-            shm_struct,
-            sem_server=sem_server,
-            sem_client=sem_client,
-            is_open=True,
-            process=None,
-            name=client_cfg.name,
-        )
-        clients.append(client)
-        client.process = run_with_callback(
-            [executable_path, *args], on_client_complete, config, client
-        )
+        clients.append(qemu_ipc.create_client(config, client_cfg, i))
 
     if config.testing.protocol.mode == "lockstep":
         max_trace_len = config.testing.max_trace_length
@@ -657,5 +416,88 @@ def start(config: Config):
             if client.process is not None:
                 client.process.terminate()
 
-    for client in clients:
-        close_client(config, client)
+    qemu_ipc.cleanup(config, clients)
+
+
+def any_client_open(clients: list[QEMUClient]) -> bool:
+    return any(map(lambda c: c.is_open, clients))
+
+
+@dataclass
+class ClientSyncInfo:
+    start_pc: int
+    end_pc: int
+    tb_size: int
+    client_idx: int
+
+    def is_jump(self) -> bool:
+        return self.start_pc + self.tb_size * 4 != self.end_pc
+
+    def __str__(self):
+        return (
+            f"ClientSyncInfo(start_pc={hex(self.start_pc)}, end_pc={hex(self.end_pc)}, "
+            f"tb_size={self.tb_size}, client_idx={self.client_idx})"
+        )
+
+    def __repr__(self):
+        return str(self)
+
+
+def sync_clients(clients_sync_infos: list[ClientSyncInfo]):
+    """
+    TB-Syncing:
+    Why?: Necessary to ensure that on a TB-level cosimulation, the state of all clients is compared at the same PC
+    Syncing is only done for the "tb" layer,
+      the "tb-strict" layer assumes that all TBs across all clients are equal.
+    """
+    logger.debug(f"starting to sync clients: {clients_sync_infos}")
+
+    if len(clients_sync_infos) == 0:
+        return
+
+    for i in range(len(clients_sync_infos) - 1):
+        assert clients_sync_infos[i].start_pc == clients_sync_infos[i + 1].start_pc, (
+            f"Clients should initially be synced: {clients_sync_infos}"
+        )
+
+    jumped_client: Optional[ClientSyncInfo] = None
+    for client_sync_info in clients_sync_infos:
+        if client_sync_info.is_jump():
+            logger.debug(f"noticed that client jumped: {client_sync_info}")
+            jumped_client = client_sync_info
+            break
+
+    target_pc = (
+        jumped_client.end_pc
+        if jumped_client is not None
+        else max(map(lambda tbs: tbs.end_pc, clients_sync_infos))
+    )
+    clients_queue = deque(
+        filter(lambda tbs: tbs.end_pc != target_pc, clients_sync_infos)
+    )
+
+    while len(clients_queue) > 0:
+        logger.debug(
+            f"queue: {clients_queue}, tbs: {clients_sync_infos}, max: {target_pc}"
+        )
+        client_entry = clients_queue.popleft()
+        client = clients[client_entry.client_idx]
+
+        start_pc = client.shm_struct.shm_tb.tb_info.pc
+        tb_size = client.shm_struct.shm_tb.tb_info.insns_info_size
+
+        # NOTE: closed clients won't be readded to the queue
+        if client.run():
+            end_pc = client.shm_struct.shm_tb.tb_info.pc
+            sync_info = ClientSyncInfo(
+                start_pc=start_pc,
+                end_pc=end_pc,
+                tb_size=tb_size,
+                client_idx=client_entry.client_idx,
+            )
+
+            if jumped_client is None and end_pc > target_pc:
+                raise ValueError("Client diverged irrecoverably, fail test.")
+
+            if end_pc != target_pc:
+                clients_queue.append(sync_info)
