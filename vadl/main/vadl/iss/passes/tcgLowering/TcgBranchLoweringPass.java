@@ -43,6 +43,7 @@ import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.MergeNode;
+import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -125,6 +126,8 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
     this.optimizeCtrlFlow = optimizeCtrlFlow;
     startNode = getSingleNode(graph, StartNode.class);
     traverseBranch(startNode);
+    // clean up all conditions that were inlined into the TCG branch operation itself
+    cleanUpUnusedConditions();
   }
 
   @Override
@@ -342,6 +345,27 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
 
   private static boolean isEmptyBranch(AbstractBeginNode branch) {
     return branch.next() instanceof AbstractEndNode;
+  }
+
+  /**
+   * Conditions that could directly be embedded in the branch instructions
+   * might not be used anymore.
+   * E.g. a EQU condition can be unscheduled and removed if it is only used by
+   * TCG branches.
+   */
+  private void cleanUpUnusedConditions() {
+    // search for all scheduled nodes that have a built-in not used by any other node
+    // except for the scheduled node and the built-in can be represented as TCG condition.
+    var schedulesToRemove = graph.getNodes(ScheduledNode.class)
+        .filter(n -> n.node() instanceof BuiltInCall call
+            && call.usageCount() == 1
+            && TcgPassUtils.conditionOf(call.builtIn()) != null
+        )
+        .toList();
+
+    for (var schedule : schedulesToRemove) {
+      schedule.replaceByNothingAndDelete();
+    }
   }
 
 }
