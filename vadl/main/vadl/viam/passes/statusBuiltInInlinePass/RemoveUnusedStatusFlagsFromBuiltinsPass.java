@@ -17,6 +17,8 @@
 package vadl.viam.passes.statusBuiltInInlinePass;
 
 import static vadl.utils.GraphUtils.getUsagesByUnrollingLets;
+import static vadl.utils.GraphUtils.not;
+import static vadl.utils.GraphUtils.zeroExtend;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -158,7 +160,16 @@ class ResultInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCall> {
 
   @Override
   public void handleSUBC(BuiltInCall input) {
-    inlineDefaultCarry(input, BuiltInTable.SUB);
+    // subsc result is a + not(b) + C = a - b - not(c).
+    // for more information take a look at ArithmeticInliner.SubC
+    var a = input.arg(0);
+    var b = input.arg(1);
+    var c = input.arg(2);
+    var newNode = BuiltInTable.SUB.call(
+        BuiltInTable.SUB.call(a, b),
+        zeroExtend(not(c), a.type().asDataType())
+    );
+    input.replaceAndDelete(newNode);
   }
 
   @Override
@@ -178,12 +189,16 @@ class ResultInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCall> {
 
   @Override
   public void handleSSATSUBC(BuiltInCall input) {
-    inlineDefaultCarry(input, BuiltInTable.SSATSUB);
+    // this is not just a USATSUB with carry like SUBB but requires special handling like
+    // handleSUBC
+    throwNotImplemented(input);
   }
 
   @Override
   public void handleUSATSUBC(BuiltInCall input) {
-    inlineDefaultCarry(input, BuiltInTable.USATSUB);
+    // this is not just a USATSUB with carry like SUBB but requires special handling like
+    // handleSUBC
+    throwNotImplemented(input);
   }
 
   @Override

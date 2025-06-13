@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
+import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.template.Renderable;
 import vadl.viam.Definition;
@@ -36,8 +37,14 @@ import vadl.viam.RegisterTensor;
  */
 public class RegInfo extends DefinitionExtension<RegisterTensor> implements Renderable {
 
+
   @Nullable
   private Map<String, Object> renderObj;
+  private IssConfiguration config;
+
+  public RegInfo(IssConfiguration config) {
+    this.config = config;
+  }
 
   public RegisterTensor reg() {
     return extendingDef();
@@ -75,6 +82,15 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     return CppTypeMap.nextFittingUInt(reg().resultType(reg().maxNumberOfAccessIndices()));
   }
 
+  /**
+   * The type of the CPU state register field must be the same size as the corresponding
+   * TCG variable, otherwise there would be an overflow when QEMU synchronizes the
+   * TCG variables with the CPU state object.
+   */
+  public int cpuStateTypeWidth() {
+    return config.targetSize().width;
+  }
+
   @Override
   @SuppressWarnings("VariableDeclarationUsageDistance")
   public Map<String, Object> renderObj() {
@@ -90,6 +106,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       renderObj.put("index_dims", dims);
       renderObj.put("value_width", resultType.bitWidth());
       renderObj.put("value_c_type", valueCType());
+      renderObj.put("cpu_state_type_width", cpuStateTypeWidth());
       renderObj.put("names", names());
       renderObj.put("constraints", renderConstraints(dims));
       renderObj.put("getter_params", renderParams.isEmpty() ? "" : ", " + renderParams);
