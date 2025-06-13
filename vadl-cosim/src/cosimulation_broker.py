@@ -16,7 +16,8 @@
 
 """
 The broker for cosimulation testing.
-It is responsible for starting QEMU-clients with the cosimulation plugin, comparing the state between them and produce a test-report.
+It is responsible for starting QEMU-clients with the cosimulation plugin,
+comparing the state between them and produce a test-report.
 The broker communicates with each QEMU-client using IPC.
 """
 
@@ -32,10 +33,10 @@ from ctypes import sizeof
 from dataclasses import asdict, dataclass, field
 from typing import Any, Optional, TypeAlias
 
-import posix_ipc as ipc
+import posix_ipc as ipc  # type: ignore[import-not-found]
 
 from src.config import Config
-from src.cstructs import BrokerSHM, BrokerSHM_Exec, SHMCPU, SHMRegister
+from src.cstructs import SHMCPU, BrokerSHM, BrokerSHM_Exec, SHMRegister
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,27 @@ class Client:
     is_open: bool
     process: Optional[multiprocessing.Process]
     name: Optional[str]
+
+    def run(self) -> bool:
+        """
+        Releases the client to run for one execution-step.
+        Returns True if the client successfully ran,
+        False indicates that the client crashed or finished executing
+        in both cases the client is marked as closed
+        by setting self.is_open = False
+        """
+        try:
+            self.sem_client.release()
+
+            # wait at most 0.1 second, if an error occurs: assume that the client finished (crashing = finishing)
+            self.sem_server.acquire(0.1)
+            return True
+        except ipc.BusyError:
+            logger.debug(
+                f"BusyError: noticed that client #{self.id} shutdown. marking as closed"
+            )
+            self.is_open = False
+            return False
 
 
 clients: list[Client] = []
@@ -149,16 +171,18 @@ def diff_cpus(
 
     return diffs
 
+
 # assumes that the name exists
-def reg_by_name(
-    registers: list[SHMRegister], name: str, config: Config
-) -> SHMRegister:
+def reg_by_name(registers: list[SHMRegister], name: str, config: Config) -> SHMRegister:
     for reg in registers:
         reg_name = reg.fname(config.qemu.gdb_reg_map)
         if reg_name == name:
             return reg
-        
-        if name in config.qemu.gdb_reg_map and reg_name == config.qemu.gdb_reg_map[name]:
+
+        if (
+            name in config.qemu.gdb_reg_map
+            and reg_name == config.qemu.gdb_reg_map[name]
+        ):
             return reg
 
     assert False, "reg_by_name called but no register with that name found"
@@ -185,7 +209,7 @@ def diff_cpu(
     if cpu1.registers_size < cpu2.registers_size:
         for reg_index in range(cpu1.registers_size):
             c1reg = cpu1.registers[reg_index]
-            c2reg = reg_by_name(cpu2.registers, c1reg.name, config)
+            c2reg = reg_by_name(cpu2.registers, c1reg.name.fstr(), config)
 
             diffs.extend(diff_register(c1reg, c2reg, cpu_index, reg_index, config))
     else:
@@ -194,12 +218,6 @@ def diff_cpu(
             c1reg = reg_by_name(cpu1.registers, c2reg.name.fstr(), config)
 
             diffs.extend(diff_register(c1reg, c2reg, cpu_index, reg_index, config))
-
-    for reg_index in range(min(cpu1.registers_size, cpu2.registers_size)):
-        c1reg = cpu1.registers[reg_index]
-        c2reg = cpu2.registers[reg_index]
-
-        diffs.extend(diff_register(c1reg, c2reg, cpu_index, reg_index, config))
 
     return diffs
 
@@ -271,7 +289,8 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
     Currently the following values are tested:
         - CPU:
             - Which CPUs are used? / How many CPUs are used?
-            - Do the amount of registers per CPU match between clients (potentially ignoring a configured set of registers)?
+            - Do the amount of registers per CPU match between clients
+                (potentially ignoring a configured set of registers)?
         - Registers:
             - Do register-sizes match between clients?
             - Do register-names match between clients?
@@ -303,30 +322,30 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
                 c2 = clients[j]
 
                 if config.testing.protocol.layer == "insn":
-                    c1shm = c1.shm_struct.shm_exec
-                    c2shm = c2.shm_struct.shm_exec
+                    c1insn = c1.shm_struct.shm_exec
+                    c2insn = c2.shm_struct.shm_exec
 
                     diffs.extend(
                         diff_cpus(
-                            c1shm.cpus,
-                            c1shm.init_mask,
-                            c2shm.cpus,
-                            c2shm.init_mask,
+                            c1insn.cpus,
+                            c1insn.init_mask,
+                            c2insn.cpus,
+                            c2insn.init_mask,
                             config,
                         )
                     )
 
                     return diffs
                 else:
-                    c1shm = c1.shm_struct.shm_tb
-                    c2shm = c2.shm_struct.shm_tb
+                    c1tb = c1.shm_struct.shm_tb
+                    c2tb = c2.shm_struct.shm_tb
 
                     diffs.extend(
                         diff_cpus(
-                            c1shm.cpus,
-                            c1shm.init_mask,
-                            c2shm.cpus,
-                            c2shm.init_mask,
+                            c1tb.cpus,
+                            c1tb.init_mask,
+                            c2tb.cpus,
+                            c2tb.init_mask,
                             config,
                         )
                     )
@@ -345,23 +364,12 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
         for i, client in enumerate(clients):
             if client.is_open and skip_per_client[i] > 0:
                 skip_per_client[i] -= 1
-                try:
-                    client.sem_client.release()
-
-                    # wait at most 0.1 second
-                    # if a client already closes in this phase then simple mark it as closed
-                    # since, in case the client closed / crashed prematurely, this will be found when checking the client's state
-                    client.sem_server.acquire(0.1)
-                except ipc.BusyError:
-                    logger.debug(
-                        f"BusyError: noticed that client #{client.id} shutdown. marking as closed"
-                    )
-                    client.is_open = False
+                client.run()
 
     execute_remaining = config.testing.protocol.execute_all_remaining_instructions
     stop_after = config.testing.protocol.stop_after_n_instructions
 
-    diffs = []
+    diffs: list[ClientDiff] = []
 
     # Lockstepping logic:
     # Release each client once and then compare their states
@@ -375,16 +383,7 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
         while any(map(lambda c: c.is_open, clients)):
             for client in clients:
                 if client.is_open:
-                    try:
-                        client.sem_client.release()
-
-                        # wait at most 0.1 second, if an error occurs: assume that the client finished (crashing = finishing)
-                        client.sem_server.acquire(0.1)
-                    except ipc.BusyError:
-                        logger.debug(
-                            f"BusyError: noticed that client #{client.id} shutdown. marking as closed"
-                        )
-                        client.is_open = False
+                    client.run()
 
             if not execute_remaining:
                 if stop_after > 0:
@@ -398,82 +397,101 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
             if len(diffs) > 0:
                 return report_from_diffs(diffs)
     else:
+
+        @dataclass
+        class ClientSyncInfo:
+            start_pc: int
+            end_pc: int
+            tb_size: int
+            client_idx: int
+
+            def is_jump(self) -> bool:
+                return self.start_pc + self.tb_size * 4 != self.end_pc
+
+            def __str__(self):
+                return (
+                    f"ClientSyncInfo(start_pc={hex(self.start_pc)}, end_pc={hex(self.end_pc)}, "
+                    f"tb_size={self.tb_size}, client_idx={self.client_idx})"
+                )
+
+            def __repr__(self):
+                return str(self)
+
         # TB-Syncing:
         # Why?: Necessary to ensure that on a TB-level cosimulation, the state of all clients is compared at the same PC
-        # Syncing is only done for the "tb" layer, the "tb-strict" layer assumes that all TBs across all clients are equal.
-        def sync_clients(clients_tbs: list[tuple[int, int, int]]):
-            if len(clients_tbs) == 0:
+        # Syncing is only done for the "tb" layer,
+        #   the "tb-strict" layer assumes that all TBs across all clients are equal.
+        def sync_clients(clients_sync_infos: list[ClientSyncInfo]):
+            logger.debug(f"starting to sync clients: {clients_sync_infos}")
+
+            if len(clients_sync_infos) == 0:
                 return
 
-            # NOTE: These asserts are assumptions by the syncing algorithm
-            #       If they fail then that indicates a bug in the algorithm and not in any of the QEMU-clients
-            for i, client_tbs in enumerate(clients_tbs):
-                assert client_tbs[0] < client_tbs[1], (
-                    f"Jumps should not occur inside a TB: #{i}: ({client_tbs})"
-                )
+            for i in range(len(clients_sync_infos) - 1):
+                assert (
+                    clients_sync_infos[i].start_pc == clients_sync_infos[i + 1].start_pc
+                ), f"Clients should initially be synced: {clients_sync_infos}"
 
-            for i in range(len(clients_tbs) - 1):
-                assert clients_tbs[i][0] == clients_tbs[i + 1][0], (
-                    f"Clients should initially be synced: {clients_tbs}"
-                )
+            jumped_client: Optional[ClientSyncInfo] = None
+            for client_sync_info in clients_sync_infos:
+                if client_sync_info.is_jump():
+                    logger.debug(
+                        f"noticed that client jumped: {client_sync_info}"
+                    )
+                    jumped_client = client_sync_info
+                    break
 
-            max_pc2 = max(map(lambda tbs: tbs[1], clients_tbs))
-            clients_queue = deque(filter(lambda tbs: tbs[1] < max_pc2, clients_tbs))
+            target_pc = (
+                jumped_client.end_pc
+                if jumped_client is not None
+                else max(map(lambda tbs: tbs.end_pc, clients_sync_infos))
+            )
+            clients_queue = deque(
+                filter(lambda tbs: tbs.end_pc != target_pc, clients_sync_infos)
+            )
 
             while len(clients_queue) > 0:
                 logger.debug(
-                    f"queue-len: {len(clients_queue)}, queue: {clients_queue}, tbs: {clients_tbs}, max: {max_pc2}"
+                    f"queue: {clients_queue}, tbs: {clients_sync_infos}, max: {target_pc}"
                 )
                 client_entry = clients_queue.popleft()
-                client = clients[client_entry[2]]
+                client = clients[client_entry.client_idx]
 
-                try:
-                    tb1 = client.shm_struct.shm_tb.tb_info.pc
-                    client.sem_client.release()
+                start_pc = client.shm_struct.shm_tb.tb_info.pc
+                tb_size = client.shm_struct.shm_tb.tb_info.insns_info_size
 
-                    # wait at most 0.1 second, if an error occurs: assume that the client finished (crashing = finishing)
-                    client.sem_server.acquire(0.1)
-                    tb2 = client.shm_struct.shm_tb.tb_info.pc
+                # NOTE: closed clients won't be readded to the queue
+                if client.run():
+                    end_pc = client.shm_struct.shm_tb.tb_info.pc
+                    sync_info = ClientSyncInfo(
+                        start_pc=start_pc,
+                        end_pc=end_pc,
+                        tb_size=tb_size,
+                        client_idx=client_entry.client_idx,
+                    )
 
-                    client_tbs = (tb1, tb2, client_entry[2])
-                    this_pc2 = tb2
-
-                    if this_pc2 < max_pc2:
-                        clients_queue.append(client_tbs)
-                        continue
-
-                    if this_pc2 == max_pc2:
-                        continue
-
-                    if this_pc2 > max_pc2:
+                    if jumped_client is None and end_pc > target_pc:
                         raise ValueError("Client diverged irrecoverably, fail test.")
 
-                except ipc.BusyError:
-                    # NOTE: In case a client closes before it synced we just ignore it in case this is the expected behavior
-                    #       If this is unexpected then a test-fail will be caught when diffing the client state
-                    #       Therefore the client is simply not readded to the sync queue
-                    logger.debug(
-                        f"BusyError: noticed that client #{client.id} shutdown. marking as closed"
-                    )
-                    client.is_open = False
+                    if end_pc != target_pc:
+                        clients_queue.append(sync_info)
 
         while any(map(lambda c: c.is_open, clients)):
-            clients_tbs: list[tuple[int, int, int]] = []
+            clients_tbs: list[ClientSyncInfo] = []
             for i, client in enumerate(clients):
                 if client.is_open:
-                    try:
-                        tb1 = client.shm_struct.shm_tb.tb_info.pc
-                        client.sem_client.release()
-
-                        # wait at most 0.1 second, if an error occurs: assume that the client finished (crashing = finishing)
-                        client.sem_server.acquire(0.1)
-                        tb2 = client.shm_struct.shm_tb.tb_info.pc
-                        clients_tbs.append((tb1, tb2, i))
-                    except ipc.BusyError:
-                        logger.debug(
-                            f"BusyError: noticed that client #{client.id} shutdown. marking as closed"
+                    start_pc = client.shm_struct.shm_tb.tb_info.pc
+                    tb_size = client.shm_struct.shm_tb.tb_info.insns_info_size
+                    if client.run():
+                        end_pc = client.shm_struct.shm_tb.tb_info.pc
+                        clients_tbs.append(
+                            ClientSyncInfo(
+                                start_pc=start_pc,
+                                end_pc=end_pc,
+                                tb_size=tb_size,
+                                client_idx=i,
+                            )
                         )
-                        client.is_open = False
 
             try:
                 sync_clients(clients_tbs)

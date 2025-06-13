@@ -237,7 +237,8 @@ static void open_sems(void) {
       g_strdup_printf("cosimulation-sem-client-%s", args.client_id);
   sem_client = sem_open(sem_client_name, O_RDWR);
   if (sem_client == SEM_FAILED) {
-    g_error("failed to open sem_client for client: %s", args.client_id);
+    char* err = strerror(errno);
+    g_error("failed to open sem_client for client: %s -> %s", args.client_id, err);
     return;
   }
 
@@ -245,7 +246,8 @@ static void open_sems(void) {
       g_strdup_printf("cosimulation-sem-server-%s", args.client_id);
   sem_server = sem_open(sem_server_name, O_RDWR);
   if (sem_server == SEM_FAILED) {
-    g_error("failed to open sem_server for client: %s", args.client_id);
+    char* err = strerror(errno);
+    g_error("failed to open sem_server for client: %s -> %s", args.client_id, err);
     return;
   }
 }
@@ -260,19 +262,22 @@ static BrokerSHM *connect_to_broker(void) {
   gchar *shm_name = g_strdup_printf("/cosimulation-shm-%s", args.client_id);
   int shm_fd = shm_open(shm_name, O_RDWR, 0600);
   if (shm_fd == -1) {
-    g_error("failed to open shared memory for client: %s", args.client_id);
+    char* err = strerror(errno);
+    g_error("failed to open shared memory for client: %s -> %s", args.client_id, err);
     return NULL;
   }
 
   if (ftruncate(shm_fd, sizeof(BrokerSHM)) == -1) {
-    g_error("failed to truncate shared memory for client: %s", args.client_id);
+    char* err = strerror(errno);
+    g_error("failed to truncate shared memory for client: %s -> %s", args.client_id, err);
     return NULL;
   }
 
   BrokerSHM *shm = mmap(NULL, sizeof(BrokerSHM), PROT_READ | PROT_WRITE,
                         MAP_SHARED, shm_fd, 0);
   if (shm == MAP_FAILED) {
-    g_error("failed to mmap shared memory for client: %s", args.client_id);
+    char* err = strerror(errno);
+    g_error("failed to mmap shared memory for client: %s -> %s", args.client_id, err);
     return NULL;
   }
 
