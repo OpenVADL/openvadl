@@ -41,6 +41,7 @@ public abstract class AbstractBeginNode extends DirectionalNode {
     }
     return false;
   }
+  
 
   @Override
   public void accept(GraphNodeVisitor visitor) {

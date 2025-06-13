@@ -89,7 +89,7 @@ public abstract class TcgBinaryOpNode extends TcgOpNode {
   @Override
   public Set<TcgVRefNode> usedVars() {
     var sup = super.usedVars();
-    sup.addAll(Set.of(arg1, arg2));
+    sup.addAll(List.of(arg1, arg2));
     return sup;
   }
 

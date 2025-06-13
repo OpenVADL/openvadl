@@ -17,7 +17,6 @@
 package vadl.viam.passes;
 
 import javax.annotation.Nullable;
-import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.ControlSplitNode;
@@ -75,12 +74,12 @@ public interface CfgTraverser {
 
 
   /**
-   * Traverses the control flow graph starting from the given branch begin node.
+   * Traverses the control flow graph starting from the given node.
    *
-   * @param branchBegin The starting node of the branch to traverse.
+   * @param branchBegin The node to begin traversing.
    * @return The end node of the traversal.
    */
-  default AbstractEndNode traverseBranch(AbstractBeginNode branchBegin) {
+  default AbstractEndNode traverseBranch(ControlNode branchBegin) {
     ControlNode currNode = branchBegin;
 
     while (true) {

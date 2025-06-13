@@ -400,14 +400,30 @@ public abstract class Node implements WithLocation {
    *                        successor
    */
   public void safeDelete() {
+    safeDelete(true);
+  }
+
+
+  /**
+   * Deletes this node safely.
+   *
+   * @param deleteChildren indicate if children (input and successors) should be removed
+   *                       recursively.
+   * @throws ViamGraphError if some other node still uses this as input or
+   *                        successor
+   */
+  public void safeDelete(boolean deleteChildren) {
     ensureDeleteIsPossible();
     clearInputsUsageOfThis();
     clearSuccessorsUsageOfThis();
     if (graph != null) {
       graph.remove(this);
     }
-    deleteObsoleteChildrenOf();
+    if (deleteChildren) {
+      deleteObsoleteChildrenOf();
+    }
   }
+
 
   /**
    * Delete all children (inputs and successors) that aren’t used (no usages and predecessor).

@@ -16,6 +16,7 @@
 
 package vadl.iss.passes.tcgLowering;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
@@ -259,8 +260,8 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
 
     var firstTrueBranchNode = ifNode.trueBranch().next();
     var firstFalseBranchNode = ifNode.falseBranch().next();
-    var lastTrueBranchNode = mergeNode.trueBranchEnd().predecessor();
-    var lastFalseBranchNode = mergeNode.falseBranchEnd().predecessor();
+    var lastTrueBranchNode = requireNonNull(mergeNode.trueBranchEnd().predecessor());
+    var lastFalseBranchNode = requireNonNull(mergeNode.falseBranchEnd().predecessor());
 
     // Unlink branches
     ifNode.trueBranch().setNext(null);
