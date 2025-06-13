@@ -26,12 +26,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BinaryOperator;
+import javax.annotation.Nullable;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
-import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.StringType;
 import vadl.types.Type;
+import vadl.utils.BigIntUtils;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 import vadl.viam.Constant;
@@ -47,6 +48,15 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   private final IdentityHashMap<Expr, ConstantValue> cache = new IdentityHashMap<>();
 
+  public boolean isConstant(Expr expr) {
+    try {
+      eval(expr);
+      return true;
+    } catch (EvaluationError e) {
+      return false;
+    }
+  }
+
   public ConstantValue eval(Expr expr) {
     // A simple optimization that avoids unneeded traversing the tree.
     if (expr.type instanceof ConstantType) {
@@ -54,7 +64,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     }
 
     if (cache.containsKey(expr)) {
-      return (ConstantValue) cache.get(expr);
+      return cache.get(expr);
     }
 
     var result = expr.accept(this);
@@ -81,14 +91,66 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
       return eval(functionDefinition.expr);
     }
 
+    if (origin instanceof LetExpr letExpr) {
+      // FIXME: implement tuple unpacking
+      if (letExpr.identifiers.size() > 1) {
+        throw new EvaluationError("Cannot evaluate tuple unpacking yet",
+            letExpr.identifiers.getFirst().loc.join(
+                letExpr.identifiers.getLast()
+                    .loc));
+      }
+
+      return eval(letExpr.valueExpr);
+    }
+
     if (origin instanceof EnumerationDefinition.Entry entry) {
       return eval(Objects.requireNonNull(entry.value));
     }
 
+
     throw new EvaluationError(
-        "Cannot evaluate identifier with origin of %s yet, found in: %s.".formatted(
-            Objects.requireNonNull(origin).getClass().getName(),
-            expr.location().toIDEString()), expr);
+        "Cannot evaluate identifier with origin of %s".formatted(
+            Objects.requireNonNull(origin).getClass().getName()), expr);
+  }
+
+  private ConstantValue concat(List<ConstantValue> values) {
+    var type = (DataType) values.getFirst().type();
+    var value = type.isSigned()
+        ? BigIntUtils.twosComplement(values.getFirst().value(), type.bitWidth())
+        : values.getFirst().value();
+
+    for (var i = 1; i < values.size(); i++) {
+      var current = values.get(i);
+      var isSigned = current.type().asDataType().isSigned();
+      var currentBitWidth = ((DataType) current.type()).bitWidth();
+      value = value
+          .shiftLeft(((DataType) current.type()).bitWidth())
+          // Change to two-compliment
+          .or(isSigned
+              ? BigIntUtils.twosComplement(current.value(), currentBitWidth)
+              : current.value());
+      type = Type.bits(type.bitWidth() + currentBitWidth);
+    }
+    return new ConstantValue(value, type);
+  }
+
+  private ConstantValue slice(ConstantValue target, Constant.BitSlice slice, DataType resultType) {
+    var parts = slice.parts().map(part ->
+            new ConstantValue(
+                target.value()
+                    // First we do the modulo to remove the left side we don't need.
+                    .mod(BigInteger.ONE.shiftLeft(part.msb() + 1))
+                    // Next shift right to remove the right part
+                    .shiftRight(part.lsb()),
+                Type.bits(part.size())
+            )
+        )
+        .toList();
+
+    var value = concat(parts).value();
+    return new ConstantValue(
+        BigIntUtils.fromTwosComplement(value, resultType.bitWidth(), resultType.isSigned()),
+        resultType);
   }
 
   @Override
@@ -178,24 +240,17 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   @Override
   public ConstantValue visit(GroupedExpr expr) {
     if (expr.expressions.size() == 1) {
-      return eval(expr.expressions.get(0));
+      return eval(expr.expressions.getFirst());
     }
 
     if (expr.expressions.stream().anyMatch(e -> e.type() instanceof StringType)) {
       throw new EvaluationError("Cannot evaluate strings.", expr);
     }
 
-    List<Constant> args = expr.expressions.stream()
+    var args = expr.expressions.stream()
         .map(this::eval)
-        .map(ConstantValue::toViamConstant)
-        .map(c -> (Constant) c)
         .toList();
-    var res = args.stream()
-        .reduce((a, b) -> BuiltInTable.CONCATENATE_BITS.compute(List.of(a, b)).orElseThrow())
-        .orElseThrow();
-    return ConstantValue.fromViam((Constant.Value) res);
-
-    //throw new RuntimeException("Research what to do in that case");
+    return concat(args);
   }
 
   @Override
@@ -215,8 +270,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(StringLiteral expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    throw new EvaluationError("Cannot evaluate strings (yet).", expr);
   }
 
   @Override
@@ -273,9 +327,15 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   public ConstantValue visit(CallIndexExpr expr) {
 
     List<Expr> args =
-        !expr.argsIndices.isEmpty() ? expr.argsIndices.get(0).values : new ArrayList<>();
+        !expr.args().isEmpty() ? expr.args().stream().flatMap(a -> a.values.stream()).toList() :
+            new ArrayList<>();
     var argTypes = args.stream().map(Expr::type).toList();
+
+    @Nullable ConstantValue result = null;
+
+    // Bultin Functions
     var builtin = AstUtils.getBuiltIn(expr.target.path().pathToString(), argTypes);
+    // FIXME: Validate the implementation
     if (builtin != null) {
       // FIXME: verify no subcalls or slicing here
       if (expr.argsIndices.size() != 1 || !expr.subCalls.isEmpty()) {
@@ -286,26 +346,35 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
       if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 1) {
 
         var fakeUnExpr = AstUtils.getBuiltinUnOp(expr, builtin);
-        return eval(fakeUnExpr);
-      }
-
-      // If the function is also a binary operation, we instead type check it as if it were a binary
-      // operation which has some special type rules.
-      if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 2) {
+        result = eval(fakeUnExpr);
+      } else if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 2) {
+        // If the function is also a binary operation, we instead type check it as if it were a
+        // binary operation which has some special type rules.
         var fakeBinExpr = AstUtils.getBuiltinBinOp(expr, builtin);
-        return eval(fakeBinExpr);
+        result = eval(fakeBinExpr);
+      } else {
+        throw new RuntimeException(
+            "At the moment the constant evaluator can only evaluate builtins that are also binary "
+                + "or unary operators.");
       }
-
-      throw new RuntimeException(
-          "At the moment the constant evaluator can only evaluate builtins that are also binary or"
-              + " unary operators.");
     }
 
+    // FIXME: User Defined Functions
+    if (!(expr.target.path() instanceof TypedNode)) {
+      throw new EvaluationError("Cannot evaluate function calls (yet).", expr);
+    }
 
-    // FIXME: Add functions
+    // If the expr is just a slice, let's load it.
+    if (result == null) {
+      result = eval((Expr) expr.target);
+    }
 
-    throw new RuntimeException(
-        "The constant evaluator cannot handle such calls");
+    // Slicing/Indexing
+    for (var sliceArg : expr.slices()) {
+      result = slice(result, requireNonNull(sliceArg.computedBitSlice), (DataType) sliceArg.type());
+    }
+
+    return result;
   }
 
   @Override
@@ -320,18 +389,21 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(LetExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
-
+    // No need to setup anything the variable will be evaluated when the identifier is visited.
+    return eval(expr.body);
   }
 
   @Override
   public ConstantValue visit(CastExpr expr) {
     var innerVal = expr.value.accept(this);
 
-    var viamVal =
-        innerVal.toViamConstant()
-            .castTo((DataType) Objects.requireNonNull(expr.type));
+    var targetType = Objects.requireNonNull(expr.type);
+    if (targetType instanceof TensorType tensorType) {
+      targetType = tensorType.flattenBitsType();
+    }
+
+    var viamVal = innerVal.toViamConstant()
+        .castTo((DataType) targetType);
     return ConstantValue.fromViam(viamVal);
   }
 
@@ -463,6 +535,10 @@ record ConstantValue(BigInteger value, Type type) {
         System.out.println();
         throw e;
       }
+    }
+
+    if (this.type instanceof TensorType tensorType) {
+      return Constant.Value.fromInteger(value, tensorType.flattenBitsType());
     }
 
     if (this.type instanceof DataType dataType) {

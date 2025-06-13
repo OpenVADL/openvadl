@@ -149,14 +149,12 @@ public class AsmGrammarDefaultRules {
             new Parameter(
                 new Identifier("x", SourceLocation.INVALID_SOURCE_LOCATION),
                 new TypeLiteral(new Identifier("SInt", SourceLocation.INVALID_SOURCE_LOCATION),
-                    List.of(
-                        List.of(new IntegerLiteral("64", SourceLocation.INVALID_SOURCE_LOCATION))),
+                    List.of(new IntegerLiteral("64", SourceLocation.INVALID_SOURCE_LOCATION)),
                     SourceLocation.INVALID_SOURCE_LOCATION)
             )
         )),
         new TypeLiteral(new Identifier("SInt", SourceLocation.INVALID_SOURCE_LOCATION),
-            List.of(
-                List.of(new IntegerLiteral("64", SourceLocation.INVALID_SOURCE_LOCATION))),
+            List.of(new IntegerLiteral("64", SourceLocation.INVALID_SOURCE_LOCATION)),
             SourceLocation.INVALID_SOURCE_LOCATION),
         new UnaryExpr(new UnOp(UnaryOperator.NEGATIVE, SourceLocation.INVALID_SOURCE_LOCATION),
             new Identifier("x", SourceLocation.INVALID_SOURCE_LOCATION)),

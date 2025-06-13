@@ -1509,7 +1509,7 @@ PRODUCTIONS
           term<out Expr term, allowedOps>         (. var isSize = false; .)
           [
             IF (!allowedOps[_SYM_LT] || la.kind == _SYM_GT) (. isSize = true; .)
-            SYM_GT                                (. castTarget.sizeIndices.add(List.of(term)); .)
+            SYM_GT                                (. castTarget.sizeIndices.add(term); .)
           ]                                       (. if (!isSize) expr = new BinaryExpr(reorderCastExpr(expr), new BinOp(Operator.Less, lessLoc), term); .)
         }                                         (. if (expr instanceof CastExpr) expr = reorderCastExpr(expr); .)
       )
@@ -1640,7 +1640,7 @@ PRODUCTIONS
     macroReplacement<out Node n> (. expr = castExpr(this, n); .)
   .
 
-  groupedExpression<out GroupedExpr expr> (. expr = new GroupedExpr(new ArrayList<>(), lastTokenLoc()); .)
+  groupedExpression<out GroupedExpr expr> (. expr = new GroupedExpr(new ArrayList<>(), nextTokenLoc()); .)
   = SYM_PAREN_OPEN
     expression<out Expr inner, BIN_OPS>   (. expr.expressions.add(inner); .)
     {
@@ -1811,15 +1811,11 @@ PRODUCTIONS
   // -- PRIMITIVES ---------------------------------------------------------------------------------------------------
 
   typeLiteral<out TypeLiteral type>
-  = identifierPath<out IsId path>                        (. List<List<Expr>> sizeIndices = new ArrayList<>(); .)
+  = identifierPath<out IsId path>                        (. List<Expr> sizeIndices = new ArrayList<>(); .)
     {
-      SYM_LT                                             (. List<Expr> sizes = new ArrayList<>(); .)
-      expression<out Expr sizeExpr, BIN_OPS_EXCEPT_GT>   (. sizes.add(sizeExpr); .)
-      {
-        SYM_COMMA
-        expression<out Expr nextSize, BIN_OPS_EXCEPT_GT> (. sizes.add(nextSize); .)
-      }
-      SYM_GT                                             (. sizeIndices.add(sizes); .)
+      SYM_LT
+      expression<out Expr sizeExpr, BIN_OPS_EXCEPT_GT>   (. sizeIndices.add(sizeExpr); .)
+      SYM_GT
     }                                                    (. type = new TypeLiteral(path, sizeIndices, path.location().join(lastTokenLoc())); .)
   .
 

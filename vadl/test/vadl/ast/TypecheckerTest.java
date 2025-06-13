@@ -17,6 +17,7 @@
 package vadl.ast;
 
 import java.math.BigInteger;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.error.Diagnostic;
@@ -1097,5 +1098,118 @@ public class TypecheckerTest {
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
   }
 
+  @Test
+  public void tensorValuesTest() {
+    var prog = """
+        constant x = let a = 1 as Bits<6> in a + 2
+        function flo -> Bits<6> = x as Bits<6>
+        
+        using Dim_1_a = Bits<16>
+        using Dim_2_a = Dim_1_a<4>
+        using Dim_3_a = Dim_2_a<2>
+        using Dim_3_b = Bits<2><4><16>         // equivalent to Dim_3_a
+        
+        constant d2 = (3 as Dim_1_a, 2, 1, 0) as Dim_2_a                // specified with highest index first
+        constant d3 = ((7 as Bits<16>, 6, 5, 4) as Dim_2_a,             // cast here is redundant but more readable
+                       (3 as Bits<16>, 2, 1, 0) as Dim_2_a) as Dim_3_a 
+        
+        constant a = d2(3)                     // is 3 as Dim_1_a (Bits<16>)
+        constant b = d2(3)(15)                 // is 0 as Bits<1>
+        constant c = d3(0)                     // is (3, 2, 1, 0) as Dim_2_a
+        constant d = d3(0)(3)                  // is 3 as Dim_1_a (Bits<16>)
+        constant e = d3(0)(3)(15)              // is 0 as Bits<1>
+        constant f = let x = d3(0) as Bits<64> in x(15..0)  // is 0, is d3(0)(0)
+        constant g = let x = d3(0) as Bits<64> in x(63..48) // is 3, is d3(0)(3)
+        constant h = let x = d3(1) as Bits<64> in x(63..48) // is 7, is d3(1)(3)
+        
+        constant i = 0xfedc'da98'7654'3210 as Bits<64>    // Bits<64> value
+        constant j = i as Dim_2_a 
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+
+    var finder = new AstFinder();
+    Assertions.assertEquals(new TensorType(List.of(4), Type.bits(16)),
+        finder.getConstantType(ast, "d2"));
+    Assertions.assertEquals(new TensorType(List.of(2, 4), Type.bits(16)),
+        finder.getConstantType(ast, "d3"));
+
+
+    Assertions.assertEquals(Type.bits(16), finder.getConstantType(ast, "a"));
+    Assertions.assertEquals(new ConstantValue(BigInteger.valueOf(3), Type.bits(16)),
+        finder.getConstantValue(ast, "a"));
+
+    Assertions.assertEquals(Type.bits(1), finder.getConstantType(ast, "b"));
+    Assertions.assertEquals(new ConstantValue(BigInteger.ZERO, Type.bits(1)),
+        finder.getConstantValue(ast, "b"));
+
+    Assertions.assertEquals(new TensorType(List.of(4), Type.bits(16)),
+        finder.getConstantType(ast, "c"));
+    Assertions.assertEquals(
+        new ConstantValue(BigInteger.valueOf(0x0003000200010000L),
+            new TensorType(List.of(4), Type.bits(16))),
+        finder.getConstantValue(ast, "c"));
+
+    Assertions.assertEquals(Type.bits(16), finder.getConstantType(ast, "d"));
+    Assertions.assertEquals(new ConstantValue(BigInteger.valueOf(3), Type.bits(16)),
+        finder.getConstantValue(ast, "d"));
+
+    Assertions.assertEquals(Type.bits(1), finder.getConstantType(ast, "e"));
+    Assertions.assertEquals(new ConstantValue(BigInteger.ZERO, Type.bits(1)),
+        finder.getConstantValue(ast, "e"));
+
+    Assertions.assertEquals(Type.bits(16), finder.getConstantType(ast, "f"));
+    Assertions.assertEquals(new ConstantValue(BigInteger.ZERO, Type.bits(16)),
+        finder.getConstantValue(ast, "f"));
+
+    Assertions.assertEquals(Type.bits(16), finder.getConstantType(ast, "g"));
+    Assertions.assertEquals(new ConstantValue(BigInteger.valueOf(3), Type.bits(16)),
+        finder.getConstantValue(ast, "g"));
+
+    Assertions.assertEquals(Type.bits(16), finder.getConstantType(ast, "h"));
+    Assertions.assertEquals(new ConstantValue(BigInteger.valueOf(7), Type.bits(16)),
+        finder.getConstantValue(ast, "h"));
+
+    Assertions.assertEquals(Type.bits(64), finder.getConstantType(ast, "i"));
+    Assertions.assertEquals(
+        new ConstantValue(new BigInteger("fedcda9876543210", 16), Type.bits(64)),
+        finder.getConstantValue(ast, "i"));
+
+    Assertions.assertEquals(new TensorType(List.of(4), Type.bits(16)),
+        finder.getConstantType(ast, "j"));
+    Assertions.assertEquals(new ConstantValue(new BigInteger("fedcda9876543210", 16),
+            Type.bits(64)),
+        finder.getConstantValue(ast, "j"));
+  }
+
+  @Test
+  public void signedTensorValuesTest() {
+    var prog = """
+        constant a = (-3 as SInt<8>, 8, -9)  as SInt<3><8>
+        constant b = a(0) 
+        constant c = a(1) 
+        constant d = a(2) 
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+
+    var finder = new AstFinder();
+    Assertions.assertEquals(new TensorType(List.of(3), Type.signedInt(8)),
+        finder.getConstantType(ast, "a"));
+
+    Assertions.assertEquals(Type.signedInt(8), finder.getConstantType(ast, "b"));
+    Assertions.assertEquals(new ConstantValue(BigInteger.valueOf(-9), Type.signedInt(8)),
+        finder.getConstantValue(ast, "b"));
+
+    Assertions.assertEquals(Type.signedInt(8), finder.getConstantType(ast, "c"));
+    Assertions.assertEquals(new ConstantValue(BigInteger.valueOf(8), Type.signedInt(8)),
+        finder.getConstantValue(ast, "c"));
+
+    Assertions.assertEquals(Type.signedInt(8), finder.getConstantType(ast, "d"));
+    Assertions.assertEquals(new ConstantValue(BigInteger.valueOf(-3), Type.signedInt(8)),
+        finder.getConstantValue(ast, "d"));
+  }
 
 }
