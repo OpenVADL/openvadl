@@ -381,7 +381,7 @@ public class AssemblyParserCodeGenerator {
 
   @Handler
   void handle(CAsmContext ctx, AsmLocalVarDefinition element) {
-    ctx.ln("ParsedValue<%s> %s;", element.asmType().toCppTypeString(namespace),
+    ctx.ln("std::optional<ParsedValue<%s>> %s;", element.asmType().toCppTypeString(namespace),
         element.localVarName());
 
     if (element.asmLiteral() != null) {
@@ -394,7 +394,7 @@ public class AssemblyParserCodeGenerator {
     var resultVar = writeCastIfNecessary(ctx, element.invokedLocalVarType(), element.asmType(),
         element.invokedLocalVar(), false);
     writeAssignToIfNotNull(ctx, element.assignToElement(), resultVar);
-    writeToElementVar(ctx, element.asmType(), varName(element), resultVar);
+    writeToElementVar(ctx, element.asmType(), varName(element), resultVar + ".value()");
   }
 
   @Handler

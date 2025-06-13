@@ -47,7 +47,7 @@ public:
 };
 
 
-struct NoData{};
+  struct NoData{};
 
 [# th:each="struct : ${parsedValueStructs}" ]
 struct [(${struct.name})] {
