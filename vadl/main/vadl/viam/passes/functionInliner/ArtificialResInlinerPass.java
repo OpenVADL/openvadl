@@ -125,14 +125,14 @@ public class ArtificialResInlinerPass extends Pass {
     }
 
     // remove the copied end node
-    var copyEndPred = copyEnd.predecessor();
+    var copyEndPred = requireNonNull(copyEnd.predecessor());
     copyEndPred.unlinkNext();
     copyEnd.replaceAndDelete(endNode);
 
     if (copyStart != copyEndPred) {
       // if there is control flow, we link it into this control flow
       var copySucc = copyStart.unlinkNext();
-      var endPred = endNode.predecessor();
+      var endPred = requireNonNull(endNode.predecessor());
       endPred.setNext(copySucc);
       copyEndPred.setNext(endNode);
     }

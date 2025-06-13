@@ -182,30 +182,26 @@ class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCal
   @Override
   public void handleSUMULLS(BuiltInCall input) {
     throwNotImplemented(input);
-
   }
 
   @Override
   public void handleSMODS(BuiltInCall input) {
     throwNotImplemented(input);
-
   }
 
   @Override
   public void handleUMODS(BuiltInCall input) {
     throwNotImplemented(input);
-
   }
 
   @Override
   public void handleSDIVS(BuiltInCall input) {
-    throwNotImplemented(input);
-
+    new ArithmeticInliner.SDivS(input).inline();
   }
 
   @Override
   public void handleUDIVS(BuiltInCall input) {
-    throwNotImplemented(input);
+    new ArithmeticInliner.UDivS(input).inline();
 
   }
 

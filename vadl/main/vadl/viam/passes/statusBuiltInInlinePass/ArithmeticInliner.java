@@ -19,13 +19,17 @@ package vadl.viam.passes.statusBuiltInInlinePass;
 import static vadl.utils.GraphUtils.and;
 import static vadl.utils.GraphUtils.binaryOp;
 import static vadl.utils.GraphUtils.bits;
+import static vadl.utils.GraphUtils.equ;
 import static vadl.utils.GraphUtils.not;
 import static vadl.utils.GraphUtils.or;
 import static vadl.utils.GraphUtils.testSignBit;
 import static vadl.utils.GraphUtils.zeroExtend;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
+import java.math.BigInteger;
 import vadl.types.BuiltInTable;
+import vadl.types.Type;
+import vadl.viam.Constant;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 
@@ -486,6 +490,108 @@ abstract class ArithmeticInliner {
           result
       );
       return or(partialCarry, finalCarry);
+    }
+  }
+
+  /**
+   * In VADL the overflow for signed division is defined as
+   * {@code ov = (a == minVal(SInt<size>) && b == -1) || (b == 0)}.
+   * While in PowerPC the result is influenced by the overflow, this is not the case
+   * for the {@code VADL::SDIVS} built-in.
+   * In the event of an overflow, the result is undefined.
+   * We do this, to match the semantics of the {@code VADL::SDIV} built-in.
+   */
+  static class SDivS extends Inliner {
+
+    public SDivS(BuiltInCall builtInCall) {
+      super(builtInCall);
+    }
+
+    @Override
+    ExpressionNode createResult() {
+      var a = arg0();
+      var b = arg1();
+      // In VADL the result is not influence by the overflow
+      return BuiltInTable.SDIV.call(a, b);
+    }
+
+    /**
+     * In VADL the signed division overflow is defined as
+     * {@code ov = (a == minVal(SInt<size>) && b == -1) || (b == 0)}.
+     */
+    @Override
+    ExpressionNode checkOverflow() {
+      var a = arg0();
+      var b = arg1();
+      var aw = a.type().asDataType().bitWidth();
+
+      // construct minval by setting bit aw - 1 to 1.
+      var minVal =
+          Constant.Value.fromInteger(BigInteger.ZERO.setBit(aw - 1), Type.bits(aw)).toNode();
+      var minusOne = Constant.Value.of(-1, Type.signedInt(aw))
+          .castTo(Type.bits(aw)).toNode();
+
+      return or(
+          // (a == -2^(size-1) && b == -1)
+          and(
+              equ(a, minVal),
+              equ(b, minusOne)
+          ),
+          // b == 0
+          equ(b, bits(0, aw).toNode())
+      );
+    }
+
+    /**
+     * Carry is always false for signed division.
+     */
+    @Override
+    ExpressionNode checkCarry() {
+      return Constant.Value.of(false).toNode();
+    }
+  }
+
+  /**
+   * In VADL the overflow for unsigned division is defined as
+   * {@code ov = (b == 0)}.
+   * While in PowerPC the result is influenced by the overflow, this is not the case
+   * for the {@code VADL::UDIVS} built-in.
+   * In the event of an overflow, the result is undefined.
+   * We do this, to match the semantics of the {@code VADL::UDIV} built-in.
+   */
+  static class UDivS extends Inliner {
+
+    public UDivS(BuiltInCall builtInCall) {
+      super(builtInCall);
+    }
+
+    @Override
+    ExpressionNode createResult() {
+      var a = arg0();
+      var b = arg1();
+      // In VADL the result is not influence by the overflow
+      return BuiltInTable.UDIV.call(a, b);
+    }
+
+    /**
+     * In VADL the unsigned division overflow is defined as
+     * {@code ov = (b == 0)}.
+     */
+    @Override
+    ExpressionNode checkOverflow() {
+      var b = arg1();
+      var bw = b.type().asDataType().bitWidth();
+
+      // b == 0
+      return equ(b, bits(0, bw).toNode());
+    }
+
+    /**
+     * Carry is always false for unsigned division.
+     */
+    @Override
+    ExpressionNode checkCarry() {
+      return Constant.Value.of(false).toNode();
     }
   }
 

@@ -108,6 +108,7 @@ import vadl.vdt.passes.VdtEncodingConstraintValidationPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
 import vadl.viam.Specification;
+import vadl.viam.passes.ControlFlowOptimizationPass;
 import vadl.viam.passes.DuplicateWriteDetectionPass;
 import vadl.viam.passes.HardcodeLGALabelPass;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
@@ -178,6 +179,7 @@ public class PassOrders {
     order.add(new FunctionInlinerPass(configuration));
     order.add(new FieldAccessInlinerPass(configuration));
     order.add(new ArtificialResInlinerPass(configuration));
+    order.add(new ControlFlowOptimizationPass(configuration));
     order.add(new SideEffectConditionResolvingPass(configuration));
     // requires SideEffectConditionResolvingPass to work
     order.add(new DuplicateWriteDetectionPass(configuration));

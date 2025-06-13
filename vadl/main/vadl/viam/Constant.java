@@ -16,6 +16,7 @@
 
 package vadl.viam;
 
+import static vadl.error.Diagnostic.warning;
 import static vadl.utils.BigIntUtils.mask;
 import static vadl.utils.BigIntUtils.twosComplement;
 
@@ -33,6 +34,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import org.jetbrains.annotations.Contract;
+import vadl.error.DeferredDiagnosticStore;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.DataType;
@@ -41,6 +43,7 @@ import vadl.types.TupleType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.BigIntUtils;
+import vadl.utils.SourceLocation;
 import vadl.utils.StreamUtils;
 import vadl.viam.graph.dependency.ConstantNode;
 
@@ -440,6 +443,7 @@ public abstract class Constant {
 
     /**
      * Divides this constant by the other one.
+     * If the division would result in an overflow, it is undefined behavior.
      */
     public Constant.Value divide(Constant.Value other, boolean signed) {
       ensure(type().isTrivialCastTo(other.type()),
@@ -454,8 +458,30 @@ public abstract class Constant {
       var a = this.trivialCastTo(divType);
       var b = other.trivialCastTo(divType);
 
+
+      if (b.value.equals(BigInteger.ZERO)) {
+        // this is undefined behavior, however to avoid crashes we just emit warning and zero
+        DeferredDiagnosticStore.add(
+            warning("Division by zero", SourceLocation.INVALID_SOURCE_LOCATION)
+                .description("There was some division by zero during constant evaluation.")
+                .note("Unfortunately we are currently not able to provide location information.")
+        );
+        return zero(divType);
+      }
+
       var newIntegerValue = a.integer()
           .divide(b.integer());
+
+      if (signed && newIntegerValue.compareTo(maxValueOf(divType).integer()) > 0) {
+        // overflow: undefined behavior, but to avoid crashes we just emit zero
+        DeferredDiagnosticStore.add(
+            warning("Division overflow", SourceLocation.INVALID_SOURCE_LOCATION)
+                .description("There was some division with overflow during constant evaluation.")
+                .note("Unfortunately we are currently not able to provide location information.")
+        );
+        return zero(divType);
+      }
+
       return fromInteger(newIntegerValue, divType);
     }
 

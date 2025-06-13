@@ -18,7 +18,7 @@ package vadl.viam.graph.control;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -53,11 +53,12 @@ public abstract class AbstractEndNode extends ControlNode {
     sideEffect.removeUsage(this);
   }
 
-  @Nonnull
+  @Nullable
   @Override
   public DirectionalNode predecessor() {
     var superNode = super.predecessor();
-    ensure(superNode instanceof DirectionalNode, "Invalid predecessor %s", superNode);
+    ensure(superNode == null || superNode instanceof DirectionalNode, "Invalid predecessor %s",
+        superNode);
     return (DirectionalNode) superNode;
   }
 

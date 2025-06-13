@@ -45,8 +45,9 @@ import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAndNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgClzNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgConstSelectNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgCountZerosNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgCtpopNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgDepositNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgDivNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtractNode;
@@ -963,9 +964,24 @@ class BuiltInTcgLoweringExecutor {
           var valSize = ctx.call.arguments().getFirst().type().asDataType().bitWidth();
           var valSizeConst = Constant.Value.of(valSize, Type.bits(ctx.targetSize.width));
           return out(
-              new TcgClzNode(ctx.dest(), ctx.src(0), ctx.constant(valSizeConst))
+              new TcgCountZerosNode(TcgCountZerosNode.Kind.LEADING, ctx.dest(), ctx.src(0),
+                  ctx.constant(valSizeConst))
           );
         })
+
+        .set(BuiltInTable.CTZ, (ctx) -> {
+          // the second argument is the fallback value in case of value being 0
+          var valSize = ctx.call.arguments().getFirst().type().asDataType().bitWidth();
+          var valSizeConst = Constant.Value.of(valSize, Type.bits(ctx.targetSize.width));
+          return out(
+              new TcgCountZerosNode(TcgCountZerosNode.Kind.TRAILING, ctx.dest(), ctx.src(0),
+                  ctx.constant(valSizeConst))
+          );
+        })
+
+        .set(BuiltInTable.COB, (ctx) -> out(
+            new TcgCtpopNode(ctx.dest(), ctx.src(0))
+        ))
 
         //// Comparison ////
 

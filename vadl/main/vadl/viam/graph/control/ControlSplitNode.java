@@ -19,6 +19,7 @@ package vadl.viam.graph.control;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Successor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -42,6 +43,16 @@ public abstract class ControlSplitNode extends ControlNode {
 
   public NodeList<BeginNode> branches() {
     return branches;
+  }
+
+  @Nullable
+  @Override
+  public DirectionalNode predecessor() {
+    var predecessor = super.predecessor();
+    ensure(predecessor == null || predecessor instanceof DirectionalNode,
+        "The predecessor of a control split must be a directional node, but was: %s",
+        predecessor);
+    return (DirectionalNode) predecessor;
   }
 
   @Override
