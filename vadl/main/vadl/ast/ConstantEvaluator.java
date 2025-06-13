@@ -29,10 +29,10 @@ import java.util.function.BinaryOperator;
 import javax.annotation.Nullable;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
-import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.StringType;
 import vadl.types.Type;
+import vadl.utils.BigIntUtils;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 import vadl.viam.Constant;
@@ -114,21 +114,27 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   }
 
   private ConstantValue concat(List<ConstantValue> values) {
-    var value = values.getFirst().value();
-    DataType type = (DataType) values.getFirst().type();
+    var type = (DataType) values.getFirst().type();
+    var value = type.isSigned()
+        ? BigIntUtils.twosComplement(values.getFirst().value(), type.bitWidth())
+        : values.getFirst().value();
+
     for (var i = 1; i < values.size(); i++) {
       var current = values.get(i);
+      var isSigned = current.type().asDataType().isSigned();
+      var currentBitWidth = ((DataType) current.type()).bitWidth();
       value = value
           .shiftLeft(((DataType) current.type()).bitWidth())
-          // FIXME: Change to two-compliment
-          .or(current.value());
-      type = Type.bits(type.bitWidth() + ((DataType) current.type()).bitWidth());
+          // Change to two-compliment
+          .or(isSigned
+              ? BigIntUtils.twosComplement(current.value(), currentBitWidth)
+              : current.value());
+      type = Type.bits(type.bitWidth() + currentBitWidth);
     }
     return new ConstantValue(value, type);
   }
 
-  private ConstantValue slice(ConstantValue target, Constant.BitSlice slice, Type resultType) {
-    // FIXME: Convert to two-copliment
+  private ConstantValue slice(ConstantValue target, Constant.BitSlice slice, DataType resultType) {
     var parts = slice.parts().map(part ->
             new ConstantValue(
                 target.value()
@@ -142,7 +148,9 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
         .toList();
 
     var value = concat(parts).value();
-    return new ConstantValue(value, resultType);
+    return new ConstantValue(
+        BigIntUtils.fromTwosComplement(value, resultType.bitWidth(), resultType.isSigned()),
+        resultType);
   }
 
   @Override
@@ -232,24 +240,17 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   @Override
   public ConstantValue visit(GroupedExpr expr) {
     if (expr.expressions.size() == 1) {
-      return eval(expr.expressions.get(0));
+      return eval(expr.expressions.getFirst());
     }
 
     if (expr.expressions.stream().anyMatch(e -> e.type() instanceof StringType)) {
       throw new EvaluationError("Cannot evaluate strings.", expr);
     }
 
-    List<Constant> args = expr.expressions.stream()
+    var args = expr.expressions.stream()
         .map(this::eval)
-        .map(ConstantValue::toViamConstant)
-        .map(c -> (Constant) c)
         .toList();
-    var res = args.stream()
-        .reduce((a, b) -> BuiltInTable.CONCATENATE_BITS.compute(List.of(a, b)).orElseThrow())
-        .orElseThrow();
-    return ConstantValue.fromViam((Constant.Value) res);
-
-    //throw new RuntimeException("Research what to do in that case");
+    return concat(args);
   }
 
   @Override
@@ -370,7 +371,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
     // Slicing/Indexing
     for (var sliceArg : expr.slices()) {
-      result = slice(result, requireNonNull(sliceArg.computedBitSlice), sliceArg.type());
+      result = slice(result, requireNonNull(sliceArg.computedBitSlice), (DataType) sliceArg.type());
     }
 
     return result;

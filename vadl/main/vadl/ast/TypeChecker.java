@@ -296,7 +296,7 @@ public class TypeChecker
       return fromTensor.flattenBitsType().equals(toBits);
     }
     if (from instanceof BitsType fromBits && to instanceof TensorType toTensor) {
-      return toTensor.flattenBitsType().equals(fromBits);
+      return toTensor.flattenBitsType().bitWidth() == fromBits.bitWidth();
     }
 
     // Casting rules for basic types
@@ -2710,7 +2710,7 @@ public class TypeChecker
           var loc = slice.values.getFirst().location().join(slice.values.getLast().location());
           throw error("Invalid Tensor Indexing", loc)
               .locationDescription(loc,
-                  "Indexing tensos only allows one argument per parenthesis group.")
+                  "Indexing tensors only allows one argument per parenthesis group.")
               .build();
         }
 
