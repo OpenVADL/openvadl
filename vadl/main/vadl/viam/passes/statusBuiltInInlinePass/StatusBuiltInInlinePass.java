@@ -199,13 +199,12 @@ class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCal
 
   @Override
   public void handleSDIVS(BuiltInCall input) {
-    throwNotImplemented(input);
-
+    new ArithmeticInliner.SDivS(input).inline();
   }
 
   @Override
   public void handleUDIVS(BuiltInCall input) {
-    throwNotImplemented(input);
+    new ArithmeticInliner.UDivS(input).inline();
 
   }
 

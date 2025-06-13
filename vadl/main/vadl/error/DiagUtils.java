@@ -43,4 +43,35 @@ public class DiagUtils {
         .build();
   }
 
+
+  /**
+   * Returns the closest valid source location for the given node.
+   * <ul>
+   *   <li>If the node has its own location, use it.</li>
+   *   <li>Otherwise, look for a usage of the node with a location.</li>
+   *   <li>If still not found, fall back to the graph definition’s location.</li>
+   *   <li>Otherwise, an invalid location is returned.</li>
+   * </ul>
+   *
+   * @param node the node whose location is sought
+   * @return the nearest available SourceLocation, or an invalid one if none found
+   */
+  public static SourceLocation validLoc(Node node) {
+    if (node.location().isValid()) {
+      return node.location();
+    }
+
+    var usageWithSourceLocation = node.usages().filter(n -> n.location().isValid())
+        .findFirst();
+    if (usageWithSourceLocation.isPresent()) {
+      return usageWithSourceLocation.get().location();
+    }
+
+    var graph = node.graph();
+    if (graph != null) {
+      return graph.parentDefinition().location();
+    }
+    return node.location();
+  }
+
 }

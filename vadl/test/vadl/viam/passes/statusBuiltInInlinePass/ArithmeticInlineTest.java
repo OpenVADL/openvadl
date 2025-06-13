@@ -279,6 +279,60 @@ public class ArithmeticInlineTest extends StatusBuiltinInlineTest {
     );
   }
 
+  @TestFactory
+  public Stream<DynamicTest> sdivsTests() {
+    return runTests(
+        sdivs(3, 0b100, 0b010, 0b110, true, false, false, false),
+        sdivs(3, 0b100, 0b110, 0b010, false, false, false, false),
+        // the result is undefined (here just for testing purposes zero)
+        sdivs(3, 0b100, 0b0, 0b0, false, true, false, true),
+        // the result is undefined (overflow) (here just for testing purposes)
+        sdivs(3, 0b100, 0b111, 0b0, false, true, false, true),
+
+        // 4-bit signed (-8..+7)
+        sdivs(4, 0b1000, 0b0010, 0b1100, true, false, false, false), // -8/  2 = -4
+        sdivs(4, 0b0111, 0b0011, 0b0010, false, false, false, false), //  7/  3 =  2
+        sdivs(4, 0b1000, 0b1111, 0b0, false, true, false, true),  // -8/ -1 → overflow
+        sdivs(4, 0b0010, 0b0100, 0b0000, false, true, false, false), //  2/  4 =  0
+
+        // 32-bit signed
+        // 1/-1 = 0 (exact)
+        sdivs(32, 0x00000001L, 0xFFFFFFFFL, 0xFFFFFFFFL, true, false, false, false),
+        // MIN/  1 = MIN
+        sdivs(32, 0x80000000L, 0x00000001L, 0x80000000L, true, false, false, false),
+        // MIN/-1 → overflow
+        sdivs(32, 0x80000000L, 0xFFFFFFFFL, 0x0, false, true, false, true),
+        // /0 → undefined
+        sdivs(32, 0x7FFFFFFFL, 0x00000000L, 0x00000000L, false, true, false, true)
+    );
+  }
+
+  @TestFactory
+  public Stream<DynamicTest> udivsTests() {
+    return runTests(
+        // 3-bit unsigned (0..7)
+        udivs(3, 0b111, 0b001, 0b111, true, false, false, false), // 7/1 = 7 (MSB=1)
+        udivs(3, 0b111, 0b010, 0b011, false, false, false, false), // 7/2 = 3
+        udivs(3, 0b010, 0b011, 0b000, false, true, false, false), // 2/3 = 0
+        udivs(3, 0b000, 0b100, 0b000, false, true, false, false), // 0/4 = 0
+        udivs(3, 0b101, 0b010, 0b010, false, false, false, false), // 5/2 = 2
+        udivs(3, 0b101, 0b000, 0b000, false, true, false, true),  // /0 → undefined
+
+        // 4-bit unsigned (0..15)
+        udivs(4, 0b1111, 0b0011, 0b101, false, false, false, false), //15/3 = 5
+        udivs(4, 0b1000, 0b0010, 0b0100, false, false, false, false), // 8/2 = 4
+        udivs(4, 0b1000, 0b1000, 0b0001, false, false, false, false), // 8/8 = 1
+        udivs(4, 0b0001, 0b0111, 0b0000, false, true, false, false), // 1/7 = 0
+        udivs(4, 0b1111, 0b0000, 0b0000, false, true, false, true),  // /0 → undefined
+
+        // 32-bit unsigned
+        udivs(32, 0xFFFFFFFFL, 0x00000002L, 0x7FFFFFFFL, false, false, false, false), // max/2
+        udivs(32, 0x80000000L, 0x00000001L, 0x80000000L, true, false, false, false), // MSB=1
+        udivs(32, 0x00000000L, 0x12345678L, 0x00000000L, false, true, false, false), //0/x = 0
+        udivs(32, 0x12345678L, 0x00000000L, 0x00000000L, false, true, false, true)
+    );
+  }
+
   private Stream<Test> adds(int size, long a, long b, long result, boolean negative, boolean zero,
                             boolean carry, boolean overflow) {
     return binary(BuiltInTable.ADDS, size, a, b, result, negative, zero, carry, overflow);
@@ -310,6 +364,20 @@ public class ArithmeticInlineTest extends StatusBuiltinInlineTest {
                             boolean zero,
                             boolean carry, boolean overflow) {
     return ternary(BuiltInTable.SUBB, size, a, b, c, result, negative, zero, carry, overflow);
+  }
+
+  private Stream<Test> sdivs(int size, long a, long b, long result,
+                             boolean negative, boolean zero,
+                             boolean carry, boolean overflow) {
+    return binary(BuiltInTable.SDIVS, size, a, b,
+        result, negative, zero, carry, overflow);
+  }
+
+  private Stream<Test> udivs(int size, long a, long b, long result,
+                             boolean negative, boolean zero,
+                             boolean carry, boolean overflow) {
+    return binary(BuiltInTable.UDIVS, size, a, b,
+        result, negative, zero, carry, overflow);
   }
 
   private Stream<Test> binary(BuiltInTable.BuiltIn op, int size, long a, long b, long result,
