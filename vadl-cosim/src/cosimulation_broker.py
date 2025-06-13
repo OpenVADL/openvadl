@@ -185,7 +185,7 @@ def reg_by_name(registers: list[SHMRegister], name: str, config: Config) -> SHMR
         ):
             return reg
 
-    assert False, "reg_by_name called but no register with that name found"
+    assert False, f"reg_by_name called but no register with that name found: {name}"
 
 
 def diff_cpu(
@@ -209,12 +209,29 @@ def diff_cpu(
     if cpu1.registers_size < cpu2.registers_size:
         for reg_index in range(cpu1.registers_size):
             c1reg = cpu1.registers[reg_index]
+            r1name = c1reg.fname(config.qemu.gdb_reg_map)
+
+            if r1name in config.qemu.ignore_registers or (
+                config.qemu.ignore_unset_registers
+                and r1name not in config.qemu.gdb_reg_map.values()
+            ):
+                break
+
             c2reg = reg_by_name(cpu2.registers, c1reg.name.fstr(), config)
 
             diffs.extend(diff_register(c1reg, c2reg, cpu_index, reg_index, config))
     else:
         for reg_index in range(cpu2.registers_size):
             c2reg = cpu2.registers[reg_index]
+
+            r2name = c2reg.fname(config.qemu.gdb_reg_map)
+
+            if r2name in config.qemu.ignore_registers or (
+                config.qemu.ignore_unset_registers
+                and r2name not in config.qemu.gdb_reg_map.values()
+            ):
+                break
+
             c1reg = reg_by_name(cpu1.registers, c2reg.name.fstr(), config)
 
             diffs.extend(diff_register(c1reg, c2reg, cpu_index, reg_index, config))
@@ -229,12 +246,6 @@ def diff_register(
 
     r1name = reg1.fname(config.qemu.gdb_reg_map)
     r2name = reg2.fname(config.qemu.gdb_reg_map)
-
-    if r1name in config.qemu.ignore_registers or (
-        config.qemu.ignore_unset_registers
-        and r1name not in config.qemu.gdb_reg_map.values()
-    ):
-        return diffs
 
     if reg1.size != reg2.size:
         diffs.append(
@@ -435,9 +446,7 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
             jumped_client: Optional[ClientSyncInfo] = None
             for client_sync_info in clients_sync_infos:
                 if client_sync_info.is_jump():
-                    logger.debug(
-                        f"noticed that client jumped: {client_sync_info}"
-                    )
+                    logger.debug(f"noticed that client jumped: {client_sync_info}")
                     jumped_client = client_sync_info
                     break
 
