@@ -177,7 +177,7 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
   }
 
   @Override
-  public String llvmKind() {
-    return kind.llvmKind();
+  public CompilerRelocation.Kind kind() {
+    return kind;
   }
 }

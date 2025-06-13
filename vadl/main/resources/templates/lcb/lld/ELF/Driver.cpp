@@ -1176,7 +1176,7 @@ static SmallVector<StringRef, 0> getSymbolOrderingFile(MemoryBufferRef mb) {
 static bool getIsRela(opt::InputArgList &args) {
   // The psABI specifies the default relocation entry format.
   bool rela = is_contained({EM_AARCH64, EM_AMDGPU, EM_HEXAGON, EM_LOONGARCH,
-                            EM_PPC, EM_PPC64, EM_RISCV, EM_S390, EM_X86_64},
+                            EM_PPC, EM_PPC64, EM_RISCV, EM_S390, EM_X86_64, EM_[(${namespace})]},
                            config->emachine);
   // If -z rel or -z rela is specified, use the last option.
   for (auto *arg : args.filtered(OPT_z)) {

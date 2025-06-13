@@ -45,7 +45,7 @@ public class GroupAsmType implements AsmType {
     if (subtypeMap.isEmpty()) {
       return "NoData";
     }
-    return subtypeMap.keySet().stream().sorted()
+    return subtypeMap.keySet().stream()
         .reduce("struct_", (acc, type) -> acc + type);
   }
 

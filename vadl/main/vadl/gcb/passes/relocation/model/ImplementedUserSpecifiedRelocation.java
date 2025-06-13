@@ -132,7 +132,7 @@ public class ImplementedUserSpecifiedRelocation extends UserSpecifiedRelocation
   }
 
   @Override
-  public String llvmKind() {
-    return kind.llvmKind();
+  public CompilerRelocation.Kind kind() {
+    return kind;
   }
 }

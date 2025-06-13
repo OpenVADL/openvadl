@@ -77,7 +77,7 @@ public interface HasRelocationComputationAndUpdate {
   ElfRelocationName elfRelocationName();
 
   /**
-   * Get the LLVM kind of the relocation.
+   * Get the {@link CompilerRelocation.Kind} of the relocation.
    */
-  String llvmKind();
+  CompilerRelocation.Kind kind();
 }

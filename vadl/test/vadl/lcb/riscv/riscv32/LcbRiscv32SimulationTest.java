@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.riscv.riscv32.asm;
+package vadl.lcb.riscv.riscv32;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,14 +23,23 @@ import org.junit.jupiter.api.TestFactory;
 import vadl.lcb.LcbDockerInputFileExecutionTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
-public class AsmRiscv32SimulationTest extends LcbDockerInputFileExecutionTest {
+public class LcbRiscv32SimulationTest extends LcbDockerInputFileExecutionTest {
 
   @TestFactory
-  List<DynamicTest> exec() throws DuplicatedPassKeyException, IOException {
+  List<DynamicTest> optLevel0() throws DuplicatedPassKeyException, IOException {
     return runEach("sys/risc-v/rv32im.vadl",
-        "test/resources/llvm/riscv/asm/rv32im/qemu_asm",
+        "test/resources/llvm/riscv/asm/rv32im/qemu_c",
         0,
-        "sh /work/asm.sh"
+        "sh /work/lcb_integration.sh"
+    );
+  }
+
+  @TestFactory
+  List<DynamicTest> optLevel3() throws DuplicatedPassKeyException, IOException {
+    return runEach("sys/risc-v/rv32im.vadl",
+        "test/resources/llvm/riscv/asm/rv32im/qemu_c",
+        3,
+        "sh /work/lcb_integration.sh"
     );
   }
 
@@ -58,5 +67,4 @@ public class AsmRiscv32SimulationTest extends LcbDockerInputFileExecutionTest {
   protected String getAbi() {
     return "ilp32";
   }
-
 }

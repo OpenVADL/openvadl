@@ -16,12 +16,14 @@
 
 package vadl.lcb.template.lld.ELF.Arch;
 
-import static java.util.Objects.requireNonNull;
-
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.error.DeferredDiagnosticStore;
+import vadl.error.Diagnostic;
 import vadl.gcb.passes.relocation.model.AutomaticallyGeneratedRelocation;
+import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -82,15 +84,13 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
             GenerateLinkerComponentsPass.class);
 
-    var encodingFunctions = ImmediateEncodingFunctionProvider.generateEncodeFunctions(passResults);
-
     var elfRelocations = output.elfRelocations().stream().map(
         r -> new ElfRelocationInfo(r.elfRelocationName().value(),
-            r.llvmKind(),
+            r.kind().llvmKind(),
             r.valueRelocation().functionName().lower(),
             r.fieldUpdateFunction().functionName().lower(),
             r instanceof AutomaticallyGeneratedRelocation
-                ? requireNonNull(encodingFunctions.get(r.field())).functionName().lower()
+                ? encodingFunction(r, passResults)
                 : ""
         )
     ).toList();
@@ -102,5 +102,25 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
         CommonVarNames.MAX_INSTRUCTION_WORDSIZE, elfInfo.maxInstructionWordSize(),
         CommonVarNames.IS_BIG_ENDIAN, elfInfo.isBigEndian(),
         "elfRelocations", elfRelocations);
+  }
+
+  private String encodingFunction(HasRelocationComputationAndUpdate elfRelocation,
+                                  PassResults passResults) {
+
+    var fields = elfRelocation.fields();
+    if (fields.size() != 1) {
+      DeferredDiagnosticStore.add(
+          Diagnostic.warning("The Linker expects only one field for relocation operand",
+              elfRelocation.format()));
+    }
+
+    var encodingFunctions = ImmediateEncodingFunctionProvider.generateEncodeFunctions(passResults);
+
+    var encodingsForField = encodingFunctions.values().stream().flatMap(Collection::stream)
+        .filter(encodingFunction -> encodingFunction.field().equals(fields.getFirst())).toList();
+
+    // Just get first encoding for the field as they are all the same function.
+    // There is more than one because the functions are generated per instruction.
+    return encodingsForField.getFirst().header().functionName().lower();
   }
 }

@@ -8,7 +8,7 @@
 // collection of all available immediates
 
 [# th:each="function : ${encodeFunctions}" ]
-static [(${function})]
+[(${function})]
 [/]
 
 #endif // LLVM_LIB_TARGET_[(${namespace})]_UTILS_IMMEDIATEUTILS_H

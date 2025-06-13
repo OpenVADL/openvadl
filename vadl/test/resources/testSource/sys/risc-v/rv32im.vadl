@@ -169,7 +169,7 @@ assembly description ASM for ABI = {
           "(" rs1Tmp = Register@operand  ")"
       )
       rs1 = rs1Tmp
-      imm = immTmp
+      immS = immTmp
     ;
 
     JalrImmediateOperand :
