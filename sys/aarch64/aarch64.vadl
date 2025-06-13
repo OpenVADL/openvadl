@@ -474,10 +474,18 @@ instruction set architecture AArch64Base = {
 
   model DivInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: ThreeRegOpFormat =
-      let result =
-        if X(rm) = 0
-          then 0
-          else X(rn) as $i.funct<Size::$size> / X(rm) as $i.funct<Size::$size> in
+      let dividend = X(rn) as $i.funct<Size::$size> in
+      let divisor  = X(rm) as $i.funct<Size::$size> in
+        let result =
+          if divisor = 0
+            then 0
+            else match : Ex ($i.funct = SInt =>     // if SInt check for overflow
+              let MinInt = 1 as SInt<Size::$size> << Size::$size - 1 in
+                if dividend = MinInt && divisor = -1
+                  then MinInt
+                  else dividend / divisor
+              ; _ =>   dividend / divisor
+              ) in
         X(rd) := result as Bits<Size::$size> as BitsX
     $ThreeRegOpEncAsm ($i; $size)
     }
