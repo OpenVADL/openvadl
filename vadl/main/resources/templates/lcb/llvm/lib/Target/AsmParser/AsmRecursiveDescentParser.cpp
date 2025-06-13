@@ -60,12 +60,12 @@ namespace llvm {
   }
 
   bool [(${namespace})]AsmRecursiveDescentParser::VADL_asmparser_laidin(uint64_t lookahead, const std::vector<std::string>& compareStrings) {
-    AsmToken* tok;
-    MutableArrayRef<AsmToken> Buf(tok, lookahead);
+    std::vector<AsmToken> tokens(lookahead);
+    MutableArrayRef<AsmToken> Buf(tokens.data(), lookahead);
     size_t ReadCount = Lexer.peekTokens(Buf, true);
 
     for (size_t i = 0; i < compareStrings.size(); i++) {
-      if (tok[lookahead].getString().[(${compareFunction})](compareStrings[i])) {
+      if (tokens[lookahead-1].getString().[(${compareFunction})](compareStrings[i])) {
           return true;
       }
     }
@@ -73,11 +73,11 @@ namespace llvm {
   }
 
   bool [(${namespace})]AsmRecursiveDescentParser::VADL_asmparser_laideq(uint64_t lookahead, const std::string compareString) {
-      AsmToken* tok;
-      MutableArrayRef<AsmToken> Buf(tok ,lookahead);
+      std::vector<AsmToken> tokens(lookahead);
+      MutableArrayRef<AsmToken> Buf(tokens.data() ,lookahead);
       size_t ReadCount = Lexer.peekTokens(Buf, true);
 
-      return tok[lookahead].getString().[(${compareFunction})](compareString);
+      return tokens[lookahead-1].getString().[(${compareFunction})](compareString);
   }
 
 [(${grammarRules})]

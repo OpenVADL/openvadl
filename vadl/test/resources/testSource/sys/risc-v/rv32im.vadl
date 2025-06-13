@@ -156,10 +156,20 @@ assembly description ASM for ABI = {
     ;
 
     JalrInstruction @instruction:
+      var rs1Tmp = null @operand
+      var immTmp = null @operand
       mnemonic = "JALR" @operand
       rd = Register@operand ","
-      rs1 = Register@operand ","
-      imm = JalrImmediateOperand
+      // FIXME: Fix constant types in typechecker to allow just '1' instead of '1 as Bits<1>'
+      (  ?(laideq(1 as Bits<1>, ","))
+          rs1Tmp = Register@operand ","
+          immTmp = JalrImmediateOperand
+        |
+          immTmp = JalrImmediateOperand
+          "(" rs1Tmp = Register@operand  ")"
+      )
+      rs1 = rs1Tmp
+      imm = immTmp
     ;
 
     JalrImmediateOperand :
