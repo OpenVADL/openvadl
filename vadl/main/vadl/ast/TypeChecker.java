@@ -24,7 +24,6 @@ import static vadl.error.Diagnostic.warning;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -36,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
@@ -288,6 +288,18 @@ public class TypeChecker
       return true;
     }
 
+    // Tensors need special rules for casting
+    if (from instanceof TensorType fromTensor && to instanceof TensorType toTensor) {
+      return fromTensor.flattenBitsType().equals(toTensor.flattenBitsType());
+    }
+    if (from instanceof TensorType fromTensor && to instanceof BitsType toBits) {
+      return fromTensor.flattenBitsType().equals(toBits);
+    }
+    if (from instanceof BitsType fromBits && to instanceof TensorType toTensor) {
+      return toTensor.flattenBitsType().equals(fromBits);
+    }
+
+    // Casting rules for basic types
     var castTable = Map.of(
         ConstantType.class, List.of(BitsType.class, BoolType.class),
         BitsType.class, List.of(BitsType.class, BoolType.class),
@@ -2302,6 +2314,34 @@ public class TypeChecker
     }
 
     // Bits concatination
+
+    // If there are constants values and only one "concrete" type we can cast the constants to that
+    // one.
+    if (types.stream().anyMatch(x -> x instanceof ConstantType)) {
+      var concreteTypes =
+          types.stream().filter(x -> !(x instanceof ConstantType)).distinct().toList();
+      if (concreteTypes.isEmpty()) {
+        throw error("Type Mismatch", expr)
+            .locationDescription(expr,
+                "At least one value has to have a concrete bitwidth for a concatination")
+            .build();
+      }
+      if (concreteTypes.size() > 1) {
+        throw error("Type Mismatch", expr)
+            .locationDescription(expr,
+                "The concatination operation can only concat bits or strings.")
+            .locationNote(expr, "Provided types: %s",
+                String.join(", ", types.stream().map(Type::toString).toList()))
+            .locationHelp(expr,
+                "Constant types can be implicitly casted to a concrete type if only one such "
+                    + "concrete type appears.")
+            .build();
+      }
+
+      expr.expressions.replaceAll(e -> wrapImplicitCast(e, concreteTypes.get(0)));
+      types = expr.expressions.stream().map(this::check).toList();
+    }
+
     if (types.stream().allMatch(x -> x instanceof DataType)) {
       var width = types.stream().map(t -> ((DataType) t).bitWidth()).reduce(0, Integer::sum);
       expr.type = Type.bits(width);
@@ -2399,28 +2439,73 @@ public class TypeChecker
   private Type parseTypeLiteral(TypeLiteral expr, @Nullable Integer preferredBitWidth) {
     var base = expr.baseType.pathToString();
 
-    if (base.equals("Bool")) {
-      if (!expr.sizeIndices.isEmpty()) {
-        throw error("Invalid Type Notation", expr.location())
-            .description("The Bool type doesn't use the size notation as it is always one bit.")
-            .build();
-      }
-      return Type.bool();
+    // 1. Check whether the base exists.
+    var builtinBases = List.of("Bool", "String", "Bits", "UInt", "SInt");
+    var customTarget = expr.symbolTable().findAs(expr.baseType, Node.class);
+    if (!(customTarget instanceof UsingDefinition) && !(customTarget instanceof FormatDefinition)) {
+      customTarget = null;
     }
 
-    if (base.equals("String")) {
-      if (!expr.sizeIndices.isEmpty()) {
-        throw error("Invalid Type Notation", expr.location())
-            .description("The String type doesn't use the size notation.")
-            .build();
-      }
-      return Type.string();
+    if (!builtinBases.contains(base) && customTarget == null) {
+      var candidateTypes = new ArrayList<>(builtinBases);
+      candidateTypes.addAll(
+          expr.symbolTable().allSymbolNamesOf(FormatDefinition.class, UsingDefinition.class));
+      var suggestions =
+          Levenshtein.suggestions(expr.baseType.pathToString(), candidateTypes);
+
+      throw error("Unknown Type `%s`".formatted(base), expr)
+          .locationDescription(expr, "No type with that name exists.")
+          .suggestions(suggestions)
+          .build();
     }
 
-    // The basic types SINT<n>, UINT<n> and BITS<n>
-    if (Arrays.asList("SInt", "UInt", "Bits").contains(base)) {
+    // 2. Calculate the sizes
+    var sizes = expr.sizeIndices.stream().map(sizeExpr -> {
+      check(sizeExpr);
+      var size = constantEvaluator.eval(sizeExpr).value().intValueExact();
 
-      if (expr.sizeIndices.isEmpty() && preferredBitWidth == null) {
+      if (size < 1) {
+        throw error("Invalid Type Notation", sizeExpr.location())
+            .locationDescription(sizeExpr.location(),
+                "Width must of a %s must be greater or equal 1 but was %d", base, size)
+            .build();
+      }
+
+      return size;
+    }).toList();
+
+
+    // For the builtin bits types we can infer the size (sometimes)
+    if (List.of("Bits", "SInt", "UInt").contains(base)
+        && expr.sizeIndices.isEmpty()
+        && preferredBitWidth != null) {
+
+      sizes = List.of(preferredBitWidth);
+    }
+
+    // 3. Create the builtin types
+    Map<String, Supplier<Type>> unSizedBuiltins = Map.of(
+        "Bool", Type::bool,
+        "String", Type::string);
+
+    if (unSizedBuiltins.containsKey(base)) {
+      if (!sizes.isEmpty()) {
+        throw error("Invalid Type Notation", expr.location())
+            .description("The %s type doesn't use the size notation.", base)
+            .help("Try removing the size parameter here.")
+            .build();
+      }
+      return unSizedBuiltins.get(base).get();
+    }
+
+    Map<String, Function<Integer, BitsType>> sizedBuiltins = Map.of(
+        "Bits", Type::bits,
+        "SInt", Type::signedInt,
+        "UInt", Type::unsignedInt
+    );
+
+    if (sizedBuiltins.containsKey(base)) {
+      if (sizes.isEmpty()) {
         throw error("Invalid Type Notation", expr.location())
             .description(
                 "Unsized `%s` can only be used in special places when it's obvious what the bit"
@@ -2430,64 +2515,39 @@ public class TypeChecker
             .build();
       }
 
-      if (!expr.sizeIndices.isEmpty()
-          && (expr.sizeIndices.size() != 1 || expr.sizeIndices.get(0).size() != 1)) {
-        throw error("Invalid Type Notation", expr.location())
-            .description("The %s type requires exactly one size parameter.", base)
-            .build();
+      if (sizes.size() == 1) {
+        return sizedBuiltins.get(base).apply(sizes.getFirst());
       }
 
-      int bitWidth;
-      if (!expr.sizeIndices.isEmpty()) {
-        var widthExpr = expr.sizeIndices.get(0).get(0);
-        check(widthExpr);
-        bitWidth = constantEvaluator.eval(widthExpr).value().intValueExact();
+      return new TensorType(sizes.subList(0, sizes.size() - 1),
+          sizedBuiltins.get(base).apply(sizes.getLast()));
+    }
 
-        if (bitWidth < 1) {
-          throw error("Invalid Type Notation", widthExpr.location())
-              .locationDescription(widthExpr.location(),
-                  "Width must of a %s must be greater than 1 but was %s", base, bitWidth)
-              .build();
-        }
-      } else {
-        bitWidth = requireNonNull(preferredBitWidth);
+    // 4. Create the custom types
+    Type customTargetType = switch (requireNonNull(customTarget)) {
+      case UsingDefinition usingDef -> check(usingDef.typeLiteral);
+      case FormatDefinition formatDef -> {
+        check(formatDef);
+        yield new FormatType(formatDef);
       }
+      default -> throw new IllegalStateException("Unexpected value: " + customTarget);
+    };
 
-      return switch (base) {
-        case "SInt" -> Type.signedInt(bitWidth);
-        case "UInt" -> Type.unsignedInt(bitWidth);
-        case "Bits" -> Type.bits(bitWidth);
-        default -> throw new IllegalStateException("Unexpected value: " + base);
-      };
+    if (sizes.isEmpty()) {
+      return customTargetType;
     }
 
-    // Find the type from the symbol table
-    var typeTarget = expr.symbolTable().findAs(expr.baseType, Node.class);
-
-    if (typeTarget instanceof UsingDefinition usingDef) {
-      return check(usingDef.typeLiteral);
+    // Only some types can be used to create a tensor.
+    if (customTargetType instanceof BitsType customBits) {
+      return new TensorType(sizes, customBits);
     }
 
-    if (typeTarget instanceof FormatDefinition formatDef) {
-      check(formatDef);
-      return new FormatType(formatDef);
+    if (customTargetType instanceof TensorType customTensor) {
+      return new TensorType(sizes, customTensor);
     }
 
-    // Throw unknown type error
-    var sb = new StringBuilder();
-    expr.prettyPrint(0, sb);
-    var typeName = sb.toString();
-
-    var baseTypes = Arrays.asList("SInt", "UInt", "Bits", "String", "Bool");
-    var candidateTypes = new ArrayList<>(baseTypes);
-    candidateTypes.addAll(
-        expr.symbolTable().allSymbolNamesOf(FormatDefinition.class, UsingDefinition.class));
-    var suggestions =
-        Levenshtein.suggestions(expr.baseType.pathToString(), candidateTypes);
-
-    throw error("Unknown Type `%s`".formatted(typeName), expr)
-        .locationDescription(expr, "No type with that name exists.")
-        .suggestions(suggestions)
+    throw error("Invalid Tensor Type", expr)
+        .locationDescription(expr, "You can only create tensors from data types.")
         .build();
   }
 
@@ -2608,42 +2668,89 @@ public class TypeChecker
 
     var lastSlice = sliceGroups.getLast();
 
-    // FIXME: Adjust for vectors in the future
-    if (!(typeBeforeSlice instanceof BitsType targetBitsType)) {
+    if (!(typeBeforeSlice instanceof BitsType) && !(typeBeforeSlice instanceof TensorType)) {
       var loc = expr.target.location().join(lastSlice.location);
       throw error("Type Mismatch", loc)
           .description("Only bit types can be sliced but the target was a `%s`", typeBeforeSlice)
           .build();
     }
 
-    BitsType currType = targetBitsType;
+    Type currType = typeBeforeSlice;
     for (var slice : sliceGroups) {
-      // construct BitSlice for each slice group
-      var parts = new ArrayList<Constant.BitSlice.Part>();
-      for (var partExpr : slice.values) {
-        // for each part construct a BitSlice.Part
-        var part = partExpr instanceof RangeExpr rangeSlice
-            ? checkSliceRange(rangeSlice, currType)
-            : checkIndexSlice(partExpr, currType);
-        parts.add(part);
-      }
+      if (currType instanceof BitsType currBitsType) {
+        // construct BitSlice for each slice group
+        var parts = new ArrayList<Constant.BitSlice.Part>();
+        for (var partExpr : slice.values) {
+          // for each part construct a BitSlice.Part
+          var part = partExpr instanceof RangeExpr rangeSlice
+              ? checkSliceRange(rangeSlice, currBitsType)
+              : checkIndexSlice(partExpr, currBitsType);
+          parts.add(part);
+        }
 
-      var bitSlice = new Constant.BitSlice(parts.toArray(new Constant.BitSlice.Part[0]));
-      if (bitSlice.hasOverlappingParts()) {
-        // Currently, we don't allow overlapping slices for both slices on read values
-        // and write targets.
-        // In the future we might want to allow overlapping slices on read values.
-        // For written values (`X(1, 1) := 2`) this must not be allowed, as the same value position
-        // is written twice.
-        throw error("Overlapping slice parts", slice.location)
-            .locationDescription(slice.location, "Some parts of the slice are overlapping.")
-            .note("Slices must have distinct, non-overlapping parts.")
-            .build();
-      }
+        var bitSlice = new Constant.BitSlice(parts.toArray(new Constant.BitSlice.Part[0]));
+        if (bitSlice.hasOverlappingParts()) {
+          // Currently, we don't allow overlapping slices for both slices on read values
+          // and write targets.
+          // In the future we might want to allow overlapping slices on read values.
+          // For written values (`X(1, 1) := 2`) this must not be allowed, as the same value
+          // position is written twice.
+          throw error("Overlapping slice parts", slice.location)
+              .locationDescription(slice.location, "Some parts of the slice are overlapping.")
+              .note("Slices must have distinct, non-overlapping parts.")
+              .build();
+        }
 
-      currType = Type.bits(bitSlice.bitSize());
-      slice.computedBitSlice = bitSlice;
-      slice.type = currType;
+        currType = Type.bits(bitSlice.bitSize());
+        slice.computedBitSlice = bitSlice;
+        slice.type = currType;
+      }
+      if (currType instanceof TensorType currTensoType) {
+        if (slice.values.size() != 1) {
+          var loc = slice.values.getFirst().location().join(slice.values.getLast().location());
+          throw error("Invalid Tensor Indexing", loc)
+              .locationDescription(loc,
+                  "Indexing tensos only allows one argument per parenthesis group.")
+              .build();
+        }
+
+        var indexExpr = slice.values.getFirst();
+        if (indexExpr instanceof RangeExpr) {
+          throw error("Invalid Tensor Slice", indexExpr)
+              .locationDescription(indexExpr, "Tensors cannot be sliced.")
+              .build();
+        }
+
+        int index;
+        try {
+          index = constantEvaluator.eval(indexExpr).value().intValueExact();
+        } catch (EvaluationError e) {
+          throw error("Invalid constant value", indexExpr)
+              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
+              .description("Tensor indexing must be a constant value.")
+              .build();
+        }
+
+        if (index < 0 || index >= currTensoType.outerMostDimension()) {
+          throw error("Tensor Index out of bounds", indexExpr)
+              .locationDescription(indexExpr,
+                  "Invalid index `%d` for tensor `%s`", index, currTensoType)
+              .build();
+        }
+
+        // Note: the computed bitslice here is already for the lowering where we assume all tensors
+        // are flattened
+        currType = currTensoType.pop();
+        var bitWidth = switch (currType) {
+          case BitsType bt -> bt.bitWidth();
+          case TensorType tt -> tt.flattenBitsType().bitWidth();
+          default -> throw new IllegalStateException();
+        };
+        slice.computedBitSlice =
+            Constant.BitSlice.of(bitWidth * index + bitWidth - 1, bitWidth * index);
+        slice.type = currType;
+
+      }
     }
 
     expr.type = currType;
