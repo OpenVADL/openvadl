@@ -1183,4 +1183,33 @@ public class TypecheckerTest {
         finder.getConstantValue(ast, "j"));
   }
 
+  @Test
+  public void signedTensorValuesTest() {
+    var prog = """
+        constant a = (-3 as SInt<8>, 8, -9)  as SInt<3><8>
+        constant b = a(0) 
+        constant c = a(1) 
+        constant d = a(2) 
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+
+    var finder = new AstFinder();
+    Assertions.assertEquals(new TensorType(List.of(3), Type.signedInt(8)),
+        finder.getConstantType(ast, "a"));
+
+    Assertions.assertEquals(Type.signedInt(8), finder.getConstantType(ast, "b"));
+    Assertions.assertEquals(new ConstantValue(BigInteger.valueOf(-9), Type.signedInt(8)),
+        finder.getConstantValue(ast, "b"));
+
+    Assertions.assertEquals(Type.signedInt(8), finder.getConstantType(ast, "c"));
+    Assertions.assertEquals(new ConstantValue(BigInteger.valueOf(8), Type.signedInt(8)),
+        finder.getConstantValue(ast, "c"));
+
+    Assertions.assertEquals(Type.signedInt(8), finder.getConstantType(ast, "d"));
+    Assertions.assertEquals(new ConstantValue(BigInteger.valueOf(-3), Type.signedInt(8)),
+        finder.getConstantValue(ast, "d"));
+  }
+
 }
