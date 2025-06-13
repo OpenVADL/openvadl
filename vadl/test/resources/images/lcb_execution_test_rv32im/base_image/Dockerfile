@@ -28,3 +28,4 @@ COPY filecheck.sh .
 COPY upstream.sh .
 COPY compare.sh .
 COPY asm.sh .
+COPY lcb_integration.sh .
