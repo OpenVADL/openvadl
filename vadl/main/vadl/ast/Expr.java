@@ -2574,13 +2574,27 @@ class ForallThenExpr extends Expr {
   }
 }
 
+/**
+ * forall in tesnor
+ * forall in fold
+ */
 class ForallExpr extends Expr {
   List<ForallExpr.Index> indices;
+
+  /**
+   * The kind of forall expression (fold, tensor, etc)
+   */
   Operation operation;
+
+  /**
+   * Only if the node is a fold we need to know which operator is folded over.
+   */
   @Nullable
   Operator foldOperator;
+
   @Child
   Expr body;
+
   SourceLocation loc;
 
   ForallExpr(List<ForallExpr.Index> indices, Operation operation, @Nullable Operator foldOperator,
@@ -2657,11 +2671,19 @@ class ForallExpr extends Expr {
   }
 
   static final class Index extends Node implements IdentifiableNode {
+    @Child
     IsId id;
+
+    @Child
+    @Nullable
+    TypeLiteral typeLiteral;
+
+    @Child
     Expr domain;
 
-    public Index(IsId id, Expr domain) {
+    public Index(IsId id, @Nullable TypeLiteral typeLiteral, Expr domain) {
       this.id = id;
+      this.typeLiteral = typeLiteral;
       this.domain = domain;
     }
 
@@ -2683,6 +2705,10 @@ class ForallExpr extends Expr {
     @Override
     void prettyPrint(int indent, StringBuilder builder) {
       id.prettyPrint(0, builder);
+      if (typeLiteral != null) {
+        builder.append(": ");
+        typeLiteral.prettyPrint(0, builder);
+      }
       builder.append(" in ");
       domain.prettyPrint(0, builder);
     }
@@ -2694,19 +2720,21 @@ class ForallExpr extends Expr {
       }
 
       Index index = (Index) o;
-      return id.equals(index.id) && domain.equals(index.domain);
+      return id.equals(index.id) && Objects.equals(typeLiteral, index.typeLiteral)
+          && domain.equals(index.domain);
     }
 
     @Override
     public int hashCode() {
       int result = id.hashCode();
+      result = 31 * result + Objects.hashCode(typeLiteral);
       result = 31 * result + domain.hashCode();
       return result;
     }
   }
 
   enum Operation {
-    APPEND("append"), TENSOR("tensor"), FOLD("fold");
+    TENSOR("tensor"), FOLD("fold");
 
     private final String keyword;
 

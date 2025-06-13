@@ -1475,16 +1475,24 @@ PRODUCTIONS
     statement<out Statement statement>      (. lock = new LockStatement(expr, statement, start.join(lastTokenLoc())); .)
   .
 
-  forallStatement<out Statement forall> (. var start = nextTokenLoc(); .)
-  = FORALL                              (. var indices = new ArrayList<ForallStatement.Index>(); .)
+  forallStatement<out Statement forall> (. var start = nextTokenLoc(); var indices = new ArrayList<ForallStatement.Index>(); TypeLiteral typeLiteral = null; .)
+   = FORALL
     identifier<out Identifier indexName>
+    [
+    SYM_COLON
+    typeLiteral<out  typeLiteral>
+    ]
     SYM_IN
-    rangeExpression<out Expr domain>    (. indices.add(new ForallStatement.Index(indexName, domain)); .)
+    rangeExpression<out Expr domain>    (. indices.add(new ForallStatement.Index(indexName, typeLiteral, domain)); .)
     {
       SYM_COMMA
-      identifier<out indexName>
+      identifier<out indexName>         (. typeLiteral = null; .)
+      [
+        SYM_COLON
+        typeLiteral<out typeLiteral>
+      ]
       SYM_IN
-      rangeExpression<out domain>       (. indices.add(new ForallStatement.Index(indexName, domain)); .)
+      rangeExpression<out domain>       (. indices.add(new ForallStatement.Index(indexName, typeLiteral, domain)); .)
     }
     DO
     statement<out Statement statement>  (. forall = new ForallStatement(indices, statement, start.join(lastTokenLoc())); .)
@@ -1776,33 +1784,46 @@ PRODUCTIONS
     SYM_BRACE_CLOSE
   .
 
-  forallExpression<out Expr forallExpr, boolean[] allowedOps> (. forallExpr = DUMMY_EXPR; var start = nextTokenLoc(); .)
+  forallExpression<out Expr forallExpr, boolean[] allowedOps> (. forallExpr = DUMMY_EXPR; var start = nextTokenLoc(); TypeLiteral typeLiteral = null; .)
   = FORALL
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    [
+    SYM_COLON
+    typeLiteral<out typeLiteral>
+    ]
     SYM_IN
     (                                                         (. var indices = new ArrayList<ForallThenExpr.Index>(); .)
       operationsList<.out List<IsId> operations.>             (. indices.add(new ForallThenExpr.Index(id, operations)); .)
       {
         SYM_COMMA
-        identifierOrPlaceholder<out id>
+        identifierOrPlaceholder<out id>                       (. typeLiteral = null; .)
+        [
+          SYM_COLON
+          typeLiteral<out typeLiteral>
+        ]
         SYM_IN
         operationsList<out operations>                        (. indices.add(new ForallThenExpr.Index(id, operations)); .)
       }
       THEN
       expression<out Expr thenExpr, allowedOps>               (. forallExpr = new ForallThenExpr(indices, thenExpr, start.join(lastTokenLoc())); .)
     |                                                         (. var indices = new ArrayList<ForallExpr.Index>(); .)
-      rangeExpression<out Expr domain>                        (. indices.add(new ForallExpr.Index(id, domain)); .)
+      rangeExpression<out Expr domain>                        (. indices.add(new ForallExpr.Index(id, typeLiteral, domain)); .)
       {
         SYM_COMMA
-        identifierOrPlaceholder<out id>
+        identifierOrPlaceholder<out id>                       (. typeLiteral = null; .)
+        [
+          SYM_COLON
+          typeLiteral<out typeLiteral>
+        ]
         SYM_IN
-        rangeExpression<out domain>                           (. indices.add(new ForallExpr.Index(id, domain)); .)
+        rangeExpression<out domain>                           (. indices.add(new ForallExpr.Index(id, typeLiteral, domain)); .)
       }                                                       (. ForallExpr.Operation operation = null; Operator foldAction = null; .)
-      ( APPEND                                                (. operation = ForallExpr.Operation.APPEND; .)
-      | TENSOR                                                (. operation = ForallExpr.Operation.TENSOR; .)
+      ( TENSOR                                                (. operation = ForallExpr.Operation.TENSOR; .)
       | FOLD                                                  (. operation = ForallExpr.Operation.FOLD; .)
         binaryOperator<out foldAction>
         WITH
+      // Previously the append existed for protocols but at the time of writing protocols are on hold in open-vadl.
+      // | APPEND                                               (. operation = ForallExpr.Operation.APPEND; .)
       )
       expression<out Expr expr, allowedOps>                   (. forallExpr = new ForallExpr(indices, operation, foldAction, expr, start.join(lastTokenLoc())); .)
     )

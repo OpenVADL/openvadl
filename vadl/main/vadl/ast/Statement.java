@@ -242,7 +242,7 @@ final class LetStatement extends Statement {
   public int hashCode() {
     return Objects.hash(identifiers, valueExpr, body);
   }
-  
+
 }
 
 final class IfStatement extends Statement {
@@ -919,6 +919,15 @@ final class LockStatement extends Statement {
 }
 
 
+/**
+ * A statement to do repeated work in a loop, mostly used for tensors.
+ *
+ * <p>{@code
+ * // initialize 4 consecutive X registers
+ * instruction Init4X : F = forall i: Bits<8> in 0 .. 3 do
+ * X(rd + i) := 0
+ * }}
+ */
 final class ForallStatement extends Statement {
   List<Index> indices;
   @Child
@@ -970,11 +979,19 @@ final class ForallStatement extends Statement {
   }
 
   static final class Index extends Statement implements IdentifiableNode {
+    @Child
     Identifier name;
+
+    @Child
+    @Nullable
+    TypeLiteral typeLiteral;
+
+    @Child
     Expr domain;
 
-    public Index(Identifier name, Expr domain) {
+    public Index(Identifier name, @Nullable TypeLiteral typeLiteral, Expr domain) {
       this.name = name;
+      this.typeLiteral = typeLiteral;
       this.domain = domain;
     }
 
@@ -991,6 +1008,10 @@ final class ForallStatement extends Statement {
     @Override
     void prettyPrint(int indent, StringBuilder builder) {
       name.prettyPrint(0, builder);
+      if (typeLiteral != null) {
+        builder.append(": ");
+        typeLiteral.prettyPrint(0, builder);
+      }
       builder.append(" in ");
       domain.prettyPrint(0, builder);
     }
@@ -1001,13 +1022,15 @@ final class ForallStatement extends Statement {
         return false;
       }
 
-      Index that = (Index) o;
-      return name.equals(that.name) && domain.equals(that.domain);
+      Index index = (Index) o;
+      return name.equals(index.name) && Objects.equals(typeLiteral, index.typeLiteral)
+          && domain.equals(index.domain);
     }
 
     @Override
     public int hashCode() {
       int result = name.hashCode();
+      result = 31 * result + Objects.hashCode(typeLiteral);
       result = 31 * result + domain.hashCode();
       return result;
     }

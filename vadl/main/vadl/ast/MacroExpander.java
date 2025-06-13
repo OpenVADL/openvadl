@@ -479,7 +479,7 @@ class MacroExpander
     indices.replaceAll(index -> {
       var operations = new ArrayList<>(index.operations);
       operations.replaceAll(id -> (IsId) expandExpr((Expr) id));
-      return new ForallThenExpr.Index((IsId) expandExpr((Expr) index.identifier()), operations);
+      return new ForallThenExpr.Index((IsId) expandExpr(index.identifier()), operations);
     });
     return new ForallThenExpr(indices, expandExpr(expr.thenExpr), copyLoc(expr.loc));
   }
@@ -487,7 +487,9 @@ class MacroExpander
   @Override
   public Expr visit(ForallExpr expr) {
     var indices = new ArrayList<>(expr.indices);
-    indices.replaceAll(index -> new ForallExpr.Index((IsId) expandExpr((Expr) index.identifier()),
+    indices.replaceAll(index -> new ForallExpr.Index(
+        (IsId) expandExpr(index.identifier()),
+        index.typeLiteral == null ? null : (TypeLiteral) expandExpr(index.typeLiteral),
         expandExpr(index.domain)));
     return new ForallExpr(indices, expr.operation, expr.foldOperator, expandExpr(expr.body),
         copyLoc(expr.loc));
@@ -1133,7 +1135,10 @@ class MacroExpander
   public Statement visit(ForallStatement forallStatement) {
     var indices = new ArrayList<>(forallStatement.indices);
     indices.replaceAll(
-        index -> new ForallStatement.Index(index.identifier(), expandExpr(index.domain)));
+        index -> new ForallStatement.Index(
+            index.identifier(),
+            index.typeLiteral == null ? null : (TypeLiteral) expandExpr(index.typeLiteral),
+            expandExpr(index.domain)));
     var statement = expandStatement(forallStatement.body);
     return new ForallStatement(indices, statement, copyLoc(forallStatement.loc));
   }
