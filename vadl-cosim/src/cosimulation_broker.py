@@ -338,28 +338,30 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
                 return report_from_diffs(diffs)
     else:
         while any_client_open(clients):
-            clients_tbs: list[ClientSyncInfo] = []
+            client_sync_infos: list[ClientSyncInfo] = []
             for i, client in enumerate(clients):
-                if client.is_open:
+                # Execute the client until it hit a jump instruction which will serve as a synchronization point
+                while client.is_open:
                     start_pc = client.shm_struct.shm_tb.tb_info.pc
                     tb_size = client.shm_struct.shm_tb.tb_info.insns_info_size
                     if client.run():
                         end_pc = client.shm_struct.shm_tb.tb_info.pc
-                        clients_tbs.append(
-                            ClientSyncInfo(
-                                start_pc=start_pc,
-                                end_pc=end_pc,
-                                tb_size=tb_size,
-                                client_idx=i,
-                            )
+                        sync_info = ClientSyncInfo(
+                            start_pc=start_pc,
+                            end_pc=end_pc,
+                            tb_size=tb_size,
+                            client_idx=i,
                         )
+                        if sync_info.is_jump():
+                            client_sync_infos.append(sync_info)
+                            break
 
-            try:
-                sync_clients(clients_tbs)
-            except ValueError as err:
-                # Some client diverged
-                logger.exception(err, exc_info=True)
-                return report_from_diffs(diffs)
+            # Every client reached a jump-instruction - therefore all should be at the same PC
+            ref_pc = client_sync_infos[0].end_pc
+            for client_sync_info in client_sync_infos[1:]:
+                if client_sync_info.end_pc != ref_pc:
+                    logger.debug("client diverged during tb synchronization")
+                    return report_from_diffs(diffs)
 
             if not execute_remaining:
                 if stop_after > 0:
@@ -441,63 +443,3 @@ class ClientSyncInfo:
 
     def __repr__(self):
         return str(self)
-
-
-def sync_clients(clients_sync_infos: list[ClientSyncInfo]):
-    """
-    TB-Syncing:
-    Why?: Necessary to ensure that on a TB-level cosimulation, the state of all clients is compared at the same PC
-    Syncing is only done for the "tb" layer,
-      the "tb-strict" layer assumes that all TBs across all clients are equal.
-    """
-    logger.debug(f"starting to sync clients: {clients_sync_infos}")
-
-    if len(clients_sync_infos) == 0:
-        return
-
-    for i in range(len(clients_sync_infos) - 1):
-        assert clients_sync_infos[i].start_pc == clients_sync_infos[i + 1].start_pc, (
-            f"Clients should initially be synced: {clients_sync_infos}"
-        )
-
-    jumped_client: Optional[ClientSyncInfo] = None
-    for client_sync_info in clients_sync_infos:
-        if client_sync_info.is_jump():
-            logger.debug(f"noticed that client jumped: {client_sync_info}")
-            jumped_client = client_sync_info
-            break
-
-    target_pc = (
-        jumped_client.end_pc
-        if jumped_client is not None
-        else max(map(lambda tbs: tbs.end_pc, clients_sync_infos))
-    )
-    clients_queue = deque(
-        filter(lambda tbs: tbs.end_pc != target_pc, clients_sync_infos)
-    )
-
-    while len(clients_queue) > 0:
-        logger.debug(
-            f"queue: {clients_queue}, tbs: {clients_sync_infos}, max: {target_pc}"
-        )
-        client_entry = clients_queue.popleft()
-        client = clients[client_entry.client_idx]
-
-        start_pc = client.shm_struct.shm_tb.tb_info.pc
-        tb_size = client.shm_struct.shm_tb.tb_info.insns_info_size
-
-        # NOTE: closed clients won't be readded to the queue
-        if client.run():
-            end_pc = client.shm_struct.shm_tb.tb_info.pc
-            sync_info = ClientSyncInfo(
-                start_pc=start_pc,
-                end_pc=end_pc,
-                tb_size=tb_size,
-                client_idx=client_entry.client_idx,
-            )
-
-            if jumped_client is None and end_pc > target_pc:
-                raise ValueError("Client diverged irrecoverably, fail test.")
-
-            if end_pc != target_pc:
-                clients_queue.append(sync_info)
