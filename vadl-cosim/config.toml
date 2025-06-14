@@ -140,7 +140,7 @@ max_trace_length = -1
 # "tb-strict": The execution-step is the *execution of a single translation-blocks*.
 #			   The same as "tb" but without the synchronization logic. Meaning that equal translation-blocks are assumed.
 #			   This option is useful if the instructions of the ISS are already correct and the TB-Block generator needs to be tested.
-layer = "insn"
+layer = "tb"
 
 # "lockstep": All clients are run and compared one *execution-step* at a time.
 # 			  This means that the test will exit on the first divergence (or at the end if no diffs where found) 
