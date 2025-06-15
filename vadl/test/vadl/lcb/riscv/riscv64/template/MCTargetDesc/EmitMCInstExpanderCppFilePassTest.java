@@ -361,32 +361,47 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            callbackSymbol(a);
            MCInst b = MCInst();
            b.setOpcode(processorNameValue::AUIPC);
-           b.addOperand(instruction.getOperand(0));
-           if(instruction.getOperand(1).isImm()) {
-              auto d = processorNameValueBaseInfo::RV3264Base_got_pcrel_hi(instruction.getOperand(1).getImm());
-              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(MCConstantExpr::create(d, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_AUIPC_immUp, Ctx));
-              b.addOperand(c);
-           }
-           else {
-              const MCExpr* e = MCOperandToMCExpr(instruction.getOperand(1));
-              const MCExpr* f = processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_GOT_RV3264Base_got_pcrel_hi, Ctx);
-              const MCExpr* g = processorNameValueMCExpr::create(f, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_AUIPC_immUp, Ctx);
-              MCOperand h = MCOperand::createExpr(g);
-              b.addOperand(h);
+           {
+              // AUIPC
+              auto rd = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              b.addOperand(instruction.getOperand(0)); // rd
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+                 imm = processorNameValueBaseInfo::RV3264Base_got_pcrel_hi(imm);
+                 b.addOperand(MCOperand::createImm(RV3264Base_AUIPC_immUp_decode(imm)));
+              }
+              else {
+                 b.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(1)), processorNameValueMCExpr::VariantKind::VK_GOT_RV3264Base_got_pcrel_hi, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_AUIPC_immUp, Ctx))); // imm
+              }
            }
            result.push_back(b);
            callback(b);
-           MCInst i = MCInst();
-           i.setOpcode(processorNameValue::LD);
-           i.addOperand(instruction.getOperand(0));
-           i.addOperand(instruction.getOperand(0));
-           const MCExpr* j = MCOperandToMCExpr(MCOperand::createExpr(MCSymbolRefExpr::create(a, Ctx)));
-           const MCExpr* k = processorNameValueMCExpr::create(j, processorNameValueMCExpr::VariantKind::VK_PCREL_RV3264Base_pcrel_lo, Ctx);
-           const MCExpr* l = processorNameValueMCExpr::create(k, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LD_immS, Ctx);
-           MCOperand m = MCOperand::createExpr(l);
-           i.addOperand(m);
-           result.push_back(i);
-           callback(i);
+           MCInst c = MCInst();
+           c.setOpcode(processorNameValue::LD);
+           {
+              // LD
+              auto rd = 0;
+              auto rs1 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = instruction.getOperand(0).getReg();
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              c.addOperand(instruction.getOperand(0)); // rd
+              c.addOperand(instruction.getOperand(0)); // rs1
+              c.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCSymbolRefExpr::create(a, Ctx), processorNameValueMCExpr::VariantKind::VK_PCREL_RV3264Base_pcrel_lo, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LD_immS, Ctx))); // imm
+           }
+           result.push_back(c);
+           callback(c);
            return result;
         }
         
@@ -397,39 +412,57 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::LUI);
-           a.addOperand(MCOperand::createReg(processorNameValue::X1));
-           if(instruction.getOperand(0).isImm()) {
-              auto c = processorNameValueBaseInfo::RV3264Base_hi(instruction.getOperand(0).getImm());
-              MCOperand b = MCOperand::createExpr(processorNameValueMCExpr::create(MCConstantExpr::create(c, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx));
-              a.addOperand(b);
-           }
-           else {
-              const MCExpr* d = MCOperandToMCExpr(instruction.getOperand(0));
-              const MCExpr* e = processorNameValueMCExpr::create(d, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx);
-              const MCExpr* f = processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx);
-              MCOperand g = MCOperand::createExpr(f);
-              a.addOperand(g);
+           {
+              // LUI
+              auto rd = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = processorNameValue::X1;
+              if(instruction.getOperand(0).isImm()) {
+                 imm = instruction.getOperand(0).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(MCOperand::createReg(rd));
+              if(instruction.getOperand(0).isImm()) {
+                 imm = instruction.getOperand(0).getImm();
+                 imm = processorNameValueBaseInfo::RV3264Base_hi(imm);
+                 a.addOperand(MCOperand::createImm(RV3264Base_LUI_immUp_decode(imm)));
+              }
+              else {
+                 a.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(0)), processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx))); // imm
+              }
            }
            result.push_back(a);
            callback(a);
-           MCInst h = MCInst();
-           h.setOpcode(processorNameValue::JALR);
-           h.addOperand(MCOperand::createReg(processorNameValue::X1));
-           h.addOperand(MCOperand::createReg(processorNameValue::X1));
-           if(instruction.getOperand(0).isImm()) {
-              auto j = processorNameValueBaseInfo::RV3264Base_lo(instruction.getOperand(0).getImm());
-              MCOperand i = MCOperand::createExpr(processorNameValueMCExpr::create(MCConstantExpr::create(j, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_JALR_immS, Ctx));
-              h.addOperand(i);
+           MCInst b = MCInst();
+           b.setOpcode(processorNameValue::JALR);
+           {
+              // JALR
+              auto rd = 0;
+              auto rs1 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = processorNameValue::X1;
+              rs1 = processorNameValue::X1;
+              if(instruction.getOperand(0).isImm()) {
+                 imm = instruction.getOperand(0).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              b.addOperand(MCOperand::createReg(rd));
+              b.addOperand(MCOperand::createReg(rs1));
+              if(instruction.getOperand(0).isImm()) {
+                 imm = instruction.getOperand(0).getImm();
+                 imm = processorNameValueBaseInfo::RV3264Base_lo(imm);
+                 b.addOperand(MCOperand::createImm(RV3264Base_JALR_immS_decode(imm)));
+              }
+              else {
+                 b.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(0)), processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_JALR_immS, Ctx))); // imm
+              }
            }
-           else {
-              const MCExpr* k = MCOperandToMCExpr(instruction.getOperand(0));
-              const MCExpr* l = processorNameValueMCExpr::create(k, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx);
-              const MCExpr* m = processorNameValueMCExpr::create(l, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_JALR_immS, Ctx);
-              MCOperand n = MCOperand::createExpr(m);
-              h.addOperand(n);
-           }
-           result.push_back(h);
-           callback(h);
+           result.push_back(b);
+           callback(b);
            return result;
         }
         
@@ -440,39 +473,57 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::AUIPC);
-           a.addOperand(MCOperand::createReg(processorNameValue::X6));
-           if(instruction.getOperand(0).isImm()) {
-              auto c = processorNameValueBaseInfo::RV3264Base_hi(instruction.getOperand(0).getImm());
-              MCOperand b = MCOperand::createExpr(processorNameValueMCExpr::create(MCConstantExpr::create(c, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_AUIPC_immUp, Ctx));
-              a.addOperand(b);
-           }
-           else {
-              const MCExpr* d = MCOperandToMCExpr(instruction.getOperand(0));
-              const MCExpr* e = processorNameValueMCExpr::create(d, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx);
-              const MCExpr* f = processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_AUIPC_immUp, Ctx);
-              MCOperand g = MCOperand::createExpr(f);
-              a.addOperand(g);
+           {
+              // AUIPC
+              auto rd = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = processorNameValue::X6;
+              if(instruction.getOperand(0).isImm()) {
+                 imm = instruction.getOperand(0).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(MCOperand::createReg(rd));
+              if(instruction.getOperand(0).isImm()) {
+                 imm = instruction.getOperand(0).getImm();
+                 imm = processorNameValueBaseInfo::RV3264Base_hi(imm);
+                 a.addOperand(MCOperand::createImm(RV3264Base_AUIPC_immUp_decode(imm)));
+              }
+              else {
+                 a.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(0)), processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_AUIPC_immUp, Ctx))); // imm
+              }
            }
            result.push_back(a);
            callback(a);
-           MCInst h = MCInst();
-           h.setOpcode(processorNameValue::JALR);
-           h.addOperand(MCOperand::createReg(processorNameValue::X0));
-           h.addOperand(MCOperand::createReg(processorNameValue::X6));
-           if(instruction.getOperand(0).isImm()) {
-              auto j = processorNameValueBaseInfo::RV3264Base_lo(instruction.getOperand(0).getImm());
-              MCOperand i = MCOperand::createExpr(processorNameValueMCExpr::create(MCConstantExpr::create(j, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_JALR_immS, Ctx));
-              h.addOperand(i);
+           MCInst b = MCInst();
+           b.setOpcode(processorNameValue::JALR);
+           {
+              // JALR
+              auto rd = 0;
+              auto rs1 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = processorNameValue::X0;
+              rs1 = processorNameValue::X6;
+              if(instruction.getOperand(0).isImm()) {
+                 imm = instruction.getOperand(0).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              b.addOperand(MCOperand::createReg(rd));
+              b.addOperand(MCOperand::createReg(rs1));
+              if(instruction.getOperand(0).isImm()) {
+                 imm = instruction.getOperand(0).getImm();
+                 imm = processorNameValueBaseInfo::RV3264Base_lo(imm);
+                 b.addOperand(MCOperand::createImm(RV3264Base_JALR_immS_decode(imm)));
+              }
+              else {
+                 b.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(0)), processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_JALR_immS, Ctx))); // imm
+              }
            }
-           else {
-              const MCExpr* k = MCOperandToMCExpr(instruction.getOperand(0));
-              const MCExpr* l = processorNameValueMCExpr::create(k, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx);
-              const MCExpr* m = processorNameValueMCExpr::create(l, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_JALR_immS, Ctx);
-              MCOperand n = MCOperand::createExpr(m);
-              h.addOperand(n);
-           }
-           result.push_back(h);
-           callback(h);
+           result.push_back(b);
+           callback(b);
            return result;
         }
         
@@ -483,9 +534,21 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::JALR);
-           a.addOperand(MCOperand::createReg(processorNameValue::X0));
-           a.addOperand(MCOperand::createReg(processorNameValue::X1));
-           a.addOperand(MCOperand::createImm(RV3264Base_JALR_immS_decode(0)));
+           {
+              // JALR
+              auto rs1 = 0;
+              auto rd = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = processorNameValue::X0;
+              rs1 = processorNameValue::X1;
+              imm = 0;
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(MCOperand::createReg(rd));
+              a.addOperand(MCOperand::createReg(rs1));
+              a.addOperand(MCOperand::createImm(imm));
+           }
            result.push_back(a);
            callback(a);
            return result;
@@ -498,14 +561,17 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::JAL);
-           a.addOperand(MCOperand::createReg(processorNameValue::X0));
-           if(instruction.getOperand(0).isImm()) {
-              a.addOperand(MCOperand::createImm(instruction.getOperand(0).getImm()));
-           }
-           else {
-              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(0));
-              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_None, Ctx));
-              a.addOperand(c);
+           {
+              // JAL
+              auto rd = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = processorNameValue::X0;
+              auto immS = instruction.getOperand(0).getImm();
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(MCOperand::createReg(rd));
+              a.addOperand(instruction.getOperand(0));
            }
            result.push_back(a);
            callback(a);
@@ -519,9 +585,21 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::ADDI);
-           a.addOperand(MCOperand::createReg(processorNameValue::X0));
-           a.addOperand(MCOperand::createReg(processorNameValue::X0));
-           a.addOperand(MCOperand::createImm(RV3264Base_ADDI_immS_decode(0)));
+           {
+              // ADDI
+              auto rd = 0;
+              auto rs1 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = processorNameValue::X0;
+              rs1 = processorNameValue::X0;
+              imm = 0;
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(MCOperand::createReg(rd));
+              a.addOperand(MCOperand::createReg(rs1));
+              a.addOperand(MCOperand::createImm(imm));
+           }
            result.push_back(a);
            callback(a);
            return result;
@@ -534,9 +612,21 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::ADDI);
-           a.addOperand(instruction.getOperand(0));
-           a.addOperand(instruction.getOperand(1));
-           a.addOperand(MCOperand::createImm(RV3264Base_ADDI_immS_decode(0)));
+           {
+              // ADDI
+              auto rd = 0;
+              auto rs1 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = instruction.getOperand(1).getReg();
+              imm = 0;
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rd
+              a.addOperand(instruction.getOperand(1)); // rs1
+              a.addOperand(MCOperand::createImm(imm));
+           }
            result.push_back(a);
            callback(a);
            return result;
@@ -549,9 +639,21 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::XORI);
-           a.addOperand(instruction.getOperand(0));
-           a.addOperand(instruction.getOperand(1));
-           a.addOperand(MCOperand::createImm(RV3264Base_XORI_immS_decode(4095)));
+           {
+              // XORI
+              auto rd = 0;
+              auto rs1 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = instruction.getOperand(1).getReg();
+              imm = 4095;
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rd
+              a.addOperand(instruction.getOperand(1)); // rs1
+              a.addOperand(MCOperand::createImm(imm));
+           }
            result.push_back(a);
            callback(a);
            return result;
@@ -564,9 +666,21 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::SUB);
-           a.addOperand(instruction.getOperand(0));
-           a.addOperand(MCOperand::createReg(processorNameValue::X0));
-           a.addOperand(instruction.getOperand(1));
+           {
+              // SUB
+              auto rd = 0;
+              auto rs1 = 0;
+              auto rs2 = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = processorNameValue::X0;
+              rs2 = instruction.getOperand(1).getReg();
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rd
+              a.addOperand(MCOperand::createReg(rs1));
+              a.addOperand(instruction.getOperand(1)); // rs2
+           }
            result.push_back(a);
            callback(a);
            return result;
@@ -579,9 +693,21 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::SLTU);
-           a.addOperand(instruction.getOperand(0));
-           a.addOperand(MCOperand::createReg(processorNameValue::X0));
-           a.addOperand(instruction.getOperand(1));
+           {
+              // SLTU
+              auto rd = 0;
+              auto rs1 = 0;
+              auto rs2 = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = processorNameValue::X0;
+              rs2 = instruction.getOperand(1).getReg();
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rd
+              a.addOperand(MCOperand::createReg(rs1));
+              a.addOperand(instruction.getOperand(1)); // rs2
+           }
            result.push_back(a);
            callback(a);
            return result;
@@ -594,9 +720,21 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::SLT);
-           a.addOperand(instruction.getOperand(0));
-           a.addOperand(instruction.getOperand(1));
-           a.addOperand(MCOperand::createReg(processorNameValue::X0));
+           {
+              // SLT
+              auto rd = 0;
+              auto rs1 = 0;
+              auto rs2 = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = instruction.getOperand(1).getReg();
+              rs2 = processorNameValue::X0;
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rd
+              a.addOperand(instruction.getOperand(1)); // rs1
+              a.addOperand(MCOperand::createReg(rs2));
+           }
            result.push_back(a);
            callback(a);
            return result;
@@ -609,9 +747,21 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::SLT);
-           a.addOperand(instruction.getOperand(0));
-           a.addOperand(MCOperand::createReg(processorNameValue::X0));
-           a.addOperand(instruction.getOperand(1));
+           {
+              // SLT
+              auto rd = 0;
+              auto rs1 = 0;
+              auto rs2 = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = processorNameValue::X0;
+              rs2 = instruction.getOperand(1).getReg();
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rd
+              a.addOperand(MCOperand::createReg(rs1));
+              a.addOperand(instruction.getOperand(1)); // rs2
+           }
            result.push_back(a);
            callback(a);
            return result;
@@ -624,15 +774,20 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::BEQ);
-           a.addOperand(instruction.getOperand(0));
-           a.addOperand(MCOperand::createReg(processorNameValue::X0));
-           if(instruction.getOperand(1).isImm()) {
-              a.addOperand(MCOperand::createImm(instruction.getOperand(1).getImm()));
-           }
-           else {
-              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_None, Ctx));
-              a.addOperand(c);
+           {
+              // BEQ
+              auto rs1 = 0;
+              auto rs2 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rs1 = instruction.getOperand(0).getReg();
+              rs2 = processorNameValue::X0;
+              auto immS = instruction.getOperand(1).getImm();
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rs1
+              a.addOperand(MCOperand::createReg(rs2));
+              a.addOperand(instruction.getOperand(1));
            }
            result.push_back(a);
            callback(a);
@@ -646,15 +801,20 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::BNE);
-           a.addOperand(instruction.getOperand(0));
-           a.addOperand(MCOperand::createReg(processorNameValue::X0));
-           if(instruction.getOperand(1).isImm()) {
-              a.addOperand(MCOperand::createImm(instruction.getOperand(1).getImm()));
-           }
-           else {
-              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_None, Ctx));
-              a.addOperand(c);
+           {
+              // BNE
+              auto rs1 = 0;
+              auto rs2 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rs1 = instruction.getOperand(0).getReg();
+              rs2 = processorNameValue::X0;
+              auto immS = instruction.getOperand(1).getImm();
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rs1
+              a.addOperand(MCOperand::createReg(rs2));
+              a.addOperand(instruction.getOperand(1));
            }
            result.push_back(a);
            callback(a);
@@ -668,15 +828,20 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::BGE);
-           a.addOperand(MCOperand::createReg(processorNameValue::X0));
-           a.addOperand(instruction.getOperand(0));
-           if(instruction.getOperand(1).isImm()) {
-              a.addOperand(MCOperand::createImm(instruction.getOperand(1).getImm()));
-           }
-           else {
-              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_None, Ctx));
-              a.addOperand(c);
+           {
+              // BGE
+              auto rs1 = 0;
+              auto rs2 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rs1 = processorNameValue::X0;
+              rs2 = instruction.getOperand(0).getReg();
+              auto immS = instruction.getOperand(1).getImm();
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(MCOperand::createReg(rs1));
+              a.addOperand(instruction.getOperand(0)); // rs2
+              a.addOperand(instruction.getOperand(1));
            }
            result.push_back(a);
            callback(a);
@@ -690,15 +855,20 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::BGE);
-           a.addOperand(instruction.getOperand(0));
-           a.addOperand(MCOperand::createReg(processorNameValue::X0));
-           if(instruction.getOperand(1).isImm()) {
-              a.addOperand(MCOperand::createImm(instruction.getOperand(1).getImm()));
-           }
-           else {
-              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_None, Ctx));
-              a.addOperand(c);
+           {
+              // BGE
+              auto rs1 = 0;
+              auto rs2 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rs1 = instruction.getOperand(0).getReg();
+              rs2 = processorNameValue::X0;
+              auto immS = instruction.getOperand(1).getImm();
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rs1
+              a.addOperand(MCOperand::createReg(rs2));
+              a.addOperand(instruction.getOperand(1));
            }
            result.push_back(a);
            callback(a);
@@ -712,15 +882,20 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::BLT);
-           a.addOperand(instruction.getOperand(0));
-           a.addOperand(MCOperand::createReg(processorNameValue::X0));
-           if(instruction.getOperand(1).isImm()) {
-              a.addOperand(MCOperand::createImm(instruction.getOperand(1).getImm()));
-           }
-           else {
-              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_None, Ctx));
-              a.addOperand(c);
+           {
+              // BLT
+              auto rs1 = 0;
+              auto rs2 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rs1 = instruction.getOperand(0).getReg();
+              rs2 = processorNameValue::X0;
+              auto immS = instruction.getOperand(1).getImm();
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rs1
+              a.addOperand(MCOperand::createReg(rs2));
+              a.addOperand(instruction.getOperand(1));
            }
            result.push_back(a);
            callback(a);
@@ -734,15 +909,20 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::BLT);
-           a.addOperand(MCOperand::createReg(processorNameValue::X0));
-           a.addOperand(instruction.getOperand(0));
-           if(instruction.getOperand(1).isImm()) {
-              a.addOperand(MCOperand::createImm(instruction.getOperand(1).getImm()));
-           }
-           else {
-              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_None, Ctx));
-              a.addOperand(c);
+           {
+              // BLT
+              auto rs1 = 0;
+              auto rs2 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rs1 = processorNameValue::X0;
+              rs2 = instruction.getOperand(0).getReg();
+              auto immS = instruction.getOperand(1).getImm();
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(MCOperand::createReg(rs1));
+              a.addOperand(instruction.getOperand(0)); // rs2
+              a.addOperand(instruction.getOperand(1));
            }
            result.push_back(a);
            callback(a);
@@ -756,39 +936,57 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::LUI);
-           a.addOperand(instruction.getOperand(0));
-           if(instruction.getOperand(1).isImm()) {
-              auto c = processorNameValueBaseInfo::RV3264Base_hi(instruction.getOperand(1).getImm());
-              MCOperand b = MCOperand::createExpr(processorNameValueMCExpr::create(MCConstantExpr::create(c, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx));
-              a.addOperand(b);
-           }
-           else {
-              const MCExpr* d = MCOperandToMCExpr(instruction.getOperand(1));
-              const MCExpr* e = processorNameValueMCExpr::create(d, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx);
-              const MCExpr* f = processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx);
-              MCOperand g = MCOperand::createExpr(f);
-              a.addOperand(g);
+           {
+              // LUI
+              auto rd = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rd
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+                 imm = processorNameValueBaseInfo::RV3264Base_hi(imm);
+                 a.addOperand(MCOperand::createImm(RV3264Base_LUI_immUp_decode(imm)));
+              }
+              else {
+                 a.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(1)), processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx))); // imm
+              }
            }
            result.push_back(a);
            callback(a);
-           MCInst h = MCInst();
-           h.setOpcode(processorNameValue::ADDI);
-           h.addOperand(instruction.getOperand(0));
-           h.addOperand(instruction.getOperand(0));
-           if(instruction.getOperand(1).isImm()) {
-              auto j = processorNameValueBaseInfo::RV3264Base_lo(instruction.getOperand(1).getImm());
-              MCOperand i = MCOperand::createExpr(processorNameValueMCExpr::create(MCConstantExpr::create(j, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx));
-              h.addOperand(i);
+           MCInst b = MCInst();
+           b.setOpcode(processorNameValue::ADDI);
+           {
+              // ADDI
+              auto rd = 0;
+              auto rs1 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = instruction.getOperand(0).getReg();
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              b.addOperand(instruction.getOperand(0)); // rd
+              b.addOperand(instruction.getOperand(0)); // rs1
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+                 imm = processorNameValueBaseInfo::RV3264Base_lo(imm);
+                 b.addOperand(MCOperand::createImm(RV3264Base_ADDI_immS_decode(imm)));
+              }
+              else {
+                 b.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(1)), processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx))); // imm
+              }
            }
-           else {
-              const MCExpr* k = MCOperandToMCExpr(instruction.getOperand(1));
-              const MCExpr* l = processorNameValueMCExpr::create(k, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx);
-              const MCExpr* m = processorNameValueMCExpr::create(l, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx);
-              MCOperand n = MCOperand::createExpr(m);
-              h.addOperand(n);
-           }
-           result.push_back(h);
-           callback(h);
+           result.push_back(b);
+           callback(b);
            return result;
         }
         
@@ -799,39 +997,57 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::AUIPC);
-           a.addOperand(instruction.getOperand(0));
-           if(instruction.getOperand(1).isImm()) {
-              auto c = processorNameValueBaseInfo::RV3264Base_got_pcrel_hi(instruction.getOperand(1).getImm());
-              MCOperand b = MCOperand::createExpr(processorNameValueMCExpr::create(MCConstantExpr::create(c, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_AUIPC_immUp, Ctx));
-              a.addOperand(b);
-           }
-           else {
-              const MCExpr* d = MCOperandToMCExpr(instruction.getOperand(1));
-              const MCExpr* e = processorNameValueMCExpr::create(d, processorNameValueMCExpr::VariantKind::VK_GOT_RV3264Base_got_pcrel_hi, Ctx);
-              const MCExpr* f = processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_AUIPC_immUp, Ctx);
-              MCOperand g = MCOperand::createExpr(f);
-              a.addOperand(g);
+           {
+              // AUIPC
+              auto rd = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rd
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+                 imm = processorNameValueBaseInfo::RV3264Base_got_pcrel_hi(imm);
+                 a.addOperand(MCOperand::createImm(RV3264Base_AUIPC_immUp_decode(imm)));
+              }
+              else {
+                 a.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(1)), processorNameValueMCExpr::VariantKind::VK_GOT_RV3264Base_got_pcrel_hi, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_AUIPC_immUp, Ctx))); // imm
+              }
            }
            result.push_back(a);
            callback(a);
-           MCInst h = MCInst();
-           h.setOpcode(processorNameValue::LW);
-           h.addOperand(instruction.getOperand(0));
-           h.addOperand(instruction.getOperand(0));
-           if(instruction.getOperand(1).isImm()) {
-              auto j = processorNameValueBaseInfo::RV3264Base_pcrel_lo(instruction.getOperand(1).getImm());
-              MCOperand i = MCOperand::createExpr(processorNameValueMCExpr::create(MCConstantExpr::create(j, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LW_immS, Ctx));
-              h.addOperand(i);
+           MCInst b = MCInst();
+           b.setOpcode(processorNameValue::LW);
+           {
+              // LW
+              auto rd = 0;
+              auto rs1 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = instruction.getOperand(0).getReg();
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              b.addOperand(instruction.getOperand(0)); // rd
+              b.addOperand(instruction.getOperand(0)); // rs1
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+                 imm = processorNameValueBaseInfo::RV3264Base_pcrel_lo(imm);
+                 b.addOperand(MCOperand::createImm(RV3264Base_LW_immS_decode(imm)));
+              }
+              else {
+                 b.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(1)), processorNameValueMCExpr::VariantKind::VK_PCREL_RV3264Base_pcrel_lo, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LW_immS, Ctx))); // imm
+              }
            }
-           else {
-              const MCExpr* k = MCOperandToMCExpr(instruction.getOperand(1));
-              const MCExpr* l = processorNameValueMCExpr::create(k, processorNameValueMCExpr::VariantKind::VK_PCREL_RV3264Base_pcrel_lo, Ctx);
-              const MCExpr* m = processorNameValueMCExpr::create(l, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LW_immS, Ctx);
-              MCOperand n = MCOperand::createExpr(m);
-              h.addOperand(n);
-           }
-           result.push_back(h);
-           callback(h);
+           result.push_back(b);
+           callback(b);
            return result;
         }
         
@@ -844,32 +1060,47 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            callbackSymbol(a);
            MCInst b = MCInst();
            b.setOpcode(processorNameValue::AUIPC);
-           b.addOperand(instruction.getOperand(0));
-           if(instruction.getOperand(1).isImm()) {
-              auto d = processorNameValueBaseInfo::RV3264Base_pcrel_hi(instruction.getOperand(1).getImm());
-              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(MCConstantExpr::create(d, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_AUIPC_immUp, Ctx));
-              b.addOperand(c);
-           }
-           else {
-              const MCExpr* e = MCOperandToMCExpr(instruction.getOperand(1));
-              const MCExpr* f = processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_PCREL_RV3264Base_pcrel_hi, Ctx);
-              const MCExpr* g = processorNameValueMCExpr::create(f, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_AUIPC_immUp, Ctx);
-              MCOperand h = MCOperand::createExpr(g);
-              b.addOperand(h);
+           {
+              // AUIPC
+              auto rd = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              b.addOperand(instruction.getOperand(0)); // rd
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+                 imm = processorNameValueBaseInfo::RV3264Base_pcrel_hi(imm);
+                 b.addOperand(MCOperand::createImm(RV3264Base_AUIPC_immUp_decode(imm)));
+              }
+              else {
+                 b.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(1)), processorNameValueMCExpr::VariantKind::VK_PCREL_RV3264Base_pcrel_hi, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_AUIPC_immUp, Ctx))); // imm
+              }
            }
            result.push_back(b);
            callback(b);
-           MCInst i = MCInst();
-           i.setOpcode(processorNameValue::ADDI);
-           i.addOperand(instruction.getOperand(0));
-           i.addOperand(instruction.getOperand(0));
-           const MCExpr* j = MCOperandToMCExpr(MCOperand::createExpr(MCSymbolRefExpr::create(a, Ctx)));
-           const MCExpr* k = processorNameValueMCExpr::create(j, processorNameValueMCExpr::VariantKind::VK_PCREL_RV3264Base_pcrel_lo, Ctx);
-           const MCExpr* l = processorNameValueMCExpr::create(k, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx);
-           MCOperand m = MCOperand::createExpr(l);
-           i.addOperand(m);
-           result.push_back(i);
-           callback(i);
+           MCInst c = MCInst();
+           c.setOpcode(processorNameValue::ADDI);
+           {
+              // ADDI
+              auto rd = 0;
+              auto rs1 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = instruction.getOperand(0).getReg();
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              c.addOperand(instruction.getOperand(0)); // rd
+              c.addOperand(instruction.getOperand(0)); // rs1
+              c.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCSymbolRefExpr::create(a, Ctx), processorNameValueMCExpr::VariantKind::VK_PCREL_RV3264Base_pcrel_lo, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx))); // imm
+           }
+           result.push_back(c);
+           callback(c);
            return result;
         }
         
@@ -880,39 +1111,57 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::LUI);
-           a.addOperand(instruction.getOperand(0));
-           if(instruction.getOperand(1).isImm()) {
-              auto c = processorNameValueBaseInfo::RV3264Base_hi(instruction.getOperand(1).getImm());
-              MCOperand b = MCOperand::createExpr(processorNameValueMCExpr::create(MCConstantExpr::create(c, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx));
-              a.addOperand(b);
-           }
-           else {
-              const MCExpr* d = MCOperandToMCExpr(instruction.getOperand(1));
-              const MCExpr* e = processorNameValueMCExpr::create(d, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx);
-              const MCExpr* f = processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx);
-              MCOperand g = MCOperand::createExpr(f);
-              a.addOperand(g);
+           {
+              // LUI
+              auto rd = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rd
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+                 imm = processorNameValueBaseInfo::RV3264Base_hi(imm);
+                 a.addOperand(MCOperand::createImm(RV3264Base_LUI_immUp_decode(imm)));
+              }
+              else {
+                 a.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(1)), processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx))); // imm
+              }
            }
            result.push_back(a);
            callback(a);
-           MCInst h = MCInst();
-           h.setOpcode(processorNameValue::ADDI);
-           h.addOperand(instruction.getOperand(0));
-           h.addOperand(instruction.getOperand(0));
-           if(instruction.getOperand(1).isImm()) {
-              auto j = processorNameValueBaseInfo::RV3264Base_lo(instruction.getOperand(1).getImm());
-              MCOperand i = MCOperand::createExpr(processorNameValueMCExpr::create(MCConstantExpr::create(j, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx));
-              h.addOperand(i);
+           MCInst b = MCInst();
+           b.setOpcode(processorNameValue::ADDI);
+           {
+              // ADDI
+              auto rd = 0;
+              auto rs1 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = instruction.getOperand(0).getReg();
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              b.addOperand(instruction.getOperand(0)); // rd
+              b.addOperand(instruction.getOperand(0)); // rs1
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+                 imm = processorNameValueBaseInfo::RV3264Base_lo(imm);
+                 b.addOperand(MCOperand::createImm(RV3264Base_ADDI_immS_decode(imm)));
+              }
+              else {
+                 b.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(1)), processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx))); // imm
+              }
            }
-           else {
-              const MCExpr* k = MCOperandToMCExpr(instruction.getOperand(1));
-              const MCExpr* l = processorNameValueMCExpr::create(k, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx);
-              const MCExpr* m = processorNameValueMCExpr::create(l, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx);
-              MCOperand n = MCOperand::createExpr(m);
-              h.addOperand(n);
-           }
-           result.push_back(h);
-           callback(h);
+           result.push_back(b);
+           callback(b);
            return result;
         }
         
@@ -923,39 +1172,57 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::LUI);
-           a.addOperand(instruction.getOperand(0));
-           if(instruction.getOperand(1).isImm()) {
-              auto c = processorNameValueBaseInfo::RV3264Base_hi(instruction.getOperand(1).getImm());
-              MCOperand b = MCOperand::createExpr(processorNameValueMCExpr::create(MCConstantExpr::create(c, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx));
-              a.addOperand(b);
-           }
-           else {
-              const MCExpr* d = MCOperandToMCExpr(instruction.getOperand(1));
-              const MCExpr* e = processorNameValueMCExpr::create(d, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx);
-              const MCExpr* f = processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx);
-              MCOperand g = MCOperand::createExpr(f);
-              a.addOperand(g);
+           {
+              // LUI
+              auto rd = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rd
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+                 imm = processorNameValueBaseInfo::RV3264Base_hi(imm);
+                 a.addOperand(MCOperand::createImm(RV3264Base_LUI_immUp_decode(imm)));
+              }
+              else {
+                 a.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(1)), processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx))); // imm
+              }
            }
            result.push_back(a);
            callback(a);
-           MCInst h = MCInst();
-           h.setOpcode(processorNameValue::ADDI);
-           h.addOperand(instruction.getOperand(0));
-           h.addOperand(instruction.getOperand(0));
-           if(instruction.getOperand(1).isImm()) {
-              auto j = processorNameValueBaseInfo::RV3264Base_lo(instruction.getOperand(1).getImm());
-              MCOperand i = MCOperand::createExpr(processorNameValueMCExpr::create(MCConstantExpr::create(j, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx));
-              h.addOperand(i);
+           MCInst b = MCInst();
+           b.setOpcode(processorNameValue::ADDI);
+           {
+              // ADDI
+              auto rd = 0;
+              auto rs1 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = instruction.getOperand(0).getReg();
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              b.addOperand(instruction.getOperand(0)); // rd
+              b.addOperand(instruction.getOperand(0)); // rs1
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+                 imm = processorNameValueBaseInfo::RV3264Base_lo(imm);
+                 b.addOperand(MCOperand::createImm(RV3264Base_ADDI_immS_decode(imm)));
+              }
+              else {
+                 b.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(1)), processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx))); // imm
+              }
            }
-           else {
-              const MCExpr* k = MCOperandToMCExpr(instruction.getOperand(1));
-              const MCExpr* l = processorNameValueMCExpr::create(k, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx);
-              const MCExpr* m = processorNameValueMCExpr::create(l, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx);
-              MCOperand n = MCOperand::createExpr(m);
-              h.addOperand(n);
-           }
-           result.push_back(h);
-           callback(h);
+           result.push_back(b);
+           callback(b);
            return result;
         }
         
@@ -966,39 +1233,57 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::LUI);
-           a.addOperand(instruction.getOperand(0));
-           if(instruction.getOperand(1).isImm()) {
-              auto c = processorNameValueBaseInfo::RV3264Base_hi(instruction.getOperand(1).getImm());
-              MCOperand b = MCOperand::createExpr(processorNameValueMCExpr::create(MCConstantExpr::create(c, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx));
-              a.addOperand(b);
-           }
-           else {
-              const MCExpr* d = MCOperandToMCExpr(instruction.getOperand(1));
-              const MCExpr* e = processorNameValueMCExpr::create(d, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx);
-              const MCExpr* f = processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx);
-              MCOperand g = MCOperand::createExpr(f);
-              a.addOperand(g);
+           {
+              // LUI
+              auto rd = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rd
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+                 imm = processorNameValueBaseInfo::RV3264Base_hi(imm);
+                 a.addOperand(MCOperand::createImm(RV3264Base_LUI_immUp_decode(imm)));
+              }
+              else {
+                 a.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(1)), processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_hi, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_LUI_immUp, Ctx))); // imm
+              }
            }
            result.push_back(a);
            callback(a);
-           MCInst h = MCInst();
-           h.setOpcode(processorNameValue::ADDI);
-           h.addOperand(instruction.getOperand(0));
-           h.addOperand(instruction.getOperand(0));
-           if(instruction.getOperand(1).isImm()) {
-              auto j = processorNameValueBaseInfo::RV3264Base_lo(instruction.getOperand(1).getImm());
-              MCOperand i = MCOperand::createExpr(processorNameValueMCExpr::create(MCConstantExpr::create(j, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx));
-              h.addOperand(i);
+           MCInst b = MCInst();
+           b.setOpcode(processorNameValue::ADDI);
+           {
+              // ADDI
+              auto rd = 0;
+              auto rs1 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = instruction.getOperand(0).getReg();
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              b.addOperand(instruction.getOperand(0)); // rd
+              b.addOperand(instruction.getOperand(0)); // rs1
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+                 imm = processorNameValueBaseInfo::RV3264Base_lo(imm);
+                 b.addOperand(MCOperand::createImm(RV3264Base_ADDI_immS_decode(imm)));
+              }
+              else {
+                 b.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(1)), processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx))); // imm
+              }
            }
-           else {
-              const MCExpr* k = MCOperandToMCExpr(instruction.getOperand(1));
-              const MCExpr* l = processorNameValueMCExpr::create(k, processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx);
-              const MCExpr* m = processorNameValueMCExpr::create(l, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx);
-              MCOperand n = MCOperand::createExpr(m);
-              h.addOperand(n);
-           }
-           result.push_back(h);
-           callback(h);
+           result.push_back(b);
+           callback(b);
            return result;
         }
         
@@ -1009,15 +1294,32 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::ADDI);
-           a.addOperand(instruction.getOperand(0));
-           a.addOperand(MCOperand::createReg(processorNameValue::X0));
-           if(instruction.getOperand(1).isImm()) {
-              a.addOperand(MCOperand::createImm(instruction.getOperand(1).getImm()));
-           }
-           else {
-              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx));
-              a.addOperand(c);
+           {
+              // ADDI
+              auto rd = 0;
+              auto rs1 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = processorNameValue::X0;
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rd
+              a.addOperand(MCOperand::createReg(rs1));
+              // We don't know whether the operand is an immediate or label?
+              // We find it out during parsing.
+              if(instruction.getOperand(1).isImm()) {
+                 imm = instruction.getOperand(1).getImm();
+                 a.addOperand(MCOperand::createImm(instruction.getOperand(1).getImm()));// imm
+              }
+              else {
+                 const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
+                 MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx));
+                 a.addOperand(c); // imm
+              }
            }
            result.push_back(a);
            callback(a);
@@ -1031,15 +1333,32 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            std::vector< MCInst > result;
            MCInst a = MCInst();
            a.setOpcode(processorNameValue::ADDI);
-           a.addOperand(instruction.getOperand(0));
-           a.addOperand(instruction.getOperand(1));
-           if(instruction.getOperand(2).isImm()) {
-              a.addOperand(MCOperand::createImm(instruction.getOperand(2).getImm()));
-           }
-           else {
-              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
-              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx));
-              a.addOperand(c);
+           {
+              // ADDI
+              auto rd = 0;
+              auto rs1 = 0;
+              auto imm = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = instruction.getOperand(1).getReg();
+              if(instruction.getOperand(2).isImm()) {
+                 imm = instruction.getOperand(2).getImm();
+              }
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              a.addOperand(instruction.getOperand(0)); // rd
+              a.addOperand(instruction.getOperand(1)); // rs1
+              // We don't know whether the operand is an immediate or label?
+              // We find it out during parsing.
+              if(instruction.getOperand(2).isImm()) {
+                 imm = instruction.getOperand(2).getImm();
+                 a.addOperand(MCOperand::createImm(instruction.getOperand(2).getImm()));// imm
+              }
+              else {
+                 const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
+                 MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx));
+                 a.addOperand(c); // imm
+              }
            }
            result.push_back(a);
            callback(a);
