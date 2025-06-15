@@ -156,7 +156,9 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
 
     var base = lcbConfiguration().targetName();
     var codeGen =
-        new CompilerInstructionExpansionCodeGenerator(base,
+        new CompilerInstructionExpansionCodeGenerator(
+            passResults,
+            base,
             fieldUsages,
             ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults),
             relocations,

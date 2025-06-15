@@ -131,7 +131,29 @@ public class InstrCallNode extends DirectionalNode {
    */
   public boolean isParameterFieldAccess(Format.Field field) {
     return paramFieldsOrAccesses.stream().anyMatch(
-        paramField -> paramField.isRight() && paramField.right().fieldRef().equals(field));
+        paramField -> paramField.isRight() && paramField.right().fieldRefs().contains(field));
+  }
+
+  /**
+   * Return all field accesses which reference the given {@link Format.Field}.
+   */
+  public List<Format.FieldAccess> getFieldAccessesWithFieldRefs(Format.Field field) {
+    return paramFieldsOrAccesses.stream()
+        .filter(
+            paramField -> paramField.isRight() && paramField.right().fieldRefs().contains(field))
+        .map(Either::right)
+        .toList();
+  }
+
+  /**
+   * Check if the parameter corresponding to a given field is a {@link Format.Field}.
+   *
+   * @param field the given field
+   * @return true if the parameter is a {@link Format.Field}, false otherwise
+   */
+  public boolean isParameterField(Format.Field field) {
+    return paramFieldsOrAccesses.stream().anyMatch(
+        paramField -> paramField.isLeft() && paramField.left().equals(field));
   }
 
   /**
