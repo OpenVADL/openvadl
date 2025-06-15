@@ -27,9 +27,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.stream.IntStream;
+import javax.annotation.Nullable;
 import net.jqwik.api.Arbitraries;
-import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
+import net.jqwik.api.Arbitrary;
+import net.jqwik.api.arbitraries.BigIntegerArbitrary;
 import vadl.TestUtils;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
@@ -48,9 +51,15 @@ import vadl.viam.passes.functionInliner.Inliner;
 
 public class AutoAssembler {
 
+  private static final int MAX_TRIES = 100;
+
   final Disassembler disassembler;
-  private List<Integer> allowedRegIndices;
+  private List<BigInteger> allowedRegIndices;
   private final ByteOrder byteOrder;
+
+  @Nullable
+  private BiFunction<Format.Field, BigIntegerArbitrary, Arbitrary<BigInteger>>
+      customFieldConstrainFn;
 
   public AutoAssembler(Disassembler disassembler, ByteOrder byteOrder) {
     this.disassembler = disassembler;
@@ -63,7 +72,22 @@ public class AutoAssembler {
   }
 
   public AutoAssembler allowRegisterIndices(List<Integer> allowedRegIndices) {
-    this.allowedRegIndices = allowedRegIndices;
+    this.allowedRegIndices = allowedRegIndices.stream().map(BigInteger::valueOf).toList();
+    return this;
+  }
+
+  public AutoAssembler registerFieldConstrain(
+      BiFunction<Format.Field, BigIntegerArbitrary, Arbitrary<BigInteger>> constrainer) {
+    if (customFieldConstrainFn != null) {
+      throw new IllegalStateException(
+          "There is already an assignment checker for this AutoAssembler");
+    }
+    this.customFieldConstrainFn = constrainer;
+    return this;
+  }
+
+  public AutoAssembler clearRegisteredAssignmentChecker() {
+    this.customFieldConstrainFn = null;
     return this;
   }
 
@@ -77,10 +101,11 @@ public class AutoAssembler {
     Map<Format.Field, BigInteger> assignment;
     do {
       assignment = genAssignment(enc, regs);
-    } while (!testAssignment(instruction, assignment) && tries++ < 10);
-    
-    if (tries >= 10) {
-      throw new IllegalStateException("Couldn't find OK assignment within 10 tries.");
+    } while (!testAssignment(instruction, assignment) && tries++ < MAX_TRIES);
+
+    if (tries >= MAX_TRIES) {
+      throw new IllegalStateException(
+          "Couldn't find OK assignment within " + MAX_TRIES + " tries.");
     }
 
     // find destination and source registers
@@ -107,14 +132,17 @@ public class AutoAssembler {
     for (var f : encoding.fieldEncodings()) {
       assignment.put(f.formatField(), f.constant().integer());
     }
+    BiFunction<Format.Field, BigIntegerArbitrary, Arbitrary<BigInteger>> constrainFn =
+        customFieldConstrainFn != null ? customFieldConstrainFn : (field, val) -> val;
     for (var reg : registers.entrySet()) {
       var field = reg.getValue();
       // select register indices
       var i = Arbitraries.of(allowedRegIndices).sample();
-      assignment.put(field, BigInteger.valueOf(i));
+      assignment.put(field, i);
     }
     for (var f : encoding.nonEncodedFormatFields()) {
-      assignment.computeIfAbsent(f, k -> TestUtils.arbitraryBits(k.size()).sample());
+      assignment.computeIfAbsent(f, k ->
+          constrainFn.apply(f, TestUtils.arbitraryBits(k.size())).sample());
     }
     return assignment;
   }

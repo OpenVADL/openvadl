@@ -65,16 +65,10 @@ instruction set architecture AArch64Base = {
   alias register SP : Address = S(31) // stack pointer
   alias register LR : Address = S(30) // link register (return address)
 
-  format ConditionFlags: Bits<4> = {  // condition flags register format
-//    res1  : Bits<32>,               // reserved, zero
-      N     : Bits1                   // Negative
-    , Z     : Bits1                   // Zero
-    , C     : Bits1                   // Carry
-    , V     : Bits1                   // oVerflow
-//  , res0  : Bits<28>                // reserved, zero
-    }
-
-  register NZCV : ConditionFlags      // condition flags register
+  register NZCV_N : Bits1             // Negative
+  register NZCV_Z : Bits1             // Zero
+  register NZCV_C : Bits1             // Carry
+  register NZCV_V : Bits1             // oVerflow
 
   enumeration CondCode : Bits<4> =    // condition code encodings, do not change order
     { EQ                              // EQual                    Z == 1
@@ -97,20 +91,20 @@ instruction set architecture AArch64Base = {
 
   function conditionHolds (cond: Bits<4>) -> Bool = // evaluate condition code
     match cond with
-      { CondCode::EQ => NZCV.Z  = 1
-      , CondCode::NE => NZCV.Z  = 0
-      , CondCode::CS => NZCV.C  = 1
-      , CondCode::CC => NZCV.C  = 0
-      , CondCode::MI => NZCV.N  = 1
-      , CondCode::PL => NZCV.N  = 0
-      , CondCode::VS => NZCV.V  = 1
-      , CondCode::VC => NZCV.V  = 0
-      , CondCode::HI => NZCV.C  = 1 && NZCV.Z = 0
-      , CondCode::LS => NZCV.C  = 0 || NZCV.Z = 1
-      , CondCode::GE => NZCV.N  = NZCV.V
-      , CondCode::LT => NZCV.N != NZCV.V
-      , CondCode::GT => NZCV.N  = NZCV.V && NZCV.Z = 0
-      , CondCode::LE => NZCV.N != NZCV.V || NZCV.Z = 1
+      { CondCode::EQ => NZCV_Z  = 1
+      , CondCode::NE => NZCV_Z  = 0
+      , CondCode::CS => NZCV_C  = 1
+      , CondCode::CC => NZCV_C  = 0
+      , CondCode::MI => NZCV_N  = 1
+      , CondCode::PL => NZCV_N  = 0
+      , CondCode::VS => NZCV_V  = 1
+      , CondCode::VC => NZCV_V  = 0
+      , CondCode::HI => NZCV_C  = 1 && NZCV_Z = 0
+      , CondCode::LS => NZCV_C  = 0 || NZCV_Z = 1
+      , CondCode::GE => NZCV_N  = NZCV_V
+      , CondCode::LT => NZCV_N != NZCV_V
+      , CondCode::GT => NZCV_N  = NZCV_V && NZCV_Z = 0
+      , CondCode::LE => NZCV_N != NZCV_V || NZCV_Z = 1
       , _            => true
       }
 
@@ -122,6 +116,11 @@ instruction set architecture AArch64Base = {
   enumeration Size =                  // bit size values for operation size, do not rename elements
     { WSize = SizeW                   // 32 is size for WSize operations
     , XSize = SizeX                   // 64 is size for XSize operations
+    }
+
+  enumeration ShiftSize =             // shift size values for operation size, do not rename elements
+    { WSize = 5                       // 5 is size for WSize shift immediate values
+    , XSize = 6                       // 6 is size for XSize shift immediate values
     }
 
   enumeration FF: Bits1 =             // flag field values, do not change order
@@ -225,12 +224,18 @@ instruction set architecture AArch64Base = {
 
   // set all flags
   model SetFlags (): Stats = {
-    NZCV := (flags.negative, flags.zero, flags.carry, flags.overflow)
+    NZCV_N := flags.negative
+    NZCV_Z := flags.zero
+    NZCV_C := flags.carry
+    NZCV_V := flags.overflow
     }
 
   // set NZ flags, clear CV flags
   model SetNZClearCVFlags (): Stats = {
-    NZCV := (flags.negative, flags.zero, false, false)
+    NZCV_N := flags.negative
+    NZCV_Z := flags.zero
+    NZCV_C := false
+    NZCV_V := false
     }
 
   // assigns zero extended word result to destination expression
@@ -326,7 +331,7 @@ instruction set architecture AArch64Base = {
     }
 
   model ExtInstrStr (i: InstrWithFunct, ext: Str): InstrWithFunct = {
-    (AsId ($i.id,  $ext); $i.mnemo; $i.opcode; $i.funct)
+    (AsId ($i.id, $ext); $i.mnemo; $i.opcode; $i.funct)
     }
 
   model AddSubImmInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
@@ -386,14 +391,14 @@ instruction set architecture AArch64Base = {
 
   model AddSubCarryInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: ThreeRegOpFormat =
-      let result, flags = VADL::$i.funct(X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>, NZCV.C) in
+      let result, flags = VADL::$i.funct(X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>, NZCV_C) in
         X(rd) := result as Bits<Size::$size> as BitsX
     $ThreeRegOpEncAsm ($i; $size)
     }
 
   model AddSubCarryFlagInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: ThreeRegOpFormat =
-      let result, flags = VADL::$i.funct(X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>, NZCV.C) in {
+      let result, flags = VADL::$i.funct(X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>, NZCV_C) in {
         X(rd) := result as Bits<Size::$size> as BitsX
         $SetFlags()
         }
@@ -909,8 +914,12 @@ instruction set architecture AArch64Base = {
         then let result, flags = VADL::$i.funct(X(rn) as Bits<Size::$size>, $ex) in {
           $SetFlags()
           }
-        else
-          NZCV := nzcv
+        else {
+          NZCV_N := nzcv(3)
+          NZCV_Z := nzcv(2)
+          NZCV_C := nzcv(1)
+          NZCV_V := nzcv(0)
+          }
     encoding $i.id = { op = $i.opcode, sf = SF::$size, cc = CondCode::$c.cc }
     assembly $i.id = ( $i.mnemo, ' ', $size(rn), $asm, ', #', decimal(nzcv), ', ', $c.mext )
     }
@@ -1031,20 +1040,20 @@ instruction set architecture AArch64Base = {
     }
 
   model CondInstr (modelid: InstrWithCond, i: InstrWithFunct): IsaDefs = {
-    $ExtendCondInstr ($modelid; $i; (EQ ; "eq" ; NZCV.Z  = 1                    ))
-    $ExtendCondInstr ($modelid; $i; (NE ; "ne" ; NZCV.Z  = 0                    ))
-    $ExtendCondInstr ($modelid; $i; (CS ; "cs" ; NZCV.C  = 1                    ))
-    $ExtendCondInstr ($modelid; $i; (CC ; "cc" ; NZCV.C  = 0                    ))
-    $ExtendCondInstr ($modelid; $i; (MI ; "mi" ; NZCV.N  = 1                    ))
-    $ExtendCondInstr ($modelid; $i; (PL ; "pl" ; NZCV.N  = 0                    ))
-    $ExtendCondInstr ($modelid; $i; (VS ; "vs" ; NZCV.V  = 1                    ))
-    $ExtendCondInstr ($modelid; $i; (VC ; "vc" ; NZCV.V  = 0                    ))
-    $ExtendCondInstr ($modelid; $i; (HI ; "hi" ; NZCV.C  = 1 && NZCV.Z = 0      ))
-    $ExtendCondInstr ($modelid; $i; (LS ; "ls" ; NZCV.C  = 0 || NZCV.Z = 1      ))
-    $ExtendCondInstr ($modelid; $i; (GE ; "ge" ; NZCV.N  = NZCV.V               ))
-    $ExtendCondInstr ($modelid; $i; (LT ; "lt" ; NZCV.N != NZCV.V               ))
-    $ExtendCondInstr ($modelid; $i; (GT ; "gt" ; NZCV.N  = NZCV.V && NZCV.Z = 0 ))
-    $ExtendCondInstr ($modelid; $i; (LE ; "le" ; NZCV.N != NZCV.V || NZCV.Z = 1 ))
+    $ExtendCondInstr ($modelid; $i; (EQ ; "eq" ; NZCV_Z  = 1                    ))
+    $ExtendCondInstr ($modelid; $i; (NE ; "ne" ; NZCV_Z  = 0                    ))
+    $ExtendCondInstr ($modelid; $i; (CS ; "cs" ; NZCV_C  = 1                    ))
+    $ExtendCondInstr ($modelid; $i; (CC ; "cc" ; NZCV_C  = 0                    ))
+    $ExtendCondInstr ($modelid; $i; (MI ; "mi" ; NZCV_N  = 1                    ))
+    $ExtendCondInstr ($modelid; $i; (PL ; "pl" ; NZCV_N  = 0                    ))
+    $ExtendCondInstr ($modelid; $i; (VS ; "vs" ; NZCV_V  = 1                    ))
+    $ExtendCondInstr ($modelid; $i; (VC ; "vc" ; NZCV_V  = 0                    ))
+    $ExtendCondInstr ($modelid; $i; (HI ; "hi" ; NZCV_C  = 1 && NZCV_Z = 0      ))
+    $ExtendCondInstr ($modelid; $i; (LS ; "ls" ; NZCV_C  = 0 || NZCV_Z = 1      ))
+    $ExtendCondInstr ($modelid; $i; (GE ; "ge" ; NZCV_N  = NZCV_V               ))
+    $ExtendCondInstr ($modelid; $i; (LT ; "lt" ; NZCV_N != NZCV_V               ))
+    $ExtendCondInstr ($modelid; $i; (GT ; "gt" ; NZCV_N  = NZCV_V && NZCV_Z = 0 ))
+    $ExtendCondInstr ($modelid; $i; (LE ; "le" ; NZCV_N != NZCV_V || NZCV_Z = 1 ))
     $ExtendCondInstr ($modelid; $i; (AL ; "al" ; true                           ))
     $ExtendCondInstr ($modelid; $i; (NV ; "nv" ; true                           ))
     }
@@ -1293,6 +1302,39 @@ instruction set architecture AArch64Base = {
     $MemoryRegPairInstr ($i; XSize; false; MEM<8> (addr) := X(rt)              MEM<8> (addr + 8) := X(rt2))
     }
 
+
+// pseudo instruction models ***************************************************
+
+  model PseudoMulInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    pseudo instruction $i.id (rd: Index, rn: Index, rm: Index) = {
+      $i.funct {rd = rd, rn = rn, rm = rm, ra = $i.opcode}
+      }
+    assembly $i.id = ($i.mnemo, " ", $size(rd), ", ", $size(rn), ", ", $size(rm))
+    }
+
+  model Pseudo3OpInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    pseudo instruction $i.id (rd: Index, rn: Index, rm: Index) = {
+      $i.funct {rd = rd, rn = rn, rm = rm}
+      }
+    assembly $i.id = ($i.mnemo, " ", $size(rd), ", ", $size(rn), ", ", $size(rm))
+    }
+
+  model PseudoShiftRightInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    pseudo instruction $i.id (rd: Index, rn: Index, shift: Bits6) = {
+      $i.funct {rd = rd, rn = rn, immr = shift as Bits<ShiftSize::$size> as Bits6, imms = Size::$size - 1}
+      }
+    assembly $i.id = ($i.mnemo, " ", $size(rd), ", ", $size(rn), ", #", decimal(shift))
+    }
+
+  model PseudoShiftLeftInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    pseudo instruction $i.id (rd: Index, rn: Index, shift: Bits6) = {
+      $i.funct{rd = rd, rn = rn, immr = - shift as Bits<ShiftSize::$size> as Bits6,
+                 imms = Size::$size - 1 - shift as Bits<ShiftSize::$size> as Bits6}
+      }
+    assembly $i.id = ($i.mnemo, " ", $size(rd), ", ", $size(rn), ", #", decimal(shift))
+    }
+
+
 // instruction enriching models ************************************************
 
   model InstrWX (modelid: InstrWithFunctSize, i: InstrWithFunct): IsaDefs = {
@@ -1310,6 +1352,15 @@ instruction set architecture AArch64Base = {
   model InstrWXRegShift (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct): IsaDefs = {
     $LogicRegShiftInstr ($modelid; $ExtInstrStr ($i; "W"); WSize)
     $LogicRegShiftInstr ($modelid; $ExtInstrStr ($i; "X"); XSize)
+    }
+
+  model ExtPseudoStr (i: InstrWithFunct, ext: Str): InstrWithFunct = {
+    (AsId ($i.id, $ext); $i.mnemo; $i.opcode; AsId ($i.funct, $ext))
+    }
+
+  model PseudoWX (modelid: InstrWithFunctSize, i: InstrWithFunct): IsaDefs = {
+    $modelid ($ExtPseudoStr ($i;  "W"); WSize)
+    $modelid ($ExtPseudoStr ($i;  "X"); XSize)
     }
 
 
@@ -1416,6 +1467,14 @@ instruction set architecture AArch64Base = {
   $StorePairInstrW     (                        (STPW   ; "stp"   ; 0b0000                ; BitsX      ))
   $StorePairInstrX     (                        (STPX   ; "stp"   ; 0b1000                ; BitsX      ))
 
+  $PseudoWX            (PseudoMulInstr        ; (MUL    ; "mul"   ; 0b1'1111              ; MADD       ))
+  $PseudoWX            (Pseudo3OpInstr        ; (ASRV   ; "asr"   ; 0                     ; ASR        ))
+  $PseudoWX            (Pseudo3OpInstr        ; (LSRV   ; "lsr"   ; 0                     ; LSR        ))
+  $PseudoWX            (Pseudo3OpInstr        ; (LSLV   ; "lsl"   ; 0                     ; LSL        ))
+  $PseudoWX            (PseudoShiftRightInstr ; (ASRI   ; "asr"   ; 0b11'1111             ; SBFM       ))
+  $PseudoWX            (PseudoShiftRightInstr ; (LSRI   ; "lsr"   ; 0b11'1111             ; UBFM       ))
+  $PseudoWX            (PseudoShiftLeftInstr  ; (LSLI   ; "lsl"   ; 0b11'1111             ; UBFM       ))
+
 //}
 //
 //instruction set architecture AArch64Sys extending AArch64Base = {
@@ -1505,11 +1564,14 @@ instruction set architecture AArch64Base = {
   register SPSR_EL1: SavedProgramStateFormat // saved program state register exception level level 1
 
   model SaveProgramState (): Stats = {
-    SPSR_EL1 := (SPSR_EL1(63..32), NZCV, SPSR_EL1(27..4), SPSel as Bits4 | 0b0100)
+    SPSR_EL1 := (SPSR_EL1(63..32), NZCV_N, NZCV_Z, NZCV_C, NZCV_V, SPSR_EL1(27..4), SPSel as Bits4 | 0b0100)
     }
 
   model RestoreProgramState (): Stats = {
-    NZCV := SPSR_EL1.NZCV
+    NZCV_N := SPSR_EL1.NZCV(3)
+    NZCV_Z := SPSR_EL1.NZCV(2)
+    NZCV_C := SPSR_EL1.NZCV(1)
+    NZCV_V := SPSR_EL1.NZCV(0)
     }
 
   exception GeneralException (exClass: Bits6, syndrome: Bits25, continuation: Address, exOffset: Address) = {
@@ -1590,7 +1652,7 @@ instruction set architecture AArch64Base = {
   model MrsRegInstr (i: InstrNoFunct): IsaDefs = {
     instruction $i.id: MoveSystemRegFormat =
       if sysreg = SysRegEncode::NZCV
-        then X(rt) := NZCV as BitsX << 28
+        then X(rt) := (NZCV_N, NZCV_Z, NZCV_C, NZCV_V) as BitsX << 28
         else if CurrentEL = 0
         then raise $UndefinedException ()
         else match sysreg with
@@ -1618,7 +1680,12 @@ instruction set architecture AArch64Base = {
   model MsrRegInstr (i: InstrNoFunct): IsaDefs = {
     instruction $i.id: MoveSystemRegFormat =
       if sysreg = SysRegEncode::NZCV
-        then NZCV := X(rt)(31..28)
+        then {
+          NZCV_N := X(rt)(31)
+          NZCV_Z := X(rt)(30)
+          NZCV_C := X(rt)(29)
+          NZCV_V := X(rt)(28)
+          }
         else if CurrentEL = 0
         then raise $UndefinedException ()
         else match sysreg with

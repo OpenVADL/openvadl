@@ -19,6 +19,7 @@ package vadl.iss;
 import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.getSingleNode;
 
+import com.google.common.collect.Streams;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,6 +27,11 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import vadl.iss.passes.tcgLowering.nodes.TcgBr;
+import vadl.iss.passes.tcgLowering.nodes.TcgBrCond;
+import vadl.iss.passes.tcgLowering.nodes.TcgLabelNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgSetLabel;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
@@ -214,18 +220,56 @@ public abstract class DataFlowAnalysis<D> {
   }
 
   private Set<ControlNode> predecessorsOf(ControlNode node) {
-    // if the node is a merge node, we must look at its inputs (branch ends)
-    return node instanceof MergeNode mergeNode
-        ? mergeNode.inputs().map(ControlNode.class::cast).collect(Collectors.toSet())
-        : node.predecessor() != null ? Set.of((ControlNode) node.predecessor()) : Set.of();
+
+    if (node instanceof TcgSetLabel setLabel) {
+      // a label can have multiple predecessors: the direct predecessor and all jumps
+      // to the label itself.
+      var jumps = graphOf(setLabel).getNodes(Set.of(TcgBrCond.class, TcgBr.class))
+          .filter(n -> ((TcgLabelNode) n).label().equals(setLabel.label()));
+      var predecessor = Stream.of(requireNonNull(setLabel.predecessor()));
+      return Streams.concat(jumps, predecessor)
+          .map(ControlNode.class::cast)
+          .collect(Collectors.toSet());
+    }
+
+    if (node instanceof MergeNode mergeNode) {
+      // if the node is a merge node, we must look at its inputs (branch ends)
+      return mergeNode.inputs().map(ControlNode.class::cast).collect(Collectors.toSet());
+    }
+
+    return node.predecessor() != null ? Set.of((ControlNode) node.predecessor()) : Set.of();
   }
 
   private Set<ControlNode> successorsOf(ControlNode node) {
-    // if the node is a branch node, we must find the corresponding merge node
-    return node instanceof BranchEndNode endNode
-        ? endNode.usages().map(ControlNode.class::cast).collect(Collectors.toSet())
-        : node.successors()
+
+    if (node instanceof TcgBr tcgBr) {
+      // if the node is an unconditional branch, the only successor is the target node.
+      return graphOf(node).getNodes(TcgSetLabel.class)
+          .filter(n -> n.label().equals(tcgBr.label()))
+          .collect(Collectors.toSet());
+    }
+
+    if (node instanceof TcgBrCond condBr) {
+      // if the node is a conditional branch, the successors are the target label
+      // and the successor.
+      var targets = graphOf(node).getNodes(TcgSetLabel.class)
+          .filter(n -> n.label().equals(condBr.label()));
+      return Streams.concat(targets, condBr.successors())
+          .map(ControlNode.class::cast)
+          .collect(Collectors.toSet());
+    }
+
+    if (node instanceof BranchEndNode endNode) {
+      // if the node is a branch node, we must find the corresponding merge node
+      return endNode.usages().map(ControlNode.class::cast).collect(Collectors.toSet());
+    }
+
+    return node.successors()
         .map(ControlNode.class::cast)
         .collect(Collectors.toSet());
+  }
+
+  private Graph graphOf(ControlNode node) {
+    return requireNonNull(node.graph());
   }
 }
