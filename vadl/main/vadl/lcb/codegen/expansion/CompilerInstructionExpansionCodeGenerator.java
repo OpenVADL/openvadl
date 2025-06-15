@@ -43,7 +43,6 @@ import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.context.CNodeWithBaggageContext;
 import vadl.cppCodeGen.model.GcbCppAccessFunction;
 import vadl.cppCodeGen.model.GcbCppEncodeFunction;
-import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
@@ -107,8 +106,6 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   private final GenerateLinkerComponentsPass.VariantKindStore variantKindStore;
   private final IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords;
   private final IdentityHashMap<NewLabelNode, String> labelSymbolNameLookup;
-  private final Map<Pair<PrintableInstruction, Format.FieldAccess>, GcbCppFunctionWithBody>
-      decodingFunctions;
   private final Map<TableGenImmediateRecord, GcbCppAccessFunction> immediateDecodings;
 
   /**
@@ -135,13 +132,6 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     this.machineInstructionRecords = machineInstructionRecords;
     this.labelSymbolNameLookup = new IdentityHashMap<>();
     this.immediateDecodings = immediateDecodings;
-    this.decodingFunctions = immediateDecodings
-        .entrySet()
-        .stream()
-        .collect(Collectors.toMap(x -> {
-          var key = x.getKey();
-          return Pair.of(key.instructionRef(), key.fieldAccessRef());
-        }, Map.Entry::getValue));
   }
 
   @Override
@@ -193,9 +183,8 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
               .spacedIn()
               .ln("// " + instrCallNode.target().simpleName());
 
-          instrCallNode.getParamFields().forEach(field -> {
-            context.ln("auto %s = 0;", field.identifier.simpleName());
-          });
+          instrCallNode.getParamFields()
+              .forEach(field -> context.ln("auto %s = 0;", field.identifier.simpleName()));
 
           writeInstructionCall(context,
               compilerInstruction,
