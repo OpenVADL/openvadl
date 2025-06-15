@@ -51,6 +51,8 @@ import vadl.viam.passes.functionInliner.Inliner;
 
 public class AutoAssembler {
 
+  private static final int MAX_TRIES = 100;
+
   final Disassembler disassembler;
   private List<BigInteger> allowedRegIndices;
   private final ByteOrder byteOrder;
@@ -99,10 +101,11 @@ public class AutoAssembler {
     Map<Format.Field, BigInteger> assignment;
     do {
       assignment = genAssignment(enc, regs);
-    } while (!testAssignment(instruction, assignment) && tries++ < 10);
+    } while (!testAssignment(instruction, assignment) && tries++ < MAX_TRIES);
 
-    if (tries >= 10) {
-      throw new IllegalStateException("Couldn't find OK assignment within 10 tries.");
+    if (tries >= MAX_TRIES) {
+      throw new IllegalStateException(
+          "Couldn't find OK assignment within " + MAX_TRIES + " tries.");
     }
 
     // find destination and source registers

@@ -165,6 +165,13 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
   }
 
   @TestFactory
+  Stream<DynamicTest> testCCMP() throws IOException {
+    // CCMP (immediate): Conditional compare (immediate)
+    return runTestsWith(makeTestCasesFromPrefixes("CCMPI"));
+  }
+
+
+  @TestFactory
   Stream<DynamicTest> testCSINC() throws IOException {
     // CSINC: Conditional select increment.
     return runTestsWith(makeTestCasesFromPrefixes("CSINC"));
