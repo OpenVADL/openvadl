@@ -354,6 +354,7 @@ instruction set architecture AArch64Base = {
     }
 
   model AddSubSftInstrBase (i: InstrWithFunct, size: Id, f: Flags, sftex: Ex, enc: Encs, asm: Ex): IsaDefs = {
+    // shift is set explicitely, therefore no undefined check for a shift of 0b11 is required
     [undefined when : sf = 0 && imm6(5) = 1]
     instruction $i.id: AddSubSftFormat =
       let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, ($sftex) as Bits<Size::$size>) in {
@@ -612,7 +613,7 @@ instruction set architecture AArch64Base = {
     }
 
   model LogicImmFlagInstr (i: InstrWithFunct, size: Id): IsaDefs = {
-    [undefined when : sf = 0 && imm13(12) = 1]
+    [undefined when : imm13Decode (imm13) = 0 || sf = 0 && imm13(12) = 1]
     instruction $i.id: LogicImmFormat =
       let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, AsId(imm, $size)) in {
         X(rd) := result as Bits<Size::$size> as BitsX
@@ -622,6 +623,7 @@ instruction set architecture AArch64Base = {
     }
 
   model LogicImmInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    [undefined when : imm13Decode (imm13) = 0 || sf = 0 && imm13(12) = 1]
     instruction $i.id: LogicImmFormat =
       let result = VADL::$i.funct (X(rn) as Bits<Size::$size>, AsId(imm, $size)) in
         S(rd) := result as Bits<Size::$size> as BitsX
@@ -720,6 +722,7 @@ instruction set architecture AArch64Base = {
   model notOrIdent (not: Id, ex: Ex) : Ex = { match: Ex ($not = not => ~($ex) ;_=> $ex) }
   
   model MovInstr (i: InstrWithFunct, size: Id, pos: Id, posex: Ex): IsaDefs = {
+    // pos is set explicitely, therefore no undefined check for sf = 0 && pos(1) = 1 is required
     instruction AsId ($i.id, $pos): MovFormat =
       X(rd) := $posex
     encoding AsId ($i.id, $pos) = { sf = SF::$size, op = $i.opcode, pos = Position::$pos }
@@ -765,6 +768,7 @@ instruction set architecture AArch64Base = {
     }
 
   model ExtractRegPairInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    // N is set explicitely, therefore no undefined check for sf != N is required
     [undefined when : sf = 0 && imms(5)]
     instruction $i.id: ExtractRegFormat =
       let pair = (X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>) in
@@ -822,7 +826,7 @@ instruction set architecture AArch64Base = {
 
   model BitfieldMoveInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     // if (sf = 0) specification ignores imms(5) and immr(5)
-    // (sf != N) cannot happen as N is set in encoding
+    // N is set explicitely, therefore no undefined check for sf != N is required
     [undefined when : sf = 0 && (imms(5) = 1 || immr(5) = 1)]
     instruction $i.id: BitFieldMoveFormat =
       let left = AsId (left, $size) in
@@ -881,6 +885,7 @@ instruction set architecture AArch64Base = {
     }
 
   model RevBytesHInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    // sf and opc are set explicitely, therefore no undefined check for sf = 0 and opc = 0b11 is required
     instruction $i.id: TwoRegOpFormat = {
       let xrn = (X(rn)) in
         let result = (xrn(55..48),xrn(63..56),xrn(39..32),xrn(47..40),xrn(23..16),xrn(31..24),xrn(7..0),xrn(15..8)) in
@@ -890,6 +895,7 @@ instruction set architecture AArch64Base = {
     }
 
   model RevBytesWInstr (i: InstrWithFunct): IsaDefs = {
+    // sf and opc are set explicitely, therefore no undefined check for sf = 0 and opc = 0b11 is required
     instruction $i.id: TwoRegOpFormat =
       let xrn = (X(rn)) in
         let result = (xrn(39..32),xrn(47..40),xrn(55..48),xrn(63..56),xrn(7..0),xrn(15..8),xrn(23..16),xrn(31..24)) in
@@ -898,6 +904,7 @@ instruction set architecture AArch64Base = {
     }
 
   model RevBytesXInstr (i: InstrWithFunct): IsaDefs = {
+    // sf and opc are set explicitely, therefore no undefined check for sf = 0 and opc = 0b11 is required
     instruction $i.id: TwoRegOpFormat =
       let xrn = (X(rn)) in
         let result = (xrn(7..0),xrn(15..8),xrn(23..16),xrn(31..24),xrn(39..32),xrn(47..40),xrn(55..48),xrn(63..56)) in
@@ -1134,6 +1141,8 @@ instruction set architecture AArch64Base = {
   }
 
   model MemoryPreIndexInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
+    // TODO check SP alignment
+    [undefined when : opc != 0 && rn = rt && rt != 31]
     instruction $i.id: MemoryImmFormat =
       let addr = S(rn) + offset in {
         $m.stmt
@@ -1143,6 +1152,8 @@ instruction set architecture AArch64Base = {
     }
 
   model MemoryPostIndexInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
+    // TODO check SP alignment
+    [undefined when : opc != 0 && rn = rt && rt != 31]
     instruction $i.id: MemoryImmFormat =
       let addr = S(rn) in {
         $m.stmt
@@ -1185,6 +1196,7 @@ instruction set architecture AArch64Base = {
 
   model MemoryRegisterBase (i: InstrNoFunct, m: Memory, option: Id, scaled: Id, asm: Ex, addr: Ex): IsaDefs = {
     // TODO check SP alignment
+    // options are enumrated explicitely, therefore no undefined check option(1) = 0 is required
     instruction $i.id: MemoryRegFormat =
       let addr = S(rn) + ($addr) in $m.stmt
     encoding $i.id = { op = $i.opcode, opc = $m.opc, size = AccSize::$m.accsize, option = ExtendType::$option, scaled = Scaled::$scaled }
@@ -1275,18 +1287,20 @@ instruction set architecture AArch64Base = {
 
   model MemoryRegPairInstr (i: InstrWithFunct, size: Id, isLoad: Bool, memstmts: Stats): IsaDefs = {
     // TODO check SP alignment
-    // [undefined when : match: Ex ( $isLoad = true => Ex1 ; _=> Ex2)]
+    [undefined when : match: Ex ( $isLoad = true => rt2 = rn ; _=> false)]
     instruction $i.id: MemoryPairFormat = 
       let addr = S(rn) + AsId (off, $size) in { $memstmts }
     $MemoryRegPairEncAsm ($i; ""; $size; $isLoad; 0b101'010; ("[", XSizeSP(rn), Imm7decimal(imm7), "]"))
-    // [undefined when : match: Ex ( $isLoad = true => Ex1 ; _=> Ex2)]
+    // TODO check SP alignment
+    [undefined when : match: Ex ( $isLoad = true => rt2 = rn || rn != 31 && (rt = rn || rt2 = rn); _=> false)]
     instruction AsId ($i.id, "Pre"): MemoryPairFormat =
       let addr = S(rn) + AsId (off, $size) in {
           $memstmts
           S(rn) := addr
         }
     $MemoryRegPairEncAsm ($i; "Pre"; $size; $isLoad; 0b101'011; ("[", XSizeSP(rn), Imm7decimal(imm7), "]!"))
-    // [undefined when : match: Ex ( $isLoad = true => Ex1 ; _=> Ex2)]
+    // TODO check SP alignment
+    [undefined when : match: Ex ( $isLoad = true => rt2 = rn || rn != 31 && (rt = rn || rt2 = rn); _=> false)]
     instruction AsId ( $i.id, "Pst"): MemoryPairFormat =
       let addr = S(rn) in {
           $memstmts
