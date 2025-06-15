@@ -92,7 +92,6 @@ import vadl.viam.passes.CfgTraverser;
  * creates the CPP code which creates the code to expand the pseudo instruction.
  */
 public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGenerator {
-  static final String FIELD = "field";
   static final String INSTRUCTION_CALL_NODE = "instructionCallNode";
   static final String INSTRUCTION = "instruction";
   static final String INSTRUCTION_SYMBOL = "instructionSymbol";
@@ -111,10 +110,6 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   private final Map<Pair<PrintableInstruction, Format.FieldAccess>, GcbCppFunctionWithBody>
       decodingFunctions;
   private final Map<TableGenImmediateRecord, GcbCppAccessFunction> immediateDecodings;
-
-  record FieldInInstruction(PrintableInstruction instruction, Format.Field field) {
-
-  }
 
   /**
    * Constructor.
@@ -232,7 +227,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
   private void writeInstructionCall(CNodeContext context,
                                     CompilerInstruction compilerInstruction,
-                                    HashMap<Format.Field, String> symbolTableFieldValues,
+                                    Map<Format.Field, String> symbolTableFieldValues,
                                     InstrCallNode instrCallNode,
                                     String instructionSymbol) {
     var fieldAccessesAndArgumentPair =
@@ -281,9 +276,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
           fieldUsages,
           targetName,
           this.compilerInstruction,
-          relocations,
-          decodingFunctions,
-          machineInstructionRecords);
+          relocations);
       pass.handle(newContext,
           instrCallNode,
           fieldOrAccessFunction.isRight() ? fieldOrAccessFunction.right() : null,
@@ -310,7 +303,6 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
               symbolTable,
               relocations,
               variantKindStore,
-              decodingFunctions,
               machineInstructionRecords,
               immediateDecodings,
               labelSymbolNameLookup,
@@ -323,51 +315,6 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
       addedOperands = pass.getAddedOperand();
     }
-  }
-
-  /**
-   * Generate an expression for the given {@code field} based on the {@code cn}.
-   *
-   * @param instrCallNode
-   * @param field         is the field (or the field behind a field access function) which is
-   *                      assigned in the instruction call in the pseudo instruction.
-   * @param cn            is the constant node which is assigned.
-   * @return an expression.
-   */
-  private String generateFieldValue(InstrCallNode instrCallNode,
-                                    Format.Field field,
-                                    ConstantNode cn) {
-    // Based on the usage, we know that we have to generate an immediate or a register.
-    var usages = fieldUsages.getFieldUsages(instrCallNode.target()).get(field);
-    ensure(usages != null && usages.size() == 1, () -> {
-      throw Diagnostic.error(
-          "Cannot expand pseudo instruction because the usage of the field is unclear",
-          field.location()).build();
-    });
-    var usage = Objects.requireNonNull(usages).getFirst();
-
-    // The cn might be
-    // rd = 1 or imm = 1 or immS = 1
-    // By switching over the usage, we know what it is.
-    switch (usage) {
-      case IMMEDIATE -> {
-        // We have a case distinction.
-        // We either have an assignment to a field or an assignment to field access function.
-
-        if (instrCallNode.isParameterField(field)) {
-          // It's an assigment to a field, therefore we have to decode the value since
-          // the MCInst only stores decoded values.
-          // We store the raw the value of the field, and then we decode the value.
-          // But we decode it later because the first pass only creates the raw values.
-
-          context.ln("%s = %s;", field.identifier.simpleName(), cn.constant().asVal().intValue());
-        } else {
-
-        }
-      }
-    }
-
-    return "";
   }
 
   /**
@@ -502,7 +449,7 @@ interface CaseHandler {
     var isAssignmentToFieldAccessFunction = fieldAccess != null;
     var isAssignmentToField = field != null;
     var isFieldUsedAsImmediate = isImmediate(instrCallNode, field);
-    var isFieldAccessUsedAsImmediate = isImmediate(instrCallNode, fieldAccess);
+    var isFieldAccessUsedAsImmediate = isImmediate(fieldAccess);
     var isFieldUsedAsRegister = !isFieldUsedAsImmediate && !isFieldAccessUsedAsImmediate;
 
     if (isFieldUsedAsRegister && expr instanceof ConstantNode cn) {
@@ -579,14 +526,9 @@ interface CaseHandler {
     return usage.getFirst() == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE;
   }
 
-  private boolean isImmediate(InstrCallNode instrCallNode,
-                              @Nullable Format.FieldAccess fieldAccess) {
-    if (fieldAccess == null) {
-      return false;
-    }
-
+  private boolean isImmediate(@Nullable Format.FieldAccess fieldAccess) {
     // At the moment, all field accesses are immediates.
-    return true;
+    return fieldAccess != null;
   }
 
   default RegisterTensor getRegisterFile(
@@ -821,27 +763,18 @@ class DecodeFieldAccessesHandler implements CaseHandler {
   private final TargetName targetName;
   private final CompilerInstruction compilerInstruction;
   private final List<HasRelocationComputationAndUpdate> relocations;
-  private final Map<Pair<PrintableInstruction, Format.FieldAccess>, GcbCppFunctionWithBody>
-      decodingFunctions;
-  private final IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords;
 
   DecodeFieldAccessesHandler(
       PassResults passResult,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       TargetName targetName,
       CompilerInstruction compilerInstruction,
-      List<HasRelocationComputationAndUpdate> relocations,
-      Map<Pair<PrintableInstruction, Format.FieldAccess>, GcbCppFunctionWithBody>
-          decodingFunctions,
-
-      IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords) {
+      List<HasRelocationComputationAndUpdate> relocations) {
     this.passResults = passResult;
     this.fieldUsages = fieldUsages;
     this.targetName = targetName;
     this.compilerInstruction = compilerInstruction;
-    this.decodingFunctions = decodingFunctions;
     this.relocations = relocations;
-    this.machineInstructionRecords = machineInstructionRecords;
   }
 
   @Override
@@ -988,8 +921,6 @@ class AddingOperands implements CaseHandler {
   private final SymbolTable symbolTable;
   private final List<HasRelocationComputationAndUpdate> relocations;
   private final GenerateLinkerComponentsPass.VariantKindStore variantKindStore;
-  private final Map<Pair<PrintableInstruction, Format.FieldAccess>, GcbCppFunctionWithBody>
-      decodingFunctions;
   private final Map<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords;
   private final Map<Pair<PrintableInstruction, Format.FieldAccess>, GcbCppAccessFunction>
       immediateDecodings;
@@ -1007,7 +938,6 @@ class AddingOperands implements CaseHandler {
       SymbolTable symbolTable,
       List<HasRelocationComputationAndUpdate> relocations,
       GenerateLinkerComponentsPass.VariantKindStore variantKindStore,
-      Map<Pair<PrintableInstruction, Format.FieldAccess>, GcbCppFunctionWithBody> decodingFunctions,
       Map<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords,
       Map<TableGenImmediateRecord, GcbCppAccessFunction> immediateDecodings,
       Map<NewLabelNode, String> labelSymbolNameLookup,
@@ -1017,7 +947,6 @@ class AddingOperands implements CaseHandler {
     this.symbolTable = symbolTable;
     this.relocations = relocations;
     this.variantKindStore = variantKindStore;
-    this.decodingFunctions = decodingFunctions;
     this.machineInstructionRecords = machineInstructionRecords;
     this.immediateDecodings = immediateDecodings
         .entrySet()
