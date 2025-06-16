@@ -32,10 +32,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
-import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.GraphVisitor;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
@@ -59,23 +56,15 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
       Instruction instruction,
       Graph uninlinedBehavior,
       Abi abi) {
-
-    var visitor = replacementHooks(instruction);
     var copy = uninlinedBehavior.copy();
 
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {
-      visitReplacementHooks(visitor, node);
+      replaceNode(instruction, node);
     }
 
     copy.deinitializeNodes();
     return Optional.of(
         createIntermediateResult(instruction, copy));
-  }
-
-  @Override
-  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks(
-      PrintableInstruction printableInstruction) {
-    return replacementHooksWithDefaultFieldAccessReplacement(printableInstruction);
   }
 
   @Override

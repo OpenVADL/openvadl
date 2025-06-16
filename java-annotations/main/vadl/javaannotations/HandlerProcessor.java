@@ -493,69 +493,91 @@ public class HandlerProcessor extends AbstractProcessor {
           .map(t -> t.toString() + " " + typeMirrorSimpleName(t).toLowerCase() + ", ")
           .collect(Collectors.joining());
 
+      writer.write("  private final " + handlerClassName + " handler;\n");
+
+      writer.write("  public " + dispatcherClassName + "(" + handlerClassName + " handler){\n");
+      writer.write("  this.handler = handler;\n");
+      writer.write("  }\n");
+
       writer.write("    @SuppressWarnings(\"BadInstanceof\")\n");
       writer.write(
           "    public static " + returnTypeName + " dispatch(" + handlerClassName
               + " handler, " + contextParams + baseTypeName
               + " obj) {\n");
 
-      // Sort handler methods by subtypes (more specific types at start)
-      List<HandlerMethod> sortedHandlerMethods = new ArrayList<>(handlerMethods.values());
-      sortedHandlerMethods.sort(Comparator.comparingInt(
-          hm -> -getInheritanceDepth(hm.handleType)) // negative inheritance
-      );
+      generateMethods(contextTypes, handlerMethods, writer, isVoidReturnType);
 
-      var contextParamNames =
-          contextTypes.stream().map(p -> typeMirrorSimpleName(p).toLowerCase() + ", ")
-              .collect(Collectors.joining());
+      writer.write("    }\n");
 
-      for (int i = 0; i < sortedHandlerMethods.size(); i++) {
-        HandlerMethod hm = sortedHandlerMethods.get(i);
-        String paramTypeStr = hm.handleType.toString();
-        String simpleParamType = paramTypeStr.substring(paramTypeStr.lastIndexOf('.') + 1);
-        String methodName = hm.methodName;
+      writer.write("    @SuppressWarnings(\"BadInstanceof\")\n");
+      writer.write(
+          "    public " + returnTypeName + " dispatch(" + contextParams + baseTypeName
+              + " obj) {\n");
 
-        if (i == 0) {
-          writer.write("        if (obj instanceof " + simpleParamType + ") {\n");
-        } else {
-          writer.write("        else if (obj instanceof " + simpleParamType + ") {\n");
-        }
-
-        if (isVoidReturnType) {
-          writer.write(
-              "            handler." + methodName + "(" + contextParamNames
-                  + "(" + simpleParamType + ") obj);\n");
-        } else {
-          writer.write(
-              "            return handler." + methodName + "(" + contextParamNames
-                  + "(" + simpleParamType + ") obj);\n");
-        }
-        writer.write("        }\n");
-      }
-
-
-      // Handle the 'else' case
-      writer.write("        else {\n");
-      if (isVoidReturnType) {
-        writer.write(
-            "            "
-                + "throw new IllegalArgumentException(\"Unhandled type: \" + obj.getClass());\n");
-      } else {
-        writer.write(
-            "            "
-                + "throw new IllegalArgumentException(\"Unhandled type: \" + obj.getClass());\n");
-      }
-      writer.write("        }\n");
-
-      // If returnType is not void, ensure all code paths return a value
-      if (!isVoidReturnType) {
-        writer.write("        // This line should be unreachable\n");
-      }
+      generateMethods(contextTypes, handlerMethods, writer, isVoidReturnType);
 
       writer.write("    }\n");
 
       writer.write("}\n");
     }
+  }
+
+  private void generateMethods(List<TypeMirror> contextTypes,
+                               Map<String, HandlerMethod> handlerMethods,
+                               Writer writer, boolean isVoidReturnType) throws IOException {
+    // Sort handler methods by subtypes (more specific types at start)
+    List<HandlerMethod> sortedHandlerMethods = new ArrayList<>(handlerMethods.values());
+    sortedHandlerMethods.sort(Comparator.comparingInt(
+        hm -> -getInheritanceDepth(hm.handleType)) // negative inheritance
+    );
+
+    var contextParamNames =
+        contextTypes.stream().map(p -> typeMirrorSimpleName(p).toLowerCase() + ", ")
+            .collect(Collectors.joining());
+
+    for (int i = 0; i < sortedHandlerMethods.size(); i++) {
+      HandlerMethod hm = sortedHandlerMethods.get(i);
+      String paramTypeStr = hm.handleType.toString();
+      String simpleParamType = paramTypeStr.substring(paramTypeStr.lastIndexOf('.') + 1);
+      String methodName = hm.methodName;
+
+      if (i == 0) {
+        writer.write("        if (obj instanceof " + simpleParamType + ") {\n");
+      } else {
+        writer.write("        else if (obj instanceof " + simpleParamType + ") {\n");
+      }
+
+      if (isVoidReturnType) {
+        writer.write(
+            "            handler." + methodName + "(" + contextParamNames
+                + "(" + simpleParamType + ") obj);\n");
+      } else {
+        writer.write(
+            "            return handler." + methodName + "(" + contextParamNames
+                + "(" + simpleParamType + ") obj);\n");
+      }
+      writer.write("        }\n");
+    }
+
+
+    // Handle the 'else' case
+    writer.write("        else {\n");
+    if (isVoidReturnType) {
+      writer.write(
+          "            "
+              + "throw new IllegalArgumentException(\"Unhandled type: \" + obj.getClass());\n");
+    } else {
+      writer.write(
+          "            "
+              + "throw new IllegalArgumentException(\"Unhandled type: \" + obj.getClass());\n");
+    }
+    writer.write("        }\n");
+
+    // If returnType is not void, ensure all code paths return a value
+    if (!isVoidReturnType) {
+      writer.write("        // This line should be unreachable\n");
+    }
+
   }
 
   private int getInheritanceDepth(TypeMirror type) {

@@ -49,6 +49,8 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetCondSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LoweringStrategyUtils;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerDispatcher;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerWithBasicBlockReplacement;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
@@ -58,7 +60,6 @@ import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -81,9 +82,10 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   }
 
   @Override
-  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks(
-      PrintableInstruction instruction) {
-    return replacementHooksWithFieldAccessWithBasicBlockReplacement(instruction);
+  protected void replaceNode(PrintableInstruction instruction, Node node) {
+    var dispatcher = new LcbNodeReplacementHandlerDispatcher(
+        new LcbNodeReplacementHandlerWithBasicBlockReplacement(instruction, architectureType));
+    dispatcher.dispatch(node);
   }
 
   @Override
@@ -92,11 +94,10 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Instruction instruction,
       Graph uninlinedBehavior,
       Abi abi) {
-    var visitor = replacementHooks(instruction);
     var copy = uninlinedBehavior.copy();
 
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {
-      visitReplacementHooks(visitor, node);
+      replaceNode(instruction, node);
     }
 
     copy.deinitializeNodes();

@@ -51,12 +51,6 @@ public class LlvmInstructionLoweringXoriAndOriStrategyImpl
   }
 
   @Override
-  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks(
-      PrintableInstruction printableInstruction) {
-    return replacementHooksWithDefaultFieldAccessReplacement(printableInstruction);
-  }
-
-  @Override
   protected LlvmLoweringPass.Flags getFlags(Graph graph) {
     var flags = super.getFlags(graph);
 

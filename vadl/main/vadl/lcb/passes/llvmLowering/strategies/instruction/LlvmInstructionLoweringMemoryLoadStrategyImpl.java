@@ -16,10 +16,8 @@
 
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
-import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensurePresent;
 
-import java.awt.print.Printable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -33,11 +31,9 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValue
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmZExtLoad;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandler;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerDispatcher;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
@@ -46,13 +42,9 @@ import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
-import vadl.viam.Memory;
 import vadl.viam.PrintableInstruction;
-import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 
 /**
@@ -67,12 +59,6 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
   @Override
   protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
     return Set.of(MachineInstructionLabel.LOAD_MEM);
-  }
-
-  @Override
-  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks(
-      PrintableInstruction instruction) {
-    return replacementHooksWithDefaultFieldAccessReplacement(instruction);
   }
 
   @Override
