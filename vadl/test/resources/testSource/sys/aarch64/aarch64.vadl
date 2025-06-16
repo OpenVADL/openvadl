@@ -1287,14 +1287,12 @@ instruction set architecture AArch64Base = {
 
   model MemoryRegPairInstr (i: InstrWithFunct, size: Id, isLoad: Bool, memstmts: Stats): IsaDefs = {
     // TODO check SP alignment
-    // TODO add BigEndian variant
-    [undefined when : match: Ex ( $isLoad = true => rt2 = rt ; _=> false)]
+    [undefined when : match: Ex ( $isLoad = true => rt2 = rn ; _=> false)]
     instruction $i.id: MemoryPairFormat =
       let addr = S(rn) + AsId (off, $size) in { $memstmts }
     $MemoryRegPairEncAsm ($i; ""; $size; $isLoad; 0b101'010; ("[", XSizeSP(rn), Imm7decimal(imm7), "]"))
     // TODO check SP alignment
-    // TODO add BigEndian variant
-    [undefined when : match: Ex ( $isLoad = true => rt2 = rt || rn != 31 && (rt = rn || rt2 = rn); _=> false)]
+    [undefined when : match: Ex ( $isLoad = true => rt2 = rn || rn != 31 && (rt = rn || rt2 = rn); _=> false)]
     instruction AsId ($i.id, "Pre"): MemoryPairFormat =
       let addr = S(rn) + AsId (off, $size) in {
           $memstmts
@@ -1302,8 +1300,7 @@ instruction set architecture AArch64Base = {
         }
     $MemoryRegPairEncAsm ($i; "Pre"; $size; $isLoad; 0b101'011; ("[", XSizeSP(rn), Imm7decimal(imm7), "]!"))
     // TODO check SP alignment
-    // TODO add BigEndian variant
-    [undefined when : match: Ex ( $isLoad = true => rt2 = rt || rn != 31 && (rt = rn || rt2 = rn); _=> false)]
+    [undefined when : match: Ex ( $isLoad = true => rt2 = rn || rn != 31 && (rt = rn || rt2 = rn); _=> false)]
     instruction AsId ( $i.id, "Pst"): MemoryPairFormat =
       let addr = S(rn) in {
           $memstmts
