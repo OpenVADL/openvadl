@@ -765,6 +765,8 @@ instruction set architecture AArch64Base = {
     , rd       [4..0]                 // destination register
     , shiftWSize  = imms(4..0)
     , shiftXSize  = imms
+    , imms := shiftWSize as Bits<6> // FIXME
+    , imms := shiftXSize as Bits<6> // FIXME
     }
 
   model ExtractRegPairInstr (i: InstrWithFunct, size: Id): IsaDefs = {
@@ -1631,12 +1633,15 @@ instruction set architecture AArch64Base = {
         }
     }
 
+/*
   format MoveSystemRegFormat: Instr =        // move system register format
     { op        : Bits12                     // [31..20] opcode
     , rs        : Bits15                     // [20..5]  system register code without leading one
     , rt        : Index                      // [4..0]   source/target register
     , sysreg    = (true, rs)
+    // , rs := sysreg[1..] as Bits15 // FIXME
     }
+    */
 
   format SuperVisorCallFormat: Instr =       // supervisor call format
     { op       [31..21,4..0] : Bits16        // opcode
@@ -1672,6 +1677,7 @@ instruction set architecture AArch64Base = {
                    decimal(sysreg( 2.. 0)))
       }
 
+/*
   model MrsRegInstr (i: InstrNoFunct): IsaDefs = {
     instruction $i.id: MoveSystemRegFormat =
       if sysreg = SysRegEncode::NZCV
@@ -1730,6 +1736,7 @@ instruction set architecture AArch64Base = {
     encoding $i.id = {op = $i.opcode}
     assembly $i.id = ($i.mnemo, ' ', SysRegName(sysreg), ', ', XSize(rt))
     }
+    */
 
   model ExceptionCallEncAsm (i: InstrWithFunct): IsaDefs = {
     encoding $i.id = {op = $i.opcode}
@@ -1782,8 +1789,8 @@ instruction set architecture AArch64Base = {
     assembly $i.id = ($i.mnemo)
     }
 
-  $MsrRegInstr           ((MSR    ; "msr"   ; 0b1101'0101'0001                             ))
-  $MrsRegInstr           ((MRS    ; "mrs"   ; 0b1101'0101'0011                             ))
+  // $MsrRegInstr           ((MSR    ; "msr"   ; 0b1101'0101'0001                             ))
+  // $MrsRegInstr           ((MRS    ; "mrs"   ; 0b1101'0101'0011                             ))
   $ExceptionCallInstr    ((BRK    ; "brk"   ; 0b1101'0100'0010'0000   ; SoftwareBreakpoint ))
   $ExceptionCallInstr    ((SVC    ; "svc"   ; 0b1101'0100'0000'0001   ; SupervisorCall     ))
   $ExceptionReturnInstr  ((ERET   ; "eret"  ; 0b1101'0110'1001'1111                        ))
