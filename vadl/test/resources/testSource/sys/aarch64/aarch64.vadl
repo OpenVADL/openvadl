@@ -354,6 +354,7 @@ instruction set architecture AArch64Base = {
     }
 
   model AddSubSftInstrBase (i: InstrWithFunct, size: Id, f: Flags, sftex: Ex, enc: Encs, asm: Ex): IsaDefs = {
+    // shift is set explicitely, therefore no undefined check for a shift of 0b11 is required
     [undefined when : sf = 0 && imm6(5) = 1]
     instruction $i.id: AddSubSftFormat =
       let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, ($sftex) as Bits<Size::$size>) in {
@@ -474,10 +475,18 @@ instruction set architecture AArch64Base = {
 
   model DivInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: ThreeRegOpFormat =
-      let result =
-        if X(rm) = 0
-          then 0
-          else X(rn) as $i.funct<Size::$size> / X(rm) as $i.funct<Size::$size> in
+      let dividend = X(rn) as $i.funct<Size::$size> in
+      let divisor  = X(rm) as $i.funct<Size::$size> in
+        let result =
+          if divisor = 0
+            then 0
+            else match : Ex ($i.funct = SInt =>     // if SInt check for overflow
+              let MinInt = 1 as SInt<Size::$size> << Size::$size - 1 in
+                if dividend = MinInt && divisor = -1
+                  then MinInt
+                  else dividend / divisor
+              ; _ =>   dividend / divisor
+              ) in
         X(rd) := result as Bits<Size::$size> as BitsX
     $ThreeRegOpEncAsm ($i; $size)
     }
@@ -567,7 +576,7 @@ instruction set architecture AArch64Base = {
 // imm13Encode encodes an unsigned 64 bit integer into the 13 bit N|immr|imms
 // representation for a valid pattern, otherwise it returns 0 as Bits13
 
-  function imm13Encode (val: BitsX) -> Bits13 =
+  function imm13EncodeXSize (val: BitsX) -> Bits13 =
     let size = patternSize (val) in
     if size = 0 then 0 else
     let mask = ~(0 as BitsX) >> (64 - size) in
@@ -581,31 +590,32 @@ instruction set architecture AArch64Base = {
           nImmrImms(size, 64 - leadingOnes, (leadingOnes + VADL::cto(immNmask) as SIntW) - (64 - size))
       else 0 as Bits13
 
-  function imm13EncodeWSize (val: BitsX) -> Bits13 =
-    let trunc = val as BitsW as BitsX in
-      if trunc != val then 0
-      else imm13Encode (val << Size::WSize | val)
+  function imm13EncodeWSize (val: BitsW) -> Bits13 =
+    imm13EncodeXSize ((val, val))
 
-  format LogicImmFormat: Instr =      // logic immediate format
-    { sf       : Bits1                // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
-    , op       : Bits8                // opcode
-    , imm13    : Bits13               // N, imms and immr fields
-    , rn       : Index                // source register
-    , rd       : Index                // destination register
-    , immX     = imm13Decode (imm13)  // decoded immediate value
-    // TODO encode
-    // TODO predicate
+  format LogicImmFormat: Instr =               // logic immediate format
+    { sf       :  Bits1                        // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       :  Bits8                        // opcode
+    , imm13    :  Bits13                       // N, imms and immr fields
+    , rn       :  Index                        // source register
+    , rd       :  Index                        // destination register
+    , immWSize =  imm13Decode (imm13) as BitsW // decoded BitsW immediate value
+    , immXSize =  imm13Decode (imm13)          // decoded BitsX immediate value
+    , imm13    := imm13EncodeWSize(immWSize)
+    , imm13    := imm13EncodeXSize(immXSize)
+    , immWSize :- imm13EncodeWSize(immWSize) != 0
+    , immXSize :- imm13EncodeXSize(immXSize) != 0
     }
 
   model LogicImmEncAsm (i: InstrWithFunct, size: Id, ext: Str): IsaDefs = {
     encoding $i.id = { op = $i.opcode, sf = SF::$size }
-    assembly $i.id = ($i.mnemo, ' ', AsId($size, $ext)(rd), ', ', $size(rn), ', #', decimal(immX))
+    assembly $i.id = ($i.mnemo, ' ', AsId($size, $ext)(rd), ', ', $size(rn), ', #', decimal(AsId(imm, $size)))
     }
 
   model LogicImmFlagInstr (i: InstrWithFunct, size: Id): IsaDefs = {
-    [undefined when : sf = 0 && imm13(12) = 1]
+    [undefined when : imm13Decode (imm13) = 0 || sf = 0 && imm13(12) = 1]
     instruction $i.id: LogicImmFormat =
-      let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, immX as Bits<Size::$size>) in {
+      let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, AsId(imm, $size)) in {
         X(rd) := result as Bits<Size::$size> as BitsX
         $SetNZClearCVFlags ()
         }
@@ -613,8 +623,9 @@ instruction set architecture AArch64Base = {
     }
 
   model LogicImmInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    [undefined when : imm13Decode (imm13) = 0 || sf = 0 && imm13(12) = 1]
     instruction $i.id: LogicImmFormat =
-      let result = VADL::$i.funct (X(rn) as Bits<Size::$size>, immX as Bits<Size::$size>) in
+      let result = VADL::$i.funct (X(rn) as Bits<Size::$size>, AsId(imm, $size)) in
         S(rd) := result as Bits<Size::$size> as BitsX
     $LogicImmEncAsm ($i; $size; "SP")
     }
@@ -711,6 +722,7 @@ instruction set architecture AArch64Base = {
   model notOrIdent (not: Id, ex: Ex) : Ex = { match: Ex ($not = not => ~($ex) ;_=> $ex) }
 
   model MovInstr (i: InstrWithFunct, size: Id, pos: Id, posex: Ex): IsaDefs = {
+    // pos is set explicitely, therefore no undefined check for sf = 0 && pos(1) = 1 is required
     instruction AsId ($i.id, $pos): MovFormat =
       X(rd) := $posex
     encoding AsId ($i.id, $pos) = { sf = SF::$size, op = $i.opcode, pos = Position::$pos }
@@ -756,6 +768,7 @@ instruction set architecture AArch64Base = {
     }
 
   model ExtractRegPairInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    // N is set explicitely, therefore no undefined check for sf != N is required
     [undefined when : sf = 0 && imms(5)]
     instruction $i.id: ExtractRegFormat =
       let pair = (X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>) in
@@ -793,27 +806,27 @@ instruction set architecture AArch64Base = {
 // followed by a shift right.
 
   format BitFieldMoveFormat: Instr =  // bit field move format
-    { sf         : Bits1              // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
-    , op         : Bits8              // opcode
-    , N          : Bits1              // must be equal to sf, otherwise undefined
-    , immr       : Bits6              // rotate right count (bit field low position)
-    , imms       : Bits6              // bit field length -1 or high position
-    , rn         : Index              // source register
-    , rd         : Index              // destination register
-    , leftWSize  = -1 as Bits5 - imms as Bits5
-    , leftXSize  = -1 as Bits6 - imms
-    , rightWSize = immr as Bits5 - imms as Bits5 - 1
-    , rightXSize = immr - imms - 1
-    , imms := (-1 as Bits5 - leftWSize) as Bits6
-    , imms :=  -1 as Bits6 - leftXSize
-    , immr := (rightWSize  - leftWSize) as Bits6
-    , immr :=  rightXSize  - leftXSize
-    // true
+    { sf         :  Bits1             // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op         :  Bits8             // opcode
+    , N          :  Bits1             // must be equal to sf, otherwise undefined
+    , immr       :  Bits6             // rotate right count (bit field low position)
+    , imms       :  Bits6             // bit field length -1 or high position
+    , rn         :  Index             // source register
+    , rd         :  Index             // destination register
+    , leftWSize  =  -1 as Bits5 - imms as Bits5
+    , leftXSize  =  -1 as Bits6 - imms
+    , rightWSize =  immr as Bits5 - imms as Bits5 - 1
+    , rightXSize =  immr - imms - 1
+    , imms       := (-1 as Bits5 - leftWSize) as Bits6
+    , imms       :=  -1 as Bits6 - leftXSize
+    , immr       := (rightWSize  - leftWSize) as Bits6
+    , immr       :=  rightXSize  - leftXSize
+    // predicates are valid for the whole range of Bits5 or Bits6
     }
 
   model BitfieldMoveInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     // if (sf = 0) specification ignores imms(5) and immr(5)
-    // (sf != N) cannot happen as N is set in encoding
+    // N is set explicitely, therefore no undefined check for sf != N is required
     [undefined when : sf = 0 && (imms(5) = 1 || immr(5) = 1)]
     instruction $i.id: BitFieldMoveFormat =
       let left = AsId (left, $size) in
@@ -872,6 +885,7 @@ instruction set architecture AArch64Base = {
     }
 
   model RevBytesHInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    // sf and opc are set explicitely, therefore no undefined check for sf = 0 and opc = 0b11 is required
     instruction $i.id: TwoRegOpFormat = {
       let xrn = (X(rn)) in
         let result = (xrn(55..48),xrn(63..56),xrn(39..32),xrn(47..40),xrn(23..16),xrn(31..24),xrn(7..0),xrn(15..8)) in
@@ -881,6 +895,7 @@ instruction set architecture AArch64Base = {
     }
 
   model RevBytesWInstr (i: InstrWithFunct): IsaDefs = {
+    // sf and opc are set explicitely, therefore no undefined check for sf = 0 and opc = 0b11 is required
     instruction $i.id: TwoRegOpFormat =
       let xrn = (X(rn)) in
         let result = (xrn(39..32),xrn(47..40),xrn(55..48),xrn(63..56),xrn(7..0),xrn(15..8),xrn(23..16),xrn(31..24)) in
@@ -889,6 +904,7 @@ instruction set architecture AArch64Base = {
     }
 
   model RevBytesXInstr (i: InstrWithFunct): IsaDefs = {
+    // sf and opc are set explicitely, therefore no undefined check for sf = 0 and opc = 0b11 is required
     instruction $i.id: TwoRegOpFormat =
       let xrn = (X(rn)) in
         let result = (xrn(7..0),xrn(15..8),xrn(23..16),xrn(31..24),xrn(39..32),xrn(47..40),xrn(55..48),xrn(63..56)) in
@@ -1125,6 +1141,8 @@ instruction set architecture AArch64Base = {
   }
 
   model MemoryPreIndexInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
+    // TODO check SP alignment
+    [undefined when : opc != 0 && rn = rt && rt != 31]
     instruction $i.id: MemoryImmFormat =
       let addr = S(rn) + offset in {
         $m.stmt
@@ -1134,6 +1152,8 @@ instruction set architecture AArch64Base = {
     }
 
   model MemoryPostIndexInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
+    // TODO check SP alignment
+    [undefined when : opc != 0 && rn = rt && rt != 31]
     instruction $i.id: MemoryImmFormat =
       let addr = S(rn) in {
         $m.stmt
@@ -1176,6 +1196,7 @@ instruction set architecture AArch64Base = {
 
   model MemoryRegisterBase (i: InstrNoFunct, m: Memory, option: Id, scaled: Id, asm: Ex, addr: Ex): IsaDefs = {
     // TODO check SP alignment
+    // options are enumrated explicitely, therefore no undefined check option(1) = 0 is required
     instruction $i.id: MemoryRegFormat =
       let addr = S(rn) + ($addr) in $m.stmt
     encoding $i.id = { op = $i.opcode, opc = $m.opc, size = AccSize::$m.accsize, option = ExtendType::$option, scaled = Scaled::$scaled }
@@ -1266,18 +1287,23 @@ instruction set architecture AArch64Base = {
 
   model MemoryRegPairInstr (i: InstrWithFunct, size: Id, isLoad: Bool, memstmts: Stats): IsaDefs = {
     // TODO check SP alignment
-    // [undefined when : match: Ex ( $isLoad = true => Ex1 ; _=> Ex2)]
+    // TODO add BigEndian variant
+    [undefined when : match: Ex ( $isLoad = true => rt2 = rt ; _=> false)]
     instruction $i.id: MemoryPairFormat =
       let addr = S(rn) + AsId (off, $size) in { $memstmts }
     $MemoryRegPairEncAsm ($i; ""; $size; $isLoad; 0b101'010; ("[", XSizeSP(rn), Imm7decimal(imm7), "]"))
-    // [undefined when : match: Ex ( $isLoad = true => Ex1 ; _=> Ex2)]
+    // TODO check SP alignment
+    // TODO add BigEndian variant
+    [undefined when : match: Ex ( $isLoad = true => rt2 = rt || rn != 31 && (rt = rn || rt2 = rn); _=> false)]
     instruction AsId ($i.id, "Pre"): MemoryPairFormat =
       let addr = S(rn) + AsId (off, $size) in {
           $memstmts
           S(rn) := addr
         }
     $MemoryRegPairEncAsm ($i; "Pre"; $size; $isLoad; 0b101'011; ("[", XSizeSP(rn), Imm7decimal(imm7), "]!"))
-    // [undefined when : match: Ex ( $isLoad = true => Ex1 ; _=> Ex2)]
+    // TODO check SP alignment
+    // TODO add BigEndian variant
+    [undefined when : match: Ex ( $isLoad = true => rt2 = rt || rn != 31 && (rt = rn || rt2 = rn); _=> false)]
     instruction AsId ( $i.id, "Pst"): MemoryPairFormat =
       let addr = S(rn) in {
           $memstmts
