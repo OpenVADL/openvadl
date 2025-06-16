@@ -19,7 +19,6 @@ package vadl.ast;
 import com.google.common.base.Preconditions;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -1323,17 +1322,19 @@ class RangeExpr extends Expr {
  * constant evaluation has to be performed for the concrete type to be known here.
  */
 final class TypeLiteral extends Expr {
+  @Child
   IsId baseType;
 
   /**
-   * The sizes of the type literal. An expression of {@code <1,2><3,4>} is equivalent to
-   * a sizeIndices of {@code List.of(List.of(1, 2), List.of(3, 4))}
+   * The sizes of the type literal.
+   * Can be zero or more, written like {@code Bits<dimension1><dimension2><dimension3>} etc.
    */
-  List<List<Expr>> sizeIndices;
+  @Child
+  List<Expr> sizeIndices;
 
   SourceLocation loc;
 
-  public TypeLiteral(IsId baseType, List<List<Expr>> sizeIndices, SourceLocation loc) {
+  public TypeLiteral(IsId baseType, List<Expr> sizeIndices, SourceLocation loc) {
     this.baseType = baseType;
     this.sizeIndices = sizeIndices;
     this.loc = loc;
@@ -1342,7 +1343,7 @@ final class TypeLiteral extends Expr {
   public TypeLiteral(IsSymExpr symExpr) {
     this.baseType = symExpr.path();
     var size = symExpr.size();
-    this.sizeIndices = size == null ? List.of() : List.of(List.of(size));
+    this.sizeIndices = size == null ? List.of() : List.of(size);
     this.loc = symExpr.location();
   }
 
@@ -1353,43 +1354,30 @@ final class TypeLiteral extends Expr {
 
     if (type.getClass() == BoolType.class) {
       this.baseType = new Identifier("Bool", SourceLocation.INVALID_SOURCE_LOCATION);
-      this.sizeIndices = List.of(List.of());
+      this.sizeIndices = List.of();
     } else if (type.getClass() == BitsType.class) {
       var bitsType = (BitsType) type;
       this.baseType = new Identifier("Bits", SourceLocation.INVALID_SOURCE_LOCATION);
       this.sizeIndices =
-          List.of(List.of(new IntegerLiteral(Integer.toString(bitsType.bitWidth()), loc)));
+          List.of(new IntegerLiteral(Integer.toString(bitsType.bitWidth()), loc));
     } else if (type.getClass() == UIntType.class) {
       var uintType = (UIntType) type;
       this.baseType = new Identifier("UInt", SourceLocation.INVALID_SOURCE_LOCATION);
       this.sizeIndices =
-          List.of(List.of(new IntegerLiteral(Integer.toString(uintType.bitWidth()), loc)));
+          List.of(new IntegerLiteral(Integer.toString(uintType.bitWidth()), loc));
     } else if (type.getClass() == SIntType.class) {
       var sintType = (SIntType) type;
       this.baseType = new Identifier("SInt", SourceLocation.INVALID_SOURCE_LOCATION);
       this.sizeIndices =
-          List.of(List.of(new IntegerLiteral(Integer.toString(sintType.bitWidth()), loc)));
+          List.of(new IntegerLiteral(Integer.toString(sintType.bitWidth()), loc));
     } else if (type.getClass() == FormatType.class) {
       var formatType = (FormatType) type;
       this.baseType = new Identifier(formatType.format.identifier().name,
           SourceLocation.INVALID_SOURCE_LOCATION);
-      this.sizeIndices =
-          List.of(List.of());
+      this.sizeIndices = List.of();
     } else {
       throw new IllegalStateException("Unsupported type " + type.getClass().getSimpleName());
     }
-  }
-
-  @Override
-  public List<Node> children() {
-    // This is too complicated for the @Child annotation
-    var childNodes = new ArrayList<Node>();
-    childNodes.add((Node) baseType);
-    childNodes.addAll(sizeIndices.stream()
-        .flatMap(Collection::stream)
-        .toList()
-    );
-    return childNodes.stream().filter(Objects::nonNull).toList();
   }
 
   @Override
@@ -1405,16 +1393,9 @@ final class TypeLiteral extends Expr {
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(baseType.pathToString());
-    for (var sizes : sizeIndices) {
+    for (var index : sizeIndices) {
       builder.append("<");
-      var isFirst = true;
-      for (var size : sizes) {
-        if (!isFirst) {
-          builder.append(", ");
-        }
-        isFirst = false;
-        size.prettyPrintExpr(0, builder, Precedence.NoPrecedence);
-      }
+      index.prettyPrint(indent, builder);
       builder.append(">");
     }
   }

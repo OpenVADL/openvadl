@@ -126,7 +126,7 @@ public class StatementTest {
         new FormatDefinition(
             new Identifier("F", loc),
             new TypeLiteral(new Identifier("Bits", loc),
-                List.of(List.of(new IntegerLiteral("32", loc))), loc),
+                List.of(new IntegerLiteral("32", loc)), loc),
             List.of(new RangeFormatField(
                 new Identifier("bits", loc),
                 List.of(new RangeExpr(new IntegerLiteral("31", loc),

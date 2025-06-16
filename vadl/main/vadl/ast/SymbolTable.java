@@ -955,7 +955,8 @@ class SymbolTable {
       // Skip the basetype of the expr and let the typechecker verify it's correct.
       beforeTravel(expr);
 
-      expr.sizeIndices.forEach(index -> index.forEach(e -> e.accept(this)));
+      // Ignore the base on purpose, the typechecker will take care of it.
+      expr.sizeIndices.forEach(index -> index.accept(this));
 
       afterTravel(expr);
       return null;
