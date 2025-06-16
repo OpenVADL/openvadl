@@ -718,11 +718,16 @@ class GenerateRawFieldsHandler implements CaseHandler {
       Format.FieldAccess fieldAccess,
       FuncParamNode funcParamNode) {
     var pseudoInstructionIndex =
-        getOperandIndexFromCompilerInstruction(compilerInstruction, fieldAccess.fieldRef(),
+        getOperandIndexFromCompilerInstruction(compilerInstruction,
+            fieldAccess,
             funcParamNode,
             funcParamNode.parameter().identifier);
-    ctx.ln("auto %s = instruction.getOperand(%d).getImm();", fieldAccess.identifier.simpleName(),
-        pseudoInstructionIndex);
+    ctx.ln("if(instruction.getOperand(%d).isImm()) {", pseudoInstructionIndex)
+        .spacedIn()
+        .ln("auto %s = instruction.getOperand(%d).getImm();", fieldAccess.identifier.simpleName(),
+            pseudoInstructionIndex)
+        .spaceOut()
+        .ln("}");
   }
 
   @Override
