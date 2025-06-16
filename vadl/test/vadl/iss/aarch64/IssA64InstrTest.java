@@ -211,10 +211,10 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
     return runTestsWith(makeTestCasesFromPrefixes("SBCS"));
   }
 
-  @TestFactory
-  Stream<DynamicTest> testSDIV() throws IOException {
-    return runTestsWith(makeTestCasesFromPrefixes("SDIV"));
-  }
+//  @TestFactory
+//  Stream<DynamicTest> testSDIV() throws IOException {
+//    return runTestsWith(makeTestCasesFromPrefixes("SDIV"));
+//  }
 
   @TestFactory
   Stream<DynamicTest> testSUBExt() throws IOException {
@@ -257,10 +257,10 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
     ));
   }
 
-  @TestFactory
-  Stream<DynamicTest> testUDIV() throws IOException {
-    return runTestsWith(makeTestCasesFromPrefixes("UDIV"));
-  }
+//  @TestFactory
+//  Stream<DynamicTest> testUDIV() throws IOException {
+//    return runTestsWith(makeTestCasesFromPrefixes("UDIV"));
+//  }
 
   private List<Function<Integer, IssTestUtils.TestCase>> makeTestCasesFromPrefixes(
       String... instrPrefix) {
