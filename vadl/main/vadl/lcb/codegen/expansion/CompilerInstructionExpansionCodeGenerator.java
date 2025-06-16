@@ -595,11 +595,12 @@ interface CaseHandler {
       }
     }
 
-    throw Diagnostic.error(
-            String.format("Cannot assign field '%s' because the field access is not a field access.",
-                fieldAccess.identifier.simpleName()), parameter.location())
+    throw Diagnostic.error(String.format("Cannot assign field '%s' because the field access is "
+                + "not a field access.",
+            fieldAccess.identifier.simpleName()), parameter.location())
         .locationDescription(argument.location(), "Trying to match this argument.")
-        .locationDescription(fieldAccess.location(), "Trying to assign this field access function.")
+        .locationDescription(fieldAccess.location(),
+            "Trying to assign this field access function.")
         .locationDescription(compilerInstruction.location(),
             "This pseudo instruction is affected.")
         .help("The parameter '%s' must match any pseudo instruction's parameter names",
@@ -1073,9 +1074,9 @@ class AddingOperands implements CaseHandler {
       FuncCallNode funcCallNode) {
     // imm = lo(symbol)
 
-    var compilerInstruction =
+    final var compilerInstruction =
         ctx.get(COMPILER_INSTRUCTION, CompilerInstruction.class);
-    var instructionSymbol = ctx.getString(INSTRUCTION_SYMBOL);
+    final var instructionSymbol = ctx.getString(INSTRUCTION_SYMBOL);
 
     ensure(funcCallNode.function() instanceof Relocation, () ->
         Diagnostic.error("Only supporting relocation functions at the moment",
@@ -1125,7 +1126,8 @@ class AddingOperands implements CaseHandler {
       var decodingMethod = immediateOperand.rawDecoderMethod().lower();
       var parameters =
           Arrays.stream(Objects.requireNonNull(immediateDecodings.get(
-                      Pair.of(immediateOperand.instructionRef(), immediateOperand.fieldAccessRef())))
+                      Pair.of(immediateOperand.instructionRef(),
+                          immediateOperand.fieldAccessRef())))
                   .header().parameters())
               .map(x -> x.identifier.simpleName()).collect(Collectors.joining(", "));
 
@@ -1177,14 +1179,14 @@ class AddingOperands implements CaseHandler {
       ctx.spaceOut()
           .ln("}");
     } else if (funcCallNode.arguments().getFirst() instanceof LabelNode labelNode) {
-       /*
-      Here is the argument to `pcrel_lo` the `LabelNode`.
+      /*
+        Here is the argument to `pcrel_lo` the `LabelNode`.
 
-      pseudo instruction XXX ( rd: Index, symbol: Bits<32> ) =
-      {
-          new_label ( label )
-          LD { rd = rd, rs1 = rd, imm = pcrel_lo( label ) }
-      }
+        pseudo instruction XXX ( rd: Index, symbol: Bits<32> ) =
+        {
+            new_label ( label )
+            LD { rd = rd, rs1 = rd, imm = pcrel_lo( label ) }
+        }
       */
 
       var newLabelNode =
@@ -1268,9 +1270,9 @@ class AddingOperands implements CaseHandler {
       Format.FieldAccess fieldAccess, FuncCallNode funcCallNode) {
     // immS = lo(symbol)
 
-    var compilerInstruction =
+    final var compilerInstruction =
         ctx.get(COMPILER_INSTRUCTION, CompilerInstruction.class);
-    var instructionSymbol = ctx.getString(INSTRUCTION_SYMBOL);
+    final var instructionSymbol = ctx.getString(INSTRUCTION_SYMBOL);
 
     ensure(funcCallNode.function() instanceof Relocation, () ->
         Diagnostic.error("Only supporting relocation functions at the moment",
