@@ -168,7 +168,7 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
                                       boolean signed,
                                       BitsType originalType) {
     var tcgExtend = signed ? TcgExtend.SIGN : TcgExtend.ZERO;
-    return behavior.add(
+    return behavior.addWithInputs(
         new IssConstExtractNode(node, tcgExtend, fromWidth, toWidth, originalType));
   }
 
@@ -456,17 +456,17 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Override
   public void handleAND(BuiltInCall input) {
-    // do nothing
+    truncateResult(input);
   }
 
   @Override
   public void handleXOR(BuiltInCall input) {
-    // do nothing
+    truncateResult(input);
   }
 
   @Override
   public void handleOR(BuiltInCall input) {
-    // do nothing
+    truncateResult(input);
   }
 
   @Override
@@ -599,11 +599,11 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
     // a >> Nr
     var aNr = BuiltInTable.LSR.call(a, Nr);
     // aLsrR | aNr
-    var result = BuiltInTable.OR.call(aLsrR, aNr);
-    // replace call
-    result = input.replaceAndDelete(result);
+    ExpressionNode result = BuiltInTable.OR.call(aLsrR, aNr);
     // truncate result to operation width, as a << r might cause an overflow
-    truncate(result, opWidth);
+    result = truncate(result, opWidth);
+    // replace call
+    input.replaceAndDelete(result);
   }
 
   @Override
@@ -634,11 +634,11 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
     // a << Nr
     var aNr = BuiltInTable.LSL.call(a, Nr);
     // aLsrR | aNr
-    var result = BuiltInTable.OR.call(aLsrR, aNr);
-    // replace call
-    result = input.replaceAndDelete(result);
+    ExpressionNode result = BuiltInTable.OR.call(aLsrR, aNr);
     // truncate result to operation width, as a << (N - r) might cause an overflow
-    truncate(result, opWidth);
+    result = truncate(result, opWidth);
+    // replace call
+    input.replaceAndDelete(result);
   }
 
   @Override
