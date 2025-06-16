@@ -51,26 +51,24 @@ import vadl.viam.graph.dependency.SliceNode;
 public class ShiftedImmediateStrategy implements EncodingGenerationStrategy {
   @Override
   public boolean checkIfApplicable(Format.FieldAccess fieldAccess) {
+    // Check if only one field
+    if (fieldAccess.fieldRefs().size() > 1) {
+      return false;
+    }
+
     // Checks whether the behavior only contains (logical or arithmetic) left or right shift.
     // But only one logical operation is allowed.
     var behavior = fieldAccess.accessFunction().behavior();
     return behavior.getNodes(BuiltInCall.class)
-        .allMatch(x -> {
-          var cast = (BuiltInCall) x;
-
-          if (cast.builtIn() == BuiltInTable.LSL) {
-            return true;
-          }
-
-          return false;
-        }) && behavior.getNodes(BuiltInCall.class).count() == 1;
+        .allMatch(x ->
+            x.builtIn() == BuiltInTable.LSL) && (behavior.getNodes(BuiltInCall.class).count() == 1);
   }
 
   @Override
   public void generateEncoding(PrintableInstruction printableInstruction,
                                Format.FieldAccess fieldAccess) {
     var accessFunction = fieldAccess.accessFunction();
-    var fieldRef = fieldAccess.fieldRef();
+    var fieldRef = fieldAccess.fieldRefs().getFirst();
 
     var originalShift =
         accessFunction.behavior().getNodes(BuiltInCall.class).findFirst().get();
@@ -101,6 +99,6 @@ public class ShiftedImmediateStrategy implements EncodingGenerationStrategy {
     var behavior = new Graph("Generated encoding of " + fieldAccess.simpleName());
     behavior.addWithInputs(returnNode);
     behavior.add(startNode);
-    setFieldEncoding(printableInstruction, fieldAccess, behavior);
+    setFieldEncoding(printableInstruction, fieldAccess, fieldRef, behavior);
   }
 }

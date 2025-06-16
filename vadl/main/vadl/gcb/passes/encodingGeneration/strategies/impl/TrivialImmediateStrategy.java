@@ -47,6 +47,11 @@ import vadl.viam.graph.dependency.SliceNode;
 public class TrivialImmediateStrategy implements EncodingGenerationStrategy {
   @Override
   public boolean checkIfApplicable(Format.FieldAccess fieldAccess) {
+    // Check if only one field
+    if (fieldAccess.fieldRefs().size() > 1) {
+      return false;
+    }
+
     // Checks whether the behavior does not contain any {@link BuiltIn} or {@link SliceNode}.
     var behavior = fieldAccess.accessFunction().behavior();
     return behavior.getNodes()
@@ -56,7 +61,7 @@ public class TrivialImmediateStrategy implements EncodingGenerationStrategy {
 
   @Override
   public void generateEncoding(PrintableInstruction instruction, Format.FieldAccess fieldAccess) {
-    var fieldRef = fieldAccess.fieldRef();
+    var fieldRef = fieldAccess.fieldRefs().getFirst();
     // The field takes up a certain slice.
     // But we need to take a slice of the immediate of the same size.
     var fieldAccessBitSlice = fieldRef.bitSlice();
@@ -71,6 +76,6 @@ public class TrivialImmediateStrategy implements EncodingGenerationStrategy {
     var behavior = new Graph("Generated encoding of " + fieldAccess.simpleName());
     behavior.addWithInputs(returnNode);
     behavior.add(startNode);
-    setFieldEncoding(instruction, fieldAccess, behavior);
+    setFieldEncoding(instruction, fieldAccess, fieldRef, behavior);
   }
 }

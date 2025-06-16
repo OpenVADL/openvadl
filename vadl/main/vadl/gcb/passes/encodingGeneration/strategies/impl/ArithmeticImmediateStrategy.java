@@ -55,18 +55,18 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
   @Override
   public boolean checkIfApplicable(Format.FieldAccess fieldAccess) {
+    // Check if only one field
+    if (fieldAccess.fieldRefs().size() > 1) {
+      return false;
+    }
+
     var behavior = fieldAccess.accessFunction().behavior();
     return behavior.getNodes(BuiltInCall.class)
-        .allMatch(x -> {
-          var cast = (BuiltInCall) x;
-
-          if (cast.builtIn() == BuiltInTable.ADD
-              || cast.builtIn() == BuiltInTable.SUB) {
-            return true;
-          }
-
-          return false;
-        }) && behavior.getNodes(SliceNode.class).findAny().isEmpty();
+        .allMatch(x ->
+            x.builtIn() == BuiltInTable.ADD
+                || x.builtIn() == BuiltInTable.SUB)
+        && behavior.getNodes(SliceNode.class).findAny()
+        .isEmpty();
   }
 
   @Override
@@ -130,6 +130,6 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
     var addedSliceNode = copy.add(sliceNode);
     returnNode.replaceInput(returnNode.value(), addedSliceNode);
 
-    setFieldEncoding(instruction, fieldAccess, copy);
+    setFieldEncoding(instruction, fieldAccess, fieldRef.formatField(), copy);
   }
 }
