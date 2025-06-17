@@ -19,7 +19,7 @@ package vadl.iss.codegen;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
-import vadl.iss.passes.nodes.IssMoveExprNode;
+import vadl.iss.passes.nodes.IssMoveNode;
 import vadl.iss.passes.nodes.IssSelectNode;
 import vadl.iss.passes.nodes.IssTempExprNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
@@ -83,7 +83,7 @@ public interface IssCMixins {
     }
 
     @Handler
-    default void handle(CGenContext<Node> ctx, IssMoveExprNode toHandle) {
+    default void handle(CGenContext<Node> ctx, IssMoveNode toHandle) {
       // should be replaced by a TCG move
       throw new IllegalStateException("The IssMoveExprNode should never be generated as C code.");
     }

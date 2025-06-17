@@ -37,7 +37,6 @@ import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.SelectNode;
@@ -116,10 +115,10 @@ public class GraphUtils {
    * Recursively finds all input nodes that by a given filter.
    */
   public static Stream<Node> getInputNodes(Node node,
-                                           Function<DependencyNode, Boolean> filter) {
+                                           Function<Node, Boolean> filter) {
     return node.inputs()
         .flatMap(i -> {
-          if (filter.apply((DependencyNode) i)) {
+          if (filter.apply(i)) {
             return Stream.concat(Stream.of(i), getInputNodes(i, filter));
           }
           return getInputNodes(i, filter);

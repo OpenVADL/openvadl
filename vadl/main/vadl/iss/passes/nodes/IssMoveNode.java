@@ -25,7 +25,7 @@ import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 
-public class IssMoveExprNode extends DirectionalNode {
+public class IssMoveNode extends DirectionalNode {
 
   @Input
   private ExpressionNode expr;
@@ -33,12 +33,12 @@ public class IssMoveExprNode extends DirectionalNode {
   @Input
   private TcgVRefNode dest;
 
-  public IssMoveExprNode(TcgVRefNode dest, ExpressionNode expr) {
+  public IssMoveNode(TcgVRefNode dest, ExpressionNode expr) {
     this.expr = expr;
     this.dest = dest;
   }
 
-  public IssMoveExprNode(TcgVRefNode dest, ExpressionNode expr, ControlNode next) {
+  public IssMoveNode(TcgVRefNode dest, ExpressionNode expr, ControlNode next) {
     super(next);
     this.expr = expr;
     this.dest = dest;
@@ -54,12 +54,12 @@ public class IssMoveExprNode extends DirectionalNode {
 
   @Override
   public Node copy() {
-    return new IssMoveExprNode(dest.copy(), expr.copy(), next().copy(ControlNode.class));
+    return new IssMoveNode(dest.copy(), expr.copy(), next().copy(ControlNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new IssMoveExprNode(dest, expr, next());
+    return new IssMoveNode(dest, expr, next());
   }
 
   @Override

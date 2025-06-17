@@ -19,9 +19,13 @@ package vadl.iss.passes;
 import static vadl.iss.passes.TcgPassUtils.isTcg;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.nodes.IssMoveExprNode;
+import vadl.iss.passes.nodes.IssMoveNode;
 import vadl.iss.passes.nodes.IssSelectNode;
 import vadl.iss.passes.nodes.IssTempExprNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
@@ -29,6 +33,7 @@ import vadl.iss.passes.tcgLowering.TcgCondition;
 import vadl.iss.passes.tcgLowering.TcgCtx;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.GraphUtils;
 import vadl.viam.Constant;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
@@ -36,6 +41,8 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.BeginNode;
 import vadl.viam.graph.control.BranchEndNode;
+import vadl.viam.graph.control.ControlNode;
+import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.ScheduledNode;
@@ -43,6 +50,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.passes.CfgTraverser;
 import vadl.viam.passes.GraphProcessor;
 
 public class IssSelectLoweringPass extends AbstractIssPass {
@@ -122,12 +130,12 @@ class IssSelectLowerer extends GraphProcessor<Void> {
     var selectTempExpr =
         selectNode.replace(new IssTempExprNode(selectNode.id.numericId(), selectNode.type()));
 
-    trueEnd.addBefore(graph.addWithInputs(
-        new IssMoveExprNode(varOf(selectTempExpr), trueValue)
+    var trueMove = trueEnd.addBefore(graph.addWithInputs(
+        new IssMoveNode(varOf(selectTempExpr), trueValue)
     ));
 
-    falseEnd.addBefore(graph.addWithInputs(
-        new IssMoveExprNode(varOf(selectTempExpr), falseValue)
+    var falseMove = falseEnd.addBefore(graph.addWithInputs(
+        new IssMoveNode(varOf(selectTempExpr), falseValue)
     ));
 
     var schedule = scheduledNode(selectTempExpr);
@@ -139,12 +147,46 @@ class IssSelectLowerer extends GraphProcessor<Void> {
     // delete original select node
     selectNode.safeDelete();
 
+    // collect all expressions that are used after the schedule
+    var blocked = new HashSet<ExpressionNode>();
+    new CfgTraverser() {
+      @Override
+      public ControlNode onDirectional(DirectionalNode dir) {
+        GraphUtils.getInputNodes(dir, i -> i instanceof ExpressionNode)
+            .forEach(node -> blocked.add((ExpressionNode) node));
+        return dir;
+      }
+    }.traverseBranch(succ);
+
+    var trueSet = new LinkedHashMap<ExpressionNode, ScheduledNode>();
+    findMovableDependencies(trueValue, schedule, trueSet, blocked);
+    removeConflictingSchedules(ifNode, trueSet);
+
+    var falseSet = new LinkedHashMap<ExpressionNode, ScheduledNode>();
+    findMovableDependencies(falseValue, schedule, falseSet, blocked);
+    removeConflictingSchedules(ifNode, falseSet);
+
+    moveDependencies(trueMove, trueSet);
+    moveDependencies(falseMove, falseSet);
+
     processNode(trueValue);
     processNode(falseValue);
 
     return null;
   }
 
+  private void moveDependencies(ControlNode position,
+                                LinkedHashMap<ExpressionNode, ScheduledNode> deps) {
+
+    for (var dep : deps.entrySet()) {
+      var expr = dep.getKey();
+      var schedule = dep.getValue();
+      position = position.addBefore(new ScheduledNode(expr));
+      if (schedule.isActive()) {
+        schedule.replaceByNothingAndDelete();
+      }
+    }
+  }
 
   /**
    * Retrieves the TCG variable associated with the given expression node.
@@ -189,6 +231,46 @@ class IssSelectLowerer extends GraphProcessor<Void> {
         .map(ScheduledNode.class::cast).findFirst().get();
   }
 
+  void findMovableDependencies(ExpressionNode expr, ScheduledNode exprSchedule,
+                               Map<ExpressionNode, ScheduledNode> out,
+                               Set<ExpressionNode> blocked) {
+    DirectionalNode currNode = exprSchedule;
+    if (blocked.contains(expr)) {
+      return;
+    }
+    while (currNode instanceof ScheduledNode schNode) {
+      if (expr == schNode.node()) {
+        out.put(expr, schNode);
+        expr.inputs()
+            .forEach(i -> findMovableDependencies((ExpressionNode) i, schNode, out, blocked));
+        break;
+      }
+      currNode = (DirectionalNode) schNode.predecessor();
+    }
+  }
+
+  void removeConflictingSchedules(IfNode ifNode,
+                                  Map<ExpressionNode, ScheduledNode> selected) {
+    var selectedSchedules = new HashSet<>(selected.values());
+
+    DirectionalNode currNode = ifNode.predecessor();
+    while (currNode instanceof ScheduledNode schNode) {
+      currNode = (DirectionalNode) schNode.predecessor();
+      if (!selectedSchedules.contains(schNode)) {
+        // if some input of the not selected schedule node is part of the selected,
+        // it conflicts, as it is required outside the branch
+        var inputs = GraphUtils.getInputNodes(schNode, i -> i instanceof ExpressionNode).toList();
+        for (var input : inputs) {
+          if (selected.containsKey((ExpressionNode) input)) {
+            // remove schedule from selection, so that it is not going to be moved.
+            selected.remove(input);
+          }
+        }
+      }
+    }
+  }
+
+
   /**
    * Remove all nodes that might where scheduled but than not used.
    * This might happen if a {@link SelectNode} is turned into a {@link IssSelectNode}.
@@ -208,3 +290,4 @@ class IssSelectLowerer extends GraphProcessor<Void> {
         });
   }
 }
+

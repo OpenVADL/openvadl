@@ -35,7 +35,7 @@ import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssLoadNode;
-import vadl.iss.passes.nodes.IssMoveExprNode;
+import vadl.iss.passes.nodes.IssMoveNode;
 import vadl.iss.passes.nodes.IssSelectNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssStoreNode;
@@ -293,7 +293,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
         case InstrExitNode.PcChange pcChange -> handle(pcChange);
         case InstrExitNode.Raise raise -> handle(raise);
       }
-    } else if (dirNode instanceof IssMoveExprNode moveExprNode) {
+    } else if (dirNode instanceof IssMoveNode moveExprNode) {
       handle(moveExprNode);
     }
     return next;
@@ -667,7 +667,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     replaceCurrent();
   }
 
-  void handle(IssMoveExprNode moveExprNode) {
+  void handle(IssMoveNode moveExprNode) {
     var src = singleDestOf(moveExprNode.expr());
     moveExprNode.replaceAndLink(new TcgMoveNode(moveExprNode.dest(), src));
   }
