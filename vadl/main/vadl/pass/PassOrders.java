@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.configuration.DecoderOptions;
 import vadl.configuration.GcbConfiguration;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
@@ -537,9 +538,15 @@ public class PassOrders {
     // VDT Decode Passes
     order
         .add(new VdtEncodingConstraintValidationPass(config))
-        .add(new VdtInputPreparationPass(config))
-        .add(new VdtConstraintSynthesisPass(config))
-        .add(new VdtLoweringPass(config));
+        .add(new VdtInputPreparationPass(config));
+
+    var skipSynthesis = Stream.of(config.getDecoderOptions().getOptsToSkip())
+        .anyMatch(o -> o == DecoderOptions.OptionToSkip.OPT_CONSTRAINT_SYNTHESIS);
+    if (!skipSynthesis) {
+      order.add(new VdtConstraintSynthesisPass(config));
+    }
+
+    order.add(new VdtLoweringPass(config));
   }
 
   /**

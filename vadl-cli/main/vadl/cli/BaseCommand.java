@@ -29,11 +29,14 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
+import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import vadl.ast.Ast;
@@ -43,6 +46,7 @@ import vadl.ast.TypeChecker;
 import vadl.ast.Ungrouper;
 import vadl.ast.VadlParser;
 import vadl.ast.ViamLowering;
+import vadl.configuration.DecoderOptions;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.ArtifactTracker;
 import vadl.error.DeferredDiagnosticStore;
@@ -60,6 +64,11 @@ import vadl.viam.Specification;
  * A base command from which the actual commands can inherit from.
  */
 public abstract class BaseCommand implements Callable<Integer> {
+
+  @Nullable
+  @CommandLine.Spec
+  CommandLine.Model.CommandSpec spec;
+
   @Parameters(description = "Path to the input VADL specification")
   @LazyInit
   Path input;
@@ -92,6 +101,17 @@ public abstract class BaseCommand implements Callable<Integer> {
       description = "Debug option to show the OpenVADL stacktrace of an emitted error."
   )
   boolean showStacktrace;
+
+  @Option(names = "--decoder",
+      split = ",",
+      scope = INHERIT,
+      description = "Options for the decoder generation. Valid options are: "
+          + "${COMPLETION-CANDIDATES}",
+      completionCandidates = DecoderOptsConverter.class,
+      converter = DecoderOptsConverter.class
+  )
+  @Nullable
+  Set<DecoderOpt> decoderOptions = new LinkedHashSet<>();
 
   /**
    * A list of timings. Will only be filled when the timings should be recorded.
@@ -282,9 +302,13 @@ public abstract class BaseCommand implements Callable<Integer> {
    * @return the configuration.
    */
   protected GeneralConfiguration getConfig() {
-    if (config == null) {
-      config = new GeneralConfiguration(output, dump);
+    if (config != null) {
+      return config;
     }
+
+    config = new GeneralConfiguration(output, dump);
+    config.setDecoderOptions(getDecoderOptions());
+
     return config;
   }
 
@@ -313,6 +337,9 @@ public abstract class BaseCommand implements Callable<Integer> {
       timings.add(new Timing("Total", (System.nanoTime() - totalStartTime) / 1_000_000));
 
 
+    } catch (CommandLine.TypeConversionException | CommandLine.MaxValuesExceededException e) {
+      // Re-throw to let Picoli handle it
+      throw e;
     } catch (Diagnostic d) {
       System.out.println(new DiagnosticPrinter().toString(d));
       if (showStacktrace) {
@@ -379,4 +406,42 @@ public abstract class BaseCommand implements Callable<Integer> {
     return returnVal;
   }
 
+  private DecoderOptions getDecoderOptions() {
+
+    if (decoderOptions == null) {
+      return new DecoderOptions();
+    }
+
+    final DecoderOptions result = new DecoderOptions();
+
+    var strategies = decoderOptions.stream()
+        .filter(DecoderStrategy.class::isInstance)
+        .map(DecoderStrategy.class::cast)
+        .toList();
+    if (strategies.size() > 1) {
+
+      if (spec == null) {
+        // Should not happen, but will satisfy Nullaway
+        throw new IllegalArgumentException("Multiple decoder strategies are not allowed.");
+      }
+
+      throw new CommandLine.MaxValuesExceededException(spec.commandLine(),
+          "Multiple decoder strategies are not allowed.");
+    }
+    if (strategies.size() == 1) {
+      result.setGenerator(strategies.getFirst().generator());
+    }
+
+    var skipOpts = decoderOptions.stream()
+        .filter(DecoderSkipOption.class::isInstance)
+        .map(DecoderSkipOption.class::cast)
+        .map(DecoderSkipOption::option)
+        .toList();
+
+    if (!skipOpts.isEmpty()) {
+      result.setOptsToSkip(skipOpts.toArray(new DecoderOptions.OptionToSkip[0]));
+    }
+
+    return result;
+  }
 }

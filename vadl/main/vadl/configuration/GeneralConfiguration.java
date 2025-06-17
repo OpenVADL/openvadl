@@ -25,6 +25,7 @@ public class GeneralConfiguration {
   private final Path outputPath;
   private final boolean doDump;
   private boolean dryRun = false;
+  private DecoderOptions decoderOptions = new DecoderOptions();
 
 
   public GeneralConfiguration(Path outputPath, boolean doDump) {
@@ -50,5 +51,13 @@ public class GeneralConfiguration {
 
   public void setDryRun(boolean dryRun) {
     this.dryRun = dryRun;
+  }
+
+  public DecoderOptions getDecoderOptions() {
+    return decoderOptions;
+  }
+
+  public void setDecoderOptions(DecoderOptions decoderOptions) {
+    this.decoderOptions = decoderOptions;
   }
 }
