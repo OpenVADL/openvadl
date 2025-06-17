@@ -28,11 +28,8 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.IssGhostCastNode;
-import vadl.iss.passes.nodes.IssSelectNode;
-import vadl.iss.passes.tcgLowering.TcgCondition;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
@@ -46,12 +43,9 @@ import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
-import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.DependencyNode;
-import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
-import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.passes.CfgTraverser;
 import vadl.viam.passes.GraphProcessor;
@@ -157,8 +151,6 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
     var start = getSingleNode(graph, StartNode.class);
     new IssTcgScheduler(pc).traverseBranch(start);
 
-    // unschedule unnecessary conditions again
-    cleanUpUnusedScheduledNodes(graph);
     graph.deleteUnusedDependencies();
   }
 
@@ -251,13 +243,6 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
       }
       return Optional.of(scheduleNode(readResourceNode));
     } else if (toProcess instanceof DependencyNode node) {
-      if (TcgPassUtils.isTcg(node)) {
-        // the node was already scheduled
-        return node.usages().filter(u -> u instanceof ScheduledNode)
-            .map(ScheduledNode.class::cast)
-            .findFirst();
-      }
-
       // In general, a node is scheduled if one of its inputs is scheduled
       var mustBeScheduled = toProcess.inputs()
           .anyMatch(n -> getResultOf(n).isPresent());
@@ -268,9 +253,6 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
         ghostCast.usages().toList().forEach(u -> u.replaceInput(ghostCast, ghostCast.value()));
         // remove the schedule node of the ghostCast's value node.
         return Optional.of(inputScheduleNode);
-      } else if (mustBeScheduled && node instanceof SelectNode selectNode) {
-        // the select node is scheduled, so we transform it to an IssSelectNode
-        node = turnIntoIssSelect(selectNode);
       }
 
       return mustBeScheduled
@@ -281,31 +263,6 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
           .addContext(toProcess);
     }
   }
-
-  private IssSelectNode turnIntoIssSelect(SelectNode selectNode) {
-    if (selectNode.condition() instanceof BuiltInCall call) {
-      var cond = TcgPassUtils.conditionOf(call.builtIn());
-      if (cond != null) {
-        // we can inline the condition into the IssSelectNode
-        var node = new IssSelectNode(cond, call.arg(0), call.arg(1), selectNode.trueCase(),
-            selectNode.falseCase());
-        return selectNode.replaceAndDelete(node);
-      }
-    }
-
-    // We couldn't inline the select node, so we must produce a comparison to true
-    return selectNode.replaceAndDelete(
-        new IssSelectNode(
-            TcgCondition.EQ,
-            selectNode.condition(),
-            Constant.Value.of(true).toNode(),
-            selectNode.trueCase(),
-            selectNode.falseCase()
-        )
-    );
-
-  }
-
 
   /**
    * Schedules a dependency node by inserting a {@link ScheduledNode} before the current root user.
@@ -349,23 +306,5 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
         );
       }
     }
-  }
-
-  /**
-   * Remove all nodes that might where scheduled but than not used.
-   * This might happen if a {@link SelectNode} is turned into a {@link IssSelectNode}.
-   */
-  private static void cleanUpUnusedScheduledNodes(Graph graph) {
-    graph.getNodes(ExpressionNode.class)
-        .filter(e -> {
-          var usages = e.usages().toList();
-          return usages.size() == 1 && usages.getFirst() instanceof ScheduledNode;
-        })
-        .forEach(n -> {
-          ((ScheduledNode) n.usages().findFirst().get()).replaceByNothingAndDelete();
-          if (n.isActive()) {
-            n.safeDelete();
-          }
-        });
   }
 }

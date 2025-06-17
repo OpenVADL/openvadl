@@ -52,6 +52,7 @@ import vadl.iss.passes.IssMemoryAccessTransformationPass;
 import vadl.iss.passes.IssMemoryDetectionPass;
 import vadl.iss.passes.IssNormalizationPass;
 import vadl.iss.passes.IssPcAccessConversionPass;
+import vadl.iss.passes.IssSelectLoweringPass;
 import vadl.iss.passes.IssTcgSchedulingPass;
 import vadl.iss.passes.IssTcgVAllocationPass;
 import vadl.iss.passes.IssVerificationPass;
@@ -469,6 +470,7 @@ public class PassOrders {
         .add(new IssPcAccessConversionPass(config))
         .add(new IssTcgSchedulingPass(config))
         .add(new IssTcgContextPass(config))
+        .add(new IssSelectLoweringPass(config))
         .add(new TcgBranchLoweringPass(config))
         .add(new TcgOpLoweringPass(config))
         .add(new IssHardcodedTcgAddOnPass(config))

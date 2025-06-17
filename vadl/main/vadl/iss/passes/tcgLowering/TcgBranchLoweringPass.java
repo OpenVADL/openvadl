@@ -308,7 +308,7 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
 
   /**
    * Check if the condition is a TCG.
-   * If might not be scheduled due to optimization, eventhough it depends
+   * It might not be scheduled due to optimization, eventhough it depends
    * on TCG arguments.
    */
   public boolean isCondTcg(ExpressionNode node) {

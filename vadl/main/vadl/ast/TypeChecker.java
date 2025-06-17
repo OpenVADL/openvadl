@@ -605,7 +605,7 @@ public class TypeChecker
     for (var aux : definition.auxiliaryFields) {
       check(aux);
       if (aux.kind == FormatDefinition.AuxiliaryField.AuxKind.PREDICATE) {
-        var conflict = derivedFieldsWithPredicate.get(aux.fieldDef());
+        var conflict = derivedFieldsWithPredicate.get((DerivedFormatField) aux.fieldDef());
         if (conflict != null) {
           throw error("Conflicting field access predicates", aux.field)
               .locationDescription(aux.field,

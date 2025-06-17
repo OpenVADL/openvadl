@@ -35,9 +35,11 @@ import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssLoadNode;
+import vadl.iss.passes.nodes.IssMoveExprNode;
 import vadl.iss.passes.nodes.IssSelectNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssStoreNode;
+import vadl.iss.passes.nodes.IssTempExprNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
@@ -282,6 +284,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   @Override
   public ControlNode traverseDirectional(DirectionalNode dirNode) {
     var next = dirNode.next();
+
     if ((dirNode instanceof ScheduledNode scheduledNode)) {
       toReplace = scheduledNode;
       dispatch(scheduledNode.node());
@@ -290,6 +293,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
         case InstrExitNode.PcChange pcChange -> handle(pcChange);
         case InstrExitNode.Raise raise -> handle(raise);
       }
+    } else if (dirNode instanceof IssMoveExprNode moveExprNode) {
+      handle(moveExprNode);
     }
     return next;
   }
@@ -654,6 +659,17 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   @Handler
   void handle(LetNode toHandle) {
     throw new UnsupportedOperationException("Type LetNode not yet implemented");
+  }
+
+  @Handler
+  void handle(IssTempExprNode toHandle) {
+    // replace by nothing
+    replaceCurrent();
+  }
+
+  void handle(IssMoveExprNode moveExprNode) {
+    var src = singleDestOf(moveExprNode.expr());
+    moveExprNode.replaceAndLink(new TcgMoveNode(moveExprNode.dest(), src));
   }
 
   @Handler
