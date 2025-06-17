@@ -663,7 +663,7 @@ public class TypeChecker
           .locationDescription(auxiliaryField.field, "The encoding must reference a format field.")
           .build();
     };
-    tryWrapImplicitCast(auxiliaryField.expr, fieldType);
+    auxiliaryField.expr = tryWrapImplicitCast(auxiliaryField.expr, fieldType);
   }
 
   private void checkFieldAccessPredicate(FormatDefinition.AuxiliaryField auxiliaryField) {

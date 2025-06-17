@@ -1180,6 +1180,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       }
     });
 
+    var fieldAccessCount = encoding.usedFieldAccesses().size();
+    ensure(fieldAccessCount > 0, () -> error("Invalid field access encoding", encode.expr)
+        .locationDescription(encode.expr, "The encoding must use at least one field access."));
+
     // at least one access function must use this field for its decoding
     var anyUseOfThisField = encoding.usedFieldAccesses().stream()
         .flatMap(f -> f.fieldRefs().stream())

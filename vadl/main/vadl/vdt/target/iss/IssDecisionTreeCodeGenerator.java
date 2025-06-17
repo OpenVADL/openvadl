@@ -63,6 +63,7 @@ import vadl.viam.Parameter;
 import vadl.viam.annotations.InstructionUndefinedAnno;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.passes.functionInliner.Inliner;
 
 /**
  * Generate C/C++ code for a decision tree from an in-memory representation of the decision tree.
@@ -459,6 +460,8 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
       if (undefAnno == null) {
         continue;
       }
+      // inline all used functions
+      Inliner.inlineFuncs(undefAnno.graph());
 
       // Get the C-code check expression
       var exprCode = getInsnUndefinedCheckExpr(undefAnno);
