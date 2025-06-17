@@ -184,9 +184,11 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   protected void replaceNode(PrintableInstruction instruction, Node node) {
-    var dispatcher = new LcbNodeReplacementHandlerDispatcher(
-        new LcbNodeReplacementHandler(instruction, architectureType));
-    dispatcher.dispatch(node);
+    LcbNodeReplacementHandlerDispatcher.dispatch(getReplacementHandler(instruction), node);
+  }
+
+  protected LcbNodeReplacementHandler getReplacementHandler(PrintableInstruction instruction) {
+    return new LcbNodeReplacementHandler(instruction, architectureType);
   }
 
   /**
