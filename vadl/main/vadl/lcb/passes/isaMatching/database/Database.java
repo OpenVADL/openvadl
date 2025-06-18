@@ -24,7 +24,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.PseudoInstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;

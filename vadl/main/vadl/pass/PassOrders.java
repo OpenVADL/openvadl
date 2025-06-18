@@ -36,7 +36,7 @@ import vadl.gcb.passes.GenerateCompilerRegistersPass;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.InstructionPatternPruningPass;
-import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.NormalizeFieldsToFieldAccessFunctionsPass;
 import vadl.gcb.passes.SetMissingConfigurationValuesPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
@@ -219,7 +219,6 @@ public class PassOrders {
     order.add(new DetectRegisterIndicesPass(gcbConfiguration));
     order.add(new NormalizeFieldsToFieldAccessFunctionsPass(gcbConfiguration));
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
-    order.add(new IsaMachineInstructionMatchingPass(gcbConfiguration));
     order.add(new DetermineRelocationTypeForFieldPass(gcbConfiguration));
     order.add(new GenerateValueRangeImmediatePass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
@@ -246,7 +245,6 @@ public class PassOrders {
     order.add(new AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass(
         configuration));
 
-    order.add(new IsaPseudoInstructionMatchingPass(configuration));
     order.add(new IsaRelocationMatchingPass(configuration));
     order.add(new GenerateTableGenRegistersPass(configuration));
     order.add(new DetermineRegisterUsesAndDefsPass(configuration));
@@ -257,6 +255,9 @@ public class PassOrders {
     order.add(new CanonicalizationPass(configuration));
     order.add(new AlgebraicSimplificationPass(configuration));
     order.add(new BehaviorRewritePass(configuration));
+
+    order.add(new IsaMachineInstructionMatchingPass(configuration));
+    order.add(new IsaPseudoInstructionMatchingPass(configuration));
 
     order.add(new LlvmLoweringPass(configuration));
     order.add(new GenerateTableGenMachineInstructionRecordPass(configuration));

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.gcb.passes;
+package vadl.lcb.passes.isaMatching;
 
 import static vadl.types.BuiltInTable.ADD;
 import static vadl.types.BuiltInTable.ADDS;
@@ -72,6 +72,9 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.IsaMatchingUtils;
+import vadl.gcb.passes.MachineInstructionCtx;
+import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;

@@ -16,6 +16,7 @@
 
 package vadl.gcb.passes;
 
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.viam.Instruction;
 
 /**

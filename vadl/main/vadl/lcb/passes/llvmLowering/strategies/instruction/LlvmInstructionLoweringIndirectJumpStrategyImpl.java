@@ -26,7 +26,7 @@ import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.database.Database;

@@ -25,7 +25,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.passes.llvmLowering.DetermineRegisterUsesAndDefsPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;

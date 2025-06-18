@@ -21,7 +21,7 @@ import static vadl.gcb.passes.MachineInstructionLabel.ADDI_64;
 
 import java.util.List;
 import java.util.Set;
-import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
@@ -31,10 +31,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
-import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.GraphVisitor;
-import vadl.viam.graph.Node;
 
 /**
  * Lowers add with immediate into {@link TableGenInstruction} and additionally,

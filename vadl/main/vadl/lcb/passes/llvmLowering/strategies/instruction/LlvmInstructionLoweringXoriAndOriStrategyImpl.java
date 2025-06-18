@@ -19,7 +19,7 @@ package vadl.lcb.passes.llvmLowering.strategies.instruction;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
@@ -29,10 +29,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
-import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.GraphVisitor;
-import vadl.viam.graph.Node;
 
 /**
  * Lowers instructions into {@link TableGenInstruction}. This differs from

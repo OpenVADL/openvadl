@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.gcb.valuetypes.RelocationCtx;
 import vadl.gcb.valuetypes.RelocationFunctionLabel;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
