@@ -57,7 +57,7 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
       Instruction instruction,
       Graph uninlinedBehavior,
       Abi abi,
-      DetermineRegisterUsesAndDefsPass.Info registerDefsUses ) {
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
     var copy = uninlinedBehavior.copy();
 
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {

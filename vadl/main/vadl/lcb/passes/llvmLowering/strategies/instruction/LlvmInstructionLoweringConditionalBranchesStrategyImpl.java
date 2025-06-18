@@ -101,7 +101,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
 
     copy.deinitializeNodes();
     return Optional.of(
-        createIntermediateResult(labelledMachineInstructions, instruction, copy, abi, registerDefsUses));
+        createIntermediateResult(labelledMachineInstructions, instruction, copy, abi,
+            registerDefsUses));
   }
 
   private LlvmLoweringRecord.Machine createIntermediateResult(

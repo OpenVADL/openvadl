@@ -87,8 +87,9 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   }
 
   @Override
-  public LlvmLoweringPass.BaseInstructionInfo lowerBaseInfo(Graph behavior,
-                                                            DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
+  public LlvmLoweringPass.BaseInstructionInfo lowerBaseInfo(
+      Graph behavior,
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
     var baseInfo = super.lowerBaseInfo(behavior, registerDefsUses);
 
     // Clear the flags
