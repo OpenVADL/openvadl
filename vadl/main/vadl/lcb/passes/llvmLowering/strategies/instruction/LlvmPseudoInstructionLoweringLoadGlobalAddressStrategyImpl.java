@@ -23,6 +23,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.PseudoInstructionLabel;
+import vadl.lcb.passes.llvmLowering.DetermineRegisterUsesAndDefsPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
@@ -68,8 +69,9 @@ public class LlvmPseudoInstructionLoweringLoadGlobalAddressStrategyImpl
       Abi abi,
       List<TableGenInstAlias> instAliases,
       PseudoInstruction pseudo,
-      IsaMachineInstructionMatchingPass.Result supportedInstructions) {
-    var record = super.lowerInstruction(abi, instAliases, pseudo, supportedInstructions);
+      IsaMachineInstructionMatchingPass.Result supportedInstructions,
+      DetermineRegisterUsesAndDefsPass.Info info) {
+    var record = super.lowerInstruction(abi, instAliases, pseudo, supportedInstructions, info);
 
     if (record.isPresent()) {
       // The pseudo instruction which loads the global address needs to have the

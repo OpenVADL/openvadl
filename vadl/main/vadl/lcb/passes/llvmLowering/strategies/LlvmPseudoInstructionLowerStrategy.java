@@ -23,6 +23,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.PseudoInstructionLabel;
+import vadl.lcb.passes.llvmLowering.DetermineRegisterUsesAndDefsPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
@@ -67,8 +68,10 @@ public abstract class LlvmPseudoInstructionLowerStrategy
       Abi abi,
       List<TableGenInstAlias> instAliases,
       PseudoInstruction pseudo,
-      IsaMachineInstructionMatchingPass.Result supportedInstructions) {
-    var compilerInstruction = super.lowerInstruction(pseudo, supportedInstructions);
+      IsaMachineInstructionMatchingPass.Result supportedInstructions,
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
+    var compilerInstruction =
+        super.lowerInstruction(pseudo, supportedInstructions, registerDefsUses);
 
     return compilerInstruction.map(x -> {
       var flags = LlvmLoweringPass.Flags.withNoCodeGenOnly(x.info().flags());

@@ -39,6 +39,7 @@ import vadl.error.Diagnostic;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.llvmLowering.DetermineRegisterUsesAndDefsPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
@@ -50,7 +51,6 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LoweringStrategyUtils;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandler;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerDispatcher;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerWithBasicBlockReplacement;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
@@ -61,7 +61,6 @@ import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -92,7 +91,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph uninlinedBehavior,
-      Abi abi) {
+      Abi abi,
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
     var copy = uninlinedBehavior.copy();
 
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {
@@ -101,15 +101,17 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
 
     copy.deinitializeNodes();
     return Optional.of(
-        createIntermediateResult(labelledMachineInstructions, instruction, copy, abi));
+        createIntermediateResult(labelledMachineInstructions, instruction, copy, abi,
+            registerDefsUses));
   }
 
   private LlvmLoweringRecord.Machine createIntermediateResult(
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Instruction instruction,
       Graph visitedGraph,
-      Abi abi) {
-    var info = lowerBaseInfo(visitedGraph);
+      Abi abi,
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
+    var info = lowerBaseInfo(visitedGraph, registerDefsUses);
 
     var writes = visitedGraph.getNodes(WriteResourceNode.class).toList();
     var patterns = generatePatterns(instruction, info.inputs(), writes);

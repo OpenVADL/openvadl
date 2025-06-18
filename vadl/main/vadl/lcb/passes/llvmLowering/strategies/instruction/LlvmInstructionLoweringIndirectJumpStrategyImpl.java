@@ -31,6 +31,7 @@ import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
+import vadl.lcb.passes.llvmLowering.DetermineRegisterUsesAndDefsPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
@@ -86,8 +87,10 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   }
 
   @Override
-  public LlvmLoweringPass.BaseInstructionInfo lowerBaseInfo(Graph behavior) {
-    var baseInfo = super.lowerBaseInfo(behavior);
+  public LlvmLoweringPass.BaseInstructionInfo lowerBaseInfo(
+      Graph behavior,
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
+    var baseInfo = super.lowerBaseInfo(behavior, registerDefsUses);
 
     // Clear the flags
     baseInfo = baseInfo.withFlags(LlvmLoweringPass.Flags.empty());
@@ -100,14 +103,15 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior,
-      Abi abi) {
+      Abi abi,
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
     var copy = unmodifiedBehavior.copy();
 
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {
       replaceNode(instruction, node);
     }
 
-    var info = lowerBaseInfo(copy);
+    var info = lowerBaseInfo(copy, registerDefsUses);
 
     // Clear the flags for this strategy
     info = info.withFlags(LlvmLoweringPass.Flags.empty());
