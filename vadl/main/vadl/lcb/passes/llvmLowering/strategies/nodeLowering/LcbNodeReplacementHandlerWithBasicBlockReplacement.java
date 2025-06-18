@@ -16,58 +16,33 @@
 
 package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
-import java.util.List;
-import javax.annotation.Nullable;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.viam.PrintableInstruction;
-import vadl.viam.graph.GraphVisitor;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 
 /**
- * While {@link LcbFieldAccessRefNodeReplacement} converts every
+ * While {@link LcbNodeReplacementHandler} converts every
  * {@link FieldAccessRefNode} into {@link LlvmFieldAccessRefNode},
  * this class converts it into {@link LlvmBasicBlockSD}. This means that the field should be
  * treated like an immediate, but it is a basic block.
  */
-public class LcbFieldAccessRefNodeByLlvmBasicBlockReplacement
-    implements GraphVisitor.NodeApplier<FieldAccessRefNode, LlvmBasicBlockSD> {
-  private final PrintableInstruction instruction;
-  private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
-  private final ValueType architectureType;
-
-  /**
-   * Constructor.
-   */
-  public LcbFieldAccessRefNodeByLlvmBasicBlockReplacement(
-      PrintableInstruction instruction,
-      List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer,
+public class LcbNodeReplacementHandlerWithBasicBlockReplacement extends LcbNodeReplacementHandler {
+  public LcbNodeReplacementHandlerWithBasicBlockReplacement(
+      PrintableInstruction printableInstruction,
       ValueType architectureType) {
-    this.instruction = instruction;
-    this.replacer = replacer;
-    this.architectureType = architectureType;
+    super(printableInstruction, architectureType);
   }
 
-  @Nullable
   @Override
-  public LlvmBasicBlockSD visit(FieldAccessRefNode fieldAccessRefNode) {
+  public void handle(FieldAccessRefNode fieldAccessRefNode) {
     var originalType = fieldAccessRefNode.fieldAccess().accessFunction().returnType();
 
-    return new LlvmBasicBlockSD(instruction,
+    fieldAccessRefNode.replaceAndDelete(new LlvmBasicBlockSD(printableInstruction,
         fieldAccessRefNode.fieldAccess(),
         originalType,
-        architectureType);
-  }
-
-  @Override
-  public boolean acceptable(Node node) {
-    return node instanceof FieldAccessRefNode;
-  }
-
-  @Override
-  public List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> recursiveHooks() {
-    return replacer;
+        architectureType)
+    );
   }
 }

@@ -50,32 +50,8 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbBranchEndNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbBuiltInCallNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbConstantNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbFieldAccessRefNodeByLlvmBasicBlockReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbFieldAccessRefNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbFuncCallReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbIfNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbInstrCallNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbInstrEndNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbLetNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbMulNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbMulhsNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbMulhuNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbReadMemNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbReadRegFileNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbReadRegNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbReturnNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbSelectNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbSignExtendNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbSliceNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbTruncateNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbWriteMemNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbWriteRegFileNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbWriteRegNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbZeroExtendNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LlvmUnlowerableNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandler;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerDispatcher;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
@@ -147,90 +123,6 @@ public abstract class LlvmInstructionLoweringStrategy {
     return getSupportedInstructionLabels().contains(machineInstructionLabel);
   }
 
-  protected List<GraphVisitor.NodeApplier
-      <? extends Node, ? extends Node>> replacementHooksWithDefaultFieldAccessReplacement(
-      PrintableInstruction printableInstruction) {
-    var hooks = new ArrayList<GraphVisitor.NodeApplier<? extends Node, ? extends Node>>();
-    return replacementHooks(
-        hooks,
-        new LcbFieldAccessRefNodeReplacement(printableInstruction, hooks, architectureType));
-  }
-
-  protected List<GraphVisitor.NodeApplier
-      <? extends Node, ? extends Node>> replacementHooksWithFieldAccessWithBasicBlockReplacement(
-      PrintableInstruction printableInstruction
-  ) {
-    var hooks = new ArrayList<GraphVisitor.NodeApplier<? extends Node, ? extends Node>>();
-    return replacementHooks(
-        hooks,
-        new LcbFieldAccessRefNodeByLlvmBasicBlockReplacement(printableInstruction,
-            hooks,
-            architectureType));
-  }
-
-  /**
-   * Returns a list of applier which transform a {@link Graph}.
-   */
-  private List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks(
-      List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> hooks,
-      GraphVisitor.NodeApplier<? extends Node, ? extends Node> fieldAccessRefNodeReplacement) {
-    var v1 = new LcbBranchEndNodeReplacement(hooks);
-    var mul = new LcbMulNodeReplacement(hooks);
-    var mulhs = new LcbMulhsNodeReplacement(hooks);
-    var mulhu = new LcbMulhuNodeReplacement(hooks);
-    var v2 = new LcbBuiltInCallNodeReplacement(hooks);
-    var v3 = new LcbConstantNodeReplacement(hooks);
-    var v5 = new LcbFuncCallReplacement();
-    var v6 = new LcbIfNodeReplacement();
-    var v7 = new LcbInstrCallNodeReplacement(hooks);
-    var v8 = new LcbInstrEndNodeReplacement(hooks);
-    var v9 = new LcbLetNodeReplacement(hooks);
-    var v10 = new LcbReadMemNodeReplacement(hooks);
-    var v11 = new LcbReadRegFileNodeReplacement(hooks);
-    var v12 = new LcbReadRegNodeReplacement(hooks);
-    var v13 = new LcbReturnNodeReplacement(hooks);
-    var v14 = new LcbSelectNodeReplacement(hooks);
-    var v15 = new LcbSignExtendNodeReplacement(hooks);
-    var v16 = new LcbSliceNodeReplacement(hooks);
-    var v17 = new LcbTruncateNodeReplacement(hooks);
-    var v18 = new LcbWriteMemNodeReplacement(hooks);
-    var v19 = new LcbWriteRegFileNodeReplacement(hooks);
-    var v20 = new LcbWriteRegNodeReplacement(hooks);
-    var v21 = new LcbZeroExtendNodeReplacement(hooks);
-    var v22 = new LlvmUnlowerableNodeReplacement(hooks);
-
-    hooks.add(v1);
-    hooks.add(mul);
-    hooks.add(mulhs);
-    hooks.add(mulhu);
-    hooks.add(v2);
-    hooks.add(v3);
-    hooks.add(fieldAccessRefNodeReplacement);
-    hooks.add(v5);
-    hooks.add(v6);
-    hooks.add(v7);
-    hooks.add(v8);
-    hooks.add(v9);
-    hooks.add(v10);
-    hooks.add(v11);
-    hooks.add(v12);
-    hooks.add(v13);
-    hooks.add(v14);
-    hooks.add(v15);
-    hooks.add(v16);
-    hooks.add(v17);
-    hooks.add(v18);
-    hooks.add(v19);
-    hooks.add(v20);
-    hooks.add(v21);
-    hooks.add(v22);
-
-    return hooks;
-  }
-
-  protected abstract List<GraphVisitor.NodeApplier
-      <? extends Node, ? extends Node>> replacementHooks(PrintableInstruction printableInstruction);
-
   /**
    * Flags indicate special properties of a machine instruction. This method checks the
    * machine instruction's behavior for those and returns them.
@@ -291,6 +183,14 @@ public abstract class LlvmInstructionLoweringStrategy {
         registerDefs);
   }
 
+  protected void replaceNode(PrintableInstruction instruction, Node node) {
+    LcbNodeReplacementHandlerDispatcher.dispatch(getReplacementHandler(instruction), node);
+  }
+
+  protected LcbNodeReplacementHandler getReplacementHandler(PrintableInstruction instruction) {
+    return new LcbNodeReplacementHandler(instruction, architectureType);
+  }
+
   /**
    * Generate a lowering result for the given {@link Graph} for pseudo instructions.
    * If it is not lowerable then return {@link Optional#empty()}.
@@ -300,7 +200,6 @@ public abstract class LlvmInstructionLoweringStrategy {
       Instruction instruction,
       Graph unmodifiedBehavior,
       Abi abi) {
-    var visitor = replacementHooksWithDefaultFieldAccessReplacement(instruction);
     var copy = unmodifiedBehavior.copy();
 
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {
@@ -312,7 +211,7 @@ public abstract class LlvmInstructionLoweringStrategy {
 
     // Continue with lowering of nodes
     for (var endNode : copy.getNodes(SideEffectNode.class).toList()) {
-      visitReplacementHooks(visitor, endNode);
+      replaceNode(instruction, endNode);
     }
 
     var isLowerable = !hasRedFlags(instruction, copy);

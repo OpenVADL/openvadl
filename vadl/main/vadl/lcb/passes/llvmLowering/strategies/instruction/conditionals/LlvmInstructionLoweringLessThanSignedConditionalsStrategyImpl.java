@@ -39,10 +39,7 @@ import vadl.types.BuiltInTable;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
-import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.GraphVisitor;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
 
@@ -63,12 +60,6 @@ public class LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl
   @Override
   protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
     return this.supported;
-  }
-
-  @Override
-  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks(
-      PrintableInstruction printableInstruction) {
-    return replacementHooksWithDefaultFieldAccessReplacement(printableInstruction);
   }
 
   @Override

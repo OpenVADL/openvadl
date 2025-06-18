@@ -60,12 +60,6 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
   }
 
   @Override
-  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks(
-      PrintableInstruction printableInstruction) {
-    return replacementHooksWithDefaultFieldAccessReplacement(printableInstruction);
-  }
-
-  @Override
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
