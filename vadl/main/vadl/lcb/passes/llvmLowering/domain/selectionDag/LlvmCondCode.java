@@ -16,8 +16,10 @@
 
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
+import vadl.error.Diagnostic;
 import vadl.types.BuiltInTable;
 import vadl.types.BuiltInTable.BuiltIn;
+import vadl.utils.SourceLocation;
 import vadl.viam.ViamError;
 
 /**
@@ -38,31 +40,34 @@ public enum LlvmCondCode {
   /**
    * Convert a {@link BuiltIn} into a {@link LlvmCondCode}.
    *
+   * @param builtIn  which has to be translated to {@link LlvmCondCode}.
+   * @param location when the {@code builtIn} cannot be mapped. This helps to spot the error
+   *                 in the specification.
    * @return the converted CondCode or {@code null}.
    */
-  public static LlvmCondCode from(BuiltIn built) {
-    if (built == BuiltInTable.EQU) {
+  public static LlvmCondCode from(BuiltIn builtIn, SourceLocation location) {
+    if (builtIn == BuiltInTable.EQU) {
       return LlvmCondCode.SETEQ;
-    } else if (built == BuiltInTable.NEQ) {
+    } else if (builtIn == BuiltInTable.NEQ) {
       return LlvmCondCode.SETNE;
-    } else if (built == BuiltInTable.SGTH) {
+    } else if (builtIn == BuiltInTable.SGTH) {
       return LlvmCondCode.SETGT;
-    } else if (built == BuiltInTable.UGTH) {
+    } else if (builtIn == BuiltInTable.UGTH) {
       return LlvmCondCode.SETUGT;
-    } else if (built == BuiltInTable.SLTH) {
+    } else if (builtIn == BuiltInTable.SLTH) {
       return LlvmCondCode.SETLT;
-    } else if (built == BuiltInTable.ULTH) {
+    } else if (builtIn == BuiltInTable.ULTH) {
       return LlvmCondCode.SETULT;
-    } else if (built == BuiltInTable.SLEQ) {
+    } else if (builtIn == BuiltInTable.SLEQ) {
       return LlvmCondCode.SETLE;
-    } else if (built == BuiltInTable.ULEQ) {
+    } else if (builtIn == BuiltInTable.ULEQ) {
       return LlvmCondCode.SETULE;
-    } else if (built == BuiltInTable.SGEQ) {
+    } else if (builtIn == BuiltInTable.SGEQ) {
       return LlvmCondCode.SETGE;
-    } else if (built == BuiltInTable.UGEQ) {
+    } else if (builtIn == BuiltInTable.UGEQ) {
       return LlvmCondCode.SETUGE;
     } else {
-      throw new ViamError("not supported cond code");
+      throw Diagnostic.error("not supported conditional code", location).build();
     }
   }
 

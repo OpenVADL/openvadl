@@ -57,7 +57,7 @@ public class LlvmSetccSD extends BuiltInCall implements LlvmNodeLowerable {
                      Type type) {
     super(built, args, type);
     this.builtIn = built;
-    var condCode = LlvmCondCode.from(builtIn);
+    var condCode = LlvmCondCode.from(builtIn, location());
     if (condCode != null) {
       llvmCondCode = condCode;
     } else {
@@ -68,7 +68,7 @@ public class LlvmSetccSD extends BuiltInCall implements LlvmNodeLowerable {
   @Override
   public void setBuiltIn(BuiltInTable.BuiltIn builtIn) {
     this.builtIn = builtIn;
-    var condCode = LlvmCondCode.from(builtIn);
+    var condCode = LlvmCondCode.from(builtIn, location());
     if (condCode != null) {
       llvmCondCode = condCode;
     } else {

@@ -40,7 +40,7 @@ public class LlvmSetCondSD extends BuiltInCall implements LlvmNodeLowerable {
                        NodeList<ExpressionNode> args,
                        Type type) {
     super(builtIn, args, type);
-    this.llvmCondCode = LlvmCondCode.from(builtIn);
+    this.llvmCondCode = LlvmCondCode.from(builtIn, location());
   }
 
   @Override
@@ -57,7 +57,7 @@ public class LlvmSetCondSD extends BuiltInCall implements LlvmNodeLowerable {
   @Override
   public ExpressionNode copy() {
     return new LlvmSetCondSD(builtIn,
-        new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
+        new NodeList<>(args.stream().map(ExpressionNode::copy).toList()),
         type());
   }
 

@@ -16,6 +16,7 @@
 
 package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
+import java.util.List;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
 import vadl.viam.Format;
 import vadl.viam.RegisterTensor;
@@ -80,6 +81,10 @@ public class TableGenInstructionRegisterFileOperand
   }
 
   @Override
+  public List<Format.Field> formatFields() {
+    return List.of(formatField);
+  }
+
   public Format.Field formatField() {
     return formatField;
   }

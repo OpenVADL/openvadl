@@ -16,6 +16,8 @@
 
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
+import java.util.HashSet;
+import java.util.List;
 import vadl.viam.Format;
 import vadl.viam.Format.Field;
 
@@ -27,5 +29,13 @@ public interface ReferencesFormatField {
   /**
    * Get the field from the operand.
    */
-  Format.Field formatField();
+  List<Field> formatFields();
+
+  /**
+   * Return {@code true} when the given {@code field} is referenced.
+   */
+  default boolean referencesField(Format.Field field) {
+    var fields = new HashSet<>(formatFields());
+    return fields.contains(field);
+  }
 }

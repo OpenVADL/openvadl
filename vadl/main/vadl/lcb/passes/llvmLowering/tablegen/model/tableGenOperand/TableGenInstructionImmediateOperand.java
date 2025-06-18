@@ -16,6 +16,7 @@
 
 package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
+import java.util.List;
 import java.util.Objects;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
@@ -65,7 +66,7 @@ public class TableGenInstructionImmediateOperand extends TableGenDefaultInstruct
   }
 
   @Override
-  public Format.Field formatField() {
-    return immediateOperand.fieldAccessRef().fieldRef();
+  public List<Format.Field> formatFields() {
+    return immediateOperand.fieldAccessRef().fieldRefs();
   }
 }

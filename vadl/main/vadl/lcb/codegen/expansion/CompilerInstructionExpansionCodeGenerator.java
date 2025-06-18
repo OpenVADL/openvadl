@@ -343,9 +343,11 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
           });
         }
       } else if (item instanceof ReferencesFormatField referencesFormatField) {
-        if (lookupFields.containsKey(referencesFormatField.formatField())) {
-          var value = lookupFields.get(referencesFormatField.formatField());
-          result.add(Pair.of(new Either<>(referencesFormatField.formatField(), null), value));
+        for (var field : referencesFormatField.formatFields()) {
+          if (lookupFields.containsKey(field)) {
+            var value = lookupFields.get(field);
+            result.add(Pair.of(new Either<>(field, null), value));
+          }
         }
       }
     }

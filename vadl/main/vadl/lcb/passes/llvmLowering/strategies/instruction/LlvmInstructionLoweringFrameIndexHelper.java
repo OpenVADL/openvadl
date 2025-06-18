@@ -69,7 +69,7 @@ public abstract class LlvmInstructionLoweringFrameIndexHelper
       if (tableGenInstructionOperand == operand) {
         return new TableGenInstructionFrameRegisterOperand(
             operand.origin(),
-            operand.formatField());
+            operand.formatField().identifier);
       }
 
       return tableGenInstructionOperand;
