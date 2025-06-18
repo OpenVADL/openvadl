@@ -16,6 +16,8 @@
 
 package vadl.vdt.passes;
 
+import static vadl.configuration.DecoderOptions.Generator.REGULAR;
+
 import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -25,7 +27,9 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.vdt.impl.irregular.IrregularDecodeTreeGenerator;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
+import vadl.vdt.impl.regular.RegularDecodeTreeGenerator;
 import vadl.vdt.model.Node;
+import vadl.vdt.utils.Instruction;
 import vadl.viam.Specification;
 
 /**
@@ -64,6 +68,13 @@ public class VdtLoweringPass extends Pass {
       // just skip if there are no instructions.
       // this will only happen if we use the check command
       return null;
+    }
+
+    if (configuration().getDecoderOptions().getGenerator() == REGULAR) {
+      var insns = entries.stream()
+          .map(Instruction.class::cast)
+          .toList();
+      return new RegularDecodeTreeGenerator().generate(insns);
     }
 
     return new IrregularDecodeTreeGenerator().generate(entries);

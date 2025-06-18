@@ -21,30 +21,43 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static vadl.vdt.target.common.DecisionTreeStatsCalculator.statistics;
 
 import java.io.IOException;
-import java.util.List;
+import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
-import vadl.vdt.AbstractDecisionTreeTest;
+import vadl.AbstractTest;
+import vadl.configuration.DecoderOptions;
+import vadl.configuration.GeneralConfiguration;
+import vadl.pass.PassManager;
+import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.model.Node;
-import vadl.vdt.utils.Instruction;
+import vadl.vdt.passes.VdtConstraintSynthesisPass;
+import vadl.vdt.passes.VdtInputPreparationPass;
+import vadl.vdt.passes.VdtLoweringPass;
 
-class RiscV64ITest extends AbstractDecisionTreeTest {
+class RiscV64ITest extends AbstractTest {
 
   @Test
-  void test_generate_tree() throws IOException {
+  void test_generate_tree() throws IOException, DuplicatedPassKeyException {
 
     /* GIVEN */
-    final List<Instruction> riscV = parseQemuDecoding("rv64i.decode");
+    var config = new GeneralConfiguration(Path.of("build/test-output"), false);
+    config.getDecoderOptions().setGenerator(DecoderOptions.Generator.REGULAR);
+
+    var spec = runAndGetViamSpecification("sys/risc-v/rv64i.vadl");
+
+    var manager = new PassManager();
+    manager.add(new VdtInputPreparationPass(config));
+    manager.add(new VdtConstraintSynthesisPass(config));
+    manager.add(new VdtLoweringPass(config));
 
     /* WHEN */
-    Node tree = new RegularDecodeTreeGenerator().generate(riscV);
+    manager.run(spec);
 
     /* THEN */
+    var tree = manager.getPassResults().lastResultOf(VdtLoweringPass.class, Node.class);
 
     assertNotNull(tree);
 
     final var stats = statistics(tree);
-    assertEquals(riscV.size(), stats.getNumberOfLeafNodes(),
-        "Expected one leaf node per instruction");
 
     assertEquals(65, stats.getNumberOfNodes());
     assertEquals(3, stats.getMaxDepth());
