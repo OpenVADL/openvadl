@@ -91,7 +91,7 @@ public class DetermineRegisterUsesAndDefsPass extends Pass {
     return new Output(machine, compiler, pseudo);
   }
 
-  /*
+  /**
    Imagine that you have a pseudo instruction which hardcodes the register. We need to replace
    the fields in the instruction and compute the defs and uses again. We must not reuse the result
    from the machine instructions.
