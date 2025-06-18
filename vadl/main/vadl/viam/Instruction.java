@@ -94,6 +94,15 @@ public class Instruction extends Definition implements DefProp.WithBehavior, Pri
   }
 
   /**
+   * Copies behavior and identifier but encoding and assembly remains the same.
+   */
+  public Instruction copy() {
+    var graph = behavior.copy();
+    return new Instruction(new Identifier(identifier.parts(), identifier.location()),
+        graph, assembly, encoding);
+  }
+
+  /**
    * Returns the {@link Resource}s that are written by this instruction.
    */
   public Set<Resource> writtenResources() {

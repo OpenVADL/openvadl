@@ -30,6 +30,7 @@ import vadl.error.Diagnostic;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.PseudoInstructionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.llvmLowering.DetermineRegisterUsesAndDefsPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
@@ -73,7 +74,8 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
       Abi abi,
       List<TableGenInstAlias> instAliases,
       PseudoInstruction pseudo,
-      IsaMachineInstructionMatchingPass.Result labelledMachineInstructions) {
+      IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
+      DetermineRegisterUsesAndDefsPass.Info info) {
     for (var callNode : pseudo.behavior().getNodes(InstrCallNode.class).toList()) {
       var instructionBehavior = callNode.target().behavior().copy();
       var label = labelledMachineInstructions.reverse().get(callNode.target());
@@ -89,7 +91,8 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
         var tableGenRecord =
             strategy.lowerInstruction(labelledMachineInstructions, callNode.target(),
                 instructionBehavior,
-                abi);
+                abi,
+                info);
 
         if (tableGenRecord.isPresent()) {
           var record = tableGenRecord.get();

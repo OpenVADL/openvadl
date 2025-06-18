@@ -35,12 +35,12 @@ import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.llvmLowering.DetermineRegisterUsesAndDefsPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
 import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;
 import vadl.lcb.passes.llvmLowering.LlvmSideEffectPatternIncluded;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
-import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
@@ -78,7 +78,6 @@ import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
-import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
@@ -167,19 +166,19 @@ public abstract class LlvmInstructionLoweringStrategy {
   /**
    * Lowers basic instruction information without patterns.
    */
-  public LlvmLoweringPass.BaseInstructionInfo lowerBaseInfo(Graph behavior) {
+  public LlvmLoweringPass.BaseInstructionInfo lowerBaseInfo(
+      Graph behavior,
+      DetermineRegisterUsesAndDefsPass.Info info) {
     var outputOperands = getTableGenOutputOperands(behavior);
     var inputOperands = getTableGenInputOperands(outputOperands, behavior);
 
-    var registerUses = getRegisterUses(behavior);
-    var registerDefs = getRegisterDefs(behavior);
     var flags = getFlags(behavior);
 
     return new LlvmLoweringPass.BaseInstructionInfo(inputOperands,
         outputOperands,
         flags,
-        registerUses,
-        registerDefs);
+        info.uses(),
+        info.defs());
   }
 
   protected void replaceNode(PrintableInstruction instruction, Node node) {
@@ -198,7 +197,8 @@ public abstract class LlvmInstructionLoweringStrategy {
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior,
-      Abi abi) {
+      Abi abi,
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
     var copy = unmodifiedBehavior.copy();
 
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {
@@ -214,7 +214,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     }
 
     var isLowerable = !hasRedFlags(instruction, copy);
-    var info = lowerBaseInfo(copy);
+    var info = lowerBaseInfo(copy, registerDefsUses);
     copy.deinitializeNodes();
 
 
@@ -359,61 +359,6 @@ public abstract class LlvmInstructionLoweringStrategy {
     }
 
     return false;
-  }
-
-  /**
-   * Get a list of {@link RegisterRef} which are written. It is considered a
-   * register definition when a {@link WriteRegTensorNode} with a
-   * constant address exists. However, the only registers without any constraints on the
-   * register file will be returned. Also program containers are not part of a "Def".
-   *
-   * @param behavior of the {@link Instruction}.
-   */
-  private static List<RegisterRef> getRegisterDefs(Graph behavior) {
-    return behavior.getNodes(WriteRegTensorNode.class)
-        .filter(writeRegTensorNode -> writeRegTensorNode.indices().stream()
-            .allMatch(ExpressionNode::isConstant))
-        .filter(writeRegTensorNode -> writeRegTensorNode.registerTensor().constraints().length == 0)
-        .filter(readRegTensorNode -> !readRegTensorNode.isPcAccess())
-        .map(node -> {
-          var reg = node.regTensor();
-          reg.ensure(reg.indexDimensions().size() < 2,
-              "Only register and register files supported");
-          if (reg.isSingleRegister()) {
-            return new RegisterRef(reg);
-          } else {
-            return new RegisterRef(reg, ((ConstantNode) node.indices().getFirst()).constant());
-          }
-        })
-        .toList();
-  }
-
-  /**
-   * Get a list of {@link RegisterRef} which are read. It is considered a
-   * register usage when a {@link ReadRegTensorNode} with a
-   * constant address exists. However, the only registers without any constraints on the
-   * register file will be returned. Also program containers are not part of a "Use".
-   *
-   * @param behavior of the {@link Instruction}.
-   */
-  private static List<RegisterRef> getRegisterUses(Graph behavior) {
-    var registers = behavior.getNodes(ReadRegTensorNode.class)
-        .filter(readRegTensorNode -> readRegTensorNode.regTensor().isSingleRegister())
-        .filter(readRegTensorNode -> !readRegTensorNode.isPcAccess())
-        .toList();
-
-    var registerFilesWithConstantAddress = behavior.getNodes(ReadRegTensorNode.class)
-        .filter(readRegTensorNode -> readRegTensorNode.regTensor().isRegisterFile())
-        .filter(ReadResourceNode::hasConstantAddress)
-        .toList();
-
-    return Stream.concat(registers.stream(), registerFilesWithConstantAddress.stream())
-        .filter(readRegTensorNode -> !readRegTensorNode.hasConstraintForAddress())
-        // Register should not have any constraints. When it does then there is no
-        // need that LLVM knows about it because it should not be a dependency.
-        .map(readRegTensorNode -> new RegisterRef(readRegTensorNode.regTensor(),
-            ((ConstantNode) readRegTensorNode.address()).constant()))
-        .toList();
   }
 
   /**

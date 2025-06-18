@@ -207,8 +207,9 @@ public class InstrCallNode extends DirectionalNode {
 
   @Override
   public Node copy() {
+    var copiedInstructionBehavior = target.behavior().copy();
     return new InstrCallNode(target, paramFieldsOrAccesses,
-        new NodeList<>(this.arguments().stream().map(x -> (ExpressionNode) x.copy()).toList()));
+        new NodeList<>(this.arguments().stream().map(ExpressionNode::copy).toList()));
   }
 
   @Override

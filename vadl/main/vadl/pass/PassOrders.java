@@ -74,6 +74,7 @@ import vadl.iss.template.target.EmitIssTranslateCPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaRelocationMatchingPass;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
+import vadl.lcb.passes.llvmLowering.DetermineRegisterUsesAndDefsPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenAbiSequenceInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
@@ -246,6 +247,7 @@ public class PassOrders {
     order.add(new IsaPseudoInstructionMatchingPass(configuration));
     order.add(new IsaRelocationMatchingPass(configuration));
     order.add(new GenerateTableGenRegistersPass(configuration));
+    order.add(new DetermineRegisterUsesAndDefsPass(configuration));
     order.add(new LlvmLoweringPass(configuration));
     order.add(new GenerateTableGenMachineInstructionRecordPass(configuration));
     order.add(new GenerateTableGenPseudoInstructionRecordPass(configuration));

@@ -25,6 +25,7 @@ import java.util.Set;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.llvmLowering.DetermineRegisterUsesAndDefsPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
@@ -55,7 +56,8 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph uninlinedBehavior,
-      Abi abi) {
+      Abi abi,
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses ) {
     var copy = uninlinedBehavior.copy();
 
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {
@@ -64,7 +66,7 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
 
     copy.deinitializeNodes();
     return Optional.of(
-        createIntermediateResult(instruction, copy));
+        createIntermediateResult(instruction, copy, registerDefsUses));
   }
 
   @Override
@@ -77,9 +79,10 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
 
   private LlvmLoweringRecord.Machine createIntermediateResult(
       Instruction instruction,
-      Graph uninlinedGraph) {
+      Graph uninlinedGraph,
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
 
-    var info = lowerBaseInfo(uninlinedGraph);
+    var info = lowerBaseInfo(uninlinedGraph, registerDefsUses);
     var unchangedFlags = getFlags(uninlinedGraph);
     var flags = LlvmLoweringPass.Flags.withNoTerminator(
         LlvmLoweringPass.Flags.withNoBranch(unchangedFlags));

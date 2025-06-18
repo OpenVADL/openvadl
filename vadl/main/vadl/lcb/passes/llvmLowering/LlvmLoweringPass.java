@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
@@ -301,6 +302,9 @@ public class LlvmLoweringPass extends Pass {
         () -> Diagnostic.error("Cannot find semantics of the instructions", viam.location()));
     var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
         IdentifyFieldUsagePass.class);
+    var registerDefsUses =
+        (DetermineRegisterUsesAndDefsPass.Output) passResults.lastResultOf(
+            DetermineRegisterUsesAndDefsPass.class);
     var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().orElseThrow();
 
     var architectureType =
@@ -328,27 +332,33 @@ public class LlvmLoweringPass extends Pass {
     var compilerStrategies =
         List.of(new LlvmCompilerInstructionLoweringDefaultStrategyImpl(machineStrategies));
 
-    var machineRecords = machineInstructions(viam, abi, machineStrategies,
-        labelingResult);
+    var machineRecords = machineInstructions(viam,
+        abi,
+        registerDefsUses.machineInstructions(),
+        machineStrategies,
+        labelingResult
+    );
     var pseudoRecords = pseudoInstructions(machineRecords, viam, fieldUsages, abi,
-        pseudoStrategies, labelingResult, labelingResultPseudo);
+        pseudoStrategies, labelingResult, labelingResultPseudo,
+        registerDefsUses.pseudoInstructions());
     var compilerInstructions =
-        compilerInstructions(abi, compilerStrategies, labelingResult);
+        compilerInstructions(abi, compilerStrategies, labelingResult,
+            registerDefsUses.compilerInstructions());
 
     return new LlvmLoweringPassResult(machineRecords, pseudoRecords, compilerInstructions);
   }
 
-
   private IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructions(
-      Specification viam, Abi abi,
+      Specification viam,
+      Abi abi,
+      Map<Instruction, DetermineRegisterUsesAndDefsPass.Info> registerDefsUses,
       List<LlvmInstructionLoweringStrategy> strategies,
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions) {
     var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord.Machine>();
 
-    viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty)
+    viam.isa().stream().flatMap(isa -> isa.ownInstructions().stream())
         .forEach(instruction -> {
           var instructionLabel = labelledMachineInstructions.reverse().get(instruction);
-
           for (var strategy : strategies) {
             if (!strategy.isApplicable(instructionLabel)) {
               // Try next strategy
@@ -358,7 +368,8 @@ public class LlvmLoweringPass extends Pass {
             var record =
                 strategy.lowerInstruction(labelledMachineInstructions, instruction,
                     instruction.behavior(),
-                    abi);
+                    abi,
+                    Objects.requireNonNull(registerDefsUses.get(instruction)));
 
             // Okay, we have to save record.
             record.ifPresent(llvmLoweringIntermediateResult -> {
@@ -386,12 +397,14 @@ public class LlvmLoweringPass extends Pass {
       Abi abi,
       List<LlvmPseudoInstructionLowerStrategy> pseudoStrategies,
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
-      IsaPseudoInstructionMatchingPass.Result labelledPseudoInstructions
+      IsaPseudoInstructionMatchingPass.Result labelledPseudoInstructions,
+      Map<PseudoInstruction, DetermineRegisterUsesAndDefsPass.Info> registerDefsUses
   ) {
     var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord.Pseudo>();
 
     viam.isa().map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
         .forEach(pseudo -> {
+          var info = Objects.requireNonNull(registerDefsUses.get(pseudo));
           for (var strategy : pseudoStrategies) {
             var label = labelledPseudoInstructions.reverse().get(pseudo);
             if (!strategy.isApplicable(label, pseudo)) {
@@ -403,7 +416,8 @@ public class LlvmLoweringPass extends Pass {
                 strategy.lowerInstruction(abi,
                     instAliases,
                     pseudo,
-                    labelledMachineInstructions);
+                    labelledMachineInstructions,
+                    info);
 
             record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(pseudo,
                 llvmLoweringIntermediateResult));
@@ -418,15 +432,19 @@ public class LlvmLoweringPass extends Pass {
   private IdentityHashMap<CompilerInstruction, LlvmLoweringRecord.Compiler> compilerInstructions(
       Abi abi,
       List<LlvmCompilerInstructionLoweringDefaultStrategyImpl> compilerStrategies,
-      IsaMachineInstructionMatchingPass.Result labelledMachineInstructions) {
+      IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
+      Map<CompilerInstruction, DetermineRegisterUsesAndDefsPass.Info> registerDefsUses) {
     var tableGenRecords = new IdentityHashMap<CompilerInstruction, LlvmLoweringRecord.Compiler>();
 
     Stream.concat(abi.constantSequences().stream(), abi.registerAdjustmentSequences().stream())
         .forEach(compilerInstruction -> {
+          var info = Objects.requireNonNull(registerDefsUses.get(compilerInstruction));
           for (var strategy : compilerStrategies) {
             var record =
                 strategy.lowerInstruction(compilerInstruction,
-                    labelledMachineInstructions);
+                    labelledMachineInstructions,
+                    info
+                );
 
             record.ifPresent(
                 llvmLoweringIntermediateResult -> tableGenRecords.put(compilerInstruction,

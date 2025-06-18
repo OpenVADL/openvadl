@@ -27,6 +27,7 @@ import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
+import vadl.lcb.passes.llvmLowering.DetermineRegisterUsesAndDefsPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
@@ -60,7 +61,8 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
    */
   public Optional<LlvmLoweringRecord.Compiler> lowerInstruction(
       CompilerInstruction compilerInstruction,
-      IsaMachineInstructionMatchingPass.Result supportedInstructions
+      IsaMachineInstructionMatchingPass.Result supportedInstructions,
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses
   ) {
     var uses = new ArrayList<RegisterRef>();
     var defs = new ArrayList<RegisterRef>();
@@ -99,7 +101,7 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
           continue;
         }
 
-        var baseInstructionInfo = strategy.lowerBaseInfo(instructionBehavior);
+        var baseInstructionInfo = strategy.lowerBaseInfo(instructionBehavior, registerDefsUses);
 
         var flags = baseInstructionInfo.flags();
         isTerminator |= flags.isTerminator();
