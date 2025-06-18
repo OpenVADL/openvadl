@@ -87,6 +87,6 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
 
   @Override
   public String lower() {
-    return "bb:$" + immediateOperand.fieldAccessRef().fieldRef().simpleName();
+    return "bb:$" + immediateOperand.fieldAccessRef().simpleName();
   }
 }

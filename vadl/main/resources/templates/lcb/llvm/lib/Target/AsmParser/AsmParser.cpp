@@ -219,15 +219,15 @@ bool [(${namespace})]AsmParser::ModifyImmediate(unsigned OpIndex, unsigned Opcod
                 return false;
             }
 
-            // normalize if access function used in grammar
             [# th:if="${!#strings.isEmpty(conversion.fieldAccessName)}" ]
-            if (GrammarAttribute.equals_insensitive("[(${conversion.fieldAccessName})]")) {
-              opImm64 = [(${conversion.encodeMethod})](opImm64);
+            if (!GrammarAttribute.equals_insensitive("[(${conversion.fieldAccessName})]")) {
+              // decode normalized value to fit MCInst expectation
+              opImm64 = [(${conversion.decodeMethod})](opImm64);
             }
             [/]
 
             // decode normalized value to fit MCInst expectation
-            opImm64 = [(${conversion.decodeMethod})](opImm64);
+            //opImm64 = [(${conversion.decodeMethod})](opImm64);
 
             // check if immediate fits the provided predicate for the instruction
             if(![(${conversion.predicateMethod})](opImm64))
