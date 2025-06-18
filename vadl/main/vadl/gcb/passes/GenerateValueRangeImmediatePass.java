@@ -47,10 +47,18 @@ public class GenerateValueRangeImmediatePass extends Pass {
    * Get the lowest possible value that the immediate with the given {@code formatBitSize} can
    * have.
    */
-  public static long lowestPossibleValue(BitsType rawType) {
-    return rawType.isSigned()
+  public static long lowestPossibleValue(BitsType rawType, boolean isSigned) {
+    return isSigned
         ? (long) (-1 * Math.pow(2, (double) rawType.bitWidth() - 1))
         : 0;
+  }
+
+  /**
+   * Get the lowest possible value that the immediate with the given {@code formatBitSize} can
+   * have.
+   */
+  public static long lowestPossibleValue(BitsType rawType) {
+    return lowestPossibleValue(rawType, rawType.isSigned());
   }
 
   /**
@@ -58,8 +66,17 @@ public class GenerateValueRangeImmediatePass extends Pass {
    * have.
    */
   public static long highestPossibleValue(BitsType rawType) {
+    return highestPossibleValue(rawType, rawType.isSigned());
+  }
+
+
+  /**
+   * Get the highest possible value that the immediate with the given {@code formatBitSize} can
+   * have.
+   */
+  public static long highestPossibleValue(BitsType rawType, boolean isSigned) {
     return
-        (long) (rawType.isSigned()
+        (long) (isSigned
             ? Math.pow(2, (double) rawType.bitWidth() - 1)
             : Math.pow(2, rawType.bitWidth())) - 1;
   }
@@ -77,9 +94,9 @@ public class GenerateValueRangeImmediatePass extends Pass {
           var ctx = new ValueRangeCtx();
 
           fields.forEach(field -> {
-            var ty = getType(instruction, field);
-            var lowest = lowestPossibleValue(ty);
-            var highest = highestPossibleValue(ty);
+            var isSigned = isSigned(instruction, field);
+            var lowest = lowestPossibleValue(field.type().toBitsType(), isSigned);
+            var highest = highestPossibleValue(field.type().toBitsType(), isSigned);
             var range = new ValueRange(lowest, highest);
             ctx.add(field, range);
           });
@@ -95,12 +112,12 @@ public class GenerateValueRangeImmediatePass extends Pass {
    * unsigned or signed, we have to check whether there exist a {@link FieldAccess}.
    * If it does, then take its type. If not then just use the field's type.
    */
-  private BitsType getType(Instruction instruction, Format.Field field) {
+  private boolean isSigned(Instruction instruction, Format.Field field) {
     var fieldAccesses = instruction.behavior().getNodes(FieldAccessRefNode.class).toList();
     for (var fieldAccess : fieldAccesses) {
       for (var fieldRef : fieldAccess.fieldAccess().fieldRefs()) {
         if (fieldRef.equals(field)) {
-          return (BitsType) fieldAccess.fieldAccess().type();
+          return fieldAccess.fieldAccess().type().asDataType().isSigned();
         }
       }
     }
