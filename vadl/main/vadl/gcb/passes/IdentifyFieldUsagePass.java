@@ -234,7 +234,7 @@ public class IdentifyFieldUsagePass extends Pass {
     /**
      * Get the immediate fields for the given format.
      */
-    public List<Field> getImmediates(Instruction instruction) {
+    public List<Field> getImmediateFields(Instruction instruction) {
       return fieldUsage.getOrDefault(instruction, new IdentityHashMap<>())
           .entrySet()
           .stream()

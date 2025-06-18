@@ -33,22 +33,22 @@ public final class TableGenImmediateOperandRenderer {
   public static String lower(TableGenImmediateRecord operand) {
     var rawType = operand.rawType();
     var highestPossibleValue =
-        GenerateValueRangeImmediatePass.highestPossibleValue(operand.formatFieldBitSize(), rawType);
+        GenerateValueRangeImmediatePass.highestPossibleValue(rawType);
     var lowestPossibleValue =
-        GenerateValueRangeImmediatePass.lowestPossibleValue(operand.formatFieldBitSize(), rawType);
+        GenerateValueRangeImmediatePass.lowestPossibleValue(rawType);
     return StringSubstitutor.replace("""
             class ${rawName}<ValueType ty> : Operand<ty>
             {
               let EncoderMethod = "${encoderMethod}";
               let DecoderMethod = "${decoderMethod}";
             }
-
+            
             def ${fullName}
                 : ${rawName}<${type}>
                 , ImmLeaf<${type}, [{ return Imm >= ${lowestPossibleValue}
                   && Imm <= ${highestPossibleValue}
                   && ${predicateMethod}(Imm); }]>;
-
+            
             def ${rawName}AsLabel : ${rawName}<OtherVT>;
             """,
         Map.of("rawName", operand.rawName(),

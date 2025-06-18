@@ -17,7 +17,6 @@
 package vadl.gcb.passes;
 
 import java.io.IOException;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.Diagnostic;
@@ -48,9 +47,9 @@ public class GenerateValueRangeImmediatePass extends Pass {
    * Get the lowest possible value that the immediate with the given {@code formatBitSize} can
    * have.
    */
-  public static long lowestPossibleValue(int formatBitSize, BitsType rawType) {
+  public static long lowestPossibleValue(BitsType rawType) {
     return rawType.isSigned()
-        ? (long) (-1 * Math.pow(2, (double) formatBitSize - 1))
+        ? (long) (-1 * Math.pow(2, (double) rawType.bitWidth() - 1))
         : 0;
   }
 
@@ -58,11 +57,11 @@ public class GenerateValueRangeImmediatePass extends Pass {
    * Get the highest possible value that the immediate with the given {@code formatBitSize} can
    * have.
    */
-  public static long highestPossibleValue(int formatBitSize, BitsType rawType) {
+  public static long highestPossibleValue(BitsType rawType) {
     return
         (long) (rawType.isSigned()
-            ? Math.pow(2, (double) formatBitSize - 1)
-            : Math.pow(2, formatBitSize)) - 1;
+            ? Math.pow(2, (double) rawType.bitWidth() - 1)
+            : Math.pow(2, rawType.bitWidth())) - 1;
   }
 
   @Nullable
@@ -72,16 +71,15 @@ public class GenerateValueRangeImmediatePass extends Pass {
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults
             .lastResultOf(IdentifyFieldUsagePass.class);
 
-    viam.isa().map(x -> x.ownInstructions().stream())
-        .orElse(Stream.empty())
+    viam.isa().stream().flatMap(x -> x.ownInstructions().stream())
         .forEach(instruction -> {
-          var fields = fieldResult.getImmediates(instruction);
+          var fields = fieldResult.getImmediateFields(instruction);
           var ctx = new ValueRangeCtx();
 
           fields.forEach(field -> {
             var ty = getType(instruction, field);
-            var lowest = lowestPossibleValue(field.size(), ty);
-            var highest = highestPossibleValue(field.size(), ty);
+            var lowest = lowestPossibleValue(ty);
+            var highest = highestPossibleValue(ty);
             var range = new ValueRange(lowest, highest);
             ctx.add(field, range);
           });

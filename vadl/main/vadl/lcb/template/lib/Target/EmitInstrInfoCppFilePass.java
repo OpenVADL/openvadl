@@ -388,7 +388,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
       for (var callNode : callNodes) {
         var machineInstruction = callNode.target();
-        var immediates = fieldUsages.getImmediates(machineInstruction);
+        var immediates = fieldUsages.getImmediateFields(machineInstruction);
         ensure(immediates.size() == 1,
             () -> Diagnostic.error("We only support branch instructions with one label.",
                 machineInstruction.location()));
@@ -418,7 +418,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     )).build());
 
     for (var machineInstruction : result.machineInstructions()) {
-      var immediates = fieldUsages.getImmediates(machineInstruction);
+      var immediates = fieldUsages.getImmediateFields(machineInstruction);
       ensure(immediates.size() == 1,
           () -> Diagnostic.error("We only support branch instructions with one label.",
               machineInstruction.location()));
@@ -471,7 +471,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
       var registerOrRegisterFile = pair.right();
 
       var immediate =
-          ensurePresent(fieldUsages.getImmediates(instruction).stream().findFirst(),
+          ensurePresent(fieldUsages.getImmediateFields(instruction).stream().findFirst(),
               () -> Diagnostic.error("Cannot find an immediate operand.",
                   instruction.location()));
 

@@ -76,7 +76,7 @@ class DetermineRelocationTypeForFieldPassTest extends AbstractGcbTest {
     var ctx = instruction.expectExtension(RelocationKindCtx.class);
     Assertions.assertNotNull(ctx);
 
-    var immediates = container.getImmediates(instruction);
+    var immediates = container.getImmediateFields(instruction);
     Assertions.assertNotNull(immediates);
 
     var formatField = getImmediate(field, immediates);

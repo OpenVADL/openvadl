@@ -35,7 +35,7 @@ public class TableGenInstructionImmediateOperand extends TableGenDefaultInstruct
    */
   public TableGenInstructionImmediateOperand(LlvmFieldAccessRefNode node) {
     super(node, node.immediateOperand().fullname(),
-        node.fieldAccess().fieldRef().identifier.simpleName());
+        node.fieldAccess().identifier.simpleName());
     this.immediateOperand = node.immediateOperand();
   }
 

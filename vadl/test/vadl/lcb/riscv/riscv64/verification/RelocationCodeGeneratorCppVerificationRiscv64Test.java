@@ -101,7 +101,7 @@ public class RelocationCodeGeneratorCppVerificationRiscv64Test extends AbstractL
           elfRelocations.stream().filter(x -> x.format() == instruction.format()).findFirst();
 
       relocation.ifPresent(
-          hasRelocationComputationAndUpdate -> immediateDetection.getImmediates(instruction)
+          hasRelocationComputationAndUpdate -> immediateDetection.getImmediateFields(instruction)
               .forEach(immField -> {
                 var params = hasRelocationComputationAndUpdate.fieldUpdateFunction().parameters();
                 // The first parameter is hardcoded to be the instruction word.

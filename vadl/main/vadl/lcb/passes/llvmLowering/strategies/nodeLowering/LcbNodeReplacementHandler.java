@@ -247,7 +247,7 @@ public class LcbNodeReplacementHandler {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(TupleGetFieldNode node) {
-    throw Diagnostic.error("not supported", node.location()).build();
+    node.replaceAndDelete(new LlvmUnlowerableSD());
   }
 
   @Handler

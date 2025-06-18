@@ -225,7 +225,7 @@ public class GenerateLinkerComponentsPass extends Pass {
     for (var instruction : instructions) {
       // We cannot use all the fields of a format because not all are immediates.
       // That's why we need the `fieldUsages`.
-      var immediateFields = fieldUsages.getImmediates(instruction);
+      var immediateFields = fieldUsages.getImmediateFields(instruction);
       for (var imm : immediateFields) {
         candidatesAuto.add(new Pair<>(instruction.format(), imm));
       }

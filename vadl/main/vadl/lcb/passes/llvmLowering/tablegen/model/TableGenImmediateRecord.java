@@ -39,10 +39,7 @@ public class TableGenImmediateRecord {
   private final Identifier predicateMethod;
   private final ValueType llvmType;
   private final BitsType rawType;
-  private final int formatFieldBitSize;
   private final Format.FieldAccess fieldAccessRef;
-  private final VariantKind absoluteVariantKind;
-  private final VariantKind relativeVariantKind;
 
   private final PrintableInstruction instructionRef;
 
@@ -67,10 +64,7 @@ public class TableGenImmediateRecord {
     this.predicateMethod = createPredicateMethod(instruction, fieldAccess);
     this.llvmType = llvmType;
     this.fieldAccessRef = fieldAccess;
-    this.absoluteVariantKind = VariantKind.absolute(fieldAccessRef.fieldRef());
-    this.relativeVariantKind = VariantKind.relative(fieldAccess.fieldRef());
     this.rawType = (BitsType) fieldAccessRef.type();
-    this.formatFieldBitSize = fieldAccessRef.fieldRef().size();
   }
 
   public static Identifier createEncoderMethod(PrintableInstruction instruction) {
@@ -123,10 +117,6 @@ public class TableGenImmediateRecord {
     return predicateMethod;
   }
 
-  public int formatFieldBitSize() {
-    return formatFieldBitSize;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -150,13 +140,5 @@ public class TableGenImmediateRecord {
 
   public Format.FieldAccess fieldAccessRef() {
     return fieldAccessRef;
-  }
-
-  public VariantKind absoluteVariantKind() {
-    return absoluteVariantKind;
-  }
-
-  public VariantKind relativeVariantKind() {
-    return relativeVariantKind;
   }
 }

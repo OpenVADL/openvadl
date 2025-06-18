@@ -67,7 +67,7 @@ public class DetermineRelocationTypeForFieldPass extends Pass {
     viam.isa().map(InstructionSetArchitecture::ownInstructions).orElse(List.of()).forEach(
         instruction -> {
           var immediateKindMap = new HashMap<Format.Field, CompilerRelocation.Kind>();
-          fieldUsages.getImmediates(instruction).forEach(
+          fieldUsages.getImmediateFields(instruction).forEach(
               immField -> {
                 // Determine for every instruction's immediate in the specification the
                 // relocation kind.
