@@ -494,6 +494,10 @@ public class Graph {
     // make shallow copy of all nodes. we will replace the links in the next step
     this.getNodes().forEach(oldNode -> {
       var newNode = oldNode.shallowCopy();
+
+      // Keep the source code location
+      newNode.setSourceLocationIfNotSet(oldNode.location());
+
       cache.put(oldNode, newNode);
     });
 
