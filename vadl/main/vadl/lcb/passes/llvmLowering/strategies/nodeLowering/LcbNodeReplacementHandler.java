@@ -482,6 +482,10 @@ public class LcbNodeReplacementHandler {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(ReadRegTensorNode readRegTensorNode) {
+    if (readRegTensorNode.isDeleted()) {
+      return;
+    }
+
     if (readRegTensorNode.hasRegisterFile()) {
       // If the address is constant and register file has a constraint for, then we should replace
       // it by the constraint value.
@@ -586,6 +590,10 @@ public class LcbNodeReplacementHandler {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(WriteRegTensorNode writeRegTensorNode) {
+    if (writeRegTensorNode.isDeleted()) {
+      return;
+    }
+
     for (var index : writeRegTensorNode.indices()) {
       LcbNodeReplacementHandlerDispatcher.dispatch(this, index);
     }
@@ -614,14 +622,57 @@ public class LcbNodeReplacementHandler {
           LcbNodeReplacementHandlerDispatcher.dispatch(this, conditional.arguments().get(0));
           LcbNodeReplacementHandlerDispatcher.dispatch(this, conditional.arguments().get(1));
 
+          if (conditional.arguments().size() != 2) {
+            return;
+          }
+
           var first = conditional.arguments().get(0);
           var second = conditional.arguments().get(1);
           var immOffset =
               builtin.arguments().stream().filter(x -> x instanceof FieldAccessRefNode)
                   .findFirst();
 
+          // Both arguments for the conditional must be registers.
+          if (!(first instanceof ReadRegTensorNode && second instanceof ReadRegTensorNode)) {
+            Objects.requireNonNull(writeRegTensorNode.graph()).add(new LlvmUnlowerableSD());
+            return;
+          }
+
+          var hasOnlyOneImmOffset =
+              builtin.arguments().stream().filter(x -> x instanceof FieldAccessRefNode).count()
+                  == 1;
+          var hasPC = builtin.arguments().stream()
+              .filter(x -> x instanceof ReadRegTensorNode readRegTensorNode
+                  && readRegTensorNode.isPcAccess()).count() == 1;
+          var hasNoFields =
+              builtin.arguments().stream().noneMatch(x -> x instanceof FieldRefNode);
+
+          /*
+           Check conditions s.t. this instruction matches
+           ```
+           instruction $name : Btype =                        // conditional branch instructions
+              if (X(rs1) as $lhsTy) $relOp X(rs2) then
+                PC := PC + immS
+            ```
+
+            but not
+
+            ```
+            instruction TEMP : Rtype =                        // 3 register operand instructions
+              if NZCV_Z = 1 then
+                PC := PC + X(rs1) + X(rs2) + shamt
+            ```
+           */
+          if (!(hasOnlyOneImmOffset && hasNoFields && hasPC)) {
+            Objects.requireNonNull(writeRegTensorNode.graph()).add(new LlvmUnlowerableSD());
+            return;
+          }
+
           if (immOffset.isEmpty()) {
-            throw Diagnostic.error("Immediate Offset is missing", builtin.location()).build();
+            DeferredDiagnosticStore.add(
+                Diagnostic.warning("Cannot find an immediate offset to make it a conditional jump",
+                    builtin.location()).build());
+            return;
           }
 
           writeRegTensorNode.value().replaceAndDelete(new LlvmBrCcSD(

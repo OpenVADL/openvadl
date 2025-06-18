@@ -17,6 +17,7 @@
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 import java.util.List;
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.javaannotations.viam.DataValue;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
@@ -37,12 +38,12 @@ public class LlvmTypeCastSD extends UnaryNode implements LlvmNodeLowerable {
 
   public LlvmTypeCastSD(ExpressionNode value, Type type) {
     super(value, type);
-    this.valueType = ValueType.from(type).get();
+    this.valueType = ValueType.from(CppTypeMap.upcast(type)).get();
   }
 
   @Override
   public ExpressionNode copy() {
-    return new LlvmTypeCastSD((ExpressionNode) value.copy(), type());
+    return new LlvmTypeCastSD(value.copy(), type());
   }
 
   @Override

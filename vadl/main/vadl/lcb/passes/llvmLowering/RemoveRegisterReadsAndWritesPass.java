@@ -53,7 +53,9 @@ public class RemoveRegisterReadsAndWritesPass extends Pass {
       var list = Stream.concat(affectedReads, affectedWrites).toList();
 
       for (var element : list) {
-        element.safeDelete();
+        if (!element.hasUsages()) {
+          element.safeDelete();
+        }
       }
     }
 
