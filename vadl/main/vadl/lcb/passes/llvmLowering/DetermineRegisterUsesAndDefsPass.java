@@ -43,6 +43,9 @@ import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
+/**
+ * Determine the uses and defs of registers.
+ */
 public class DetermineRegisterUsesAndDefsPass extends Pass {
   public DetermineRegisterUsesAndDefsPass(GeneralConfiguration configuration) {
     super(configuration);
@@ -140,12 +143,18 @@ public class DetermineRegisterUsesAndDefsPass extends Pass {
     );
   }
 
+  /**
+   * Output of the pass.
+   */
   public record Output(Map<Instruction, Info> machineInstructions,
                        Map<CompilerInstruction, Info> compilerInstructions,
                        Map<PseudoInstruction, Info> pseudoInstructions) {
 
   }
 
+  /**
+   * Uses and defs of registers.
+   */
   public record Info(List<RegisterRef> uses, List<RegisterRef> defs) {
 
   }
