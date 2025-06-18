@@ -31,11 +31,22 @@ public final class TableGenImmediateOperandRenderer {
    * Transforms the given {@code operand} into a string which can be used by LLVM's TableGen.
    */
   public static String lower(TableGenImmediateRecord operand) {
-    var rawType = operand.rawType();
+    if (operand.fieldAccessRef().fieldRefs().size() == 1) {
+      return handleCaseOneField(operand);
+    } else {
+      return handleCaseMultipleFields(operand);
+    }
+  }
+
+  private static String handleCaseOneField(TableGenImmediateRecord operand) {
+    var field = operand.fieldAccessRef().fieldRefs().getFirst();
+    var ty = field.type().toBitsType();
+    var isSigned = operand.fieldAccessRef().type().asDataType().isSigned();
     var highestPossibleValue =
-        GenerateValueRangeImmediatePass.highestPossibleValue(rawType);
+        GenerateValueRangeImmediatePass.highestPossibleValue(ty, isSigned);
     var lowestPossibleValue =
-        GenerateValueRangeImmediatePass.lowestPossibleValue(rawType);
+        GenerateValueRangeImmediatePass.lowestPossibleValue(ty, isSigned);
+
     return StringSubstitutor.replace("""
             class ${rawName}<ValueType ty> : Operand<ty>
             {
@@ -58,6 +69,28 @@ public final class TableGenImmediateOperandRenderer {
             "type", operand.llvmType().getLlvmType(),
             "lowestPossibleValue", lowestPossibleValue,
             "highestPossibleValue", highestPossibleValue,
+            "predicateMethod", operand.predicateMethod().lower()));
+  }
+
+  private static String handleCaseMultipleFields(TableGenImmediateRecord operand) {
+    return StringSubstitutor.replace("""
+            class ${rawName}<ValueType ty> : Operand<ty>
+            {
+              let EncoderMethod = "${encoderMethod}";
+              let DecoderMethod = "${decoderMethod}";
+            }
+            
+            def ${fullName}
+                : ${rawName}<${type}>
+                , ImmLeaf<${type}, [{ return ${predicateMethod}(Imm); }]>;
+            
+            def ${rawName}AsLabel : ${rawName}<OtherVT>;
+            """,
+        Map.of("rawName", operand.rawName(),
+            "fullName", operand.fullname(),
+            "encoderMethod", operand.encoderMethod().lower(),
+            "decoderMethod", operand.decoderMethod().lower(),
+            "type", operand.llvmType().getLlvmType(),
             "predicateMethod", operand.predicateMethod().lower()));
   }
 }
