@@ -402,7 +402,7 @@ public class LlvmLoweringPass extends Pass {
   ) {
     var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord.Pseudo>();
 
-    viam.isa().map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
+    viam.isa().stream().flatMap(isa -> isa.ownPseudoInstructions().stream())
         .forEach(pseudo -> {
           var info = Objects.requireNonNull(registerDefsUses.get(pseudo));
           for (var strategy : pseudoStrategies) {
