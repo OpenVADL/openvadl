@@ -70,7 +70,6 @@ import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -172,8 +171,8 @@ public abstract class LlvmInstructionLoweringStrategy {
     var outputOperands = getTableGenOutputOperands(behavior);
     var inputOperands = getTableGenInputOperands(outputOperands, behavior);
 
-    var registerUses = getRegisterUses(behavior, inputOperands, outputOperands);
-    var registerDefs = getRegisterDefs(behavior, inputOperands, outputOperands);
+    var registerUses = getRegisterUses(behavior);
+    var registerDefs = getRegisterDefs(behavior);
     var flags = getFlags(behavior);
 
     return new LlvmLoweringPass.BaseInstructionInfo(inputOperands,
@@ -362,28 +361,20 @@ public abstract class LlvmInstructionLoweringStrategy {
     return false;
   }
 
-  protected void visitReplacementHooks(
-      List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> visitor,
-      SideEffectNode sideEffect) {
-    for (var v : visitor.stream().filter(x -> x.acceptable(sideEffect)).toList()) {
-      v.visitApplicable(sideEffect);
-    }
-  }
-
   /**
    * Get a list of {@link RegisterRef} which are written. It is considered a
    * register definition when a {@link WriteRegTensorNode} with a
    * constant address exists. However, the only registers without any constraints on the
    * register file will be returned. Also program containers are not part of a "Def".
    *
-   * @param behavior          of the {@link Instruction}.
-   * @param filterConstraints whether registers with constraints should be considered.
+   * @param behavior of the {@link Instruction}.
    */
-  private static List<RegisterRef> getRegisterDefs(Graph behavior, boolean filterConstraints) {
+  private static List<RegisterRef> getRegisterDefs(Graph behavior) {
     return behavior.getNodes(WriteRegTensorNode.class)
-        .filter(node -> node.staticCounterAccess() == null)
-        // all indices must be constant
-        .filter(n -> n.indices().stream().allMatch(ExpressionNode::isConstant))
+        .filter(writeRegTensorNode -> writeRegTensorNode.indices().stream()
+            .allMatch(ExpressionNode::isConstant))
+        .filter(writeRegTensorNode -> writeRegTensorNode.registerTensor().constraints().length == 0)
+        .filter(readRegTensorNode -> !readRegTensorNode.isPcAccess())
         .map(node -> {
           var reg = node.regTensor();
           reg.ensure(reg.indexDimensions().size() < 2,
@@ -394,27 +385,7 @@ public abstract class LlvmInstructionLoweringStrategy {
             return new RegisterRef(reg, ((ConstantNode) node.indices().getFirst()).constant());
           }
         })
-        // Register should not have any constraints. When it does then there is no
-        // need that LLVM knows about it because it should not be a dependency.
-        .filter(register -> filterConstraints || register.constraints().isEmpty())
         .toList();
-  }
-
-  /**
-   * Get a list of {@link RegisterRef} which are written. It is considered a
-   * register definition when a {@link WriteRegTensorNode} with a
-   * constant address exists. However, the only registers without any constraints on the
-   * register file will be returned.
-   */
-  public static List<RegisterRef> getRegisterDefs(Graph behavior,
-                                                  List<TableGenInstructionOperand> inputOperands,
-                                                  List<TableGenInstructionOperand> outputOperands) {
-    // If a TableGen record has no input or output operands,
-    // and no registers as def or use then it will throw an error.
-    // Therefore, when input and output operands are empty then do not filter any
-    // registers.
-    var filterRegistersWithConstraints = inputOperands.isEmpty() && outputOperands.isEmpty();
-    return getRegisterDefs(behavior, filterRegistersWithConstraints);
   }
 
   /**
@@ -423,41 +394,26 @@ public abstract class LlvmInstructionLoweringStrategy {
    * constant address exists. However, the only registers without any constraints on the
    * register file will be returned. Also program containers are not part of a "Use".
    *
-   * @param behavior          of the {@link Instruction}.
-   * @param filterConstraints whether registers with constraints should be considered.
+   * @param behavior of the {@link Instruction}.
    */
-  private static List<RegisterRef> getRegisterUses(Graph behavior, boolean filterConstraints) {
-    return Stream.concat(behavior.getNodes(ReadRegTensorNode.class)
-                .filter(node -> node.staticCounterAccess() == null
-                    && node.regTensor().isSingleRegister())
-                .map(ReadRegTensorNode::regTensor)
-                .map(RegisterRef::new),
-            behavior.getNodes(ReadRegTensorNode.class)
-                .filter(node -> node.hasConstantAddress() && node.regTensor().isRegisterFile())
-                .map(x -> new RegisterRef(x.regTensor(),
-                    ((ConstantNode) x.address()).constant()))
-        )
+  private static List<RegisterRef> getRegisterUses(Graph behavior) {
+    var registers = behavior.getNodes(ReadRegTensorNode.class)
+        .filter(readRegTensorNode -> readRegTensorNode.regTensor().isSingleRegister())
+        .filter(readRegTensorNode -> !readRegTensorNode.isPcAccess())
+        .toList();
+
+    var registerFilesWithConstantAddress = behavior.getNodes(ReadRegTensorNode.class)
+        .filter(readRegTensorNode -> readRegTensorNode.regTensor().isRegisterFile())
+        .filter(ReadResourceNode::hasConstantAddress)
+        .toList();
+
+    return Stream.concat(registers.stream(), registerFilesWithConstantAddress.stream())
+        .filter(readRegTensorNode -> !readRegTensorNode.hasConstraintForAddress())
         // Register should not have any constraints. When it does then there is no
         // need that LLVM knows about it because it should not be a dependency.
-        .filter(register -> filterConstraints || register.constraints().isEmpty())
+        .map(readRegTensorNode -> new RegisterRef(readRegTensorNode.regTensor(),
+            ((ConstantNode) readRegTensorNode.address()).constant()))
         .toList();
-  }
-
-  /**
-   * Get a list of {@link RegisterRef} which are read. It is considered a
-   * register usage when a {@link ReadRegTensorNode} with a
-   * constant address exists. However, the only registers without any constraints on the
-   * register file will be returned.
-   */
-  public static List<RegisterRef> getRegisterUses(Graph behavior,
-                                                  List<TableGenInstructionOperand> inputOperands,
-                                                  List<TableGenInstructionOperand> outputOperands) {
-    // If a TableGen record has no input or output operands,
-    // and no registers as def or use then it will throw an error.
-    // Therefore, when input and output operands are empty then do not filter any
-    // registers.
-    var filterRegistersWithConstraints = inputOperands.isEmpty() && outputOperands.isEmpty();
-    return getRegisterUses(behavior, filterRegistersWithConstraints);
   }
 
   /**

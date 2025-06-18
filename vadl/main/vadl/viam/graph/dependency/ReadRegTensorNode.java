@@ -100,6 +100,30 @@ public class ReadRegTensorNode extends ReadResourceNode implements HasRegisterTe
     this.staticCounterAccess = staticCounterAccess;
   }
 
+  /**
+   * If this node has a constant address and the {@link RegisterTensor}
+   * has a {@link vadl.viam.RegisterTensor.Constraint} for {@link #indices}.
+   */
+  public boolean hasConstraintForAddress() {
+    if (hasConstantAddress()) {
+      for (var index : indices) {
+        var addressIndex = ((ConstantNode) index).constant;
+
+        for (var constraint : regTensor.constraints()) {
+          for (var constraintIndex : constraint.indices()) {
+            if (!addressIndex.equals(constraintIndex)) {
+              return false;
+            }
+          }
+
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
 
   @Override
   public void verifyState() {

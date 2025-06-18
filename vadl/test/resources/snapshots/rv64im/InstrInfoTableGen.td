@@ -4954,8 +4954,8 @@ let isAsCheapAsAMove   = 0;
 let Constraints = "";
 let AddedComplexity = 0;
 
-let Uses = [ X0 ];
-let Defs = [ X0 ];
+let Uses = [  ];
+let Defs = [  ];
 }
 
 
