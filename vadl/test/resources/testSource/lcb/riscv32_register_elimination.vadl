@@ -143,6 +143,13 @@ instruction set architecture RV3264IM = {
     encoding TEMP = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
     assembly TEMP = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(shamt))
 
+    instruction TEMP2 : Rtype = {                        // 3 register operand instructions
+          NZCV_N := 1
+          X(rd) := 1
+        }
+        encoding TEMP2 = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
+        assembly TEMP2 = (mnemonic, " ", register(rd))
+
   pseudo instruction CALL( symbol : Bits<32> ) =
   {
       LUI{ rd = 1 as Bits5, imm = hi( symbol ) }

@@ -24,6 +24,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
+import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
@@ -48,12 +49,14 @@ public class RemoveRegisterReadsAndWritesPass extends Pass {
       var affectedReads = instruction.behavior().getNodes(ReadRegTensorNode.class)
           .filter(x -> x.registerTensor().isSingleRegister() && !x.isPcAccess());
       var affectedWrites = instruction.behavior().getNodes(WriteRegTensorNode.class)
-          .filter(x -> x.registerTensor().isSingleRegister() && !x.isPcAccess());
+          .filter(x -> x.registerTensor().isSingleRegister() && !x.isPcAccess())
+          .toList();
 
-      var list = Stream.concat(affectedReads, affectedWrites).toList();
-
-      for (var element : list) {
-        if (!element.hasUsages()) {
+      for (var element : affectedWrites) {
+        if (element.usages().count() == 1
+            && element.usages().toList().getFirst() instanceof InstrEndNode instrEndNode) {
+          instrEndNode.sideEffects().remove(element);
+          element.clearUsages();
           element.safeDelete();
         }
       }
