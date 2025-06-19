@@ -28,7 +28,7 @@ import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
 
 /**
- * The {@link RemoveRegisterReadsAndWritesPass} removed any register writes and reads.
+ * The {@link RemoveRegisterWritesPass} removed any register writes and reads.
  * Therefore, status builtins don't write the status registers anymore. We can try to replace
  * status builtins to the non status builtins.
  */

@@ -17,7 +17,6 @@
 package vadl.lcb.passes.llvmLowering;
 
 import java.io.IOException;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -25,15 +24,14 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 import vadl.viam.graph.control.InstrEndNode;
-import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
- * Remove all register reads or writes. We already determined in
+ * Remove all register writes which are not PC writes. We already determined in
  * {@link DetermineRegisterUsesAndDefsPass} the uses and defs.
  */
-public class RemoveRegisterReadsAndWritesPass extends Pass {
-  public RemoveRegisterReadsAndWritesPass(GeneralConfiguration configuration) {
+public class RemoveRegisterWritesPass extends Pass {
+  public RemoveRegisterWritesPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 
@@ -46,8 +44,6 @@ public class RemoveRegisterReadsAndWritesPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     for (var instruction : viam.isa().orElseThrow().ownInstructions()) {
-      var affectedReads = instruction.behavior().getNodes(ReadRegTensorNode.class)
-          .filter(x -> x.registerTensor().isSingleRegister() && !x.isPcAccess());
       var affectedWrites = instruction.behavior().getNodes(WriteRegTensorNode.class)
           .filter(x -> x.registerTensor().isSingleRegister() && !x.isPcAccess())
           .toList();
