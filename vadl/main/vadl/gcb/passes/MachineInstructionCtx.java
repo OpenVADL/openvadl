@@ -18,7 +18,6 @@ package vadl.gcb.passes;
 
 import java.util.Optional;
 import vadl.types.BitsType;
-import vadl.types.DataType;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.Instruction;

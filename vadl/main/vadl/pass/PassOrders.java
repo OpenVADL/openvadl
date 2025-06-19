@@ -36,7 +36,6 @@ import vadl.gcb.passes.GenerateCompilerRegistersPass;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.InstructionPatternPruningPass;
-import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.NormalizeFieldsToFieldAccessFunctionsPass;
 import vadl.gcb.passes.SetMissingConfigurationValuesPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
@@ -71,6 +70,7 @@ import vadl.iss.template.target.EmitIssGdbStubPass;
 import vadl.iss.template.target.EmitIssInsnTransCIncPass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslateCPass;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaRelocationMatchingPass;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
@@ -81,6 +81,8 @@ import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.ISelLoweringOperationActionPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.RemoveRegisterWritesPass;
+import vadl.lcb.passes.llvmLowering.ReplaceStatusBuiltinsByNonStatusBuiltinsPass;
 import vadl.lcb.passes.llvmLowering.compensation.CompensationPatternPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.pseudo.AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass;
@@ -217,7 +219,6 @@ public class PassOrders {
     order.add(new DetectRegisterIndicesPass(gcbConfiguration));
     order.add(new NormalizeFieldsToFieldAccessFunctionsPass(gcbConfiguration));
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
-    order.add(new IsaMachineInstructionMatchingPass(gcbConfiguration));
     order.add(new DetermineRelocationTypeForFieldPass(gcbConfiguration));
     order.add(new GenerateValueRangeImmediatePass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
@@ -244,10 +245,21 @@ public class PassOrders {
     order.add(new AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass(
         configuration));
 
-    order.add(new IsaPseudoInstructionMatchingPass(configuration));
     order.add(new IsaRelocationMatchingPass(configuration));
     order.add(new GenerateTableGenRegistersPass(configuration));
     order.add(new DetermineRegisterUsesAndDefsPass(configuration));
+    order.add(new RemoveRegisterWritesPass(configuration));
+    order.add(new RemoveUnusedStatusFlagsFromBuiltinsPass(configuration));
+    order.add(new ReplaceStatusBuiltinsByNonStatusBuiltinsPass(configuration));
+
+    // Common optimizations after register elimination
+    order.add(new CanonicalizationPass(configuration));
+    order.add(new AlgebraicSimplificationPass(configuration));
+    order.add(new BehaviorRewritePass(configuration));
+
+    order.add(new IsaMachineInstructionMatchingPass(configuration));
+    order.add(new IsaPseudoInstructionMatchingPass(configuration));
+
     order.add(new LlvmLoweringPass(configuration));
     order.add(new GenerateTableGenMachineInstructionRecordPass(configuration));
     order.add(new GenerateTableGenPseudoInstructionRecordPass(configuration));

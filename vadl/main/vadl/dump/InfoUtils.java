@@ -19,7 +19,6 @@ package vadl.dump;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import vadl.utils.Pair;
 
 /**
  * Utility functions to create common info objects.

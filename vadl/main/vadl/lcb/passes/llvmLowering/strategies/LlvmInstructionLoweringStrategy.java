@@ -31,10 +31,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.DetermineRegisterUsesAndDefsPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
@@ -323,7 +323,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Check if some properties for the naive approach do not uphold.
    * Return {@code true} if it is not lowerable.
    */
-  private boolean hasRedFlags(
+  protected boolean hasRedFlags(
       Instruction instruction,
       Graph graph) {
     if (!graph.getNodes(LlvmUnlowerableSD.class).toList().isEmpty()) {
@@ -386,7 +386,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    *
    * @return {@code true} if the {@link Graph} is lowerable.
    */
-  private boolean checkIfNoControlFlow(Graph behavior) {
+  protected boolean checkIfNoControlFlow(Graph behavior) {
     return behavior.getNodes(ControlNode.class)
         .allMatch(
             x -> x instanceof AbstractBeginNode || x instanceof AbstractEndNode); // exceptions
@@ -398,7 +398,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    *
    * @return {@code true} if the {@link Graph} is lowerable.
    */
-  private boolean checkIfNotAllowedDataflowNodes(Graph behavior) {
+  protected boolean checkIfNotAllowedDataflowNodes(Graph behavior) {
     return behavior.getNodes(DependencyNode.class)
         .noneMatch(x -> x instanceof FuncParamNode);
   }
@@ -407,7 +407,8 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Extract the output parameters of {@link Graph}.
    */
   public static List<TableGenInstructionOperand> getTableGenOutputOperands(Graph graph) {
-    return getOutputOperands(graph)
+    var operands = getOutputOperands(graph);
+    return operands
         .stream()
         .filter(operand -> {
           // Why?
@@ -429,21 +430,22 @@ public abstract class LlvmInstructionLoweringStrategy {
       List<TableGenInstructionOperand> outputOperands,
       Graph graph) {
 
+    var inputOperands = getInputOperands(graph)
+        .stream()
+        .filter(node -> {
+          // Why?
+          // Because LLVM cannot handle static registers in input or output operands.
+          // They belong to defs and uses instead.
+          if (node instanceof ReadRegTensorNode readRegTensorNode
+              && readRegTensorNode.regTensor().isRegisterFile()) {
+            return !readRegTensorNode.hasConstantAddress();
+          }
+          return true;
+        })
+        .map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput)
+        .toList();
 
-    return filterOutputs(outputOperands,
-        getInputOperands(graph)
-            .stream()
-            .filter(node -> {
-              // Why?
-              // Because LLVM cannot handle static registers in input or output operands.
-              // They belong to defs and uses instead.
-              if (node instanceof ReadRegTensorNode readRegTensorNode
-                  && readRegTensorNode.regTensor().isRegisterFile()) {
-                return !readRegTensorNode.hasConstantAddress();
-              }
-              return true;
-            })
-            .map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput))
+    return filterOutputs(outputOperands, inputOperands.stream())
         .toList();
   }
 

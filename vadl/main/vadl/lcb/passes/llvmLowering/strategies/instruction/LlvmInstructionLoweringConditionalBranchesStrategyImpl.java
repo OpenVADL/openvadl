@@ -36,9 +36,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.DetermineRegisterUsesAndDefsPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
@@ -112,6 +112,13 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Abi abi,
       DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
     var info = lowerBaseInfo(visitedGraph, registerDefsUses);
+
+    if (hasRedFlags(instruction, visitedGraph)) {
+      return new LlvmLoweringRecord.Machine(instruction,
+          info,
+          Collections.emptyList(),
+          Collections.emptyList());
+    }
 
     var writes = visitedGraph.getNodes(WriteResourceNode.class).toList();
     var patterns = generatePatterns(instruction, info.inputs(), writes);

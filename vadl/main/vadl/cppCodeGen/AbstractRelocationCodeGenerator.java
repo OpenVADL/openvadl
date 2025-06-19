@@ -26,12 +26,10 @@ import vadl.cppCodeGen.model.nodes.CppUpdateBitRangeNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.types.BitsType;
-import vadl.types.DataType;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SliceNode;
-import vadl.viam.graph.dependency.TruncateNode;
 
 /**
  * This class overrides the default implementation of {@link CDefaultMixins} for

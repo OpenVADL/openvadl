@@ -92,15 +92,16 @@ public class DetermineRegisterUsesAndDefsPass extends Pass {
   }
 
   /**
-   Imagine that you have a pseudo instruction which hardcodes the register. We need to replace
-   the fields in the instruction and compute the defs and uses again. We must not reuse the result
-   from the machine instructions.
-
-   pseudo instruction CALL( symbol : Bits<32> ) =
-   {
-        LUI{ rd = 1 as Bits5, imm = hi( symbol ) }
-        JALR{ rd = 1 as Bits5, rs1 = 1 as Bits5, imm = lo( symbol ) }
-   }
+   * Imagine that you have a pseudo instruction which hardcodes the register. We need to replace
+   * the fields in the instruction and compute the defs and uses again. We must not reuse the result
+   * from the machine instructions.
+   * <pre>
+   * pseudo instruction CALL( symbol : Bits<32> ) =
+   * {
+   *  LUI{ rd = 1 as Bits5, imm = hi( symbol ) }
+   *  JALR{ rd = 1 as Bits5, rs1 = 1 as Bits5, imm = lo( symbol ) }
+   * }
+   * </pre>
    */
   private Info applyArgumentsAndCreateInfo(CompilerInstruction instruction) {
     var uses = new HashSet<RegisterRef>();
@@ -207,10 +208,11 @@ public class DetermineRegisterUsesAndDefsPass extends Pass {
 
     return Stream.concat(registers.stream(), registerFilesWithConstantAddress.stream())
         .filter(readRegTensorNode -> !readRegTensorNode.hasConstraintForAddress())
+        .filter(readRegTensorNode -> readRegTensorNode.indices().size() == 1)
         // Register should not have any constraints. When it does then there is no
         // need that LLVM knows about it because it should not be a dependency.
         .map(readRegTensorNode -> new RegisterRef(readRegTensorNode.regTensor(),
-            ((ConstantNode) readRegTensorNode.address()).constant()))
+            ((ConstantNode) readRegTensorNode.indices().getFirst()).constant()))
         .toList();
   }
 }
