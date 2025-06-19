@@ -19,7 +19,6 @@ package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensurePresent;
 
-import java.util.Objects;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.utils.SourceLocation;

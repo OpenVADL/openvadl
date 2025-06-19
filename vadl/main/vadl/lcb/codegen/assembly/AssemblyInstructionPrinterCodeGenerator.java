@@ -19,8 +19,6 @@ package vadl.lcb.codegen.assembly;
 import java.io.StringWriter;
 import vadl.cppCodeGen.model.CppFunctionCode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
-import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
-import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.control.ReturnNode;
 

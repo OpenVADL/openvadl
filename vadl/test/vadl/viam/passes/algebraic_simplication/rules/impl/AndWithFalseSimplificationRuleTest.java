@@ -27,7 +27,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import vadl.AbstractTest;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
-import vadl.utils.GraphUtils;
 import vadl.viam.Constant;
 import vadl.viam.Parameter;
 import vadl.viam.graph.NodeList;

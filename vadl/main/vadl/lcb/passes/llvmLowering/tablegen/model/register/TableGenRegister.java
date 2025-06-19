@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import vadl.gcb.valuetypes.CompilerRegister;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.template.Renderable;
 

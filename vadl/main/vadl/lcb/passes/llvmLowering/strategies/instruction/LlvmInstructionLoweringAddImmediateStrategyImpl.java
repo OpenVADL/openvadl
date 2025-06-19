@@ -21,9 +21,9 @@ import static vadl.gcb.passes.MachineInstructionLabel.ADDI_64;
 
 import java.util.List;
 import java.util.Set;
-import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;

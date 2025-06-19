@@ -95,12 +95,13 @@ public class DetermineRegisterUsesAndDefsPass extends Pass {
    * Imagine that you have a pseudo instruction which hardcodes the register. We need to replace
    * the fields in the instruction and compute the defs and uses again. We must not reuse the result
    * from the machine instructions.
-   * <p>
+   * <pre>
    * pseudo instruction CALL( symbol : Bits<32> ) =
    * {
-   * LUI{ rd = 1 as Bits5, imm = hi( symbol ) }
-   * JALR{ rd = 1 as Bits5, rs1 = 1 as Bits5, imm = lo( symbol ) }
+   *  LUI{ rd = 1 as Bits5, imm = hi( symbol ) }
+   *  JALR{ rd = 1 as Bits5, rs1 = 1 as Bits5, imm = lo( symbol ) }
    * }
+   * </pre>
    */
   private Info applyArgumentsAndCreateInfo(CompilerInstruction instruction) {
     var uses = new HashSet<RegisterRef>();

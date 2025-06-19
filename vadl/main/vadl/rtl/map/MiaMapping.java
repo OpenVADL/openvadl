@@ -16,7 +16,6 @@
 
 package vadl.rtl.map;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;

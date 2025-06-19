@@ -24,19 +24,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 import vadl.gcb.AbstractGcbTest;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Format;
-import vadl.viam.Instruction;
-import vadl.viam.Specification;
 
 public class IdentifyFieldUsagePassTest extends AbstractGcbTest {
 

@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.List;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.AbstractCppCodeGenTest;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;

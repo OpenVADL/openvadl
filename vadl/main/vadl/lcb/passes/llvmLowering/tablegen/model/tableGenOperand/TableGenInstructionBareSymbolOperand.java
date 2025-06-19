@@ -16,7 +16,6 @@
 
 package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
-import java.util.Objects;
 import vadl.viam.graph.Node;
 
 /**
