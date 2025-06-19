@@ -137,18 +137,34 @@ instruction set architecture RV3264IM = {
   register NZCV_C : Bits1             // Carry
   register NZCV_V : Bits1             // Overflow
 
-  instruction TEMP : Rtype =                        // 3 register operand instructions
+  instruction TEMP : Rtype =
       if NZCV_Z = 1 then
         PC := PC + X(rs1) + X(rs2) + shamt
     encoding TEMP = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
     assembly TEMP = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(shamt))
 
-    instruction TEMP2 : Rtype = {                        // 3 register operand instructions
-          NZCV_N := 1
-          X(rd) := 1
-        }
-        encoding TEMP2 = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
-        assembly TEMP2 = (mnemonic, " ", register(rd))
+    instruction TEMP2 : Rtype = {
+      NZCV_N := 1
+      X(rd) := 1
+    }
+    encoding TEMP2 = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
+    assembly TEMP2 = (mnemonic, " ", register(rd))
+
+    instruction TEMP3 : Rtype = {
+      X(rd) := NZCV_N as Bits<32>
+    }
+    encoding TEMP3 = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
+    assembly TEMP3 = (mnemonic, " ", register(rd))
+
+    instruction TEMP4 : Rtype = {
+      let result, status = VADL::adds(X(rs1), X(rs2)) in
+      {
+          X(rd) := result
+          NZCV_N := status.negative
+      }
+    }
+    encoding TEMP4 = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
+    assembly TEMP4 = (mnemonic, " ", register(rd))
 
   pseudo instruction CALL( symbol : Bits<32> ) =
   {

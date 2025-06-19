@@ -17,13 +17,15 @@
 package vadl.gcb.riscv.riscv32;
 
 import java.io.IOException;
-import java.util.stream.Stream;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.lcb.AbstractLcbTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.types.BuiltInTable;
 import vadl.viam.Instruction;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 class InstructionRegisterEliminationPassTest extends AbstractLcbTest {
@@ -36,8 +38,7 @@ class InstructionRegisterEliminationPassTest extends AbstractLcbTest {
 
 
     // Then
-    var temp = setup.specification().isa().map(x -> x.ownInstructions().stream())
-        .orElse(Stream.empty())
+    var temp = setup.specification().isa().stream().flatMap(x -> x.ownInstructions().stream())
         .filter(instruction -> instruction.simpleName().equals("TEMP"))
         .map(Instruction::behavior).findFirst();
 
@@ -53,8 +54,7 @@ class InstructionRegisterEliminationPassTest extends AbstractLcbTest {
     var setup = runLcb(getConfiguration(false), "lcb/riscv32_register_elimination.vadl");
 
     // Then
-    var temp = setup.specification().isa().map(x -> x.ownInstructions().stream())
-        .orElse(Stream.empty())
+    var temp = setup.specification().isa().stream().flatMap(x -> x.ownInstructions().stream())
         .filter(instruction -> instruction.simpleName().equals("TEMP2"))
         .map(Instruction::behavior).findFirst();
 
@@ -63,4 +63,42 @@ class InstructionRegisterEliminationPassTest extends AbstractLcbTest {
         .filter(x -> x.regTensor().identifier.simpleName().equals("NZCV_N"))).isEmpty();
   }
 
+  @Test
+  void shouldNotRemoveNZCV_N_whenTemp3()
+      throws IOException, DuplicatedPassKeyException {
+    // Given
+    var setup = runLcb(getConfiguration(false), "lcb/riscv32_register_elimination.vadl");
+
+    // Then
+    var temp = setup.specification().isa().stream().flatMap(x -> x.ownInstructions().stream())
+        .filter(instruction -> instruction.simpleName().equals("TEMP3"))
+        .map(Instruction::behavior).findFirst();
+
+    Assertions.assertThat(temp).isPresent();
+    Assertions.assertThat(temp.get().getNodes(ReadRegTensorNode.class)
+        .filter(x -> x.regTensor().identifier.simpleName().equals("NZCV_N"))).isNotEmpty();
+  }
+
+  @Test
+  void shouldRemoveNZCV_N_whenTemp4()
+      throws IOException, DuplicatedPassKeyException {
+    // Given
+    var setup = runLcb(getConfiguration(false), "lcb/riscv32_register_elimination.vadl");
+
+    // Then
+    var temp = setup.specification().isa().stream().flatMap(x -> x.ownInstructions().stream())
+        .filter(instruction -> instruction.simpleName().equals("TEMP4"))
+        .map(Instruction::behavior).findFirst();
+
+    Assertions.assertThat(temp).isPresent();
+    Assertions.assertThat(temp.get().getNodes(ReadRegTensorNode.class)
+        .filter(x -> x.regTensor().identifier.simpleName().equals("NZCV_N"))).isEmpty();
+    Assertions.assertThat(temp.get().getNodes(TupleGetFieldNode.class)).isEmpty();
+    Assertions.assertThat(
+            temp.get().getNodes(BuiltInCall.class).filter(x -> x.builtIn().isStatusBuiltin()))
+        .isEmpty();
+    Assertions.assertThat(
+            temp.get().getNodes(BuiltInCall.class).filter(x -> x.builtIn() == BuiltInTable.ADD))
+        .isNotEmpty();
+  }
 }

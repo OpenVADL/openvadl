@@ -249,6 +249,7 @@ public class PassOrders {
     order.add(new GenerateTableGenRegistersPass(configuration));
     order.add(new DetermineRegisterUsesAndDefsPass(configuration));
     order.add(new RemoveRegisterReadsAndWritesPass(configuration));
+    order.add(new RemoveUnusedStatusFlagsFromBuiltinsPass(configuration));
     order.add(new ReplaceStatusBuiltinsByNonStatusBuiltinsPass(configuration));
 
     // Common optimizations after register elimination
