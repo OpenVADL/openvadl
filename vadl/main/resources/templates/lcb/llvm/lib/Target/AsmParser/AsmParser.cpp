@@ -69,38 +69,51 @@ void [(${namespace})]AsmParser::reportError(OperandVector &Operands) {
 
 [# th:each="instruction : ${instructions}" ]
 void [(${namespace})]AsmParser::parse_[(${instruction.name})](MCInst &Inst, OperandVector &Operands) {
-    std::vector<[(${namespace})]ParsedOperand> result;
-
     if(Operands.size() - 1 != [(${instruction.numOperands})]) {
       reportError(Operands);
     }
 
-    [# th:each="operand : ${instruction.operands}" ]
-    {
-      // [(${operand.name})]
-      [(${namespace})]ParsedOperand& Op = static_cast<[(${namespace})]ParsedOperand&>(*Operands[ [(${operand.index})] ]);
+    // { [(${instruction.targets})] }
+    std::vector<std::string> targets;
+    targets =  { [(${instruction.targets})] };
+    for(auto target : targets) {
+      for(auto index = 1; index < [(${instruction.numOperands})] + 1; index++) {
+        [(${namespace})]ParsedOperand& Op = static_cast<[(${namespace})]ParsedOperand&>(*Operands[ index ]);
+        StringRef operandName = Op.getTarget();
 
-      if(!Op.isImm() || Op.getImm()->getKind() != MCExpr::ExprKind::Constant) {
-          Op.addOperand(Inst);
-      } else {
-        int64_t opImm64 = dyn_cast<MCConstantExpr>(Op.getImm())->getValue();
+        if(target != operandName) {
+          continue;
+        }
 
-        [# th:if="${operand.requiresPredicate}" ]
-        if(![(${operand.predicateMethod})](opImm64)) {
-          std::string error = "Invalid immediate operand for [(${operand.name})]. The predicate does not hold.";
-          Parser.Error(Op.getStartLoc(), error);
-          return;
+        [# th:each="operand : ${instruction.operands}" ]
+        if(operandName == "[(${operand.name})]") {
+          if(!Op.isImm() || Op.getImm()->getKind() != MCExpr::ExprKind::Constant) {
+              Op.addOperand(Inst);
+          } else {
+            int64_t opImm64 = dyn_cast<MCConstantExpr>(Op.getImm())->getValue();
+
+            [# th:if="${operand.requiresPredicate}" ]
+            if(![(${operand.predicateMethod})](opImm64)) {
+              std::string error = "Invalid immediate operand for [(${operand.name})]. The predicate does not hold.";
+              Parser.Error(Op.getStartLoc(), error);
+              return;
+            }
+            [/]
+
+            const MCExpr* constantExpr = MCConstantExpr::create(opImm64, Parser.getContext());
+            auto operand = [(${namespace})]ParsedOperand::CreateImm(constantExpr, Op.getStartLoc(), Op.getEndLoc());
+            operand.addOperand(Inst);
+          }
+          continue;
         }
         [/]
 
-        const MCExpr* constantExpr = MCConstantExpr::create(opImm64, Parser.getContext());
-        auto operand = [(${namespace})]ParsedOperand::CreateImm(constantExpr, Op.getStartLoc(), Op.getEndLoc());
-        operand.addOperand(Inst);
+        [(${namespace})]ParsedOperand& mnemonic = static_cast<[(${namespace})]ParsedOperand&>(*Operands[0]);
+        Parser.Error(mnemonic.getStartLoc(), "Could not find index for operand '" + target + "'");
+        return;
       }
     }
-
-    [/]
-  }
+}
 [/]
 
 bool [(${namespace})]AsmParser::MatchAndEmitInstruction(SMLoc IDLoc,
