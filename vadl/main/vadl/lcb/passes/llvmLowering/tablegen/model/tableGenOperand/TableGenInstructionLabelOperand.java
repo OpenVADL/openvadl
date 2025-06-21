@@ -40,7 +40,13 @@ public class TableGenInstructionLabelOperand extends TableGenDefaultInstructionO
   private TableGenInstructionLabelOperand(Node origin,
                                           TableGenImmediateRecord immediateRecord,
                                           Format.FieldAccess fieldAccess) {
-    super(origin, immediateRecord.rawName() + AS_LABEL, fieldAccess.identifier.simpleName());
+    this(origin, immediateRecord, fieldAccess.identifier.simpleName());
+  }
+
+  public TableGenInstructionLabelOperand(Node origin,
+                                         TableGenImmediateRecord immediateRecord,
+                                         String variableName) {
+    super(origin, immediateRecord.rawName() + AS_LABEL, variableName);
     this.immediate = immediateRecord;
   }
 
@@ -48,7 +54,7 @@ public class TableGenInstructionLabelOperand extends TableGenDefaultInstructionO
    * Constructor.
    */
   public TableGenInstructionLabelOperand(LlvmBasicBlockSD node) {
-    this(node, node.immediateOperand(), node.fieldAccess());
+    this(node, node.immediateOperand(), node.variableName());
   }
 
   /**

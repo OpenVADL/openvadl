@@ -44,6 +44,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionBareSymbolOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
 import vadl.viam.Abi;
 import vadl.viam.Format;
 import vadl.viam.PseudoInstruction;
@@ -116,14 +117,17 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
          */
 
           var instrCallNode = getInstrCallNodeOrThrowError(pseudo);
+          var parameter = pseudo.parameters()[0];
           var fieldAccess = getFieldAccessFunctionFromFormatOrThrowError(instrCallNode);
           var fieldAccessNode = new LlvmFieldAccessRefNode(pseudo,
               fieldAccess,
               fieldAccess.type(),
               upcastFieldAccess(fieldAccess),
               LlvmFieldAccessRefNode.Usage.BasicBlock);
+          // Overwrite the name of the selector with the name of the pseudo instruction.
           var inputOperand =
-              LlvmInstructionLoweringStrategy.generateTableGenInputOutput(fieldAccessNode);
+              new TableGenInstructionLabelOperand(fieldAccessNode,
+                  fieldAccessNode.immediateOperand(), parameter.simpleName());
           var flags =
               LlvmLoweringPass.Flags.withPseudo(
                   LlvmLoweringPass.Flags.withBarrier(LlvmLoweringPass.Flags.withBranch(
@@ -163,18 +167,21 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
     var instrCallNode = getInstrCallNodeOrThrowError(pseudo);
     var fieldAccess = getFieldAccessFunctionFromFormatOrThrowError(instrCallNode);
     var upcasted = upcastFieldAccess(fieldAccess);
+    var parameter = pseudo.parameters()[0];
 
     selector.addWithInputs(
         new LlvmBrSD(new LlvmBasicBlockSD(
             pseudo,
             fieldAccess,
+            parameter.simpleName(),
             fieldAccess.type(),
             upcasted)));
     machine.addWithInputs(new LcbPseudoInstructionNode(
         new NodeList<>(
             new LcbMachineInstructionParameterNode(new TableGenInstructionBareSymbolOperand(
-                new LlvmBasicBlockSD(pseudo, fieldAccess, fieldAccess.type(), upcasted),
-                fieldAccess.simpleName()))
+                new LlvmBasicBlockSD(pseudo, fieldAccess, parameter.simpleName(),
+                    fieldAccess.type(), upcasted),
+                parameter.simpleName()))
         ), pseudo));
 
     return List.of(
