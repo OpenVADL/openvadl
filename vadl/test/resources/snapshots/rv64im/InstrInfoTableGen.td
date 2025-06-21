@@ -1242,7 +1242,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_ADDI_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_ADDI_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -1254,11 +1254,11 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0010011;
 bits<3> funct3 = 0b000;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs1;
 bits<64> rd;
 
-let Inst{31-20} = imm{11-0};
+let Inst{31-20} = immS{11-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -1293,7 +1293,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_ADDIW_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_ADDIW_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -1305,11 +1305,11 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0011011;
 bits<3> funct3 = 0b000;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs1;
 bits<64> rd;
 
-let Inst{31-20} = imm{11-0};
+let Inst{31-20} = immS{11-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -1450,7 +1450,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_ANDI_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_ANDI_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -1462,11 +1462,11 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0010011;
 bits<3> funct3 = 0b111;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs1;
 bits<64> rd;
 
-let Inst{31-20} = imm{11-0};
+let Inst{31-20} = immS{11-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -1501,7 +1501,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins RV3264Base_AUIPC_immUpAsInt64:$imm );
+let InOperandList = ( ins RV3264Base_AUIPC_immUpAsInt64:$immUp );
 
 field bits<32> Inst;
 
@@ -1512,10 +1512,10 @@ field bits<32> Inst;
 field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0010111;
-bits<64> imm;
+bits<64> immUp;
 bits<64> rd;
 
-let Inst{31-12} = imm{19-0};
+let Inst{31-12} = immUp{19-0};
 let Inst{11-7} = rd{4-0};
 let Inst{6-0} = opcode{6-0};
 
@@ -1548,7 +1548,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_BEQ_immSAsLabel:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_BEQ_immSAsLabel:$immS );
 
 field bits<32> Inst;
 
@@ -1560,14 +1560,14 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1100011;
 bits<3> funct3 = 0b000;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs2;
 bits<64> rs1;
 
-let Inst{11-8} = imm{3-0};
-let Inst{30-25} = imm{9-4};
-let Inst{7} = imm{10};
-let Inst{31} = imm{11};
+let Inst{11-8} = immS{3-0};
+let Inst{30-25} = immS{9-4};
+let Inst{7} = immS{10};
+let Inst{31} = immS{11};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -1602,7 +1602,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_BGE_immSAsLabel:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_BGE_immSAsLabel:$immS );
 
 field bits<32> Inst;
 
@@ -1614,14 +1614,14 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1100011;
 bits<3> funct3 = 0b101;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs2;
 bits<64> rs1;
 
-let Inst{11-8} = imm{3-0};
-let Inst{30-25} = imm{9-4};
-let Inst{7} = imm{10};
-let Inst{31} = imm{11};
+let Inst{11-8} = immS{3-0};
+let Inst{30-25} = immS{9-4};
+let Inst{7} = immS{10};
+let Inst{31} = immS{11};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -1656,7 +1656,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_BGEU_immSAsLabel:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_BGEU_immSAsLabel:$immS );
 
 field bits<32> Inst;
 
@@ -1668,14 +1668,14 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1100011;
 bits<3> funct3 = 0b111;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs2;
 bits<64> rs1;
 
-let Inst{11-8} = imm{3-0};
-let Inst{30-25} = imm{9-4};
-let Inst{7} = imm{10};
-let Inst{31} = imm{11};
+let Inst{11-8} = immS{3-0};
+let Inst{30-25} = immS{9-4};
+let Inst{7} = immS{10};
+let Inst{31} = immS{11};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -1710,7 +1710,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_BLT_immSAsLabel:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_BLT_immSAsLabel:$immS );
 
 field bits<32> Inst;
 
@@ -1722,14 +1722,14 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1100011;
 bits<3> funct3 = 0b100;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs2;
 bits<64> rs1;
 
-let Inst{11-8} = imm{3-0};
-let Inst{30-25} = imm{9-4};
-let Inst{7} = imm{10};
-let Inst{31} = imm{11};
+let Inst{11-8} = immS{3-0};
+let Inst{30-25} = immS{9-4};
+let Inst{7} = immS{10};
+let Inst{31} = immS{11};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -1764,7 +1764,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_BLTU_immSAsLabel:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_BLTU_immSAsLabel:$immS );
 
 field bits<32> Inst;
 
@@ -1776,14 +1776,14 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1100011;
 bits<3> funct3 = 0b110;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs2;
 bits<64> rs1;
 
-let Inst{11-8} = imm{3-0};
-let Inst{30-25} = imm{9-4};
-let Inst{7} = imm{10};
-let Inst{31} = imm{11};
+let Inst{11-8} = immS{3-0};
+let Inst{30-25} = immS{9-4};
+let Inst{7} = immS{10};
+let Inst{31} = immS{11};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -1818,7 +1818,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_BNE_immSAsLabel:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_BNE_immSAsLabel:$immS );
 
 field bits<32> Inst;
 
@@ -1830,14 +1830,14 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1100011;
 bits<3> funct3 = 0b001;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs2;
 bits<64> rs1;
 
-let Inst{11-8} = imm{3-0};
-let Inst{30-25} = imm{9-4};
-let Inst{7} = imm{10};
-let Inst{31} = imm{11};
+let Inst{11-8} = immS{3-0};
+let Inst{30-25} = immS{9-4};
+let Inst{7} = immS{10};
+let Inst{31} = immS{11};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -2186,7 +2186,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins RV3264Base_JAL_immSAsInt64:$imm );
+let InOperandList = ( ins RV3264Base_JAL_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -2197,13 +2197,13 @@ field bits<32> Inst;
 field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1101111;
-bits<64> imm;
+bits<64> immS;
 bits<64> rd;
 
-let Inst{30-21} = imm{9-0};
-let Inst{20} = imm{10};
-let Inst{19-12} = imm{18-11};
-let Inst{31} = imm{19};
+let Inst{30-21} = immS{9-0};
+let Inst{20} = immS{10};
+let Inst{19-12} = immS{18-11};
+let Inst{31} = immS{19};
 let Inst{11-7} = rd{4-0};
 let Inst{6-0} = opcode{6-0};
 
@@ -2236,7 +2236,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_JALR_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_JALR_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -2248,11 +2248,11 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1100111;
 bits<3> funct3 = 0b000;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs1;
 bits<64> rd;
 
-let Inst{31-20} = imm{11-0};
+let Inst{31-20} = immS{11-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -2287,7 +2287,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_LB_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_LB_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -2299,11 +2299,11 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0000011;
 bits<3> funct3 = 0b000;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs1;
 bits<64> rd;
 
-let Inst{31-20} = imm{11-0};
+let Inst{31-20} = immS{11-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -2338,7 +2338,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_LBU_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_LBU_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -2350,11 +2350,11 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0000011;
 bits<3> funct3 = 0b100;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs1;
 bits<64> rd;
 
-let Inst{31-20} = imm{11-0};
+let Inst{31-20} = immS{11-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -2389,7 +2389,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_LD_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_LD_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -2401,11 +2401,11 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0000011;
 bits<3> funct3 = 0b011;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs1;
 bits<64> rd;
 
-let Inst{31-20} = imm{11-0};
+let Inst{31-20} = immS{11-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -2440,7 +2440,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_LH_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_LH_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -2452,11 +2452,11 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0000011;
 bits<3> funct3 = 0b001;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs1;
 bits<64> rd;
 
-let Inst{31-20} = imm{11-0};
+let Inst{31-20} = immS{11-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -2491,7 +2491,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_LHU_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_LHU_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -2503,11 +2503,11 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0000011;
 bits<3> funct3 = 0b101;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs1;
 bits<64> rd;
 
-let Inst{31-20} = imm{11-0};
+let Inst{31-20} = immS{11-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -2542,7 +2542,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins RV3264Base_LUI_immUpAsInt64:$imm );
+let InOperandList = ( ins RV3264Base_LUI_immUpAsInt64:$immUp );
 
 field bits<32> Inst;
 
@@ -2553,10 +2553,10 @@ field bits<32> Inst;
 field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0110111;
-bits<64> imm;
+bits<64> immUp;
 bits<64> rd;
 
-let Inst{31-12} = imm{19-0};
+let Inst{31-12} = immUp{19-0};
 let Inst{11-7} = rd{4-0};
 let Inst{6-0} = opcode{6-0};
 
@@ -2589,7 +2589,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_LW_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_LW_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -2601,11 +2601,11 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0000011;
 bits<3> funct3 = 0b010;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs1;
 bits<64> rd;
 
-let Inst{31-20} = imm{11-0};
+let Inst{31-20} = immS{11-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -2640,7 +2640,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_LWU_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_LWU_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -2652,11 +2652,11 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0000011;
 bits<3> funct3 = 0b110;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs1;
 bits<64> rd;
 
-let Inst{31-20} = imm{11-0};
+let Inst{31-20} = immS{11-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -3009,7 +3009,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_ORI_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_ORI_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -3021,11 +3021,11 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0010011;
 bits<3> funct3 = 0b110;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs1;
 bits<64> rd;
 
-let Inst{31-20} = imm{11-0};
+let Inst{31-20} = immS{11-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -3272,7 +3272,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_SB_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_SB_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -3284,12 +3284,12 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0100011;
 bits<3> funct3 = 0b000;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs2;
 bits<64> rs1;
 
-let Inst{11-7} = imm{4-0};
-let Inst{31-25} = imm{11-5};
+let Inst{11-7} = immS{4-0};
+let Inst{31-25} = immS{11-5};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -3324,7 +3324,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_SD_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_SD_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -3336,12 +3336,12 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0100011;
 bits<3> funct3 = 0b011;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs2;
 bits<64> rs1;
 
-let Inst{11-7} = imm{4-0};
-let Inst{31-25} = imm{11-5};
+let Inst{11-7} = immS{4-0};
+let Inst{31-25} = immS{11-5};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -3376,7 +3376,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_SH_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_SH_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -3388,12 +3388,12 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0100011;
 bits<3> funct3 = 0b001;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs2;
 bits<64> rs1;
 
-let Inst{11-7} = imm{4-0};
-let Inst{31-25} = imm{11-5};
+let Inst{11-7} = immS{4-0};
+let Inst{31-25} = immS{11-5};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -3481,7 +3481,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SLLI_shamtAsInt64:$sft );
+let InOperandList = ( ins X:$rs1, RV3264Base_SLLI_shamtAsInt64:$shamt );
 
 field bits<32> Inst;
 
@@ -3495,13 +3495,13 @@ bits<7> opcode = 0b0010011;
 bits<4> zero = 0b0000;
 bits<3> funct3 = 0b001;
 bits<2> funct2 = 0b00;
-bits<64> sft;
+bits<64> shamt;
 bits<64> rs1;
 bits<64> rd;
 
 let Inst{31-30} = funct2{1-0};
 let Inst{29-26} = zero{3-0};
-let Inst{25-20} = sft{5-0};
+let Inst{25-20} = shamt{5-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -3536,7 +3536,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SLLIW_shamtAsInt64:$rs2 );
+let InOperandList = ( ins X:$rs1, RV3264Base_SLLIW_shamtAsInt64:$shamt );
 
 field bits<32> Inst;
 
@@ -3549,12 +3549,12 @@ field bits<32> SoftFail = 0;
 bits<7> opcode = 0b0011011;
 bits<3> funct3 = 0b001;
 bits<7> funct7 = 0b0000000;
-bits<64> rs2;
+bits<64> shamt;
 bits<64> rs1;
 bits<64> rd;
 
 let Inst{31-25} = funct7{6-0};
-let Inst{24-20} = rs2{4-0};
+let Inst{24-20} = shamt{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -3695,7 +3695,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SLTI_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_SLTI_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -3707,11 +3707,11 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0010011;
 bits<3> funct3 = 0b010;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs1;
 bits<64> rd;
 
-let Inst{31-20} = imm{11-0};
+let Inst{31-20} = immS{11-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -3746,7 +3746,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SLTIU_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_SLTIU_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -3758,11 +3758,11 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0010011;
 bits<3> funct3 = 0b011;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs1;
 bits<64> rd;
 
-let Inst{31-20} = imm{11-0};
+let Inst{31-20} = immS{11-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -3903,7 +3903,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SRAI_shamtAsInt64:$sft );
+let InOperandList = ( ins X:$rs1, RV3264Base_SRAI_shamtAsInt64:$shamt );
 
 field bits<32> Inst;
 
@@ -3917,13 +3917,13 @@ bits<7> opcode = 0b0010011;
 bits<4> zero = 0b0000;
 bits<3> funct3 = 0b101;
 bits<2> funct2 = 0b01;
-bits<64> sft;
+bits<64> shamt;
 bits<64> rs1;
 bits<64> rd;
 
 let Inst{31-30} = funct2{1-0};
 let Inst{29-26} = zero{3-0};
-let Inst{25-20} = sft{5-0};
+let Inst{25-20} = shamt{5-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -3958,7 +3958,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SRAIW_shamtAsInt64:$rs2 );
+let InOperandList = ( ins X:$rs1, RV3264Base_SRAIW_shamtAsInt64:$shamt );
 
 field bits<32> Inst;
 
@@ -3971,12 +3971,12 @@ field bits<32> SoftFail = 0;
 bits<7> opcode = 0b0011011;
 bits<3> funct3 = 0b101;
 bits<7> funct7 = 0b0100000;
-bits<64> rs2;
+bits<64> shamt;
 bits<64> rs1;
 bits<64> rd;
 
 let Inst{31-25} = funct7{6-0};
-let Inst{24-20} = rs2{4-0};
+let Inst{24-20} = shamt{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -4117,7 +4117,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SRLI_shamtAsInt64:$sft );
+let InOperandList = ( ins X:$rs1, RV3264Base_SRLI_shamtAsInt64:$shamt );
 
 field bits<32> Inst;
 
@@ -4131,13 +4131,13 @@ bits<7> opcode = 0b0010011;
 bits<4> zero = 0b0000;
 bits<3> funct3 = 0b101;
 bits<2> funct2 = 0b00;
-bits<64> sft;
+bits<64> shamt;
 bits<64> rs1;
 bits<64> rd;
 
 let Inst{31-30} = funct2{1-0};
 let Inst{29-26} = zero{3-0};
-let Inst{25-20} = sft{5-0};
+let Inst{25-20} = shamt{5-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -4172,7 +4172,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SRLIW_shamtAsInt64:$rs2 );
+let InOperandList = ( ins X:$rs1, RV3264Base_SRLIW_shamtAsInt64:$shamt );
 
 field bits<32> Inst;
 
@@ -4185,12 +4185,12 @@ field bits<32> SoftFail = 0;
 bits<7> opcode = 0b0011011;
 bits<3> funct3 = 0b101;
 bits<7> funct7 = 0b0000000;
-bits<64> rs2;
+bits<64> shamt;
 bits<64> rs1;
 bits<64> rd;
 
 let Inst{31-25} = funct7{6-0};
-let Inst{24-20} = rs2{4-0};
+let Inst{24-20} = shamt{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -4384,7 +4384,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_SW_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_SW_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -4396,12 +4396,12 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0100011;
 bits<3> funct3 = 0b010;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs2;
 bits<64> rs1;
 
-let Inst{11-7} = imm{4-0};
-let Inst{31-25} = imm{11-5};
+let Inst{11-7} = immS{4-0};
+let Inst{31-25} = immS{11-5};
 let Inst{24-20} = rs2{4-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -4489,7 +4489,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_XORI_immSAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_XORI_immSAsInt64:$immS );
 
 field bits<32> Inst;
 
@@ -4501,11 +4501,11 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b0010011;
 bits<3> funct3 = 0b100;
-bits<64> imm;
+bits<64> immS;
 bits<64> rs1;
 bits<64> rd;
 
-let Inst{31-20} = imm{11-0};
+let Inst{31-20} = immS{11-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
@@ -4711,7 +4711,7 @@ def J : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins RV3264Base_J_immSAsLabel:$imm );
+let InOperandList = ( ins RV3264Base_J_immSAsLabel:$offset );
 
 let isTerminator  = 1;
 let isBranch      = 1;
@@ -4732,8 +4732,8 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(br bb:$imm),
-        (J RV3264Base_J_immSAsLabel:$imm)>;
+def : Pat<(br bb:$offset),
+        (J RV3264Base_J_immSAsLabel:$offset)>;
 
 
 def LA : Instruction
@@ -5225,19 +5225,19 @@ let Defs = [  ];
 
 
 
-def : InstAlias<"BEQZ $rs,$offset", (BEQ X:$rs, X0, RV3264Base_BEQ_immSAsLabel:$imm)>;
+def : InstAlias<"BEQZ $rs,$offset", (BEQ X:$rs, X0, RV3264Base_BEQ_immSAsLabel:$immS)>;
 
-def : InstAlias<"BGEZ $rs,$offset", (BGE X:$rs, X0, RV3264Base_BGE_immSAsLabel:$imm)>;
+def : InstAlias<"BGEZ $rs,$offset", (BGE X:$rs, X0, RV3264Base_BGE_immSAsLabel:$immS)>;
 
-def : InstAlias<"BGTZ $rs,$offset", (BLT X0, X:$rs, RV3264Base_BLT_immSAsLabel:$imm)>;
+def : InstAlias<"BGTZ $rs,$offset", (BLT X0, X:$rs, RV3264Base_BLT_immSAsLabel:$immS)>;
 
-def : InstAlias<"BLEZ $rs,$offset", (BGE X0, X:$rs, RV3264Base_BGE_immSAsLabel:$imm)>;
+def : InstAlias<"BLEZ $rs,$offset", (BGE X0, X:$rs, RV3264Base_BGE_immSAsLabel:$immS)>;
 
-def : InstAlias<"BLTZ $rs,$offset", (BLT X:$rs, X0, RV3264Base_BLT_immSAsLabel:$imm)>;
+def : InstAlias<"BLTZ $rs,$offset", (BLT X:$rs, X0, RV3264Base_BLT_immSAsLabel:$immS)>;
 
-def : InstAlias<"BNEZ $rs,$offset", (BNE X:$rs, X0, RV3264Base_BNE_immSAsLabel:$imm)>;
+def : InstAlias<"BNEZ $rs,$offset", (BNE X:$rs, X0, RV3264Base_BNE_immSAsLabel:$immS)>;
 
-def : InstAlias<"J $offset", (JAL X0, RV3264Base_JAL_immSAsInt64:$imm)>;
+def : InstAlias<"J $offset", (JAL X0, RV3264Base_JAL_immSAsInt64:$immS)>;
 
 def : InstAlias<"MV $rd,$rs1", (ADDI X:$rd, X:$rs1, 0)>;
 
@@ -5268,19 +5268,19 @@ in
 let isCall = 1, isBranch = 1, isIndirectBranch = 1, isTerminator = 1,
 isBarrier = 1
 in
-    def PseudoBRIND : Pseudo<(outs ), (ins X:$rs1, RV3264Base_JALR_immSAsInt64:$imm),
+    def PseudoBRIND : Pseudo<(outs ), (ins X:$rs1, RV3264Base_JALR_immSAsInt64:$immS),
                         []>,
-                 PseudoInstExpansion<(JALR X0, X:$rs1, RV3264Base_JALR_immSAsInt64:$imm)>;
+                 PseudoInstExpansion<(JALR X0, X:$rs1, RV3264Base_JALR_immSAsInt64:$immS)>;
 
 def : Pat<(add X:$rs1, X:$rs2),
         (ADD X:$rs1, X:$rs2)>;
 
 
-def : Pat<(add X:$rs1, RV3264Base_ADDI_immSAsInt64:$imm),
-        (ADDI X:$rs1, RV3264Base_ADDI_immSAsInt64:$imm)>;
+def : Pat<(add X:$rs1, RV3264Base_ADDI_immSAsInt64:$immS),
+        (ADDI X:$rs1, RV3264Base_ADDI_immSAsInt64:$immS)>;
 
-def : Pat<(add AddrFI:$rs1, RV3264Base_ADDI_immSAsInt64:$imm),
-        (ADDI AddrFI:$rs1, RV3264Base_ADDI_immSAsInt64:$imm)>;
+def : Pat<(add AddrFI:$rs1, RV3264Base_ADDI_immSAsInt64:$immS),
+        (ADDI AddrFI:$rs1, RV3264Base_ADDI_immSAsInt64:$immS)>;
 
 
 
@@ -5291,79 +5291,79 @@ def : Pat<(and X:$rs1, X:$rs2),
         (AND X:$rs1, X:$rs2)>;
 
 
-def : Pat<(and X:$rs1, RV3264Base_ANDI_immSAsInt64:$imm),
-        (ANDI X:$rs1, RV3264Base_ANDI_immSAsInt64:$imm)>;
+def : Pat<(and X:$rs1, RV3264Base_ANDI_immSAsInt64:$immS),
+        (ANDI X:$rs1, RV3264Base_ANDI_immSAsInt64:$immS)>;
 
 
 
 
-def : Pat<(brcc SETEQ, X:$rs1, X:$rs2, bb:$imm),
-        (BEQ X:$rs1, X:$rs2, RV3264Base_BEQ_immSAsLabel:$imm)>;
+def : Pat<(brcc SETEQ, X:$rs1, X:$rs2, bb:$immS),
+        (BEQ X:$rs1, X:$rs2, RV3264Base_BEQ_immSAsLabel:$immS)>;
 
-def : Pat<(brcond (i64 (seteq X:$rs1, X:$rs2)), bb:$imm),
-        (BEQ X:$rs1, X:$rs2, RV3264Base_BEQ_immSAsLabel:$imm)>;
-
-
-def : Pat<(brcc SETGE, X:$rs1, X:$rs2, bb:$imm),
-        (BGE X:$rs1, X:$rs2, RV3264Base_BGE_immSAsLabel:$imm)>;
-
-def : Pat<(brcc SETLE, X:$rs2, X:$rs1, bb:$imm),
-        (BGE X:$rs1, X:$rs2, RV3264Base_BGE_immSAsLabel:$imm)>;
-
-def : Pat<(brcond (i64 (setge X:$rs1, X:$rs2)), bb:$imm),
-        (BGE X:$rs1, X:$rs2, RV3264Base_BGE_immSAsLabel:$imm)>;
-
-def : Pat<(brcond (i64 (setle X:$rs2, X:$rs1)), bb:$imm),
-        (BGE X:$rs1, X:$rs2, RV3264Base_BGE_immSAsLabel:$imm)>;
+def : Pat<(brcond (i64 (seteq X:$rs1, X:$rs2)), bb:$immS),
+        (BEQ X:$rs1, X:$rs2, RV3264Base_BEQ_immSAsLabel:$immS)>;
 
 
-def : Pat<(brcc SETUGE, X:$rs1, X:$rs2, bb:$imm),
-        (BGEU X:$rs1, X:$rs2, RV3264Base_BGEU_immSAsLabel:$imm)>;
+def : Pat<(brcc SETGE, X:$rs1, X:$rs2, bb:$immS),
+        (BGE X:$rs1, X:$rs2, RV3264Base_BGE_immSAsLabel:$immS)>;
 
-def : Pat<(brcc SETULE, X:$rs2, X:$rs1, bb:$imm),
-        (BGEU X:$rs1, X:$rs2, RV3264Base_BGEU_immSAsLabel:$imm)>;
+def : Pat<(brcc SETLE, X:$rs2, X:$rs1, bb:$immS),
+        (BGE X:$rs1, X:$rs2, RV3264Base_BGE_immSAsLabel:$immS)>;
 
-def : Pat<(brcond (i64 (setuge X:$rs1, X:$rs2)), bb:$imm),
-        (BGEU X:$rs1, X:$rs2, RV3264Base_BGEU_immSAsLabel:$imm)>;
+def : Pat<(brcond (i64 (setge X:$rs1, X:$rs2)), bb:$immS),
+        (BGE X:$rs1, X:$rs2, RV3264Base_BGE_immSAsLabel:$immS)>;
 
-def : Pat<(brcond (i64 (setule X:$rs2, X:$rs1)), bb:$imm),
-        (BGEU X:$rs1, X:$rs2, RV3264Base_BGEU_immSAsLabel:$imm)>;
-
-
-def : Pat<(brcc SETLT, X:$rs1, X:$rs2, bb:$imm),
-        (BLT X:$rs1, X:$rs2, RV3264Base_BLT_immSAsLabel:$imm)>;
-
-def : Pat<(brcc SETGT, X:$rs2, X:$rs1, bb:$imm),
-        (BLT X:$rs1, X:$rs2, RV3264Base_BLT_immSAsLabel:$imm)>;
-
-def : Pat<(brcond (i64 (setlt X:$rs1, X:$rs2)), bb:$imm),
-        (BLT X:$rs1, X:$rs2, RV3264Base_BLT_immSAsLabel:$imm)>;
-
-def : Pat<(brcond (i64 (setgt X:$rs2, X:$rs1)), bb:$imm),
-        (BLT X:$rs1, X:$rs2, RV3264Base_BLT_immSAsLabel:$imm)>;
+def : Pat<(brcond (i64 (setle X:$rs2, X:$rs1)), bb:$immS),
+        (BGE X:$rs1, X:$rs2, RV3264Base_BGE_immSAsLabel:$immS)>;
 
 
-def : Pat<(brcc SETULT, X:$rs1, X:$rs2, bb:$imm),
-        (BLTU X:$rs1, X:$rs2, RV3264Base_BLTU_immSAsLabel:$imm)>;
+def : Pat<(brcc SETUGE, X:$rs1, X:$rs2, bb:$immS),
+        (BGEU X:$rs1, X:$rs2, RV3264Base_BGEU_immSAsLabel:$immS)>;
 
-def : Pat<(brcc SETUGT, X:$rs2, X:$rs1, bb:$imm),
-        (BLTU X:$rs1, X:$rs2, RV3264Base_BLTU_immSAsLabel:$imm)>;
+def : Pat<(brcc SETULE, X:$rs2, X:$rs1, bb:$immS),
+        (BGEU X:$rs1, X:$rs2, RV3264Base_BGEU_immSAsLabel:$immS)>;
 
-def : Pat<(brcond (i64 (setult X:$rs1, X:$rs2)), bb:$imm),
-        (BLTU X:$rs1, X:$rs2, RV3264Base_BLTU_immSAsLabel:$imm)>;
+def : Pat<(brcond (i64 (setuge X:$rs1, X:$rs2)), bb:$immS),
+        (BGEU X:$rs1, X:$rs2, RV3264Base_BGEU_immSAsLabel:$immS)>;
 
-def : Pat<(brcond (i64 (setugt X:$rs2, X:$rs1)), bb:$imm),
-        (BLTU X:$rs1, X:$rs2, RV3264Base_BLTU_immSAsLabel:$imm)>;
+def : Pat<(brcond (i64 (setule X:$rs2, X:$rs1)), bb:$immS),
+        (BGEU X:$rs1, X:$rs2, RV3264Base_BGEU_immSAsLabel:$immS)>;
 
 
-def : Pat<(brcc SETNE, X:$rs1, X:$rs2, bb:$imm),
-        (BNE X:$rs1, X:$rs2, RV3264Base_BNE_immSAsLabel:$imm)>;
+def : Pat<(brcc SETLT, X:$rs1, X:$rs2, bb:$immS),
+        (BLT X:$rs1, X:$rs2, RV3264Base_BLT_immSAsLabel:$immS)>;
 
-def : Pat<(brcond (i64 (setne X:$rs1, X:$rs2)), bb:$imm),
-        (BNE X:$rs1, X:$rs2, RV3264Base_BNE_immSAsLabel:$imm)>;
+def : Pat<(brcc SETGT, X:$rs2, X:$rs1, bb:$immS),
+        (BLT X:$rs1, X:$rs2, RV3264Base_BLT_immSAsLabel:$immS)>;
 
-def : Pat<(brcond X:$rs1, bb:$imm),
-        (BNE X:$rs1, X0, bb:$imm)>;
+def : Pat<(brcond (i64 (setlt X:$rs1, X:$rs2)), bb:$immS),
+        (BLT X:$rs1, X:$rs2, RV3264Base_BLT_immSAsLabel:$immS)>;
+
+def : Pat<(brcond (i64 (setgt X:$rs2, X:$rs1)), bb:$immS),
+        (BLT X:$rs1, X:$rs2, RV3264Base_BLT_immSAsLabel:$immS)>;
+
+
+def : Pat<(brcc SETULT, X:$rs1, X:$rs2, bb:$immS),
+        (BLTU X:$rs1, X:$rs2, RV3264Base_BLTU_immSAsLabel:$immS)>;
+
+def : Pat<(brcc SETUGT, X:$rs2, X:$rs1, bb:$immS),
+        (BLTU X:$rs1, X:$rs2, RV3264Base_BLTU_immSAsLabel:$immS)>;
+
+def : Pat<(brcond (i64 (setult X:$rs1, X:$rs2)), bb:$immS),
+        (BLTU X:$rs1, X:$rs2, RV3264Base_BLTU_immSAsLabel:$immS)>;
+
+def : Pat<(brcond (i64 (setugt X:$rs2, X:$rs1)), bb:$immS),
+        (BLTU X:$rs1, X:$rs2, RV3264Base_BLTU_immSAsLabel:$immS)>;
+
+
+def : Pat<(brcc SETNE, X:$rs1, X:$rs2, bb:$immS),
+        (BNE X:$rs1, X:$rs2, RV3264Base_BNE_immSAsLabel:$immS)>;
+
+def : Pat<(brcond (i64 (setne X:$rs1, X:$rs2)), bb:$immS),
+        (BNE X:$rs1, X:$rs2, RV3264Base_BNE_immSAsLabel:$immS)>;
+
+def : Pat<(brcond X:$rs1, bb:$immS),
+        (BNE X:$rs1, X0, bb:$immS)>;
 
 
 def : Pat<(sdiv X:$rs1, X:$rs2),
@@ -5387,15 +5387,15 @@ def : Pat<(udiv X:$rs1, X:$rs2),
 def : Pat<(brind X:$rs1),
         (PseudoBRIND X:$rs1, 0)>;
 
-def : Pat<(brind (add X:$rs1, RV3264Base_JALR_immSAsInt64:$imm)),
-        (PseudoBRIND X:$rs1, RV3264Base_JALR_immSAsInt64:$imm)>;
+def : Pat<(brind (add X:$rs1, RV3264Base_JALR_immSAsInt64:$immS)),
+        (PseudoBRIND X:$rs1, RV3264Base_JALR_immSAsInt64:$immS)>;
 
 
-def : Pat<(i64 (sextloadi8 (add X:$rs1, RV3264Base_LB_immSAsInt64:$imm))),
-        (LB X:$rs1, RV3264Base_LB_immSAsInt64:$imm)>;
+def : Pat<(i64 (sextloadi8 (add X:$rs1, RV3264Base_LB_immSAsInt64:$immS))),
+        (LB X:$rs1, RV3264Base_LB_immSAsInt64:$immS)>;
 
-def : Pat<(i64 (sextloadi8 (add AddrFI:$rs1, RV3264Base_LB_immSAsInt64:$imm))),
-        (LB AddrFI:$rs1, RV3264Base_LB_immSAsInt64:$imm)>;
+def : Pat<(i64 (sextloadi8 (add AddrFI:$rs1, RV3264Base_LB_immSAsInt64:$immS))),
+        (LB AddrFI:$rs1, RV3264Base_LB_immSAsInt64:$immS)>;
 
 def : Pat<(i64 (sextloadi8 X:$rs1)),
         (LB X:$rs1, (i64 0))>;
@@ -5410,11 +5410,11 @@ def : Pat<(i64 (extloadi8 AddrFI:$rs1)),
         (LB AddrFI:$rs1, (i64 0))>;
 
 
-def : Pat<(i64 (zextloadi8 (add X:$rs1, RV3264Base_LBU_immSAsInt64:$imm))),
-        (LBU X:$rs1, RV3264Base_LBU_immSAsInt64:$imm)>;
+def : Pat<(i64 (zextloadi8 (add X:$rs1, RV3264Base_LBU_immSAsInt64:$immS))),
+        (LBU X:$rs1, RV3264Base_LBU_immSAsInt64:$immS)>;
 
-def : Pat<(i64 (zextloadi8 (add AddrFI:$rs1, RV3264Base_LBU_immSAsInt64:$imm))),
-        (LBU AddrFI:$rs1, RV3264Base_LBU_immSAsInt64:$imm)>;
+def : Pat<(i64 (zextloadi8 (add AddrFI:$rs1, RV3264Base_LBU_immSAsInt64:$immS))),
+        (LBU AddrFI:$rs1, RV3264Base_LBU_immSAsInt64:$immS)>;
 
 def : Pat<(i64 (zextloadi8 X:$rs1)),
         (LBU X:$rs1, (i64 0))>;
@@ -5423,11 +5423,11 @@ def : Pat<(i64 (zextloadi8 AddrFI:$rs1)),
         (LBU AddrFI:$rs1, (i64 0))>;
 
 
-def : Pat<(i64 (load (add X:$rs1, RV3264Base_LD_immSAsInt64:$imm))),
-        (LD X:$rs1, RV3264Base_LD_immSAsInt64:$imm)>;
+def : Pat<(i64 (load (add X:$rs1, RV3264Base_LD_immSAsInt64:$immS))),
+        (LD X:$rs1, RV3264Base_LD_immSAsInt64:$immS)>;
 
-def : Pat<(i64 (load (add AddrFI:$rs1, RV3264Base_LD_immSAsInt64:$imm))),
-        (LD AddrFI:$rs1, RV3264Base_LD_immSAsInt64:$imm)>;
+def : Pat<(i64 (load (add AddrFI:$rs1, RV3264Base_LD_immSAsInt64:$immS))),
+        (LD AddrFI:$rs1, RV3264Base_LD_immSAsInt64:$immS)>;
 
 def : Pat<(i64 (load X:$rs1)),
         (LD X:$rs1, (i64 0))>;
@@ -5436,11 +5436,11 @@ def : Pat<(i64 (load AddrFI:$rs1)),
         (LD AddrFI:$rs1, (i64 0))>;
 
 
-def : Pat<(i64 (sextloadi16 (add X:$rs1, RV3264Base_LH_immSAsInt64:$imm))),
-        (LH X:$rs1, RV3264Base_LH_immSAsInt64:$imm)>;
+def : Pat<(i64 (sextloadi16 (add X:$rs1, RV3264Base_LH_immSAsInt64:$immS))),
+        (LH X:$rs1, RV3264Base_LH_immSAsInt64:$immS)>;
 
-def : Pat<(i64 (sextloadi16 (add AddrFI:$rs1, RV3264Base_LH_immSAsInt64:$imm))),
-        (LH AddrFI:$rs1, RV3264Base_LH_immSAsInt64:$imm)>;
+def : Pat<(i64 (sextloadi16 (add AddrFI:$rs1, RV3264Base_LH_immSAsInt64:$immS))),
+        (LH AddrFI:$rs1, RV3264Base_LH_immSAsInt64:$immS)>;
 
 def : Pat<(i64 (sextloadi16 X:$rs1)),
         (LH X:$rs1, (i64 0))>;
@@ -5455,11 +5455,11 @@ def : Pat<(i64 (extloadi16 AddrFI:$rs1)),
         (LH AddrFI:$rs1, (i64 0))>;
 
 
-def : Pat<(i64 (zextloadi16 (add X:$rs1, RV3264Base_LHU_immSAsInt64:$imm))),
-        (LHU X:$rs1, RV3264Base_LHU_immSAsInt64:$imm)>;
+def : Pat<(i64 (zextloadi16 (add X:$rs1, RV3264Base_LHU_immSAsInt64:$immS))),
+        (LHU X:$rs1, RV3264Base_LHU_immSAsInt64:$immS)>;
 
-def : Pat<(i64 (zextloadi16 (add AddrFI:$rs1, RV3264Base_LHU_immSAsInt64:$imm))),
-        (LHU AddrFI:$rs1, RV3264Base_LHU_immSAsInt64:$imm)>;
+def : Pat<(i64 (zextloadi16 (add AddrFI:$rs1, RV3264Base_LHU_immSAsInt64:$immS))),
+        (LHU AddrFI:$rs1, RV3264Base_LHU_immSAsInt64:$immS)>;
 
 def : Pat<(i64 (zextloadi16 X:$rs1)),
         (LHU X:$rs1, (i64 0))>;
@@ -5470,11 +5470,11 @@ def : Pat<(i64 (zextloadi16 AddrFI:$rs1)),
 
 
 
-def : Pat<(i64 (sextloadi32 (add X:$rs1, RV3264Base_LW_immSAsInt64:$imm))),
-        (LW X:$rs1, RV3264Base_LW_immSAsInt64:$imm)>;
+def : Pat<(i64 (sextloadi32 (add X:$rs1, RV3264Base_LW_immSAsInt64:$immS))),
+        (LW X:$rs1, RV3264Base_LW_immSAsInt64:$immS)>;
 
-def : Pat<(i64 (sextloadi32 (add AddrFI:$rs1, RV3264Base_LW_immSAsInt64:$imm))),
-        (LW AddrFI:$rs1, RV3264Base_LW_immSAsInt64:$imm)>;
+def : Pat<(i64 (sextloadi32 (add AddrFI:$rs1, RV3264Base_LW_immSAsInt64:$immS))),
+        (LW AddrFI:$rs1, RV3264Base_LW_immSAsInt64:$immS)>;
 
 def : Pat<(i64 (sextloadi32 X:$rs1)),
         (LW X:$rs1, (i64 0))>;
@@ -5489,11 +5489,11 @@ def : Pat<(i64 (extloadi32 AddrFI:$rs1)),
         (LW AddrFI:$rs1, (i64 0))>;
 
 
-def : Pat<(i64 (zextloadi32 (add X:$rs1, RV3264Base_LWU_immSAsInt64:$imm))),
-        (LWU X:$rs1, RV3264Base_LWU_immSAsInt64:$imm)>;
+def : Pat<(i64 (zextloadi32 (add X:$rs1, RV3264Base_LWU_immSAsInt64:$immS))),
+        (LWU X:$rs1, RV3264Base_LWU_immSAsInt64:$immS)>;
 
-def : Pat<(i64 (zextloadi32 (add AddrFI:$rs1, RV3264Base_LWU_immSAsInt64:$imm))),
-        (LWU AddrFI:$rs1, RV3264Base_LWU_immSAsInt64:$imm)>;
+def : Pat<(i64 (zextloadi32 (add AddrFI:$rs1, RV3264Base_LWU_immSAsInt64:$immS))),
+        (LWU AddrFI:$rs1, RV3264Base_LWU_immSAsInt64:$immS)>;
 
 def : Pat<(i64 (zextloadi32 X:$rs1)),
         (LWU X:$rs1, (i64 0))>;
@@ -5522,8 +5522,8 @@ def : Pat<(or X:$rs1, X:$rs2),
         (OR X:$rs1, X:$rs2)>;
 
 
-def : Pat<(or X:$rs1, RV3264Base_ORI_immSAsInt64:$imm),
-        (ORI X:$rs1, RV3264Base_ORI_immSAsInt64:$imm)>;
+def : Pat<(or X:$rs1, RV3264Base_ORI_immSAsInt64:$immS),
+        (ORI X:$rs1, RV3264Base_ORI_immSAsInt64:$immS)>;
 
 
 def : Pat<(srem X:$rs1, X:$rs2),
@@ -5538,11 +5538,11 @@ def : Pat<(urem X:$rs1, X:$rs2),
 
 
 
-def : Pat<(truncstorei8 X:$rs2, (add X:$rs1, RV3264Base_SB_immSAsInt64:$imm)),
-        (SB X:$rs1, X:$rs2, RV3264Base_SB_immSAsInt64:$imm)>;
+def : Pat<(truncstorei8 X:$rs2, (add X:$rs1, RV3264Base_SB_immSAsInt64:$immS)),
+        (SB X:$rs1, X:$rs2, RV3264Base_SB_immSAsInt64:$immS)>;
 
-def : Pat<(truncstorei8 X:$rs2, (add AddrFI:$rs1, RV3264Base_SB_immSAsInt64:$imm)),
-        (SB AddrFI:$rs1, X:$rs2, RV3264Base_SB_immSAsInt64:$imm)>;
+def : Pat<(truncstorei8 X:$rs2, (add AddrFI:$rs1, RV3264Base_SB_immSAsInt64:$immS)),
+        (SB AddrFI:$rs1, X:$rs2, RV3264Base_SB_immSAsInt64:$immS)>;
 
 def : Pat<(truncstorei8 X:$rs2, X:$rs1),
         (SB X:$rs1, X:$rs2, (i64 0))>;
@@ -5551,11 +5551,11 @@ def : Pat<(truncstorei8 X:$rs2, AddrFI:$rs1),
         (SB AddrFI:$rs1, X:$rs2, (i64 0))>;
 
 
-def : Pat<(store X:$rs2, (add X:$rs1, RV3264Base_SD_immSAsInt64:$imm)),
-        (SD X:$rs1, X:$rs2, RV3264Base_SD_immSAsInt64:$imm)>;
+def : Pat<(store X:$rs2, (add X:$rs1, RV3264Base_SD_immSAsInt64:$immS)),
+        (SD X:$rs1, X:$rs2, RV3264Base_SD_immSAsInt64:$immS)>;
 
-def : Pat<(store X:$rs2, (add AddrFI:$rs1, RV3264Base_SD_immSAsInt64:$imm)),
-        (SD AddrFI:$rs1, X:$rs2, RV3264Base_SD_immSAsInt64:$imm)>;
+def : Pat<(store X:$rs2, (add AddrFI:$rs1, RV3264Base_SD_immSAsInt64:$immS)),
+        (SD AddrFI:$rs1, X:$rs2, RV3264Base_SD_immSAsInt64:$immS)>;
 
 def : Pat<(store X:$rs2, X:$rs1),
         (SD X:$rs1, X:$rs2, (i64 0))>;
@@ -5564,11 +5564,11 @@ def : Pat<(store X:$rs2, AddrFI:$rs1),
         (SD AddrFI:$rs1, X:$rs2, (i64 0))>;
 
 
-def : Pat<(truncstorei16 X:$rs2, (add X:$rs1, RV3264Base_SH_immSAsInt64:$imm)),
-        (SH X:$rs1, X:$rs2, RV3264Base_SH_immSAsInt64:$imm)>;
+def : Pat<(truncstorei16 X:$rs2, (add X:$rs1, RV3264Base_SH_immSAsInt64:$immS)),
+        (SH X:$rs1, X:$rs2, RV3264Base_SH_immSAsInt64:$immS)>;
 
-def : Pat<(truncstorei16 X:$rs2, (add AddrFI:$rs1, RV3264Base_SH_immSAsInt64:$imm)),
-        (SH AddrFI:$rs1, X:$rs2, RV3264Base_SH_immSAsInt64:$imm)>;
+def : Pat<(truncstorei16 X:$rs2, (add AddrFI:$rs1, RV3264Base_SH_immSAsInt64:$immS)),
+        (SH AddrFI:$rs1, X:$rs2, RV3264Base_SH_immSAsInt64:$immS)>;
 
 def : Pat<(truncstorei16 X:$rs2, X:$rs1),
         (SH X:$rs1, X:$rs2, (i64 0))>;
@@ -5581,8 +5581,8 @@ def : Pat<(shl X:$rs1, X:$rs2),
         (SLL X:$rs1, X:$rs2)>;
 
 
-def : Pat<(shl X:$rs1, RV3264Base_SLLI_shamtAsInt64:$sft),
-        (SLLI X:$rs1, RV3264Base_SLLI_shamtAsInt64:$sft)>;
+def : Pat<(shl X:$rs1, RV3264Base_SLLI_shamtAsInt64:$shamt),
+        (SLLI X:$rs1, RV3264Base_SLLI_shamtAsInt64:$shamt)>;
 
 
 
@@ -5605,15 +5605,15 @@ def : Pat<(setcc X:$rs1, X:$rs2, SETGE),
         (XORI (SLT X:$rs1, X:$rs2), 1)>;
 
 
-def : Pat<(setcc X:$rs1, RV3264Base_SLTI_immSAsInt64:$imm, SETLT),
-        (SLTI X:$rs1, RV3264Base_SLTI_immSAsInt64:$imm)>;
+def : Pat<(setcc X:$rs1, RV3264Base_SLTI_immSAsInt64:$immS, SETLT),
+        (SLTI X:$rs1, RV3264Base_SLTI_immSAsInt64:$immS)>;
 
 
-def : Pat<(setcc X:$rs1, RV3264Base_SLTIU_immSAsInt64:$imm, SETULT),
-        (SLTIU X:$rs1, RV3264Base_SLTIU_immSAsInt64:$imm)>;
+def : Pat<(setcc X:$rs1, RV3264Base_SLTIU_immSAsInt64:$immS, SETULT),
+        (SLTIU X:$rs1, RV3264Base_SLTIU_immSAsInt64:$immS)>;
 
-def : Pat<(setcc X:$rs1, RV3264Base_SLTIU_immSAsInt64:$imm, SETNE),
-        (SLTU X0, (XORI X:$rs1, RV3264Base_SLTIU_immSAsInt64:$imm))>;
+def : Pat<(setcc X:$rs1, RV3264Base_SLTIU_immSAsInt64:$immS, SETNE),
+        (SLTU X0, (XORI X:$rs1, RV3264Base_SLTIU_immSAsInt64:$immS))>;
 
 
 def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
@@ -5636,8 +5636,8 @@ def : Pat<(sra X:$rs1, X:$rs2),
         (SRA X:$rs1, X:$rs2)>;
 
 
-def : Pat<(sra X:$rs1, RV3264Base_SRAI_shamtAsInt64:$sft),
-        (SRAI X:$rs1, RV3264Base_SRAI_shamtAsInt64:$sft)>;
+def : Pat<(sra X:$rs1, RV3264Base_SRAI_shamtAsInt64:$shamt),
+        (SRAI X:$rs1, RV3264Base_SRAI_shamtAsInt64:$shamt)>;
 
 
 
@@ -5648,8 +5648,8 @@ def : Pat<(srl X:$rs1, X:$rs2),
         (SRL X:$rs1, X:$rs2)>;
 
 
-def : Pat<(srl X:$rs1, RV3264Base_SRLI_shamtAsInt64:$sft),
-        (SRLI X:$rs1, RV3264Base_SRLI_shamtAsInt64:$sft)>;
+def : Pat<(srl X:$rs1, RV3264Base_SRLI_shamtAsInt64:$shamt),
+        (SRLI X:$rs1, RV3264Base_SRLI_shamtAsInt64:$shamt)>;
 
 
 
@@ -5662,11 +5662,11 @@ def : Pat<(sub X:$rs1, X:$rs2),
 
 
 
-def : Pat<(truncstorei32 X:$rs2, (add X:$rs1, RV3264Base_SW_immSAsInt64:$imm)),
-        (SW X:$rs1, X:$rs2, RV3264Base_SW_immSAsInt64:$imm)>;
+def : Pat<(truncstorei32 X:$rs2, (add X:$rs1, RV3264Base_SW_immSAsInt64:$immS)),
+        (SW X:$rs1, X:$rs2, RV3264Base_SW_immSAsInt64:$immS)>;
 
-def : Pat<(truncstorei32 X:$rs2, (add AddrFI:$rs1, RV3264Base_SW_immSAsInt64:$imm)),
-        (SW AddrFI:$rs1, X:$rs2, RV3264Base_SW_immSAsInt64:$imm)>;
+def : Pat<(truncstorei32 X:$rs2, (add AddrFI:$rs1, RV3264Base_SW_immSAsInt64:$immS)),
+        (SW AddrFI:$rs1, X:$rs2, RV3264Base_SW_immSAsInt64:$immS)>;
 
 def : Pat<(truncstorei32 X:$rs2, X:$rs1),
         (SW X:$rs1, X:$rs2, (i64 0))>;
@@ -5679,8 +5679,8 @@ def : Pat<(xor X:$rs1, X:$rs2),
         (XOR X:$rs1, X:$rs2)>;
 
 
-def : Pat<(xor X:$rs1, RV3264Base_XORI_immSAsInt64:$imm),
-        (XORI X:$rs1, RV3264Base_XORI_immSAsInt64:$imm)>;
+def : Pat<(xor X:$rs1, RV3264Base_XORI_immSAsInt64:$immS),
+        (XORI X:$rs1, RV3264Base_XORI_immSAsInt64:$immS)>;
 
 
 
@@ -5697,8 +5697,8 @@ def : Pat<(xor X:$rs1, RV3264Base_XORI_immSAsInt64:$imm),
 
 
 
-def : Pat<(br bb:$imm),
-        (J RV3264Base_J_immSAsLabel:$imm)>;
+def : Pat<(br bb:$offset),
+        (J RV3264Base_J_immSAsLabel:$offset)>;
 
 
 
