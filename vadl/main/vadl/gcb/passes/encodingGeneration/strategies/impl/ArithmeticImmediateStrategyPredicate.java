@@ -17,12 +17,13 @@
 package vadl.gcb.passes.encodingGeneration.strategies.impl;
 
 import javax.annotation.Nullable;
-import vadl.gcb.passes.encodingGeneration.strategies.EncodingGenerationStrategy;
+import vadl.gcb.passes.encodingGeneration.strategies.EncodingPredicateGenerationStrategy;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.viam.Constant;
 import vadl.viam.Format;
+import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -52,7 +53,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * }
  * }</pre>
  */
-public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
+public class ArithmeticImmediateStrategyPredicate implements EncodingPredicateGenerationStrategy {
   @Override
   public boolean checkIfApplicable(Format.FieldAccess fieldAccess) {
     // Check if only one field
@@ -70,7 +71,7 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
   }
 
   @Override
-  public void generateEncoding(PrintableInstruction instruction, Format.FieldAccess fieldAccess) {
+  public void generateEncodingAndPredicateFunction(Instruction instruction, Format.FieldAccess fieldAccess) {
     var accessFunction = fieldAccess.accessFunction();
     var copy = accessFunction.behavior().copy();
     final var returnNode = copy.getNodes(ReturnNode.class).findFirst().get();

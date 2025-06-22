@@ -16,14 +16,17 @@
 
 package vadl.gcb.passes.encodingGeneration.strategies;
 
+import vadl.types.Type;
 import vadl.viam.Format;
-import vadl.viam.PrintableInstruction;
+import vadl.viam.Function;
+import vadl.viam.Instruction;
+import vadl.viam.Parameter;
 import vadl.viam.graph.Graph;
 
 /**
- * The implementor of this interface can generate a field access encoding function.
+ * The implementor of this interface can generate a field access encoding / predicate functions.
  */
-public interface EncodingGenerationStrategy {
+public interface EncodingPredicateGenerationStrategy {
   /**
    * Check if the strategy can be applied. Returns {@code true} when it is applicable.
    */
@@ -32,15 +35,18 @@ public interface EncodingGenerationStrategy {
   /**
    * Create the inverse behavior graph of a field access function.
    * It also adds the created nodes to {@code vadl.viam.Format.FieldAccess#encoding}.
+   * Based on the encoding functions, it automatically detects the value range which is encodable
+   * into the {@link Format.Field}.
    */
-  void generateEncoding(PrintableInstruction instruction, Format.FieldAccess fieldAccess);
+  void generateEncodingAndPredicateFunction(Instruction instruction,
+                                            Format.FieldAccess fieldAccess);
 
   /**
    * Creates a new {@link vadl.viam.Format.FieldEncoding} for the given field
    * and the behavior graph.
    * It assumes that there is only a single field references by the field access.
    */
-  default void setFieldEncoding(PrintableInstruction instruction,
+  default void setFieldEncoding(Instruction instruction,
                                 Format.FieldAccess fieldAccess,
                                 Format.Field fieldToBeEncoded,
                                 Graph behavior) {
@@ -48,5 +54,19 @@ public interface EncodingGenerationStrategy {
     var format = fieldAccess.format();
     var encoding = new Format.FieldEncoding(ident, fieldToBeEncoded, behavior);
     format.setFieldEncoding(encoding);
+  }
+
+  /**
+   * Creates a new predicate function for the given field
+   * and the behavior graph.
+   * It assumes that there is only a single field references by the field access.
+   */
+  default void setPredicate(Instruction instruction,
+                            Format.FieldAccess fieldAccess,
+                            Graph behavior) {
+    var ident = instruction.identifier().append(fieldAccess.identifier.last()
+        .parts());
+    var predicate = new Function(ident, new Parameter[] {}, Type.bool(), behavior);
+    fieldAccess.setPredicate(predicate);
   }
 }

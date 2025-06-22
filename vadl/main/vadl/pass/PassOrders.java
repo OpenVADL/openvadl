@@ -39,7 +39,7 @@ import vadl.gcb.passes.InstructionPatternPruningPass;
 import vadl.gcb.passes.NormalizeFieldsToFieldAccessFunctionsPass;
 import vadl.gcb.passes.SetMissingConfigurationValuesPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
-import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingFunctionPass;
+import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingAndPredicateFunctionsPass;
 import vadl.iss.passes.IssBuiltInArgTruncOptPass;
 import vadl.iss.passes.IssConfigurationPass;
 import vadl.iss.passes.IssExtractOptimizationPass;
@@ -221,7 +221,7 @@ public class PassOrders {
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
     order.add(new DetermineRelocationTypeForFieldPass(gcbConfiguration));
     order.add(new GenerateValueRangeImmediatePass(gcbConfiguration));
-    order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
+    order.add(new GenerateFieldAccessEncodingAndPredicateFunctionsPass(gcbConfiguration));
     order.add(new AssemblyConcatBuiltinMergingPass(gcbConfiguration));
     order.add(new InstructionPatternPruningPass(gcbConfiguration));
 

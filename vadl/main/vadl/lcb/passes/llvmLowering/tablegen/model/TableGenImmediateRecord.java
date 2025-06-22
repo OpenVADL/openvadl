@@ -17,7 +17,6 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.Objects;
-import vadl.gcb.valuetypes.VariantKind;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass;
 import vadl.types.BitsType;
@@ -73,7 +72,7 @@ public class TableGenImmediateRecord {
 
   public static Identifier createPredicateMethod(PrintableInstruction instruction,
                                                  Format.FieldAccess fieldAccess) {
-    return fieldAccess.predicate().identifier.dropLast().last().prepend(instruction.identifier())
+    return fieldAccess.identifier.last().prepend(instruction.identifier())
         .append("predicate");
   }
 

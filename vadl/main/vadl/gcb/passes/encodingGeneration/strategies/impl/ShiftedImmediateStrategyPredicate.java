@@ -16,10 +16,11 @@
 
 package vadl.gcb.passes.encodingGeneration.strategies.impl;
 
-import vadl.gcb.passes.encodingGeneration.strategies.EncodingGenerationStrategy;
+import vadl.gcb.passes.encodingGeneration.strategies.EncodingPredicateGenerationStrategy;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.Format;
+import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
@@ -48,7 +49,7 @@ import vadl.viam.graph.dependency.SliceNode;
  * }
  * }</pre>
  */
-public class ShiftedImmediateStrategy implements EncodingGenerationStrategy {
+public class ShiftedImmediateStrategyPredicate implements EncodingPredicateGenerationStrategy {
   @Override
   public boolean checkIfApplicable(Format.FieldAccess fieldAccess) {
     // Check if only one field
@@ -65,8 +66,8 @@ public class ShiftedImmediateStrategy implements EncodingGenerationStrategy {
   }
 
   @Override
-  public void generateEncoding(PrintableInstruction printableInstruction,
-                               Format.FieldAccess fieldAccess) {
+  public void generateEncodingAndPredicateFunction(Instruction printableInstruction,
+                                                   Format.FieldAccess fieldAccess) {
     var accessFunction = fieldAccess.accessFunction();
     var fieldRef = fieldAccess.fieldRefs().getFirst();
 

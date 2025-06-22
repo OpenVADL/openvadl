@@ -27,12 +27,13 @@ import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.GcbConfiguration;
 import vadl.gcb.AbstractGcbTest;
-import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingFunctionPass;
+import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingAndPredicateFunctionsPass;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 import vadl.utils.VadlFileUtils;
 import vadl.viam.Format;
+import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.control.ReturnNode;
 
@@ -89,7 +90,7 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends AbstractGcbTe
     return assertStatusCodes(path + "/result.csv");
   }
 
-  private TestCase createTestCase(PrintableInstruction instruction,
+  private TestCase createTestCase(Instruction instruction,
                                   Format.FieldAccess fieldAccess) {
     var decodingFunction = fieldAccess.accessFunction();
     // Then generate the z3 code for the f_x
@@ -99,9 +100,9 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends AbstractGcbTe
     // Generate encoding from decoding.
     // This is what we would like to test for.
     if (fieldAccess.encoding() == null) {
-      for (var strategy : GenerateFieldAccessEncodingFunctionPass.strategies) {
+      for (var strategy : GenerateFieldAccessEncodingAndPredicateFunctionsPass.strategies) {
         if (strategy.checkIfApplicable(fieldAccess)) {
-          strategy.generateEncoding(instruction, fieldAccess);
+          strategy.generateEncodingAndPredicateFunction(instruction, fieldAccess);
           break;
         }
       }

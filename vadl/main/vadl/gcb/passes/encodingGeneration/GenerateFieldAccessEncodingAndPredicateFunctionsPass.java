@@ -20,12 +20,10 @@ import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
-import vadl.error.Diagnostic;
-import vadl.error.DiagnosticList;
-import vadl.gcb.passes.encodingGeneration.strategies.EncodingGenerationStrategy;
-import vadl.gcb.passes.encodingGeneration.strategies.impl.ArithmeticImmediateStrategy;
-import vadl.gcb.passes.encodingGeneration.strategies.impl.ShiftedImmediateStrategy;
-import vadl.gcb.passes.encodingGeneration.strategies.impl.TrivialImmediateStrategy;
+import vadl.gcb.passes.encodingGeneration.strategies.EncodingPredicateGenerationStrategy;
+import vadl.gcb.passes.encodingGeneration.strategies.impl.ArithmeticImmediateStrategyPredicate;
+import vadl.gcb.passes.encodingGeneration.strategies.impl.ShiftedImmediateStrategyPredicate;
+import vadl.gcb.passes.encodingGeneration.strategies.impl.TrivialImmediateStrategyPredicate;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -50,14 +48,14 @@ import vadl.viam.Specification;
  * }
  * }</pre>
  */
-public class GenerateFieldAccessEncodingFunctionPass extends Pass {
+public class GenerateFieldAccessEncodingAndPredicateFunctionsPass extends Pass {
 
-  public static final List<EncodingGenerationStrategy> strategies = List.of(
-      new TrivialImmediateStrategy(),
-      new ShiftedImmediateStrategy(),
-      new ArithmeticImmediateStrategy());
+  public static final List<EncodingPredicateGenerationStrategy> strategies = List.of(
+      new TrivialImmediateStrategyPredicate(),
+      new ShiftedImmediateStrategyPredicate(),
+      new ArithmeticImmediateStrategyPredicate());
 
-  public GenerateFieldAccessEncodingFunctionPass(GcbConfiguration gcbConfiguration) {
+  public GenerateFieldAccessEncodingAndPredicateFunctionsPass(GcbConfiguration gcbConfiguration) {
     super(gcbConfiguration);
   }
 
@@ -77,7 +75,7 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
           // Different field access functions require different heuristics for the encoding.
           for (var strategy : strategies) {
             if (strategy.checkIfApplicable(fieldAccess)) {
-              strategy.generateEncoding(instruction, fieldAccess);
+              strategy.generateEncodingAndPredicateFunction(instruction, fieldAccess);
               break;
             }
           }
