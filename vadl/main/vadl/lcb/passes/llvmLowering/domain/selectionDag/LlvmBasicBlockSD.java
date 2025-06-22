@@ -37,7 +37,7 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
   private final PrintableInstruction instruction;
   private final ValueType llvmType;
   private final TableGenImmediateRecord immediateOperand;
-
+  private final String variableName;
 
   /**
    * Creates an {@link LlvmBasicBlockSD} object that holds a reference to a format field
@@ -57,8 +57,35 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
     super(fieldAccess, originalType);
     this.instruction = instruction;
     this.immediateOperand =
-        new TableGenImmediateRecord(instruction, fieldAccess,  llvmType);
+        new TableGenImmediateRecord(instruction, fieldAccess, llvmType);
     this.llvmType = llvmType;
+    this.variableName = immediateOperand.fieldAccessRef().simpleName();
+  }
+
+  /**
+   * Creates an {@link LlvmBasicBlockSD} object that holds a reference to a format field
+   * access. But in the selection dag, the immediate is a reference to a basic block.
+   * Overwrites the {@code variableName} to the given parameter.
+   *
+   * @param instruction  which scopes the {@link vadl.viam.Format.FieldAccess}.
+   * @param fieldAccess  the format immediate to be referenced
+   * @param variableName name of the variable for the rendering.
+   * @param originalType of the node. This type might not be correctly sized because vadl allows
+   *                     arbitrary bit sizes.
+   * @param llvmType     is same as {@code originalType} when it is a valid LLVM type. Otherwise,
+   *                     it is the next upcasted type.
+   */
+  public LlvmBasicBlockSD(PrintableInstruction instruction,
+                          Format.FieldAccess fieldAccess,
+                          String variableName,
+                          Type originalType,
+                          ValueType llvmType) {
+    super(fieldAccess, originalType);
+    this.instruction = instruction;
+    this.immediateOperand =
+        new TableGenImmediateRecord(instruction, fieldAccess, llvmType);
+    this.llvmType = llvmType;
+    this.variableName = variableName;
   }
 
   public TableGenImmediateRecord immediateOperand() {
@@ -85,8 +112,12 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
     }
   }
 
+  public String variableName() {
+    return variableName;
+  }
+
   @Override
   public String lower() {
-    return "bb:$" + immediateOperand.fieldAccessRef().fieldRef().simpleName();
+    return "bb:$" + variableName;
   }
 }

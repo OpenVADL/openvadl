@@ -428,7 +428,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     for (int i = 0; i < tableGenInstruction.getInOperands().size(); i++) {
       var operand = tableGenInstruction.getInOperands().get(i);
       if (operand instanceof ReferencesFormatField x
-          && x.formatField().equals(needle)) {
+          && x.referencesField(needle)) {
         return Optional.of(outputOffset + i);
       }
     }
@@ -440,7 +440,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     for (int i = 0; i < tableGenInstruction.getOutOperands().size(); i++) {
       var operand = tableGenInstruction.getOutOperands().get(i);
       if (operand instanceof ReferencesFormatField x
-          && x.formatField().equals(needle)) {
+          && x.referencesField(needle)) {
         return Optional.of(i);
       }
     }

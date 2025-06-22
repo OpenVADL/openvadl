@@ -247,7 +247,7 @@ public class LcbNodeReplacementHandler {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(TupleGetFieldNode node) {
-    throw Diagnostic.error("not supported", node.location()).build();
+    node.replaceAndDelete(new LlvmUnlowerableSD());
   }
 
   @Handler
@@ -614,7 +614,7 @@ public class LcbNodeReplacementHandler {
         // 4. the immediate offset
 
         if (writeRegTensorNode.condition() instanceof BuiltInCall conditional) {
-          var condCond = LlvmCondCode.from(conditional.builtIn());
+          var condCond = LlvmCondCode.from(conditional.builtIn(), conditional.location());
           if (condCond == null) {
             throw Diagnostic.error("CondCode must not be null", conditional.location()).build();
           }

@@ -16,31 +16,27 @@
 
 package vadl.lcb.template.lib.Target.AsmParser;
 
-import static vadl.viam.ViamError.ensureNonNull;
-import static vadl.viam.ViamError.ensurePresent;
-
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
-import vadl.error.Diagnostic;
-import vadl.gcb.passes.ValueRange;
-import vadl.gcb.passes.ValueRangeCtx;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
-import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenDefaultInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.AssemblyDescription;
-import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
 /**
@@ -75,131 +71,33 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
-  private List<Map<String, Object>> instructionsWithOperands(PassResults results) {
-    var output =
-        (LlvmLoweringPass.LlvmLoweringPassResult) results.lastResultOf(LlvmLoweringPass.class);
-    var result = new ArrayList<Map<String, Object>>();
-
-    output.machineInstructionRecords().forEach(
-        (insn, llvmRecord) -> {
-
-          var operands = llvmRecord.info().outputInputOperands().stream()
-              .map(o -> '"' + ((TableGenDefaultInstructionOperand) o).name() + '"')
-              .toList();
-
-          var fieldAccesses = new HashMap<String, String>();
-          insn.format().fieldAccesses().forEach(
-              fieldAccess -> {
-                fieldAccesses.put(fieldAccess.simpleName(), fieldAccess.fieldRef().simpleName());
-              }
-          );
-
-          result.add(Map.of(
-              "name", insn.simpleName(),
-              "operands", String.join(", ", operands),
-              "fieldAccesses", fieldAccesses
-          ));
-        }
-    );
-
-    output.pseudoInstructionRecords().forEach(
-        (pseudo, llvmRecord) -> {
-          var operands = Arrays.stream(pseudo.parameters()).map(p -> '"' + p.simpleName() + '"');
-          result.add(Map.of(
-              "name", pseudo.simpleName(),
-              "operands", String.join(", ", operands.toList())
-          ));
-        }
-    );
-
-    return result;
-  }
-
-  record ImmediateConversion(
-      String instructionName,
-      String fieldAccessName,
-      String operandName,
-      String encodeMethod,
-      String decodeMethod,
-      String predicateMethod,
-      long lowestValue,
-      long highestValue,
-      int opIndex
-  ) implements Renderable {
+  record TableGenOperand(String name,
+                         int index,
+                         boolean requiresPredicate,
+                         String predicateMethod) implements Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
-      return Map.of(
-          "insnName", instructionName,
-          "fieldAccessName", fieldAccessName,
-          "operandName", operandName,
-          "encodeMethod", encodeMethod,
-          "decodeMethod", decodeMethod,
-          "predicateMethod", predicateMethod,
-          "lowestValue", lowestValue,
-          "highestValue", highestValue,
-          "opIndex", opIndex
-      );
+      return Map.of("name", name,
+          "index", index,
+          "requiresPredicate", requiresPredicate,
+          "predicateMethod", predicateMethod);
     }
   }
 
-  /**
-   * Immediate conversions are used to generate the {@code ModifyImmediate} method in the parser.
-   * {@code ModifyImmediate} fulfills 4 tasks:
-   * <ul>
-   *   <li>Applies {@code encode} to the parsed immediate if an
-   *   access function was referenced in the grammar</li>
-   *   <li>Checks if a normalized immediate is in the valid value range</li>
-   *   <li>Applies {@code decode} to fit the expectation of {@code MCInst}</li>
-   *   <li>Checks if the {@code predicate} holds for the immediate value</li>
-   * </ul>
-   */
-  private List<ImmediateConversion> immediateConversions(PassResults passResults) {
-    var tableGenMachineInstructions =
-        (List<TableGenMachineInstruction>) passResults.lastResultOf(
-            GenerateTableGenMachineInstructionRecordPass.class);
-    return tableGenMachineInstructions
-        .stream()
-        .filter(tableGenMachineInstruction -> {
-          // We only convert immediates. Therefore, we have to check whether the
-          // instruction actually has at least one immediate.
-          return !tableGenMachineInstruction.llvmLoweringRecord().info().inputImmediates()
-              .isEmpty();
-        })
-        .flatMap(tableGenMachineInstruction -> {
-          var instruction = tableGenMachineInstruction.instruction();
-          var valueRange = valueRange(instruction);
+  record ParseInstruction(String name,
+                          List<TableGenOperand> operands,
+                          int numOperands,
+                          String targets)
+      implements Renderable {
 
-          return tableGenMachineInstruction.llvmLoweringRecord().info().inputs().stream()
-              .filter(i -> i instanceof ReferencesImmediateOperand)
-              .map(tableGenOperand -> {
-                var castedTableGenOperand = (TableGenDefaultInstructionOperand) tableGenOperand;
-                var immediateOperand =
-                    ((ReferencesImmediateOperand) tableGenOperand).immediateOperand();
-                var fieldAccess = immediateOperand.fieldAccessRef();
-                var opIndex = tableGenMachineInstruction.indexInOperands(tableGenOperand);
-
-                return new ImmediateConversion(
-                    instruction.simpleName(),
-                    fieldAccess != null ? fieldAccess.simpleName() : "",
-                    castedTableGenOperand.name(),
-                    immediateOperand.rawEncoderMethod().lower()
-                        + "_" + castedTableGenOperand.name(),
-                    immediateOperand.rawDecoderMethod().lower(),
-                    immediateOperand.predicateMethod().lower(),
-                    valueRange.lowest(),
-                    valueRange.highest(),
-                    opIndex
-                );
-              });
-        }).toList();
-  }
-
-  private ValueRange valueRange(Instruction instruction) {
-    var ctx = ensureNonNull(instruction.extension(ValueRangeCtx.class),
-        () -> Diagnostic.error("Has no extension value range", instruction.location()));
-    return ensurePresent(ctx.getFirst(),
-        () -> Diagnostic.error("Has no value range", instruction.location()));
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of("name", name,
+          "targets", targets,
+          "operands", operands,
+          "numOperands", numOperands);
+    }
   }
 
   @Override
@@ -208,9 +106,138 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         CommonVarNames.ALIASES, directiveMappings(specification.assemblyDescription()),
-        CommonVarNames.INSTRUCTIONS, instructionsWithOperands(passResults),
-        "immediateConversions", immediateConversions(passResults)
+        CommonVarNames.INSTRUCTIONS, instructions(passResults)
     );
+  }
+
+  private List<ParseInstruction> instructions(PassResults passResults) {
+    var tableGenMachineInstructions =
+        (List<TableGenMachineInstruction>) passResults.lastResultOf(
+            GenerateTableGenMachineInstructionRecordPass.class);
+    var tableGenPseudoInstructions =
+        (List<TableGenPseudoInstruction>) passResults.lastResultOf(
+            GenerateTableGenPseudoInstructionRecordPass.class);
+
+    var machine = tableGenMachineInstructions.stream()
+        .map(instruction -> {
+          var name = instruction.getName();
+          var operands = createOperands(instruction);
+          int numOperands = operands.size();
+          return new ParseInstruction(name,
+              operands,
+              numOperands,
+              operands.stream()
+                  .map(x -> "\"" + x.name + "\"")
+                  .collect(Collectors.joining(", "))
+          );
+        })
+        .toList();
+
+    var pseudo = tableGenPseudoInstructions.stream()
+        .map(instruction -> {
+          var name = instruction.getName();
+          var operands = createOperands(instruction);
+          int numOperands = operands.size();
+          return new ParseInstruction(name,
+              operands,
+              numOperands,
+              operands.stream()
+                  .map(x -> "\"" + x.name + "\"")
+                  .collect(Collectors.joining(", "))
+          );
+        })
+        .toList();
+
+    return Stream.concat(machine.stream(), pseudo.stream()).toList();
+  }
+
+  private List<TableGenOperand> createOperands(TableGenInstruction instruction) {
+    var result = new ArrayList<TableGenOperand>();
+    int indexOffset = 1;
+    // Output
+    for (var output : instruction.getOutOperands()) {
+      var casted = (TableGenDefaultInstructionOperand) output;
+      var operand = new TableGenOperand(casted.name(), indexOffset, false, "");
+      result.add(operand);
+      indexOffset++;
+    }
+
+    // Inputs
+    for (var input : instruction.getInOperands()) {
+      var casted = (TableGenDefaultInstructionOperand) input;
+      if (input instanceof TableGenInstructionImmediateOperand immediateOperand) {
+        var operand = new TableGenOperand(immediateOperand.name(),
+            indexOffset,
+            true,
+            immediateOperand.immediateOperand().predicateMethod().lower()
+        );
+        result.add(operand);
+      } else if (input instanceof TableGenInstructionLabelOperand immediateOperand) {
+        var operand = new TableGenOperand(immediateOperand.name(),
+            indexOffset,
+            true,
+            immediateOperand.immediateOperand().predicateMethod().lower()
+        );
+        result.add(operand);
+      } else {
+        var operand = new TableGenOperand(casted.name(),
+            indexOffset,
+            false,
+            ""
+        );
+        result.add(operand);
+      }
+
+      indexOffset++;
+    }
+
+    return result;
+
+  }
+
+  private List<TableGenOperand> createOperands(TableGenPseudoInstruction instruction) {
+    var result = new ArrayList<TableGenOperand>();
+    int indexOffset = 1;
+
+    // Output
+    for (var output : instruction.getOutOperands()) {
+      var casted = (TableGenDefaultInstructionOperand) output;
+      var operand = new TableGenOperand(casted.name(), indexOffset, false, "");
+      result.add(operand);
+      indexOffset++;
+    }
+
+    // Inputs
+    for (var input : instruction.getInOperands()) {
+      var casted = (TableGenDefaultInstructionOperand) input;
+      if (input instanceof TableGenInstructionImmediateOperand immediateOperand) {
+        var operand = new TableGenOperand(immediateOperand.name(),
+            indexOffset,
+            false,
+            immediateOperand.immediateOperand().predicateMethod().lower()
+        );
+        result.add(operand);
+      } else if (input instanceof TableGenInstructionLabelOperand immediateOperand) {
+        var operand = new TableGenOperand(immediateOperand.name(),
+            indexOffset,
+            false,
+            immediateOperand.immediateOperand().predicateMethod().lower()
+        );
+        result.add(operand);
+      } else {
+        var operand = new TableGenOperand(casted.name(),
+            indexOffset,
+            false,
+            ""
+        );
+        result.add(operand);
+      }
+
+      indexOffset++;
+    }
+
+    return result;
+
   }
 
   private List<AliasDirective> directiveMappings(Optional<AssemblyDescription> asmDescription) {

@@ -144,7 +144,7 @@ public class IdentifyFieldUsagePassTest extends AbstractGcbTest {
     Assertions.assertNotNull(result);
     var instruction = getInstrByName(instructionName, setup.specification());
     Assertions.assertNotNull(instruction);
-    var immediates = result.getImmediates(instruction);
+    var immediates = result.getImmediateFields(instruction);
 
     for (var imm : imms) {
       assertThat(getImmediate(imm, immediates)).isPresent();

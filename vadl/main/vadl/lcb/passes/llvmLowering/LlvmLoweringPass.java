@@ -122,7 +122,7 @@ public class LlvmLoweringPass extends Pass {
      */
     public int findInputIndex(Format.Field field) {
       for (int i = 0; i < inputs.size(); i++) {
-        if (inputs.get(i) instanceof ReferencesFormatField x && x.formatField().equals(field)) {
+        if (inputs.get(i) instanceof ReferencesFormatField x && x.referencesField(field)) {
           return i;
         }
       }
@@ -148,7 +148,7 @@ public class LlvmLoweringPass extends Pass {
       var result = new ArrayList<Format.Field>();
       for (var operand : outputInputOperands()) {
         if (operand instanceof ReferencesFormatField x) {
-          result.add(x.formatField());
+          result.addAll(x.formatFields());
         } else {
           throw Diagnostic.error("Expected to find format field on operand.",
               SourceLocation.INVALID_SOURCE_LOCATION).build();

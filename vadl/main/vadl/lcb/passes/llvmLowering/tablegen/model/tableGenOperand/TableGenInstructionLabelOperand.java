@@ -18,6 +18,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
 import static vadl.viam.ViamError.ensure;
 
+import java.util.List;
 import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
@@ -39,7 +40,13 @@ public class TableGenInstructionLabelOperand extends TableGenDefaultInstructionO
   private TableGenInstructionLabelOperand(Node origin,
                                           TableGenImmediateRecord immediateRecord,
                                           Format.FieldAccess fieldAccess) {
-    super(origin, immediateRecord.rawName() + AS_LABEL, fieldAccess.fieldRef().simpleName());
+    this(origin, immediateRecord, fieldAccess.identifier.simpleName());
+  }
+
+  public TableGenInstructionLabelOperand(Node origin,
+                                         TableGenImmediateRecord immediateRecord,
+                                         String variableName) {
+    super(origin, immediateRecord.rawName() + AS_LABEL, variableName);
     this.immediate = immediateRecord;
   }
 
@@ -47,7 +54,7 @@ public class TableGenInstructionLabelOperand extends TableGenDefaultInstructionO
    * Constructor.
    */
   public TableGenInstructionLabelOperand(LlvmBasicBlockSD node) {
-    this(node, node.immediateOperand(), node.fieldAccess());
+    this(node, node.immediateOperand(), node.variableName());
   }
 
   /**
@@ -62,8 +69,8 @@ public class TableGenInstructionLabelOperand extends TableGenDefaultInstructionO
   }
 
   @Override
-  public Format.Field formatField() {
-    return immediate.fieldAccessRef().fieldRef();
+  public List<Format.Field> formatFields() {
+    return immediate.fieldAccessRef().fieldRefs();
   }
 
   @Override

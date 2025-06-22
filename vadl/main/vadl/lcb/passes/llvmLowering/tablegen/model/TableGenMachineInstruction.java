@@ -23,11 +23,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.Encoding;
+import vadl.viam.Format;
 import vadl.viam.Instruction;
 
 /**
@@ -60,7 +62,7 @@ public class TableGenMachineInstruction extends TableGenInstruction {
     this.formatSize = instruction.encoding().format().type().bitWidth();
     this.size = instruction.encoding().format().type().bitWidth() / 8;
     this.codeSize = instruction.encoding().format().type().bitWidth() / 8;
-    this.bitBlocks = BitBlock.from(instruction.encoding());
+    this.bitBlocks = BitBlock.from(instruction.encoding(), inOperands);
     this.fieldEncodings = FieldEncoding.from(instruction.encoding(), inOperands);
     this.instruction = instruction;
     this.llvmLoweringRecord = llvmLoweringRecord;
@@ -112,12 +114,18 @@ public class TableGenMachineInstruction extends TableGenInstruction {
     /**
      * Convert an encoding into a bitblock set for TableGen.
      */
-    public static List<BitBlock> from(vadl.viam.Encoding encoding) {
+    public static List<BitBlock> from(vadl.viam.Encoding encoding,
+                                      List<TableGenInstructionOperand> inOperands) {
       var encodedFields = Arrays.stream(encoding.fieldEncodings())
           .map(field -> new BitBlock(field.formatField().size(), field.simpleName(),
               Optional.of(BitSet.valueOf(new long[] {field.constant().longValue()}))));
       var nonEncodedFields = Arrays.stream(encoding.nonEncodedFormatFields())
-          .map(field -> new BitBlock(field.size(), field.simpleName(), Optional.empty()));
+          .map(field -> {
+            var fieldAccess = getFieldAccessFromField(inOperands, field);
+            var name = fieldAccess.map(x -> x.identifier.simpleName()).orElse(field.simpleName());
+
+            return new BitBlock(field.size(), name, Optional.empty());
+          });
 
       return Stream.concat(encodedFields, nonEncodedFields).toList();
     }
@@ -175,16 +183,13 @@ public class TableGenMachineInstruction extends TableGenInstruction {
         var sourceOffset = 0;
         var parts = new ArrayList<>(field.bitSlice().parts().toList());
         Collections.reverse(parts);
-        boolean isImmediate =
-            inOperands.stream()
-                .filter(x -> x instanceof ReferencesImmediateOperand)
-                .flatMap(x ->
-                    ((ReferencesImmediateOperand) x).immediateOperand().fieldAccessRef().fieldRefs()
-                        .stream())
-                .anyMatch(y -> y == field);
+        var fieldAccess = getFieldAccessFromField(inOperands, field);
+        var isImmediate = fieldAccess.isPresent();
+        var name = fieldAccess.map(x -> x.identifier.simpleName()).orElse(field.simpleName());
         for (var part : parts) {
           encodings.add(
-              new FieldEncoding(part.msb(), part.lsb(), field.simpleName(),
+              new FieldEncoding(part.msb(), part.lsb(),
+                  name,
                   sourceOffset + part.size() - 1,
                   sourceOffset,
                   isImmediate ? immediateOffset : 0)); // only field access functions have offset
@@ -221,5 +226,18 @@ public class TableGenMachineInstruction extends TableGenInstruction {
     public int immediateOffset() {
       return immediateOffset;
     }
+  }
+
+  @Nonnull
+  private static Optional<Format.FieldAccess> getFieldAccessFromField(
+      List<TableGenInstructionOperand> inOperands, Format.Field field) {
+    var fieldAccess =
+        inOperands.stream()
+            .filter(x -> x instanceof ReferencesImmediateOperand)
+            .map(x ->
+                ((ReferencesImmediateOperand) x).immediateOperand().fieldAccessRef())
+            .filter(y -> y.fieldRefs().stream().anyMatch(z -> z == field))
+            .findFirst();
+    return fieldAccess;
   }
 }

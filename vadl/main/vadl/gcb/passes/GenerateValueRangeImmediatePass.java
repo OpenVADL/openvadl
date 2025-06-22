@@ -17,7 +17,6 @@
 package vadl.gcb.passes;
 
 import java.io.IOException;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.Diagnostic;
@@ -48,21 +47,38 @@ public class GenerateValueRangeImmediatePass extends Pass {
    * Get the lowest possible value that the immediate with the given {@code formatBitSize} can
    * have.
    */
-  public static long lowestPossibleValue(int formatBitSize, BitsType rawType) {
-    return rawType.isSigned()
-        ? (long) (-1 * Math.pow(2, (double) formatBitSize - 1))
+  public static long lowestPossibleValue(BitsType rawType, boolean isSigned) {
+    return isSigned
+        ? (long) (-1 * Math.pow(2, (double) rawType.bitWidth() - 1))
         : 0;
+  }
+
+  /**
+   * Get the lowest possible value that the immediate with the given {@code formatBitSize} can
+   * have.
+   */
+  public static long lowestPossibleValue(BitsType rawType) {
+    return lowestPossibleValue(rawType, rawType.isSigned());
   }
 
   /**
    * Get the highest possible value that the immediate with the given {@code formatBitSize} can
    * have.
    */
-  public static long highestPossibleValue(int formatBitSize, BitsType rawType) {
+  public static long highestPossibleValue(BitsType rawType) {
+    return highestPossibleValue(rawType, rawType.isSigned());
+  }
+
+
+  /**
+   * Get the highest possible value that the immediate with the given {@code formatBitSize} can
+   * have.
+   */
+  public static long highestPossibleValue(BitsType rawType, boolean isSigned) {
     return
-        (long) (rawType.isSigned()
-            ? Math.pow(2, (double) formatBitSize - 1)
-            : Math.pow(2, formatBitSize)) - 1;
+        (long) (isSigned
+            ? Math.pow(2, (double) rawType.bitWidth() - 1)
+            : Math.pow(2, rawType.bitWidth())) - 1;
   }
 
   @Nullable
@@ -72,16 +88,15 @@ public class GenerateValueRangeImmediatePass extends Pass {
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults
             .lastResultOf(IdentifyFieldUsagePass.class);
 
-    viam.isa().map(x -> x.ownInstructions().stream())
-        .orElse(Stream.empty())
+    viam.isa().stream().flatMap(x -> x.ownInstructions().stream())
         .forEach(instruction -> {
-          var fields = fieldResult.getImmediates(instruction);
+          var fields = fieldResult.getImmediateFields(instruction);
           var ctx = new ValueRangeCtx();
 
           fields.forEach(field -> {
-            var ty = getType(instruction, field);
-            var lowest = lowestPossibleValue(field.size(), ty);
-            var highest = highestPossibleValue(field.size(), ty);
+            var isSigned = isSigned(instruction, field);
+            var lowest = lowestPossibleValue(field.type().toBitsType(), isSigned);
+            var highest = highestPossibleValue(field.type().toBitsType(), isSigned);
             var range = new ValueRange(lowest, highest);
             ctx.add(field, range);
           });
@@ -97,12 +112,12 @@ public class GenerateValueRangeImmediatePass extends Pass {
    * unsigned or signed, we have to check whether there exist a {@link FieldAccess}.
    * If it does, then take its type. If not then just use the field's type.
    */
-  private BitsType getType(Instruction instruction, Format.Field field) {
+  private boolean isSigned(Instruction instruction, Format.Field field) {
     var fieldAccesses = instruction.behavior().getNodes(FieldAccessRefNode.class).toList();
     for (var fieldAccess : fieldAccesses) {
       for (var fieldRef : fieldAccess.fieldAccess().fieldRefs()) {
         if (fieldRef.equals(field)) {
-          return (BitsType) fieldAccess.fieldAccess().type();
+          return fieldAccess.fieldAccess().type().asDataType().isSigned();
         }
       }
     }

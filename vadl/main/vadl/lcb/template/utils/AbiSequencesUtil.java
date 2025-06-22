@@ -101,8 +101,8 @@ public class AbiSequencesUtil {
     var param = x.getLargestParameter();
     var ty = (BitsType) param.type().asDataType();
 
-    var highest = GenerateValueRangeImmediatePass.highestPossibleValue(ty.bitWidth(), ty);
-    var lowest = GenerateValueRangeImmediatePass.lowestPossibleValue(ty.bitWidth(), ty);
+    var highest = GenerateValueRangeImmediatePass.highestPossibleValue(ty);
+    var lowest = GenerateValueRangeImmediatePass.lowestPossibleValue(ty);
 
     return new ConstantSequence(x,
         Arrays.stream(x.parameters()).anyMatch(y -> y.type().asDataType().isSigned()),

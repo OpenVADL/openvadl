@@ -42,10 +42,11 @@ public interface EncodingGenerationStrategy {
    */
   default void setFieldEncoding(PrintableInstruction instruction,
                                 Format.FieldAccess fieldAccess,
+                                Format.Field fieldToBeEncoded,
                                 Graph behavior) {
     var ident = fieldAccess.identifier.last().prepend(instruction.identifier());
     var format = fieldAccess.format();
-    var encoding = new Format.FieldEncoding(ident, fieldAccess.fieldRef(), behavior);
+    var encoding = new Format.FieldEncoding(ident, fieldToBeEncoded, behavior);
     format.setFieldEncoding(encoding);
   }
 }

@@ -85,23 +85,6 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
       }
     }
 
-    var hasNoEncoding = viam.findAllFormats()
-        .flatMap(x -> x.fieldAccesses().stream())
-        .filter(x -> x.format().fieldEncodingsOf(Set.of(x)).isEmpty())
-        .toList();
-
-    if (!hasNoEncoding.isEmpty()) {
-      var errors =
-          hasNoEncoding.stream().map(x -> Diagnostic.error("Missing access function encoding", x)
-              .locationDescription(x,
-                  "The LCB couldn't generate an encoding for this access function.")
-              .help("Add a custom encoding `%s := <expr>` to the format.", x.fieldRefs().getFirst())
-              .build()
-          ).toList();
-      throw new DiagnosticList(errors);
-    }
-
-
     return null;
   }
 }

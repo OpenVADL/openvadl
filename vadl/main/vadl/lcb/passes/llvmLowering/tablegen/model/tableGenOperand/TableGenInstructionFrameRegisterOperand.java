@@ -18,7 +18,9 @@ package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.viam.Format;
+import vadl.viam.Identifier;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
@@ -32,10 +34,10 @@ public class TableGenInstructionFrameRegisterOperand
    * Constructor.
    */
   public TableGenInstructionFrameRegisterOperand(Node node,
-                                                 Format.Field address) {
+                                                 Identifier address) {
     // Note that `node` has the type `Node` and not `LlvmFrameIndex` because
     // the machine pattern requires that the node remains a register class file operand.
-    super(node, LlvmFrameIndexSD.NAME, address.identifier.simpleName());
+    super(node, LlvmFrameIndexSD.NAME, address.simpleName());
   }
 
   /**
@@ -43,7 +45,7 @@ public class TableGenInstructionFrameRegisterOperand
    */
   public TableGenInstructionFrameRegisterOperand(Node node,
                                                  FieldRefNode address) {
-    this(node, address.formatField());
+    this(node, address.formatField().identifier);
   }
 
   /**
