@@ -34,6 +34,7 @@ import vadl.cppCodeGen.model.GcbCppEncodeFunction;
 import vadl.cppCodeGen.model.GcbCppEncodingWrapperFunction;
 import vadl.cppCodeGen.model.GcbCppFunctionBodyLess;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
+import vadl.gcb.passes.encodingGeneration.strategies.EncodingPredicateGenerationStrategy;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
@@ -285,7 +286,8 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
     var bodyLessFunction = new GcbCppFunctionBodyLess(
         immediate.predicateMethod(),
         new Parameter[] {
-            new Parameter(new Identifier("param", SourceLocation.INVALID_SOURCE_LOCATION),
+            new Parameter(new Identifier(EncodingPredicateGenerationStrategy.PARAM,
+                SourceLocation.INVALID_SOURCE_LOCATION),
                 stackPointerType)},
         Type.bool(),
         immediate.fieldAccessRef().predicate().behavior());

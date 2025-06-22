@@ -94,38 +94,4 @@ public class TrivialImmediateStrategyPredicate implements EncodingPredicateGener
     behavior.add(startNode);
     setFieldEncoding(instruction, fieldAccess, fieldRef, behavior);
   }
-
-  private void generatePredicate(Instruction instruction, Format.FieldAccess fieldAccess) {
-    var trueCase = new ConstantNode(Constant.Value.fromBoolean(true));
-    var falseCase = new ConstantNode(Constant.Value.fromBoolean(false));
-
-    var fieldRef = fieldAccess.fieldRefs().getFirst();
-
-    var paramNode = new FuncParamNode(
-        new Parameter(new Identifier("param", SourceLocation.INVALID_SOURCE_LOCATION),
-            fieldAccess.type()));
-
-    var lowestValue = new ConstantNode(Constant.Value.fromInteger(
-        BigInteger.valueOf(
-            GenerateValueRangeImmediatePass.lowestPossibleValue(fieldRef.type().toBitsType(), true)),
-        Type.signedInt(64)));
-    var highestValue = new ConstantNode(Constant.Value.fromInteger(
-        BigInteger.valueOf(
-            GenerateValueRangeImmediatePass.highestPossibleValue(fieldRef.type().toBitsType(), true)),
-        Type.signedInt(64)));
-
-    var lowestExpr =
-        GraphUtils.binaryOp(BuiltInTable.SGEQ, paramNode, lowestValue);
-    var highestExpr =
-        GraphUtils.binaryOp(BuiltInTable.SLEQ, paramNode, highestValue);
-
-    var conditional =
-        GraphUtils.select(GraphUtils.and(lowestExpr, highestExpr), trueCase, falseCase);
-    var returnNode = new ReturnNode(conditional);
-    var startNode = new StartNode(returnNode);
-    var behavior = new Graph("Generated predicate of " + fieldAccess.simpleName());
-    behavior.addWithInputs(returnNode);
-    behavior.add(startNode);
-    setPredicate(instruction, fieldAccess, behavior);
-  }
 }
