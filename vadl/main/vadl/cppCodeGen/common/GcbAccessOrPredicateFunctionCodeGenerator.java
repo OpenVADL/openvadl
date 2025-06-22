@@ -35,10 +35,10 @@ public class GcbAccessOrPredicateFunctionCodeGenerator extends AccessFunctionCod
   /**
    * Constructor.
    */
-  public GcbAccessOrPredicateFunctionCodeGenerator(GcbCppFunctionBodyLess accessFunction,
+  public GcbAccessOrPredicateFunctionCodeGenerator(GcbCppFunctionBodyLess functionHeader,
                                                    Format.FieldAccess fieldAccess,
                                                    String functionName) {
-    super(accessFunction, fieldAccess, functionName);
+    super(functionHeader, fieldAccess, functionName);
   }
 
   /**
