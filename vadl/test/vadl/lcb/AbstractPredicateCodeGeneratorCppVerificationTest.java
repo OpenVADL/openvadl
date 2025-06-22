@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -43,23 +42,24 @@ import vadl.utils.Pair;
 import vadl.utils.VadlFileUtils;
 import vadl.viam.Format;
 
-public class PredicateCodeGeneratorCppVerificationTest extends AbstractLcbTest {
-  record Test(String name, String fieldAccessFunction, Arbitrary<Integer> arbitrary) {
+public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends AbstractLcbTest {
+  public record Test(String name, String fieldAccessFunction, Arbitrary<Integer> arbitrary) {
 
   }
 
-  public static Stream<Test> positiveInputs() {
-    return Stream.of(new Test(
-        "ADDI",
-        "immS",
-        Arbitraries.integers().greaterOrEqual(-2048).lessOrEqual(2047)));
-  }
+  public abstract String specification();
+
+  public abstract Stream<Test> inputs();
+
+  public abstract String render(GcbCppFunctionWithBody record, Format.FieldAccess fieldAccess,
+                                int sample);
+
 
   @TestFactory
-  List<DynamicTest> positiveCases() throws DuplicatedPassKeyException, IOException {
+  List<DynamicTest> cases() throws DuplicatedPassKeyException, IOException {
     var configuration =
         new LcbConfiguration(getConfiguration(false), new TargetName("processorNameValue"));
-    var pair = setup(configuration);
+    var pair = setup(configuration, specification());
     var image = pair.left();
     var setup = pair.right();
     var predicates = predicates(setup)
@@ -70,7 +70,7 @@ public class PredicateCodeGeneratorCppVerificationTest extends AbstractLcbTest {
                 x.getKey().fieldAccessRef().identifier.simpleName()),
             x -> Pair.of(x.getKey().fieldAccessRef(), x.getValue())));
 
-    var mappings = positiveInputs()
+    var mappings = inputs()
         .flatMap(input -> {
           var value = predicates.get(Pair.of(input.name, input.fieldAccessFunction));
           var fieldAccess = value.left();
@@ -79,7 +79,7 @@ public class PredicateCodeGeneratorCppVerificationTest extends AbstractLcbTest {
           input.arbitrary.sampleStream().limit(1).forEach(sample -> {
             var fileName = record.header().functionName().lower() + "_sample_" + sample + ".cpp";
             var filePath = configuration.outputPath() + "/inputs/" + fileName;
-            var code = renderPositiveCase(record, fieldAccess, sample);
+            var code = render(record, fieldAccess, sample);
             copyMappings.add(Pair.of(filePath, "/inputs/" + fileName));
 
             try {
@@ -113,71 +113,6 @@ public class PredicateCodeGeneratorCppVerificationTest extends AbstractLcbTest {
     }
   }
 
-  private String renderPositiveCase(GcbCppFunctionWithBody record,
-                                    Format.FieldAccess fieldAccess,
-                                    Integer sample) {
-    var predicateFunctionGenerator =
-        new GcbAccessOrPredicateFunctionCodeGenerator(record.header(), fieldAccess,
-            record.header().functionName().lower());
-
-    var predicateFunction = predicateFunctionGenerator.genFunctionDefinition();
-
-    String cppCode = String.format("""
-            #include <cstdint>
-            #include <iostream>
-            #include <bitset>
-            #include <vector>
-            
-            // Imported by manual copy mapping
-            #include "/vadl-builtins.h"
-            
-            template<int start, int end, std::size_t N>
-            std::bitset<N> project_range(std::bitset<N> bits)
-            {
-                std::bitset<N> result;
-                size_t result_index = 0; // Index for the new bitset
-            
-                // Extract bits from the range [start, end]
-                for (size_t i = start; i <= end; ++i) {
-                  result[result_index] = bits[i];
-                  result_index++;
-                }
-            
-                return result;
-            }
-            
-            template<std::size_t N, std::size_t M>
-            std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
-                auto target = 0;
-                for (int i = bits.size() - 1; i >= 0 ; --i) {
-                    auto j = bits[target];
-                    dest.set(j, source[i]);
-                    target++;
-                }
-            
-                return dest;
-            }
-            
-            %s
-            
-            int main() {
-              auto actual = %s(%d);
-              if(actual) {
-                std::cout << "ok" << std::endl;
-                return 0;
-              } else {
-                std::cout << "not ok" << std::endl;
-                return -1;
-              }
-            }
-            """,
-        predicateFunction,
-        record.header().identifier.lower(),
-        sample);
-
-    return cppCode;
-  }
-
   private static Map<TableGenImmediateRecord, GcbCppFunctionWithBody> predicates(TestSetup setup) {
     var passManager = setup.passManager();
     var output = (CreateFunctionsFromImmediatesPass.Output) passManager.getPassResults()
@@ -185,10 +120,11 @@ public class PredicateCodeGeneratorCppVerificationTest extends AbstractLcbTest {
     return output.predicates();
   }
 
-  private Pair<ImageFromDockerfile, TestSetup> setup(LcbConfiguration configuration)
+  private Pair<ImageFromDockerfile, TestSetup> setup(LcbConfiguration configuration,
+                                                     String specification)
       throws IOException, DuplicatedPassKeyException {
 
-    var setup = runLcb(configuration, "sys/risc-v/rv64im.vadl");
+    var setup = runLcb(configuration, specification);
 
     // Move files into Docker Context
     {
