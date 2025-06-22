@@ -16,12 +16,18 @@
 
 package vadl.gcb.passes.encodingGeneration.strategies.impl;
 
+import java.math.BigInteger;
+import vadl.error.Diagnostic;
 import vadl.gcb.passes.encodingGeneration.strategies.EncodingPredicateGenerationStrategy;
 import vadl.types.BuiltInTable;
+import vadl.types.Type;
+import vadl.utils.GraphUtils;
+import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Format;
+import vadl.viam.Identifier;
 import vadl.viam.Instruction;
-import vadl.viam.PrintableInstruction;
+import vadl.viam.Parameter;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
@@ -30,6 +36,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SliceNode;
 
 /**
@@ -62,12 +69,50 @@ public class ShiftedImmediateStrategyPredicate implements EncodingPredicateGener
     var behavior = fieldAccess.accessFunction().behavior();
     return behavior.getNodes(BuiltInCall.class)
         .allMatch(x ->
-            x.builtIn() == BuiltInTable.LSL) && (behavior.getNodes(BuiltInCall.class).count() == 1);
+            x.builtIn() == BuiltInTable.LSL)
+        && behavior.getNodes(BuiltInCall.class).count() == 1
+        && behavior.getNodes(ConstantNode.class).count() == 1;
   }
 
   @Override
   public void generateEncodingAndPredicateFunction(Instruction printableInstruction,
                                                    Format.FieldAccess fieldAccess) {
+    generateEncoding(printableInstruction, fieldAccess);
+    generatePredicate(printableInstruction, fieldAccess);
+  }
+
+  @Override
+  public void generatePredicate(Instruction instruction, Format.FieldAccess fieldAccess) {
+    var trueCase = new ConstantNode(Constant.Value.fromBoolean(true));
+    var falseCase = new ConstantNode(Constant.Value.fromBoolean(false));
+    var constantNodes =
+        fieldAccess.accessFunction().behavior().getNodes(ConstantNode.class).toList();
+    ViamError.ensure(constantNodes.size() == 1,
+        () -> Diagnostic.error("Expected one constant node We found zero or multiple",
+            fieldAccess.location()));
+    var constantNode = constantNodes.getFirst();
+    var shiftValue = constantNode.constant().asVal().intValue();
+    var shiftValueNode = new ConstantNode(
+        Constant.Value.fromInteger(BigInteger.valueOf((long) Math.pow(2, shiftValue)),
+            Type.signedInt(64)));
+
+    // Check if the lowest "shiftValue" bits are zero.
+    var paramNode = new FuncParamNode(
+        new Parameter(new Identifier(PARAM, SourceLocation.INVALID_SOURCE_LOCATION),
+            fieldAccess.type()));
+    var and = GraphUtils.binaryOp(BuiltInTable.AND, paramNode, shiftValueNode);
+    var conditional = GraphUtils.select(GraphUtils.binaryOp(BuiltInTable.EQU, and,
+            new ConstantNode(Constant.Value.fromInteger(BigInteger.ZERO, Type.unsignedInt(64)))),
+        trueCase, falseCase);
+    var returnNode = new ReturnNode(conditional);
+    var startNode = new StartNode(returnNode);
+    var behavior = new Graph("Generated predicate of " + fieldAccess.simpleName());
+    behavior.addWithInputs(returnNode);
+    behavior.add(startNode);
+    setPredicate(instruction, fieldAccess, behavior);
+  }
+
+  private void generateEncoding(Instruction printableInstruction, Format.FieldAccess fieldAccess) {
     var accessFunction = fieldAccess.accessFunction();
     var fieldRef = fieldAccess.fieldRefs().getFirst();
 
