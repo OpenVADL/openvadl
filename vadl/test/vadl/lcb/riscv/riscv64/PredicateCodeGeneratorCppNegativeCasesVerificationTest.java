@@ -17,15 +17,14 @@
 package vadl.lcb.riscv.riscv64;
 
 import java.util.stream.Stream;
-import net.jqwik.api.Arbitraries;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.lcb.AbstractPredicateCodeGeneratorCppVerificationTest;
 import vadl.viam.Format;
 
 /**
- * This test classes tests the instruction immediates where the predicate should match.
+ * This test classes tests the instruction immediates where the predicate should not match.
  */
-public class PredicateCodeGeneratorCppPositiveCasesVerificationTest extends
+public class PredicateCodeGeneratorCppNegativeCasesVerificationTest extends
     AbstractPredicateCodeGeneratorCppVerificationTest {
 
   @Override
@@ -35,31 +34,33 @@ public class PredicateCodeGeneratorCppPositiveCasesVerificationTest extends
 
   @Override
   public Stream<Test> inputs() {
-    return Stream.of(
-        new Test(
+    return Stream.of(new Test(
             "ADDI",
             "immS",
-            Arbitraries.integers().greaterOrEqual(-2048).lessOrEqual(2047)),
+            allIntegersExcept(-2048, 2047)
+        ),
         new Test(
             "SW",
             "immS",
-            Arbitraries.integers().greaterOrEqual(-2048).lessOrEqual(2047)),
+            allIntegersExcept(-2048, 2047)
+        ),
         new Test(
             "BEQ",
             "immS",
-            Arbitraries.integers().greaterOrEqual(-4096).lessOrEqual(4094)
-                .filter(x -> x % 2 == 0)),
+            allIntegersExcept(-4096, 4094)
+                .filter(x -> x % 2 != 0)
+        ),
         new Test(
             "JAL",
             "immS",
-            Arbitraries.integers().greaterOrEqual(-1048576).lessOrEqual(1048574)
-                .filter(x -> x % 2 == 0)
+            allIntegersExcept(-1048576, 1048574)
+                .filter(x -> x % 2 != 0)
         )
     );
   }
 
   @Override
   public String render(GcbCppFunctionWithBody record, Format.FieldAccess fieldAccess, int sample) {
-    return renderPositive(record, fieldAccess, sample);
+    return renderNegative(record, fieldAccess, sample);
   }
 }

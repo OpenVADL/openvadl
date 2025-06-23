@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -54,6 +55,12 @@ public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends 
   public abstract String render(GcbCppFunctionWithBody record, Format.FieldAccess fieldAccess,
                                 int sample);
 
+  protected Arbitrary<Integer> allIntegersExcept(int minInclusive, int maxExclusive) {
+    return Arbitraries.oneOf(Arbitraries.integers().lessOrEqual(minInclusive),
+        Arbitraries.integers().greaterOrEqual(maxExclusive)
+    );
+  }
+
 
   @TestFactory
   List<DynamicTest> cases() throws DuplicatedPassKeyException, IOException {
@@ -76,7 +83,7 @@ public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends 
           var fieldAccess = value.left();
           var record = value.right();
           List<Pair<String, String>> copyMappings = new ArrayList<>();
-          input.arbitrary.sampleStream().limit(1).forEach(sample -> {
+          input.arbitrary.sampleStream().limit(100).forEach(sample -> {
             var fileName = record.header().functionName().lower() + "_sample_" + sample + ".cpp";
             var filePath = configuration.outputPath() + "/inputs/" + fileName;
             var code = render(record, fieldAccess, sample);
@@ -142,5 +149,133 @@ public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends 
 
     return Pair.of(new ImageFromDockerfile()
         .withDockerfile(Paths.get(configuration.outputPath() + "/encoding/Dockerfile")), setup);
+  }
+
+  protected String renderPositive(GcbCppFunctionWithBody record, Format.FieldAccess fieldAccess,
+                                  int sample) {
+    var predicateFunctionGenerator =
+        new GcbAccessOrPredicateFunctionCodeGenerator(record.header(), fieldAccess,
+            record.header().functionName().lower());
+
+    var predicateFunction = predicateFunctionGenerator.genFunctionDefinition();
+
+    String cppCode = String.format("""
+            #include <cstdint>
+            #include <iostream>
+            #include <bitset>
+            #include <vector>
+            
+            // Imported by manual copy mapping
+            #include "/vadl-builtins.h"
+            
+            template<int start, int end, std::size_t N>
+            std::bitset<N> project_range(std::bitset<N> bits)
+            {
+                std::bitset<N> result;
+                size_t result_index = 0; // Index for the new bitset
+            
+                // Extract bits from the range [start, end]
+                for (size_t i = start; i <= end; ++i) {
+                  result[result_index] = bits[i];
+                  result_index++;
+                }
+            
+                return result;
+            }
+            
+            template<std::size_t N, std::size_t M>
+            std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
+                auto target = 0;
+                for (int i = bits.size() - 1; i >= 0 ; --i) {
+                    auto j = bits[target];
+                    dest.set(j, source[i]);
+                    target++;
+                }
+            
+                return dest;
+            }
+            
+            %s
+            
+            int main() {
+              auto actual = %s(%d);
+              if(actual) {
+                std::cout << "ok" << std::endl;
+                return 0;
+              } else {
+                std::cout << "not ok" << std::endl;
+                return -1;
+              }
+            }
+            """,
+        predicateFunction,
+        record.header().identifier.lower(),
+        sample);
+
+    return cppCode;
+  }
+
+  protected String renderNegative(GcbCppFunctionWithBody record, Format.FieldAccess fieldAccess,
+                               int sample) {
+    var predicateFunctionGenerator =
+        new GcbAccessOrPredicateFunctionCodeGenerator(record.header(), fieldAccess,
+            record.header().functionName().lower());
+
+    var predicateFunction = predicateFunctionGenerator.genFunctionDefinition();
+
+    String cppCode = String.format("""
+            #include <cstdint>
+            #include <iostream>
+            #include <bitset>
+            #include <vector>
+            
+            // Imported by manual copy mapping
+            #include "/vadl-builtins.h"
+            
+            template<int start, int end, std::size_t N>
+            std::bitset<N> project_range(std::bitset<N> bits)
+            {
+                std::bitset<N> result;
+                size_t result_index = 0; // Index for the new bitset
+            
+                // Extract bits from the range [start, end]
+                for (size_t i = start; i <= end; ++i) {
+                  result[result_index] = bits[i];
+                  result_index++;
+                }
+            
+                return result;
+            }
+            
+            template<std::size_t N, std::size_t M>
+            std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
+                auto target = 0;
+                for (int i = bits.size() - 1; i >= 0 ; --i) {
+                    auto j = bits[target];
+                    dest.set(j, source[i]);
+                    target++;
+                }
+            
+                return dest;
+            }
+            
+            %s
+            
+            int main() {
+              auto actual = %s(%d);
+              if(!actual) {
+                std::cout << "ok" << std::endl;
+                return 0;
+              } else {
+                std::cout << "not ok" << std::endl;
+                return -1;
+              }
+            }
+            """,
+        predicateFunction,
+        record.header().identifier.lower(),
+        sample);
+
+    return cppCode;
   }
 }
