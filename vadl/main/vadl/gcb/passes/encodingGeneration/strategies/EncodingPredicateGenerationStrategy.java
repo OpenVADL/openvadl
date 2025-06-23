@@ -99,11 +99,13 @@ public interface EncodingPredicateGenerationStrategy {
 
     var lowestValue = new ConstantNode(Constant.Value.fromInteger(
         BigInteger.valueOf(
-            GenerateValueRangeImmediatePass.lowestPossibleValue(fieldRef.type().toBitsType(), true)),
+            GenerateValueRangeImmediatePass.lowestPossibleValue(fieldRef.type().toBitsType(),
+                true)),
         Type.signedInt(64)));
     var highestValue = new ConstantNode(Constant.Value.fromInteger(
         BigInteger.valueOf(
-            GenerateValueRangeImmediatePass.highestPossibleValue(fieldRef.type().toBitsType(), true)),
+            GenerateValueRangeImmediatePass.highestPossibleValue(fieldRef.type().toBitsType(),
+                true)),
         Type.signedInt(64)));
 
     var lowestExpr =

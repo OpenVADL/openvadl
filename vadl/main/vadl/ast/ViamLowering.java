@@ -1106,7 +1106,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
           DeferredDiagnosticStore.add(
               Diagnostic.error("A predicate is required", fieldAccess.location())
                   .help(
-                      "When a custom encoding function is specified, a predicate function is required."));
+                      "When a custom encoding function is specified, "
+                          + "a predicate function is required."));
         }
       }
     }
