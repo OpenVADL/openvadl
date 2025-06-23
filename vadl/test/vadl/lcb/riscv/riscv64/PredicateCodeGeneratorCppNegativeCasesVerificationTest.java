@@ -48,13 +48,11 @@ public class PredicateCodeGeneratorCppNegativeCasesVerificationTest extends
             "BEQ",
             "immS",
             allIntegersExcept(-4096, 4094)
-                .filter(x -> x % 2 != 0)
         ),
         new Test(
             "JAL",
             "immS",
             allIntegersExcept(-1048576, 1048574)
-                .filter(x -> x % 2 != 0)
         )
     );
   }

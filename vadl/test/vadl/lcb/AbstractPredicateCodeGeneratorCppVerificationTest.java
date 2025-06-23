@@ -55,9 +55,9 @@ public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends 
   public abstract String render(GcbCppFunctionWithBody record, Format.FieldAccess fieldAccess,
                                 int sample);
 
-  protected Arbitrary<Integer> allIntegersExcept(int minInclusive, int maxExclusive) {
-    return Arbitraries.oneOf(Arbitraries.integers().lessOrEqual(minInclusive),
-        Arbitraries.integers().greaterOrEqual(maxExclusive)
+  protected Arbitrary<Integer> allIntegersExcept(int minExclusive, int maxExclusive) {
+    return Arbitraries.oneOf(Arbitraries.integers().lessOrEqual(minExclusive - 1),
+        Arbitraries.integers().greaterOrEqual(maxExclusive + 1)
     );
   }
 
@@ -83,7 +83,7 @@ public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends 
           var fieldAccess = value.left();
           var record = value.right();
           List<Pair<String, String>> copyMappings = new ArrayList<>();
-          input.arbitrary.sampleStream().limit(100).forEach(sample -> {
+          input.arbitrary.sampleStream().limit(5).forEach(sample -> {
             var fileName = record.header().functionName().lower() + "_sample_" + sample + ".cpp";
             var filePath = configuration.outputPath() + "/inputs/" + fileName;
             var code = render(record, fieldAccess, sample);

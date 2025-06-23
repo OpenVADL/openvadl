@@ -18,7 +18,9 @@ package vadl.gcb.passes.encodingGeneration.strategies.impl;
 
 import java.math.BigInteger;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.gcb.passes.encodingGeneration.strategies.EncodingPredicateGenerationStrategy;
+import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.utils.GraphUtils;
@@ -36,6 +38,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SliceNode;
 
@@ -96,20 +99,53 @@ public class ShiftedImmediateStrategyPredicate implements EncodingPredicateGener
         Constant.Value.fromInteger(BigInteger.valueOf((long) Math.pow(2, shiftValue - 1)),
             Type.signedInt(64)));
 
+
     // Check if the lowest "shiftValue" bits are zero.
     var paramNode = new FuncParamNode(
         new Parameter(new Identifier(PARAM, SourceLocation.INVALID_SOURCE_LOCATION),
             fieldAccess.type()));
-    var and = GraphUtils.binaryOp(BuiltInTable.AND, paramNode, shiftValueNode);
-    var conditional = GraphUtils.select(GraphUtils.binaryOp(BuiltInTable.EQU, and,
+    var bitwise = GraphUtils.binaryOp(BuiltInTable.AND, paramNode, shiftValueNode);
+    var cond = GraphUtils.and(GraphUtils.binaryOp(BuiltInTable.EQU, bitwise,
             new ConstantNode(Constant.Value.fromInteger(BigInteger.ZERO, Type.unsignedInt(64)))),
+        checkIfValueInRange(fieldAccess, shiftValue, paramNode)
+    );
+    var select = GraphUtils.select(cond,
         trueCase, falseCase);
-    var returnNode = new ReturnNode(conditional);
+    var returnNode = new ReturnNode(select);
     var startNode = new StartNode(returnNode);
     var behavior = new Graph("Generated predicate of " + fieldAccess.simpleName());
     behavior.addWithInputs(returnNode);
     behavior.add(startNode);
     setPredicate(instruction, fieldAccess, behavior);
+  }
+
+  private ExpressionNode checkIfValueInRange(Format.FieldAccess fieldAccess,
+                                             int shiftBits,
+                                             FuncParamNode param) {
+    var ty =
+        fieldAccess.accessFunction().behavior().getNodes(FieldRefNode.class).toList().getFirst()
+            .formatField().type();
+    var isSigned = fieldAccess.accessFunction().returnType().asDataType().isSigned();
+    var bitWidth = ty.bitWidth();
+    var newTy = BitsType.bits(bitWidth + shiftBits);
+    var maxValue = new ConstantNode(
+        Constant.Value.fromInteger(
+            GenerateValueRangeImmediatePass.highestPossibleValue(
+                newTy, isSigned),
+            fieldAccess.accessFunction().returnType().asDataType()));
+    var minValue = new ConstantNode(
+        Constant.Value.fromInteger(
+            GenerateValueRangeImmediatePass.lowestPossibleValue(
+                newTy, isSigned),
+            fieldAccess.accessFunction().returnType().asDataType()));
+
+    if (!isSigned) {
+      return GraphUtils.and(GraphUtils.binaryOp(BuiltInTable.ULEQ, param, maxValue),
+          GraphUtils.binaryOp(BuiltInTable.UGEQ, param, minValue));
+    } else {
+      return GraphUtils.and(GraphUtils.binaryOp(BuiltInTable.SLEQ, param, maxValue),
+          GraphUtils.binaryOp(BuiltInTable.SGEQ, param, minValue));
+    }
   }
 
   private void generateEncoding(Instruction printableInstruction, Format.FieldAccess fieldAccess) {

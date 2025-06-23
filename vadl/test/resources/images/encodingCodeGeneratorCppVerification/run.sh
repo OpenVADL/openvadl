@@ -1,6 +1,7 @@
 #!/bin/bash
 
 for FILE in /inputs/*; do
+    cat $FILE
     g++ -Wall "$FILE" -o /tmp/a.out && /tmp/a.out
     STATUS_CODE=$?
 

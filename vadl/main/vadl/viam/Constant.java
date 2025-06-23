@@ -145,6 +145,14 @@ public abstract class Constant {
      * Constructor of a constant value from an integer (that is not in two's complement form).
      * So the {@code integer} argument might be negative.
      */
+    public static Value fromInteger(long integer, DataType type) {
+      return fromInteger(BigInteger.valueOf(integer), type);
+    }
+
+    /**
+     * Constructor of a constant value from an integer (that is not in two's complement form).
+     * So the {@code integer} argument might be negative.
+     */
     public static Value fromInteger(BigInteger integer, DataType type) {
       if (type instanceof BoolType) {
         // hard code boolean value
