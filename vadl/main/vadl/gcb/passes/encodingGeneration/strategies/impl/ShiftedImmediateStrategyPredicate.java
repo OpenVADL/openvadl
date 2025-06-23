@@ -93,7 +93,7 @@ public class ShiftedImmediateStrategyPredicate implements EncodingPredicateGener
     var constantNode = constantNodes.getFirst();
     var shiftValue = constantNode.constant().asVal().intValue();
     var shiftValueNode = new ConstantNode(
-        Constant.Value.fromInteger(BigInteger.valueOf((long) Math.pow(2, shiftValue)),
+        Constant.Value.fromInteger(BigInteger.valueOf((long) Math.pow(2, shiftValue - 1)),
             Type.signedInt(64)));
 
     // Check if the lowest "shiftValue" bits are zero.
