@@ -69,14 +69,6 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
         createIntermediateResult(instruction, copy, registerDefsUses));
   }
 
-  @Override
-  protected LlvmLoweringPass.Flags getFlags(Graph graph) {
-    var flags = super.getFlags(graph);
-
-    return LlvmLoweringPass.Flags.withIsRematerialisable(
-        LlvmLoweringPass.Flags.withIsAsCheapAsMove(flags));
-  }
-
   private LlvmLoweringRecord.Machine createIntermediateResult(
       Instruction instruction,
       Graph uninlinedGraph,
