@@ -202,7 +202,9 @@ public interface DefinitionVisitor {
       if (formatFieldAccess.encoding() != null) {
         formatFieldAccess.encoding().accept(this);
       }
-      formatFieldAccess.predicate().accept(this);
+      if (formatFieldAccess.predicate() != null) {
+        formatFieldAccess.predicate().accept(this);
+      }
       afterTraversal(formatFieldAccess);
     }
 

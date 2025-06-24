@@ -22,9 +22,9 @@ import static vadl.TestUtils.createFunction;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.provider.Arguments;
 import vadl.AbstractTest;
-import vadl.gcb.passes.encodingGeneration.strategies.impl.ArithmeticImmediateStrategy;
-import vadl.gcb.passes.encodingGeneration.strategies.impl.ShiftedImmediateStrategy;
-import vadl.gcb.passes.encodingGeneration.strategies.impl.TrivialImmediateStrategy;
+import vadl.gcb.passes.encodingGeneration.strategies.impl.ArithmeticImmediateStrategyPredicate;
+import vadl.gcb.passes.encodingGeneration.strategies.impl.ShiftedImmediateStrategyPredicate;
+import vadl.gcb.passes.encodingGeneration.strategies.impl.TrivialImmediateStrategyPredicate;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.Type;
@@ -42,18 +42,18 @@ import vadl.viam.helper.TestGraph;
 public class EncodingCodeGeneratorTestInputs extends AbstractTest {
   public static Stream<Arguments> createFieldAccessFunctions() {
     return Stream.of(
-        Arguments.of(createUnsignedInt32DecodingFunction(), new TrivialImmediateStrategy()),
-        Arguments.of(createSignedInt32DecodingFunction(), new TrivialImmediateStrategy()),
-        Arguments.of(createUnsignedInt32ShiftDecodingFunction(), new ShiftedImmediateStrategy()),
-        Arguments.of(createSignedInt32ShiftDecodingFunction(), new ShiftedImmediateStrategy()),
+        Arguments.of(createUnsignedInt32DecodingFunction(), new TrivialImmediateStrategyPredicate()),
+        Arguments.of(createSignedInt32DecodingFunction(), new TrivialImmediateStrategyPredicate()),
+        Arguments.of(createUnsignedInt32ShiftDecodingFunction(), new ShiftedImmediateStrategyPredicate()),
+        Arguments.of(createSignedInt32ShiftDecodingFunction(), new ShiftedImmediateStrategyPredicate()),
         Arguments.of(createUnsignedInt32WithAdditionDecodingFunction(),
-            new ArithmeticImmediateStrategy()),
+            new ArithmeticImmediateStrategyPredicate()),
         Arguments.of(createSignedInt32WithAdditionDecodingFunction(),
-            new ArithmeticImmediateStrategy()),
+            new ArithmeticImmediateStrategyPredicate()),
         Arguments.of(createUnsignedInt32WithSubtractionDecodingFunction(),
-            new ArithmeticImmediateStrategy()),
+            new ArithmeticImmediateStrategyPredicate()),
         Arguments.of(createSignedInt32WithSubtractionDecodingFunction(),
-            new ArithmeticImmediateStrategy())
+            new ArithmeticImmediateStrategyPredicate())
     );
   }
 

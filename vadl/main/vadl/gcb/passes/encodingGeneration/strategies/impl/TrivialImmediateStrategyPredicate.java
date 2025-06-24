@@ -16,15 +16,25 @@
 
 package vadl.gcb.passes.encodingGeneration.strategies.impl;
 
-import vadl.gcb.passes.encodingGeneration.strategies.EncodingGenerationStrategy;
+import java.math.BigInteger;
+import vadl.gcb.passes.GenerateValueRangeImmediatePass;
+import vadl.gcb.passes.encodingGeneration.strategies.EncodingPredicateGenerationStrategy;
+import vadl.types.BuiltInTable;
+import vadl.types.Type;
+import vadl.utils.GraphUtils;
+import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Format;
-import vadl.viam.PrintableInstruction;
+import vadl.viam.Identifier;
+import vadl.viam.Instruction;
+import vadl.viam.Parameter;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SliceNode;
 
 /**
@@ -44,7 +54,7 @@ import vadl.viam.graph.dependency.SliceNode;
  * }
  * }</pre>
  */
-public class TrivialImmediateStrategy implements EncodingGenerationStrategy {
+public class TrivialImmediateStrategyPredicate implements EncodingPredicateGenerationStrategy {
   @Override
   public boolean checkIfApplicable(Format.FieldAccess fieldAccess) {
     // Check if only one field
@@ -60,7 +70,13 @@ public class TrivialImmediateStrategy implements EncodingGenerationStrategy {
   }
 
   @Override
-  public void generateEncoding(PrintableInstruction instruction, Format.FieldAccess fieldAccess) {
+  public void generateEncodingAndPredicateFunction(Instruction instruction,
+                                                   Format.FieldAccess fieldAccess) {
+    generateEncoding(instruction, fieldAccess);
+    generatePredicate(instruction, fieldAccess);
+  }
+
+  private void generateEncoding(Instruction instruction, Format.FieldAccess fieldAccess) {
     var fieldRef = fieldAccess.fieldRefs().getFirst();
     // The field takes up a certain slice.
     // But we need to take a slice of the immediate of the same size.

@@ -26,6 +26,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.jetbrains.annotations.Contract;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
@@ -245,6 +246,8 @@ public class ViamError extends RuntimeException {
    * @param diagnosticSupplier is the function which provides the {@link Diagnostic}.
    * @throws Diagnostic if the condition is false
    */
+  @Nonnull
+  @Contract("null, _  -> fail")
   public static <T> T ensureNonNull(@Nullable T obj,
                                     Supplier<DiagnosticBuilder> diagnosticSupplier) {
     ensure(obj != null, diagnosticSupplier);

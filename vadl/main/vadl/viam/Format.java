@@ -389,7 +389,6 @@ public class Format extends Definition implements DefProp.WithType {
       return fieldRefs.getFirst().format();
     }
 
-    // only called by the lowering
     public void setPredicate(Function predicate) {
       this.predicate = predicate;
     }

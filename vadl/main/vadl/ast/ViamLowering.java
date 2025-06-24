@@ -1062,19 +1062,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
           var identifier = generateIdentifier(derivedField.viamId, derivedField.identifier());
           var access = getFieldAccessFunction(derivedField);
 
-          // construct a default predicate that just returns true.
-          // if there is a user-specified predicate, this will be overwritten by the one provided
-          // (in setFieldAccessPredicate).
-          var predName = identifier.name() + "::predicate";
-          var predicateGraph =
-              new BehaviorLowering(this).getFunctionGraph(
-                  new BoolLiteral(true, SourceLocation.INVALID_SOURCE_LOCATION), predName);
-          var predicate = new Function(
-              generateIdentifier(predName, derivedField.identifier),
-              new vadl.viam.Parameter[] {}, Type.bool(), predicateGraph
-          );
-
-          var field = new Format.FieldAccess(identifier, access, predicate);
+          var field = new Format.FieldAccess(identifier, access, null);
           formatFieldCache.put(derivedField, field);
 
           return field;
@@ -1100,8 +1088,29 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     format.setFieldEncodings(encodings);
 
     checkFormatFieldEncodings(format);
+    checkIfPredicateIsRequired(format);
 
     return Optional.of(format);
+  }
+
+  /**
+   * The user has to specify a predicate when she specifies an encoding function.
+   */
+  private void checkIfPredicateIsRequired(Format format) {
+    var fieldAccesses = format.fieldAccesses();
+
+    for (var fieldAccess : fieldAccesses) {
+      if (fieldAccess.predicate() != null) {
+        var encodings = format.fieldEncodingsOf(Set.of(fieldAccess));
+        if (encodings.isEmpty()) {
+          DeferredDiagnosticStore.add(
+              Diagnostic.error("A predicate is required", fieldAccess.location())
+                  .help(
+                      "When a custom encoding function is specified, "
+                          + "a predicate function is required."));
+        }
+      }
+    }
   }
 
   private Function getFieldAccessFunction(DerivedFormatField derivedField) {
