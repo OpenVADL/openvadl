@@ -129,12 +129,12 @@ public class ShiftedImmediateStrategyPredicate implements EncodingPredicateGener
     var bitWidth = ty.bitWidth();
     var newTy = BitsType.bits(bitWidth + shiftBits);
     var maxValue = new ConstantNode(
-        Constant.Value.fromInteger(
+        Constant.Value.of(
             GenerateValueRangeImmediatePass.highestPossibleValue(
                 newTy, isSigned),
             fieldAccess.accessFunction().returnType().asDataType()));
     var minValue = new ConstantNode(
-        Constant.Value.fromInteger(
+        Constant.Value.of(
             GenerateValueRangeImmediatePass.lowestPossibleValue(
                 newTy, isSigned),
             fieldAccess.accessFunction().returnType().asDataType()));
