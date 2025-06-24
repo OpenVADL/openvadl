@@ -92,6 +92,7 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -140,6 +141,11 @@ public class LcbNodeReplacementHandler {
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(SideEffectNode sideEffectNode) {
     throw Diagnostic.error("not handled", sideEffectNode.location()).build();
+  }
+
+  @Handler
+  public void handle(ProcCallNode node) {
+    Objects.requireNonNull(node.graph()).add(new LlvmUnlowerableSD());
   }
 
   @Handler
@@ -326,6 +332,10 @@ public class LcbNodeReplacementHandler {
         node.replaceAndDelete(new LlvmSMulhSD(node.arguments(), node.type()));
       }
     } else if (LlvmSetccSD.supported.contains(node.builtIn())) {
+      for (var arg : node.arguments()) {
+        LcbNodeReplacementHandlerDispatcher.dispatch(this, arg);
+      }
+
       var replaced = node.replaceAndDelete(
           new LlvmSetccSD(node.builtIn(), node.arguments(), node.type()));
       //def : Pat< ( setcc X:$rs1, 0, SETEQ ),
@@ -598,6 +608,7 @@ public class LcbNodeReplacementHandler {
       LcbNodeReplacementHandlerDispatcher.dispatch(this, index);
     }
 
+    LcbNodeReplacementHandlerDispatcher.dispatch(this, writeRegTensorNode.condition());
     LcbNodeReplacementHandlerDispatcher.dispatch(this, writeRegTensorNode.value());
 
     if (writeRegTensorNode.regTensor().isSingleRegister()

@@ -7,16 +7,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.error.Diagnostic;
+import vadl.gcb.annotations.SkipPruningAnnotation;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
 import vadl.utils.Pair;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -63,12 +63,12 @@ public class InstructionPatternPruningPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var workList = new ArrayList<Pair<Node, Node>>();
+    var isNotPrunable = new HashSet<Instruction>();
 
     do {
       workList.clear();
-      viam.isa()
-          .map(isa -> isa.ownInstructions().stream())
-          .orElse(Stream.empty())
+      viam.isa().stream().flatMap(isa -> isa.ownInstructions().stream())
+          .filter(instruction -> !instruction.hasAnnotation(SkipPruningAnnotation.class))
           .forEach(instruction -> {
             instruction.behavior().getNodes(InstrEndNode.class)
                 .flatMap(instrEndNode -> instrEndNode.sideEffects().stream())
@@ -84,28 +84,7 @@ public class InstructionPatternPruningPass extends Pass {
                              Because you can write a condition in two ways:
                              (1) X(rs1) == X(rs2) (narrow)
                              (2) X(rs1) != x(rs2) (wide)
-                           */
-                          var hasTrueCaseHasException = hasException();
-                          var hasFalseCaseHasException = hasException();
-
-                          if (hasTrueCaseHasException && hasFalseCaseHasException) {
-                            throw Diagnostic.error(
-                                "Both branches raise an exception and are pruned",
-                                selectNode.trueCase().location()
-                                    .join(selectNode.falseCase().location())).build();
-                          }
-
-                          if (hasTrueCaseHasException) {
-                            workList.add(Pair.of(selectNode, selectNode.falseCase()));
-                            selectNode.falseCase().applyOnInputs(this);
-                            return to;
-                          }
-
-                          if (hasFalseCaseHasException) {
-                            workList.add(Pair.of(selectNode, selectNode.trueCase()));
-                            selectNode.trueCase().applyOnInputs(this);
-                            return to;
-                          }
+                           f*/
 
                           var likelihood = determineLikelihood(selectNode.condition());
                           switch (likelihood) {
@@ -121,6 +100,7 @@ public class InstructionPatternPruningPass extends Pass {
                             }
                             default -> {
                               // We can't do anything.
+                              isNotPrunable.add(instruction);
                               return to;
                             }
                           }
@@ -140,9 +120,10 @@ public class InstructionPatternPruningPass extends Pass {
           });
     } while (!workList.isEmpty());
 
-    viam.isa()
-        .map(isa -> isa.ownInstructions().stream())
-        .orElse(Stream.empty())
+    viam.isa().stream().flatMap(isa -> isa.ownInstructions().stream())
+        .filter(instruction -> !instruction.hasAnnotation(SkipPruningAnnotation.class))
+        // Only prune instructions which can be entirely pruned.
+        .filter(instruction -> !isNotPrunable.contains(instruction))
         .forEach(instruction -> {
           var startNodes = instruction.behavior().getNodes(StartNode.class).toList();
           for (var startNode : startNodes) {
@@ -291,13 +272,5 @@ public class InstructionPatternPruningPass extends Pass {
         return Likelihood.BOTH;
       }
     }
-  }
-
-  /**
-   * Returns {@code true} when an exception is raised on *ALL* execution paths.
-   */
-  private boolean hasException() {
-    // TODO: VADL cannot raise exceptions in the dataflow at the moment.
-    return false;
   }
 }

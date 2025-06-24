@@ -35,6 +35,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import vadl.gcb.annotations.SkipPruningAnnotation;
 import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
@@ -176,6 +177,15 @@ class AnnotationTable {
           });
         })
         .build();
+
+    /// Compiler RELATED ///
+
+    annotationOn(InstructionDefinition.class, "skipPruning", EnableAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          if (annotation.isEnabled) {
+            def.addAnnotation(new SkipPruningAnnotation());
+          }
+        }).build();
   }
 
 
@@ -1201,4 +1211,3 @@ class InstructionUndefinedAnnotation extends ExprAnnotation {
     super.resolveName(definition, resolver);
   }
 }
-

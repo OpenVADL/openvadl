@@ -88,20 +88,20 @@ public class ArtificialResource extends Resource {
     super.verify();
     var readParams = readFunction.parameters();
     var writeParams = writeProcedure.parameters();
-    ensure(readFunction.returnType().isData(), "Read return type must be a data type");
+    ensure(readFunction.returnType().isDataType(), "Read return type must be a data type");
     ensure(writeParams.length == readParams.length + 1,
         "Write must have one more param than read (because the last value is write)");
     for (int i = 0; i < readParams.length; i++) {
       var readParam = readFunction.parameters()[i];
       var writeAddrParam = writeProcedure.parameters()[i];
-      ensure(readParam.type().isData(), "Read type must be a data type");
-      ensure(writeAddrParam.type().isData(), "Write address type must be a data type");
+      ensure(readParam.type().isDataType(), "Read type must be a data type");
+      ensure(writeAddrParam.type().isDataType(), "Write address type must be a data type");
       ensure(readParam.type().isTrivialCastTo(writeAddrParam.type()),
           "Write address type must be a data type");
     }
 
     var writeValParam = writeParams[writeParams.length - 1];
-    ensure(writeValParam.type().isData(), "Write value type must be a data type");
+    ensure(writeValParam.type().isDataType(), "Write value type must be a data type");
 
     ensure(readFunction.returnType().isTrivialCastTo(resultType()),
         "Read return type must match result type");

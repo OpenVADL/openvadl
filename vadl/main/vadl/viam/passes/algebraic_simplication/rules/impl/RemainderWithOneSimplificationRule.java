@@ -38,11 +38,15 @@ public class RemainderWithOneSimplificationRule implements AlgebraicSimplificati
   @Override
   public Optional<Node> simplify(Node node) {
     if (node instanceof ExpressionNode n) {
+      var ty = getType(n);
+      if (ty.isEmpty()) {
+        return Optional.empty();
+      }
       var matcher =
           new BuiltInMatcher(
               List.of(BuiltInTable.SMOD, BuiltInTable.UMOD),
               List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
-                  Constant.Value.of(1, getType(n)))));
+                  Constant.Value.of(1, ty.get()))));
 
       var matchings = TreeMatcher.matches(Stream.of(node), matcher);
       if (!matchings.isEmpty()) {

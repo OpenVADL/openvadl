@@ -1064,12 +1064,12 @@ instruction set architecture AArch64Base = {
     $ExtendCondInstr ($modelid; $i; (PL ; "pl" ; NZCV_N  = 0                    ))
     $ExtendCondInstr ($modelid; $i; (VS ; "vs" ; NZCV_V  = 1                    ))
     $ExtendCondInstr ($modelid; $i; (VC ; "vc" ; NZCV_V  = 0                    ))
-    $ExtendCondInstr ($modelid; $i; (HI ; "hi" ; NZCV_C  = 1 && NZCV_Z = 0      ))
-    $ExtendCondInstr ($modelid; $i; (LS ; "ls" ; NZCV_C  = 0 || NZCV_Z = 1      ))
+    // $ExtendCondInstr ($modelid; $i; (HI ; "hi" ; NZCV_C  = 1 && NZCV_Z = 0      ))
+    // $ExtendCondInstr ($modelid; $i; (LS ; "ls" ; NZCV_C  = 0 || NZCV_Z = 1      ))
     $ExtendCondInstr ($modelid; $i; (GE ; "ge" ; NZCV_N  = NZCV_V               ))
     $ExtendCondInstr ($modelid; $i; (LT ; "lt" ; NZCV_N != NZCV_V               ))
-    $ExtendCondInstr ($modelid; $i; (GT ; "gt" ; NZCV_N  = NZCV_V && NZCV_Z = 0 ))
-    $ExtendCondInstr ($modelid; $i; (LE ; "le" ; NZCV_N != NZCV_V || NZCV_Z = 1 ))
+    // $ExtendCondInstr ($modelid; $i; (GT ; "gt" ; NZCV_N  = NZCV_V && NZCV_Z = 0 ))
+    // $ExtendCondInstr ($modelid; $i; (LE ; "le" ; NZCV_N != NZCV_V || NZCV_Z = 1 ))
     $ExtendCondInstr ($modelid; $i; (AL ; "al" ; true                           ))
     $ExtendCondInstr ($modelid; $i; (NV ; "nv" ; true                           ))
     }
@@ -1676,6 +1676,7 @@ instruction set architecture AArch64Base = {
       }
 
   model MrsRegInstr (i: InstrNoFunct): IsaDefs = {
+    [skipPruning]
     instruction $i.id: MoveSystemRegFormat =
       if sysreg = SysRegEncode::NZCV
         then X(rt) := (NZCV_N, NZCV_Z, NZCV_C, NZCV_V) as BitsX << 28
@@ -1704,6 +1705,7 @@ instruction set architecture AArch64Base = {
     }
 
   model MsrRegInstr (i: InstrNoFunct): IsaDefs = {
+    [skipPruning]
     instruction $i.id: MoveSystemRegFormat =
       if sysreg = SysRegEncode::NZCV
         then {
