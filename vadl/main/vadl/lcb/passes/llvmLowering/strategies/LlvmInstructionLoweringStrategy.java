@@ -202,9 +202,6 @@ public abstract class LlvmInstructionLoweringStrategy {
     var copy = unmodifiedBehavior.copy();
 
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {
-      DeferredDiagnosticStore.add(
-          Diagnostic.warning("Instruction is not lowerable and will be skipped",
-              instruction.location()).build());
       return Optional.empty();
     }
 
