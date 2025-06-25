@@ -53,6 +53,10 @@ import vadl.viam.annotations.AsmParserCommentString;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.annotations.InstructionUndefinedAnno;
 
+/**
+ * The annotation table defines how {@link Annotation} can be used for different elements in
+ * VADL.
+ */
 @SuppressWarnings({"UnusedMethod", "UnusedVariable"})
 public class AnnotationTable {
   private static final Map<Class<? extends Definition>, Map<String, Supplier<Annotation>>>
