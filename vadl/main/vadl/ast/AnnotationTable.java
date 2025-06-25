@@ -54,7 +54,7 @@ import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.annotations.InstructionUndefinedAnno;
 
 @SuppressWarnings({"UnusedMethod", "UnusedVariable"})
-class AnnotationTable {
+public class AnnotationTable {
   private static final Map<Class<? extends Definition>, Map<String, Supplier<Annotation>>>
       annotationFactories = new java.util.HashMap<>();
 

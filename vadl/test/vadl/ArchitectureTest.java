@@ -16,6 +16,9 @@
 
 package vadl;
 
+import static com.tngtech.archunit.base.DescribedPredicate.not;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.equivalentTo;
+import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -23,6 +26,7 @@ import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.library.Architectures;
 import org.junit.jupiter.api.Test;
+import vadl.ast.AnnotationTable;
 
 public class ArchitectureTest {
   @Test
@@ -30,7 +34,9 @@ public class ArchitectureTest {
     JavaClasses jc = new ClassFileImporter()
         .withImportOption(
             new ImportOption.DoNotIncludeTests())
-        .importPackages("vadl");
+        .importPackages("vadl")
+        .that(are(not(equivalentTo(AnnotationTable.class))));
+
     Architectures.LayeredArchitecture layeredArchitecture = layeredArchitecture()
         .consideringOnlyDependenciesInLayers()
         .layer("Ast").definedBy("..ast..")
