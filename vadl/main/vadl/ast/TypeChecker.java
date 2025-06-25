@@ -235,12 +235,12 @@ public class TypeChecker
             node.getClass().getSimpleName(), node.location().toIDEString()));
   }
 
-  private static Diagnostic typeMissmatchError(WithLocation locatable, Type expected, Type actual) {
-    return typeMissmatchError(locatable, "`%s`".formatted(expected), actual);
+  private static Diagnostic typeMismatchError(WithLocation locatable, Type expected, Type actual) {
+    return typeMismatchError(locatable, "`%s`".formatted(expected), actual);
   }
 
-  private static Diagnostic typeMissmatchError(WithLocation locatable, String expectation,
-                                               Type actual) {
+  private static Diagnostic typeMismatchError(WithLocation locatable, String expectation,
+                                              Type actual) {
     return error("Type Mismatch", locatable)
         .locationDescription(locatable, "Expected %s but got `%s`.",
             expectation, actual)
@@ -447,7 +447,7 @@ public class TypeChecker
     }
     var wrapped = wrapImplicitCast(inner, to);
     if (!wrapped.type().equals(to)) {
-      throw typeMissmatchError(inner, to, inner.type());
+      throw typeMismatchError(inner, to, inner.type());
     }
     return wrapped;
   }
@@ -478,7 +478,7 @@ public class TypeChecker
       Type litType = requireNonNull(definition.typeLiteral.type);
 
       if (!canImplicitCast(valType, litType)) {
-        throw typeMissmatchError(definition.value, litType, valType);
+        throw typeMismatchError(definition.value, litType, valType);
       }
 
       // Insert a cast if needed
@@ -505,7 +505,7 @@ public class TypeChecker
   public Void visit(FormatDefinition definition) {
     var type = check(definition.typeLiteral);
     if (!(type instanceof BitsType bitsType)) {
-      throw typeMissmatchError(definition.typeLiteral, "bits type", type);
+      throw typeMismatchError(definition.typeLiteral, "bits type", type);
     }
 
     var bitWidth = bitsType.bitWidth();
@@ -791,7 +791,7 @@ public class TypeChecker
     definition.expr = wrapImplicitCast(definition.expr, definedType);
     var actualType = requireNonNull(definition.expr.type);
     if (!definedType.equals(actualType)) {
-      throw error("Type Missmatch", definition.expr)
+      throw error("Type Mismatch", definition.expr)
           .description("Expected %s but got %s", definedType, actualType)
           .build();
     }
@@ -818,7 +818,7 @@ public class TypeChecker
       var valueType = requireNonNull(encodingField.value.type);
 
       if (!fieldType.equals(valueType)) {
-        throw typeMissmatchError(encodingField.value, fieldType, valueType);
+        throw typeMismatchError(encodingField.value, fieldType, valueType);
       }
     }
     return null;
@@ -836,7 +836,7 @@ public class TypeChecker
     var exprType = check(definition.expr);
 
     if (exprType.getClass() != StringType.class) {
-      throw typeMissmatchError(definition.expr, "`String`", exprType);
+      throw typeMismatchError(definition.expr, "`String`", exprType);
     }
     return null;
   }
@@ -1005,7 +1005,7 @@ public class TypeChecker
       for (var entry : definition.entries) {
         entry.value = wrapImplicitCast(requireNonNull(entry.value), type);
         if (!entry.value.type().equals(type)) {
-          throw typeMissmatchError(entry.value, type, entry.value.type());
+          throw typeMismatchError(entry.value, type, entry.value.type());
         }
       }
     }
@@ -2133,7 +2133,7 @@ public class TypeChecker
       }
 
       if (!(leftTyp instanceof BitsType) && !(leftTyp instanceof ConstantType)) {
-        throw error("Type Missmatch", expr)
+        throw error("Type Mismatch", expr)
             .locationDescription(expr, "Expected a number here but the left side was an `%s`",
                 leftTyp)
             .description("The `%s` operator only works on pairs of numbers or strings.",
@@ -2141,7 +2141,7 @@ public class TypeChecker
             .build();
       }
       if (!(rightTyp instanceof BitsType) && !(rightTyp instanceof ConstantType)) {
-        throw error("Type Missmatch", expr)
+        throw error("Type Mismatch", expr)
             .locationDescription(expr, "Expected a number here but the right side was an `%s`",
                 rightTyp)
             .description("The `%s` operator only works on pairs of numbers or string.s",
@@ -2168,7 +2168,7 @@ public class TypeChecker
 
       if (!(rightTyp instanceof UIntType || rightTyp instanceof BitsType)
           && !canImplicitCast(rightTyp, closestUIntType)) {
-        throw error("Type Missmatch", expr)
+        throw error("Type Mismatch", expr)
             .locationNote(expr, "The right type must be unsigned but is %s", rightTyp)
             .build();
       }
@@ -2182,7 +2182,7 @@ public class TypeChecker
       if (leftTyp instanceof ConstantType) {
 
         if (List.of(Operator.RotateLeft, Operator.RotateRight).contains(expr.operator())) {
-          throw error("Type Missmatch", expr)
+          throw error("Type Mismatch", expr)
               .locationNote(expr, "The left side must be a concrete type but was %s", rightTyp)
               .description("Rotate operations require a type with a fixed bit width.")
               .build();
@@ -2276,7 +2276,7 @@ public class TypeChecker
     rightTyp = expr.right.type();
 
     if (!leftTyp.equals(rightTyp)) {
-      throw error("Type Missmatch", expr)
+      throw error("Type Mismatch", expr)
           .locationNote(expr, "The left type is %s while right is %s", leftTyp, rightTyp)
           .description(
               "Both types on the left and right side of an binary operation should be equal.")
@@ -3027,7 +3027,7 @@ public class TypeChecker
     expr.condition = wrapImplicitCast(expr.condition, Type.bool());
     var condType = expr.condition.type();
     if (condType != Type.bool()) {
-      throw typeMissmatchError(expr, Type.bool(), condType);
+      throw typeMismatchError(expr, Type.bool(), condType);
     }
 
     var thenType = check(expr.thenExpr);
@@ -3286,7 +3286,7 @@ public class TypeChecker
     statement.condition = wrapImplicitCast(statement.condition, Type.bool());
     var condType = statement.condition.type();
     if (condType != Type.bool()) {
-      throw typeMissmatchError(statement.condition, Type.bool(), condType);
+      throw typeMismatchError(statement.condition, Type.bool(), condType);
     }
 
     check(statement.thenStmt);
@@ -3311,7 +3311,7 @@ public class TypeChecker
     }
 
     if (!targetType.equals(valueType)) {
-      throw typeMissmatchError(statement.valueExpression, targetType, valueType);
+      throw typeMismatchError(statement.valueExpression, targetType, valueType);
     }
 
     return null;
@@ -3327,7 +3327,7 @@ public class TypeChecker
   public Void visit(CallStatement statement) {
     check(statement.expr);
     if (statement.expr.type != Type.void_()) {
-      throw typeMissmatchError(statement.expr, Type.void_(), requireNonNull(statement.expr.type));
+      throw typeMismatchError(statement.expr, Type.void_(), requireNonNull(statement.expr.type));
     }
     return null;
   }
@@ -3415,7 +3415,7 @@ public class TypeChecker
         var actualType = arg.value.type();
 
         if (!targetType.equals(actualType)) {
-          throw typeMissmatchError(arg, targetType, actualType);
+          throw typeMismatchError(arg, targetType, actualType);
         }
       }
 
@@ -3451,7 +3451,7 @@ public class TypeChecker
         var actualType = statement.unnamedArguments.get(i).type();
 
         if (!targetType.equals(actualType)) {
-          throw typeMissmatchError(arg, targetType, actualType);
+          throw typeMismatchError(arg, targetType, actualType);
         }
       }
 
