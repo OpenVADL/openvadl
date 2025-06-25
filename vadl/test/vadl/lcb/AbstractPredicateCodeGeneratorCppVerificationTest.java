@@ -33,7 +33,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.LcbConfiguration;
-import vadl.cppCodeGen.common.GcbAccessFunctionCodeGenerator;
+import vadl.cppCodeGen.common.PredicateFunctionCodeGenerator;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
@@ -154,7 +154,7 @@ public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends 
   protected String renderPositive(GcbCppFunctionWithBody record, Format.FieldAccess fieldAccess,
                                   int sample) {
     var predicateFunctionGenerator =
-        new GcbAccessFunctionCodeGenerator(record.header(), fieldAccess,
+        new PredicateFunctionCodeGenerator(record.header(), fieldAccess,
             record.header().functionName().lower());
 
     var predicateFunction = predicateFunctionGenerator.genFunctionDefinition();
@@ -218,7 +218,7 @@ public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends 
   protected String renderNegative(GcbCppFunctionWithBody record, Format.FieldAccess fieldAccess,
                                int sample) {
     var predicateFunctionGenerator =
-        new GcbAccessFunctionCodeGenerator(record.header(), fieldAccess,
+        new PredicateFunctionCodeGenerator(record.header(), fieldAccess,
             record.header().functionName().lower());
 
     var predicateFunction = predicateFunctionGenerator.genFunctionDefinition();
