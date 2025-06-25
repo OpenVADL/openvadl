@@ -30,7 +30,7 @@ import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
-import vadl.cppCodeGen.common.GcbAccessOrPredicateFunctionCodeGenerator;
+import vadl.cppCodeGen.common.GcbAccessFunctionCodeGenerator;
 import vadl.cppCodeGen.common.GcbEncodingFunctionCodeGenerator;
 import vadl.cppCodeGen.model.GcbCppAccessFunction;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
@@ -147,7 +147,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractLcbTest {
                   GcbCppAccessFunction accessFunction,
                   GcbCppFunctionWithBody encodingFunction) {
     var decodeFunctionGenerator =
-        new GcbAccessOrPredicateFunctionCodeGenerator(accessFunction.header(),
+        new GcbAccessFunctionCodeGenerator(accessFunction.header(),
             accessFunction.fieldAccess(),
             accessFunction.header().identifier.lower());
     var encodeFunctionGenerator =

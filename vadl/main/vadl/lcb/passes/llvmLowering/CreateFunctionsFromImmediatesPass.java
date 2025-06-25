@@ -27,8 +27,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
-import vadl.cppCodeGen.common.GcbAccessOrPredicateFunctionCodeGenerator;
+import vadl.cppCodeGen.common.GcbAccessFunctionCodeGenerator;
 import vadl.cppCodeGen.common.GcbEncodingFunctionCodeGenerator;
+import vadl.cppCodeGen.common.PredicateFunctionCodeGenerator;
 import vadl.cppCodeGen.model.GcbCppAccessFunction;
 import vadl.cppCodeGen.model.GcbCppEncodeFunction;
 import vadl.cppCodeGen.model.GcbCppEncodingWrapperFunction;
@@ -273,11 +274,13 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
         parameters.toArray(Parameter[]::new),
         CppTypeMap.upcast(immediate.fieldAccessRef().accessFunction().returnType()),
         immediate.fieldAccessRef().accessFunction().behavior());
+    var codeGen = new GcbAccessFunctionCodeGenerator(bodyLessFunction,
+        immediate.fieldAccessRef(),
+        immediate.rawDecoderMethod().lower());
+
     return new GcbCppAccessFunction(bodyLessFunction,
         immediate.fieldAccessRef(),
-        generateCode(immediate.rawDecoderMethod(),
-            immediate.fieldAccessRef(),
-            bodyLessFunction));
+        codeGen.genFunctionDefinition());
   }
 
   @Nonnull
@@ -291,17 +294,11 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
                 stackPointerType)},
         Type.bool(),
         immediate.fieldAccessRef().predicate().behavior());
-    return new GcbCppFunctionWithBody(bodyLessFunction,
-        generateCode(immediate.predicateMethod(),
-            immediate.fieldAccessRef(),
-            bodyLessFunction));
-  }
+    var codeGen = new PredicateFunctionCodeGenerator(bodyLessFunction,
+        immediate.fieldAccessRef(),
+        immediate.predicateMethod().lower());
 
-  private String generateCode(Identifier identifier,
-                              Format.FieldAccess fieldAccess,
-                              GcbCppFunctionBodyLess header) {
-    return new GcbAccessOrPredicateFunctionCodeGenerator(header,
-        fieldAccess,
-        identifier.lower()).genFunctionDefinition();
+    return new GcbCppFunctionWithBody(bodyLessFunction,
+        codeGen.genFunctionDefinition());
   }
 }
