@@ -2184,7 +2184,12 @@ public class TypeChecker
 
   @Override
   public Void visit(MicroArchitectureDefinition definition) {
-    throwUnimplemented(definition);
+    if (!(definition.isa.target() instanceof InstructionSetDefinition)) {
+      throw error("ISA required", definition.isa)
+          .locationDescription(definition.isa, "A MIA implements an ISA but this points to a %s",
+              requireNonNull(definition.isa.target()).getClass().getSimpleName()).build();
+    }
+    definition.definitions.forEach(this::check);
     return null;
   }
 

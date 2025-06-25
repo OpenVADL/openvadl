@@ -24,10 +24,10 @@ import vadl.types.BuiltInTable;
 import vadl.types.MicroArchitectureType;
 import vadl.types.Type;
 import vadl.viam.Identifier;
+import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Logic;
 import vadl.viam.Memory;
 import vadl.viam.MicroArchitecture;
-import vadl.viam.Processor;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
@@ -47,12 +47,12 @@ import vadl.viam.graph.dependency.WriteStageOutputNode;
  */
 class FiveStageDummyMia {
 
-  public static MicroArchitecture mia(Specification viam, Processor mip) {
+  public static MicroArchitecture mia(Specification viam, InstructionSetArchitecture isa) {
     var regFile = viam.isa().orElseThrow().registerTensors()
         .stream().filter(RegisterTensor::isRegisterFile).findFirst().get();
     var mem = viam.isa().orElseThrow().ownMemories().get(0);
-    var pc = Objects.requireNonNull(mip.isa().pc()).registerTensor();
-    var csr = mip.isa().registerTensors().stream()
+    var pc = Objects.requireNonNull(isa.pc()).registerTensor();
+    var csr = isa.registerTensors().stream()
         .filter(reg -> reg.simpleName().equals("CSR")).findAny().orElse(null);
 
     var ident = Identifier.noLocation("MiA");
@@ -68,7 +68,7 @@ class FiveStageDummyMia {
 
     return new MicroArchitecture(
         ident,
-        mip,
+        isa,
         new ArrayList<>(List.of(fetch, decode, execute, memory, writeBack)),
         new ArrayList<>(List.of(bypass, predict))
     );

@@ -4365,15 +4365,16 @@ class CpuProcessDefinition extends Definition {
 
 class MicroArchitectureDefinition extends Definition implements IdentifiableNode {
   Identifier id;
-  IsId processor;
+  @Child
+  IsId isa;
   @Child
   List<Definition> definitions;
   SourceLocation loc;
 
-  MicroArchitectureDefinition(Identifier id, IsId processor, List<Definition> definitions,
+  MicroArchitectureDefinition(Identifier id, IsId isa, List<Definition> definitions,
                               SourceLocation loc) {
     this.id = id;
-    this.processor = processor;
+    this.isa = isa;
     this.definitions = definitions;
     this.loc = loc;
   }
@@ -4404,7 +4405,7 @@ class MicroArchitectureDefinition extends Definition implements IdentifiableNode
     builder.append("micro architecture ");
     id.prettyPrint(0, builder);
     builder.append(" implements ");
-    processor.prettyPrint(0, builder);
+    isa.prettyPrint(0, builder);
     builder.append(" = {\n");
     prettyPrintDefinitions(indent + 1, builder, definitions);
     builder.append(prettyIndentString(indent)).append("}\n");
@@ -4420,13 +4421,13 @@ class MicroArchitectureDefinition extends Definition implements IdentifiableNode
     }
     MicroArchitectureDefinition that = (MicroArchitectureDefinition) o;
     return Objects.equals(id, that.id)
-        && Objects.equals(processor, that.processor)
+        && Objects.equals(isa, that.isa)
         && Objects.equals(definitions, that.definitions);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, processor, definitions);
+    return Objects.hash(id, isa, definitions);
   }
 
 }

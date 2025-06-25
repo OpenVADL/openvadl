@@ -895,7 +895,7 @@ class MacroExpander
 
   @Override
   public Definition visit(MicroArchitectureDefinition definition) {
-    return new MicroArchitectureDefinition(definition.id, definition.processor,
+    return new MicroArchitectureDefinition(definition.id, definition.isa,
         expandDefinitions(definition.definitions), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
