@@ -1676,7 +1676,7 @@ instruction set architecture AArch64Base = {
       }
 
   model MrsRegInstr (i: InstrNoFunct): IsaDefs = {
-    [skipPruning]
+    [skip pruning]
     instruction $i.id: MoveSystemRegFormat =
       if sysreg = SysRegEncode::NZCV
         then X(rt) := (NZCV_N, NZCV_Z, NZCV_C, NZCV_V) as BitsX << 28
@@ -1705,7 +1705,7 @@ instruction set architecture AArch64Base = {
     }
 
   model MsrRegInstr (i: InstrNoFunct): IsaDefs = {
-    [skipPruning]
+    [skip pruning]
     instruction $i.id: MoveSystemRegFormat =
       if sysreg = SysRegEncode::NZCV
         then {

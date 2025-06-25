@@ -184,7 +184,7 @@ public class AnnotationTable {
 
     /// Compiler RELATED ///
 
-    annotationOn(InstructionDefinition.class, "skipPruning", EnableAnnotation::new)
+    annotationOn(InstructionDefinition.class, "skip pruning", EnableAnnotation::new)
         .applyViam((def, annotation, lowering) -> {
           if (annotation.isEnabled) {
             def.addAnnotation(new SkipPruningAnnotation());
