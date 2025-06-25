@@ -22,6 +22,8 @@ import javax.annotation.Nullable;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.model.GcbCppFunctionBodyLess;
+import vadl.error.Diagnostic;
+import vadl.utils.SourceLocation;
 import vadl.viam.Format;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
@@ -77,6 +79,16 @@ public class PredicateFunctionCodeGenerator extends AccessFunctionCodeGenerator 
 
   @Override
   protected void handle(CGenContext<Node> ctx, FieldAccessRefNode toHandle) {
+    if (!toHandle.fieldAccess().equals(fieldAccess)) {
+      // Check because when we inline then we might lose source code location.
+      var location =
+          toHandle.location().equals(SourceLocation.INVALID_SOURCE_LOCATION) ? fieldAccess :
+              toHandle.location();
+      throw Diagnostic.error(
+              "Predicate uses field access function does not belong to this function", location)
+          .build();
+    }
+
     ctx.wr(toHandle.fieldAccess().simpleName());
   }
 
