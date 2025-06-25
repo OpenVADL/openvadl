@@ -72,12 +72,12 @@ public class PredicateFunctionCodeGenerator extends AccessFunctionCodeGenerator 
 
   @Override
   public void handle(CGenContext<Node> ctx, FuncParamNode toHandle) {
-    ctx.wr(toHandle.parameter().simpleName());
+    throwNotAllowed(toHandle, "Func parameter");
   }
 
   @Override
   protected void handle(CGenContext<Node> ctx, FieldAccessRefNode toHandle) {
-    throwNotAllowed(toHandle, "Format field accesses");
+    ctx.wr(toHandle.fieldAccess().simpleName());
   }
 
   @Override
