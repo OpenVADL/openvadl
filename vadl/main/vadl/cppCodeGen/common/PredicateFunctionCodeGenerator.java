@@ -20,7 +20,6 @@ import static vadl.error.DiagUtils.throwNotAllowed;
 
 import javax.annotation.Nullable;
 import vadl.cppCodeGen.CppTypeMap;
-import vadl.cppCodeGen.FunctionCodeGenerator;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.model.GcbCppFunctionBodyLess;
 import vadl.viam.Format;
@@ -73,8 +72,7 @@ public class PredicateFunctionCodeGenerator extends AccessFunctionCodeGenerator 
 
   @Override
   public void handle(CGenContext<Node> ctx, FuncParamNode toHandle) {
-    // Explicit parameters are not allowed. The only parameter is the implicit format field access.
-    throwNotAllowed(toHandle, "Function parameters");
+    ctx.wr(toHandle.parameter().simpleName());
   }
 
   @Override

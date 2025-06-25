@@ -101,9 +101,7 @@ public class ShiftedImmediateStrategyPredicate implements EncodingPredicateGener
 
 
     // Check if the lowest "shiftValue" bits are zero.
-    var paramNode = new FuncParamNode(
-        new Parameter(new Identifier(PARAM, SourceLocation.INVALID_SOURCE_LOCATION),
-            fieldAccess.type()));
+    var paramNode = new FieldAccessRefNode(fieldAccess, fieldAccess.type());
     var bitwise = GraphUtils.binaryOp(BuiltInTable.AND, paramNode, shiftValueNode);
     var cond = GraphUtils.and(GraphUtils.binaryOp(BuiltInTable.EQU, bitwise,
             new ConstantNode(Constant.Value.fromInteger(BigInteger.ZERO, Type.unsignedInt(64)))),
@@ -121,7 +119,7 @@ public class ShiftedImmediateStrategyPredicate implements EncodingPredicateGener
 
   private ExpressionNode checkIfValueInRange(Format.FieldAccess fieldAccess,
                                              int shiftBits,
-                                             FuncParamNode param) {
+                                             FieldAccessRefNode param) {
     var ty =
         fieldAccess.accessFunction().behavior().getNodes(FieldRefNode.class).toList().getFirst()
             .formatField().type();

@@ -35,7 +35,7 @@ import vadl.cppCodeGen.model.GcbCppEncodeFunction;
 import vadl.cppCodeGen.model.GcbCppEncodingWrapperFunction;
 import vadl.cppCodeGen.model.GcbCppFunctionBodyLess;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
-import vadl.gcb.passes.encodingGeneration.strategies.EncodingPredicateGenerationStrategy;
+import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
@@ -46,13 +46,13 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.Type;
-import vadl.utils.SourceLocation;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.Parameter;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.Specification;
+import vadl.viam.ViamError;
 
 /**
  * A pass that creates various functions which are required for the immediates in LLVM.
@@ -286,11 +286,14 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
   @Nonnull
   private GcbCppFunctionWithBody predicate(Type stackPointerType,
                                            TableGenImmediateRecord immediate) {
+    ViamError.ensureNonNull(immediate.fieldAccessRef().predicate(),
+        () -> Diagnostic.error("Predicate must not be null",
+            immediate.fieldAccessRef().location()));
     var bodyLessFunction = new GcbCppFunctionBodyLess(
         immediate.predicateMethod(),
         new Parameter[] {
-            new Parameter(new Identifier(EncodingPredicateGenerationStrategy.PARAM,
-                SourceLocation.INVALID_SOURCE_LOCATION),
+            new Parameter(new Identifier(immediate.fieldAccessRef().simpleName(),
+                immediate.fieldAccessRef().location()),
                 stackPointerType)},
         Type.bool(),
         immediate.fieldAccessRef().predicate().behavior());

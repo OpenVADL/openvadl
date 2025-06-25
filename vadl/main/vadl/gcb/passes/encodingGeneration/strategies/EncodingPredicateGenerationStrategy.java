@@ -21,18 +21,16 @@ import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.utils.GraphUtils;
-import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.Function;
-import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.Parameter;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 
 /**
  * The implementor of this interface can generate a field access encoding / predicate functions.
@@ -93,9 +91,7 @@ public interface EncodingPredicateGenerationStrategy {
 
     var fieldRef = fieldAccess.fieldRefs().getFirst();
 
-    var paramNode = new FuncParamNode(
-        new Parameter(new Identifier(PARAM, SourceLocation.INVALID_SOURCE_LOCATION),
-            fieldAccess.type()));
+    var paramNode = new FieldAccessRefNode(fieldAccess, fieldAccess.type());
 
     var lowestValue = new ConstantNode(Constant.Value.fromInteger(
         BigInteger.valueOf(
