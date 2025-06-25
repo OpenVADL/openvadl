@@ -336,6 +336,14 @@ public class LcbNodeReplacementHandler {
         LcbNodeReplacementHandlerDispatcher.dispatch(this, arg);
       }
 
+      // Check if the builtin is used in the condition of a write.
+      // If yes, then we do not want this transformation.
+      var usages = node.usages().filter(x -> x instanceof WriteRegTensorNode)
+          .map(x -> (WriteRegTensorNode) x).toList();
+      if (usages.stream().anyMatch(usage -> usage.condition() == node)) {
+        return;
+      }
+
       var replaced = node.replaceAndDelete(
           new LlvmSetccSD(node.builtIn(), node.arguments(), node.type()));
       //def : Pat< ( setcc X:$rs1, 0, SETEQ ),
