@@ -17,6 +17,7 @@
 package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -633,13 +634,22 @@ public class LcbNodeReplacementHandler {
         // 4. the immediate offset
 
         if (writeRegTensorNode.condition() instanceof BuiltInCall conditional) {
-          var condCond = LlvmCondCode.from(conditional.builtIn(), conditional.location());
-          if (condCond == null) {
-            throw Diagnostic.error("CondCode must not be null", conditional.location()).build();
+          for (var arg : conditional.arguments()) {
+            LcbNodeReplacementHandlerDispatcher.dispatch(this, arg);
           }
 
-          LcbNodeReplacementHandlerDispatcher.dispatch(this, conditional.arguments().get(0));
-          LcbNodeReplacementHandlerDispatcher.dispatch(this, conditional.arguments().get(1));
+          if (conditional.builtIn() == BuiltInTable.AND
+              || conditional.builtIn() == BuiltInTable.OR) {
+            DeferredDiagnosticStore.add(Diagnostic.warning(
+                "Compiler generator is not able to lower a conjunction / disjunction. "
+                    + "This will be skipped.",
+                conditional.location()));
+            return;
+          }
+
+          var condCond = LlvmCondCode.from(conditional.builtIn(), conditional.location());
+          ensureNonNull(condCond,
+              () -> Diagnostic.error("CondCode must not be null", conditional.location()));
 
           if (conditional.arguments().size() != 2) {
             return;
