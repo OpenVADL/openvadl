@@ -39,11 +39,15 @@ public interface AlgebraicSimplificationRule {
    * When the {@code node} has a {@link TupleType} then return the type of the first
    * child.
    */
-  default DataType getType(ExpressionNode node) {
-    if (node.type() instanceof TupleType tupleType) {
-      return tupleType.first().asDataType();
+  default Optional<DataType> getType(ExpressionNode node) {
+    if (node.type() instanceof TupleType tupleType && tupleType.first().isDataType()) {
+      return Optional.ofNullable(tupleType.first().asDataType());
     }
 
-    return node.type().asDataType();
+    if (node.type().isDataType()) {
+      return Optional.ofNullable(node.type().asDataType());
+    }
+
+    return Optional.empty();
   }
 }

@@ -365,11 +365,15 @@ public class LlvmLoweringPass extends Pass {
               continue;
             }
 
+            var usesDefs = ensureNonNull(registerDefsUses.get(instruction),
+                () -> Diagnostic.error("No defs / uses found", instruction.location()));
+
             var record =
-                strategy.lowerInstruction(labelledMachineInstructions, instruction,
+                strategy.lowerInstruction(labelledMachineInstructions,
+                    instruction,
                     instruction.behavior(),
                     abi,
-                    Objects.requireNonNull(registerDefsUses.get(instruction)));
+                    usesDefs);
 
             // Okay, we have to save record.
             record.ifPresent(llvmLoweringIntermediateResult -> {
@@ -551,7 +555,7 @@ public class LlvmLoweringPass extends Pass {
               ensurePresent(
                   instruction.target().behavior().getNodes(FieldAccessRefNode.class)
                       .filter(x ->
-                          x.fieldAccess().fieldRef().equals(field))
+                          x.fieldAccess().fieldRefs().contains(field))
                       .findFirst(),
                   () -> Diagnostic.error("Cannot find field access function for field",
                       field.location()));

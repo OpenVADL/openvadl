@@ -17,6 +17,7 @@
 package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -92,6 +93,7 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -140,6 +142,11 @@ public class LcbNodeReplacementHandler {
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(SideEffectNode sideEffectNode) {
     throw Diagnostic.error("not handled", sideEffectNode.location()).build();
+  }
+
+  @Handler
+  public void handle(ProcCallNode node) {
+    Objects.requireNonNull(node.graph()).add(new LlvmUnlowerableSD());
   }
 
   @Handler
@@ -326,6 +333,18 @@ public class LcbNodeReplacementHandler {
         node.replaceAndDelete(new LlvmSMulhSD(node.arguments(), node.type()));
       }
     } else if (LlvmSetccSD.supported.contains(node.builtIn())) {
+      for (var arg : node.arguments()) {
+        LcbNodeReplacementHandlerDispatcher.dispatch(this, arg);
+      }
+
+      // Check if the builtin is used in the condition of a write.
+      // If yes, then we do not want this transformation.
+      var usages = node.usages().filter(x -> x instanceof WriteRegTensorNode)
+          .map(x -> (WriteRegTensorNode) x).toList();
+      if (usages.stream().anyMatch(usage -> usage.condition() == node)) {
+        return;
+      }
+
       var replaced = node.replaceAndDelete(
           new LlvmSetccSD(node.builtIn(), node.arguments(), node.type()));
       //def : Pat< ( setcc X:$rs1, 0, SETEQ ),
@@ -598,6 +617,7 @@ public class LcbNodeReplacementHandler {
       LcbNodeReplacementHandlerDispatcher.dispatch(this, index);
     }
 
+    LcbNodeReplacementHandlerDispatcher.dispatch(this, writeRegTensorNode.condition());
     LcbNodeReplacementHandlerDispatcher.dispatch(this, writeRegTensorNode.value());
 
     if (writeRegTensorNode.regTensor().isSingleRegister()
@@ -614,13 +634,22 @@ public class LcbNodeReplacementHandler {
         // 4. the immediate offset
 
         if (writeRegTensorNode.condition() instanceof BuiltInCall conditional) {
-          var condCond = LlvmCondCode.from(conditional.builtIn(), conditional.location());
-          if (condCond == null) {
-            throw Diagnostic.error("CondCode must not be null", conditional.location()).build();
+          for (var arg : conditional.arguments()) {
+            LcbNodeReplacementHandlerDispatcher.dispatch(this, arg);
           }
 
-          LcbNodeReplacementHandlerDispatcher.dispatch(this, conditional.arguments().get(0));
-          LcbNodeReplacementHandlerDispatcher.dispatch(this, conditional.arguments().get(1));
+          if (conditional.builtIn() == BuiltInTable.AND
+              || conditional.builtIn() == BuiltInTable.OR) {
+            DeferredDiagnosticStore.add(Diagnostic.warning(
+                "Compiler generator is not able to lower a conjunction / disjunction. "
+                    + "This will be skipped.",
+                conditional.location()));
+            return;
+          }
+
+          var condCond = LlvmCondCode.from(conditional.builtIn(), conditional.location());
+          ensureNonNull(condCond,
+              () -> Diagnostic.error("CondCode must not be null", conditional.location()));
 
           if (conditional.arguments().size() != 2) {
             return;

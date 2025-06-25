@@ -51,12 +51,12 @@ public abstract class Type {
     return other == this;
   }
 
-  public final boolean isData() {
+  public final boolean isDataType() {
     return this instanceof DataType;
   }
 
   public final DataType asDataType() {
-    ViamError.ensure(isData(), "Not a data type: %s", this);
+    ViamError.ensure(isDataType(), "Not a data type: %s", this);
     return (DataType) this;
   }
 

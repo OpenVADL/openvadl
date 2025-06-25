@@ -35,6 +35,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import vadl.gcb.annotations.SkipPruningAnnotation;
 import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
@@ -52,8 +53,12 @@ import vadl.viam.annotations.AsmParserCommentString;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.annotations.InstructionUndefinedAnno;
 
+/**
+ * The annotation table defines how {@link Annotation} can be used for different elements in
+ * VADL.
+ */
 @SuppressWarnings({"UnusedMethod", "UnusedVariable"})
-class AnnotationTable {
+public class AnnotationTable {
   private static final Map<Class<? extends Definition>, Map<String, Supplier<Annotation>>>
       annotationFactories = new java.util.HashMap<>();
 
@@ -176,6 +181,15 @@ class AnnotationTable {
           });
         })
         .build();
+
+    /// Compiler RELATED ///
+
+    annotationOn(InstructionDefinition.class, "skip pruning", EnableAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          if (annotation.isEnabled) {
+            def.addAnnotation(new SkipPruningAnnotation());
+          }
+        }).build();
   }
 
 
@@ -1201,4 +1215,3 @@ class InstructionUndefinedAnnotation extends ExprAnnotation {
     super.resolveName(definition, resolver);
   }
 }
-

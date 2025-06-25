@@ -205,7 +205,7 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
                 if (x instanceof FieldRefNode fieldRefNode) {
                   return fieldRefNode.formatField().equals(formatField);
                 } else if (x instanceof FieldAccessRefNode fieldAccessRefNode) {
-                  return fieldAccessRefNode.fieldAccess().fieldRef().equals(formatField);
+                  return fieldAccessRefNode.fieldAccess().fieldRefs().contains(formatField);
                 }
                 return false;
               })
