@@ -31,7 +31,8 @@ public class FrontendIntegrationTest {
       "../sys/risc-v/rv32im.vadl",
       "../sys/risc-v/rv64im.vadl",
       "../sys/risc-v/rvcsr.vadl",
-      "../sys/aarch64/aarch64.vadl"
+      "../sys/aarch64/aarch64.vadl",
+      "../sys/v-risc/ABI.vadl"
   })
   public void testFrontendPassingOnSysSpecs(String filename) {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(Path.of(filename)),
