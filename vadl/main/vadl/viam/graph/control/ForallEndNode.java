@@ -31,6 +31,9 @@ public class ForallEndNode extends DirectionalNode {
     super(next);
   }
 
+  public ForallEndNode() {
+  }
+
   @Override
   public Node copy() {
     return new ForallEndNode(next().copy(ControlNode.class));

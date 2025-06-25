@@ -17,7 +17,7 @@
 package vadl.ast;
 
 
-import static vadl.error.Diagnostic.ensure;
+import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
 import static vadl.utils.GraphUtils.ifElseSideEffect;
 import static vadl.utils.GraphUtils.intU;
@@ -147,7 +147,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     ControlNode startSuccessor = end;
     if (stmtCtx.hasControlBlock()) {
-      var controlBlock = Objects.requireNonNull(stmtCtx.controlBlock());
+      var controlBlock = requireNonNull(stmtCtx.controlBlock());
       controlBlock.lastNode().setNext(end);
       startSuccessor = controlBlock.firstNode();
     }
@@ -171,7 +171,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     ControlNode startSuccessor = end;
     if (stmtCtx.hasControlBlock()) {
-      var controlBlock = Objects.requireNonNull(stmtCtx.controlBlock());
+      var controlBlock = requireNonNull(stmtCtx.controlBlock());
       controlBlock.lastNode().setNext(end);
       startSuccessor = controlBlock.firstNode();
     }
@@ -192,7 +192,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     end.setSourceLocation(definition.location());
 
     var calls = definition.statements.stream()
-        .map(s -> (InstrCallNode) Objects.requireNonNull(s.accept(this).controlBlock()).firstNode())
+        .map(s -> (InstrCallNode) requireNonNull(s.accept(this).controlBlock()).firstNode())
         .toList();
 
     ControlNode curr = end;
@@ -338,7 +338,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     final var identifier =
         viamLowering.generateIdentifier(definition.viamId + "::write", definition.loc);
-    final var regFileDef = (RegisterDefinition) Objects.requireNonNull(definition.computedTarget);
+    final var regFileDef = (RegisterDefinition) requireNonNull(definition.computedTarget);
     final var zeroConst = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
 
     DataType resultType;
@@ -625,6 +625,19 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return new FuncParamNode(param);
     }
 
+    // Forall Statement
+    if (computedTarget instanceof ForallStatement forallStatement) {
+      var index = forallStatement.indices.stream()
+          .filter(idx -> idx.name.name.equals(innerName))
+          .findFirst()
+          .orElseThrow();
+
+      return new ForIdxNode(
+          getViamType(expr.type()),
+          requireNonNull(index.computedFrom),
+          requireNonNull(index.computedTo));
+    }
+
     // Function call without arguments (and no parenthesis)
     if (computedTarget instanceof FunctionDefinition functionDefinition) {
       var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
@@ -766,7 +779,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public ExpressionNode visit(UnaryExpr expr) {
     var value = fetch(expr.operand);
     return new BuiltInCall(
-        Objects.requireNonNull(expr.computedTarget),
+        requireNonNull(expr.computedTarget),
         new NodeList<>(value),
         getViamType(expr.type()));
   }
@@ -789,7 +802,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         var bitSlice = subCall.computedBitSlice;
         var slice =
             new SliceNode(resultExpr, bitSlice,
-                (DataType) getViamType(Objects.requireNonNull(subCall.formatFieldType)));
+                (DataType) getViamType(requireNonNull(subCall.formatFieldType)));
         resultExpr = visitSliceIndexCall(slice, subCall.argsIndices);
       } else if (subCall.computedStatusIndex != null) {
         var indexing =
@@ -839,7 +852,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var result = exprBeforeSlice;
     for (var slice : slices) {
-      var bitSlice = Objects.requireNonNull(slice.computedBitSlice);
+      var bitSlice = requireNonNull(slice.computedBitSlice);
       var type = Type.bits(bitSlice.bitSize());
       result = new SliceNode(exprBeforeSlice, slice.computedBitSlice, type);
     }
@@ -933,7 +946,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // check the different rules and apply them accordingly
     var source = fetch(expr.value);
-    var sourceType = getViamType(Objects.requireNonNull(expr.value.type));
+    var sourceType = getViamType(requireNonNull(expr.value.type));
     var targetType = getViamType(expr.type());
     if (sourceType.isTrivialCastTo(targetType)) {
       // match 1. rule: same bit representation
@@ -1090,7 +1103,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       targetDef = (vadl.ast.Definition) callTarget.computedTarget();
       argGroups = callTarget.args();
       callTarget.slices().forEach(s -> {
-        slices.add(Objects.requireNonNull(s.computedBitSlice));
+        slices.add(requireNonNull(s.computedBitSlice));
       });
       // add all slices that come from format field accesses
       callTarget.subCalls.forEach(s -> {
@@ -1104,7 +1117,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           ? constantEvaluator.eval(sizeExpr).value().intValueExact()
           : null;
     } else if (statement.target instanceof Identifier identTarget) {
-      targetDef = (vadl.ast.Definition) Objects.requireNonNull(identTarget.target());
+      targetDef = (vadl.ast.Definition) requireNonNull(identTarget.target());
     } else {
       throw new IllegalStateException("Unexpected target: " + statement);
     }
@@ -1207,7 +1220,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var mask = slice.mask().castTo(Type.bits(entireRead.type().bitWidth())).not().toNode();
     var clearedResource = BuiltInCall.of(BuiltInTable.AND, entireRead, mask);
-    return BuiltInCall.of(BuiltInTable.OR, clearedResource, Objects.requireNonNull(injected));
+    return BuiltInCall.of(BuiltInTable.OR, clearedResource, requireNonNull(injected));
   }
 
 
@@ -1222,14 +1235,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
       if (stmtCtx.hasControlBlock()) {
         if (firstNode == null) {
-          firstNode = Objects.requireNonNull(stmtCtx.controlBlock()).firstNode();
+          firstNode = requireNonNull(stmtCtx.controlBlock()).firstNode();
         }
 
         if (lastNode != null) {
           // link previous stmt with current stmt
-          lastNode.setNext(Objects.requireNonNull(stmtCtx.controlBlock()).firstNode());
+          lastNode.setNext(requireNonNull(stmtCtx.controlBlock()).firstNode());
         }
-        lastNode = Objects.requireNonNull(stmtCtx.controlBlock()).lastNode();
+        lastNode = requireNonNull(stmtCtx.controlBlock()).lastNode();
       }
       nodes.addAll(stmtCtx.sideEffectsOrEmptyList());
     }
@@ -1255,8 +1268,32 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(ForallStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    var forallEndNode = addToGraph(new ForallEndNode());
+
+    // Something here about the inner statement and l
+    var bodyGraph = statement.body.accept(this);
+    ControlNode next = forallEndNode;
+    if (bodyGraph.hasControlBlock()) {
+      var controlBlock = requireNonNull(bodyGraph.controlBlock());
+      controlBlock.lastNode().setNext(next);
+      next = controlBlock.firstNode();
+    }
+
+    if (statement.indices.size() != 1) {
+      throw new IllegalStateException("Can only lower single index right now");
+    }
+
+    var index = requireNonNull(statement.indices.getFirst());
+    var idx =
+        new ForIdxNode(requireNonNull(index.typeLiteral).type(), requireNonNull(index.computedFrom),
+            requireNonNull(index.computedTo));
+    var forallNode = addToGraph(new ForallNode(idx, next));
+
+    var nodes = new ArrayList();
+    nodes.add(forallNode);
+    nodes.add(forallEndNode);
+    nodes.addAll(bodyGraph.sideEffectsOrEmptyList());
+    return SubgraphContext.of(statement, nodes);
   }
 
   @Override
@@ -1288,8 +1325,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     var target =
-        (Instruction) viamLowering.fetch(Objects.requireNonNull(statement.instrDef))
-            .orElseThrow();
+        (Instruction) viamLowering.fetch(requireNonNull(statement.instrDef)).orElseThrow();
     var fieldMap = Arrays.stream(target.encoding().nonEncodedFormatFields())
         .collect(Collectors.toMap(Definition::simpleName, f -> f));
 
@@ -1379,7 +1415,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         contradictionPair = defaultPair;
       } else {
         contradictionPair =
-            buildBranch(SubgraphContext.of(statement, start, Objects.requireNonNull(end)), kase);
+            buildBranch(SubgraphContext.of(statement, start, requireNonNull(end)), kase);
       }
 
       end = addToGraph(
@@ -1388,8 +1424,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
 
-    return SubgraphContext.of(statement, Objects.requireNonNull(start),
-        Objects.requireNonNull(end));
+    return SubgraphContext.of(statement, requireNonNull(start),
+        requireNonNull(end));
   }
 
   @Override
