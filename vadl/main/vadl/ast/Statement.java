@@ -27,45 +27,8 @@ import vadl.types.Type;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 
-abstract sealed class Statement extends Node
-    permits AssignmentStatement, BlockStatement, CallStatement, ForallStatement,
-    ForallStatement.Index, IfStatement, InstructionCallStatement, LetStatement, LockStatement,
-    MacroInstanceStatement, MacroMatchStatement, MatchStatement, PlaceholderStatement,
-    RaiseStatement, StatementList {
-  <T> T accept(StatementVisitor<T> visitor) {
-    // TODO Use exhaustive switch with patterns in future Java versions
-    if (this instanceof BlockStatement b) {
-      return visitor.visit(b);
-    } else if (this instanceof LetStatement l) {
-      return visitor.visit(l);
-    } else if (this instanceof IfStatement i) {
-      return visitor.visit(i);
-    } else if (this instanceof AssignmentStatement a) {
-      return visitor.visit(a);
-    } else if (this instanceof RaiseStatement r) {
-      return visitor.visit(r);
-    } else if (this instanceof CallStatement c) {
-      return visitor.visit(c);
-    } else if (this instanceof InstructionCallStatement ic) {
-      return visitor.visit(ic);
-    } else if (this instanceof PlaceholderStatement p) {
-      return visitor.visit(p);
-    } else if (this instanceof MacroInstanceStatement m) {
-      return visitor.visit(m);
-    } else if (this instanceof MacroMatchStatement m) {
-      return visitor.visit(m);
-    } else if (this instanceof MatchStatement m) {
-      return visitor.visit(m);
-    } else if (this instanceof StatementList s) {
-      return visitor.visit(s);
-    } else if (this instanceof LockStatement l) {
-      return visitor.visit(l);
-    } else if (this instanceof ForallStatement f) {
-      return visitor.visit(f);
-    } else {
-      throw new IllegalStateException("Unhandled statement type " + getClass().getSimpleName());
-    }
-  }
+abstract class Statement extends Node {
+  abstract <R> R accept(StatementVisitor<R> visitor);
 
   @Override
   SyntaxType syntaxType() {
@@ -153,6 +116,10 @@ final class BlockStatement extends Statement {
     return Objects.hash(statements);
   }
 
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 /**
@@ -177,7 +144,7 @@ final class LetStatement extends Statement {
   /**
    * Returns the index of one of the variables the statement defines.
    *
-   * @return the type of the name provided.
+   * @return the index/offset of the name provided.
    */
   int getIndexOf(String name) {
     return identifiers.stream().map(i -> i.name).toList().indexOf(name);
@@ -243,6 +210,10 @@ final class LetStatement extends Statement {
     return Objects.hash(identifiers, valueExpr, body);
   }
 
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 final class IfStatement extends Statement {
@@ -303,7 +274,10 @@ final class IfStatement extends Statement {
     return Objects.hash(condition, thenStmt, elseStmt);
   }
 
-
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 final class AssignmentStatement extends Statement {
@@ -353,6 +327,10 @@ final class AssignmentStatement extends Statement {
     return Objects.hash(target, valueExpression);
   }
 
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 final class StatementList extends Statement {
@@ -379,6 +357,11 @@ final class StatementList extends Statement {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     items.forEach(item -> item.prettyPrint(indent, builder));
+  }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
   }
 }
 
@@ -423,6 +406,11 @@ final class RaiseStatement extends Statement {
   public int hashCode() {
     return Objects.hash(statement, location);
   }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 final class CallStatement extends Statement {
@@ -461,17 +449,22 @@ final class CallStatement extends Statement {
   public int hashCode() {
     return Objects.hashCode(expr);
   }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 final class PlaceholderStatement extends Statement {
 
   List<String> segments;
-  SyntaxType type;
+  SyntaxType syntaxType;
   SourceLocation loc;
 
   PlaceholderStatement(List<String> segments, SyntaxType type, SourceLocation loc) {
     this.segments = segments;
-    this.type = type;
+    this.syntaxType = type;
     this.loc = loc;
   }
 
@@ -487,7 +480,7 @@ final class PlaceholderStatement extends Statement {
 
   @Override
   SyntaxType syntaxType() {
-    return type;
+    return syntaxType;
   }
 
   @Override
@@ -548,6 +541,11 @@ final class MacroInstanceStatement extends Statement implements IsMacroInstance 
   public MacroOrPlaceholder macroOrPlaceholder() {
     return macro;
   }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 /**
@@ -592,6 +590,11 @@ final class MacroMatchStatement extends Statement implements IsMacroMatch {
   @Override
   public int hashCode() {
     return macroMatch.hashCode();
+  }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
   }
 }
 
@@ -731,6 +734,11 @@ final class MatchStatement extends Statement {
       return patterns.get(0).location().join(result.location());
     }
   }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 final class InstructionCallStatement extends Statement {
@@ -816,6 +824,11 @@ final class InstructionCallStatement extends Statement {
   @Override
   public int hashCode() {
     return Objects.hash(id, namedArguments, unnamedArguments);
+  }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
   }
 
   static final class NamedArgument extends Node {
@@ -916,6 +929,11 @@ final class LockStatement extends Statement {
   public int hashCode() {
     return Objects.hash(expr, statement);
   }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 
@@ -929,9 +947,12 @@ final class LockStatement extends Statement {
  * }}
  */
 final class ForallStatement extends Statement {
+  @Child
   List<Index> indices;
+
   @Child
   Statement body;
+
   SourceLocation loc;
 
   ForallStatement(List<Index> indices, Statement body, SourceLocation loc) {
@@ -978,7 +999,12 @@ final class ForallStatement extends Statement {
     return Objects.hash(indices, body);
   }
 
-  static final class Index extends Statement implements IdentifiableNode {
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  static final class Index extends Node implements IdentifiableNode {
     @Child
     Identifier name;
 
@@ -988,6 +1014,14 @@ final class ForallStatement extends Statement {
 
     @Child
     Expr domain;
+
+    /**
+     * Set by the typechecker.
+     */
+    @Nullable
+    Integer computedFrom;
+    @Nullable
+    Integer computedTo;
 
     public Index(Identifier name, @Nullable TypeLiteral typeLiteral, Expr domain) {
       this.name = name;
@@ -1003,6 +1037,11 @@ final class ForallStatement extends Statement {
     @Override
     public SourceLocation location() {
       return name.location().join(domain.location());
+    }
+
+    @Override
+    SyntaxType syntaxType() {
+      return BasicSyntaxType.INVALID;
     }
 
     @Override

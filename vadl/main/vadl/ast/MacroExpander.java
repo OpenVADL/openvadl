@@ -1060,7 +1060,7 @@ class MacroExpander
   public Statement visit(PlaceholderStatement statement) {
     var arg = resolveArg(statement.segments);
     return Objects.requireNonNullElse((Statement) arg,
-        new PlaceholderStatement(statement.segments, statement.type, copyLoc(statement.loc)));
+        new PlaceholderStatement(statement.segments, statement.syntaxType, copyLoc(statement.loc)));
   }
 
   @Override

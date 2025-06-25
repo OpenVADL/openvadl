@@ -2082,6 +2082,17 @@ public class TypeChecker
       return;
     }
 
+    if (origin instanceof ForallStatement forallStatement) {
+      // No need to check because this can only be the case if we are inside the for statement.
+      expr.type =
+          forallStatement.indices.stream()
+              .filter(index -> index.name.name.equals(innerName))
+              .findFirst()
+              .orElseThrow()
+              .name.type();
+      return;
+    }
+
     if (origin instanceof FunctionDefinition functionDefinition) {
       // It's a call without arguments
       check(functionDefinition);
@@ -2821,6 +2832,9 @@ public class TypeChecker
         try {
           index = constantEvaluator.eval(indexExpr).value().intValueExact();
         } catch (EvaluationError e) {
+          // FIXME: This doesn't work because of for all statements and how they are lowered.
+          // Basically the whole slicing/indexing musst be rewritten and can no longer depend on
+          // compiletme known values.
           throw error("Invalid constant value", indexExpr)
               .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
               .description("Tensor indexing must be a constant value.")
@@ -3567,7 +3581,40 @@ public class TypeChecker
 
   @Override
   public Void visit(ForallStatement statement) {
-    throwUnimplemented(statement);
+    statement.indices.forEach(index -> {
+      // FIXME: Until we have bidirectional typechecking we need this explicit cast
+      if (index.typeLiteral == null) {
+        throw error("Type Mismatch", index)
+            .locationDescription(index, "A explicit type cast is required here.")
+            .locationNote(index, "In the future this won't be necessary.")
+            .build();
+      }
+
+      index.name.type = check(index.typeLiteral);
+
+      // Check as expression
+      if (index.domain instanceof RangeExpr rangeExpr) {
+        try {
+          index.computedFrom = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
+          index.computedTo = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
+        } catch (EvaluationError e) {
+          throw error("Constant value required", e.location)
+              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
+              .build();
+        }
+      } else {
+        try {
+          index.computedFrom = constantEvaluator.eval(index.domain).value().intValueExact();
+          index.computedTo = index.computedFrom;
+        } catch (EvaluationError e) {
+          throw error("Constant value required", e.location)
+              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
+              .build();
+        }
+      }
+    });
+
+    check(statement.body);
     return null;
   }
 }
