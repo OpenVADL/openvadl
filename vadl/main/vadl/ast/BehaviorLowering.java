@@ -1057,11 +1057,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
-  @Override
-  public ExpressionNode visit(ForallThenExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
-  }
 
   @Override
   public ExpressionNode visit(ForallExpr expr) {
@@ -1268,10 +1263,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(ForallStatement statement) {
-    var forallEndNode = addToGraph(new ForallEndNode());
-
-    // Something here about the inner statement and l
     var bodyGraph = statement.body.accept(this);
+
+    var forallEndNode = addToGraph(new ForallEndNode(bodyGraph.sideEffectsOrEmptyList()));
     ControlNode next = forallEndNode;
     if (bodyGraph.hasControlBlock()) {
       var controlBlock = requireNonNull(bodyGraph.controlBlock());
@@ -1289,11 +1283,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             requireNonNull(index.computedTo));
     var forallNode = addToGraph(new ForallNode(idx, next));
 
-    var nodes = new ArrayList();
-    nodes.add(forallNode);
-    nodes.add(forallEndNode);
-    nodes.addAll(bodyGraph.sideEffectsOrEmptyList());
-    return SubgraphContext.of(statement, nodes);
+    return SubgraphContext.of(statement, forallNode, forallEndNode);
   }
 
   @Override
