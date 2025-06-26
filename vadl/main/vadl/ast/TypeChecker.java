@@ -3329,11 +3329,6 @@ public class TypeChecker
     return null;
   }
 
-  @Override
-  public Void visit(ForallThenExpr expr) {
-    throwUnimplemented(expr);
-    return null;
-  }
 
   @Override
   public Void visit(ForallExpr expr) {
