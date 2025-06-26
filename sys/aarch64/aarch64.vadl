@@ -767,8 +767,8 @@ instruction set architecture AArch64Base = {
     , shiftXSize  = imms
     , imms        := shiftWSize as Bits<6>
     , imms        := shiftXSize
-    , shiftWSize  :- shiftWSize <= 16
-    , shiftXSize  :- shiftXSize <= 32
+    , shiftWSize  :- shiftWSize <= 31
+    , shiftXSize  :- shiftXSize <= 63
     }
 
   model ExtractRegPairInstr (i: InstrWithFunct, size: Id): IsaDefs = {
@@ -825,10 +825,10 @@ instruction set architecture AArch64Base = {
     , imms       :=  -1 as Bits6 - leftXSize
     , immr       := (rightWSize  - leftWSize) as Bits6
     , immr       :=  rightXSize  - leftXSize
-    , leftWSize  :- leftWSize <= 16
-    , leftXSize  :- leftXSize <= 32
-    , rightWSize :- rightWSize <= 16
-    , rightXSize :- rightXSize <= 32
+    , leftWSize  :- leftWSize <= 31
+    , leftXSize  :- leftXSize <= 63
+    , rightWSize :- rightWSize <= 31
+    , rightXSize :- rightXSize <= 63
     }
 
   model BitfieldMoveInstr (i: InstrWithFunct, size: Id): IsaDefs = {
