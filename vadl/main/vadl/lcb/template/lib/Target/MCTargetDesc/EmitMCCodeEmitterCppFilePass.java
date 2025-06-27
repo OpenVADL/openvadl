@@ -26,11 +26,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.GcbCppEncodingWrapperFunction;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.RelocationKindCtx;
 import vadl.gcb.passes.relocation.model.AutomaticallyGeneratedRelocation;
+import vadl.gcb.passes.relocation.model.CompilerRelocation;
+import vadl.gcb.passes.relocation.model.Fixup;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
@@ -43,6 +47,7 @@ import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.utils.Triple;
 import vadl.viam.Definition;
+import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
@@ -306,6 +311,9 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
     var linkerComponents = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
         GenerateLinkerComponentsPass.class);
 
+    var linkerFixupsAbsMap = fixupsMap(linkerComponents, CompilerRelocation.Kind.ABSOLUTE);
+    var linkerFixupsRelMap = fixupsMap(linkerComponents, CompilerRelocation.Kind.RELATIVE);
+
     return tableGenMachineInstructions.stream()
         .filter(
             tableGenMachineInstruction -> !tableGenMachineInstruction.llvmLoweringRecord().info()
@@ -327,6 +335,15 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
                     var relocationKind = relocationKindExtension.getFieldToKind()
                         .get(new HashSet<>(immediateOperand.fieldAccessRef().fieldRefs()));
 
+                    var fixupMap =
+                        relocationKind == CompilerRelocation.Kind.ABSOLUTE ? linkerFixupsAbsMap :
+                            linkerFixupsRelMap;
+                    var operanderFixup =
+                        ensureNonNull(fixupMap.get(immediateOperand.fieldAccessRef()),
+                            () -> Diagnostic.error("Cannot find a fixup for operand",
+                                immediateOperand.fieldAccessRef().location()));
+
+                    /*
                     var operanderFixup = linkerComponents.fixups().stream()
                         .filter(fixup ->
                             fixup.implementedRelocation()
@@ -338,6 +355,7 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
                             Diagnostic.error("Cannot find a fixup for the immediate operand",
                                 instruction.location()
                                     .join(immediateOperand.fieldAccessRef().location())).build());
+                     */
 
                     return Map.of(
                         "opIndex", opIndex,
@@ -350,5 +368,19 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
               "immediateOperands", immediateOperands
           );
         }).toList();
+  }
+
+  @Nonnull
+  private static Map<Format.FieldAccess, @NotNull Fixup> fixupsMap(
+      GenerateLinkerComponentsPass.Output linkerComponents,
+      CompilerRelocation.Kind relocationKind) {
+    return linkerComponents.fixups().stream()
+        .filter(fixup ->
+            fixup.implementedRelocation()
+                instanceof AutomaticallyGeneratedRelocation relocation
+                && relocation.kind() == relocationKind)
+        .collect(Collectors.toMap(
+            x -> ((AutomaticallyGeneratedRelocation) x.implementedRelocation()).fieldAccess(),
+            x -> x));
   }
 }

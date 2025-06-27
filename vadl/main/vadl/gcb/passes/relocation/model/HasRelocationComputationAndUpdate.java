@@ -16,7 +16,7 @@
 
 package vadl.gcb.passes.relocation.model;
 
-import java.util.Set;
+import java.util.List;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.cppCodeGen.model.GcbUpdateFieldRelocationCppFunction;
 import vadl.gcb.valuetypes.VariantKind;
@@ -59,7 +59,7 @@ public interface HasRelocationComputationAndUpdate {
   /**
    * Get the {@link Format.Field} for the relocation.
    */
-  Set<Format.Field> fields();
+  List<Format.Field> fields();
 
   /**
    * Get the cpp function for changing a value for a relocation.

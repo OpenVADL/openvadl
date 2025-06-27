@@ -18,6 +18,7 @@ package vadl.gcb.passes.relocation.model;
 
 import static vadl.viam.ViamError.ensure;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -36,7 +37,7 @@ public class ImplementedUserSpecifiedRelocation extends UserSpecifiedRelocation
     implements HasRelocationComputationAndUpdate {
 
   protected final Format format;
-  protected final Set<Format.Field> fields;
+  protected final List<Format.Field> fields;
 
   @Nullable
   protected Fixup fixup;
@@ -59,7 +60,7 @@ public class ImplementedUserSpecifiedRelocation extends UserSpecifiedRelocation
             CompilerRelocation.Kind.fromRelocationKind(originalRelocation.kind())),
         modifier, variantKind, valueRelocation, originalRelocation);
     this.format = format;
-    this.fields = Set.of(field);
+    this.fields = List.of(field);
     this.fieldUpdateFunction = fieldUpdateFunction;
   }
 
@@ -110,7 +111,7 @@ public class ImplementedUserSpecifiedRelocation extends UserSpecifiedRelocation
   }
 
   @Override
-  public Set<Format.Field> fields() {
+  public List<Format.Field> fields() {
     return fields;
   }
 
