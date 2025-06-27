@@ -72,18 +72,18 @@ public class GenerateLinkerComponentsRiscv32PassTest extends AbstractLcbTest {
         new Modifier("MO_RV3264Base_pcrel_lo", REL, Optional.of(RelocationFunctionLabel.UNKNOWN)),
         new Modifier("MO_RV3264Base_got_pcrel_hi", REL,
             Optional.of(RelocationFunctionLabel.UNKNOWN)),
-        new Modifier("MO_ABS_RV3264Base_Itype_imm", ABS, Optional.empty()),
-        new Modifier("MO_REL_RV3264Base_Itype_imm", REL, Optional.empty()),
-        new Modifier("MO_ABS_RV3264Base_Utype_imm", ABS, Optional.empty()),
-        new Modifier("MO_REL_RV3264Base_Utype_imm", REL, Optional.empty()),
-        new Modifier("MO_ABS_RV3264Base_Stype_imm", ABS, Optional.empty()),
-        new Modifier("MO_REL_RV3264Base_Stype_imm", REL, Optional.empty()),
-        new Modifier("MO_ABS_RV3264Base_Btype_imm", ABS, Optional.empty()),
-        new Modifier("MO_REL_RV3264Base_Btype_imm", REL, Optional.empty()),
-        new Modifier("MO_ABS_RV3264Base_Jtype_imm", ABS, Optional.empty()),
-        new Modifier("MO_REL_RV3264Base_Jtype_imm", REL, Optional.empty()),
-        new Modifier("MO_ABS_RV3264Base_Ftype_sft", ABS, Optional.empty()),
-        new Modifier("MO_REL_RV3264Base_Ftype_sft", REL, Optional.empty())
+        new Modifier("MO_ABS_RV3264Base_Itype_immS", ABS, Optional.empty()),
+        new Modifier("MO_REL_RV3264Base_Itype_immS", REL, Optional.empty()),
+        new Modifier("MO_ABS_RV3264Base_Utype_immUp", ABS, Optional.empty()),
+        new Modifier("MO_REL_RV3264Base_Utype_immUp", REL, Optional.empty()),
+        new Modifier("MO_ABS_RV3264Base_Stype_immS", ABS, Optional.empty()),
+        new Modifier("MO_REL_RV3264Base_Stype_immS", REL, Optional.empty()),
+        new Modifier("MO_ABS_RV3264Base_Btype_immS", ABS, Optional.empty()),
+        new Modifier("MO_REL_RV3264Base_Btype_immS", REL, Optional.empty()),
+        new Modifier("MO_ABS_RV3264Base_Jtype_immS", ABS, Optional.empty()),
+        new Modifier("MO_REL_RV3264Base_Jtype_immS", REL, Optional.empty()),
+        new Modifier("MO_ABS_RV3264Base_Ftype_shamt", ABS, Optional.empty()),
+        new Modifier("MO_REL_RV3264Base_Ftype_shamt", REL, Optional.empty())
     );
   }
 
@@ -99,20 +99,20 @@ public class GenerateLinkerComponentsRiscv32PassTest extends AbstractLcbTest {
       VK_PCREL_RV3264Base_pcrel_hi
       VK_PCREL_RV3264Base_pcrel_lo
       VK_GOT_RV3264Base_got_pcrel_hi
-      VK_SYMB_ABS_RV3264Base_Itype_imm
-      VK_SYMB_PCREL_RV3264Base_Itype_imm
-      VK_SYMB_ABS_RV3264Base_Utype_imm
-      VK_SYMB_PCREL_RV3264Base_Utype_imm
-      VK_SYMB_ABS_RV3264Base_Stype_imm
-      VK_SYMB_PCREL_RV3264Base_Stype_imm
-      VK_SYMB_ABS_RV3264Base_Btype_imm
-      VK_SYMB_PCREL_RV3264Base_Btype_imm
-      VK_SYMB_ABS_RV3264Base_Jtype_imm
-      VK_SYMB_PCREL_RV3264Base_Jtype_imm
+      VK_SYMB_ABS_RV3264Base_Itype_immS
+      VK_SYMB_PCREL_RV3264Base_Itype_immS
+      VK_SYMB_ABS_RV3264Base_Utype_immS
+      VK_SYMB_PCREL_RV3264Base_Utype_immS
+      VK_SYMB_ABS_RV3264Base_Stype_immS
+      VK_SYMB_PCREL_RV3264Base_Stype_immS
+      VK_SYMB_ABS_RV3264Base_Btype_immS
+      VK_SYMB_PCREL_RV3264Base_Btype_immS
+      VK_SYMB_ABS_RV3264Base_Jtype_immS
+      VK_SYMB_PCREL_RV3264Base_Jtype_immS
       VK_SYMB_ABS_RV3264Base_Rtype_rs2
       VK_SYMB_PCREL_RV3264Base_Rtype_rs2
-      VK_SYMB_ABS_RV3264Base_Ftype_sft
-      VK_SYMB_PCREL_RV3264Base_Ftype_sft
+      VK_SYMB_ABS_RV3264Base_Ftype_shamt
+      VK_SYMB_PCREL_RV3264Base_Ftype_shamt
       VK_DECODE_RV3264Base_ADDI_immS
       VK_DECODE_RV3264Base_ANDI_immS
       VK_DECODE_RV3264Base_ORI_immS
@@ -222,18 +222,18 @@ public class GenerateLinkerComponentsRiscv32PassTest extends AbstractLcbTest {
         "fixup_got_pcrel_hi_RV3264Base_Btype_GLOBAL_OFFSET_TABLE_imm",
         "fixup_got_pcrel_hi_RV3264Base_Jtype_GLOBAL_OFFSET_TABLE_imm",
         "fixup_got_pcrel_hi_RV3264Base_Ftype_GLOBAL_OFFSET_TABLE_sft",
-        "fixup_imm_RV3264Base_Itype_ABSOLUTE_imm",
-        "fixup_imm_RV3264Base_Itype_RELATIVE_imm",
-        "fixup_imm_RV3264Base_Utype_ABSOLUTE_imm",
-        "fixup_imm_RV3264Base_Utype_RELATIVE_imm",
-        "fixup_imm_RV3264Base_Stype_ABSOLUTE_imm",
-        "fixup_imm_RV3264Base_Stype_RELATIVE_imm",
-        "fixup_imm_RV3264Base_Btype_ABSOLUTE_imm",
-        "fixup_imm_RV3264Base_Btype_RELATIVE_imm",
-        "fixup_imm_RV3264Base_Jtype_ABSOLUTE_imm",
-        "fixup_imm_RV3264Base_Jtype_RELATIVE_imm",
-        "fixup_sft_RV3264Base_Ftype_ABSOLUTE_sft",
-        "fixup_sft_RV3264Base_Ftype_RELATIVE_sft"
+        "fixup_immS_RV3264Base_Itype_ABSOLUTE_immS",
+        "fixup_immS_RV3264Base_Itype_RELATIVE_immS",
+        "fixup_immUp_RV3264Base_Utype_ABSOLUTE_immUp",
+        "fixup_immUp_RV3264Base_Utype_RELATIVE_immUp",
+        "fixup_immS_RV3264Base_Stype_ABSOLUTE_immS",
+        "fixup_immS_RV3264Base_Stype_RELATIVE_immS",
+        "fixup_immS_RV3264Base_Btype_ABSOLUTE_immS",
+        "fixup_immS_RV3264Base_Btype_RELATIVE_immS",
+        "fixup_immS_RV3264Base_Jtype_ABSOLUTE_immS",
+        "fixup_immS_RV3264Base_Jtype_RELATIVE_immS",
+        "fixup_shamt_RV3264Base_Ftype_ABSOLUTE_shamt",
+        "fixup_shamt_RV3264Base_Ftype_RELATIVE_shamt"
     );
   }
 
@@ -262,18 +262,18 @@ public class GenerateLinkerComponentsRiscv32PassTest extends AbstractLcbTest {
 
   private static Stream<String> expectedAutomaticallyGeneratedRelocationIds() {
     return Stream.of(
-        "R_RV3264Base_Itype_ABSOLUTE_imm",
-        "R_RV3264Base_Itype_RELATIVE_imm",
-        "R_RV3264Base_Utype_ABSOLUTE_imm",
-        "R_RV3264Base_Utype_RELATIVE_imm",
-        "R_RV3264Base_Stype_ABSOLUTE_imm",
-        "R_RV3264Base_Stype_RELATIVE_imm",
-        "R_RV3264Base_Btype_ABSOLUTE_imm",
-        "R_RV3264Base_Btype_RELATIVE_imm",
-        "R_RV3264Base_Jtype_ABSOLUTE_imm",
-        "R_RV3264Base_Jtype_RELATIVE_imm",
-        "R_RV3264Base_Ftype_ABSOLUTE_sft",
-        "R_RV3264Base_Ftype_RELATIVE_sft"
+        "R_RV3264Base_Itype_ABSOLUTE_immS",
+        "R_RV3264Base_Itype_RELATIVE_immS",
+        "R_RV3264Base_Utype_ABSOLUTE_immUp",
+        "R_RV3264Base_Utype_RELATIVE_immUp",
+        "R_RV3264Base_Stype_ABSOLUTE_immS",
+        "R_RV3264Base_Stype_RELATIVE_immS",
+        "R_RV3264Base_Btype_ABSOLUTE_immS",
+        "R_RV3264Base_Btype_RELATIVE_immS",
+        "R_RV3264Base_Jtype_ABSOLUTE_immS",
+        "R_RV3264Base_Jtype_RELATIVE_immS",
+        "R_RV3264Base_Ftype_ABSOLUTE_shamt",
+        "R_RV3264Base_Ftype_RELATIVE_shamt"
     );
   }
 
