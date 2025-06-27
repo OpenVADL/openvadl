@@ -18,6 +18,7 @@ package vadl.gcb.passes.relocation.model;
 
 import static vadl.viam.ViamError.ensure;
 
+import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.cppCodeGen.model.GcbUpdateFieldRelocationCppFunction;
@@ -46,7 +47,7 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
   // This is the function which updates the value in the format.
   protected final GcbUpdateFieldRelocationCppFunction fieldUpdateFunction;
 
-  protected final Format.Field field;
+  protected final Set<Format.Field> fields;
   protected final Format format;
 
   @Nullable
@@ -97,7 +98,7 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
                                            Modifier modifier,
                                            VariantKind variantKind,
                                            Format format,
-                                           Format.Field field,
+                                           Format.Field fields,
                                            Relocation relocationRef,
                                            GcbImmediateExtractionCppFunction valueRelocation,
                                            GcbUpdateFieldRelocationCppFunction fieldUpdateFunction
@@ -106,7 +107,7 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
     this.modifier = modifier;
     this.variantKind = variantKind;
     this.format = format;
-    this.field = field;
+    this.fields = Set.of(fields);
     this.valueRelocation = valueRelocation;
     this.fieldUpdateFunction = fieldUpdateFunction;
   }
@@ -162,8 +163,8 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
   }
 
   @Override
-  public Format.Field field() {
-    return field;
+  public Set<Format.Field> fields() {
+    return fields;
   }
 
   @Override

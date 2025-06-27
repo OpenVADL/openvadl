@@ -18,6 +18,8 @@ package vadl.gcb.passes.relocation.model;
 
 import static vadl.viam.ViamError.ensure;
 
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.cppCodeGen.model.GcbUpdateFieldRelocationCppFunction;
@@ -34,7 +36,7 @@ public class ImplementedUserSpecifiedRelocation extends UserSpecifiedRelocation
     implements HasRelocationComputationAndUpdate {
 
   protected final Format format;
-  protected final Format.Field field;
+  protected final Set<Format.Field> fields;
 
   @Nullable
   protected Fixup fixup;
@@ -57,7 +59,7 @@ public class ImplementedUserSpecifiedRelocation extends UserSpecifiedRelocation
             CompilerRelocation.Kind.fromRelocationKind(originalRelocation.kind())),
         modifier, variantKind, valueRelocation, originalRelocation);
     this.format = format;
-    this.field = field;
+    this.fields = Set.of(field);
     this.fieldUpdateFunction = fieldUpdateFunction;
   }
 
@@ -108,8 +110,8 @@ public class ImplementedUserSpecifiedRelocation extends UserSpecifiedRelocation
   }
 
   @Override
-  public Format.Field field() {
-    return field;
+  public Set<Format.Field> fields() {
+    return fields;
   }
 
   @Override
@@ -119,10 +121,13 @@ public class ImplementedUserSpecifiedRelocation extends UserSpecifiedRelocation
 
   @Override
   public ElfRelocationName elfRelocationName() {
+    var names = fields.stream()
+        .map(x -> x.identifier.simpleName()).sorted()
+        .collect(Collectors.joining("_"));
     return new ElfRelocationName(
         "R_" + relocation().identifier.lower() + "_"
             + format.identifier.simpleName()
-            + "_" + field.identifier.simpleName()
+            + "_" + names
     );
   }
 }

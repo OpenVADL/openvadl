@@ -21,12 +21,14 @@ import static vadl.viam.ViamError.ensureNonNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.GcbCppEncodingWrapperFunction;
+import vadl.error.Diagnostic;
 import vadl.gcb.passes.RelocationKindCtx;
 import vadl.gcb.passes.relocation.model.AutomaticallyGeneratedRelocation;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
@@ -260,13 +262,15 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
                     tableGenMachineInstruction.llvmLoweringRecord().info().inputImmediates()
                         .forEach(
                             immOp -> {
-                              var field = immOp.immediateOperand().fieldAccessRef().fieldRef();
+                              var fields = immOp.immediateOperand().fieldAccessRef().fieldRefs();
+                              // this is a quick hack and doesn't work for multiple fields.
+                              var field = fields.getFirst();
 
                               var info = tableGenMachineInstruction.llvmLoweringRecord().info();
                               var opIndex = info.findInputIndex(field) + info.outputs().size();
                               var loweredRelocationsForRelocationWithThisOperand =
                                   userSpecifiedRelocations.stream().filter(
-                                      userReloc -> userReloc.field().equals(field));
+                                      userReloc -> userReloc.fields().containsAll(fields));
 
                               loweredRelocationsForRelocationWithThisOperand.forEach(
                                   loweredReloc ->
@@ -321,16 +325,19 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
                     var relocationKindExtension = ensureNonNull(
                         instruction.extension(RelocationKindCtx.class), "must not be null");
                     var relocationKind = relocationKindExtension.getFieldToKind()
-                        .get(immediateOperand.fieldAccessRef().fieldRef());
+                        .get(new HashSet<>(immediateOperand.fieldAccessRef().fieldRefs()));
 
                     var operanderFixup = linkerComponents.fixups().stream()
                         .filter(fixup ->
                             fixup.implementedRelocation()
                                 instanceof AutomaticallyGeneratedRelocation relocation
-                                && relocation.field()
-                                .equals(immediateOperand.fieldAccessRef().fieldRef())
+                                && relocation.fields().containsAll(immediateOperand.fieldAccessRef()
+                                .fieldRefs())
                                 && relocation.kind() == relocationKind
-                        ).findFirst().orElseThrow();
+                        ).findFirst().orElseThrow(() ->
+                            Diagnostic.error("Cannot find a fixup for the immediate operand",
+                                instruction.location()
+                                    .join(immediateOperand.fieldAccessRef().location())).build());
 
                     return Map.of(
                         "opIndex", opIndex,

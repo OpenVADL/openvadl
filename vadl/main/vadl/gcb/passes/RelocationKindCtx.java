@@ -17,6 +17,7 @@
 package vadl.gcb.passes;
 
 import java.util.Map;
+import java.util.Set;
 import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
@@ -29,13 +30,13 @@ import vadl.viam.Instruction;
  */
 public class RelocationKindCtx extends DefinitionExtension<Instruction> {
 
-  private final Map<Format.Field, CompilerRelocation.Kind> fieldToKind;
+  private final Map<Set<Format.Field>, CompilerRelocation.Kind> fieldToKind;
 
-  public RelocationKindCtx(Map<Format.Field, CompilerRelocation.Kind> fieldToKind) {
+  public RelocationKindCtx(Map<Set<Format.Field>, CompilerRelocation.Kind> fieldToKind) {
     this.fieldToKind = fieldToKind;
   }
 
-  public Map<Format.Field, CompilerRelocation.Kind> getFieldToKind() {
+  public Map<Set<Format.Field>, CompilerRelocation.Kind> getFieldToKind() {
     return fieldToKind;
   }
 
