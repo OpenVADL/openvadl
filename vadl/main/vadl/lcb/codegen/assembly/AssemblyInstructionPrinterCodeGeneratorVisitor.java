@@ -151,6 +151,18 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     } else if (node.builtIn() == BuiltInTable.HEX) {
       ensure(node.arguments().size() == 1, "Expected only one argument");
       writeImmediateWithRadix(node, 16);
+    } else if (node.builtIn() == BuiltInTable.EQU) {
+      handleConditional(node, "==");
+    } else if (node.builtIn() == BuiltInTable.NEQ) {
+      handleConditional(node, "!=");
+    } else if (node.builtIn() == BuiltInTable.SGTH || node.builtIn() == BuiltInTable.UGTH) {
+      handleConditional(node, ">");
+    } else if (node.builtIn() == BuiltInTable.SGEQ || node.builtIn() == BuiltInTable.UGEQ) {
+      handleConditional(node, ">=");
+    } else if (node.builtIn() == BuiltInTable.SLTH || node.builtIn() == BuiltInTable.ULTH) {
+      handleConditional(node, "<");
+    } else if (node.builtIn() == BuiltInTable.SLEQ || node.builtIn() == BuiltInTable.ULEQ) {
+      handleConditional(node, "<=");
     } else {
       throw Diagnostic.error("Not supported builtin for assembly printing",
               node.location())
@@ -175,7 +187,13 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
 
   @Override
   public void visit(SelectNode selectNode) {
-    System.out.println("");
+    visit(selectNode.condition());
+    var condition = operands.removeFirst();
+    writer.write("if(" + condition + ") {\n");
+    visit(selectNode.trueCase());
+    writer.write("} else {");
+    visit(selectNode.falseCase());
+    writer.write("}");
   }
 
   @Override
@@ -272,6 +290,17 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
   @Override
   public void visit(TupleGetFieldNode tupleGetFieldNode) {
     throw new RuntimeException("Node type is not implemented: " + tupleGetFieldNode.getClass());
+  }
+
+  private void handleConditional(BuiltInCall node, String operation) {
+    ensure(node.arguments().size() == 2, "Expected two arguments");
+    for (var arg : node.arguments()) {
+      visit(arg);
+    }
+    var symbol = symbolTable.getNextVariable();
+    var op1 = operands.removeFirst();
+    var op2 = operands.removeFirst();
+    writer.write("auto " + symbol + " = " + op1 + " " + operation + " " + op2 + ";");
   }
 
   private void writeImmediateWithRadix(BuiltInCall node, int radix) {
