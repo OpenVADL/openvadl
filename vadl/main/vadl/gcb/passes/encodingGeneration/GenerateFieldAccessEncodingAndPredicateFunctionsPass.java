@@ -16,10 +16,13 @@
 
 package vadl.gcb.passes.encodingGeneration;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
+import vadl.error.DeferredDiagnosticStore;
+import vadl.error.Diagnostic;
 import vadl.gcb.passes.encodingGeneration.strategies.EncodingPredicateGenerationStrategy;
 import vadl.gcb.passes.encodingGeneration.strategies.impl.ArithmeticImmediateStrategyPredicate;
 import vadl.gcb.passes.encodingGeneration.strategies.impl.ShiftedImmediateStrategyPredicate;
@@ -80,6 +83,22 @@ public class GenerateFieldAccessEncodingAndPredicateFunctionsPass extends Pass {
             }
           }
         }
+      }
+    }
+
+    // Check predicates
+    for (var format : viam.isa().orElseThrow().ownFormats()) {
+      var fieldAccesses = new HashSet<>(format.fieldAccesses());
+      for (var fieldAccess : format.fieldAccesses()) {
+        if (fieldAccess.predicate() != null) {
+          fieldAccesses.remove(fieldAccess);
+        }
+      }
+
+      for (var leftOverFieldAccess : fieldAccesses) {
+        DeferredDiagnosticStore.add(
+            Diagnostic.error("Field access function has no predicate.",
+                leftOverFieldAccess.location()));
       }
     }
 

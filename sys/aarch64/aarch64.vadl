@@ -765,6 +765,10 @@ instruction set architecture AArch64Base = {
     , rd       [4..0]                 // destination register
     , shiftWSize  = imms(4..0)
     , shiftXSize  = imms
+    , imms        := shiftWSize as Bits<6>
+    , imms        := shiftXSize
+    , shiftWSize  :- shiftWSize <= 31
+    , shiftXSize  :- shiftXSize <= 63
     }
 
   model ExtractRegPairInstr (i: InstrWithFunct, size: Id): IsaDefs = {
@@ -821,7 +825,10 @@ instruction set architecture AArch64Base = {
     , imms       :=  -1 as Bits6 - leftXSize
     , immr       := (rightWSize  - leftWSize) as Bits6
     , immr       :=  rightXSize  - leftXSize
-    // predicates are valid for the whole range of Bits5 or Bits6
+    , leftWSize  :- leftWSize <= 31
+    , leftXSize  :- leftXSize <= 63
+    , rightWSize :- rightWSize <= 31
+    , rightXSize :- rightXSize <= 63
     }
 
   model BitfieldMoveInstr (i: InstrWithFunct, size: Id): IsaDefs = {
@@ -1639,6 +1646,8 @@ instruction set architecture AArch64Base = {
     , rs        : Bits15                     // [20..5]  system register code without leading one
     , rt        : Index                      // [4..0]   source/target register
     , sysreg    = (true, rs)
+    , rs        := sysreg(14..0)
+    , sysreg    :- false                     // don't match this instruction
     }
 
   format SuperVisorCallFormat: Instr =       // supervisor call format

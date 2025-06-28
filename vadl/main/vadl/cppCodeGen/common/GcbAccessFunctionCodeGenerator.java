@@ -28,23 +28,23 @@ import vadl.viam.graph.dependency.SliceNode;
 
 /**
  * Produce a pure function that allows to access format field references.
- * It generates code for accessing fields or predicating fields from instructions.
+ * It generates code for accessing fields from instructions.
  */
-public class GcbAccessOrPredicateFunctionCodeGenerator extends AccessFunctionCodeGenerator {
+public class GcbAccessFunctionCodeGenerator extends AccessFunctionCodeGenerator {
 
   /**
    * Constructor.
    */
-  public GcbAccessOrPredicateFunctionCodeGenerator(GcbCppFunctionBodyLess functionHeader,
-                                                   Format.FieldAccess fieldAccess,
-                                                   String functionName) {
+  public GcbAccessFunctionCodeGenerator(GcbCppFunctionBodyLess functionHeader,
+                                        Format.FieldAccess fieldAccess,
+                                        String functionName) {
     super(functionHeader, fieldAccess, functionName);
   }
 
   /**
    * Constructor.
    */
-  public GcbAccessOrPredicateFunctionCodeGenerator(
+  public GcbAccessFunctionCodeGenerator(
       GcbImmediateExtractionCppFunction extractionFunction,
       Format.FieldAccess fieldAccess,
       String functionName) {
