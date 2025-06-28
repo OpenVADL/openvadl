@@ -17,6 +17,7 @@
 package vadl.viam.graph;
 
 import vadl.viam.RegisterTensor;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * Interface to indicate that the implementing class has register file.
@@ -26,6 +27,11 @@ public interface HasRegisterTensor {
    * Get register file.
    */
   RegisterTensor registerTensor();
+
+  /**
+   * Get the indices for the tensor instruction.
+   */
+  NodeList<ExpressionNode> indices();
 
   /**
    * Checks whether the node has a register file.

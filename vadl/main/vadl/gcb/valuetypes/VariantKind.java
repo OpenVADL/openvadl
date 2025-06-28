@@ -72,6 +72,14 @@ public record VariantKind(String value, String human, boolean isImmediate) imple
   }
 
   /**
+   * Create an absolute variant kind.
+   */
+  public static VariantKind absolute(Format.FieldAccess fieldAccess) {
+    return new VariantKind("VK_SYMB_ABS_" + fieldAccess.identifier.lower(),
+        "SYMB_ABS_" + fieldAccess.identifier.lower(), true);
+  }
+
+  /**
    * Create a relative variant kind.
    */
   public static VariantKind relative(Relocation relocation, Format.Field field) {
@@ -87,6 +95,14 @@ public record VariantKind(String value, String human, boolean isImmediate) imple
   public static VariantKind relative(Format.Field field) {
     return new VariantKind("VK_SYMB_PCREL_" + field.identifier.lower(),
         "SYMB_PCREL_" + field.identifier.lower(), true);
+  }
+
+  /**
+   * Create a relative variant kind.
+   */
+  public static VariantKind relative(Format.FieldAccess fieldAccess) {
+    return new VariantKind("VK_SYMB_PCREL_" + fieldAccess.identifier.lower(),
+        "SYMB_PCREL_" + fieldAccess.identifier.lower(), true);
   }
 
 

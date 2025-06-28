@@ -17,6 +17,8 @@
 package vadl.lcb.passes.relocation;
 
 
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,7 +31,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.BitMaskFunctionGenerator;
 import vadl.gcb.passes.relocation.model.AutomaticallyGeneratedRelocation;
 import vadl.gcb.passes.relocation.model.CompilerRelocation;
@@ -121,7 +122,7 @@ public class GenerateLinkerComponentsPass extends Pass {
           .entrySet()
           .stream()
           .filter(x -> x.getKey().left().equals(instruction)
-              && x.getKey().right().fieldRef().equals(field))
+              && x.getKey().right().fieldRefs().contains(field))
           .map(Map.Entry::getValue)
           .toList();
     }
@@ -131,9 +132,6 @@ public class GenerateLinkerComponentsPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     // The hierarchy is variant kind > fixup > relocation.
-    final var fieldUsages =
-        (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
-            IdentifyFieldUsagePass.class);
     var immediates = (CreateFunctionsFromImmediatesPass.Output) passResults.lastResultOf(
         CreateFunctionsFromImmediatesPass.class);
     final var tableGenMachineInstructions =
@@ -160,7 +158,7 @@ public class GenerateLinkerComponentsPass extends Pass {
     variantKinds.add(pltVariantKind);
 
     var relocations =
-        viam.isa().map(isa -> isa.ownRelocations().stream()).orElseGet(Stream::empty).toList();
+        viam.isa().stream().flatMap(isa -> isa.ownRelocations().stream()).toList();
 
     var instructions =
         viam.isa().stream().flatMap(isa -> isa.ownInstructions().stream()).toList();
@@ -221,13 +219,13 @@ public class GenerateLinkerComponentsPass extends Pass {
     }
 
     // Next, we need to generate relocations for every immediate in an instruction.
-    var candidatesAuto = new ArrayList<Pair<Format, Format.Field>>();
+    var candidatesAuto = new ArrayList<Pair<Format, Format.FieldAccess>>();
     for (var instruction : instructions) {
-      // We cannot use all the fields of a format because not all are immediates.
-      // That's why we need the `fieldUsages`.
-      var immediateFields = fieldUsages.getImmediateFields(instruction);
-      for (var imm : immediateFields) {
-        candidatesAuto.add(new Pair<>(instruction.format(), imm));
+      var record =
+          ensureNonNull(tableGenMachineInstructions.get(instruction), "must not be null");
+      for (var operand : record.immediateInputOperands()) {
+        candidatesAuto.add(new Pair<>(instruction.format(), operand.immediateOperand()
+            .fieldAccessRef()));
       }
     }
 
@@ -285,7 +283,7 @@ public class GenerateLinkerComponentsPass extends Pass {
     );
   }
 
-  private static void genRelative(Format.Field imm,
+  private static void genRelative(Format.FieldAccess imm,
                                   Format format,
                                   List<Fixup> fixups,
                                   List<Modifier> modifiers,
@@ -301,8 +299,12 @@ public class GenerateLinkerComponentsPass extends Pass {
     variantKinds.add(variantKind);
     linkModifierToVariantKind.add(Pair.of(modifier, variantKind));
 
+    // THIS IS A HACK
+    // We need to implement it for all fields but only is supported at the moment.
+    var firstField = imm.fieldRefs().getFirst();
+
     var updateFieldFunction =
-        BitMaskFunctionGenerator.generateUpdateFunction(format, imm);
+        BitMaskFunctionGenerator.generateUpdateFunction(format, firstField);
     var generated = AutomaticallyGeneratedRelocation.create(CompilerRelocation.Kind.RELATIVE,
         modifier,
         variantKind,
@@ -319,7 +321,7 @@ public class GenerateLinkerComponentsPass extends Pass {
     variantStore.relocationVariantKinds.put(generated, variantKind);
   }
 
-  private static void genAbs(Format.Field imm,
+  private static void genAbs(Format.FieldAccess imm,
                              Format format,
                              List<Fixup> fixups,
                              List<Modifier> modifiers,
@@ -336,8 +338,12 @@ public class GenerateLinkerComponentsPass extends Pass {
     variantKinds.add(variantKind);
     linkModifierToVariantKind.add(Pair.of(modifier, variantKind));
 
+    // THIS IS A HACK
+    // We need to implement it for all fields but only is supported at the moment.
+    var firstField = imm.fieldRefs().getFirst();
+
     var updateFieldFunction =
-        BitMaskFunctionGenerator.generateUpdateFunction(format, imm);
+        BitMaskFunctionGenerator.generateUpdateFunction(format, firstField);
     var generated = AutomaticallyGeneratedRelocation.create(CompilerRelocation.Kind.ABSOLUTE,
         modifier,
         variantKind,

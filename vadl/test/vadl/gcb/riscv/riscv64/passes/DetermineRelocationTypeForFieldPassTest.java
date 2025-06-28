@@ -17,6 +17,7 @@
 package vadl.gcb.riscv.riscv64.passes;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -83,9 +84,9 @@ class DetermineRelocationTypeForFieldPassTest extends AbstractGcbTest {
     Assertions.assertTrue(formatField.isPresent(), "Tested field is not an immediate field");
 
     // The actual test is here.
-    Assertions.assertTrue(ctx.getFieldToKind().containsKey(formatField.get()),
+    Assertions.assertTrue(ctx.getFieldToKind().containsKey(Set.of(formatField.get())),
         "Tested field is not a relocation field");
-    Assertions.assertEquals(kind, ctx.getFieldToKind().get(formatField.get()));
+    Assertions.assertEquals(kind, ctx.getFieldToKind().get(Set.of(formatField.get())));
   }
 
   @MethodSource(value = "interestingInstructionsForRegisterTest")
@@ -116,7 +117,7 @@ class DetermineRelocationTypeForFieldPassTest extends AbstractGcbTest {
 
     // The actual test is here.
     for (var register : registers.keySet()) {
-      Assertions.assertFalse(ctx.getFieldToKind().containsKey(register),
+      Assertions.assertFalse(ctx.getFieldToKind().containsKey(Set.of(register)),
           "Register has relocation kind but must not");
     }
   }

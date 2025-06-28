@@ -121,6 +121,9 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
 
       String symbol = symbolTable.getNextVariable();
       writer.write("std::string " + symbol + " = ");
+      ensure(node.arguments().size() == operands.size(),
+          () -> Diagnostic.error("Number of operands and number of arguments is not correct",
+              node.location()));
       for (int i = 0; i < node.arguments().size(); i++) {
         writer.write(operands.removeFirst());
         if (i < node.arguments().size() - 1) {
@@ -157,47 +160,47 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
 
   @Override
   public void visit(WriteRegTensorNode writeRegNode) {
-
+    throw new RuntimeException("Node type is not implemented: " + writeRegNode.getClass());
   }
 
   @Override
   public void visit(WriteMemNode writeMemNode) {
-
+    throw new RuntimeException("Node type is not implemented: " + writeMemNode.getClass());
   }
 
   @Override
   public void visit(SliceNode sliceNode) {
-
+    throw new RuntimeException("Node type is not implemented: " + sliceNode.getClass());
   }
 
   @Override
   public void visit(SelectNode selectNode) {
-
+    System.out.println("");
   }
 
   @Override
   public void visit(ReadRegTensorNode readRegNode) {
-
+    throw new RuntimeException("Node type is not implemented: " + readRegNode.getClass());
   }
 
   @Override
   public void visit(ReadMemNode readMemNode) {
-
+    throw new RuntimeException("Node type is not implemented: " + readMemNode.getClass());
   }
 
   @Override
   public void visit(LetNode letNode) {
-
+    throw new RuntimeException("Node type is not implemented: " + letNode.getClass());
   }
 
   @Override
   public void visit(FuncParamNode funcParamNode) {
-
+    throw new RuntimeException("Node type is not implemented: " + funcParamNode.getClass());
   }
 
   @Override
   public void visit(FuncCallNode funcCallNode) {
-
+    throw new RuntimeException("Node type is not implemented: " + funcCallNode.getClass());
   }
 
   @Override
@@ -212,12 +215,12 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
 
   @Override
   public void visit(AbstractBeginNode abstractBeginNode) {
-
+    throw new RuntimeException("Node type is not implemented: " + abstractBeginNode.getClass());
   }
 
   @Override
   public void visit(InstrEndNode instrEndNode) {
-
+    throw new RuntimeException("Node type is not implemented: " + instrEndNode.getClass());
   }
 
   @Override
@@ -228,32 +231,32 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
 
   @Override
   public void visit(BranchEndNode branchEndNode) {
-
+    throw new RuntimeException("Node type is not implemented: " + branchEndNode.getClass());
   }
 
   @Override
   public void visit(InstrCallNode instrCallNode) {
-
+    throw new RuntimeException("Node type is not implemented: " + instrCallNode.getClass());
   }
 
   @Override
   public void visit(IfNode ifNode) {
-
+    throw new RuntimeException("Node type is not implemented: " + ifNode.getClass());
   }
 
   @Override
   public void visit(ZeroExtendNode node) {
-
+    throw new RuntimeException("Node type is not implemented: " + node.getClass());
   }
 
   @Override
   public void visit(SignExtendNode node) {
-
+    throw new RuntimeException("Node type is not implemented: " + node.getClass());
   }
 
   @Override
   public void visit(TruncateNode node) {
-
+    throw new RuntimeException("Node type is not implemented: " + node.getClass());
   }
 
   @Override
@@ -263,12 +266,12 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
 
   @Override
   public void visit(SideEffectNode sideEffectNode) {
-
+    throw new RuntimeException("Node type is not implemented: " + sideEffectNode.getClass());
   }
 
   @Override
   public void visit(TupleGetFieldNode tupleGetFieldNode) {
-
+    throw new RuntimeException("Node type is not implemented: " + tupleGetFieldNode.getClass());
   }
 
   private void writeImmediateWithRadix(BuiltInCall node, int radix) {

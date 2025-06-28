@@ -75,46 +75,46 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
         int64_t RV3264Base_got_pcrel_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
-        int64_t RV3264Base_Itype_ABSOLUTE_imm(int64_t input) {
+        int64_t RV3264Base_Itype_ABSOLUTE_immS(int64_t input) {
            return input;
         }
-        int64_t RV3264Base_Itype_RELATIVE_imm(int64_t input) {
+        int64_t RV3264Base_Itype_RELATIVE_immS(int64_t input) {
            return input;
         }
-        int64_t RV3264Base_Utype_ABSOLUTE_imm(int64_t input) {
+        int64_t RV3264Base_Utype_ABSOLUTE_immUp(int64_t input) {
            return input;
         }
-        int64_t RV3264Base_Utype_RELATIVE_imm(int64_t input) {
+        int64_t RV3264Base_Utype_RELATIVE_immUp(int64_t input) {
            return input;
         }
-        int64_t RV3264Base_Stype_ABSOLUTE_imm(int64_t input) {
+        int64_t RV3264Base_Stype_ABSOLUTE_immS(int64_t input) {
            return input;
         }
-        int64_t RV3264Base_Stype_RELATIVE_imm(int64_t input) {
+        int64_t RV3264Base_Stype_RELATIVE_immS(int64_t input) {
            return input;
         }
-        int64_t RV3264Base_Btype_ABSOLUTE_imm(int64_t input) {
+        int64_t RV3264Base_Btype_ABSOLUTE_immS(int64_t input) {
            return input;
         }
-        int64_t RV3264Base_Btype_RELATIVE_imm(int64_t input) {
+        int64_t RV3264Base_Btype_RELATIVE_immS(int64_t input) {
            return input;
         }
-        int64_t RV3264Base_Jtype_ABSOLUTE_imm(int64_t input) {
+        int64_t RV3264Base_Jtype_ABSOLUTE_immS(int64_t input) {
            return input;
         }
-        int64_t RV3264Base_Jtype_RELATIVE_imm(int64_t input) {
+        int64_t RV3264Base_Jtype_RELATIVE_immS(int64_t input) {
            return input;
         }
-        int64_t RV3264Base_Rtype_ABSOLUTE_rs2(int64_t input) {
+        int64_t RV3264Base_Rtype_ABSOLUTE_shamt(int64_t input) {
            return input;
         }
-        int64_t RV3264Base_Rtype_RELATIVE_rs2(int64_t input) {
+        int64_t RV3264Base_Rtype_RELATIVE_shamt(int64_t input) {
            return input;
         }
-        int64_t RV3264Base_Ftype_ABSOLUTE_sft(int64_t input) {
+        int64_t RV3264Base_Ftype_ABSOLUTE_shamt(int64_t input) {
            return input;
         }
-        int64_t RV3264Base_Ftype_RELATIVE_sft(int64_t input) {
+        int64_t RV3264Base_Ftype_RELATIVE_shamt(int64_t input) {
            return input;
         }
         """.trim().lines(), output);

@@ -28,6 +28,7 @@ import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -509,10 +510,10 @@ interface CaseHandler {
 
     var usage = fieldUsages().getFieldUsages(instrCallNode.target()).get(field);
     ensure(usage != null, "usage must not be null");
-    ensure(usage.size() == 1, () -> {
+    ensure(new HashSet<>(usage).size() == 1, () -> {
       throw Diagnostic.error(
           "Cannot expand pseudo instruction because the usage of the field is unclear",
-          field.location()).build();
+          field.location().join(instrCallNode.location())).build();
     });
     return usage.getFirst() == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE;
   }

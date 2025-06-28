@@ -18,6 +18,7 @@ package vadl.gcb.passes.relocation.model;
 
 import static vadl.viam.ViamError.ensure;
 
+import java.util.List;
 import javax.annotation.Nullable;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.cppCodeGen.model.GcbUpdateFieldRelocationCppFunction;
@@ -46,7 +47,7 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
   // This is the function which updates the value in the format.
   protected final GcbUpdateFieldRelocationCppFunction fieldUpdateFunction;
 
-  protected final Format.Field field;
+  protected final Format.FieldAccess fieldAccess;
   protected final Format format;
 
   @Nullable
@@ -59,10 +60,10 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
                                                         Modifier modifier,
                                                         VariantKind variantKind,
                                                         Format format,
-                                                        Format.Field field,
+                                                        Format.FieldAccess fieldAccess,
                                                         GcbUpdateFieldRelocationCppFunction
                                                             fieldUpdateFunction) {
-    var identifier = generateName(format, field, kind);
+    var identifier = generateName(format, fieldAccess, kind);
     var parameter = new Parameter(new Identifier("input",
         SourceLocation.INVALID_SOURCE_LOCATION),
         Type.signedInt(64)); // default in LLVM, otherwise we might get truncation
@@ -75,7 +76,7 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
         modifier,
         variantKind,
         format,
-        field,
+        fieldAccess,
         relocation,
         valueRelocation,
         fieldUpdateFunction);
@@ -97,7 +98,7 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
                                            Modifier modifier,
                                            VariantKind variantKind,
                                            Format format,
-                                           Format.Field field,
+                                           Format.FieldAccess fieldAccess,
                                            Relocation relocationRef,
                                            GcbImmediateExtractionCppFunction valueRelocation,
                                            GcbUpdateFieldRelocationCppFunction fieldUpdateFunction
@@ -106,13 +107,13 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
     this.modifier = modifier;
     this.variantKind = variantKind;
     this.format = format;
-    this.field = field;
+    this.fieldAccess = fieldAccess;
     this.valueRelocation = valueRelocation;
     this.fieldUpdateFunction = fieldUpdateFunction;
   }
 
-  private static Identifier generateName(Format format, Format.Field imm, Kind kind) {
-    return format.identifier.append(kind.name(), imm.identifier.simpleName());
+  private static Identifier generateName(Format format, Format.FieldAccess fieldAccess, Kind kind) {
+    return format.identifier.append(kind.name(), fieldAccess.identifier.simpleName());
   }
 
   @Override
@@ -162,8 +163,12 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
   }
 
   @Override
-  public Format.Field field() {
-    return field;
+  public List<Format.Field> fields() {
+    return fieldAccess.fieldRefs();
+  }
+
+  public Format.FieldAccess fieldAccess() {
+    return fieldAccess;
   }
 
   @Override

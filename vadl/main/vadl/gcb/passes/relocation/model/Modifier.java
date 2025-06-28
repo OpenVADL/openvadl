@@ -60,10 +60,28 @@ public record Modifier(String value,
   }
 
   /**
+   * Create an absolute modifier for an {@link AutomaticallyGeneratedRelocation}.
+   */
+  public static Modifier absolute(Format.FieldAccess fieldAccess) {
+    return new Modifier("MO_ABS_" + fieldAccess.identifier.lower(),
+        CompilerRelocation.Kind.ABSOLUTE,
+        Optional.empty());
+  }
+
+  /**
    * Create a relative modifier for an {@link AutomaticallyGeneratedRelocation}.
    */
   public static Modifier relative(Format.Field imm) {
     return new Modifier("MO_REL_" + imm.identifier.lower(), CompilerRelocation.Kind.RELATIVE,
+        Optional.empty());
+  }
+
+  /**
+   * Create a relative modifier for an {@link AutomaticallyGeneratedRelocation}.
+   */
+  public static Modifier relative(Format.FieldAccess fieldAccess) {
+    return new Modifier("MO_REL_" + fieldAccess.identifier.lower(),
+        CompilerRelocation.Kind.RELATIVE,
         Optional.empty());
   }
 
