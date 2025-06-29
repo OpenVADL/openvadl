@@ -259,10 +259,10 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
 
     int shift = insnWidth - (node.getOffset() + length);
     if (offset > 0 && shift > 0) {
-      appendable.append("if ((insn >> %d) & 0x%x == 0x%x) {\n"
+      appendable.append("if (((insn >> %d) & 0x%x) == 0x%x) {\n"
           .formatted(shift, mask, value));
     } else {
-      appendable.append("if (insn & 0x%x ==  0x%x) {\n"
+      appendable.append("if ((insn & 0x%x) == 0x%x) {\n"
           .formatted(mask, value));
     }
 
@@ -272,6 +272,7 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
 
     if (node.getOtherChild() == null) {
       appendable.appendLn("}");
+      appendable.appendLn("return 0;");
       return null;
     }
 
@@ -328,7 +329,7 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
           .append(insn.source().simpleName().toLowerCase(Locale.US))
           .append("(")
           .append(argsStr)
-          .appendLn(")) { return false; }");
+          .appendLn(")) { return 0; }");
     }
 
     // Call the translation function
