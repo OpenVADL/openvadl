@@ -25,14 +25,15 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenDefaultInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionBareSymbolOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.utils.SourceLocation;
@@ -101,8 +102,12 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
 
     if (node.constant() instanceof Constant.Str str) {
       writer.write("std::string " + symbol + " = std::string(\"" + str.value() + "\");\n");
+    } else if (node.constant() instanceof Constant.Value val) {
+      writer.write("std::string " + symbol + " = std::string(" + val.intValue() + ");\n");
     } else {
-      throw Diagnostic.error("Not supported constant type", node.location()).build();
+      throw Diagnostic.error(
+          String.format("Not supported constant type: %s", node.constant().getClass()),
+          node.location()).build();
     }
   }
 
@@ -121,8 +126,9 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
 
       String symbol = symbolTable.getNextVariable();
       writer.write("std::string " + symbol + " = ");
-      ensure(node.arguments().size() == operands.size(),
-          () -> Diagnostic.error("Number of operands and number of arguments is not correct",
+      ensure(node.arguments().size() <= operands.size(),
+          () -> Diagnostic.error(
+              "Node requires more arguments than there are values on the operand stack",
               node.location()));
       for (int i = 0; i < node.arguments().size(); i++) {
         writer.write(operands.removeFirst());
@@ -189,11 +195,13 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
   public void visit(SelectNode selectNode) {
     visit(selectNode.condition());
     var condition = operands.removeFirst();
+    writer.write("\n");
     writer.write("if(" + condition + ") {\n");
     visit(selectNode.trueCase());
-    writer.write("} else {");
+    writer.write("} else {\n");
     visit(selectNode.falseCase());
-    writer.write("}");
+    writer.write("}\n");
+    writer.write("\n");
   }
 
   @Override
@@ -301,6 +309,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     var op1 = operands.removeFirst();
     var op2 = operands.removeFirst();
     writer.write("auto " + symbol + " = " + op1 + " " + operation + " " + op2 + ";");
+    operands.add(symbol);
   }
 
   private void writeImmediateWithRadix(BuiltInCall node, int radix) {
@@ -345,7 +354,8 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
         operandSymbol,
         valueSymbol
     ));
-    writer.write(String.format("\t%s =  MCOperand::createImm(%s);\n", operandSymbol, valueSymbol));
+    writer.write(
+        String.format("\t%s =  MCOperand::createImm(%s);\n", operandSymbol, valueSymbol));
     writer.write("}\n");
 
     var symbol = symbolTable.getNextVariable();
@@ -360,12 +370,15 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     operands.add(symbol);
   }
 
-  private void writeImmediateWithRadix(Format.Field field, int radix, DataType argumentType,
+  private void writeImmediateWithRadix(Format.Field field,
+                                       int radix,
+                                       DataType argumentType,
                                        SourceLocation sourceLocation) {
-    var index = ensurePresent(indexInInputs(field), () ->
+    var indexInOperands = ensurePresent(indexInInputsOrOutputs(field), () ->
         Diagnostic.error("Immediate must be part of an tablegen input.",
             sourceLocation)
     );
+    var tableGenOperand = getOperand(field).orElseThrow();
 
     var operandSymbol = symbolTable.getNextVariable();
     var valueSymbol = symbolTable.getNextVariable();
@@ -377,19 +390,17 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
             if (AsmUtils::evaluateConstantImm(&%s, %s)) {
             """,
         operandSymbol,
-        index,
+        indexInOperands,
         valueSymbol,
         operandSymbol,
         valueSymbol
     ));
 
-
+    /*
     var fieldAccesses = instruction.assembly().fieldAccesses().stream();
-    if (fieldAccesses.noneMatch(fieldAccess -> fieldAccess.fieldRef().equals(field))) {
-      var indexInInputs = index - tableGenInstruction.getOutOperands().size();
-      var tableGenImmediate = tableGenInstruction.getInOperands().get(indexInInputs);
+    if (fieldAccesses.noneMatch(fieldAccess -> fieldAccess.fieldRefs().contains(field))) {
       var immediateRecord =
-          ((TableGenInstructionImmediateOperand) tableGenImmediate).immediateOperand();
+          ((TableGenInstructionImmediateOperand) tableGenOperand).immediateOperand();
       var encodeMethod = immediateRecord.rawEncoderMethod().lower() + "_" + field.simpleName();
 
       var encodedSymbol = symbolTable.getNextVariable();
@@ -411,9 +422,10 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
         writer.write(String.format("\n%s = %s;\n", valueSymbol, encodedSymbol));
       }
     }
+     */
 
-
-    writer.write(String.format("\t%s =  MCOperand::createImm(%s);\n", operandSymbol, valueSymbol));
+    writer.write(
+        String.format("\t%s =  MCOperand::createImm(%s);\n", operandSymbol, valueSymbol));
     writer.write("}\n");
 
     var symbol = symbolTable.getNextVariable();
@@ -453,6 +465,33 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     }
 
     return Optional.empty();
+  }
+
+  private Optional<Integer> indexInInputsOrOutputs(Format.Field needle) {
+    var operands = Stream.concat(tableGenInstruction.getOutOperands().stream(),
+        tableGenInstruction.getInOperands().stream()).toList();
+
+    for (int i = 0; i < operands.size(); i++) {
+      var operand = operands.get(i);
+      if (operand instanceof ReferencesFormatField x
+          && x.referencesField(needle)) {
+        return Optional.of(i);
+      }
+    }
+
+    return Optional.empty();
+  }
+
+  private Optional<TableGenInstructionOperand> getOperand(Format.Field needle) {
+    var index = indexInInputsOrOutputs(needle);
+    if (index.isEmpty()) {
+      return Optional.empty();
+    }
+
+    var operands = Stream.concat(tableGenInstruction.getOutOperands().stream(),
+        tableGenInstruction.getInOperands().stream()).toList();
+
+    return Optional.ofNullable(operands.get(index.get()));
   }
 
   private Optional<Integer> indexInInputs(Format.Field needle) {
@@ -622,7 +661,8 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
           funcParamNode.location()).build();
     }
 
-    var registerFileName = registerFiles.stream().findFirst().orElseThrow().identifier.simpleName();
+    var registerFileName =
+        registerFiles.stream().findFirst().orElseThrow().identifier.simpleName();
     var index = indexInInputs(funcParamNode)
         .or(() -> indexInOutputs(funcParamNode))
         .orElseThrow(() -> Diagnostic.error(
