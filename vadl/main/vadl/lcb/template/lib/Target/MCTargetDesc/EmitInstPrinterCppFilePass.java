@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
+import vadl.cppCodeGen.common.GcbAssemblyPrintingTransformationFunctionCodeGenerator;
 import vadl.cppCodeGen.model.CppFunctionCode;
 import vadl.lcb.codegen.assembly.AssemblyInstructionPrinterCodeGenerator;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
@@ -35,7 +36,11 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
+import vadl.viam.Function;
+import vadl.viam.Instruction;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.dependency.FuncCallNode;
 
 /**
  * This file contains the implementation for emitting asm instructions.
@@ -70,16 +75,51 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
+  record AssemblyTransformationFunction(String name,
+                                        Function function,
+                                        CppFunctionCode code)
+      implements Renderable {
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "name", name,
+          "code", code
+      );
+    }
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var machineInstructions = machineInstructions(passResults, specification);
     var pseudoInstructions = pseudoInstructions(passResults, specification);
+    var functions = functions(specification);
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
+        "functions", functions,
         "instructions",
         Stream.concat(machineInstructions.stream(), pseudoInstructions.stream()).toList());
+  }
+
+  private List<AssemblyTransformationFunction> functions(Specification specification) {
+    var machineInstructions = specification.isa().orElseThrow().ownInstructions().stream().map(
+        Instruction::assembly);
+    var pseudoInstructions = specification.isa().orElseThrow().ownPseudoInstructions().stream().map(
+        PseudoInstruction::assembly);
+    var assembly = Stream.concat(machineInstructions, pseudoInstructions)
+        .flatMap(x -> x.function().behavior().getNodes(FuncCallNode.class).map(
+            FuncCallNode::function))
+        .distinct()
+        .toList();
+
+    return assembly.stream()
+        .map(x -> {
+          var codeGen = new GcbAssemblyPrintingTransformationFunctionCodeGenerator(x);
+          var code = new CppFunctionCode(codeGen.genFunctionDefinition());
+          return new AssemblyTransformationFunction(x.simpleName(), x, code);
+        })
+        .toList();
   }
 
   @Nonnull

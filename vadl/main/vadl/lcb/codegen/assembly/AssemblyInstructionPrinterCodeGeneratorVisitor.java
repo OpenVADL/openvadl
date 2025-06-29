@@ -316,16 +316,18 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
   private void writeImmediateWithRadix(BuiltInCall node, int radix) {
     var type = node.arguments().getFirst().type().asDataType();
 
-    if (node.arguments().get(0) instanceof FieldRefNode fieldRefNode) {
+    if (node.arguments().getFirst() instanceof FieldRefNode fieldRefNode) {
       writeImmediateWithRadix(fieldRefNode.formatField(), radix,
           type, fieldRefNode.location());
-    } else if (node.arguments().get(0) instanceof FieldAccessRefNode fieldAccessRefNode) {
+    } else if (node.arguments().getFirst() instanceof FieldAccessRefNode fieldAccessRefNode) {
       writeImmediateWithRadix(fieldAccessRefNode.fieldAccess().fieldRef(), radix,
           type, fieldAccessRefNode.location());
-    } else if (node.arguments().get(0) instanceof FuncParamNode funcParamNode) {
+    } else if (node.arguments().getFirst() instanceof FuncParamNode funcParamNode) {
       // This case is for pseudo instructions because they arguments are not fields,
       // but function parameter nodes.
       writeImmediateWithRadix(funcParamNode, radix, funcParamNode.location());
+    } else if (node.arguments().getFirst() instanceof FuncCallNode funcCallNode) {
+      throw Diagnostic.error("Temp", node.location()).build();
     } else {
       throw Diagnostic.error("Not supported argument "
               + "in assembly printing", node.location())
