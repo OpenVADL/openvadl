@@ -31,11 +31,14 @@ import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenDefaultInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionBareSymbolOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
+import vadl.viam.Definition;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
@@ -442,11 +445,23 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     var operands = Stream.concat(tableGenInstruction.getOutOperands().stream(),
         tableGenInstruction.getInOperands().stream()).toList();
 
+    var paramName = needle.parameter().simpleName();
     for (int i = 0; i < operands.size(); i++) {
       var operand = operands.get(i);
-      if (operand instanceof ReferencesFormatField x
-          && x.formatFields().stream()
-          .anyMatch(y -> y.identifier.simpleName().equals(needle.parameter().simpleName()))) {
+      if (operand instanceof TableGenInstructionBareSymbolOperand bareSymbolOperand
+          && bareSymbolOperand.origin() instanceof FuncParamNode funcParamNode
+          && needle.parameter().equals(funcParamNode.parameter())) {
+        return Optional.of(i);
+      } else if (operand instanceof TableGenInstructionLabelOperand) {
+        return Optional.of(i);
+      } else if (operand instanceof ReferencesFormatField x) {
+        var names =
+            x.formatFields().stream().map(Definition::simpleName).collect(Collectors.toSet());
+        if (names.contains(paramName)) {
+          return Optional.of(i);
+        }
+      } else if (operand instanceof TableGenDefaultInstructionOperand defaultOperand
+          && defaultOperand.name().equals(paramName)) {
         return Optional.of(i);
       }
     }
