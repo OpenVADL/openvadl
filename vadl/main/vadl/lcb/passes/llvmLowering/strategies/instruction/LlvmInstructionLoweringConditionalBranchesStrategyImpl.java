@@ -39,7 +39,7 @@ import vadl.error.Diagnostic;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
-import vadl.lcb.passes.llvmLowering.DetermineRegisterUsesAndDefsPass;
+import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;

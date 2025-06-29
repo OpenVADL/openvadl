@@ -35,7 +35,7 @@ import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
-import vadl.lcb.passes.llvmLowering.DetermineRegisterUsesAndDefsPass;
+import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
 import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;

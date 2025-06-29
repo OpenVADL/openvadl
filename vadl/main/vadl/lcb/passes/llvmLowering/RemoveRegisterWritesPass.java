@@ -19,6 +19,7 @@ package vadl.lcb.passes.llvmLowering;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
