@@ -205,10 +205,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       return Optional.empty();
     }
 
-    // Continue with lowering of nodes
-    for (var endNode : copy.getNodes(SideEffectNode.class).toList()) {
-      replaceNode(instruction, endNode);
-    }
+    lowerNodes(instruction, copy);
 
     var isLowerable = !hasRedFlags(instruction, copy);
     var info = lowerBaseInfo(copy, registerDefsUses);
@@ -264,6 +261,13 @@ public abstract class LlvmInstructionLoweringStrategy {
           info,
           Collections.emptyList(),
           Collections.emptyList()));
+    }
+  }
+
+  private void lowerNodes(Instruction instruction, Graph copy) {
+    // Replaces nodes along side effects.
+    for (var endNode : copy.getNodes(SideEffectNode.class).toList()) {
+      replaceNode(instruction, endNode);
     }
   }
 

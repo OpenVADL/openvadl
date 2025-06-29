@@ -31,8 +31,6 @@ import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenDefaultInstructionOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionBareSymbolOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
@@ -332,10 +330,11 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     }
   }
 
-  private void writeImmediateWithRadix(FuncParamNode paramNode, int radix,
+  private void writeImmediateWithRadix(FuncParamNode paramNode,
+                                       int radix,
                                        SourceLocation sourceLocation) {
-    var index = ensurePresent(indexInInputs(paramNode), () ->
-        Diagnostic.error("Immediate must be part of an tablegen input.",
+    var indexInOperands = ensurePresent(indexInInputsOrOutputs(paramNode), () ->
+        Diagnostic.error("Immediate must be part of an tablegen input or output.",
             sourceLocation)
     );
 
@@ -349,7 +348,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
             if (AsmUtils::evaluateConstantImm(&%s, %s)) {
             """,
         operandSymbol,
-        index,
+        indexInOperands,
         valueSymbol,
         operandSymbol,
         valueSymbol
@@ -375,10 +374,9 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
                                        DataType argumentType,
                                        SourceLocation sourceLocation) {
     var indexInOperands = ensurePresent(indexInInputsOrOutputs(field), () ->
-        Diagnostic.error("Immediate must be part of an tablegen input.",
+        Diagnostic.error("Immediate must be part of an tablegen input or output.",
             sourceLocation)
     );
-    var tableGenOperand = getOperand(field).orElseThrow();
 
     var operandSymbol = symbolTable.getNextVariable();
     var valueSymbol = symbolTable.getNextVariable();
@@ -440,27 +438,16 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     operands.add(symbol);
   }
 
-  private Optional<Integer> indexInInputs(FuncParamNode needle) {
-    if (tableGenInstruction.getInOperands().stream()
-        .filter(x -> x instanceof TableGenInstructionLabelOperand).count() > 1) {
-      // When we see an immediate label operand, we do not know which operand it is.
-      // Therefore, the support is limited at the moment.
-      throw Diagnostic.error("Currently we cannot support multiple labels when printing",
-          needle.location()).build();
-    }
+  private Optional<Integer> indexInInputsOrOutputs(FuncParamNode needle) {
+    var operands = Stream.concat(tableGenInstruction.getOutOperands().stream(),
+        tableGenInstruction.getInOperands().stream()).toList();
 
-    int outputOffset = tableGenInstruction.getOutOperands().size();
-    for (int i = 0; i < tableGenInstruction.getInOperands().size(); i++) {
-      var operand = tableGenInstruction.getInOperands().get(i);
-      if (operand instanceof TableGenInstructionBareSymbolOperand symbolOperand
-          && symbolOperand.origin() instanceof FuncParamNode funcParamNodeOfOperand
-          && needle.parameter().equals(funcParamNodeOfOperand.parameter())) {
-        return Optional.of(outputOffset + i);
-      } else if (operand instanceof TableGenInstructionLabelOperand) {
-        return Optional.of(outputOffset + i);
-      } else if (operand instanceof TableGenDefaultInstructionOperand x
-          && x.name().equals(needle.parameter().identifier.simpleName())) {
-        return Optional.of(outputOffset + i);
+    for (int i = 0; i < operands.size(); i++) {
+      var operand = operands.get(i);
+      if (operand instanceof ReferencesFormatField x
+          && x.formatFields().stream()
+          .anyMatch(y -> y.identifier.simpleName().equals(needle.parameter().simpleName()))) {
+        return Optional.of(i);
       }
     }
 
@@ -663,8 +650,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
 
     var registerFileName =
         registerFiles.stream().findFirst().orElseThrow().identifier.simpleName();
-    var index = indexInInputs(funcParamNode)
-        .or(() -> indexInOutputs(funcParamNode))
+    var index = indexInInputsOrOutputs(funcParamNode)
         .orElseThrow(() -> Diagnostic.error(
             "Parameter is not part of an input or output operand in tablegen",
             funcParamNode.location()).build());

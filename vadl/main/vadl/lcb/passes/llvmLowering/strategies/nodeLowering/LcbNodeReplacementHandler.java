@@ -254,7 +254,8 @@ public class LcbNodeReplacementHandler {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(TupleGetFieldNode node) {
-    node.replaceAndDelete(new LlvmUnlowerableSD());
+    Objects.requireNonNull(node.graph()).add(new LlvmUnlowerableSD());
+    LcbNodeReplacementHandlerDispatcher.dispatch(this, node.expression());
   }
 
   @Handler
@@ -364,7 +365,8 @@ public class LcbNodeReplacementHandler {
           .replaceAndDelete(
               new LlvmMulSD(node.arguments(), ((TruncateNode) value).type())));
     } else {
-      node.replaceAndDelete(new LlvmUnlowerableSD(node.arguments(), node.type()));
+      Objects.requireNonNull(node.graph())
+          .add(new LlvmUnlowerableSD(node.arguments(), node.type()));
     }
   }
 
@@ -711,7 +713,7 @@ public class LcbNodeReplacementHandler {
               immOffset.get()
           ));
         } else {
-          writeRegTensorNode.value().replaceAndDelete(new LlvmUnlowerableSD());
+          Objects.requireNonNull(writeRegTensorNode.graph()).add(new LlvmUnlowerableSD());
         }
       }
     }
