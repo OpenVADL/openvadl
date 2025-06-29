@@ -16,6 +16,7 @@
 #define DEBUG_TYPE "[(${namespace})]InstPrinter"
 
 using namespace llvm;
+using namespace std::string_literals;
 
 #define PRINT_ALIAS_INSTR
 #include "[(${namespace})]GenAsmWriter.inc"
