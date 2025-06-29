@@ -48,6 +48,7 @@ import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
@@ -400,6 +401,18 @@ public interface CDefaultMixins {
         ctx.wr(", " + p.msb() + ", " + p.lsb());
       });
       ctx.wr(")");
+    }
+
+    @Handler
+    @SuppressWarnings("MissingJavadocMethodCheck")
+    default void handle(CGenContext<Node> ctx, DynSliceNode node) {
+      ctx.wr("VADL_slice(")
+          .gen(node.value())
+          .wr(", %s, ", 1)
+          .gen(node.msb())
+          .wr(", ")
+          .gen(node.lsb())
+          .wr(")");
     }
   }
 

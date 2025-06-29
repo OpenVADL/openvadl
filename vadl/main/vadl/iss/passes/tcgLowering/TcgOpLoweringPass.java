@@ -95,6 +95,7 @@ import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
+import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
@@ -733,6 +734,11 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     ops.add(new TcgMoveNode(destVar, res));
 
     replaceCurrent(ops.toArray(new TcgNode[0]));
+  }
+
+  @Handler
+  void handle(DynSliceNode toHandle) {
+    throw new UnsupportedOperationException("Type DynSliceNode not yet implemented");
   }
 
   /**

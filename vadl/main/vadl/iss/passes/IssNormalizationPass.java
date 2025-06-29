@@ -56,6 +56,7 @@ import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
@@ -338,6 +339,11 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   @Handler
   void handle(SliceNode node) {
     // is handled in the operation lowering
+  }
+
+  @Handler
+  void handle(DynSliceNode node) {
+    throw new UnsupportedOperationException("Type DynSliceNode not yet implemented");
   }
 
 
