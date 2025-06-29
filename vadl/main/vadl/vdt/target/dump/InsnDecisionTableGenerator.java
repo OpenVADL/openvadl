@@ -220,13 +220,16 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
       result.addAll(matchingLines);
     }
 
+    if (node.getOtherChild() == null) {
+      return result;
+    }
+
     var otherLines = node.getOtherChild().accept(this);
     if (otherLines != null) {
       var otherLabel = "%s != 0x%x".formatted(label, value);
       otherLines.forEach(l -> l.add(1, otherLabel));
       result.addAll(otherLines);
     }
-
     return result;
   }
 }

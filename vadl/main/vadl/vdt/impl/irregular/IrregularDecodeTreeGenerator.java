@@ -17,10 +17,14 @@
 package vadl.vdt.impl.irregular;
 
 import static vadl.error.Diagnostic.error;
+import static vadl.vdt.utils.BitPattern.fromBitVector;
+import static vadl.vdt.utils.PatternUtils.combinePatterns;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,7 +73,14 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
       throw new IllegalArgumentException("Entry set must not be empty");
     }
 
-    final DecodeEntries entries = toRelevantBits(decodeEntries);
+    DecodeEntries entries = toRelevantBits(BitPattern.empty(1), decodeEntries);
+
+    // After padding (and truncating) to relevant bits, initialize the checked bits pattern, which
+    // always considers the full possible width (without offset/truncate).
+    BitPattern checkedBits =
+        BitPattern.empty(entries.offset() + entries.entries().getFirst().width());
+    entries = new DecodeEntries(entries.offset(), entries.length(), checkedBits, entries.entries());
+
     return generateInternal(entries);
   }
 
@@ -82,18 +93,32 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
    */
   private Node generateInternal(DecodeEntries decodeEntries) {
 
-    if (decodeEntries.entries().size() == 1) {
-      return new LeafNodeImpl(decodeEntries.entries().getFirst());
+    if (decodeEntries.entries().size() != 1) {
+      // Split the entry set
+      return makeNode(decodeEntries);
     }
 
-    return makeNode(decodeEntries);
+    // TODO: If the instruction has additional constraints, we should also check them here
+
+    var entry = decodeEntries.entries().getFirst();
+    var unchecked =
+        getUncheckedBits(decodeEntries.checkedBits(), decodeEntries.offset(), entry.pattern());
+
+    if (unchecked.toMaskVector().toValue().compareTo(BigInteger.ZERO) == 0) {
+      // Nothing to, no remaining unchecked bits left
+      return new LeafNodeImpl(entry);
+    }
+
+    // Add another condition on the (so far) unchecked bits
+    return new SingleDecisionNode(0, unchecked.width(), unchecked,
+        new LeafNodeImpl(entry), null);
   }
 
   private Node makeNode(DecodeEntries decodeEntries) {
 
-    final MultiPatterns patterns = makePatterns(decodeEntries.entries());
+    final MultiPatterns patterns = makePatterns(decodeEntries);
 
-    if (patterns.isEmpty()) {
+    if (!patterns.hasDecision()) {
       // Split entry set by exclusion conditions instead
       return makeConditionNode(decodeEntries);
     }
@@ -101,11 +126,16 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     final Map<BitPattern, Node> children = new HashMap<>();
     for (BitPattern p : patterns.patterns()) {
       final List<DecodeEntry> matchingEntries = makeMatchingEntries(decodeEntries.entries(), p);
+
       if (matchingEntries.isEmpty()) {
         continue;
       }
 
-      final DecodeEntries entries = toRelevantBits(decodeEntries.offset(), matchingEntries);
+      final BitPattern checked =
+          combinePatterns(decodeEntries.checkedBits(), decodeEntries.offset(), p);
+
+      final DecodeEntries entries =
+          toRelevantBits(decodeEntries.offset(), checked, matchingEntries);
       final Node childNode = generateInternal(entries);
       children.put(p, childNode);
     }
@@ -123,30 +153,42 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     final List<DecodeEntry> matching = makeMatchingEntries(decodeEntries.entries(), pattern);
     final List<DecodeEntry> others = makeOtherEntries(decodeEntries.entries(), pattern);
 
+    // We can only consider the splitting pattern as 'checked' for the matching entries
+    final BitPattern parentChecked = decodeEntries.checkedBits();
+    final BitPattern checked = combinePatterns(parentChecked, decodeEntries.offset(), pattern);
+
     // Recursively build child-trees
-    final DecodeEntries me = toRelevantBits(decodeEntries.offset(), matching);
+    final DecodeEntries me = toRelevantBits(decodeEntries.offset(), checked, matching);
     final Node matchingChild = generateInternal(me);
 
-    final DecodeEntries oe = toRelevantBits(decodeEntries.offset(), others);
+    final DecodeEntries oe = toRelevantBits(decodeEntries.offset(), parentChecked, others);
     final Node otherChild = generateInternal(oe);
 
     return new SingleDecisionNode(decodeEntries.offset(), decodeEntries.length(), pattern,
         matchingChild, otherChild);
   }
 
-  private MultiPatterns makePatterns(List<DecodeEntry> decodeEntries) {
-    // Determine the significant bits, i.e. ones that split the entry set
-    final boolean[] significantBits = getSignificantBits(decodeEntries);
+  private MultiPatterns makePatterns(DecodeEntries decodeEntries) {
 
-    // Return the bit mask to select the significant bits
-    final BitVector mask = new BitVector(significantBits);
+    List<DecodeEntry> entries = decodeEntries.entries();
 
-    // Enumerate all options
-    var options = enumerate(significantBits)
-        .stream()
-        .map(sb -> BitPattern.fromString(sb.toString(), sb.length()))
-        .filter(p -> !p.doesMatchAll())
-        .toList();
+    // Construct the bit mask to select the significant bits
+    BitVector mask = entries.getFirst().pattern().toMaskVector();
+    for (DecodeEntry e : entries) {
+      mask = mask.and(e.pattern().toMaskVector());
+    }
+
+    // We don't need to check bits more than once
+    BitVector checked = decodeEntries.checkedBits().toMaskVector()
+        .truncate(decodeEntries.offset(), decodeEntries.length());
+    mask = mask.xor(checked);
+
+    final Set<BitPattern> options = new LinkedHashSet<>();
+    for (DecodeEntry e : entries) {
+      final BitVector b = e.pattern().toBitVector().and(mask);
+      final BitPattern p = BitPattern.fromBitVector(mask, b);
+      options.add(p);
+    }
 
     return new MultiPatterns(mask, options);
   }
@@ -345,58 +387,16 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     return new BitPattern(bits);
   }
 
-  private static boolean[] getSignificantBits(List<DecodeEntry> decodeEntries) {
-    final int width = decodeEntries.getFirst().width();
-    final boolean[] significantBits = new boolean[width];
-
-    for (int i = 0; i < width; i++) {
-      boolean wildcard = false;
-      boolean zero = false;
-      boolean one = false;
-      for (DecodeEntry d : decodeEntries) {
-        PBit bit = d.pattern().get(i);
-        switch (bit.getValue()) {
-          case ZERO -> zero = true;
-          case ONE -> one = true;
-          case DONT_CARE -> wildcard = true;
-        }
-      }
-      // no entry has a wildcard at this position and the values are distinct
-      significantBits[i] = !wildcard && zero && one;
-    }
-    return significantBits;
-  }
-
-
-  private static List<StringBuilder> enumerate(boolean[] mask) {
-
-    List<StringBuilder> patterns = new ArrayList<>();
-    patterns.add(new StringBuilder());
-
-    for (boolean b : mask) {
-      if (!b) {
-        patterns = patterns.stream().map(sb -> sb.append("-")).toList();
-        continue;
-      }
-
-      patterns = patterns.stream()
-          .flatMap(p -> Stream.of(
-              new StringBuilder("0").insert(0, p),
-              new StringBuilder("1").insert(0, p)))
-          .toList();
-    }
-
-    return patterns;
-  }
-
   /**
    * Prepare the input decode entries for the generator. This includes padding the patterns to the
    * same width and truncating them to the overall relevant region.
    *
+   * @param checkedBits   The bits already checked by the algorithm (i.e. fixed for the entry set)
    * @param decodeEntries The entry set
    * @return The relevant region to truncate to and the prepared entry set
    */
-  private DecodeEntries toRelevantBits(Collection<DecodeEntry> decodeEntries) {
+  private DecodeEntries toRelevantBits(BitPattern checkedBits,
+                                       Collection<DecodeEntry> decodeEntries) {
 
     // Pad all patterns to the maximum occurring width
     final int maxWidth = decodeEntries.stream()
@@ -406,7 +406,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
 
     // Pad all patterns to the same width
     List<DecodeEntry> entries = decodeEntries.stream()
-        .map(e -> transform(e, p -> pad(p, maxWidth)))
+        .map(e -> transform(e, p -> p.rightPad(maxWidth - p.width())))
         .toList();
 
     // Collect all involved patterns, including the condition patterns
@@ -438,16 +438,17 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
         .map(e -> transform(e, p -> slice(p, fromIdx, toIdx)))
         .collect(Collectors.toList());
 
-    return new DecodeEntries(fromIdx, (toIdx + 1) - fromIdx, entries);
+    return new DecodeEntries(fromIdx, (toIdx + 1) - fromIdx, checkedBits, entries);
   }
 
-  private DecodeEntries toRelevantBits(int parentOffset, Collection<DecodeEntry> decodeEntries) {
+  private DecodeEntries toRelevantBits(int parentOffset, BitPattern checkedBits,
+                                       Collection<DecodeEntry> decodeEntries) {
 
     // Determine and transform the input patterns to only consider decoding relevant bits
-    final var res = toRelevantBits(decodeEntries);
+    final var res = toRelevantBits(checkedBits, decodeEntries);
 
     // Convert the relative offset to an absolute one
-    return new DecodeEntries(parentOffset + res.offset(), res.length(), res.entries());
+    return new DecodeEntries(parentOffset + res.offset(), res.length(), checkedBits, res.entries());
   }
 
   private int getFirstRelevantIdx(BitPattern pattern) {
@@ -484,32 +485,6 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
         transformedExclusions);
   }
 
-  /**
-   * Pad the given pattern to the target width. The padding is done by adding don't care bits to
-   * the least significant bits.
-   *
-   * @param pattern     The pattern to pad
-   * @param targetWidth The target width
-   * @return The padded pattern
-   */
-  private BitPattern pad(BitPattern pattern, int targetWidth) {
-
-    if (pattern.width() >= targetWidth) {
-      return pattern;
-    }
-
-    final PBit[] bits = new PBit[targetWidth];
-    for (int i = 0; i < targetWidth; i++) {
-      if (i < pattern.width()) {
-        bits[i] = pattern.get(i);
-      } else {
-        bits[i] = new PBit(PBit.Value.DONT_CARE);
-      }
-    }
-
-    return new BitPattern(bits);
-  }
-
   private BitPattern slice(BitPattern pattern, int from, int to) {
     final PBit[] bits = new PBit[to - from + 1];
     for (int i = from; i <= to; i++) {
@@ -518,20 +493,39 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     return new BitPattern(bits);
   }
 
+  private BitPattern getUncheckedBits(BitPattern checkedBits, int offset, BitPattern insn) {
+
+    final BitPattern aligned = insn.leftPad(offset)
+        .rightPad(checkedBits.width() - offset - insn.width());
+
+    // Allow to check more bits than required by the instruction pattern, which may be required for
+    // checking constraints.
+    final BitVector mask = aligned.toMaskVector().xor(checkedBits.toMaskVector())
+        .and(aligned.toMaskVector());
+    if (mask.toValue().compareTo(BigInteger.ZERO) == 0) {
+      return BitPattern.empty(insn.width());
+    }
+
+    return fromBitVector(mask, aligned.toBitVector());
+  }
+
   /**
    * Encapsulate the decode entry set, only considering the region specified by offset and length.
    *
-   * @param offset  The offset in bits given the instruction word to decode
-   * @param length  The length of the relevant bit-region considered for decoding
-   * @param entries The decode entries and patterns, truncated to the specified offset and width
+   * @param offset      The offset in bits given the instruction word to decode
+   * @param length      The length of the relevant bit-region considered for decoding
+   * @param checkedBits The bits already checked by the algorithm (not sliced to the offset/width)
+   * @param entries     The decode entries and patterns, truncated to the specified offset and width
    */
-  private record DecodeEntries(int offset, int length, List<DecodeEntry> entries) {
+  private record DecodeEntries(int offset, int length, BitPattern checkedBits,
+                               List<DecodeEntry> entries) {
 
   }
 
-  private record MultiPatterns(BitVector mask, List<BitPattern> patterns) {
-    boolean isEmpty() {
-      return patterns.isEmpty();
+  private record MultiPatterns(BitVector mask, Set<BitPattern> patterns) {
+
+    boolean hasDecision() {
+      return patterns.size() > 1;
     }
   }
 }

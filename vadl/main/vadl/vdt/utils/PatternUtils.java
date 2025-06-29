@@ -199,4 +199,24 @@ public class PatternUtils {
     }
     return new BitPattern(bits);
   }
+
+  /**
+   * Combine the two bit-patterns to one. Align the second pattern by the given offset.
+   *
+   * @param p1     The first pattern
+   * @param offset The offset tho shift the second pattern by
+   * @param p2     The second pattern (will be aligned by the offset)
+   * @return The combined pattern.
+   */
+  public static BitPattern combinePatterns(BitPattern p1, int offset, BitPattern p2) {
+
+    int targetWidth = p1.width();
+
+    if (offset + p2.width() > targetWidth) {
+      throw new IllegalArgumentException("Patterns cannot be combined");
+    }
+
+    var alignedP2 = p2.leftPad(offset).rightPad(targetWidth - p2.width() - offset);
+    return combinePatterns(p1, alignedP2);
+  }
 }

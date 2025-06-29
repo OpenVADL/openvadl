@@ -234,6 +234,10 @@ public class TextGraphGenerator implements Visitor<List<StringBuilder>> {
       }
     }
 
+    if (node.getOtherChild() == null) {
+      return result;
+    }
+
     var otherResult = node.getOtherChild().accept(this);
     if (otherResult != null) {
       var edgeLabel = new StringBuilder("  |- False");

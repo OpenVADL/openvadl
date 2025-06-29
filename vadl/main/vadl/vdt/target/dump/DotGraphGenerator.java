@@ -226,6 +226,10 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
       lines.add("    %d -> %d [label=\"Yes\"];\n".formatted(id, matchingResult.left()));
     }
 
+    if (node.getOtherChild() == null) {
+      return Pair.of(id, lines);
+    }
+
     var otherResult = node.getOtherChild().accept(this);
     if (otherResult != null) {
       lines.addAll(otherResult.right());

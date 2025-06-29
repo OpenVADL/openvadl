@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.AbstractTest;
 import vadl.configuration.GeneralConfiguration;
-import vadl.configuration.IssConfiguration;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.model.Node;
@@ -40,19 +39,17 @@ import vadl.vdt.target.dump.TextGraphGenerator;
 import vadl.vdt.utils.BitPattern;
 import vadl.viam.Instruction;
 
-class Aarch64Test extends AbstractTest {
+class RiscVTest extends AbstractTest {
 
-  private static final Logger log = LoggerFactory.getLogger(Aarch64Test.class);
+  private static final Logger log = LoggerFactory.getLogger(RiscVTest.class);
 
   @Test
   void testGenerateVDT() throws IOException, DuplicatedPassKeyException {
 
     /* GIVEN */
 
-    var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));
-
-    var spec = runAndGetViamSpecification("sys/aarch64/virt.vadl");
+    var config = new GeneralConfiguration(Path.of("build/test-output"), false);
+    var spec = runAndGetViamSpecification("sys/risc-v/rv64im.vadl");
 
     var manager = new PassManager();
     manager.add(new VdtInputPreparationPass(config));
@@ -68,8 +65,9 @@ class Aarch64Test extends AbstractTest {
 
     Assertions.assertNotNull(decodeTree);
 
-    log.info("VDT: {}", DecisionTreeStatsCalculator.statistics(decodeTree));
-    log.info("Decoder: \n{}", new TextGraphGenerator(decodeTree).generate());
+    log.info("Statistics: {}", DecisionTreeStatsCalculator.statistics(decodeTree));
+    log.info("VDT:\n{}", new TextGraphGenerator(decodeTree).generate());
+
   }
 
   @Test
@@ -77,10 +75,8 @@ class Aarch64Test extends AbstractTest {
 
     /* GIVEN */
 
-    var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));
-
-    var spec = runAndGetViamSpecification("sys/aarch64/virt.vadl");
+    var config = new GeneralConfiguration(Path.of("build/test-output"), false);
+    var spec = runAndGetViamSpecification("sys/risc-v/rv64im.vadl");
 
     var manager = new PassManager();
     manager.add(new VdtInputPreparationPass(config));

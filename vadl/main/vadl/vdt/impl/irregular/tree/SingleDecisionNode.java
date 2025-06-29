@@ -32,6 +32,8 @@ public class SingleDecisionNode extends AbstractTruncatingDecisionNode {
 
   private final BitPattern pattern;
   private final Node matchingChild;
+
+  @Nullable
   private final Node otherChild;
 
   /**
@@ -44,7 +46,7 @@ public class SingleDecisionNode extends AbstractTruncatingDecisionNode {
    * @param otherChild    the child to select if the pattern does not match
    */
   public SingleDecisionNode(int offset, int length, BitPattern pattern, Node matchingChild,
-                            Node otherChild) {
+                            @Nullable Node otherChild) {
     super(offset, length);
     this.pattern = pattern;
     this.matchingChild = matchingChild;
@@ -59,7 +61,17 @@ public class SingleDecisionNode extends AbstractTruncatingDecisionNode {
         .rightPad(getOffset() + getLength(), new Bit(false))
         .truncate(getOffset(), getLength());
 
-    return pattern.test(i) ? matchingChild : otherChild;
+    final boolean match = pattern.test(i);
+
+    if (match) {
+      return matchingChild;
+    }
+
+    if (otherChild != null) {
+      return otherChild;
+    }
+
+    throw new RuntimeException("No decision found for " + insn);
   }
 
   public BitPattern getPattern() {
@@ -70,12 +82,16 @@ public class SingleDecisionNode extends AbstractTruncatingDecisionNode {
     return matchingChild;
   }
 
+  @Nullable
   public Node getOtherChild() {
     return otherChild;
   }
 
   @Override
   public Collection<Node> children() {
+    if (otherChild == null) {
+      return Set.of(matchingChild);
+    }
     return Set.of(matchingChild, otherChild);
   }
 
