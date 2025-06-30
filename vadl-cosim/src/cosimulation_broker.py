@@ -31,7 +31,7 @@ from typing import Any, Optional, TypeAlias
 
 from src import qemu_ipc
 from src.config import Config
-from src.cstructs import SHMCPU, BrokerSHM_Exec, SHMRegister
+from src.cstructs import MAX_CPU_COUNT, SHMCPU, SHMRegister
 from src.qemu_ipc import QEMUClient
 
 logger = logging.getLogger(__name__)
@@ -89,12 +89,12 @@ def diff_cpus(
             ClientDiff(
                 "cpu.init_mask",
                 f"{init_mask1:08b}",
-                f"{init_mask1:08b}",
+                f"{init_mask2:08b}",
             )
         )
         return diffs
 
-    for idx in range(BrokerSHM_Exec.MAX_CPU_COUNT):
+    for idx in range(MAX_CPU_COUNT):
         if init_mask1 & (1 << idx):
             cpu1 = cpus1[idx]
             cpu2 = cpus2[idx]
@@ -137,35 +137,38 @@ def diff_cpu(
             )
         )
 
-    if cpu1.registers_size < cpu2.registers_size:
-        for reg_index in range(cpu1.registers_size):
-            c1reg = cpu1.registers[reg_index]
-            r1name = c1reg.fname(config.qemu.gdb_reg_map)
+    # Registers per CPU are tested using the following logic:
+    # 1. The cpu with less registers is selected. (sub_cpu)
+    #    Assumption: The register set of one CPU must be a subset (or equal) of the other.
+    # 2. Take each register of the selected cpu by index.
+    # 3. Find the corresponding register of the other CPU by its name.
+    # 3.1 Both the "built-in" and gdb-register-mapped names are compared and the register is selected if any match.
+    # 3.2 However, if the register name is in the ignore_registers list
+    #     or is not present in the gdb_reg_map while ignore_unset_registers is set,
+    #     then the register comparison is skipped.
+    # 3.3 Example:
+    #   Assume c1reg = "t0" and config.qemu.ignore_registers = [ "t0", ... ] -> comparison skipped
+    #   Assume c1reg = "t0" and config.qemu.gdb_reg_map = [ "some-value": "not-t0" ]
+    #       If config.qemu.ignore_unset_registers is True:
+    #           -> comparsion skipped
+    #       Else:
+    #           -> continue comparing
+    sub_cpu = min(cpu1, cpu2, key=lambda x: x.registers_size)
+    super_cpu = max(cpu1, cpu2, key=lambda x: x.registers_size)
 
-            if r1name in config.qemu.ignore_registers or (
-                config.qemu.ignore_unset_registers
-                and r1name not in config.qemu.gdb_reg_map.values()
-            ):
-                break
+    for reg_index in range(sub_cpu.registers_size):
+        csub_reg = sub_cpu.registers[reg_index]
+        rsub_name = csub_reg.fname(config.qemu.gdb_reg_map)
 
-            c2reg = reg_by_name(cpu2.registers, c1reg.name.fstr(), config)
+        if rsub_name in config.qemu.ignore_registers or (
+            config.qemu.ignore_unset_registers
+            and rsub_name not in config.qemu.gdb_reg_map.values()
+        ):
+            continue
 
-            diffs.extend(diff_register(c1reg, c2reg, cpu_index, reg_index, config))
-    else:
-        for reg_index in range(cpu2.registers_size):
-            c2reg = cpu2.registers[reg_index]
+        csuper_reg = reg_by_name(super_cpu.registers, csub_reg.name.fstr(), config)
 
-            r2name = c2reg.fname(config.qemu.gdb_reg_map)
-
-            if r2name in config.qemu.ignore_registers or (
-                config.qemu.ignore_unset_registers
-                and r2name not in config.qemu.gdb_reg_map.values()
-            ):
-                break
-
-            c1reg = reg_by_name(cpu1.registers, c2reg.name.fstr(), config)
-
-            diffs.extend(diff_register(c1reg, c2reg, cpu_index, reg_index, config))
+        diffs.extend(diff_register(csub_reg, csuper_reg, cpu_index, reg_index, config))
 
     return diffs
 
@@ -315,7 +318,6 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
     # Release each client once and then compare their states
     # NOTE: Maybe parallelize this for exec-level and tb-strict-level testing,
     #       for tb-level testing this might not be possible due to the differently generated TBs
-
     if (
         config.testing.protocol.layer == "insn"
         or config.testing.protocol.layer == "tb-strict"
@@ -339,29 +341,43 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
     else:
         while any_client_open(clients):
             client_sync_infos: list[ClientSyncInfo] = []
+            insns_executed_per_client: list[int] = [0] * len(clients)
             for i, client in enumerate(clients):
                 # Execute the client until it hit a jump instruction which will serve as a synchronization point
                 while client.is_open:
-                    start_pc = client.shm_struct.shm_tb.tb_info.pc
-                    tb_size = client.shm_struct.shm_tb.tb_info.insns_info_size
+                    shm = client.shm_struct.shm_tb
+                    start_pc = shm.tb_info.pc
+                    insn_sizes = [
+                        insn_info.data.size
+                        for insn_info in shm.tb_info.insns_info_list()
+                    ]
+                    insns_executed_per_client[i] = len(insn_sizes)
+
                     if client.run():
-                        end_pc = client.shm_struct.shm_tb.tb_info.pc
+                        end_pc = shm.tb_info.pc
                         sync_info = ClientSyncInfo(
                             start_pc=start_pc,
                             end_pc=end_pc,
-                            tb_size=tb_size,
+                            insn_sizes=insn_sizes,
                             client_idx=i,
                         )
                         if sync_info.is_jump():
+                            logger.debug(f"found jump: {sync_info}")
                             client_sync_infos.append(sync_info)
                             break
 
             # Every client reached a jump-instruction - therefore all should be at the same PC
-            ref_pc = client_sync_infos[0].end_pc
-            for client_sync_info in client_sync_infos[1:]:
-                if client_sync_info.end_pc != ref_pc:
-                    logger.debug("client diverged during tb synchronization")
-                    return report_from_diffs(diffs)
+            # and have executed the same amount of instructions
+            end_pc_diverged = any(
+                info.end_pc != client_sync_infos[0].end_pc for info in client_sync_infos
+            )
+            insns_executed_diverged = any(
+                insns_executed != insns_executed_per_client[0]
+                for insns_executed in insns_executed_per_client
+            )
+            if end_pc_diverged or insns_executed_diverged:
+                logger.debug("client diverged during tb synchronization")
+                return report_from_diffs(diffs)
 
             if not execute_remaining:
                 if stop_after > 0:
@@ -429,16 +445,16 @@ def any_client_open(clients: list[QEMUClient]) -> bool:
 class ClientSyncInfo:
     start_pc: int
     end_pc: int
-    tb_size: int
+    insn_sizes: list[int]
     client_idx: int
 
     def is_jump(self) -> bool:
-        return self.start_pc + self.tb_size * 4 != self.end_pc
+        return self.start_pc + sum(self.insn_sizes) != self.end_pc
 
     def __str__(self):
         return (
             f"ClientSyncInfo(start_pc={hex(self.start_pc)}, end_pc={hex(self.end_pc)}, "
-            f"tb_size={self.tb_size}, client_idx={self.client_idx})"
+            f"insn_sizes={self.insn_sizes}, client_idx={self.client_idx})"
         )
 
     def __repr__(self):

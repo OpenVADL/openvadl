@@ -22,13 +22,22 @@ See `BrokerSHM(Structure)` as the "entrypoint" of this class-hierarchy.
 Hint: Use the annotate-fields.py script to help generate parts of these python classes.
 """
 
-from ctypes import c_char, c_int, c_uint, c_uint64, c_uint8, Structure, c_size_t, Union
+from ctypes import Structure, Union, c_char, c_int, c_size_t, c_uint, c_uint8, c_uint64
 from typing import Annotated, Any
+
+SHMSTRING_MAX_LEN = 1024
+TBINFO_ENTRIES = 1024
+TBINSNINFO_ENTRIES = 64
+
+MAX_REGISTER_NAME_SIZE = 256
+MAX_REGISTER_DATA_SIZE = 256
+MAX_CPU_REGISTERS = 256
+MAX_CPU_COUNT = 8
+MAX_INSN_DATA_SIZE = 64
 
 
 class SHMString(Structure):
-    MAX_LEN = 256
-    _fields_ = [("len", c_size_t), ("value", c_char * MAX_LEN)]
+    _fields_ = [("len", c_size_t), ("value", c_char * SHMSTRING_MAX_LEN)]
 
     def __repr__(self):
         return f"SHMString(len={self.len}, value={self.fstr()})"
@@ -42,14 +51,13 @@ class SHMString(Structure):
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         self.len: Annotated[int, c_size_t]
-        self.value: Annotated[bytes, c_char * self.MAX_LEN]
+        self.value: Annotated[bytes, c_char * SHMSTRING_MAX_LEN]
 
     def fstr(self) -> str:
-        return self.value[: self.len].decode()
+        return self.value[: self.len].decode(errors="backslashreplace")
 
 
 class InsnData(Structure):
-    MAX_INSN_DATA_SIZE = 256
     _fields_ = [("size", c_size_t), ("buffer", c_uint8 * MAX_INSN_DATA_SIZE)]
 
     def __repr__(self):
@@ -69,7 +77,7 @@ class InsnData(Structure):
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         self.size: Annotated[int, c_size_t]
-        self.buffer: Annotated[list[int], c_uint8 * self.MAX_INSN_DATA_SIZE]
+        self.buffer: Annotated[list[int], c_uint8 * MAX_INSN_DATA_SIZE]
 
 
 class TBInsnInfo(Structure):
@@ -109,7 +117,6 @@ class TBInsnInfo(Structure):
 
 
 class TBInfo(Structure):
-    TBINSNINFO_ENTRIES = 32
     _fields_ = [
         ("pc", c_uint64),
         ("insns_info_size", c_size_t),
@@ -131,15 +138,17 @@ class TBInfo(Structure):
             ],
         }
 
+    def insns_info_list(self) -> list[TBInsnInfo]:
+        return self.insns_info[: self.insns_info_size]
+
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         self.pc: Annotated[int, c_uint64]
         self.insns_info_size: Annotated[int, c_size_t]
-        self.insns_info: Annotated[list[TBInsnInfo], TBInsnInfo * self.INSNS_INFOS_SIZE]
+        self.insns_info: Annotated[list[TBInsnInfo], TBInsnInfo * TBINSNINFO_ENTRIES]
 
 
 class SHMRegister(Structure):
-    MAX_REGISTER_DATA_SIZE = 64
     _fields_ = [
         ("size", c_int),
         ("data", c_uint8 * MAX_REGISTER_DATA_SIZE),
@@ -149,7 +158,7 @@ class SHMRegister(Structure):
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         self.size: Annotated[int, c_int]
-        self.data: Annotated[list[int], c_uint8 * self.MAX_REGISTER_DATA_SIZE]
+        self.data: Annotated[list[int], c_uint8 * MAX_REGISTER_DATA_SIZE]
         self.name: Annotated[SHMString, SHMString]
 
     def __repr__(self):
@@ -180,7 +189,6 @@ class SHMRegister(Structure):
 
 
 class SHMCPU(Structure):
-    MAX_CPU_REGISTERS = 256
     _fields_ = [
         ("idx", c_uint),
         ("registers_size", c_size_t),
@@ -202,17 +210,17 @@ class SHMCPU(Structure):
             ],
         }
 
+    def registers_list(self) -> list[SHMRegister]:
+        return self.registers[: self.registers_size]
+
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         self.idx: Annotated[int, c_uint]
         self.registers_size: Annotated[int, c_size_t]
-        self.registers: Annotated[
-            list[SHMRegister], SHMRegister * self.MAX_CPU_REGISTERS
-        ]
+        self.registers: Annotated[list[SHMRegister], SHMRegister * MAX_CPU_REGISTERS]
 
 
 class BrokerSHM_TB(Structure):
-    MAX_CPU_COUNT = 8
     _fields_ = [
         ("init_mask", c_int),
         ("cpus", SHMCPU * MAX_CPU_COUNT),
@@ -235,12 +243,11 @@ class BrokerSHM_TB(Structure):
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         self.init_mask: Annotated[int, c_int]
-        self.cpus: Annotated[list[SHMCPU], SHMCPU * self.MAX_CPU_COUNT]
+        self.cpus: Annotated[list[SHMCPU], SHMCPU * MAX_CPU_COUNT]
         self.tb_info: Annotated[TBInfo, TBInfo]
 
 
 class BrokerSHM_Exec(Structure):
-    MAX_CPU_COUNT = 8
     _fields_ = [
         ("init_mask", c_int),
         ("cpus", SHMCPU * MAX_CPU_COUNT),
@@ -263,7 +270,7 @@ class BrokerSHM_Exec(Structure):
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         self.init_mask: Annotated[int, c_int]
-        self.cpus: Annotated[list[SHMCPU], SHMCPU * self.MAX_CPU_COUNT]
+        self.cpus: Annotated[list[SHMCPU], SHMCPU * MAX_CPU_COUNT]
         self.insn_info: Annotated[TBInsnInfo, TBInsnInfo]
 
 

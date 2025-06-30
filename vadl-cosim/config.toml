@@ -27,7 +27,8 @@ ignore_unset_registers = true
 
 # Ignore specific registers
 # Filters in conjunction with `ignore_unset_registers`
-ignore_registers = []
+ignore_registers = [ "s0", "x0" ]
+
 
 # Defines a list of clients to test against
 # A single client is also possible, e.g. to check if a crash or similar occurs
@@ -52,11 +53,11 @@ additional_args = [
 	# "-S",
 ]
 
-# The following three options configure which instructions from the `test_exec` executable should actually be tested.
-# NOTE: Only applies to `layer = "insn" | "tb-strict"`
-# NOTE: This option is must be set per client to be able to account for different setup-codes per ISS
-# Skips the first n instructions 
-skip_n_instructions = 0
+# # The following three options configure which instructions from the `test_exec` executable should actually be tested.
+# # NOTE: Only applies to `layer = "insn" | "tb-strict"`
+# # NOTE: This option is must be set per client to be able to account for different setup-codes per ISS
+# # Skips the first n instructions 
+skip_n_instructions = 2
 
 [[qemu.clients]]
 name = "UPSTREAM"
@@ -70,9 +71,10 @@ additional_args = [
 	"-M", "virt",
 	"-cpu", "cortex-a57",
 	"-semihosting",
+	"-d", "plugin",
 ]
 
-skip_n_instructions = 0
+skip_n_instructions = 1
 
 # Defines a custom map where the key (e.g. x0) is mapped to another value (e.g. zero)
 [qemu.gdb_reg_map]
@@ -116,7 +118,7 @@ pc = "pc"
 
 # The path to the compiled file to use for testing
 # This file will be passed to all clients
-test_exec="./qemu-setup/build/elf-demo"
+test_exec="./qemu-setup/build/sglib-combined"
 
 # The maximum trace length during a test-run
 # The trace acts as a sized dequeue, meaning newer trace-entries push out the oldest trace-entries if the length has been reached
@@ -148,10 +150,10 @@ layer = "tb"
 mode = "lockstep" 
 
 # Execute all remaining instructions (overrides `stop_after_n_instructions` if set to true)
-execute_all_remaining_instructions = true
+execute_all_remaining_instructions = false
 
 # Execute the next (after skipped) n instructions
-stop_after_n_instructions = 0
+stop_after_n_instructions = 100
 
 # Where the test result should be saved and in which format
 [testing.protocol.out]

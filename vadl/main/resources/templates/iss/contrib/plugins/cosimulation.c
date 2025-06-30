@@ -36,15 +36,15 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_version = QEMU_PLUGIN_VERSION;
 // adjust as needed
 // NOTE: try to keep these values as small as possible to minimize memory usage
 //       if set too small then crashes and/or invalid state can occur
-#define SHMSTRING_MAX_LEN 256
+#define SHMSTRING_MAX_LEN 1024
 #define TBINFO_ENTRIES 1024
-#define TBINSNINFO_ENTRIES 32
+#define TBINSNINFO_ENTRIES 64
 
-#define MAX_REGISTER_NAME_SIZE 64
-#define MAX_REGISTER_DATA_SIZE 64
+#define MAX_REGISTER_NAME_SIZE 256
+#define MAX_REGISTER_DATA_SIZE 256
 #define MAX_CPU_REGISTERS 256
 #define MAX_CPU_COUNT 8
-#define MAX_INSN_DATA_SIZE 4
+#define MAX_INSN_DATA_SIZE 64
 
 static qemu_plugin_id_t plugin_id;
 
@@ -216,7 +216,7 @@ static SHMCPU get_cpu_state(unsigned int cpu_index) {
     shm_reg.size = qemu_plugin_read_register(reg->handle, buf);
 
     if (reg->name != NULL) {
-      strncpy(shm_reg.name.value, reg->name, SHMSTRING_MAX_LEN);
+      strncpy(shm_reg.name.value, reg->name, SHMSTRING_MAX_LEN - 1);
       shm_reg.name.len = strlen(shm_reg.name.value);
     }
 
@@ -237,8 +237,9 @@ static void open_sems(void) {
       g_strdup_printf("cosimulation-sem-client-%s", args.client_id);
   sem_client = sem_open(sem_client_name, O_RDWR);
   if (sem_client == SEM_FAILED) {
-    char* err = strerror(errno);
-    g_error("failed to open sem_client for client: %s -> %s", args.client_id, err);
+    char *err = strerror(errno);
+    g_error("failed to open sem_client for client: %s -> %s", args.client_id,
+            err);
     return;
   }
 
@@ -246,8 +247,9 @@ static void open_sems(void) {
       g_strdup_printf("cosimulation-sem-server-%s", args.client_id);
   sem_server = sem_open(sem_server_name, O_RDWR);
   if (sem_server == SEM_FAILED) {
-    char* err = strerror(errno);
-    g_error("failed to open sem_server for client: %s -> %s", args.client_id, err);
+    char *err = strerror(errno);
+    g_error("failed to open sem_server for client: %s -> %s", args.client_id,
+            err);
     return;
   }
 }
@@ -262,22 +264,25 @@ static BrokerSHM *connect_to_broker(void) {
   gchar *shm_name = g_strdup_printf("/cosimulation-shm-%s", args.client_id);
   int shm_fd = shm_open(shm_name, O_RDWR, 0600);
   if (shm_fd == -1) {
-    char* err = strerror(errno);
-    g_error("failed to open shared memory for client: %s -> %s", args.client_id, err);
+    char *err = strerror(errno);
+    g_error("failed to open shared memory for client: %s -> %s", args.client_id,
+            err);
     return NULL;
   }
 
   if (ftruncate(shm_fd, sizeof(BrokerSHM)) == -1) {
-    char* err = strerror(errno);
-    g_error("failed to truncate shared memory for client: %s -> %s", args.client_id, err);
+    char *err = strerror(errno);
+    g_error("failed to truncate shared memory for client: %s -> %s",
+            args.client_id, err);
     return NULL;
   }
 
   BrokerSHM *shm = mmap(NULL, sizeof(BrokerSHM), PROT_READ | PROT_WRITE,
                         MAP_SHARED, shm_fd, 0);
   if (shm == MAP_FAILED) {
-    char* err = strerror(errno);
-    g_error("failed to mmap shared memory for client: %s -> %s", args.client_id, err);
+    char *err = strerror(errno);
+    g_error("failed to mmap shared memory for client: %s -> %s", args.client_id,
+            err);
     return NULL;
   }
 
@@ -291,20 +296,20 @@ static TBInsnInfo get_tbinsn_info(struct qemu_plugin_insn *insn) {
 
   const char *insn_symbol = qemu_plugin_insn_symbol(insn);
   if (insn_symbol != NULL) {
-    strncpy(insn_info.symbol.value, insn_symbol, SHMSTRING_MAX_LEN);
+    strncpy(insn_info.symbol.value, insn_symbol, SHMSTRING_MAX_LEN - 1);
     insn_info.symbol.len = strlen(insn_info.symbol.value);
   }
 
   void *insn_hwaddr = qemu_plugin_insn_haddr(insn);
   if (insn_hwaddr != NULL) {
     char *hwaddrfmt = g_strdup_printf("%p", insn_hwaddr);
-    strncpy(insn_info.hwaddr.value, hwaddrfmt, SHMSTRING_MAX_LEN);
+    strncpy(insn_info.hwaddr.value, hwaddrfmt, SHMSTRING_MAX_LEN - 1);
     insn_info.hwaddr.len = strlen(insn_info.hwaddr.value);
   }
 
   char *insn_disas = qemu_plugin_insn_disas(insn);
   if (insn_disas != NULL) {
-    strncpy(insn_info.disas.value, insn_disas, SHMSTRING_MAX_LEN);
+    strncpy(insn_info.disas.value, insn_disas, SHMSTRING_MAX_LEN - 1);
     insn_info.disas.len = strlen(insn_info.disas.value);
   }
 
@@ -324,7 +329,7 @@ static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
   uint64_t pc = qemu_plugin_tb_vaddr(tb);
   size_t insns = qemu_plugin_tb_n_insns(tb);
 
-  TBInfo tbinfo;
+  TBInfo tbinfo = {0};
   tbinfo.pc = pc;
 
   PLUGIN_ASSERT(insns <= TBINSNINFO_ENTRIES,
@@ -332,14 +337,18 @@ static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
                 insns, TBINSNINFO_ENTRIES);
   for (int i = 0; i < insns; i++) {
     struct qemu_plugin_insn *insn = qemu_plugin_tb_get_insn(tb, i);
+    PLUGIN_ASSERT(insn != NULL, "insn must not be null: %d", i);
     tbinfo.insns_info[i] = get_tbinsn_info(insn);
   }
 
   tbinfo.insns_info_size = insns;
+
   return tbinfo;
 }
 
 static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
+  TBInsnInfo *tbinsn_info = udata;
+  PLUGIN_PRINTLN("vcpu_insn_exec: before wait: (PC=%lu) %s", tbinsn_info->pc, tbinsn_info->disas.value);
   sem_wait(sem_client);
 
   SHMCPU cpu = get_cpu_state(cpu_index);
@@ -347,11 +356,15 @@ static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
   shm->shm_exec.cpus[cpu_index] = cpu;
   shm->shm_exec.init_mask |= (1 << cpu_index);
 
-  TBInsnInfo *tbinsn_info = udata;
+  PLUGIN_PRINTLN("vcpu_insn_exec: PC = %lu", tbinsn_info->pc);
+
   shm->shm_exec.insn_info = *tbinsn_info;
-  g_free(tbinsn_info);
+
+  // TODO: we cannot free here because the same callback might be used multiple times when a tb gets reused
+  // g_free(tbinsn_info);
 
   sem_post(sem_server);
+  PLUGIN_PRINTLN("vcpu_insn_exec: after post");
 }
 
 static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
@@ -363,17 +376,16 @@ static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
   shm->shm_tb.init_mask |= (1 << cpu_index);
 
   TBInfo *tb_info = udata;
-  shm->shm_tb.tb_info = *tb_info ;
-  g_free(tb_info);
+  shm->shm_tb.tb_info = *tb_info;
+
+  // TODO: we cannot free here because the same callback might be used multiple times when a tb gets reused
+  // g_free(tb_info);
 
   sem_post(sem_server);
 }
 
 static void vcpu_tb_trans(qemu_plugin_id_t id, struct qemu_plugin_tb *tb) {
   if (args.mode == TB_MODE) {
-    // TODO: move TB info collection to qemu_plugin_register_vcpu_tb_exec_cb,
-    // this function should just manage the cb based on the modes
-
     TBInfo *tbinfo = g_new0(TBInfo, 1);
     *tbinfo = get_tb_info(tb);
     qemu_plugin_register_vcpu_tb_exec_cb(tb, vcpu_tb_exec,
