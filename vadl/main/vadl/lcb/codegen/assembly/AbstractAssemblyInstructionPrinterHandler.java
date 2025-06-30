@@ -22,6 +22,9 @@ import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.viam.PrintableInstruction;
 
+/**
+ * Abstract class for assembly printing functionality.
+ */
 public abstract class AbstractAssemblyInstructionPrinterHandler
     implements CDefaultMixins.AllExpressions {
 
