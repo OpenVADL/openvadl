@@ -27,11 +27,11 @@ import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.RegisterRef;
+import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.utils.Pair;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.graph.Graph;
@@ -85,11 +85,12 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
 
 
     for (var callNode : compilerInstruction.behavior().getNodes(InstrCallNode.class).toList()) {
-      var instructionBehavior = callNode.target().behavior().copy();
+      var instruction = callNode.target();
+      var instructionBehavior = instruction.behavior().copy();
 
       replaceNodesInBehavior(instructionBehavior, callNode);
 
-      var label = supportedInstructions.reverse().get(callNode.target());
+      var label = supportedInstructions.reverse().get(instruction);
 
       // Skip not supported instructions
       if (label == null) {
@@ -101,7 +102,8 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
           continue;
         }
 
-        var baseInstructionInfo = strategy.lowerBaseInfo(instructionBehavior, registerDefsUses);
+        var baseInstructionInfo =
+            strategy.lowerBaseInfo(instruction, instructionBehavior, registerDefsUses);
 
         var flags = baseInstructionInfo.flags();
         isTerminator |= flags.isTerminator();

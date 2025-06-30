@@ -31,7 +31,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;

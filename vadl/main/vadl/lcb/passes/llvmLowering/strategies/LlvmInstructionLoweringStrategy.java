@@ -16,6 +16,7 @@
 
 package vadl.lcb.passes.llvmLowering.strategies;
 
+import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
@@ -33,6 +34,15 @@ import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.MachineInstructionLabel;
+import vadl.gcb.passes.operands.GenerateInstructionOperandsPass;
+import vadl.gcb.passes.operands.InstructionOperandsCtx;
+import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
+import vadl.gcb.passes.operands.model.TableGenConstantOperand;
+import vadl.gcb.passes.operands.model.TableGenInstructionBareSymbolOperand;
+import vadl.gcb.passes.operands.model.TableGenInstructionImmediateOperand;
+import vadl.gcb.passes.operands.model.TableGenInstructionIndexedRegisterFileOperand;
+import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
+import vadl.gcb.passes.operands.model.TableGenInstructionRegisterFileOperand;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
@@ -55,14 +65,8 @@ import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHa
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenConstantOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionBareSymbolOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionFrameRegisterOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionIndexedRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionRegisterFileOperand;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
@@ -167,10 +171,12 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Lowers basic instruction information without patterns.
    */
   public LlvmLoweringPass.BaseInstructionInfo lowerBaseInfo(
+      Instruction instruction,
       Graph behavior,
       DetermineRegisterUsesAndDefsPass.Info info) {
-    var outputOperands = getTableGenOutputOperands(behavior);
-    var inputOperands = getTableGenInputOperands(outputOperands, behavior);
+    var ctx = instruction.expectExtension(InstructionOperandsCtx.class);
+    var outputOperands = transformOutputOperands(instruction, behavior, ctx.outputs());
+    var inputOperands = transformInputOperands(instruction, behavior, ctx.inputs());
 
     var flags = getFlags(behavior);
 
@@ -179,6 +185,77 @@ public abstract class LlvmInstructionLoweringStrategy {
         flags,
         info.uses(),
         info.defs());
+  }
+
+  /**
+   * The operand detection in {@link GenerateInstructionOperandsPass} was done on an
+   * unmodified graph. But after the lowering, nodes might have changed and different
+   * strategies might want to update the operands.
+   */
+  protected List<TableGenInstructionOperand> transformOutputOperands(
+      Instruction instruction,
+      Graph behavior,
+      List<TableGenInstructionOperand> operands) {
+    return replaceOperands(instruction, behavior, operands);
+  }
+
+  /**
+   * The operand detection in {@link GenerateInstructionOperandsPass} was done on an
+   * unmodified graph. But after the lowering, nodes might have changed and different
+   * strategies might want to update the operands.
+   */
+  protected List<TableGenInstructionOperand> transformInputOperands(
+      Instruction instruction,
+      Graph behavior,
+      List<TableGenInstructionOperand> operands) {
+    return replaceOperands(instruction, behavior, operands);
+  }
+
+  private List<TableGenInstructionOperand> replaceOperands(
+      Instruction instruction,
+      Graph behavior,
+      List<TableGenInstructionOperand> operands) {
+    var fieldAccesses = behavior.getNodes(LlvmFieldAccessRefNode.class).collect(Collectors.toMap(
+        FieldAccessRefNode::fieldAccess, x -> x));
+    var basicBlocks = behavior.getNodes(LlvmBasicBlockSD.class).collect(Collectors.toMap(
+        FieldAccessRefNode::fieldAccess, x -> x));
+    var frameIndices = behavior.getNodes(LlvmFrameIndexSD.class).collect(Collectors.toMap(
+        LlvmFrameIndexSD::origin, x -> x));
+
+    // Replace generic field accesses by more specialized.
+    for (int i = 0; i < operands.size(); i++) {
+      var operand = operands.get(i);
+      if (operand instanceof GcbInstructionImmediateOperand immediateOperand
+          && fieldAccesses.containsKey(immediateOperand.fieldAccess())) {
+        var llvmNode = ensureNonNull(fieldAccesses.get(immediateOperand.fieldAccess()),
+            () -> Diagnostic.error("There is no lowered field access",
+                instruction.location().join(immediateOperand.fieldAccess().location())));
+
+        operands.set(i, new TableGenInstructionImmediateOperand(llvmNode));
+      } else if (operand instanceof GcbInstructionImmediateOperand immediateOperand
+          && basicBlocks.containsKey(immediateOperand.fieldAccess())) {
+        var llvmNode = ensureNonNull(basicBlocks.get(immediateOperand.fieldAccess()),
+            () -> Diagnostic.error("There is no lowered field access",
+                instruction.location().join(immediateOperand.fieldAccess().location())));
+
+        operands.set(i, new TableGenInstructionLabelOperand(llvmNode));
+      } else if (operand instanceof TableGenInstructionRegisterFileOperand registerFileOperand
+          && registerFileOperand.origin() instanceof ReadRegTensorNode readNode) {
+        if (frameIndices.containsKey(readNode)) {
+          var llvmNode = frameIndices.get(readNode);
+          if (llvmNode.address() instanceof FieldRefNode fieldRefNode) {
+            operands.set(i, new TableGenInstructionFrameRegisterOperand(llvmNode, fieldRefNode));
+          } else if (llvmNode.address() instanceof FuncParamNode funcParamNode) {
+            operands.set(i, new TableGenInstructionFrameRegisterOperand(llvmNode, funcParamNode));
+          } else {
+            throw Diagnostic.error("Node's address is not supported", llvmNode.address().location())
+                .build();
+          }
+        }
+      }
+    }
+
+    return operands;
   }
 
   protected void replaceNode(PrintableInstruction instruction, Node node) {
@@ -208,7 +285,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     lowerNodes(instruction, copy);
 
     var isLowerable = !hasRedFlags(instruction, copy);
-    var info = lowerBaseInfo(copy, registerDefsUses);
+    var info = lowerBaseInfo(instruction, copy, registerDefsUses);
     copy.deinitializeNodes();
 
 

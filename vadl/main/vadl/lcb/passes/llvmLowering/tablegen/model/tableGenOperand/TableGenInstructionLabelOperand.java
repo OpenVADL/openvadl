@@ -20,6 +20,7 @@ import static vadl.viam.ViamError.ensure;
 
 import java.util.List;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.operands.model.TableGenDefaultInstructionOperand;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;

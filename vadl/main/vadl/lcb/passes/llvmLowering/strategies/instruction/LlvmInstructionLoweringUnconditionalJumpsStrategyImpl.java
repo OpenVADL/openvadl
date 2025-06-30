@@ -24,13 +24,13 @@ import java.util.Optional;
 import java.util.Set;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.MachineInstructionLabel;
+import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
@@ -74,7 +74,7 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
       Graph uninlinedGraph,
       DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
 
-    var info = lowerBaseInfo(uninlinedGraph, registerDefsUses);
+    var info = lowerBaseInfo(instruction, uninlinedGraph, registerDefsUses);
     var unchangedFlags = getFlags(uninlinedGraph);
     var flags = LlvmLoweringPass.Flags.withNoTerminator(
         LlvmLoweringPass.Flags.withNoBranch(unchangedFlags));

@@ -16,21 +16,28 @@
 
 package vadl.gcb.passes.operands.model;
 
+import java.util.Objects;
 import vadl.viam.graph.Node;
 
 /**
- * The default instruction operand has always a type and a name.
+ * The default tablegen instruction operand has always a type and a name.
  */
-public sealed class GcbDefaultInstructionOperand extends GcbInstructionOperand
-    permits GcbFieldAccessOperand, GcbInstructionBareSymbolOperand,
-    GcbInstructionIndexRegisterFileOperand, GcbRegisterFileOperand {
+public class TableGenDefaultInstructionOperand extends TableGenInstructionOperand {
   private final String type;
   private final String name;
 
-  protected GcbDefaultInstructionOperand(Node origin, String type, String name) {
+  /**
+   * Constructor.
+   */
+  public TableGenDefaultInstructionOperand(Node origin, String type, String name) {
     super(origin);
     this.type = type;
     this.name = name;
+  }
+
+  @Override
+  public String render() {
+    return String.format("%s:$%s", type, name);
   }
 
   public String type() {
@@ -39,5 +46,19 @@ public sealed class GcbDefaultInstructionOperand extends GcbInstructionOperand
 
   public String name() {
     return name;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(origin, name());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    TableGenDefaultInstructionOperand that = (TableGenDefaultInstructionOperand) o;
+    return Objects.equals(type, that.type) && Objects.equals(name, that.name);
   }
 }

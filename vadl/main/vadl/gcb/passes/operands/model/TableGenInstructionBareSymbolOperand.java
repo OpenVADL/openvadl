@@ -16,24 +16,15 @@
 
 package vadl.gcb.passes.operands.model;
 
-import vadl.viam.Format.FieldAccess;
 import vadl.viam.graph.Node;
 
 /**
- * Indicates which states that the operand is a {@link FieldAccess}.
+ * Represents a bare symbol operand in TableGen.
  */
-public final class GcbFieldAccessOperand extends GcbDefaultInstructionOperand {
-  private final FieldAccess fieldAccess;
-
-  /**
-   * Constructor.
-   */
-  private GcbFieldAccessOperand(FieldAccess fieldAccess, Node origin) {
-    super(origin);
-    this.fieldAccess = fieldAccess;
-  }
-
-  public FieldAccess fieldAccess() {
-    return fieldAccess;
+public class TableGenInstructionBareSymbolOperand
+    extends TableGenDefaultInstructionOperand {
+  public TableGenInstructionBareSymbolOperand(
+      Node origin, String name) {
+    super(origin, "bare_symbol", name);
   }
 }

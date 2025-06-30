@@ -20,7 +20,7 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
 import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;

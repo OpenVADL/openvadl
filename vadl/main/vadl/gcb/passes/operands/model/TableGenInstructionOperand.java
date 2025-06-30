@@ -14,32 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
+package vadl.gcb.passes.operands.model;
 
-import vadl.viam.PseudoInstruction;
-import vadl.viam.RegisterTensor;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.viam.graph.Node;
 
 /**
- * A user can specify a concrete register in a {@link PseudoInstruction}.
+ * An {@link TableGenInstruction} has list of operands for inputs and outputs.
+ * This class represent one element of the inputs or outputs.
+ * A parameter represents {@code X:$rs1} in
+ * <pre>
+ * {@code
+ * def : Pat<(xor X:$rs1, RV3264I_Itype_immAsInt64:$imm),
+ * (XORI X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+ * }</pre>
  */
-public class TableGenInstructionConcreteRegisterOperand extends TableGenInstructionOperand {
-  private final RegisterTensor registerTensor;
-  private final int address;
+public abstract class TableGenInstructionOperand implements InstructionOperandPrintable {
+  protected final Node origin;
 
-  /**
-   * Constructor.
-   */
-  public TableGenInstructionConcreteRegisterOperand(RegisterTensor registerTensor,
-                                                    int address,
-                                                    Node origin) {
-    super(origin);
-    this.registerTensor = registerTensor;
-    this.address = address;
+  public TableGenInstructionOperand(Node origin) {
+    this.origin = origin;
   }
 
-  @Override
-  public String render() {
-    return registerTensor.simpleName() + address;
+  public Node origin() {
+    return origin;
   }
 }

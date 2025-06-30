@@ -17,7 +17,7 @@
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
 
 /**
  * Indicates that the node has a parameter which

@@ -16,29 +16,12 @@
 
 package vadl.gcb.passes.operands.model;
 
-import static vadl.viam.ViamError.ensure;
-
-import vadl.viam.Constant;
-import vadl.viam.graph.dependency.ConstantNode;
-
 /**
- * Indicates that the operand is a {@link Constant} index of a register file. It
- * can be only lowered when the register file at that constant is also a constant.
+ * Interface which indicates that the instruction operand is printable.
  */
-public final class GcbConstantOperand extends GcbInstructionOperand {
-  private final Constant constant;
-
+public interface InstructionOperandPrintable {
   /**
-   * Constructor.
+   * Create a string for TableGen.
    */
-  public GcbConstantOperand(ConstantNode constantNode, Constant value) {
-    super(constantNode);
-    ensure(constantNode.constant().equals(value),
-        "This is definitely wrong because index and constraint value are mismatched");
-    this.constant = value;
-  }
-
-  public Constant constant() {
-    return constant;
-  }
+  String render();
 }

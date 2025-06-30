@@ -54,7 +54,7 @@ import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHa
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerWithBasicBlockReplacement;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
@@ -111,7 +111,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Graph visitedGraph,
       Abi abi,
       DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
-    var info = lowerBaseInfo(visitedGraph, registerDefsUses);
+    var info = lowerBaseInfo(instruction, visitedGraph, registerDefsUses);
 
     if (hasRedFlags(instruction, visitedGraph)) {
       return new LlvmLoweringRecord.Machine(instruction,

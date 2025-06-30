@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
+package vadl.gcb.passes.operands.model;
 
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensurePresent;
@@ -29,7 +29,7 @@ import vadl.viam.graph.dependency.ConstantNode;
  * Indicates that the operand is a {@link Constant} index of a register file. It
  * can be only lowered when the register file at that constant is also a constant.
  */
-public class TableGenConstantOperand extends TableGenInstructionOperand {
+public final class TableGenConstantOperand extends TableGenInstructionOperand {
   private final Constant constant;
 
   /**

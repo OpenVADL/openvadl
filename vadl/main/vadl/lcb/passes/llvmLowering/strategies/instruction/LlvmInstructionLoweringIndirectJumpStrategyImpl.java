@@ -46,9 +46,9 @@ import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionRegisterFileOperand;
+import vadl.gcb.passes.operands.model.TableGenInstructionImmediateOperand;
+import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
+import vadl.gcb.passes.operands.model.TableGenInstructionRegisterFileOperand;
 import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
@@ -88,9 +88,10 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
 
   @Override
   public LlvmLoweringPass.BaseInstructionInfo lowerBaseInfo(
+      Instruction instruction,
       Graph behavior,
       DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
-    var baseInfo = super.lowerBaseInfo(behavior, registerDefsUses);
+    var baseInfo = super.lowerBaseInfo(instruction, behavior, registerDefsUses);
 
     // Clear the flags
     baseInfo = baseInfo.withFlags(LlvmLoweringPass.Flags.empty());
@@ -111,7 +112,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       replaceNode(instruction, node);
     }
 
-    var info = lowerBaseInfo(copy, registerDefsUses);
+    var info = lowerBaseInfo(instruction, copy, registerDefsUses);
 
     // Clear the flags for this strategy
     info = info.withFlags(LlvmLoweringPass.Flags.empty());

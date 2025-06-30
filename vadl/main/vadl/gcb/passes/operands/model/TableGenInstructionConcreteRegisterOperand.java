@@ -16,13 +16,30 @@
 
 package vadl.gcb.passes.operands.model;
 
+import vadl.viam.PseudoInstruction;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Node;
 
 /**
- * Represents a bare symbol operand.
+ * A user can specify a concrete register in a {@link PseudoInstruction}.
  */
-public final class GcbInstructionBareSymbolOperand extends GcbDefaultInstructionOperand {
-  private GcbInstructionBareSymbolOperand(Node origin) {
+public final class TableGenInstructionConcreteRegisterOperand extends TableGenInstructionOperand {
+  private final RegisterTensor registerTensor;
+  private final int address;
+
+  /**
+   * Constructor.
+   */
+  public TableGenInstructionConcreteRegisterOperand(RegisterTensor registerTensor,
+                                                    int address,
+                                                    Node origin) {
     super(origin);
+    this.registerTensor = registerTensor;
+    this.address = address;
+  }
+
+  @Override
+  public String render() {
+    return registerTensor.simpleName() + address;
   }
 }

@@ -33,28 +33,34 @@ import vadl.viam.graph.dependency.ReadRegTensorNode;
  */
 public class LlvmFrameIndexSD extends ReadRegTensorNode implements LlvmNodeLowerable {
   public static final String NAME = "AddrFI";
+  private final ReadRegTensorNode origin;
 
   public LlvmFrameIndexSD(ReadRegTensorNode obj) {
-    this(obj.regTensor(), obj.indices(), obj.type(), obj.staticCounterAccess());
+    this(obj.regTensor(), obj.indices(), obj.type(), obj.staticCounterAccess(), obj);
     obj.regTensor().ensure(obj.regTensor().isRegisterFile(), "must be register file");
   }
 
-  private LlvmFrameIndexSD(RegisterTensor registerFile, NodeList<ExpressionNode> addresses,
+  private LlvmFrameIndexSD(RegisterTensor registerFile,
+                           NodeList<ExpressionNode> addresses,
                            DataType type,
-                           @Nullable Counter staticCounterAccess) {
+                           @Nullable Counter staticCounterAccess,
+                           ReadRegTensorNode obj) {
     super(registerFile, addresses, type, staticCounterAccess);
+    this.origin = obj;
   }
-
 
   @Override
   public LlvmFrameIndexSD copy() {
-    return new LlvmFrameIndexSD(regTensor, indices.copy(), type(),
-        staticCounterAccess());
+    return new LlvmFrameIndexSD(regTensor,
+        indices.copy(),
+        type(),
+        staticCounterAccess(),
+        origin);
   }
 
   @Override
   public LlvmFrameIndexSD shallowCopy() {
-    return new LlvmFrameIndexSD(regTensor, indices, type(), staticCounterAccess());
+    return new LlvmFrameIndexSD(regTensor, indices, type(), staticCounterAccess(), origin);
   }
 
   @Override
@@ -70,5 +76,9 @@ public class LlvmFrameIndexSD extends ReadRegTensorNode implements LlvmNodeLower
   @Override
   public String lower() {
     return NAME;
+  }
+
+  public ReadRegTensorNode origin() {
+    return origin;
   }
 }
