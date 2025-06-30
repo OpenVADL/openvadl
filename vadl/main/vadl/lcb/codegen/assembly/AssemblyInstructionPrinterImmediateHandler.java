@@ -368,6 +368,14 @@ public class AssemblyInstructionPrinterImmediateHandler
         node.arguments().get(1));
   }
 
+  protected void handleArbitraryExpression(BuiltInCall node, int radix, CGenContext<Node> ctx) {
+    // ctx.wr("std::to_string(");
+    ctx.wr("AsmUtils::formatImm(");
+    AssemblyInstructionPrinterImmediateHandlerDispatcher.dispatch(this,
+        (CNodeContext) ctx, node.arguments().getFirst());
+    ctx.wr(", %d, &MAI)", radix);
+  }
+
   private void writeImmediateWithRadix(BuiltInCall node, CGenContext<Node> ctx, int radix) {
     if (node.arguments().getFirst() instanceof FieldRefNode fieldRefNode) {
       writeImmediateWithRadix(fieldRefNode.formatField(),
@@ -386,14 +394,6 @@ public class AssemblyInstructionPrinterImmediateHandler
     } else {
       handleArbitraryExpression(node, radix, ctx);
     }
-  }
-
-  protected void handleArbitraryExpression(BuiltInCall node, int radix, CGenContext<Node> ctx) {
-    // ctx.wr("std::to_string(");
-    ctx.wr("AsmUtils::formatImm(");
-    AssemblyInstructionPrinterImmediateHandlerDispatcher.dispatch(this,
-        (CNodeContext) ctx, node.arguments().getFirst());
-    ctx.wr(", %d, &MAI)", radix);
   }
 
   private void writeImmediateWithRadix(Format.Field field, CGenContext<Node> ctx, int radix,
