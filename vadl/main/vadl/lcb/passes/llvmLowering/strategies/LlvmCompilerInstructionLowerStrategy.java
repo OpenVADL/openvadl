@@ -30,7 +30,7 @@ import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
-import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
+import vadl.gcb.passes.RegisterRef;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.utils.Pair;
 import vadl.viam.CompilerInstruction;

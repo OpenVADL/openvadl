@@ -17,7 +17,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.util.stream.Collectors;
-import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
+import vadl.gcb.passes.RegisterRef;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
 
 /**
