@@ -24,12 +24,9 @@ import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.utils.GraphUtils;
-import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Format;
-import vadl.viam.Identifier;
 import vadl.viam.Instruction;
-import vadl.viam.Parameter;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
@@ -39,7 +36,6 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SliceNode;
 
 /**

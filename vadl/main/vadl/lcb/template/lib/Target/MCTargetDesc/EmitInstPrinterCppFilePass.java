@@ -35,7 +35,6 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
-import vadl.viam.Function;
 import vadl.viam.Specification;
 
 /**
