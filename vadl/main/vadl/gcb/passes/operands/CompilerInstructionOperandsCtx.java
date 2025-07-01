@@ -19,6 +19,7 @@ package vadl.gcb.passes.operands;
 import java.util.ArrayList;
 import java.util.List;
 import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
+import vadl.viam.CompilerInstruction;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.PseudoInstruction;
@@ -26,15 +27,15 @@ import vadl.viam.PseudoInstruction;
 /**
  * An extension for {@link PseudoInstruction} to store input and output operands.
  */
-public class PseudoInstructionOperandsCtx extends DefinitionExtension<PseudoInstruction> {
+public class CompilerInstructionOperandsCtx extends DefinitionExtension<CompilerInstruction> {
   private final List<TableGenInstructionOperand> inputs;
   private final List<TableGenInstructionOperand> outputs;
 
   /**
    * Constructor.
    */
-  public PseudoInstructionOperandsCtx(List<TableGenInstructionOperand> inputs,
-                                      List<TableGenInstructionOperand> outputs) {
+  public CompilerInstructionOperandsCtx(List<TableGenInstructionOperand> inputs,
+                                        List<TableGenInstructionOperand> outputs) {
     this.inputs = new ArrayList<>(inputs);
     this.outputs = new ArrayList<>(outputs);
   }
