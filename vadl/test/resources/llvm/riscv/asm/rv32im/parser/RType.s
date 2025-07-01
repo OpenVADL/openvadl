@@ -168,26 +168,26 @@ MULHU x10, x11, x12
 DIV x13, x14, x15
 # CHECK: <MCInst #{{[0-9]+}} DIV
 # CHECK-NEXT: <MCOperand Reg:15>
-# CHECK-NEXT: <MCOperand Reg:16>
 # CHECK-NEXT: <MCOperand Reg:17>>
+# CHECK-NEXT: <MCOperand Reg:16>
 
 # Test cases for DIVU
 DIVU x16, x17, x18
 # CHECK: <MCInst #{{[0-9]+}} DIVU
 # CHECK-NEXT: <MCOperand Reg:18>
-# CHECK-NEXT: <MCOperand Reg:19>
 # CHECK-NEXT: <MCOperand Reg:20>>
+# CHECK-NEXT: <MCOperand Reg:19>
 
 # Test cases for REM
 REM x19, x20, x21
 # CHECK: <MCInst #{{[0-9]+}} REM
 # CHECK-NEXT: <MCOperand Reg:21>
-# CHECK-NEXT: <MCOperand Reg:22>
 # CHECK-NEXT: <MCOperand Reg:23>>
+# CHECK-NEXT: <MCOperand Reg:22>
 
 # Test cases for REMU
 REMU x22, x23, x24
 # CHECK: <MCInst #{{[0-9]+}} REMU
 # CHECK-NEXT: <MCOperand Reg:24>
-# CHECK-NEXT: <MCOperand Reg:25>
 # CHECK-NEXT: <MCOperand Reg:26>>
+# CHECK-NEXT: <MCOperand Reg:25>
