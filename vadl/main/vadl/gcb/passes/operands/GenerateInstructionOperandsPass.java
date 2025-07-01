@@ -176,19 +176,15 @@ public class GenerateInstructionOperandsPass extends Pass {
   }
 
   private TableGenInstructionOperand map(Node operand) {
-    if (operand instanceof ReadRegTensorNode node && node.regTensor().isRegisterFile()) {
-      return mapFrom(node);
-    } else if (operand instanceof WriteRegTensorNode node && node.regTensor().isRegisterFile()) {
-      return mapFrom(node);
-    } else if (operand instanceof FuncParamNode node) {
-      return mapFrom(node);
-    } else if (operand instanceof FieldAccessRefNode node) {
-      return mapFrom(node);
-    } else {
-      throw Diagnostic.error(
+    return switch (operand) {
+      case ReadRegTensorNode node when node.regTensor().isRegisterFile() -> mapFrom(node);
+      case WriteRegTensorNode node when node.regTensor().isRegisterFile() -> mapFrom(node);
+      case FuncParamNode node -> mapFrom(node);
+      case FieldAccessRefNode node -> mapFrom(node);
+      default -> throw Diagnostic.error(
           "Cannot construct a tablegen instruction operand from the type.",
           operand.location()).build();
-    }
+    };
   }
 
   /**

@@ -211,7 +211,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     return replaceOperands(instruction, behavior, operands);
   }
 
-  private List<TableGenInstructionOperand> replaceOperands(
+  protected List<TableGenInstructionOperand> replaceOperands(
       Instruction instruction,
       Graph behavior,
       List<TableGenInstructionOperand> operands) {
@@ -221,6 +221,7 @@ public abstract class LlvmInstructionLoweringStrategy {
         FieldAccessRefNode::fieldAccess, x -> x));
     var frameIndices = behavior.getNodes(LlvmFrameIndexSD.class).collect(Collectors.toMap(
         LlvmFrameIndexSD::origin, x -> x));
+    var funcParams = behavior.getNodes(PseudoFuncParamNode.class).toList();
 
     // Replace generic field accesses by more specialized.
     for (int i = 0; i < operands.size(); i++) {

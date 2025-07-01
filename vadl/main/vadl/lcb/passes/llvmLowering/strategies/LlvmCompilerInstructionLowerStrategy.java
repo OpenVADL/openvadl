@@ -27,6 +27,8 @@ import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.RegisterRef;
+import vadl.gcb.passes.operands.model.TableGenDefaultInstructionOperand;
+import vadl.gcb.passes.operands.model.TableGenInstructionImmediateOperand;
 import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
@@ -34,6 +36,7 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.utils.Pair;
 import vadl.viam.CompilerInstruction;
+import vadl.viam.Parameter;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
@@ -121,6 +124,32 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
       }
     }
 
+    // We have now computed both `inputOperands` and `outputOperands` based on the
+    // underlying machine instructions. However, those aren't the real operands of the
+    // pseudo instruction. The pseudo instruction defines its own operands.
+
+    /*
+      Pseudo Instruction Operands (out): rd ; (in): symbol
+      Machine Instructions (out): rd ; (in): rs1, imm
+
+      pseudo instruction LGA_64( rd: Index, symbol: Bits<32> ) =
+      {
+          AUIPC { rd = rd, imm = got_pcrel_hi( symbol ) }
+          LD { rd = rd, rs1 = rd, imm = pcrel_lo( symbol ) }
+      }
+      assembly LGA_64 = ("LGA", " ", register(rd), ",", hex( symbol ))
+     */
+
+    var compilerInstructionInputOperands = new ArrayList<TableGenInstructionOperand>();
+    var compilerInstructionsOutputOperands = new ArrayList<TableGenInstructionOperand>();
+
+    for (var parameter : compilerInstruction.parameters()) {
+      matchesParameter(parameter, inputOperands)
+          .ifPresent(compilerInstructionInputOperands::add);
+      matchesParameter(parameter, outputOperands)
+          .ifPresent(compilerInstructionsOutputOperands::add);
+    }
+
     var flags = new LlvmLoweringPass.Flags(isTerminator,
         isBranch,
         false,
@@ -134,8 +163,8 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
         false);
 
     var info = new LlvmLoweringPass.BaseInstructionInfo(
-        dedup(inputOperands),
-        dedup(outputOperands),
+        dedup(compilerInstructionInputOperands),
+        dedup(compilerInstructionsOutputOperands),
         flags,
         dedup(uses),
         dedup(defs)
@@ -144,6 +173,21 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
     return Optional.of(new LlvmLoweringRecord.Compiler(
         info
     ));
+  }
+
+  private Optional<TableGenInstructionOperand> matchesParameter(Parameter parameter,
+                                                                List<TableGenInstructionOperand> operands) {
+    for (var operand : operands) {
+      if (operand instanceof TableGenDefaultInstructionOperand defaultInstructionOperand
+          && defaultInstructionOperand.name().equals(parameter.simpleName())) {
+        return Optional.of(operand);
+      } else if (operand instanceof TableGenInstructionImmediateOperand immediateOperand
+          && immediateOperand.name().equals(parameter.simpleName())) {
+        return Optional.of(operand);
+      }
+    }
+
+    return Optional.empty();
   }
 
   private void addWithoutDuplicates(List<TableGenInstructionOperand> dest,
