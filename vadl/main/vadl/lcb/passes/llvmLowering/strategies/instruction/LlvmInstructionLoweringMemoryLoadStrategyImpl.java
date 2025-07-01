@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.MachineInstructionLabel;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
@@ -34,8 +35,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.gcb.passes.operands.model.TableGenInstructionImmediateOperand;
-import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
+import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
 import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
@@ -62,8 +62,8 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
       Instruction instruction,
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Graph behavior,
-      List<TableGenInstructionOperand> inputOperands,
-      List<TableGenInstructionOperand> outputOperands,
+      List<GcbInstructionOperand> inputOperands,
+      List<GcbInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
       Abi abi) {
     var alternativePatterns = new ArrayList<TableGenPattern>();

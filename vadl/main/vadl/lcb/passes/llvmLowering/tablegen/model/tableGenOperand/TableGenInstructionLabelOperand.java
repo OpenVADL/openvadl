@@ -20,7 +20,7 @@ import static vadl.viam.ViamError.ensure;
 
 import java.util.List;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.operands.model.TableGenDefaultInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
@@ -32,7 +32,7 @@ import vadl.viam.graph.Node;
 /**
  * TableGen operand which references a label.
  */
-public class TableGenInstructionLabelOperand extends TableGenDefaultInstructionOperand
+public class TableGenInstructionLabelOperand extends GcbDefaultInstructionOperand
     implements ReferencesFormatField, ReferencesImmediateOperand {
   private static final String AS_LABEL = "AsLabel";
 

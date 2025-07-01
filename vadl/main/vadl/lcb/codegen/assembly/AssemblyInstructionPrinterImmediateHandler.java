@@ -26,8 +26,8 @@ import java.util.stream.Stream;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.operands.model.TableGenDefaultInstructionOperand;
-import vadl.gcb.passes.operands.model.TableGenInstructionBareSymbolOperand;
+import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
@@ -421,6 +421,19 @@ public class AssemblyInstructionPrinterImmediateHandler
         indexInOperands, radix);
   }
 
+  private void writeImmediateWithRadix(FuncParamNode node,
+                                       CGenContext<Node> ctx,
+                                       int radix,
+                                       SourceLocation sourceLocation) {
+    var indexInOperands = ensurePresent(indexInInputs(node), () ->
+        Diagnostic.error("Immediate must be part of an tablegen input or output.",
+            sourceLocation)
+    );
+
+    ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
+        indexInOperands, radix);
+  }
+
   /**
    * {@link FuncParamNode} requires a special case since the names between pseudo instruction
    * and {@link InstrCallNode} can differ. That's why look for a
@@ -438,32 +451,19 @@ public class AssemblyInstructionPrinterImmediateHandler
     int outputOffset = tableGenInstruction.getOutOperands().size();
     for (int i = 0; i < tableGenInstruction.getInOperands().size(); i++) {
       var operand = tableGenInstruction.getInOperands().get(i);
-      if (operand instanceof TableGenInstructionBareSymbolOperand symbolOperand
+      if (operand instanceof GcbInstructionBareSymbolOperand symbolOperand
           && symbolOperand.origin() instanceof FuncParamNode funcParamNodeOfOperand
           && needle.parameter().equals(funcParamNodeOfOperand.parameter())) {
         return Optional.of(outputOffset + i);
       } else if (operand instanceof TableGenInstructionLabelOperand) {
         return Optional.of(outputOffset + i);
-      } else if (operand instanceof TableGenDefaultInstructionOperand x
+      } else if (operand instanceof GcbDefaultInstructionOperand x
           && x.name().equals(needle.parameter().identifier.simpleName())) {
         return Optional.of(outputOffset + i);
       }
     }
 
     return Optional.empty();
-  }
-
-  private void writeImmediateWithRadix(FuncParamNode node,
-                                       CGenContext<Node> ctx,
-                                       int radix,
-                                       SourceLocation sourceLocation) {
-    var indexInOperands = ensurePresent(indexInInputs(node), () ->
-        Diagnostic.error("Immediate must be part of an tablegen input or output.",
-            sourceLocation)
-    );
-
-    ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
-        indexInOperands, radix);
   }
 
   /**
@@ -618,7 +618,7 @@ public class AssemblyInstructionPrinterImmediateHandler
     var paramName = needle.parameter().simpleName();
     for (int i = 0; i < operands.size(); i++) {
       var operand = operands.get(i);
-      if (operand instanceof TableGenInstructionBareSymbolOperand bareSymbolOperand
+      if (operand instanceof GcbInstructionBareSymbolOperand bareSymbolOperand
           && bareSymbolOperand.origin() instanceof FuncParamNode funcParamNode
           && needle.parameter().equals(funcParamNode.parameter())) {
         return Optional.of(i);
@@ -630,7 +630,7 @@ public class AssemblyInstructionPrinterImmediateHandler
         if (names.contains(paramName)) {
           return Optional.of(i);
         }
-      } else if (operand instanceof TableGenDefaultInstructionOperand defaultOperand
+      } else if (operand instanceof GcbDefaultInstructionOperand defaultOperand
           && defaultOperand.name().equals(paramName)) {
         return Optional.of(i);
       }

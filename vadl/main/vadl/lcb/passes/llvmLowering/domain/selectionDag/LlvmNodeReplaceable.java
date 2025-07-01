@@ -16,8 +16,8 @@
 
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
 
 /**
  * Indicates that the node has a parameter which
@@ -28,7 +28,7 @@ import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
  */
 public interface LlvmNodeReplaceable {
   /**
-   * Returns the {@link TableGenInstructionOperand} of the node.
+   * Returns the {@link GcbInstructionOperand} of the node.
    */
-  TableGenInstructionOperand operand();
+  GcbInstructionOperand operand();
 }

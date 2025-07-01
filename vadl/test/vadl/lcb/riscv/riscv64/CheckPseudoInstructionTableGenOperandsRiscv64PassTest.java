@@ -24,10 +24,10 @@ import java.util.stream.Collectors;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
-import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
@@ -109,7 +109,7 @@ public class CheckPseudoInstructionTableGenOperandsRiscv64PassTest extends Abstr
     // Then
     var actual = pseudoInstructionRecords.stream()
         .map(x -> new Entry(x.getName(),
-            x.getInOperands().stream().map(TableGenInstructionOperand::render).toList())
+            x.getInOperands().stream().map(GcbInstructionOperand::render).toList())
         ).collect(Collectors.toMap(x -> x.instruction, x -> x.operands));
 
     return inputOperands.stream()
@@ -140,7 +140,7 @@ public class CheckPseudoInstructionTableGenOperandsRiscv64PassTest extends Abstr
     // Then
     var actual = pseudoInstructionRecords.stream()
         .map(x -> new Entry(x.getName(),
-            x.getOutOperands().stream().map(TableGenInstructionOperand::render).toList())
+            x.getOutOperands().stream().map(GcbInstructionOperand::render).toList())
         ).collect(Collectors.toMap(x -> x.instruction, x -> x.operands));
 
     return outputOperands.stream()

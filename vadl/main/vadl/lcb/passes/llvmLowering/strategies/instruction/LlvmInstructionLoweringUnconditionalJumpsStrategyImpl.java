@@ -24,7 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.MachineInstructionLabel;
-import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
@@ -89,7 +89,7 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
 
   @Override
   protected List<TableGenPattern> generatePatterns(Instruction instruction,
-                                                   List<TableGenInstructionOperand> inputOperands,
+                                                   List<GcbInstructionOperand> inputOperands,
                                                    List<WriteResourceNode> sideEffectNodes) {
     throw new RuntimeException("Must not be called. Use the other method");
   }
@@ -99,8 +99,8 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
       Instruction instruction,
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Graph behavior,
-      List<TableGenInstructionOperand> inputOperands,
-      List<TableGenInstructionOperand> outputOperands,
+      List<GcbInstructionOperand> inputOperands,
+      List<GcbInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
       Abi abi) {
     return Collections.emptyList();

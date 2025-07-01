@@ -25,7 +25,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import vadl.gcb.passes.RegisterRef;
-import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.viam.Encoding;
@@ -53,8 +53,8 @@ public class TableGenMachineInstruction extends TableGenInstruction {
                                     Instruction instruction,
                                     LlvmLoweringRecord.Machine llvmLoweringRecord,
                                     LlvmLoweringPass.Flags flags,
-                                    List<TableGenInstructionOperand> inOperands,
-                                    List<TableGenInstructionOperand> outOperands,
+                                    List<GcbInstructionOperand> inOperands,
+                                    List<GcbInstructionOperand> outOperands,
                                     List<RegisterRef> uses,
                                     List<RegisterRef> defs,
                                     List<TableGenPattern> anonymousPatterns) {
@@ -115,7 +115,7 @@ public class TableGenMachineInstruction extends TableGenInstruction {
      * Convert an encoding into a bitblock set for TableGen.
      */
     public static List<BitBlock> from(vadl.viam.Encoding encoding,
-                                      List<TableGenInstructionOperand> inOperands) {
+                                      List<GcbInstructionOperand> inOperands) {
       var encodedFields = Arrays.stream(encoding.fieldEncodings())
           .map(field -> new BitBlock(field.formatField().size(), field.simpleName(),
               Optional.of(BitSet.valueOf(new long[] {field.constant().longValue()}))));
@@ -176,7 +176,7 @@ public class TableGenMachineInstruction extends TableGenInstruction {
      * Convert an encoding to a TableGen model.
      */
     public static List<FieldEncoding> from(Encoding encoding,
-                                           List<TableGenInstructionOperand> inOperands) {
+                                           List<GcbInstructionOperand> inOperands) {
       ArrayList<FieldEncoding> encodings = new ArrayList<>();
       var immediateOffset = 0;
       for (var field : encoding.format().fields()) {
@@ -230,7 +230,7 @@ public class TableGenMachineInstruction extends TableGenInstruction {
 
   @Nonnull
   private static Optional<Format.FieldAccess> getFieldAccessFromField(
-      List<TableGenInstructionOperand> inOperands, Format.Field field) {
+      List<GcbInstructionOperand> inOperands, Format.Field field) {
     var fieldAccess =
         inOperands.stream()
             .filter(x -> x instanceof ReferencesImmediateOperand)

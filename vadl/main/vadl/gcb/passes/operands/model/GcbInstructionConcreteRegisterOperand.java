@@ -23,16 +23,16 @@ import vadl.viam.graph.Node;
 /**
  * A user can specify a concrete register in a {@link PseudoInstruction}.
  */
-public final class TableGenInstructionConcreteRegisterOperand extends TableGenInstructionOperand {
+public final class GcbInstructionConcreteRegisterOperand extends GcbInstructionOperand {
   private final RegisterTensor registerTensor;
   private final int address;
 
   /**
    * Constructor.
    */
-  public TableGenInstructionConcreteRegisterOperand(RegisterTensor registerTensor,
-                                                    int address,
-                                                    Node origin) {
+  public GcbInstructionConcreteRegisterOperand(RegisterTensor registerTensor,
+                                               int address,
+                                               Node origin) {
     super(origin);
     this.registerTensor = registerTensor;
     this.address = address;

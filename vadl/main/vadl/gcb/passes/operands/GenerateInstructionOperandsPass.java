@@ -30,12 +30,12 @@ import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.operands.model.GcbConstantOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
-import vadl.gcb.passes.operands.model.TableGenConstantOperand;
-import vadl.gcb.passes.operands.model.TableGenInstructionBareSymbolOperand;
-import vadl.gcb.passes.operands.model.TableGenInstructionIndexedRegisterFileOperand;
-import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
-import vadl.gcb.passes.operands.model.TableGenInstructionRegisterFileOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionIndexedRegisterFileOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -114,8 +114,8 @@ public class GenerateInstructionOperandsPass extends Pass {
   }
 
   private void attachContextToCompilerInstruction(CompilerInstruction compilerInstruction) {
-    var totalInputs = new ArrayList<TableGenInstructionOperand>();
-    var totalOutputs = new ArrayList<TableGenInstructionOperand>();
+    var totalInputs = new ArrayList<GcbInstructionOperand>();
+    var totalOutputs = new ArrayList<GcbInstructionOperand>();
 
     for (var callNode : compilerInstruction.behavior().getNodes(InstrCallNode.class).toList()) {
       var instruction = callNode.target();
@@ -133,8 +133,8 @@ public class GenerateInstructionOperandsPass extends Pass {
     compilerInstruction.attachExtension(ctx);
   }
 
-  private void addWithoutDuplicates(List<TableGenInstructionOperand> dest,
-                                    List<TableGenInstructionOperand> src) {
+  private void addWithoutDuplicates(List<GcbInstructionOperand> dest,
+                                    List<GcbInstructionOperand> src) {
     for (var element : src) {
       boolean exists = false;
       for (var needle : dest) {
@@ -151,7 +151,7 @@ public class GenerateInstructionOperandsPass extends Pass {
 
   }
 
-  private List<TableGenInstructionOperand> getTableGenOutputOperands(Graph behavior) {
+  private List<GcbInstructionOperand> getTableGenOutputOperands(Graph behavior) {
     var operands = extractWrites(behavior);
     return operands
         .stream()
@@ -171,7 +171,6 @@ public class GenerateInstructionOperandsPass extends Pass {
   private static List<Node> getInputOperands(Graph graph) {
     var children = new ArrayList<Node>();
     var builtins = new ArrayList<Node>();
-    var funcCalls = new ArrayList<Node>();
     var sideEffects = graph.getNodes(SideEffectNode.class).toList();
 
     getNodesRecursively(sideEffects, builtins, BuiltInCall.class);
@@ -216,6 +215,7 @@ public class GenerateInstructionOperandsPass extends Pass {
         });
 
     // To make sure we didn't forget anything
+    var funcCalls = new ArrayList<Node>();
     getNodesRecursively(sideEffects, children, ReadRegTensorNode.class);
     getNodesRecursively(sideEffects, children, FieldAccessRefNode.class);
     getNodesRecursively(sideEffects, funcCalls, FuncCallNode.class);
@@ -236,8 +236,8 @@ public class GenerateInstructionOperandsPass extends Pass {
                   } else {
                     return true;
                   }
-                })
-            , funcCalls.stream().flatMap(
+                }),
+            funcCalls.stream().flatMap(
                     funcCallNode -> ((FuncCallNode) funcCallNode).function().behavior()
                         .getNodes(FuncParamNode.class))
                 .map(node -> (Node) node)
@@ -263,8 +263,8 @@ public class GenerateInstructionOperandsPass extends Pass {
    * {@link PseudoInstruction} like {@code ADDI rd, rd, 1} then is the output and one input
    * the same which tablegen will not accept.
    */
-  private List<TableGenInstructionOperand> getTableGenInputOperands(
-      List<TableGenInstructionOperand> outputOperands,
+  private List<GcbInstructionOperand> getTableGenInputOperands(
+      List<GcbInstructionOperand> outputOperands,
       Graph graph) {
 
     var inputOperands = getInputOperands(graph)
@@ -286,7 +286,7 @@ public class GenerateInstructionOperandsPass extends Pass {
         .toList();
   }
 
-  private TableGenInstructionOperand map(Node operand) {
+  private GcbInstructionOperand map(Node operand) {
     return switch (operand) {
       case ReadRegTensorNode node when node.regTensor().isRegisterFile() -> mapFrom(node);
       case WriteRegTensorNode node when node.regTensor().isRegisterFile() -> mapFrom(node);
@@ -299,29 +299,29 @@ public class GenerateInstructionOperandsPass extends Pass {
   }
 
   /**
-   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   * Returns a {@link GcbInstructionOperand} given a {@link Node}.
    */
-  private TableGenInstructionOperand mapFrom(FieldAccessRefNode node) {
+  private GcbInstructionOperand mapFrom(FieldAccessRefNode node) {
     return new GcbInstructionImmediateOperand(node);
   }
 
   /**
-   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   * Returns a {@link GcbInstructionOperand} given a {@link Node}.
    */
-  private TableGenInstructionOperand mapFrom(FuncParamNode node) {
-    return new TableGenInstructionBareSymbolOperand(node,
+  private GcbInstructionOperand mapFrom(FuncParamNode node) {
+    return new GcbInstructionBareSymbolOperand(node,
         node.parameter().simpleName());
   }
 
   /**
-   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   * Returns a {@link GcbInstructionOperand} given a {@link Node}.
    */
-  private TableGenInstructionOperand mapFrom(
+  private GcbInstructionOperand mapFrom(
       ReadRegTensorNode node) {
     if (node.address() instanceof FieldRefNode field) {
-      return new TableGenInstructionRegisterFileOperand(node, field);
+      return new GcbInstructionRegisterFileOperand(node, field);
     } else if (node.address() instanceof FuncParamNode funcParamNode) {
-      return new TableGenInstructionIndexedRegisterFileOperand(node, funcParamNode);
+      return new GcbInstructionIndexedRegisterFileOperand(node, funcParamNode);
     } else if (node.address() instanceof ConstantNode constantNode) {
       // The register file has a constant as address.
       // This is ok as long as the value of the register file at the address is also constant.
@@ -339,7 +339,7 @@ public class GenerateInstructionOperandsPass extends Pass {
       // Heuristically, we take the type of the index because indices were also upcasted.
       var constantValue = constRegisterValue.value();
       constantValue.setType(constantNode.type());
-      return new TableGenConstantOperand(constantNode, constantValue);
+      return new GcbConstantOperand(constantNode, constantValue);
     } else {
       throw Diagnostic.error(
           "The compiler generator needs to generate a tablegen instruction operand from this "
@@ -348,11 +348,11 @@ public class GenerateInstructionOperandsPass extends Pass {
     }
   }
 
-  private TableGenInstructionOperand mapFrom(WriteRegTensorNode node) {
+  private GcbInstructionOperand mapFrom(WriteRegTensorNode node) {
     if (node.address() instanceof FieldRefNode field) {
-      return new TableGenInstructionRegisterFileOperand(node, field);
+      return new GcbInstructionRegisterFileOperand(node, field);
     } else if (node.address() instanceof FuncParamNode funcParamNode) {
-      return new TableGenInstructionIndexedRegisterFileOperand(node, funcParamNode);
+      return new GcbInstructionIndexedRegisterFileOperand(node, funcParamNode);
     } else {
       throw Diagnostic.error(
           "The compiler generator needs to generate a tablegen instruction operand from this "
@@ -362,14 +362,14 @@ public class GenerateInstructionOperandsPass extends Pass {
   }
 
   /**
-   * It is not allowed to have a {@link TableGenInstructionOperand} in the input list
+   * It is not allowed to have a {@link GcbInstructionOperand} in the input list
    * when it is already in the output list. That's why we compute the {@code outputOperands}
    * first and then filter out the {@code stream} for elements which already present in
    * {@code outputOperands}.
    */
-  protected static Stream<TableGenInstructionOperand> filterOutputs(
-      List<TableGenInstructionOperand> outputOperands,
-      Stream<TableGenInstructionOperand> stream) {
+  protected static Stream<GcbInstructionOperand> filterOutputs(
+      List<GcbInstructionOperand> outputOperands,
+      Stream<GcbInstructionOperand> stream) {
     /*
     pseudo instruction LA( rd: Index, symbol: Bits<32> ) =
     {
@@ -383,8 +383,8 @@ public class GenerateInstructionOperandsPass extends Pass {
 
     var visited =
         outputOperands.stream()
-            .filter(x -> x instanceof TableGenInstructionRegisterFileOperand
-                || x instanceof TableGenInstructionIndexedRegisterFileOperand)
+            .filter(x -> x instanceof GcbInstructionRegisterFileOperand
+                || x instanceof GcbInstructionIndexedRegisterFileOperand)
             .collect(Collectors.toSet());
 
     return stream

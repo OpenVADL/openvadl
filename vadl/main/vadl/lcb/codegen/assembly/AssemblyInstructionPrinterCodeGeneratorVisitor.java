@@ -27,12 +27,12 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
-import vadl.gcb.passes.operands.model.TableGenDefaultInstructionOperand;
-import vadl.gcb.passes.operands.model.TableGenInstructionBareSymbolOperand;
-import vadl.gcb.passes.operands.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
+import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.utils.SourceLocation;
@@ -411,13 +411,13 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     int outputOffset = tableGenInstruction.getOutOperands().size();
     for (int i = 0; i < tableGenInstruction.getInOperands().size(); i++) {
       var operand = tableGenInstruction.getInOperands().get(i);
-      if (operand instanceof TableGenInstructionBareSymbolOperand symbolOperand
+      if (operand instanceof GcbInstructionBareSymbolOperand symbolOperand
           && symbolOperand.origin() instanceof FuncParamNode funcParamNodeOfOperand
           && needle.parameter().equals(funcParamNodeOfOperand.parameter())) {
         return Optional.of(outputOffset + i);
       } else if (operand instanceof TableGenInstructionLabelOperand) {
         return Optional.of(outputOffset + i);
-      } else if (operand instanceof TableGenDefaultInstructionOperand x
+      } else if (operand instanceof GcbDefaultInstructionOperand x
           && x.name().equals(needle.parameter().identifier.simpleName())) {
         return Optional.of(outputOffset + i);
       }
@@ -454,7 +454,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
   private Optional<Integer> indexInOutputs(FuncParamNode needle) {
     for (int i = 0; i < tableGenInstruction.getOutOperands().size(); i++) {
       var operand = tableGenInstruction.getOutOperands().get(i);
-      if (operand instanceof TableGenDefaultInstructionOperand x
+      if (operand instanceof GcbDefaultInstructionOperand x
           && x.name().equals(needle.parameter().identifier.simpleName())) {
         return Optional.of(i);
       }

@@ -17,10 +17,10 @@
 package vadl.lcb.passes.llvmLowering.domain.machineDag;
 
 import java.util.List;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.javaannotations.viam.DataValue;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
 import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
@@ -35,18 +35,18 @@ import vadl.viam.graph.dependency.ExpressionNode;
  */
 public class LcbMachineInstructionParameterNode extends ExpressionNode {
   @DataValue
-  private TableGenInstructionOperand instructionOperand;
+  private GcbInstructionOperand instructionOperand;
 
-  public LcbMachineInstructionParameterNode(TableGenInstructionOperand instructionOperand) {
+  public LcbMachineInstructionParameterNode(GcbInstructionOperand instructionOperand) {
     super(Type.dummy());
     this.instructionOperand = instructionOperand;
   }
 
-  public TableGenInstructionOperand instructionOperand() {
+  public GcbInstructionOperand instructionOperand() {
     return instructionOperand;
   }
 
-  public void setInstructionOperand(TableGenInstructionOperand operand) {
+  public void setInstructionOperand(GcbInstructionOperand operand) {
     this.instructionOperand = operand;
   }
 

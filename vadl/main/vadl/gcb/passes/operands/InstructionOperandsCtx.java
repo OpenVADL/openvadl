@@ -18,7 +18,7 @@ package vadl.gcb.passes.operands;
 
 import java.util.ArrayList;
 import java.util.List;
-import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.Instruction;
@@ -27,23 +27,23 @@ import vadl.viam.Instruction;
  * An extension for {@link Instruction} to store input and output operands.
  */
 public class InstructionOperandsCtx extends DefinitionExtension<Instruction> {
-  private final List<TableGenInstructionOperand> inputs;
-  private final List<TableGenInstructionOperand> outputs;
+  private final List<GcbInstructionOperand> inputs;
+  private final List<GcbInstructionOperand> outputs;
 
   /**
    * Constructor.
    */
-  public InstructionOperandsCtx(List<TableGenInstructionOperand> inputs,
-                                List<TableGenInstructionOperand> outputs) {
+  public InstructionOperandsCtx(List<GcbInstructionOperand> inputs,
+                                List<GcbInstructionOperand> outputs) {
     this.inputs = new ArrayList<>(inputs);
     this.outputs = new ArrayList<>(outputs);
   }
 
-  public List<TableGenInstructionOperand> inputs() {
+  public List<GcbInstructionOperand> inputs() {
     return inputs;
   }
 
-  public List<TableGenInstructionOperand> outputs() {
+  public List<GcbInstructionOperand> outputs() {
     return outputs;
   }
 

@@ -16,15 +16,27 @@
 
 package vadl.gcb.passes.operands.model;
 
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.viam.graph.Node;
 
 /**
- * Represents a bare symbol operand in TableGen.
+ * An {@link TableGenInstruction} has list of operands for inputs and outputs.
+ * This class represent one element of the inputs or outputs.
+ * A parameter represents {@code X:$rs1} in
+ * <pre>
+ * {@code
+ * def : Pat<(xor X:$rs1, RV3264I_Itype_immAsInt64:$imm),
+ * (XORI X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+ * }</pre>
  */
-public class TableGenInstructionBareSymbolOperand
-    extends TableGenDefaultInstructionOperand {
-  public TableGenInstructionBareSymbolOperand(
-      Node origin, String name) {
-    super(origin, "bare_symbol", name);
+public abstract class GcbInstructionOperand implements InstructionOperandPrintable {
+  protected final Node origin;
+
+  public GcbInstructionOperand(Node origin) {
+    this.origin = origin;
+  }
+
+  public Node origin() {
+    return origin;
   }
 }

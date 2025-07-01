@@ -28,8 +28,8 @@ import vadl.viam.graph.dependency.WriteRegTensorNode;
 /**
  * Indicates that the operand is a register file when the address is a {@link Format.Field}.
  */
-public class TableGenInstructionRegisterFileOperand
-    extends TableGenDefaultInstructionOperand
+public class GcbInstructionRegisterFileOperand
+    extends GcbDefaultInstructionOperand
     implements ReferencesFormatField {
   private final RegisterTensor registerFile;
   private final Format.Field formatField;
@@ -37,7 +37,7 @@ public class TableGenInstructionRegisterFileOperand
   /**
    * Constructor.
    */
-  public TableGenInstructionRegisterFileOperand(ReadRegTensorNode node, Format.Field address) {
+  public GcbInstructionRegisterFileOperand(ReadRegTensorNode node, Format.Field address) {
     super(node, node.regTensor().simpleName(), address.identifier.simpleName());
     this.registerFile = node.regTensor();
     this.registerFile.ensure(registerFile.isRegisterFile(), "must be registerfile");
@@ -48,14 +48,14 @@ public class TableGenInstructionRegisterFileOperand
   /**
    * Constructor.
    */
-  public TableGenInstructionRegisterFileOperand(ReadRegTensorNode node, FieldRefNode address) {
+  public GcbInstructionRegisterFileOperand(ReadRegTensorNode node, FieldRefNode address) {
     this(node, address.formatField());
   }
 
   /**
    * Constructor.
    */
-  public TableGenInstructionRegisterFileOperand(WriteRegTensorNode node, FieldRefNode address) {
+  public GcbInstructionRegisterFileOperand(WriteRegTensorNode node, FieldRefNode address) {
     super(node, node.regTensor().simpleName(), address.formatField().identifier.simpleName());
     this.registerFile = node.regTensor();
     this.registerFile.ensure(registerFile.isRegisterFile(), "must be registerfile");
@@ -66,9 +66,9 @@ public class TableGenInstructionRegisterFileOperand
    * Constructor for pseudo instructions. Pseudo instructions will have a {@link ReadRegTensorNode}
    * or {@link WriteRegTensorNode} because they are constructed over {@link FuncParamNode}.
    */
-  public TableGenInstructionRegisterFileOperand(RegisterTensor registerFile,
-                                                Format.Field field,
-                                                FuncParamNode funcParamNode) {
+  public GcbInstructionRegisterFileOperand(RegisterTensor registerFile,
+                                           Format.Field field,
+                                           FuncParamNode funcParamNode) {
     super(funcParamNode, registerFile.simpleName(),
         funcParamNode.parameter().identifier.simpleName());
     this.registerFile = registerFile;

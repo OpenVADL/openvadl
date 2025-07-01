@@ -19,7 +19,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.model;
 import java.util.Collections;
 import java.util.List;
 import vadl.gcb.passes.RegisterRef;
-import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.viam.CompilerInstruction;
 
@@ -34,8 +34,8 @@ public class TableGenCompilerInstruction extends TableGenInstruction {
       String name,
       String namespace,
       LlvmLoweringPass.Flags flags,
-      List<TableGenInstructionOperand> inOperands,
-      List<TableGenInstructionOperand> outOperands,
+      List<GcbInstructionOperand> inOperands,
+      List<GcbInstructionOperand> outOperands,
       List<RegisterRef> uses,
       List<RegisterRef> defs) {
     super(name, namespace, flags, inOperands, outOperands, uses, defs, Collections.emptyList());

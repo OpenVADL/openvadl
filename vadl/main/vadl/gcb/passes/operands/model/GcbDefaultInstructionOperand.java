@@ -22,14 +22,14 @@ import vadl.viam.graph.Node;
 /**
  * The default tablegen instruction operand has always a type and a name.
  */
-public class TableGenDefaultInstructionOperand extends TableGenInstructionOperand {
+public class GcbDefaultInstructionOperand extends GcbInstructionOperand {
   private final String type;
   private final String name;
 
   /**
    * Constructor.
    */
-  public TableGenDefaultInstructionOperand(Node origin, String type, String name) {
+  public GcbDefaultInstructionOperand(Node origin, String type, String name) {
     super(origin);
     this.type = type;
     this.name = name;
@@ -58,7 +58,7 @@ public class TableGenDefaultInstructionOperand extends TableGenInstructionOperan
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TableGenDefaultInstructionOperand that = (TableGenDefaultInstructionOperand) o;
+    GcbDefaultInstructionOperand that = (GcbDefaultInstructionOperand) o;
     return Objects.equals(type, that.type) && Objects.equals(name, that.name);
   }
 }

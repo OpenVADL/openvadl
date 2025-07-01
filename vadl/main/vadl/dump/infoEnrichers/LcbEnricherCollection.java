@@ -28,9 +28,9 @@ import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
 import vadl.gcb.passes.MachineInstructionCtx;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
 import vadl.viam.Instruction;
 
 /**
@@ -81,15 +81,15 @@ public class LcbEnricherCollection {
             (LlvmLoweringPass.LlvmLoweringPassResult)
                 passResults.lastResultOf(LlvmLoweringPass.class);
 
-        if (results != null && definitionEntity.origin() instanceof Instruction instruction) {
+        if (definitionEntity.origin() instanceof Instruction instruction) {
           var result = results.machineInstructionRecords().get(instruction);
 
           if (result != null) {
             var renderedInputOperands =
-                result.info().inputs().stream().map(TableGenInstructionOperand::render).collect(
+                result.info().inputs().stream().map(GcbInstructionOperand::render).collect(
                     Collectors.joining(", "));
             var renderedOutputOperands =
-                result.info().outputs().stream().map(TableGenInstructionOperand::render).collect(
+                result.info().outputs().stream().map(GcbInstructionOperand::render).collect(
                     Collectors.joining(", "));
             definitionEntity.addInfo(InfoUtils.createCodeBlockExpandable(
                 "TableGen Input Operands",

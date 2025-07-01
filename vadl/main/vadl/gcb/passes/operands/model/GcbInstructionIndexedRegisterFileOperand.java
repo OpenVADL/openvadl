@@ -37,15 +37,15 @@ import vadl.viam.graph.dependency.WriteRegTensorNode;
  * }
  * </code>
  */
-public class TableGenInstructionIndexedRegisterFileOperand
-    extends TableGenDefaultInstructionOperand {
+public class GcbInstructionIndexedRegisterFileOperand
+    extends GcbDefaultInstructionOperand {
   private final RegisterTensor registerFile;
 
   /**
    * Constructor.
    */
-  public TableGenInstructionIndexedRegisterFileOperand(ReadRegTensorNode node,
-                                                       FuncParamNode address) {
+  public GcbInstructionIndexedRegisterFileOperand(ReadRegTensorNode node,
+                                                  FuncParamNode address) {
     super(node, node.regTensor().simpleName(), address.parameter().identifier.simpleName());
     this.registerFile = node.regTensor();
     node.regTensor().ensure(node.regTensor().isRegisterFile(), "must be a register file");
@@ -54,8 +54,8 @@ public class TableGenInstructionIndexedRegisterFileOperand
   /**
    * Constructor.
    */
-  public TableGenInstructionIndexedRegisterFileOperand(WriteRegTensorNode node,
-                                                       FuncParamNode address) {
+  public GcbInstructionIndexedRegisterFileOperand(WriteRegTensorNode node,
+                                                  FuncParamNode address) {
     super(node, node.regTensor().simpleName(), address.parameter().identifier.simpleName());
     this.registerFile = node.regTensor();
     node.regTensor().ensure(node.regTensor().isRegisterFile(), "must be a register file");
@@ -64,8 +64,8 @@ public class TableGenInstructionIndexedRegisterFileOperand
   /**
    * Constructor.
    */
-  public TableGenInstructionIndexedRegisterFileOperand(RegisterTensor registerFile,
-                                                       ConstantNode address) {
+  public GcbInstructionIndexedRegisterFileOperand(RegisterTensor registerFile,
+                                                  ConstantNode address) {
     super(address, registerFile.identifier.simpleName(),
         address.constant().asVal().intValue() + "");
     this.registerFile = registerFile;
@@ -86,8 +86,8 @@ public class TableGenInstructionIndexedRegisterFileOperand
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TableGenInstructionIndexedRegisterFileOperand that =
-        (TableGenInstructionIndexedRegisterFileOperand) o;
+    GcbInstructionIndexedRegisterFileOperand that =
+        (GcbInstructionIndexedRegisterFileOperand) o;
     return Objects.equals(registerFile, that.registerFile)
         && Objects.equals(name(), that.name())
         && Objects.equals(type(), that.type());

@@ -22,7 +22,7 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 /**
  * Indicates that the operand is an immediate.
  */
-public class GcbInstructionImmediateOperand extends TableGenDefaultInstructionOperand {
+public class GcbInstructionImmediateOperand extends GcbDefaultInstructionOperand {
   private final Format.FieldAccess fieldAccess;
 
   /**

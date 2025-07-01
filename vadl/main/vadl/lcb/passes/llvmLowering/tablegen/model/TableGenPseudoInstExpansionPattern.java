@@ -18,7 +18,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.List;
 import vadl.gcb.passes.RegisterRef;
-import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.viam.graph.Graph;
 
 /**
@@ -32,8 +32,8 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
   private final boolean isIndirectBranch;
   private final boolean isTerminator;
   private final boolean isBarrier;
-  private final List<TableGenInstructionOperand> outputs;
-  private final List<TableGenInstructionOperand> inputs;
+  private final List<GcbInstructionOperand> outputs;
+  private final List<GcbInstructionOperand> inputs;
   private final List<RegisterRef> defs;
   private final Graph machine;
 
@@ -48,8 +48,8 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
                                             boolean isIndirectBranch,
                                             boolean isTerminator,
                                             boolean isBarrier,
-                                            List<TableGenInstructionOperand> inputs,
-                                            List<TableGenInstructionOperand> outputs,
+                                            List<GcbInstructionOperand> inputs,
+                                            List<GcbInstructionOperand> outputs,
                                             List<RegisterRef> defs) {
     super(selector);
     this.name = name;
@@ -107,11 +107,11 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
     return isBarrier;
   }
 
-  public List<TableGenInstructionOperand> outputs() {
+  public List<GcbInstructionOperand> outputs() {
     return outputs;
   }
 
-  public List<TableGenInstructionOperand> inputs() {
+  public List<GcbInstructionOperand> inputs() {
     return inputs;
   }
 

@@ -18,13 +18,13 @@ package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionIndexedRegisterFileOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
-import vadl.gcb.passes.operands.model.TableGenDefaultInstructionOperand;
-import vadl.gcb.passes.operands.model.TableGenInstructionIndexedRegisterFileOperand;
-import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
-import vadl.gcb.passes.operands.model.TableGenInstructionRegisterFileOperand;
 import vadl.types.DataType;
 import vadl.viam.Counter;
 import vadl.viam.RegisterTensor;
@@ -40,7 +40,7 @@ import vadl.viam.graph.dependency.ReadRegTensorNode;
  */
 public class LlvmReadRegFileNode extends ReadRegTensorNode implements LlvmNodeLowerable,
     LlvmNodeReplaceable {
-  protected TableGenDefaultInstructionOperand instructionOperand;
+  protected GcbDefaultInstructionOperand instructionOperand;
 
   /**
    * Constructor.
@@ -50,7 +50,7 @@ public class LlvmReadRegFileNode extends ReadRegTensorNode implements LlvmNodeLo
                              DataType type,
                              @Nullable Counter staticCounterAccess) {
     super(registerFile, new NodeList<>(address), type, staticCounterAccess);
-    instructionOperand = new TableGenInstructionRegisterFileOperand(this, address);
+    instructionOperand = new GcbInstructionRegisterFileOperand(this, address);
   }
 
   /**
@@ -62,9 +62,9 @@ public class LlvmReadRegFileNode extends ReadRegTensorNode implements LlvmNodeLo
                              @Nullable Counter staticCounterAccess) {
     super(registerFile, new NodeList<>(address), type, staticCounterAccess);
     if (address instanceof FieldRefNode fieldRefNode) {
-      instructionOperand = new TableGenInstructionRegisterFileOperand(this, fieldRefNode);
+      instructionOperand = new GcbInstructionRegisterFileOperand(this, fieldRefNode);
     } else if (address instanceof FuncParamNode funcParamNode) {
-      instructionOperand = new TableGenInstructionIndexedRegisterFileOperand(this, funcParamNode);
+      instructionOperand = new GcbInstructionIndexedRegisterFileOperand(this, funcParamNode);
     } else {
       throw Diagnostic.error("Cannot construct a tablegen operand from this", address.location())
           .build();
@@ -72,7 +72,7 @@ public class LlvmReadRegFileNode extends ReadRegTensorNode implements LlvmNodeLo
   }
 
   @Override
-  public TableGenInstructionOperand operand() {
+  public GcbInstructionOperand operand() {
     return instructionOperand;
   }
 

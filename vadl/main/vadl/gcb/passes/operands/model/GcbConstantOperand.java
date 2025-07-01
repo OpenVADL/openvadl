@@ -29,13 +29,13 @@ import vadl.viam.graph.dependency.ConstantNode;
  * Indicates that the operand is a {@link Constant} index of a register file. It
  * can be only lowered when the register file at that constant is also a constant.
  */
-public final class TableGenConstantOperand extends TableGenInstructionOperand {
+public final class GcbConstantOperand extends GcbInstructionOperand {
   private final Constant constant;
 
   /**
    * Constructor.
    */
-  public TableGenConstantOperand(ConstantNode constantNode, Constant value) {
+  public GcbConstantOperand(ConstantNode constantNode, Constant value) {
     super(constantNode);
     ensure(constantNode.constant().equals(value),
         "This is definitely wrong because index and constraint value are mismatched");
