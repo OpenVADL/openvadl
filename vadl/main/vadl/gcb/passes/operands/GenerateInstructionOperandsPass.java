@@ -22,6 +22,7 @@ import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,6 +40,7 @@ import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.PseudoInstruction;
@@ -47,6 +49,7 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -55,6 +58,7 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
@@ -165,23 +169,91 @@ public class GenerateInstructionOperandsPass extends Pass {
    * Most instruction's behaviors have inputs. Those are the results which the instruction requires.
    */
   private static List<Node> getInputOperands(Graph graph) {
-    // First, the registers
-    var x = graph.getNodes(ReadRegTensorNode.class).filter(k -> k.regTensor().isRegisterFile());
-    // Then, immediates
-    var y = graph.getNodes(FieldAccessRefNode.class);
-    // Then, the rest
-    var z = graph.getNodes(FuncCallNode.class).flatMap(
-        funcCallNode -> funcCallNode.function().behavior().getNodes(FuncParamNode.class));
+    var children = new ArrayList<Node>();
+    var builtins = new ArrayList<Node>();
+    var funcCalls = new ArrayList<Node>();
+    var sideEffects = graph.getNodes(SideEffectNode.class).toList();
 
-    // We need this edge case for compiler and pseudo instructions.
-    // However, we need to filter for `WriteResourceNode` and `ReadResourceNode`, so
-    // the operand is not added twice.
-    var u = graph.getNodes(PseudoFuncParamNode.class)
-        .filter(k -> k.usages()
-            .noneMatch(v -> v instanceof WriteResourceNode || v instanceof ReadResourceNode));
+    getNodesRecursively(sideEffects, builtins, BuiltInCall.class);
 
-    return Stream.concat(Stream.concat(Stream.concat(x, y), z), u)
-        .map(k -> (Node) k).toList();
+    // First arithmetical builtins
+    builtins.stream()
+        .map(x -> (BuiltInCall) x)
+        // Heuristic to prefer arithmetic builtins
+        .filter(x -> !x.builtIn().returns(Collections.singletonList(Type.bool())).isDataType())
+        .forEach(x -> {
+          for (var arg : x.arguments()) {
+            if (arg instanceof ReadRegTensorNode readRegTensorNode && readRegTensorNode.regTensor()
+                .isRegisterFile()) {
+              children.add(arg);
+            }
+          }
+        });
+
+    // Anything else
+    builtins.stream()
+        .map(x -> (BuiltInCall) x)
+        .filter(x -> x.builtIn().returns(Collections.singletonList(Type.bool())).isDataType())
+        .forEach(x -> {
+          for (var arg : x.arguments()) {
+            if (arg instanceof ReadRegTensorNode readRegTensorNode && readRegTensorNode.regTensor()
+                .isRegisterFile()) {
+              children.add(arg);
+            }
+          }
+        });
+
+    // Field Accesses
+    builtins.stream()
+        .map(x -> (BuiltInCall) x)
+        .filter(x -> !x.builtIn().returns(Collections.singletonList(Type.bool())).isDataType())
+        .forEach(x -> {
+          for (var arg : x.arguments()) {
+            if (arg instanceof FieldAccessRefNode) {
+              children.add(arg);
+            }
+          }
+        });
+
+    // To make sure we didn't forget anything
+    getNodesRecursively(sideEffects, children, ReadRegTensorNode.class);
+    getNodesRecursively(sideEffects, children, FieldAccessRefNode.class);
+    getNodesRecursively(sideEffects, funcCalls, FuncCallNode.class);
+    getNodesRecursively(sideEffects, children, PseudoFuncParamNode.class);
+
+    return Stream.concat(
+        children.stream()
+            .filter(node -> {
+              if (node instanceof ReadRegTensorNode readRegTensorNode) {
+                return readRegTensorNode.regTensor().isRegisterFile();
+              } else if (node instanceof PseudoFuncParamNode pseudoFuncParamNode) {
+                // We need this edge case for compiler and pseudo instructions.
+                // However, we need to filter for `WriteResourceNode` and `ReadResourceNode`, so
+                // the operand is not added twice.
+                return pseudoFuncParamNode.usages()
+                    .noneMatch(
+                        v -> v instanceof WriteResourceNode || v instanceof ReadResourceNode);
+              } else {
+                return true;
+              }
+            })
+        , funcCalls.stream().flatMap(
+                funcCallNode -> ((FuncCallNode) funcCallNode).function().behavior()
+                    .getNodes(FuncParamNode.class))
+            .map(node -> (Node) node)
+    )
+        .distinct()
+        .toList();
+  }
+
+  private static <T extends Node> void getNodesRecursively(
+      List<SideEffectNode> sideEffects, ArrayList<Node> children,
+      Class<T> clazz) {
+    for (var sideEffect : sideEffects) {
+      var temp = new ArrayList<T>();
+      sideEffect.collectInputsWithChildren(temp, clazz);
+      children.addAll(temp);
+    }
   }
 
   /**
