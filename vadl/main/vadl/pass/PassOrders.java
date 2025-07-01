@@ -31,6 +31,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.DetectRegisterIndicesPass;
+import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.DetermineRelocationTypeForFieldPass;
 import vadl.gcb.passes.GenerateCompilerRegistersPass;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
@@ -75,7 +76,6 @@ import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaRelocationMatchingPass;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
-import vadl.lcb.passes.llvmLowering.DetermineRegisterUsesAndDefsPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenAbiSequenceInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
@@ -225,6 +225,7 @@ public class PassOrders {
     order.add(new GenerateFieldAccessEncodingAndPredicateFunctionsPass(gcbConfiguration));
     order.add(new PredicateFunctionInlinerPass(gcbConfiguration));
     order.add(new AssemblyConcatBuiltinMergingPass(gcbConfiguration));
+    order.add(new DetermineRegisterUsesAndDefsPass(gcbConfiguration));
     order.add(new InstructionPatternPruningPass(gcbConfiguration));
 
     addHtmlDump(order, gcbConfiguration, "gcbProcessing",
@@ -249,7 +250,6 @@ public class PassOrders {
 
     order.add(new IsaRelocationMatchingPass(configuration));
     order.add(new GenerateTableGenRegistersPass(configuration));
-    order.add(new DetermineRegisterUsesAndDefsPass(configuration));
     order.add(new RemoveRegisterWritesPass(configuration));
     order.add(new RemoveUnusedStatusFlagsFromBuiltinsPass(configuration));
     order.add(new ReplaceStatusBuiltinsByNonStatusBuiltinsPass(configuration));

@@ -26,7 +26,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.jetbrains.annotations.Contract;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;

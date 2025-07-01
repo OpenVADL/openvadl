@@ -162,11 +162,13 @@ instruction set architecture RV3264Base = {
     assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
     }
 
+  function UTypeShift(immUp : Bits<MLen>) -> Bits<20> = (immUp >> 12) as Bits<20>
+
   model UtypeInstr (name : Id, opcode : Bin, rhsEx : Ex) : IsaDefs = {
     instruction $name : Utype =                        // upper immediate instructions
       X(rd) := $rhsEx
     encoding $name = {opcode = $opcode}
-    assembly $name = (mnemonic, " ", register(rd), ",", hex(imm))
+    assembly $name = (mnemonic, " ", register(rd), ",", hex(UTypeShift(immUp)))
     }
 
   model LtypeInstr (name : Id, funct3 : Bin, memEx : CallEx, exTy: Id) : IsaDefs = {

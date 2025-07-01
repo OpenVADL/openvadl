@@ -31,11 +31,11 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
-import vadl.lcb.passes.llvmLowering.DetermineRegisterUsesAndDefsPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
 import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;
@@ -205,10 +205,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       return Optional.empty();
     }
 
-    // Continue with lowering of nodes
-    for (var endNode : copy.getNodes(SideEffectNode.class).toList()) {
-      replaceNode(instruction, endNode);
-    }
+    lowerNodes(instruction, copy);
 
     var isLowerable = !hasRedFlags(instruction, copy);
     var info = lowerBaseInfo(copy, registerDefsUses);
@@ -264,6 +261,13 @@ public abstract class LlvmInstructionLoweringStrategy {
           info,
           Collections.emptyList(),
           Collections.emptyList()));
+    }
+  }
+
+  private void lowerNodes(Instruction instruction, Graph copy) {
+    // Replaces nodes along side effects.
+    for (var endNode : copy.getNodes(SideEffectNode.class).toList()) {
+      replaceNode(instruction, endNode);
     }
   }
 

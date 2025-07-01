@@ -18,8 +18,8 @@ package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.Collections;
 import java.util.List;
+import vadl.gcb.passes.RegisterRef;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.CompilerInstruction;
 

@@ -16,8 +16,9 @@
 
 package vadl.lcb.codegen.assembly;
 
-import java.io.StringWriter;
+import java.util.stream.Collectors;
 import vadl.cppCodeGen.model.CppFunctionCode;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.control.ReturnNode;
@@ -26,7 +27,6 @@ import vadl.viam.graph.control.ReturnNode;
  * Wrapper class for the visitor.
  */
 public class AssemblyInstructionPrinterCodeGenerator {
-  private final StringWriter writer = new StringWriter();
 
   /**
    * Generate a function which prints the assembly.
@@ -34,14 +34,36 @@ public class AssemblyInstructionPrinterCodeGenerator {
   public CppFunctionCode generateFunctionBody(
       PrintableInstruction instruction,
       TableGenInstruction tableGenInstruction) {
-    var visitor =
-        new AssemblyInstructionPrinterCodeGeneratorVisitor(writer,
-            instruction,
-            tableGenInstruction);
+    // There are two cases
+    // The first case is that all immediates are really immediates.
+    // And the second case is that the immediate is actually a label.
+    var immediates = tableGenInstruction.getInOperands().stream()
+        .filter(x -> x instanceof ReferencesImmediateOperand)
+        .map(x -> ((ReferencesImmediateOperand) x))
+        .toList();
 
-    instruction.assembly().function().behavior().getNodes(ReturnNode.class)
-        .forEach(visitor::visit);
+    var isImm = immediates.stream().map(x -> String.format("MI->getOperand(%s).isImm()",
+            tableGenInstruction.getInOperands().indexOf(x) + tableGenInstruction.getOutOperands()
+                .size()))
+        .collect(Collectors.joining(" && "));
 
-    return new CppFunctionCode(writer.toString());
+    var handler = new AssemblyInstructionPrinterImmediateHandler(instruction, tableGenInstruction);
+    var handler2 = new AssemblyInstructionPrinterLabelHandler(instruction, tableGenInstruction);
+
+    var returnNodes =
+        instruction.assembly().function().behavior().getNodes(ReturnNode.class).toList();
+    var returnNode = returnNodes.getFirst();
+
+    AssemblyInstructionPrinterImmediateHandlerDispatcher.dispatch(handler, handler.ctx(),
+        returnNode);
+    AssemblyInstructionPrinterLabelHandlerDispatcher.dispatch(handler2, handler2.ctx(), returnNode);
+
+    return new CppFunctionCode(String.format("""
+          if(%s) {
+            %s
+          } else {
+            %s
+          }
+        """, immediates.isEmpty() ? "true" : isImm, handler.builder(), handler2.builder()));
   }
 }

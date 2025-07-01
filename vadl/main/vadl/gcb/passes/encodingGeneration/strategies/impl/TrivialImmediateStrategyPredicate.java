@@ -16,25 +16,15 @@
 
 package vadl.gcb.passes.encodingGeneration.strategies.impl;
 
-import java.math.BigInteger;
-import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.gcb.passes.encodingGeneration.strategies.EncodingPredicateGenerationStrategy;
-import vadl.types.BuiltInTable;
-import vadl.types.Type;
-import vadl.utils.GraphUtils;
-import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Format;
-import vadl.viam.Identifier;
 import vadl.viam.Instruction;
-import vadl.viam.Parameter;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
-import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SliceNode;
 
 /**

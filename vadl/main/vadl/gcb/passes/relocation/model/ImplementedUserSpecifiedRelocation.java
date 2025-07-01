@@ -19,7 +19,6 @@ package vadl.gcb.passes.relocation.model;
 import static vadl.viam.ViamError.ensure;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
