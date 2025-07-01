@@ -29,6 +29,9 @@ import vadl.error.Diagnostic;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.RegisterRef;
+import vadl.gcb.passes.operands.model.TableGenInstructionImmediateOperand;
+import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
+import vadl.gcb.passes.operands.model.TableGenInstructionRegisterFileOperand;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.database.Database;
@@ -46,9 +49,6 @@ import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.gcb.passes.operands.model.TableGenInstructionImmediateOperand;
-import vadl.gcb.passes.operands.model.TableGenInstructionOperand;
-import vadl.gcb.passes.operands.model.TableGenInstructionRegisterFileOperand;
 import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
@@ -179,8 +179,11 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
             .firstMachineInstruction();
     var machine = new Graph("machine");
     var constant = new Constant.Str("0");
+    var llvmReadRegFile =
+        new LlvmReadRegFileNode(ref.regTensor(), address.copy(), ref.type(), ref.staticCounterAccess());
     machine.addWithInputs(new LcbMachineInstructionNode(
-        new NodeList<>(new ConstantNode(new Constant.Str(abi.returnAddress().render())), ref,
+        new NodeList<>(new ConstantNode(new Constant.Str(abi.returnAddress().render())),
+            llvmReadRegFile,
             new ConstantNode(constant)), jalr));
     return new TableGenPseudoInstExpansionPattern("PseudoCALLIndirect",
         selector,
@@ -191,7 +194,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         false,
         false,
         List.of(
-            new TableGenInstructionRegisterFileOperand(ref, address)
+            new TableGenInstructionRegisterFileOperand(llvmReadRegFile, address)
         ), Collections.emptyList(),
         List.of(
             new RegisterRef(abi.returnAddress().registerFile(),
@@ -233,7 +236,8 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
     machine.addWithInputs(new LcbMachineInstructionNode(
         new NodeList<>(
             new ConstantNode(new Constant.Str(zeroRegister(inputRegister.registerFile()))),
-            ref,
+            new LlvmReadRegFileNode(ref.registerTensor(), address, ref.type(),
+                ref.staticCounterAccess()),
             fieldRef), jalr));
     return new TableGenPseudoInstExpansionPattern("PseudoBRIND",
         selector,
