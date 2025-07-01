@@ -222,32 +222,33 @@ public class GenerateInstructionOperandsPass extends Pass {
     getNodesRecursively(sideEffects, children, PseudoFuncParamNode.class);
 
     return Stream.concat(
-        children.stream()
-            .filter(node -> {
-              if (node instanceof ReadRegTensorNode readRegTensorNode) {
-                return readRegTensorNode.regTensor().isRegisterFile();
-              } else if (node instanceof PseudoFuncParamNode pseudoFuncParamNode) {
-                // We need this edge case for compiler and pseudo instructions.
-                // However, we need to filter for `WriteResourceNode` and `ReadResourceNode`, so
-                // the operand is not added twice.
-                return pseudoFuncParamNode.usages()
-                    .noneMatch(
-                        v -> v instanceof WriteResourceNode || v instanceof ReadResourceNode);
-              } else {
-                return true;
-              }
-            })
-        , funcCalls.stream().flatMap(
-                funcCallNode -> ((FuncCallNode) funcCallNode).function().behavior()
-                    .getNodes(FuncParamNode.class))
-            .map(node -> (Node) node)
-    )
+            children.stream()
+                .filter(node -> {
+                  if (node instanceof ReadRegTensorNode readRegTensorNode) {
+                    return readRegTensorNode.regTensor().isRegisterFile();
+                  } else if (node instanceof PseudoFuncParamNode pseudoFuncParamNode) {
+                    // We need this edge case for compiler and pseudo instructions.
+                    // However, we need to filter for `WriteResourceNode` and `ReadResourceNode`, so
+                    // the operand is not added twice.
+                    return pseudoFuncParamNode.usages()
+                        .noneMatch(
+                            v -> v instanceof WriteResourceNode || v instanceof ReadResourceNode);
+                  } else {
+                    return true;
+                  }
+                })
+            , funcCalls.stream().flatMap(
+                    funcCallNode -> ((FuncCallNode) funcCallNode).function().behavior()
+                        .getNodes(FuncParamNode.class))
+                .map(node -> (Node) node)
+        )
         .distinct()
         .toList();
   }
 
   private static <T extends Node> void getNodesRecursively(
-      List<SideEffectNode> sideEffects, ArrayList<Node> children,
+      List<SideEffectNode> sideEffects,
+      List<Node> children,
       Class<T> clazz) {
     for (var sideEffect : sideEffects) {
       var temp = new ArrayList<T>();
