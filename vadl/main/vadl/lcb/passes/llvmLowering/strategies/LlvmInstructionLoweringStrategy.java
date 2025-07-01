@@ -483,83 +483,6 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Extract the output parameters of {@link Graph}.
-   */
-  public static List<TableGenInstructionOperand> getTableGenOutputOperands(Graph graph) {
-    var operands = getOutputOperands(graph);
-    return operands
-        .stream()
-        .filter(operand -> {
-          // Why?
-          // Because LLVM cannot handle static registers in input or output operands.
-          // They belong to defs and uses instead.
-          return !operand.hasConstantAddress();
-        })
-        .map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput)
-        .toList();
-  }
-
-  /**
-   * Extracts the input operands from the {@link Graph}. But it will skip nodes which are
-   * already a {@link Node} in the {@code outputOperands}. Because if you have a
-   * {@link PseudoInstruction} like {@code ADDI rd, rd, 1} then is the output and one input
-   * the same which tablegen will not accept.
-   */
-  public static List<TableGenInstructionOperand> getTableGenInputOperands(
-      List<TableGenInstructionOperand> outputOperands,
-      Graph graph) {
-
-    var inputOperands = getInputOperands(graph)
-        .stream()
-        .filter(node -> {
-          // Why?
-          // Because LLVM cannot handle static registers in input or output operands.
-          // They belong to defs and uses instead.
-          if (node instanceof ReadRegTensorNode readRegTensorNode
-              && readRegTensorNode.regTensor().isRegisterFile()) {
-            return !readRegTensorNode.hasConstantAddress();
-          }
-          return true;
-        })
-        .map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput)
-        .toList();
-
-    return filterOutputs(outputOperands, inputOperands.stream())
-        .toList();
-  }
-
-  /**
-   * It is not allowed to have a {@link TableGenInstructionOperand} in the input list
-   * when it is already in the output list. That's why we compute the {@code outputOperands}
-   * first and then filter out the {@code stream} for elements which already present in
-   * {@code outputOperands}.
-   */
-  protected static Stream<TableGenInstructionOperand> filterOutputs(
-      List<TableGenInstructionOperand> outputOperands,
-      Stream<TableGenInstructionOperand> stream) {
-    /*
-    pseudo instruction LA( rd: Index, symbol: Bits<32> ) =
-    {
-      LUI { rd = rd, imm = hi( symbol ) }
-      ADDI { rd = rd, rs1 = rd, imm = lo( symbol ) }
-    }
-
-    Here ADDI has a destination `rd` and an input `rs1` which is the same register as the
-    destination. For these cases, we do not want the operand in the inputs.
-     */
-
-    var visited =
-        outputOperands.stream()
-            .filter(x -> x instanceof TableGenInstructionRegisterFileOperand
-                || x instanceof TableGenInstructionIndexedRegisterFileOperand)
-            .collect(Collectors.toSet());
-
-    return stream
-        .filter(
-            node -> !visited.contains(node));
-  }
-
-  /**
    * Generate {@link TableGenInstructionOperand} which looks like "X:$lhs" for TableGen.
    */
   public static TableGenInstructionOperand generateTableGenInputOutput(Node operand) {
@@ -675,38 +598,6 @@ public abstract class LlvmInstructionLoweringStrategy {
               + "address for a field but it does not support it.",
           node.address().location()).build();
     }
-  }
-
-  /**
-   * Most instruction's behaviors have inputs. Those are the results which the instruction requires.
-   */
-  private static List<Node> getInputOperands(Graph graph) {
-    // First, the registers
-    var x = graph.getNodes(ReadRegTensorNode.class).filter(k -> k.regTensor().isRegisterFile());
-    // Then, immediates
-    var y = graph.getNodes(FieldAccessRefNode.class);
-    // Then, the rest
-    var z = graph.getNodes(FuncCallNode.class).flatMap(
-        funcCallNode -> funcCallNode.function().behavior().getNodes(FuncParamNode.class));
-
-    // We need this edge case for compiler and pseudo instructions.
-    // However, we need to filter for `WriteResourceNode` and `ReadResourceNode`, so
-    // the operand is not added twice.
-    var u = graph.getNodes(PseudoFuncParamNode.class)
-        .filter(k -> k.usages()
-            .noneMatch(v -> v instanceof WriteResourceNode || v instanceof ReadResourceNode));
-
-    return Stream.concat(Stream.concat(Stream.concat(x, y), z), u)
-        .map(k -> (Node) k).toList();
-  }
-
-  /**
-   * Most instruction's behaviors have outputs. Those are the results which the instruction emits.
-   */
-  private static List<WriteRegTensorNode> getOutputOperands(Graph graph) {
-    return graph.getNodes(WriteRegTensorNode.class)
-        .filter(e -> e.regTensor().isRegisterFile())
-        .toList();
   }
 
   protected List<TableGenPattern> generatePatterns(
