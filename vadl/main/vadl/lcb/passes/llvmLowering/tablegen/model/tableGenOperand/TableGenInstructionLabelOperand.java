@@ -20,10 +20,10 @@ import static vadl.viam.ViamError.ensure;
 
 import java.util.List;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
-import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.viam.Format;
 import vadl.viam.graph.Node;

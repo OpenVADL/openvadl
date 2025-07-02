@@ -18,8 +18,8 @@ package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 import java.util.List;
 import vadl.cppCodeGen.CppTypeMap;
-import vadl.javaannotations.viam.DataValue;
 import vadl.gcb.valuetypes.ValueType;
+import vadl.javaannotations.viam.DataValue;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;

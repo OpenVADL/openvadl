@@ -18,12 +18,12 @@ package vadl.lcb.passes.operands;
 
 import java.util.List;
 import java.util.Objects;
+import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
-import vadl.gcb.passes.operands.ReferencesFormatField;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
 import vadl.viam.Format;
 
 /**
