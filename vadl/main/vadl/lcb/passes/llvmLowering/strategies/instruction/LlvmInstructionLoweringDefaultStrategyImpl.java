@@ -22,7 +22,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
-import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;

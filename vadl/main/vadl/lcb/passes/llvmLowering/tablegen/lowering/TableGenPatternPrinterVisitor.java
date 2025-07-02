@@ -19,7 +19,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 import java.io.StringWriter;
 import java.util.Objects;
 import vadl.error.Diagnostic;
-import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;

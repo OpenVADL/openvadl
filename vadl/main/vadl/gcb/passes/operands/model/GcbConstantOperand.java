@@ -20,7 +20,7 @@ import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensurePresent;
 
 import vadl.error.Diagnostic;
-import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.graph.dependency.ConstantNode;

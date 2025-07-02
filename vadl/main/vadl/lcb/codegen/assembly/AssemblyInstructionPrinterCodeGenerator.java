@@ -18,7 +18,7 @@ package vadl.lcb.codegen.assembly;
 
 import java.util.stream.Collectors;
 import vadl.cppCodeGen.model.CppFunctionCode;
-import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.control.ReturnNode;

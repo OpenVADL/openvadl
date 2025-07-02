@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.llvmLowering.tablegen.model;
+package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
+
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 
 /**
  * Indicator interface which indicates that the operand is referencing

@@ -27,7 +27,7 @@ import vadl.gcb.passes.GenerateCompilerRegistersPass;
 import vadl.gcb.valuetypes.CompilerRegister;
 import vadl.gcb.valuetypes.CompilerRegisterClass;
 import vadl.gcb.valuetypes.IndexedCompilerRegister;
-import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegister;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
 import vadl.pass.Pass;

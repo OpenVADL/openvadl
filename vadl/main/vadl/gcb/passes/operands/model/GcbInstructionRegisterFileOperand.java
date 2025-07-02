@@ -17,7 +17,7 @@
 package vadl.gcb.passes.operands.model;
 
 import java.util.List;
-import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
+import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.viam.Format;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.dependency.FieldRefNode;

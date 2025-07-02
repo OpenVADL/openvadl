@@ -29,7 +29,7 @@ import vadl.cppCodeGen.SymbolTable;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
+import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
 import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
