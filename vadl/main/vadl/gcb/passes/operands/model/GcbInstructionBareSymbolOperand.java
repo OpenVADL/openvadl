@@ -14,14 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
+package vadl.gcb.passes.operands.model;
+
+import vadl.viam.graph.Node;
 
 /**
- * Interface which indicates that the instruction operand is printable.
+ * Represents a bare symbol operand in TableGen.
  */
-public interface InstructionOperandPrintable {
-  /**
-   * Create a string for TableGen.
-   */
-  String render();
+public class GcbInstructionBareSymbolOperand
+    extends GcbDefaultInstructionOperand {
+  public GcbInstructionBareSymbolOperand(
+      Node origin, String name) {
+    super(origin, "bare_symbol", name);
+  }
 }

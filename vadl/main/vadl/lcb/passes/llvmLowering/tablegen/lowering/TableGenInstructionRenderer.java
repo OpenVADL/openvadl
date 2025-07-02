@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import vadl.gcb.passes.RegisterRef;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenCompilerInstruction;
@@ -31,7 +32,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
@@ -301,7 +301,7 @@ public final class TableGenInstructionRenderer {
   /**
    * Renders an operand into a string.
    */
-  public static String lower(TableGenInstructionOperand operand) {
+  public static String lower(GcbInstructionOperand operand) {
     return operand.render();
   }
 

@@ -14,13 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
+package vadl.gcb.passes.operands.model;
 
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensurePresent;
 
 import vadl.error.Diagnostic;
-import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -29,13 +29,13 @@ import vadl.viam.graph.dependency.ConstantNode;
  * Indicates that the operand is a {@link Constant} index of a register file. It
  * can be only lowered when the register file at that constant is also a constant.
  */
-public class TableGenConstantOperand extends TableGenInstructionOperand {
+public final class GcbConstantOperand extends GcbInstructionOperand {
   private final Constant constant;
 
   /**
    * Constructor.
    */
-  public TableGenConstantOperand(ConstantNode constantNode, Constant value) {
+  public GcbConstantOperand(ConstantNode constantNode, Constant value) {
     super(constantNode);
     ensure(constantNode.constant().equals(value),
         "This is definitely wrong because index and constraint value are mismatched");

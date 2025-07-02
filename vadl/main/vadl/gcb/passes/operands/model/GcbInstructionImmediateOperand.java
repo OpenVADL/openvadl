@@ -14,15 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.llvmLowering.tablegen.model;
+package vadl.gcb.passes.operands.model;
+
+import vadl.viam.Format;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 
 /**
- * Indicator interface which indicates that the operand is referencing
- * a {@link TableGenImmediateRecord}.
+ * Indicates that the operand is an immediate.
  */
-public interface ReferencesImmediateOperand {
+public class GcbInstructionImmediateOperand extends GcbDefaultInstructionOperand {
+  private final Format.FieldAccess fieldAccess;
+
   /**
-   * Get the field from the operand.
+   * Constructor.
    */
-  TableGenImmediateRecord immediateOperand();
+  public GcbInstructionImmediateOperand(FieldAccessRefNode node) {
+    super(node, "", node.fieldAccess().simpleName());
+    this.fieldAccess = node.fieldAccess();
+  }
+
+  public Format.FieldAccess fieldAccess() {
+    return fieldAccess;
+  }
 }

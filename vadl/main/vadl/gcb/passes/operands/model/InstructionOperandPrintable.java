@@ -14,29 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
-
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
-import vadl.viam.graph.Node;
+package vadl.gcb.passes.operands.model;
 
 /**
- * An {@link TableGenInstruction} has list of operands for inputs and outputs.
- * This class represent one element of the inputs or outputs.
- * A parameter represents {@code X:$rs1} in
- * <pre>
- * {@code
- * def : Pat<(xor X:$rs1, RV3264I_Itype_immAsInt64:$imm),
- * (XORI X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
- * }</pre>
+ * Interface which indicates that the instruction operand is printable.
  */
-public abstract class TableGenInstructionOperand implements InstructionOperandPrintable {
-  protected final Node origin;
-
-  public TableGenInstructionOperand(Node origin) {
-    this.origin = origin;
-  }
-
-  public Node origin() {
-    return origin;
-  }
+public interface InstructionOperandPrintable {
+  /**
+   * Create a string for TableGen.
+   */
+  String render();
 }

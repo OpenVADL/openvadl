@@ -38,7 +38,8 @@ import java.util.stream.Stream;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.MachineInstructionLabel;
-import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
@@ -54,7 +55,6 @@ import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHa
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerWithBasicBlockReplacement;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
@@ -111,7 +111,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Graph visitedGraph,
       Abi abi,
       DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
-    var info = lowerBaseInfo(visitedGraph, registerDefsUses);
+    var info = lowerBaseInfo(instruction, visitedGraph, registerDefsUses);
 
     if (hasRedFlags(instruction, visitedGraph)) {
       return new LlvmLoweringRecord.Machine(instruction,
@@ -147,8 +147,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Instruction instruction,
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Graph behavior,
-      List<TableGenInstructionOperand> inputOperands,
-      List<TableGenInstructionOperand> outputOperands,
+      List<GcbInstructionOperand> inputOperands,
+      List<GcbInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
       Abi abi) {
     var label = supportedInstructions.reverse().get(instruction);

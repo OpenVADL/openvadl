@@ -14,20 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
+package vadl.lcb.passes.operands;
 
 import java.util.List;
 import java.util.Objects;
+import vadl.gcb.passes.operands.ReferencesFormatField;
+import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
-import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
-import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
 import vadl.viam.Format;
 
 /**
- * Indicates that the operand is an immediate.
+ * Indicates that the operand is an immediate. This is a lowered variant
+ * of {@link GcbInstructionImmediateOperand} because we need to reference
+ * {@link TableGenImmediateRecord}. However, we can only do that after the LLVM lowering.
  */
-public class TableGenInstructionImmediateOperand extends TableGenDefaultInstructionOperand
+public class TableGenInstructionImmediateOperand extends GcbDefaultInstructionOperand
     implements ReferencesFormatField, ReferencesImmediateOperand {
   private final TableGenImmediateRecord immediateOperand;
 

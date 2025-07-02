@@ -32,7 +32,7 @@ import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.MachineInstructionLabelGroup;
 import vadl.gcb.passes.ValueRange;
 import vadl.gcb.passes.ValueRangeCtx;
-import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;

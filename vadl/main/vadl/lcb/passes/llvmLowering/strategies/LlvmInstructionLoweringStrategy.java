@@ -16,6 +16,7 @@
 
 package vadl.lcb.passes.llvmLowering.strategies;
 
+import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
@@ -33,8 +34,15 @@ import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.MachineInstructionLabel;
-import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
-import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.gcb.passes.operands.GenerateInstructionOperandsPass;
+import vadl.gcb.passes.operands.InstructionOperandsCtx;
+import vadl.gcb.passes.operands.model.GcbConstantOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionIndexedRegisterFileOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
@@ -55,20 +63,14 @@ import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHa
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenConstantOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionBareSymbolOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionFrameRegisterOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionIndexedRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionRegisterFileOperand;
+import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.PrintableInstruction;
-import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -80,10 +82,8 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -167,10 +167,12 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Lowers basic instruction information without patterns.
    */
   public LlvmLoweringPass.BaseInstructionInfo lowerBaseInfo(
+      Instruction instruction,
       Graph behavior,
       DetermineRegisterUsesAndDefsPass.Info info) {
-    var outputOperands = getTableGenOutputOperands(behavior);
-    var inputOperands = getTableGenInputOperands(outputOperands, behavior);
+    var ctx = instruction.expectExtension(InstructionOperandsCtx.class);
+    var outputOperands = transformOutputOperands(instruction, behavior, ctx.outputs());
+    var inputOperands = transformInputOperands(instruction, behavior, ctx.inputs());
 
     var flags = getFlags(behavior);
 
@@ -179,6 +181,77 @@ public abstract class LlvmInstructionLoweringStrategy {
         flags,
         info.uses(),
         info.defs());
+  }
+
+  /**
+   * The operand detection in {@link GenerateInstructionOperandsPass} was done on an
+   * unmodified graph. But after the lowering, nodes might have changed and different
+   * strategies might want to update the operands.
+   */
+  protected List<GcbInstructionOperand> transformOutputOperands(
+      Instruction instruction,
+      Graph behavior,
+      List<GcbInstructionOperand> operands) {
+    return replaceOperands(instruction, behavior, operands);
+  }
+
+  /**
+   * The operand detection in {@link GenerateInstructionOperandsPass} was done on an
+   * unmodified graph. But after the lowering, nodes might have changed and different
+   * strategies might want to update the operands.
+   */
+  protected List<GcbInstructionOperand> transformInputOperands(
+      Instruction instruction,
+      Graph behavior,
+      List<GcbInstructionOperand> operands) {
+    return replaceOperands(instruction, behavior, operands);
+  }
+
+  protected List<GcbInstructionOperand> replaceOperands(
+      Instruction instruction,
+      Graph behavior,
+      List<GcbInstructionOperand> operands) {
+    var fieldAccesses = behavior.getNodes(LlvmFieldAccessRefNode.class).collect(Collectors.toMap(
+        FieldAccessRefNode::fieldAccess, x -> x));
+    var basicBlocks = behavior.getNodes(LlvmBasicBlockSD.class).collect(Collectors.toMap(
+        FieldAccessRefNode::fieldAccess, x -> x));
+    var frameIndices = behavior.getNodes(LlvmFrameIndexSD.class).collect(Collectors.toMap(
+        LlvmFrameIndexSD::origin, x -> x));
+
+    // Replace generic field accesses by more specialized.
+    for (int i = 0; i < operands.size(); i++) {
+      var operand = operands.get(i);
+      if (operand instanceof GcbInstructionImmediateOperand immediateOperand
+          && fieldAccesses.containsKey(immediateOperand.fieldAccess())) {
+        var llvmNode = ensureNonNull(fieldAccesses.get(immediateOperand.fieldAccess()),
+            () -> Diagnostic.error("There is no lowered field access",
+                instruction.location().join(immediateOperand.fieldAccess().location())));
+
+        operands.set(i, new TableGenInstructionImmediateOperand(llvmNode));
+      } else if (operand instanceof GcbInstructionImmediateOperand immediateOperand
+          && basicBlocks.containsKey(immediateOperand.fieldAccess())) {
+        var llvmNode = ensureNonNull(basicBlocks.get(immediateOperand.fieldAccess()),
+            () -> Diagnostic.error("There is no lowered field access",
+                instruction.location().join(immediateOperand.fieldAccess().location())));
+
+        operands.set(i, new TableGenInstructionLabelOperand(llvmNode));
+      } else if (operand instanceof GcbInstructionRegisterFileOperand registerFileOperand
+          && registerFileOperand.origin() instanceof ReadRegTensorNode readNode) {
+        if (frameIndices.containsKey(readNode)) {
+          var llvmNode = frameIndices.get(readNode);
+          if (llvmNode.address() instanceof FieldRefNode fieldRefNode) {
+            operands.set(i, new TableGenInstructionFrameRegisterOperand(llvmNode, fieldRefNode));
+          } else if (llvmNode.address() instanceof FuncParamNode funcParamNode) {
+            operands.set(i, new TableGenInstructionFrameRegisterOperand(llvmNode, funcParamNode));
+          } else {
+            throw Diagnostic.error("Node's address is not supported", llvmNode.address().location())
+                .build();
+          }
+        }
+      }
+    }
+
+    return operands;
   }
 
   protected void replaceNode(PrintableInstruction instruction, Node node) {
@@ -208,12 +281,12 @@ public abstract class LlvmInstructionLoweringStrategy {
     lowerNodes(instruction, copy);
 
     var isLowerable = !hasRedFlags(instruction, copy);
-    var info = lowerBaseInfo(copy, registerDefsUses);
+    var info = lowerBaseInfo(instruction, copy, registerDefsUses);
     copy.deinitializeNodes();
 
 
     if (isLowerable) {
-      var additionalBehaviors = new ArrayList<Pair<Graph, List<TableGenInstructionOperand>>>();
+      var additionalBehaviors = new ArrayList<Pair<Graph, List<GcbInstructionOperand>>>();
       // This list stores the optimisations result which can be then displayed in the dump.
       var additionalBehaviorsBookkeeping = new ArrayList<DerivedGraphOptimisationResult>();
 
@@ -313,10 +386,10 @@ public abstract class LlvmInstructionLoweringStrategy {
    *     also return a list of instruction input operands for each graph since machine patterns are
    *     built with those.
    */
-  protected List<Pair<Graph, List<TableGenInstructionOperand>>> deriveDifferentBehaviors(
+  protected List<Pair<Graph, List<GcbInstructionOperand>>> deriveDifferentBehaviors(
       Instruction instruction,
       Graph copyBaseBehavior,
-      List<TableGenInstructionOperand> instructionInputOperands) {
+      List<GcbInstructionOperand> instructionInputOperands) {
     return Collections.emptyList();
   }
 
@@ -376,8 +449,8 @@ public abstract class LlvmInstructionLoweringStrategy {
       Instruction instruction,
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Graph behavior,
-      List<TableGenInstructionOperand> inputOperands,
-      List<TableGenInstructionOperand> outputOperands,
+      List<GcbInstructionOperand> inputOperands,
+      List<GcbInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
       Abi abi);
 
@@ -405,86 +478,9 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Extract the output parameters of {@link Graph}.
+   * Generate {@link GcbInstructionOperand} which looks like "X:$lhs" for TableGen.
    */
-  public static List<TableGenInstructionOperand> getTableGenOutputOperands(Graph graph) {
-    var operands = getOutputOperands(graph);
-    return operands
-        .stream()
-        .filter(operand -> {
-          // Why?
-          // Because LLVM cannot handle static registers in input or output operands.
-          // They belong to defs and uses instead.
-          return !operand.hasConstantAddress();
-        })
-        .map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput)
-        .toList();
-  }
-
-  /**
-   * Extracts the input operands from the {@link Graph}. But it will skip nodes which are
-   * already a {@link Node} in the {@code outputOperands}. Because if you have a
-   * {@link PseudoInstruction} like {@code ADDI rd, rd, 1} then is the output and one input
-   * the same which tablegen will not accept.
-   */
-  public static List<TableGenInstructionOperand> getTableGenInputOperands(
-      List<TableGenInstructionOperand> outputOperands,
-      Graph graph) {
-
-    var inputOperands = getInputOperands(graph)
-        .stream()
-        .filter(node -> {
-          // Why?
-          // Because LLVM cannot handle static registers in input or output operands.
-          // They belong to defs and uses instead.
-          if (node instanceof ReadRegTensorNode readRegTensorNode
-              && readRegTensorNode.regTensor().isRegisterFile()) {
-            return !readRegTensorNode.hasConstantAddress();
-          }
-          return true;
-        })
-        .map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput)
-        .toList();
-
-    return filterOutputs(outputOperands, inputOperands.stream())
-        .toList();
-  }
-
-  /**
-   * It is not allowed to have a {@link TableGenInstructionOperand} in the input list
-   * when it is already in the output list. That's why we compute the {@code outputOperands}
-   * first and then filter out the {@code stream} for elements which already present in
-   * {@code outputOperands}.
-   */
-  protected static Stream<TableGenInstructionOperand> filterOutputs(
-      List<TableGenInstructionOperand> outputOperands,
-      Stream<TableGenInstructionOperand> stream) {
-    /*
-    pseudo instruction LA( rd: Index, symbol: Bits<32> ) =
-    {
-      LUI { rd = rd, imm = hi( symbol ) }
-      ADDI { rd = rd, rs1 = rd, imm = lo( symbol ) }
-    }
-
-    Here ADDI has a destination `rd` and an input `rs1` which is the same register as the
-    destination. For these cases, we do not want the operand in the inputs.
-     */
-
-    var visited =
-        outputOperands.stream()
-            .filter(x -> x instanceof TableGenInstructionRegisterFileOperand
-                || x instanceof TableGenInstructionIndexedRegisterFileOperand)
-            .collect(Collectors.toSet());
-
-    return stream
-        .filter(
-            node -> !visited.contains(node));
-  }
-
-  /**
-   * Generate {@link TableGenInstructionOperand} which looks like "X:$lhs" for TableGen.
-   */
-  public static TableGenInstructionOperand generateTableGenInputOutput(Node operand) {
+  public static GcbInstructionOperand generateTableGenInputOutput(Node operand) {
     if (operand instanceof LlvmFrameIndexSD node) {
       return generateInstructionOperand(node);
     } else if (operand instanceof ReadRegTensorNode node && node.regTensor().isRegisterFile()) {
@@ -505,24 +501,24 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   * Returns a {@link GcbInstructionOperand} given a {@link Node}.
    */
-  private static TableGenInstructionOperand generateInstructionOperand(FuncParamNode node) {
-    return new TableGenInstructionBareSymbolOperand(node,
+  private static GcbInstructionOperand generateInstructionOperand(FuncParamNode node) {
+    return new GcbInstructionBareSymbolOperand(node,
         node.parameter().simpleName());
   }
 
   /**
-   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   * Returns a {@link GcbInstructionOperand} given a {@link Node}.
    */
-  private static TableGenInstructionOperand generateInstructionOperand(LlvmBasicBlockSD node) {
+  private static GcbInstructionOperand generateInstructionOperand(LlvmBasicBlockSD node) {
     return new TableGenInstructionLabelOperand(node);
   }
 
   /**
-   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   * Returns a {@link GcbInstructionOperand} given a {@link Node}.
    */
-  private static TableGenInstructionOperand generateInstructionOperand(LlvmFrameIndexSD node) {
+  private static GcbInstructionOperand generateInstructionOperand(LlvmFrameIndexSD node) {
     if (node.address() instanceof FieldRefNode fieldRefNode) {
       return new TableGenInstructionFrameRegisterOperand(node, fieldRefNode);
     } else if (node.address() instanceof FuncParamNode funcParamNode) {
@@ -534,9 +530,9 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   * Returns a {@link GcbInstructionOperand} given a {@link Node}.
    */
-  private static TableGenInstructionOperand generateInstructionOperand(
+  private static GcbInstructionOperand generateInstructionOperand(
       LlvmFieldAccessRefNode node) {
     if (node.usage() == LlvmFieldAccessRefNode.Usage.Immediate) {
       return new TableGenInstructionImmediateOperand(node);
@@ -548,14 +544,14 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   * Returns a {@link GcbInstructionOperand} given a {@link Node}.
    */
-  private static TableGenInstructionOperand generateInstructionOperandRegisterFile(
+  private static GcbInstructionOperand generateInstructionOperandRegisterFile(
       ReadRegTensorNode node) {
     if (node.address() instanceof FieldRefNode field) {
-      return new TableGenInstructionRegisterFileOperand(node, field);
+      return new GcbInstructionRegisterFileOperand(node, field);
     } else if (node.address() instanceof FuncParamNode funcParamNode) {
-      return new TableGenInstructionIndexedRegisterFileOperand(node, funcParamNode);
+      return new GcbInstructionIndexedRegisterFileOperand(node, funcParamNode);
     } else if (node.address() instanceof ConstantNode constantNode) {
       // The register file has a constant as address.
       // This is ok as long as the value of the register file at the address is also constant.
@@ -573,7 +569,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       // Heuristically, we take the type of the index because indices were also upcasted.
       var constantValue = constRegisterValue.value();
       constantValue.setType(constantNode.type());
-      return new TableGenConstantOperand(constantNode, constantValue);
+      return new GcbConstantOperand(constantNode, constantValue);
     } else {
       throw Diagnostic.error(
           "The compiler generator needs to generate a tablegen instruction operand from this "
@@ -583,57 +579,25 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   * Returns a {@link GcbInstructionOperand} given a {@link Node}.
    */
-  private static TableGenInstructionOperand generateInstructionOperandRegisterFile(
+  private static GcbInstructionOperand generateInstructionOperandRegisterFile(
       WriteRegTensorNode node) {
     if (node.address() instanceof FieldRefNode field) {
-      return new TableGenInstructionRegisterFileOperand(node, field);
+      return new GcbInstructionRegisterFileOperand(node, field);
     } else if (node.address() instanceof FuncParamNode funcParamNode) {
-      return new TableGenInstructionIndexedRegisterFileOperand(node, funcParamNode);
+      return new GcbInstructionIndexedRegisterFileOperand(node, funcParamNode);
     } else {
       throw Diagnostic.error(
           "The compiler generator needs to generate a tablegen instruction operand from this "
               + "address for a field but it does not support it.",
           node.address().location()).build();
     }
-  }
-
-  /**
-   * Most instruction's behaviors have inputs. Those are the results which the instruction requires.
-   */
-  private static List<Node> getInputOperands(Graph graph) {
-    // First, the registers
-    var x = graph.getNodes(ReadRegTensorNode.class).filter(k -> k.regTensor().isRegisterFile());
-    // Then, immediates
-    var y = graph.getNodes(FieldAccessRefNode.class);
-    // Then, the rest
-    var z = graph.getNodes(FuncCallNode.class).flatMap(
-        funcCallNode -> funcCallNode.function().behavior().getNodes(FuncParamNode.class));
-
-    // We need this edge case for compiler and pseudo instructions.
-    // However, we need to filter for `WriteResourceNode` and `ReadResourceNode`, so
-    // the operand is not added twice.
-    var u = graph.getNodes(PseudoFuncParamNode.class)
-        .filter(k -> k.usages()
-            .noneMatch(v -> v instanceof WriteResourceNode || v instanceof ReadResourceNode));
-
-    return Stream.concat(Stream.concat(Stream.concat(x, y), z), u)
-        .map(k -> (Node) k).toList();
-  }
-
-  /**
-   * Most instruction's behaviors have outputs. Those are the results which the instruction emits.
-   */
-  private static List<WriteRegTensorNode> getOutputOperands(Graph graph) {
-    return graph.getNodes(WriteRegTensorNode.class)
-        .filter(e -> e.regTensor().isRegisterFile())
-        .toList();
   }
 
   protected List<TableGenPattern> generatePatterns(
       Instruction instruction,
-      List<TableGenInstructionOperand> inputOperands,
+      List<GcbInstructionOperand> inputOperands,
       List<WriteResourceNode> sideEffectNodes) {
     ArrayList<TableGenPattern> patterns = new ArrayList<>();
 
@@ -670,7 +634,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    */
   @Nonnull
   protected Graph generateMachinePattern(Instruction instruction,
-                                         List<TableGenInstructionOperand> inputOperands) {
+                                         List<GcbInstructionOperand> inputOperands) {
     var graph = new Graph(instruction.simpleName() + ".machine.lowering");
     graph.setParentDefinition(Objects.requireNonNull(instruction));
 

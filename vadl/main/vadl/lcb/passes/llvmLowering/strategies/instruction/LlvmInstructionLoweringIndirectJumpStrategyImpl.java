@@ -29,7 +29,9 @@ import vadl.error.Diagnostic;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.RegisterRef;
-import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
@@ -46,9 +48,7 @@ import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionRegisterFileOperand;
+import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
 import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
@@ -88,9 +88,10 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
 
   @Override
   public LlvmLoweringPass.BaseInstructionInfo lowerBaseInfo(
+      Instruction instruction,
       Graph behavior,
       DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
-    var baseInfo = super.lowerBaseInfo(behavior, registerDefsUses);
+    var baseInfo = super.lowerBaseInfo(instruction, behavior, registerDefsUses);
 
     // Clear the flags
     baseInfo = baseInfo.withFlags(LlvmLoweringPass.Flags.empty());
@@ -111,7 +112,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       replaceNode(instruction, node);
     }
 
-    var info = lowerBaseInfo(copy, registerDefsUses);
+    var info = lowerBaseInfo(instruction, copy, registerDefsUses);
 
     // Clear the flags for this strategy
     info = info.withFlags(LlvmLoweringPass.Flags.empty());
@@ -136,22 +137,22 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       Instruction instruction,
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Graph behavior,
-      List<TableGenInstructionOperand> inputOperands,
-      List<TableGenInstructionOperand> outputOperands,
+      List<GcbInstructionOperand> inputOperands,
+      List<GcbInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
       Abi abi) {
     var result = new ArrayList<TableGenPattern>();
-    inputOperands.stream().filter(x -> x instanceof TableGenInstructionRegisterFileOperand)
+    inputOperands.stream().filter(x -> x instanceof GcbInstructionRegisterFileOperand)
         .findFirst()
         .ifPresent((uncastInputRegister) -> {
           result.add(generateIndirectCall(supportedInstructions, abi,
-              (TableGenInstructionRegisterFileOperand) uncastInputRegister));
+              (GcbInstructionRegisterFileOperand) uncastInputRegister));
           result.add(generateBranchIndirect(instruction, supportedInstructions,
-              (TableGenInstructionRegisterFileOperand) uncastInputRegister));
+              (GcbInstructionRegisterFileOperand) uncastInputRegister));
           result.add(generateBranchIndirectWithZero(
-              (TableGenInstructionRegisterFileOperand) uncastInputRegister));
+              (GcbInstructionRegisterFileOperand) uncastInputRegister));
           result.add(generateBranchIndirectWithAdd(instruction, supportedInstructions,
-              (TableGenInstructionRegisterFileOperand) uncastInputRegister));
+              (GcbInstructionRegisterFileOperand) uncastInputRegister));
         });
 
     return result;
@@ -161,7 +162,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   private static @Nonnull TableGenPseudoInstExpansionPattern generateIndirectCall(
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Abi abi,
-      TableGenInstructionRegisterFileOperand inputRegister) {
+      GcbInstructionRegisterFileOperand inputRegister) {
     var selector = new Graph("selector");
     var ref = (ReadRegTensorNode) inputRegister.origin().copy();
     var address = (FieldRefNode) ref.address().copy();
@@ -178,8 +179,12 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
             .firstMachineInstruction();
     var machine = new Graph("machine");
     var constant = new Constant.Str("0");
+    var llvmReadRegFile =
+        new LlvmReadRegFileNode(ref.regTensor(), address.copy(), ref.type(),
+            ref.staticCounterAccess());
     machine.addWithInputs(new LcbMachineInstructionNode(
-        new NodeList<>(new ConstantNode(new Constant.Str(abi.returnAddress().render())), ref,
+        new NodeList<>(new ConstantNode(new Constant.Str(abi.returnAddress().render())),
+            llvmReadRegFile,
             new ConstantNode(constant)), jalr));
     return new TableGenPseudoInstExpansionPattern("PseudoCALLIndirect",
         selector,
@@ -190,7 +195,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         false,
         false,
         List.of(
-            new TableGenInstructionRegisterFileOperand(ref, address)
+            new GcbInstructionRegisterFileOperand(llvmReadRegFile, address)
         ), Collections.emptyList(),
         List.of(
             new RegisterRef(abi.returnAddress().registerFile(),
@@ -202,7 +207,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   private static @Nonnull TableGenPseudoInstExpansionPattern generateBranchIndirect(
       Instruction instruction,
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
-      TableGenInstructionRegisterFileOperand inputRegister) {
+      GcbInstructionRegisterFileOperand inputRegister) {
     /*
     let isCall = 1, isBranch = 1, isIndirectBranch = 1, isTerminator = 1,
       isBarrier = 1
@@ -232,7 +237,8 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
     machine.addWithInputs(new LcbMachineInstructionNode(
         new NodeList<>(
             new ConstantNode(new Constant.Str(zeroRegister(inputRegister.registerFile()))),
-            ref,
+            new LlvmReadRegFileNode(ref.registerTensor(), address, ref.type(),
+                ref.staticCounterAccess()),
             fieldRef), jalr));
     return new TableGenPseudoInstExpansionPattern("PseudoBRIND",
         selector,
@@ -243,7 +249,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         true,
         true,
         List.of(
-            new TableGenInstructionRegisterFileOperand(ref, address),
+            new GcbInstructionRegisterFileOperand(ref, address),
             new TableGenInstructionImmediateOperand(fieldRef)
         ), Collections.emptyList(),
         Collections.emptyList());
@@ -253,7 +259,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   private TableGenPattern generateBranchIndirectWithAdd(
       Instruction instruction,
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
-      TableGenInstructionRegisterFileOperand inputRegister) {
+      GcbInstructionRegisterFileOperand inputRegister) {
     var database = new Database(supportedInstructions);
     var jalr =
         database.run(
@@ -291,7 +297,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   }
 
   private TableGenPattern generateBranchIndirectWithZero(
-      TableGenInstructionRegisterFileOperand inputRegister) {
+      GcbInstructionRegisterFileOperand inputRegister) {
     var selector = new Graph("selector");
     var ref = (ReadRegTensorNode) inputRegister.origin().copy();
     var address = (FieldRefNode) ref.address().copy();

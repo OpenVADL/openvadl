@@ -1730,7 +1730,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -1783,7 +1783,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -1836,7 +1836,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -1889,7 +1889,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -2918,7 +2918,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -2971,7 +2971,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -3024,7 +3024,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -3077,7 +3077,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -5225,11 +5225,11 @@ def : Pat<(brcond X:$rs1, bb:$immS),
 
 
 def : Pat<(sdiv X:$rs1, X:$rs2),
-        (DIV X:$rs1, X:$rs2)>;
+        (DIV X:$rs2, X:$rs1)>;
 
 
 def : Pat<(udiv X:$rs1, X:$rs2),
-        (DIVU X:$rs1, X:$rs2)>;
+        (DIVU X:$rs2, X:$rs1)>;
 
 
 
@@ -5385,11 +5385,11 @@ def : Pat<(or X:$rs1, RV3264Base_ORI_immSAsInt64:$immS),
 
 
 def : Pat<(srem X:$rs1, X:$rs2),
-        (REM X:$rs1, X:$rs2)>;
+        (REM X:$rs2, X:$rs1)>;
 
 
 def : Pat<(urem X:$rs1, X:$rs2),
-        (REMU X:$rs1, X:$rs2)>;
+        (REMU X:$rs2, X:$rs1)>;
 
 
 

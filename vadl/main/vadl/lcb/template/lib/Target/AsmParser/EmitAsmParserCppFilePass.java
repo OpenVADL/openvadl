@@ -24,14 +24,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenDefaultInstructionOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
+import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -156,7 +156,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     int indexOffset = 1;
     // Output
     for (var output : instruction.getOutOperands()) {
-      var casted = (TableGenDefaultInstructionOperand) output;
+      var casted = (GcbDefaultInstructionOperand) output;
       var operand = new TableGenOperand(casted.name(), indexOffset, false, "");
       result.add(operand);
       indexOffset++;
@@ -164,7 +164,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
     // Inputs
     for (var input : instruction.getInOperands()) {
-      var casted = (TableGenDefaultInstructionOperand) input;
+      var casted = (GcbDefaultInstructionOperand) input;
       if (input instanceof TableGenInstructionImmediateOperand immediateOperand) {
         var operand = new TableGenOperand(immediateOperand.name(),
             indexOffset,
@@ -201,7 +201,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
     // Output
     for (var output : instruction.getOutOperands()) {
-      var casted = (TableGenDefaultInstructionOperand) output;
+      var casted = (GcbDefaultInstructionOperand) output;
       var operand = new TableGenOperand(casted.name(), indexOffset, false, "");
       result.add(operand);
       indexOffset++;
@@ -209,7 +209,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
     // Inputs
     for (var input : instruction.getInOperands()) {
-      var casted = (TableGenDefaultInstructionOperand) input;
+      var casted = (GcbDefaultInstructionOperand) input;
       if (input instanceof TableGenInstructionImmediateOperand immediateOperand) {
         var operand = new TableGenOperand(immediateOperand.name(),
             indexOffset,

@@ -19,7 +19,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.model.register;
 import java.util.List;
 import java.util.stream.Collectors;
 import vadl.gcb.valuetypes.TargetName;
-import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.viam.RegisterTensor;
 
 /**

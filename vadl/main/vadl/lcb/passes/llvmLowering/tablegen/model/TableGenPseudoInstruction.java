@@ -18,8 +18,8 @@ package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.List;
 import vadl.gcb.passes.RegisterRef;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.PseudoInstruction;
 
 /**
@@ -33,8 +33,8 @@ public class TableGenPseudoInstruction extends TableGenInstruction {
       String name,
       String namespace,
       LlvmLoweringPass.Flags flags,
-      List<TableGenInstructionOperand> inOperands,
-      List<TableGenInstructionOperand> outOperands,
+      List<GcbInstructionOperand> inOperands,
+      List<GcbInstructionOperand> outOperands,
       List<RegisterRef> uses,
       List<RegisterRef> defs,
       List<TableGenPattern> anonymousPatterns) {

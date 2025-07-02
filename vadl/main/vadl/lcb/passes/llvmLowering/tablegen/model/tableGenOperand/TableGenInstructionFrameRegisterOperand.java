@@ -16,6 +16,7 @@
 
 package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
+import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.viam.Identifier;
 import vadl.viam.graph.Node;
@@ -26,7 +27,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
  * Indicates that the operand is a register which is the frame pointer.
  */
 public class TableGenInstructionFrameRegisterOperand
-    extends TableGenDefaultInstructionOperand {
+    extends GcbDefaultInstructionOperand {
 
   /**
    * Constructor.

@@ -29,7 +29,8 @@ import vadl.cppCodeGen.CppTypeMap;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.PseudoInstructionLabel;
-import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
@@ -43,7 +44,6 @@ import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoInstructionLowerStrateg
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionBareSymbolOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
 import vadl.viam.Abi;
 import vadl.viam.Format;
@@ -178,7 +178,7 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
             upcasted)));
     machine.addWithInputs(new LcbPseudoInstructionNode(
         new NodeList<>(
-            new LcbMachineInstructionParameterNode(new TableGenInstructionBareSymbolOperand(
+            new LcbMachineInstructionParameterNode(new GcbInstructionBareSymbolOperand(
                 new LlvmBasicBlockSD(pseudo, fieldAccess, parameter.simpleName(),
                     fieldAccess.type(), upcasted),
                 parameter.simpleName()))

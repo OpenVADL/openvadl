@@ -14,21 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.llvmLowering.domain.selectionDag;
+package vadl.gcb.passes.operands.model;
 
-import vadl.gcb.passes.operands.model.GcbInstructionOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.viam.graph.Node;
 
 /**
- * Indicates that the node has a parameter which
- * makes it replaceable for selector and machine graphs.
- * This is useful when already a {@link TableGenPattern} exists,
- * and you want to replace a single node in it to create new pattern.
- * This has to be changed in both graphs.
+ * An {@link TableGenInstruction} has list of operands for inputs and outputs.
+ * This class represent one element of the inputs or outputs.
+ * A parameter represents {@code X:$rs1} in
+ * <pre>
+ * {@code
+ * def : Pat<(xor X:$rs1, RV3264I_Itype_immAsInt64:$imm),
+ * (XORI X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+ * }</pre>
  */
-public interface LlvmNodeReplaceable {
-  /**
-   * Returns the {@link GcbInstructionOperand} of the node.
-   */
-  GcbInstructionOperand operand();
+public abstract class GcbInstructionOperand implements InstructionOperandPrintable {
+  protected final Node origin;
+
+  public GcbInstructionOperand(Node origin) {
+    this.origin = origin;
+  }
+
+  public Node origin() {
+    return origin;
+  }
 }

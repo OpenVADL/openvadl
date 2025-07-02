@@ -14,17 +14,32 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
+package vadl.gcb.passes.operands.model;
 
+import vadl.viam.PseudoInstruction;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Node;
 
 /**
- * Represents a bare symbol operand in TableGen.
+ * A user can specify a concrete register in a {@link PseudoInstruction}.
  */
-public class TableGenInstructionBareSymbolOperand
-    extends TableGenDefaultInstructionOperand {
-  public TableGenInstructionBareSymbolOperand(
-      Node origin, String name) {
-    super(origin, "bare_symbol", name);
+public final class GcbInstructionConcreteRegisterOperand extends GcbInstructionOperand {
+  private final RegisterTensor registerTensor;
+  private final int address;
+
+  /**
+   * Constructor.
+   */
+  public GcbInstructionConcreteRegisterOperand(RegisterTensor registerTensor,
+                                               int address,
+                                               Node origin) {
+    super(origin);
+    this.registerTensor = registerTensor;
+    this.address = address;
+  }
+
+  @Override
+  public String render() {
+    return registerTensor.simpleName() + address;
   }
 }

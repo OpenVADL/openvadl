@@ -17,7 +17,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.Objects;
-import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass;
 import vadl.types.BitsType;
 import vadl.viam.Format;

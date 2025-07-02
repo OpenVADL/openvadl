@@ -19,8 +19,9 @@ package vadl.lcb.passes.llvmLowering.tablegen.model;
 import java.util.List;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.RegisterRef;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
@@ -32,8 +33,8 @@ public abstract class TableGenInstruction {
   private final String name;
   private final String namespace;
   private final List<TableGenPattern> anonymousPatterns;
-  private final List<TableGenInstructionOperand> inOperands;
-  private final List<TableGenInstructionOperand> outOperands;
+  private final List<GcbInstructionOperand> inOperands;
+  private final List<GcbInstructionOperand> outOperands;
   private final List<RegisterRef> uses;
   private final List<RegisterRef> defs;
   private final LlvmLoweringPass.Flags flags;
@@ -45,8 +46,8 @@ public abstract class TableGenInstruction {
   public TableGenInstruction(String name,
                              String namespace,
                              LlvmLoweringPass.Flags flags,
-                             List<TableGenInstructionOperand> inOperands,
-                             List<TableGenInstructionOperand> outOperands,
+                             List<GcbInstructionOperand> inOperands,
+                             List<GcbInstructionOperand> outOperands,
                              List<RegisterRef> uses,
                              List<RegisterRef> defs,
                              List<TableGenPattern> anonymousPatterns) {
@@ -80,11 +81,11 @@ public abstract class TableGenInstruction {
     return flags;
   }
 
-  public List<TableGenInstructionOperand> getInOperands() {
+  public List<GcbInstructionOperand> getInOperands() {
     return inOperands;
   }
 
-  public List<TableGenInstructionOperand> getOutOperands() {
+  public List<GcbInstructionOperand> getOutOperands() {
     return outOperands;
   }
 
@@ -96,7 +97,7 @@ public abstract class TableGenInstruction {
    * Get the operand index in {@link #inOperands}. It is offset by the number of operands
    * in {@link #outOperands}.
    */
-  public int indexInOperands(TableGenInstructionOperand operand) {
+  public int indexInOperands(GcbInstructionOperand operand) {
     return outOperands.size() + inOperands.indexOf(operand);
   }
 

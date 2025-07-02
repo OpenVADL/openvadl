@@ -19,13 +19,13 @@ package vadl.lcb.passes.llvmLowering.strategies.instruction;
 import java.util.ArrayList;
 import java.util.List;
 import vadl.error.Diagnostic;
-import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionFrameRegisterOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionRegisterFileOperand;
 import vadl.utils.Pair;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
@@ -42,10 +42,10 @@ public abstract class LlvmInstructionLoweringFrameIndexHelper
   }
 
   @Override
-  protected List<Pair<Graph, List<TableGenInstructionOperand>>> deriveDifferentBehaviors(
+  protected List<Pair<Graph, List<GcbInstructionOperand>>> deriveDifferentBehaviors(
       Instruction instruction,
       Graph copyBaseBehavior,
-      List<TableGenInstructionOperand> instructionInputOperands) {
+      List<GcbInstructionOperand> instructionInputOperands) {
 
     // Replace one register with a frame index node.
     var copy = copyBaseBehavior.copy();
@@ -57,9 +57,9 @@ public abstract class LlvmInstructionLoweringFrameIndexHelper
     readRegNode.replaceAndDelete(new LlvmFrameIndexSD(readRegNode));
 
     var copyInputOperands = new ArrayList<>(instructionInputOperands);
-    TableGenInstructionRegisterFileOperand operand =
-        (TableGenInstructionRegisterFileOperand) copyInputOperands.stream()
-            .filter(x -> x instanceof TableGenInstructionRegisterFileOperand)
+    GcbInstructionRegisterFileOperand operand =
+        (GcbInstructionRegisterFileOperand) copyInputOperands.stream()
+            .filter(x -> x instanceof GcbInstructionRegisterFileOperand)
             .findFirst().orElseThrow(
                 () -> Diagnostic.error("Expected at least one reference to a register file",
                     instruction.behavior().sourceLocation()).build());

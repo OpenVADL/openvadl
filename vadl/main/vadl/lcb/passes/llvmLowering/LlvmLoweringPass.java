@@ -36,7 +36,12 @@ import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.RegisterRef;
-import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.gcb.passes.operands.ReferencesFormatField;
+import vadl.gcb.passes.operands.model.GcbConstantOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionConcreteRegisterOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.TableGenInstructionCtx;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
@@ -61,16 +66,11 @@ import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmPseudoInstruction
 import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanImmediateUnsignedConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl;
-import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
-import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenConstantOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionConcreteRegisterOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionRegisterFileOperand;
+import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -103,8 +103,8 @@ public class LlvmLoweringPass extends Pass {
    * This record contains the basic information for lowering {@link Instruction} and
    * {@link PseudoInstruction}.
    */
-  public record BaseInstructionInfo(List<TableGenInstructionOperand> inputs,
-                                    List<TableGenInstructionOperand> outputs,
+  public record BaseInstructionInfo(List<GcbInstructionOperand> inputs,
+                                    List<GcbInstructionOperand> outputs,
                                     LlvmLoweringPass.Flags flags,
                                     List<RegisterRef> uses,
                                     List<RegisterRef> defs) {
@@ -134,7 +134,7 @@ public class LlvmLoweringPass extends Pass {
     /**
      * Return the concatenation of {@link #outputs} and {@link #inputs} in that order.
      */
-    public List<TableGenInstructionOperand> outputInputOperands() {
+    public List<GcbInstructionOperand> outputInputOperands() {
       var result = new ArrayList<>(outputs);
       result.addAll(inputs);
       return result;
@@ -527,7 +527,7 @@ public class LlvmLoweringPass extends Pass {
           // So the pattern will look like:
           // `def : InstAlias<"BEQZ $rs,$offset", (BEQ X:$rs, X0, RV3264I_Btype_immAsLabel:$imm)>;`
           args.add(new LcbMachineInstructionParameterNode(
-              new TableGenInstructionRegisterFileOperand(registerFile,
+              new GcbInstructionRegisterFileOperand(registerFile,
                   field,
                   funcParamNode)));
         } else if (argument instanceof ConstantNode constantNode) {
@@ -541,7 +541,7 @@ public class LlvmLoweringPass extends Pass {
                       .findFirst(), () -> Diagnostic.error("Expected to find register file",
                       field.location()));
           args.add(new LcbMachineInstructionParameterNode(
-              new TableGenInstructionConcreteRegisterOperand(registerFile,
+              new GcbInstructionConcreteRegisterOperand(registerFile,
                   constantNode.constant().asVal().intValue(),
                   constantNode)));
         }
@@ -577,7 +577,7 @@ public class LlvmLoweringPass extends Pass {
           args.add(new LcbMachineInstructionParameterNode(operand));
         } else if (argument instanceof ConstantNode constantNode) {
           args.add(new LcbMachineInstructionParameterNode(
-              new TableGenConstantOperand(constantNode, constantNode.constant())));
+              new GcbConstantOperand(constantNode, constantNode.constant())));
         }
       }
     }

@@ -24,10 +24,10 @@ import java.util.stream.Collectors;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
@@ -69,8 +69,8 @@ public class CheckMachineInstructionTableGenOperandsRiscv64PassTest extends Abst
         new Entry("BLTU", List.of("X:$rs1", "X:$rs2", "RV3264Base_BLTU_immSAsLabel:$immS")));
     inputOperands.add(
         new Entry("BNE", List.of("X:$rs1", "X:$rs2", "RV3264Base_BNE_immSAsLabel:$immS")));
-    inputOperands.add(new Entry("DIV", List.of("X:$rs1", "X:$rs2")));
-    inputOperands.add(new Entry("DIVU", List.of("X:$rs1", "X:$rs2")));
+    inputOperands.add(new Entry("DIV", List.of("X:$rs2", "X:$rs1")));
+    inputOperands.add(new Entry("DIVU", List.of("X:$rs2", "X:$rs1")));
     inputOperands.add(new Entry("JAL", List.of("RV3264Base_JAL_immSAsInt64:$immS")));
     inputOperands.add(new Entry("JALR", List.of("X:$rs1", "RV3264Base_JALR_immSAsInt64:$immS")));
     inputOperands.add(new Entry("LB", List.of("X:$rs1", "RV3264Base_LB_immSAsInt64:$immS")));
@@ -86,8 +86,8 @@ public class CheckMachineInstructionTableGenOperandsRiscv64PassTest extends Abst
     inputOperands.add(new Entry("MULHU", List.of("X:$rs1", "X:$rs2")));
     inputOperands.add(new Entry("OR", List.of("X:$rs1", "X:$rs2")));
     inputOperands.add(new Entry("ORI", List.of("X:$rs1", "RV3264Base_ORI_immSAsInt64:$immS")));
-    inputOperands.add(new Entry("REM", List.of("X:$rs1", "X:$rs2")));
-    inputOperands.add(new Entry("REMU", List.of("X:$rs1", "X:$rs2")));
+    inputOperands.add(new Entry("REM", List.of("X:$rs2", "X:$rs1")));
+    inputOperands.add(new Entry("REMU", List.of("X:$rs2", "X:$rs1")));
     inputOperands.add(
         new Entry("SW", List.of("X:$rs1", "X:$rs2", "RV3264Base_SW_immSAsInt64:$immS")));
     inputOperands.add(
@@ -183,7 +183,7 @@ public class CheckMachineInstructionTableGenOperandsRiscv64PassTest extends Abst
     // Then
     var actual = machineInstructionRecords.stream()
         .map(x -> new Entry(x.instruction().identifier.simpleName(),
-            x.getInOperands().stream().map(TableGenInstructionOperand::render).toList())
+            x.getInOperands().stream().map(GcbInstructionOperand::render).toList())
         ).collect(Collectors.toMap(x -> x.instruction, x -> x.operands));
 
     return inputOperands.stream()
@@ -213,7 +213,7 @@ public class CheckMachineInstructionTableGenOperandsRiscv64PassTest extends Abst
     // Then
     var actual = machineInstructionRecords.stream()
         .map(x -> new Entry(x.instruction().identifier.simpleName(),
-            x.getOutOperands().stream().map(TableGenInstructionOperand::render).toList())
+            x.getOutOperands().stream().map(GcbInstructionOperand::render).toList())
         ).collect(Collectors.toMap(x -> x.instruction, x -> x.operands));
 
     return outputOperands.stream()

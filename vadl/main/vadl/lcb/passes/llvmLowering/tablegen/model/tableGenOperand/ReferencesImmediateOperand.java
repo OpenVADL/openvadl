@@ -16,30 +16,15 @@
 
 package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
-import vadl.viam.PseudoInstruction;
-import vadl.viam.RegisterTensor;
-import vadl.viam.graph.Node;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 
 /**
- * A user can specify a concrete register in a {@link PseudoInstruction}.
+ * Indicator interface which indicates that the operand is referencing
+ * a {@link TableGenImmediateRecord}.
  */
-public class TableGenInstructionConcreteRegisterOperand extends TableGenInstructionOperand {
-  private final RegisterTensor registerTensor;
-  private final int address;
-
+public interface ReferencesImmediateOperand {
   /**
-   * Constructor.
+   * Get the field from the operand.
    */
-  public TableGenInstructionConcreteRegisterOperand(RegisterTensor registerTensor,
-                                                    int address,
-                                                    Node origin) {
-    super(origin);
-    this.registerTensor = registerTensor;
-    this.address = address;
-  }
-
-  @Override
-  public String render() {
-    return registerTensor.simpleName() + address;
-  }
+  TableGenImmediateRecord immediateOperand();
 }

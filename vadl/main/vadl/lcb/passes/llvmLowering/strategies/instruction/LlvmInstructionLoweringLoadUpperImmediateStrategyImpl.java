@@ -20,13 +20,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import vadl.gcb.passes.MachineInstructionLabel;
-import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
@@ -60,8 +60,8 @@ public class LlvmInstructionLoweringLoadUpperImmediateStrategyImpl
       Instruction instruction,
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Graph behavior,
-      List<TableGenInstructionOperand> inputOperands,
-      List<TableGenInstructionOperand> outputOperands,
+      List<GcbInstructionOperand> inputOperands,
+      List<GcbInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
       Abi abi) {
     return Collections.emptyList();

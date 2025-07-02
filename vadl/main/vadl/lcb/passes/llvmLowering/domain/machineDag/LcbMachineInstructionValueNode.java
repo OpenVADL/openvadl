@@ -17,8 +17,8 @@
 package vadl.lcb.passes.llvmLowering.domain.machineDag;
 
 import java.util.List;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.javaannotations.viam.DataValue;
-import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.types.Type;
