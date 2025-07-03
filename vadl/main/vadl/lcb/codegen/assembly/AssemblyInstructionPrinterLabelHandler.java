@@ -25,11 +25,14 @@ import vadl.error.Diagnostic;
 import vadl.javaannotations.DispatchFor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.pass.PassResults;
+import vadl.utils.SourceLocation;
+import vadl.viam.Format;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 
 /**
  * Generates the code blocks to construct an assembly string. This handler creates the code path
@@ -69,6 +72,51 @@ public class AssemblyInstructionPrinterLabelHandler
     var indexInOperands = ensurePresent(indexInInputsOrOutputs(fieldAccessNode.fieldAccess()), () ->
         Diagnostic.error("Immediate must be part of an tablegen input or output.",
             node.location())
+    );
+
+    ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
+        indexInOperands, radix);
+  }
+
+  // We are overwriting this from the parent class because we don't want any sign extension
+  // of the immediate operand. This handler deals with labels and will crash if we call ".isImm()"
+
+  @Override
+  protected void writeImmediateWithRadix(Format.FieldAccess fieldAccess,
+                                         CGenContext<Node> ctx,
+                                         int radix,
+                                         SourceLocation sourceLocation) {
+    var indexInOperands = ensurePresent(indexInInputsOrOutputs(fieldAccess), () ->
+        Diagnostic.error("Immediate must be part of an tablegen input or output.",
+            sourceLocation)
+    );
+
+    ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
+        indexInOperands, radix);
+  }
+
+  @Override
+  protected void writeImmediateWithRadix(Format.Field field,
+                                         CGenContext<Node> ctx,
+                                         int radix,
+                                         SourceLocation sourceLocation) {
+    var indexInOperands = ensurePresent(indexInInputsOrOutputs(field), () ->
+        Diagnostic.error("Immediate must be part of an tablegen input or output.",
+            sourceLocation)
+    );
+
+    ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
+        indexInOperands, radix);
+  }
+
+  @Override
+  protected void writeImmediateWithRadix(FuncParamNode node,
+                                         CGenContext<Node> ctx,
+                                         int radix,
+                                         SourceLocation sourceLocation) {
+    var indexInOperands = ensurePresent(indexInInputsOrOutputs(node), () ->
+        Diagnostic.error("Immediate must be part of an tablegen input or output.",
+            sourceLocation)
     );
 
     ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",

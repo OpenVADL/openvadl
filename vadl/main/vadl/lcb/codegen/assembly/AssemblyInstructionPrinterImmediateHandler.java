@@ -404,10 +404,10 @@ public class AssemblyInstructionPrinterImmediateHandler
     }
   }
 
-  private void writeImmediateWithRadix(Format.Field field,
-                                       CGenContext<Node> ctx,
-                                       int radix,
-                                       SourceLocation sourceLocation) {
+  protected void writeImmediateWithRadix(Format.Field field,
+                                         CGenContext<Node> ctx,
+                                         int radix,
+                                         SourceLocation sourceLocation) {
     var indexInOperands = ensurePresent(indexInInputsOrOutputs(field), () ->
         Diagnostic.error("Immediate must be part of an tablegen input or output.",
             sourceLocation)
@@ -429,8 +429,8 @@ public class AssemblyInstructionPrinterImmediateHandler
                     machineInstruction.location()));
 
         var encodingFunction = ensurePresent(
-            encodingFunctions.stream().filter(x -> x.field().equals(field)).findFirst()
-            , () -> Diagnostic.error("Cannot find encoding function for field",
+            encodingFunctions.stream().filter(x -> x.field().equals(field)).findFirst(),
+            () -> Diagnostic.error("Cannot find encoding function for field",
                 machineInstruction.location().join(field.location()))
         );
 
@@ -443,9 +443,12 @@ public class AssemblyInstructionPrinterImmediateHandler
                 .collect(Collectors.joining(", "));
 
         if (radix == 10) {
-          ctx.wr("AsmUtils::formatImm((int64_t) %s(%s), %d, &MAI)",
+          // The sign extension function needs to know which bit it should consider.
+          int width = fieldEncoding.get().targetField().size();
+          ctx.wr("AsmUtils::formatImm(VADL_sextract(%s(%s), %d), %d, &MAI)",
               encodingFunction.header().functionName().lower(),
               argumentsForEncodingFunction,
+              width,
               radix);
         } else if (radix == 16) {
           ctx.wr("AsmUtils::formatImm(%s(%s), %d, &MAI)",
@@ -466,24 +469,43 @@ public class AssemblyInstructionPrinterImmediateHandler
     }
   }
 
+  protected void writeImmediateWithRadix(Format.FieldAccess fieldAccess,
+                                         CGenContext<Node> ctx,
+                                         int radix,
+                                         SourceLocation sourceLocation) {
+    var indexInOperands = ensurePresent(indexInInputsOrOutputs(fieldAccess), () ->
+        Diagnostic.error("Immediate must be part of an tablegen input or output.",
+            sourceLocation)
+    );
+
+    formatImm(ctx, radix, indexInOperands, sourceLocation);
+  }
+
+  protected void writeImmediateWithRadix(FuncParamNode node,
+                                         CGenContext<Node> ctx,
+                                         int radix,
+                                         SourceLocation sourceLocation) {
+    var indexInOperands = ensurePresent(indexInInputsOrOutputs(node), () ->
+        Diagnostic.error("Immediate must be part of an tablegen input or output.",
+            sourceLocation)
+    );
+
+    formatImm(ctx, radix, indexInOperands, sourceLocation);
+  }
+
   private void writeFieldWithRawImmediateWithRadix(int indexInOperands,
                                                    int radix) {
     ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
         indexInOperands, radix);
   }
 
-
-  private void writeImmediateWithRadix(Format.FieldAccess fieldAccess,
-                                       CGenContext<Node> ctx,
-                                       int radix,
-                                       SourceLocation sourceLocation) {
-    var indexInOperands = ensurePresent(indexInInputsOrOutputs(fieldAccess), () ->
-        Diagnostic.error("Immediate must be part of an tablegen input or output.",
-            sourceLocation)
-    );
-
+  private void formatImm(CGenContext<Node> ctx,
+                         int radix,
+                         Integer indexInOperands,
+                         SourceLocation sourceLocation) {
     if (radix == 10) {
-      ctx.wr("AsmUtils::formatImm(MCOperandWrapper((int64_t) MI->getOperand(%s)), %d, &MAI)",
+      // default is always signed
+      ctx.wr("AsmUtils::formatImm(MI->getOperand(%s).getImm(), %d, &MAI)",
           indexInOperands, radix);
     } else if (radix == 16) {
       ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
@@ -492,19 +514,6 @@ public class AssemblyInstructionPrinterImmediateHandler
       throw Diagnostic.error("There are no casting semantics defined for this builtin. "
           + "See issue #382", sourceLocation).build();
     }
-  }
-
-  private void writeImmediateWithRadix(FuncParamNode node,
-                                       CGenContext<Node> ctx,
-                                       int radix,
-                                       SourceLocation sourceLocation) {
-    var indexInOperands = ensurePresent(indexInInputs(node), () ->
-        Diagnostic.error("Immediate must be part of an tablegen input or output.",
-            sourceLocation)
-    );
-
-    ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
-        indexInOperands, radix);
   }
 
   /**
