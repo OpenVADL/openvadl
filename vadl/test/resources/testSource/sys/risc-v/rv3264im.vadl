@@ -138,14 +138,14 @@ instruction set architecture RV3264Base = {
     instruction $name : Ftype =                        // shift immediate instructions
       X(rd) := ((X(rs1) as $lhsTy) $op shamt) as Regs
     encoding $name = {opcode = 0b001'0011, zero = 0, funct3 = $funct3, funct2 = $funct2}
-    assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(sft))
+    assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", hex(sft))
     }
 
   model WShftInstr (name : Id, op : BinOp, funct3 : Bin, funct7 : Bin, lhsTy : Id) : IsaDefs = {
     instruction $name : Rtype =                        // shift immediate instructions word
       X(rd) := (((X(rs1) as $lhsTy) $op shamt) as SInt) as SIntR
     encoding $name = {opcode = 0b001'1011, funct3 = $funct3, funct7 = $funct7}
-    assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(shamt))
+    assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", hex(shamt))
     }
 
   model ItypeInstr (name : Id, op : BinOp, funct3 : Bin, exTy : Id) : IsaDefs = {
@@ -168,7 +168,7 @@ instruction set architecture RV3264Base = {
     instruction $name : Utype =                        // upper immediate instructions
       X(rd) := $rhsEx
     encoding $name = {opcode = $opcode}
-    assembly $name = (mnemonic, " ", register(rd), ",", hex(UTypeShift(immUp)))
+    assembly $name = (mnemonic, " ", register(rd), ",", hex(imm))
     }
 
   model LtypeInstr (name : Id, funct3 : Bin, memEx : CallEx, exTy: Id) : IsaDefs = {
