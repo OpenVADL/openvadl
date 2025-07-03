@@ -517,38 +517,6 @@ public class AssemblyInstructionPrinterImmediateHandler
   }
 
   /**
-   * {@link FuncParamNode} requires a special case since the names between pseudo instruction
-   * and {@link InstrCallNode} can differ. That's why look for a
-   * {@link TableGenInstructionLabelOperand}. We only support one.
-   */
-  private Optional<Integer> indexInInputs(FuncParamNode needle) {
-    if (tableGenInstruction.getInOperands().stream()
-        .filter(x -> x instanceof TableGenInstructionLabelOperand).count() > 1) {
-      // When we see an immediate label operand, we do not know which operand it is.
-      // Therefore, the support is limited at the moment.
-      throw Diagnostic.error("Currently we cannot support multiple labels when printing",
-          needle.location()).build();
-    }
-
-    int outputOffset = tableGenInstruction.getOutOperands().size();
-    for (int i = 0; i < tableGenInstruction.getInOperands().size(); i++) {
-      var operand = tableGenInstruction.getInOperands().get(i);
-      if (operand instanceof GcbInstructionBareSymbolOperand symbolOperand
-          && symbolOperand.origin() instanceof FuncParamNode funcParamNodeOfOperand
-          && needle.parameter().equals(funcParamNodeOfOperand.parameter())) {
-        return Optional.of(outputOffset + i);
-      } else if (operand instanceof TableGenInstructionLabelOperand) {
-        return Optional.of(outputOffset + i);
-      } else if (operand instanceof GcbDefaultInstructionOperand x
-          && x.name().equals(needle.parameter().identifier.simpleName())) {
-        return Optional.of(outputOffset + i);
-      }
-    }
-
-    return Optional.empty();
-  }
-
-  /**
    * The assembly string contains a {@code register(rd) }, but the given {@code fieldRefNode}
    * comes from a {@link Format} and is therefore a {@link FieldRefNode}.
    */
