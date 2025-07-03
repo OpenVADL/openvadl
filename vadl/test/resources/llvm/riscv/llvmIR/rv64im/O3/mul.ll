@@ -30,7 +30,7 @@ define signext i32 @mul_constant(i32 %a) nounwind {
 ; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp0)
 ; CHECK-NEXT: LD a1,0(a1)
 ; CHECK-NEXT: MUL a0,a0,a1
-; CHECK-NEXT: SRAI a0,a0,32
+; CHECK-NEXT: SRAI a0,a0,0x20
 ; CHECK-NEXT: RET
   %1 = mul i32 %a, 5
   ret i32 %1

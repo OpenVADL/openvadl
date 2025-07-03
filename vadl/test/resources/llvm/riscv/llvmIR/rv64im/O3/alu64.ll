@@ -70,7 +70,7 @@ define i64 @slli(i64 %a) nounwind {
 define i64 @srli(i64 %a) nounwind {
 ; CHECK-LABEL: srli: # @srli
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: SRLI a0,a0,8
+; CHECK-NEXT: SRLI a0,a0,0x8
 ; CHECK-NEXT: RET
   %1 = lshr i64 %a, 8
   ret i64 %1
@@ -79,7 +79,7 @@ define i64 @srli(i64 %a) nounwind {
 define i64 @srai(i64 %a) nounwind {
 ; CHECK-LABEL: srai: # @srai
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: SRAI a0,a0,9
+; CHECK-NEXT: SRAI a0,a0,0x9
 ; CHECK-NEXT: RET
   %1 = ashr i64 %a, 9
   ret i64 %1
@@ -214,7 +214,7 @@ define signext i32 @srliw(i32 %a) nounwind {
 ; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp1)
 ; CHECK-NEXT: LD a1,0(a1)
 ; CHECK-NEXT: AND a0,a0,a1
-; CHECK-NEXT: SRLI a0,a0,8
+; CHECK-NEXT: SRLI a0,a0,0x8
 ; CHECK-NEXT: RET
   %1 = lshr i32 %a, 8
   ret i32 %1
