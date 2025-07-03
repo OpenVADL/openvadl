@@ -24,6 +24,7 @@ import vadl.cppCodeGen.context.CNodeContext;
 import vadl.error.Diagnostic;
 import vadl.javaannotations.DispatchFor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.pass.PassResults;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
@@ -45,9 +46,10 @@ public class AssemblyInstructionPrinterLabelHandler
   /**
    * Constructor.
    */
-  public AssemblyInstructionPrinterLabelHandler(PrintableInstruction instruction,
+  public AssemblyInstructionPrinterLabelHandler(PassResults passResults,
+                                                PrintableInstruction instruction,
                                                 TableGenInstruction tableGenInstruction) {
-    super(instruction, tableGenInstruction);
+    super(passResults, instruction, tableGenInstruction);
     this.ctx = new CNodeContext(
         builder::append,
         (ctx, node)

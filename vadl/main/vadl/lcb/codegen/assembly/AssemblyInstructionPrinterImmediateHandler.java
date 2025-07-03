@@ -17,6 +17,7 @@
 package vadl.lcb.codegen.assembly;
 
 
+import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
@@ -31,9 +32,12 @@ import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
+import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
+import vadl.lcb.template.utils.ImmediateEncodingFunctionProvider;
+import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
@@ -90,12 +94,16 @@ import vadl.viam.graph.dependency.WriteStageOutputNode;
 public class AssemblyInstructionPrinterImmediateHandler
     extends AbstractAssemblyInstructionPrinterHandler {
 
+  private final PassResults passResults;
+
   /**
    * Constructor.
    */
-  public AssemblyInstructionPrinterImmediateHandler(PrintableInstruction instruction,
+  public AssemblyInstructionPrinterImmediateHandler(PassResults passResults,
+                                                    PrintableInstruction instruction,
                                                     TableGenInstruction tableGenInstruction) {
     super(instruction, tableGenInstruction);
+    this.passResults = passResults;
     this.ctx = new CNodeContext(
         builder::append,
         (ctx, node)
@@ -396,13 +404,60 @@ public class AssemblyInstructionPrinterImmediateHandler
     }
   }
 
-  private void writeImmediateWithRadix(Format.Field field, CGenContext<Node> ctx, int radix,
+  private void writeImmediateWithRadix(Format.Field field,
+                                       CGenContext<Node> ctx,
+                                       int radix,
                                        SourceLocation sourceLocation) {
     var indexInOperands = ensurePresent(indexInInputsOrOutputs(field), () ->
         Diagnostic.error("Immediate must be part of an tablegen input or output.",
             sourceLocation)
     );
 
+    // If this instruction is a machine instruction then ...
+    if (instruction instanceof Instruction machineInstruction) {
+      var fieldEncodings = machineInstruction.fieldEncodingsByUsedFieldAccesses();
+      var fieldEncoding =
+          fieldEncodings.stream().filter(x -> x.targetField().equals(field)).findFirst();
+
+      // If this field has an encoding, we are applying it.
+      if (fieldEncoding.isPresent()) {
+        var encodingFunctions =
+            ensureNonNull(
+                ImmediateEncodingFunctionProvider.generateEncodeFunctions(passResults)
+                    .get(instruction),
+                () -> Diagnostic.error("Cannot find encoding functions for the instruction.",
+                    machineInstruction.location()));
+
+        var encodingFunction = ensurePresent(
+            encodingFunctions.stream().filter(x -> x.field().equals(field)).findFirst()
+            , () -> Diagnostic.error("Cannot find encoding function for field",
+                machineInstruction.location().join(field.location()))
+        );
+
+        var argumentsForEncodingFunction =
+            CreateFunctionsFromImmediatesPass.createParametersForEncodingFunctionFromInputOperands(
+                    tableGenInstruction)
+                .stream()
+                .map(x -> String.format("MI->getOperand(%s).getImm()",
+                    indexInInputsOrOutputs(x.operand().immediateOperand().fieldAccessRef()).get()))
+                .collect(Collectors.joining(", "));
+
+        ctx.wr("AsmUtils::formatImm(%s(%s), %d, &MAI)",
+            encodingFunction.header().functionName().lower(),
+            argumentsForEncodingFunction,
+            radix);
+      } else {
+        // Otherwise print raw field value.
+        writeFieldWithRawImmediateWithRadix(indexInOperands, radix);
+      }
+    } else {
+      // Otherwise print raw field value.
+      writeFieldWithRawImmediateWithRadix(indexInOperands, radix);
+    }
+  }
+
+  private void writeFieldWithRawImmediateWithRadix(int indexInOperands,
+                                                   int radix) {
     ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
         indexInOperands, radix);
   }

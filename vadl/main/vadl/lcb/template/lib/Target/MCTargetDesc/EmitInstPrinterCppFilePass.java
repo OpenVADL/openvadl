@@ -99,7 +99,7 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
           var codeGen = new AssemblyInstructionPrinterCodeGenerator();
           var tableGenRecord =
               ensureNonNull(tableGenLookup.get(instruction), "tablegen record must exist");
-          var result = codeGen.generateFunctionBody(instruction, tableGenRecord);
+          var result = codeGen.generateFunctionBody(passResults, instruction, tableGenRecord);
           return new PrintableInstruction(instruction.identifier.simpleName(), result);
         })
         .toList();
@@ -124,7 +124,7 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
           var codeGen = new AssemblyInstructionPrinterCodeGenerator();
           var tableGenRecord =
               ensureNonNull(tableGenLookup.get(instruction), "tablegen record must exist");
-          var result = codeGen.generateFunctionBody(instruction, tableGenRecord);
+          var result = codeGen.generateFunctionBody(passResults, instruction, tableGenRecord);
           return new PrintableInstruction(instruction.identifier.simpleName(), result);
         })
         .toList();
