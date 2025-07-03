@@ -48,7 +48,7 @@ void convertToMapAndConstraints(unsigned Kind, const OperandVector &Operands) ov
 void reportError(OperandVector &Operands);
 
 [# th:each="instruction : ${instructions}" ]
-void parse_[(${instruction.name})](MCInst &Inst, OperandVector &Operands);
+bool parse_[(${instruction.name})](MCInst &Inst, OperandVector &Operands);
 [/]
 
 public:
@@ -68,7 +68,7 @@ void [(${namespace})]AsmParser::reportError(OperandVector &Operands) {
 }
 
 [# th:each="instruction : ${instructions}" ]
-void [(${namespace})]AsmParser::parse_[(${instruction.name})](MCInst &Inst, OperandVector &Operands) {
+bool [(${namespace})]AsmParser::parse_[(${instruction.name})](MCInst &Inst, OperandVector &Operands) {
     if(Operands.size() - 1 != [(${instruction.numOperands})]) {
       reportError(Operands);
     }
@@ -80,23 +80,32 @@ void [(${namespace})]AsmParser::parse_[(${instruction.name})](MCInst &Inst, Oper
       for(auto index = 1; index < [(${instruction.numOperands})] + 1; index++) {
         [(${namespace})]ParsedOperand& Op = static_cast<[(${namespace})]ParsedOperand&>(*Operands[ index ]);
         StringRef operandName = Op.getTarget();
-
-        if(target != operandName) {
-          continue;
-        }
+        auto isFieldOfOperand = false;
 
         [# th:each="operand : ${instruction.operands}" ]
-        if(operandName == "[(${operand.name})]") {
+        [# th:if="${operand.isImmediate}"]
+        isFieldOfOperand = operandName.equals_insensitive("[(${operand.formatField})]");
+        [/]
+        if(operandName == "[(${operand.name})]" || isFieldOfOperand) {
+          if(target != "[(${operand.name})]") {
+            continue;
+          }
           if(!Op.isImm() || Op.getImm()->getKind() != MCExpr::ExprKind::Constant) {
               Op.addOperand(Inst);
           } else {
             int64_t opImm64 = dyn_cast<MCConstantExpr>(Op.getImm())->getValue();
 
+            [# th:if="${operand.isImmediate}"]
+            if (isFieldOfOperand) {
+              opImm64 = [(${operand.decodeMethod})](opImm64);
+            }
+            [/]
+
             [# th:if="${operand.requiresPredicate}" ]
             if(![(${operand.predicateMethod})](opImm64)) {
               std::string error = "Invalid immediate operand for [(${operand.name})]. The predicate does not hold.";
               Parser.Error(Op.getStartLoc(), error);
-              return;
+              return true;
             }
             [/]
 
@@ -104,15 +113,16 @@ void [(${namespace})]AsmParser::parse_[(${instruction.name})](MCInst &Inst, Oper
             auto operand = [(${namespace})]ParsedOperand::CreateImm(constantExpr, Op.getStartLoc(), Op.getEndLoc());
             operand.addOperand(Inst);
           }
-          continue;
+          break;
         }
         [/]
 
         [(${namespace})]ParsedOperand& mnemonic = static_cast<[(${namespace})]ParsedOperand&>(*Operands[0]);
         Parser.Error(mnemonic.getStartLoc(), "Could not find index for operand '" + target + "'");
-        return;
+        return true;
       }
     }
+    return false;
 }
 [/]
 
@@ -138,7 +148,9 @@ bool [(${namespace})]AsmParser::MatchAndEmitInstruction(SMLoc IDLoc,
     switch(Opcode) {
         [# th:each="instruction : ${instructions}" ]
         case [(${namespace})]::[(${instruction.name})]:
-          parse_[(${instruction.name})](Inst, Operands);
+          if(parse_[(${instruction.name})](Inst, Operands)) {
+            return true; // returning true signals error occurred
+          }
          break;
         [/]
     }

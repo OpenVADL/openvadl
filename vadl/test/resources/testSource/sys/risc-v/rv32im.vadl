@@ -150,7 +150,7 @@ assembly description ASM for ABI = {
     LuiInstruction @instruction:
       mnemonic = "LUI" @operand
       rd = Register@operand ","
-      immUp = LuiImmediateOperand
+      imm = LuiImmediateOperand
     ;
 
     LuiImmediateOperand :
@@ -164,7 +164,7 @@ assembly description ASM for ABI = {
     AuipcInstruction @instruction:
       mnemonic = "AUIPC" @operand
       rd = Register@operand ","
-      immUp = ImmediateOperand
+      imm = ImmediateOperand
     ;
 
     LTypeIds : "LB" | "LBU" | "LH" | "LHU" | "LW" ;

@@ -1,19 +1,37 @@
 # RUN: /src/llvm-final/build/bin/llvm-mc -arch=rv32im -show-inst < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
 
+BEQ x1, x2, 0
+# CHECK: <MCInst #{{[0-9]+}} BEQ
+# CHECK-NEXT: <MCOperand Reg:3>
+# CHECK-NEXT: <MCOperand Reg:4>
+# CHECK-NEXT: <MCOperand Imm:0>>
+
 BNE x3, x4, 2
 # CHECK: <MCInst #{{[0-9]+}} BNE
 # CHECK-NEXT: <MCOperand Reg:5>
 # CHECK-NEXT: <MCOperand Reg:6>
 # CHECK-NEXT: <MCOperand Imm:2>>
 
-BGEU x7, x8, 4
+BGE x5, x6, 4
+# CHECK: <MCInst #{{[0-9]+}} BGE
+# CHECK-NEXT: <MCOperand Reg:7>
+# CHECK-NEXT: <MCOperand Reg:8>
+# CHECK-NEXT: <MCOperand Imm:4>>
+
+BGEU x7, x8, 6
 # CHECK: <MCInst #{{[0-9]+}} BGEU
 # CHECK-NEXT: <MCOperand Reg:9>
 # CHECK-NEXT: <MCOperand Reg:10>
-# CHECK-NEXT: <MCOperand Imm:4>>
+# CHECK-NEXT: <MCOperand Imm:6>>
 
-BLTU x11, x12, 6
+BLT x9, x10, 8
+# CHECK: <MCInst #{{[0-9]+}} BLT
+# CHECK-NEXT: <MCOperand Reg:11>
+# CHECK-NEXT: <MCOperand Reg:12>
+# CHECK-NEXT: <MCOperand Imm:8>>
+
+BLTU x11, x12, 10
 # CHECK: <MCInst #{{[0-9]+}} BLTU
 # CHECK-NEXT: <MCOperand Reg:13>
 # CHECK-NEXT: <MCOperand Reg:14>
-# CHECK-NEXT: <MCOperand Imm:6>>
+# CHECK-NEXT: <MCOperand Imm:10>>
