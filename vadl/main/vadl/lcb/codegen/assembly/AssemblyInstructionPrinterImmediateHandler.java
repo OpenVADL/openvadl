@@ -442,10 +442,20 @@ public class AssemblyInstructionPrinterImmediateHandler
                     indexInInputsOrOutputs(x.operand().immediateOperand().fieldAccessRef()).get()))
                 .collect(Collectors.joining(", "));
 
-        ctx.wr("AsmUtils::formatImm(%s(%s), %d, &MAI)",
-            encodingFunction.header().functionName().lower(),
-            argumentsForEncodingFunction,
-            radix);
+        if (radix == 10) {
+          ctx.wr("AsmUtils::formatImm((int64_t) %s(%s), %d, &MAI)",
+              encodingFunction.header().functionName().lower(),
+              argumentsForEncodingFunction,
+              radix);
+        } else if (radix == 16) {
+          ctx.wr("AsmUtils::formatImm(%s(%s), %d, &MAI)",
+              encodingFunction.header().functionName().lower(),
+              argumentsForEncodingFunction,
+              radix);
+        } else {
+          throw Diagnostic.error("There are no casting semantics defined for this builtin. "
+              + "See issue #382", field.location()).build();
+        }
       } else {
         // Otherwise print raw field value.
         writeFieldWithRawImmediateWithRadix(indexInOperands, radix);
@@ -472,8 +482,16 @@ public class AssemblyInstructionPrinterImmediateHandler
             sourceLocation)
     );
 
-    ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
-        indexInOperands, radix);
+    if (radix == 10) {
+      ctx.wr("AsmUtils::formatImm(MCOperandWrapper((int64_t) MI->getOperand(%s)), %d, &MAI)",
+          indexInOperands, radix);
+    } else if (radix == 16) {
+      ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
+          indexInOperands, radix);
+    } else {
+      throw Diagnostic.error("There are no casting semantics defined for this builtin. "
+          + "See issue #382", sourceLocation).build();
+    }
   }
 
   private void writeImmediateWithRadix(FuncParamNode node,
