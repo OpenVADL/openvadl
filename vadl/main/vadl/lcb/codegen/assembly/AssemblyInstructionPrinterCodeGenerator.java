@@ -18,6 +18,7 @@ package vadl.lcb.codegen.assembly;
 
 import java.util.stream.Collectors;
 import vadl.cppCodeGen.model.CppFunctionCode;
+import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
 import vadl.pass.PassResults;
@@ -40,8 +41,8 @@ public class AssemblyInstructionPrinterCodeGenerator {
     // The first case is that all immediates are really immediates.
     // And the second case is that the immediate is actually a label.
     var immediates = tableGenInstruction.getInOperands().stream()
-        .filter(x -> x instanceof ReferencesImmediateOperand)
-        .map(x -> ((ReferencesImmediateOperand) x))
+        .filter(x -> x instanceof ReferencesImmediateOperand
+            || x instanceof GcbInstructionBareSymbolOperand)
         .toList();
 
     var isImm = immediates.stream().map(x -> String.format("MI->getOperand(%s).isImm()",
