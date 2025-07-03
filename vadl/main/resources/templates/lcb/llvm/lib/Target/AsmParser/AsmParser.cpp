@@ -77,28 +77,22 @@ bool [(${namespace})]AsmParser::parse_[(${instruction.name})](MCInst &Inst, Oper
     std::vector<std::string> targets;
     targets =  { [(${instruction.targets})] };
     for(auto target : targets) {
+      bool found = false;
       for(auto index = 1; index < [(${instruction.numOperands})] + 1; index++) {
         [(${namespace})]ParsedOperand& Op = static_cast<[(${namespace})]ParsedOperand&>(*Operands[ index ]);
         StringRef operandName = Op.getTarget();
-        auto isFieldOfOperand = false;
 
         [# th:each="operand : ${instruction.operands}" ]
-        [# th:if="${operand.isImmediate}"]
-        isFieldOfOperand = operandName.equals_insensitive("[(${operand.formatField})]");
-        [/]
-        if(operandName == "[(${operand.name})]" || isFieldOfOperand) {
-          if(target != "[(${operand.name})]") {
-            continue;
-          }
+        if(operandName == "[(${operand.name})]" && target == "[(${operand.targetName})]") {
+          found = true;
+
           if(!Op.isImm() || Op.getImm()->getKind() != MCExpr::ExprKind::Constant) {
               Op.addOperand(Inst);
           } else {
             int64_t opImm64 = dyn_cast<MCConstantExpr>(Op.getImm())->getValue();
 
-            [# th:if="${operand.isImmediate}"]
-            if (isFieldOfOperand) {
-              opImm64 = [(${operand.decodeMethod})](opImm64);
-            }
+            [# th:if="${operand.isFieldOperand}"]
+            opImm64 = [(${operand.decodeMethod})](opImm64);
             [/]
 
             [# th:if="${operand.requiresPredicate}" ]
@@ -115,8 +109,10 @@ bool [(${namespace})]AsmParser::parse_[(${instruction.name})](MCInst &Inst, Oper
           }
           break;
         }
-        [/]
 
+        [/]
+      }
+      if (!found) {
         [(${namespace})]ParsedOperand& mnemonic = static_cast<[(${namespace})]ParsedOperand&>(*Operands[0]);
         Parser.Error(mnemonic.getStartLoc(), "Could not find index for operand '" + target + "'");
         return true;
