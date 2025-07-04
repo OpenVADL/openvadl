@@ -18,9 +18,11 @@ package vadl.gcb.passes;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
@@ -197,6 +199,17 @@ public class IdentifyFieldUsagePass extends Pass {
         throw new ViamError("Hashmap must not be null");
       }
       return obj;
+    }
+
+    /**
+     * Get the usages of fields by instruction.
+     */
+    public List<FieldUsage> getFieldUsages(Instruction instruction, Field field) {
+      var obj = fieldUsage.get(instruction);
+      if (obj == null) {
+        throw new ViamError("Hashmap must not be null");
+      }
+      return Optional.ofNullable(obj.get(field)).orElse(Collections.emptyList());
     }
 
     /**

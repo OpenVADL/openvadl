@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
@@ -95,6 +96,7 @@ public class AssemblyInstructionPrinterImmediateHandler
     extends AbstractAssemblyInstructionPrinterHandler {
 
   private final PassResults passResults;
+  private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
 
   /**
    * Constructor.
@@ -104,6 +106,9 @@ public class AssemblyInstructionPrinterImmediateHandler
                                                     TableGenInstruction tableGenInstruction) {
     super(instruction, tableGenInstruction);
     this.passResults = passResults;
+    this.fieldUsages =
+        (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
+            IdentifyFieldUsagePass.class);
     this.ctx = new CNodeContext(
         builder::append,
         (ctx, node)
@@ -189,7 +194,30 @@ public class AssemblyInstructionPrinterImmediateHandler
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(CGenContext<Node> ctx, FieldRefNode node) {
-    throw Diagnostic.error("not supported", node.location()).build();
+    if (instruction instanceof Instruction machineInstruction) {
+      var usages = fieldUsages.getFieldUsages(machineInstruction, node.formatField());
+
+      if (usages.isEmpty()) {
+        throw Diagnostic.error(
+            "The generator does not know whether this is an immediate or register access.",
+            node.location()).build();
+      } else if (usages.size() > 1) {
+        throw Diagnostic.error(
+            "The generator registered multiple register usages for this field.",
+            node.location()).build();
+      }
+
+      var usage = usages.getFirst();
+      var indexInOperands = ensurePresent(indexInInputsOrOutputs(node.formatField()),
+          () -> Diagnostic.error("Cannot find operand.", node.location()));
+      if (usage == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE) {
+        ctx.wr("MI->getOperand(%s).getImm()", indexInOperands);
+      } else if (usage == IdentifyFieldUsagePass.FieldUsage.REGISTER) {
+        ctx.wr("MI->getOperand(%s).getReg()", indexInOperands);
+      }
+    } else {
+      throw Diagnostic.error("not supported", node.location()).build();
+    }
   }
 
   @Handler
