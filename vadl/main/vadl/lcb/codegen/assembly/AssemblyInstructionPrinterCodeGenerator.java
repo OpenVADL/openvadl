@@ -18,8 +18,10 @@ package vadl.lcb.codegen.assembly;
 
 import java.util.stream.Collectors;
 import vadl.cppCodeGen.model.CppFunctionCode;
+import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
+import vadl.pass.PassResults;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.control.ReturnNode;
 
@@ -32,14 +34,15 @@ public class AssemblyInstructionPrinterCodeGenerator {
    * Generate a function which prints the assembly.
    */
   public CppFunctionCode generateFunctionBody(
+      PassResults passResults,
       PrintableInstruction instruction,
       TableGenInstruction tableGenInstruction) {
     // There are two cases
     // The first case is that all immediates are really immediates.
     // And the second case is that the immediate is actually a label.
     var immediates = tableGenInstruction.getInOperands().stream()
-        .filter(x -> x instanceof ReferencesImmediateOperand)
-        .map(x -> ((ReferencesImmediateOperand) x))
+        .filter(x -> x instanceof ReferencesImmediateOperand
+            || x instanceof GcbInstructionBareSymbolOperand)
         .toList();
 
     var isImm = immediates.stream().map(x -> String.format("MI->getOperand(%s).isImm()",
@@ -47,8 +50,10 @@ public class AssemblyInstructionPrinterCodeGenerator {
                 .size()))
         .collect(Collectors.joining(" && "));
 
-    var handler = new AssemblyInstructionPrinterImmediateHandler(instruction, tableGenInstruction);
-    var handler2 = new AssemblyInstructionPrinterLabelHandler(instruction, tableGenInstruction);
+    var handler = new AssemblyInstructionPrinterImmediateHandler(passResults, instruction,
+        tableGenInstruction);
+    var handler2 =
+        new AssemblyInstructionPrinterLabelHandler(passResults, instruction, tableGenInstruction);
 
     var returnNodes =
         instruction.assembly().function().behavior().getNodes(ReturnNode.class).toList();

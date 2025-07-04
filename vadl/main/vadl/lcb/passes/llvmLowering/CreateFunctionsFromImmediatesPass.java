@@ -47,6 +47,8 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.Type;
 import vadl.viam.Format;
+import vadl.viam.Format.FieldAccess;
+import vadl.viam.Format.FieldEncoding;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.Parameter;
@@ -175,7 +177,7 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
   private List<GcbCppEncodeFunction> encoding(
       Instruction instruction,
       TableGenInstruction tableGenInstruction,
-      List<Format.FieldEncoding> encodings) {
+      List<FieldEncoding> encodings) {
     return encodings.stream().map(encoding -> {
       // Why do we need to handle the operands?
       // The problem is that it might happen that we are given a MCInst
@@ -184,13 +186,11 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
       // Our solution to that is that each operand from the instruction is a parameter. It's also
       // in the same order. Then the encoding wrapper function can extract the operands from MCInst,
       // but the parser can also use this function regularly because they are raw types.
-      var inputOperands = tableGenInstruction.getInOperands()
-          .stream()
-          .filter(operand -> operand instanceof ReferencesImmediateOperand)
-          .map(operand -> (ReferencesImmediateOperand) operand)
-          .toList();
 
-      List<Parameter> parameters = createParametersForEncodingFunction(inputOperands);
+      // We are passing in all the field access functions into the function.
+      // The function will only use the parameters (field access functions) that it needs.
+      List<FieldAccessParameter> parameters =
+          createParametersForEncodingFunctionFromInputOperands(tableGenInstruction);
 
       var identifier = instruction.identifier.append(encoding.targetField().simpleName());
       var encodingBodyLessFunction = new GcbCppFunctionBodyLess(
@@ -205,20 +205,41 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
     }).toList();
   }
 
+  /**
+   * A {@link FieldEncoding} may have multiple {@link FieldAccess}. However, the VIAM is not
+   * forcing a particular order which is not problematic. Therefore, we have to define our own
+   * order. Our solution is that a {@link FieldEncoding} uses all the {@link FieldAccess} for
+   * an {@link Instruction}. Since all the field access functions' parameters are named and the
+   * function refers to the name of the field access function, the encoding function
+   * will only use the parameters it requires. We define the order of the parameters to the order
+   * in {@link TableGenInstruction#getInOperands()}.
+   */
   @Nonnull
-  private static List<Parameter> createParametersForEncodingFunction(
+  public static List<FieldAccessParameter> createParametersForEncodingFunctionFromInputOperands(
+      TableGenInstruction tableGenInstruction) {
+    var inputOperands = tableGenInstruction.getInOperands()
+        .stream()
+        .filter(operand -> operand instanceof ReferencesImmediateOperand)
+        .map(operand -> (ReferencesImmediateOperand) operand)
+        .toList();
+
+    return createParametersForEncodingFunction(inputOperands);
+  }
+
+  @Nonnull
+  private static List<FieldAccessParameter> createParametersForEncodingFunction(
       List<ReferencesImmediateOperand> inputOperands) {
-    List<Parameter> parameters = inputOperands.stream()
-        .map(operand -> new Parameter(
+    return inputOperands.stream()
+        .map(operand -> new FieldAccessParameter(
             new Identifier(operand.immediateOperand().fieldAccessRef().identifier.simpleName(),
                 operand.immediateOperand().fieldAccessRef().location()),
-            operand.immediateOperand().rawType()))
+            operand.immediateOperand().rawType(),
+            operand))
         .toList();
-    return parameters;
   }
 
   /**
-   * Creates parameters from the given {@link vadl.viam.Format.FieldAccess} list. Note,
+   * Creates parameters from the given {@link FieldAccess} list. Note,
    * that the orders matters!
    */
   @Nonnull
@@ -303,5 +324,23 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
 
     return new GcbCppFunctionWithBody(bodyLessFunction,
         codeGen.genFunctionDefinition());
+  }
+
+  /**
+   * Extends {@link Parameter} to additionally store the {@link ReferencesImmediateOperand}.
+   */
+  public static class FieldAccessParameter extends Parameter {
+
+    private final ReferencesImmediateOperand operand;
+
+    public FieldAccessParameter(Identifier identifier, Type type,
+                                ReferencesImmediateOperand operand) {
+      super(identifier, type);
+      this.operand = operand;
+    }
+
+    public ReferencesImmediateOperand operand() {
+      return operand;
+    }
   }
 }

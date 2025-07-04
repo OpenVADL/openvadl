@@ -19,9 +19,12 @@ package vadl.viam;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import vadl.viam.Format.FieldAccess;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 
 /**
  * The VADL ISA Instruction definition.
@@ -168,5 +171,20 @@ public class Instruction extends Definition implements DefProp.WithBehavior, Pri
   @Override
   public List<Graph> behaviors() {
     return List.of(behavior);
+  }
+
+  /**
+   * A {@link Format} has a list of all defined {@link FieldAccess}. However, an instruction has
+   * not to use all of them. This functions returns a list of {@link Format.FieldEncoding} for only
+   * the {@link FieldAccess} which are used in the behavior.
+   */
+  public List<Format.FieldEncoding> fieldEncodingsByUsedFieldAccesses() {
+    var fieldAccesses = behaviors()
+        .stream()
+        .flatMap(x -> x.getNodes(FieldAccessRefNode.class))
+        .map(FieldAccessRefNode::fieldAccess)
+        .collect(Collectors.toSet());
+
+    return format().fieldEncodingsOf(fieldAccesses);
   }
 }

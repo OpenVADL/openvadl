@@ -17,6 +17,7 @@
 package vadl.lcb.codegen.assembly;
 
 
+import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
@@ -31,9 +32,12 @@ import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
+import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
+import vadl.lcb.template.utils.ImmediateEncodingFunctionProvider;
+import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
@@ -90,12 +94,16 @@ import vadl.viam.graph.dependency.WriteStageOutputNode;
 public class AssemblyInstructionPrinterImmediateHandler
     extends AbstractAssemblyInstructionPrinterHandler {
 
+  private final PassResults passResults;
+
   /**
    * Constructor.
    */
-  public AssemblyInstructionPrinterImmediateHandler(PrintableInstruction instruction,
+  public AssemblyInstructionPrinterImmediateHandler(PassResults passResults,
+                                                    PrintableInstruction instruction,
                                                     TableGenInstruction tableGenInstruction) {
     super(instruction, tableGenInstruction);
+    this.passResults = passResults;
     this.ctx = new CNodeContext(
         builder::append,
         (ctx, node)
@@ -396,74 +404,116 @@ public class AssemblyInstructionPrinterImmediateHandler
     }
   }
 
-  private void writeImmediateWithRadix(Format.Field field, CGenContext<Node> ctx, int radix,
-                                       SourceLocation sourceLocation) {
+  protected void writeImmediateWithRadix(Format.Field field,
+                                         CGenContext<Node> ctx,
+                                         int radix,
+                                         SourceLocation sourceLocation) {
     var indexInOperands = ensurePresent(indexInInputsOrOutputs(field), () ->
         Diagnostic.error("Immediate must be part of an tablegen input or output.",
             sourceLocation)
     );
 
-    ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
-        indexInOperands, radix);
+    // If this instruction is a machine instruction then ...
+    if (instruction instanceof Instruction machineInstruction) {
+      var fieldEncodings = machineInstruction.fieldEncodingsByUsedFieldAccesses();
+      var fieldEncoding =
+          fieldEncodings.stream().filter(x -> x.targetField().equals(field)).findFirst();
+
+      // If this field has an encoding, we are applying it.
+      if (fieldEncoding.isPresent()) {
+        var encodingFunctions =
+            ensureNonNull(
+                ImmediateEncodingFunctionProvider.generateEncodeFunctions(passResults)
+                    .get(instruction),
+                () -> Diagnostic.error("Cannot find encoding functions for the instruction.",
+                    machineInstruction.location()));
+
+        var encodingFunction = ensurePresent(
+            encodingFunctions.stream().filter(x -> x.field().equals(field)).findFirst(),
+            () -> Diagnostic.error("Cannot find encoding function for field",
+                machineInstruction.location().join(field.location()))
+        );
+
+        var argumentsForEncodingFunction =
+            CreateFunctionsFromImmediatesPass.createParametersForEncodingFunctionFromInputOperands(
+                    tableGenInstruction)
+                .stream()
+                .map(x -> String.format("MI->getOperand(%s).getImm()",
+                    indexInInputsOrOutputs(x.operand().immediateOperand().fieldAccessRef()).get()))
+                .collect(Collectors.joining(", "));
+
+        if (radix == 10) {
+          // The sign extension function needs to know which bit it should consider.
+          int width = fieldEncoding.get().targetField().size();
+          ctx.wr("AsmUtils::formatImm(VADL_sextract(%s(%s), %d), %d, &MAI)",
+              encodingFunction.header().functionName().lower(),
+              argumentsForEncodingFunction,
+              width,
+              radix);
+        } else if (radix == 16) {
+          ctx.wr("AsmUtils::formatImm(%s(%s), %d, &MAI)",
+              encodingFunction.header().functionName().lower(),
+              argumentsForEncodingFunction,
+              radix);
+        } else {
+          throw Diagnostic.error("There are no casting semantics defined for this builtin. "
+              + "See issue #382", field.location()).build();
+        }
+      } else {
+        // Otherwise print raw field value.
+        writeFieldWithRawImmediateWithRadix(indexInOperands, radix);
+      }
+    } else {
+      // Otherwise print raw field value.
+      writeFieldWithRawImmediateWithRadix(indexInOperands, radix);
+    }
   }
 
-
-  private void writeImmediateWithRadix(Format.FieldAccess fieldAccess,
-                                       CGenContext<Node> ctx,
-                                       int radix,
-                                       SourceLocation sourceLocation) {
+  protected void writeImmediateWithRadix(Format.FieldAccess fieldAccess,
+                                         CGenContext<Node> ctx,
+                                         int radix,
+                                         SourceLocation sourceLocation) {
     var indexInOperands = ensurePresent(indexInInputsOrOutputs(fieldAccess), () ->
         Diagnostic.error("Immediate must be part of an tablegen input or output.",
             sourceLocation)
     );
 
-    ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
-        indexInOperands, radix);
+    formatImm(ctx, radix, indexInOperands, sourceLocation);
   }
 
-  private void writeImmediateWithRadix(FuncParamNode node,
-                                       CGenContext<Node> ctx,
-                                       int radix,
-                                       SourceLocation sourceLocation) {
-    var indexInOperands = ensurePresent(indexInInputs(node), () ->
+  protected void writeImmediateWithRadix(FuncParamNode node,
+                                         CGenContext<Node> ctx,
+                                         int radix,
+                                         SourceLocation sourceLocation) {
+    var indexInOperands = ensurePresent(indexInInputsOrOutputs(node), () ->
         Diagnostic.error("Immediate must be part of an tablegen input or output.",
             sourceLocation)
     );
 
+    formatImm(ctx, radix, indexInOperands, sourceLocation);
+  }
+
+  private void writeFieldWithRawImmediateWithRadix(int indexInOperands,
+                                                   int radix) {
     ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
         indexInOperands, radix);
   }
 
-  /**
-   * {@link FuncParamNode} requires a special case since the names between pseudo instruction
-   * and {@link InstrCallNode} can differ. That's why look for a
-   * {@link TableGenInstructionLabelOperand}. We only support one.
-   */
-  private Optional<Integer> indexInInputs(FuncParamNode needle) {
-    if (tableGenInstruction.getInOperands().stream()
-        .filter(x -> x instanceof TableGenInstructionLabelOperand).count() > 1) {
-      // When we see an immediate label operand, we do not know which operand it is.
-      // Therefore, the support is limited at the moment.
-      throw Diagnostic.error("Currently we cannot support multiple labels when printing",
-          needle.location()).build();
+  private void formatImm(CGenContext<Node> ctx,
+                         int radix,
+                         Integer indexInOperands,
+                         SourceLocation sourceLocation) {
+    if (radix == 10) {
+      // default is always signed
+      ctx.wr("AsmUtils::formatImm(MI->getOperand(%s).getImm(), %d, &MAI)",
+          indexInOperands, radix);
+    } else if (radix == 16) {
+      ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
+          indexInOperands, radix);
+    } else {
+      throw Diagnostic.error("There are no casting semantics defined for this builtin. "
+          + "See issue #382", sourceLocation).build();
     }
-
-    int outputOffset = tableGenInstruction.getOutOperands().size();
-    for (int i = 0; i < tableGenInstruction.getInOperands().size(); i++) {
-      var operand = tableGenInstruction.getInOperands().get(i);
-      if (operand instanceof GcbInstructionBareSymbolOperand symbolOperand
-          && symbolOperand.origin() instanceof FuncParamNode funcParamNodeOfOperand
-          && needle.parameter().equals(funcParamNodeOfOperand.parameter())) {
-        return Optional.of(outputOffset + i);
-      } else if (operand instanceof TableGenInstructionLabelOperand) {
-        return Optional.of(outputOffset + i);
-      } else if (operand instanceof GcbDefaultInstructionOperand x
-          && x.name().equals(needle.parameter().identifier.simpleName())) {
-        return Optional.of(outputOffset + i);
-      }
-    }
-
-    return Optional.empty();
   }
 
   /**
