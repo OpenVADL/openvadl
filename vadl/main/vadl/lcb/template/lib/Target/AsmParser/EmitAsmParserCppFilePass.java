@@ -24,6 +24,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
+import vadl.error.DeferredDiagnosticStore;
+import vadl.error.Diagnostic;
 import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
@@ -72,16 +74,20 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
   }
 
   record TableGenOperand(String name,
-                         int index,
                          boolean requiresPredicate,
-                         String predicateMethod) implements Renderable {
+                         String predicateMethod,
+                         boolean isFieldOperand,
+                         String targetName,
+                         String decodeMethod) implements Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
       return Map.of("name", name,
-          "index", index,
           "requiresPredicate", requiresPredicate,
-          "predicateMethod", predicateMethod);
+          "predicateMethod", predicateMethod,
+          "isFieldOperand", isFieldOperand,
+          "targetName", targetName,
+          "decodeMethod", decodeMethod);
     }
   }
 
@@ -122,12 +128,13 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
         .map(instruction -> {
           var name = instruction.getName();
           var operands = createOperands(instruction);
-          int numOperands = operands.size();
+          var targets = targets(instruction);
+          int numOperands = targets.size();
           return new ParseInstruction(name,
               operands,
               numOperands,
-              operands.stream()
-                  .map(x -> "\"" + x.name + "\"")
+              targets.stream()
+                  .map(t -> "\"" + t + "\"")
                   .collect(Collectors.joining(", "))
           );
         })
@@ -137,12 +144,13 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
         .map(instruction -> {
           var name = instruction.getName();
           var operands = createOperands(instruction);
-          int numOperands = operands.size();
+          var targets = targets(instruction);
+          int numOperands = targets.size();
           return new ParseInstruction(name,
               operands,
               numOperands,
-              operands.stream()
-                  .map(x -> "\"" + x.name + "\"")
+              targets.stream()
+                  .map(t -> "\"" + t + "\"")
                   .collect(Collectors.joining(", "))
           );
         })
@@ -151,44 +159,115 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     return Stream.concat(machine.stream(), pseudo.stream()).toList();
   }
 
+  private List<String> targets(TableGenInstruction instruction) {
+    var targets = new ArrayList<String>();
+
+    for (var output : instruction.getOutOperands()) {
+      var casted = (GcbDefaultInstructionOperand) output;
+      targets.add(casted.name());
+    }
+
+    for (var input : instruction.getInOperands()) {
+      var casted = (GcbDefaultInstructionOperand) input;
+      targets.add(casted.name());
+    }
+
+    return targets;
+  }
+
+  /**
+   * In the AsmParser we need to deal with cases where an operand in the assembly
+   * language represents the encoded value of the operand.
+   * An example is AUIPC of Risc-V:
+   * <pre>
+   *   AuipcInstruction @instruction:
+   *     mnemonic = "AUIPC" @operand
+   *     rd = Register@operand ","
+   *     imm = ImmediateOperand
+   *   ;
+   * </pre>
+   * Here the immediate operand is assigned to the field <code>imm</code>
+   * as opposed to field access <code>immS</code>, which LLVM actually expects.
+   * To meet the expectation we need to call the field access function to transform
+   * <code>imm</code> to <code>immS</code>.
+   *
+   * <p>In the current implementation this method assumes that an immediate operands access function
+   * only ever takes one format field as input.
+   * Because of this the AsmParser WILL NOT work for architectures where a field access
+   * takes multiple fields as input.
+   * </p>
+   */
   private List<TableGenOperand> createOperands(TableGenInstruction instruction) {
     var result = new ArrayList<TableGenOperand>();
-    int indexOffset = 1;
     // Output
     for (var output : instruction.getOutOperands()) {
       var casted = (GcbDefaultInstructionOperand) output;
-      var operand = new TableGenOperand(casted.name(), indexOffset, false, "");
+      var operand = new TableGenOperand(casted.name(), false, "", false, casted.name(), "");
       result.add(operand);
-      indexOffset++;
     }
 
     // Inputs
     for (var input : instruction.getInOperands()) {
       var casted = (GcbDefaultInstructionOperand) input;
       if (input instanceof TableGenInstructionImmediateOperand immediateOperand) {
-        var operand = new TableGenOperand(immediateOperand.name(),
-            indexOffset,
+
+        var formatFields = immediateOperand.formatFields();
+        if (formatFields.size() != 1) {
+          DeferredDiagnosticStore.add(Diagnostic.warning(
+              "The AsmParser cannot deal with access functions with multiple fields.",
+              input.origin().location()).build());
+        }
+
+        var fieldAccessOperand = new TableGenOperand(immediateOperand.name(),
             true,
-            immediateOperand.immediateOperand().predicateMethod().lower()
-        );
-        result.add(operand);
-      } else if (input instanceof TableGenInstructionLabelOperand immediateOperand) {
-        var operand = new TableGenOperand(immediateOperand.name(),
-            indexOffset,
-            true,
-            immediateOperand.immediateOperand().predicateMethod().lower()
-        );
-        result.add(operand);
-      } else {
-        var operand = new TableGenOperand(casted.name(),
-            indexOffset,
+            immediateOperand.immediateOperand().predicateMethod().lower(),
             false,
+            immediateOperand.name(),
+            ""
+        );
+        result.add(fieldAccessOperand);
+
+        var fieldOperand = new TableGenOperand(
+            formatFields.get(0).simpleName(),
+            true,
+            immediateOperand.immediateOperand().predicateMethod().lower(),
+            true,
+            immediateOperand.name(),
+            immediateOperand.immediateOperand().rawDecoderMethod().lower()
+        );
+        result.add(fieldOperand);
+      } else if (input instanceof TableGenInstructionLabelOperand immediateOperand) {
+
+        var formatFields = immediateOperand.formatFields();
+        if (formatFields.size() != 1) {
+          DeferredDiagnosticStore.add(Diagnostic.warning(
+              "The AsmParser cannot deal with access functions with multiple fields.",
+              input.origin().location()).build());
+        }
+
+        var operand = new TableGenOperand(immediateOperand.name(),
+            true,
+            immediateOperand.immediateOperand().predicateMethod().lower(),
+            false,
+            immediateOperand.name(),
             ""
         );
         result.add(operand);
+
+        var fieldOperand = new TableGenOperand(
+            formatFields.get(0).simpleName(),
+            true,
+            immediateOperand.immediateOperand().predicateMethod().lower(),
+            true,
+            immediateOperand.name(),
+            immediateOperand.immediateOperand().rawDecoderMethod().lower()
+        );
+        result.add(fieldOperand);
+      } else {
+        var operand = new TableGenOperand(casted.name(), false, "", false, casted.name(), "");
+        result.add(operand);
       }
 
-      indexOffset++;
     }
 
     return result;
@@ -197,43 +276,31 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
   private List<TableGenOperand> createOperands(TableGenPseudoInstruction instruction) {
     var result = new ArrayList<TableGenOperand>();
-    int indexOffset = 1;
 
     // Output
     for (var output : instruction.getOutOperands()) {
       var casted = (GcbDefaultInstructionOperand) output;
-      var operand = new TableGenOperand(casted.name(), indexOffset, false, "");
+      var operand = new TableGenOperand(casted.name(), false, "", false, casted.name(), "");
       result.add(operand);
-      indexOffset++;
     }
 
     // Inputs
     for (var input : instruction.getInOperands()) {
       var casted = (GcbDefaultInstructionOperand) input;
       if (input instanceof TableGenInstructionImmediateOperand immediateOperand) {
-        var operand = new TableGenOperand(immediateOperand.name(),
-            indexOffset,
-            false,
-            immediateOperand.immediateOperand().predicateMethod().lower()
-        );
+        var operand =
+            new TableGenOperand(immediateOperand.name(), false, "", false, immediateOperand.name(),
+                "");
         result.add(operand);
       } else if (input instanceof TableGenInstructionLabelOperand immediateOperand) {
-        var operand = new TableGenOperand(immediateOperand.name(),
-            indexOffset,
-            false,
-            immediateOperand.immediateOperand().predicateMethod().lower()
-        );
+        var operand =
+            new TableGenOperand(immediateOperand.name(), false, "", false, immediateOperand.name(),
+                "");
         result.add(operand);
       } else {
-        var operand = new TableGenOperand(casted.name(),
-            indexOffset,
-            false,
-            ""
-        );
+        var operand = new TableGenOperand(casted.name(), false, "", false, casted.name(), "");
         result.add(operand);
       }
-
-      indexOffset++;
     }
 
     return result;
