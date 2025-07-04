@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
+import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
@@ -212,9 +213,9 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
         var formatFields = immediateOperand.formatFields();
         if (formatFields.size() != 1) {
-          throw Diagnostic.error(
+          DeferredDiagnosticStore.add(Diagnostic.warning(
               "The AsmParser cannot deal with access functions with multiple fields.",
-              input.origin().location()).build();
+              input.origin().location()).build());
         }
 
         var fieldAccessOperand = new TableGenOperand(immediateOperand.name(),
@@ -239,9 +240,9 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
         var formatFields = immediateOperand.formatFields();
         if (formatFields.size() != 1) {
-          throw Diagnostic.error(
+          DeferredDiagnosticStore.add(Diagnostic.warning(
               "The AsmParser cannot deal with access functions with multiple fields.",
-              input.origin().location()).build();
+              input.origin().location()).build());
         }
 
         var operand = new TableGenOperand(immediateOperand.name(),
