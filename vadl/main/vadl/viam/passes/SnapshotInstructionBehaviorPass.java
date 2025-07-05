@@ -17,6 +17,7 @@
 package vadl.viam.passes;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
@@ -24,6 +25,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Instruction;
+import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 
@@ -46,7 +48,8 @@ public class SnapshotInstructionBehaviorPass extends Pass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var result = new IdentityHashMap<Instruction, Graph>();
 
-    for (var instruction : viam.isa().orElseThrow().ownInstructions()) {
+    for (var instruction : viam.isa().map(InstructionSetArchitecture::ownInstructions).orElse(
+        Collections.emptyList())) {
       var copy = instruction.behavior().copy();
       result.put(instruction, copy);
     }
