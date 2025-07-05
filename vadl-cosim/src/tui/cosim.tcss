@@ -1,0 +1,26 @@
+#json-tree {
+	height: 95%;
+}
+
+#input-filter {
+	height: 5%;
+	border: solid blue;
+}
+
+GDBWindow {
+	height: 50%;
+}
+
+#gdb_log {
+    height: 90%;
+    border: solid white;
+}
+
+#gdb_input {
+    height: 10%;
+    border: solid yellow;
+}
+
+.column {
+	width: 1fr;
+}
