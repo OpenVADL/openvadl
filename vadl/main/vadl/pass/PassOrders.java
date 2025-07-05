@@ -118,6 +118,7 @@ import vadl.viam.passes.ControlFlowOptimizationPass;
 import vadl.viam.passes.DuplicateWriteDetectionPass;
 import vadl.viam.passes.HardcodeLGALabelPass;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
+import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
@@ -168,6 +169,7 @@ public class PassOrders {
     order.add(new ViamCreationPass(configuration));
     order.add(new ViamVerificationPass(configuration));
 
+    order.add(new SnapshotInstructionBehaviorPass(configuration));
     order.add(new RemoveUnusedStatusFlagsFromBuiltinsPass(configuration));
     order.add(new StatusBuiltInInlinePass(configuration));
 
