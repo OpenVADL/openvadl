@@ -33,31 +33,35 @@ ignore_registers = [ "s0", "x0" ]
 # Defines a list of clients to test against
 # A single client is also possible, e.g. to check if a crash or similar occurs
 # In most use-cases, 2 clients (one test-simulator and one reference-simulator) are used
-[[qemu.clients]]
-
-# Optional: A custom name for a client
-# Will default to the index of the client in this list
-name = "VADL"
-
-# The executable of the ISS
-exec = "qemu-system-a64"
-
-# "bios" | "kernel": Defines where the test-executable is passed to when starting the QEMU-client
-pass_test_exec_to = "bios"
-
-# Applies additional arguments to the ISS-executable, e.g. `qemu-system-riscv64 -nographic -d plugin`
-additional_args = [
-	"-nographic",
-	"-d", "plugin"
-	# "-s",
-	# "-S",
-]
-
+# [[qemu.clients]]
+#
+# # Optional: A custom name for a client
+# # Will default to the index of the client in this list
+# name = "VADL"
+#
+# # The executable of the ISS
+# exec = "qemu-system-a64"
+#
+# # "bios" | "kernel": Defines where the test-executable is passed to when starting the QEMU-client
+# pass_test_exec_to = "bios"
+#
+# # Applies additional arguments to the ISS-executable, e.g. `qemu-system-riscv64 -nographic -d plugin`
+# additional_args = [
+# 	"-nographic",
+# 	"-d", "plugin"
+# ]
+#
 # # The following three options configure which instructions from the `test_exec` executable should actually be tested.
 # # NOTE: Only applies to `layer = "insn" | "tb-strict"`
 # # NOTE: This option is must be set per client to be able to account for different setup-codes per ISS
 # # Skips the first n instructions 
-skip_n_instructions = 2
+# skip_n_instructions = 2
+#
+# # Settings for running the qemu-clients with gdb-debugging enabled.
+# # Use these settings when possible instead of configuring the flags in the additional_args array since this will ensure that the runner and tui correctly connect to the gdb targets (when enabled)
+# [qemu.clients.gdb]
+# enable = true
+# remote_target = "localhost:1234"
 
 [[qemu.clients]]
 name = "UPSTREAM"
@@ -74,7 +78,12 @@ additional_args = [
 	"-d", "plugin",
 ]
 
-skip_n_instructions = 1
+skip_n_instructions = 0
+
+[qemu.clients.gdb]
+enable = true 
+remote_target = "localhost:1234"
+
 
 # Defines a custom map where the key (e.g. x0) is mapped to another value (e.g. zero)
 [qemu.gdb_reg_map]
