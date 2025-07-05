@@ -36,6 +36,7 @@ import vadl.cppCodeGen.model.GcbCppEncodingWrapperFunction;
 import vadl.cppCodeGen.model.GcbCppFunctionBodyLess;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
@@ -159,9 +160,9 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
       var instruction = (Instruction) pair.getKey();
       var tableGenInstruction = pair.getValue();
 
-      var fieldAccesses = tableGenInstruction.immediateInputOperands().stream()
-          .map(x -> x.immediateOperand().fieldAccessRef()).collect(
-              Collectors.toSet());
+      var fieldAccesses = tableGenInstruction.gcbImmediateInputOperands().stream()
+          .map(GcbInstructionImmediateOperand::fieldAccess)
+          .collect(Collectors.toSet());
       var fieldEncodings = instruction.format().fieldEncodingsOf(fieldAccesses);
       var encodingsFunctions = encoding(instruction, tableGenInstruction, fieldEncodings);
       encodings.put(instruction, encodingsFunctions);

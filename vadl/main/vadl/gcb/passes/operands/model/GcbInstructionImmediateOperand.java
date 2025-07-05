@@ -33,6 +33,14 @@ public class GcbInstructionImmediateOperand extends GcbDefaultInstructionOperand
     this.fieldAccess = node.fieldAccess();
   }
 
+  /**
+   * Constructor.
+   */
+  public GcbInstructionImmediateOperand(FieldAccessRefNode origin, String type, String name) {
+    super(origin, type, name);
+    this.fieldAccess = origin.fieldAccess();
+  }
+
   public Format.FieldAccess fieldAccess() {
     return fieldAccess;
   }

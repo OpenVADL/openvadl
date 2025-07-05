@@ -176,12 +176,20 @@ public class Instruction extends Definition implements DefProp.WithBehavior, Pri
   /**
    * A {@link Format} has a list of all defined {@link FieldAccess}. However, an instruction has
    * not to use all of them. This functions returns a list of {@link Format.FieldEncoding} for only
-   * the {@link FieldAccess} which are used in the behavior.
+   * the {@link FieldAccess} which are used in the instruction's behavior.
    */
   public List<Format.FieldEncoding> fieldEncodingsByUsedFieldAccesses() {
-    var fieldAccesses = behaviors()
-        .stream()
-        .flatMap(x -> x.getNodes(FieldAccessRefNode.class))
+    return fieldEncodingsByUsedFieldAccesses(behavior);
+  }
+
+  /**
+   * A {@link Format} has a list of all defined {@link FieldAccess}. However, an instruction has
+   * not to use all of them. This functions returns a list of {@link Format.FieldEncoding} for only
+   * the {@link FieldAccess} which are used in the given behavior.
+   */
+  public List<Format.FieldEncoding> fieldEncodingsByUsedFieldAccesses(Graph graph) {
+    var fieldAccesses = graph
+        .getNodes(FieldAccessRefNode.class)
         .map(FieldAccessRefNode::fieldAccess)
         .collect(Collectors.toSet());
 
