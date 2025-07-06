@@ -25,13 +25,13 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.WriteRegTensorNode;
+import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
  * Detect whether the {@link FieldRefNode} is used as a register index.
- * It is detected as register index when a usage is {@link ReadRegTensorNode}
- * or {@link WriteRegTensorNode}.
+ * It is detected as register index when a usage is {@link ReadResourceNode}
+ * or {@link WriteResourceNode}.
  */
 public class DetectRegisterIndicesPass extends Pass {
   public DetectRegisterIndicesPass(GeneralConfiguration configuration) {
@@ -57,8 +57,8 @@ public class DetectRegisterIndicesPass extends Pass {
           var fields = behavior.getNodes(FieldRefNode.class).toList();
 
           for (var field : fields) {
-            var hasRead = field.usages().anyMatch(u -> u instanceof ReadRegTensorNode);
-            var hasWrite = field.usages().anyMatch(u -> u instanceof WriteRegTensorNode);
+            var hasRead = field.usages().anyMatch(u -> u instanceof ReadResourceNode);
+            var hasWrite = field.usages().anyMatch(u -> u instanceof WriteResourceNode);
 
             if (hasRead || hasWrite) {
               result.add(field);
