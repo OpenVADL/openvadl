@@ -22,6 +22,7 @@ import vadl.viam.RegisterTensor;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
@@ -62,6 +63,15 @@ public class GcbInstructionIndexedRegisterFileOperand
   }
 
   public GcbInstructionIndexedRegisterFileOperand(ReadArtificialResNode node,
+                                                  FuncParamNode address) {
+    super(node, node.resourceDefinition().innerResourceRef().simpleName(),
+        address.parameter().identifier.simpleName());
+    this.registerFile = (RegisterTensor) node.resourceDefinition().innerResourceRef();
+    node.resourceDefinition().innerResourceRef()
+        .ensure(registerFile.isRegisterFile(), "must be registerfile");
+  }
+
+  public GcbInstructionIndexedRegisterFileOperand(WriteArtificialResNode node,
                                                   FuncParamNode address) {
     super(node, node.resourceDefinition().innerResourceRef().simpleName(),
         address.parameter().identifier.simpleName());

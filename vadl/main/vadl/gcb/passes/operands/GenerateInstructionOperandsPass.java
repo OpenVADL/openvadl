@@ -60,6 +60,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.SnapshotInstructionBehaviorPass;
@@ -233,6 +234,7 @@ public class GenerateInstructionOperandsPass extends Pass {
       case ReadRegTensorNode node when node.regTensor().isRegisterFile() -> mapFrom(node);
       case ReadArtificialResNode node -> mapFrom(node);
       case WriteRegTensorNode node when node.regTensor().isRegisterFile() -> mapFrom(node);
+      case WriteArtificialResNode node -> mapFrom(node);
       case FuncParamNode node -> mapFrom(node);
       case FieldAccessRefNode node -> mapFrom(node);
       default -> throw Diagnostic.error(
@@ -341,6 +343,19 @@ public class GenerateInstructionOperandsPass extends Pass {
     }
   }
 
+  private GcbInstructionOperand mapFrom(WriteArtificialResNode node) {
+    if (node.address() instanceof FieldRefNode field) {
+      return new GcbInstructionRegisterFileOperand(node, field.formatField());
+    } else if (node.address() instanceof FuncParamNode funcParamNode) {
+      return new GcbInstructionIndexedRegisterFileOperand(node, funcParamNode);
+    } else {
+      throw Diagnostic.error(
+          "The compiler generator needs to generate a tablegen instruction operand from this "
+              + "address for a field but it does not support it.",
+          node.address().location()).build();
+    }
+  }
+
   /**
    * It is not allowed to have a {@link GcbInstructionOperand} in the input list
    * when it is already in the output list. That's why we compute the {@code outputOperands}
@@ -375,9 +390,12 @@ public class GenerateInstructionOperandsPass extends Pass {
   /**
    * Most instruction's behaviors have outputs. Those are the results which the instruction emits.
    */
-  private List<WriteRegTensorNode> extractWrites(Graph graph) {
-    return graph.getNodes(WriteRegTensorNode.class)
-        .filter(e -> e.regTensor().isRegisterFile())
+  private List<WriteResourceNode> extractWrites(Graph graph) {
+    return Stream.concat(graph.getNodes(WriteRegTensorNode.class)
+                .filter(e -> e.regTensor().isRegisterFile()),
+            graph.getNodes(WriteArtificialResNode.class).filter(
+                e -> e.resourceDefinition().innerResourceRef() instanceof RegisterTensor tensor
+                    && tensor.isRegisterFile()))
         .toList();
   }
 

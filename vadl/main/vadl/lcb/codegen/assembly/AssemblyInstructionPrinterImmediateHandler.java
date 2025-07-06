@@ -211,7 +211,8 @@ public class AssemblyInstructionPrinterImmediateHandler
 
       var usage = usages.getFirst();
       var indexInOperands = ensurePresent(indexInInputsOrOutputs(node.formatField()),
-          () -> Diagnostic.error("Cannot find operand.", node.location()));
+          () -> Diagnostic.error("Cannot find operand: " + node.formatField().simpleName(),
+              node.location()));
       if (usage == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE) {
         ctx.wr("MI->getOperand(%s).getImm()", indexInOperands);
       } else if (usage == IdentifyFieldUsagePass.FieldUsage.REGISTER) {
