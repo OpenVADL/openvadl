@@ -21,12 +21,14 @@ import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
@@ -81,6 +83,7 @@ import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteStageOutputNode;
+import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 
 /**
  * Generates the code blocks to construct an assembly string. This handler creates the code path
@@ -95,6 +98,7 @@ public class AssemblyInstructionPrinterImmediateHandler
     extends AbstractAssemblyInstructionPrinterHandler {
 
   private final PassResults passResults;
+  private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
 
   /**
    * Constructor.
@@ -104,6 +108,9 @@ public class AssemblyInstructionPrinterImmediateHandler
                                                     TableGenInstruction tableGenInstruction) {
     super(instruction, tableGenInstruction);
     this.passResults = passResults;
+    this.fieldUsages =
+        (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
+            IdentifyFieldUsagePass.class);
     this.ctx = new CNodeContext(
         builder::append,
         (ctx, node)
@@ -189,7 +196,30 @@ public class AssemblyInstructionPrinterImmediateHandler
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(CGenContext<Node> ctx, FieldRefNode node) {
-    throw Diagnostic.error("not supported", node.location()).build();
+    if (instruction instanceof Instruction machineInstruction) {
+      var usages = fieldUsages.getFieldUsages(machineInstruction, node.formatField());
+
+      if (usages.isEmpty()) {
+        throw Diagnostic.error(
+            "The generator does not know whether this is an immediate or register access.",
+            node.location()).build();
+      } else if (usages.size() > 1) {
+        throw Diagnostic.error(
+            "The generator registered multiple register usages for this field.",
+            node.location()).build();
+      }
+
+      var usage = usages.getFirst();
+      var indexInOperands = ensurePresent(indexInInputsOrOutputs(node.formatField()),
+          () -> Diagnostic.error("Cannot find operand.", node.location()));
+      if (usage == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE) {
+        ctx.wr("MI->getOperand(%s).getImm()", indexInOperands);
+      } else if (usage == IdentifyFieldUsagePass.FieldUsage.REGISTER) {
+        ctx.wr("MI->getOperand(%s).getReg()", indexInOperands);
+      }
+    } else {
+      throw Diagnostic.error("not supported", node.location()).build();
+    }
   }
 
   @Handler
@@ -408,25 +438,21 @@ public class AssemblyInstructionPrinterImmediateHandler
                                          CGenContext<Node> ctx,
                                          int radix,
                                          SourceLocation sourceLocation) {
-    var indexInOperands = ensurePresent(indexInInputsOrOutputs(field), () ->
-        Diagnostic.error("Immediate must be part of an tablegen input or output.",
-            sourceLocation)
-    );
-
     // If this instruction is a machine instruction then ...
     if (instruction instanceof Instruction machineInstruction) {
-      var fieldEncodings = machineInstruction.fieldEncodingsByUsedFieldAccesses();
+      var originalGraph = getUnmodifiedOriginalGraph(machineInstruction);
+      var fieldEncodings = machineInstruction.fieldEncodingsByUsedFieldAccesses(originalGraph);
       var fieldEncoding =
           fieldEncodings.stream().filter(x -> x.targetField().equals(field)).findFirst();
 
       // If this field has an encoding, we are applying it.
       if (fieldEncoding.isPresent()) {
-        var encodingFunctions =
-            ensureNonNull(
-                ImmediateEncodingFunctionProvider.generateEncodeFunctions(passResults)
-                    .get(instruction),
-                () -> Diagnostic.error("Cannot find encoding functions for the instruction.",
-                    machineInstruction.location()));
+        var uncheckedEncodingFunctions =
+            ImmediateEncodingFunctionProvider.generateEncodeFunctions(passResults)
+                .get(instruction);
+        var encodingFunctions = ensureNonNull(uncheckedEncodingFunctions,
+            () -> Diagnostic.error("Cannot find encoding functions for the instruction.",
+                machineInstruction.location()));
 
         var encodingFunction = ensurePresent(
             encodingFunctions.stream().filter(x -> x.field().equals(field)).findFirst(),
@@ -460,10 +486,20 @@ public class AssemblyInstructionPrinterImmediateHandler
               + "See issue #382", field.location()).build();
         }
       } else {
+        var indexInOperands = ensurePresent(indexInInputsOrOutputs(field), () ->
+            Diagnostic.error("Immediate must be part of an tablegen input or output.",
+                sourceLocation)
+        );
+
         // Otherwise print raw field value.
         writeFieldWithRawImmediateWithRadix(indexInOperands, radix);
       }
     } else {
+      var indexInOperands = ensurePresent(indexInInputsOrOutputs(field), () ->
+          Diagnostic.error("Immediate must be part of an tablegen input or output.",
+              sourceLocation)
+      );
+
       // Otherwise print raw field value.
       writeFieldWithRawImmediateWithRadix(indexInOperands, radix);
     }
@@ -514,6 +550,19 @@ public class AssemblyInstructionPrinterImmediateHandler
       throw Diagnostic.error("There are no casting semantics defined for this builtin. "
           + "See issue #382", sourceLocation).build();
     }
+  }
+
+  /**
+   * Return the unmodified version of the instruction's behavior from the
+   * {@link SnapshotInstructionBehaviorPass}.
+   */
+  private Graph getUnmodifiedOriginalGraph(Instruction machineInstruction) {
+    var graphs =
+        (Map<Instruction, Graph>) passResults.lastResultOf(SnapshotInstructionBehaviorPass.class);
+
+    return ensureNonNull(graphs.get(machineInstruction),
+        () -> Diagnostic.error("Cannot find unmodified instruction's behavior.",
+            machineInstruction.location()));
   }
 
   /**

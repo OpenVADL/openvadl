@@ -19,6 +19,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.model;
 import java.util.List;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.RegisterRef;
+import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
@@ -126,7 +127,8 @@ public abstract class TableGenInstruction {
   }
 
   /**
-   * Get the operands which are immediates from the input operand list.
+   * Get the operands which are immediates from the input operand list but only if the
+   * operands have been already lowered.
    *
    * @return a list of {@link ReferencesImmediateOperand}.
    */
@@ -134,6 +136,17 @@ public abstract class TableGenInstruction {
     return inOperands.stream()
         .filter(x -> x instanceof ReferencesImmediateOperand)
         .map(x -> (ReferencesImmediateOperand) x)
+        .toList();
+  }
+
+  /**
+   * Get the operands which are immediates from the input operand list. This will also work if the
+   * immediate was not lowered.
+   */
+  public List<GcbInstructionImmediateOperand> gcbImmediateInputOperands() {
+    return inOperands.stream()
+        .filter(x -> x instanceof GcbInstructionImmediateOperand)
+        .map(x -> (GcbInstructionImmediateOperand) x)
         .toList();
   }
 }

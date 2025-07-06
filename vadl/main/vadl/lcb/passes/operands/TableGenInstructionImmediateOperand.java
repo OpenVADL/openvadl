@@ -31,7 +31,7 @@ import vadl.viam.Format;
  * of {@link GcbInstructionImmediateOperand} because we need to reference
  * {@link TableGenImmediateRecord}. However, we can only do that after the LLVM lowering.
  */
-public class TableGenInstructionImmediateOperand extends GcbDefaultInstructionOperand
+public class TableGenInstructionImmediateOperand extends GcbInstructionImmediateOperand
     implements ReferencesFormatField, ReferencesImmediateOperand {
   private final TableGenImmediateRecord immediateOperand;
 

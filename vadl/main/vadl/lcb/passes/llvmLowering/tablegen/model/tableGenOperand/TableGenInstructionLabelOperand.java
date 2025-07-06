@@ -21,17 +21,18 @@ import static vadl.viam.ViamError.ensure;
 import java.util.List;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.operands.ReferencesFormatField;
-import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.viam.Format;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 
 /**
  * TableGen operand which references a label.
  */
-public class TableGenInstructionLabelOperand extends GcbDefaultInstructionOperand
+public class TableGenInstructionLabelOperand extends GcbInstructionImmediateOperand
     implements ReferencesFormatField, ReferencesImmediateOperand {
   private static final String AS_LABEL = "AsLabel";
 
@@ -46,7 +47,7 @@ public class TableGenInstructionLabelOperand extends GcbDefaultInstructionOperan
   public TableGenInstructionLabelOperand(Node origin,
                                          TableGenImmediateRecord immediateRecord,
                                          String variableName) {
-    super(origin, immediateRecord.rawName() + AS_LABEL, variableName);
+    super((FieldAccessRefNode) origin, immediateRecord.rawName() + AS_LABEL, variableName);
     this.immediate = immediateRecord;
   }
 
