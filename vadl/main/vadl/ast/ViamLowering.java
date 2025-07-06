@@ -1097,12 +1097,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * The user has to specify a predicate when she specifies an encoding function.
    */
   private void checkIfPredicateIsRequired(Format format) {
-    var fieldAccesses = format.fieldAccesses();
+    for (var fieldEncoding : format.fieldEncodings()) {
+      var usedFieldAccesses = fieldEncoding.usedFieldAccesses();
 
-    for (var fieldAccess : fieldAccesses) {
-      if (fieldAccess.predicate() != null) {
-        var encodings = format.fieldEncodingsOf(Set.of(fieldAccess));
-        if (encodings.isEmpty()) {
+      for (var fieldAccess : usedFieldAccesses) {
+        if (fieldAccess.predicate() == null) {
           DeferredDiagnosticStore.add(
               Diagnostic.error("A predicate is required", fieldAccess.location())
                   .help(
