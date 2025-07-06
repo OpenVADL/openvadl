@@ -23,7 +23,6 @@ import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -42,26 +41,25 @@ import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
-import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
-import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.SnapshotInstructionBehaviorPass;
@@ -176,6 +174,9 @@ public class GenerateInstructionOperandsPass extends Pass {
   private static List<Node> getInputOperands(Graph graph) {
     // First, the registers
     var x = graph.getNodes(ReadRegTensorNode.class).filter(k -> k.regTensor().isRegisterFile());
+    var xx = graph.getNodes(ReadArtificialResNode.class).filter(
+        k -> k.resourceDefinition().innerResourceRef() instanceof RegisterTensor tensor
+            && tensor.isRegisterFile());
     // Then, immediates
     var y = graph.getNodes(FieldAccessRefNode.class);
     // Then, the rest
@@ -189,7 +190,7 @@ public class GenerateInstructionOperandsPass extends Pass {
         .filter(k -> k.usages()
             .noneMatch(v -> v instanceof WriteResourceNode || v instanceof ReadResourceNode));
 
-    return Stream.concat(Stream.concat(Stream.concat(x, y), z), u)
+    return Stream.concat(Stream.concat(Stream.concat(Stream.concat(x, xx), y), z), u)
         .map(k -> (Node) k).toList();
   }
 
@@ -212,6 +213,11 @@ public class GenerateInstructionOperandsPass extends Pass {
           if (node instanceof ReadRegTensorNode readRegTensorNode
               && readRegTensorNode.regTensor().isRegisterFile()) {
             return !readRegTensorNode.hasConstantAddress();
+          } else if (node instanceof ReadArtificialResNode artificialResNode
+              && artificialResNode.resourceDefinition()
+              .innerResourceRef() instanceof RegisterTensor tensor
+              && tensor.isRegisterFile()) {
+            return !artificialResNode.hasConstantAddress();
           }
           return true;
         })
@@ -225,6 +231,7 @@ public class GenerateInstructionOperandsPass extends Pass {
   private GcbInstructionOperand map(Node operand) {
     return switch (operand) {
       case ReadRegTensorNode node when node.regTensor().isRegisterFile() -> mapFrom(node);
+      case ReadArtificialResNode node -> mapFrom(node);
       case WriteRegTensorNode node when node.regTensor().isRegisterFile() -> mapFrom(node);
       case FuncParamNode node -> mapFrom(node);
       case FieldAccessRefNode node -> mapFrom(node);
@@ -263,6 +270,43 @@ public class GenerateInstructionOperandsPass extends Pass {
       // This is ok as long as the value of the register file at the address is also constant.
       // For example, the X0 register in RISC-V which always has a constant value.
       var constraints = Arrays.stream(node.regTensor().constraints()).toList();
+      var constraintValue = constraints.stream()
+          .filter(
+              x -> x.indices().getFirst().intValue() == constantNode.constant().asVal().intValue())
+          .findFirst();
+      var constRegisterValue = ensurePresent(constraintValue,
+          () -> Diagnostic.error("Register file with constant index has no constant value.",
+                  constantNode.location())
+              .help("Consider adding a constraint to register file for the given index."));
+      // Update the type of the constant because it needs to be upcasted.
+      // Heuristically, we take the type of the index because indices were also upcasted.
+      var constantValue = constRegisterValue.value();
+      constantValue.setType(constantNode.type());
+      return new GcbConstantOperand(constantNode, constantValue);
+    } else {
+      throw Diagnostic.error(
+          "The compiler generator needs to generate a tablegen instruction operand from this "
+              + "address for a field but it does not support it.",
+          node.address().location()).build();
+    }
+  }
+
+
+  /**
+   * Returns a {@link GcbInstructionOperand} given a {@link Node}.
+   */
+  private GcbInstructionOperand mapFrom(
+      ReadArtificialResNode node) {
+    if (node.address() instanceof FieldRefNode field) {
+      return new GcbInstructionRegisterFileOperand(node, field.formatField());
+    } else if (node.address() instanceof FuncParamNode funcParamNode) {
+      return new GcbInstructionIndexedRegisterFileOperand(node, funcParamNode);
+    } else if (node.address() instanceof ConstantNode constantNode) {
+      var tensor = (RegisterTensor) node.resourceDefinition().innerResourceRef();
+      // The register file has a constant as address.
+      // This is ok as long as the value of the register file at the address is also constant.
+      // For example, the X0 register in RISC-V which always has a constant value.
+      var constraints = Arrays.stream(tensor.constraints()).toList();
       var constraintValue = constraints.stream()
           .filter(
               x -> x.indices().getFirst().intValue() == constantNode.constant().asVal().intValue())
