@@ -30,14 +30,14 @@ import vadl.configuration.IssConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
-import vadl.gcb.passes.DetectRegisterIndicesPass;
+import vadl.viam.passes.DetectRegisterIndicesPass;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.DetermineRelocationTypeForFieldPass;
 import vadl.gcb.passes.GenerateCompilerRegistersPass;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.InstructionPatternPruningPass;
-import vadl.gcb.passes.NormalizeFieldsToFieldAccessFunctionsPass;
+import vadl.viam.passes.NormalizeFieldsToFieldAccessFunctionsPass;
 import vadl.gcb.passes.PredicateFunctionInlinerPass;
 import vadl.gcb.passes.SetMissingConfigurationValuesPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
@@ -169,7 +169,10 @@ public class PassOrders {
     order.add(new ViamCreationPass(configuration));
     order.add(new ViamVerificationPass(configuration));
 
+    order.add(new DetectRegisterIndicesPass(configuration));
+    order.add(new NormalizeFieldsToFieldAccessFunctionsPass(configuration));
     order.add(new SnapshotInstructionBehaviorPass(configuration));
+
     order.add(new RemoveUnusedStatusFlagsFromBuiltinsPass(configuration));
     order.add(new StatusBuiltInInlinePass(configuration));
 
@@ -220,8 +223,6 @@ public class PassOrders {
     order.add(new GenerateCompilerRegistersPass(gcbConfiguration));
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
-    order.add(new DetectRegisterIndicesPass(gcbConfiguration));
-    order.add(new NormalizeFieldsToFieldAccessFunctionsPass(gcbConfiguration));
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
     order.add(new DetermineRelocationTypeForFieldPass(gcbConfiguration));
     order.add(new GenerateValueRangeImmediatePass(gcbConfiguration));
@@ -433,6 +434,7 @@ public class PassOrders {
 
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
+    order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
 
     // iss function passes
     order
@@ -574,6 +576,8 @@ public class PassOrders {
    */
   public static PassOrder rtl(GeneralConfiguration config) throws IOException {
     var order = viam(config);
+
+    order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
 
     // TODO: Remove once frontend creates it
     order.add(new DummyMiaPass(config));
