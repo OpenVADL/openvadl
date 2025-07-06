@@ -321,6 +321,20 @@ public class Format extends Definition implements DefProp.WithType {
 
       return function;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Field field = (Field) o;
+      return this.identifier.equals(field.identifier);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(this.identifier);
+    }
   }
 
 
