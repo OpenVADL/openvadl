@@ -16,6 +16,8 @@
 
 package vadl.gcb.passes;
 
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
 import vadl.error.Diagnostic;
@@ -37,10 +40,14 @@ import vadl.viam.Instruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
+import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 
 /**
  * This pass goes over all instructions and determines
@@ -260,21 +267,26 @@ public class IdentifyFieldUsagePass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
+    var snapshots =
+        (Map<Instruction, Graph>) passResults.lastResultOf(SnapshotInstructionBehaviorPass.class);
     var container = new ImmediateDetectionContainer();
 
     for (var instruction : viam.isa().stream().flatMap(isa -> isa.ownInstructions().stream())
         .toList()) {
+      var snapshot = ensureNonNull(snapshots.get(instruction),
+          () -> Diagnostic.error("Cannot find snapshot for instruction", instruction.location()));
       container.addInstruction(instruction);
-      handleFields(instruction, container);
-      handleFieldAccessFunctions(instruction, container);
+      handleFields(instruction, snapshot, container);
+      handleFieldAccessFunctions(instruction, snapshot, container);
     }
 
     return container;
   }
 
   private static void handleFieldAccessFunctions(Instruction instruction,
+                                                 Graph snapshot,
                                                  ImmediateDetectionContainer container) {
-    instruction.behavior().getNodes(FieldAccessRefNode.class)
+    snapshot.getNodes(FieldAccessRefNode.class)
         .forEach(fieldAccessRefNode -> {
           var fieldRefs = fieldAccessRefNode.fieldAccess().fieldRefs();
           container.addInstruction(instruction);
@@ -286,19 +298,35 @@ public class IdentifyFieldUsagePass extends Pass {
   }
 
   private static void handleFields(Instruction instruction,
+                                   Graph snapshot,
                                    ImmediateDetectionContainer container) {
-    instruction.behavior().getNodes(FieldRefNode.class)
+    snapshot.getNodes(FieldRefNode.class)
         .forEach(fieldRefNode -> {
           var fieldRef = fieldRefNode.formatField();
-          var registerRead = fieldRefNode.usages()
-              .filter(
-                  usage -> usage instanceof ReadRegTensorNode)
-              .map(usage -> ((ReadRegTensorNode) usage).regTensor())
+          var registerRead = Stream.concat(fieldRefNode.usages()
+                      .filter(
+                          usage -> usage instanceof ReadRegTensorNode)
+                      .map(usage -> ((ReadRegTensorNode) usage).regTensor()),
+                  fieldRefNode.usages().filter(
+                          usage -> usage instanceof ReadArtificialResNode artificialResNode
+                              && artificialResNode.resourceDefinition()
+                              .innerResourceRef() instanceof RegisterTensor)
+                      .map(usage -> (RegisterTensor)
+                          ((ReadArtificialResNode) usage).resourceDefinition().innerResourceRef())
+              )
               .findFirst();
 
-          var registerWrite = fieldRefNode.usages()
-              .filter(usage -> usage instanceof WriteRegTensorNode)
-              .map(usage -> ((WriteRegTensorNode) usage).regTensor())
+          var registerWrite = Stream.concat(fieldRefNode.usages()
+                      .filter(
+                          usage -> usage instanceof WriteRegTensorNode)
+                      .map(usage -> ((WriteRegTensorNode) usage).regTensor()),
+                  fieldRefNode.usages().filter(
+                          usage -> usage instanceof WriteArtificialResNode artificialResNode
+                              && artificialResNode.resourceDefinition()
+                              .innerResourceRef() instanceof RegisterTensor)
+                      .map(usage -> (RegisterTensor)
+                          ((WriteArtificialResNode) usage).resourceDefinition().innerResourceRef())
+              )
               .findFirst();
 
           container.addInstruction(instruction);
