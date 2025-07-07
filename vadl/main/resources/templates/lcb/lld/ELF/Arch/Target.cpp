@@ -10,7 +10,7 @@
 #include "Symbols.h"
 #include "SyntheticSections.h"
 #include "Target.h"
-#include "[(${namespace})]ManualEncoding.cpp"
+#include "[(${namespace})]ManualEncoding.hpp"
 #include "[(${namespace})]Relocations.hpp"
 #include "ImmediateUtils.h"
 

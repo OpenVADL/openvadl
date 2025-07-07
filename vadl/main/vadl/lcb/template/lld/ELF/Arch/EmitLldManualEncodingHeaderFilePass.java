@@ -43,7 +43,7 @@ public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPas
 
   @Override
   protected String getOutputPath() {
-    return "lld/ELF/Arch/" + lcbConfiguration().targetName().value() + "ManualEncoding.cpp";
+    return "lld/ELF/Arch/" + lcbConfiguration().targetName().value() + "ManualEncoding.hpp";
   }
 
   @Override
