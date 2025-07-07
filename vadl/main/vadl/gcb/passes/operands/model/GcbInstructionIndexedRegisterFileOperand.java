@@ -62,6 +62,9 @@ public class GcbInstructionIndexedRegisterFileOperand
     node.regTensor().ensure(node.regTensor().isRegisterFile(), "must be a register file");
   }
 
+  /**
+   * Constructor.
+   */
   public GcbInstructionIndexedRegisterFileOperand(ReadArtificialResNode node,
                                                   FuncParamNode address) {
     super(node, node.resourceDefinition().innerResourceRef().simpleName(),
@@ -70,7 +73,10 @@ public class GcbInstructionIndexedRegisterFileOperand
     node.resourceDefinition().innerResourceRef()
         .ensure(registerFile.isRegisterFile(), "must be registerfile");
   }
-
+  
+  /**
+   * Constructor.
+   */
   public GcbInstructionIndexedRegisterFileOperand(WriteArtificialResNode node,
                                                   FuncParamNode address) {
     super(node, node.resourceDefinition().innerResourceRef().simpleName(),
