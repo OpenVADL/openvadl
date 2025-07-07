@@ -73,7 +73,7 @@ public class GcbInstructionIndexedRegisterFileOperand
     node.resourceDefinition().innerResourceRef()
         .ensure(registerFile.isRegisterFile(), "must be registerfile");
   }
-  
+
   /**
    * Constructor.
    */

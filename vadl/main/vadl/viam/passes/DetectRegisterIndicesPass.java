@@ -17,12 +17,14 @@
 package vadl.viam.passes;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
@@ -49,8 +51,8 @@ public class DetectRegisterIndicesPass extends Pass {
     var result = new HashSet<FieldRefNode>();
 
     viam.isa()
-        .get()
-        .ownInstructions()
+        .map(InstructionSetArchitecture::ownInstructions)
+        .orElse(Collections.emptyList())
         .stream()
         .flatMap(x -> x.behaviors().stream())
         .forEach(behavior -> {
