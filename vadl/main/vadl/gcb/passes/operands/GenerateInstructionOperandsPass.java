@@ -162,6 +162,7 @@ public class GenerateInstructionOperandsPass extends Pass {
     var operands = extractWrites(behavior);
     return operands
         .stream()
+        .filter(operand -> !operand.indices().isEmpty()) // must not be register.
         .filter(operand -> {
           // Why?
           // Because LLVM cannot handle static registers in input or output operands.
