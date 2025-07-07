@@ -16,7 +16,10 @@
 
 package vadl.gcb.passes;
 
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.io.IOException;
+import java.util.Map;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.Diagnostic;
@@ -28,7 +31,9 @@ import vadl.viam.Format;
 import vadl.viam.Format.FieldAccess;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 
 /**
  * This pass generates the ranges for immediates.
@@ -84,6 +89,8 @@ public class GenerateValueRangeImmediatePass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
+    var snapshots =
+        (Map<Instruction, Graph>) passResults.lastResultOf(SnapshotInstructionBehaviorPass.class);
     var fieldResult =
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults
             .lastResultOf(IdentifyFieldUsagePass.class);
@@ -92,9 +99,12 @@ public class GenerateValueRangeImmediatePass extends Pass {
         .forEach(instruction -> {
           var fields = fieldResult.getImmediateFields(instruction);
           var ctx = new ValueRangeCtx();
+          var snapshot = ensureNonNull(snapshots.get(instruction),
+              () -> Diagnostic.error("Cannot find snapshot for instruction",
+                  instruction.location()));
 
           fields.forEach(field -> {
-            var isSigned = isSigned(instruction, field);
+            var isSigned = isSigned(instruction, snapshot, field);
             var lowest = lowestPossibleValue(field.type().toBitsType(), isSigned);
             var highest = highestPossibleValue(field.type().toBitsType(), isSigned);
             var range = new ValueRange(lowest, highest);
@@ -112,8 +122,8 @@ public class GenerateValueRangeImmediatePass extends Pass {
    * unsigned or signed, we have to check whether there exist a {@link FieldAccess}.
    * If it does, then take its type. If not then just use the field's type.
    */
-  private boolean isSigned(Instruction instruction, Format.Field field) {
-    var fieldAccesses = instruction.behavior().getNodes(FieldAccessRefNode.class).toList();
+  private boolean isSigned(Instruction instruction, Graph snapshot, Format.Field field) {
+    var fieldAccesses = snapshot.getNodes(FieldAccessRefNode.class).toList();
     for (var fieldAccess : fieldAccesses) {
       for (var fieldRef : fieldAccess.fieldAccess().fieldRefs()) {
         if (fieldRef.equals(field)) {
