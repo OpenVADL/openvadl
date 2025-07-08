@@ -182,6 +182,11 @@ class StructGenerator {
   }
 
   private void generateStructIfNecessary(AsmType type) {
+    
+    if (type.toCppTypeString(namespace).equals("NoData")) {
+      return;
+    }
+
     if (!(type instanceof GroupAsmType groupType)) {
       return;
     }

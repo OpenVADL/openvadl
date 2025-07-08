@@ -75,4 +75,9 @@ public interface HasRelocationComputationAndUpdate {
    * Generates and returns the name of the ELF relocation.
    */
   ElfRelocationName elfRelocationName();
+
+  /**
+   * Get the {@link CompilerRelocation.Kind} of the relocation.
+   */
+  CompilerRelocation.Kind kind();
 }

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.riscv;
+package vadl.lcb.riscv.riscv32;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,39 +23,48 @@ import org.junit.jupiter.api.TestFactory;
 import vadl.lcb.LcbDockerInputFileExecutionTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
-public abstract class QemuRiscvSimulationTest extends LcbDockerInputFileExecutionTest {
-
-  protected abstract String getTarget();
-
-  protected abstract String getUpstreamBuildTarget();
-
-  protected abstract String getUpstreamClangTarget();
-
-  protected abstract String getSpecPath();
-
-  protected abstract String getSpikeTarget();
-
-  protected abstract String getAbi();
+public class LcbRiscv32SimulationTest extends LcbDockerInputFileExecutionTest {
 
   @TestFactory
   List<DynamicTest> optLevel0() throws DuplicatedPassKeyException, IOException {
-    return runEach(getSpecPath(),
-        List.of("test/resources/llvm/riscv/qemu_libc/",
-            "test/resources/llvm/riscv/qemu_libc/" + getTarget(),
-            "test/resources/llvm/riscv/qemu_nolibc/"
-        ),
+    return runEach("sys/risc-v/rv32im.vadl",
+        "test/resources/llvm/riscv/qemu_nolibc/",
         0,
-        "sh /work/compile.sh");
+        "sh /work/lcb_integration.sh"
+    );
   }
 
   @TestFactory
   List<DynamicTest> optLevel3() throws DuplicatedPassKeyException, IOException {
-    return runEach(getSpecPath(),
-        List.of("test/resources/llvm/riscv/qemu_libc/",
-            "test/resources/llvm/riscv/qemu_libc/" + getTarget(),
-            "test/resources/llvm/riscv/qemu_nolibc/"
-        ),
+    return runEach("sys/risc-v/rv32im.vadl",
+        "test/resources/llvm/riscv/qemu_nolibc/",
         3,
-        "sh /work/compile.sh");
+        "sh /work/lcb_integration.sh"
+    );
+  }
+
+  @Override
+  protected String getTarget() {
+    return "rv32im";
+  }
+
+  @Override
+  protected String getUpstreamBuildTarget() {
+    return "RISCV";
+  }
+
+  @Override
+  protected String getUpstreamClangTarget() {
+    return "riscv32";
+  }
+
+  @Override
+  protected String getSpikeTarget() {
+    return "rv32im";
+  }
+
+  @Override
+  protected String getAbi() {
+    return "ilp32";
   }
 }

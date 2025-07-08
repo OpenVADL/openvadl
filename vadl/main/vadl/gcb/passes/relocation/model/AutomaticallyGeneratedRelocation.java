@@ -175,4 +175,9 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
   public Format format() {
     return format;
   }
+
+  @Override
+  public CompilerRelocation.Kind kind() {
+    return kind;
+  }
 }
