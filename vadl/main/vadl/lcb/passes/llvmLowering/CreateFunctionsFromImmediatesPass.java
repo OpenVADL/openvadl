@@ -17,6 +17,7 @@
 package vadl.lcb.passes.llvmLowering;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -230,13 +231,20 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
   @Nonnull
   private static List<FieldAccessParameter> createParametersForEncodingFunction(
       List<ReferencesImmediateOperand> inputOperands) {
-    return inputOperands.stream()
-        .map(operand -> new FieldAccessParameter(
-            new Identifier(operand.immediateOperand().fieldAccessRef().identifier.simpleName(),
-                operand.immediateOperand().fieldAccessRef().location()),
-            operand.immediateOperand().rawType(),
-            operand))
-        .toList();
+    var parameters = new ArrayList<FieldAccessParameter>();
+
+    for (var i = 0; i < inputOperands.size(); i++) {
+      var operand = inputOperands.get(i);
+      var param = new FieldAccessParameter(
+          new Identifier(operand.immediateOperand().fieldAccessRef().identifier.simpleName(),
+              operand.immediateOperand().fieldAccessRef().location()),
+          operand.immediateOperand().rawType(),
+          operand,
+          i);
+      parameters.add(param);
+    }
+
+    return parameters;
   }
 
   /**
@@ -246,12 +254,19 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
   @Nonnull
   private static List<Parameter> createParametersForAccessFunction(
       List<Format.Field> fields) {
-    return fields.stream()
-        .map(field -> new Parameter(
-            new Identifier(field.identifier.simpleName(),
-                field.location()),
-            CppTypeMap.upcast(field.type())))
-        .toList();
+    var parameters = new ArrayList<Parameter>();
+
+    for (int i = 0; i < fields.size(); i++) {
+      var field = fields.get(i);
+      var param = new Parameter(
+          new Identifier(field.identifier.simpleName(),
+              field.location()),
+          CppTypeMap.upcast(field.type()),
+          i);
+      parameters.add(param);
+    }
+
+    return parameters;
   }
 
 
@@ -316,7 +331,8 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
         new Parameter[] {
             new Parameter(new Identifier(immediate.fieldAccessRef().simpleName(),
                 immediate.fieldAccessRef().location()),
-                stackPointerType)},
+                stackPointerType,
+                0)},
         Type.bool(),
         immediate.fieldAccessRef().predicate().behavior());
     var codeGen = new PredicateFunctionCodeGenerator(bodyLessFunction,
@@ -334,9 +350,11 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
 
     private final ReferencesImmediateOperand operand;
 
-    public FieldAccessParameter(Identifier identifier, Type type,
-                                ReferencesImmediateOperand operand) {
-      super(identifier, type);
+    public FieldAccessParameter(Identifier identifier,
+                                Type type,
+                                ReferencesImmediateOperand operand,
+                                int index) {
+      super(identifier, type, index);
       this.operand = operand;
     }
 

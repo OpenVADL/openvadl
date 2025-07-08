@@ -304,7 +304,7 @@ public class Format extends Definition implements DefProp.WithType {
     private Function createExtractFunction() {
       var ident = identifier.extendSimpleName("_extract");
       var paramIdent = ident.append("format");
-      var formatParam = new Parameter(paramIdent, parentFormat.type());
+      var formatParam = new Parameter(paramIdent, parentFormat.type(), 0);
       var function = new Function(ident, new Parameter[] {formatParam}, this.type);
       formatParam.setParent(function);
 

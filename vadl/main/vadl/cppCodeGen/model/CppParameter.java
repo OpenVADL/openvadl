@@ -24,7 +24,7 @@ import vadl.viam.Parameter;
  */
 public class CppParameter extends Parameter {
 
-  public CppParameter(Identifier identifier, CppType type) {
-    super(identifier, type);
+  public CppParameter(Identifier identifier, CppType type, int index) {
+    super(identifier, type, index);
   }
 }

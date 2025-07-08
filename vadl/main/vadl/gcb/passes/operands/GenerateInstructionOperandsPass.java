@@ -39,7 +39,6 @@ import vadl.gcb.passes.operands.model.GcbInstructionIndexedRegisterFileOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
 import vadl.gcb.passes.operands.model.InstructionOperandNamePrintable;
-import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -218,7 +217,7 @@ public class GenerateInstructionOperandsPass extends Pass {
     // We need this edge case for compiler and pseudo instructions.
     // However, we need to filter for `WriteResourceNode` and `ReadResourceNode`, so
     // the operand is not added twice.
-    var u = graph.getNodes(PseudoFuncParamNode.class)
+    var u = graph.getNodes(FuncParamNode.class)
         .filter(k -> k.usages()
             .noneMatch(v -> v instanceof WriteResourceNode || v instanceof ReadResourceNode));
 
@@ -437,85 +436,6 @@ public class GenerateInstructionOperandsPass extends Pass {
   }
 
   /**
-   * There are two relevant cases.
-   * The first is that the {@code argument} is a constant. Then, we do not have to do anything.
-   * The second case is when {@link CompilerInstruction} uses an {@code index}. Then, the argument
-   * is replaced by a {@link FuncParamNode}. However, we still require to know the index for
-   * the pseudo instance expansion. That's why we extend {@link FuncParamNode} with
-   * {@link PseudoFuncParamNode} which has an {@code index} property.
-   * Here is an example of the index. Note that {@code rs} will be transformed into
-   * a {@link PseudoFuncParamNode} when it is replaced.
-   * <code>
-   * pseudo instruction BGEZ( rs : Index, offset : Bits<12> ) =
-   * {
-   * BGE{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
-   * }
-   * </code>
-   */
-  protected static ExpressionNode indexArgument(List<ExpressionNode> arguments,
-                                                ExpressionNode argument) {
-    int index = arguments.indexOf(argument);
-
-    // If the node itself a FuncParamNode ...
-    if (argument instanceof FuncParamNode funcParamNode) {
-      return funcParamNode.replaceAndDelete(
-          new PseudoFuncParamNode(funcParamNode.parameter(), index));
-    }
-
-    var children = new ArrayList<FuncParamNode>();
-    argument.collectInputsWithChildren(children, FuncParamNode.class);
-
-    for (var child : children) {
-      child.replaceAndDelete(new PseudoFuncParamNode(child.parameter(), index));
-    }
-
-    return argument;
-
-    /*
-    if (argument instanceof FuncParamNode funcParamNode) {
-      return new PseudoFuncParamNode(funcParamNode.parameter(), index);
-    }
-
-    // or its children ...
-    var queue = new ArrayDeque<ExpressionNode>();
-    queue.add(argument);
-
-    while (!queue.isEmpty()) {
-      var element = queue.removeFirst();
-      var inputs = element.inputs().toList();
-
-      for (var child : inputs) {
-        if (child instanceof FuncParamNode funcParamNode) {
-          element.replaceInput(child, new PseudoFuncParamNode(funcParamNode.parameter(), index));
-        } else if (child instanceof ExpressionNode expressionNode) {
-          queue.add(expressionNode);
-        }
-      }
-    }
-
-    return argument;
-     */
-
-    /*
-    var children = new ArrayList<FuncParamNode>();
-    if (argument instanceof FuncParamNode funcParamNode) {
-      children.add(funcParamNode);
-    }
-
-    argument.collectInputsWithChildren(children, FuncParamNode.class);
-
-    for (var child : children) {
-
-    }
-
-    if (argument instanceof FuncParamNode funcParamNode) {
-      return new PseudoFuncParamNode(funcParamNode.parameter(), index);
-    }
-    return argument;
-     */
-  }
-
-  /**
    * Replace the arguments in the behavior of {@code copiedInstructionBehavior}.
    */
   public static void replaceNodesInBehavior(Graph copiedInstructionBehavior,
@@ -524,7 +444,7 @@ public class GenerateInstructionOperandsPass extends Pass {
             Pair::new)
         .forEach(app -> {
           var formatField = app.left();
-          var argument = indexArgument(callNode.arguments(), app.right());
+          var argument = app.right(); // indexArgument(callNode.arguments(), app.right());
 
           var fields =
               Stream.concat(

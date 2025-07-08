@@ -89,7 +89,8 @@ class Utils {
     var ty = new CppType("MCInst", true, true);
     var param = new CppParameter(new Identifier("instruction",
         SourceLocation.INVALID_SOURCE_LOCATION),
-        ty);
+        ty,
+        0);
     return new GcbExpandPseudoInstructionCppFunction(
         identifier.append("expand"),
         new Parameter[] {param},

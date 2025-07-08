@@ -28,7 +28,7 @@ class FuncParamMatcherTest extends AbstractTest {
   @Test
   void matches_shouldReturnTrue_whenTypeMatches() {
     var matcher = new FuncParamMatcher(DataType.unsignedInt(32));
-    var node = new FuncParamNode(createParameter("parameterValue", DataType.unsignedInt(32)));
+    var node = new FuncParamNode(createParameter("parameterValue", DataType.unsignedInt(32), 0));
 
     // When
     var result = matcher.matches(node);
@@ -40,7 +40,7 @@ class FuncParamMatcherTest extends AbstractTest {
   @Test
   void matches_shouldReturnFalse_whenTypeMismatches() {
     var matcher = new FuncParamMatcher(DataType.bool());
-    var node = new FuncParamNode(createParameter("parameterValue", DataType.unsignedInt(32)));
+    var node = new FuncParamNode(createParameter("parameterValue", DataType.unsignedInt(32), 0));
 
     // When
     var result = matcher.matches(node);

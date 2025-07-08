@@ -41,6 +41,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
@@ -364,15 +365,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(AbiSequenceDefinition definition) {
-    var parameters = definition.params.stream()
-        .map(parameter -> {
-          var viamParam = new vadl.viam.Parameter(
-              generateIdentifier(parameter.name.name, parameter.name.location()),
-              getViamType(parameter.typeLiteral.type()));
-          parameterCache.put(parameter, viamParam);
-          return viamParam;
-        })
-        .toArray(vadl.viam.Parameter[]::new);
+    var parameters = mapParameters(definition.params);
 
     if (definition.kind == AbiSequenceDefinition.SeqKind.CONSTANT) {
       var astIdentifier = new Identifier("constMat" + constantMatSequence, definition.loc);
@@ -927,19 +920,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       Type returnType
   ) {
     var identifier = generateIdentifier(definition.viamId, definition.identifier());
-    var parameters = new ArrayList<vadl.viam.Parameter>();
-    for (var parameter : params) {
-      var viamParameter = new vadl.viam.Parameter(
-          generateIdentifier(parameter.name.name, parameter.name.location()),
-          getViamType(parameter.typeLiteral.type()));
-      parameterCache.put(parameter, viamParameter);
-      parameters.add(viamParameter);
-    }
+    var parameters = mapParameters(params);
     var behavior =
         new BehaviorLowering(this).getFunctionGraph(expr, identifier.simpleName() + " behavior");
 
     return new Function(identifier,
-        parameters.toArray(new vadl.viam.Parameter[0]),
+        parameters,
         returnType,
         behavior);
   }
@@ -993,19 +979,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Override
   public Optional<vadl.viam.Definition> visit(ExceptionDefinition definition) {
     var identifier = generateIdentifier(definition.viamId, definition.identifier());
-    var parameters = new ArrayList<vadl.viam.Parameter>();
-    for (var param : definition.params) {
-      var viamParameter = new vadl.viam.Parameter(
-          generateIdentifier(param.name.name, param.name.location()),
-          getViamType(param.typeLiteral.type())
-      );
-      parameterCache.put(param, viamParameter);
-      parameters.add(viamParameter);
-    }
+    var parameters = mapParameters(definition.params);
     var behavior = new BehaviorLowering(this).getProcedureGraph(definition.statement, "exception");
     return Optional.of(new ExceptionDef(
         identifier,
-        parameters.toArray(new vadl.viam.Parameter[0]),
+        parameters,
         behavior,
         ExceptionDef.Kind.DECLARED
     ));
@@ -1539,7 +1517,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   public Optional<vadl.viam.Definition> visit(Parameter definition) {
     return Optional.of(new vadl.viam.Parameter(
         generateIdentifier(definition.name.name, definition.name.location()),
-        getViamType(definition.typeLiteral.type())));
+        getViamType(definition.typeLiteral.type()),
+        -1)); // FIXME: we need to know the parent to know the index
     // FIXME: Do we need to add it to the parametercache?
   }
 
@@ -1576,15 +1555,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Override
   public Optional<vadl.viam.Definition> visit(PseudoInstructionDefinition definition) {
     var identifier = generateIdentifier(definition.viamId, definition.identifier());
-    var parameters = definition.params.stream()
-        .map(parameter -> {
-          var viamParam = new vadl.viam.Parameter(
-              generateIdentifier(parameter.name.name, parameter.name.location()),
-              getViamType(parameter.typeLiteral.type()));
-          parameterCache.put(parameter, viamParam);
-          return viamParam;
-        })
-        .toArray(vadl.viam.Parameter[]::new);
+    var parameters = mapParameters(definition.params);
 
     var graph =
         new BehaviorLowering(this).getInstructionSequenceGraph(definition.identifier(), definition);
@@ -1598,6 +1569,21 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         graph,
         assembly
     ));
+  }
+
+  @Nonnull
+  private vadl.viam.Parameter[] mapParameters(List<Parameter> definition) {
+    var parameters = new ArrayList<vadl.viam.Parameter>();
+    for (int i = 0; i < definition.size(); i++) {
+      var parameter = definition.get(i);
+      var viamParam = new vadl.viam.Parameter(
+          generateIdentifier(parameter.name.name, parameter.name.location()),
+          getViamType(parameter.typeLiteral.type()),
+          i);
+      parameterCache.put(parameter, viamParam);
+      parameters.add(viamParam);
+    }
+    return parameters.toArray(vadl.viam.Parameter[]::new);
   }
 
   @Override
@@ -1652,15 +1638,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Override
   public Optional<vadl.viam.Definition> visit(RelocationDefinition definition) {
     var identifier = generateIdentifier(definition.viamId, definition.identifier());
-    var parameters = definition.params.stream()
-        .map(p -> {
-          var viamParam =
-              new vadl.viam.Parameter(generateIdentifier(p.name.name, p.name.location()),
-                  getViamType(p.typeLiteral.type()));
-          parameterCache.put(p, viamParam);
-          return viamParam;
-        })
-        .toArray(vadl.viam.Parameter[]::new);
+    var parameters = mapParameters(definition.params);
     var graph =
         new BehaviorLowering(this).getFunctionGraph(definition.expr,
             identifier.name() + "::behavior");

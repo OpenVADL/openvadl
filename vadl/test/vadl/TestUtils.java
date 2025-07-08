@@ -264,8 +264,8 @@ public class TestUtils {
     return new Function(createIdentifier(name), new Parameter[] {}, retTy);
   }
 
-  public static Parameter createParameter(String name, DataType ty) {
-    return new Parameter(createIdentifier(name), ty);
+  public static Parameter createParameter(String name, DataType ty, int index) {
+    return new Parameter(createIdentifier(name), ty, index);
   }
 
   public static Format.Field createFieldWithParent(String name, DataType ty,
