@@ -84,6 +84,21 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
             GenerateLinkerComponentsPass.class);
 
+    // We only apply the encoding function for AutomaticallyGeneratedRelocations,
+    // because instructions that permit UserDefinedRelocations store the raw immediate value
+    // in the instruction word.
+
+    // Take LUI x2, %hi(.some_function) as example. Let's say the linker determined
+    // the address of .some_function to be 0x80001234.
+    // Applying the relocation %hi returns the value 0x80001 as operand. This is already the
+    // representation which needs to be written to the instruction word
+    // (as opposed to applying the encode function which would produce the value 0x80).
+
+    // An example for an AutomaticallyGeneratedRelocation is BEQ x2, x3, .other_function.
+    // Let's say the linker determined the address of .some_function to be 0x802.
+    // In this case the value needs to be encoded by right shifting by one bit to match the
+    // expectation of the BEQ instruction. This is done by applying the encoding function
+    // to transform the value from 0x802 to 0x401.
     var elfRelocations = output.elfRelocations().stream().map(
         r -> new ElfRelocationInfo(r.elfRelocationName().value(),
             r.kind().llvmKind(),
