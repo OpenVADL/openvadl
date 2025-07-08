@@ -138,6 +138,15 @@ public class GenerateInstructionOperandsPass extends Pass {
       addWithoutDuplicates(totalOutputs, outputOperands);
     }
 
+    checkIfAllOperandsWereDetected(compilerInstruction, totalOutputs, totalInputs);
+
+    var ctx = new CompilerInstructionOperandsCtx(totalInputs, totalOutputs);
+    compilerInstruction.attachExtension(ctx);
+  }
+
+  private static void checkIfAllOperandsWereDetected(CompilerInstruction compilerInstruction,
+                                                     List<GcbInstructionOperand> totalOutputs,
+                                                     List<GcbInstructionOperand> totalInputs) {
     // We have now all the operands for each machine instruction. However, we cannot use them
     // directly as operands for the pseudo instruction. The pseudo instruction has itself a list of
     // operands. We needed the operands from the machine instructions to determine whether they
@@ -154,18 +163,11 @@ public class GenerateInstructionOperandsPass extends Pass {
       }
     }
 
-    // We sort it, so we always get the same order. But, we don't care which order.
-    // We assume when operand wasn't matched by any other instruction's operand
-    // then it is constant input.
-    /*
-    for (var parameter : unmatchedOperands.stream().sorted().toList()) {
-      var operand = mapFrom(parameter);
-      totalInputs.add(operand);
+    for (var operand : unmatchedOperands) {
+      throw Diagnostic.error(
+          "Operand is not part of any machine instruction and its usage cannot be determined.",
+          compilerInstruction.location().join(operand.location())).build();
     }
-     */
-
-    var ctx = new CompilerInstructionOperandsCtx(totalInputs, totalOutputs);
-    compilerInstruction.attachExtension(ctx);
   }
 
   private void addWithoutDuplicates(List<GcbInstructionOperand> dest,
