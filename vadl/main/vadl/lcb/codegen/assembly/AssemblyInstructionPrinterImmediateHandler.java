@@ -409,7 +409,6 @@ public class AssemblyInstructionPrinterImmediateHandler
   }
 
   protected void handleArbitraryExpression(BuiltInCall node, int radix, CGenContext<Node> ctx) {
-    // ctx.wr("std::to_string(");
     ctx.wr("AsmUtils::formatImm(");
     AssemblyInstructionPrinterImmediateHandlerDispatcher.dispatch(this,
         (CNodeContext) ctx, node.arguments().getFirst());
@@ -431,9 +430,17 @@ public class AssemblyInstructionPrinterImmediateHandler
       // This case is for pseudo instructions because they arguments are not fields,
       // but function parameter nodes.
       writeImmediateWithRadix(funcParamNode, ctx, radix, funcParamNode.location());
+    } else if (node.arguments().getFirst() instanceof ConstantNode constantNode) {
+      writeImmediateWithRadix(constantNode, ctx, radix);
     } else {
       handleArbitraryExpression(node, radix, ctx);
     }
+  }
+
+  private void writeImmediateWithRadix(ConstantNode constantNode,
+                                       CGenContext<Node> ctx,
+                                       int radix) {
+    ctx.wr("AsmUtils::formatImm(%d, %d, &MAI)", constantNode.constant().asVal().intValue(), radix);
   }
 
   protected void writeImmediateWithRadix(Format.Field field,
