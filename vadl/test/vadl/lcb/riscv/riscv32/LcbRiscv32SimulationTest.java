@@ -28,7 +28,7 @@ public class LcbRiscv32SimulationTest extends LcbDockerInputFileExecutionTest {
   @TestFactory
   List<DynamicTest> optLevel0() throws DuplicatedPassKeyException, IOException {
     return runEach("sys/risc-v/rv32im.vadl",
-        "test/resources/llvm/riscv/asm/rv32im/qemu_c",
+        "test/resources/llvm/riscv/qemu_nolibc/",
         0,
         "sh /work/lcb_integration.sh"
     );
@@ -37,7 +37,7 @@ public class LcbRiscv32SimulationTest extends LcbDockerInputFileExecutionTest {
   @TestFactory
   List<DynamicTest> optLevel3() throws DuplicatedPassKeyException, IOException {
     return runEach("sys/risc-v/rv32im.vadl",
-        "test/resources/llvm/riscv/asm/rv32im/qemu_c",
+        "test/resources/llvm/riscv/qemu_nolibc/",
         3,
         "sh /work/lcb_integration.sh"
     );

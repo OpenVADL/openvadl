@@ -40,8 +40,10 @@ public abstract class QemuRiscvSimulationTest extends LcbDockerInputFileExecutio
   @TestFactory
   List<DynamicTest> optLevel0() throws DuplicatedPassKeyException, IOException {
     return runEach(getSpecPath(),
-        List.of("test/resources/llvm/riscv/spike/",
-            "test/resources/llvm/riscv/spike/" + getTarget()),
+        List.of("test/resources/llvm/riscv/qemu_libc/",
+            "test/resources/llvm/riscv/qemu_libc/" + getTarget(),
+            "test/resources/llvm/riscv/qemu_nolibc/"
+        ),
         0,
         "sh /work/compile.sh");
   }
@@ -49,8 +51,10 @@ public abstract class QemuRiscvSimulationTest extends LcbDockerInputFileExecutio
   @TestFactory
   List<DynamicTest> optLevel3() throws DuplicatedPassKeyException, IOException {
     return runEach(getSpecPath(),
-        List.of("test/resources/llvm/riscv/spike/",
-            "test/resources/llvm/riscv/spike/" + getTarget()),
+        List.of("test/resources/llvm/riscv/qemu_libc/",
+            "test/resources/llvm/riscv/qemu_libc/" + getTarget(),
+            "test/resources/llvm/riscv/qemu_nolibc/"
+        ),
         3,
         "sh /work/compile.sh");
   }
