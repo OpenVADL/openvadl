@@ -881,7 +881,7 @@ class DecodeFieldAccessesHandler implements CaseHandler {
       fieldAccess.format().fieldEncodingsOf(Set.of(fieldAccess))
           .forEach(fieldEncoding -> {
             for (var encodingFunction : encodingFunctions) {
-              if (encodingFunction.field() == fieldEncoding.targetField()) {
+              if (encodingFunction.field().equals(fieldEncoding.targetField())) {
                 encodeField(ctx, fieldEncoding, encodingFunction);
               }
             }

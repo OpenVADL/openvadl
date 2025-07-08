@@ -237,7 +237,7 @@ public class TableGenMachineInstruction extends TableGenInstruction {
             .filter(x -> x instanceof ReferencesImmediateOperand)
             .map(x ->
                 ((ReferencesImmediateOperand) x).immediateOperand().fieldAccessRef())
-            .filter(y -> y.fieldRefs().stream().anyMatch(z -> z == field))
+            .filter(y -> y.fieldRefs().stream().anyMatch(z -> z.equals(field)))
             .findFirst();
     return fieldAccess;
   }

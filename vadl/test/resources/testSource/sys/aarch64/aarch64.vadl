@@ -1216,13 +1216,13 @@ instruction set architecture AArch64Base = {
 
   model MemoryRegisterInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
     $MemoryRegisterXtd ($i; $m; UXTW; Un; (WSize(rm), ", uxtw"   );               X(rm) as UIntW as BitsX)
-    $MemoryRegisterXtd ($i; $m; UXTW; Is; (WSize(rm), ", uxtw #", decimal(size)); X(rm) as UIntW as BitsX << AccSize::$m.accsize)
+    $MemoryRegisterXtd ($i; $m; UXTW; Is; (WSize(rm), ", uxtw #", decimal(0 as Bits<1>)); X(rm) as UIntW as BitsX << AccSize::$m.accsize)
     $MemoryRegisterXtd ($i; $m; UXTX; Un; (XSize(rm)             );               X(rm))
-    $MemoryRegisterXtd ($i; $m; UXTX; Is; (XSize(rm), ", lsl #",  decimal(size)); X(rm) << AccSize::$m.accsize)
+    $MemoryRegisterXtd ($i; $m; UXTX; Is; (XSize(rm), ", lsl #",  decimal(0 as Bits<1>)); X(rm) << AccSize::$m.accsize)
     $MemoryRegisterXtd ($i; $m; SXTW; Un; (WSize(rm), ", sxtw"   );               X(rm) as SIntW as BitsX)
-    $MemoryRegisterXtd ($i; $m; SXTW; Is; (WSize(rm), ", sxtw #", decimal(size)); X(rm) as SIntW as BitsX << AccSize::$m.accsize)
+    $MemoryRegisterXtd ($i; $m; SXTW; Is; (WSize(rm), ", sxtw #", decimal(0 as Bits<1>)); X(rm) as SIntW as BitsX << AccSize::$m.accsize)
     $MemoryRegisterXtd ($i; $m; SXTX; Un; (XSize(rm), ", sxtx"   );               X(rm))
-    $MemoryRegisterXtd ($i; $m; SXTX; Is; (XSize(rm), ", sxtx #", decimal(size)); X(rm) << AccSize::$m.accsize)
+    $MemoryRegisterXtd ($i; $m; SXTX; Is; (XSize(rm), ", sxtx #", decimal(0 as Bits<1>)); X(rm) << AccSize::$m.accsize)
     }
 
 // memory literal model ********************************************************
@@ -1745,6 +1745,7 @@ instruction set architecture AArch64Base = {
     assembly $i.id = ($i.mnemo, ' ', SysRegName(sysreg), ', ', XSize(rt))
     }
 
+  /*
   model ExceptionCallEncAsm (i: InstrWithFunct): IsaDefs = {
     encoding $i.id = {op = $i.opcode}
     assembly $i.id = ($i.mnemo, ' #', decimal(imm16))
@@ -1769,6 +1770,7 @@ instruction set architecture AArch64Base = {
     encoding $i.id = {op = $i.opcode, imm16 = 0b0000'0011'1110'0000}
     assembly $i.id = ($i.mnemo)
     }
+  */
 
   model NopInstr (i: InstrNoFunct): IsaDefs = {
     instruction $i.id: UndefinedInstrFormat = {}
@@ -1798,13 +1800,13 @@ instruction set architecture AArch64Base = {
 
   $MsrRegInstr           ((MSR    ; "msr"   ; 0b1101'0101'0001                             ))
   $MrsRegInstr           ((MRS    ; "mrs"   ; 0b1101'0101'0011                             ))
-  $ExceptionCallInstr    ((BRK    ; "brk"   ; 0b1101'0100'0010'0000   ; SoftwareBreakpoint ))
-  $ExceptionCallInstr    ((SVC    ; "svc"   ; 0b1101'0100'0000'0001   ; SupervisorCall     ))
-  $ExceptionReturnInstr  ((ERET   ; "eret"  ; 0b1101'0110'1001'1111                        ))
-  $HaltInstr             ((HLT    ; "hlt"   ; 0b1101'0100'0100'0000                        ))
+  // $ExceptionCallInstr    ((BRK    ; "brk"   ; 0b1101'0100'0010'0000   ; SoftwareBreakpoint ))
+  // $ExceptionCallInstr    ((SVC    ; "svc"   ; 0b1101'0100'0000'0001   ; SupervisorCall     ))
+  // $ExceptionReturnInstr  ((ERET   ; "eret"  ; 0b1101'0110'1001'1111                        ))
+  // $HaltInstr             ((HLT    ; "hlt"   ; 0b1101'0100'0100'0000                        ))
   $NopInstr              ((NOP    ; "nop"   ; 0b0010'0000'0001'1111                        ))
   $NopInstr              ((YIELD  ; "yield" ; 0b0010'0000'0011'1111                        ))
-  $BTIInstr              ((BTI    ; "bti"   ; 0b0010'0100'''01'1111                        ))
+  // $BTIInstr              ((BTI    ; "bti"   ; 0b0010'0100'''01'1111                        ))
   $UndefinedInstr        ((UDF    ; "udf"   ; 0b0000'0000'0000'0000                        ))
 
 }

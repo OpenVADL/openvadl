@@ -32,6 +32,7 @@ import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
@@ -211,7 +212,8 @@ public class AssemblyInstructionPrinterImmediateHandler
 
       var usage = usages.getFirst();
       var indexInOperands = ensurePresent(indexInInputsOrOutputs(node.formatField()),
-          () -> Diagnostic.error("Cannot find operand.", node.location()));
+          () -> Diagnostic.error("Cannot find operand: " + node.formatField().simpleName(),
+              node.location()));
       if (usage == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE) {
         ctx.wr("MI->getOperand(%s).getImm()", indexInOperands);
       } else if (usage == IdentifyFieldUsagePass.FieldUsage.REGISTER) {
@@ -689,6 +691,9 @@ public class AssemblyInstructionPrinterImmediateHandler
       if (operand instanceof ReferencesFormatField x
           && x.referencesField(needle)) {
         return Optional.of(i);
+      } else if (operand instanceof GcbInstructionImmediateOperand immediateOperand
+          && immediateOperand.fieldAccess().fieldRefs().contains(needle)) {
+        return Optional.of(i);
       }
     }
 
@@ -703,6 +708,9 @@ public class AssemblyInstructionPrinterImmediateHandler
       var operand = operands.get(i);
       if (operand instanceof ReferencesImmediateOperand x
           && x.immediateOperand().fieldAccessRef().equals(needle)) {
+        return Optional.of(i);
+      } else if (operand instanceof GcbInstructionImmediateOperand immediateOperand
+          && immediateOperand.fieldAccess().equals(needle)) {
         return Optional.of(i);
       }
     }

@@ -116,7 +116,7 @@ public class DetermineRegisterUsesAndDefsPass extends Pass {
         if (isField && isConstant) {
           var field = pair.left().left();
           var affectedNodes = copy.behavior().getNodes(FieldRefNode.class)
-              .filter(x -> x.formatField() == field)
+              .filter(x -> x.formatField().equals(field))
               .toList();
 
           for (var affected : affectedNodes) {

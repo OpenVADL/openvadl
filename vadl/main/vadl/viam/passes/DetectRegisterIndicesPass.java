@@ -14,24 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.gcb.passes;
+package vadl.viam.passes;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.WriteRegTensorNode;
+import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
  * Detect whether the {@link FieldRefNode} is used as a register index.
- * It is detected as register index when a usage is {@link ReadRegTensorNode}
- * or {@link WriteRegTensorNode}.
+ * It is detected as register index when a usage is {@link ReadResourceNode}
+ * or {@link WriteResourceNode}.
  */
 public class DetectRegisterIndicesPass extends Pass {
   public DetectRegisterIndicesPass(GeneralConfiguration configuration) {
@@ -49,16 +51,16 @@ public class DetectRegisterIndicesPass extends Pass {
     var result = new HashSet<FieldRefNode>();
 
     viam.isa()
-        .get()
-        .ownInstructions()
+        .map(InstructionSetArchitecture::ownInstructions)
+        .orElse(Collections.emptyList())
         .stream()
         .flatMap(x -> x.behaviors().stream())
         .forEach(behavior -> {
           var fields = behavior.getNodes(FieldRefNode.class).toList();
 
           for (var field : fields) {
-            var hasRead = field.usages().anyMatch(u -> u instanceof ReadRegTensorNode);
-            var hasWrite = field.usages().anyMatch(u -> u instanceof WriteRegTensorNode);
+            var hasRead = field.usages().anyMatch(u -> u instanceof ReadResourceNode);
+            var hasWrite = field.usages().anyMatch(u -> u instanceof WriteResourceNode);
 
             if (hasRead || hasWrite) {
               result.add(field);

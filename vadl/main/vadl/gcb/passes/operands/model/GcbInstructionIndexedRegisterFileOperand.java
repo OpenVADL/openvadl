@@ -19,9 +19,10 @@ package vadl.gcb.passes.operands.model;
 import java.util.Objects;
 import vadl.viam.Format;
 import vadl.viam.RegisterTensor;
-import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
@@ -64,12 +65,25 @@ public class GcbInstructionIndexedRegisterFileOperand
   /**
    * Constructor.
    */
-  public GcbInstructionIndexedRegisterFileOperand(RegisterTensor registerFile,
-                                                  ConstantNode address) {
-    super(address, registerFile.identifier.simpleName(),
-        address.constant().asVal().intValue() + "");
-    this.registerFile = registerFile;
-    registerFile.ensure(registerFile.isRegisterFile(), "must be a register file");
+  public GcbInstructionIndexedRegisterFileOperand(ReadArtificialResNode node,
+                                                  FuncParamNode address) {
+    super(node, node.resourceDefinition().innerResourceRef().simpleName(),
+        address.parameter().identifier.simpleName());
+    this.registerFile = (RegisterTensor) node.resourceDefinition().innerResourceRef();
+    node.resourceDefinition().innerResourceRef()
+        .ensure(registerFile.isRegisterFile(), "must be registerfile");
+  }
+
+  /**
+   * Constructor.
+   */
+  public GcbInstructionIndexedRegisterFileOperand(WriteArtificialResNode node,
+                                                  FuncParamNode address) {
+    super(node, node.resourceDefinition().innerResourceRef().simpleName(),
+        address.parameter().identifier.simpleName());
+    this.registerFile = (RegisterTensor) node.resourceDefinition().innerResourceRef();
+    node.resourceDefinition().innerResourceRef()
+        .ensure(registerFile.isRegisterFile(), "must be registerfile");
   }
 
   public RegisterTensor registerFile() {

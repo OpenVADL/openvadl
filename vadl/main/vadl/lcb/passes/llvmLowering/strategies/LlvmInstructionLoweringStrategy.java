@@ -401,9 +401,6 @@ public abstract class LlvmInstructionLoweringStrategy {
       Instruction instruction,
       Graph graph) {
     if (!graph.getNodes(LlvmUnlowerableSD.class).toList().isEmpty()) {
-      DeferredDiagnosticStore.add(
-          Diagnostic.warning("Instruction is not lowerable and will be skipped",
-              instruction.location()).build());
       return true;
     }
 
@@ -411,10 +408,6 @@ public abstract class LlvmInstructionLoweringStrategy {
     // has no concept of register in the IR.
     if (graph.getNodes(ReadRegTensorNode.class)
         .anyMatch(n -> n.regTensor().isSingleRegister())) {
-      DeferredDiagnosticStore.add(
-          Diagnostic.warning(
-              "Instruction is not lowerable because it tries to match fixed registers.",
-              instruction.location()).build());
       return true;
     }
 

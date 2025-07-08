@@ -16,14 +16,15 @@
 
 package vadl.gcb.passes.operands;
 
+import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -40,27 +41,29 @@ import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.viam.CompilerInstruction;
+import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
-import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
-import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 
 /**
  * Generates the input and output operands for instructions.
@@ -82,17 +85,21 @@ public class GenerateInstructionOperandsPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    machineInstructions(viam);
+    machineInstructions(passResults, viam);
     pseudoInstructions(viam);
     compilerInstructions(viam);
 
     return null;
   }
 
-  private void machineInstructions(Specification viam) {
+  private void machineInstructions(PassResults passResults, Specification viam) {
+    var snapshots =
+        (Map<Instruction, Graph>) passResults.lastResultOf(SnapshotInstructionBehaviorPass.class);
     for (var instruction : viam.isa().orElseThrow().ownInstructions()) {
-      var outputOperands = getTableGenOutputOperands(instruction.behavior());
-      var inputOperands = getTableGenInputOperands(outputOperands, instruction.behavior());
+      var snapshot = ensureNonNull(snapshots.get(instruction),
+          () -> Diagnostic.error("Cannot find snapshot for instruction", instruction.location()));
+      var outputOperands = getTableGenOutputOperands(snapshot);
+      var inputOperands = getTableGenInputOperands(outputOperands, snapshot);
 
       var ctx = new InstructionOperandsCtx(inputOperands, outputOperands);
       instruction.attachExtension(ctx);
@@ -155,6 +162,7 @@ public class GenerateInstructionOperandsPass extends Pass {
     var operands = extractWrites(behavior);
     return operands
         .stream()
+        .filter(operand -> !operand.indices().isEmpty()) // must not be register.
         .filter(operand -> {
           // Why?
           // Because LLVM cannot handle static registers in input or output operands.
@@ -165,96 +173,27 @@ public class GenerateInstructionOperandsPass extends Pass {
         .toList();
   }
 
-  /**
-   * Most instruction's behaviors have inputs. Those are the results which the instruction requires.
-   */
   private static List<Node> getInputOperands(Graph graph) {
-    var children = new ArrayList<Node>();
-    var builtins = new ArrayList<Node>();
-    var sideEffects = graph.getNodes(SideEffectNode.class).toList();
+    // First, the registers
+    var x = graph.getNodes(ReadRegTensorNode.class).filter(k -> k.regTensor().isRegisterFile());
+    var xx = graph.getNodes(ReadArtificialResNode.class).filter(
+        k -> k.resourceDefinition().innerResourceRef() instanceof RegisterTensor tensor
+            && tensor.isRegisterFile());
+    // Then, immediates
+    var y = graph.getNodes(FieldAccessRefNode.class);
+    // Then, the rest
+    var z = graph.getNodes(FuncCallNode.class).flatMap(
+        funcCallNode -> funcCallNode.function().behavior().getNodes(FuncParamNode.class));
 
-    getNodesRecursively(sideEffects, builtins, BuiltInCall.class);
+    // We need this edge case for compiler and pseudo instructions.
+    // However, we need to filter for `WriteResourceNode` and `ReadResourceNode`, so
+    // the operand is not added twice.
+    var u = graph.getNodes(PseudoFuncParamNode.class)
+        .filter(k -> k.usages()
+            .noneMatch(v -> v instanceof WriteResourceNode || v instanceof ReadResourceNode));
 
-    // First arithmetical builtins
-    builtins.stream()
-        .map(x -> (BuiltInCall) x)
-        // Heuristic to prefer arithmetic builtins
-        .filter(x -> !x.builtIn().returns(Collections.singletonList(Type.bool())).isDataType())
-        .forEach(x -> {
-          for (var arg : x.arguments()) {
-            if (arg instanceof ReadRegTensorNode readRegTensorNode && readRegTensorNode.regTensor()
-                .isRegisterFile()) {
-              children.add(arg);
-            }
-          }
-        });
-
-    // Anything else
-    builtins.stream()
-        .map(x -> (BuiltInCall) x)
-        .filter(x -> x.builtIn().returns(Collections.singletonList(Type.bool())).isDataType())
-        .forEach(x -> {
-          for (var arg : x.arguments()) {
-            if (arg instanceof ReadRegTensorNode readRegTensorNode && readRegTensorNode.regTensor()
-                .isRegisterFile()) {
-              children.add(arg);
-            }
-          }
-        });
-
-    // Field Accesses
-    builtins.stream()
-        .map(x -> (BuiltInCall) x)
-        .filter(x -> !x.builtIn().returns(Collections.singletonList(Type.bool())).isDataType())
-        .forEach(x -> {
-          for (var arg : x.arguments()) {
-            if (arg instanceof FieldAccessRefNode) {
-              children.add(arg);
-            }
-          }
-        });
-
-    // To make sure we didn't forget anything
-    var funcCalls = new ArrayList<Node>();
-    getNodesRecursively(sideEffects, children, ReadRegTensorNode.class);
-    getNodesRecursively(sideEffects, children, FieldAccessRefNode.class);
-    getNodesRecursively(sideEffects, funcCalls, FuncCallNode.class);
-    getNodesRecursively(sideEffects, children, PseudoFuncParamNode.class);
-
-    return Stream.concat(
-            children.stream()
-                .filter(node -> {
-                  if (node instanceof ReadRegTensorNode readRegTensorNode) {
-                    return readRegTensorNode.regTensor().isRegisterFile();
-                  } else if (node instanceof PseudoFuncParamNode pseudoFuncParamNode) {
-                    // We need this edge case for compiler and pseudo instructions.
-                    // However, we need to filter for `WriteResourceNode` and `ReadResourceNode`, so
-                    // the operand is not added twice.
-                    return pseudoFuncParamNode.usages()
-                        .noneMatch(
-                            v -> v instanceof WriteResourceNode || v instanceof ReadResourceNode);
-                  } else {
-                    return true;
-                  }
-                }),
-            funcCalls.stream().flatMap(
-                    funcCallNode -> ((FuncCallNode) funcCallNode).function().behavior()
-                        .getNodes(FuncParamNode.class))
-                .map(node -> (Node) node)
-        )
-        .distinct()
-        .toList();
-  }
-
-  private static <T extends Node> void getNodesRecursively(
-      List<SideEffectNode> sideEffects,
-      List<Node> children,
-      Class<T> clazz) {
-    for (var sideEffect : sideEffects) {
-      var temp = new ArrayList<T>();
-      sideEffect.collectInputsWithChildren(temp, clazz);
-      children.addAll(temp);
-    }
+    return Stream.concat(Stream.concat(Stream.concat(Stream.concat(x, xx), y), z), u)
+        .map(k -> (Node) k).toList();
   }
 
   /**
@@ -276,6 +215,11 @@ public class GenerateInstructionOperandsPass extends Pass {
           if (node instanceof ReadRegTensorNode readRegTensorNode
               && readRegTensorNode.regTensor().isRegisterFile()) {
             return !readRegTensorNode.hasConstantAddress();
+          } else if (node instanceof ReadArtificialResNode artificialResNode
+              && artificialResNode.resourceDefinition()
+              .innerResourceRef() instanceof RegisterTensor tensor
+              && tensor.isRegisterFile()) {
+            return !artificialResNode.hasConstantAddress();
           }
           return true;
         })
@@ -289,7 +233,9 @@ public class GenerateInstructionOperandsPass extends Pass {
   private GcbInstructionOperand map(Node operand) {
     return switch (operand) {
       case ReadRegTensorNode node when node.regTensor().isRegisterFile() -> mapFrom(node);
+      case ReadArtificialResNode node -> mapFrom(node);
       case WriteRegTensorNode node when node.regTensor().isRegisterFile() -> mapFrom(node);
+      case WriteArtificialResNode node -> mapFrom(node);
       case FuncParamNode node -> mapFrom(node);
       case FieldAccessRefNode node -> mapFrom(node);
       default -> throw Diagnostic.error(
@@ -348,9 +294,59 @@ public class GenerateInstructionOperandsPass extends Pass {
     }
   }
 
+
+  /**
+   * Returns a {@link GcbInstructionOperand} given a {@link Node}.
+   */
+  private GcbInstructionOperand mapFrom(
+      ReadArtificialResNode node) {
+    if (node.address() instanceof FieldRefNode field) {
+      return new GcbInstructionRegisterFileOperand(node, field.formatField());
+    } else if (node.address() instanceof FuncParamNode funcParamNode) {
+      return new GcbInstructionIndexedRegisterFileOperand(node, funcParamNode);
+    } else if (node.address() instanceof ConstantNode constantNode) {
+      var tensor = (RegisterTensor) node.resourceDefinition().innerResourceRef();
+      // The register file has a constant as address.
+      // This is ok as long as the value of the register file at the address is also constant.
+      // For example, the X0 register in RISC-V which always has a constant value.
+      var constraints = Arrays.stream(tensor.constraints()).toList();
+      var constraintValue = constraints.stream()
+          .filter(
+              x -> x.indices().getFirst().intValue() == constantNode.constant().asVal().intValue())
+          .findFirst();
+      var constRegisterValue = ensurePresent(constraintValue,
+          () -> Diagnostic.error("Register file with constant index has no constant value.",
+                  constantNode.location())
+              .help("Consider adding a constraint to register file for the given index."));
+      // Update the type of the constant because it needs to be upcasted.
+      // Heuristically, we take the type of the index because indices were also upcasted.
+      var constantValue = constRegisterValue.value();
+      constantValue.setType(constantNode.type());
+      return new GcbConstantOperand(constantNode, constantValue);
+    } else {
+      throw Diagnostic.error(
+          "The compiler generator needs to generate a tablegen instruction operand from this "
+              + "address for a field but it does not support it.",
+          node.address().location()).build();
+    }
+  }
+
   private GcbInstructionOperand mapFrom(WriteRegTensorNode node) {
     if (node.address() instanceof FieldRefNode field) {
       return new GcbInstructionRegisterFileOperand(node, field);
+    } else if (node.address() instanceof FuncParamNode funcParamNode) {
+      return new GcbInstructionIndexedRegisterFileOperand(node, funcParamNode);
+    } else {
+      throw Diagnostic.error(
+          "The compiler generator needs to generate a tablegen instruction operand from this "
+              + "address for a field but it does not support it.",
+          node.address().location()).build();
+    }
+  }
+
+  private GcbInstructionOperand mapFrom(WriteArtificialResNode node) {
+    if (node.address() instanceof FieldRefNode field) {
+      return new GcbInstructionRegisterFileOperand(node, field.formatField());
     } else if (node.address() instanceof FuncParamNode funcParamNode) {
       return new GcbInstructionIndexedRegisterFileOperand(node, funcParamNode);
     } else {
@@ -395,9 +391,12 @@ public class GenerateInstructionOperandsPass extends Pass {
   /**
    * Most instruction's behaviors have outputs. Those are the results which the instruction emits.
    */
-  private List<WriteRegTensorNode> extractWrites(Graph graph) {
-    return graph.getNodes(WriteRegTensorNode.class)
-        .filter(e -> e.regTensor().isRegisterFile())
+  private List<WriteResourceNode> extractWrites(Graph graph) {
+    return Stream.concat(graph.getNodes(WriteRegTensorNode.class)
+                .filter(e -> e.regTensor().isRegisterFile()),
+            graph.getNodes(WriteArtificialResNode.class).filter(
+                e -> e.resourceDefinition().innerResourceRef() instanceof RegisterTensor tensor
+                    && tensor.isRegisterFile()))
         .toList();
   }
 

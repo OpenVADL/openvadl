@@ -1195,7 +1195,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // at least one access function must use this field for its decoding
     var anyUseOfThisField = encoding.usedFieldAccesses().stream()
         .flatMap(f -> f.fieldRefs().stream())
-        .anyMatch(e -> e == field);
+        .anyMatch(e -> e.equals(field));
     ensure(anyUseOfThisField, () -> error("Invalid field access encoding", encode)
         .description(
             "At least one of the field accesses must use the target field `%s` in its access functions.",

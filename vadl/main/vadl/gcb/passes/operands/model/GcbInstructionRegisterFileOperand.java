@@ -22,7 +22,9 @@ import vadl.viam.Format;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
@@ -48,6 +50,19 @@ public class GcbInstructionRegisterFileOperand
   /**
    * Constructor.
    */
+  public GcbInstructionRegisterFileOperand(ReadArtificialResNode node, Format.Field address) {
+    super(node, node.resourceDefinition().innerResourceRef().simpleName(),
+        address.identifier.simpleName());
+    this.registerFile = (RegisterTensor) node.resourceDefinition().innerResourceRef();
+    this.registerFile.ensure(registerFile.isRegisterFile(), "must be registerfile");
+    this.formatField = address;
+    node.resourceDefinition().innerResourceRef()
+        .ensure(registerFile.isRegisterFile(), "must be registerfile");
+  }
+
+  /**
+   * Constructor.
+   */
   public GcbInstructionRegisterFileOperand(ReadRegTensorNode node, FieldRefNode address) {
     this(node, address.formatField());
   }
@@ -60,6 +75,19 @@ public class GcbInstructionRegisterFileOperand
     this.registerFile = node.regTensor();
     this.registerFile.ensure(registerFile.isRegisterFile(), "must be registerfile");
     this.formatField = address.formatField();
+  }
+
+  /**
+   * Constructor.
+   */
+  public GcbInstructionRegisterFileOperand(WriteArtificialResNode node, Format.Field address) {
+    super(node, node.resourceDefinition().innerResourceRef().simpleName(),
+        address.identifier.simpleName());
+    this.registerFile = (RegisterTensor) node.resourceDefinition().innerResourceRef();
+    this.registerFile.ensure(registerFile.isRegisterFile(), "must be registerfile");
+    this.formatField = address;
+    node.resourceDefinition().innerResourceRef()
+        .ensure(registerFile.isRegisterFile(), "must be registerfile");
   }
 
   /**

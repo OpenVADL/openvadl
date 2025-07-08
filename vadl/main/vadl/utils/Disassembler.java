@@ -143,7 +143,7 @@ class InstructionPrinter {
   private String registerNameFromField(Format.Field field, Constant.Value value,
                                        SourceLocation fieldLocation) {
     var referencedResources = insn.source().behavior().getNodes(FieldRefNode.class)
-        .filter(f -> f.formatField() == field)
+        .filter(f -> f.formatField().equals(field))
         .flatMap(vadl.viam.graph.Node::usages)
         .filter(n -> n instanceof ReadResourceNode || n instanceof WriteResourceNode)
         .map(n -> {

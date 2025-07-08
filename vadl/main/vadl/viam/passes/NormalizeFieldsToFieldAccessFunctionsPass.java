@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.gcb.passes;
+package vadl.viam.passes;
 
 import java.io.IOException;
 import java.util.HashSet;
