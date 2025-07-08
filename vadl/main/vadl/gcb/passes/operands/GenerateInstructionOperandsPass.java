@@ -23,6 +23,7 @@ import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -37,6 +38,7 @@ import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionIndexedRegisterFileOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
+import vadl.gcb.passes.operands.model.InstructionOperandNamePrintable;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -135,6 +137,32 @@ public class GenerateInstructionOperandsPass extends Pass {
       addWithoutDuplicates(totalInputs, inputOperands);
       addWithoutDuplicates(totalOutputs, outputOperands);
     }
+
+    // We have now all the operands for each machine instruction. However, we cannot use them
+    // directly as operands for the pseudo instruction. The pseudo instruction has itself a list of
+    // operands. We needed the operands from the machine instructions to determine whether they
+    // are inputs or outputs.
+
+    // All parameters must be either be an output or input operand.
+    var unmatchedOperands = new HashSet<>(List.of(compilerInstruction.parameters()));
+    for (var pseudoInstructionParameter : compilerInstruction.parameters()) {
+      for (var operand : Stream.concat(totalOutputs.stream(), totalInputs.stream()).toList()) {
+        if (operand instanceof InstructionOperandNamePrintable printable
+            && printable.name().equals(pseudoInstructionParameter.simpleName())) {
+          unmatchedOperands.remove(pseudoInstructionParameter);
+        }
+      }
+    }
+
+    // We sort it, so we always get the same order. But, we don't care which order.
+    // We assume when operand wasn't matched by any other instruction's operand
+    // then it is constant input.
+    /*
+    for (var parameter : unmatchedOperands.stream().sorted().toList()) {
+      var operand = mapFrom(parameter);
+      totalInputs.add(operand);
+    }
+     */
 
     var ctx = new CompilerInstructionOperandsCtx(totalInputs, totalOutputs);
     compilerInstruction.attachExtension(ctx);
@@ -243,6 +271,12 @@ public class GenerateInstructionOperandsPass extends Pass {
           operand.location()).build();
     };
   }
+
+  /*
+  private GcbInstructionOperand mapFrom(Parameter parameter) {
+    return new GcbDefaultInstructionOperand(null, );
+  }
+   */
 
   /**
    * Returns a {@link GcbInstructionOperand} given a {@link Node}.
@@ -418,11 +452,65 @@ public class GenerateInstructionOperandsPass extends Pass {
    */
   protected static ExpressionNode indexArgument(List<ExpressionNode> arguments,
                                                 ExpressionNode argument) {
+    int index = arguments.indexOf(argument);
+
+    // If the node itself a FuncParamNode ...
     if (argument instanceof FuncParamNode funcParamNode) {
-      int index = arguments.indexOf(argument);
+      return funcParamNode.replaceAndDelete(
+          new PseudoFuncParamNode(funcParamNode.parameter(), index));
+    }
+
+    var children = new ArrayList<FuncParamNode>();
+    argument.collectInputsWithChildren(children, FuncParamNode.class);
+
+    for (var child : children) {
+      child.replaceAndDelete(new PseudoFuncParamNode(child.parameter(), index));
+    }
+
+    return argument;
+
+    /*
+    if (argument instanceof FuncParamNode funcParamNode) {
+      return new PseudoFuncParamNode(funcParamNode.parameter(), index);
+    }
+
+    // or its children ...
+    var queue = new ArrayDeque<ExpressionNode>();
+    queue.add(argument);
+
+    while (!queue.isEmpty()) {
+      var element = queue.removeFirst();
+      var inputs = element.inputs().toList();
+
+      for (var child : inputs) {
+        if (child instanceof FuncParamNode funcParamNode) {
+          element.replaceInput(child, new PseudoFuncParamNode(funcParamNode.parameter(), index));
+        } else if (child instanceof ExpressionNode expressionNode) {
+          queue.add(expressionNode);
+        }
+      }
+    }
+
+    return argument;
+     */
+
+    /*
+    var children = new ArrayList<FuncParamNode>();
+    if (argument instanceof FuncParamNode funcParamNode) {
+      children.add(funcParamNode);
+    }
+
+    argument.collectInputsWithChildren(children, FuncParamNode.class);
+
+    for (var child : children) {
+
+    }
+
+    if (argument instanceof FuncParamNode funcParamNode) {
       return new PseudoFuncParamNode(funcParamNode.parameter(), index);
     }
     return argument;
+     */
   }
 
   /**
@@ -436,10 +524,13 @@ public class GenerateInstructionOperandsPass extends Pass {
           var formatField = app.left();
           var argument = indexArgument(callNode.arguments(), app.right());
 
-          Stream.concat(
+          var fields =
+              Stream.concat(
                   copiedInstructionBehavior.getNodes(FieldRefNode.class),
-                  copiedInstructionBehavior.getNodes(FieldAccessRefNode.class)
-              )
+                  copiedInstructionBehavior.getNodes(FieldAccessRefNode.class)).toList();
+
+          fields
+              .stream()
               .filter(x -> {
                 if (x instanceof FieldRefNode fieldRefNode) {
                   return fieldRefNode.formatField().equals(formatField);
