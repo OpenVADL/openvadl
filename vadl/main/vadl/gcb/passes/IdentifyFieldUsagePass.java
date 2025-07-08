@@ -193,29 +193,24 @@ public class IdentifyFieldUsagePass extends Pass {
       }
     }
 
-    public Map<Instruction, IdentityHashMap<Field, List<FieldUsage>>> getFieldUsages() {
-      return fieldUsage;
-    }
-
     /**
      * Get the usages of fields by instruction.
      */
     public Map<Field, List<FieldUsage>> getFieldUsages(Instruction instruction) {
-      var obj = fieldUsage.get(instruction);
-      if (obj == null) {
-        throw new ViamError("Hashmap must not be null");
-      }
-      return obj;
+      return ensureNonNull(fieldUsage.get(instruction),
+          () -> Diagnostic.error("Cannot find field's usages for instruction",
+              instruction.location()));
     }
 
     /**
-     * Get the usages of fields by instruction.
+     * Get the usages of fields by instruction. If there are no usages for the given
+     * {@link Format} then return an empty list.
      */
     public List<FieldUsage> getFieldUsages(Instruction instruction, Field field) {
-      var obj = fieldUsage.get(instruction);
-      if (obj == null) {
-        throw new ViamError("Hashmap must not be null");
-      }
+      var obj = ensureNonNull(fieldUsage.get(instruction),
+          () -> Diagnostic.error("Cannot find field's usages for instruction",
+              instruction.location()));
+
       return Optional.ofNullable(obj.get(field)).orElse(Collections.emptyList());
     }
 
@@ -223,11 +218,9 @@ public class IdentifyFieldUsagePass extends Pass {
      * Get the usages of registers by instruction.
      */
     public Map<Field, RegisterUsageAggregate> getRegisterUsages(Instruction instruction) {
-      var obj = registerUsage.get(instruction);
-      if (obj == null) {
-        throw new ViamError("Hashmap must not be null");
-      }
-      return obj;
+      return ensureNonNull(registerUsage.get(instruction),
+          () -> Diagnostic.error("Cannot find register's usages for instruction",
+              instruction.location()));
 
     }
 
