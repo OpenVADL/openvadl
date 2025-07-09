@@ -48,7 +48,7 @@ class AdditionWithZeroSimplificationRuleTest extends AbstractTest {
   void shouldReplaceNode(BuiltInTable.BuiltIn built) {
     var ty = Type.signedInt(32);
     var node = new BuiltInCall(built, new NodeList<>(List.of(
-        new FuncParamNode(new Parameter(createIdentifier("parameterValue"), ty)),
+        new FuncParamNode(new Parameter(createIdentifier("parameterValue"), ty, 0)),
         new ConstantNode(Constant.Value.of(0, ty)
         ))), ty);
 

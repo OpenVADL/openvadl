@@ -268,7 +268,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           viamLowering.generateIdentifier(
               identifier.name() + "::index",
               identifier.location()),
-          relType.argTypes().getFirst());
+          relType.argTypes().getFirst(),
+          0);
       params.add(param);
       indices.add(new FuncParamNode(param));
       resultType = relType.resultType().asDataType();
@@ -337,7 +338,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           viamLowering.generateIdentifier(
               identifier.name() + "::index",
               identifier.location()),
-          relType.argTypes().getFirst());
+          relType.argTypes().getFirst(),
+          0);
       params.add(param);
       indices.add(new FuncParamNode(param));
       resultType = relType.resultType().asDataType();
@@ -349,7 +351,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         viamLowering.generateIdentifier(
             identifier.name() + "::value",
             identifier.location()),
-        getViamType(resultType));
+        getViamType(resultType),
+        1);
     params.add(valueParam);
 
     // FIXME: Support pre-indexed registers, for example:

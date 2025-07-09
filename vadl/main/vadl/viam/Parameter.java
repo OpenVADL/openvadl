@@ -25,6 +25,7 @@ import vadl.types.Type;
 public class Parameter extends Definition implements DefProp.WithType {
 
   private final Type type;
+  private final int index;
 
   // the parent of this parameter (e.g. a function definition)
   @Nullable
@@ -35,18 +36,20 @@ public class Parameter extends Definition implements DefProp.WithType {
    * You must add the
    * parent definition directly after construction.
    */
-  public Parameter(Identifier identifier, Type type) {
+  public Parameter(Identifier identifier, Type type, int index) {
     super(identifier);
     this.type = type;
+    this.index = index;
   }
 
   /**
    * Constructs a parameter.
    */
   @SuppressWarnings("NullableProblems")
-  public Parameter(Identifier identifier, Type type, Definition parent) {
+  public Parameter(Identifier identifier, Type type, int index, Definition parent) {
     super(identifier);
     this.type = type;
+    this.index = index;
     this.parent = parent;
   }
 
@@ -63,6 +66,9 @@ public class Parameter extends Definition implements DefProp.WithType {
     return type;
   }
 
+  public int index() {
+    return index;
+  }
 
   @Override
   public String toString() {

@@ -17,12 +17,14 @@
 package vadl.gcb.passes.operands.model;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 import vadl.viam.graph.Node;
 
 /**
  * The default tablegen instruction operand has always a type and a name.
  */
-public class GcbDefaultInstructionOperand extends GcbInstructionOperand {
+public class GcbDefaultInstructionOperand extends GcbInstructionOperand
+    implements InstructionOperandNamePrintable {
   private final String type;
   private final String name;
 
@@ -44,6 +46,7 @@ public class GcbDefaultInstructionOperand extends GcbInstructionOperand {
     return type;
   }
 
+  @Override
   public String name() {
     return name;
   }

@@ -50,15 +50,35 @@ public class Inliner {
     });
   }
 
+  /**
+   * Indicates how a {@link Function} should be inlined.
+   */
+  public enum InliningMode {
+    WithRelocations,
+    WithoutRelocations,
+  }
 
   /**
-   * Inline all functions in the given behavior.
+   * Inline all functions in the given behavior that are not {@link Relocation}.
    */
   public static void inlineFuncs(Graph behavior) {
-    var functionCalls = behavior.getNodes(FuncCallNode.class)
-        .filter(funcCallNode -> funcCallNode.function().behavior().isPureFunction())
-        .filter(funcCallNode -> !(funcCallNode.function() instanceof Relocation))
-        .toList();
+    inlineFuncs(behavior, InliningMode.WithoutRelocations);
+  }
+
+  /**
+   * Inline all functions in the given behavior. The second operand determines whether
+   * a {@link Relocation} should be also inlined.
+   */
+  public static void inlineFuncs(Graph behavior, InliningMode mode) {
+    var functionCallsStream = behavior.getNodes(FuncCallNode.class)
+        .filter(funcCallNode -> funcCallNode.function().behavior().isPureFunction());
+
+    if (mode == InliningMode.WithoutRelocations) {
+      functionCallsStream = functionCallsStream
+          .filter(funcCallNode -> !(funcCallNode.function() instanceof Relocation));
+    }
+
+    var functionCalls = functionCallsStream.toList();
 
     if (functionCalls.isEmpty()) {
       return;

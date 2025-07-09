@@ -49,10 +49,10 @@ public class BitMaskFunctionGenerator {
                                                                            Format.Field field) {
     var parameterInstWord =
         new Parameter(new Identifier("instWord", SourceLocation.INVALID_SOURCE_LOCATION),
-            format.type());
+            format.type(), 0);
     var parameterNewValue =
         new Parameter(new Identifier("newValue", SourceLocation.INVALID_SOURCE_LOCATION),
-            format.type());
+            format.type(), 1);
 
     return new GcbUpdateFieldRelocationCppFunction(
         new Identifier(generateFunctionName(format, field), SourceLocation.INVALID_SOURCE_LOCATION),

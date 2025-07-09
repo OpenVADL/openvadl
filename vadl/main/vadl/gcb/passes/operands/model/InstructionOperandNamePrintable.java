@@ -14,17 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.cppCodeGen.model;
-
-import vadl.viam.Identifier;
-import vadl.viam.Parameter;
+package vadl.gcb.passes.operands.model;
 
 /**
- * Indicates that the parameter is a parameter for cpp.
+ * Interface indicates that an instruction operand has findable by name.
  */
-public class CppParameter extends Parameter {
-
-  public CppParameter(Identifier identifier, CppType type, int index) {
-    super(identifier, type, index);
-  }
+public interface InstructionOperandNamePrintable {
+  /**
+   * Get the name of an operand.
+   */
+  String name();
 }

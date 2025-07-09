@@ -35,7 +35,7 @@ class CompilerInstructionTest {
   CompilerInstruction create(Type type1, Type type2) {
     return new CompilerInstruction(
         new Identifier("test", SourceLocation.INVALID_SOURCE_LOCATION),
-        new Parameter[] {new Parameter(first(), type1), new Parameter(second(), type2)},
+        new Parameter[] {new Parameter(first(), type1, 0), new Parameter(second(), type2, 1)},
         new Graph("graph")
     );
   }
