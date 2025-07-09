@@ -103,7 +103,7 @@ import vadl.viam.matching.impl.AnyChildMatcher;
 import vadl.viam.matching.impl.AnyConstantValueMatcher;
 import vadl.viam.matching.impl.AnyNodeMatcher;
 import vadl.viam.matching.impl.AnyReadMemMatcher;
-import vadl.viam.matching.impl.AnyReadRegFileMatcher;
+import vadl.viam.matching.impl.AnyReadRegisterFileMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.FieldAccessRefMatcher;
 import vadl.viam.matching.impl.IsReadRegMatcher;
@@ -349,8 +349,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     // (2) Cut the inputs
     return TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
             new BuiltInMatcher(builtins, List.of(
-                new AnyChildMatcher(new AnyReadRegFileMatcher()),
-                new AnyChildMatcher(new AnyReadRegFileMatcher())
+                new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
+                new AnyChildMatcher(new AnyReadRegisterFileMatcher())
             )))
         .stream()
         .map(x -> (BuiltInCall) x)
@@ -367,8 +367,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     return
         TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
                 new BuiltInMatcher(builtins, List.of(
-                    new AnyChildMatcher(new AnyReadRegFileMatcher()),
-                    new AnyChildMatcher(new AnyReadRegFileMatcher())
+                    new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
+                    new AnyChildMatcher(new AnyReadRegisterFileMatcher())
                 )))
             .stream()
             .map(x -> (BuiltInCall) x)
@@ -432,7 +432,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     }
 
     var matched = TreeMatcher.matches(graph.getNodes(WriteResourceNode.class).map(x -> x),
-        new WriteResourceMatcherForValue(new AnyChildMatcher(new AnyReadRegFileMatcher())));
+        new WriteResourceMatcherForValue(new AnyChildMatcher(new AnyReadRegisterFileMatcher())));
 
     return !matched.isEmpty();
   }
@@ -480,8 +480,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   private boolean findAdd(UninlinedGraph behavior, int bitWidth) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
             new BuiltInMatcher(List.of(ADD, ADDS), List.of(
-                new AnyChildMatcher(new AnyReadRegFileMatcher()),
-                new AnyChildMatcher(new AnyReadRegFileMatcher())
+                new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
+                new AnyChildMatcher(new AnyReadRegisterFileMatcher())
             )))
         .stream()
         .map(x -> ((BuiltInCall) x).type())
@@ -503,7 +503,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   private boolean findAddWithImmediate(UninlinedGraph behavior, int bitWidth) {
     var matcher =
         new BuiltInMatcher(List.of(ADD, ADDS),
-            List.of(new AnyChildMatcher(new AnyReadRegFileMatcher()),
+            List.of(new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
                 new AnyChildMatcher(new FieldAccessRefMatcher())));
 
     // We use a set because we want to allow commutativity.
@@ -554,7 +554,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         .filter(w -> w.regTensor().isRegisterFile()).toList();
 
     var matcher = new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB), List.of(
-        new AnyChildMatcher(new AnyReadRegFileMatcher()),
+        new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
         new AnyNodeMatcher()
     ));
     Set<Matcher> matchers = Set.of(

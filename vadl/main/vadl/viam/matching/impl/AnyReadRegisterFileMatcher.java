@@ -16,27 +16,26 @@
 
 package vadl.viam.matching.impl;
 
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.matching.Matcher;
 
 /**
- * Checks if the node has for the given {@link WriteResourceNode} an address which matches
- * child matcher.
+ * Matches any {@link ReadRegTensorNode} or {@link ReadArtificialResNode} that is a register file
+ * (two dimensions).
  */
-public class WriteResourceMatcherForAddr implements Matcher {
-
-  private final Matcher matcher;
-
-  public WriteResourceMatcherForAddr(Matcher matcher) {
-    this.matcher = matcher;
-  }
-
+public class AnyReadRegisterFileMatcher implements Matcher {
 
   @Override
   public boolean matches(Node node) {
-    return (node instanceof WriteResourceNode write
-        && write.address() != null
-        && matcher.matches(write.address()));
+    var isReadRegTensorNode = node instanceof ReadRegTensorNode readRegTensorNode
+        && readRegTensorNode.regTensor().isRegisterFile();
+    var isReadArtificialResNode = node instanceof ReadArtificialResNode readArtificialResNode
+        && readArtificialResNode.resourceDefinition()
+        .innerResourceRef() instanceof RegisterTensor registerTensor
+        && registerTensor.isRegisterFile();
+    return isReadRegTensorNode || isReadArtificialResNode;
   }
 }
