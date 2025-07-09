@@ -123,6 +123,17 @@ public class SliceNode extends ExpressionNode implements Canonicalizable {
 
   @Override
   public Node canonical() {
+    // If value's type is equal to the slice's type then it makes no sense to slice.
+    var parts = slice.parts().toList();
+    if (parts.size() == 1) {
+      var part = parts.getFirst();
+      var sliceMsb = part.msb();
+      var sliceLsb = part.lsb();
+      if (sliceLsb == 0 && value.type().asDataType().bitWidth() - 1 == sliceMsb) {
+        return value;
+      }
+    }
+
     if (!(value instanceof ConstantNode constantNode)) {
       return this;
     }
