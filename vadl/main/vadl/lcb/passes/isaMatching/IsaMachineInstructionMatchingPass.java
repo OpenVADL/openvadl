@@ -479,7 +479,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
 
   private boolean findAdd(UninlinedGraph behavior, int bitWidth) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
-            new BuiltInMatcher(ADD, List.of(
+            new BuiltInMatcher(List.of(ADD, ADDS), List.of(
                 new AnyChildMatcher(new AnyReadRegFileMatcher()),
                 new AnyChildMatcher(new AnyReadRegFileMatcher())
             )))

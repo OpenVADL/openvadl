@@ -210,7 +210,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
     if (add64 == null) {
       var instructions = isaMatches.get(MachineInstructionLabel.ADD_32);
-      ensureNonNull(instructions, "instructions with addition exist");
+      ensureNonNull(instructions, "instructions with addition have to exist");
       return ensurePresent(instructions.stream().findFirst(),
           "There must be at least one instruction");
     } else {
