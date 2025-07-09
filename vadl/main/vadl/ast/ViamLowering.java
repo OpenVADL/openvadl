@@ -1518,7 +1518,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     return Optional.of(new vadl.viam.Parameter(
         generateIdentifier(definition.name.name, definition.name.location()),
         getViamType(definition.typeLiteral.type()),
-        -1)); // FIXME: we need to know the parent to know the index
+        -1));
+    // FIXME: we need to know the parent to know the index (-1)
     // FIXME: Do we need to add it to the parametercache?
   }
 
