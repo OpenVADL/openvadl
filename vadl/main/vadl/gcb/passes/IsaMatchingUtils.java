@@ -42,7 +42,7 @@ import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.matching.Matcher;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyChildMatcher;
-import vadl.viam.matching.impl.AnyReadRegFileMatcher;
+import vadl.viam.matching.impl.AnyReadRegisterFileMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.FieldAccessRefMatcher;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
@@ -101,8 +101,8 @@ public interface IsaMatchingUtils {
   default boolean findRR(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
         new BuiltInMatcher(builtins, List.of(
-            new AnyChildMatcher(new AnyReadRegFileMatcher()),
-            new AnyChildMatcher(new AnyReadRegFileMatcher())
+            new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
+            new AnyChildMatcher(new AnyReadRegisterFileMatcher())
         )));
 
     return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior);
@@ -116,7 +116,7 @@ public interface IsaMatchingUtils {
   default boolean findRegisterImmediateOrImmediateRegister(UninlinedGraph behavior,
                                                            List<BuiltInTable.BuiltIn> builtins) {
     var matcher = new BuiltInMatcher(builtins, List.of(
-        new AnyChildMatcher(new AnyReadRegFileMatcher()),
+        new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
         new AnyChildMatcher(new FieldAccessRefMatcher())
     ));
     Set<Matcher> matchers = Set.of(
