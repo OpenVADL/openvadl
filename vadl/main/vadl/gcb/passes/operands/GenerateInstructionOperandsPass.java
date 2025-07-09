@@ -39,6 +39,8 @@ import vadl.gcb.passes.operands.model.GcbInstructionIndexedRegisterFileOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
 import vadl.gcb.passes.operands.model.InstructionOperandNamePrintable;
+import vadl.javaannotations.DispatchFor;
+import vadl.javaannotations.Handler;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -52,19 +54,34 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.dependency.AsmBuiltInCall;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FoldNode;
+import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.LabelNode;
+import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
+import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.ReadStageOutputNode;
+import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TensorNode;
+import vadl.viam.graph.dependency.TupleGetFieldNode;
+import vadl.viam.graph.dependency.UnaryNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.SnapshotInstructionBehaviorPass;
+import vadl.viam.passes.functionInliner.Inliner;
 
 /**
  * Generates the input and output operands for instructions.
@@ -100,7 +117,7 @@ public class GenerateInstructionOperandsPass extends Pass {
       var snapshot = ensureNonNull(snapshots.get(instruction),
           () -> Diagnostic.error("Cannot find snapshot for instruction", instruction.location()));
       var outputOperands = getTableGenOutputOperands(snapshot);
-      var inputOperands = getTableGenInputOperands(outputOperands, snapshot);
+      var inputOperands = getTableGenInputOperandsForMachineInstructions(outputOperands, snapshot);
 
       var ctx = new InstructionOperandsCtx(inputOperands, outputOperands);
       instruction.attachExtension(ctx);
@@ -131,7 +148,10 @@ public class GenerateInstructionOperandsPass extends Pass {
       replaceNodesInBehavior(instructionBehavior, callNode);
 
       var outputOperands = getTableGenOutputOperands(instructionBehavior);
-      var inputOperands = getTableGenInputOperands(outputOperands, instructionBehavior);
+      var inputOperands =
+          getTableGenInputOperandsForPseudoInstructions(compilerInstruction,
+              outputOperands,
+              instructionBehavior);
 
       addWithoutDuplicates(totalInputs, inputOperands);
       addWithoutDuplicates(totalOutputs, outputOperands);
@@ -165,7 +185,7 @@ public class GenerateInstructionOperandsPass extends Pass {
     for (var operand : unmatchedOperands) {
       throw Diagnostic.error(
           "Operand is not part of any machine instruction and its usage cannot be determined.",
-          compilerInstruction.location().join(operand.location())).build();
+          operand.location()).build();
     }
   }
 
@@ -203,26 +223,42 @@ public class GenerateInstructionOperandsPass extends Pass {
   }
 
   private static List<Node> getInputOperands(Graph graph) {
+    // There are different use cases for both normal instructions and pseudo instructions.
+
     // First, the registers
-    var x = graph.getNodes(ReadRegTensorNode.class).filter(k -> k.regTensor().isRegisterFile());
+    var x = graph.getNodes(ReadRegTensorNode.class).filter(k -> k.regTensor().isRegisterFile())
+        .toList();
     var xx = graph.getNodes(ReadArtificialResNode.class).filter(
         k -> k.resourceDefinition().innerResourceRef() instanceof RegisterTensor tensor
-            && tensor.isRegisterFile());
+            && tensor.isRegisterFile()).toList();
+
     // Then, immediates
-    var y = graph.getNodes(FieldAccessRefNode.class);
-    // Then, the rest
+    var y = graph.getNodes(FieldAccessRefNode.class).toList();
+
     var z = graph.getNodes(FuncCallNode.class).flatMap(
-        funcCallNode -> funcCallNode.function().behavior().getNodes(FuncParamNode.class));
+            funcCallNode -> funcCallNode.function().behavior().getNodes(FuncParamNode.class))
+        .toList();
 
-    // We need this edge case for compiler and pseudo instructions.
-    // However, we need to filter for `WriteResourceNode` and `ReadResourceNode`, so
-    // the operand is not added twice.
-    var u = graph.getNodes(FuncParamNode.class)
-        .filter(k -> k.usages()
-            .noneMatch(v -> v instanceof WriteResourceNode || v instanceof ReadResourceNode));
+    return concat(x.stream(), xx.stream(), y.stream(), z.stream()).toList();
+  }
 
-    return Stream.concat(Stream.concat(Stream.concat(Stream.concat(x, xx), y), z), u)
-        .map(k -> (Node) k).toList();
+  private static List<Node> getInputOperandsForPseudoInstructions(CompilerInstruction instruction,
+                                                                  Graph graph) {
+    var handler = new PseudoNodeOperandCollector(instruction);
+
+    graph.getNodes(SideEffectNode.class).forEach(sideEffectNode -> {
+      if (sideEffectNode instanceof WriteRegTensorNode writeRegTensorNode) {
+        PseudoNodeOperandCollectorDispatcher.dispatch(handler, writeRegTensorNode.condition());
+        PseudoNodeOperandCollectorDispatcher.dispatch(handler, writeRegTensorNode.value());
+        // We don't handle the indices because they are considered output operands.
+      }
+    });
+
+    return handler.operands();
+  }
+
+  private static Stream<Node> concat(Stream<? extends Node>... streams) {
+    return Streams.concat(streams);
   }
 
   /**
@@ -231,11 +267,46 @@ public class GenerateInstructionOperandsPass extends Pass {
    * {@link PseudoInstruction} like {@code ADDI rd, rd, 1} then is the output and one input
    * the same which tablegen will not accept.
    */
-  private List<GcbInstructionOperand> getTableGenInputOperands(
+  private List<GcbInstructionOperand> getTableGenInputOperandsForMachineInstructions(
       List<GcbInstructionOperand> outputOperands,
       Graph graph) {
 
     var inputOperands = getInputOperands(graph)
+        .stream()
+        .filter(node -> {
+          // Why?
+          // Because LLVM cannot handle static registers in input or output operands.
+          // They belong to defs and uses instead.
+          if (node instanceof ReadRegTensorNode readRegTensorNode
+              && readRegTensorNode.regTensor().isRegisterFile()) {
+            return !readRegTensorNode.hasConstantAddress();
+          } else if (node instanceof ReadArtificialResNode artificialResNode
+              && artificialResNode.resourceDefinition()
+              .innerResourceRef() instanceof RegisterTensor tensor
+              && tensor.isRegisterFile()) {
+            return !artificialResNode.hasConstantAddress();
+          }
+          return true;
+        })
+        .map(this::map)
+        .toList();
+
+    return filterOutputs(outputOperands, inputOperands.stream())
+        .toList();
+  }
+
+  /**
+   * Extracts the input operands from the {@link Graph}. But it will skip nodes which are
+   * already a {@link Node} in the {@code outputOperands}. Because if you have a
+   * {@link PseudoInstruction} like {@code ADDI rd, rd, 1} then is the output and one input
+   * the same which tablegen will not accept.
+   */
+  private List<GcbInstructionOperand> getTableGenInputOperandsForPseudoInstructions(
+      CompilerInstruction instruction,
+      List<GcbInstructionOperand> outputOperands,
+      Graph graph) {
+
+    var inputOperands = getInputOperandsForPseudoInstructions(instruction, graph)
         .stream()
         .filter(node -> {
           // Why?
@@ -272,12 +343,6 @@ public class GenerateInstructionOperandsPass extends Pass {
           operand.location()).build();
     };
   }
-
-  /*
-  private GcbInstructionOperand mapFrom(Parameter parameter) {
-    return new GcbDefaultInstructionOperand(null, );
-  }
-   */
 
   /**
    * Returns a {@link GcbInstructionOperand} given a {@link Node}.
@@ -444,7 +509,7 @@ public class GenerateInstructionOperandsPass extends Pass {
             Pair::new)
         .forEach(app -> {
           var formatField = app.left();
-          var argument = app.right(); // indexArgument(callNode.arguments(), app.right());
+          var argument = app.right();
 
           var fields =
               Stream.concat(
@@ -515,5 +580,140 @@ public class GenerateInstructionOperandsPass extends Pass {
                 }
               });
         });
+    Inliner.inlineFuncs(copiedInstructionBehavior, Inliner.InliningMode.WithRelocations);
+  }
+}
+
+@DispatchFor(value = ExpressionNode.class,
+    include = {"vadl.viam"}
+)
+class PseudoNodeOperandCollector {
+  private final CompilerInstruction compilerInstruction;
+  private final List<Node> operands = new ArrayList<>();
+
+  PseudoNodeOperandCollector(CompilerInstruction compilerInstruction) {
+    this.compilerInstruction = compilerInstruction;
+  }
+
+  public List<Node> operands() {
+    return operands;
+  }
+
+  @Handler
+  protected void handle(FuncParamNode node) {
+    operands.add(node);
+  }
+
+  @Handler
+  protected void handle(UnaryNode node) {
+    PseudoNodeOperandCollectorDispatcher.dispatch(this, node.value());
+  }
+
+
+  @Handler
+  protected void handle(TensorNode node) {
+
+  }
+
+  @Handler
+  protected void handle(AsmBuiltInCall node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
+  @Handler
+  protected void handle(ReadArtificialResNode node) {
+    if (node.resourceDefinition().innerResourceRef() instanceof RegisterTensor tensor
+        && tensor.isRegisterFile()) {
+      operands.add(node);
+    }
+  }
+
+  @Handler
+  protected void handle(ReadRegTensorNode node) {
+    if (node.regTensor().isRegisterFile()) {
+      operands.add(node);
+    }
+  }
+
+  @Handler
+  protected void handle(BuiltInCall node) {
+    for (var arg : node.arguments()) {
+      PseudoNodeOperandCollectorDispatcher.dispatch(this, arg);
+    }
+  }
+
+
+  @Handler
+  protected void handle(TupleGetFieldNode node) {
+    PseudoNodeOperandCollectorDispatcher.dispatch(this, node.expression());
+  }
+
+  @Handler
+  protected void handle(ConstantNode node) {
+
+  }
+
+  @Handler
+  protected void handle(FuncCallNode node) {
+    throw Diagnostic.error("Should be already inlined",
+        node.location().join(compilerInstruction.location())).build();
+  }
+
+  @Handler
+  protected void handle(ReadStageOutputNode node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
+  @Handler
+  protected void handle(ForIdxNode node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
+  @Handler
+  protected void handle(FoldNode node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
+  @Handler
+  protected void handle(LetNode node) {
+    PseudoNodeOperandCollectorDispatcher.dispatch(this, node.expression());
+  }
+
+  @Handler
+  protected void handle(SliceNode node) {
+    PseudoNodeOperandCollectorDispatcher.dispatch(this, node.value());
+  }
+
+  @Handler
+  protected void handle(ReadMemNode node) {
+    PseudoNodeOperandCollectorDispatcher.dispatch(this, node.address());
+  }
+
+  @Handler
+  protected void handle(MiaBuiltInCall node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
+  @Handler
+  protected void handle(FieldRefNode node) {
+    throw Diagnostic.error("This field should have been replaced by pseudo instruction argument.",
+        node.location()).build();
+  }
+
+  @Handler
+  protected void handle(FieldAccessRefNode node) {
+
+  }
+
+  @Handler
+  protected void handle(LabelNode node) {
+
+  }
+
+  @Handler
+  protected void handle(SelectNode node) {
+    PseudoNodeOperandCollectorDispatcher.dispatch(this, node.condition());
+    PseudoNodeOperandCollectorDispatcher.dispatch(this, node.trueCase());
+    PseudoNodeOperandCollectorDispatcher.dispatch(this, node.falseCase());
   }
 }
