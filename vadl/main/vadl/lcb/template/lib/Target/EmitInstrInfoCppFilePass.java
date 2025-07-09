@@ -218,16 +218,36 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
-  private PseudoInstruction getJump(Specification specification,
-                                    Map<PseudoInstructionLabel,
-                                        List<PseudoInstruction>> pseudoMatches) {
-    var jump = Optional.ofNullable(pseudoMatches.get(PseudoInstructionLabel.J))
-        .map(x -> x.stream().findFirst().get());
-    return ensurePresent(jump,
-        () -> Diagnostic.error(
-            "Compiler generator requires a pseudo instruction for an unconditional jump",
-            specification.location()
-        ));
+  /**
+   * Return the name of the unconditional jump instruction.
+   */
+  private String getJump(Specification specification,
+                         Map<MachineInstructionLabel,
+                             List<Instruction>> instructionMatches,
+                         Map<PseudoInstructionLabel,
+                             List<PseudoInstruction>> pseudoMatches) {
+    return getJumpFromMachineInstructions(instructionMatches)
+        .or(() -> getJumpFromPseudoInstructions(pseudoMatches))
+        .orElseThrow(() -> Diagnostic.error(
+            "The compiler generator requires an instruction / a pseudo instruction which is "
+                + "an unconditional jump. We haven't found one.",
+            specification.location()).build());
+  }
+
+  private Optional<String> getJumpFromPseudoInstructions(
+      Map<PseudoInstructionLabel,
+          List<PseudoInstruction>> pseudoMatches) {
+    return Optional.ofNullable(pseudoMatches.get(PseudoInstructionLabel.J))
+        .map(x -> x.stream().findFirst().get())
+        .map(Definition::simpleName);
+  }
+
+  private Optional<String> getJumpFromMachineInstructions(
+      Map<MachineInstructionLabel,
+          List<Instruction>> machineMatches) {
+    return Optional.ofNullable(machineMatches.get(MachineInstructionLabel.J))
+        .map(x -> x.stream().findFirst().get())
+        .map(Definition::simpleName);
   }
 
   record BranchInstruction(String name, /* size of the immediate */ int bitWidth) implements
@@ -304,8 +324,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     var additionRI = getAdditionRI(isaMatches);
     var additionRR = getAdditionRR(isaMatches);
     var additionRegisterFile = getRegisterClassFromInstruction(additionRR);
-    // Integer of the index of the zero register in the register file.
-    var jump = getJump(specification, pseudoMatches);
+    var jumpInstructionName = getJump(specification, isaMatches, pseudoMatches);
 
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE, lcbConfiguration().targetName().value().toLowerCase());
@@ -320,7 +339,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     map.put("additionRegisterFile", additionRegisterFile.simpleName());
     map.put("branchInstructions", getBranchInstructions(specification, passResults, fieldUsages));
     map.put("instructionSizes", instructionSizes(specification));
-    map.put("jumpInstruction", jump.simpleName());
+    map.put("jumpInstruction", jumpInstructionName);
     map.put("beq",
         getBranchInstruction(specification, passResults, MachineInstructionLabel.BEQ));
     map.put("bne", getBranchInstruction(specification, passResults,
