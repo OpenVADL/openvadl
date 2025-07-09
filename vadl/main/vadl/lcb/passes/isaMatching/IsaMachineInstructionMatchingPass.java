@@ -235,42 +235,34 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SLLI, ty));
       } else if (findRR(behavior, List.of(LSR, LSRS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SRL, ty));
-      } else if (pc != null && findBranchWithConditional(behavior, EQU)) {
+      } else if (findBranchWithConditional(behavior, EQU)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BEQ, Optional.empty()));
-      } else if (pc != null && findBranchWithConditional(behavior, NEQ)) {
+      } else if (findBranchWithConditional(behavior, NEQ)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BNEQ, Optional.empty()));
-      } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(SGEQ))) {
+      } else if (findBranchWithConditional(behavior, Set.of(SGEQ))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSGEQ, Optional.empty()));
-      } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(UGEQ))) {
+      } else if (findBranchWithConditional(behavior, Set.of(UGEQ))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BUGEQ, Optional.empty()));
-      } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(SLEQ))) {
+      } else if (findBranchWithConditional(behavior, Set.of(SLEQ))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSLEQ, Optional.empty()));
-      } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(ULEQ))) {
+      } else if (findBranchWithConditional(behavior, Set.of(ULEQ))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BULEQ, Optional.empty()));
-      } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(SLTH))) {
+      } else if (findBranchWithConditional(behavior, Set.of(SLTH))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSLTH, Optional.empty()));
-      } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(ULTH))) {
+      } else if (findBranchWithConditional(behavior, Set.of(ULTH))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BULTH, Optional.empty()));
-      } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(SGTH))) {
+      } else if (findBranchWithConditional(behavior, Set.of(SGTH))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSGTH, Optional.empty()));
-      } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(UGTH))) {
+      } else if (findBranchWithConditional(behavior, Set.of(UGTH))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BUGTH, Optional.empty()));
       } else if (findRR(behavior, List.of(SLTH))) {
@@ -287,9 +279,9 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       } else if (findLoadMem(behavior)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.LOAD_MEM, ty));
-      } else if (pc != null && findJalr(behavior, pc)) {
+      } else if (findJalr(behavior, pc)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JALR, ty));
-      } else if (pc != null && findJal(behavior, pc)) {
+      } else if (findJal(behavior, pc)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JAL, ty));
       }
     });
