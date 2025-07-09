@@ -107,6 +107,7 @@ import vadl.viam.matching.impl.AnyReadRegisterFileMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.FieldAccessRefMatcher;
 import vadl.viam.matching.impl.IsReadRegMatcher;
+import vadl.viam.matching.impl.ReadRegisterCounterMatcher;
 import vadl.viam.matching.impl.WriteResourceMatcherForValue;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
@@ -159,7 +160,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     }
 
     var pc = isa.pc();
-    ensure(pc != null && pc.registerTensor().isSingleRegister(),
+    ensureNonNull(pc, () -> Diagnostic.error("PC must not be null", isa.location()));
+    ensure(pc.registerTensor().isSingleRegister(),
         () -> Diagnostic.error("Only counter to single registers are supported.",
             Objects.requireNonNull(isa.pc()).location()));
 
@@ -283,6 +285,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JALR, ty));
       } else if (findJal(behavior, pc)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JAL, ty));
+      } else if (findJ(behavior, pc)) {
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.J, ty));
       }
     });
 
@@ -560,6 +564,37 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     );
 
     return writesPc.size() == 1 && writesRegFile.size() == 1 && !inputRegister.isEmpty();
+  }
+
+  /**
+   * Match {@link Instruction} which modifies the PC not store the result into a register.
+   */
+  private boolean findJ(UninlinedGraph behavior, Counter pcRegister) {
+    var writesPc =
+        behavior.getNodes(WriteRegTensorNode.class)
+            .filter(x -> x.regTensor().equals(pcRegister.registerTensor()))
+            .toList();
+    var writes = behavior.getNodes(WriteResourceNode.class).toList();
+    var builtins = behavior.getNodes(BuiltInCall.class).toList();
+
+    var matcher = new BuiltInMatcher(List.of(BuiltInTable.ADD), List.of(
+        new AnyChildMatcher(new ReadRegisterCounterMatcher(pcRegister)),
+        new FieldAccessRefMatcher()
+    ));
+    Set<Matcher> matchers = Set.of(
+        matcher,
+        matcher.swapOperands()
+    );
+
+    var addition = TreeMatcher.matches(
+        () -> behavior.getNodes(BuiltInCall.class).map(x -> x),
+        matchers
+    );
+
+    return writesPc.size() == 1
+        && writes.size() == 1
+        && !addition.isEmpty()
+        && builtins.size() == 1;
   }
 
   /**
