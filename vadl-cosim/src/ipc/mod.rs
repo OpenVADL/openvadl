@@ -4,6 +4,8 @@ use libc::strerror;
 
 pub mod sem;
 pub mod shm;
+pub mod cstructs;
+pub mod qemu;
 
 const PERMISSONS: u32 = 0o600;
 

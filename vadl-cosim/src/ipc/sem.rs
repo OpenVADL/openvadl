@@ -1,8 +1,9 @@
-use crate::ipc::{get_errno, PERMISSONS};
+use crate::ipc::{PERMISSONS, get_errno};
+use anyhow::{Context, Result, bail};
 use libc::{
-    c_uint, sem_close, sem_open, sem_post, sem_unlink, sem_wait, O_CREAT, O_EXCL, O_RDWR, SEM_FAILED
+    c_uint, clock_gettime, sem_close, sem_open, sem_post, sem_timedwait, sem_unlink, sem_wait, timespec, CLOCK_REALTIME, EINTR, ETIMEDOUT, O_CREAT, O_EXCL, O_RDWR, SEM_FAILED
 };
-use std::ffi::CString;
+use std::{ffi::CString, time::Duration};
 
 use crate::ipc::get_last_error;
 
@@ -10,6 +11,12 @@ use crate::ipc::get_last_error;
 pub struct Semaphore {
     id: *mut libc::sem_t,
     name: String,
+}
+
+
+pub enum TimedWaitState {
+    Timeout,
+    Success,
 }
 
 impl Semaphore {
@@ -22,23 +29,23 @@ impl Semaphore {
     /// # Returns
     /// * `Ok(Self)` if the semaphore is created successfully.
     /// * `Err(String)` if the creation fails.
-    pub fn create(name: &str, initial_value: u32) -> Result<Self, String> {
-        let name_cstr = CString::new(name).map_err(|_| "Invalid semaphore name".to_string())?;
+    pub fn create(name: &str, initial_value: u32) -> Result<Self> {
+        let name_cstr = CString::new(name).context("Invalid semaphore name")?;
         unsafe { sem_unlink(name_cstr.as_ptr()) }; // Remove existing semaphore
         let id = unsafe {
             sem_open(
                 name_cstr.as_ptr(),
-                O_CREAT | O_EXCL | O_RDWR ,
+                O_CREAT | O_EXCL | O_RDWR,
                 PERMISSONS,
                 initial_value as c_uint,
             )
         };
 
         if id == SEM_FAILED {
-            return Err(get_last_error(&format!(
-                "Failed to create semaphore {}",
+            bail!(get_last_error(&format!(
+                "Failed to create semaphore: {}",
                 name
-            )));
+            )))
         }
 
         Ok(Self {
@@ -47,30 +54,60 @@ impl Semaphore {
         })
     }
 
-    /// Performs a blocking wait (decrement) operation on the semaphore.
-    ///
-    /// # Returns
-    /// * `Ok(())` if successful.
-    /// * `Err(String)` if the operation fails.
-    pub fn wait(&self) -> Result<(), String> {
+    pub fn wait(&self) -> Result<()> {
         if unsafe { sem_wait(self.id) } == -1 {
-            return Err(get_last_error(&format!(
-                "Failed to lock semaphore {}",
+            bail!(get_last_error(&format!(
+                "Failed to lock semaphore: {}",
                 self.name
             )));
         }
         Ok(())
     }
 
-    /// Performs a post (increment) operation on the semaphore.
-    ///
-    /// # Returns
-    /// * `Ok(())` if successful.
-    /// * `Err(String)` if the operation fails.
-    pub fn post(&self) -> Result<(), String> {
+    pub fn timedwait(&self, duration: Duration) -> Result<TimedWaitState> {
+        let mut ts = timespec {
+            tv_sec: 0,
+            tv_nsec: 0,
+        };
+
+        let ts_ptr = &mut ts as *mut timespec;
+
+        if unsafe { clock_gettime(CLOCK_REALTIME, ts_ptr) } == -1 {
+            bail!(get_last_error(&format!(
+                "clock_gettime failed in semaphore timedwait: {}",
+                self.name
+            )));
+        }
+
+        ts.tv_nsec += duration.as_nanos() as i64;
+
+        let mut s: i32;
+        loop {
+            s = unsafe { sem_timedwait(self.id, ts_ptr) };
+            if s == -1 && get_errno() == EINTR {
+                continue;
+            }
+            break;
+        }
+
+        if s == -1 {
+            if get_errno() == ETIMEDOUT {
+                Ok(TimedWaitState::Timeout)
+            } else {
+                bail!(get_last_error(&format!(
+                    "Failed to timedwait semaphore: {}",
+                    self.name
+                )))
+            }
+        } else {
+            Ok(TimedWaitState::Success)
+        }
+    }
+
+    pub fn post(&self) -> Result<()> {
         if unsafe { sem_post(self.id) } == -1 {
-            return Err(get_last_error(&format!(
-                "Failed to unlock semaphore {}",
+            bail!(get_last_error(&format!(
+                "Failed to unlock semaphore: {}",
                 self.name
             )));
         }

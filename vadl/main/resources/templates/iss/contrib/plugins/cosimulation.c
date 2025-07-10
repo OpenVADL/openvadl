@@ -36,14 +36,13 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_version = QEMU_PLUGIN_VERSION;
 // adjust as needed
 // NOTE: try to keep these values as small as possible to minimize memory usage
 //       if set too small then crashes and/or invalid state can occur
-#define SHMSTRING_MAX_LEN 1024
-#define TBINFO_ENTRIES 1024
+#define SHMSTRING_MAX_LEN 256
 #define TBINSNINFO_ENTRIES 64
 
-#define MAX_REGISTER_NAME_SIZE 256
+#define MAX_REGISTER_NAME_SIZE 64 
 #define MAX_REGISTER_DATA_SIZE 256
 #define MAX_CPU_REGISTERS 256
-#define MAX_CPU_COUNT 8
+#define MAX_CPU_COUNT 1
 #define MAX_INSN_DATA_SIZE 64
 
 static qemu_plugin_id_t plugin_id;

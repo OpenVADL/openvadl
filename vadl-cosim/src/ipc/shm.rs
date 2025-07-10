@@ -1,7 +1,6 @@
-use std::{
-    ffi::{c_char, CString}, ptr, thread::sleep, time::Duration
-};
+use std::{ffi::CString, marker::PhantomData, ptr};
 
+use anyhow::{bail, Context, Result};
 use libc::{
     MAP_FAILED, MAP_SHARED, O_CREAT, O_EXCL, O_RDWR, PROT_READ, PROT_WRITE, close, ftruncate, mmap,
     munmap, shm_open, shm_unlink,
@@ -9,15 +8,16 @@ use libc::{
 
 use crate::ipc::{PERMISSONS, get_errno, get_last_error};
 
-pub struct SharedMemory {
+pub struct SharedMemory<T: Sized> {
     mmap_ptr: *mut u8,
     mmap_path: String,
     mmap_path_c: CString,
     size: usize,
     fd: i32,
+    _phantom: PhantomData<T>,
 }
 
-impl SharedMemory {
+impl<T: Sized> SharedMemory<T> {
     /// Creates a new shared memory segment with a semaphore.
     ///
     /// # Arguments
@@ -27,17 +27,18 @@ impl SharedMemory {
     /// # Returns
     /// * `Ok(Self)` on success.
     /// * `Err(String)` on failure.
-    pub fn create(mmap_path: &str, size: usize) -> Result<Self, String> {
-        let mmap_path_c = CString::new(mmap_path)
-            .map_err(|e| format!("Invalid mmap_path: {}, {}", mmap_path, e))?;
+    pub fn create(mmap_path: &str) -> Result<Self> {
+        let size = size_of::<T>();
+        let mmap_path_c =
+            CString::new(mmap_path).with_context(|| format!("Invalid mmap_path: {}", mmap_path))?;
         unsafe {
-            let fd = shm_open(mmap_path_c.as_ptr(), O_CREAT | O_RDWR | O_EXCL, PERMISSONS);
+            let fd = shm_open(mmap_path_c.as_ptr(), O_CREAT | O_RDWR, PERMISSONS);
             if fd == -1 {
-                return Err(get_last_error("Failed to open shared memory"));
+                bail!(get_last_error("Failed to open shared memory"));
             }
 
             if ftruncate(fd, size as i64) == -1 {
-                return Err(get_last_error("Failed to truncate shared memory"));
+                bail!(get_last_error("Failed to truncate shared memory"));
             }
 
             let addr = mmap(
@@ -50,7 +51,7 @@ impl SharedMemory {
             );
 
             if addr == MAP_FAILED {
-                return Err(get_last_error(&format!(
+                bail!(get_last_error(&format!(
                     "Failed to map memory {}",
                     mmap_path
                 )));
@@ -62,20 +63,23 @@ impl SharedMemory {
                 mmap_path_c,
                 size,
                 fd,
+                _phantom: PhantomData,
             })
         }
     }
 
     /// Reads and deserializes data from shared memory.
     /// Assumes that the shared memory contains valid data.
-    pub fn read<T>(&self) -> T {
+    pub fn read(&self) -> &mut T {
         unsafe {
-            return ptr::read(self.mmap_ptr as *const _);
+            let data_ptr = self.mmap_ptr as *mut T;
+            let shared: &mut T = &mut *data_ptr;
+            return shared;
         }
     }
 }
 
-impl Drop for SharedMemory {
+impl<T: Sized> Drop for SharedMemory<T> {
     fn drop(&mut self) {
         unsafe {
             if munmap(self.mmap_ptr as *mut _, self.size) == -1 {
