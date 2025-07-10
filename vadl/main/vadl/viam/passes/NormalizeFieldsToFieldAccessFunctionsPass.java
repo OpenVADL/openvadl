@@ -83,7 +83,10 @@ public class NormalizeFieldsToFieldAccessFunctionsPass extends Pass {
 
           immediates
               .forEach(fieldRefNode -> {
-                var id = fieldRefNode.formatField().identifier.append("generated");
+                var id =
+                    instruction.format().identifier.append(
+                        instruction.identifier().last()
+                            .append(fieldRefNode.formatField().identifier.last().parts()).parts());
                 var fieldAccess = new Format.FieldAccess(
                     id,
                     createAccessFunction(id, fieldRefNode),
