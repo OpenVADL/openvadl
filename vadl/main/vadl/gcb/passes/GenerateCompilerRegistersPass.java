@@ -32,7 +32,9 @@ import vadl.gcb.valuetypes.IndexedCompilerRegister;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.Pair;
 import vadl.viam.Abi;
+import vadl.viam.ArtificialResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
@@ -73,8 +75,10 @@ public class GenerateCompilerRegistersPass extends Pass {
         registerClasses(viam.registerTensors().filter(RegisterTensor::isRegisterFile)
                 .toList(), abi,
             dwarfOffset);
+    var artificialResources =
+        artificialResources(viam.artificialResources().toList(), abi, registerClasses.right());
 
-    return new Output(generalRegisters, registerClasses);
+    return new Output(generalRegisters, registerClasses.left());
   }
 
   private List<CompilerRegister> generalRegisters(List<RegisterTensor> registers) {
@@ -93,13 +97,14 @@ public class GenerateCompilerRegistersPass extends Pass {
     return compilerRegisters;
   }
 
-  private List<CompilerRegisterClass> registerClasses(List<RegisterTensor> registerFiles,
-                                                      Abi abi,
-                                                      int dwarfOffset) {
+  private Pair<List<CompilerRegisterClass>, Integer> registerClasses(
+      List<RegisterTensor> registerFiles,
+      Abi abi,
+      int dwarfOffset) {
     var result = new ArrayList<CompilerRegisterClass>();
 
     for (var registerFile : registerFiles) {
-      var registers = IndexedCompilerRegister.fromRegisterFile(registerFile, abi, dwarfOffset);
+      var registers = IndexedCompilerRegister.fromRegisterFile(registerFile, abi, dwarfOffset, false);
       dwarfOffset += registers.size();
 
       var alignment = ensureNonNull(abi.registerFileAlignment().get(registerFile),
@@ -109,6 +114,30 @@ public class GenerateCompilerRegistersPass extends Pass {
       result.add(new CompilerRegisterClass(registerFile, registers, alignment));
     }
 
-    return result;
+    return Pair.of(result, dwarfOffset);
+  }
+
+  private Pair<List<CompilerRegisterClass>, Integer> artificialResources(
+      List<ArtificialResource> artificialResources,
+      Abi abi,
+      int dwarfOffset) {
+    var result = new ArrayList<CompilerRegisterClass>();
+
+    for (var registerFile : artificialResources) {
+      // If it is not a register file then continue.
+      if (registerFile.innerResourceRef() instanceof RegisterTensor registerTensor
+          && registerTensor.isRegisterFile()) {
+        var registers = IndexedCompilerRegister.fromRegisterFile(registerTensor, abi, dwarfOffset, true);
+        dwarfOffset += registers.size();
+
+        var alignment = ensureNonNull(abi.registerFileAlignment().get(registerTensor),
+            () -> Diagnostic.error("There is not alignment for the register file defined",
+                registerFile.location().join(abi.location())));
+
+        result.add(new CompilerRegisterClass(registerTensor, registers, alignment));
+      }
+    }
+
+    return Pair.of(result, dwarfOffset);
   }
 }

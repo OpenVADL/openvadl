@@ -112,9 +112,14 @@ public class Specification extends Definition {
    * Returns all register tensors in the ISA as a stream.
    */
   public Stream<RegisterTensor> registerTensors() {
-    return isa()
-        .map(x -> x.registerTensors().stream())
-        .orElseGet(Stream::empty);
+    return isa().stream().flatMap(x -> x.registerTensors().stream());
+  }
+
+  /**
+   * Returns all artificial resources in the ISA as a stream.
+   */
+  public Stream<ArtificialResource> artificialResources() {
+    return isa().stream().flatMap(x -> x.artificialResources().stream());
   }
 
   /**

@@ -45,7 +45,8 @@ public class IndexedCompilerRegister extends CompilerRegister {
                                  int index,
                                  String asmName,
                                  List<String> altNames,
-                                 int dwarfNumber) {
+                                 int dwarfNumber,
+                                 int isArtificial) {
     super(registerFile.generateRegisterFileName(index), asmName, altNames, dwarfNumber, index);
     this.index = index;
   }
@@ -58,11 +59,13 @@ public class IndexedCompilerRegister extends CompilerRegister {
    * @param abi               for the compiler.
    * @param dwarfNumberOffset is the offset for calculating the dwarf numbers because we cannot
    *                          assume that there is only one register file.
+   * @param isArtificial      registers in {@code registerFile} do not really exist.
    * @return a list of registers generated from the register file.
    */
   public static List<CompilerRegister> fromRegisterFile(RegisterTensor registerFile,
                                                         Abi abi,
-                                                        int dwarfNumberOffset) {
+                                                        int dwarfNumberOffset,
+                                                        boolean isArtificial) {
     var bitWidth = Objects.requireNonNull(registerFile.addressType()).bitWidth();
     var numberOfRegisters = (int) Math.pow(2, bitWidth);
     var all = IntStream.range(0, numberOfRegisters).boxed().collect(Collectors.toSet());
@@ -82,7 +85,8 @@ public class IndexedCompilerRegister extends CompilerRegister {
 
       int dwarfNumber = dwarfNumberOffset + addr;
 
-      registers.add(new IndexedCompilerRegister(registerFile, addr, alias, altNames, dwarfNumber));
+      registers.add(new IndexedCompilerRegister(registerFile, addr, alias, altNames, dwarfNumber,
+          isArtificial ? 1 : 0));
     }
 
     return registers;
