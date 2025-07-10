@@ -22,12 +22,14 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.javaannotations.Handler;
 import vadl.types.DataType;
 import vadl.types.StringType;
+import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.viam.Function;
 import vadl.viam.Parameter;
@@ -125,13 +127,22 @@ public interface CDefaultMixins {
      */
     default String genFunctionParameters(Parameter[] parameters) {
       var cppArgs = Stream.of(parameters)
-          .map(p -> Pair.of(p.simpleName(), requireNonNull(p.type().asDataType().fittingCppType())))
+          .map(p -> Pair.of(p.simpleName(), requireNonNull(asCppType(p.type()))))
           .toList();
 
       return cppArgs.stream().map(
           s -> CppTypeMap.getCppTypeNameByVadlType(s.right())
               + " " + s.left()
       ).collect(Collectors.joining(", "));
+    }
+
+    @Nullable
+    private Type asCppType(Type originalType) {
+      if (originalType.isDataType()) {
+        return originalType.asDataType().fittingCppType();
+      }
+
+      return originalType;
     }
 
     /**

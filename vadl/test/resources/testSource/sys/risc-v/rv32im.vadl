@@ -318,13 +318,18 @@ assembly description ASM for ABI = {
 
     LGA_32PseudoInstruction @instruction:
       "LGA"
-      mnemonic = lga_32_string @operand
+      mnemonic = firstParam<lga_32_string,one> @operand
       rd = Register @operand ","
       symbol = ImmediateOperand
     ;
   }
 
   function lga_32_string -> String = "LGA_32"
+
+  // These functions are not necessary for this specification.
+  // They are used here to test functions in the assembly grammar.
+  function one -> SInt<64> = 1
+  function firstParam(x: String, y: SInt<64>) -> String = x
 }
 
 [ htif ]

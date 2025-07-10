@@ -34,6 +34,7 @@ public abstract class AsmGrammarRule extends Definition implements AsmGrammarEle
     this.asmType = asmType;
   }
 
+  @Override
   public AsmType getAsmType() {
     return asmType;
   }

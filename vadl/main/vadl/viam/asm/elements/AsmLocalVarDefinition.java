@@ -25,4 +25,8 @@ import vadl.types.asmTypes.AsmType;
 public record AsmLocalVarDefinition(String localVarName,
                                     @Nullable AsmGrammarElement asmLiteral, AsmType asmType)
     implements AsmGrammarElement {
+  @Override
+  public AsmType getAsmType() {
+    return asmType;
+  }
 }

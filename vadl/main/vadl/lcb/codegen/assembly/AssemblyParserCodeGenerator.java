@@ -337,7 +337,8 @@ public class AssemblyParserCodeGenerator {
     element.parameters().forEach(
         parameter -> {
           ctx.gen(parameter);
-          paramVars.add(varName(parameter) + ".Value");
+          var asStdString = parameter.getAsmType() == StringAsmType.instance() ? ".str()" : "";
+          paramVars.add(varName(parameter) + ".Value" + asStdString);
         }
     );
 

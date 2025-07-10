@@ -24,4 +24,8 @@ import vadl.types.asmTypes.AsmType;
  */
 public record AsmStringLiteralUse(@Nullable AsmAssignTo assignToElement,
                                   String value, AsmType asmType) implements AsmGrammarElement {
+  @Override
+  public AsmType getAsmType() {
+    return asmType;
+  }
 }
