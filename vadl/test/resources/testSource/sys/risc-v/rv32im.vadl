@@ -315,7 +315,16 @@ assembly description ASM for ABI = {
       rd = Register @operand ","
       symbol = ImmediateOperand
     ;
+
+    LGA_32PseudoInstruction @instruction:
+      "LGA"
+      mnemonic = lga_32_string @operand
+      rd = Register @operand ","
+      symbol = ImmediateOperand
+    ;
   }
+
+  function lga_32_string -> String = "LGA_32"
 }
 
 [ htif ]

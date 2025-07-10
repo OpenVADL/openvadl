@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.common.AsmParserFunctionCodeGenerator;
 import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
@@ -341,11 +342,15 @@ public class AssemblyParserCodeGenerator {
     );
 
     var functionReturnType = AsmType.getAsmTypeFromOperationalType(element.function().returnType());
+    var cppType = CppTypeMap.getCppTypeNameByVadlType(element.function().returnType());
     var type = functionReturnType.toCppTypeString(namespace);
     var tempVar = symbolTable.getNextVariable();
+    var functionResultVar = symbolTable.getNextVariable();
 
-    ctx.ln("ParsedValue<%s> %s = ParsedValue<%s>(%s(%s));",
-        type, tempVar, type, element.function().simpleName(), String.join(", ", paramVars));
+    ctx.ln("%s %s = %s(%s);", cppType, functionResultVar,
+        element.function().simpleName(), String.join(", ", paramVars));
+    ctx.ln("ParsedValue<%s> %s = ParsedValue<%s>(%s);",
+        type, tempVar, type, functionResultVar);
 
     var resultVar =
         writeCastIfNecessary(ctx, functionReturnType, element.asmType(), tempVar, false);

@@ -1,7 +1,5 @@
 # RUN: /src/llvm-final/build/bin/llvm-mc -arch=rv32im -show-encoding < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
 
-# TODO: LGA
-
 RET
 # CHECK: # encoding: [0x67,0x80,0x00,0x00]
 
@@ -77,3 +75,8 @@ LLA x3, .lbl
 
 LI x3, 0x12345
 # CHECK: [0xb7,0x21,0x01,0x00,0x93,0x81,0x51,0x34]
+
+LGA x3, my_label
+# CHECK: [0x97,0x01,0x00,0x00,0x83,0xa1,0x01,0x00]
+# CHECK-NEXT: #   fixup A - offset: 0, value: %got_pcrel_hi(my_label), kind: fixup_got_pcrel_hi_RV3264Base_Utype_GLOBAL_OFFSET_TABLE_imm
+# CHECK-NEXT: #   fixup B - offset: 4, value: %pcrel_lo(my_label), kind: fixup_pcrel_lo_RV3264Base_Itype_RELATIVE_imm

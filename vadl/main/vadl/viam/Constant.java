@@ -76,6 +76,11 @@ public abstract class Constant {
     return (Constant.Tuple) this;
   }
 
+  public Constant.Str asString() {
+    ensure(this instanceof Str, "Constant is not a string");
+    return (Constant.Str) this;
+  }
+
   public ConstantNode toNode() {
     return new ConstantNode(this);
   }
@@ -953,6 +958,10 @@ public abstract class Constant {
 
     public java.lang.String value() {
       return value;
+    }
+
+    public java.lang.String quotedValue() {
+      return '"' + value + '"';
     }
 
     @Override

@@ -104,3 +104,8 @@ LA x2, my_label
 # CHECK: <MCInst #{{[0-9]+}} LA
 # CHECK-NEXT: <MCOperand Reg:4>
 # CHECK-NEXT: <MCOperand Expr:(my_label)>>
+
+LGA x3, my_label
+# CHECK: <MCInst #{{[0-9]+}} LGA_32
+# CHECK-NEXT: <MCOperand Reg:5>
+# CHECK-NEXT: <MCOperand Expr:(my_label)>>
