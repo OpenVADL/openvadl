@@ -5,8 +5,8 @@ from textual.reactive import reactive
 from textual.widgets import Tree
 
 class JsonTree(Widget):
-    json_data: reactive[object | None] = reactive(None)
-    filtered_data: reactive[object | None] = reactive(None)
+    json_data: object
+    filtered_data: object
     inner_tree: Tree[str]
 
     def __init__(self, json_data: object, *args, **kwargs):

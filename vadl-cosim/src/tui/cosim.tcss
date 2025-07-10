@@ -1,23 +1,24 @@
 #json-tree {
-	height: 95%;
+	height: 1fr;
+	border: solid white;
 }
 
 #input-filter {
-	height: 5%;
+	height: 3;
 	border: solid blue;
 }
 
 GDBWindow {
-	height: 50%;
+	height: 1fr;
 }
 
 #gdb_log {
-    height: 90%;
+    height: 1fr;
     border: solid white;
 }
 
 #gdb_input {
-    height: 10%;
+    height: 3;
     border: solid yellow;
 }
 

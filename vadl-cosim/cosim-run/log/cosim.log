@@ -1,0 +1,10 @@
+[cosimulation_broker.py:399 -        setup_clients() ] creating clients for cosimulation
+[qemu_ipc.py:72 -        create_client() ] created shm and sems, spawning client with id: 0
+[qemu_ipc.py:103 -        create_client() ] starting client: qemu-system-a64 -bios ./qemu-setup/build/sglib-combined -plugin ./qemu-setup/build/contrib/plugins/libcosimulation.so,client-id=0,mode=tb,client-name=VADL -nographic -d plugin -s -S
+[qemu_ipc.py:148 -   on_client_complete() ] Process (client: 0) finished with code: 1
+[selector_events.py:64 -             __init__() ] Using selector: EpollSelector
+[cosimulation_broker.py:404 -                  run() ] starting broker: config=Config(qemu=Qemu(plugin='./qemu-setup/build/contrib/plugins/libcosimulation.so', clients=[Client(exec='qemu-system-a64', pass_test_exec_to='bios', additional_args=['-nographic', '-d', 'plugin'], gdb=ClientGDB(enable=True, remote_target='localhost:1234'), skip_n_instructions=2, name='VADL')], gdb_reg_map={'s0': 'x0', 's1': 'x1', 's2': 'x2', 's3': 'x3', 's4': 'x4', 's5': 'x5', 's6': 'x6', 's7': 'x7', 's8': 'x8', 's9': 'x9', 's10': 'x10', 's11': 'x11', 's12': 'x12', 's13': 'x13', 's14': 'x14', 's15': 'x15', 's16': 'x16', 's17': 'x17', 's18': 'x18', 's19': 'x19', 's20': 'x20', 's21': 'x21', 's22': 'x22', 's23': 'x23', 's24': 'x24', 's25': 'x25', 's26': 'x26', 's27': 'x27', 's28': 'x28', 's29': 'x29', 's30': 'x30', 's31': 'sp', 'pc': 'pc'}, ignore_registers=['s0', 'x0'], ignore_unset_registers=True), testing=Testing(test_exec='./qemu-setup/build/sglib-combined', protocol=Protocol(mode='lockstep', layer='tb', execute_all_remaining_instructions=False, stop_after_n_instructions=100, out=Out(dir='./cosim-run/result', format='json')), max_trace_length=-1), logging=Logging(level='DEBUG', file='cosim.log', dir='./cosim-run/log', enable=True, clear_on_rerun=True), dev=Dev(dry_run=False))
+[qemu_ipc.py:185 -              cleanup() ] cleaning up shm and sems for each client
+[qemu_ipc.py:153 -          cleanup_sem() ] cleanup_sem of client #0 start
+[qemu_ipc.py:161 -          cleanup_sem() ] cleanup_sem of client #0 done
+[qemu_ipc.py:173 -         close_client() ] Closing client: 0

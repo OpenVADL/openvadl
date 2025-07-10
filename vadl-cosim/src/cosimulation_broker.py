@@ -394,15 +394,14 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
     # if the loop has exited and no diffs were found then the test passed
     return report_from_diffs(diffs)
 
-
-def start(config: Config):
-    logger.debug(f"starting broker: config={config}")
+def setup_clients(config: Config):
     atexit.register(qemu_ipc.cleanup, config, clients)
-
-    # create shared memory and semaphores per client
+    logger.debug(f"creating clients for cosimulation")
     for i, client_cfg in enumerate(config.qemu.clients):
         clients.append(qemu_ipc.create_client(config, client_cfg, i))
 
+def run(config: Config):
+    logger.debug(f"starting broker: config={config}")
     if config.testing.protocol.mode == "lockstep":
         max_trace_len = config.testing.max_trace_length
         traces: deque[Trace] = deque(

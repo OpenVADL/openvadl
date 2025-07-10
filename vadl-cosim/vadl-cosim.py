@@ -3,7 +3,7 @@ import logging
 import os
 from src import cosimulation_broker
 from src.config import load_config
-
+from src.tui.app import CosimApp
 
 def default_config_file() -> str:
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -29,6 +29,11 @@ if __name__ == "__main__":
         type=str,
         help="Defines where the test-executable is passed to when starting the QEMU-client",
     )
+    parser.add_argument(
+        "--tui",
+        help="Starts a TUI for interactive testing/debugging when the flag is set",
+        action="store_true"
+    )
 
     args = parser.parse_args()
 
@@ -53,7 +58,15 @@ if __name__ == "__main__":
     else:
         logging.disable()
 
-    if not config.dev.dry_run:
-        cosimulation_broker.start(config)
-    else:
+    if config.dev.dry_run:
         logger.info(f"Dry-Run. Config: {config}")
+        exit(0)
+
+    if args.tui:
+        cosimulation_broker.setup_clients(config)
+        tui_app = CosimApp(config) 
+        tui_app.run()
+        cosimulation_broker.run(config)
+    else:
+        cosimulation_broker.setup_clients(config)
+        cosimulation_broker.run(config)

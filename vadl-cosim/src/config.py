@@ -51,12 +51,17 @@ class Testing:
     protocol: Protocol
     max_trace_length: int
 
+@dataclass
+class ClientGDB:
+    enable: bool
+    remote_target: str
 
 @dataclass
 class Client:
     exec: str
     pass_test_exec_to: Literal["bios", "kernel"]
     additional_args: list[str]
+    gdb: ClientGDB
     skip_n_instructions: int = 0
     name: Optional[str] = None
 

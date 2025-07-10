@@ -25,6 +25,7 @@ class QEMUClient:
     is_open: bool
     process: Optional[multiprocessing.Process]
     name: Optional[str]
+    client_cfg: Client
 
     def run(self) -> bool:
         """
@@ -37,8 +38,12 @@ class QEMUClient:
         try:
             self.sem_client.release()
 
-            # wait at most 0.1 second, if an error occurs: assume that the client finished (crashing = finishing)
-            self.sem_server.acquire(0.1)
+            if self.client_cfg.gdb.enable:
+                # no timeout is set if gdb debugging is enabled for the client to let the user inspect the client for as long as they want
+                self.sem_server.acquire()
+            else:
+                # wait at most 0.1 second, if an error occurs: assume that the client finished (crashing = finishing)
+                self.sem_server.acquire(0.1)
             return True
         except ipc.BusyError:
             logger.debug(
@@ -54,6 +59,10 @@ Setup and Cleanup functions for the QEMU/C IPC
 
 
 def create_client(config: Config, client_cfg: Client, i: int) -> QEMUClient:
+    """
+    Create shared memory and semaphores per client
+    """
+
     shm = ipc.SharedMemory(f"/cosimulation-shm-{i}", ipc.O_CREX, size=sizeof(BrokerSHM))
     mm = mmap.mmap(shm.fd, sizeof(BrokerSHM))
     shm_struct = BrokerSHM.from_buffer(mm)
@@ -87,6 +96,10 @@ def create_client(config: Config, client_cfg: Client, i: int) -> QEMUClient:
         plugin,
     ]
     args = default_args + client_cfg.additional_args
+
+    if client_cfg.gdb.enable:
+        args += ["-gdb", f"tcp::6000{i}", "-S"]
+
     logger.info(f"starting client: {' '.join([executable_path, *args])}")
     client = QEMUClient(
         i,
@@ -97,6 +110,7 @@ def create_client(config: Config, client_cfg: Client, i: int) -> QEMUClient:
         is_open=True,
         process=None,
         name=client_cfg.name,
+        client_cfg=client_cfg
     )
     client.process = run_with_callback(
         [executable_path, *args], on_client_complete, config, client
