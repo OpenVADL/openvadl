@@ -137,11 +137,13 @@ instruction set architecture RV3264IM = {
   register NZCV_C : Bits1             // Carry
   register NZCV_V : Bits1             // Overflow
 
-  instruction TEMP : Rtype =
+  instruction TEMP : Rtype = {
       if NZCV_Z = 1 then
-        PC := PC + X(rs1) + X(rs2) + shamt
+        X(rs2) := X(rs1) + shamt
+        PC := PC + shamt
+    }
     encoding TEMP = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
-    assembly TEMP = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(shamt))
+    assembly TEMP = (mnemonic, " ", register(rs1), ",", decimal(shamt))
 
     instruction TEMP2 : Rtype = {
       NZCV_N := 1

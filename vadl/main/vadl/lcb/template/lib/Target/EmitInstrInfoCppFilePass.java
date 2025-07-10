@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
@@ -47,12 +48,16 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
+import vadl.types.BuiltInTable;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -218,16 +223,36 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
-  private PseudoInstruction getJump(Specification specification,
-                                    Map<PseudoInstructionLabel,
-                                        List<PseudoInstruction>> pseudoMatches) {
-    var jump = Optional.ofNullable(pseudoMatches.get(PseudoInstructionLabel.J))
-        .map(x -> x.stream().findFirst().get());
-    return ensurePresent(jump,
-        () -> Diagnostic.error(
-            "Compiler generator requires a pseudo instruction for an unconditional jump",
-            specification.location()
-        ));
+  /**
+   * Return the name of the unconditional jump instruction.
+   */
+  private String getJump(Specification specification,
+                         Map<MachineInstructionLabel,
+                             List<Instruction>> instructionMatches,
+                         Map<PseudoInstructionLabel,
+                             List<PseudoInstruction>> pseudoMatches) {
+    return getJumpFromMachineInstructions(instructionMatches)
+        .or(() -> getJumpFromPseudoInstructions(pseudoMatches))
+        .orElseThrow(() -> Diagnostic.error(
+            "The compiler generator requires an instruction / a pseudo instruction which is "
+                + "an unconditional jump. We haven't found one.",
+            specification.location()).build());
+  }
+
+  private Optional<String> getJumpFromPseudoInstructions(
+      Map<PseudoInstructionLabel,
+          List<PseudoInstruction>> pseudoMatches) {
+    return Optional.ofNullable(pseudoMatches.get(PseudoInstructionLabel.J))
+        .map(x -> x.stream().findFirst().get())
+        .map(Definition::simpleName);
+  }
+
+  private Optional<String> getJumpFromMachineInstructions(
+      Map<MachineInstructionLabel,
+          List<Instruction>> machineMatches) {
+    return Optional.ofNullable(machineMatches.get(MachineInstructionLabel.J))
+        .map(x -> x.stream().findFirst().get())
+        .map(Definition::simpleName);
   }
 
   record BranchInstruction(String name, /* size of the immediate */ int bitWidth) implements
@@ -304,8 +329,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     var additionRI = getAdditionRI(isaMatches);
     var additionRR = getAdditionRR(isaMatches);
     var additionRegisterFile = getRegisterClassFromInstruction(additionRR);
-    // Integer of the index of the zero register in the register file.
-    var jump = getJump(specification, pseudoMatches);
+    var jumpInstructionName = getJump(specification, isaMatches, pseudoMatches);
 
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE, lcbConfiguration().targetName().value().toLowerCase());
@@ -320,7 +344,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     map.put("additionRegisterFile", additionRegisterFile.simpleName());
     map.put("branchInstructions", getBranchInstructions(specification, passResults, fieldUsages));
     map.put("instructionSizes", instructionSizes(specification));
-    map.put("jumpInstruction", jump.simpleName());
+    map.put("jumpInstruction", jumpInstructionName);
     map.put("beq",
         getBranchInstruction(specification, passResults, MachineInstructionLabel.BEQ));
     map.put("bne", getBranchInstruction(specification, passResults,
@@ -370,7 +394,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     var branchInstructions = new ArrayList<BranchInstruction>();
     var database = new Database(passResults, specification);
 
-    machineInstructions(fieldUsages, database, branchInstructions);
+    machineInstructions(database, branchInstructions);
     pseudoInstructions(fieldUsages, database, branchInstructions);
 
     return branchInstructions;
@@ -401,7 +425,6 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private static void machineInstructions(
-      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Database database,
       List<BranchInstruction> branchInstructions) {
     var result = database.run(new Query.Builder().machineInstructionLabels(List.of(
@@ -417,13 +440,22 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         MachineInstructionLabel.BULTH
     )).build());
 
+    final Predicate<Node> isPc = (x) -> x instanceof ReadRegTensorNode node && node.isPcAccess();
     for (var machineInstruction : result.machineInstructions()) {
-      var immediates = fieldUsages.getImmediateFields(machineInstruction);
+      var builtins = machineInstruction
+          .behavior()
+          .getNodes(BuiltInCall.class)
+          .filter(x -> x.builtIn() == BuiltInTable.ADD && x.arguments().size() == 2)
+          .filter(x -> isPc.test(x.arguments().getFirst()) || isPc.test(x.arguments().get(1)))
+          .toList();
+      var immediates = new ArrayList<FieldAccessRefNode>();
+      builtins.forEach(builtInCall -> builtInCall.collectInputsWithChildren(immediates,
+          FieldAccessRefNode.class));
       ensure(immediates.size() == 1,
           () -> Diagnostic.error("We only support branch instructions with one label.",
               machineInstruction.location()));
       var immediate = unwrap(immediates.stream().findFirst());
-      int bitWidth = immediate.size();
+      int bitWidth = immediate.fieldAccess().type().asDataType().bitWidth();
       branchInstructions.add(
           new BranchInstruction(machineInstruction.identifier.simpleName(), bitWidth));
     }

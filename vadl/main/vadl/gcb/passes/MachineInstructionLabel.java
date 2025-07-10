@@ -86,7 +86,8 @@ public enum MachineInstructionLabel {
   UNCONDITIONAL JUMPS
    */
   JALR,
-  JAL,
+  JAL, // the difference between JAL and J is that JAL also writes a linking register.
+  J,
   /*
   CONDITIONAL MOVE
    */

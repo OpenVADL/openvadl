@@ -107,6 +107,7 @@ import vadl.viam.matching.impl.AnyReadRegisterFileMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.FieldAccessRefMatcher;
 import vadl.viam.matching.impl.IsReadRegMatcher;
+import vadl.viam.matching.impl.ReadRegisterCounterMatcher;
 import vadl.viam.matching.impl.WriteResourceMatcherForValue;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
@@ -159,7 +160,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     }
 
     var pc = isa.pc();
-    ensure(pc != null && pc.registerTensor().isSingleRegister(),
+    ensureNonNull(pc, () -> Diagnostic.error("PC must not be null", isa.location()));
+    ensure(pc.registerTensor().isSingleRegister(),
         () -> Diagnostic.error("Only counter to single registers are supported.",
             Objects.requireNonNull(isa.pc()).location()));
 
@@ -235,42 +237,34 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SLLI, ty));
       } else if (findRR(behavior, List.of(LSR, LSRS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SRL, ty));
-      } else if (pc != null && findBranchWithConditional(behavior, EQU)) {
+      } else if (findBranchWithConditional(behavior, EQU)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BEQ, Optional.empty()));
-      } else if (pc != null && findBranchWithConditional(behavior, NEQ)) {
+      } else if (findBranchWithConditional(behavior, NEQ)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BNEQ, Optional.empty()));
-      } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(SGEQ))) {
+      } else if (findBranchWithConditional(behavior, Set.of(SGEQ))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSGEQ, Optional.empty()));
-      } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(UGEQ))) {
+      } else if (findBranchWithConditional(behavior, Set.of(UGEQ))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BUGEQ, Optional.empty()));
-      } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(SLEQ))) {
+      } else if (findBranchWithConditional(behavior, Set.of(SLEQ))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSLEQ, Optional.empty()));
-      } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(ULEQ))) {
+      } else if (findBranchWithConditional(behavior, Set.of(ULEQ))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BULEQ, Optional.empty()));
-      } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(SLTH))) {
+      } else if (findBranchWithConditional(behavior, Set.of(SLTH))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSLTH, Optional.empty()));
-      } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(ULTH))) {
+      } else if (findBranchWithConditional(behavior, Set.of(ULTH))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BULTH, Optional.empty()));
-      } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(SGTH))) {
+      } else if (findBranchWithConditional(behavior, Set.of(SGTH))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSGTH, Optional.empty()));
-      } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(UGTH))) {
+      } else if (findBranchWithConditional(behavior, Set.of(UGTH))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BUGTH, Optional.empty()));
       } else if (findRR(behavior, List.of(SLTH))) {
@@ -287,10 +281,12 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       } else if (findLoadMem(behavior)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.LOAD_MEM, ty));
-      } else if (pc != null && findJalr(behavior, pc)) {
+      } else if (findJalr(behavior, pc)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JALR, ty));
-      } else if (pc != null && findJal(behavior, pc)) {
+      } else if (findJal(behavior, pc)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JAL, ty));
+      } else if (findJ(behavior, pc)) {
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.J, ty));
       }
     });
 
@@ -568,6 +564,37 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     );
 
     return writesPc.size() == 1 && writesRegFile.size() == 1 && !inputRegister.isEmpty();
+  }
+
+  /**
+   * Match {@link Instruction} which modifies the PC not store the result into a register.
+   */
+  private boolean findJ(UninlinedGraph behavior, Counter pcRegister) {
+    var writesPc =
+        behavior.getNodes(WriteRegTensorNode.class)
+            .filter(x -> x.regTensor().equals(pcRegister.registerTensor()))
+            .toList();
+    var writes = behavior.getNodes(WriteResourceNode.class).toList();
+    var builtins = behavior.getNodes(BuiltInCall.class).toList();
+
+    var matcher = new BuiltInMatcher(List.of(BuiltInTable.ADD), List.of(
+        new AnyChildMatcher(new ReadRegisterCounterMatcher(pcRegister)),
+        new FieldAccessRefMatcher()
+    ));
+    Set<Matcher> matchers = Set.of(
+        matcher,
+        matcher.swapOperands()
+    );
+
+    var addition = TreeMatcher.matches(
+        () -> behavior.getNodes(BuiltInCall.class).map(x -> x),
+        matchers
+    );
+
+    return writesPc.size() == 1
+        && writes.size() == 1
+        && !addition.isEmpty()
+        && builtins.size() == 1;
   }
 
   /**
