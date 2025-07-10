@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
@@ -47,12 +48,16 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
+import vadl.types.BuiltInTable;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -389,7 +394,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     var branchInstructions = new ArrayList<BranchInstruction>();
     var database = new Database(passResults, specification);
 
-    machineInstructions(fieldUsages, database, branchInstructions);
+    machineInstructions(database, branchInstructions);
     pseudoInstructions(fieldUsages, database, branchInstructions);
 
     return branchInstructions;
@@ -420,7 +425,6 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private static void machineInstructions(
-      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Database database,
       List<BranchInstruction> branchInstructions) {
     var result = database.run(new Query.Builder().machineInstructionLabels(List.of(
@@ -436,13 +440,22 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         MachineInstructionLabel.BULTH
     )).build());
 
+    final Predicate<Node> isPc = (x) -> x instanceof ReadRegTensorNode node && node.isPcAccess();
     for (var machineInstruction : result.machineInstructions()) {
-      var immediates = fieldUsages.getImmediateFields(machineInstruction);
+      var builtins = machineInstruction
+          .behavior()
+          .getNodes(BuiltInCall.class)
+          .filter(x -> x.builtIn() == BuiltInTable.ADD && x.arguments().size() == 2)
+          .filter(x -> isPc.test(x.arguments().getFirst()) || isPc.test(x.arguments().get(1)))
+          .toList();
+      var immediates = new ArrayList<FieldAccessRefNode>();
+      builtins.forEach(builtInCall -> builtInCall.collectInputsWithChildren(immediates,
+          FieldAccessRefNode.class));
       ensure(immediates.size() == 1,
           () -> Diagnostic.error("We only support branch instructions with one label.",
               machineInstruction.location()));
       var immediate = unwrap(immediates.stream().findFirst());
-      int bitWidth = immediate.size();
+      int bitWidth = immediate.fieldAccess().type().asDataType().bitWidth();
       branchInstructions.add(
           new BranchInstruction(machineInstruction.identifier.simpleName(), bitWidth));
     }
