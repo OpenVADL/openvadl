@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.Diagnostic;
@@ -115,9 +114,8 @@ public class GenerateCompilerRegistersPass extends Pass {
       // The alias should be the same as the register name.
       var alias = GeneralCompilerRegister.generateName(register);
 
-      var compilerRegister = address.isEmpty() ?
-          new GeneralCompilerRegister(register, alias, Collections.emptyList(),
-              dwarfOffset++) :
+      var compilerRegister = address.isEmpty()
+          ? new GeneralCompilerRegister(register, alias, Collections.emptyList(), dwarfOffset++) :
           new GeneralCompilerRegister(register, address.get(), alias, Collections.emptyList(),
               dwarfOffset++);
       compilerRegisters.add(compilerRegister);

@@ -78,10 +78,10 @@ public class GenerateTableGenRegistersPass extends Pass {
         GenerateCompilerRegistersPass.class);
     var compilerRegisterClasses = output.registerClasses();
 
-    var registerClasses = new ArrayList<TableGenRegisterClass>();
-    var aliasRegisterClasses = new ArrayList<TableGenRegisterClass>();
-    var registers = new ArrayList<TableGenRegister>();
-    var aliasRegisters = new ArrayList<TableGenRegisterAlias>();
+    final var registerClasses = new ArrayList<TableGenRegisterClass>();
+    final var aliasRegisterClasses = new ArrayList<TableGenRegisterClass>();
+    final var registers = new ArrayList<TableGenRegister>();
+    final var aliasRegisters = new ArrayList<TableGenRegisterAlias>();
 
     for (var compilerRegister : output.generalRegisters()) {
       var register = new TableGenRegister(
