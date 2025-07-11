@@ -131,6 +131,10 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
         fieldAccess.identifier.simpleName());
   }
 
+  public Instruction instruction() {
+    return instruction;
+  }
+
   @Override
   public GcbImmediateExtractionCppFunction valueRelocation() {
     return valueRelocation;

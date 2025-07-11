@@ -45,6 +45,7 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.ImmediateEncodingFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
+import vadl.utils.Pair;
 import vadl.utils.Triple;
 import vadl.viam.Definition;
 import vadl.viam.Format;
@@ -339,23 +340,10 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
                         relocationKind == CompilerRelocation.Kind.ABSOLUTE ? linkerFixupsAbsMap :
                             linkerFixupsRelMap;
                     var operanderFixup =
-                        ensureNonNull(fixupMap.get(immediateOperand.fieldAccessRef()),
+                        ensureNonNull(
+                            fixupMap.get(Pair.of(instruction, immediateOperand.fieldAccessRef())),
                             () -> Diagnostic.error("Cannot find a fixup for operand",
                                 immediateOperand.fieldAccessRef().location()));
-
-                    /*
-                    var operanderFixup = linkerComponents.fixups().stream()
-                        .filter(fixup ->
-                            fixup.implementedRelocation()
-                                instanceof AutomaticallyGeneratedRelocation relocation
-                                && relocation.fields().containsAll(immediateOperand.fieldAccessRef()
-                                .fieldRefs())
-                                && relocation.kind() == relocationKind
-                        ).findFirst().orElseThrow(() ->
-                            Diagnostic.error("Cannot find a fixup for the immediate operand",
-                                instruction.location()
-                                    .join(immediateOperand.fieldAccessRef().location())).build());
-                     */
 
                     return Map.of(
                         "opIndex", opIndex,
@@ -371,7 +359,7 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
   }
 
   @Nonnull
-  private static Map<Format.FieldAccess, @NotNull Fixup> fixupsMap(
+  private static Map<Pair<Instruction, Format.FieldAccess>, @NotNull Fixup> fixupsMap(
       GenerateLinkerComponentsPass.Output linkerComponents,
       CompilerRelocation.Kind relocationKind) {
     return linkerComponents.fixups().stream()
@@ -380,7 +368,10 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
                 instanceof AutomaticallyGeneratedRelocation relocation
                 && relocation.kind() == relocationKind)
         .collect(Collectors.toMap(
-            x -> ((AutomaticallyGeneratedRelocation) x.implementedRelocation()).fieldAccess(),
+            x -> {
+              var rel = (AutomaticallyGeneratedRelocation) x.implementedRelocation();
+              return Pair.of(rel.instruction(), rel.fieldAccess());
+            },
             x -> x));
   }
 }
