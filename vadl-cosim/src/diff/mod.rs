@@ -53,6 +53,7 @@ pub type DiffContext = Vec<DiffContextClient>;
 pub struct DiffContextClient {
     client_id: usize,
     client_name: Option<String>,
+    client_run_count: u64,
     pc: u64,
 }
 
@@ -78,15 +79,15 @@ impl DiffEntry {
 }
 
 impl DiffContextClient {
-    pub fn new(client_id: usize, client_name: Option<String>, pc: u64) -> Self {
-        Self { client_id, client_name, pc }
+    pub fn new(client_id: usize, client_name: Option<String>, client_run_count: u64, pc: u64) -> Self {
+        Self { client_id, client_name, client_run_count, pc }
     }
 
     pub fn from_tb(client: &Client, shm: &BrokerSHMTB) -> Self {
-        Self::new(client.id, client.name.clone(), shm.tb_info.pc)
+        Self::new(client.id, client.name.clone(), client.run_count, shm.tb_info.pc)
     }
 
     pub fn from_insn(client: &Client, shm: &BrokerSHMExec) -> Self {
-        Self::new(client.id, client.name.clone(), shm.insn_info.pc)
+        Self::new(client.id, client.name.clone(), client.run_count, shm.insn_info.pc)
     }
 }

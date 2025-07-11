@@ -132,7 +132,7 @@ test_exec="./test-execs/sglib-combined"
 # The maximum trace length during a test-run
 # The trace acts as a sized dequeue, meaning newer trace-entries push out the oldest trace-entries if the length has been reached
 # Use max_trace_length = -1 to keep all traces
-max_trace_length = -1
+max_trace_length = 2
 
 # The testing-protocol defines how the clients are run and tested against eachother
 [testing.protocol]

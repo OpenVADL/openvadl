@@ -22,6 +22,7 @@ pub struct Client {
     pub is_open: bool,
     pub process: Child,
     pub name: Option<String>,
+    pub run_count: u64,
 }
 
 impl Client {
@@ -37,6 +38,8 @@ impl Client {
 
     pub fn run(&mut self, config: &Config) -> bool {
         assert!(self.is_open, "called client.run() on a closed client");
+
+        self.run_count += 1;
 
         match self.run_inner(config) {
             Ok(wait_res) => {
@@ -165,6 +168,7 @@ impl Client {
             is_open: true,
             process: client_process,
             name: client_cfg.name.clone(),
+            run_count: 0,
         })
     }
 
