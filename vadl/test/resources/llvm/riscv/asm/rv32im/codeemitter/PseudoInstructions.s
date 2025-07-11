@@ -60,7 +60,7 @@ BGEZ x4, 4
 
 BGEZ x4, .lbl
 # CHECK: [0x63,0x50,0x02,0x00]
-# CHECK-NEXT: #   fixup A - offset: 0, value: .lbl, kind: fixup_immS_RV3264Base_Btype_RELATIVE_immS
+# CHECK-NEXT: #   fixup A - offset: 0, value: .lbl, kind: fixup_immS_RV3264Base_Btype_RELATIVE_BGE_immS
 
 BLTZ x5, 5
 # CHECK: [0x63,0xc2,0x02,0x00]
