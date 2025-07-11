@@ -27,6 +27,7 @@ public abstract class CompilerRegister {
   protected final List<String> altNames;
   protected final int dwarfNumber;
   protected final int hwEncodingValue;
+  protected final boolean isArtificial;
 
   /**
    * Constructor.
@@ -35,12 +36,14 @@ public abstract class CompilerRegister {
                           String asmName,
                           List<String> altNames,
                           int dwarfNumber,
-                          int hwEncodingValue) {
+                          int hwEncodingValue,
+                          boolean isArtificial) {
     this.name = name;
     this.asmName = asmName;
     this.altNames = altNames;
     this.dwarfNumber = dwarfNumber;
     this.hwEncodingValue = hwEncodingValue;
+    this.isArtificial = isArtificial;
   }
 
   public String name() {
@@ -61,5 +64,9 @@ public abstract class CompilerRegister {
 
   public int hwEncodingValue() {
     return hwEncodingValue;
+  }
+
+  public boolean isArtificial() {
+    return isArtificial;
   }
 }

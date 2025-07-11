@@ -24,13 +24,12 @@ import vadl.gcb.valuetypes.TargetName;
 import vadl.template.Renderable;
 
 /**
- * Represents a single register in TableGen.
+ * Represents a register alias in TableGen.
  */
-public record TableGenRegister(TargetName namespace,
-                               CompilerRegister compilerRegister,
-                               int hwEncodingMsb,
-                               Optional<Integer> index,
-                               boolean isArtificial) implements Renderable {
+public record TableGenRegisterAlias(TargetName namespace,
+                                    CompilerRegister compilerRegister,
+                                    Optional<Integer> index,
+                                    boolean isArtificial) implements Renderable {
 
   public String altNamesString() {
     return String.join(", ",
@@ -44,7 +43,6 @@ public record TableGenRegister(TargetName namespace,
     map.put("name", compilerRegister.name());
     map.put("asmName", compilerRegister.asmName());
     map.put("dwarfNumber", compilerRegister.dwarfNumber());
-    map.put("hwEncodingMsb", hwEncodingMsb);
     map.put("hwEncodingValue", compilerRegister.hwEncodingValue());
     map.put("altNamesString", altNamesString());
     map.put("isArtificial", isArtificial ? 1 : 0);

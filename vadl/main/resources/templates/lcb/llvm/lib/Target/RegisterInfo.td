@@ -17,7 +17,25 @@ def [(${register.name})] : Register<"[(${register.name})]">
     [#th:block th:if="${register.hwEncodingMsb == 0}"]
     let HWEncoding = [(${register.hwEncodingValue})];
     [/th:block]
-    let isArtificial = 0;
+    let isArtificial = [(${register.isArtificial})];
+}
+[/]
+
+[# th:each="register, iterStat : ${aliasRegisters}" ]
+def [(${register.name})] : Register<"[(${register.name})]">
+{
+    let Namespace = "[(${register.namespace.value})]";
+    let AsmName = "[(${register.asmName})]";
+    let AltNames = [ [(${register.altNamesString})]  ];
+    let Aliases = [ ];
+    let SubRegs = [ ];
+    let SubRegIndices = [ ];
+    let RegAltNameIndices = [];
+    let DwarfNumbers = [ [(${register.dwarfNumber})] ];
+    list<int> CostPerUse = [0];
+    let CoveredBySubRegs = 0;
+    let HWEncoding = [(${register.hwEncodingValue})];
+    let isArtificial = [(${register.isArtificial})];
 }
 [/]
 

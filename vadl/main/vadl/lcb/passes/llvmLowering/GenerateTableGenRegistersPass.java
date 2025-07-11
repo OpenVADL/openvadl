@@ -29,6 +29,7 @@ import vadl.gcb.valuetypes.CompilerRegisterClass;
 import vadl.gcb.valuetypes.IndexedCompilerRegister;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegister;
+import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -62,7 +63,9 @@ public class GenerateTableGenRegistersPass extends Pass {
    * Contains the output of the pass.
    */
   public record Output(List<TableGenRegisterClass> registerClasses,
+                       List<TableGenRegisterClass> aliasRegisterClasses,
                        List<TableGenRegister> registers,
+                       List<TableGenRegisterAlias> aliasRegisters,
                        List<LlvmConstraint> constraints) {
     /* `registers` do not belong to any register class. */
   }
@@ -75,17 +78,30 @@ public class GenerateTableGenRegistersPass extends Pass {
         GenerateCompilerRegistersPass.class);
     var compilerRegisterClasses = output.registerClasses();
 
-    var registerClasses = new ArrayList<TableGenRegisterClass>();
-    var registers = new ArrayList<TableGenRegister>();
+    final var registerClasses = new ArrayList<TableGenRegisterClass>();
+    final var aliasRegisterClasses = new ArrayList<TableGenRegisterClass>();
+    final var registers = new ArrayList<TableGenRegister>();
+    final var aliasRegisters = new ArrayList<TableGenRegisterAlias>();
 
     for (var compilerRegister : output.generalRegisters()) {
       var register = new TableGenRegister(
           configuration.targetName(),
           compilerRegister,
           compilerRegister.hwEncodingValue(),
-          Optional.empty()
+          Optional.empty(),
+          compilerRegister.isArtificial()
       );
       registers.add(register);
+    }
+
+    for (var compilerRegister : output.aliasRegisters()) {
+      var register = new TableGenRegisterAlias(
+          configuration.targetName(),
+          compilerRegister,
+          Optional.of(compilerRegister.hwEncodingValue()),
+          compilerRegister.isArtificial()
+      );
+      aliasRegisters.add(register);
     }
 
     for (var compilerRegisterClass : compilerRegisterClasses) {
@@ -96,7 +112,8 @@ public class GenerateTableGenRegistersPass extends Pass {
             compilerRegister,
             Objects.requireNonNull(compilerRegisterClass.registerFile().addressType()).bitWidth()
                 - 1,
-            Optional.of(compilerRegister.hwEncodingValue())
+            Optional.of(compilerRegister.hwEncodingValue()),
+            compilerRegister.isArtificial()
         );
         registers.add(register);
         classRegisters.add(register);
@@ -115,7 +132,8 @@ public class GenerateTableGenRegistersPass extends Pass {
     }
 
     var constraints = getConstraints(registerClasses);
-    return new Output(registerClasses, registers, constraints);
+    return new Output(registerClasses, aliasRegisterClasses, registers, aliasRegisters,
+        constraints);
   }
 
   private List<LlvmConstraint> getConstraints(List<TableGenRegisterClass> mainRegisterClasses) {

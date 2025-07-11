@@ -17,6 +17,7 @@
 package vadl.gcb.valuetypes;
 
 import java.util.List;
+import vadl.viam.ArtificialResource;
 import vadl.viam.RegisterTensor;
 
 /**
@@ -26,11 +27,39 @@ import vadl.viam.RegisterTensor;
  * register file.
  */
 public class GeneralCompilerRegister extends CompilerRegister {
+  /**
+   * Generate a register from a {@link RegisterTensor}. It has no {@code hwEncodingValue} because
+   * it is a separate physical register.
+   */
   public GeneralCompilerRegister(RegisterTensor register,
                                  String asmName,
                                  List<String> altNames,
                                  int dwarfNumber) {
-    super(generateName(register), asmName, altNames, dwarfNumber, 0);
+    super(generateName(register), asmName, altNames, dwarfNumber, 0, false);
+  }
+
+  /**
+   * Generate a register which is an alias to a physical register or a register file. This
+   * constructor handles a register file because it takes {@code address} as input.
+   */
+  public GeneralCompilerRegister(ArtificialResource artificialResource,
+                                 int address, /* hwEncoding */
+                                 String asmName,
+                                 List<String> altNames,
+                                 int dwarfNumber) {
+    super(generateName(artificialResource), asmName, altNames, dwarfNumber, address, true);
+  }
+
+  /**
+   * Generate a register which is an alias to a physical register or a register file. This
+   * constructor handles an alias for a physical register because the {@code hwEncodingValue} is
+   * zero.
+   */
+  public GeneralCompilerRegister(ArtificialResource artificialResource,
+                                 String asmName,
+                                 List<String> altNames,
+                                 int dwarfNumber) {
+    super(generateName(artificialResource), asmName, altNames, dwarfNumber, 0, true);
   }
 
   /**
@@ -39,5 +68,17 @@ public class GeneralCompilerRegister extends CompilerRegister {
   public static String generateName(RegisterTensor register) {
     register.ensure(register.isSingleRegister(), "must be single register");
     return register.simpleName();
+  }
+
+  /**
+   * Generate the internal compiler name from a register.
+   */
+  public static String generateName(ArtificialResource artificialResource) {
+    var registerTensor = (RegisterTensor) artificialResource.innerResourceRef();
+
+    // Either is the underlying a register or the readFunction has no inputs.
+    artificialResource.ensure(registerTensor.isSingleRegister()
+        || artificialResource.readFunction().parameters().length == 0, "must be single register");
+    return artificialResource.simpleName();
   }
 }
