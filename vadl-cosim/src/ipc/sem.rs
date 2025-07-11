@@ -43,8 +43,7 @@ impl Semaphore {
 
         if id == SEM_FAILED {
             bail!(get_last_error(&format!(
-                "Failed to create semaphore: {}",
-                name
+                "Failed to create semaphore: {name}"
             )))
         }
 

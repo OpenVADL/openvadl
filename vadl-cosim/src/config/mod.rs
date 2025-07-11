@@ -11,7 +11,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn for_client<'a>(&'a self, idx: usize) -> &'a Client {
+    pub fn for_client(&self, idx: usize) -> &Client {
         &self.qemu.clients[idx]  
     }
 }

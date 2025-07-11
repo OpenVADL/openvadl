@@ -4,6 +4,7 @@ use serde::Serialize;
 
 use crate::ipc::{cstructs::{BrokerSHMExec, BrokerSHMTB}, qemu::Client};
 
+#[allow(clippy::module_inception)]
 pub mod diff;
 
 #[derive(Debug, Serialize)]

@@ -84,8 +84,8 @@ pub fn diff_cpu(cpu1: &SHMCPU, cpu2: &SHMCPU, cpu_index: usize, config: &Config,
             config,
         );
         diffs.append(&mut diff_register(
-            &csub_reg,
-            &csuper_reg,
+            csub_reg,
+            csuper_reg,
             cpu_index,
             reg_index,
             config,

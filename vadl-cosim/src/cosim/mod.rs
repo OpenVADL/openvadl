@@ -2,13 +2,13 @@ use std::{
     collections::VecDeque, mem::ManuallyDrop, sync::{Arc, RwLock}
 };
 
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, Result};
 use serde::Serialize;
-use tracing::{debug, info};
+use tracing::debug;
 
 use crate::{
     config::Config,
-    diff::{self, diff::diff_cpus, DiffContextClient, DiffEntry, Report},
+    diff::{diff::diff_cpus, DiffContextClient, DiffEntry, Report},
     ipc::{
         cstructs::{BrokerSHMExec, BrokerSHMTB},
         qemu::Client,
@@ -17,8 +17,8 @@ use crate::{
 
 #[derive(Debug, Serialize)]
 pub enum TraceData {
-    TB(BrokerSHMTB),
-    Exec(BrokerSHMExec),
+    TB(Box<BrokerSHMTB>),
+    Exec(Box<BrokerSHMExec>),
 }
 
 #[derive(Debug)]
@@ -62,7 +62,6 @@ struct ClientSyncInfo {
     start_pc: u64,
     end_pc: u64,
     insn_sizes: Vec<u64>,
-    client_idx: usize,
 }
 
 impl ClientSyncInfo {
@@ -74,7 +73,7 @@ impl ClientSyncInfo {
 
 pub struct Broker {
     clients: Vec<Client>,
-    pub traces: Arc<RwLock<Box<BoundedVecDeque<Vec<TraceData>>>>>,
+    pub traces: Arc<RwLock<BoundedVecDeque<Vec<TraceData>>>>,
 }
 
 impl Broker {
@@ -84,7 +83,7 @@ impl Broker {
             .clients
             .iter()
             .enumerate()
-            .map(|(idx, _)| Client::create(&config, idx))
+            .map(|(idx, _)| Client::create(config, idx))
             .collect::<Result<Vec<_>>>()?;
 
         let trace_limit = if config.testing.max_trace_length < 0 {
@@ -95,7 +94,7 @@ impl Broker {
 
         Ok(Self {
             clients,
-            traces: Arc::new(RwLock::new(Box::new(BoundedVecDeque::new(trace_limit)))),
+            traces: Arc::new(RwLock::new(BoundedVecDeque::new(trace_limit))),
         })
     }
 
@@ -172,7 +171,6 @@ impl Broker {
                                     start_pc,
                                     end_pc,
                                     insn_sizes,
-                                    client_idx: idx,
                                 };
 
                                 if sync_info.is_jump() {
@@ -219,7 +217,7 @@ impl Broker {
             }
         }
 
-        return Ok(diffs);
+        Ok(diffs)
     }
 
     fn any_client_open(&self) -> bool {
@@ -228,7 +226,7 @@ impl Broker {
 
     fn diff_clients(&mut self, config: &Config) -> Vec<DiffEntry> {
         for i in 0..self.clients.len() {
-            for j in i + 1..self.clients.len() {
+            if let Some(j) = (i + 1..self.clients.len()).next() {
                 let c1 = &self.clients[i];
                 let c2 = &self.clients[j];
 
@@ -287,25 +285,26 @@ impl Broker {
     fn trace_clients(&mut self, config: &Config) -> Result<()> {
         let trace = match config.testing.protocol.layer {
             crate::config::ProtocolLayer::Insn => {
-                let trace = self.clients
+                
+                self.clients
                     .iter()
                     .map(|c| unsafe { c.shm.read().shm_exec.clone() })
-                    .map(|s| ManuallyDrop::into_inner(s))
+                    .map(ManuallyDrop::into_inner)
+                    .map(Box::new)
                     .map(TraceData::Exec)
-                    .collect();
-
-                trace
+                    .collect()
             },
             crate::config::ProtocolLayer::TB |
             crate::config::ProtocolLayer::TBStrict => {
-                let trace = self.clients
+                
+
+                self.clients
                     .iter()
                     .map(|c| unsafe { c.shm.read().shm_tb.clone() })
-                    .map(|s| ManuallyDrop::into_inner(s))
+                    .map(ManuallyDrop::into_inner)
+                    .map(Box::new)
                     .map(TraceData::TB)
-                    .collect();
-
-                trace
+                    .collect()
             },
         };
 

@@ -1,9 +1,9 @@
 use std::{ffi::CString, marker::PhantomData, ptr};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use libc::{
-    MAP_FAILED, MAP_SHARED, O_CREAT, O_EXCL, O_RDWR, PROT_READ, PROT_WRITE, close, ftruncate, mmap,
-    munmap, shm_open, shm_unlink,
+    MAP_FAILED, MAP_SHARED, O_CREAT, O_RDWR, PROT_READ, PROT_WRITE, close, ftruncate, mmap, munmap,
+    shm_open, shm_unlink,
 };
 
 use crate::ipc::{PERMISSONS, get_errno, get_last_error};
@@ -30,7 +30,7 @@ impl<T: Sized> SharedMemory<T> {
     pub fn create(mmap_path: &str) -> Result<Self> {
         let size = size_of::<T>();
         let mmap_path_c =
-            CString::new(mmap_path).with_context(|| format!("Invalid mmap_path: {}", mmap_path))?;
+            CString::new(mmap_path).with_context(|| format!("Invalid mmap_path: {mmap_path}"))?;
         unsafe {
             let fd = shm_open(mmap_path_c.as_ptr(), O_CREAT | O_RDWR, PERMISSONS);
             if fd == -1 {
@@ -51,10 +51,7 @@ impl<T: Sized> SharedMemory<T> {
             );
 
             if addr == MAP_FAILED {
-                bail!(get_last_error(&format!(
-                    "Failed to map memory {}",
-                    mmap_path
-                )));
+                bail!(get_last_error(&format!("Failed to map memory {mmap_path}")));
             }
 
             Ok(Self {
@@ -70,12 +67,10 @@ impl<T: Sized> SharedMemory<T> {
 
     /// Reads and deserializes data from shared memory.
     /// Assumes that the shared memory contains valid data.
-    pub fn read(&self) -> &mut T {
-        unsafe {
-            let data_ptr = self.mmap_ptr as *mut T;
-            let shared: &mut T = &mut *data_ptr;
-            return shared;
-        }
+    pub fn read(&self) -> &T {
+        let data_ptr = self.mmap_ptr as *const T;
+        let shared: &T = unsafe { &*data_ptr };
+        shared
     }
 }
 

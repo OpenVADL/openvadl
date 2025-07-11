@@ -1,7 +1,6 @@
 use std::{fs::File, io::Write};
 
 use anyhow::Result;
-use clap::Parser;
 use figment::{
     Figment,
     providers::{Format, Toml},
