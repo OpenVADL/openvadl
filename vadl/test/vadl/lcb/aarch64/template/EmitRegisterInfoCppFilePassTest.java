@@ -45,12 +45,12 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
     // Then
     var resultFile = passResult.emittedFile().toFile();
     var trimmed = Files.asCharSource(resultFile, Charset.defaultCharset()).read().trim();
-    var output = trimmed.lines();
+    var output = trimmed.lines().map(String::trim);
 
     var fs = new File(
-        "test/resources/snapshots/aarch64/RegisterInfo.td");
+        "test/resources/snapshots/aarch64/RegisterInfo.cpp");
     var expected = FileUtils.readFileToString(fs, "UTF-8");
 
-    Assertions.assertLinesMatch(expected.trim().lines(), output);
+    Assertions.assertLinesMatch(expected.trim().lines().map(String::trim), output);
   }
 }
