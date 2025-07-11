@@ -28,6 +28,7 @@ import vadl.utils.SourceLocation;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
+import vadl.viam.Instruction;
 import vadl.viam.Parameter;
 import vadl.viam.Relocation;
 import vadl.viam.graph.control.ReturnNode;
@@ -39,6 +40,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
  */
 public class AutomaticallyGeneratedRelocation extends CompilerRelocation
     implements HasRelocationComputationAndUpdate, RelocationsBeforeElfExpansion {
+  protected final Instruction instruction;
   protected final Modifier modifier;
   protected final VariantKind variantKind;
   // This is the function which computes the value for the
@@ -56,14 +58,16 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
   /**
    * Constructor.
    */
-  public static AutomaticallyGeneratedRelocation create(Kind kind,
-                                                        Modifier modifier,
-                                                        VariantKind variantKind,
-                                                        Format format,
-                                                        Format.FieldAccess fieldAccess,
-                                                        GcbUpdateFieldRelocationCppFunction
-                                                            fieldUpdateFunction) {
-    var identifier = generateName(format, fieldAccess, kind);
+  public static AutomaticallyGeneratedRelocation create(
+      Instruction instruction,
+      Kind kind,
+      Modifier modifier,
+      VariantKind variantKind,
+      Format format,
+      Format.FieldAccess fieldAccess,
+      GcbUpdateFieldRelocationCppFunction
+          fieldUpdateFunction) {
+    var identifier = generateName(format, instruction, fieldAccess, kind);
     var parameter = new Parameter(new Identifier("input",
         SourceLocation.INVALID_SOURCE_LOCATION),
         Type.signedInt(64),
@@ -72,7 +76,9 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
         new Relocation(identifier, kind.map(), new Parameter[] {parameter}, format.type());
     var valueRelocation = createGcbRelocationCppFunction(relocation);
     valueRelocation.behavior().addWithInputs(new ReturnNode(new FuncParamNode(parameter)));
-    return new AutomaticallyGeneratedRelocation(identifier,
+    return new AutomaticallyGeneratedRelocation(
+        instruction,
+        identifier,
         kind,
         modifier,
         variantKind,
@@ -94,17 +100,20 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
         function.behavior());
   }
 
-  private AutomaticallyGeneratedRelocation(Identifier identifier,
-                                           Kind kind,
-                                           Modifier modifier,
-                                           VariantKind variantKind,
-                                           Format format,
-                                           Format.FieldAccess fieldAccess,
-                                           Relocation relocationRef,
-                                           GcbImmediateExtractionCppFunction valueRelocation,
-                                           GcbUpdateFieldRelocationCppFunction fieldUpdateFunction
+  private AutomaticallyGeneratedRelocation(
+      Instruction instruction,
+      Identifier identifier,
+      Kind kind,
+      Modifier modifier,
+      VariantKind variantKind,
+      Format format,
+      Format.FieldAccess fieldAccess,
+      Relocation relocationRef,
+      GcbImmediateExtractionCppFunction valueRelocation,
+      GcbUpdateFieldRelocationCppFunction fieldUpdateFunction
   ) {
     super(identifier, kind, relocationRef);
+    this.instruction = instruction;
     this.modifier = modifier;
     this.variantKind = variantKind;
     this.format = format;
@@ -113,8 +122,13 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
     this.fieldUpdateFunction = fieldUpdateFunction;
   }
 
-  private static Identifier generateName(Format format, Format.FieldAccess fieldAccess, Kind kind) {
-    return format.identifier.append(kind.name(), fieldAccess.identifier.simpleName());
+  private static Identifier generateName(Format format,
+                                         Instruction instruction,
+                                         Format.FieldAccess fieldAccess,
+                                         Kind kind) {
+    return format.identifier.append(kind.name(),
+        instruction.identifier.simpleName(),
+        fieldAccess.identifier.simpleName());
   }
 
   @Override

@@ -49,6 +49,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
+import vadl.utils.Triple;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
@@ -219,27 +220,29 @@ public class GenerateLinkerComponentsPass extends Pass {
     }
 
     // Next, we need to generate relocations for every immediate in an instruction.
-    var candidatesAuto = new ArrayList<Pair<Format, Format.FieldAccess>>();
+    var candidatesAuto = new ArrayList<Triple<Format, Instruction, Format.FieldAccess>>();
     for (var instruction : instructions) {
       var record =
           ensureNonNull(tableGenMachineInstructions.get(instruction), "must not be null");
       for (var operand : record.immediateInputOperands()) {
-        candidatesAuto.add(new Pair<>(instruction.format(), operand.immediateOperand()
-            .fieldAccessRef()));
+        candidatesAuto.add(
+            new Triple<>(instruction.format(), instruction, operand.immediateOperand()
+                .fieldAccessRef()));
       }
     }
 
     for (var candidate : candidatesAuto.stream().distinct().toList()) {
       var format = candidate.left();
+      var instruction = candidate.middle();
       var imm = candidate.right();
 
       // Absolute
-      genAbs(imm, format, fixups,
+      genAbs(instruction, imm, format, fixups,
           modifiers, variantKinds, variantStore, linkModifierToVariantKind,
           automaticallyGeneratedRelocations, relocationsBeforeElfExpansion);
 
       // Relative
-      genRelative(imm, format, fixups,
+      genRelative(instruction, imm, format, fixups,
           modifiers, variantKinds, variantStore, linkModifierToVariantKind,
           automaticallyGeneratedRelocations, relocationsBeforeElfExpansion);
     }
@@ -283,15 +286,17 @@ public class GenerateLinkerComponentsPass extends Pass {
     );
   }
 
-  private static void genRelative(Format.FieldAccess imm,
-                                  Format format,
-                                  List<Fixup> fixups,
-                                  List<Modifier> modifiers,
-                                  List<VariantKind> variantKinds,
-                                  VariantKindStore variantStore,
-                                  List<Pair<Modifier, VariantKind>> linkModifierToVariantKind,
-                                  List<AutomaticallyGeneratedRelocation> compilerRelocations,
-                                  List<RelocationsBeforeElfExpansion> relocationsBeforeExpansion) {
+  private static void genRelative(
+      Instruction instruction,
+      Format.FieldAccess imm,
+      Format format,
+      List<Fixup> fixups,
+      List<Modifier> modifiers,
+      List<VariantKind> variantKinds,
+      VariantKindStore variantStore,
+      List<Pair<Modifier, VariantKind>> linkModifierToVariantKind,
+      List<AutomaticallyGeneratedRelocation> compilerRelocations,
+      List<RelocationsBeforeElfExpansion> relocationsBeforeExpansion) {
     var modifier = Modifier.relative(imm);
     modifiers.add(modifier);
 
@@ -305,7 +310,9 @@ public class GenerateLinkerComponentsPass extends Pass {
 
     var updateFieldFunction =
         BitMaskFunctionGenerator.generateUpdateFunction(format, firstField);
-    var generated = AutomaticallyGeneratedRelocation.create(CompilerRelocation.Kind.RELATIVE,
+    var generated = AutomaticallyGeneratedRelocation.create(
+        instruction,
+        CompilerRelocation.Kind.RELATIVE,
         modifier,
         variantKind,
         format,
@@ -321,15 +328,17 @@ public class GenerateLinkerComponentsPass extends Pass {
     variantStore.relocationVariantKinds.put(generated, variantKind);
   }
 
-  private static void genAbs(Format.FieldAccess imm,
-                             Format format,
-                             List<Fixup> fixups,
-                             List<Modifier> modifiers,
-                             List<VariantKind> variantKinds,
-                             VariantKindStore variantStore,
-                             List<Pair<Modifier, VariantKind>> linkModifierToVariantKind,
-                             List<AutomaticallyGeneratedRelocation> compilerRelocations,
-                             List<RelocationsBeforeElfExpansion> relocationsBeforeExpansion) {
+  private static void genAbs(
+      Instruction instruction,
+      Format.FieldAccess imm,
+      Format format,
+      List<Fixup> fixups,
+      List<Modifier> modifiers,
+      List<VariantKind> variantKinds,
+      VariantKindStore variantStore,
+      List<Pair<Modifier, VariantKind>> linkModifierToVariantKind,
+      List<AutomaticallyGeneratedRelocation> compilerRelocations,
+      List<RelocationsBeforeElfExpansion> relocationsBeforeExpansion) {
 
     var modifier = Modifier.absolute(imm);
     modifiers.add(modifier);
@@ -344,7 +353,9 @@ public class GenerateLinkerComponentsPass extends Pass {
 
     var updateFieldFunction =
         BitMaskFunctionGenerator.generateUpdateFunction(format, firstField);
-    var generated = AutomaticallyGeneratedRelocation.create(CompilerRelocation.Kind.ABSOLUTE,
+    var generated = AutomaticallyGeneratedRelocation.create(
+        instruction,
+        CompilerRelocation.Kind.ABSOLUTE,
         modifier,
         variantKind,
         format,
