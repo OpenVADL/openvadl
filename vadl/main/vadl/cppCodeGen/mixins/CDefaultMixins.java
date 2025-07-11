@@ -22,11 +22,14 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.javaannotations.Handler;
 import vadl.types.DataType;
+import vadl.types.StringType;
+import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.viam.Function;
 import vadl.viam.Parameter;
@@ -102,10 +105,14 @@ public interface CDefaultMixins {
      */
     default String genFunctionSignature() {
       var function = function();
-      var returnType = function.returnType().asDataType().fittingCppType();
 
-      function.ensure(returnType != null, "No fitting Cpp type found for return type %s",
-          returnType);
+      var returnType = function.returnType();
+      if (returnType.isDataType()) {
+        returnType = returnType.asDataType().fittingCppType();
+        function.ensure(returnType != null,
+            "No fitting Cpp type found for return type %s", returnType);
+      }
+
       function.ensure(function.behavior().isPureFunction(), "Function is not pure.");
 
       return CppTypeMap.getCppTypeNameByVadlType(returnType)
@@ -120,13 +127,22 @@ public interface CDefaultMixins {
      */
     default String genFunctionParameters(Parameter[] parameters) {
       var cppArgs = Stream.of(parameters)
-          .map(p -> Pair.of(p.simpleName(), requireNonNull(p.type().asDataType().fittingCppType())))
+          .map(p -> Pair.of(p.simpleName(), requireNonNull(asCppType(p.type()))))
           .toList();
 
       return cppArgs.stream().map(
           s -> CppTypeMap.getCppTypeNameByVadlType(s.right())
               + " " + s.left()
       ).collect(Collectors.joining(", "));
+    }
+
+    @Nullable
+    private Type asCppType(Type originalType) {
+      if (originalType.isDataType()) {
+        return originalType.asDataType().fittingCppType();
+      }
+
+      return originalType;
     }
 
     /**
@@ -352,10 +368,23 @@ public interface CDefaultMixins {
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx, ConstantNode constant) {
-      var fittingCppType = constant.type().asDataType().fittingCppType();
-      constant.ensure(fittingCppType != null, "No fitting cpp type");
-      var cppType = getCppTypeNameByVadlType(fittingCppType);
-      ctx.wr("((" + cppType + ") " + constant.constant().asVal().asString("0x", 16, false) + " )");
+      var type = constant.type();
+      if (type.isDataType()) {
+        type = constant.type().asDataType().fittingCppType();
+        constant.ensure(type != null, "No fitting cpp type");
+      }
+
+      ctx.wr("((" + getCppTypeNameByVadlType(type) + ") ");
+
+      if (type.isDataType()) {
+        ctx.wr(constant.constant().asVal().hexadecimal());
+      } else if (type instanceof StringType) {
+        ctx.wr(constant.constant().asString().quotedValue());
+      } else {
+        ctx.wr(constant.constant().toString());
+      }
+
+      ctx.wr(" )");
     }
   }
 

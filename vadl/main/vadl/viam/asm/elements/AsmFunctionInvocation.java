@@ -29,4 +29,8 @@ public record AsmFunctionInvocation(@Nullable AsmAssignTo assignToElement,
                                     List<AsmGrammarElement> parameters,
                                     AsmType asmType)
     implements AsmGrammarElement {
+  @Override
+  public AsmType getAsmType() {
+    return asmType;
+  }
 }

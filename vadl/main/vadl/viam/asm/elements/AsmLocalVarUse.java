@@ -27,4 +27,8 @@ public record AsmLocalVarUse(@Nullable AsmAssignTo assignToElement,
                              AsmType invokedLocalVarType,
                              AsmType asmType)
     implements AsmGrammarElement {
+  @Override
+  public AsmType getAsmType() {
+    return asmType;
+  }
 }

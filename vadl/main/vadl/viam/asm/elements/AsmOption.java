@@ -18,6 +18,7 @@ package vadl.viam.asm.elements;
 
 import java.util.Set;
 import javax.annotation.Nullable;
+import vadl.types.asmTypes.AsmType;
 import vadl.viam.Function;
 import vadl.viam.asm.AsmToken;
 
@@ -27,4 +28,8 @@ import vadl.viam.asm.AsmToken;
 public record AsmOption(@Nullable Function semanticPredicate,
                         Set<AsmToken> firstTokens,
                         AsmAlternatives alternatives) implements AsmGrammarElement {
+  @Override
+  public AsmType getAsmType() {
+    throw new UnsupportedOperationException("AsmOption has no AsmType");
+  }
 }

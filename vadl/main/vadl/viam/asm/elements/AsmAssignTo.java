@@ -16,6 +16,8 @@
 
 package vadl.viam.asm.elements;
 
+import vadl.types.asmTypes.AsmType;
+
 /**
  * AssignTo is a super class for grammar elements that can be assigned to.
  */
@@ -34,5 +36,10 @@ public abstract class AsmAssignTo implements AsmGrammarElement {
 
   public boolean getIsWithinRepetition() {
     return isWithinRepetition;
+  }
+
+  @Override
+  public AsmType getAsmType() {
+    throw new UnsupportedOperationException("AsmAssignTo has no AsmType");
   }
 }

@@ -16,9 +16,16 @@
 
 package vadl.viam.asm.elements;
 
+import vadl.types.asmTypes.AsmType;
+
 /**
  * Represents a building block for grammar rules.
  * A grammar rule is a composition of grammar elements.
  */
 public interface AsmGrammarElement {
+
+  /**
+   * Get the {@link AsmType} of the grammar element.
+   */
+  AsmType getAsmType();
 }

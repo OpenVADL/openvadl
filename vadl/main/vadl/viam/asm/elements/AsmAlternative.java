@@ -32,4 +32,8 @@ public record AsmAlternative(@Nullable Function semanticPredicate,
                              AsmType asmType,
                              boolean isWithinRepetition,
                              List<AsmGrammarElement> elements) implements AsmGrammarElement {
+  @Override
+  public AsmType getAsmType() {
+    return asmType;
+  }
 }

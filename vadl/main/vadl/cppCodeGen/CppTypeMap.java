@@ -20,6 +20,7 @@ import vadl.cppCodeGen.model.CppType;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.SIntType;
+import vadl.types.StringType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 
@@ -70,6 +71,8 @@ public class CppTypeMap {
       return "uint128_t";
     } else if (type instanceof CppType cppType) {
       return cppType.lower();
+    } else if (type instanceof StringType) {
+      return "std::string";
     }
 
     throw new RuntimeException(String.format("not implemented: type %s", type.toString()));
