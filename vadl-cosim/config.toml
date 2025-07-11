@@ -173,8 +173,8 @@ format = "json"
 
 [logging]
 enable = true 
-# Python log-levels as defined here: https://docs.python.org/3/library/logging.html#logging-levels
-level = "DEBUG"
+# tracing log-levels as defined here: https://docs.rs/tracing/latest/tracing/struct.Level.html#implementations
+level = "debug"
 
 # The directory will also contain files for the stdout and stderr of each client
 dir = "./cosim-run/log"

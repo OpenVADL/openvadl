@@ -1,28 +1,44 @@
-use std::{fs::File, io::Write};
+use std::{fs::File, io::Write, str::FromStr};
 
 use anyhow::Result;
+use clap::Parser;
 use figment::{
     Figment,
     providers::{Format, Toml},
 };
-use tracing::Level;
+use tracing::{info, Level};
 
-use crate::{config::Config, cosim::Broker};
+use crate::{cli::Cli, config::Config, cosim::Broker};
 
 pub mod config;
 pub mod cosim;
 pub mod diff;
 pub mod ipc;
+pub mod cli;
 
 fn main() -> Result<()> {
-    tracing_subscriber::fmt()
-        .pretty()
-        .with_max_level(Level::DEBUG)
-        .init();
+    let cli = Cli::parse();
 
-    let config: Config = Figment::new()
-        .merge(Toml::file("./open-vadl/vadl-cosim/config.toml"))
+    let mut config: Config = Figment::new()
+        .merge(Toml::file(cli.config))
         .extract()?;
+
+    if let Some(test_exec) = cli.test_exec {
+        config.testing.test_exec = test_exec;
+    }
+
+    if config.logging.enable {
+        let level = Level::from_str(&config.logging.level)?;
+        tracing_subscriber::fmt()
+            .pretty()
+            .with_max_level(level)
+            .init();
+    }
+
+    if config.dev.dry_run {
+        info!(?config, "Dry-Run.");
+        return Ok(());
+    }
 
     let mut broker = Broker::create(&config)?;
     let report = broker.run(&config)?;
