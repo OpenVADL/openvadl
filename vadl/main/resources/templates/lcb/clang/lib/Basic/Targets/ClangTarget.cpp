@@ -18,16 +18,8 @@ ArrayRef<const char *> [(${namespace})]TargetInfo::getGCCRegNames() const
 
 ArrayRef<TargetInfo::GCCRegAlias> [(${namespace})]TargetInfo::getGCCRegAliases() const
 {
-    static const TargetInfo::GCCRegAlias GCCRegAliases[] =
-    {
-    [# th:each="register, iterStat : ${registers}" ]
-        {
-            {[# th:each="alias, iterAliasStat : ${registers}" ] "[(${alias.name})]"[# th:if="${!iterAliasStat.last}" ],[/] [/]},
-            "[(${register.name})]"
-        }[# th:if="${!iterStat.last}" ],[/]
-    [/]
-    };
-    return llvm::ArrayRef( GCCRegAliases );
+    std::vector<TargetInfo::GCCRegAlias> aliases; // keep it empty
+    return llvm::ArrayRef(aliases);
 }
 
 void [(${namespace})]TargetInfo::getTargetDefines(const LangOptions &Opts,
