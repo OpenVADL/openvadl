@@ -8,7 +8,7 @@ use tracing::{debug, info};
 
 use crate::{
     config::Config,
-    diff::{self, DiffEntry, Report, diff::diff_cpus},
+    diff::{self, diff::diff_cpus, DiffContextClient, DiffEntry, Report},
     ipc::{
         cstructs::{BrokerSHMExec, BrokerSHMTB},
         qemu::Client,
@@ -237,26 +237,33 @@ impl Broker {
                         let c1insn = unsafe { &c1.shm.read().shm_exec };
                         let c2insn = unsafe { &c2.shm.read().shm_exec };
 
+                        let ctx1 = DiffContextClient::from_insn(c1, c1insn);
+                        let ctx2 = DiffContextClient::from_insn(c2, c2insn);
+
                         return diff_cpus(
                             &c1insn.cpus,
                             c1insn.init_mask,
                             &c2insn.cpus,
                             c2insn.init_mask,
                             config,
+                            vec![ctx1, ctx2],
                         );
                     }
                     crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
                         let c1insn = unsafe { &c1.shm.read().shm_tb };
                         let c2insn = unsafe { &c2.shm.read().shm_tb };
 
-                        // NOTE: also diff instruction info especially for "tb-strict"
+                        let ctx1 = DiffContextClient::from_tb(c1, c1insn);
+                        let ctx2 = DiffContextClient::from_tb(c2, c2insn);
 
+                        // NOTE: also diff instruction info especially for "tb-strict"
                         return diff_cpus(
                             &c1insn.cpus,
                             c1insn.init_mask,
                             &c2insn.cpus,
                             c2insn.init_mask,
                             config,
+                            vec![ctx1, ctx2],
                         );
                     }
                 }

@@ -55,7 +55,7 @@ additional_args = [
 # NOTE: Only applies to `layer = "insn" | "tb-strict"`
 # NOTE: This option is must be set per client to be able to account for different setup-codes per ISS
 # Skips the first n instructions 
-skip_n_instructions = 1
+skip_n_instructions = 2
 
 # Settings for running the qemu-clients with gdb-debugging enabled.
 # Use these settings when possible instead of configuring the flags in the additional_args array since this will ensure that the runner and tui correctly connect to the gdb targets (when enabled)
@@ -159,10 +159,10 @@ layer = "insn"
 mode = "lockstep" 
 
 # Execute all remaining instructions (overrides `stop_after_n_instructions` if set to true)
-execute_all_remaining_instructions = false
+execute_all_remaining_instructions = true
 
 # Execute the next (after skipped) n instructions
-stop_after_n_instructions = 100
+stop_after_n_instructions = 10000
 
 # Where the test result should be saved and in which format
 [testing.protocol.out]

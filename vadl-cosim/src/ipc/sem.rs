@@ -79,7 +79,16 @@ impl Semaphore {
             )));
         }
 
-        ts.tv_nsec += duration.as_nanos() as i64;
+        ts.tv_sec += duration.as_secs() as i64;
+        ts.tv_nsec += duration.subsec_nanos() as i64;
+
+        // ensure that tv_nsec is less than TV_NSEC_MAX (but larger than 0)
+        // otherwise sem_timedwait returns EINVAL
+        const TV_NSEC_MAX: i64 = 1_000_000_000;
+        if ts.tv_nsec >= TV_NSEC_MAX {
+            ts.tv_sec += 1;
+            ts.tv_nsec -= TV_NSEC_MAX; 
+        }
 
         let mut s: i32;
         loop {

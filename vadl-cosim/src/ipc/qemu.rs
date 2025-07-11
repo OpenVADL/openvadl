@@ -85,7 +85,7 @@ impl Client {
             return Ok(true);
         }
 
-        let wait_res = self.sem_server.timedwait(Duration::from_millis(100))?;
+        let wait_res = self.sem_server.timedwait(Duration::from_secs(1))?;
         match wait_res {
             TimedWaitState::Timeout => Ok(false),
             TimedWaitState::Success => Ok(true),

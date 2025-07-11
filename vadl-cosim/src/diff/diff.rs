@@ -1,7 +1,7 @@
 use crate::{
     config::Config,
-    diff::DiffEntry,
-    ipc::cstructs::{MAX_CPU_COUNT, SHMCPU, SHMRegister},
+    diff::{DiffContext, DiffEntry},
+    ipc::cstructs::{SHMRegister, MAX_CPU_COUNT, SHMCPU},
 };
 
 pub fn diff_cpus(
@@ -10,6 +10,7 @@ pub fn diff_cpus(
     cpus2: &[SHMCPU; MAX_CPU_COUNT],
     init_mask2: i32,
     config: &Config,
+    context: DiffContext,
 ) -> Vec<DiffEntry> {
     let mut diffs = vec![];
 
@@ -18,6 +19,7 @@ pub fn diff_cpus(
             "cpu.init_mask",
             vec![init_mask1.to_string(), init_mask2.to_string()],
             "The init masks of the cpu differ - meaning different CPUs were used during execution",
+            context,
         ));
 
         return diffs;
@@ -28,14 +30,14 @@ pub fn diff_cpus(
         if flag == 1 {
             let cpu1 = &cpus1[idx];
             let cpu2 = &cpus2[idx];
-            diffs.append(&mut diff_cpu(cpu1, cpu2, idx, config));
+            diffs.append(&mut diff_cpu(cpu1, cpu2, idx, config, context.clone()));
         }
     }
 
     diffs
 }
 
-pub fn diff_cpu(cpu1: &SHMCPU, cpu2: &SHMCPU, cpu_index: usize, config: &Config) -> Vec<DiffEntry> {
+pub fn diff_cpu(cpu1: &SHMCPU, cpu2: &SHMCPU, cpu_index: usize, config: &Config, context: DiffContext) -> Vec<DiffEntry> {
     let mut diffs = vec![];
 
     if !config.qemu.ignore_unset_registers && cpu1.registers_size != cpu2.registers_size {
@@ -46,6 +48,7 @@ pub fn diff_cpu(cpu1: &SHMCPU, cpu2: &SHMCPU, cpu_index: usize, config: &Config)
                 cpu2.registers_size.to_string(),
             ],
             "different number of CPU registers",
+            context,
         ));
 
         return diffs;
@@ -86,6 +89,7 @@ pub fn diff_cpu(cpu1: &SHMCPU, cpu2: &SHMCPU, cpu_index: usize, config: &Config)
             cpu_index,
             reg_index,
             config,
+            context.clone(),
         ));
     }
 
@@ -98,6 +102,7 @@ pub fn diff_register(
     cpu_index: usize,
     reg_index: usize,
     config: &Config,
+    context: DiffContext,
 ) -> Vec<DiffEntry> {
     let mut diffs = vec![];
 
@@ -108,15 +113,17 @@ pub fn diff_register(
         diffs.push(DiffEntry::new(
             format!("cpu[{cpu_index}].registers[{reg_index}].size"),
             vec![reg1.size.to_string(), reg2.size.to_string()],
-            "different register sizes",
+            format!("different register sizes for {r1name}"),
+            context.clone(),
         ));
     }
 
     if r1name != r2name {
         diffs.push(DiffEntry::new(
             format!("cpu[{cpu_index}].registers[{reg_index}].name"),
-            vec![r1name, r2name],
+            vec![r1name.clone(), r2name.clone()],
             "different register names",
+            context.clone(),
         ));
     }
 
@@ -124,7 +131,8 @@ pub fn diff_register(
         diffs.push(DiffEntry::new(
             format!("cpu[{cpu_index}].registers[{reg_index}].data"),
             vec![reg1.data_slice_fmt(), reg2.data_slice_fmt()],
-            "different register data",
+            format!("different register data for {r1name}"),
+            context.clone(),
         ));
     }
 
