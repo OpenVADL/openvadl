@@ -25,6 +25,7 @@ import vadl.gcb.valuetypes.RelocationCtx;
 import vadl.gcb.valuetypes.RelocationFunctionLabel;
 import vadl.template.Renderable;
 import vadl.viam.Format;
+import vadl.viam.Instruction;
 import vadl.viam.Relocation;
 
 /**
@@ -53,17 +54,9 @@ public record Modifier(String value,
   /**
    * Create an absolute modifier for an {@link AutomaticallyGeneratedRelocation}.
    */
-  public static Modifier absolute(Format.Field imm) {
-    return new Modifier("MO_ABS_" + imm.identifier.lower(),
-        CompilerRelocation.Kind.ABSOLUTE,
-        Optional.empty());
-  }
-
-  /**
-   * Create an absolute modifier for an {@link AutomaticallyGeneratedRelocation}.
-   */
-  public static Modifier absolute(Format.FieldAccess fieldAccess) {
-    return new Modifier("MO_ABS_" + fieldAccess.identifier.lower(),
+  public static Modifier absolute(Instruction instruction, Format.FieldAccess fieldAccess) {
+    return new Modifier(
+        "MO_ABS_" + instruction.identifier.lower() + "_" + fieldAccess.identifier.simpleName(),
         CompilerRelocation.Kind.ABSOLUTE,
         Optional.empty());
   }
@@ -71,16 +64,9 @@ public record Modifier(String value,
   /**
    * Create a relative modifier for an {@link AutomaticallyGeneratedRelocation}.
    */
-  public static Modifier relative(Format.Field imm) {
-    return new Modifier("MO_REL_" + imm.identifier.lower(), CompilerRelocation.Kind.RELATIVE,
-        Optional.empty());
-  }
-
-  /**
-   * Create a relative modifier for an {@link AutomaticallyGeneratedRelocation}.
-   */
-  public static Modifier relative(Format.FieldAccess fieldAccess) {
-    return new Modifier("MO_REL_" + fieldAccess.identifier.lower(),
+  public static Modifier relative(Instruction instruction, Format.FieldAccess fieldAccess) {
+    return new Modifier(
+        "MO_REL_" + instruction.identifier.lower() + "_" + fieldAccess.identifier.simpleName(),
         CompilerRelocation.Kind.RELATIVE,
         Optional.empty());
   }

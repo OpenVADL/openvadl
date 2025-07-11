@@ -297,10 +297,10 @@ public class GenerateLinkerComponentsPass extends Pass {
       List<Pair<Modifier, VariantKind>> linkModifierToVariantKind,
       List<AutomaticallyGeneratedRelocation> compilerRelocations,
       List<RelocationsBeforeElfExpansion> relocationsBeforeExpansion) {
-    var modifier = Modifier.relative(imm);
+    var modifier = Modifier.relative(instruction, imm);
     modifiers.add(modifier);
 
-    var variantKind = VariantKind.relative(imm);
+    var variantKind = VariantKind.relative(instruction, imm);
     variantKinds.add(variantKind);
     linkModifierToVariantKind.add(Pair.of(modifier, variantKind));
 
@@ -340,10 +340,10 @@ public class GenerateLinkerComponentsPass extends Pass {
       List<AutomaticallyGeneratedRelocation> compilerRelocations,
       List<RelocationsBeforeElfExpansion> relocationsBeforeExpansion) {
 
-    var modifier = Modifier.absolute(imm);
+    var modifier = Modifier.absolute(instruction, imm);
     modifiers.add(modifier);
 
-    var variantKind = VariantKind.absolute(imm);
+    var variantKind = VariantKind.absolute(instruction, imm);
     variantKinds.add(variantKind);
     linkModifierToVariantKind.add(Pair.of(modifier, variantKind));
 
