@@ -126,6 +126,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
         lcbConfiguration().targetName().value().toLowerCase(),
         "pointerAlignment", DataLayoutProvider.pointerAlignment(abi),
         "registers", output.registers(),
+        "aliasRegisters", output.aliasRegisters(),
         "registerFiles", List.of(
             new WrappedRegisterFile(registerClass, allocationSeq)
         ));

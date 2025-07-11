@@ -83,6 +83,20 @@ public class ArtificialResource extends Resource {
     return writeProcedure;
   }
 
+  /**
+   * The {@link ArtificialResource} is an alias for a register file.
+   */
+  public boolean isRegisterFile() {
+    return readFunction.parameters().length == 1;
+  }
+
+  /**
+   * The {@link ArtificialResource} is an alias for a concrete register.
+   */
+  public boolean isRegister() {
+    return readFunction.parameters().length == 0;
+  }
+
   @Override
   public void verify() {
     super.verify();

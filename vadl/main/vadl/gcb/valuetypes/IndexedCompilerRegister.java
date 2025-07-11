@@ -46,8 +46,9 @@ public class IndexedCompilerRegister extends CompilerRegister {
                                  String asmName,
                                  List<String> altNames,
                                  int dwarfNumber,
-                                 int isArtificial) {
-    super(registerFile.generateRegisterFileName(index), asmName, altNames, dwarfNumber, index);
+                                 boolean isArtificial) {
+    super(registerFile.generateRegisterFileName(index), asmName, altNames, dwarfNumber, index,
+        isArtificial);
     this.index = index;
   }
 
@@ -86,7 +87,7 @@ public class IndexedCompilerRegister extends CompilerRegister {
       int dwarfNumber = dwarfNumberOffset + addr;
 
       registers.add(new IndexedCompilerRegister(registerFile, addr, alias, altNames, dwarfNumber,
-          isArtificial ? 1 : 0));
+          isArtificial));
     }
 
     return registers;
