@@ -145,7 +145,8 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
                 argument.location())
             .build();
       }
-    } else if (node.builtIn() == BuiltInTable.DECIMAL) {
+      // TODO: Implement UDEC builtin
+    } else if (node.builtIn() == BuiltInTable.SDEC) {
       ensure(node.arguments().size() == 1, "Expected only one argument");
       writeImmediateWithRadix(node, 10);
     } else if (node.builtIn() == BuiltInTable.HEX) {

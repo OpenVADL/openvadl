@@ -345,4 +345,14 @@ public class ParserTest {
 
     Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog));
   }
+
+  @Test
+  void parseUdecSdec() {
+    var prog = """
+        function a(bits: Bits<32>) -> String = udec(bits)
+        function b(bits: Bits<32>) -> String = sdec(bits)
+        """;
+
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog));
+  }
 }
