@@ -251,6 +251,10 @@ public class GenerateInstructionOperandsPass extends Pass {
         PseudoNodeOperandCollectorDispatcher.dispatch(handler, writeRegTensorNode.condition());
         PseudoNodeOperandCollectorDispatcher.dispatch(handler, writeRegTensorNode.value());
         // We don't handle the indices because they are considered output operands.
+      } else if(sideEffectNode instanceof WriteArtificialResNode writeArtificialResNode) {
+        PseudoNodeOperandCollectorDispatcher.dispatch(handler, writeArtificialResNode.condition());
+        PseudoNodeOperandCollectorDispatcher.dispatch(handler, writeArtificialResNode.value());
+        // We don't handle the indices because they are considered output operands.
       }
     });
 
