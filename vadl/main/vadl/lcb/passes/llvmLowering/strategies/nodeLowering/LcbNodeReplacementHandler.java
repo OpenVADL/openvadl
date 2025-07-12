@@ -494,6 +494,7 @@ public class LcbNodeReplacementHandler {
       }
     } else {
       LcbNodeReplacementHandlerDispatcher.dispatch(this, sliceNode.value());
+      Objects.requireNonNull(sliceNode.graph()).add(new LlvmUnlowerableSD());
     }
   }
 
