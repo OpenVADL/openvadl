@@ -19,8 +19,8 @@ impl Config {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tracing {
-    #[serde(default = "default_true")]
-    pub enable: bool,
+    #[serde(default = "TracingMode::default")]
+    pub mode: TracingMode,
 
     #[serde(default = "default_tracing_dir")]
     pub dir: String,
@@ -29,8 +29,18 @@ pub struct Tracing {
     pub file: String,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum TracingMode {
+    #[default]
+    None,
+    Collect,
+    Threaded,
+    Sync,
+}
+
 fn default_tracing_file() -> String {
-    "trace.json".into()
+    "trace.sqlite3".into()
 }
 
 fn default_tracing_dir() -> String {
@@ -187,7 +197,7 @@ impl Qemu {
     pub fn set_inverse_reg_map(&mut self) {
         self.gdb_reg_map_inverse = self.gdb_reg_map
             .iter()
-            .map(|(k, v)| (v.clone(), k.clone()))
+           .map(|(k, v)| (v.clone(), k.clone()))
             .collect();
     }
 }

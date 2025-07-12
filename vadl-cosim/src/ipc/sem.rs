@@ -13,7 +13,6 @@ pub struct Semaphore {
     name: String,
 }
 
-
 pub enum TimedWaitState {
     Timeout,
     Success,

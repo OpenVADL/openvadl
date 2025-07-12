@@ -1,63 +1,13 @@
-use std::{
-    collections::VecDeque,
-    mem::ManuallyDrop,
-    sync::{Arc, RwLock},
-};
-
-use anyhow::{Result, bail};
-use serde::Serialize;
+use anyhow::Result;
+use rusqlite::Connection;
 use tracing::debug;
 
 use crate::{
-    config::Config,
+    config::{Config, TracingMode},
     diff::{DiffContextClient, DiffEntry, Report, diff::diff_cpus},
-    ipc::{
-        cstructs::{BrokerSHMExec, BrokerSHMTB},
-        qemu::Client,
-    },
+    ipc::qemu::Client,
+    trace::{TraceStore, trace_collect, trace_sync, trace_threaded},
 };
-
-#[derive(Debug, Serialize)]
-pub enum TraceData {
-    TB(Box<BrokerSHMTB>),
-    Exec(Box<BrokerSHMExec>),
-}
-
-#[derive(Debug)]
-pub struct BoundedVecDeque<T> {
-    pub deque: VecDeque<T>,
-    limit: Option<usize>,
-}
-
-impl<T> BoundedVecDeque<T> {
-    fn new(limit: Option<usize>) -> Self {
-        BoundedVecDeque {
-            deque: VecDeque::default(),
-            limit,
-        }
-    }
-}
-
-impl<T> BoundedVecDeque<T> {
-    pub fn push(&mut self, elem: T) {
-        self.deque.push_back(elem);
-        if let Some(limit) = self.limit
-            && limit < self.deque.len()
-        {
-            self.deque.pop_front();
-        }
-    }
-}
-
-impl<T> IntoIterator for BoundedVecDeque<T> {
-    type Item = T;
-
-    type IntoIter = std::collections::vec_deque::IntoIter<Self::Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.deque.into_iter()
-    }
-}
 
 #[derive(Debug)]
 struct ClientSyncInfo {
@@ -75,8 +25,10 @@ impl ClientSyncInfo {
 
 pub struct Broker {
     clients: Vec<Client>,
-    pub traces: Arc<RwLock<BoundedVecDeque<Vec<TraceData>>>>,
+    pub trace_store: TraceStore,
 }
+
+pub type DBConnection = Connection;
 
 impl Broker {
     pub fn create(config: &Config) -> Result<Self> {
@@ -88,15 +40,9 @@ impl Broker {
             .map(|(idx, _)| Client::create(config, idx))
             .collect::<Result<Vec<_>>>()?;
 
-        let trace_limit = if config.testing.max_trace_length < 0 {
-            None
-        } else {
-            Some(config.testing.max_trace_length as usize)
-        };
-
         Ok(Self {
             clients,
-            traces: Arc::new(RwLock::new(BoundedVecDeque::new(trace_limit))),
+            trace_store: TraceStore::new(),
         })
     }
 
@@ -256,7 +202,6 @@ impl Broker {
                         let ctx1 = DiffContextClient::from_tb(c1, c1insn);
                         let ctx2 = DiffContextClient::from_tb(c2, c2insn);
 
-                        // NOTE: also diff instruction info especially for "tb-strict"
                         return diff_cpus(
                             &c1insn.cpus,
                             c1insn.init_mask,
@@ -274,41 +219,25 @@ impl Broker {
         Vec::new()
     }
 
-    fn add_trace_entry(&mut self, trace: Vec<TraceData>) -> Result<()> {
-        let Ok(mut lock) = self.traces.write() else {
-            bail!("rwlock of trace-queue is poisoned");
-        };
-
-        lock.push(trace);
-
-        Ok(())
-    }
-
+    /// Copies (for each client) the current state of the shared memory and spawns a task which
+    /// stores the data in a database.
+    //
+    /// The trace-data is guaranteed (assuming no db-error occurs) to be stored in the database but it is not
+    /// blocking since this would drastically reduce cosimulation performance.
+    ///
+    /// The trace-data is guaranteed to be fully available once the process exits.
+    ///
+    /// NOTE: The copy of the shared memory is necessary since no lock is placed on it (which would
+    /// basically transform the function into a blocking function).
     fn trace_clients(&mut self, config: &Config) -> Result<()> {
-        if !config.tracing.enable {
-            return Ok(());
+        match config.tracing.mode {
+            TracingMode::None => Ok(()),
+            TracingMode::Collect => {
+                trace_collect(&self.clients, config, &mut self.trace_store);
+                Ok(())
+            }
+            TracingMode::Threaded => trace_threaded(&self.clients, config),
+            TracingMode::Sync => trace_sync(&self.clients, config),
         }
-
-        let trace = match config.testing.protocol.layer {
-            crate::config::ProtocolLayer::Insn => self
-                .clients
-                .iter()
-                .map(|c| unsafe { c.shm.read().shm_exec.clone() })
-                .map(ManuallyDrop::into_inner)
-                .map(Box::new)
-                .map(TraceData::Exec)
-                .collect(),
-            crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => self
-                .clients
-                .iter()
-                .map(|c| unsafe { c.shm.read().shm_tb.clone() })
-                .map(ManuallyDrop::into_inner)
-                .map(Box::new)
-                .map(TraceData::TB)
-                .collect(),
-        };
-
-        self.add_trace_entry(trace)?;
-        Ok(())
     }
 }

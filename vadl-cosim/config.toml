@@ -174,20 +174,34 @@ format = "json"
 [logging]
 enable = true 
 # tracing log-levels as defined here: https://docs.rs/tracing/latest/tracing/struct.Level.html#implementations
-level = "debug"
+level = "info"
 
 # The directory will also contain files for the stdout and stderr of each client
 dir = "./cosim-run/log"
 file = "cosim.log"
 
-[tracing]
-enable = true
-
-dir = "./cosim-run/trace"
-file = "trace.json"
-
 # Clears the logfile every time the program is run
 clear_on_rerun = true
+
+# Tracing means collecting the data from the qemu clients at *every execution step*
+# This slows the cosimulation process.
+# Therefore, four tracing modes are available:
+#	- "none" (default): Disables tracing - fastest option but no additional information for debugging.
+#	- "collect": Collects tracing-data but doesn't write it to disk until after cosimulation is done
+#			   This causes a performance impact of roughly 2x but the data is not available during interactive debugging
+#	- "threaded": The tracing-data is writting while the cosimulation process runs by using a threadpool. 
+#				  Marginally slower than the "collect" mode.
+#				  The data is available during interactive debugging but takes some time to sync to the current state.
+#	- "sync": Tracing data is synchronously written to the database. By far the slowest option, "threaded" should usually be preferred.
+# The data is always "tagged" with a date (when was the cosimulation-run started) and a counter that orders entries inside a cosimulation-run.
+# Therefore even if the data is entered out-of-order in the database it is still possible to order it correctly.
+[tracing]
+mode = "none"
+
+dir = "./cosim-run/trace"
+
+# NOTE: The cosimulation cli can be used to generate a sqlite3 db-file with the necessary tables created.
+file = "trace.sqlite3"
 
 [dev]
 # Prints the loaded configuration if set to true and exits

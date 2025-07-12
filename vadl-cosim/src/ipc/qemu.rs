@@ -25,8 +25,6 @@ pub struct Client {
     pub run_count: u64,
 }
 
-unsafe impl Send for Client {}
-
 impl Client {
     pub fn run_n_times(&mut self, n: u32, config: &Config) {
         for _ in 0..n {

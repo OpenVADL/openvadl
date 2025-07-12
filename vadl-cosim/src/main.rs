@@ -1,4 +1,4 @@
-use std::{fs::File, io::Write, path::Path, str::FromStr};
+use std::str::FromStr;
 
 use anyhow::Result;
 use clap::Parser;
@@ -6,22 +6,29 @@ use figment::{
     Figment,
     providers::{Format, Toml},
 };
-use tracing::{info, Level};
+use tracing::{Level, info};
 
-use crate::{cli::Cli, config::Config, cosim::Broker};
+use crate::{
+    cli::Cli,
+    config::Config,
+    cosim::Broker,
+    trace::{
+        connect,
+        db::{insert_broker_shm_exec, insert_broker_shm_tb},
+    },
+};
 
+pub mod cli;
 pub mod config;
 pub mod cosim;
 pub mod diff;
 pub mod ipc;
-pub mod cli;
+pub mod trace;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let mut config: Config = Figment::new()
-        .merge(Toml::file(cli.config))
-        .extract()?;
+    let mut config: Config = Figment::new().merge(Toml::file(cli.config)).extract()?;
 
     config.qemu.set_inverse_reg_map();
 
@@ -47,18 +54,21 @@ fn main() -> Result<()> {
 
     dbg!(report);
 
-    if config.tracing.enable {
-        let traces = &broker
-            .traces
-            .read()
-            .unwrap()
-            .deque;
-
-        let res = serde_json::to_string_pretty(traces)?;
-
-        let trace_path = Path::new(&config.tracing.dir).join(&config.tracing.file);
-        let mut f = File::create(trace_path)?;
-        f.write_all(res.as_bytes())?;
+    if config.tracing.mode == config::TracingMode::Collect {
+        for entry in broker.trace_store {
+            let c = config.clone();
+            rayon::spawn(move || {
+                let conn = connect(&c).unwrap();
+                match entry {
+                    trace::TraceData::TB(broker_shmtb) => {
+                        let _ = insert_broker_shm_tb(&conn, &broker_shmtb);
+                    },
+                    trace::TraceData::Exec(broker_shmexec) => {
+                        let _ = insert_broker_shm_exec(&conn, &broker_shmexec);
+                    },
+                }
+            });
+        }
     }
 
     Ok(())

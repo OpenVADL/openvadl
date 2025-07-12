@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use serde::{ser::SerializeStruct, Serialize};
 
 use crate::config::Config;
@@ -55,7 +53,7 @@ impl SHMRegister {
         if let Some(entry) = config.qemu.gdb_reg_map.get(s) {
             entry
         } else {
-            &s
+            s
         }
     }
 }
