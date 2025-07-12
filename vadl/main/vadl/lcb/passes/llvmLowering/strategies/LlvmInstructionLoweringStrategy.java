@@ -237,6 +237,7 @@ public abstract class LlvmInstructionLoweringStrategy {
 
         operands.set(i, new TableGenInstructionLabelOperand(llvmNode));
       } else if (operand instanceof GcbInstructionImmediateOperand immediateOperand
+          && !(operand instanceof TableGenInstructionLabelOperand)
           && !fieldAccesses.containsKey(immediateOperand.fieldAccess())
           && !basicBlocks.containsKey(immediateOperand.fieldAccess())) {
         // This branch is taken when the field access was removed from the instruction's behavior

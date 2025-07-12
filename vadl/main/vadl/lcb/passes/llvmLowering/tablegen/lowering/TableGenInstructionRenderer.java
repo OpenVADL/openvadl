@@ -129,15 +129,6 @@ public final class TableGenInstructionRenderer {
     );
   }
 
-  private static String renderRegisterRef(RegisterRef x) {
-    if (x.hasAddress()) {
-      return x.identifier.simpleName() + Objects.requireNonNull(x.address()).asVal().intValue();
-    } else {
-      return x.identifier.simpleName();
-    }
-  }
-
-
   /**
    * Transforms the given {@link PseudoInstruction} into a string which can be used by LLVM's
    * TableGen.
@@ -339,6 +330,14 @@ public final class TableGenInstructionRenderer {
     return String.format("let Inst{%s} = %s{%s};", inst,
         fieldEncoding.getSourceBitBlockName(),
         source);
+  }
+
+  private static String renderRegisterRef(RegisterRef x) {
+    if (x.hasAddress()) {
+      return x.identifier.simpleName() + Objects.requireNonNull(x.address()).asVal().intValue();
+    } else {
+      return x.identifier.simpleName();
+    }
   }
 
   /**

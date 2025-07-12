@@ -615,6 +615,7 @@ public class LcbNodeReplacementHandler {
   }
 
   @Handler
+  @SuppressWarnings("MissingJavadocMethod")
   public void handle(WriteArtificialResNode writeArtificialResNode) {
     if (writeArtificialResNode.isDeleted()) {
       return;
