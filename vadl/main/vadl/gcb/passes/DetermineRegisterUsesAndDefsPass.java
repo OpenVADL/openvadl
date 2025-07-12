@@ -221,7 +221,7 @@ public class DetermineRegisterUsesAndDefsPass extends Pass {
    * Get a list of {@link RegisterRef} which are read. It is considered a
    * register usage when a {@link ReadRegTensorNode} with a
    * constant address exists. However, the only registers without any constraints on the
-   * register file will be returned. Also program containers are not part of a "Use".
+   * register file will be returned. Also program counters are not part of a "Use".
    *
    * @param behavior of the {@link Instruction}.
    */

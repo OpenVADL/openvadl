@@ -19,6 +19,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 import static vadl.viam.ViamError.ensure;
 
 import java.util.BitSet;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
@@ -33,7 +34,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.viam.CompilerInstruction;
-import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 
@@ -122,9 +122,19 @@ public final class TableGenInstructionRenderer {
             .map(x -> (TableGenSelectionPattern) x)
             .map(TableGenInstructionRenderer::lower)
             .collect(Collectors.joining(",")),
-        instruction.getUses().stream().map(Definition::simpleName).collect(Collectors.joining(",")),
-        instruction.getDefs().stream().map(Definition::simpleName).collect(Collectors.joining(","))
+        instruction.getUses().stream().map(TableGenInstructionRenderer::renderRegisterRef)
+            .collect(Collectors.joining(",")),
+        instruction.getDefs().stream().map(TableGenInstructionRenderer::renderRegisterRef)
+            .collect(Collectors.joining(","))
     );
+  }
+
+  private static String renderRegisterRef(RegisterRef x) {
+    if (x.hasAddress()) {
+      return x.identifier.simpleName() + Objects.requireNonNull(x.address()).asVal().intValue();
+    } else {
+      return x.identifier.simpleName();
+    }
   }
 
 

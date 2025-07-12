@@ -44,6 +44,7 @@ public class RegisterRef extends Resource {
 
   @Nullable
   private Format refFormat;
+
   @Nullable
   private Constant address;
   private final List<RegisterTensor.Constraint> constraints;
@@ -132,6 +133,11 @@ public class RegisterRef extends Resource {
   @Override
   public void accept(DefinitionVisitor visitor) {
 
+  }
+
+  @Nullable
+  public Constant address() {
+    return address;
   }
 
   public List<RegisterTensor.Constraint> constraints() {
