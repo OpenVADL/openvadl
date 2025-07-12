@@ -63,8 +63,9 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
             // When a field access is changed to a field access function it is
             // added the instruction format's field accesses. Therefore,
             // we will have a lot field accesses which are not part of the instruction's behavior.
-            if (fieldAccess instanceof
-                NormalizeFieldsToFieldAccessFunctionsPass.GeneratedFieldAccess genFieldAccess) {
+            if (fieldAccess
+                instanceof NormalizeFieldsToFieldAccessFunctionsPass.GeneratedFieldAccess
+                genFieldAccess) {
               if (!genFieldAccess.instruction().equals(instruction)) {
                 // If we have generated a field access for an instruction then only generate
                 // an immediate record if it's the same instruction.
