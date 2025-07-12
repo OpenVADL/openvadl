@@ -221,6 +221,9 @@ public class PassOrders {
     // needs to know about those status built-in calls.
     order.skip(StatusBuiltInInlinePass.class);
 
+    // We need to keep the aliases.
+    order.skip(ArtificialResInlinerPass.class);
+
     order.add(new GenerateCompilerRegistersPass(gcbConfiguration));
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);

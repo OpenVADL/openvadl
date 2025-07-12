@@ -31,6 +31,7 @@ import vadl.pass.PassResults;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.InstrCallNode;
@@ -40,7 +41,9 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
  * Determine the uses and defs of registers.
@@ -168,22 +171,50 @@ public class DetermineRegisterUsesAndDefsPass extends Pass {
    * @param behavior of the {@link Instruction}.
    */
   private static List<RegisterRef> getRegisterDefs(Graph behavior) {
-    return behavior.getNodes(WriteRegTensorNode.class)
-        .filter(writeRegTensorNode -> writeRegTensorNode.indices().stream()
-            .allMatch(ExpressionNode::isConstant))
-        .filter(writeRegTensorNode -> writeRegTensorNode.registerTensor().constraints().length == 0)
-        .filter(readRegTensorNode -> !readRegTensorNode.isPcAccess())
-        .map(node -> {
-          var reg = node.regTensor();
-          reg.ensure(reg.indexDimensions().size() < 2,
-              "Only register and register files supported");
-          if (reg.isSingleRegister()) {
-            return new RegisterRef(reg);
-          } else {
-            return new RegisterRef(reg, ((ConstantNode) node.indices().getFirst()).constant());
-          }
-        })
+    var writeRegCandidates = behavior.getNodes(WriteRegTensorNode.class).toList();
+    var writeArtificialCandidates =
+        behavior.getNodes(WriteArtificialResNode.class)
+            .filter(node -> node.resourceDefinition().innerResourceRef() instanceof RegisterTensor)
+            .toList();
+
+    return Stream.concat(writeRegCandidates.stream()
+                .filter(node -> isRegister(node, node.registerTensor()))
+                .map(DetermineRegisterUsesAndDefsPass::map),
+            writeArtificialCandidates.stream()
+                .filter(node -> isRegister(node,
+                    (RegisterTensor) node.resourceDefinition().innerResourceRef())
+                    && node.resourceDefinition().readFunction().parameters().length == 0)
+                .map(DetermineRegisterUsesAndDefsPass::map)
+        )
         .toList();
+  }
+
+  private static boolean isRegister(WriteResourceNode node, RegisterTensor tensor) {
+    var allAddressesConstant = node.indices().stream()
+        .allMatch(ExpressionNode::isConstant);
+    var noConstraints = tensor.constraints().length == 0;
+    var noPc = true;
+
+    if (node instanceof WriteRegTensorNode tensorNode) {
+      noPc = !tensorNode.isPcAccess();
+    }
+
+    return allAddressesConstant && noConstraints && noPc;
+  }
+
+  private static RegisterRef map(WriteRegTensorNode node) {
+    var reg = node.registerTensor();
+    reg.ensure(reg.indexDimensions().size() < 2,
+        "Only register and register files supported");
+    if (reg.isSingleRegister()) {
+      return new RegisterRef(reg);
+    } else {
+      return new RegisterRef(reg, ((ConstantNode) node.indices().getFirst()).constant());
+    }
+  }
+
+  private static RegisterRef map(WriteArtificialResNode node) {
+    return new RegisterRef(node.resourceDefinition());
   }
 
   /**
