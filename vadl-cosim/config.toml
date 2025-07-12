@@ -48,7 +48,7 @@ pass_test_exec_to = "bios"
 # Applies additional arguments to the ISS-executable, e.g. `qemu-system-riscv64 -nographic -d plugin`
 additional_args = [
 	"-nographic",
-	"-d", "plugin"
+  # "-d", "plugin"
 ]
 
 # The following three options configure which instructions from the `test_exec` executable should actually be tested.
@@ -75,7 +75,7 @@ additional_args = [
 	"-M", "virt",
 	"-cpu", "cortex-a57",
 	"-semihosting",
-	"-d", "plugin",
+  # "-d", "plugin",
 ]
 
 skip_n_instructions = 0
@@ -179,6 +179,12 @@ level = "debug"
 # The directory will also contain files for the stdout and stderr of each client
 dir = "./cosim-run/log"
 file = "cosim.log"
+
+[tracing]
+enable = true
+
+dir = "./cosim-run/trace"
+file = "trace.json"
 
 # Clears the logfile every time the program is run
 clear_on_rerun = true

@@ -1,7 +1,7 @@
 use crate::{
     config::Config,
     diff::{DiffContext, DiffEntry},
-    ipc::cstructs::{SHMRegister, MAX_CPU_COUNT, SHMCPU},
+    ipc::cstructs::{MAX_CPU_COUNT, SHMCPU, SHMRegister},
 };
 
 pub fn diff_cpus(
@@ -30,16 +30,21 @@ pub fn diff_cpus(
         if flag == 1 {
             let cpu1 = &cpus1[idx];
             let cpu2 = &cpus2[idx];
-            diffs.append(&mut diff_cpu(cpu1, cpu2, idx, config, context.clone()));
+            diff_cpu(cpu1, cpu2, idx, config, context.clone(), &mut diffs);
         }
     }
 
     diffs
 }
 
-pub fn diff_cpu(cpu1: &SHMCPU, cpu2: &SHMCPU, cpu_index: usize, config: &Config, context: DiffContext) -> Vec<DiffEntry> {
-    let mut diffs = vec![];
-
+pub fn diff_cpu(
+    cpu1: &SHMCPU,
+    cpu2: &SHMCPU,
+    cpu_index: usize,
+    config: &Config,
+    context: DiffContext,
+    diffs: &mut Vec<DiffEntry>,
+) {
     if !config.qemu.ignore_unset_registers && cpu1.registers_size != cpu2.registers_size {
         diffs.push(DiffEntry::new(
             format!("cpu[{cpu_index}].registers.size"),
@@ -51,7 +56,7 @@ pub fn diff_cpu(cpu1: &SHMCPU, cpu2: &SHMCPU, cpu_index: usize, config: &Config,
             context,
         ));
 
-        return diffs;
+        return;
     }
 
     let mut cpus = [cpu1, cpu2];
@@ -62,38 +67,33 @@ pub fn diff_cpu(cpu1: &SHMCPU, cpu2: &SHMCPU, cpu_index: usize, config: &Config,
         let csub_reg = &sub_cpu.registers_slice()[reg_index];
         let rsub_name = csub_reg.mapped_name(config);
 
-        if config.qemu.ignore_registers.contains(&rsub_name) {
+        if config
+            .qemu
+            .ignore_registers
+            .contains(&rsub_name.to_string())
+        {
             continue;
         }
 
         // TODO: maybe store an inverted map
         if config.qemu.ignore_unset_registers
-            && !config
-                .qemu
-                .gdb_reg_map
-                .values()
-                .collect::<Vec<_>>()
-                .contains(&&rsub_name)
+            && !config.qemu.gdb_reg_map_inverse.contains_key(rsub_name)
         {
             continue;
         }
 
-        let csuper_reg = reg_by_name(
-            super_cpu.registers_slice(),
-            &csub_reg.name.to_string(),
-            config,
-        );
-        diffs.append(&mut diff_register(
+        let csuper_reg = reg_by_name(super_cpu.registers_slice(), csub_reg.name.as_str(), config);
+
+        diff_register(
             csub_reg,
             csuper_reg,
             cpu_index,
             reg_index,
             config,
             context.clone(),
-        ));
+            diffs,
+        );
     }
-
-    diffs
 }
 
 pub fn diff_register(
@@ -103,9 +103,8 @@ pub fn diff_register(
     reg_index: usize,
     config: &Config,
     context: DiffContext,
-) -> Vec<DiffEntry> {
-    let mut diffs = vec![];
-
+    diffs: &mut Vec<DiffEntry>,
+) {
     let r1name = reg1.mapped_name(config);
     let r2name = reg2.mapped_name(config);
 
@@ -121,7 +120,7 @@ pub fn diff_register(
     if r1name != r2name {
         diffs.push(DiffEntry::new(
             format!("cpu[{cpu_index}].registers[{reg_index}].name"),
-            vec![r1name.clone(), r2name.clone()],
+            vec![r1name.to_string(), r2name.to_string()],
             "different register names",
             context.clone(),
         ));
@@ -135,8 +134,6 @@ pub fn diff_register(
             context.clone(),
         ));
     }
-
-    diffs
 }
 
 fn reg_by_name<'a>(registers: &'a [SHMRegister], name: &str, config: &Config) -> &'a SHMRegister {

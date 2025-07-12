@@ -1,14 +1,16 @@
 use std::{
-    collections::VecDeque, mem::ManuallyDrop, sync::{Arc, RwLock}, thread::sleep, time::Duration
+    collections::VecDeque,
+    mem::ManuallyDrop,
+    sync::{Arc, RwLock},
 };
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use serde::Serialize;
 use tracing::debug;
 
 use crate::{
     config::Config,
-    diff::{diff::diff_cpus, DiffContextClient, DiffEntry, Report},
+    diff::{DiffContextClient, DiffEntry, Report, diff::diff_cpus},
     ipc::{
         cstructs::{BrokerSHMExec, BrokerSHMTB},
         qemu::Client,
@@ -271,7 +273,7 @@ impl Broker {
         // if less than 2 clients are configured -> no diff will be returned
         Vec::new()
     }
-    
+
     fn add_trace_entry(&mut self, trace: Vec<TraceData>) -> Result<()> {
         let Ok(mut lock) = self.traces.write() else {
             bail!("rwlock of trace-queue is poisoned");
@@ -283,29 +285,27 @@ impl Broker {
     }
 
     fn trace_clients(&mut self, config: &Config) -> Result<()> {
-        let trace = match config.testing.protocol.layer {
-            crate::config::ProtocolLayer::Insn => {
-                
-                self.clients
-                    .iter()
-                    .map(|c| unsafe { c.shm.read().shm_exec.clone() })
-                    .map(ManuallyDrop::into_inner)
-                    .map(Box::new)
-                    .map(TraceData::Exec)
-                    .collect()
-            },
-            crate::config::ProtocolLayer::TB |
-            crate::config::ProtocolLayer::TBStrict => {
-                
+        if !config.tracing.enable {
+            return Ok(());
+        }
 
-                self.clients
-                    .iter()
-                    .map(|c| unsafe { c.shm.read().shm_tb.clone() })
-                    .map(ManuallyDrop::into_inner)
-                    .map(Box::new)
-                    .map(TraceData::TB)
-                    .collect()
-            },
+        let trace = match config.testing.protocol.layer {
+            crate::config::ProtocolLayer::Insn => self
+                .clients
+                .iter()
+                .map(|c| unsafe { c.shm.read().shm_exec.clone() })
+                .map(ManuallyDrop::into_inner)
+                .map(Box::new)
+                .map(TraceData::Exec)
+                .collect(),
+            crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => self
+                .clients
+                .iter()
+                .map(|c| unsafe { c.shm.read().shm_tb.clone() })
+                .map(ManuallyDrop::into_inner)
+                .map(Box::new)
+                .map(TraceData::TB)
+                .collect(),
         };
 
         self.add_trace_entry(trace)?;

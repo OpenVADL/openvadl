@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt::Display};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -8,12 +8,33 @@ pub struct Config {
     pub testing: Testing,
     pub logging: Logging,
     pub dev: Dev,
+    pub tracing: Tracing,
 }
 
 impl Config {
     pub fn for_client(&self, idx: usize) -> &Client {
-        &self.qemu.clients[idx]  
+        &self.qemu.clients[idx]
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Tracing {
+    #[serde(default = "default_true")]
+    pub enable: bool,
+
+    #[serde(default = "default_tracing_dir")]
+    pub dir: String,
+
+    #[serde(default = "default_tracing_file")]
+    pub file: String,
+}
+
+fn default_tracing_file() -> String {
+    "trace.json".into()
+}
+
+fn default_tracing_dir() -> String {
+    "./trace".into()
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -26,7 +47,7 @@ pub struct Logging {
 
     #[serde(default = "default_logging_dir")]
     pub dir: String,
-    
+
     #[serde(default = "default_true")]
     pub enable: bool,
 
@@ -42,9 +63,12 @@ fn default_logging_dir() -> String {
     "./logs".into()
 }
 
-fn default_true() -> bool { true }
-fn default_false() -> bool { false }
-
+fn default_true() -> bool {
+    true
+}
+fn default_false() -> bool {
+    false
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Out {
@@ -63,9 +87,8 @@ fn default_out_dir() -> String {
 #[serde(rename_all = "lowercase")]
 pub enum OutFormat {
     #[default]
-    Json
+    Json,
 }
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Protocol {
@@ -78,13 +101,13 @@ pub struct Protocol {
     pub stop_after_n_instructions: u32,
 
     #[serde(default = "Out::default")]
-    pub out: Out
+    pub out: Out,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "lowercase")]
 pub enum ProtocolMode {
-    Lockstep
+    Lockstep,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -93,7 +116,7 @@ pub enum ProtocolLayer {
     Insn,
     TB,
     #[serde(rename = "tb-strict")]
-    TBStrict
+    TBStrict,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -104,7 +127,6 @@ pub struct Testing {
 
     pub max_trace_length: i32,
 }
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ClientGDB {
@@ -132,7 +154,7 @@ pub struct Client {
 #[serde(rename_all = "lowercase")]
 pub enum TestExecDestination {
     Bios,
-    Kernel
+    Kernel,
 }
 
 impl Display for TestExecDestination {
@@ -150,15 +172,27 @@ pub struct Qemu {
     pub plugin: String,
     pub clients: Vec<Client>,
     pub gdb_reg_map: HashMap<String, String>,
+
+    #[serde(default = "empty_hashmap")]
+    pub gdb_reg_map_inverse: HashMap<String, String>,
     pub ignore_registers: Vec<String>,
-    pub ignore_unset_registers: bool
+    pub ignore_unset_registers: bool,
 }
 
+fn empty_hashmap() -> HashMap<String, String> {
+    HashMap::new()
+}
+
+impl Qemu {
+    pub fn set_inverse_reg_map(&mut self) {
+        self.gdb_reg_map_inverse = self.gdb_reg_map
+            .iter()
+            .map(|(k, v)| (v.clone(), k.clone()))
+            .collect();
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Dev {
-    pub dry_run: bool
+    pub dry_run: bool,
 }
-
-
-

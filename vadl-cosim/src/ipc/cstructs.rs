@@ -23,16 +23,13 @@ impl Serialize for SHMString {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer {
-        serializer.serialize_str(&self.to_string())
+        serializer.serialize_str(self.as_str())
     }
 }
 
-impl Display for SHMString {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = String::from_utf8(self.value[..self.len].to_vec())
-            .expect("invalid utf8 sequence in SHMString");
-
-        write!(f, "{s}")
+impl SHMString {
+    pub fn as_str(&self) -> &str {
+        std::str::from_utf8(&self.value[..self.len]).expect("valid utf8 sequence in SHMString")
     }
 }
 
@@ -53,12 +50,12 @@ impl SHMRegister {
         format!("{:02X?}", self.data_slice())
     }
 
-    pub fn mapped_name(&self, config: &Config) -> String {
-        let s = self.name.to_string();
-        if let Some(entry) = config.qemu.gdb_reg_map.get(&s) {
-            entry.clone()
+    pub fn mapped_name<'a>(&'a self, config: &'a Config) -> &'a str {
+        let s = self.name.as_str();
+        if let Some(entry) = config.qemu.gdb_reg_map.get(s) {
+            entry
         } else {
-            s
+            &s
         }
     }
 }

@@ -1,4 +1,4 @@
-use std::{fs::File, io::Write, str::FromStr};
+use std::{fs::File, io::Write, path::Path, str::FromStr};
 
 use anyhow::Result;
 use clap::Parser;
@@ -23,6 +23,8 @@ fn main() -> Result<()> {
         .merge(Toml::file(cli.config))
         .extract()?;
 
+    config.qemu.set_inverse_reg_map();
+
     if let Some(test_exec) = cli.test_exec {
         config.testing.test_exec = test_exec;
     }
@@ -45,16 +47,19 @@ fn main() -> Result<()> {
 
     dbg!(report);
 
-    let traces = &broker
-        .traces
-        .read()
-        .unwrap()
-        .deque;
+    if config.tracing.enable {
+        let traces = &broker
+            .traces
+            .read()
+            .unwrap()
+            .deque;
 
-    let res = serde_json::to_string_pretty(traces)?;
+        let res = serde_json::to_string_pretty(traces)?;
 
-    let mut f = File::create("./trace.json")?;
-    f.write_all(res.as_bytes())?;
+        let trace_path = Path::new(&config.tracing.dir).join(&config.tracing.file);
+        let mut f = File::create(trace_path)?;
+        f.write_all(res.as_bytes())?;
+    }
 
     Ok(())
 }
