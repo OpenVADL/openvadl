@@ -33,6 +33,7 @@ import vadl.pass.PassResults;
 import vadl.viam.Abi;
 import vadl.viam.Specification;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.passes.NormalizeFieldsToFieldAccessFunctionsPass;
 
 /**
  * This pass extracts the immediates from the TableGen records.
@@ -59,6 +60,19 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
     viam.isa().orElseThrow()
         .ownInstructions().forEach(instruction -> {
           instruction.format().fieldAccesses().forEach(fieldAccess -> {
+            // When a field access is changed to a field access function it is
+            // added the instruction format's field accesses. Therefore,
+            // we will have a lot field accesses which are not part of the instruction's behavior.
+            if (fieldAccess
+                instanceof NormalizeFieldsToFieldAccessFunctionsPass.GeneratedFieldAccess
+                genFieldAccess) {
+              if (!genFieldAccess.instruction().equals(instruction)) {
+                // If we have generated a field access for an instruction then only generate
+                // an immediate record if it's the same instruction.
+                return;
+              }
+            }
+
             var originalType = abi.stackPointer().registerFile().resultType();
             var llvmType = ValueType.from(originalType);
 
