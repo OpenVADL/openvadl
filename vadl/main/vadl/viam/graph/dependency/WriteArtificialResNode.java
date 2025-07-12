@@ -20,14 +20,16 @@ import java.util.List;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.ArtificialResource;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 
 /**
  * A write to an {@link ArtificialResource}.
  */
-public class WriteArtificialResNode extends WriteResourceNode {
+public class WriteArtificialResNode extends WriteResourceNode implements HasRegisterTensor {
 
   @DataValue
   protected ArtificialResource resource;
@@ -82,5 +84,17 @@ public class WriteArtificialResNode extends WriteResourceNode {
   @Override
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public RegisterTensor registerTensor() {
+    return (RegisterTensor) resource.innerResourceRef();
+  }
+
+  @Override
+  public boolean hasRegisterFile() {
+    // If parameter's length is 1 then it is a register file.
+    // If parameter's length is 0 then it is a register.
+    return resource.isRegisterFile() && resource.readFunction().parameters().length == 1;
   }
 }

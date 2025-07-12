@@ -251,7 +251,7 @@ public class GenerateInstructionOperandsPass extends Pass {
         PseudoNodeOperandCollectorDispatcher.dispatch(handler, writeRegTensorNode.condition());
         PseudoNodeOperandCollectorDispatcher.dispatch(handler, writeRegTensorNode.value());
         // We don't handle the indices because they are considered output operands.
-      } else if(sideEffectNode instanceof WriteArtificialResNode writeArtificialResNode) {
+      } else if (sideEffectNode instanceof WriteArtificialResNode writeArtificialResNode) {
         PseudoNodeOperandCollectorDispatcher.dispatch(handler, writeArtificialResNode.condition());
         PseudoNodeOperandCollectorDispatcher.dispatch(handler, writeArtificialResNode.value());
         // We don't handle the indices because they are considered output operands.
@@ -497,7 +497,8 @@ public class GenerateInstructionOperandsPass extends Pass {
    */
   private List<WriteResourceNode> extractWrites(Graph graph) {
     return Stream.concat(graph.getNodes(WriteRegTensorNode.class)
-                .filter(e -> e.regTensor().isRegisterFile()),
+                .filter(e -> e.regTensor().isRegisterFile())
+                .map(x -> (WriteResourceNode) x),
             graph.getNodes(WriteArtificialResNode.class).filter(
                 e -> e.resourceDefinition().innerResourceRef() instanceof RegisterTensor tensor
                     && tensor.isRegisterFile()))
