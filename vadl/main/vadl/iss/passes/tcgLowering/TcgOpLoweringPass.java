@@ -464,7 +464,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
       // extract  dest, t0,  0, toWidth
 
       var t0 = tmp(0);
-      var toWidth = intU(toHandle.fromWidth(), 32).toNode();
+      var toWidth = intU(toHandle.toWidth(), 32).toNode();
       replaceCurrent(
           new TcgExtractNode(t0, src, ofs, len, TcgExtend.SIGN),
           new TcgExtractNode(dest, t0, ofs, toWidth, TcgExtend.ZERO)
