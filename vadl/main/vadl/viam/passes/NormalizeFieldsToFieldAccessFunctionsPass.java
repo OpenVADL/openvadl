@@ -30,6 +30,7 @@ import vadl.pass.PassResults;
 import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.Format;
+import vadl.viam.Format.FieldAccess;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
@@ -87,10 +88,11 @@ public class NormalizeFieldsToFieldAccessFunctionsPass extends Pass {
                     instruction.format().identifier.append(
                         instruction.identifier().last()
                             .append(fieldRefNode.formatField().identifier.last().parts()).parts());
-                var fieldAccess = new Format.FieldAccess(
+                var fieldAccess = new GeneratedFieldAccess(
                     id,
                     createAccessFunction(id, fieldRefNode),
-                    createPredicateFunction(id, fieldRefNode)
+                    createPredicateFunction(id, fieldRefNode),
+                    instruction
                 );
                 instruction.format().fieldAccesses().add(fieldAccess);
                 var fieldAccessRefNode = new FieldAccessRefNode(
@@ -144,5 +146,37 @@ public class NormalizeFieldsToFieldAccessFunctionsPass extends Pass {
     ControlNode startNode = graph.add(new StartNode(endNode));
     startNode.setSourceLocation(fieldRefNode.location());
     return new Function(id, new Parameter[] {}, Type.bool(), graph);
+  }
+
+  /**
+   * This class extends {@link FieldAccess} and it's intention is to store the {@link Instruction}
+   * which it was generated for. The {@link NormalizeFieldsToFieldAccessFunctionsPass} might
+   * create a lot of field accesses and adds them to the {@link Format}. It's easier for later
+   * passes to generate only the used field access functions when we store a reference to the
+   * {@link Instruction} which generated it.
+   */
+  public static class GeneratedFieldAccess extends FieldAccess {
+    private final Instruction instruction;
+
+    /**
+     * Constructs a new FieldAccess object with the given identifier, accessFunction function,
+     * encoding function, and predicate function.
+     *
+     * @param identifier     The identifier of the Immediate.
+     * @param accessFunction The access function of the FieldAccess.  {@code () -> T}
+     * @param predicate      The predicate function of the Immediate. {@code () -> Bool}
+     * @param instruction    The instruction for which the {@link FieldAccess} was generated for.
+     */
+    public GeneratedFieldAccess(Identifier identifier,
+                                Function accessFunction,
+                                @Nullable Function predicate,
+                                Instruction instruction) {
+      super(identifier, accessFunction, predicate);
+      this.instruction = instruction;
+    }
+
+    public Instruction instruction() {
+      return instruction;
+    }
   }
 }
