@@ -1034,16 +1034,35 @@ public class BuiltInTable {
           .build();
 
   /**
-   * Formats value to decimal string.
+   * Formats value to signed decimal string.
    *
-   * <p>{@code function decimal(Bits<N>) -> String<M>}
+   * <p>{@code function sdec(Bits<N>) -> String<M>}
    */
-  public static final BuiltIn DECIMAL =
-      func("decimal",
+  public static final BuiltIn SDEC =
+      func("sdec",
           Type.relation(BitsType.class, StringType.class))
           .takesDefault()
           .returns(Type.string())
-          .computeUnary(a -> new Constant.Str(a.asVal().decimal()))
+          .computeUnary(a -> new Constant.Str(
+              // cast to signed type and get decimal value
+              a.asVal().castTo(Type.signedInt(a.type().asDataType().bitWidth()))
+                  .decimal()))
+          .build();
+
+  /**
+   * Formats value to unsigned decimal string.
+   *
+   * <p>{@code function udec(Bits<N>) -> String<M>}
+   */
+  public static final BuiltIn UDEC =
+      func("udec",
+          Type.relation(BitsType.class, StringType.class))
+          .takesDefault()
+          .returns(Type.string())
+          .computeUnary(a -> new Constant.Str(
+              // cast to unsigned type and get decimal value
+              a.asVal().castTo(Type.unsignedInt(a.type().asDataType().bitWidth()))
+                  .decimal()))
           .build();
 
   /**
@@ -1295,7 +1314,8 @@ public class BuiltInTable {
       REGISTER,
 
       BINARY,
-      DECIMAL,
+      SDEC,
+      UDEC,
       HEX,
       OCTAL,
 
@@ -1542,7 +1562,7 @@ public class BuiltInTable {
     /**
      * Creates a {@link BuiltInCall} node from this built-in and the given arguments.
      */
-    public BuiltInCall  call(NodeList<ExpressionNode> arguments) {
+    public BuiltInCall call(NodeList<ExpressionNode> arguments) {
       return BuiltInCall.of(this, arguments);
     }
   }

@@ -107,7 +107,8 @@ public class ParserGenerator {
   public static String mapToName(ExpressionNode x) {
     if (x instanceof BuiltInCall b && b.builtIn() == BuiltInTable.MNEMONIC) {
       return "mnemonic";
-    } else if (x instanceof BuiltInCall b && b.builtIn() == BuiltInTable.DECIMAL) {
+      // TODO: Implement UDEC builtin
+    } else if (x instanceof BuiltInCall b && b.builtIn() == BuiltInTable.SDEC) {
       if (b.arguments().get(0) instanceof FieldRefNode frn) {
         return mapToName(frn);
       } else if (b.arguments().get(0) instanceof FieldAccessRefNode fac) {

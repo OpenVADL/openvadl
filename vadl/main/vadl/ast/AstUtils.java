@@ -45,6 +45,10 @@ class AstUtils {
     if (pseudoRewrites.containsKey(name)) {
       var singed = argTypes.stream().anyMatch(t -> t instanceof SIntType);
       name = pseudoRewrites.get(name).get(singed ? 0 : 1);
+    } else if (name.equals("decimal")) {
+      // TODO: Remove this once all decimal calls were replaced by s/udec in the VADL specs (#409)
+      // set decimal to be an alias of sdec
+      name = "sdec";
     }
 
     String finalBuiltinName = name;

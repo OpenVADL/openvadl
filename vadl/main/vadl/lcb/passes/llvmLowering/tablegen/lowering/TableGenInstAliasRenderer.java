@@ -83,8 +83,9 @@ public class TableGenInstAliasRenderer {
         } else if (to instanceof BuiltInCall builtInCall
             && builtInCall.builtIn() == BuiltInTable.MNEMONIC) {
           result.append(pseudoInstruction.simpleName());
+          // TODO: Implement UDEC builtin
         } else if (to instanceof BuiltInCall builtInCall
-            && builtInCall.builtIn() == BuiltInTable.DECIMAL) {
+            && builtInCall.builtIn() == BuiltInTable.SDEC) {
           to.applyOnInputs(this);
         } else if (to instanceof BuiltInCall builtInCall
             && builtInCall.builtIn() == BuiltInTable.HEX) {

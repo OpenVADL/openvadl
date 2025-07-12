@@ -173,7 +173,8 @@ public class AssemblyInstructionPrinterImmediateHandler
                 argument.location())
             .build();
       }
-    } else if (node.builtIn() == BuiltInTable.DECIMAL) {
+      // TODO: Implement UDEC builtin
+    } else if (node.builtIn() == BuiltInTable.SDEC) {
       writeImmediateWithRadix(node, ctx, 10);
     } else if (node.builtIn() == BuiltInTable.HEX) {
       writeImmediateWithRadix(node, ctx, 16);
