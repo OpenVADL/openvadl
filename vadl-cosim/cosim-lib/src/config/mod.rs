@@ -141,9 +141,25 @@ pub struct Testing {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ClientGDB {
     pub enable: bool,
-
+    #[serde(default = "GDBTargetType::default")]
+    pub target_type: GDBTargetType,
+    #[serde(default = "default_clientgdb_remote_target")]
     pub remote_target: String,
 }
+
+fn default_clientgdb_remote_target() -> String {
+    "".into()
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum GDBTargetType {
+    #[default]
+    Chardev,
+    Port,
+}
+
+
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Client {

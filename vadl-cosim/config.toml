@@ -48,7 +48,7 @@ pass_test_exec_to = "bios"
 # Applies additional arguments to the ISS-executable, e.g. `qemu-system-riscv64 -nographic -d plugin`
 additional_args = [
 	"-nographic",
-  # "-d", "plugin"
+	"-d", "plugin",
 ]
 
 # The following three options configure which instructions from the `test_exec` executable should actually be tested.
@@ -58,10 +58,18 @@ additional_args = [
 skip_n_instructions = 2
 
 # Settings for running the qemu-clients with gdb-debugging enabled.
-# Use these settings when possible instead of configuring the flags in the additional_args array since this will ensure that the runner and tui correctly connect to the gdb targets (when enabled)
+# Use these settings when possible instead of configuring the flags in the additional_args array since otherwise the runner will mark the client as finished because it did not respond in time.
 [qemu.clients.gdb]
 enable = false
-remote_target = "localhost:1234"
+# The target_type can be optionally set ("chardev" | "port"), default is "chardev"
+# For reference see the QEMU GDB usage documentation: https://qemu-project.gitlab.io/qemu/system/gdb.html
+# For more info regarding chardev/unix sockets see: https://qemu-project.gitlab.io/qemu/system/gdb.html#using-unix-sockets
+# Using a chardev is preferred to ensure that the target is always available for cosimulation
+# NOTE: It is not necessary (and will lead to errors if done anyway) to manually create the char-device, simply use a path that is available and
+#		QEMU will automatically handle creating the device-file.
+# If target_type is "port" then simply enter the port (e.g. "tcp:1234") into the remote_target field, QEMU will try to listen on the port automatically
+target_type = "chardev"
+remote_target = "/tmp/gdb-cosim-VADL"
 
 [[qemu.clients]]
 name = "UPSTREAM"
@@ -75,14 +83,15 @@ additional_args = [
 	"-M", "virt",
 	"-cpu", "cortex-a57",
 	"-semihosting",
-  # "-d", "plugin",
+	"-d", "plugin",
 ]
 
 skip_n_instructions = 0
 
 [qemu.clients.gdb]
 enable = false
-remote_target = "localhost:1234"
+target_type = "chardev"
+remote_target = "/tmp/gdb-cosim-VADL"
 
 
 # Defines a custom map where the key (e.g. x0) is mapped to another value (e.g. zero)

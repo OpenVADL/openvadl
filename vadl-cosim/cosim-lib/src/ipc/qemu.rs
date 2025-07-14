@@ -132,17 +132,38 @@ impl Client {
             plugin,
         ];
 
-        let args = if client_cfg.gdb.enable {
-            let gdb_options = vec!["-gdb".into(), format!("tcp::6000{client_idx}"), "-S".into()];
-            [
-                default_args,
-                client_cfg.additional_args.clone(),
-                gdb_options,
-            ]
-            .concat()
+        let gdb_args = if client_cfg.gdb.enable {
+            let remote_target = &client_cfg.gdb.remote_target;
+            let gdb_args = match client_cfg.gdb.target_type {
+                crate::config::GDBTargetType::Chardev => {
+                    vec![
+                        "-chardev".into(),
+                        format!(
+                            "socket,path={remote_target},server=on,wait=off,id=gdb{client_idx}"
+                        ),
+                        "-gdb".into(),
+                        format!("chardev:gdb{client_idx}"),
+                        "-S".into(),
+                    ]
+                }
+                crate::config::GDBTargetType::Port => {
+                    info!(
+                        "Cosimulation with GDB-Debugging enabled, connect via: gdb -ex \"target remote {}\"",
+                        remote_target
+                    );
+                    vec!["-gdb".into(), format!("{remote_target}"), "-S".into()]
+                }
+            };
+            info!(
+                "Cosimulation with GDB-Debugging enabled, connect via: gdb -ex \"target remote {}\"",
+                remote_target
+            );
+            gdb_args
         } else {
-            [default_args, client_cfg.additional_args.clone()].concat()
+            vec![]
         };
+
+        let args = [default_args, client_cfg.additional_args.clone(), gdb_args].concat();
 
         info!(executable_path, ?args, "starting client");
 

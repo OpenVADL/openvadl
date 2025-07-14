@@ -207,6 +207,7 @@ static SHMCPU get_cpu_state(unsigned int cpu_index) {
     GByteArray *buf = g_byte_array_new();
 
     shm_reg.size = qemu_plugin_read_register(reg->handle, buf);
+    PLUGIN_ASSERT(shm_reg.size != -1, "failed to read size of register at idx: %d", reg_idx);
 
     if (reg->name != NULL) {
       strncpy(shm_reg.name.value, reg->name, SHMSTRING_MAX_LEN - 1);
@@ -341,23 +342,18 @@ static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
 
 static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
   TBInsnInfo *tbinsn_info = udata;
-  PLUGIN_PRINTLN("vcpu_insn_exec: before wait: (PC=%lu) %s", tbinsn_info->pc, tbinsn_info->disas.value);
   sem_wait(sem_client);
 
   SHMCPU cpu = get_cpu_state(cpu_index);
 
   shm->shm_exec.cpus[cpu_index] = cpu;
   shm->shm_exec.init_mask |= (1 << cpu_index);
-
-  PLUGIN_PRINTLN("vcpu_insn_exec: PC = %lu", tbinsn_info->pc);
-
   shm->shm_exec.insn_info = *tbinsn_info;
 
   // TODO: we cannot free here because the same callback might be used multiple times when a tb gets reused
   // g_free(tbinsn_info);
 
   sem_post(sem_server);
-  PLUGIN_PRINTLN("vcpu_insn_exec: after post");
 }
 
 static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
