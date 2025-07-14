@@ -416,28 +416,10 @@ public abstract class LlvmInstructionLoweringStrategy {
   protected boolean hasRedFlags(
       Instruction instruction,
       Graph graph) {
-    if (!graph.getNodes(LlvmUnlowerableSD.class).toList().isEmpty()) {
-      return true;
-    }
-
-    // If the behavior contains any registers then it is also not lowerable because LLVM's DAG
-    // has no concept of register in the IR.
-    if (graph.getNodes(ReadRegTensorNode.class)
-        .anyMatch(n -> n.regTensor().isSingleRegister())) {
-      return true;
-    }
-
-    // If a sign extend node is right before a register file write then we cannot lower it.
-    // This removes the patterns for ADDW, SLLW ...
-    if (graph.getNodes(WriteRegTensorNode.class)
-        .filter(n -> n.regTensor().isRegisterFile())
-        .flatMap(Node::usages)
-        .anyMatch(x -> x instanceof SignExtendNode)) {
-      DeferredDiagnosticStore.add(
-          Diagnostic.warning(
-              "Instruction is not lowerable because it tries to sign extend "
-                  + "before writing a register file.",
-              instruction.location()).build());
+    if (hasUnlowerableSDNode(graph)
+        || readsSingleRegister(graph)
+        || hasSignExtensionInGraph(instruction, graph)
+        || hasMultipleOutputs(graph)) {
       return true;
     }
 
@@ -462,6 +444,45 @@ public abstract class LlvmInstructionLoweringStrategy {
         && graph.getNodes(ReadResourceNode.class).toList().size() == 1
         && graph.getNodes(WriteResourceNode.class)
         .anyMatch(writeResourceNode -> writeResourceNode.value() instanceof ReadResourceNode);
+  }
+
+  /**
+   * If a sign extend node is right before a register file write then we cannot lower it.
+   * This removes the patterns for ADDW, SLLW ...
+   */
+  private static boolean hasSignExtensionInGraph(Instruction instruction, Graph graph) {
+    if (graph.getNodes(WriteRegTensorNode.class)
+        .filter(n -> n.regTensor().isRegisterFile())
+        .flatMap(Node::usages)
+        .anyMatch(x -> x instanceof SignExtendNode)) {
+      DeferredDiagnosticStore.add(
+          Diagnostic.warning(
+              "Instruction is not lowerable because it tries to sign extend "
+                  + "before writing a register file.",
+              instruction.location()).build());
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * If the {@link Graph} it has multiple writes then we cannot lower it.
+   */
+  protected static boolean hasMultipleOutputs(Graph graph) {
+    return graph.getNodes(WriteResourceNode.class).toList().size() > 1;
+  }
+
+  /**
+   * If the behavior contains any registers then it is also not lowerable because LLVM's DAG
+   * has no concept of register in the IR.
+   */
+  protected static boolean readsSingleRegister(Graph graph) {
+    return graph.getNodes(ReadRegTensorNode.class)
+        .anyMatch(n -> n.regTensor().isSingleRegister());
+  }
+
+  protected static boolean hasUnlowerableSDNode(Graph graph) {
+    return !graph.getNodes(LlvmUnlowerableSD.class).toList().isEmpty();
   }
 
   /**
