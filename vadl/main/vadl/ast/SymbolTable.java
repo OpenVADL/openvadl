@@ -73,6 +73,8 @@ class SymbolTable {
     symbols.put("start", new BuiltInSymbol());
     symbols.put("executable", new BuiltInSymbol());
     symbols.put("halt", new BuiltInSymbol());
+    // TODO: Remove this once migration of decimal to sdec is done for all specs #409
+    symbols.put("decimal", new BuiltInSymbol());
   }
 
   /**
