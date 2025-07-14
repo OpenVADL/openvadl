@@ -36,6 +36,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.gcb.annotations.SkipPruningAnnotation;
+import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
@@ -125,7 +126,7 @@ public class AnnotationTable {
     annotationOn(EncodingDefinition.class, "select when", EncodingConstraintAnnotation::new)
         .check((def, annotation, lowering) -> annotation.verifyExprType(Type.bool()))
         .applyViam((def, annotation, lowering) -> {
-          // The actual formular checks are done in the the VdtEncodingConstraintValidationPass.
+          // The actual formular checks are done in the VdtEncodingConstraintValidationPass.
           var encoding = (Encoding) def;
           var graph = new BehaviorLowering(lowering).getFunctionGraph(annotation.expr,
               encoding.simpleName() + " Constraint");
@@ -188,6 +189,34 @@ public class AnnotationTable {
         .applyViam((def, annotation, lowering) -> {
           if (annotation.isEnabled) {
             def.addAnnotation(new SkipPruningAnnotation());
+          }
+        }).build();
+
+    annotationOn(RegisterDefinition.class, "negative status register", EnableAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          if (annotation.isEnabled) {
+            def.addAnnotation(new StatusRegisterAnnotation.NegativeStatusRegisterAnnotation());
+          }
+        }).build();
+
+    annotationOn(RegisterDefinition.class, "zero status register", EnableAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          if (annotation.isEnabled) {
+            def.addAnnotation(new StatusRegisterAnnotation.ZeroStatusRegisterAnnotation());
+          }
+        }).build();
+
+    annotationOn(RegisterDefinition.class, "carry status register", EnableAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          if (annotation.isEnabled) {
+            def.addAnnotation(new StatusRegisterAnnotation.CarryStatusRegisterAnnotation());
+          }
+        }).build();
+
+    annotationOn(RegisterDefinition.class, "overflow status register", EnableAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          if (annotation.isEnabled) {
+            def.addAnnotation(new StatusRegisterAnnotation.OverflowStatusRegisterAnnotation());
           }
         }).build();
   }

@@ -65,9 +65,13 @@ instruction set architecture AArch64Base = {
   alias register SP : Address = S(31) // stack pointer
   alias register LR : Address = S(30) // link register (return address)
 
+  [negative status register]
   register NZCV_N : Bits1             // Negative
+  [zero status register]
   register NZCV_Z : Bits1             // Zero
+  [carry status register]
   register NZCV_C : Bits1             // Carry
+  [overflow status register]
   register NZCV_V : Bits1             // oVerflow
 
   enumeration CondCode : Bits<4> =    // condition code encodings, do not change order
