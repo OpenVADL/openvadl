@@ -85,6 +85,7 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -440,7 +441,27 @@ public abstract class LlvmInstructionLoweringStrategy {
       return true;
     }
 
-    return false;
+    /*
+      Edge case where only one read node is left.
+
+      instruction CSELALX : CondSelectFormat =   let result = if true then
+        X(rn)
+      else
+        X(rm) in
+      X(rd) := result as Bits<Size::XSize> as BitsX
+
+      Here we essentially have X(rd) = X(rn) which creates the pattern:
+
+      def : Pat<S:$rn,
+        (CSELALX S:$rn, S:$rm)>;
+
+      We don't want that!
+     */
+
+    return graph.getNodes(WriteResourceNode.class).toList().size() == 1
+        && graph.getNodes(ReadResourceNode.class).toList().size() == 1
+        && graph.getNodes(WriteResourceNode.class)
+        .anyMatch(writeResourceNode -> writeResourceNode.value() instanceof ReadResourceNode);
   }
 
   /**
