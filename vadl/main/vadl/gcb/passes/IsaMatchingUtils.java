@@ -37,6 +37,7 @@ import vadl.viam.Relocation;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ReadMemNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.matching.Matcher;
@@ -89,8 +90,14 @@ public interface IsaMatchingUtils {
    */
   default boolean findRegisterRegisterOrRegisterImmediateOrImmediateRegister(
       UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
-    return findRR(behavior, builtins)
-        || findRegisterImmediateOrImmediateRegister(behavior, builtins);
+    return (findRR(behavior, builtins)
+        || findRegisterImmediateOrImmediateRegister(behavior, builtins))
+        && noPcAccess(behavior);
+  }
+
+  private boolean noPcAccess(UninlinedGraph behavior) {
+    return behavior.getNodes(WriteRegTensorNode.class).noneMatch(WriteRegTensorNode::isPcAccess)
+        && behavior.getNodes(ReadRegTensorNode.class).noneMatch(ReadRegTensorNode::isPcAccess);
   }
 
   /**
@@ -105,7 +112,7 @@ public interface IsaMatchingUtils {
             new AnyChildMatcher(new AnyReadRegisterFileMatcher())
         )));
 
-    return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior);
+    return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior) && noPcAccess(behavior);
   }
 
   /**
@@ -127,7 +134,7 @@ public interface IsaMatchingUtils {
         matchers
     );
 
-    return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior);
+    return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior) && noPcAccess(behavior);
   }
 
   /**
