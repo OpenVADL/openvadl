@@ -30,7 +30,6 @@ import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.template.AbstractTemplateRenderingPass;
 
-@Disabled
 public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
   @Test
   void testLowering() throws IOException, DuplicatedPassKeyException {
