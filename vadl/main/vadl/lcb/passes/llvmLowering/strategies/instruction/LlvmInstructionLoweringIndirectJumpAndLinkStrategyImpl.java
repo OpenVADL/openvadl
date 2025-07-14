@@ -66,9 +66,9 @@ import vadl.viam.graph.dependency.SideEffectNode;
  * Generates the {@link LlvmLoweringRecord} for {@link MachineInstructionLabel#JALR}
  * instruction.
  */
-public class LlvmInstructionLoweringIndirectJumpStrategyImpl
+public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     extends LlvmInstructionLoweringStrategy {
-  public LlvmInstructionLoweringIndirectJumpStrategyImpl(
+  public LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl(
       ValueType architectureType) {
     super(architectureType);
   }

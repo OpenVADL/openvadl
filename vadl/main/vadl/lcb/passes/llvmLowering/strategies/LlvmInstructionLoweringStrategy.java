@@ -57,6 +57,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadArtificialResourceNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandler;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerDispatcher;
@@ -235,6 +236,20 @@ public abstract class LlvmInstructionLoweringStrategy {
                 instruction.location().join(immediateOperand.fieldAccess().location())));
 
         operands.set(i, new TableGenInstructionLabelOperand(llvmNode));
+      } else if (operand instanceof GcbInstructionImmediateOperand immediateOperand
+          && !(operand instanceof TableGenInstructionLabelOperand)
+          && !fieldAccesses.containsKey(immediateOperand.fieldAccess())
+          && !basicBlocks.containsKey(immediateOperand.fieldAccess())) {
+        // This branch is taken when the field access was removed from the instruction's behavior
+        // because of optimisations. However, we still need to replace this operand.
+        var fieldAccess = immediateOperand.fieldAccess();
+        var llvmNode =
+            new LlvmFieldAccessRefNode(instruction,
+                fieldAccess,
+                fieldAccess.type(),
+                architectureType,
+                LlvmFieldAccessRefNode.Usage.Immediate);
+        operands.set(i, new TableGenInstructionImmediateOperand(llvmNode));
       } else if (operand instanceof GcbInstructionRegisterFileOperand registerFileOperand
           && registerFileOperand.origin() instanceof ReadRegTensorNode readNode) {
         if (frameIndices.containsKey(readNode)) {
@@ -476,6 +491,8 @@ public abstract class LlvmInstructionLoweringStrategy {
   public static GcbInstructionOperand generateTableGenInputOutput(Node operand) {
     if (operand instanceof LlvmFrameIndexSD node) {
       return generateInstructionOperand(node);
+    } else if (operand instanceof LlvmReadArtificialResourceNode node) {
+      return generateInstructionOperandRegisterFile(node);
     } else if (operand instanceof ReadRegTensorNode node && node.regTensor().isRegisterFile()) {
       return generateInstructionOperandRegisterFile(node);
     } else if (operand instanceof LlvmFieldAccessRefNode node) {

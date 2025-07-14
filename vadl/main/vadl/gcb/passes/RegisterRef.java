@@ -23,6 +23,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
+import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
 import vadl.viam.DefinitionVisitor;
 import vadl.viam.Format;
@@ -43,6 +44,7 @@ public class RegisterRef extends Resource {
 
   @Nullable
   private Format refFormat;
+
   @Nullable
   private Constant address;
   private final List<RegisterTensor.Constraint> constraints;
@@ -55,6 +57,18 @@ public class RegisterRef extends Resource {
     register.ensure(register.isSingleRegister(), "must be single register");
     this.resultType = register.resultType();
     this.relationType = register.relationType();
+    this.address = null;
+    // When constructed over register then they are no constraints.
+    this.constraints = Collections.emptyList();
+  }
+
+  /**
+   * Constructor.
+   */
+  public RegisterRef(ArtificialResource artificialResource) {
+    super(artificialResource.identifier);
+    this.resultType = artificialResource.resultType();
+    this.relationType = artificialResource.relationType();
     this.address = null;
     // When constructed over register then they are no constraints.
     this.constraints = Collections.emptyList();
@@ -119,6 +133,11 @@ public class RegisterRef extends Resource {
   @Override
   public void accept(DefinitionVisitor visitor) {
 
+  }
+
+  @Nullable
+  public Constant address() {
+    return address;
   }
 
   public List<RegisterTensor.Constraint> constraints() {

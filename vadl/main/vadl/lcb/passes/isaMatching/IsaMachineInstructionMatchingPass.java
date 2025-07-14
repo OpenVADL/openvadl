@@ -287,6 +287,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JAL, ty));
       } else if (findJ(behavior, pc)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.J, ty));
+      } else if (findJR(behavior, pc)) {
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JR, ty));
       }
     });
 
@@ -567,7 +569,25 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   }
 
   /**
-   * Match {@link Instruction} which modifies the PC not store the result into a register.
+   * Match {@link Instruction} which modifies the PC without an immediate not store the result into
+   * a register.
+   */
+  private boolean findJR(UninlinedGraph behavior, Counter pcRegister) {
+    var writesPc =
+        behavior.getNodes(WriteRegTensorNode.class)
+            .filter(x -> x.regTensor().equals(pcRegister.registerTensor()))
+            .toList();
+    var writes = behavior.getNodes(WriteResourceNode.class).toList();
+    var immediates = behavior.getNodes(FieldAccessRefNode.class).toList();
+
+    return writesPc.size() == 1
+        && writes.size() == 1
+        && immediates.isEmpty();
+  }
+
+  /**
+   * Match {@link Instruction} which modifies the PC with an immediate not store the result into
+   * a register.
    */
   private boolean findJ(UninlinedGraph behavior, Counter pcRegister) {
     var writesPc =

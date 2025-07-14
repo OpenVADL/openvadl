@@ -40,6 +40,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmMulSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmOrSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadArtificialResourceNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSDivSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
@@ -105,6 +106,7 @@ import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
@@ -176,7 +178,10 @@ public class LcbNodeReplacementHandler {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(ReadArtificialResNode node) {
-    throw Diagnostic.error("not supported", node.location()).build();
+    node.replaceAndDelete(
+        new LlvmReadArtificialResourceNode(node.resourceDefinition(),
+            node.indices().getFirst(),
+            node.type()));
   }
 
   @Handler
@@ -489,6 +494,7 @@ public class LcbNodeReplacementHandler {
       }
     } else {
       LcbNodeReplacementHandlerDispatcher.dispatch(this, sliceNode.value());
+      Objects.requireNonNull(sliceNode.graph()).add(new LlvmUnlowerableSD());
     }
   }
 
@@ -606,6 +612,21 @@ public class LcbNodeReplacementHandler {
     }
 
     LcbNodeReplacementHandlerDispatcher.dispatch(this, writeMemNode.value());
+  }
+
+  @Handler
+  @SuppressWarnings("MissingJavadocMethod")
+  public void handle(WriteArtificialResNode writeArtificialResNode) {
+    if (writeArtificialResNode.isDeleted()) {
+      return;
+    }
+
+    for (var index : writeArtificialResNode.indices()) {
+      LcbNodeReplacementHandlerDispatcher.dispatch(this, index);
+    }
+
+    LcbNodeReplacementHandlerDispatcher.dispatch(this, writeArtificialResNode.condition());
+    LcbNodeReplacementHandlerDispatcher.dispatch(this, writeArtificialResNode.value());
   }
 
   @Handler

@@ -40,9 +40,10 @@ import vadl.viam.graph.dependency.WriteResourceNode;
 /**
  * Lowering unconditional jump instructions into TableGen patterns.
  */
-public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
+public class LlvmInstructionLoweringUnconditionalJumpWithLinkRegistersStrategyImpl
     extends LlvmInstructionLoweringStrategy {
-  public LlvmInstructionLoweringUnconditionalJumpsStrategyImpl(ValueType architectureType) {
+  public LlvmInstructionLoweringUnconditionalJumpWithLinkRegistersStrategyImpl(
+      ValueType architectureType) {
     super(architectureType);
   }
 
