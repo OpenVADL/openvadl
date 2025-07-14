@@ -8,22 +8,12 @@ use figment::{
 };
 use tracing::{Level, info};
 
-use crate::{
+use cosim_lib::{
     cli::Cli,
     config::Config,
     cosim::Broker,
-    trace::{
-        connect,
-        db::{insert_broker_shm_exec, insert_broker_shm_tb},
-    },
 };
 
-pub mod cli;
-pub mod config;
-pub mod cosim;
-pub mod diff;
-pub mod ipc;
-pub mod trace;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -54,22 +44,9 @@ fn main() -> Result<()> {
 
     dbg!(report);
 
-    if config.tracing.mode == config::TracingMode::Collect {
-        for entry in broker.trace_store {
-            let c = config.clone();
-            rayon::spawn(move || {
-                let conn = connect(&c).unwrap();
-                match entry {
-                    trace::TraceData::TB(broker_shmtb) => {
-                        let _ = insert_broker_shm_tb(&conn, &broker_shmtb);
-                    },
-                    trace::TraceData::Exec(broker_shmexec) => {
-                        let _ = insert_broker_shm_exec(&conn, &broker_shmexec);
-                    },
-                }
-            });
-        }
-    }
+    broker.finish(&config)?;
+
 
     Ok(())
 }
+

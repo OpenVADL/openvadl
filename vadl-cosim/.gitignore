@@ -20,3 +20,5 @@ target/
 /target
 
 .idea/
+
+!src/bin

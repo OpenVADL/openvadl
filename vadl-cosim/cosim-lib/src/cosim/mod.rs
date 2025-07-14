@@ -4,9 +4,9 @@ use tracing::debug;
 
 use crate::{
     config::{Config, TracingMode},
-    diff::{DiffContextClient, DiffEntry, Report, diff::diff_cpus},
+    diff::{diff::diff_cpus, DiffContextClient, DiffEntry, Report},
     ipc::qemu::Client,
-    trace::{TraceStore, trace_collect, trace_sync, trace_threaded},
+    trace::{connect, db::{insert_broker_shm_exec, insert_broker_shm_tb}, trace_collect, trace_sync, trace_threaded, TraceStore},
 };
 
 #[derive(Debug)]
@@ -53,11 +53,32 @@ impl Broker {
             crate::config::ProtocolMode::Lockstep => self.run_lockstep(config),
         }?;
 
+        Ok(diffs.into())
+    }
+
+    pub fn finish(mut self, config: &Config) -> Result<()> {
+        if config.tracing.mode == crate::config::TracingMode::Collect {
+            for entry in self.trace_store {
+                let c = config.clone();
+                rayon::spawn(move || {
+                    let conn = connect(&c).unwrap();
+                    match entry {
+                        crate::trace::TraceData::TB(broker_shmtb) => {
+                            let _ = insert_broker_shm_tb(&conn, &broker_shmtb);
+                        },
+                        crate::trace::TraceData::Exec(broker_shmexec) => {
+                            let _ = insert_broker_shm_exec(&conn, &broker_shmexec);
+                        },
+                    }
+                });
+            }
+        }
+
         for client in &mut self.clients {
             client.terminate()?;
         }
 
-        Ok(diffs.into())
+        Ok(())
     }
 
     fn run_lockstep(&mut self, config: &Config) -> Result<Vec<DiffEntry>> {

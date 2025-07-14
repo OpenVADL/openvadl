@@ -132,6 +132,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
 
 [[package]]
+name = "cosim-lib"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "figment",
+ "libc",
+ "rayon",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "crossbeam-deque"
 version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -551,6 +567,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "tui"
+version = "0.1.0"
+
+[[package]]
 name = "uncased"
 version = "0.9.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -572,17 +592,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
-name = "vadl-cosim"
+name = "vadl-cosim-broker"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "cosim-lib",
  "figment",
- "libc",
- "rayon",
- "rusqlite",
- "serde",
- "serde_json",
  "tracing",
  "tracing-subscriber",
 ]
