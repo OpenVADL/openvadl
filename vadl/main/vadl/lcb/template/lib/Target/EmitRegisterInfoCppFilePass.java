@@ -16,7 +16,6 @@
 
 package vadl.lcb.template.lib.Target;
 
-import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
@@ -27,6 +26,7 @@ import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
@@ -195,7 +195,8 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
 
     var entries = new ArrayList<FrameIndexElimination>();
     var affected =
-        List.of(MachineInstructionLabel.ADDI_32, MachineInstructionLabel.ADDI_64,
+        List.of(MachineInstructionLabel.ADDI_32,
+            MachineInstructionLabel.ADDI_64,
             MachineInstructionLabel.STORE_MEM,
             MachineInstructionLabel.LOAD_MEM);
 
@@ -210,26 +211,29 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
         var indices =
             extractFrameIndexAndImmIndexFromMachineInstruction(tableGenMachineInstructions,
                 instruction);
-        var isSigned = immediate.fieldAccess().type() instanceof SIntType;
-        var fieldBitWidth = immediate.fieldAccess().fieldRef().bitSlice().bitSize();
-        long minValue = isSigned ? -1 * (long) Math.pow(2, fieldBitWidth - 1) : 0;
-        long maxValue = isSigned ? (long) Math.pow(2, fieldBitWidth - 1) - 1 :
-            (long) Math.pow(2, fieldBitWidth);
-        var entry = new FrameIndexElimination(label, instruction, immediate,
-            TableGenImmediateRecord.createPredicateMethod(instruction, immediate.fieldAccess())
-                .lower(),
-            instruction.behavior().getNodes(ReadRegTensorNode.class)
-                .filter(x -> x.regTensor().isRegisterFile())
-                .findFirst().get()
-                .regTensor(), indices, minValue, maxValue);
-        entries.add(entry);
+
+        indices.ifPresent(ind -> {
+          var isSigned = immediate.fieldAccess().type() instanceof SIntType;
+          var fieldBitWidth = immediate.fieldAccess().fieldRef().bitSlice().bitSize();
+          long minValue = isSigned ? -1 * (long) Math.pow(2, fieldBitWidth - 1) : 0;
+          long maxValue = isSigned ? (long) Math.pow(2, fieldBitWidth - 1) - 1 :
+              (long) Math.pow(2, fieldBitWidth);
+          var entry = new FrameIndexElimination(label, instruction, immediate,
+              TableGenImmediateRecord.createPredicateMethod(instruction, immediate.fieldAccess())
+                  .lower(),
+              instruction.behavior().getNodes(ReadRegTensorNode.class)
+                  .filter(x -> x.regTensor().isRegisterFile())
+                  .findFirst().get()
+                  .regTensor(), ind, minValue, maxValue);
+          entries.add(entry);
+        });
       }
     }
 
     return entries;
   }
 
-  private MachineInstructionIndices extractFrameIndexAndImmIndexFromMachineInstruction(
+  private Optional<MachineInstructionIndices> extractFrameIndexAndImmIndexFromMachineInstruction(
       List<TableGenMachineInstruction> tableGenMachineInstructions, Instruction instruction) {
     var machineInstructionIndices = new ArrayList<MachineInstructionIndices>();
 
@@ -265,7 +269,10 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
       }
     }
 
-    ensure(!machineInstructionIndices.isEmpty(), "Expected at least one FI pattern");
-    return machineInstructionIndices.stream().findFirst().get();
+    if (machineInstructionIndices.isEmpty()) {
+      return Optional.empty();
+    } else {
+      return machineInstructionIndices.stream().findFirst();
+    }
   }
 }
