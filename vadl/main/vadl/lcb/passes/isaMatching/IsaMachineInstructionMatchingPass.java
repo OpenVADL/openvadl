@@ -430,7 +430,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     }
 
     // Requires to read memory.
-    if(readsMem != 1) {
+    if (readsMem != 1) {
       return false;
     }
 
