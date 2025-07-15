@@ -55,7 +55,7 @@ public enum MachineInstructionLabelGroup {
   );
 
   public static final Set<MachineInstructionLabel> memoryMachineInstructions = Set.of(
-      MachineInstructionLabel.LOAD_MEM,
+      MachineInstructionLabel.LOAD_MEM_WITH_IMMEDIATE,
       MachineInstructionLabel.STORE_MEM
   );
 

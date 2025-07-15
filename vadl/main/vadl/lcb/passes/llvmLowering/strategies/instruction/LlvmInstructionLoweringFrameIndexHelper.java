@@ -53,7 +53,8 @@ public abstract class LlvmInstructionLoweringFrameIndexHelper
     // We just replace the first occurrence and ignore the rest.
     var readRegNode = copy.getNodes(LlvmReadRegFileNode.class)
         .findFirst()
-        .orElseThrow();
+        .orElseThrow(() -> Diagnostic.error("Cannot find a read from a register file",
+            instruction.location()).build());
     readRegNode.replaceAndDelete(new LlvmFrameIndexSD(readRegNode));
 
     var copyInputOperands = new ArrayList<>(instructionInputOperands);

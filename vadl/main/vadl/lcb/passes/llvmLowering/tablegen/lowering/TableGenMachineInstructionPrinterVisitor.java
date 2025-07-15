@@ -18,6 +18,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.io.StringWriter;
 import vadl.gcb.passes.operands.model.GcbConstantOperand;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValueNode;
@@ -27,6 +28,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
+import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -108,7 +110,14 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
 
   @Override
   public void visit(LcbMachineInstructionValueNode machineInstructionValueNode) {
-    writer.write("(" + machineInstructionValueNode.valueType().getLlvmType() + " "
+    var valueType = machineInstructionValueNode.valueType();
+
+    // LLVM cannot handle unsigned constants. We need to cast them and hope they fit.
+    if (!valueType.isSigned()) {
+      valueType = ValueType.from(Type.signedInt(valueType.getBitwidth())).get();
+    }
+
+    writer.write("(" + valueType.getLlvmType() + " "
         + machineInstructionValueNode.constant().asVal().intValue() + ")");
   }
 

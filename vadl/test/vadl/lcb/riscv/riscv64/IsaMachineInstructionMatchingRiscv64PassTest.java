@@ -91,7 +91,7 @@ public class IsaMachineInstructionMatchingRiscv64PassTest extends AbstractLcbTes
         Arguments.of(List.of("SLTIU"), MachineInstructionLabel.LTIU,
             Optional.of(DataType.bits(64))),
         Arguments.of(List.of("LB", "LBU", "LD", "LH", "LHU", "LW", "LWU"),
-            MachineInstructionLabel.LOAD_MEM, Optional.of(DataType.bits(64))),
+            MachineInstructionLabel.LOAD_MEM_WITH_IMMEDIATE, Optional.of(DataType.bits(64))),
         Arguments.of(List.of("SB", "SD", "SH", "SW"), MachineInstructionLabel.STORE_MEM,
             Optional.of(DataType.bits(64))),
         Arguments.of(List.of("JALR"), MachineInstructionLabel.JALR,

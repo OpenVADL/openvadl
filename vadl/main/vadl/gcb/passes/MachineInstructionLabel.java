@@ -68,7 +68,7 @@ public enum MachineInstructionLabel {
   MEMORY
    */
   STORE_MEM,
-  LOAD_MEM,
+  LOAD_MEM_WITH_IMMEDIATE,
   /*
   CONDITIONAL BRANCHES
    */

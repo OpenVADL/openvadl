@@ -41,7 +41,9 @@ import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.WriteMemNode;
 
 /**
  * Lowers instructions which can load from memory.
@@ -54,7 +56,7 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
 
   @Override
   protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
-    return Set.of(MachineInstructionLabel.LOAD_MEM);
+    return Set.of(MachineInstructionLabel.LOAD_MEM_WITH_IMMEDIATE);
   }
 
   @Override
@@ -66,13 +68,19 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
       List<GcbInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
       Abi abi) {
-    var alternativePatterns = new ArrayList<TableGenPattern>();
     var anyExtendPatterns = createAnyExtPatterns(patterns);
     var loadFromRegisterPatterns = createLoadsFromRegister(
         Stream.concat(patterns.stream(), anyExtendPatterns.stream()).toList());
-    alternativePatterns.addAll(loadFromRegisterPatterns);
 
-    return alternativePatterns;
+    return new ArrayList<>(loadFromRegisterPatterns);
+  }
+
+  /**
+   * This strategy is ok with it when it has {@link ReadMemNode} or {@link WriteMemNode}.
+   */
+  @Override
+  protected boolean rejectWhenReadingFromMemory(Graph graph) {
+    return false;
   }
 
   /**

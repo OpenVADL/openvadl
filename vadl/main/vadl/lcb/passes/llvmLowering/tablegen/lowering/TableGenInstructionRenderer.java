@@ -47,7 +47,7 @@ public final class TableGenInstructionRenderer {
    * It will *ONLY* print the anonymous pattern if the pattern is actually lowerable.
    */
   public static String lower(TableGenMachineInstruction instruction) {
-    return String.format("""
+    String y = String.format("""
             def %s : Instruction
             {
             let Namespace = "%s";
@@ -127,6 +127,7 @@ public final class TableGenInstructionRenderer {
         instruction.getDefs().stream().map(TableGenInstructionRenderer::renderRegisterRef)
             .collect(Collectors.joining(","))
     );
+    return y;
   }
 
   /**
