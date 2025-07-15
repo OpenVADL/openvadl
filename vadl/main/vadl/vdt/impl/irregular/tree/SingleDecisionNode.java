@@ -37,6 +37,11 @@ public class SingleDecisionNode extends AbstractTruncatingDecisionNode {
   private final Node otherChild;
 
   /**
+   * Whether to check for matching (or unmatching) of the pattern.
+   */
+  private final boolean match;
+
+  /**
    * Creates a new inner node.
    *
    * @param offset        the offset of bits to skip prior to matching
@@ -49,6 +54,26 @@ public class SingleDecisionNode extends AbstractTruncatingDecisionNode {
                             @Nullable Node otherChild) {
     super(offset, length);
     this.pattern = pattern;
+    this.match = true; // default to matching
+    this.matchingChild = matchingChild;
+    this.otherChild = otherChild;
+  }
+
+  /**
+   * Creates a new inner node.
+   *
+   * @param offset        the offset of bits to skip prior to matching
+   * @param length        the number of bits to match
+   * @param pattern       the pattern to check
+   * @param match         whether to check for matching (or unmatching) of the pattern
+   * @param matchingChild the child to select upon matching the pattern
+   * @param otherChild    the child to select if the pattern does not match
+   */
+  public SingleDecisionNode(int offset, int length, BitPattern pattern, boolean match,
+                            Node matchingChild, @Nullable Node otherChild) {
+    super(offset, length);
+    this.pattern = pattern;
+    this.match = match;
     this.matchingChild = matchingChild;
     this.otherChild = otherChild;
   }
@@ -61,9 +86,22 @@ public class SingleDecisionNode extends AbstractTruncatingDecisionNode {
         .rightPad(getOffset() + getLength(), new Bit(false))
         .truncate(getOffset(), getLength());
 
-    final boolean match = pattern.test(i);
+    final boolean matches = pattern.test(i);
 
     if (match) {
+
+      if (matches) {
+        return matchingChild;
+      }
+
+      if (otherChild != null) {
+        return otherChild;
+      }
+
+      throw new RuntimeException("No decision found for " + insn);
+    }
+
+    if (!matches) {
       return matchingChild;
     }
 
@@ -72,6 +110,10 @@ public class SingleDecisionNode extends AbstractTruncatingDecisionNode {
     }
 
     throw new RuntimeException("No decision found for " + insn);
+  }
+
+  public boolean isMatch() {
+    return match;
   }
 
   public BitPattern getPattern() {

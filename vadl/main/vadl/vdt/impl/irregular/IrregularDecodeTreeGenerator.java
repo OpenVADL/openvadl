@@ -24,14 +24,17 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.impl.irregular.model.ExclusionCondition;
@@ -98,20 +101,27 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
       return makeNode(decodeEntries);
     }
 
-    // TODO: If the instruction has additional constraints, we should also check them here
-
     var entry = decodeEntries.entries().getFirst();
-    var unchecked =
+
+    // Determine any unchecked bits in the instruction pattern
+    var uncheckedPatternBits =
         getUncheckedBits(decodeEntries.checkedBits(), decodeEntries.offset(), entry.pattern());
 
-    if (unchecked.toMaskVector().toValue().compareTo(BigInteger.ZERO) == 0) {
-      // Nothing to, no remaining unchecked bits left
-      return new LeafNodeImpl(entry);
+    // Determine any unchecked constraints
+    var checkedBits = combinePatterns(decodeEntries.checkedBits(), uncheckedPatternBits);
+    var remainingConstraintsCheck =
+        checkRemainingConstraints(checkedBits, decodeEntries.offset(), entry);
+
+    // The remaining constraints decision node (or leaf node, if no constraints left)
+    var innerNode = Objects.requireNonNullElseGet(remainingConstraintsCheck,
+        () -> new LeafNodeImpl(entry));
+
+    if (uncheckedPatternBits.toMaskVector().toValue().compareTo(BigInteger.ZERO) == 0) {
+      return innerNode;
     }
 
-    // Add another condition on the (so far) unchecked bits
-    return new SingleDecisionNode(0, unchecked.width(), unchecked,
-        new LeafNodeImpl(entry), null);
+    return new SingleDecisionNode(0, uncheckedPatternBits.width(), uncheckedPatternBits, innerNode,
+        null);
   }
 
   private Node makeNode(DecodeEntries decodeEntries) {
@@ -493,6 +503,14 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     return new BitPattern(bits);
   }
 
+  /**
+   * Resolve the yet unchecked bits for the given instruction pattern.
+   *
+   * @param checkedBits The checked bits (full width, not truncated to offset/length)
+   * @param offset      The offset of the instruction pattern
+   * @param insn        The instruction pattern to check
+   * @return The yet unchecked bits.
+   */
   private BitPattern getUncheckedBits(BitPattern checkedBits, int offset, BitPattern insn) {
 
     final BitPattern aligned = insn.leftPad(offset)
@@ -503,10 +521,86 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     final BitVector mask = aligned.toMaskVector().xor(checkedBits.toMaskVector())
         .and(aligned.toMaskVector());
     if (mask.toValue().compareTo(BigInteger.ZERO) == 0) {
-      return BitPattern.empty(insn.width());
+      return BitPattern.empty(checkedBits.width());
     }
 
     return fromBitVector(mask, aligned.toBitVector());
+  }
+
+  @Nullable
+  private Node checkRemainingConstraints(BitPattern checkedBits, int offset,
+                                         DecodeEntry entry) {
+
+    Node node = null;
+
+    for (ExclusionCondition c : entry.exclusionConditions()) {
+      final BitPattern mAligned = c.matching().leftPad(offset)
+          .rightPad(checkedBits.width() - offset - c.matching().width());
+
+      if (!match(checkedBits, mAligned)) {
+        // The exclusion condition cannot match, it collides with the already known bits
+        continue;
+      }
+
+      BitPattern matchingPattern = null;
+      if (!contain(checkedBits, mAligned)) {
+        var mask = mAligned.toMaskVector().xor(checkedBits.toMaskVector())
+            .and(mAligned.toMaskVector());
+        matchingPattern = fromBitVector(mask, mAligned.toBitVector());
+      }
+
+      final Set<BitPattern> unmatchingConditions = new HashSet<>();
+      for (BitPattern pu : c.unmatching()) {
+
+        final BitPattern uAligned = pu.leftPad(offset)
+            .rightPad(checkedBits.width() - offset - pu.width());
+
+        if (!match(checkedBits, uAligned) || contain(checkedBits, uAligned)) {
+          // The unmatching condition cannot match, or it has already been checked
+          continue;
+        }
+
+        var mask = uAligned.toMaskVector().xor(checkedBits.toMaskVector())
+            .and(uAligned.toMaskVector());
+
+        if (mask.toValue().compareTo(BigInteger.ZERO) == 0) {
+          // No bits left to check, skip this condition
+          continue;
+        }
+
+        unmatchingConditions.add(fromBitVector(mask, uAligned.toBitVector()));
+      }
+
+      if (matchingPattern == null && unmatchingConditions.isEmpty()) {
+        // No bits left to check, skip this condition
+        continue;
+      }
+
+      if (unmatchingConditions.isEmpty()) {
+        // If there are no unmatching conditions, we can directly check that the exclusion condition
+        // does not match.
+        node =
+            new SingleDecisionNode(0, checkedBits.width(), Objects.requireNonNull(matchingPattern),
+                false, node == null ? new LeafNodeImpl(entry) : node, null);
+        continue;
+      }
+
+      Node unmatchingNode = null;
+      for (BitPattern pu : unmatchingConditions) {
+        unmatchingNode = new SingleDecisionNode(0, checkedBits.width(), pu,
+            new LeafNodeImpl(entry), unmatchingNode);
+      }
+
+      if (matchingPattern == null) {
+        node = unmatchingNode;
+        continue;
+      }
+
+      node = new SingleDecisionNode(0, checkedBits.width(), matchingPattern,
+          Objects.requireNonNull(unmatchingNode), node == null ? new LeafNodeImpl(entry) : node);
+    }
+
+    return node;
   }
 
   /**

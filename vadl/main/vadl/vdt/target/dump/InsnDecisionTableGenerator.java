@@ -215,7 +215,7 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
     // If/Else cases
     var matchingLines = node.getMatchingChild().accept(this);
     if (matchingLines != null) {
-      var matchingLabel = "%s == 0x%x".formatted(label, value);
+      var matchingLabel = "%s %s 0x%x".formatted(label, node.isMatch() ? "==" : "!=", value);
       matchingLines.forEach(l -> l.add(1, matchingLabel));
       result.addAll(matchingLines);
     }
@@ -226,7 +226,7 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
 
     var otherLines = node.getOtherChild().accept(this);
     if (otherLines != null) {
-      var otherLabel = "%s != 0x%x".formatted(label, value);
+      var otherLabel = "%s %s 0x%x".formatted(label, node.isMatch() ? "!=" : "==", value);
       otherLines.forEach(l -> l.add(1, otherLabel));
       result.addAll(otherLines);
     }

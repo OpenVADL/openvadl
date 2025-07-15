@@ -213,9 +213,11 @@ public class TextGraphGenerator implements Visitor<List<StringBuilder>> {
 
     int shift = insnWidth - (node.getOffset() + length);
     if (offset > 0 && shift > 0) {
-      label.append("(insn >> %d) & 0x%x == 0x%x".formatted(shift, mask, value));
+      label.append(
+          "(insn >> %d) & 0x%x %s 0x%x".formatted(shift, mask, node.isMatch() ? "==" : "!=",
+              value));
     } else {
-      label.append("insn & 0x%x == 0x%x".formatted(mask, value));
+      label.append("insn & 0x%x %s 0x%x".formatted(mask, node.isMatch() ? "==" : "!=", value));
     }
 
     result.add(label);

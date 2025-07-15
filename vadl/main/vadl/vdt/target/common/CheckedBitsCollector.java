@@ -157,6 +157,20 @@ public class CheckedBitsCollector implements Visitor<Map<Instruction, BitPattern
 
     var result = new LinkedHashMap<Instruction, BitPattern>();
 
+    if (!node.isMatch()) {
+
+      // If this is not a match, we cannot mark any bits as 'checked'.
+      if (node.getOtherChild() == null) {
+        return result;
+      }
+
+      final Map<Instruction, BitPattern> otherChildren = node.getOtherChild().accept(this);
+      if (otherChildren == null) {
+        throw new IllegalStateException("Expected non-matching child entries to exist");
+      }
+      return otherChildren;
+    }
+
     final Map<Instruction, BitPattern> matchingChildren = node.getMatchingChild().accept(this);
     if (matchingChildren == null) {
       throw new IllegalStateException("Expected matching child entries to exist");
