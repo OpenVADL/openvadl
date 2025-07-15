@@ -197,7 +197,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
     var affected =
         List.of(MachineInstructionLabel.ADDI_32,
             MachineInstructionLabel.ADDI_64,
-            MachineInstructionLabel.STORE_MEM,
+            MachineInstructionLabel.STORE_MEM_WITH_IMMEDIATE,
             MachineInstructionLabel.LOAD_MEM_WITH_IMMEDIATE);
 
     for (var label : affected) {

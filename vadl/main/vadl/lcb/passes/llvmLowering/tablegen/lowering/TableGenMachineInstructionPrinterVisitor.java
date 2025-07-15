@@ -45,6 +45,7 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SelectNode;
@@ -266,6 +267,11 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
 
   @Override
   public void visit(TupleGetFieldNode tupleGetFieldNode) {
+    throw new RuntimeException("not implemented");
+  }
+
+  @Override
+  public void visit(ReadArtificialResNode node) {
     throw new RuntimeException("not implemented");
   }
 }

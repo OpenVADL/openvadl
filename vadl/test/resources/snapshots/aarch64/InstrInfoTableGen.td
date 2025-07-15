@@ -53919,9 +53919,21 @@ def : Pat<(mulhs S:$rn, S:$rm),
 def : Pat<(truncstorei8 S:$rt, (add S:$rn, AArch64Base_STRB_offsetAsInt64:$offset)),
         (STRB S:$rn, S:$rt, AArch64Base_STRB_offsetAsInt64:$offset)>;
 
+def : Pat<(truncstorei8 S:$rt, (add AddrFI:$rn, AArch64Base_STRB_offsetAsInt64:$offset)),
+        (STRB AddrFI:$rn, S:$rt, AArch64Base_STRB_offsetAsInt64:$offset)>;
+
+def : Pat<(truncstorei8 S:$rt, S:$rn),
+        (STRB S:$rn, S:$rt, (i64 0))>;
+
+def : Pat<(truncstorei8 S:$rt, AddrFI:$rn),
+        (STRB AddrFI:$rn, S:$rt, (i64 0))>;
+
 
 def : Pat<(truncstorei16 S:$rt, (add S:$rn, (shl AArch64Base_STRH_offsetAsInt64:$offset, (i64 1)))),
         (STRH S:$rn, S:$rt, AArch64Base_STRH_offsetAsInt64:$offset)>;
+
+def : Pat<(truncstorei16 S:$rt, (add AddrFI:$rn, (shl AArch64Base_STRH_offsetAsInt64:$offset, (i64 1)))),
+        (STRH AddrFI:$rn, S:$rt, AArch64Base_STRH_offsetAsInt64:$offset)>;
 
 
 
@@ -54071,25 +54083,67 @@ def : Pat<(store S:$rt, (add S:$rn, S:$rm)),
 def : Pat<(truncstorei32 S:$rt, (add S:$rn, (shl AArch64Base_STRW_offsetAsInt64:$offset, (i64 2)))),
         (STRW S:$rn, S:$rt, AArch64Base_STRW_offsetAsInt64:$offset)>;
 
+def : Pat<(truncstorei32 S:$rt, (add AddrFI:$rn, (shl AArch64Base_STRW_offsetAsInt64:$offset, (i64 2)))),
+        (STRW AddrFI:$rn, S:$rt, AArch64Base_STRW_offsetAsInt64:$offset)>;
+
 
 def : Pat<(store S:$rt, (add S:$rn, (shl AArch64Base_STRX_offsetAsInt64:$offset, (i64 3)))),
         (STRX S:$rn, S:$rt, AArch64Base_STRX_offsetAsInt64:$offset)>;
+
+def : Pat<(store S:$rt, (add AddrFI:$rn, (shl AArch64Base_STRX_offsetAsInt64:$offset, (i64 3)))),
+        (STRX AddrFI:$rn, S:$rt, AArch64Base_STRX_offsetAsInt64:$offset)>;
 
 
 def : Pat<(truncstorei8 S:$rt, (add S:$rn, AArch64Base_STURB_offsetAsInt64:$offset)),
         (STURB S:$rn, S:$rt, AArch64Base_STURB_offsetAsInt64:$offset)>;
 
+def : Pat<(truncstorei8 S:$rt, (add AddrFI:$rn, AArch64Base_STURB_offsetAsInt64:$offset)),
+        (STURB AddrFI:$rn, S:$rt, AArch64Base_STURB_offsetAsInt64:$offset)>;
+
+def : Pat<(truncstorei8 S:$rt, S:$rn),
+        (STURB S:$rn, S:$rt, (i64 0))>;
+
+def : Pat<(truncstorei8 S:$rt, AddrFI:$rn),
+        (STURB AddrFI:$rn, S:$rt, (i64 0))>;
+
 
 def : Pat<(truncstorei16 S:$rt, (add S:$rn, AArch64Base_STURH_offsetAsInt64:$offset)),
         (STURH S:$rn, S:$rt, AArch64Base_STURH_offsetAsInt64:$offset)>;
+
+def : Pat<(truncstorei16 S:$rt, (add AddrFI:$rn, AArch64Base_STURH_offsetAsInt64:$offset)),
+        (STURH AddrFI:$rn, S:$rt, AArch64Base_STURH_offsetAsInt64:$offset)>;
+
+def : Pat<(truncstorei16 S:$rt, S:$rn),
+        (STURH S:$rn, S:$rt, (i64 0))>;
+
+def : Pat<(truncstorei16 S:$rt, AddrFI:$rn),
+        (STURH AddrFI:$rn, S:$rt, (i64 0))>;
 
 
 def : Pat<(truncstorei32 S:$rt, (add S:$rn, AArch64Base_STURW_offsetAsInt64:$offset)),
         (STURW S:$rn, S:$rt, AArch64Base_STURW_offsetAsInt64:$offset)>;
 
+def : Pat<(truncstorei32 S:$rt, (add AddrFI:$rn, AArch64Base_STURW_offsetAsInt64:$offset)),
+        (STURW AddrFI:$rn, S:$rt, AArch64Base_STURW_offsetAsInt64:$offset)>;
+
+def : Pat<(truncstorei32 S:$rt, S:$rn),
+        (STURW S:$rn, S:$rt, (i64 0))>;
+
+def : Pat<(truncstorei32 S:$rt, AddrFI:$rn),
+        (STURW AddrFI:$rn, S:$rt, (i64 0))>;
+
 
 def : Pat<(store S:$rt, (add S:$rn, AArch64Base_STURX_offsetAsInt64:$offset)),
         (STURX S:$rn, S:$rt, AArch64Base_STURX_offsetAsInt64:$offset)>;
+
+def : Pat<(store S:$rt, (add AddrFI:$rn, AArch64Base_STURX_offsetAsInt64:$offset)),
+        (STURX AddrFI:$rn, S:$rt, AArch64Base_STURX_offsetAsInt64:$offset)>;
+
+def : Pat<(store S:$rt, S:$rn),
+        (STURX S:$rn, S:$rt, (i64 0))>;
+
+def : Pat<(store S:$rt, AddrFI:$rn),
+        (STURX AddrFI:$rn, S:$rt, (i64 0))>;
 
 
 def : Pat<(sub S:$rn, S:$rm),

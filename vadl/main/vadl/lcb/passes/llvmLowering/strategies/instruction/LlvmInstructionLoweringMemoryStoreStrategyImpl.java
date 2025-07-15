@@ -55,7 +55,7 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
 
   @Override
   protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
-    return Set.of(MachineInstructionLabel.STORE_MEM);
+    return Set.of(MachineInstructionLabel.STORE_MEM_WITH_IMMEDIATE);
   }
 
   @Override

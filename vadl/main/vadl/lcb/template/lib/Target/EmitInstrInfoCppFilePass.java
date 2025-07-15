@@ -132,7 +132,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   private List<StoreRegSlot> getStoreMemoryInstructions(
       Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
     var instructions =
-        isaMatching.getOrDefault(MachineInstructionLabel.STORE_MEM,
+        isaMatching.getOrDefault(MachineInstructionLabel.STORE_MEM_WITH_IMMEDIATE,
             Collections.emptyList());
 
     return instructions.stream()
