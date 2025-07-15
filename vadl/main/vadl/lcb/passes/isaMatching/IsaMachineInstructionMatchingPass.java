@@ -434,7 +434,6 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       return false;
     }
 
-
     // Requires at least one immediate
     if (immediates != 1) {
       return false;
