@@ -84,6 +84,7 @@ import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SideEffectNode;
@@ -419,7 +420,8 @@ public abstract class LlvmInstructionLoweringStrategy {
     if (hasUnlowerableSDNode(graph)
         || readsSingleRegister(graph)
         || hasSignExtensionInGraph(instruction, graph)
-        || hasMultipleOutputs(graph)) {
+        || hasMultipleOutputs(graph)
+        || rejectWhenReadingFromMemory(graph)) {
       return true;
     }
 
@@ -466,9 +468,16 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
+   * If the {@link Graph} it has nodes which read from memory then we cannot lower it.
+   */
+  protected boolean rejectWhenReadingFromMemory(Graph graph) {
+    return !graph.getNodes(ReadMemNode.class).toList().isEmpty();
+  }
+
+  /**
    * If the {@link Graph} it has multiple writes then we cannot lower it.
    */
-  protected static boolean hasMultipleOutputs(Graph graph) {
+  protected boolean hasMultipleOutputs(Graph graph) {
     return graph.getNodes(WriteResourceNode.class).toList().size() > 1;
   }
 
@@ -476,12 +485,12 @@ public abstract class LlvmInstructionLoweringStrategy {
    * If the behavior contains any registers then it is also not lowerable because LLVM's DAG
    * has no concept of register in the IR.
    */
-  protected static boolean readsSingleRegister(Graph graph) {
+  protected boolean readsSingleRegister(Graph graph) {
     return graph.getNodes(ReadRegTensorNode.class)
         .anyMatch(n -> n.regTensor().isSingleRegister());
   }
 
-  protected static boolean hasUnlowerableSDNode(Graph graph) {
+  protected boolean hasUnlowerableSDNode(Graph graph) {
     return !graph.getNodes(LlvmUnlowerableSD.class).toList().isEmpty();
   }
 

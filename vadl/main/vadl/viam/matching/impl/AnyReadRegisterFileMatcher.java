@@ -16,7 +16,6 @@
 
 package vadl.viam.matching.impl;
 
-import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -33,9 +32,7 @@ public class AnyReadRegisterFileMatcher implements Matcher {
     var isReadRegTensorNode = node instanceof ReadRegTensorNode readRegTensorNode
         && readRegTensorNode.regTensor().isRegisterFile();
     var isReadArtificialResNode = node instanceof ReadArtificialResNode readArtificialResNode
-        && readArtificialResNode.resourceDefinition()
-        .innerResourceRef() instanceof RegisterTensor registerTensor
-        && registerTensor.isRegisterFile();
+        && readArtificialResNode.hasRegisterFile();
     return isReadRegTensorNode || isReadArtificialResNode;
   }
 }

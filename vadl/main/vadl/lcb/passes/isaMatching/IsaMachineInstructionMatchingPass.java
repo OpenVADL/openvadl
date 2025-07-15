@@ -94,6 +94,7 @@ import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -405,15 +406,20 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   }
 
   private boolean findLoadMem(UninlinedGraph graph) {
-    // TODO: @kper refactor (duplicated code)
     var writesRegFile = graph.getNodes(WriteRegTensorNode.class)
         .filter(e -> e.regTensor().isRegisterFile())
         .toList().size();
+    var writesArtificialRegFile = graph.getNodes(WriteArtificialResNode.class)
+        .filter(
+            WriteArtificialResNode::hasRegisterFile)
+        .toList().size();
+
     var writesReg = graph.getNodes(WriteRegTensorNode.class)
         .filter(e -> e.regTensor().isSingleRegister())
         .toList().size();
 
-    if ((writesRegFile == 1) == (writesReg == 1)) {
+    // We need at least one register file write and no single register write.
+    if ((writesRegFile != 1 && writesArtificialRegFile != 1) || writesReg > 0) {
       return false;
     }
 

@@ -38,7 +38,9 @@ import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.WriteMemNode;
 
 /**
  * Lowers instructions which can store into memory.
@@ -65,12 +67,16 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
       List<GcbInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
       Abi abi) {
-    var alternativePatterns = new ArrayList<TableGenPattern>();
     var storesWithoutImmediates = createStoreFromsWithoutImmediate(patterns);
+    return new ArrayList<>(storesWithoutImmediates);
+  }
 
-    alternativePatterns.addAll(storesWithoutImmediates);
-
-    return alternativePatterns;
+  /**
+   * This strategy is ok with it when it has {@link ReadMemNode} or {@link WriteMemNode}.
+   */
+  @Override
+  protected boolean rejectWhenReadingFromMemory(Graph graph) {
+    return false;
   }
 
   /**
