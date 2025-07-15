@@ -23,6 +23,7 @@ import vadl.types.BoolType;
 import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.Memory;
+import vadl.viam.RegisterTensor;
 import vadl.viam.ViamError;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
@@ -40,6 +41,7 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SelectNode;
@@ -242,6 +244,24 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
   @Override
   public void visit(TupleGetFieldNode tupleGetFieldNode) {
     throw new RuntimeException("not implemented");
+  }
+
+  @Override
+  public void visit(ReadArtificialResNode node) {
+    if (node.resourceDefinition().innerResourceRef() instanceof RegisterTensor registerTensor) {
+      if (registerTensor.isSingleRegister()) {
+        writer.write(registerTensor.identifier.simpleName());
+      } else if (registerTensor.isRegisterFile()) {
+        // Do not write the register file because we actually care about the address.
+        // a = X << X (wrong)
+        // a = rs1 << rs2 (correct)
+        writer.write("Select(" + registerTensor.identifier.simpleName() + ", ");
+        visit(node.indices().getFirst());
+        writer.write(")");
+      } else {
+        throw new RuntimeException("not implemented");
+      }
+    }
   }
 
   @Override

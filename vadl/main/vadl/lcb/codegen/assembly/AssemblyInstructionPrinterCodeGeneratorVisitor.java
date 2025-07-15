@@ -59,6 +59,7 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SelectNode;
@@ -273,6 +274,11 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
   @Override
   public void visit(TupleGetFieldNode tupleGetFieldNode) {
     throw new RuntimeException("Node type is not implemented: " + tupleGetFieldNode.getClass());
+  }
+
+  @Override
+  public void visit(ReadArtificialResNode node) {
+    throw new RuntimeException("Node type is not implemented: " + node.getClass());
   }
 
   private void writeImmediateWithRadix(BuiltInCall node, int radix) {

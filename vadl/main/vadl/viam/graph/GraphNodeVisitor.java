@@ -30,6 +30,7 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SelectNode;
@@ -184,4 +185,9 @@ public interface GraphNodeVisitor {
    * Visit {@link TupleGetFieldNode}.
    */
   void visit(TupleGetFieldNode tupleGetFieldNode);
+
+  /**
+   * Visit {@link ReadArtificialResNode}.
+   */
+  void visit(ReadArtificialResNode node);
 }

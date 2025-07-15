@@ -86,7 +86,9 @@ import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
+import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.WritesRegisterTensor;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -95,7 +97,6 @@ import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -279,7 +280,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTIU, ty));
       } else if (findWriteMem(behavior)) {
         instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.STORE_MEM, ty));
+            new MachineInstructionCtx(MachineInstructionLabel.STORE_MEM_WITH_IMMEDIATE, ty));
       } else if (findLoadMem(behavior)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.LOAD_MEM_WITH_IMMEDIATE, ty));
@@ -407,12 +408,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   }
 
   private boolean findLoadMem(UninlinedGraph graph) {
-    var writesRegFile = graph.getNodes(WriteRegTensorNode.class)
-        .filter(e -> e.regTensor().isRegisterFile())
-        .count();
-    var writesArtificialRegFile = graph.getNodes(WriteArtificialResNode.class)
-        .filter(
-            WriteArtificialResNode::hasRegisterFile)
+    var writesRegFile = graph.getNodes(WritesRegisterTensor.class)
+        .filter(HasRegisterTensor::hasRegisterFile)
         .count();
 
     var writesReg = graph.getNodes(WriteRegTensorNode.class)
@@ -425,7 +422,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     var readsMem = graph.getNodes(ReadMemNode.class).count();
 
     // We need at least one register file write and no single register write.
-    if ((writesRegFile != 1 && writesArtificialRegFile != 1) || writesReg > 0) {
+    if (writesRegFile != 1 || writesReg > 0) {
       return false;
     }
 
@@ -448,6 +445,27 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
 
   private boolean findWriteMem(UninlinedGraph graph) {
     if (graph.getNodes(WriteMemNode.class).toList().size() != 1) {
+      return false;
+    }
+
+    var writesRegFile = graph.getNodes(WritesRegisterTensor.class)
+        .filter(HasRegisterTensor::hasRegisterFile)
+        .count();
+
+    var writesReg = graph.getNodes(WriteRegTensorNode.class)
+        .filter(e -> e.regTensor().isSingleRegister())
+        .count();
+
+    var immediates = graph.getNodes(FieldAccessRefNode.class)
+        .count();
+
+    // no writes except memory
+    if (writesRegFile != 0 && writesReg != 0) {
+      return false;
+    }
+
+    // Requires at least one immediate
+    if (immediates != 1) {
       return false;
     }
 

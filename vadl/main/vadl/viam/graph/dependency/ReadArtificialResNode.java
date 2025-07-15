@@ -64,7 +64,7 @@ public class ReadArtificialResNode extends ReadResourceNode implements HasRegist
 
   @Override
   public <T extends GraphNodeVisitor> void accept(T visitor) {
-
+    visitor.visit(this);
   }
 
   @Override
