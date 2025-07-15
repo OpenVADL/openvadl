@@ -90,6 +90,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
@@ -281,7 +282,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
             new MachineInstructionCtx(MachineInstructionLabel.STORE_MEM, ty));
       } else if (findLoadMem(behavior)) {
         instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.LOAD_MEM, ty));
+            new MachineInstructionCtx(MachineInstructionLabel.LOAD_MEM_WITH_IMMEDIATE, ty));
       } else if (findJalr(behavior, pc)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JALR, ty));
       } else if (findJal(behavior, pc)) {
@@ -408,18 +409,34 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   private boolean findLoadMem(UninlinedGraph graph) {
     var writesRegFile = graph.getNodes(WriteRegTensorNode.class)
         .filter(e -> e.regTensor().isRegisterFile())
-        .toList().size();
+        .count();
     var writesArtificialRegFile = graph.getNodes(WriteArtificialResNode.class)
         .filter(
             WriteArtificialResNode::hasRegisterFile)
-        .toList().size();
+        .count();
 
     var writesReg = graph.getNodes(WriteRegTensorNode.class)
         .filter(e -> e.regTensor().isSingleRegister())
-        .toList().size();
+        .count();
+
+    var immediates = graph.getNodes(FieldAccessRefNode.class)
+        .count();
+
+    var readsMem = graph.getNodes(ReadMemNode.class).count();
 
     // We need at least one register file write and no single register write.
     if ((writesRegFile != 1 && writesArtificialRegFile != 1) || writesReg > 0) {
+      return false;
+    }
+
+    // Requires to read memory.
+    if(readsMem != 1) {
+      return false;
+    }
+
+
+    // Requires at least one immediate
+    if (immediates != 1) {
       return false;
     }
 

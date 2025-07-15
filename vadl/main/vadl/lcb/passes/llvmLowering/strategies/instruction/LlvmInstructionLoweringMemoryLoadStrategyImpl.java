@@ -56,7 +56,7 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
 
   @Override
   protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
-    return Set.of(MachineInstructionLabel.LOAD_MEM);
+    return Set.of(MachineInstructionLabel.LOAD_MEM_WITH_IMMEDIATE);
   }
 
   @Override

@@ -1207,7 +1207,7 @@ instruction set architecture AArch64Base = {
 
   model MemoryRegisterBase (i: InstrNoFunct, m: Memory, option: Id, scaled: Id, asm: Ex, addr: Ex): IsaDefs = {
     // TODO check SP alignment
-    // options are enumrated explicitely, therefore no undefined check option(1) = 0 is required
+    // options are enumerated explicitly, therefore no undefined check option(1) = 0 is required
     instruction $i.id: MemoryRegFormat =
       let addr = S(rn) + ($addr) in $m.stmt
     encoding $i.id = { op = $i.opcode, opc = $m.opc, size = AccSize::$m.accsize, option = ExtendType::$option, scaled = Scaled::$scaled }

@@ -54,7 +54,9 @@ import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
+import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.WritesRegisterTensor;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -153,16 +155,17 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   private List<LoadRegSlot> getLoadMemoryInstructions(
       Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
     var instructions =
-        isaMatching.getOrDefault(MachineInstructionLabel.LOAD_MEM,
+        isaMatching.getOrDefault(MachineInstructionLabel.LOAD_MEM_WITH_IMMEDIATE,
             Collections.emptyList());
 
     return instructions.stream()
         .map(i -> {
           var destRegisterFile =
-              ensurePresent(i.behavior().getNodes(WriteRegTensorNode.class)
-                      .filter(x -> x.regTensor().isRegisterFile())
+              ensurePresent(i.behavior().getNodes(WritesRegisterTensor.class)
+                      .filter(HasRegisterTensor::hasRegisterFile)
                       .findFirst(),
-                  "There must be destination register").regTensor();
+                  () -> Diagnostic.error("There must be a destination register file",
+                      i.location())).registerTensor();
           var words =
               ensurePresent(i.behavior().getNodes(ReadMemNode.class).findFirst(),
                   "There must be a read mem node").words();

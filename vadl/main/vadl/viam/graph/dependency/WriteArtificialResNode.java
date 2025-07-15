@@ -22,14 +22,14 @@ import vadl.javaannotations.viam.DataValue;
 import vadl.viam.ArtificialResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
-import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.WritesRegisterTensor;
 
 /**
  * A write to an {@link ArtificialResource}.
  */
-public class WriteArtificialResNode extends WriteResourceNode implements HasRegisterTensor {
+public class WriteArtificialResNode extends WriteResourceNode implements WritesRegisterTensor {
 
   @DataValue
   protected ArtificialResource resource;
