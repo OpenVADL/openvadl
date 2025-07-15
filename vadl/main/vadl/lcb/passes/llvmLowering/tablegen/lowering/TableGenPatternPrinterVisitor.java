@@ -122,7 +122,7 @@ public class TableGenPatternPrinterVisitor
     if (node instanceof LlvmNodeLowerable lowerable) {
       writer.write(lowerable.lower() + " ");
     } else {
-      writer.write(node.builtIn().operator() + " ");
+      throw Diagnostic.error("not supported operator", node.location()).build();
     }
 
     joinArgumentsWithComma(node.arguments());

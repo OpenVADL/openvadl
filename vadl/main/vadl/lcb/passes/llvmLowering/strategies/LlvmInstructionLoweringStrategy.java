@@ -47,6 +47,7 @@ import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
 import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;
+import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.LlvmSideEffectPatternIncluded;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
@@ -79,6 +80,7 @@ import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -421,7 +423,8 @@ public abstract class LlvmInstructionLoweringStrategy {
         || readsSingleRegister(graph)
         || hasSignExtensionInGraph(instruction, graph)
         || hasMultipleOutputs(graph)
-        || rejectWhenReadingFromMemory(graph)) {
+        || rejectWhenReadingFromMemory(graph)
+        || hasUnreplacedBuiltins(graph)) {
       return true;
     }
 
@@ -449,10 +452,18 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
+   * If there is a {@link BuiltInCall} which is not {@link LlvmNodeLowerable} and thus
+   * wasn't replaced.
+   */
+  protected boolean hasUnreplacedBuiltins(Graph graph) {
+    return graph.getNodes(BuiltInCall.class).anyMatch(x -> !(x instanceof LlvmNodeLowerable));
+  }
+
+  /**
    * If a sign extend node is right before a register file write then we cannot lower it.
    * This removes the patterns for ADDW, SLLW ...
    */
-  private static boolean hasSignExtensionInGraph(Instruction instruction, Graph graph) {
+  private boolean hasSignExtensionInGraph(Instruction instruction, Graph graph) {
     if (graph.getNodes(WriteRegTensorNode.class)
         .filter(n -> n.regTensor().isRegisterFile())
         .flatMap(Node::usages)

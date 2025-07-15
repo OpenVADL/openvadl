@@ -53952,12 +53952,8 @@ def : Pat<(sdiv S:$rn, S:$rm),
         (SDIVX S:$rm, S:$rn)>;
 
 
-def : Pat<(add S:$ra, (*# S:$rn, S:$rm)),
-        (SMADDL S:$ra, S:$rn, S:$rm)>;
 
 
-def : Pat<(sub S:$ra, (*# S:$rn, S:$rm)),
-        (SMSUBL S:$ra, S:$rn, S:$rm)>;
 
 
 def : Pat<(mulhs S:$rn, S:$rm),

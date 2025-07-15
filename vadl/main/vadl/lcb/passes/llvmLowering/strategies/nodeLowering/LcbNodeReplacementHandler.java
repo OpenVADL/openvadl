@@ -328,6 +328,16 @@ public class LcbNodeReplacementHandler {
       node.replaceAndDelete(new LlvmShrSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.ASR || node.builtIn() == BuiltInTable.ASRS) {
       node.replaceAndDelete(new LlvmSraSD(node.arguments(), node.type()));
+    } else if ((node.builtIn() == BuiltInTable.SMULL || node.builtIn() == BuiltInTable.SMULLS)
+        && node.type() instanceof BitsType bitsType) {
+      var trunc = bitsType.bitWidth() / 2;
+
+      // Only replace when parent is a truncate node to the half bit width.
+      var truncNode = node.usages().findFirst().filter(x -> x instanceof TruncateNode y
+          && y.type().bitWidth() == trunc);
+      truncNode.ifPresent(value -> value
+          .replaceAndDelete(
+              new LlvmMulSD(node.arguments(), ((TruncateNode) value).type())));
     } else if (node.builtIn() == BuiltInTable.SMULL || node.builtIn() == BuiltInTable.SMULLS) {
       /*
         `MUL` and `SMUL` need to be covered in the normal BuiltinReplacement.
@@ -359,16 +369,6 @@ public class LcbNodeReplacementHandler {
       var newArg = new ConstantNode(new Constant.Str(replaced.llvmCondCode().name()));
       ensure(replaced.graph() != null, "graph must exist");
       replaced.arguments().add(replaced.graph().addWithInputs(newArg));
-    } else if ((node.builtIn() == BuiltInTable.SMULL || node.builtIn() == BuiltInTable.SMULLS)
-        && node.type() instanceof BitsType bitsType) {
-      var trunc = bitsType.bitWidth() / 2;
-
-      // Only replace when parent is a truncate node to the half bit width.
-      var truncNode = node.usages().findFirst().filter(x -> x instanceof TruncateNode y
-          && y.type().bitWidth() == trunc);
-      truncNode.ifPresent(value -> value
-          .replaceAndDelete(
-              new LlvmMulSD(node.arguments(), ((TruncateNode) value).type())));
     } else {
       Objects.requireNonNull(node.graph())
           .add(new LlvmUnlowerableSD(node.arguments(), node.type()));

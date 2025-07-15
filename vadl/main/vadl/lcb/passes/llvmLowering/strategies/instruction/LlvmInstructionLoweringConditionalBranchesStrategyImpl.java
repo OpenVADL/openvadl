@@ -105,6 +105,12 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
             registerDefsUses));
   }
 
+  @Override
+  protected boolean hasUnreplacedBuiltins(Graph graph) {
+    // TODO: check which are not replaced yet and replace them
+    return false;
+  }
+
   private LlvmLoweringRecord.Machine createIntermediateResult(
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Instruction instruction,
