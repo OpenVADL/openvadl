@@ -41,6 +41,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmZExtLoad;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
+import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -94,9 +95,17 @@ public class TableGenPatternPrinterVisitor
         || node.constant() instanceof Constant.Str, "constant must be value or string");
     if (node.constant() instanceof Constant.Value constant) {
       var ty = ValueType.from(constant.type());
-      if (ty.isPresent()) {
+      if (ty.isPresent() && ty.get().isSigned()) {
+        // LLVM only allows signed constants.
         writer.write(String.format("(%s %d)",
             ty.get().getLlvmType(),
+            constant.intValue()));
+      } else if (ty.isPresent()) {
+        // ty is unsigned, so we need to make it signed and hope that it still fits.
+        var bitWidth = ty.get().getBitwidth();
+        var signedType = ValueType.from(Type.signedInt(bitWidth)).get();
+        writer.write(String.format("(%s %d)",
+            signedType.getLlvmType(),
             constant.intValue()));
       } else {
         throw Diagnostic.error(String.format("Constant has no valid LLVM type: '%s'.",
