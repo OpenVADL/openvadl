@@ -53287,10 +53287,17 @@ def : Pat<(i64 (zextloadi8 (add AddrFI:$rn, AArch64Base_LDRB_offsetAsInt64:$offs
         (LDRB AddrFI:$rn, AArch64Base_LDRB_offsetAsInt64:$offset)>;
 
 def : Pat<(i64 (zextloadi8 S:$rn)),
+<<<<<<< HEAD
         (LDRB S:$rn, (i64 0))>;
 
 def : Pat<(i64 (zextloadi8 AddrFI:$rn)),
         (LDRB AddrFI:$rn, (i64 0))>;
+=======
+        (LDRB S:$rn, (u64 0))>;
+
+def : Pat<(i64 (zextloadi8 AddrFI:$rn)),
+        (LDRB AddrFI:$rn, (u64 0))>;
+>>>>>>> 96f6b0142 (lcb: Tweaking matching for loading of memory in AArch64)
 
 
 def : Pat<(i64 (zextloadi16 (add S:$rn, (shl AArch64Base_LDRH_offsetAsInt64:$offset, (i64 1))))),
@@ -53493,6 +53500,7 @@ def : Pat<(i32 (sextloadi8 (add AddrFI:$rn, AArch64Base_LDRSBW_offsetAsInt64:$of
         (LDRSBW AddrFI:$rn, AArch64Base_LDRSBW_offsetAsInt64:$offset)>;
 
 def : Pat<(i32 (sextloadi8 S:$rn)),
+<<<<<<< HEAD
         (LDRSBW S:$rn, (i64 0))>;
 
 def : Pat<(i32 (extloadi8 S:$rn)),
@@ -53503,6 +53511,18 @@ def : Pat<(i32 (sextloadi8 AddrFI:$rn)),
 
 def : Pat<(i32 (extloadi8 AddrFI:$rn)),
         (LDRSBW AddrFI:$rn, (i64 0))>;
+=======
+        (LDRSBW S:$rn, (u64 0))>;
+
+def : Pat<(i32 (extloadi8 S:$rn)),
+        (LDRSBW S:$rn, (u64 0))>;
+
+def : Pat<(i32 (sextloadi8 AddrFI:$rn)),
+        (LDRSBW AddrFI:$rn, (u64 0))>;
+
+def : Pat<(i32 (extloadi8 AddrFI:$rn)),
+        (LDRSBW AddrFI:$rn, (u64 0))>;
+>>>>>>> 96f6b0142 (lcb: Tweaking matching for loading of memory in AArch64)
 
 
 def : Pat<(i64 (sextloadi8 (add S:$rn, AArch64Base_LDRSBX_offsetAsInt64:$offset))),
@@ -53512,6 +53532,7 @@ def : Pat<(i64 (sextloadi8 (add AddrFI:$rn, AArch64Base_LDRSBX_offsetAsInt64:$of
         (LDRSBX AddrFI:$rn, AArch64Base_LDRSBX_offsetAsInt64:$offset)>;
 
 def : Pat<(i64 (sextloadi8 S:$rn)),
+<<<<<<< HEAD
         (LDRSBX S:$rn, (i64 0))>;
 
 def : Pat<(i64 (extloadi8 S:$rn)),
@@ -53522,6 +53543,18 @@ def : Pat<(i64 (sextloadi8 AddrFI:$rn)),
 
 def : Pat<(i64 (extloadi8 AddrFI:$rn)),
         (LDRSBX AddrFI:$rn, (i64 0))>;
+=======
+        (LDRSBX S:$rn, (u64 0))>;
+
+def : Pat<(i64 (extloadi8 S:$rn)),
+        (LDRSBX S:$rn, (u64 0))>;
+
+def : Pat<(i64 (sextloadi8 AddrFI:$rn)),
+        (LDRSBX AddrFI:$rn, (u64 0))>;
+
+def : Pat<(i64 (extloadi8 AddrFI:$rn)),
+        (LDRSBX AddrFI:$rn, (u64 0))>;
+>>>>>>> 96f6b0142 (lcb: Tweaking matching for loading of memory in AArch64)
 
 
 def : Pat<(i32 (sextloadi16 (add S:$rn, (shl AArch64Base_LDRSHW_offsetAsInt64:$offset, (i64 1))))),
