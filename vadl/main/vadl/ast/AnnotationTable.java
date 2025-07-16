@@ -196,6 +196,9 @@ public class AnnotationTable {
         .applyViam((def, annotation, lowering) -> {
           if (annotation.isEnabled) {
             def.addAnnotation(new StatusRegisterAnnotation.NegativeStatusRegisterAnnotation());
+            // The annotation does not check subtyping, so we have to add the parent class as
+            // well.
+            def.addAnnotation(new StatusRegisterAnnotation());
           }
         }).build();
 
@@ -203,6 +206,9 @@ public class AnnotationTable {
         .applyViam((def, annotation, lowering) -> {
           if (annotation.isEnabled) {
             def.addAnnotation(new StatusRegisterAnnotation.ZeroStatusRegisterAnnotation());
+            // The annotation does not check subtyping, so we have to add the parent class as
+            // well.
+            def.addAnnotation(new StatusRegisterAnnotation());
           }
         }).build();
 
@@ -210,6 +216,9 @@ public class AnnotationTable {
         .applyViam((def, annotation, lowering) -> {
           if (annotation.isEnabled) {
             def.addAnnotation(new StatusRegisterAnnotation.CarryStatusRegisterAnnotation());
+            // The annotation does not check subtyping, so we have to add the parent class as
+            // well.
+            def.addAnnotation(new StatusRegisterAnnotation());
           }
         }).build();
 
@@ -217,6 +226,9 @@ public class AnnotationTable {
         .applyViam((def, annotation, lowering) -> {
           if (annotation.isEnabled) {
             def.addAnnotation(new StatusRegisterAnnotation.OverflowStatusRegisterAnnotation());
+            // The annotation does not check subtyping, so we have to add the parent class as
+            // well.
+            def.addAnnotation(new StatusRegisterAnnotation());
           }
         }).build();
   }

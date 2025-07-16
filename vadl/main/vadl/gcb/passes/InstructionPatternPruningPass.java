@@ -10,6 +10,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.gcb.annotations.SkipPruningAnnotation;
+import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -20,6 +21,7 @@ import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.ReadsRegisterTensor;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.ControlSplitNode;
@@ -78,6 +80,12 @@ public class InstructionPatternPruningPass extends Pass {
                       @Override
                       public Node applyNullable(Node from, @Nullable Node to) {
                         if (to instanceof SelectNode selectNode) {
+                          // If the condition contains a register which is a status
+                          // register then we do not prune.
+                          if (!checkIfConditionHasNoStatusRegister(selectNode)) {
+                            return to;
+                          }
+
                           /* Here we determine the default case.
                              Is the true case the default case
                              or the false case?
@@ -133,6 +141,21 @@ public class InstructionPatternPruningPass extends Pass {
         });
 
     return null;
+  }
+
+  /**
+   * If the selectNode's condition has no {@link ReadsRegisterTensor} that has the
+   * {@link StatusRegisterAnnotation}. If all {@link ReadsRegisterTensor} are not status registers
+   * then return {@code true}.
+   */
+  private boolean checkIfConditionHasNoStatusRegister(SelectNode selectNode) {
+    var children = new ArrayList<ReadsRegisterTensor>();
+    selectNode.condition().collectInputsWithChildren(children, ReadsRegisterTensor.class);
+
+    return children
+        .stream()
+        .filter(x -> x.registerTensor().isSingleRegister())
+        .noneMatch(x -> x.registerTensor().hasAnnotation(StatusRegisterAnnotation.class));
   }
 
   static class ExceptionBranchElimination implements CfgTraverser {
