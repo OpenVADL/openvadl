@@ -4,12 +4,10 @@ use tracing::debug;
 
 use crate::{
     config::{Config, TracingMode},
-    diff::{DiffContextClient, DiffEntry, Report, diff::diff_cpus},
-    ipc::qemu::Client,
+    diff::{diff::diff_cpus, DiffContextClient, DiffEntry, Report},
+    ipc::{cstructs::MAX_CPU_REGISTERS, qemu::Client},
     trace::{
-        TraceStore, connect,
-        db::{insert_broker_shm_exec, insert_broker_shm_tb},
-        trace_collect, trace_sync, trace_threaded,
+        connect, db::{insert_broker_shm_exec, insert_broker_shm_tb}, trace_collect, trace_sync, trace_threaded, TraceStore
     },
 };
 

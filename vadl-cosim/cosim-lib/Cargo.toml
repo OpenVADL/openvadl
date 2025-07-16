@@ -8,6 +8,7 @@ anyhow = "1.0.98"
 
 clap = { version = "4.5.41", features = ["derive"] }
 figment = { version = "0.10.19", features = ["toml"] }
+fnv = "1.0.7"
 
 libc = "0.2.174"
 

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Display};
+use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
@@ -159,8 +159,6 @@ pub enum GDBTargetType {
     Port,
 }
 
-
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Client {
     pub exec: String,
@@ -193,27 +191,34 @@ impl Display for TestExecDestination {
     }
 }
 
+// HashMap and HashSet lookups are measurably faster for small key-sizes.
+// This makes it usable for a register-map where the keys are register-names which are most of the
+// time only a few characters long.
+// For reference see: https://cglab.ca/~abeinges/blah/hash-rs/
+type RegHashMap = fnv::FnvHashMap<String, String>;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Qemu {
     pub plugin: String,
     pub clients: Vec<Client>,
-    pub gdb_reg_map: HashMap<String, String>,
+    pub gdb_reg_map: RegHashMap,
 
     #[serde(default = "empty_hashmap")]
-    pub gdb_reg_map_inverse: HashMap<String, String>,
-    pub ignore_registers: Vec<String>,
+    pub gdb_reg_map_inverse: RegHashMap,
+    pub ignore_registers: fnv::FnvHashSet<String>,
     pub ignore_unset_registers: bool,
 }
 
-fn empty_hashmap() -> HashMap<String, String> {
-    HashMap::new()
+fn empty_hashmap() -> RegHashMap {
+    RegHashMap::default()
 }
 
 impl Qemu {
     pub fn set_inverse_reg_map(&mut self) {
-        self.gdb_reg_map_inverse = self.gdb_reg_map
+        self.gdb_reg_map_inverse = self
+            .gdb_reg_map
             .iter()
-           .map(|(k, v)| (v.clone(), k.clone()))
+            .map(|(k, v)| (v.clone(), k.clone()))
             .collect();
     }
 }
