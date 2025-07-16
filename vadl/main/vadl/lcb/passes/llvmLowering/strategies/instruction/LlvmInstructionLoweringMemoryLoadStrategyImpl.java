@@ -33,6 +33,8 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandler;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerForMemoryInstructionsReplacement;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
@@ -40,6 +42,7 @@ import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -73,6 +76,12 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
         Stream.concat(patterns.stream(), anyExtendPatterns.stream()).toList());
 
     return new ArrayList<>(loadFromRegisterPatterns);
+  }
+
+  @Override
+  protected LcbNodeReplacementHandler getReplacementHandler(PrintableInstruction instruction) {
+    return new LcbNodeReplacementHandlerForMemoryInstructionsReplacement(instruction,
+        architectureType);
   }
 
   /**

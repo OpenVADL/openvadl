@@ -50,10 +50,8 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmShlSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmShrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSraSD;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSubSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTargetCallSD;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUDivSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUMulhSD;
@@ -64,8 +62,6 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmZExtLoad;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
-import vadl.types.SIntType;
-import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Node;
@@ -592,18 +588,7 @@ public class LcbNodeReplacementHandler {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(WriteMemNode writeMemNode) {
-    // LLVM has a special selection dag node when the memory
-    // is written and the value truncated.
-    if (writeMemNode.value() instanceof TruncateNode truncateNode) {
-      var node = new LlvmTruncStore(writeMemNode, truncateNode);
-      writeMemNode.replaceAndDelete(node);
-    } else {
-      var node = new LlvmStoreSD(Objects.requireNonNull(writeMemNode.address()),
-          writeMemNode.value(),
-          writeMemNode.memory(),
-          writeMemNode.words());
-      writeMemNode.replaceAndDelete(node);
-    }
+    Objects.requireNonNull(writeMemNode.graph()).add(new LlvmUnlowerableSD());
 
     for (var index : writeMemNode.indices()) {
       LcbNodeReplacementHandlerDispatcher.dispatch(this, index);
