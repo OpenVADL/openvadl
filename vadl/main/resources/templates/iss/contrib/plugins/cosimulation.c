@@ -36,14 +36,13 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_version = QEMU_PLUGIN_VERSION;
 // adjust as needed
 // NOTE: try to keep these values as small as possible to minimize memory usage
 //       if set too small then crashes and/or invalid state can occur
-#define SHMSTRING_MAX_LEN 1024
-#define TBINFO_ENTRIES 1024
+#define SHMSTRING_MAX_LEN 256
 #define TBINSNINFO_ENTRIES 64
 
-#define MAX_REGISTER_NAME_SIZE 256
+#define MAX_REGISTER_NAME_SIZE 64 
 #define MAX_REGISTER_DATA_SIZE 256
 #define MAX_CPU_REGISTERS 256
-#define MAX_CPU_COUNT 8
+#define MAX_CPU_COUNT 1
 #define MAX_INSN_DATA_SIZE 64
 
 static qemu_plugin_id_t plugin_id;
@@ -160,7 +159,6 @@ typedef struct {
 } Arguments;
 
 static GArray *cpus;
-static GRWLock cpus_lock;
 
 static Arguments args;
 static BrokerSHM *shm;
@@ -168,10 +166,7 @@ static sem_t *sem_client, *sem_server;
 
 static CPU *get_cpu(int vcpu_index) {
   CPU *c;
-  g_rw_lock_reader_lock(&cpus_lock);
   c = &g_array_index(cpus, CPU, vcpu_index);
-  g_rw_lock_reader_unlock(&cpus_lock);
-
   return c;
 }
 
@@ -198,9 +193,7 @@ static GPtrArray *registers_init(int vcpu_index) {
 }
 
 static SHMCPU get_cpu_state(unsigned int cpu_index) {
-  g_rw_lock_reader_lock(&cpus_lock);
   CPU *c = get_cpu(cpu_index);
-  g_rw_lock_reader_unlock(&cpus_lock);
 
   SHMCPU shm_cpu = {};
   shm_cpu.idx = cpu_index;
@@ -214,6 +207,7 @@ static SHMCPU get_cpu_state(unsigned int cpu_index) {
     GByteArray *buf = g_byte_array_new();
 
     shm_reg.size = qemu_plugin_read_register(reg->handle, buf);
+    PLUGIN_ASSERT(shm_reg.size != -1, "failed to read size of register at idx: %d", reg_idx);
 
     if (reg->name != NULL) {
       strncpy(shm_reg.name.value, reg->name, SHMSTRING_MAX_LEN - 1);
@@ -348,23 +342,18 @@ static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
 
 static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
   TBInsnInfo *tbinsn_info = udata;
-  PLUGIN_PRINTLN("vcpu_insn_exec: before wait: (PC=%lu) %s", tbinsn_info->pc, tbinsn_info->disas.value);
   sem_wait(sem_client);
 
   SHMCPU cpu = get_cpu_state(cpu_index);
 
   shm->shm_exec.cpus[cpu_index] = cpu;
   shm->shm_exec.init_mask |= (1 << cpu_index);
-
-  PLUGIN_PRINTLN("vcpu_insn_exec: PC = %lu", tbinsn_info->pc);
-
   shm->shm_exec.insn_info = *tbinsn_info;
 
   // TODO: we cannot free here because the same callback might be used multiple times when a tb gets reused
   // g_free(tbinsn_info);
 
   sem_post(sem_server);
-  PLUGIN_PRINTLN("vcpu_insn_exec: after post");
 }
 
 static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
@@ -403,12 +392,7 @@ static void vcpu_tb_trans(qemu_plugin_id_t id, struct qemu_plugin_tb *tb) {
 }
 
 static void vcpu_init(qemu_plugin_id_t id, unsigned int vcpu_index) {
-  g_rw_lock_writer_lock(&cpus_lock);
-  if (vcpu_index >= cpus->len) {
-    g_array_set_size(cpus, vcpu_index + 1);
-  }
-  g_rw_lock_writer_unlock(&cpus_lock);
-
+  PLUGIN_ASSERT(vcpu_index < MAX_CPU_COUNT, "A CPU with vcpu_index larger than MAX_CPU_COUNT was initialized: %d (idx) >= %d (max-len)", vcpu_index, MAX_CPU_COUNT);
   CPU *c = get_cpu(vcpu_index);
   c->registers = registers_init(vcpu_index);
   PLUGIN_ASSERT(
@@ -436,7 +420,7 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
                                            const qemu_info_t *info, int argc,
                                            char **argv) {
   cpus = g_array_sized_new(true, true, sizeof(CPU),
-                           info->system_emulation ? info->system.max_vcpus : 1);
+                           MAX_CPU_COUNT);
 
   args.client_name_set = false;
 

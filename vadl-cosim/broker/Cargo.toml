@@ -1,0 +1,15 @@
+[package]
+name = "vadl-cosim-broker"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+cosim-lib = { path = "../cosim-lib" }
+
+anyhow = "1.0.98"
+
+clap = { version = "4.5.41", features = ["derive"] }
+figment = { version = "0.10.19", features = ["toml"] }
+
+tracing = { version = "0.1.41", features = ["attributes"] }
+tracing-subscriber = "0.3.19"

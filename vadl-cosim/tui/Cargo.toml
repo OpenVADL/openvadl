@@ -1,0 +1,12 @@
+[package]
+name = "vadl-cosim-tui"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+cosim-lib = { path = "../cosim-lib" }
+anyhow = "1.0.98"
+
+tracing = { version = "0.1.41", features = ["attributes"] }
+tracing-subscriber = "0.3.19"
+ratatui = "0.29.0"

@@ -1,0 +1,3 @@
+[workspace]
+resolver = "3"
+members = ["broker", "cosim-lib", "tui"]
