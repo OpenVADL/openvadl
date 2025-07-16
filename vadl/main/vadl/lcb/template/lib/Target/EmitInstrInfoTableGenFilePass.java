@@ -166,6 +166,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
                         compensationPatterns.stream()
                             .map(TableGenInstructionPatternRenderer::lower))
                 ))
+            .filter(x -> !x.equals("\n"))
             .toList();
 
     var map = new HashMap<String, Object>();

@@ -12021,8 +12021,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 1;
-let isAsCheapAsAMove   = 1;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -12079,8 +12079,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 1;
-let isAsCheapAsAMove   = 1;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -12137,8 +12137,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 1;
-let isAsCheapAsAMove   = 1;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -12485,8 +12485,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 1;
-let isAsCheapAsAMove   = 1;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -12543,8 +12543,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 1;
-let isAsCheapAsAMove   = 1;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -12601,8 +12601,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 1;
-let isAsCheapAsAMove   = 1;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -51708,8 +51708,9 @@ let Defs = [  ];
 
 
 
+// Hardcoded
 def : Pat<(i64 AddrFI:$rs1),
-  (ADDXUXSB AddrFI:$rs1, (i64 0))>;
+  (ADDXI AddrFI:$rs1, (i64 0))>;
 
 
 def ASRIW : Instruction
@@ -52171,14 +52172,6 @@ def : InstAlias<"xzr$rd, xzr$rn, xzr$rm", (MADDX S:$rd, S31, S:$rn, S:$rm)>;
 
 
 
-
-
-
-
-
-
-
-
 def : Pat<(add S:$rn, S:$rm),
         (ADDW S:$rn, S:$rm)>;
 
@@ -52227,80 +52220,32 @@ def : Pat<(add S:$rn, (srl S:$rm, AArch64Base_ADDWSLSR_imm6AsInt64:$imm6)),
         (ADDWSLSR S:$rn, S:$rm, AArch64Base_ADDWSLSR_imm6AsInt64:$imm6)>;
 
 
-
-
-
-
-
-
 def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSSXSX_imm3AsInt64:$imm3)),
         (ADDWSSXSX S:$rn, S:$rm, AArch64Base_ADDWSSXSX_imm3AsInt64:$imm3)>;
-
-
-
-
-
-
 
 
 def : Pat<(add S:$rn, S:$rm),
         (ADDWSSXTX S:$rn, S:$rm)>;
 
 
-
-
-
-
-
-
 def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSUXSX_imm3AsInt64:$imm3)),
         (ADDWSUXSX S:$rn, S:$rm, AArch64Base_ADDWSUXSX_imm3AsInt64:$imm3)>;
-
-
-
-
-
-
 
 
 def : Pat<(add S:$rn, S:$rm),
         (ADDWSUXTX S:$rn, S:$rm)>;
 
 
-
-
-
-
-
-
 def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSXSX_imm3AsInt64:$imm3)),
         (ADDWSXSX S:$rn, S:$rm, AArch64Base_ADDWSXSX_imm3AsInt64:$imm3)>;
-
-
-
-
-
-
 
 
 def : Pat<(add S:$rn, S:$rm),
         (ADDWSXTX S:$rn, S:$rm)>;
 
 
-
-
-
-
-
-
 def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWUXSX_imm3AsInt64:$imm3)),
         (ADDWUXSX S:$rn, S:$rm, AArch64Base_ADDWUXSX_imm3AsInt64:$imm3)>;
-
-
-
-
-
-
 
 
 def : Pat<(add S:$rn, S:$rm),
@@ -52358,88 +52303,36 @@ def : Pat<(add S:$rn, (srl S:$rm, AArch64Base_ADDXSLSR_imm6AsInt64:$imm6)),
         (ADDXSLSR S:$rn, S:$rm, AArch64Base_ADDXSLSR_imm6AsInt64:$imm6)>;
 
 
-
-
-
-
-
-
 def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSSXSX_imm3AsInt64:$imm3)),
         (ADDXSSXSX S:$rn, S:$rm, AArch64Base_ADDXSSXSX_imm3AsInt64:$imm3)>;
-
-
-
-
-
-
 
 
 def : Pat<(add S:$rn, S:$rm),
         (ADDXSSXTX S:$rn, S:$rm)>;
 
 
-
-
-
-
-
-
 def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSUXSX_imm3AsInt64:$imm3)),
         (ADDXSUXSX S:$rn, S:$rm, AArch64Base_ADDXSUXSX_imm3AsInt64:$imm3)>;
-
-
-
-
-
-
 
 
 def : Pat<(add S:$rn, S:$rm),
         (ADDXSUXTX S:$rn, S:$rm)>;
 
 
-
-
-
-
-
-
 def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSXSX_imm3AsInt64:$imm3)),
         (ADDXSXSX S:$rn, S:$rm, AArch64Base_ADDXSXSX_imm3AsInt64:$imm3)>;
-
-
-
-
-
-
 
 
 def : Pat<(add S:$rn, S:$rm),
         (ADDXSXTX S:$rn, S:$rm)>;
 
 
-
-
-
-
-
-
 def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXUXSX_imm3AsInt64:$imm3)),
         (ADDXUXSX S:$rn, S:$rm, AArch64Base_ADDXUXSX_imm3AsInt64:$imm3)>;
 
 
-
-
-
-
-
-
 def : Pat<(add S:$rn, S:$rm),
         (ADDXUXTX S:$rn, S:$rm)>;
-
-
-
-
 
 
 def : Pat<(and S:$rn, AArch64Base_ANDIW_immWSizeAsInt64:$immWSize),
@@ -52474,8 +52367,6 @@ def : Pat<(and S:$rn, (srl S:$rm, AArch64Base_ANDSWLSR_imm6AsInt64:$imm6)),
         (ANDSWLSR S:$rn, S:$rm, AArch64Base_ANDSWLSR_imm6AsInt64:$imm6)>;
 
 
-
-
 def : Pat<(and S:$rn, S:$rm),
         (ANDSX S:$rn, S:$rm)>;
 
@@ -52490,8 +52381,6 @@ def : Pat<(and S:$rn, (shl S:$rm, AArch64Base_ANDSXLSL_imm6AsInt64:$imm6)),
 
 def : Pat<(and S:$rn, (srl S:$rm, AArch64Base_ANDSXLSR_imm6AsInt64:$imm6)),
         (ANDSXLSR S:$rn, S:$rm, AArch64Base_ANDSXLSR_imm6AsInt64:$imm6)>;
-
-
 
 
 def : Pat<(and S:$rn, S:$rm),
@@ -52510,8 +52399,6 @@ def : Pat<(and S:$rn, (srl S:$rm, AArch64Base_ANDWLSR_imm6AsInt64:$imm6)),
         (ANDWLSR S:$rn, S:$rm, AArch64Base_ANDWLSR_imm6AsInt64:$imm6)>;
 
 
-
-
 def : Pat<(and S:$rn, S:$rm),
         (ANDX S:$rn, S:$rm)>;
 
@@ -52528,438 +52415,12 @@ def : Pat<(and S:$rn, (srl S:$rm, AArch64Base_ANDXLSR_imm6AsInt64:$imm6)),
         (ANDXLSR S:$rn, S:$rm, AArch64Base_ANDXLSR_imm6AsInt64:$imm6)>;
 
 
-
-
 def : Pat<(sra S:$rn, S:$rm),
         (ASRW S:$rn, S:$rm)>;
 
 
 def : Pat<(sra S:$rn, S:$rm),
         (ASRX S:$rn, S:$rm)>;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def : Pat<(add S:$rm, (i64 1)),
@@ -53010,18 +52471,6 @@ def : Pat<(add S:$rm, (i64 1)),
         (CSINCHIX S:$rn, S:$rm)>;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 def : Pat<(add S:$rm, (i64 1)),
         (CSINCMIW S:$rn, S:$rm)>;
 
@@ -53036,10 +52485,6 @@ def : Pat<(add S:$rm, (i64 1)),
 
 def : Pat<(add S:$rm, (i64 1)),
         (CSINCNEX S:$rn, S:$rm)>;
-
-
-
-
 
 
 def : Pat<(add S:$rm, (i64 1)),
@@ -53066,154 +52511,6 @@ def : Pat<(add S:$rm, (i64 1)),
         (CSINCVSX S:$rn, S:$rm)>;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def : Pat<(xor S:$rn, AArch64Base_EORIW_immWSizeAsInt64:$immWSize),
         (EORIW S:$rn, AArch64Base_EORIW_immWSizeAsInt64:$immWSize)>;
 
@@ -53238,8 +52535,6 @@ def : Pat<(xor S:$rn, (srl S:$rm, AArch64Base_EORWLSR_imm6AsInt64:$imm6)),
         (EORWLSR S:$rn, S:$rm, AArch64Base_EORWLSR_imm6AsInt64:$imm6)>;
 
 
-
-
 def : Pat<(xor S:$rn, S:$rm),
         (EORX S:$rn, S:$rm)>;
 
@@ -53254,30 +52549,6 @@ def : Pat<(xor S:$rn, (shl S:$rm, AArch64Base_EORXLSL_imm6AsInt64:$imm6)),
 
 def : Pat<(xor S:$rn, (srl S:$rm, AArch64Base_EORXLSR_imm6AsInt64:$imm6)),
         (EORXLSR S:$rn, S:$rm, AArch64Base_EORXLSR_imm6AsInt64:$imm6)>;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def : Pat<(i64 (zextloadi8 (add S:$rn, AArch64Base_LDRB_offsetAsInt64:$offset))),
@@ -53298,192 +52569,6 @@ def : Pat<(i64 (zextloadi16 (add S:$rn, (shl AArch64Base_LDRH_offsetAsInt64:$off
 
 def : Pat<(i64 (zextloadi16 (add AddrFI:$rn, (shl AArch64Base_LDRH_offsetAsInt64:$offset, (i64 1))))),
         (LDRH AddrFI:$rn, AArch64Base_LDRH_offsetAsInt64:$offset)>;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def : Pat<(i32 (sextloadi8 (add S:$rn, AArch64Base_LDRSBW_offsetAsInt64:$offset))),
@@ -53730,36 +52815,8 @@ def : Pat<(add S:$ra, (mul S:$rn, S:$rm)),
         (MADDX S:$ra, S:$rn, S:$rm)>;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def : Pat<(shl AArch64Base_MOVZWPos16_imm16AsInt64:$imm16, (i32 16)),
         (MOVZWPos16 AArch64Base_MOVZWPos16_imm16AsInt64:$imm16)>;
-
-
 
 
 def : Pat<(shl AArch64Base_MOVZXPos16_imm16AsInt64:$imm16, (i64 16)),
@@ -53774,38 +52831,12 @@ def : Pat<(shl AArch64Base_MOVZXPos48_imm16AsInt64:$imm16, (i64 48)),
         (MOVZXPos48 AArch64Base_MOVZXPos48_imm16AsInt64:$imm16)>;
 
 
-
-
-
-
 def : Pat<(sub S:$ra, (mul S:$rn, S:$rm)),
         (MSUBW S:$ra, S:$rn, S:$rm)>;
 
 
 def : Pat<(sub S:$ra, (mul S:$rn, S:$rm)),
         (MSUBX S:$ra, S:$rn, S:$rm)>;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def : Pat<(or S:$rn, AArch64Base_ORRIW_immWSizeAsInt64:$immWSize),
@@ -53832,8 +52863,6 @@ def : Pat<(or S:$rn, (srl S:$rm, AArch64Base_ORRWLSR_imm6AsInt64:$imm6)),
         (ORRWLSR S:$rn, S:$rm, AArch64Base_ORRWLSR_imm6AsInt64:$imm6)>;
 
 
-
-
 def : Pat<(or S:$rn, S:$rm),
         (ORRX S:$rn, S:$rm)>;
 
@@ -53848,36 +52877,6 @@ def : Pat<(or S:$rn, (shl S:$rm, AArch64Base_ORRXLSL_imm6AsInt64:$imm6)),
 
 def : Pat<(or S:$rn, (srl S:$rm, AArch64Base_ORRXLSR_imm6AsInt64:$imm6)),
         (ORRXLSR S:$rn, S:$rm, AArch64Base_ORRXLSR_imm6AsInt64:$imm6)>;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def : Pat<(sra (shl S:$rn, AArch64Base_SBFMW_leftWSizeAsInt64:$leftWSize), AArch64Base_SBFMW_rightWSizeAsInt64:$rightWSize),
@@ -53896,24 +52895,8 @@ def : Pat<(sdiv S:$rn, S:$rm),
         (SDIVX S:$rm, S:$rn)>;
 
 
-
-
-
-
 def : Pat<(mulhs S:$rn, S:$rm),
         (SMULH S:$rn, S:$rm)>;
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def : Pat<(truncstorei8 S:$rt, (add S:$rn, AArch64Base_STRB_offsetAsInt64:$offset)),
@@ -53934,22 +52917,6 @@ def : Pat<(truncstorei16 S:$rt, (add S:$rn, (shl AArch64Base_STRH_offsetAsInt64:
 
 def : Pat<(truncstorei16 S:$rt, (add AddrFI:$rn, (shl AArch64Base_STRH_offsetAsInt64:$offset, (i64 1)))),
         (STRH AddrFI:$rn, S:$rt, AArch64Base_STRH_offsetAsInt64:$offset)>;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def : Pat<(truncstorei8 S:$rt, (add S:$rn, (sext S:$rm))),
@@ -54046,22 +53013,6 @@ def : Pat<(truncstorei32 S:$rt, (add S:$rn, (shl S:$rm, (i64 2)))),
 
 def : Pat<(truncstorei32 S:$rt, (add S:$rn, S:$rm)),
         (STRRegWUXTXUn S:$rn, S:$rm, S:$rt)>;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def : Pat<(truncstorei32 S:$rt, (add S:$rn, (shl AArch64Base_STRW_offsetAsInt64:$offset, (i64 2)))),
@@ -54178,80 +53129,32 @@ def : Pat<(sub S:$rn, (srl S:$rm, AArch64Base_SUBWSLSR_imm6AsInt64:$imm6)),
         (SUBWSLSR S:$rn, S:$rm, AArch64Base_SUBWSLSR_imm6AsInt64:$imm6)>;
 
 
-
-
-
-
-
-
 def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSSXSX_imm3AsInt64:$imm3)),
         (SUBWSSXSX S:$rn, S:$rm, AArch64Base_SUBWSSXSX_imm3AsInt64:$imm3)>;
-
-
-
-
-
-
 
 
 def : Pat<(sub S:$rn, S:$rm),
         (SUBWSSXTX S:$rn, S:$rm)>;
 
 
-
-
-
-
-
-
 def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSUXSX_imm3AsInt64:$imm3)),
         (SUBWSUXSX S:$rn, S:$rm, AArch64Base_SUBWSUXSX_imm3AsInt64:$imm3)>;
-
-
-
-
-
-
 
 
 def : Pat<(sub S:$rn, S:$rm),
         (SUBWSUXTX S:$rn, S:$rm)>;
 
 
-
-
-
-
-
-
 def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSXSX_imm3AsInt64:$imm3)),
         (SUBWSXSX S:$rn, S:$rm, AArch64Base_SUBWSXSX_imm3AsInt64:$imm3)>;
-
-
-
-
-
-
 
 
 def : Pat<(sub S:$rn, S:$rm),
         (SUBWSXTX S:$rn, S:$rm)>;
 
 
-
-
-
-
-
-
 def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWUXSX_imm3AsInt64:$imm3)),
         (SUBWUXSX S:$rn, S:$rm, AArch64Base_SUBWUXSX_imm3AsInt64:$imm3)>;
-
-
-
-
-
-
 
 
 def : Pat<(sub S:$rn, S:$rm),
@@ -54306,88 +53209,36 @@ def : Pat<(sub S:$rn, (srl S:$rm, AArch64Base_SUBXSLSR_imm6AsInt64:$imm6)),
         (SUBXSLSR S:$rn, S:$rm, AArch64Base_SUBXSLSR_imm6AsInt64:$imm6)>;
 
 
-
-
-
-
-
-
 def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSSXSX_imm3AsInt64:$imm3)),
         (SUBXSSXSX S:$rn, S:$rm, AArch64Base_SUBXSSXSX_imm3AsInt64:$imm3)>;
-
-
-
-
-
-
 
 
 def : Pat<(sub S:$rn, S:$rm),
         (SUBXSSXTX S:$rn, S:$rm)>;
 
 
-
-
-
-
-
-
 def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSUXSX_imm3AsInt64:$imm3)),
         (SUBXSUXSX S:$rn, S:$rm, AArch64Base_SUBXSUXSX_imm3AsInt64:$imm3)>;
-
-
-
-
-
-
 
 
 def : Pat<(sub S:$rn, S:$rm),
         (SUBXSUXTX S:$rn, S:$rm)>;
 
 
-
-
-
-
-
-
 def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSXSX_imm3AsInt64:$imm3)),
         (SUBXSXSX S:$rn, S:$rm, AArch64Base_SUBXSXSX_imm3AsInt64:$imm3)>;
-
-
-
-
-
-
 
 
 def : Pat<(sub S:$rn, S:$rm),
         (SUBXSXTX S:$rn, S:$rm)>;
 
 
-
-
-
-
-
-
 def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXUXSX_imm3AsInt64:$imm3)),
         (SUBXUXSX S:$rn, S:$rm, AArch64Base_SUBXUXSX_imm3AsInt64:$imm3)>;
 
 
-
-
-
-
-
-
 def : Pat<(sub S:$rn, S:$rm),
         (SUBXUXTX S:$rn, S:$rm)>;
-
-
-
-
 
 
 def : Pat<(srl (shl S:$rn, AArch64Base_UBFMW_leftWSizeAsInt64:$leftWSize), AArch64Base_UBFMW_rightWSizeAsInt64:$rightWSize),
@@ -54398,18 +53249,12 @@ def : Pat<(srl (shl S:$rn, AArch64Base_UBFMX_leftXSizeAsInt64:$leftXSize), AArch
         (UBFMX S:$rn, AArch64Base_UBFMX_leftXSizeAsInt64:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt64:$rightXSize)>;
 
 
-
-
 def : Pat<(udiv S:$rn, S:$rm),
         (UDIVW S:$rm, S:$rn)>;
 
 
 def : Pat<(udiv S:$rn, S:$rm),
         (UDIVX S:$rm, S:$rn)>;
-
-
-
-
 
 
 def : Pat<(mulhu S:$rn, S:$rm),

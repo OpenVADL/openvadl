@@ -216,6 +216,7 @@ def SelectCC_[(${registerFile.name})]: Instruction {
 [(${instruction})]
 [/]
 
+// Hardcoded
 def : Pat<([(${stackPointerType})] AddrFI:$rs1),
   ([(${addi})] AddrFI:$rs1, ([(${stackPointerType})] 0))>;
 

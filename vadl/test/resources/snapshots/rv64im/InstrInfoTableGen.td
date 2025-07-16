@@ -4392,6 +4392,7 @@ let Defs = [  ];
 
 
 
+// Hardcoded
 def : Pat<(i64 AddrFI:$rs1),
   (ADDI AddrFI:$rs1, (i64 0))>;
 
@@ -5171,18 +5172,12 @@ def : Pat<(add AddrFI:$rs1, RV3264Base_ADDI_immSAsInt64:$immS),
         (ADDI AddrFI:$rs1, RV3264Base_ADDI_immSAsInt64:$immS)>;
 
 
-
-
-
-
 def : Pat<(and X:$rs1, X:$rs2),
         (AND X:$rs1, X:$rs2)>;
 
 
 def : Pat<(and X:$rs1, RV3264Base_ANDI_immSAsInt64:$immS),
         (ANDI X:$rs1, RV3264Base_ANDI_immSAsInt64:$immS)>;
-
-
 
 
 def : Pat<(brcc SETEQ, X:$rs1, X:$rs2, bb:$immS),
@@ -5260,16 +5255,6 @@ def : Pat<(sdiv X:$rs1, X:$rs2),
 
 def : Pat<(udiv X:$rs1, X:$rs2),
         (DIVU X:$rs2, X:$rs1)>;
-
-
-
-
-
-
-
-
-
-
 
 
 def : Pat<(brind X:$rs1),
@@ -5356,8 +5341,6 @@ def : Pat<(i64 (zextloadi16 AddrFI:$rs1)),
         (LHU AddrFI:$rs1, (i64 0))>;
 
 
-
-
 def : Pat<(i64 (sextloadi32 (add X:$rs1, RV3264Base_LW_immSAsInt64:$immS))),
         (LW X:$rs1, RV3264Base_LW_immSAsInt64:$immS)>;
 
@@ -5398,12 +5381,8 @@ def : Pat<(mulhs X:$rs1, X:$rs2),
         (MULH X:$rs1, X:$rs2)>;
 
 
-
-
 def : Pat<(mulhu X:$rs1, X:$rs2),
         (MULHU X:$rs1, X:$rs2)>;
-
-
 
 
 def : Pat<(or X:$rs1, X:$rs2),
@@ -5420,10 +5399,6 @@ def : Pat<(srem X:$rs1, X:$rs2),
 
 def : Pat<(urem X:$rs1, X:$rs2),
         (REMU X:$rs2, X:$rs1)>;
-
-
-
-
 
 
 def : Pat<(truncstorei8 X:$rs2, (add X:$rs1, RV3264Base_SB_immSAsInt64:$immS)),
@@ -5471,10 +5446,6 @@ def : Pat<(shl X:$rs1, X:$rs2),
 
 def : Pat<(shl X:$rs1, RV3264Base_SLLI_shamtAsInt64:$shamt),
         (SLLI X:$rs1, RV3264Base_SLLI_shamtAsInt64:$shamt)>;
-
-
-
-
 
 
 def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
@@ -5528,10 +5499,6 @@ def : Pat<(sra X:$rs1, RV3264Base_SRAI_shamtAsInt64:$shamt),
         (SRAI X:$rs1, RV3264Base_SRAI_shamtAsInt64:$shamt)>;
 
 
-
-
-
-
 def : Pat<(srl X:$rs1, X:$rs2),
         (SRL X:$rs1, X:$rs2)>;
 
@@ -5540,14 +5507,8 @@ def : Pat<(srl X:$rs1, RV3264Base_SRLI_shamtAsInt64:$shamt),
         (SRLI X:$rs1, RV3264Base_SRLI_shamtAsInt64:$shamt)>;
 
 
-
-
-
-
 def : Pat<(sub X:$rs1, X:$rs2),
         (SUB X:$rs1, X:$rs2)>;
-
-
 
 
 def : Pat<(truncstorei32 X:$rs2, (add X:$rs1, RV3264Base_SW_immSAsInt64:$immS)),
@@ -5571,52 +5532,8 @@ def : Pat<(xor X:$rs1, RV3264Base_XORI_immSAsInt64:$immS),
         (XORI X:$rs1, RV3264Base_XORI_immSAsInt64:$immS)>;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def : Pat<(br bb:$offset),
         (J RV3264Base_J_immSAsLabel:$offset)>;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
