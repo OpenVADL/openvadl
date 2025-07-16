@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
+import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
@@ -479,6 +480,11 @@ public class LlvmLoweringPass extends Pass {
             "must exist");
     var machineRecord = ensureNonNull(machineRecords.get(instruction.target()), "must exist");
     var args = getArgsForInstAlias(machineRecord, fieldUsages, instruction);
+
+    if (args.isEmpty()) {
+      return Collections.emptyList();
+    }
+
     var graph = new Graph("output");
     graph.addWithInputs(
         new LcbMachineInstructionNode(new NodeList<>(args), instruction.target()));
@@ -582,6 +588,11 @@ public class LlvmLoweringPass extends Pass {
         } else if (argument instanceof ConstantNode constantNode) {
           args.add(new LcbMachineInstructionParameterNode(
               new GcbConstantOperand(constantNode, constantNode.constant())));
+        } else {
+          DeferredDiagnosticStore.add(
+              Diagnostic.warning("Cannot create an instruction alias for expressions",
+                  argument.location()).build());
+          return new ArrayList<>();
         }
       }
     }
