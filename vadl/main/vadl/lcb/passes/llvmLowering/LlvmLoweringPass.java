@@ -592,7 +592,7 @@ public class LlvmLoweringPass extends Pass {
           DeferredDiagnosticStore.add(
               Diagnostic.warning("Cannot create an instruction alias for expressions",
                   argument.location()).build());
-          return Collections.emptyList();
+          return new ArrayList<>();
         }
       }
     }
