@@ -55,7 +55,7 @@ additional_args = [
 # NOTE: Only applies to `layer = "insn" | "tb-strict"`
 # NOTE: This option is must be set per client to be able to account for different setup-codes per ISS
 # Skips the first n instructions 
-skip_n_instructions = 2
+skip_n_instructions = 3
 
 # Settings for running the qemu-clients with gdb-debugging enabled.
 # Use these settings when possible instead of configuring the flags in the additional_args array since otherwise the runner will mark the client as finished because it did not respond in time.
@@ -86,7 +86,7 @@ additional_args = [
 	"-d", "plugin",
 ]
 
-skip_n_instructions = 0
+skip_n_instructions = 1
 
 [qemu.clients.gdb]
 enable = false

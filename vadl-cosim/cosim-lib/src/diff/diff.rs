@@ -80,7 +80,7 @@ pub fn diff_cpu(
         if config
             .qemu
             .ignore_registers
-            .contains(&rsub_name.to_string())
+            .contains(rsub_name)
         {
             continue;
         }

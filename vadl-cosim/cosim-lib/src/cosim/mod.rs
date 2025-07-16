@@ -1,11 +1,11 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use rusqlite::Connection;
 use tracing::debug;
 
 use crate::{
     config::{Config, TracingMode},
     diff::{diff::diff_cpus, DiffContextClient, DiffEntry, Report},
-    ipc::{cstructs::MAX_CPU_REGISTERS, qemu::Client},
+    ipc::qemu::Client,
     trace::{
         connect, db::{insert_broker_shm_exec, insert_broker_shm_tb}, trace_collect, trace_sync, trace_threaded, TraceStore
     },
@@ -98,6 +98,8 @@ impl Broker {
         let mut diffs = vec![];
         let mut stop_after = config.testing.protocol.stop_after_n_instructions;
 
+        self.check_clients_are_initially_synchronized(config)?;
+
         while self.any_client_open() {
             match config.testing.protocol.layer {
                 crate::config::ProtocolLayer::Insn | crate::config::ProtocolLayer::TBStrict => {
@@ -108,14 +110,13 @@ impl Broker {
                     }
                 }
                 crate::config::ProtocolLayer::TB => {
-                    if let TBSyncResult::Diverged(diff_entry)  = self.tb_sync_clients(config) {
+                    if let TBSyncResult::Diverged(diff_entry) = self.tb_sync_clients(config) {
                         debug!("client diverged during tb synchronization");
                         diffs.push(diff_entry);
                         return Ok(diffs);
                     }
-                },
+                }
             };
-
 
             if !config.testing.protocol.execute_all_remaining_instructions {
                 if stop_after > 0 {
@@ -138,6 +139,26 @@ impl Broker {
 
     fn any_client_open(&self) -> bool {
         self.clients.iter().any(|c| c.is_open)
+    }
+
+    fn check_clients_are_initially_synchronized(&self, config: &Config) -> Result<()> {
+        let start_pcs = self
+            .clients
+            .iter()
+            .map(|c| {
+                match config.testing.protocol.layer {
+                    crate::config::ProtocolLayer::Insn => unsafe { &c.shm.read().shm_exec }.insn_info.pc,
+                    crate::config::ProtocolLayer::TB |
+                    crate::config::ProtocolLayer::TBStrict => unsafe { &c.shm.read().shm_tb }.tb_info.pc,
+                }
+            })
+            .collect::<Vec<_>>();
+
+        if start_pcs.iter().any(|pc| *pc != start_pcs[0]) {
+            bail!("clients started sync from different start-pcs: {start_pcs:?}")
+        }
+
+        Ok(())
     }
 
     fn tb_sync_clients(&mut self, config: &Config) -> TBSyncResult {
@@ -190,10 +211,17 @@ impl Broker {
             let diff_contexts = client_sync_infos
                 .iter()
                 .map(|i| (&self.clients[i.client_id], i.end_pc))
-                .map(|(c, end_pc)| DiffContextClient::new(c.id, c.name.clone(), c.run_count, end_pc))
+                .map(|(c, end_pc)| {
+                    DiffContextClient::new(c.id, c.name.clone(), c.run_count, end_pc)
+                })
                 .collect();
 
-            let diff = DiffEntry::new("tb_info", end_pcs, "clients reached a different end-pc at the end of tb-synchronization", diff_contexts);
+            let diff = DiffEntry::new(
+                "tb_info",
+                end_pcs,
+                "clients reached a different end-pc at the end of tb-synchronization",
+                diff_contexts,
+            );
             return TBSyncResult::Diverged(diff);
         }
 
@@ -210,10 +238,17 @@ impl Broker {
             let diff_contexts = client_sync_infos
                 .iter()
                 .map(|i| (&self.clients[i.client_id], i.end_pc))
-                .map(|(c, end_pc)| DiffContextClient::new(c.id, c.name.clone(), c.run_count, end_pc))
+                .map(|(c, end_pc)| {
+                    DiffContextClient::new(c.id, c.name.clone(), c.run_count, end_pc)
+                })
                 .collect();
 
-            let diff = DiffEntry::new("tb_info.insns_info_size", instr_counts, "clients reached the same end-pc, but executed a different number of instructions", diff_contexts);
+            let diff = DiffEntry::new(
+                "tb_info.insns_info_size",
+                instr_counts,
+                "clients reached the same end-pc, but executed a different number of instructions",
+                diff_contexts,
+            );
             return TBSyncResult::Diverged(diff);
         }
 
