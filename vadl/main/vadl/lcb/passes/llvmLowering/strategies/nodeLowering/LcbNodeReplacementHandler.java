@@ -502,8 +502,7 @@ public class LcbNodeReplacementHandler {
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(ReadMemNode readMemNode) {
     LcbNodeReplacementHandlerDispatcher.dispatch(this, readMemNode.address());
-    readMemNode.replaceAndDelete(
-        new LlvmTypeCastSD(new LlvmLoadSD(readMemNode), readMemNode.type()));
+    readMemNode.replaceAndDelete(new LlvmLoadSD(readMemNode));
   }
 
   @Handler
@@ -572,8 +571,7 @@ public class LcbNodeReplacementHandler {
   public void handle(SignExtendNode signExtendNode) {
     if (signExtendNode.value() instanceof ReadMemNode readMemNode) {
       // Merge SignExtend and ReadMem to LlvmSExtLoad
-      signExtendNode.replaceAndDelete(
-          new LlvmTypeCastSD(new LlvmSExtLoad(readMemNode), makeSigned(signExtendNode.type())));
+      signExtendNode.replaceAndDelete(new LlvmSExtLoad(readMemNode));
       LcbNodeReplacementHandlerDispatcher.dispatch(this, readMemNode.address());
     } else {
       LcbNodeReplacementHandlerDispatcher.dispatch(this, signExtendNode.value());
@@ -744,8 +742,7 @@ public class LcbNodeReplacementHandler {
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(ZeroExtendNode node) {
     if (node.value() instanceof ReadMemNode readMemNode) {
-      node.replaceAndDelete(
-          new LlvmTypeCastSD(new LlvmZExtLoad(readMemNode), makeSigned(node.type())));
+      node.replaceAndDelete(new LlvmZExtLoad(readMemNode));
       LcbNodeReplacementHandlerDispatcher.dispatch(this, readMemNode.address());
     } else {
       // Remove all nodes
@@ -768,16 +765,5 @@ public class LcbNodeReplacementHandler {
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(ExpressionNode node) {
     throw Diagnostic.error("not handled", node.location()).build();
-  }
-
-
-  private Type makeSigned(DataType type) {
-    if (!type.isSigned()) {
-      if (type instanceof BitsType bitsType) {
-        return SIntType.bits(bitsType.bitWidth());
-      }
-    }
-
-    return type;
   }
 }

@@ -437,6 +437,13 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       return false;
     }
 
+    // Only add is allowed as a builtin
+    var builtins = graph.getNodes(BuiltInCall.class).toList();
+    if (builtins.size() != 1 && builtins.stream()
+        .noneMatch(x -> Set.of(ADD).contains(x.builtIn()))) {
+      return false;
+    }
+
     var matched = TreeMatcher.matches(
         graph.getNodes(WriteResourceNode.class).map(x -> x),
         new WriteResourceMatcherForValue(new AnyChildMatcher(new AnyReadMemMatcher())));
