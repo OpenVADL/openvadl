@@ -52463,243 +52463,243 @@ def : Pat<(xor S:$rn, (srl S:$rm, AArch64Base_EORXLSR_imm6AsInt64:$imm6)),
         (EORXLSR S:$rn, S:$rm, AArch64Base_EORXLSR_imm6AsInt64:$imm6)>;
 
 
-def : Pat<(i64 (zextloadi8 (add S:$rn, AArch64Base_LDRB_offsetAsInt64:$offset))),
+def : Pat<(zextloadi8 (add S:$rn, AArch64Base_LDRB_offsetAsInt64:$offset)),
         (LDRB S:$rn, AArch64Base_LDRB_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (zextloadi8 (add AddrFI:$rn, AArch64Base_LDRB_offsetAsInt64:$offset))),
+def : Pat<(zextloadi8 (add AddrFI:$rn, AArch64Base_LDRB_offsetAsInt64:$offset)),
         (LDRB AddrFI:$rn, AArch64Base_LDRB_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (zextloadi8 S:$rn)),
+def : Pat<(zextloadi8 S:$rn),
         (LDRB S:$rn, (i64 0))>;
 
-def : Pat<(i64 (zextloadi8 AddrFI:$rn)),
+def : Pat<(zextloadi8 AddrFI:$rn),
         (LDRB AddrFI:$rn, (i64 0))>;
 
 
-def : Pat<(i64 (zextloadi16 (add S:$rn, (shl AArch64Base_LDRH_offsetAsInt64:$offset, (i64 1))))),
+def : Pat<(zextloadi16 (add S:$rn, (shl AArch64Base_LDRH_offsetAsInt64:$offset, (i64 1)))),
         (LDRH S:$rn, AArch64Base_LDRH_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (zextloadi16 (add AddrFI:$rn, (shl AArch64Base_LDRH_offsetAsInt64:$offset, (i64 1))))),
+def : Pat<(zextloadi16 (add AddrFI:$rn, (shl AArch64Base_LDRH_offsetAsInt64:$offset, (i64 1)))),
         (LDRH AddrFI:$rn, AArch64Base_LDRH_offsetAsInt64:$offset)>;
 
 
-def : Pat<(i32 (sextloadi8 (add S:$rn, AArch64Base_LDRSBW_offsetAsInt64:$offset))),
+def : Pat<(sextloadi8 (add S:$rn, AArch64Base_LDRSBW_offsetAsInt64:$offset)),
         (LDRSBW S:$rn, AArch64Base_LDRSBW_offsetAsInt64:$offset)>;
 
-def : Pat<(i32 (sextloadi8 (add AddrFI:$rn, AArch64Base_LDRSBW_offsetAsInt64:$offset))),
+def : Pat<(sextloadi8 (add AddrFI:$rn, AArch64Base_LDRSBW_offsetAsInt64:$offset)),
         (LDRSBW AddrFI:$rn, AArch64Base_LDRSBW_offsetAsInt64:$offset)>;
 
-def : Pat<(i32 (sextloadi8 S:$rn)),
+def : Pat<(sextloadi8 S:$rn),
         (LDRSBW S:$rn, (i64 0))>;
 
-def : Pat<(i32 (extloadi8 S:$rn)),
+def : Pat<(extloadi8 S:$rn),
         (LDRSBW S:$rn, (i64 0))>;
 
-def : Pat<(i32 (sextloadi8 AddrFI:$rn)),
+def : Pat<(sextloadi8 AddrFI:$rn),
         (LDRSBW AddrFI:$rn, (i64 0))>;
 
-def : Pat<(i32 (extloadi8 AddrFI:$rn)),
+def : Pat<(extloadi8 AddrFI:$rn),
         (LDRSBW AddrFI:$rn, (i64 0))>;
 
 
-def : Pat<(i64 (sextloadi8 (add S:$rn, AArch64Base_LDRSBX_offsetAsInt64:$offset))),
+def : Pat<(sextloadi8 (add S:$rn, AArch64Base_LDRSBX_offsetAsInt64:$offset)),
         (LDRSBX S:$rn, AArch64Base_LDRSBX_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (sextloadi8 (add AddrFI:$rn, AArch64Base_LDRSBX_offsetAsInt64:$offset))),
+def : Pat<(sextloadi8 (add AddrFI:$rn, AArch64Base_LDRSBX_offsetAsInt64:$offset)),
         (LDRSBX AddrFI:$rn, AArch64Base_LDRSBX_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (sextloadi8 S:$rn)),
+def : Pat<(sextloadi8 S:$rn),
         (LDRSBX S:$rn, (i64 0))>;
 
-def : Pat<(i64 (extloadi8 S:$rn)),
+def : Pat<(extloadi8 S:$rn),
         (LDRSBX S:$rn, (i64 0))>;
 
-def : Pat<(i64 (sextloadi8 AddrFI:$rn)),
+def : Pat<(sextloadi8 AddrFI:$rn),
         (LDRSBX AddrFI:$rn, (i64 0))>;
 
-def : Pat<(i64 (extloadi8 AddrFI:$rn)),
+def : Pat<(extloadi8 AddrFI:$rn),
         (LDRSBX AddrFI:$rn, (i64 0))>;
 
 
-def : Pat<(i32 (sextloadi16 (add S:$rn, (shl AArch64Base_LDRSHW_offsetAsInt64:$offset, (i64 1))))),
+def : Pat<(sextloadi16 (add S:$rn, (shl AArch64Base_LDRSHW_offsetAsInt64:$offset, (i64 1)))),
         (LDRSHW S:$rn, AArch64Base_LDRSHW_offsetAsInt64:$offset)>;
 
-def : Pat<(i32 (sextloadi16 (add AddrFI:$rn, (shl AArch64Base_LDRSHW_offsetAsInt64:$offset, (i64 1))))),
+def : Pat<(sextloadi16 (add AddrFI:$rn, (shl AArch64Base_LDRSHW_offsetAsInt64:$offset, (i64 1)))),
         (LDRSHW AddrFI:$rn, AArch64Base_LDRSHW_offsetAsInt64:$offset)>;
 
 
-def : Pat<(i64 (sextloadi16 (add S:$rn, (shl AArch64Base_LDRSHX_offsetAsInt64:$offset, (i64 1))))),
+def : Pat<(sextloadi16 (add S:$rn, (shl AArch64Base_LDRSHX_offsetAsInt64:$offset, (i64 1)))),
         (LDRSHX S:$rn, AArch64Base_LDRSHX_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (sextloadi16 (add AddrFI:$rn, (shl AArch64Base_LDRSHX_offsetAsInt64:$offset, (i64 1))))),
+def : Pat<(sextloadi16 (add AddrFI:$rn, (shl AArch64Base_LDRSHX_offsetAsInt64:$offset, (i64 1)))),
         (LDRSHX AddrFI:$rn, AArch64Base_LDRSHX_offsetAsInt64:$offset)>;
 
 
-def : Pat<(i64 (sextloadi32 (add S:$rn, (shl AArch64Base_LDRSWX_offsetAsInt64:$offset, (i64 2))))),
+def : Pat<(sextloadi32 (add S:$rn, (shl AArch64Base_LDRSWX_offsetAsInt64:$offset, (i64 2)))),
         (LDRSWX S:$rn, AArch64Base_LDRSWX_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (sextloadi32 (add AddrFI:$rn, (shl AArch64Base_LDRSWX_offsetAsInt64:$offset, (i64 2))))),
+def : Pat<(sextloadi32 (add AddrFI:$rn, (shl AArch64Base_LDRSWX_offsetAsInt64:$offset, (i64 2)))),
         (LDRSWX AddrFI:$rn, AArch64Base_LDRSWX_offsetAsInt64:$offset)>;
 
 
-def : Pat<(i64 (zextloadi32 (add S:$rn, (shl AArch64Base_LDRW_offsetAsInt64:$offset, (i64 2))))),
+def : Pat<(zextloadi32 (add S:$rn, (shl AArch64Base_LDRW_offsetAsInt64:$offset, (i64 2)))),
         (LDRW S:$rn, AArch64Base_LDRW_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (zextloadi32 (add AddrFI:$rn, (shl AArch64Base_LDRW_offsetAsInt64:$offset, (i64 2))))),
+def : Pat<(zextloadi32 (add AddrFI:$rn, (shl AArch64Base_LDRW_offsetAsInt64:$offset, (i64 2)))),
         (LDRW AddrFI:$rn, AArch64Base_LDRW_offsetAsInt64:$offset)>;
 
 
-def : Pat<(i64 (load (add S:$rn, (shl AArch64Base_LDRX_offsetAsInt64:$offset, (i64 3))))),
+def : Pat<(load (add S:$rn, (shl AArch64Base_LDRX_offsetAsInt64:$offset, (i64 3)))),
         (LDRX S:$rn, AArch64Base_LDRX_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (load (add AddrFI:$rn, (shl AArch64Base_LDRX_offsetAsInt64:$offset, (i64 3))))),
+def : Pat<(load (add AddrFI:$rn, (shl AArch64Base_LDRX_offsetAsInt64:$offset, (i64 3)))),
         (LDRX AddrFI:$rn, AArch64Base_LDRX_offsetAsInt64:$offset)>;
 
 
-def : Pat<(i64 (zextloadi8 (add S:$rn, AArch64Base_LDURB_offsetAsInt64:$offset))),
+def : Pat<(zextloadi8 (add S:$rn, AArch64Base_LDURB_offsetAsInt64:$offset)),
         (LDURB S:$rn, AArch64Base_LDURB_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (zextloadi8 (add AddrFI:$rn, AArch64Base_LDURB_offsetAsInt64:$offset))),
+def : Pat<(zextloadi8 (add AddrFI:$rn, AArch64Base_LDURB_offsetAsInt64:$offset)),
         (LDURB AddrFI:$rn, AArch64Base_LDURB_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (zextloadi8 S:$rn)),
+def : Pat<(zextloadi8 S:$rn),
         (LDURB S:$rn, (i64 0))>;
 
-def : Pat<(i64 (zextloadi8 AddrFI:$rn)),
+def : Pat<(zextloadi8 AddrFI:$rn),
         (LDURB AddrFI:$rn, (i64 0))>;
 
 
-def : Pat<(i64 (zextloadi16 (add S:$rn, AArch64Base_LDURH_offsetAsInt64:$offset))),
+def : Pat<(zextloadi16 (add S:$rn, AArch64Base_LDURH_offsetAsInt64:$offset)),
         (LDURH S:$rn, AArch64Base_LDURH_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (zextloadi16 (add AddrFI:$rn, AArch64Base_LDURH_offsetAsInt64:$offset))),
+def : Pat<(zextloadi16 (add AddrFI:$rn, AArch64Base_LDURH_offsetAsInt64:$offset)),
         (LDURH AddrFI:$rn, AArch64Base_LDURH_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (zextloadi16 S:$rn)),
+def : Pat<(zextloadi16 S:$rn),
         (LDURH S:$rn, (i64 0))>;
 
-def : Pat<(i64 (zextloadi16 AddrFI:$rn)),
+def : Pat<(zextloadi16 AddrFI:$rn),
         (LDURH AddrFI:$rn, (i64 0))>;
 
 
-def : Pat<(i32 (sextloadi8 (add S:$rn, AArch64Base_LDURSBW_offsetAsInt64:$offset))),
+def : Pat<(sextloadi8 (add S:$rn, AArch64Base_LDURSBW_offsetAsInt64:$offset)),
         (LDURSBW S:$rn, AArch64Base_LDURSBW_offsetAsInt64:$offset)>;
 
-def : Pat<(i32 (sextloadi8 (add AddrFI:$rn, AArch64Base_LDURSBW_offsetAsInt64:$offset))),
+def : Pat<(sextloadi8 (add AddrFI:$rn, AArch64Base_LDURSBW_offsetAsInt64:$offset)),
         (LDURSBW AddrFI:$rn, AArch64Base_LDURSBW_offsetAsInt64:$offset)>;
 
-def : Pat<(i32 (sextloadi8 S:$rn)),
+def : Pat<(sextloadi8 S:$rn),
         (LDURSBW S:$rn, (i64 0))>;
 
-def : Pat<(i32 (extloadi8 S:$rn)),
+def : Pat<(extloadi8 S:$rn),
         (LDURSBW S:$rn, (i64 0))>;
 
-def : Pat<(i32 (sextloadi8 AddrFI:$rn)),
+def : Pat<(sextloadi8 AddrFI:$rn),
         (LDURSBW AddrFI:$rn, (i64 0))>;
 
-def : Pat<(i32 (extloadi8 AddrFI:$rn)),
+def : Pat<(extloadi8 AddrFI:$rn),
         (LDURSBW AddrFI:$rn, (i64 0))>;
 
 
-def : Pat<(i64 (sextloadi8 (add S:$rn, AArch64Base_LDURSBX_offsetAsInt64:$offset))),
+def : Pat<(sextloadi8 (add S:$rn, AArch64Base_LDURSBX_offsetAsInt64:$offset)),
         (LDURSBX S:$rn, AArch64Base_LDURSBX_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (sextloadi8 (add AddrFI:$rn, AArch64Base_LDURSBX_offsetAsInt64:$offset))),
+def : Pat<(sextloadi8 (add AddrFI:$rn, AArch64Base_LDURSBX_offsetAsInt64:$offset)),
         (LDURSBX AddrFI:$rn, AArch64Base_LDURSBX_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (sextloadi8 S:$rn)),
+def : Pat<(sextloadi8 S:$rn),
         (LDURSBX S:$rn, (i64 0))>;
 
-def : Pat<(i64 (extloadi8 S:$rn)),
+def : Pat<(extloadi8 S:$rn),
         (LDURSBX S:$rn, (i64 0))>;
 
-def : Pat<(i64 (sextloadi8 AddrFI:$rn)),
+def : Pat<(sextloadi8 AddrFI:$rn),
         (LDURSBX AddrFI:$rn, (i64 0))>;
 
-def : Pat<(i64 (extloadi8 AddrFI:$rn)),
+def : Pat<(extloadi8 AddrFI:$rn),
         (LDURSBX AddrFI:$rn, (i64 0))>;
 
 
-def : Pat<(i32 (sextloadi16 (add S:$rn, AArch64Base_LDURSHW_offsetAsInt64:$offset))),
+def : Pat<(sextloadi16 (add S:$rn, AArch64Base_LDURSHW_offsetAsInt64:$offset)),
         (LDURSHW S:$rn, AArch64Base_LDURSHW_offsetAsInt64:$offset)>;
 
-def : Pat<(i32 (sextloadi16 (add AddrFI:$rn, AArch64Base_LDURSHW_offsetAsInt64:$offset))),
+def : Pat<(sextloadi16 (add AddrFI:$rn, AArch64Base_LDURSHW_offsetAsInt64:$offset)),
         (LDURSHW AddrFI:$rn, AArch64Base_LDURSHW_offsetAsInt64:$offset)>;
 
-def : Pat<(i32 (sextloadi16 S:$rn)),
+def : Pat<(sextloadi16 S:$rn),
         (LDURSHW S:$rn, (i64 0))>;
 
-def : Pat<(i32 (extloadi16 S:$rn)),
+def : Pat<(extloadi16 S:$rn),
         (LDURSHW S:$rn, (i64 0))>;
 
-def : Pat<(i32 (sextloadi16 AddrFI:$rn)),
+def : Pat<(sextloadi16 AddrFI:$rn),
         (LDURSHW AddrFI:$rn, (i64 0))>;
 
-def : Pat<(i32 (extloadi16 AddrFI:$rn)),
+def : Pat<(extloadi16 AddrFI:$rn),
         (LDURSHW AddrFI:$rn, (i64 0))>;
 
 
-def : Pat<(i64 (sextloadi16 (add S:$rn, AArch64Base_LDURSHX_offsetAsInt64:$offset))),
+def : Pat<(sextloadi16 (add S:$rn, AArch64Base_LDURSHX_offsetAsInt64:$offset)),
         (LDURSHX S:$rn, AArch64Base_LDURSHX_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (sextloadi16 (add AddrFI:$rn, AArch64Base_LDURSHX_offsetAsInt64:$offset))),
+def : Pat<(sextloadi16 (add AddrFI:$rn, AArch64Base_LDURSHX_offsetAsInt64:$offset)),
         (LDURSHX AddrFI:$rn, AArch64Base_LDURSHX_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (sextloadi16 S:$rn)),
+def : Pat<(sextloadi16 S:$rn),
         (LDURSHX S:$rn, (i64 0))>;
 
-def : Pat<(i64 (extloadi16 S:$rn)),
+def : Pat<(extloadi16 S:$rn),
         (LDURSHX S:$rn, (i64 0))>;
 
-def : Pat<(i64 (sextloadi16 AddrFI:$rn)),
+def : Pat<(sextloadi16 AddrFI:$rn),
         (LDURSHX AddrFI:$rn, (i64 0))>;
 
-def : Pat<(i64 (extloadi16 AddrFI:$rn)),
+def : Pat<(extloadi16 AddrFI:$rn),
         (LDURSHX AddrFI:$rn, (i64 0))>;
 
 
-def : Pat<(i64 (sextloadi32 (add S:$rn, AArch64Base_LDURSWX_offsetAsInt64:$offset))),
+def : Pat<(sextloadi32 (add S:$rn, AArch64Base_LDURSWX_offsetAsInt64:$offset)),
         (LDURSWX S:$rn, AArch64Base_LDURSWX_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (sextloadi32 (add AddrFI:$rn, AArch64Base_LDURSWX_offsetAsInt64:$offset))),
+def : Pat<(sextloadi32 (add AddrFI:$rn, AArch64Base_LDURSWX_offsetAsInt64:$offset)),
         (LDURSWX AddrFI:$rn, AArch64Base_LDURSWX_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (sextloadi32 S:$rn)),
+def : Pat<(sextloadi32 S:$rn),
         (LDURSWX S:$rn, (i64 0))>;
 
-def : Pat<(i64 (extloadi32 S:$rn)),
+def : Pat<(extloadi32 S:$rn),
         (LDURSWX S:$rn, (i64 0))>;
 
-def : Pat<(i64 (sextloadi32 AddrFI:$rn)),
+def : Pat<(sextloadi32 AddrFI:$rn),
         (LDURSWX AddrFI:$rn, (i64 0))>;
 
-def : Pat<(i64 (extloadi32 AddrFI:$rn)),
+def : Pat<(extloadi32 AddrFI:$rn),
         (LDURSWX AddrFI:$rn, (i64 0))>;
 
 
-def : Pat<(i64 (zextloadi32 (add S:$rn, AArch64Base_LDURW_offsetAsInt64:$offset))),
+def : Pat<(zextloadi32 (add S:$rn, AArch64Base_LDURW_offsetAsInt64:$offset)),
         (LDURW S:$rn, AArch64Base_LDURW_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (zextloadi32 (add AddrFI:$rn, AArch64Base_LDURW_offsetAsInt64:$offset))),
+def : Pat<(zextloadi32 (add AddrFI:$rn, AArch64Base_LDURW_offsetAsInt64:$offset)),
         (LDURW AddrFI:$rn, AArch64Base_LDURW_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (zextloadi32 S:$rn)),
+def : Pat<(zextloadi32 S:$rn),
         (LDURW S:$rn, (i64 0))>;
 
-def : Pat<(i64 (zextloadi32 AddrFI:$rn)),
+def : Pat<(zextloadi32 AddrFI:$rn),
         (LDURW AddrFI:$rn, (i64 0))>;
 
 
-def : Pat<(i64 (load (add S:$rn, AArch64Base_LDURX_offsetAsInt64:$offset))),
+def : Pat<(load (add S:$rn, AArch64Base_LDURX_offsetAsInt64:$offset)),
         (LDURX S:$rn, AArch64Base_LDURX_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (load (add AddrFI:$rn, AArch64Base_LDURX_offsetAsInt64:$offset))),
+def : Pat<(load (add AddrFI:$rn, AArch64Base_LDURX_offsetAsInt64:$offset)),
         (LDURX AddrFI:$rn, AArch64Base_LDURX_offsetAsInt64:$offset)>;
 
-def : Pat<(i64 (load S:$rn)),
+def : Pat<(load S:$rn),
         (LDURX S:$rn, (i64 0))>;
 
-def : Pat<(i64 (load AddrFI:$rn)),
+def : Pat<(load AddrFI:$rn),
         (LDURX AddrFI:$rn, (i64 0))>;
 
 
