@@ -766,15 +766,4 @@ public class LcbNodeReplacementHandler {
   public void handle(ExpressionNode node) {
     throw Diagnostic.error("not handled", node.location()).build();
   }
-
-
-  private Type makeSigned(DataType type) {
-    if (!type.isSigned()) {
-      if (type instanceof BitsType bitsType) {
-        return SIntType.bits(bitsType.bitWidth());
-      }
-    }
-
-    return type;
-  }
 }
