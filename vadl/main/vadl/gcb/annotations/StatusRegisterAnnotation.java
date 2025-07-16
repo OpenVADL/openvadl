@@ -22,48 +22,34 @@ import vadl.viam.RegisterTensor;
  * Indicates that the {@link RegisterTensor} is a status register and needs special
  * treatment in the compiler-generator.
  */
-public abstract class StatusRegisterAnnotation extends vadl.viam.Annotation<RegisterTensor> {
+public class StatusRegisterAnnotation extends vadl.viam.Annotation<RegisterTensor> {
+
+  @Override
+  public Class<RegisterTensor> parentDefinitionClass() {
+    return RegisterTensor.class;
+  }
 
   /**
    * Register annotation for the negative status register.
    */
   public static class NegativeStatusRegisterAnnotation extends StatusRegisterAnnotation {
-    @Override
-    public Class<RegisterTensor> parentDefinitionClass() {
-      return RegisterTensor.class;
-    }
   }
 
   /**
    * Register annotation for the zero status register.
    */
   public static class ZeroStatusRegisterAnnotation extends StatusRegisterAnnotation {
-    @Override
-    public Class<RegisterTensor> parentDefinitionClass() {
-      return RegisterTensor.class;
-    }
   }
 
   /**
    * Register annotation for the carry status register.
    */
   public static class CarryStatusRegisterAnnotation extends StatusRegisterAnnotation {
-    @Override
-    public Class<RegisterTensor> parentDefinitionClass() {
-      return RegisterTensor.class;
-    }
   }
 
   /**
    * Register annotation for the overflow status register.
    */
   public static class OverflowStatusRegisterAnnotation extends StatusRegisterAnnotation {
-    @Override
-    public Class<RegisterTensor> parentDefinitionClass() {
-      return RegisterTensor.class;
-    }
   }
 }
-
-
-
