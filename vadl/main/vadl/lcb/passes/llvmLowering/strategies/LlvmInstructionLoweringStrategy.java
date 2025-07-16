@@ -424,6 +424,7 @@ public abstract class LlvmInstructionLoweringStrategy {
         || hasSignExtensionInGraph(instruction, graph)
         || hasMultipleOutputs(graph)
         || rejectWhenReadingFromMemory(graph)
+        || rejectWhenWritingToMemory(graph)
         || hasUnreplacedBuiltins(graph)) {
       return true;
     }
@@ -476,6 +477,13 @@ public abstract class LlvmInstructionLoweringStrategy {
       return true;
     }
     return false;
+  }
+
+  /**
+   * If the {@link Graph} it has nodes which writes to memory then we cannot lower it.
+   */
+  protected boolean rejectWhenWritingToMemory(Graph graph) {
+    return !graph.getNodes(WriteMemNode.class).toList().isEmpty();
   }
 
   /**

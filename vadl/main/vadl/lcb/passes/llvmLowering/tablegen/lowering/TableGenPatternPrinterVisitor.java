@@ -343,12 +343,16 @@ public class TableGenPatternPrinterVisitor
 
   @Override
   public void visit(ZeroExtendNode node) {
-
+    writer.write("(zext ");
+    visit(node.value());
+    writer.write(")");
   }
 
   @Override
   public void visit(SignExtendNode node) {
-
+    writer.write("(sext ");
+    visit(node.value());
+    writer.write(")");
   }
 
   @Override

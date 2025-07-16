@@ -53952,11 +53952,11 @@ def : Pat<(truncstorei16 S:$rt, (add AddrFI:$rn, (shl AArch64Base_STRH_offsetAsI
 
 
 
-def : Pat<(truncstorei8 S:$rt, (add S:$rn, )),
+def : Pat<(truncstorei8 S:$rt, (add S:$rn, (sext S:$rm))),
         (STRRegBSXTWIs S:$rn, S:$rm, S:$rt)>;
 
 
-def : Pat<(truncstorei8 S:$rt, (add S:$rn, )),
+def : Pat<(truncstorei8 S:$rt, (add S:$rn, (sext S:$rm))),
         (STRRegBSXTWUn S:$rn, S:$rm, S:$rt)>;
 
 
@@ -53984,11 +53984,11 @@ def : Pat<(truncstorei8 S:$rt, (add S:$rn, S:$rm)),
         (STRRegBUXTXUn S:$rn, S:$rm, S:$rt)>;
 
 
-def : Pat<(truncstorei16 S:$rt, (add S:$rn, (shl , (i64 1)))),
+def : Pat<(truncstorei16 S:$rt, (add S:$rn, (shl (sext S:$rm), (i64 1)))),
         (STRRegHSXTWIs S:$rn, S:$rm, S:$rt)>;
 
 
-def : Pat<(truncstorei16 S:$rt, (add S:$rn, )),
+def : Pat<(truncstorei16 S:$rt, (add S:$rn, (sext S:$rm))),
         (STRRegHSXTWUn S:$rn, S:$rm, S:$rt)>;
 
 
@@ -54016,11 +54016,11 @@ def : Pat<(truncstorei16 S:$rt, (add S:$rn, S:$rm)),
         (STRRegHUXTXUn S:$rn, S:$rm, S:$rt)>;
 
 
-def : Pat<(truncstorei32 S:$rt, (add S:$rn, (shl , (i64 2)))),
+def : Pat<(truncstorei32 S:$rt, (add S:$rn, (shl (sext S:$rm), (i64 2)))),
         (STRRegWSXTWIs S:$rn, S:$rm, S:$rt)>;
 
 
-def : Pat<(truncstorei32 S:$rt, (add S:$rn, )),
+def : Pat<(truncstorei32 S:$rt, (add S:$rn, (sext S:$rm))),
         (STRRegWSXTWUn S:$rn, S:$rm, S:$rt)>;
 
 
@@ -54048,36 +54048,20 @@ def : Pat<(truncstorei32 S:$rt, (add S:$rn, S:$rm)),
         (STRRegWUXTXUn S:$rn, S:$rm, S:$rt)>;
 
 
-def : Pat<(store S:$rt, (add S:$rn, (shl , (i64 3)))),
-        (STRRegXSXTWIs S:$rn, S:$rm, S:$rt)>;
 
 
-def : Pat<(store S:$rt, (add S:$rn, )),
-        (STRRegXSXTWUn S:$rn, S:$rm, S:$rt)>;
 
 
-def : Pat<(store S:$rt, (add S:$rn, (shl S:$rm, (i64 3)))),
-        (STRRegXSXTXIs S:$rn, S:$rm, S:$rt)>;
 
 
-def : Pat<(store S:$rt, (add S:$rn, S:$rm)),
-        (STRRegXSXTXUn S:$rn, S:$rm, S:$rt)>;
 
 
-def : Pat<(store S:$rt, (add S:$rn, (shl S:$rm, (i64 3)))),
-        (STRRegXUXTWIs S:$rn, S:$rm, S:$rt)>;
 
 
-def : Pat<(store S:$rt, (add S:$rn, S:$rm)),
-        (STRRegXUXTWUn S:$rn, S:$rm, S:$rt)>;
 
 
-def : Pat<(store S:$rt, (add S:$rn, (shl S:$rm, (i64 3)))),
-        (STRRegXUXTXIs S:$rn, S:$rm, S:$rt)>;
 
 
-def : Pat<(store S:$rt, (add S:$rn, S:$rm)),
-        (STRRegXUXTXUn S:$rn, S:$rm, S:$rt)>;
 
 
 def : Pat<(truncstorei32 S:$rt, (add S:$rn, (shl AArch64Base_STRW_offsetAsInt64:$offset, (i64 2)))),
