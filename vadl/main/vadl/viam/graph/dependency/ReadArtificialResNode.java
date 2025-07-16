@@ -22,14 +22,14 @@ import vadl.types.DataType;
 import vadl.viam.ArtificialResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
-import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.ReadsRegisterTensor;
 
 /**
  * A read of an {@link ArtificialResource}.
  */
-public class ReadArtificialResNode extends ReadResourceNode implements HasRegisterTensor {
+public class ReadArtificialResNode extends ReadResourceNode implements ReadsRegisterTensor {
 
   @DataValue
   private final ArtificialResource resource;

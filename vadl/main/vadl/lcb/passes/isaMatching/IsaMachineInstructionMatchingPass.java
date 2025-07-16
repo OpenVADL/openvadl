@@ -88,6 +88,7 @@ import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.ReadsRegisterTensor;
 import vadl.viam.graph.WritesRegisterTensor;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -557,7 +558,13 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         .filter(ty -> ty instanceof BitsType && ((BitsType) ty).bitWidth() == bitWidth)
         .findFirst();
 
-    return matched.isPresent()
+    // only one read is allowed
+    var registerReads = behavior.getNodes(ReadsRegisterTensor.class)
+        .filter(HasRegisterTensor::hasRegisterFile)
+        .toList();
+
+    return registerReads.size() == 1
+        && matched.isPresent()
         && writesExactlyOneRegisterClassWithType(behavior, Type.bits(bitWidth));
   }
 

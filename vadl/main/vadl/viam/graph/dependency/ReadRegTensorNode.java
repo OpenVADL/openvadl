@@ -24,8 +24,8 @@ import vadl.types.DataType;
 import vadl.viam.Counter;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
-import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.ReadsRegisterTensor;
 
 /**
  * Represents a read access to a {@link RegisterTensor}.
@@ -43,7 +43,7 @@ import vadl.viam.graph.NodeList;
  * (program) counter access. It is set by the
  * {@link vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass}</p>
  */
-public class ReadRegTensorNode extends ReadResourceNode implements HasRegisterTensor {
+public class ReadRegTensorNode extends ReadResourceNode implements ReadsRegisterTensor {
 
   @DataValue
   protected RegisterTensor regTensor;
