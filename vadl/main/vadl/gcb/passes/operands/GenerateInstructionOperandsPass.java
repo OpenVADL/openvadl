@@ -219,6 +219,7 @@ public class GenerateInstructionOperandsPass extends Pass {
           return !operand.hasConstantAddress();
         })
         .map(this::map)
+        .distinct()
         .toList();
   }
 
@@ -296,6 +297,7 @@ public class GenerateInstructionOperandsPass extends Pass {
         .toList();
 
     return filterOutputs(outputOperands, inputOperands.stream())
+        .distinct()
         .toList();
   }
 

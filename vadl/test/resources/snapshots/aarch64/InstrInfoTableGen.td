@@ -14486,7 +14486,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rd, S:$rn, AArch64Base_BFMW_leftWSizeAsInt64:$leftWSize, AArch64Base_BFMW_rightWSizeAsInt64:$rightWSize );
+let InOperandList = ( ins S:$rn, AArch64Base_BFMW_leftWSizeAsInt64:$leftWSize, AArch64Base_BFMW_rightWSizeAsInt64:$rightWSize );
 
 field bits<32> Inst;
 
@@ -14541,7 +14541,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rd, S:$rn, AArch64Base_BFMX_leftXSizeAsInt64:$leftXSize, AArch64Base_BFMX_rightXSizeAsInt64:$rightXSize );
+let InOperandList = ( ins S:$rn, AArch64Base_BFMX_leftXSizeAsInt64:$leftXSize, AArch64Base_BFMX_rightXSizeAsInt64:$rightXSize );
 
 field bits<32> Inst;
 
@@ -32355,7 +32355,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
-let InOperandList = ( ins S:$rn, AArch64Base_LDPSPre_offWSizeAsInt64:$offWSize );
+let InOperandList = ( ins AArch64Base_LDPSPre_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
 
@@ -32411,7 +32411,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
-let InOperandList = ( ins S:$rn, AArch64Base_LDPSPst_offWSizeAsInt64:$offWSize );
+let InOperandList = ( ins AArch64Base_LDPSPst_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
 
@@ -32523,7 +32523,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
-let InOperandList = ( ins S:$rn, AArch64Base_LDPWPre_offWSizeAsInt64:$offWSize );
+let InOperandList = ( ins AArch64Base_LDPWPre_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
 
@@ -32579,7 +32579,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
-let InOperandList = ( ins S:$rn, AArch64Base_LDPWPst_offWSizeAsInt64:$offWSize );
+let InOperandList = ( ins AArch64Base_LDPWPst_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
 
@@ -32691,7 +32691,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
-let InOperandList = ( ins S:$rn, AArch64Base_LDPXPre_offXSizeAsInt64:$offXSize );
+let InOperandList = ( ins AArch64Base_LDPXPre_offXSizeAsInt64:$offXSize );
 
 field bits<32> Inst;
 
@@ -32747,7 +32747,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
-let InOperandList = ( ins S:$rn, AArch64Base_LDPXPst_offXSizeAsInt64:$offXSize );
+let InOperandList = ( ins AArch64Base_LDPXPst_offXSizeAsInt64:$offXSize );
 
 field bits<32> Inst;
 
@@ -33056,7 +33056,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPreB_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPreB_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33111,7 +33111,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPreH_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPreH_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33166,7 +33166,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPreSBW_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPreSBW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33221,7 +33221,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPreSBX_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPreSBX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33276,7 +33276,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPreSHW_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPreSHW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33331,7 +33331,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPreSHX_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPreSHX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33386,7 +33386,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPreSWX_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPreSWX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33441,7 +33441,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPreW_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPreW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33496,7 +33496,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPreX_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPreX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33551,7 +33551,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPstB_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPstB_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33606,7 +33606,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPstH_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPstH_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33661,7 +33661,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPstSBW_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPstSBW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33716,7 +33716,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPstSBX_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPstSBX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33771,7 +33771,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPstSHW_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPstSHW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33826,7 +33826,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPstSHX_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPstSHX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33881,7 +33881,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPstSWX_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPstSWX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33936,7 +33936,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPstW_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPstW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -33991,7 +33991,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn, S:$rt );
-let InOperandList = ( ins S:$rn, AArch64Base_LDRPstX_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_LDRPstX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -39484,7 +39484,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rd, AArch64Base_MOVKWPos00_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKWPos00_imm16AsInt64:$imm16 );
 
 field bits<32> Inst;
 
@@ -39535,7 +39535,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rd, AArch64Base_MOVKWPos16_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKWPos16_imm16AsInt64:$imm16 );
 
 field bits<32> Inst;
 
@@ -39586,7 +39586,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rd, AArch64Base_MOVKXPos00_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKXPos00_imm16AsInt64:$imm16 );
 
 field bits<32> Inst;
 
@@ -39637,7 +39637,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rd, AArch64Base_MOVKXPos16_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKXPos16_imm16AsInt64:$imm16 );
 
 field bits<32> Inst;
 
@@ -39688,7 +39688,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rd, AArch64Base_MOVKXPos32_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKXPos32_imm16AsInt64:$imm16 );
 
 field bits<32> Inst;
 
@@ -39739,7 +39739,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rd, AArch64Base_MOVKXPos48_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKXPos48_imm16AsInt64:$imm16 );
 
 field bits<32> Inst;
 
@@ -40401,7 +40401,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt, S:$rt, S:$rt, S:$rt, S:$rt, S:$rt, S:$rt, S:$rt, S:$rt );
+let OutOperandList = ( outs S:$rt );
 let InOperandList = ( ins AArch64Base_MRS_sysregAsInt64:$sysreg );
 
 field bits<32> Inst;
@@ -43006,7 +43006,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn, S:$rt, S:$rt2, AArch64Base_STPWPre_offWSizeAsInt64:$offWSize );
+let InOperandList = ( ins S:$rt, S:$rt2, AArch64Base_STPWPre_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
 
@@ -43062,7 +43062,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn, S:$rt, S:$rt2, AArch64Base_STPWPst_offWSizeAsInt64:$offWSize );
+let InOperandList = ( ins S:$rt, S:$rt2, AArch64Base_STPWPst_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
 
@@ -43174,7 +43174,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn, S:$rt, S:$rt2, AArch64Base_STPXPre_offXSizeAsInt64:$offXSize );
+let InOperandList = ( ins S:$rt, S:$rt2, AArch64Base_STPXPre_offXSizeAsInt64:$offXSize );
 
 field bits<32> Inst;
 
@@ -43230,7 +43230,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn, S:$rt, S:$rt2, AArch64Base_STPXPst_offXSizeAsInt64:$offXSize );
+let InOperandList = ( ins S:$rt, S:$rt2, AArch64Base_STPXPst_offXSizeAsInt64:$offXSize );
 
 field bits<32> Inst;
 
@@ -43392,7 +43392,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn, S:$rt, AArch64Base_STRPreB_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rt, AArch64Base_STRPreB_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -43447,7 +43447,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn, S:$rt, AArch64Base_STRPreH_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rt, AArch64Base_STRPreH_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -43502,7 +43502,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn, S:$rt, AArch64Base_STRPreW_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rt, AArch64Base_STRPreW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -43557,7 +43557,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn, S:$rt, AArch64Base_STRPreX_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rt, AArch64Base_STRPreX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -43612,7 +43612,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn, S:$rt, AArch64Base_STRPstB_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rt, AArch64Base_STRPstB_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -43667,7 +43667,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn, S:$rt, AArch64Base_STRPstH_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rt, AArch64Base_STRPstH_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -43722,7 +43722,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn, S:$rt, AArch64Base_STRPstW_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rt, AArch64Base_STRPstW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -43777,7 +43777,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn, S:$rt, AArch64Base_STRPstX_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rt, AArch64Base_STRPstX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
