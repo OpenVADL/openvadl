@@ -53,7 +53,7 @@ public class GcbDefaultInstructionOperand extends GcbInstructionOperand
 
   @Override
   public int hashCode() {
-    return Objects.hash(origin, name());
+    return Objects.hash(type(), name());
   }
 
   @Override
