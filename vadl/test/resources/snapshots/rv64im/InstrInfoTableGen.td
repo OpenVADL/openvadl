@@ -5112,37 +5112,21 @@ let Defs = [  ];
 
 
 
-def : InstAlias<"BEQZ $rs,$offset", (BEQ X:$rs, X0, RV3264Base_BEQ_immSAsLabel:$immS)>;
 
-def : InstAlias<"BGEZ $rs,$offset", (BGE X:$rs, X0, RV3264Base_BGE_immSAsLabel:$immS)>;
 
-def : InstAlias<"BGTZ $rs,$offset", (BLT X0, X:$rs, RV3264Base_BLT_immSAsLabel:$immS)>;
 
-def : InstAlias<"BLEZ $rs,$offset", (BGE X0, X:$rs, RV3264Base_BGE_immSAsLabel:$immS)>;
 
-def : InstAlias<"BLTZ $rs,$offset", (BLT X:$rs, X0, RV3264Base_BLT_immSAsLabel:$immS)>;
 
-def : InstAlias<"BNEZ $rs,$offset", (BNE X:$rs, X0, RV3264Base_BNE_immSAsLabel:$immS)>;
 
-def : InstAlias<"J $offset", (JAL X0, RV3264Base_JAL_immSAsInt64:$immS)>;
 
-def : InstAlias<"JR $rs", (JALR X0, X:$rs, 0)>;
 
-def : InstAlias<"MV $rd,$rs1", (ADDI X:$rd, X:$rs1, 0)>;
 
-def : InstAlias<"NEG $rd,$rs1", (SUB X:$rd, X0, X:$rs1)>;
 
-def : InstAlias<"NOP", (ADDI X0, X0, 0)>;
 
-def : InstAlias<"NOT $rd,$rs1", (XORI X:$rd, X:$rs1, 4095)>;
 
-def : InstAlias<"RET", (JALR X0, X1, 0)>;
 
-def : InstAlias<"SGTZ $rd,$rs1", (SLT X:$rd, X0, X:$rs1)>;
 
-def : InstAlias<"SLTZ $rd,$rs1", (SLT X:$rd, X:$rs1, X0)>;
 
-def : InstAlias<"SNEZ $rd,$rs1", (SLTU X:$rd, X0, X:$rs1)>;
 
 
 

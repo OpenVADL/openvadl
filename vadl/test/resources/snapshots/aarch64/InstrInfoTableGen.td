@@ -52145,25 +52145,15 @@ let Defs = [  ];
 
 
 
-def : InstAlias<"wzr$rd, wzr$rn, wzr$rm", (ASRW S:$rd, S:$rn, S:$rm)>;
 
-def : InstAlias<"wzr$rd, wzr$rn, wzr$rm", (LSLW S:$rd, S:$rn, S:$rm)>;
 
-def : InstAlias<"wzr$rd, wzr$rn, wzr$rm", (LSRW S:$rd, S:$rn, S:$rm)>;
 
-def : InstAlias<"wzr$rd, wzr$rn, wzr$rm", (MADDW S:$rd, S31, S:$rn, S:$rm)>;
 
-def : InstAlias<"xzr$rd, xzr$rn, #$shift", (SBFMX S:$rd, S:$rn, 63, AArch64Base_SBFMX_rightXSizeAsInt64:$rightXSize, 63)>;
 
-def : InstAlias<"xzr$rd, xzr$rn, #$shift", (UBFMX S:$rd, S:$rn, 63, AArch64Base_UBFMX_rightXSizeAsInt64:$rightXSize, 63)>;
 
-def : InstAlias<"xzr$rd, xzr$rn, xzr$rm", (ASRX S:$rd, S:$rn, S:$rm)>;
 
-def : InstAlias<"xzr$rd, xzr$rn, xzr$rm", (LSLX S:$rd, S:$rn, S:$rm)>;
 
-def : InstAlias<"xzr$rd, xzr$rn, xzr$rm", (LSRX S:$rd, S:$rn, S:$rm)>;
 
-def : InstAlias<"xzr$rd, xzr$rn, xzr$rm", (MADDX S:$rd, S31, S:$rn, S:$rm)>;
 
 
 

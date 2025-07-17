@@ -26,29 +26,20 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
-import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
-import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.RegisterRef;
 import vadl.gcb.passes.operands.ReferencesFormatField;
-import vadl.gcb.passes.operands.model.GcbConstantOperand;
-import vadl.gcb.passes.operands.model.GcbInstructionConcreteRegisterOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
-import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.TableGenInstructionCtx;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoInstructionLowerStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmCompilerInstructionLoweringDefaultStrategyImpl;
@@ -68,11 +59,8 @@ import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmPseudoInstruction
 import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanImmediateUnsignedConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
-import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -83,15 +71,6 @@ import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
-import vadl.viam.graph.Graph;
-import vadl.viam.graph.HasRegisterTensor;
-import vadl.viam.graph.NodeList;
-import vadl.viam.graph.control.InstrCallNode;
-import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.FieldAccessRefNode;
-import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.FuncParamNode;
 
 /**
  * This is a wrapper class which contains utility functions for the lowering.
@@ -303,8 +282,6 @@ public class LlvmLoweringPass extends Pass {
         (IsaPseudoInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaPseudoInstructionMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions", viam.location()));
-    var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
-        IdentifyFieldUsagePass.class);
     var registerDefsUses =
         (DetermineRegisterUsesAndDefsPass.Output) passResults.lastResultOf(
             DetermineRegisterUsesAndDefsPass.class);
@@ -344,9 +321,8 @@ public class LlvmLoweringPass extends Pass {
         machineStrategies,
         labelingResult
     );
-    var pseudoRecords = pseudoInstructions(machineRecords, viam, fieldUsages, abi,
-        pseudoStrategies, labelingResult, labelingResultPseudo,
-        registerDefsUses.pseudoInstructions());
+    var pseudoRecords = pseudoInstructions(viam, abi, pseudoStrategies, labelingResult,
+        labelingResultPseudo, registerDefsUses.pseudoInstructions());
     var compilerInstructions =
         compilerInstructions(abi, compilerStrategies, labelingResult,
             registerDefsUses.compilerInstructions());
@@ -401,9 +377,7 @@ public class LlvmLoweringPass extends Pass {
   }
 
   private IdentityHashMap<PseudoInstruction, LlvmLoweringRecord.Pseudo> pseudoInstructions(
-      IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineRecords,
       Specification viam,
-      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Abi abi,
       List<LlvmPseudoInstructionLowerStrategy> pseudoStrategies,
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
@@ -421,10 +395,9 @@ public class LlvmLoweringPass extends Pass {
               continue;
             }
 
-            var instAliases = instAliases(machineRecords, fieldUsages, pseudo);
             var record =
                 strategy.lowerInstruction(abi,
-                    instAliases,
+                    Collections.emptyList(),
                     pseudo,
                     labelledMachineInstructions,
                     info);
@@ -465,139 +438,6 @@ public class LlvmLoweringPass extends Pass {
         });
 
     return tableGenRecords;
-  }
-
-  private @Nonnull List<TableGenInstAlias> instAliases(
-      IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineRecords,
-      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
-      PseudoInstruction pseudo) {
-    if (pseudo.behavior().getNodes(InstrCallNode.class).toList().size() != 1) {
-      return Collections.emptyList();
-    }
-
-    var instruction =
-        ensurePresent(pseudo.behavior().getNodes(InstrCallNode.class).findFirst(),
-            "must exist");
-    var machineRecord = ensureNonNull(machineRecords.get(instruction.target()), "must exist");
-    var args = getArgsForInstAlias(machineRecord, fieldUsages, instruction);
-
-    if (args.isEmpty()) {
-      return Collections.emptyList();
-    }
-
-    var graph = new Graph("output");
-    graph.addWithInputs(
-        new LcbMachineInstructionNode(new NodeList<>(args), instruction.target()));
-
-    return List.of(
-        new TableGenInstAlias(
-            pseudo,
-            pseudo.assembly(),
-            graph
-        )
-    );
-  }
-
-  private List<ExpressionNode> getArgsForInstAlias(
-      LlvmLoweringRecord machineRecord,
-      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
-      InstrCallNode instruction) {
-    var args = new ArrayList<ExpressionNode>();
-
-    for (int i = 0; i < machineRecord.info().outputInputOperandsFormatFields().size(); i++) {
-      var field = machineRecord.info().outputInputOperandsFormatFields().get(i);
-      var argument = instruction.getArgument(field);
-      var fieldUsageMap = fieldUsages.getFieldUsages(instruction.target());
-
-      if (Optional.ofNullable(fieldUsageMap.get(field))
-          .map(x -> x.stream().anyMatch(y -> y == IdentifyFieldUsagePass.FieldUsage.REGISTER))
-          .orElse(false)) {
-        // There are two cases:
-        // First, the given argument is `FuncParamNode`. This means that the argument remains
-        // a register file.
-        // Second, the given argument is a `ConstantNode`. This means that the argument will be
-        // a fixed register in a register file.
-        if (argument instanceof FuncParamNode funcParamNode) {
-          // it is a register file
-          var registerFile =
-              ensurePresent(
-                  instruction.target().behavior().getNodes(FieldRefNode.class)
-                      .flatMap(x -> x.usages()
-                          .filter(y -> y instanceof HasRegisterTensor z && z.hasRegisterFile())
-                          .map(y -> ((HasRegisterTensor) y).registerTensor()))
-                      .findFirst(), () -> Diagnostic.error("Expected to find register file",
-                      field.location()));
-          // We use the funcParamNode's name because we need to make sure that the register
-          // renaming is handled.
-          // pseudo instruction BEQZ( rs : Index, offset : Bits<12> ) =
-          //  {
-          //      BEQ{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
-          //  }
-          // Here register `rs1` gets renamed to `rs`.
-          // So the pattern will look like:
-          // `def : InstAlias<"BEQZ $rs,$offset", (BEQ X:$rs, X0, RV3264I_Btype_immAsLabel:$imm)>;`
-          args.add(new LcbMachineInstructionParameterNode(
-              new GcbInstructionRegisterFileOperand(registerFile,
-                  field,
-                  funcParamNode)));
-        } else if (argument instanceof ConstantNode constantNode) {
-          // it is indexed in a register file
-          var registerFile =
-              ensurePresent(
-                  instruction.target().behavior().getNodes(FieldRefNode.class)
-                      .flatMap(x -> x.usages()
-                          .filter(y -> y instanceof HasRegisterTensor z && z.hasRegisterFile())
-                          .map(y -> ((HasRegisterTensor) y).registerTensor()))
-                      .findFirst(), () -> Diagnostic.error("Expected to find register file",
-                      field.location()));
-          args.add(new LcbMachineInstructionParameterNode(
-              new GcbInstructionConcreteRegisterOperand(registerFile,
-                  constantNode.constant().asVal().intValue(),
-                  constantNode)));
-        }
-      } else {
-        // There are two cases:
-        // First, the given argument is `FuncCallNode`. This means that the argument remains
-        // an immediate which needs to be selected during instruction selection.
-        // Second, the given argument is a `ConstantNode`. This means that the argument will be
-        // a fixed constant.
-        if (argument instanceof FuncParamNode) {
-          var fieldAccess =
-              ensurePresent(
-                  instruction.target().behavior().getNodes(FieldAccessRefNode.class)
-                      .filter(x ->
-                          x.fieldAccess().fieldRefs().contains(field))
-                      .findFirst(),
-                  () -> Diagnostic.error("Cannot find field access function for field",
-                      field.location()));
-          var operand =
-              ensurePresent(
-                  Stream.concat(machineRecord.info().inputs().stream(),
-                          machineRecord.info().outputs().stream())
-                      .filter(x -> (x instanceof TableGenInstructionLabelOperand y
-                          &&
-                          y.immediateOperand().fieldAccessRef().equals(fieldAccess.fieldAccess()))
-                          || (x instanceof TableGenInstructionImmediateOperand z
-                          &&
-                          z.immediateOperand().fieldAccessRef().equals(fieldAccess.fieldAccess()))
-                      )
-                      .findFirst(),
-                  () -> Diagnostic.error("Cannot find operand", argument.location()));
-
-          args.add(new LcbMachineInstructionParameterNode(operand));
-        } else if (argument instanceof ConstantNode constantNode) {
-          args.add(new LcbMachineInstructionParameterNode(
-              new GcbConstantOperand(constantNode, constantNode.constant())));
-        } else {
-          DeferredDiagnosticStore.add(
-              Diagnostic.warning("Cannot create an instruction alias for expressions",
-                  argument.location()).build());
-          return new ArrayList<>();
-        }
-      }
-    }
-
-    return args;
   }
 
   /**
