@@ -54,21 +54,6 @@ namespace
                       , IK_[(${function})]
                       [/th:block]
                     };
-
-        static uint64_t applyDecoding(const uint64_t value, [(${namespace})]ImmediateKind kind)
-        {
-            switch (kind)
-            {
-            default:
-                llvm_unreachable("Unsupported immediate kind to use for decoding!");
-            case IK_UNKNOWN_IMMEDIATE:
-                return value;
-            [#th:block th:each="function, iterStat : ${decodeFunctionNames}" ]
-              case IK_[(${function})]:
-                return [(${function})](value);
-            [/th:block]
-            }
-        }
     };
 
 } // end of anonymous namespace

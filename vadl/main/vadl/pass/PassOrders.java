@@ -323,7 +323,6 @@ public class PassOrders {
         new vadl.lcb.template.lib.Target.EmitMachineFunctionInfoHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitTargetObjectFileCppFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitInstrInfoHeaderFilePass(configuration));
-    order.add(new vadl.lcb.template.lib.Target.EmitExpandPseudoHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitDAGToDAGIselHeaderFilePass(configuration));
     order.add(
         new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParsedOperandCppFilePass(configuration));
@@ -420,7 +419,6 @@ public class PassOrders {
     order.add(new vadl.lcb.template.lib.Target.EmitRegisterInfoCppFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitTargetMachineCppFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitTargetMachineHeaderFilePass(configuration));
-    order.add(new vadl.lcb.template.lib.Target.EmitExpandPseudoCppFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitTargetObjectFileHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitISelLoweringHeaderFilePass(configuration));
     order.add(
