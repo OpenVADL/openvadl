@@ -123,7 +123,7 @@ public class AssemblyInstructionPrinterImmediateHandler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(CGenContext<Node> ctx, ConstantNode node) {
     if (node.constant() instanceof Constant.Str str) {
-      ctx.ln("\"" + str.value() + "\"s");
+      ctx.ln("std::string(\"" + str.value() + "\")");
     } else if (node.constant() instanceof Constant.Value val) {
       ctx.ln(val.intValue() + "");
     } else {
@@ -152,7 +152,7 @@ public class AssemblyInstructionPrinterImmediateHandler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(CGenContext<Node> ctx, BuiltInCall node) {
     if (node.builtIn() == BuiltInTable.MNEMONIC) {
-      ctx.ln("\"" + instruction.identifier().simpleName() + "\"s");
+      ctx.ln("std::string(\"" + instruction.identifier().simpleName() + "\")");
     } else if (node.builtIn() == BuiltInTable.CONCATENATE_STRINGS) {
       for (int i = 0; i < node.arguments().size(); i++) {
         if (i != 0) {
