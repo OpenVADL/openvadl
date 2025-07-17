@@ -137,6 +137,7 @@ public class AssemblyInstructionPrinterImmediateHandler
   @Override
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(CGenContext<Node> ctx, SelectNode node) {
+    ctx.wr("(");
     AssemblyInstructionPrinterImmediateHandlerDispatcher.dispatch(this, (CNodeContext) ctx,
         node.condition());
     ctx.wr(" ? ");
@@ -145,6 +146,7 @@ public class AssemblyInstructionPrinterImmediateHandler
     ctx.wr(" : ");
     AssemblyInstructionPrinterImmediateHandlerDispatcher.dispatch(this, (CNodeContext) ctx,
         node.falseCase());
+    ctx.wr(")");
   }
 
   @Handler
