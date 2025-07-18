@@ -47,10 +47,7 @@ BitVector Reserved(getNumRegs());
 
 markSuperRegs(Reserved, processornamevalue::S29); // frame pointer
 markSuperRegs(Reserved, processornamevalue::S31); // stack pointer
-markSuperRegs(Reserved, processornamevalue::); // global pointer
 
-
-markSuperRegs(Reserved, processornamevalue::); // thread pointer
 
 
 
