@@ -118,66 +118,6 @@ public class GcbEncodingFunctionCodeGenerator extends FunctionCodeGenerator {
     throwNotAllowed(toHandle, "Asm builtin calls");
   }
 
-  /*
-  @Override
-  public String genFunctionDefinition() {
-    var returnNode = getSingleNode(function().behavior(), ReturnNode.class);
-
-    context().wr(genFunctionSignature())
-        .wr(" {\n");
-
-    var merged =
-        Stream.concat(tableGenInstruction.getOutOperands().stream(),
-                tableGenInstruction.getInOperands().stream())
-            .toList();
-
-    var matched = false;
-    for (var operand : tableGenInstruction.getInOperands()) {
-      if (operand instanceof TableGenInstructionImmediateOperand immediateOperand) {
-        writeImmediateOperand(operand, immediateOperand.immediateOperand(), merged);
-        matched = true;
-      } else if (operand instanceof TableGenInstructionLabelOperand labelOperand) {
-        writeImmediateOperand(operand, labelOperand.immediateOperand(), merged);
-        matched = true;
-      }
-    }
-
-    if(!matched) {
-      // It might happen that an instruction has field access functions but do not use them.
-      // For example in RISCV MULH has the `shamt` field access function, but doesn't use it.
-
-      context().wr("   llvm_unreachable(\"unusable encoding\");")
-          .wr("\n}")
-          .ln();
-
-      return builder().toString();
-    }
-
-    context
-        .wr("   return ")
-        .gen(returnNode.value())
-        .wr(";\n}");
-    return builder().toString();
-  }
-
-  private void writeImmediateOperand(TableGenInstructionOperand operand,
-                                     TableGenImmediateRecord immediateRecord,
-                                     List<TableGenInstructionOperand> merged) {
-    var index = merged.indexOf(operand);
-    context.wr("   auto %s = MI.getOperand(%d);",
-        immediateRecord.fieldAccessRef().simpleName(),
-        index).ln();
-  }
-
-  private void writeImmediateOperand(TableGenInstructionBareSymbolOperand operand,
-                                     List<TableGenInstructionOperand> merged) {
-    var index = merged.indexOf(operand);
-    context.wr("   auto %s = MI.getOperand(%d);",
-        operand.name(),
-        index).ln();
-  }
-   */
-
   @Override
   public String genFunctionName() {
     return functionName;

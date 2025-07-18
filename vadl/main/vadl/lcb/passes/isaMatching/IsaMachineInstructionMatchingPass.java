@@ -468,7 +468,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         .count();
 
     // no writes except memory
-    if (writesRegFile != 0 && writesReg != 0) {
+    if (writesRegFile != 0 || writesReg != 0) {
       return false;
     }
 
