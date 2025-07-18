@@ -20,7 +20,7 @@ pub enum TraceData {
 }
 
 pub fn connect(config: &Config) -> Result<Connection> {
-    let connect_flags = OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NOFOLLOW;
+    let connect_flags = OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NOFOLLOW | OpenFlags::SQLITE_OPEN_CREATE;
     let path = Path::new(&config.tracing.dir).join(&config.tracing.file);
     Connection::open_with_flags(path, connect_flags)
         .context("failed to open sqlite connection for tracing")

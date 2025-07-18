@@ -11,7 +11,7 @@ use tracing::{Level, info};
 use cosim_lib::{
     cli::Cli,
     config::Config,
-    cosim::Broker,
+    cosim::Broker, trace::{connect, db::setup_database},
 };
 
 
@@ -37,6 +37,11 @@ fn main() -> Result<()> {
     if config.dev.dry_run {
         info!(?config, "Dry-Run.");
         return Ok(());
+    }
+
+    if config.tracing.clear_on_rerun {
+        let conn = connect(&config)?;
+        setup_database(&conn)?;
     }
 
     let mut broker = Broker::create(&config)?;

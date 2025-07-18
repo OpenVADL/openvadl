@@ -205,12 +205,11 @@ clear_on_rerun = true
 # The data is always "tagged" with a date (when was the cosimulation-run started) and a counter that orders entries inside a cosimulation-run.
 # Therefore even if the data is entered out-of-order in the database it is still possible to order it correctly.
 [tracing]
-mode = "none"
-
+mode = "threaded"
+# NOTE: If no db-file is found at the given path then one will be automatically created.
 dir = "./cosim-run/trace"
-
-# NOTE: The cosimulation cli can be used to generate a sqlite3 db-file with the necessary tables created.
 file = "trace.sqlite3"
+clear_on_rerun = true
 
 [dev]
 # Prints the loaded configuration if set to true and exits
