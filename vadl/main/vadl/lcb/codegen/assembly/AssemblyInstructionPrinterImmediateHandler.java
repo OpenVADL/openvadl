@@ -496,8 +496,18 @@ public class AssemblyInstructionPrinterImmediateHandler
             CreateFunctionsFromImmediatesPass.createParametersForEncodingFunctionFromInputOperands(
                     tableGenInstruction)
                 .stream()
-                .map(x -> String.format("MI->getOperand(%s).getImm()",
-                    indexInInputsOrOutputs(x.operand().immediateOperand().fieldAccessRef()).get()))
+                .map(x -> {
+                  var index = indexInInputsOrOutputs(
+                      x.operand().immediateOperand().fieldAccessRef()).get();
+                  var operand = tableGenInstruction.getOperand(index);
+                  var isUsedAsImmediate = operand instanceof GcbInstructionImmediateOperand;
+                  // You can also use a register as immediate, but then you need to call ".getReg".
+                  if (isUsedAsImmediate) {
+                    return String.format("MI->getOperand(%s).getImm()", index);
+                  } else {
+                    return String.format("MI->getOperand(%s).getReg()", index);
+                  }
+                })
                 .collect(Collectors.joining(", "));
 
         if (radix == 10) {
@@ -563,8 +573,13 @@ public class AssemblyInstructionPrinterImmediateHandler
 
   private void writeFieldWithRawImmediateWithRadix(int indexInOperands,
                                                    int radix) {
-    ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
-        indexInOperands, radix);
+    // Operand must not be necessarily an immediate, but can also be a register.
+    if (tableGenInstruction.getOperand(indexInOperands) instanceof GcbInstructionImmediateOperand) {
+      ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
+          indexInOperands, radix);
+    } else {
+      ctx.wr("std::to_string(MI->getOperand(%s).getReg())", indexInOperands);
+    }
   }
 
   private void formatImm(CGenContext<Node> ctx,
