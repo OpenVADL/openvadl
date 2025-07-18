@@ -209,8 +209,8 @@ public class AssemblyInstructionPrinterImmediateHandler
         tableGenInstruction.getInOperands().stream()).toList();
     var operand = operands.get(index);
 
-    if (operand instanceof GcbInstructionRegisterFileOperand ||
-        operand instanceof GcbInstructionIndexedRegisterFileOperand) {
+    if (operand instanceof GcbInstructionRegisterFileOperand
+        || operand instanceof GcbInstructionIndexedRegisterFileOperand) {
       ctx.wr("MI->getOperand(" + index + ").getReg()");
     } else {
       ctx.wr("MI->getOperand(" + index + ").getImm()");
