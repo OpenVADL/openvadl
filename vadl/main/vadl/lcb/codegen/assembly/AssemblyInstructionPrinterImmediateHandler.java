@@ -211,9 +211,9 @@ public class AssemblyInstructionPrinterImmediateHandler
 
     if (operand instanceof GcbInstructionRegisterFileOperand ||
         operand instanceof GcbInstructionIndexedRegisterFileOperand) {
-      ctx.wr("MI->getOperand("+ index + ").getReg()");
+      ctx.wr("MI->getOperand(" + index + ").getReg()");
     } else {
-      ctx.wr("MI->getOperand("+ index + ").getImm()");
+      ctx.wr("MI->getOperand(" + index + ").getImm()");
     }
   }
 

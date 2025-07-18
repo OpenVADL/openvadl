@@ -47,6 +47,7 @@ import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.utils.Pair;
 import vadl.utils.Triple;
+import vadl.viam.Definition;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
@@ -178,8 +179,14 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
       GcbCppEncodingWrapperFunction wrapperFunction) {
     var encodings = new ArrayList<Encoding>();
 
+
     var offset = 0;
     for (var encoding : wrapperFunction.encodingFunctions()) {
+      // Do not support multiple field access functions.
+      if (encoding.header().parameters().length > 1) {
+        continue;
+      }
+
 
       /*
         const MCOperand &MO = MI.getOperand(OpNo);
@@ -208,13 +215,13 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
               ? encoding.header().parameters()[0].simpleName() + ".isExpr()"
               : Arrays.stream(encoding.header().parameters())
               .map(x -> x.simpleName() + ".isExpr()")
-              .collect(Collectors.joining(".isExpr() && "));
+              .collect(Collectors.joining(" && "));
 
       var fieldAccesses =
           encoding.header().parameters().length == 1
-              ? "&" + encoding.header().parameters()[0].simpleName() + ".getImm()"
+              ? "&" + encoding.header().parameters()[0].simpleName()
               : Arrays.stream(encoding.header().parameters())
-              .map(x -> x.simpleName() + ".getImm()")
+              .map(Definition::simpleName)
               .collect(Collectors.joining(", &"));
 
       encodings.add(
