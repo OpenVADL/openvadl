@@ -47,7 +47,6 @@ import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.utils.Pair;
 import vadl.utils.Triple;
-import vadl.viam.Definition;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
@@ -194,28 +193,28 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
           encoding.header().parameters().length == 1
               ? encoding.header().parameters()[0].simpleName() + ".getImm()"
               : Arrays.stream(encoding.header().parameters())
-              .map(Definition::simpleName)
-              .collect(Collectors.joining(".getImm(), "));
+              .map(x -> x.simpleName() + ".getImm()")
+              .collect(Collectors.joining(", "));
 
       var checks =
           encoding.header().parameters().length == 1
               ? encoding.header().parameters()[0].simpleName() + ".isImm()"
               : Arrays.stream(encoding.header().parameters())
-              .map(Definition::simpleName)
-              .collect(Collectors.joining(".isImm() && "));
+              .map(x -> x.simpleName() + ".isImm()")
+              .collect(Collectors.joining(" && "));
 
       var checksExpr =
           encoding.header().parameters().length == 1
               ? encoding.header().parameters()[0].simpleName() + ".isExpr()"
               : Arrays.stream(encoding.header().parameters())
-              .map(Definition::simpleName)
+              .map(x -> x.simpleName() + ".isExpr()")
               .collect(Collectors.joining(".isExpr() && "));
 
       var fieldAccesses =
           encoding.header().parameters().length == 1
-              ? "&" + encoding.header().parameters()[0].simpleName()
+              ? "&" + encoding.header().parameters()[0].simpleName() + ".getImm()"
               : Arrays.stream(encoding.header().parameters())
-              .map(Definition::simpleName)
+              .map(x -> x.simpleName() + ".getImm()")
               .collect(Collectors.joining(", &"));
 
       encodings.add(
