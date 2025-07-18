@@ -82,7 +82,8 @@ namespace lld
         {
             uint64_t relocated =  [(${elfRelocation.relocationFunction})](val);
             [#th:block th:if="${not #strings.isEmpty(elfRelocation.encodingFunction)}" ]
-            relocated = [(${elfRelocation.encodingFunction})](relocated);
+            // FIXME: invocation when multiple field refs in field access function is incorrect.
+            relocated = [(${elfRelocation.encodingFunction})]([(${elfRelocation.encodingFunctionParamString})]);
             [/th:block]
             return [(${elfRelocation.patchInstructionFunction})](word, relocated);
         }

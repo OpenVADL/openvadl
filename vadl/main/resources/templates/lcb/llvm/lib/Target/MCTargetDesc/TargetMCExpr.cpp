@@ -166,7 +166,8 @@ int64_t [(${namespace})]MCExpr::evaluateAsInt64(int64_t Value) const
     [# th:each="decodeMapping : ${decodeMappings}" ]
       if(Kind == [(${decodeMapping.variantKind})])
       {
-        resultValue = [(${decodeMapping.decodeFunction})](resultValue);
+        // FIXME: invocation when multiple field refs in field access function is incorrect.
+        resultValue = [(${decodeMapping.decodeFunction})]([(${decodeMapping.paramString})]);
       }
     [/]
 

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.VariantKind;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
@@ -54,12 +55,16 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
         + processorName + "MCExpr.cpp";
   }
 
-  record DecodeMapping(String variantKind, String decodeFunction) implements Renderable {
+  record DecodeMapping(String variantKind, String decodeFunction, int numParams)
+      implements Renderable {
     @Override
     public Map<String, Object> renderObj() {
       return Map.of(
           "variantKind", variantKind,
-          "decodeFunction", decodeFunction
+          "decodeFunction", decodeFunction,
+          "numParams", numParams,
+          "paramString", IntStream.range(0, numParams).mapToObj(x -> "resultValue")
+              .collect(Collectors.joining(", "))
       );
     }
   }
@@ -122,7 +127,8 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
 
           var decodeFunction = imm.rawDecoderMethod().lower();
           return new DecodeMapping(variantKind.value(),
-              decodeFunction);
+              decodeFunction,
+              fieldAccess.fieldRefs().size());
         }).toList();
   }
 }
