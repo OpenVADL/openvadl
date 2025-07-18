@@ -92,7 +92,7 @@ bool [(${namespace})]AsmParser::parse_[(${instruction.name})](MCInst &Inst, Oper
             int64_t opImm64 = dyn_cast<MCConstantExpr>(Op.getImm())->getValue();
 
             [# th:if="${operand.isFieldOperand}"]
-            opImm64 = [(${operand.decodeMethod})](opImm64);
+            opImm64 = [(${operand.decodeMethod})]([(${operand.params})]);
             [/]
 
             [# th:if="${operand.requiresPredicate}" ]

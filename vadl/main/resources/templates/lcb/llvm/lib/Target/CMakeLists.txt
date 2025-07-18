@@ -22,7 +22,6 @@ add_llvm_target([(${namespace})]CodeGen
           [(${namespace})]ISelLowering.cpp
           [(${namespace})]DAGToDAGISel.cpp
           [(${namespace})]AsmPrinter.cpp
-          [(${namespace})]ExpandPseudo.cpp
           [(${namespace})]PassConfig.cpp
           [(${namespace})]TargetObjectFile.cpp
           [(${namespace})]MCInstLower.cpp

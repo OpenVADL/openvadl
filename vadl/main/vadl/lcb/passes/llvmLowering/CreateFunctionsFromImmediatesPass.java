@@ -57,6 +57,7 @@ import vadl.viam.Parameter;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
+import vadl.viam.passes.functionInliner.Inliner;
 
 /**
  * A pass that creates various functions which are required for the immediates in LLVM.
@@ -144,7 +145,7 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
 
     for (var immediate : immediates) {
       // We do not need to encode pseudo instructions.
-      if (!(immediate.instructionRef() instanceof Instruction instruction)) {
+      if (!(immediate.instructionRef() instanceof Instruction)) {
         continue;
       }
 
@@ -200,6 +201,7 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
           parameters.toArray(Parameter[]::new),
           CppTypeMap.upcast(encoding.targetField().type()),
           encoding.behavior());
+      Inliner.inlineFuncs(encoding.behavior(), Inliner.InliningMode.WithoutRelocations);
       return new GcbCppEncodeFunction(encodingBodyLessFunction,
           encoding.targetField(),
           new GcbEncodingFunctionCodeGenerator(

@@ -1811,6 +1811,6 @@ instruction set architecture AArch64Base = {
   $NopInstr              ((NOP    ; "nop"   ; 0b0010'0000'0001'1111                        ))
   $NopInstr              ((YIELD  ; "yield" ; 0b0010'0000'0011'1111                        ))
   // $BTIInstr              ((BTI    ; "bti"   ; 0b0010'0100'''01'1111                        ))
-  $UndefinedInstr        ((UDF    ; "udf"   ; 0b0000'0000'0000'0000                        ))
+  // $UndefinedInstr        ((UDF    ; "udf"   ; 0b0000'0000'0000'0000                        ))
 
 }

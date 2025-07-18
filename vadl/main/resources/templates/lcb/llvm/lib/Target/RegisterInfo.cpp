@@ -47,11 +47,12 @@ BitVector [(${namespace})]RegisterInfo::getReservedRegs(const MachineFunction &M
 
     markSuperRegs(Reserved, [(${namespace})]::[(${framePointer})]); // frame pointer
     markSuperRegs(Reserved, [(${namespace})]::[(${stackPointer})]); // stack pointer
+    [#th:block th:if="${not #strings.isEmpty(globalPointer)}" ]
     markSuperRegs(Reserved, [(${namespace})]::[(${globalPointer})]); // global pointer
-
-    [# th:if="hasThreadPointer" ]
+    [/th:block]
+    [#th:block th:if="${not #strings.isEmpty(threadPointer)}" ]
     markSuperRegs(Reserved, [(${namespace})]::[(${threadPointer})]); // thread pointer
-    [/]
+    [/th:block]
 
     [# th:each="constraint : ${constraints}" ]
     markSuperRegs(Reserved,  [(${namespace})]::[(${constraint.registerFile})][(${constraint.index})]);

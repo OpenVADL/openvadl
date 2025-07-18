@@ -234,7 +234,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
             Stream.concat(
                 registerAdjustmentSequences.stream().map(x -> x.identifier().simpleName()),
                 loadInstructions)
-        ).toList(),
+        ).distinct().toList(),
         "compilerInstructions", Stream.concat(pseudoInstructions.stream(),
                 Stream.concat(constantSequences.stream(), registerAdjustmentSequences.stream()))
             .toList()

@@ -16,9 +16,13 @@
 
 package vadl.lcb.template.lld.ELF.Arch;
 
+import static vadl.lcb.template.utils.ImmediateEncodingFunctionProvider.generateEncodeFunctions;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
@@ -27,9 +31,9 @@ import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
-import vadl.lcb.template.utils.ImmediateEncodingFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
+import vadl.utils.Pair;
 import vadl.viam.Specification;
 
 /**
@@ -58,7 +62,8 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
 
   record ElfRelocationInfo(String elfName, String kind,
                            String relocationFunction, String patchInstructionFunction,
-                           String encodingFunction) implements
+                           String encodingFunction,
+                           int encodingParams) implements
       Renderable {
 
     @Override
@@ -68,7 +73,11 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
           "kind", kind,
           "relocationFunction", relocationFunction,
           "patchInstructionFunction", patchInstructionFunction,
-          "encodingFunction", encodingFunction
+          "encodingFunction", encodingFunction,
+          "encodingNumParams", encodingParams,
+          "encodingFunctionParamString",
+          IntStream.range(0, encodingParams).mapToObj(x -> "relocated")
+              .collect(Collectors.joining(", "))
       );
     }
   }
@@ -83,7 +92,6 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
     var output =
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
             GenerateLinkerComponentsPass.class);
-
     // We only apply the encoding function for AutomaticallyGeneratedRelocations,
     // because instructions that permit UserDefinedRelocations store the raw immediate value
     // in the instruction word.
@@ -100,14 +108,26 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
     // expectation of the BEQ instruction. This is done by applying the encoding function
     // to transform the value from 0x802 to 0x401.
     var elfRelocations = output.elfRelocations().stream().map(
-        r -> new ElfRelocationInfo(r.elfRelocationName().value(),
-            r.kind().llvmKind(),
-            r.valueRelocation().functionName().lower(),
-            r.fieldUpdateFunction().functionName().lower(),
-            r instanceof AutomaticallyGeneratedRelocation
-                ? encodingFunction(r, passResults)
-                : ""
-        )
+        r -> {
+          if (r instanceof AutomaticallyGeneratedRelocation) {
+            var fun = encodingFunction(r, passResults);
+            return new ElfRelocationInfo(r.elfRelocationName().value(),
+                r.kind().llvmKind(),
+                r.valueRelocation().functionName().lower(),
+                r.fieldUpdateFunction().functionName().lower(),
+                fun.left(),
+                fun.right()
+            );
+          } else {
+            return new ElfRelocationInfo(r.elfRelocationName().value(),
+                r.kind().llvmKind(),
+                r.valueRelocation().functionName().lower(),
+                r.fieldUpdateFunction().functionName().lower(),
+                "",
+                0
+            );
+          }
+        }
     ).toList();
 
     var elfInfo = createElfInfo();
@@ -119,8 +139,8 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
         "elfRelocations", elfRelocations);
   }
 
-  private String encodingFunction(HasRelocationComputationAndUpdate elfRelocation,
-                                  PassResults passResults) {
+  private Pair<String, Integer> encodingFunction(HasRelocationComputationAndUpdate elfRelocation,
+                                                 PassResults passResults) {
 
     var fields = elfRelocation.fields();
     if (fields.size() != 1) {
@@ -129,13 +149,14 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
               elfRelocation.format()));
     }
 
-    var encodingFunctions = ImmediateEncodingFunctionProvider.generateEncodeFunctions(passResults);
+    var encodingFunctions = generateEncodeFunctions(passResults);
 
     var encodingsForField = encodingFunctions.values().stream().flatMap(Collection::stream)
         .filter(encodingFunction -> encodingFunction.field().equals(fields.getFirst())).toList();
 
     // Just get first encoding for the field as they are all the same function.
     // There is more than one because the functions are generated per instruction.
-    return encodingsForField.getFirst().header().functionName().lower();
+    var x = encodingsForField.getFirst();
+    return Pair.of(x.header().functionName().lower(), x.header().parameters().length);
   }
 }

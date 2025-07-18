@@ -78,878 +78,879 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         void processornamevalueRegisterInfo::anchor() {}
         
         processornamevalueRegisterInfo::processornamevalueRegisterInfo()
-            : processornamevalueGenRegisterInfo( processornamevalue::X1 )
+        : processornamevalueGenRegisterInfo( processornamevalue::X1 )
         {
         }
         
         const uint16_t * processornamevalueRegisterInfo::getCalleeSavedRegs(const MachineFunction * /*MF*/
         ) const
         {
-            // defined in calling convention tablegen
-            return CSR_processornamevalue_SaveList;
+        // defined in calling convention tablegen
+        return CSR_processornamevalue_SaveList;
         }
         
         BitVector processornamevalueRegisterInfo::getReservedRegs(const MachineFunction &MF) const
         {
-            BitVector Reserved(getNumRegs());
+        BitVector Reserved(getNumRegs());
         
-            markSuperRegs(Reserved, processornamevalue::X8); // frame pointer
-            markSuperRegs(Reserved, processornamevalue::X2); // stack pointer
-            markSuperRegs(Reserved, processornamevalue::X3); // global pointer
+        markSuperRegs(Reserved, processornamevalue::X8); // frame pointer
+        markSuperRegs(Reserved, processornamevalue::X2); // stack pointer
         
-        
-            markSuperRegs(Reserved, processornamevalue::X4); // thread pointer
+        markSuperRegs(Reserved, processornamevalue::X3); // global pointer
         
         
+        markSuperRegs(Reserved, processornamevalue::X4); // thread pointer
         
-            markSuperRegs(Reserved,  processornamevalue::X0);
         
         
-            assert(checkAllSuperRegsMarked(Reserved));
+        markSuperRegs(Reserved,  processornamevalue::X0);
         
-            return Reserved;
+        
+        assert(checkAllSuperRegsMarked(Reserved));
+        
+        return Reserved;
         }
         
         
         bool eliminateFrameIndexADDI
-            ( MachineBasicBlock::iterator II
-            , int SPAdj
-            , unsigned FIOperandNum
-            , unsigned FrameReg
-            , StackOffset FrameIndexOffset
-            , RegScavenger *RS
-            )
+        ( MachineBasicBlock::iterator II
+        , int SPAdj
+        , unsigned FIOperandNum
+        , unsigned FrameReg
+        , StackOffset FrameIndexOffset
+        , RegScavenger *RS
+        )
         {
-            MachineInstr &MI = *II;
-            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
-            assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
+        MachineInstr &MI = *II;
+        assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+        assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
         
-            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
-            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
+        MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+        MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
         
-            int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
+        int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
         
-            //
-            // try to inline the offset into the instruction
-            //
+        //
+        // try to inline the offset into the instruction
+        //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_ADDI_immS_predicate(Offset))
-            {
-                // immediate can be encoded and instruction can be inlined.
-                FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
-                ImmOp.setImm( Offset );
-                return false; // success
-            }
+        if(Offset >= -2048 && Offset <= 2047 && RV3264Base_ADDI_immS_predicate(Offset))
+        {
+        // immediate can be encoded and instruction can be inlined.
+        FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
+        ImmOp.setImm( Offset );
+        return false; // success
+        }
         
         
-            DebugLoc DL = MI.getDebugLoc();
-            MachineBasicBlock &MBB = *MI.getParent();
-            MachineFunction *MF = MBB.getParent();
-            MachineRegisterInfo &MRI = MF->getRegInfo();
-            const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
+        DebugLoc DL = MI.getDebugLoc();
+        MachineBasicBlock &MBB = *MI.getParent();
+        MachineFunction *MF = MBB.getParent();
+        MachineRegisterInfo &MRI = MF->getRegInfo();
+        const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
         
-            //
-            // try to generate a scratch register and adjust frame register with given offset
-            //
+        //
+        // try to generate a scratch register and adjust frame register with given offset
+        //
         
-            Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
-            if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
-            {
-                // the scratch register can properly be manipulated and used as address register.
-                FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
-                ImmOp.setImm( 0 );
-                return false; // success
-            }
+        Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
+        if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
+        {
+        // the scratch register can properly be manipulated and used as address register.
+        FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
+        ImmOp.setImm( 0 );
+        return false; // success
+        }
         
-            return true; // failure
+        return true; // failure
         }
         bool eliminateFrameIndexLB
-            ( MachineBasicBlock::iterator II
-            , int SPAdj
-            , unsigned FIOperandNum
-            , unsigned FrameReg
-            , StackOffset FrameIndexOffset
-            , RegScavenger *RS
-            )
+        ( MachineBasicBlock::iterator II
+        , int SPAdj
+        , unsigned FIOperandNum
+        , unsigned FrameReg
+        , StackOffset FrameIndexOffset
+        , RegScavenger *RS
+        )
         {
-            MachineInstr &MI = *II;
-            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
-            assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
+        MachineInstr &MI = *II;
+        assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+        assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
         
-            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
-            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
+        MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+        MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
         
-            int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
+        int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
         
-            //
-            // try to inline the offset into the instruction
-            //
+        //
+        // try to inline the offset into the instruction
+        //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LB_immS_predicate(Offset))
-            {
-                // immediate can be encoded and instruction can be inlined.
-                FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
-                ImmOp.setImm( Offset );
-                return false; // success
-            }
+        if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LB_immS_predicate(Offset))
+        {
+        // immediate can be encoded and instruction can be inlined.
+        FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
+        ImmOp.setImm( Offset );
+        return false; // success
+        }
         
         
-            DebugLoc DL = MI.getDebugLoc();
-            MachineBasicBlock &MBB = *MI.getParent();
-            MachineFunction *MF = MBB.getParent();
-            MachineRegisterInfo &MRI = MF->getRegInfo();
-            const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
+        DebugLoc DL = MI.getDebugLoc();
+        MachineBasicBlock &MBB = *MI.getParent();
+        MachineFunction *MF = MBB.getParent();
+        MachineRegisterInfo &MRI = MF->getRegInfo();
+        const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
         
-            //
-            // try to generate a scratch register and adjust frame register with given offset
-            //
+        //
+        // try to generate a scratch register and adjust frame register with given offset
+        //
         
-            Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
-            if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
-            {
-                // the scratch register can properly be manipulated and used as address register.
-                FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
-                ImmOp.setImm( 0 );
-                return false; // success
-            }
+        Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
+        if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
+        {
+        // the scratch register can properly be manipulated and used as address register.
+        FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
+        ImmOp.setImm( 0 );
+        return false; // success
+        }
         
-            return true; // failure
+        return true; // failure
         }
         bool eliminateFrameIndexLBU
-            ( MachineBasicBlock::iterator II
-            , int SPAdj
-            , unsigned FIOperandNum
-            , unsigned FrameReg
-            , StackOffset FrameIndexOffset
-            , RegScavenger *RS
-            )
+        ( MachineBasicBlock::iterator II
+        , int SPAdj
+        , unsigned FIOperandNum
+        , unsigned FrameReg
+        , StackOffset FrameIndexOffset
+        , RegScavenger *RS
+        )
         {
-            MachineInstr &MI = *II;
-            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
-            assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
+        MachineInstr &MI = *II;
+        assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+        assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
         
-            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
-            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
+        MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+        MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
         
-            int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
+        int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
         
-            //
-            // try to inline the offset into the instruction
-            //
+        //
+        // try to inline the offset into the instruction
+        //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LBU_immS_predicate(Offset))
-            {
-                // immediate can be encoded and instruction can be inlined.
-                FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
-                ImmOp.setImm( Offset );
-                return false; // success
-            }
+        if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LBU_immS_predicate(Offset))
+        {
+        // immediate can be encoded and instruction can be inlined.
+        FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
+        ImmOp.setImm( Offset );
+        return false; // success
+        }
         
         
-            DebugLoc DL = MI.getDebugLoc();
-            MachineBasicBlock &MBB = *MI.getParent();
-            MachineFunction *MF = MBB.getParent();
-            MachineRegisterInfo &MRI = MF->getRegInfo();
-            const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
+        DebugLoc DL = MI.getDebugLoc();
+        MachineBasicBlock &MBB = *MI.getParent();
+        MachineFunction *MF = MBB.getParent();
+        MachineRegisterInfo &MRI = MF->getRegInfo();
+        const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
         
-            //
-            // try to generate a scratch register and adjust frame register with given offset
-            //
+        //
+        // try to generate a scratch register and adjust frame register with given offset
+        //
         
-            Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
-            if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
-            {
-                // the scratch register can properly be manipulated and used as address register.
-                FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
-                ImmOp.setImm( 0 );
-                return false; // success
-            }
+        Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
+        if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
+        {
+        // the scratch register can properly be manipulated and used as address register.
+        FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
+        ImmOp.setImm( 0 );
+        return false; // success
+        }
         
-            return true; // failure
+        return true; // failure
         }
         bool eliminateFrameIndexLD
-            ( MachineBasicBlock::iterator II
-            , int SPAdj
-            , unsigned FIOperandNum
-            , unsigned FrameReg
-            , StackOffset FrameIndexOffset
-            , RegScavenger *RS
-            )
+        ( MachineBasicBlock::iterator II
+        , int SPAdj
+        , unsigned FIOperandNum
+        , unsigned FrameReg
+        , StackOffset FrameIndexOffset
+        , RegScavenger *RS
+        )
         {
-            MachineInstr &MI = *II;
-            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
-            assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
+        MachineInstr &MI = *II;
+        assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+        assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
         
-            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
-            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
+        MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+        MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
         
-            int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
+        int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
         
-            //
-            // try to inline the offset into the instruction
-            //
+        //
+        // try to inline the offset into the instruction
+        //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LD_immS_predicate(Offset))
-            {
-                // immediate can be encoded and instruction can be inlined.
-                FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
-                ImmOp.setImm( Offset );
-                return false; // success
-            }
+        if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LD_immS_predicate(Offset))
+        {
+        // immediate can be encoded and instruction can be inlined.
+        FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
+        ImmOp.setImm( Offset );
+        return false; // success
+        }
         
         
-            DebugLoc DL = MI.getDebugLoc();
-            MachineBasicBlock &MBB = *MI.getParent();
-            MachineFunction *MF = MBB.getParent();
-            MachineRegisterInfo &MRI = MF->getRegInfo();
-            const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
+        DebugLoc DL = MI.getDebugLoc();
+        MachineBasicBlock &MBB = *MI.getParent();
+        MachineFunction *MF = MBB.getParent();
+        MachineRegisterInfo &MRI = MF->getRegInfo();
+        const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
         
-            //
-            // try to generate a scratch register and adjust frame register with given offset
-            //
+        //
+        // try to generate a scratch register and adjust frame register with given offset
+        //
         
-            Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
-            if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
-            {
-                // the scratch register can properly be manipulated and used as address register.
-                FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
-                ImmOp.setImm( 0 );
-                return false; // success
-            }
+        Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
+        if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
+        {
+        // the scratch register can properly be manipulated and used as address register.
+        FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
+        ImmOp.setImm( 0 );
+        return false; // success
+        }
         
-            return true; // failure
+        return true; // failure
         }
         bool eliminateFrameIndexLH
-            ( MachineBasicBlock::iterator II
-            , int SPAdj
-            , unsigned FIOperandNum
-            , unsigned FrameReg
-            , StackOffset FrameIndexOffset
-            , RegScavenger *RS
-            )
+        ( MachineBasicBlock::iterator II
+        , int SPAdj
+        , unsigned FIOperandNum
+        , unsigned FrameReg
+        , StackOffset FrameIndexOffset
+        , RegScavenger *RS
+        )
         {
-            MachineInstr &MI = *II;
-            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
-            assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
+        MachineInstr &MI = *II;
+        assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+        assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
         
-            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
-            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
+        MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+        MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
         
-            int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
+        int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
         
-            //
-            // try to inline the offset into the instruction
-            //
+        //
+        // try to inline the offset into the instruction
+        //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LH_immS_predicate(Offset))
-            {
-                // immediate can be encoded and instruction can be inlined.
-                FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
-                ImmOp.setImm( Offset );
-                return false; // success
-            }
+        if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LH_immS_predicate(Offset))
+        {
+        // immediate can be encoded and instruction can be inlined.
+        FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
+        ImmOp.setImm( Offset );
+        return false; // success
+        }
         
         
-            DebugLoc DL = MI.getDebugLoc();
-            MachineBasicBlock &MBB = *MI.getParent();
-            MachineFunction *MF = MBB.getParent();
-            MachineRegisterInfo &MRI = MF->getRegInfo();
-            const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
+        DebugLoc DL = MI.getDebugLoc();
+        MachineBasicBlock &MBB = *MI.getParent();
+        MachineFunction *MF = MBB.getParent();
+        MachineRegisterInfo &MRI = MF->getRegInfo();
+        const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
         
-            //
-            // try to generate a scratch register and adjust frame register with given offset
-            //
+        //
+        // try to generate a scratch register and adjust frame register with given offset
+        //
         
-            Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
-            if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
-            {
-                // the scratch register can properly be manipulated and used as address register.
-                FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
-                ImmOp.setImm( 0 );
-                return false; // success
-            }
+        Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
+        if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
+        {
+        // the scratch register can properly be manipulated and used as address register.
+        FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
+        ImmOp.setImm( 0 );
+        return false; // success
+        }
         
-            return true; // failure
+        return true; // failure
         }
         bool eliminateFrameIndexLHU
-            ( MachineBasicBlock::iterator II
-            , int SPAdj
-            , unsigned FIOperandNum
-            , unsigned FrameReg
-            , StackOffset FrameIndexOffset
-            , RegScavenger *RS
-            )
+        ( MachineBasicBlock::iterator II
+        , int SPAdj
+        , unsigned FIOperandNum
+        , unsigned FrameReg
+        , StackOffset FrameIndexOffset
+        , RegScavenger *RS
+        )
         {
-            MachineInstr &MI = *II;
-            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
-            assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
+        MachineInstr &MI = *II;
+        assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+        assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
         
-            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
-            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
+        MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+        MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
         
-            int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
+        int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
         
-            //
-            // try to inline the offset into the instruction
-            //
+        //
+        // try to inline the offset into the instruction
+        //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LHU_immS_predicate(Offset))
-            {
-                // immediate can be encoded and instruction can be inlined.
-                FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
-                ImmOp.setImm( Offset );
-                return false; // success
-            }
+        if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LHU_immS_predicate(Offset))
+        {
+        // immediate can be encoded and instruction can be inlined.
+        FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
+        ImmOp.setImm( Offset );
+        return false; // success
+        }
         
         
-            DebugLoc DL = MI.getDebugLoc();
-            MachineBasicBlock &MBB = *MI.getParent();
-            MachineFunction *MF = MBB.getParent();
-            MachineRegisterInfo &MRI = MF->getRegInfo();
-            const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
+        DebugLoc DL = MI.getDebugLoc();
+        MachineBasicBlock &MBB = *MI.getParent();
+        MachineFunction *MF = MBB.getParent();
+        MachineRegisterInfo &MRI = MF->getRegInfo();
+        const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
         
-            //
-            // try to generate a scratch register and adjust frame register with given offset
-            //
+        //
+        // try to generate a scratch register and adjust frame register with given offset
+        //
         
-            Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
-            if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
-            {
-                // the scratch register can properly be manipulated and used as address register.
-                FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
-                ImmOp.setImm( 0 );
-                return false; // success
-            }
+        Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
+        if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
+        {
+        // the scratch register can properly be manipulated and used as address register.
+        FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
+        ImmOp.setImm( 0 );
+        return false; // success
+        }
         
-            return true; // failure
+        return true; // failure
         }
         bool eliminateFrameIndexLW
-            ( MachineBasicBlock::iterator II
-            , int SPAdj
-            , unsigned FIOperandNum
-            , unsigned FrameReg
-            , StackOffset FrameIndexOffset
-            , RegScavenger *RS
-            )
+        ( MachineBasicBlock::iterator II
+        , int SPAdj
+        , unsigned FIOperandNum
+        , unsigned FrameReg
+        , StackOffset FrameIndexOffset
+        , RegScavenger *RS
+        )
         {
-            MachineInstr &MI = *II;
-            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
-            assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
+        MachineInstr &MI = *II;
+        assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+        assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
         
-            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
-            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
+        MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+        MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
         
-            int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
+        int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
         
-            //
-            // try to inline the offset into the instruction
-            //
+        //
+        // try to inline the offset into the instruction
+        //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LW_immS_predicate(Offset))
-            {
-                // immediate can be encoded and instruction can be inlined.
-                FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
-                ImmOp.setImm( Offset );
-                return false; // success
-            }
+        if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LW_immS_predicate(Offset))
+        {
+        // immediate can be encoded and instruction can be inlined.
+        FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
+        ImmOp.setImm( Offset );
+        return false; // success
+        }
         
         
-            DebugLoc DL = MI.getDebugLoc();
-            MachineBasicBlock &MBB = *MI.getParent();
-            MachineFunction *MF = MBB.getParent();
-            MachineRegisterInfo &MRI = MF->getRegInfo();
-            const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
+        DebugLoc DL = MI.getDebugLoc();
+        MachineBasicBlock &MBB = *MI.getParent();
+        MachineFunction *MF = MBB.getParent();
+        MachineRegisterInfo &MRI = MF->getRegInfo();
+        const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
         
-            //
-            // try to generate a scratch register and adjust frame register with given offset
-            //
+        //
+        // try to generate a scratch register and adjust frame register with given offset
+        //
         
-            Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
-            if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
-            {
-                // the scratch register can properly be manipulated and used as address register.
-                FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
-                ImmOp.setImm( 0 );
-                return false; // success
-            }
+        Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
+        if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
+        {
+        // the scratch register can properly be manipulated and used as address register.
+        FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
+        ImmOp.setImm( 0 );
+        return false; // success
+        }
         
-            return true; // failure
+        return true; // failure
         }
         bool eliminateFrameIndexLWU
-            ( MachineBasicBlock::iterator II
-            , int SPAdj
-            , unsigned FIOperandNum
-            , unsigned FrameReg
-            , StackOffset FrameIndexOffset
-            , RegScavenger *RS
-            )
+        ( MachineBasicBlock::iterator II
+        , int SPAdj
+        , unsigned FIOperandNum
+        , unsigned FrameReg
+        , StackOffset FrameIndexOffset
+        , RegScavenger *RS
+        )
         {
-            MachineInstr &MI = *II;
-            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
-            assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
+        MachineInstr &MI = *II;
+        assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+        assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
         
-            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
-            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
+        MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+        MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
         
-            int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
+        int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
         
-            //
-            // try to inline the offset into the instruction
-            //
+        //
+        // try to inline the offset into the instruction
+        //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LWU_immS_predicate(Offset))
-            {
-                // immediate can be encoded and instruction can be inlined.
-                FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
-                ImmOp.setImm( Offset );
-                return false; // success
-            }
+        if(Offset >= -2048 && Offset <= 2047 && RV3264Base_LWU_immS_predicate(Offset))
+        {
+        // immediate can be encoded and instruction can be inlined.
+        FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
+        ImmOp.setImm( Offset );
+        return false; // success
+        }
         
         
-            DebugLoc DL = MI.getDebugLoc();
-            MachineBasicBlock &MBB = *MI.getParent();
-            MachineFunction *MF = MBB.getParent();
-            MachineRegisterInfo &MRI = MF->getRegInfo();
-            const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
+        DebugLoc DL = MI.getDebugLoc();
+        MachineBasicBlock &MBB = *MI.getParent();
+        MachineFunction *MF = MBB.getParent();
+        MachineRegisterInfo &MRI = MF->getRegInfo();
+        const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
         
-            //
-            // try to generate a scratch register and adjust frame register with given offset
-            //
+        //
+        // try to generate a scratch register and adjust frame register with given offset
+        //
         
-            Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
-            if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
-            {
-                // the scratch register can properly be manipulated and used as address register.
-                FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
-                ImmOp.setImm( 0 );
-                return false; // success
-            }
+        Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
+        if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
+        {
+        // the scratch register can properly be manipulated and used as address register.
+        FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
+        ImmOp.setImm( 0 );
+        return false; // success
+        }
         
-            return true; // failure
+        return true; // failure
         }
         bool eliminateFrameIndexSB
-            ( MachineBasicBlock::iterator II
-            , int SPAdj
-            , unsigned FIOperandNum
-            , unsigned FrameReg
-            , StackOffset FrameIndexOffset
-            , RegScavenger *RS
-            )
+        ( MachineBasicBlock::iterator II
+        , int SPAdj
+        , unsigned FIOperandNum
+        , unsigned FrameReg
+        , StackOffset FrameIndexOffset
+        , RegScavenger *RS
+        )
         {
-            MachineInstr &MI = *II;
-            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
-            assert(  MI.getOperand(FIOperandNum + 2).isImm() && "Immediate operand position does not match expected position!" );
+        MachineInstr &MI = *II;
+        assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+        assert(  MI.getOperand(FIOperandNum + 2).isImm() && "Immediate operand position does not match expected position!" );
         
-            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
-            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 2);
+        MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+        MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 2);
         
-            int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
+        int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
         
-            //
-            // try to inline the offset into the instruction
-            //
+        //
+        // try to inline the offset into the instruction
+        //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_SB_immS_predicate(Offset))
-            {
-                // immediate can be encoded and instruction can be inlined.
-                FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
-                ImmOp.setImm( Offset );
-                return false; // success
-            }
+        if(Offset >= -2048 && Offset <= 2047 && RV3264Base_SB_immS_predicate(Offset))
+        {
+        // immediate can be encoded and instruction can be inlined.
+        FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
+        ImmOp.setImm( Offset );
+        return false; // success
+        }
         
         
-            DebugLoc DL = MI.getDebugLoc();
-            MachineBasicBlock &MBB = *MI.getParent();
-            MachineFunction *MF = MBB.getParent();
-            MachineRegisterInfo &MRI = MF->getRegInfo();
-            const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
+        DebugLoc DL = MI.getDebugLoc();
+        MachineBasicBlock &MBB = *MI.getParent();
+        MachineFunction *MF = MBB.getParent();
+        MachineRegisterInfo &MRI = MF->getRegInfo();
+        const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
         
-            //
-            // try to generate a scratch register and adjust frame register with given offset
-            //
+        //
+        // try to generate a scratch register and adjust frame register with given offset
+        //
         
-            Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
-            if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
-            {
-                // the scratch register can properly be manipulated and used as address register.
-                FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
-                ImmOp.setImm( 0 );
-                return false; // success
-            }
+        Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
+        if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
+        {
+        // the scratch register can properly be manipulated and used as address register.
+        FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
+        ImmOp.setImm( 0 );
+        return false; // success
+        }
         
-            return true; // failure
+        return true; // failure
         }
         bool eliminateFrameIndexSD
-            ( MachineBasicBlock::iterator II
-            , int SPAdj
-            , unsigned FIOperandNum
-            , unsigned FrameReg
-            , StackOffset FrameIndexOffset
-            , RegScavenger *RS
-            )
+        ( MachineBasicBlock::iterator II
+        , int SPAdj
+        , unsigned FIOperandNum
+        , unsigned FrameReg
+        , StackOffset FrameIndexOffset
+        , RegScavenger *RS
+        )
         {
-            MachineInstr &MI = *II;
-            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
-            assert(  MI.getOperand(FIOperandNum + 2).isImm() && "Immediate operand position does not match expected position!" );
+        MachineInstr &MI = *II;
+        assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+        assert(  MI.getOperand(FIOperandNum + 2).isImm() && "Immediate operand position does not match expected position!" );
         
-            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
-            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 2);
+        MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+        MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 2);
         
-            int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
+        int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
         
-            //
-            // try to inline the offset into the instruction
-            //
+        //
+        // try to inline the offset into the instruction
+        //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_SD_immS_predicate(Offset))
-            {
-                // immediate can be encoded and instruction can be inlined.
-                FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
-                ImmOp.setImm( Offset );
-                return false; // success
-            }
+        if(Offset >= -2048 && Offset <= 2047 && RV3264Base_SD_immS_predicate(Offset))
+        {
+        // immediate can be encoded and instruction can be inlined.
+        FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
+        ImmOp.setImm( Offset );
+        return false; // success
+        }
         
         
-            DebugLoc DL = MI.getDebugLoc();
-            MachineBasicBlock &MBB = *MI.getParent();
-            MachineFunction *MF = MBB.getParent();
-            MachineRegisterInfo &MRI = MF->getRegInfo();
-            const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
+        DebugLoc DL = MI.getDebugLoc();
+        MachineBasicBlock &MBB = *MI.getParent();
+        MachineFunction *MF = MBB.getParent();
+        MachineRegisterInfo &MRI = MF->getRegInfo();
+        const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
         
-            //
-            // try to generate a scratch register and adjust frame register with given offset
-            //
+        //
+        // try to generate a scratch register and adjust frame register with given offset
+        //
         
-            Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
-            if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
-            {
-                // the scratch register can properly be manipulated and used as address register.
-                FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
-                ImmOp.setImm( 0 );
-                return false; // success
-            }
+        Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
+        if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
+        {
+        // the scratch register can properly be manipulated and used as address register.
+        FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
+        ImmOp.setImm( 0 );
+        return false; // success
+        }
         
-            return true; // failure
+        return true; // failure
         }
         bool eliminateFrameIndexSH
-            ( MachineBasicBlock::iterator II
-            , int SPAdj
-            , unsigned FIOperandNum
-            , unsigned FrameReg
-            , StackOffset FrameIndexOffset
-            , RegScavenger *RS
-            )
+        ( MachineBasicBlock::iterator II
+        , int SPAdj
+        , unsigned FIOperandNum
+        , unsigned FrameReg
+        , StackOffset FrameIndexOffset
+        , RegScavenger *RS
+        )
         {
-            MachineInstr &MI = *II;
-            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
-            assert(  MI.getOperand(FIOperandNum + 2).isImm() && "Immediate operand position does not match expected position!" );
+        MachineInstr &MI = *II;
+        assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+        assert(  MI.getOperand(FIOperandNum + 2).isImm() && "Immediate operand position does not match expected position!" );
         
-            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
-            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 2);
+        MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+        MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 2);
         
-            int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
+        int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
         
-            //
-            // try to inline the offset into the instruction
-            //
+        //
+        // try to inline the offset into the instruction
+        //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_SH_immS_predicate(Offset))
-            {
-                // immediate can be encoded and instruction can be inlined.
-                FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
-                ImmOp.setImm( Offset );
-                return false; // success
-            }
+        if(Offset >= -2048 && Offset <= 2047 && RV3264Base_SH_immS_predicate(Offset))
+        {
+        // immediate can be encoded and instruction can be inlined.
+        FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
+        ImmOp.setImm( Offset );
+        return false; // success
+        }
         
         
-            DebugLoc DL = MI.getDebugLoc();
-            MachineBasicBlock &MBB = *MI.getParent();
-            MachineFunction *MF = MBB.getParent();
-            MachineRegisterInfo &MRI = MF->getRegInfo();
-            const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
+        DebugLoc DL = MI.getDebugLoc();
+        MachineBasicBlock &MBB = *MI.getParent();
+        MachineFunction *MF = MBB.getParent();
+        MachineRegisterInfo &MRI = MF->getRegInfo();
+        const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
         
-            //
-            // try to generate a scratch register and adjust frame register with given offset
-            //
+        //
+        // try to generate a scratch register and adjust frame register with given offset
+        //
         
-            Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
-            if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
-            {
-                // the scratch register can properly be manipulated and used as address register.
-                FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
-                ImmOp.setImm( 0 );
-                return false; // success
-            }
+        Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
+        if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
+        {
+        // the scratch register can properly be manipulated and used as address register.
+        FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
+        ImmOp.setImm( 0 );
+        return false; // success
+        }
         
-            return true; // failure
+        return true; // failure
         }
         bool eliminateFrameIndexSW
-            ( MachineBasicBlock::iterator II
-            , int SPAdj
-            , unsigned FIOperandNum
-            , unsigned FrameReg
-            , StackOffset FrameIndexOffset
-            , RegScavenger *RS
-            )
+        ( MachineBasicBlock::iterator II
+        , int SPAdj
+        , unsigned FIOperandNum
+        , unsigned FrameReg
+        , StackOffset FrameIndexOffset
+        , RegScavenger *RS
+        )
         {
-            MachineInstr &MI = *II;
-            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
-            assert(  MI.getOperand(FIOperandNum + 2).isImm() && "Immediate operand position does not match expected position!" );
+        MachineInstr &MI = *II;
+        assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+        assert(  MI.getOperand(FIOperandNum + 2).isImm() && "Immediate operand position does not match expected position!" );
         
-            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
-            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 2);
+        MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+        MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 2);
         
-            int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
+        int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
         
-            //
-            // try to inline the offset into the instruction
-            //
+        //
+        // try to inline the offset into the instruction
+        //
         
-            if(Offset >= -2048 && Offset <= 2047 && RV3264Base_SW_immS_predicate(Offset))
-            {
-                // immediate can be encoded and instruction can be inlined.
-                FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
-                ImmOp.setImm( Offset );
-                return false; // success
-            }
+        if(Offset >= -2048 && Offset <= 2047 && RV3264Base_SW_immS_predicate(Offset))
+        {
+        // immediate can be encoded and instruction can be inlined.
+        FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
+        ImmOp.setImm( Offset );
+        return false; // success
+        }
         
         
-            DebugLoc DL = MI.getDebugLoc();
-            MachineBasicBlock &MBB = *MI.getParent();
-            MachineFunction *MF = MBB.getParent();
-            MachineRegisterInfo &MRI = MF->getRegInfo();
-            const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
+        DebugLoc DL = MI.getDebugLoc();
+        MachineBasicBlock &MBB = *MI.getParent();
+        MachineFunction *MF = MBB.getParent();
+        MachineRegisterInfo &MRI = MF->getRegInfo();
+        const processornamevalueInstrInfo *TII = MF->getSubtarget<processornamevalueSubtarget>().getInstrInfo();
         
-            //
-            // try to generate a scratch register and adjust frame register with given offset
-            //
+        //
+        // try to generate a scratch register and adjust frame register with given offset
+        //
         
-            Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
-            if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
-            {
-                // the scratch register can properly be manipulated and used as address register.
-                FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
-                ImmOp.setImm( 0 );
-                return false; // success
-            }
+        Register ScratchReg = MRI.createVirtualRegister(&processornamevalue::XRegClass);
+        if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
+        {
+        // the scratch register can properly be manipulated and used as address register.
+        FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
+        ImmOp.setImm( 0 );
+        return false; // success
+        }
         
-            return true; // failure
+        return true; // failure
         }
         
         
         /**
-         * This method calls its own replacement class for each allowed instruction.
-         * Inside the special instruction the following steps or tries to remove the FI are done.
-         *
-         *     1. try to inline the frame index calculation into the current instruction.
-         *     2. check if we can move the immediate materialization and frame index addition
-         *        into a separate instruction with scratch register. The scratch register must be
-         *        useable with our current instruction.
-         *     3. replace the current instruction with
-         *        3.1 a more specific instruction that can load the offset
-         *        3.2 a very general instruction that uses a scratch register for computing the
-         *            desired frame index.
-         *
-         * If an instruction is not supported, an llvm_fatal_error is emitted as it should be impossible
-         * for a frame index to be an operand.
-         */
+        * This method calls its own replacement class for each allowed instruction.
+        * Inside the special instruction the following steps or tries to remove the FI are done.
+        *
+        *     1. try to inline the frame index calculation into the current instruction.
+        *     2. check if we can move the immediate materialization and frame index addition
+        *        into a separate instruction with scratch register. The scratch register must be
+        *        useable with our current instruction.
+        *     3. replace the current instruction with
+        *        3.1 a more specific instruction that can load the offset
+        *        3.2 a very general instruction that uses a scratch register for computing the
+        *            desired frame index.
+        *
+        * If an instruction is not supported, an llvm_fatal_error is emitted as it should be impossible
+        * for a frame index to be an operand.
+        */
         bool processornamevalueRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj, unsigned FIOperandNum, RegScavenger *RS) const
         {
-            MachineInstr &MI = *II;
-            const MachineFunction &MF = *MI.getParent()->getParent();
+        MachineInstr &MI = *II;
+        const MachineFunction &MF = *MI.getParent()->getParent();
         
-            const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
-            const std::string mnemonic = TII->getName(MI.getOpcode()).str(); // for debug purposes
+        const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
+        const std::string mnemonic = TII->getName(MI.getOpcode()).str(); // for debug purposes
         
-            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
-            unsigned FI = FIOp.getIndex();
-            Register FrameReg;
-            StackOffset FrameIndexOffset = getFrameLowering(MF)->getFrameIndexReference(MF, FI, FrameReg);
+        MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+        unsigned FI = FIOp.getIndex();
+        Register FrameReg;
+        StackOffset FrameIndexOffset = getFrameLowering(MF)->getFrameIndexReference(MF, FI, FrameReg);
         
-            bool error = true;
-            switch (MI.getOpcode())
-            {
+        bool error = true;
+        switch (MI.getOpcode())
+        {
         
-                case processornamevalue::ADDI:
-                {
-                  error = eliminateFrameIndexADDI(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
-                  break;
-                }
-                case processornamevalue::LB:
-                {
-                  error = eliminateFrameIndexLB(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
-                  break;
-                }
-                case processornamevalue::LBU:
-                {
-                  error = eliminateFrameIndexLBU(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
-                  break;
-                }
-                case processornamevalue::LD:
-                {
-                  error = eliminateFrameIndexLD(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
-                  break;
-                }
-                case processornamevalue::LH:
-                {
-                  error = eliminateFrameIndexLH(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
-                  break;
-                }
-                case processornamevalue::LHU:
-                {
-                  error = eliminateFrameIndexLHU(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
-                  break;
-                }
-                case processornamevalue::LW:
-                {
-                  error = eliminateFrameIndexLW(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
-                  break;
-                }
-                case processornamevalue::LWU:
-                {
-                  error = eliminateFrameIndexLWU(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
-                  break;
-                }
-                case processornamevalue::SB:
-                {
-                  error = eliminateFrameIndexSB(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
-                  break;
-                }
-                case processornamevalue::SD:
-                {
-                  error = eliminateFrameIndexSD(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
-                  break;
-                }
-                case processornamevalue::SH:
-                {
-                  error = eliminateFrameIndexSH(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
-                  break;
-                }
-                case processornamevalue::SW:
-                {
-                  error = eliminateFrameIndexSW(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
-                  break;
-                }
+        case processornamevalue::ADDI:
+        {
+        error = eliminateFrameIndexADDI(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
+        break;
+        }
+        case processornamevalue::LB:
+        {
+        error = eliminateFrameIndexLB(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
+        break;
+        }
+        case processornamevalue::LBU:
+        {
+        error = eliminateFrameIndexLBU(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
+        break;
+        }
+        case processornamevalue::LD:
+        {
+        error = eliminateFrameIndexLD(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
+        break;
+        }
+        case processornamevalue::LH:
+        {
+        error = eliminateFrameIndexLH(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
+        break;
+        }
+        case processornamevalue::LHU:
+        {
+        error = eliminateFrameIndexLHU(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
+        break;
+        }
+        case processornamevalue::LW:
+        {
+        error = eliminateFrameIndexLW(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
+        break;
+        }
+        case processornamevalue::LWU:
+        {
+        error = eliminateFrameIndexLWU(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
+        break;
+        }
+        case processornamevalue::SB:
+        {
+        error = eliminateFrameIndexSB(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
+        break;
+        }
+        case processornamevalue::SD:
+        {
+        error = eliminateFrameIndexSD(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
+        break;
+        }
+        case processornamevalue::SH:
+        {
+        error = eliminateFrameIndexSH(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
+        break;
+        }
+        case processornamevalue::SW:
+        {
+        error = eliminateFrameIndexSW(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
+        break;
+        }
         
-                default:
-                {
-                    /* This should be unreachable! */
-                    std::string errMsg;
-                    std::stringstream errMsgStream;
-                    errMsgStream << "Unexpected frame index for instruction '" << mnemonic << "'";
-                    errMsg = errMsgStream.str();
-                    llvm_unreachable(errMsg.c_str());
-                }
-            }
+        default:
+        {
+        /* This should be unreachable! */
+        std::string errMsg;
+        std::stringstream errMsgStream;
+        errMsgStream << "Unexpected frame index for instruction '" << mnemonic << "'";
+        errMsg = errMsgStream.str();
+        llvm_unreachable(errMsg.c_str());
+        }
+        }
         
-            if (error) // something went wrong
-            {
-                std::string errMsg;
-                std::stringstream errMsgStream;
-                errMsgStream << "Unable to eliminate frame index ('FrameIndex<" << FrameIndexOffset.getFixed() << ">')";
-                errMsgStream << " for instruction '" << mnemonic << "'";
-                errMsg = errMsgStream.str();
-                report_fatal_error(errMsg.c_str()); // if we cannot eliminate the frame index abort!
-            }
+        if (error) // something went wrong
+        {
+        std::string errMsg;
+        std::stringstream errMsgStream;
+        errMsgStream << "Unable to eliminate frame index ('FrameIndex<" << FrameIndexOffset.getFixed() << ">')";
+        errMsgStream << " for instruction '" << mnemonic << "'";
+        errMsg = errMsgStream.str();
+        report_fatal_error(errMsg.c_str()); // if we cannot eliminate the frame index abort!
+        }
         
-            return true;
+        return true;
         }
         
         Register processornamevalueRegisterInfo::getFrameRegister(const MachineFunction &MF) const
         {
-            const TargetFrameLowering *TFI = getFrameLowering(MF);
-            return TFI->hasFP(MF) ? processornamevalue::X8 /* FP */ : processornamevalue::X2 /* SP */;
+        const TargetFrameLowering *TFI = getFrameLowering(MF);
+        return TFI->hasFP(MF) ? processornamevalue::X8 /* FP */ : processornamevalue::X2 /* SP */;
         }
         
         const uint32_t * processornamevalueRegisterInfo::getCallPreservedMask(const MachineFunction & /*MF*/
-                                                                           , CallingConv::ID /*CC*/
+        , CallingConv::ID /*CC*/
         ) const
         {
-            // defined in calling convention tablegen
-            return CSR_processornamevalue_RegMask;
+        // defined in calling convention tablegen
+        return CSR_processornamevalue_RegMask;
         }
         
         
         /*static*/ unsigned processornamevalueRegisterInfo::X(unsigned index)
         {
-          switch (index)
-          {
+        switch (index)
+        {
         
-            case 0:
-                return processornamevalue::X0;
-            case 1:
-                return processornamevalue::X1;
-            case 2:
-                return processornamevalue::X2;
-            case 3:
-                return processornamevalue::X3;
-            case 4:
-                return processornamevalue::X4;
-            case 5:
-                return processornamevalue::X5;
-            case 6:
-                return processornamevalue::X6;
-            case 7:
-                return processornamevalue::X7;
-            case 8:
-                return processornamevalue::X8;
-            case 9:
-                return processornamevalue::X9;
-            case 10:
-                return processornamevalue::X10;
-            case 11:
-                return processornamevalue::X11;
-            case 12:
-                return processornamevalue::X12;
-            case 13:
-                return processornamevalue::X13;
-            case 14:
-                return processornamevalue::X14;
-            case 15:
-                return processornamevalue::X15;
-            case 16:
-                return processornamevalue::X16;
-            case 17:
-                return processornamevalue::X17;
-            case 18:
-                return processornamevalue::X18;
-            case 19:
-                return processornamevalue::X19;
-            case 20:
-                return processornamevalue::X20;
-            case 21:
-                return processornamevalue::X21;
-            case 22:
-                return processornamevalue::X22;
-            case 23:
-                return processornamevalue::X23;
-            case 24:
-                return processornamevalue::X24;
-            case 25:
-                return processornamevalue::X25;
-            case 26:
-                return processornamevalue::X26;
-            case 27:
-                return processornamevalue::X27;
-            case 28:
-                return processornamevalue::X28;
-            case 29:
-                return processornamevalue::X29;
-            case 30:
-                return processornamevalue::X30;
-            case 31:
-                return processornamevalue::X31;
+        case 0:
+        return processornamevalue::X0;
+        case 1:
+        return processornamevalue::X1;
+        case 2:
+        return processornamevalue::X2;
+        case 3:
+        return processornamevalue::X3;
+        case 4:
+        return processornamevalue::X4;
+        case 5:
+        return processornamevalue::X5;
+        case 6:
+        return processornamevalue::X6;
+        case 7:
+        return processornamevalue::X7;
+        case 8:
+        return processornamevalue::X8;
+        case 9:
+        return processornamevalue::X9;
+        case 10:
+        return processornamevalue::X10;
+        case 11:
+        return processornamevalue::X11;
+        case 12:
+        return processornamevalue::X12;
+        case 13:
+        return processornamevalue::X13;
+        case 14:
+        return processornamevalue::X14;
+        case 15:
+        return processornamevalue::X15;
+        case 16:
+        return processornamevalue::X16;
+        case 17:
+        return processornamevalue::X17;
+        case 18:
+        return processornamevalue::X18;
+        case 19:
+        return processornamevalue::X19;
+        case 20:
+        return processornamevalue::X20;
+        case 21:
+        return processornamevalue::X21;
+        case 22:
+        return processornamevalue::X22;
+        case 23:
+        return processornamevalue::X23;
+        case 24:
+        return processornamevalue::X24;
+        case 25:
+        return processornamevalue::X25;
+        case 26:
+        return processornamevalue::X26;
+        case 27:
+        return processornamevalue::X27;
+        case 28:
+        return processornamevalue::X28;
+        case 29:
+        return processornamevalue::X29;
+        case 30:
+        return processornamevalue::X30;
+        case 31:
+        return processornamevalue::X31;
         
-            default:
-            {
-                std::string errMsg;
-                std::stringstream errMsgStream;
-                errMsgStream << "Unable to find index " << "'" << index << "'";
-                errMsgStream << " with name '«registerClass.simpleName»' !\\n";
-                errMsg = errMsgStream.str();
-                report_fatal_error(errMsg.c_str());
-            }
-          }
+        default:
+        {
+        std::string errMsg;
+        std::stringstream errMsgStream;
+        errMsgStream << "Unable to find index " << "'" << index << "'";
+        errMsgStream << " with name '«registerClass.simpleName»' !\\n";
+        errMsg = errMsgStream.str();
+        report_fatal_error(errMsg.c_str());
+        }
+        }
         }
         """.trim().lines().map(String::trim), output);
   }

@@ -33,6 +33,8 @@ import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionIndexedRegisterFileOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
@@ -123,7 +125,7 @@ public class AssemblyInstructionPrinterImmediateHandler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(CGenContext<Node> ctx, ConstantNode node) {
     if (node.constant() instanceof Constant.Str str) {
-      ctx.ln("\"" + str.value() + "\"s");
+      ctx.ln("std::string(\"" + str.value() + "\")");
     } else if (node.constant() instanceof Constant.Value val) {
       ctx.ln(val.intValue() + "");
     } else {
@@ -137,6 +139,7 @@ public class AssemblyInstructionPrinterImmediateHandler
   @Override
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(CGenContext<Node> ctx, SelectNode node) {
+    ctx.wr("(");
     AssemblyInstructionPrinterImmediateHandlerDispatcher.dispatch(this, (CNodeContext) ctx,
         node.condition());
     ctx.wr(" ? ");
@@ -145,6 +148,7 @@ public class AssemblyInstructionPrinterImmediateHandler
     ctx.wr(" : ");
     AssemblyInstructionPrinterImmediateHandlerDispatcher.dispatch(this, (CNodeContext) ctx,
         node.falseCase());
+    ctx.wr(")");
   }
 
   @Handler
@@ -152,7 +156,7 @@ public class AssemblyInstructionPrinterImmediateHandler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(CGenContext<Node> ctx, BuiltInCall node) {
     if (node.builtIn() == BuiltInTable.MNEMONIC) {
-      ctx.ln("\"" + instruction.identifier().simpleName() + "\"s");
+      ctx.ln("std::string(\"" + instruction.identifier().simpleName() + "\")");
     } else if (node.builtIn() == BuiltInTable.CONCATENATE_STRINGS) {
       for (int i = 0; i < node.arguments().size(); i++) {
         if (i != 0) {
@@ -192,6 +196,24 @@ public class AssemblyInstructionPrinterImmediateHandler
       handleConditional(node, ctx, "<=");
     } else {
       super.handle(ctx, node);
+    }
+  }
+
+  @Override
+  @SuppressWarnings("MissingJavadocMethod")
+  public void handle(CGenContext<Node> ctx, FuncParamNode node) {
+    var index = indexInInputsOrOutputs(node).orElseThrow(
+        () -> Diagnostic.error("Cannot find operand", node.location()).build()
+    );
+    var operands = Stream.concat(tableGenInstruction.getOutOperands().stream(),
+        tableGenInstruction.getInOperands().stream()).toList();
+    var operand = operands.get(index);
+
+    if (operand instanceof GcbInstructionRegisterFileOperand
+        || operand instanceof GcbInstructionIndexedRegisterFileOperand) {
+      ctx.wr("MI->getOperand(" + index + ").getReg()");
+    } else {
+      ctx.wr("MI->getOperand(" + index + ").getImm()");
     }
   }
 

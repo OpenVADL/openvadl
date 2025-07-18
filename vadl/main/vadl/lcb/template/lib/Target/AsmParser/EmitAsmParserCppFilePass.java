@@ -78,7 +78,8 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
                          String predicateMethod,
                          boolean isFieldOperand,
                          String targetName,
-                         String decodeMethod) implements Renderable {
+                         String decodeMethod,
+                         String params) implements Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
@@ -87,7 +88,8 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
           "predicateMethod", predicateMethod,
           "isFieldOperand", isFieldOperand,
           "targetName", targetName,
-          "decodeMethod", decodeMethod);
+          "decodeMethod", decodeMethod,
+          "params", params);
     }
   }
 
@@ -202,7 +204,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     // Output
     for (var output : instruction.getOutOperands()) {
       var casted = (GcbDefaultInstructionOperand) output;
-      var operand = new TableGenOperand(casted.name(), false, "", false, casted.name(), "");
+      var operand = new TableGenOperand(casted.name(), false, "", false, casted.name(), "", "");
       result.add(operand);
     }
 
@@ -223,6 +225,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
             immediateOperand.immediateOperand().predicateMethod().lower(),
             false,
             immediateOperand.name(),
+            "",
             ""
         );
         result.add(fieldAccessOperand);
@@ -233,7 +236,8 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
             immediateOperand.immediateOperand().predicateMethod().lower(),
             true,
             immediateOperand.name(),
-            immediateOperand.immediateOperand().rawDecoderMethod().lower()
+            immediateOperand.immediateOperand().rawDecoderMethod().lower(),
+            formatFields.stream().map(x -> "opImm64").collect(Collectors.joining(", "))
         );
         result.add(fieldOperand);
       } else if (input instanceof TableGenInstructionLabelOperand immediateOperand) {
@@ -250,6 +254,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
             immediateOperand.immediateOperand().predicateMethod().lower(),
             false,
             immediateOperand.name(),
+            "",
             ""
         );
         result.add(operand);
@@ -260,11 +265,12 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
             immediateOperand.immediateOperand().predicateMethod().lower(),
             true,
             immediateOperand.name(),
-            immediateOperand.immediateOperand().rawDecoderMethod().lower()
+            immediateOperand.immediateOperand().rawDecoderMethod().lower(),
+            formatFields.stream().map(x -> "opImm64").collect(Collectors.joining(", "))
         );
         result.add(fieldOperand);
       } else {
-        var operand = new TableGenOperand(casted.name(), false, "", false, casted.name(), "");
+        var operand = new TableGenOperand(casted.name(), false, "", false, casted.name(), "", "");
         result.add(operand);
       }
 
@@ -280,7 +286,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     // Output
     for (var output : instruction.getOutOperands()) {
       var casted = (GcbDefaultInstructionOperand) output;
-      var operand = new TableGenOperand(casted.name(), false, "", false, casted.name(), "");
+      var operand = new TableGenOperand(casted.name(), false, "", false, casted.name(), "", "");
       result.add(operand);
     }
 
@@ -290,15 +296,15 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
       if (input instanceof TableGenInstructionImmediateOperand immediateOperand) {
         var operand =
             new TableGenOperand(immediateOperand.name(), false, "", false, immediateOperand.name(),
-                "");
+                "", "");
         result.add(operand);
       } else if (input instanceof TableGenInstructionLabelOperand immediateOperand) {
         var operand =
             new TableGenOperand(immediateOperand.name(), false, "", false, immediateOperand.name(),
-                "");
+                "", "");
         result.add(operand);
       } else {
-        var operand = new TableGenOperand(casted.name(), false, "", false, casted.name(), "");
+        var operand = new TableGenOperand(casted.name(), false, "", false, casted.name(), "", "");
         result.add(operand);
       }
     }

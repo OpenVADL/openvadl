@@ -51352,51 +51352,6 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def UDF : Instruction
-{
-let Namespace = "processorNameValue";
-
-let Size = 4;
-let CodeSize = 4;
-
-let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
-
-field bits<32> Inst;
-
-// SoftFail is a field the disassembler can use to provide a way for
-// instructions to not match without killing the whole decode process. It is
-// mainly used for ARM, but Tablegen expects this field to exist or it fails
-// to build the decode table.
-field bits<32> SoftFail = 0;
-
-bits<16> op = 0b0000000000000000;
-bits<64> imm16;
-
-let Inst{31-16} = op{15-0};
-let Inst{15-0} = imm16{15-0};
-
-let isTerminator       = 0;
-let isBranch           = 0;
-let isCall             = 0;
-let isReturn           = 0;
-let isPseudo           = 0;
-let isCodeGenOnly      = 0;
-let mayLoad            = 0;
-let mayStore           = 0;
-let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
-
-let Constraints = "";
-let AddedComplexity = 0;
-
-let Pattern = [];
-
-let Uses = [  ];
-let Defs = [  ];
-}
-
 def UDIVW : Instruction
 {
 let Namespace = "processorNameValue";
