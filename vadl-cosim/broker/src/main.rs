@@ -51,7 +51,5 @@ fn main() -> Result<()> {
 
     broker.finish(&config)?;
 
-
     Ok(())
 }
-

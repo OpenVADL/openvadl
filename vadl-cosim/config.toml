@@ -193,19 +193,25 @@ file = "cosim.log"
 clear_on_rerun = true
 
 # Tracing means collecting the data from the qemu clients at *every execution step*
-# This slows the cosimulation process.
-# Therefore, four tracing modes are available:
+# This slows the cosimulation process by factor of ~16x. (500ms without tracing, 8s with tracing)
+# Therefore, three tracing modes are available:
 #	- "none" (default): Disables tracing - fastest option but no additional information for debugging.
-#	- "collect": Collects tracing-data but doesn't write it to disk until after cosimulation is done
-#			   This causes a performance impact of roughly 2x but the data is not available during interactive debugging
-#	- "threaded": The tracing-data is writting while the cosimulation process runs by using a threadpool. 
-#				  Marginally slower than the "collect" mode.
-#				  The data is available during interactive debugging but takes some time to sync to the current state.
-#	- "sync": Tracing data is synchronously written to the database. By far the slowest option, "threaded" should usually be preferred.
+#						(+): Much faster cosimulation speed
+#						(-): No tracing data which could be useful for debugging
+#						=> Use this mode when running a large test-suite and only switch to tracing when a test-case is known to fail.
+#	- "sync": The tracing data is writting while the cosimulation process runs. 
+#		      (+): Tracing data is available at every execution step, making a live-view possible.
+#			  (-): Much slower than without tracing.
+#			  => Use this mode when manually debugging.
+#	- "collect": Collects tracing-data but doesn't write it to disk until after cosimulation is done.
+#				 The benefit of this mode is that the cosimulation-result is immediately available.
+#				 (+): Cosimulation-result is available just as quickly as with the "none" option.
+#				 (-): Tracing data is only available at the end of the cosimulation-process.
+#				 => This mode is probably most useful when manually running a test where the test-result is not known beforehand. In most cases using a combination of "none" and "sync" is probably preferred.
 # The data is always "tagged" with a date (when was the cosimulation-run started) and a counter that orders entries inside a cosimulation-run.
 # Therefore even if the data is entered out-of-order in the database it is still possible to order it correctly.
 [tracing]
-mode = "threaded"
+mode = "none"
 # NOTE: If no db-file is found at the given path then one will be automatically created.
 dir = "./cosim-run/trace"
 file = "trace.sqlite3"

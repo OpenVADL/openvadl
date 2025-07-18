@@ -38,7 +38,6 @@ pub enum TracingMode {
     #[default]
     None,
     Collect,
-    Threaded,
     Sync,
 }
 
