@@ -29,6 +29,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.ArtificialResource;
+import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.ReadsRegisterTensor;
@@ -65,9 +66,9 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var candidates =
-        viam.isa().orElseThrow().artificialResources().stream()
-            .filter(x -> x.hasAnnotation(
-                CompilerRegisterRenamingAnnotation.class))
+        viam.isa().map(InstructionSetArchitecture::artificialResources).orElse(List.of())
+            .stream()
+            .filter(x -> x.hasAnnotation(CompilerRegisterRenamingAnnotation.class))
             .toList();
 
     var worklist = new ArrayList<Node>();
