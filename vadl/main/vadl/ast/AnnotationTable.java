@@ -35,6 +35,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import vadl.gcb.annotations.CompilerRegisterRenamingAnnotation;
+import vadl.gcb.annotations.HalfWidthOfAnnotation;
 import vadl.gcb.annotations.SkipPruningAnnotation;
 import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.types.Type;
@@ -49,6 +51,7 @@ import vadl.viam.Instruction;
 import vadl.viam.MemoryRegion;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
+import vadl.viam.Resource;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
 import vadl.viam.annotations.EnableHtifAnno;
@@ -231,6 +234,26 @@ public class AnnotationTable {
             def.addAnnotation(new StatusRegisterAnnotation());
           }
         }).build();
+
+    // TODO: also add it for register definitions
+    annotationOn(AliasDefinition.class, "half width of", DefinitionRefAnnotation::new)
+        .check((def, annotation, lowering) -> {
+          var alias = annotation.verifyDefinitionType(AliasDefinition.class);
+          ensure(alias.computedTarget instanceof RegisterDefinition,
+              () -> error("Invalid annotation", annotation)
+                  .description("Alias must reference a register."));
+        })
+        .applyViam((def, annotation, lowering) -> {
+          var resource = (Resource) def;
+          var lo = 0;
+          var hi = (resource.resultType().bitWidth() / 2) - 1;
+          def.addAnnotation(new HalfWidthOfAnnotation(lo, hi, resource));
+        }).build();
+
+    annotationOn(AliasDefinition.class, "regfile renaming", EnableAnnotation::new)
+        .applyViam((def, annotation, lowering) -> def.addAnnotation(
+            new CompilerRegisterRenamingAnnotation()))
+        .build();
   }
 
 
@@ -1254,5 +1277,51 @@ class InstructionUndefinedAnnotation extends ExprAnnotation {
     // Extend annotation's symbol table by the symbol table of the encoding's format.
     definition.symbolTable().extendBy(format.symbolTable());
     super.resolveName(definition, resolver);
+  }
+}
+
+class DefinitionRefAnnotation extends Annotation {
+  @LazyInit
+  Definition def;
+
+  private Expr firstVal() {
+    return definition.values.getFirst();
+  }
+
+  @Override
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+    verifyValuesCnt(definition, 1);
+    // resolve the symbol of the value
+    firstVal().accept(resolver);
+  }
+
+  @Override
+  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+    var v = firstVal();
+    ensure(v instanceof Identifier, () -> error("Invalid annotation value", v)
+        .description("A single identifier was expected.")
+    );
+    var target = ((Identifier) v).target();
+    ensure(target instanceof Definition, () -> error("Invalid annotation value", v)
+        .description("The identifier must reference a definition."));
+    def = (Definition) target;
+  }
+
+  @Override
+  public String usageString() {
+    return "[ " + name + " : <ident> ]";
+  }
+
+  /**
+   * Utility method to check if the referenced definition is of this definition type.
+   *
+   * @return the casted definition.
+   */
+  public <T extends Definition> T verifyDefinitionType(Class<T> defClass) {
+    ensure(defClass.isInstance(def), () -> error("Invalid annotation value", firstVal())
+        .locationDescription(firstVal(), "The identifier must reference a %s, but was %s",
+            defClass.getSimpleName(),
+            def));
+    return defClass.cast(def);
   }
 }
