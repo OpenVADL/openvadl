@@ -42,4 +42,16 @@ public class HalfWidthOfAnnotation extends Annotation<ArtificialResource> {
   public Class<ArtificialResource> parentDefinitionClass() {
     return ArtificialResource.class;
   }
+
+  public int hi() {
+    return hi;
+  }
+
+  public int lo() {
+    return lo;
+  }
+
+  public Resource resource() {
+    return resource;
+  }
 }

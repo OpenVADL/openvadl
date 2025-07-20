@@ -20,6 +20,7 @@ import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -257,6 +258,21 @@ public class RegisterTensor extends Resource {
           "Provided index type does not match respective tensor image type: %s != %s",
           provided, actual);
     });
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(dimensions, constraints, identifier);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof RegisterTensor that) {
+      return Objects.equals(dimensions, that.dimensions)
+          && Objects.equals(constraints, that.constraints)
+          && this.identifier.equals(that.identifier);
+    }
+    return false;
   }
 
   @Override

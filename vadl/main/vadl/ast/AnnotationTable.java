@@ -44,6 +44,7 @@ import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 import vadl.utils.functionInterfaces.TriConsumer;
+import vadl.viam.ArtificialResource;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Constant;
 import vadl.viam.Encoding;
@@ -244,7 +245,7 @@ public class AnnotationTable {
                   .description("Alias must reference a register."));
         })
         .applyViam((def, annotation, lowering) -> {
-          var resource = (Resource) def;
+          var resource = (ArtificialResource) lowering.fetch(annotation.def).orElseThrow();
           var lo = 0;
           var hi = (resource.resultType().bitWidth() / 2) - 1;
           def.addAnnotation(new HalfWidthOfAnnotation(lo, hi, resource));

@@ -56,6 +56,7 @@ import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.ReadsRegisterTensor;
 import vadl.viam.graph.WritesRegisterTensor;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -63,7 +64,6 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * This file contains the logic for adjusting registers in instructions.
@@ -138,10 +138,10 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     return instructions.stream()
         .map(i -> {
           var destRegisterFile =
-              ensurePresent(i.behavior().getNodes(ReadRegTensorNode.class)
-                      .filter(x -> x.regTensor().isRegisterFile())
+              ensurePresent(i.behavior().getNodes(ReadsRegisterTensor.class)
+                      .filter(HasRegisterTensor::hasRegisterFile)
                       .findFirst(),
-                  "There must be destination register").regTensor();
+                  "There must be destination register").registerTensor();
           var words =
               ensurePresent(i.behavior().getNodes(WriteMemNode.class).findFirst(),
                   "There must be a write mem node").words();
@@ -185,15 +185,15 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     return instructions.stream()
         .map(i -> {
           var destRegisterFile =
-              ensurePresent(i.behavior().getNodes(WriteRegTensorNode.class)
-                      .filter(x -> x.regTensor().isRegisterFile())
+              ensurePresent(i.behavior().getNodes(WritesRegisterTensor.class)
+                      .filter(HasRegisterTensor::hasRegisterFile)
                       .findFirst(),
-                  "There must be destination register").regTensor();
+                  "There must be destination register").registerTensor();
           var srcRegisterFile =
-              ensurePresent(i.behavior().getNodes(ReadRegTensorNode.class)
-                      .filter(x -> x.regTensor().isRegisterFile())
+              ensurePresent(i.behavior().getNodes(ReadsRegisterTensor.class)
+                      .filter(HasRegisterTensor::hasRegisterFile)
                       .findFirst(),
-                  "There must be source register").regTensor();
+                  "There must be source register").registerTensor();
 
           return new CopyPhysRegInstruction(i, srcRegisterFile, destRegisterFile);
         })
@@ -310,9 +310,9 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     return
         ensurePresent(
             instruction.behavior()
-                .getNodes(ReadRegTensorNode.class)
-                .filter(x -> x.regTensor().isRegisterFile())
-                .map(ReadRegTensorNode::regTensor)
+                .getNodes(ReadsRegisterTensor.class)
+                .filter(HasRegisterTensor::hasRegisterFile)
+                .map(HasRegisterTensor::registerTensor)
                 .findFirst(), () -> Diagnostic.error(
                 "Expected that the instruction has at least one register file",
                 instruction.location()));

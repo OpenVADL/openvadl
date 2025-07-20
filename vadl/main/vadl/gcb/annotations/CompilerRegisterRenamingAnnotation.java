@@ -16,16 +16,16 @@
 
 package vadl.gcb.annotations;
 
-import vadl.viam.ArtificialResource;
+import vadl.viam.Resource;
 
 /**
  * Indicates that the given alias should be used to rename existing registers.
  */
-public class CompilerRegisterRenamingAnnotation extends vadl.viam.Annotation<ArtificialResource> {
+public class CompilerRegisterRenamingAnnotation extends vadl.viam.Annotation<Resource> {
 
   @Override
-  public Class<ArtificialResource> parentDefinitionClass() {
-    return ArtificialResource.class;
+  public Class<Resource> parentDefinitionClass() {
+    return Resource.class;
   }
 
 }
