@@ -147,17 +147,17 @@ public class ArtificialResource extends Resource implements GeneratesRegisterFil
   }
 
   @Override
-  public DataType resultType() {
-    return readFunction.returnType().asDataType();
-  }
-
-  @Override
   public RegisterTensor.Constraint[] constraints() {
     if (innerResourceRef instanceof RegisterTensor registerTensor) {
       return registerTensor.constraints();
     } else {
       return new RegisterTensor.Constraint[0];
     }
+  }
+
+  @Override
+  public DataType resultType() {
+    return readFunction.returnType().asDataType();
   }
 
   @Override

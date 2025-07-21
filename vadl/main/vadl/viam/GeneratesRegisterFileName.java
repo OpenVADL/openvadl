@@ -16,10 +16,13 @@
 
 package vadl.viam;
 
-import java.util.List;
 import vadl.types.DataType;
 import vadl.utils.SourceLocation;
 
+/**
+ * Interface to combine common functionality for {@link RegisterTensor} and
+ * {@link ArtificialResource}.
+ */
 public interface GeneratesRegisterFileName {
 
   /**

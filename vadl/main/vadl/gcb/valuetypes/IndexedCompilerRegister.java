@@ -80,7 +80,8 @@ public class IndexedCompilerRegister extends CompilerRegister {
       int dwarfNumber = dwarfNumberOffset + addr;
 
       registers.add(
-          new IndexedCompilerRegister(registerFile.generateRegisterFileName(addr), addr, alias, altNames,
+          new IndexedCompilerRegister(registerFile.generateRegisterFileName(addr), addr, alias,
+              altNames,
               dwarfNumber,
               isArtificial));
     }
