@@ -106,7 +106,7 @@ public class IssGdbInfoExtractionPass extends AbstractIssPass {
   private Stream<Result.Reg> getRegTensor(RegisterTensor reg, int i, RegisterTensor pc) {
     var idxDimSizes = reg.indexDimensions().stream().map(RegisterTensor.Dimension::size).toList();
     var regs = regIndexes(idxDimSizes);
-    var isCodePtr = reg.equals(pc);
+    var isCodePtr = reg == pc;
     return regs.stream().map(regIndices -> {
       var idxNames = regIndices.stream().map(ri -> "" + ri).collect(Collectors.joining("_"));
       return new Result.Reg(
