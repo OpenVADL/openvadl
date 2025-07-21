@@ -282,7 +282,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         "name", registerFile.name(),
         "regTypes", registerFile.regTypes(),
         "registerFileRef", Map.of(
-            "name", registerFile.registerFileRef().simpleName()
+            "name", registerFile.registerFileRef().identifier().simpleName()
         )
     );
   }

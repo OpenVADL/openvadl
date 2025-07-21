@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.GenerateCompilerRegistersPass;
@@ -121,6 +122,33 @@ public class GenerateTableGenRegistersPass extends Pass {
 
       var type = ValueType.from(compilerRegisterClass.registerFile().resultType()).get();
       registerClasses.add(
+          new TableGenRegisterClass(
+              configuration.targetName(),
+              compilerRegisterClass.name(),
+              compilerRegisterClass.alignment().bitAlignment(),
+              List.of(type),
+              classRegisters,
+              compilerRegisterClass.registerFile())
+      );
+    }
+
+    for (var compilerRegisterClass : output.aliasRegisterClasses()) {
+      var classRegisters = new ArrayList<TableGenRegister>();
+      for (var compilerRegister : compilerRegisterClass.registers()) {
+        var register = new TableGenRegister(
+            configuration.targetName(),
+            compilerRegister,
+            Objects.requireNonNull(compilerRegisterClass.registerFile().addressType()).bitWidth()
+                - 1,
+            Optional.of(compilerRegister.hwEncodingValue()),
+            compilerRegister.isArtificial()
+        );
+        registers.add(register);
+        classRegisters.add(register);
+      }
+
+      var type = ValueType.from(compilerRegisterClass.registerFile().resultType()).get();
+      aliasRegisterClasses.add(
           new TableGenRegisterClass(
               configuration.targetName(),
               compilerRegisterClass.name(),

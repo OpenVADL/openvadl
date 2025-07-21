@@ -33,7 +33,7 @@ import vadl.types.DataType;
  * to check for 0 when accessing X. This is done using the readFunction and writeProcedure.
  * So in this case X would be turned into an artificial resource.
  */
-public class ArtificialResource extends Resource {
+public class ArtificialResource extends Resource implements GeneratesRegisterFileName {
 
   /**
    * A hint what the artificial resources were created from.
@@ -83,9 +83,15 @@ public class ArtificialResource extends Resource {
     return writeProcedure;
   }
 
+  @Override
+  public Identifier identifier() {
+    return identifier;
+  }
+
   /**
    * The {@link ArtificialResource} is an alias for a register file.
    */
+  @Override
   public boolean isRegisterFile() {
     return readFunction.parameters().length == 1;
   }
@@ -138,6 +144,15 @@ public class ArtificialResource extends Resource {
   @Override
   public List<DataType> indexTypes() {
     return List.of(addressType());
+  }
+
+  @Override
+  public RegisterTensor.Constraint[] constraints() {
+    if (innerResourceRef instanceof RegisterTensor registerTensor) {
+      return registerTensor.constraints();
+    } else {
+      return new RegisterTensor.Constraint[0];
+    }
   }
 
   @Override
