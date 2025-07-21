@@ -440,6 +440,7 @@ public class PassOrders {
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
+    order.skip(ApplyCompilerRegisterRenamingPass.class);
 
     // iss function passes
     order
@@ -583,6 +584,7 @@ public class PassOrders {
     var order = viam(config);
 
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
+    order.skip(ApplyCompilerRegisterRenamingPass.class);
 
     // TODO: Remove once frontend creates it
     order.add(new DummyMiaPass(config));
