@@ -102,6 +102,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .toList();
 
     var outputRegisterClasses = new ArrayList<WrappedRegisterFile>();
+    var outputAliasRegisterClasses = new ArrayList<WrappedRegisterFile>();
     for (var registerClass : registerClasses) {
       HashSet<String> both = new HashSet<>();
       both.addAll(callerSaved);
@@ -122,7 +123,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
     for (var registerClass : output.aliasRegisterClasses()) {
       var allocationSeq = IntStream.range(0, registerClass.registers().size()).mapToObj(
           x -> registerClass.name() + x).collect(Collectors.joining(", "));
-      outputRegisterClasses.add(new WrappedRegisterFile(registerClass, allocationSeq));
+      outputAliasRegisterClasses.add(new WrappedRegisterFile(registerClass, allocationSeq));
     }
 
     return Map.of(CommonVarNames.NAMESPACE,
@@ -130,7 +131,8 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
         "pointerAlignment", DataLayoutProvider.pointerAlignment(abi),
         "registers", output.registers(),
         "aliasRegisters", output.aliasRegisters(),
-        "registerFiles", outputRegisterClasses
+        "registerFiles", outputRegisterClasses,
+        "aliasRegisterFiles", outputAliasRegisterClasses
     );
   }
 }
