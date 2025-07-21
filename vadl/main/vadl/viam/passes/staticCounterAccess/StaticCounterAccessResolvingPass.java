@@ -102,14 +102,14 @@ public class StaticCounterAccessResolvingPass extends Pass {
     behavior.getNodes(Set.of(ReadRegTensorNode.class, WriteRegTensorNode.class))
         .forEach(node -> {
           if (node instanceof ReadRegTensorNode read
-              && read.regTensor() == regCounter.registerTensor()) {
+              && read.regTensor().equals(regCounter.registerTensor())) {
             // if the node is a read and
             // the register file matches the register file of the counter
             // we set the static counter access field of the read node
             read.setStaticCounterAccess(regCounter);
 
           } else if (node instanceof WriteRegTensorNode write
-              && write.regTensor() == regCounter.registerTensor()) {
+              && write.regTensor().equals(regCounter.registerTensor())) {
             // if the node is a write and
             // the register file matches the register file of the counter
             // we set the static counter access field of the write node
@@ -130,7 +130,7 @@ public class StaticCounterAccessResolvingPass extends Pass {
         .forEach(node -> {
 
           if (node instanceof ReadRegTensorNode read
-              && read.regTensor() == fileCounter.registerTensor()
+              && read.regTensor().equals(fileCounter.registerTensor())
               && read.indices().getFirst() instanceof ConstantNode constIndex
               && constIndex.constant().asVal().intValue()
               == fileCounter.indices().getFirst().intValue()) {
@@ -143,7 +143,7 @@ public class StaticCounterAccessResolvingPass extends Pass {
             read.setStaticCounterAccess(fileCounter);
 
           } else if (node instanceof WriteRegTensorNode write
-              && write.regTensor() == fileCounter.registerTensor()
+              && write.regTensor().equals(fileCounter.registerTensor())
               && write.indices().getFirst() instanceof ConstantNode constIndex
               && constIndex.constant().asVal().intValue()
               == fileCounter.indices().getFirst().intValue()) {
