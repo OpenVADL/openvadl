@@ -14,32 +14,44 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.gcb.passes.operands.model;
+package vadl.gcb.annotations;
 
-import vadl.viam.PseudoInstruction;
-import vadl.viam.RegisterTensor;
-import vadl.viam.graph.Node;
+import vadl.viam.Annotation;
+import vadl.viam.ArtificialResource;
+import vadl.viam.Resource;
 
 /**
- * A user can specify a concrete register in a {@link PseudoInstruction}.
+ * Annotation indicating the size of the alias which is crucial for
+ * {@link CompilerRegisterRenamingAnnotation}.
  */
-public final class GcbInstructionConcreteRegisterOperand extends GcbDefaultInstructionOperand {
-  private final RegisterTensor registerTensor;
-  private final int address;
+public class HalfWidthOfAnnotation extends Annotation<ArtificialResource> {
+  private final int lo;
+  private final int hi;
+  private final Resource resource;
 
   /**
    * Constructor.
    */
-  public GcbInstructionConcreteRegisterOperand(RegisterTensor registerTensor,
-                                               int address,
-                                               Node origin) {
-    super(origin, registerTensor.simpleName() + address, "");
-    this.registerTensor = registerTensor;
-    this.address = address;
+  public HalfWidthOfAnnotation(int lo, int hi, Resource resource) {
+    this.lo = lo;
+    this.hi = hi;
+    this.resource = resource;
   }
 
   @Override
-  public String render() {
-    return registerTensor.simpleName() + address;
+  public Class<ArtificialResource> parentDefinitionClass() {
+    return ArtificialResource.class;
+  }
+
+  public int hi() {
+    return hi;
+  }
+
+  public int lo() {
+    return lo;
+  }
+
+  public Resource resource() {
+    return resource;
   }
 }

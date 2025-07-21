@@ -50,8 +50,9 @@ import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
+import vadl.viam.graph.HasRegisterTensor;
+import vadl.viam.graph.ReadsRegisterTensor;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
-import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
@@ -221,10 +222,10 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
           var entry = new FrameIndexElimination(label, instruction, immediate,
               TableGenImmediateRecord.createPredicateMethod(instruction, immediate.fieldAccess())
                   .lower(),
-              instruction.behavior().getNodes(ReadRegTensorNode.class)
-                  .filter(x -> x.regTensor().isRegisterFile())
+              instruction.behavior().getNodes(ReadsRegisterTensor.class)
+                  .filter(HasRegisterTensor::hasRegisterFile)
                   .findFirst().get()
-                  .regTensor(), ind, minValue, maxValue);
+                  .registerTensor(), ind, minValue, maxValue);
           entries.add(entry);
         });
       }

@@ -17,6 +17,7 @@
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionConcreteRegisterOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionIndexedRegisterFileOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
@@ -28,6 +29,7 @@ import vadl.viam.ArtificialResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
@@ -56,6 +58,11 @@ public class LlvmReadArtificialResourceNode extends ReadRegTensorNode implements
       // It is a register
       instructionOperand =
           new GcbInstructionIndexedRegisterFileOperand(this, (FuncParamNode) address);
+    } else if (address instanceof ConstantNode constantNode) {
+      instructionOperand = new GcbInstructionConcreteRegisterOperand(
+          (RegisterTensor) artificialResource.innerResourceRef(),
+          constantNode.constant().asVal().intValue(),
+          this);
     } else {
       instructionOperand = new GcbInstructionRegisterFileOperand(this, (FieldRefNode) address);
     }
