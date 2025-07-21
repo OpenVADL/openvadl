@@ -261,21 +261,6 @@ public class RegisterTensor extends Resource {
   }
 
   @Override
-  public int hashCode() {
-    return Objects.hash(dimensions, constraints, identifier);
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (obj instanceof RegisterTensor that) {
-      return Objects.equals(dimensions, that.dimensions)
-          && Objects.equals(constraints, that.constraints)
-          && this.identifier.equals(that.identifier);
-    }
-    return false;
-  }
-
-  @Override
   public String toString() {
     var indices = dimensions.stream().map(d -> "<" + d.size() + ">").collect(Collectors.joining());
     return "register " + simpleName() + ": Bits" + indices;
