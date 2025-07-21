@@ -147,19 +147,19 @@ public class GenerateCompilerRegistersPass extends Pass {
       List<ArtificialResource> artificialResources, Abi abi, int dwarfOffset) {
     var result = new ArrayList<CompilerRegisterClass>();
 
-    for (var registerFile : artificialResources) {
+    for (var artificialResource : artificialResources) {
       // If it is not a register file then continue.
-      if (registerFile.innerResourceRef() instanceof RegisterTensor registerTensor
+      if (artificialResource.innerResourceRef() instanceof RegisterTensor registerTensor
           && registerTensor.isRegisterFile()) {
         var registers =
-            IndexedCompilerRegister.fromRegisterFile(registerTensor, abi, dwarfOffset, true);
+            IndexedCompilerRegister.fromRegisterFile(artificialResource, abi, dwarfOffset, true);
         dwarfOffset += registers.size();
 
         var alignment = ensureNonNull(abi.registerFileAlignment().get(registerTensor),
             () -> Diagnostic.error("There is not alignment for the register file defined",
-                registerFile.location().join(abi.location())));
+                artificialResource.location().join(abi.location())));
 
-        result.add(new CompilerRegisterClass(registerTensor, registers, alignment));
+        result.add(new CompilerRegisterClass(artificialResource, registers, alignment));
       }
     }
 

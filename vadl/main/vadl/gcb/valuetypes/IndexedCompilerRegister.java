@@ -17,18 +17,15 @@
 package vadl.gcb.valuetypes;
 
 
-import static vadl.viam.ViamError.ensurePresent;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import vadl.error.Diagnostic;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
-import vadl.viam.RegisterTensor;
+import vadl.viam.GeneratesRegisterFileName;
 
 /**
  * Like a {@link CompilerRegister} but contains the index in the register file.
@@ -41,13 +38,13 @@ public class IndexedCompilerRegister extends CompilerRegister {
   /**
    * Constructor.
    */
-  public IndexedCompilerRegister(RegisterTensor registerFile,
-                                 int index,
-                                 String asmName,
-                                 List<String> altNames,
-                                 int dwarfNumber,
-                                 boolean isArtificial) {
-    super(registerFile.generateRegisterFileName(index), asmName, altNames, dwarfNumber, index,
+  private IndexedCompilerRegister(String regFileName,
+                                  int index,
+                                  String asmName,
+                                  List<String> altNames,
+                                  int dwarfNumber,
+                                  boolean isArtificial) {
+    super(regFileName, asmName, altNames, dwarfNumber, index,
         isArtificial);
     this.index = index;
   }
@@ -63,7 +60,7 @@ public class IndexedCompilerRegister extends CompilerRegister {
    * @param isArtificial      registers in {@code registerFile} do not really exist.
    * @return a list of registers generated from the register file.
    */
-  public static List<CompilerRegister> fromRegisterFile(RegisterTensor registerFile,
+  public static List<CompilerRegister> fromRegisterFile(GeneratesRegisterFileName registerFile,
                                                         Abi abi,
                                                         int dwarfNumberOffset,
                                                         boolean isArtificial) {
@@ -76,18 +73,16 @@ public class IndexedCompilerRegister extends CompilerRegister {
       var altNames =
           abi.aliases().getOrDefault(Pair.of(registerFile, addr), Collections.emptyList())
               .stream().map(Abi.RegisterAlias::value).toList();
-      var alias = ensurePresent(
-          altNames
-              .stream().findFirst(),
-          () -> Diagnostic.error(
-              String.format("The aliases for a register file's register '%s' are not defined",
-                  registerFile.generateRegisterFileName(addr)),
-              registerFile.location().join(abi.location())));
+      var alias = altNames
+          .stream().findFirst()
+          .orElse(registerFile.generateRegisterFileName(addr));
 
       int dwarfNumber = dwarfNumberOffset + addr;
 
-      registers.add(new IndexedCompilerRegister(registerFile, addr, alias, altNames, dwarfNumber,
-          isArtificial));
+      registers.add(
+          new IndexedCompilerRegister(registerFile.generateRegisterFileName(addr), addr, alias, altNames,
+              dwarfNumber,
+              isArtificial));
     }
 
     return registers;

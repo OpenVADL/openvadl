@@ -48,7 +48,7 @@ import vadl.types.Type;
  * E.g. {@code register X: Bits<5> -> Bits<64>} has dimensions
  * {@code { (Bits<5>, 32), (Bits<6>, 64)}}.</p>
  */
-public class RegisterTensor extends Resource {
+public class RegisterTensor extends Resource implements GeneratesRegisterFileName {
 
   /**
    * A dimension in a {@link RegisterTensor} consists of an index type and a size.
@@ -123,6 +123,7 @@ public class RegisterTensor extends Resource {
    * Returns whether this register tensor represents a register file.
    * This the case if the number of dimensions is 2.
    */
+  @Override
   public boolean isRegisterFile() {
     return dimCount() == 2;
   }
@@ -136,6 +137,7 @@ public class RegisterTensor extends Resource {
   }
 
   // TODO: Refactor this to return a list instead of an array
+  @Override
   public Constraint[] constraints() {
     return constraints.toArray(new Constraint[0]);
   }
@@ -199,6 +201,11 @@ public class RegisterTensor extends Resource {
   }
 
   @Override
+  public Identifier identifier() {
+    return identifier;
+  }
+
+  @Override
   public ConcreteRelationType relationType() {
     // all from one.
     // e.g. Bits<4><2><32> -> args: Bits<10>, Bits<10>
@@ -218,14 +225,6 @@ public class RegisterTensor extends Resource {
         .filter(c -> c.value().intValue() == 0)
         .map(c -> c.indices)
         .findFirst();
-  }
-
-  /**
-   * Generate the name from this register file with an {@code index}.
-   */
-  public String generateRegisterFileName(int index) {
-    ensure(isRegisterFile(), "must be registerFile");
-    return identifier.simpleName() + index;
   }
 
   @Override
