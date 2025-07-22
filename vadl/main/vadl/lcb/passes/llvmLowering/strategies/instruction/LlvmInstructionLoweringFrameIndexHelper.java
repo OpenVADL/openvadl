@@ -28,6 +28,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstr
 import vadl.utils.Pair;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 
 /**
@@ -51,11 +52,17 @@ public abstract class LlvmInstructionLoweringFrameIndexHelper
     var copy = copyBaseBehavior.copy();
 
     // We just replace the first occurrence and ignore the rest.
-    var readRegNode = copy.getNodes(ReadRegTensorNode.class)
+    copy.getNodes(ReadRegTensorNode.class)
         .findFirst()
-        .orElseThrow(() -> Diagnostic.error("Cannot find a read from a register file",
-            instruction.location()).build());
-    readRegNode.replaceAndDelete(new LlvmFrameIndexSD(readRegNode));
+        .ifPresent(readRegNode -> {
+          readRegNode.replaceAndDelete(new LlvmFrameIndexSD(readRegNode));
+        });
+    copy.getNodes(ReadArtificialResNode.class)
+        .findFirst()
+        .ifPresent(readRegNode -> {
+          readRegNode.replaceAndDelete(new LlvmFrameIndexSD(readRegNode));
+        });
+
 
     var copyInputOperands = new ArrayList<>(instructionInputOperands);
     GcbInstructionRegisterFileOperand operand =

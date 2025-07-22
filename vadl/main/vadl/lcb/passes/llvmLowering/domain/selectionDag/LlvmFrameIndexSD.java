@@ -16,51 +16,55 @@
 
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
-import javax.annotation.Nullable;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.types.DataType;
-import vadl.viam.Counter;
-import vadl.viam.RegisterTensor;
+import vadl.viam.Resource;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.ReadResourceNode;
 
 /**
  * LLVM node which represents the frame index as selection dag node.
  */
-public class LlvmFrameIndexSD extends ReadRegTensorNode implements LlvmNodeLowerable {
+public class LlvmFrameIndexSD extends ReadResourceNode implements LlvmNodeLowerable {
   public static final String NAME = "AddrFI";
-  private final ReadRegTensorNode origin;
+  private final Resource resource;
+  private final Node origin;
 
   public LlvmFrameIndexSD(ReadRegTensorNode obj) {
-    this(obj.regTensor(), obj.indices(), obj.type(), obj.staticCounterAccess(), obj);
+    this(obj.indices(), obj.type(), obj.resourceDefinition(), obj);
     obj.regTensor().ensure(obj.regTensor().isRegisterFile(), "must be register file");
   }
 
-  private LlvmFrameIndexSD(RegisterTensor registerFile,
-                           NodeList<ExpressionNode> addresses,
+  public LlvmFrameIndexSD(ReadArtificialResNode obj) {
+    this(obj.indices(), obj.type(), obj.resourceDefinition(), obj);
+    obj.registerTensor().ensure(obj.registerTensor().isRegisterFile(), "must be register file");
+  }
+
+  private LlvmFrameIndexSD(NodeList<ExpressionNode> indices,
                            DataType type,
-                           @Nullable Counter staticCounterAccess,
-                           ReadRegTensorNode obj) {
-    super(registerFile, addresses, type, staticCounterAccess);
-    this.origin = obj;
+                           Resource resource,
+                           Node origin) {
+    super(indices, type);
+    this.resource = resource;
+    this.origin = origin;
   }
 
   @Override
   public LlvmFrameIndexSD copy() {
-    return new LlvmFrameIndexSD(regTensor,
-        indices.copy(),
-        type(),
-        staticCounterAccess(),
-        origin);
+    return new LlvmFrameIndexSD(new NodeList<>(indices.stream().map(ExpressionNode::copy).toList()),
+        type(), resource, origin.copy());
   }
 
   @Override
   public LlvmFrameIndexSD shallowCopy() {
-    return new LlvmFrameIndexSD(regTensor, indices, type(), staticCounterAccess(), origin);
+    return new LlvmFrameIndexSD(indices, type(), resource, origin);
   }
 
   @Override
@@ -78,7 +82,12 @@ public class LlvmFrameIndexSD extends ReadRegTensorNode implements LlvmNodeLower
     return NAME;
   }
 
-  public ReadRegTensorNode origin() {
+  @Override
+  public Resource resourceDefinition() {
+    return resource;
+  }
+
+  public Node origin() {
     return origin;
   }
 }

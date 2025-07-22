@@ -32,6 +32,7 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValue
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandler;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerForMemoryInstructionsReplacement;
@@ -44,8 +45,8 @@ import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.ReadsRegisterTensor;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 
 /**
@@ -113,8 +114,9 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
         var addition = ensurePresent(selector.getNodes(LlvmAddSD.class).findFirst(),
             "There must be an addition");
         var register = ensurePresent(
-            addition.arguments().stream().filter(x -> x instanceof ReadRegTensorNode node
-                && node.regTensor().isRegisterFile()).findFirst(),
+            addition.arguments().stream().filter(x -> (x instanceof ReadsRegisterTensor node
+                && node.registerTensor().isRegisterFile())
+                || x instanceof LlvmFrameIndexSD).findFirst(),
             () -> Diagnostic.error("Expected a register node as child.",
                 addition.location()));
 

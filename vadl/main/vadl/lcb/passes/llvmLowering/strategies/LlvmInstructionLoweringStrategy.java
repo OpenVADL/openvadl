@@ -86,6 +86,7 @@ import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
@@ -637,6 +638,41 @@ public abstract class LlvmInstructionLoweringStrategy {
       // This is ok as long as the value of the register file at the address is also constant.
       // For example, the X0 register in RISC-V which always has a constant value.
       var constraints = Arrays.stream(node.regTensor().constraints()).toList();
+      var constraintValue = constraints.stream()
+          .filter(
+              x -> x.indices().getFirst().intValue() == constantNode.constant().asVal().intValue())
+          .findFirst();
+      var constRegisterValue = ensurePresent(constraintValue,
+          () -> Diagnostic.error("Register file with constant index has no constant value.",
+                  constantNode.location())
+              .help("Consider adding a constraint to register file for the given index."));
+      // Update the type of the constant because it needs to be upcasted.
+      // Heuristically, we take the type of the index because indices were also upcasted.
+      var constantValue = constRegisterValue.value();
+      constantValue.setType(constantNode.type());
+      return new GcbConstantOperand(constantNode, constantValue);
+    } else {
+      throw Diagnostic.error(
+          "The compiler generator needs to generate a tablegen instruction operand from this "
+              + "address for a field but it does not support it.",
+          node.address().location()).build();
+    }
+  }
+
+  /**
+   * Returns a {@link GcbInstructionOperand} given a {@link Node}.
+   */
+  private static GcbInstructionOperand generateInstructionOperandRegisterFile(
+      ReadArtificialResNode node) {
+    if (node.address() instanceof FieldRefNode field) {
+      return new GcbInstructionRegisterFileOperand(node, field.formatField());
+    } else if (node.address() instanceof FuncParamNode funcParamNode) {
+      return new GcbInstructionIndexedRegisterFileOperand(node, funcParamNode);
+    } else if (node.address() instanceof ConstantNode constantNode) {
+      // The register file has a constant as address.
+      // This is ok as long as the value of the register file at the address is also constant.
+      // For example, the X0 register in RISC-V which always has a constant value.
+      var constraints = Arrays.stream(node.registerTensor().constraints()).toList();
       var constraintValue = constraints.stream()
           .filter(
               x -> x.indices().getFirst().intValue() == constantNode.constant().asVal().intValue())

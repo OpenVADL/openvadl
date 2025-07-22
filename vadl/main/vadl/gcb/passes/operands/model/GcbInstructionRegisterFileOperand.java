@@ -21,8 +21,6 @@ import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.viam.Format;
 import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.RegisterTensor;
-import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
@@ -51,8 +49,7 @@ public class GcbInstructionRegisterFileOperand
    * Constructor.
    */
   public GcbInstructionRegisterFileOperand(ReadArtificialResNode node, Format.Field address) {
-    super(node, node.resourceDefinition().innerResourceRef().simpleName(),
-        address.identifier.simpleName());
+    super(node, node.resourceDefinition().identifier.simpleName(), address.identifier.simpleName());
     this.registerFile = (RegisterTensor) node.resourceDefinition().innerResourceRef();
     this.formatField = address;
     node.resourceDefinition().innerResourceRef()
@@ -63,8 +60,7 @@ public class GcbInstructionRegisterFileOperand
    * Constructor.
    */
   public GcbInstructionRegisterFileOperand(WriteArtificialResNode node, Format.Field address) {
-    super(node, node.resourceDefinition().innerResourceRef().simpleName(),
-        address.identifier.simpleName());
+    super(node, node.resourceDefinition().identifier.simpleName(), address.identifier.simpleName());
     this.registerFile = (RegisterTensor) node.resourceDefinition().innerResourceRef();
     this.formatField = address;
     node.resourceDefinition().innerResourceRef()
