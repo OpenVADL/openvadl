@@ -79,6 +79,11 @@ public class SignExtendNode extends UnaryNode implements Canonicalizable {
       // if the constant node we can zero extend the node
       return new ConstantNode(constant.signExtend(this.type()));
     }
+
+    if (value.type().isDataType() && value.type().asDataType().bitWidth() == type().bitWidth()) {
+      return value;
+    }
+
     return this;
   }
 }

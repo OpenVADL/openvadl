@@ -24,10 +24,6 @@ import vadl.viam.graph.Node;
 
 /**
  * Represents a zero extension of the node's value to the assigned type.
- * This node is constructed during the
- * {@link vadl.viam.passes.typeCastElimination.TypeCastEliminationPass}.
- *
- * @see vadl.viam.passes.typeCastElimination.TypeCastEliminator
  */
 public class ZeroExtendNode extends UnaryNode implements Canonicalizable {
 
@@ -83,6 +79,11 @@ public class ZeroExtendNode extends UnaryNode implements Canonicalizable {
       // if the constant node we can zero extend the node
       return new ConstantNode(constant.zeroExtend(this.type()));
     }
+
+    if (value.type().isDataType() && value.type().asDataType().bitWidth() == type().bitWidth()) {
+      return value;
+    }
+
     return this;
   }
 }

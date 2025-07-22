@@ -24,10 +24,6 @@ import vadl.viam.graph.Node;
 
 /**
  * Represents a truncation of the node's value the assigned type.
- * This node is constructed during the
- * {@link vadl.viam.passes.typeCastElimination.TypeCastEliminationPass}.
- *
- * @see vadl.viam.passes.typeCastElimination.TypeCastEliminator
  */
 public class TruncateNode extends UnaryNode implements Canonicalizable {
 
@@ -79,6 +75,17 @@ public class TruncateNode extends UnaryNode implements Canonicalizable {
       // if the constant node we can zero extend the node
       return new ConstantNode(constant.truncate(this.type()));
     }
+
+    if (value instanceof ZeroExtendNode zeroExtendNode
+        && zeroExtendNode.value().type().equals(type())) {
+      return zeroExtendNode.value();
+    }
+
+    if (value instanceof SignExtendNode signExtendNode
+        && signExtendNode.value().type().equals(type())) {
+      return signExtendNode.value();
+    }
+
     return this;
   }
 }
