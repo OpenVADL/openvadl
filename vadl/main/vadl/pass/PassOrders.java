@@ -119,6 +119,7 @@ import vadl.viam.passes.ControlFlowOptimizationPass;
 import vadl.viam.passes.DetectRegisterIndicesPass;
 import vadl.viam.passes.DuplicateWriteDetectionPass;
 import vadl.viam.passes.HardcodeLGALabelPass;
+import vadl.viam.passes.InsertZeroOrSignExtensionPass;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 import vadl.viam.passes.NormalizeFieldsToFieldAccessFunctionsPass;
 import vadl.viam.passes.SnapshotInstructionBehaviorPass;
@@ -175,6 +176,7 @@ public class PassOrders {
     order.add(new DetectRegisterIndicesPass(configuration));
     order.add(new NormalizeFieldsToFieldAccessFunctionsPass(configuration));
     // has to happen before SnapshotInstructionBehavior
+    order.add(new InsertZeroOrSignExtensionPass(configuration));
     order.add(new MergeTruncateNodePass(configuration));
     order.add(new ApplyCompilerRegisterRenamingPass(configuration));
     order.add(new SnapshotInstructionBehaviorPass(configuration));
@@ -446,6 +448,7 @@ public class PassOrders {
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
     order.skip(ApplyCompilerRegisterRenamingPass.class);
     order.skip(MergeTruncateNodePass.class);
+    order.skip(InsertZeroOrSignExtensionPass.class);
 
     // iss function passes
     order
@@ -591,6 +594,7 @@ public class PassOrders {
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
     order.skip(ApplyCompilerRegisterRenamingPass.class);
     order.skip(MergeTruncateNodePass.class);
+    order.skip(InsertZeroOrSignExtensionPass.class);
 
     // TODO: Remove once frontend creates it
     order.add(new DummyMiaPass(config));

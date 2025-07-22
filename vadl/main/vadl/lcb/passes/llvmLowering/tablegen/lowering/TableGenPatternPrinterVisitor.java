@@ -18,7 +18,6 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.io.StringWriter;
 import java.util.Objects;
-import vadl.cppCodeGen.CppTypeMap;
 import vadl.error.Diagnostic;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
@@ -42,6 +41,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmZExtLoad;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
+import vadl.types.BitsType;
 import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
@@ -120,6 +120,8 @@ public class TableGenPatternPrinterVisitor
 
   @Override
   public void visit(BuiltInCall node) {
+    var type = valueType(node);
+    writer.write("(" + type.getLlvmType() + " ");
     writer.write("(");
     if (node instanceof LlvmNodeLowerable lowerable) {
       writer.write(lowerable.lower() + " ");
@@ -129,7 +131,7 @@ public class TableGenPatternPrinterVisitor
 
     joinArgumentsWithComma(node.arguments());
 
-    writer.write(")");
+    writer.write("))");
   }
 
   @Override
@@ -344,21 +346,25 @@ public class TableGenPatternPrinterVisitor
 
   @Override
   public void visit(ZeroExtendNode node) {
+    var type = valueType(node);
+    writer.write("(" + type.getLlvmType() + " ");
     writer.write("(zext ");
     visit(node.value());
-    writer.write(")");
+    writer.write("))");
   }
 
   @Override
   public void visit(SignExtendNode node) {
+    var type = valueType(node);
+    writer.write("(" + type.getLlvmType() + " ");
     writer.write("(sext ");
     visit(node.value());
-    writer.write(")");
+    writer.write("))");
   }
 
   @Override
   public void visit(TruncateNode node) {
-    var type = ValueType.from(CppTypeMap.upcast(node.type()).makeSigned()).get();
+    var type = valueType(node);
     writer.write("(" + type.getLlvmType() + " (trunc ");
     visit(node.value());
     writer.write("))");
@@ -413,5 +419,11 @@ public class TableGenPatternPrinterVisitor
         writer.write(", ");
       }
     }
+  }
+
+  private static ValueType valueType(ExpressionNode node) {
+    return ValueType.from(((BitsType) node.type()).makeSigned())
+        .orElseThrow(() ->
+            Diagnostic.error("Cannot create LLVM type: " + node.type(), node.location()).build());
   }
 }

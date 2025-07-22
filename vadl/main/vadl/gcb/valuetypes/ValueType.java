@@ -34,13 +34,15 @@ public enum ValueType implements Renderable {
   I32("i32", "Int32", "Int32", 32),
 
   I64("i64", "Int64", "Int64", 64),
+  I128("i128", "Int128", "Int128", 128),
 
   // LLVM has no concept of unsigned integers because it's all interpretation.
   // That's why sometimes have to use signed names.
   U8("u8", "Uint8", "Int8", 8),
   U16("u16", "Uint16", "Int16", 16),
   U32("u32", "Uint32", "Int32", 32),
-  U64("u64", "Uint64", "Int64", 64);
+  U64("u64", "Uint64", "Int64", 64),
+  U128("u128", "Int128", "Int128", 128);
 
   private final String llvmType;
   private final String fancyName;
@@ -63,10 +65,12 @@ public enum ValueType implements Renderable {
       case I16 -> 16;
       case I32 -> 32;
       case I64 -> 64;
+      case I128 -> 128;
       case U8 -> 8;
       case U16 -> 16;
       case U32 -> 32;
       case U64 -> 64;
+      case U128 -> 128;
     };
   }
 
@@ -85,6 +89,8 @@ public enum ValueType implements Renderable {
         return Optional.of(ValueType.I32);
       } else if (sint.bitWidth() == 64) {
         return Optional.of(ValueType.I64);
+      } else if (sint.bitWidth() == 128) {
+        return Optional.of(ValueType.I128);
       }
     } else if (type instanceof UIntType uint) {
       if (uint.bitWidth() == 8) {
@@ -95,6 +101,8 @@ public enum ValueType implements Renderable {
         return Optional.of(ValueType.U32);
       } else if (uint.bitWidth() == 64) {
         return Optional.of(ValueType.U64);
+      } else if (uint.bitWidth() == 128) {
+        return Optional.of(ValueType.U128);
       }
     } else if (type instanceof BitsType bitsType) {
       if (bitsType.bitWidth() == 8) {
@@ -105,6 +113,8 @@ public enum ValueType implements Renderable {
         return Optional.of(ValueType.I32);
       } else if (bitsType.bitWidth() == 64) {
         return Optional.of(ValueType.I64);
+      } else if (bitsType.bitWidth() == 128) {
+        return Optional.of(ValueType.I128);
       }
     }
 
@@ -128,7 +138,7 @@ public enum ValueType implements Renderable {
    */
   public boolean isSigned() {
     return switch (this) {
-      case I8, I16, I32, I64 -> true;
+      case I8, I16, I32, I64, I128 -> true;
       default -> false;
     };
   }
