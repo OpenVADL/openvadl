@@ -572,7 +572,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
 
     return registerReads.size() == 1
         && matched.isPresent()
-        && writesExactlyOneRegisterClassWithType(behavior, Type.bits(bitWidth));
+        && writesExactlyOneRegisterClassWithType(behavior, Type.bits(bitWidth))
+        && behavior.getNodes(TruncateNode.class).toList().isEmpty();
   }
 
   private boolean findBranchWithConditional(UninlinedGraph behavior,
