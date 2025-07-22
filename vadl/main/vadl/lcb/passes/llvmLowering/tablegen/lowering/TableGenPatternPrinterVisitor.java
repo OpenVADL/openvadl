@@ -18,6 +18,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.io.StringWriter;
 import java.util.Objects;
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.error.Diagnostic;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
@@ -357,7 +358,10 @@ public class TableGenPatternPrinterVisitor
 
   @Override
   public void visit(TruncateNode node) {
-
+    var type = ValueType.from(CppTypeMap.upcast(node.type()).makeSigned()).get();
+    writer.write("(" + type.getLlvmType() + " (trunc ");
+    visit(node.value());
+    writer.write("))");
   }
 
   @Override

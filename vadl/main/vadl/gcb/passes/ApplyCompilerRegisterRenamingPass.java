@@ -28,6 +28,8 @@ import vadl.gcb.annotations.HalfWidthOfAnnotation;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.types.BitsType;
+import vadl.utils.Pair;
 import vadl.viam.ArtificialResource;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
@@ -76,7 +78,7 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
             .filter(x -> x.hasAnnotation(CompilerRegisterRenamingAnnotation.class))
             .toList();
 
-    var worklist = new ArrayList<Node>();
+    var worklist = new ArrayList<Pair<Node, BitsType>>();
     for (var artificialResource : candidates) {
       var inner = artificialResource.innerResourceRef();
 
@@ -107,7 +109,9 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
                     return false;
                   });
 
-              worklist.addAll(matcher);
+              var type = BitsType.bits(annotation.hi() - annotation.lo() + 1);
+              worklist.addAll(matcher.stream()
+                  .map(x -> Pair.of(x, type)).toList());
             }
 
             {
@@ -127,18 +131,22 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
                     return false;
                   });
 
-              worklist.addAll(matcher);
+              var type = BitsType.bits(annotation.hi() - annotation.lo() + 1);
+              worklist.addAll(matcher.stream()
+                  .map(x -> Pair.of(x, type)).toList());
             }
           }
         }
       } else {
         for (var instruction : viam.isa().orElseThrow().ownInstructions()) {
           for (var behavior : instruction.behaviors()) {
-            var tensorNodes = behavior.getNodes(ReadResourceNode.class)
+            List<Pair<Node, BitsType>> tensorNodes = behavior.getNodes(ReadResourceNode.class)
                 .filter(x -> !x.isDeleted())
                 .filter(x -> x instanceof ReadsRegisterTensor readsRegisterTensor
                     && readsRegisterTensor.hasRegisterFile()
-                    && readsRegisterTensor.registerTensor().equals(inner)).toList();
+                    && readsRegisterTensor.registerTensor().equals(inner))
+                .map(x -> Pair.of((Node) x, x.type().toBitsType()))
+                .toList();
 
             worklist.addAll(tensorNodes);
           }
@@ -189,11 +197,12 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
                   return false;
                 });
 
-            worklist.addAll(matcher);
+            var type = BitsType.bits(annotation.hi() - annotation.lo() + 1);
+            worklist.addAll(matcher.stream()
+                .map(x -> Pair.of(x, type)).toList());
           }
         }
       }
-
 
       replace(worklist, artificialResource);
     }
@@ -201,8 +210,12 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
     return null;
   }
 
-  private void replace(List<Node> matchings, ArtificialResource artificialResource) {
-    for (var node : matchings) {
+  private void replace(List<Pair<Node, BitsType>> matchings,
+                       ArtificialResource artificialResource) {
+    for (var entry : matchings) {
+      var node = entry.left();
+      var type = entry.right();
+
       // Nodes can be contained multiple times, but we only need it once.
       if (node.isDeleted()) {
         continue;
@@ -232,11 +245,11 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
       if (node instanceof ReadRegTensorNode regTensorNode) {
         regTensorNode.replaceAndDelete(
             new ReadArtificialResNode(artificialResource, regTensorNode.indices(),
-                regTensorNode.type()));
+                type));
       } else if (node instanceof ReadArtificialResNode artificialResNode) {
         artificialResNode.replaceAndDelete(
             new ReadArtificialResNode(artificialResource, artificialResNode.indices(),
-                artificialResNode.type()));
+                type));
       } else if (node instanceof WriteArtificialResNode artificialResNode) {
         artificialResNode.replaceAndDelete(
             new WriteArtificialResNode(artificialResource, artificialResNode.indices(),

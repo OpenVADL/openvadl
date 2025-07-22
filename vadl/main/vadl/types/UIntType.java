@@ -30,13 +30,6 @@ public class UIntType extends BitsType {
     return "UInt<%s>".formatted(bitWidth);
   }
 
-  /**
-   * Returns a signed integer with the same {@code bitWidth}.
-   */
-  public SIntType makeSigned() {
-    return new SIntType(bitWidth);
-  }
-
   @Override
   public boolean isSigned() {
     return false;

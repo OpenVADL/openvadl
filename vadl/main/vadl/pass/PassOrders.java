@@ -37,6 +37,7 @@ import vadl.gcb.passes.GenerateCompilerRegistersPass;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.InstructionPatternPruningPass;
+import vadl.gcb.passes.MergeTruncateNodePass;
 import vadl.gcb.passes.PredicateFunctionInlinerPass;
 import vadl.gcb.passes.SetMissingConfigurationValuesPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
@@ -173,6 +174,8 @@ public class PassOrders {
 
     order.add(new DetectRegisterIndicesPass(configuration));
     order.add(new NormalizeFieldsToFieldAccessFunctionsPass(configuration));
+    // has to happen before SnapshotInstructionBehavior
+    order.add(new MergeTruncateNodePass(configuration));
     order.add(new ApplyCompilerRegisterRenamingPass(configuration));
     order.add(new SnapshotInstructionBehaviorPass(configuration));
 
@@ -442,6 +445,7 @@ public class PassOrders {
     order.skip(FieldAccessInlinerPass.class);
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
     order.skip(ApplyCompilerRegisterRenamingPass.class);
+    order.skip(MergeTruncateNodePass.class);
 
     // iss function passes
     order
@@ -586,6 +590,7 @@ public class PassOrders {
 
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
     order.skip(ApplyCompilerRegisterRenamingPass.class);
+    order.skip(MergeTruncateNodePass.class);
 
     // TODO: Remove once frontend creates it
     order.add(new DummyMiaPass(config));

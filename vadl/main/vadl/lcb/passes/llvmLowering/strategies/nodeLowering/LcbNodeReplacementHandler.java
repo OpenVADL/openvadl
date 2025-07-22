@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.valuetypes.ValueType;
@@ -412,13 +413,15 @@ public class LcbNodeReplacementHandler {
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(FieldAccessRefNode fieldAccessRefNode) {
     var originalType = fieldAccessRefNode.fieldAccess().accessFunction().returnType();
+    var upcasted =
+        ValueType.from(CppTypeMap.upcast(fieldAccessRefNode.type()).makeSigned()).get();
 
     fieldAccessRefNode.replaceAndDelete(
         new LlvmFieldAccessRefNode(
             printableInstruction,
             fieldAccessRefNode.fieldAccess(),
             originalType,
-            architectureType,
+            upcasted,
             LlvmFieldAccessRefNode.Usage.Immediate));
   }
 
@@ -577,11 +580,6 @@ public class LcbNodeReplacementHandler {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(TruncateNode truncateNode) {
-    // Remove all nodes
-    for (var usage : truncateNode.usages().toList()) {
-      usage.replaceInput(truncateNode, truncateNode.value());
-    }
-
     LcbNodeReplacementHandlerDispatcher.dispatch(this, truncateNode.value());
   }
 
@@ -730,10 +728,6 @@ public class LcbNodeReplacementHandler {
       node.replaceAndDelete(new LlvmZExtLoad(readMemNode));
       LcbNodeReplacementHandlerDispatcher.dispatch(this, readMemNode.address());
     } else {
-      // Remove all nodes
-      for (var usage : node.usages().toList()) {
-        usage.replaceInput(node, node.value());
-      }
       LcbNodeReplacementHandlerDispatcher.dispatch(this, node.value());
     }
   }

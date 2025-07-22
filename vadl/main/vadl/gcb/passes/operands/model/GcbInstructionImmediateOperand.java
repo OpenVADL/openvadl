@@ -16,6 +16,7 @@
 
 package vadl.gcb.passes.operands.model;
 
+import vadl.types.Type;
 import vadl.viam.Format;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 
@@ -25,11 +26,14 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 public class GcbInstructionImmediateOperand extends GcbDefaultInstructionOperand {
   private final Format.FieldAccess fieldAccess;
 
+  private final Type overlayType;
+
   /**
    * Constructor.
    */
   public GcbInstructionImmediateOperand(FieldAccessRefNode node) {
     super(node, "", node.fieldAccess().simpleName());
+    this.overlayType = node.type();
     this.fieldAccess = node.fieldAccess();
   }
 
@@ -38,10 +42,15 @@ public class GcbInstructionImmediateOperand extends GcbDefaultInstructionOperand
    */
   public GcbInstructionImmediateOperand(FieldAccessRefNode origin, String type, String name) {
     super(origin, type, name);
+    this.overlayType = origin.type();
     this.fieldAccess = origin.fieldAccess();
   }
 
   public Format.FieldAccess fieldAccess() {
     return fieldAccess;
+  }
+
+  public Type overlayType() {
+    return overlayType;
   }
 }
