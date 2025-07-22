@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.viam.GeneratesRegisterFileName;
-import vadl.viam.RegisterTensor;
 
 /**
  * Represents a single register file in TableGen. This is the lowered representation of a

@@ -371,7 +371,7 @@ public class GenerateInstructionOperandsPass extends Pass {
   private GcbInstructionOperand mapFrom(
       ReadRegTensorNode node) {
     if (node.address() instanceof FieldRefNode field) {
-      return new GcbInstructionRegisterFileOperand(node, field);
+      return new GcbInstructionRegisterFileOperand(node, field.formatField());
     } else if (node.address() instanceof FuncParamNode funcParamNode) {
       return new GcbInstructionIndexedRegisterFileOperand(node, funcParamNode);
     } else if (node.address() instanceof ConstantNode constantNode) {
@@ -439,7 +439,7 @@ public class GenerateInstructionOperandsPass extends Pass {
 
   private GcbInstructionOperand mapFrom(WriteRegTensorNode node) {
     if (node.address() instanceof FieldRefNode field) {
-      return new GcbInstructionRegisterFileOperand(node, field);
+      return new GcbInstructionRegisterFileOperand(node, field.formatField());
     } else if (node.address() instanceof FuncParamNode funcParamNode) {
       return new GcbInstructionIndexedRegisterFileOperand(node, funcParamNode);
     } else {

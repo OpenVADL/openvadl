@@ -42,6 +42,7 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.OutputInstructionName;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrindSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadArtificialResourceNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTargetCallSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
@@ -52,13 +53,15 @@ import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
 import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
+import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.Instruction;
-import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 
@@ -166,10 +169,8 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     var selector = new Graph("selector");
     var ref = (ReadRegTensorNode) inputRegister.origin().copy();
     var address = (FieldRefNode) ref.address().copy();
-    selector.addWithInputs(new LlvmTargetCallSD(new NodeList<>(new LlvmReadRegFileNode(
-        inputRegister.registerFile(), address, inputRegister.formatField().type(),
-        ref.staticCounterAccess()
-    )),
+    var llvmRegister = createReadNodeFromOperand(inputRegister, address, ref);
+    selector.addWithInputs(new LlvmTargetCallSD(new NodeList<>(llvmRegister),
         Type.dummy()));
 
     var database = new Database(supportedInstructions);
@@ -195,7 +196,7 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
         false,
         false,
         List.of(
-            new GcbInstructionRegisterFileOperand(llvmReadRegFile, address)
+            new GcbInstructionRegisterFileOperand(llvmReadRegFile, address.formatField())
         ), Collections.emptyList(),
         List.of(
             new RegisterRef(abi.returnAddress().registerFile(),
@@ -249,7 +250,7 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
         true,
         true,
         List.of(
-            new GcbInstructionRegisterFileOperand(ref, address),
+            new GcbInstructionRegisterFileOperand(ref, address.formatField()),
             new TableGenInstructionImmediateOperand(fieldRef)
         ), Collections.emptyList(),
         Collections.emptyList());
@@ -272,10 +273,7 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     var selector = new Graph("selector");
     var ref = (ReadRegTensorNode) inputRegister.origin().copy();
     var address = (FieldRefNode) ref.address().copy();
-    var llvmRegister = new LlvmReadRegFileNode(
-        inputRegister.registerFile(), address, inputRegister.formatField().type(),
-        ref.staticCounterAccess()
-    );
+    ExpressionNode llvmRegister = createReadNodeFromOperand(inputRegister, address, ref);
 
     var llvmType = ensurePresent(ValueType.from(immediate.fieldAccess().type()),
         () -> Diagnostic.error("Cannot construct llvm type from field access",
@@ -296,15 +294,32 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     return new TableGenSelectionWithOutputPattern(selector, machine);
   }
 
+  @Nonnull
+  private static ExpressionNode createReadNodeFromOperand(GcbInstructionRegisterFileOperand operand,
+                                                          FieldRefNode address,
+                                                          ReadRegTensorNode ref) {
+    ExpressionNode llvmRegister;
+    if (operand.registerFile() instanceof ReadRegTensorNode readRegTensorNode) {
+      llvmRegister = new LlvmReadRegFileNode(
+          readRegTensorNode.regTensor(), address, operand.formatField().type(),
+          ref.staticCounterAccess()
+      );
+    } else if (operand.registerFile() instanceof ReadArtificialResNode readRegTensorNode) {
+      llvmRegister = new LlvmReadArtificialResourceNode(
+          readRegTensorNode.resourceDefinition(), address, operand.formatField().type()
+      );
+    } else {
+      throw Diagnostic.error("Cannot create node", operand.registerFile().location()).build();
+    }
+    return llvmRegister;
+  }
+
   private TableGenPattern generateBranchIndirectWithZero(
       GcbInstructionRegisterFileOperand inputRegister) {
     var selector = new Graph("selector");
     var ref = (ReadRegTensorNode) inputRegister.origin().copy();
     var address = (FieldRefNode) ref.address().copy();
-    var llvmRegister = new LlvmReadRegFileNode(
-        inputRegister.registerFile(), address, inputRegister.formatField().type(),
-        ref.staticCounterAccess()
-    );
+    var llvmRegister = createReadNodeFromOperand(inputRegister, address, ref);
     var constant = new Constant.Str("0");
     selector.addWithInputs(new LlvmBrindSD(new NodeList<>(
         llvmRegister),
@@ -319,7 +334,7 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     return new TableGenSelectionWithOutputPattern(selector, machine);
   }
 
-  private static String zeroRegister(RegisterTensor registerFile) {
+  private static String zeroRegister(GeneratesRegisterFileName registerFile) {
     var constraint =
         ensurePresent(
             Arrays.stream(registerFile.constraints()).filter(x -> x.value().intValue() == 0)
@@ -328,6 +343,6 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
                 registerFile.location())
         );
 
-    return registerFile.simpleName() + constraint.indices().getFirst().intValue();
+    return registerFile.identifier().simpleName() + constraint.indices().getFirst().intValue();
   }
 }
