@@ -36,9 +36,13 @@ import vadl.viam.graph.ReadsRegisterTensor;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.UnaryNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.matching.TreeMatcher;
 
 /**
@@ -74,6 +78,8 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
     var worklist = new ArrayList<Node>();
     for (var artificialResource : candidates) {
       var inner = artificialResource.innerResourceRef();
+
+      // We have to replace the reads ...
 
       // If we have this annotation then replace Slice + `src`
       // Otherwise, only `src`
@@ -116,6 +122,56 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
         }
       }
 
+      // but we also have to replace the writes.
+      if (artificialResource.hasAnnotation(HalfWidthOfAnnotation.class)) {
+        var annotation =
+            Objects.requireNonNull(artificialResource.annotation(HalfWidthOfAnnotation.class));
+        for (var instruction : viam.isa().orElseThrow().ownInstructions()) {
+          for (var behavior : instruction.behaviors()) {
+            var matcher = TreeMatcher.matches(
+                behavior.getNodes(WriteResourceNode.class).filter(x -> !x.isDeleted()).map(x -> x),
+                node -> {
+                  var hi = (annotation.hi() + 1) * 2;
+                  if (node instanceof WriteResourceNode writeResourceNode
+                      && writeResourceNode.value() instanceof ZeroExtendNode zeroExtendNode
+                      && zeroExtendNode.type().asDataType().bitWidth() == hi) {
+                    if (writeResourceNode instanceof WriteRegTensorNode readRegTensorNode) {
+                      return readRegTensorNode.regTensor().equals(annotation.resource());
+                    } else if (writeResourceNode instanceof WriteArtificialResNode writeArtificialResNode) {
+                      return writeArtificialResNode.resourceDefinition()
+                          .equals(annotation.resource());
+                    }
+                  }
+
+                  if (node instanceof WriteResourceNode writeResourceNode
+                      && writeResourceNode.value() instanceof SignExtendNode signExtendNode
+                      && signExtendNode.type().asDataType().bitWidth() == hi) {
+                    if (writeResourceNode instanceof WriteRegTensorNode readRegTensorNode) {
+                      return readRegTensorNode.regTensor().equals(annotation.resource());
+                    } else if (writeResourceNode instanceof WriteArtificialResNode writeArtificialResNode) {
+                      return writeArtificialResNode.resourceDefinition()
+                          .equals(annotation.resource());
+                    }
+
+                    if (writeResourceNode.value() instanceof ReadRegTensorNode readRegTensorNode) {
+                      return readRegTensorNode.regTensor().equals(annotation.resource());
+                    } else if (writeResourceNode.value() instanceof ReadArtificialResNode
+                        readArtificialResNode) {
+                      return readArtificialResNode.resourceDefinition()
+                          .equals(annotation.resource());
+                    }
+                  }
+
+
+                  return false;
+                });
+
+            worklist.addAll(matcher);
+          }
+        }
+      }
+
+
       replace(worklist, artificialResource);
     }
 
@@ -135,6 +191,12 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
         node = sliceNode.value();
       }
 
+      UnaryNode unaryNodeValue = null;
+      if (node instanceof UnaryNode unaryNode) {
+        unaryNodeValue = unaryNode;
+        node = unaryNode.value();
+      }
+
       if (node instanceof ReadRegTensorNode regTensorNode) {
         regTensorNode.replaceAndDelete(
             new ReadArtificialResNode(artificialResource, regTensorNode.indices(),
@@ -146,7 +208,7 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
       } else if (node instanceof WriteArtificialResNode artificialResNode) {
         artificialResNode.replaceAndDelete(
             new WriteArtificialResNode(artificialResource, artificialResNode.indices(),
-                artificialResNode.value(), artificialResNode.condition()));
+                artificialResNode.value(), artificialResNode.nullableCondition()));
       } else if (node instanceof WriteRegTensorNode writeTensorNode) {
         writeTensorNode.replaceAndDelete(
             new WriteArtificialResNode(artificialResource, writeTensorNode.indices(),
@@ -157,6 +219,10 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
 
       if (sliceNodeValue != null) {
         sliceNodeValue.replaceAndDelete(sliceNodeValue.value());
+      }
+
+      if (unaryNodeValue != null) {
+        unaryNodeValue.replaceAndDelete(unaryNodeValue.value());
       }
     }
 
