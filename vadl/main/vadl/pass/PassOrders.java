@@ -254,6 +254,7 @@ public class PassOrders {
     var order = gcbAndCppCodeGen(configuration);
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
+    order.skip(ViamVerificationPass.class);
 
     order.add(new PseudoExpansionFunctionGeneratorPass(configuration));
     order.add(new AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass(

@@ -38,6 +38,7 @@ import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.UnaryNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
@@ -88,24 +89,46 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
             Objects.requireNonNull(artificialResource.annotation(HalfWidthOfAnnotation.class));
         for (var instruction : viam.isa().orElseThrow().ownInstructions()) {
           for (var behavior : instruction.behaviors()) {
-            var matcher = TreeMatcher.matches(
-                behavior.getNodes(SliceNode.class).filter(x -> !x.isDeleted()).map(x -> x),
-                node -> {
-                  if (node instanceof SliceNode sliceNode
-                      && sliceNode.bitSlice().lsb() == 0
-                      && sliceNode.bitSlice().msb() == annotation.hi()) {
-                    if (sliceNode.value() instanceof ReadRegTensorNode readRegTensorNode) {
-                      return readRegTensorNode.regTensor().equals(annotation.resource());
-                    } else if (sliceNode.value() instanceof ReadArtificialResNode
-                        readArtificialResNode) {
-                      return readArtificialResNode.resourceDefinition()
-                          .equals(annotation.resource());
+            {
+              var matcher = TreeMatcher.matches(
+                  behavior.getNodes(SliceNode.class).filter(x -> !x.isDeleted()).map(x -> x),
+                  node -> {
+                    if (node instanceof SliceNode sliceNode
+                        && sliceNode.bitSlice().lsb() == 0
+                        && sliceNode.bitSlice().msb() == annotation.hi()) {
+                      if (sliceNode.value() instanceof ReadRegTensorNode readRegTensorNode) {
+                        return readRegTensorNode.regTensor().equals(annotation.resource());
+                      } else if (sliceNode.value() instanceof ReadArtificialResNode
+                          readArtificialResNode) {
+                        return readArtificialResNode.resourceDefinition()
+                            .equals(annotation.resource());
+                      }
                     }
-                  }
-                  return false;
-                });
+                    return false;
+                  });
 
-            worklist.addAll(matcher);
+              worklist.addAll(matcher);
+            }
+
+            {
+              var matcher = TreeMatcher.matches(
+                  behavior.getNodes(TruncateNode.class).filter(x -> !x.isDeleted()).map(x -> x),
+                  node -> {
+                    if (node instanceof TruncateNode truncateNode
+                        && truncateNode.type().bitWidth() == annotation.hi() + 1) {
+                      if (truncateNode.value() instanceof ReadRegTensorNode readRegTensorNode) {
+                        return readRegTensorNode.regTensor().equals(annotation.resource());
+                      } else if (truncateNode.value() instanceof ReadArtificialResNode
+                          readArtificialResNode) {
+                        return readArtificialResNode.resourceDefinition()
+                            .equals(annotation.resource());
+                      }
+                    }
+                    return false;
+                  });
+
+              worklist.addAll(matcher);
+            }
           }
         }
       } else {
@@ -185,6 +208,12 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
         continue;
       }
 
+      TruncateNode truncateNodeValue = null;
+      if (node instanceof TruncateNode truncateNode) {
+        truncateNodeValue = truncateNode;
+        node = truncateNodeValue.value();
+      }
+
       SliceNode sliceNodeValue = null;
       if (node instanceof SliceNode sliceNode) {
         sliceNodeValue = sliceNode;
@@ -192,9 +221,12 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
       }
 
       UnaryNode unaryNodeValue = null;
-      if (node instanceof UnaryNode unaryNode) {
-        unaryNodeValue = unaryNode;
-        node = unaryNode.value();
+      if (node instanceof WriteResourceNode writeResourceNode) {
+        if (writeResourceNode.value() instanceof ZeroExtendNode zeroExtendNode) {
+          unaryNodeValue = zeroExtendNode;
+        } else if (writeResourceNode.value() instanceof SignExtendNode signExtendNode) {
+          unaryNodeValue = signExtendNode;
+        }
       }
 
       if (node instanceof ReadRegTensorNode regTensorNode) {
@@ -219,6 +251,10 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
 
       if (sliceNodeValue != null) {
         sliceNodeValue.replaceAndDelete(sliceNodeValue.value());
+      }
+
+      if (truncateNodeValue != null) {
+        truncateNodeValue.replaceAndDelete(truncateNodeValue.value());
       }
 
       if (unaryNodeValue != null) {
