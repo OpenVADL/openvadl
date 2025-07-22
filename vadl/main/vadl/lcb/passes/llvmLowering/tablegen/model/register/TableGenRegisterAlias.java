@@ -45,7 +45,7 @@ public record TableGenRegisterAlias(TargetName namespace,
     map.put("dwarfNumber", compilerRegister.dwarfNumber());
     map.put("hwEncodingValue", compilerRegister.hwEncodingValue());
     map.put("altNamesString", altNamesString());
-    map.put("isArtificial", isArtificial ? 1 : 0);
+    map.put("isArtificial", 0);
     index.ifPresent(integer -> map.put("index", integer));
     return map;
   }
