@@ -17,7 +17,6 @@
 package vadl.gcb.passes;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -77,7 +76,6 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
             .filter(x -> x.hasAnnotation(CompilerRegisterRenamingAnnotation.class))
             .toList();
 
-    var worklist = new ArrayList<Pair<Node, BitsType>>();
     for (var artificialResource : candidates) {
       var inner = artificialResource.innerResourceRef();
 
@@ -228,27 +226,27 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
     return null;
   }
 
-  private Node replaceBy(Node node, ArtificialResource artificialResource, BitsType type) {
+  private void replaceBy(Node node, ArtificialResource artificialResource, BitsType type) {
     switch (node) {
       case ReadRegTensorNode regTensorNode -> {
         var resNode = new ReadArtificialResNode(artificialResource, regTensorNode.indices(),
             type);
-        return regTensorNode.replaceAndDelete(resNode);
+        regTensorNode.replaceAndDelete(resNode);
       }
       case ReadArtificialResNode artificialResNode -> {
         var resNode = new ReadArtificialResNode(artificialResource, artificialResNode.indices(),
             type);
-        return artificialResNode.replaceAndDelete(resNode);
+        artificialResNode.replaceAndDelete(resNode);
       }
       case WriteArtificialResNode artificialResNode -> {
         var resNode = new WriteArtificialResNode(artificialResource, artificialResNode.indices(),
             artificialResNode.value(), artificialResNode.nullableCondition());
-        return artificialResNode.replaceAndDelete(resNode);
+        artificialResNode.replaceAndDelete(resNode);
       }
       case WriteRegTensorNode writeTensorNode -> {
         var resNode = new WriteArtificialResNode(artificialResource, writeTensorNode.indices(),
             writeTensorNode.value());
-        return writeTensorNode.replaceAndDelete(resNode);
+        writeTensorNode.replaceAndDelete(resNode);
       }
       default -> throw Diagnostic.error("Cannot replace node", node.location()).build();
     }

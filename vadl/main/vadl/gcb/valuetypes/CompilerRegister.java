@@ -16,15 +16,38 @@
 
 package vadl.gcb.valuetypes;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Extends the register with information which a compiler requires.
  */
 public abstract class CompilerRegister {
+  /**
+   * Indicates the indices for sub registers.
+   */
+  public enum SubRegIndex {
+    SUB_32("sub_32"),
+    SUB_32_HI("sub_32_hi"),
+    FULL_64("full_64");
+
+    private final String name;
+
+    SubRegIndex(String name) {
+      this.name = name;
+    }
+
+    public String getName() {
+      return name;
+    }
+  }
+
   protected final String name;
   protected final String asmName;
   protected final List<String> altNames;
+  protected final List<CompilerRegister> subRegs;
+  protected final List<SubRegIndex> subRegIndices;
+
   protected final int dwarfNumber;
   protected final int hwEncodingValue;
   protected final boolean isArtificial;
@@ -43,6 +66,8 @@ public abstract class CompilerRegister {
     this.altNames = altNames;
     this.dwarfNumber = dwarfNumber;
     this.hwEncodingValue = hwEncodingValue;
+    this.subRegs = new ArrayList<>();
+    this.subRegIndices = new ArrayList<>();
     this.isArtificial = isArtificial;
   }
 
@@ -68,5 +93,21 @@ public abstract class CompilerRegister {
 
   public boolean isArtificial() {
     return isArtificial;
+  }
+
+  public List<CompilerRegister> subRegs() {
+    return subRegs;
+  }
+
+  public List<SubRegIndex> subRegIndices() {
+    return subRegIndices;
+  }
+
+  /**
+   * Adding {@link CompilerRegister} as {@link #subRegs}.
+   */
+  public void addSubReg(CompilerRegister subRegister, SubRegIndex subRegIndex) {
+    subRegIndices.add(subRegIndex);
+    subRegs.add(subRegister);
   }
 }

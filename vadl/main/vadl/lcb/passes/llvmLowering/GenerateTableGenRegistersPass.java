@@ -90,6 +90,8 @@ public class GenerateTableGenRegistersPass extends Pass {
       var register = new TableGenRegister(
           configuration.targetName(),
           compilerRegister,
+          compilerRegister.subRegs(),
+          compilerRegister.subRegIndices(),
           compilerRegister.hwEncodingValue(),
           Optional.empty(),
           compilerRegister.isArtificial()
@@ -113,6 +115,8 @@ public class GenerateTableGenRegistersPass extends Pass {
         var register = new TableGenRegister(
             configuration.targetName(),
             compilerRegister,
+            compilerRegister.subRegs(),
+            compilerRegister.subRegIndices(),
             Objects.requireNonNull(compilerRegisterClass.registerFile().addressType()).bitWidth()
                 - 1,
             Optional.of(compilerRegister.hwEncodingValue()),
@@ -140,6 +144,8 @@ public class GenerateTableGenRegistersPass extends Pass {
         var register = new TableGenRegister(
             configuration.targetName(),
             compilerRegister,
+            compilerRegister.subRegs(),
+            compilerRegister.subRegIndices(),
             Objects.requireNonNull(compilerRegisterClass.registerFile().addressType()).bitWidth()
                 - 1,
             Optional.of(compilerRegister.hwEncodingValue()),

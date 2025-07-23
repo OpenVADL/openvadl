@@ -17,8 +17,10 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model.register;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import vadl.gcb.valuetypes.CompilerRegister;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.template.Renderable;
@@ -28,6 +30,8 @@ import vadl.template.Renderable;
  */
 public record TableGenRegister(TargetName namespace,
                                CompilerRegister compilerRegister,
+                               List<CompilerRegister> subRegs,
+                               List<CompilerRegister.SubRegIndex> subRegIndices,
                                int hwEncodingMsb,
                                Optional<Integer> index,
                                boolean isArtificial) implements Renderable {
@@ -47,7 +51,11 @@ public record TableGenRegister(TargetName namespace,
     map.put("hwEncodingMsb", hwEncodingMsb);
     map.put("hwEncodingValue", compilerRegister.hwEncodingValue());
     map.put("altNamesString", altNamesString());
-    map.put("isArtificial", 0);
+    map.put("isArtificial", isArtificial);
+    map.put("subRegs",
+        subRegs.stream().map(CompilerRegister::name).collect(Collectors.joining(", ")));
+    map.put("subRegIndices",
+        subRegIndices.stream().map(Enum::name).collect(Collectors.joining(", ")));
     index.ifPresent(integer -> map.put("index", integer));
     return map;
   }

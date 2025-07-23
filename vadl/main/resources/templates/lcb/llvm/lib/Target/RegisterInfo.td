@@ -1,3 +1,10 @@
+let Namespace = "[(${namespace})]" in {
+  // SubRegIndexes for GPR registers
+  def sub_32   : SubRegIndex<32>;
+  def sub_32_hi : SubRegIndex<32, 32>;
+  def full_64    : SubRegIndex<64>;
+}
+
 [# th:each="register, iterStat : ${registers}" ]
 def [(${register.name})] : Register<"[(${register.name})]">
 {
@@ -5,8 +12,8 @@ def [(${register.name})] : Register<"[(${register.name})]">
     let AsmName = "[(${register.asmName})]";
     let AltNames = [ [(${register.altNamesString})]  ];
     let Aliases = [ ];
-    let SubRegs = [ ];
-    let SubRegIndices = [ ];
+    let SubRegs = [ [(${register.subRegs})] ];
+    let SubRegIndices = [ [(${register.subRegIndices})] ];
     let RegAltNameIndices = [];
     let DwarfNumbers = [ [(${register.dwarfNumber})] ];
     list<int> CostPerUse = [0];
