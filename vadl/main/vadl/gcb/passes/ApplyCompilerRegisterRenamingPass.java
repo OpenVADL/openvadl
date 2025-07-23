@@ -41,7 +41,6 @@ import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.UnaryNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -110,8 +109,12 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
                   });
 
               var type = BitsType.bits(annotation.hi() - annotation.lo() + 1);
-              worklist.addAll(matcher.stream()
-                  .map(x -> Pair.of(x, type)).toList());
+              for (var sliceNodeRaw : matcher) {
+                var sliceNode = (SliceNode) sliceNodeRaw;
+                var value = sliceNode.value();
+                replaceBy(value, artificialResource, type);
+                sliceNode.replaceAndDelete(sliceNode.value());
+              }
             }
 
             {
@@ -132,8 +135,12 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
                   });
 
               var type = BitsType.bits(annotation.hi() - annotation.lo() + 1);
-              worklist.addAll(matcher.stream()
-                  .map(x -> Pair.of(x, type)).toList());
+              for (var truncateNodeRaw : matcher) {
+                var truncateNode = (TruncateNode) truncateNodeRaw;
+                var value = truncateNode.value();
+                replaceBy(value, artificialResource, type);
+                truncateNode.replaceAndDelete(truncateNode.value());
+              }
             }
           }
         }
@@ -148,7 +155,11 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
                 .map(x -> Pair.of((Node) x, x.type().toBitsType()))
                 .toList();
 
-            worklist.addAll(tensorNodes);
+            for (var entry : tensorNodes) {
+              var node = entry.left();
+              var type = entry.right();
+              replaceBy(node, artificialResource, type);
+            }
           }
         }
       }
@@ -198,82 +209,48 @@ public class ApplyCompilerRegisterRenamingPass extends Pass {
                 });
 
             var type = BitsType.bits(annotation.hi() - annotation.lo() + 1);
-            worklist.addAll(matcher.stream()
-                .map(x -> Pair.of(x, type)).toList());
+            for (var writeRaw : matcher) {
+              var writeNode = (WriteResourceNode) writeRaw;
+              var value = writeNode.value();
+              replaceBy(writeNode, artificialResource, type);
+
+              if (value instanceof ZeroExtendNode zeroExtendNode) {
+                zeroExtendNode.replaceAndDelete(zeroExtendNode.value());
+              } else if (value instanceof SignExtendNode signExtendNode) {
+                signExtendNode.replaceAndDelete(signExtendNode.value());
+              }
+            }
           }
         }
       }
-
-      replace(worklist, artificialResource);
     }
 
     return null;
   }
 
-  private void replace(List<Pair<Node, BitsType>> matchings,
-                       ArtificialResource artificialResource) {
-    for (var entry : matchings) {
-      var node = entry.left();
-      var type = entry.right();
-
-      // Nodes can be contained multiple times, but we only need it once.
-      if (node.isDeleted()) {
-        continue;
+  private Node replaceBy(Node node, ArtificialResource artificialResource, BitsType type) {
+    switch (node) {
+      case ReadRegTensorNode regTensorNode -> {
+        var resNode = new ReadArtificialResNode(artificialResource, regTensorNode.indices(),
+            type);
+        return regTensorNode.replaceAndDelete(resNode);
       }
-
-      TruncateNode truncateNodeValue = null;
-      if (node instanceof TruncateNode truncateNode) {
-        truncateNodeValue = truncateNode;
-        node = truncateNodeValue.value();
+      case ReadArtificialResNode artificialResNode -> {
+        var resNode = new ReadArtificialResNode(artificialResource, artificialResNode.indices(),
+            type);
+        return artificialResNode.replaceAndDelete(resNode);
       }
-
-      SliceNode sliceNodeValue = null;
-      if (node instanceof SliceNode sliceNode) {
-        sliceNodeValue = sliceNode;
-        node = sliceNode.value();
+      case WriteArtificialResNode artificialResNode -> {
+        var resNode = new WriteArtificialResNode(artificialResource, artificialResNode.indices(),
+            artificialResNode.value(), artificialResNode.nullableCondition());
+        return artificialResNode.replaceAndDelete(resNode);
       }
-
-      UnaryNode unaryNodeValue = null;
-      if (node instanceof WriteResourceNode writeResourceNode) {
-        if (writeResourceNode.value() instanceof ZeroExtendNode zeroExtendNode) {
-          unaryNodeValue = zeroExtendNode;
-        } else if (writeResourceNode.value() instanceof SignExtendNode signExtendNode) {
-          unaryNodeValue = signExtendNode;
-        }
+      case WriteRegTensorNode writeTensorNode -> {
+        var resNode = new WriteArtificialResNode(artificialResource, writeTensorNode.indices(),
+            writeTensorNode.value());
+        return writeTensorNode.replaceAndDelete(resNode);
       }
-
-      if (node instanceof ReadRegTensorNode regTensorNode) {
-        regTensorNode.replaceAndDelete(
-            new ReadArtificialResNode(artificialResource, regTensorNode.indices(),
-                type));
-      } else if (node instanceof ReadArtificialResNode artificialResNode) {
-        artificialResNode.replaceAndDelete(
-            new ReadArtificialResNode(artificialResource, artificialResNode.indices(),
-                type));
-      } else if (node instanceof WriteArtificialResNode artificialResNode) {
-        artificialResNode.replaceAndDelete(
-            new WriteArtificialResNode(artificialResource, artificialResNode.indices(),
-                artificialResNode.value(), artificialResNode.nullableCondition()));
-      } else if (node instanceof WriteRegTensorNode writeTensorNode) {
-        writeTensorNode.replaceAndDelete(
-            new WriteArtificialResNode(artificialResource, writeTensorNode.indices(),
-                writeTensorNode.value()));
-      } else {
-        throw Diagnostic.error("Cannot replace node", node.location()).build();
-      }
-
-      if (sliceNodeValue != null) {
-        sliceNodeValue.replaceAndDelete(sliceNodeValue.value());
-      }
-
-      if (truncateNodeValue != null) {
-        truncateNodeValue.replaceAndDelete(truncateNodeValue.value());
-      }
-
-      if (unaryNodeValue != null) {
-        unaryNodeValue.replaceAndDelete(unaryNodeValue.value());
-      }
+      default -> throw Diagnostic.error("Cannot replace node", node.location()).build();
     }
-
   }
 }
