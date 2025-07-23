@@ -22,6 +22,7 @@ import static vadl.viam.ViamError.ensureNonNull;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import vadl.cppCodeGen.CppTypeMap;
@@ -66,6 +67,7 @@ import vadl.types.DataType;
 import vadl.viam.Constant;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.BeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ForallEndNode;
@@ -325,26 +327,10 @@ public class LcbNodeReplacementHandler {
       node.replaceAndDelete(new LlvmShrSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.ASR || node.builtIn() == BuiltInTable.ASRS) {
       node.replaceAndDelete(new LlvmSraSD(node.arguments(), node.type()));
-    } else if ((node.builtIn() == BuiltInTable.SMULL || node.builtIn() == BuiltInTable.SMULLS)
-        && node.type() instanceof BitsType bitsType) {
-      var trunc = bitsType.bitWidth() / 2;
-
-      // Only replace when parent is a truncate node to the half bit width.
-      var truncNode = node.usages().findFirst().filter(x -> x instanceof TruncateNode y
-          && y.type().bitWidth() == trunc);
-      truncNode.ifPresent(value -> value
-          .replaceAndDelete(
-              new LlvmMulSD(node.arguments(), ((TruncateNode) value).type())));
+    } else if (node.builtIn() == BuiltInTable.UMULL || node.builtIn() == BuiltInTable.UMULLS) {
+      node.replaceAndDelete(new LlvmUMulhSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.SMULL || node.builtIn() == BuiltInTable.SMULLS) {
-      /*
-        `MUL` and `SMUL` need to be covered in the normal BuiltinReplacement.
-        The reason why we are using `BuiltInTable.SMULL, BuiltInTable.SMULLS` is that the "normal"
-        multiplication requires two nodes: arithmetic and slice / truncate node.
-       */
-      if (node.usages().allMatch(usage -> usage instanceof TruncateNode)
-          || node.arguments().stream().allMatch(arg -> arg instanceof TruncateNode)) {
-        node.replaceAndDelete(new LlvmSMulhSD(node.arguments(), node.type()));
-      }
+      node.replaceAndDelete(new LlvmSMulhSD(node.arguments(), node.type()));
     } else if (LlvmSetccSD.supported.contains(node.builtIn())) {
       for (var arg : node.arguments()) {
         LcbNodeReplacementHandlerDispatcher.dispatch(this, arg);
@@ -467,12 +453,8 @@ public class LcbNodeReplacementHandler {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(SliceNode sliceNode) {
+    /*
     if (sliceNode.value() instanceof BuiltInCall bc) {
-      /*
-        Example: `ty` is `int128`
-        then `high` is `128` and `64`.
-        A SliceNode requires the bounds `lsb` = `64` and `msb` = `127`.
-       */
       var ty = (BitsType) bc.type();
       var high = ty.bitWidth();
       var low = high / 2;
@@ -493,8 +475,28 @@ public class LcbNodeReplacementHandler {
       }
     } else {
       LcbNodeReplacementHandlerDispatcher.dispatch(this, sliceNode.value());
-      Objects.requireNonNull(sliceNode.graph()).add(new LlvmUnlowerableSD());
+      // Objects.requireNonNull(sliceNode.graph()).add(new LlvmUnlowerableSD());
     }
+    */
+
+    var valueBitWidth = sliceNode.value().type().asDataType().bitWidth();
+    if (sliceNode.bitSlice().isContinuous()) {
+      // value has type 128
+      // we want to slice the upper half
+      if (sliceNode.bitSlice().msb() + 1 == valueBitWidth
+          && sliceNode.bitSlice().lsb() > 0) {
+        // (trunc (srl i128:$val, (i8 64)))
+        var node = new TruncateNode(new LlvmShrSD(new NodeList<>(List.of(sliceNode.value(),
+            new ConstantNode(Constant.Value.of(sliceNode.bitSlice().lsb(), BitsType.bits(8))))),
+            BitsType.bits(valueBitWidth)),
+            BitsType.bits(valueBitWidth / 2));
+        var replaced = sliceNode.replaceAndDelete(node);
+        LcbNodeReplacementHandlerDispatcher.dispatch(this, replaced.value());
+        return;
+      }
+    }
+
+    Objects.requireNonNull(sliceNode.graph()).add(new LlvmUnlowerableSD());
   }
 
   @Handler
