@@ -30,6 +30,7 @@
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
+#include <pthread.h>
 
 QEMU_PLUGIN_EXPORT int qemu_plugin_version = QEMU_PLUGIN_VERSION;
 
@@ -143,6 +144,19 @@ typedef struct {
 typedef union {
   BrokerSHM_TB shm_tb;
   BrokerSHM_Exec shm_exec;
+} BrokerSHMData;
+
+typedef struct {
+  pthread_mutex_t mutex;
+  pthread_cond_t cond_server;
+  pthread_cond_t cond_client;
+  bool is_server;
+} Semaphore;
+
+
+typedef struct {
+  BrokerSHMData data;
+  Semaphore sync;
 } BrokerSHM;
 
 typedef enum {
@@ -162,7 +176,6 @@ static GArray *cpus;
 
 static Arguments args;
 static BrokerSHM *shm;
-static sem_t *sem_client, *sem_server;
 
 static CPU *get_cpu(int vcpu_index) {
   CPU *c;
@@ -225,28 +238,6 @@ static SHMCPU get_cpu_state(unsigned int cpu_index) {
 
   return shm_cpu;
 };
-
-static void open_sems(void) {
-  gchar *sem_client_name =
-      g_strdup_printf("cosimulation-sem-client-%s", args.client_id);
-  sem_client = sem_open(sem_client_name, O_RDWR);
-  if (sem_client == SEM_FAILED) {
-    char *err = strerror(errno);
-    g_error("failed to open sem_client for client: %s -> %s", args.client_id,
-            err);
-    return;
-  }
-
-  gchar *sem_server_name =
-      g_strdup_printf("cosimulation-sem-server-%s", args.client_id);
-  sem_server = sem_open(sem_server_name, O_RDWR);
-  if (sem_server == SEM_FAILED) {
-    char *err = strerror(errno);
-    g_error("failed to open sem_server for client: %s -> %s", args.client_id,
-            err);
-    return;
-  }
-}
 
 static void plugin_exit(qemu_plugin_id_t id, void *p) {
   PLUGIN_PRINTLN("plugin_exit");
@@ -341,36 +332,51 @@ static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
 }
 
 static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
+  pthread_mutex_lock(&shm->sync.mutex);
+  while(shm->sync.is_server) {
+    PLUGIN_PRINTLN("waiting... %d", shm->sync.is_server);
+    pthread_cond_wait(&shm->sync.cond_client, &shm->sync.mutex);
+  }
+
+  PLUGIN_PRINTLN("got it!");
+
   TBInsnInfo *tbinsn_info = udata;
-  sem_wait(sem_client);
 
   SHMCPU cpu = get_cpu_state(cpu_index);
 
-  shm->shm_exec.cpus[cpu_index] = cpu;
-  shm->shm_exec.init_mask |= (1 << cpu_index);
-  shm->shm_exec.insn_info = *tbinsn_info;
+  shm->data.shm_exec.cpus[cpu_index] = cpu;
+  shm->data.shm_exec.init_mask |= (1 << cpu_index);
+  shm->data.shm_exec.insn_info = *tbinsn_info;
 
   // TODO: we cannot free here because the same callback might be used multiple times when a tb gets reused
   // g_free(tbinsn_info);
 
-  sem_post(sem_server);
+  shm->sync.is_server = true;
+  pthread_cond_broadcast(&shm->sync.cond_server);
+  pthread_mutex_unlock(&shm->sync.mutex);
+  PLUGIN_PRINTLN("unlocked! %d", shm->sync.is_server);
 }
 
 static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
-  sem_wait(sem_client);
+  pthread_mutex_lock(&shm->sync.mutex);
+  while(shm->sync.is_server) {
+    pthread_cond_wait(&shm->sync.cond_client, &shm->sync.mutex);
+  }
 
   SHMCPU cpu = get_cpu_state(cpu_index);
 
-  shm->shm_tb.cpus[cpu_index] = cpu;
-  shm->shm_tb.init_mask |= (1 << cpu_index);
+  shm->data.shm_tb.cpus[cpu_index] = cpu;
+  shm->data.shm_tb.init_mask |= (1 << cpu_index);
 
   TBInfo *tb_info = udata;
-  shm->shm_tb.tb_info = *tb_info;
+  shm->data.shm_tb.tb_info = *tb_info;
 
   // TODO: we cannot free here because the same callback might be used multiple times when a tb gets reused
   // g_free(tb_info);
 
-  sem_post(sem_server);
+  shm->sync.is_server = true;
+  pthread_cond_broadcast(&shm->sync.cond_server);
+  pthread_mutex_unlock(&shm->sync.mutex);
 }
 
 static void vcpu_tb_trans(qemu_plugin_id_t id, struct qemu_plugin_tb *tb) {
@@ -466,13 +472,8 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
     return EXIT_FAILURE;
   }
 
-  open_sems();
-  if (sem_client == NULL || sem_server == NULL) {
-    return EXIT_FAILURE;
-  }
-
   if (args.mode == INSN_MODE) {
-    shm->shm_exec.init_mask = 0;
+    shm->data.shm_exec.init_mask = 0;
   }
 
   plugin_id = id;
