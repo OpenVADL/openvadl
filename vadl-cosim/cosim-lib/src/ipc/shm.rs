@@ -1,12 +1,13 @@
-use std::{ffi::CString, marker::PhantomData, ptr};
+use std::{ffi::CString, marker::PhantomData, ptr, time::Duration};
 
 use anyhow::{Context, Result, bail};
 use libc::{
     MAP_FAILED, MAP_SHARED, O_CREAT, O_RDWR, PROT_READ, PROT_WRITE, close, ftruncate, mmap, munmap,
     shm_open, shm_unlink,
 };
+use tracing::debug;
 
-use crate::ipc::{PERMISSONS, get_errno, get_last_error};
+use crate::ipc::{cstructs::BrokerSHM, get_errno, get_last_error, sem::TimedWaitState, PERMISSONS};
 
 pub struct SharedMemory<T: Sized> {
     mmap_ptr: *mut u8,
@@ -15,6 +16,23 @@ pub struct SharedMemory<T: Sized> {
     size: usize,
     fd: i32,
     _phantom: PhantomData<T>,
+}
+
+impl SharedMemory<BrokerSHM> {
+    pub fn release_client(&self) -> Result<()> {
+        debug!("releasing client: {}", self.fd);
+        self.get_mut().sync.post()
+    }
+
+    pub fn wait_client(&self) -> Result<()> {
+        debug!("waiting client: {}", self.fd);
+        self.get_mut().sync.wait()
+    }
+
+    pub fn timedwait_client(&self, duration: Duration) -> Result<TimedWaitState> {
+        debug!("waiting client timed: {}, {:?}", self.fd, duration);
+        self.get_mut().sync.timedwait(duration)
+    }
 }
 
 impl<T: Sized> SharedMemory<T> {
@@ -67,9 +85,16 @@ impl<T: Sized> SharedMemory<T> {
 
     /// Reads and deserializes data from shared memory.
     /// Assumes that the shared memory contains valid data.
-    pub fn read(&self) -> &T {
+    pub fn get(&self) -> &T {
         let data_ptr = self.mmap_ptr as *const T;
         let shared: &T = unsafe { &*data_ptr };
+        shared
+    }
+
+    #[allow(clippy::mut_from_ref)]
+    pub fn get_mut(&self) -> &mut T {
+        let data_ptr = self.mmap_ptr as *mut T;
+        let shared: &mut T = unsafe { &mut *data_ptr };
         shared
     }
 }

@@ -30,7 +30,7 @@ pub fn trace_threaded(clients: &Vec<crate::ipc::qemu::Client>, config: &crate::c
     match config.testing.protocol.layer {
         crate::config::ProtocolLayer::Insn => {
             for c in clients {
-                let exec = unsafe { &c.shm.read().shm_exec };
+                let exec = unsafe { &c.shm.get().data.shm_exec };
                 let exec = exec.clone();
                 let c = config.clone();
                 rayon::spawn(move || {
@@ -41,7 +41,7 @@ pub fn trace_threaded(clients: &Vec<crate::ipc::qemu::Client>, config: &crate::c
         }
         crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
             for c in clients {
-                let tb = unsafe { &c.shm.read().shm_tb };
+                let tb = unsafe { &c.shm.get().data.shm_tb };
                 let tb = tb.clone();
                 let c = config.clone();
                 rayon::spawn(move || {
@@ -63,14 +63,14 @@ pub fn trace_sync(
     match config.testing.protocol.layer {
         crate::config::ProtocolLayer::Insn => {
             for c in clients {
-                let exec = unsafe { &c.shm.read().shm_exec };
+                let exec = unsafe { &c.shm.get().data.shm_exec };
                 let exec = exec.clone();
                 insert_broker_shm_exec(&conn, &exec)?;
             }
         }
         crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
             for c in clients {
-                let tb = unsafe { &c.shm.read().shm_tb };
+                let tb = unsafe { &c.shm.get().data.shm_tb };
                 let tb = tb.clone();
                 insert_broker_shm_tb(&conn, &tb)?;
             }
@@ -89,7 +89,7 @@ pub fn trace_collect(
     match config.testing.protocol.layer {
         crate::config::ProtocolLayer::Insn => {
             for c in clients {
-                let exec = unsafe { &c.shm.read().shm_exec };
+                let exec = unsafe { &c.shm.get().data.shm_exec };
                 let exec = exec.clone();
                 let exec = ManuallyDrop::into_inner(exec);
                 let exec = Box::new(exec);
@@ -98,7 +98,7 @@ pub fn trace_collect(
         }
         crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
             for c in clients {
-                let tb = unsafe { &c.shm.read().shm_tb };
+                let tb = unsafe { &c.shm.get().data.shm_tb };
                 let tb = tb.clone();
                 let tb = ManuallyDrop::into_inner(tb);
                 let tb = Box::new(tb);

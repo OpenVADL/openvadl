@@ -1,16 +1,19 @@
-use crate::ipc::{PERMISSONS, get_errno};
-use anyhow::{Context, Result, bail};
+use crate::ipc::get_errno;
+use anyhow::{Result, bail};
 use libc::{
-    c_uint, clock_gettime, sem_close, sem_open, sem_post, sem_timedwait, sem_unlink, sem_wait, timespec, CLOCK_REALTIME, EINTR, ETIMEDOUT, O_CREAT, O_EXCL, O_RDWR, SEM_FAILED
+    clock_gettime, pthread_cond_broadcast, pthread_cond_destroy, pthread_cond_init, pthread_cond_t, pthread_cond_timedwait, pthread_cond_wait, pthread_condattr_init, pthread_condattr_setpshared, pthread_condattr_t, pthread_mutex_destroy, pthread_mutex_init, pthread_mutex_lock, pthread_mutex_t, pthread_mutex_unlock, pthread_mutexattr_init, pthread_mutexattr_setpshared, pthread_mutexattr_t, timespec, CLOCK_REALTIME, ETIMEDOUT, PTHREAD_PROCESS_SHARED
 };
-use std::{ffi::CString, time::Duration};
+use std::{mem::MaybeUninit, time::Duration};
 
 use crate::ipc::get_last_error;
 
 /// A semaphore implementation for inter-process synchronization.
+#[repr(C)]
 pub struct Semaphore {
-    id: *mut libc::sem_t,
-    name: String,
+    pub mutex: pthread_mutex_t,
+    pub cond_server: pthread_cond_t,
+    pub cond_client: pthread_cond_t,
+    pub is_server: bool,
 }
 
 pub enum TimedWaitState {
@@ -28,52 +31,79 @@ impl Semaphore {
     /// # Returns
     /// * `Ok(Self)` if the semaphore is created successfully.
     /// * `Err(String)` if the creation fails.
-    pub fn create(name: &str, initial_value: u32) -> Result<Self> {
-        let name_cstr = CString::new(name).context("Invalid semaphore name")?;
-        unsafe { sem_unlink(name_cstr.as_ptr()) }; // Remove existing semaphore
-        let id = unsafe {
-            sem_open(
-                name_cstr.as_ptr(),
-                O_CREAT | O_EXCL | O_RDWR,
-                PERMISSONS,
-                initial_value as c_uint,
-            )
+    pub fn create() -> Self {
+        let mut mutex_attr: pthread_mutexattr_t = unsafe { MaybeUninit::zeroed().assume_init() };
+        let mutex_attr_ptr = &mut mutex_attr as *mut _;
+        unsafe { 
+            pthread_mutexattr_init(mutex_attr_ptr);
+            pthread_mutexattr_setpshared(mutex_attr_ptr, PTHREAD_PROCESS_SHARED) 
         };
 
-        if id == SEM_FAILED {
-            bail!(get_last_error(&format!(
-                "Failed to create semaphore: {name}"
-            )))
-        }
+        let mut mutex: pthread_mutex_t = unsafe { MaybeUninit::zeroed().assume_init() };
+        let mutex_ptr = &mut mutex as *mut _;
+        unsafe { pthread_mutex_init(mutex_ptr, mutex_attr_ptr) };
 
-        Ok(Self {
-            id,
-            name: name.to_string(),
-        })
+        let mut cond_attr: pthread_condattr_t = unsafe { MaybeUninit::zeroed().assume_init() };
+        let cond_attr_ptr = &mut cond_attr as *mut _;
+        unsafe { 
+            pthread_condattr_init(cond_attr_ptr);
+            pthread_condattr_setpshared(cond_attr_ptr, PTHREAD_PROCESS_SHARED);
+        };
+
+        let mut cond_server: pthread_cond_t = unsafe { MaybeUninit::zeroed().assume_init() };
+        let mut cond_client: pthread_cond_t = unsafe { MaybeUninit::zeroed().assume_init() };
+
+        let cond_server_ptr = &mut cond_server as *mut _;
+        let cond_client_ptr = &mut cond_client as *mut _;
+
+        unsafe { 
+            pthread_cond_init(cond_server_ptr, cond_attr_ptr);
+            pthread_cond_init(cond_client_ptr, cond_attr_ptr);
+        };
+
+        let is_server = true;
+        Self {
+            mutex,
+            cond_server,
+            cond_client,
+            is_server,
+        }
     }
 
-    pub fn wait(&self) -> Result<()> {
-        if unsafe { sem_wait(self.id) } == -1 {
-            bail!(get_last_error(&format!(
-                "Failed to lock semaphore: {}",
-                self.name
-            )));
+    pub fn wait(&mut self) -> Result<()> {
+        let mutex_ptr = &mut self.mutex as *mut _;
+        let cond_ptr = &mut self.cond_server as *mut _;
+        if unsafe { pthread_mutex_lock(mutex_ptr) } == -1 {
+            bail!(get_last_error(&format!("Failed to lock semaphore",)));
         }
+
+        #[allow(clippy::while_immutable_condition)]
+        while !self.is_server {
+            if unsafe { pthread_cond_wait(cond_ptr, mutex_ptr) } == -1 {
+                bail!(get_last_error(&format!("Failed to lock semaphore",)));
+            }
+        }
+
         Ok(())
     }
 
-    pub fn timedwait(&self, duration: Duration) -> Result<TimedWaitState> {
+    pub fn timedwait(&mut self, duration: Duration) -> Result<TimedWaitState> {
         let mut ts = timespec {
             tv_sec: 0,
             tv_nsec: 0,
         };
 
-        let ts_ptr = &mut ts as *mut timespec;
+        let ts_ptr = &mut ts as *mut _;
+        let mutex_ptr = &mut self.mutex as *mut _;
+        let cond_ptr= &mut self.cond_server as *mut _;
+
+        if unsafe { pthread_mutex_lock(mutex_ptr) } != 0 {
+            bail!(get_last_error("fail"));
+        }
 
         if unsafe { clock_gettime(CLOCK_REALTIME, ts_ptr) } == -1 {
             bail!(get_last_error(&format!(
-                "clock_gettime failed in semaphore timedwait: {}",
-                self.name
+                "clock_gettime failed in semaphore timedwait"
             )));
         }
 
@@ -85,39 +115,45 @@ impl Semaphore {
         const TV_NSEC_MAX: i64 = 1_000_000_000;
         if ts.tv_nsec >= TV_NSEC_MAX {
             ts.tv_sec += 1;
-            ts.tv_nsec -= TV_NSEC_MAX; 
+            ts.tv_nsec -= TV_NSEC_MAX;
         }
 
-        let mut s: i32;
-        loop {
-            s = unsafe { sem_timedwait(self.id, ts_ptr) };
-            if s == -1 && get_errno() == EINTR {
-                continue;
-            }
-            break;
+        let mut rc: i32 = 0;
+        while !self.is_server && rc == 0 {
+            rc = unsafe {
+                pthread_cond_timedwait(cond_ptr, mutex_ptr, ts_ptr)
+            };
         }
 
-        if s == -1 {
-            if get_errno() == ETIMEDOUT {
-                Ok(TimedWaitState::Timeout)
-            } else {
-                bail!(get_last_error(&format!(
-                    "Failed to timedwait semaphore: {}",
-                    self.name
-                )))
+        match rc {
+            0 => Ok(TimedWaitState::Success),
+            ETIMEDOUT =>  {
+                if unsafe { pthread_mutex_unlock(mutex_ptr) } != 0 {
+                    bail!(get_last_error("fail"));
+                }
+                Ok(TimedWaitState::Timeout) 
+            },
+            _ => {
+                if unsafe { pthread_mutex_unlock(mutex_ptr) } != 0 {
+                    bail!(get_last_error("fail"));
+                }
+                bail!("failed to timedwait")
             }
-        } else {
-            Ok(TimedWaitState::Success)
         }
     }
 
-    pub fn post(&self) -> Result<()> {
-        if unsafe { sem_post(self.id) } == -1 {
-            bail!(get_last_error(&format!(
-                "Failed to unlock semaphore: {}",
-                self.name
-            )));
+    pub fn post(&mut self) -> Result<()> {
+        let mutex_ptr = &mut self.mutex as *mut _;
+        let cond_ptr = &mut self.cond_client as *mut _;
+        
+        self.is_server = false;
+
+        unsafe { pthread_cond_broadcast(cond_ptr) };
+
+        if unsafe { pthread_mutex_unlock(mutex_ptr) } == -1 {
+            bail!(get_last_error(&format!("Failed to unlock semaphore",)));
         }
+
         Ok(())
     }
 }
@@ -125,16 +161,23 @@ impl Semaphore {
 impl Drop for Semaphore {
     /// Closes and optionally removes the semaphore when dropped.
     fn drop(&mut self) {
+        let mutex_ptr = &mut self.mutex as *mut _;
+        let cond_server_ptr = &mut self.cond_server as *mut _;
+        let cond_client_ptr = &mut self.cond_client as *mut _;
         unsafe {
-            if sem_close(self.id) == -1 {
+            if pthread_mutex_destroy(mutex_ptr) == -1 {
                 let err = get_errno();
-                eprintln!("Warning: sem_close failed {}: {}", self.name, err);
+                eprintln!("Warning: sem_close failed: {}", err);
             }
 
-            let name_cstr = CString::new(self.name.clone()).expect("Failed to create CString");
-            if sem_unlink(name_cstr.as_ptr()) == -1 {
+            if pthread_cond_destroy(cond_server_ptr) == -1 {
                 let err = get_errno();
-                eprintln!("Warning: sem_unlink failed {}: {}", self.name, err);
+                eprintln!("Waringin: pthread_cond_destroy on cond_server failed: {}", err);
+            }
+
+            if pthread_cond_destroy(cond_client_ptr) == -1 {
+                let err = get_errno();
+                eprintln!("Waringin: pthread_cond_destroy on cond_client failed: {}", err);
             }
         }
     }
