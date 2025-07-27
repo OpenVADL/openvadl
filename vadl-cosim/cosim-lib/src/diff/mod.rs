@@ -15,9 +15,9 @@ pub mod diff;
 
 #[derive(Debug, Serialize)]
 pub struct Report {
-    passed: bool,
-    diffs: Vec<DiffEntry>,
-    diff_context: DiffContext,
+    pub passed: bool,
+    pub diffs: Vec<DiffEntry>,
+    pub diff_context: DiffContext,
 }
 
 impl Report {
@@ -36,53 +36,61 @@ impl Report {
             diff_context,
         }
     }
+
+    pub fn without_context(self) -> Self {
+        Report {
+            passed: self.passed,
+            diffs: self.diffs,
+            diff_context: vec![],
+        }
+    }
 }
 
 #[derive(Debug, Serialize)]
 pub struct DiffEntry {
-    key: String,
-    values: Vec<String>,
-    description: String,
+    pub key: String,
+    pub values: Vec<String>,
+    pub description: String,
 }
 
 pub type DiffContext = Vec<DiffContextClient>;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DiffContextClient {
-    client_id: usize,
-    client_name: Option<String>,
-    client_run_count: u64,
-    before_state: DiffContextClientState,
-    error_instruction: DiffContextClientInstructions,
-    after_state: DiffContextClientState,
+    pub client_id: usize,
+    pub client_name: Option<String>,
+    pub client_run_count: u64,
+    pub before_state: DiffContextClientState,
+    pub error_instruction: DiffContextClientInstructions,
+    pub after_state: DiffContextClientState,
 }
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DiffContextClientState {
-    pc: u64,
-    cpus: Vec<DiffContextClientStateCPU>,
+    pub pc: u64,
+    pub cpus: Vec<DiffContextClientStateCPU>,
 }
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DiffContextClientStateCPU {
-    registers: Vec<DiffContextClientStateRegister>,
+    pub registers: Vec<DiffContextClientStateRegister>,
 }
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DiffContextClientStateRegister {
-    name: String,
-    value: String,
+    pub name: String,
+    pub value: String,
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub struct DiffContextClientInstructions(Vec<DiffContextClientInstruction>);
+pub struct DiffContextClientInstructions(pub Vec<DiffContextClientInstruction>);
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DiffContextClientInstruction {
-    pc: u64,
-    hwaddr: String,
-    disas: String,
-    insn_data: String,
+    pub pc: u64,
+    pub hwaddr: String,
+    pub disas: String,
+    pub insn_data: String,
 }
 
 pub enum DiffValue {

@@ -175,10 +175,10 @@ stop_after_n_instructions = 10000
 
 # Where the test result should be saved and in which format
 [testing.protocol.out]
-dir = "./cosim-run/result"
+file = "./cosim-run/result/result.json"
 
-# Supported formats: "json"
-format = "json"
+# "short" | "full"
+verbosity = "short"
 
 [logging]
 enable = true 

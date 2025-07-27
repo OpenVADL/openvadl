@@ -84,22 +84,18 @@ fn default_false() -> bool {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Out {
-    #[serde(default = "default_out_dir")]
-    pub dir: String,
+    #[serde(default = "OutVerbosity::default")]
+    pub verbosity: OutVerbosity,
 
-    #[serde(default = "OutFormat::default")]
-    pub format: OutFormat,
-}
-
-fn default_out_dir() -> String {
-    "./result".into()
+    pub file: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 #[serde(rename_all = "lowercase")]
-pub enum OutFormat {
+pub enum OutVerbosity {
     #[default]
-    Json,
+    Full,
+    Short,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
