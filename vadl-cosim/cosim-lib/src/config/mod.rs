@@ -27,6 +27,9 @@ pub struct Tracing {
 
     #[serde(default = "default_tracing_file")]
     pub file: String,
+
+    #[serde(default = "default_true")]
+    pub clear_on_rerun: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
@@ -35,7 +38,6 @@ pub enum TracingMode {
     #[default]
     None,
     Collect,
-    Threaded,
     Sync,
 }
 

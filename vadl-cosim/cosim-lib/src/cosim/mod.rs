@@ -7,7 +7,11 @@ use crate::{
     diff::{diff::diff_cpus, DiffContextClient, DiffEntry, Report},
     ipc::qemu::Client,
     trace::{
-        connect, db::{insert_broker_shm_exec, insert_broker_shm_tb}, trace_collect, trace_sync, trace_threaded, TraceStore
+        connect, 
+        get_client_trace, 
+        store_trace, 
+        trace_collect, 
+        TraceStore
     },
 };
 
@@ -28,7 +32,8 @@ impl ClientSyncInfo {
 
 pub struct Broker {
     clients: Vec<Client>,
-    pub trace_store: TraceStore,
+    trace_store: TraceStore, 
+    trace_connection: Connection,
 }
 
 enum TBSyncResult {
@@ -48,9 +53,12 @@ impl Broker {
             .map(|(idx, _)| Client::create(config, idx))
             .collect::<Result<Vec<_>>>()?;
 
+        let trace_connection = connect(config)?;
+
         Ok(Self {
             clients,
             trace_store: TraceStore::new(),
+            trace_connection,
         })
     }
 
@@ -67,18 +75,7 @@ impl Broker {
     pub fn finish(mut self, config: &Config) -> Result<()> {
         if config.tracing.mode == crate::config::TracingMode::Collect {
             for entry in self.trace_store {
-                let c = config.clone();
-                rayon::spawn(move || {
-                    let conn = connect(&c).unwrap();
-                    match entry {
-                        crate::trace::TraceData::TB(broker_shmtb) => {
-                            let _ = insert_broker_shm_tb(&conn, &broker_shmtb);
-                        }
-                        crate::trace::TraceData::Exec(broker_shmexec) => {
-                            let _ = insert_broker_shm_exec(&conn, &broker_shmexec);
-                        }
-                    }
-                });
+                store_trace(entry, &self.trace_connection)?;
             }
         }
 
@@ -319,8 +316,13 @@ impl Broker {
                 trace_collect(&self.clients, config, &mut self.trace_store);
                 Ok(())
             }
-            TracingMode::Threaded => trace_threaded(&self.clients, config),
-            TracingMode::Sync => trace_sync(&self.clients, config),
+            TracingMode::Sync => {
+                for client in &self.clients {
+                    let trace = get_client_trace(client, config); 
+                    store_trace(trace, &self.trace_connection)?;
+                }
+                Ok(())
+            },
         }
     }
 }
