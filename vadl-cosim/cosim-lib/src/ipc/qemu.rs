@@ -1,5 +1,8 @@
 use std::{
-    fs::File, path::Path, process::{Child, Command}, sync::Arc, time::Duration
+    fs::File,
+    path::Path,
+    process::{Child, Command},
+    time::Duration,
 };
 
 use anyhow::{Context, Result};
@@ -8,7 +11,7 @@ use tracing::{debug, error, info};
 use crate::{
     config::Config,
     ipc::{
-        cstructs::{BrokerSHM, BrokerSHMData},
+        cstructs::BrokerSHM,
         sem::{Semaphore, TimedWaitState},
         shm::SharedMemory,
     },
@@ -16,7 +19,7 @@ use crate::{
 
 pub struct Client {
     pub id: usize,
-    pub shm: Arc<SharedMemory<BrokerSHM>>,
+    pub shm: SharedMemory<BrokerSHM>,
     pub is_open: bool,
     pub process: Child,
     pub name: Option<String>,
@@ -59,7 +62,7 @@ impl Client {
                         Ok(None) => {
                             error!(
                                 client_id = self.id,
-                                is_server = self.shm.get().sync.is_server,
+                                is_server = self.shm.get_sync().is_server,
                                 "client is still running but unresponive"
                             );
                         }
@@ -97,9 +100,9 @@ impl Client {
     pub fn create(config: &Config, client_idx: usize) -> Result<Self> {
         let client_cfg = config.for_client(client_idx);
 
-        let shm: SharedMemory<BrokerSHM> =
+        let mut shm: SharedMemory<BrokerSHM> =
             SharedMemory::create(&format!("/cosimulation-shm-{client_idx}"))?;
-        shm.get_mut().sync = Semaphore::create();
+        shm.get_mut().sync = Semaphore::create()?;
 
         info!(
             client_id = client_idx,
@@ -181,7 +184,7 @@ impl Client {
 
         Ok(Self {
             id: client_idx,
-            shm: shm.into(),
+            shm,
             is_open: true,
             process: client_process,
             name: client_cfg.name.clone(),

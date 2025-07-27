@@ -2,7 +2,10 @@ use std::fmt::Debug;
 
 use serde::Serialize;
 
-use crate::ipc::{cstructs::{BrokerSHMExec, BrokerSHMTB}, qemu::Client};
+use crate::ipc::{
+    cstructs::{BrokerSHMExec, BrokerSHMTB},
+    qemu::Client,
+};
 
 #[allow(clippy::module_inception)]
 pub mod diff;
@@ -45,7 +48,7 @@ pub struct DiffEntry {
     values: Vec<String>,
     description: String,
     context: DiffContext,
-} 
+}
 
 pub type DiffContext = Vec<DiffContextClient>;
 
@@ -79,15 +82,35 @@ impl DiffEntry {
 }
 
 impl DiffContextClient {
-    pub fn new(client_id: usize, client_name: Option<String>, client_run_count: u64, pc: u64) -> Self {
-        Self { client_id, client_name, client_run_count, pc }
+    pub fn new(
+        client_id: usize,
+        client_name: Option<String>,
+        client_run_count: u64,
+        pc: u64,
+    ) -> Self {
+        Self {
+            client_id,
+            client_name,
+            client_run_count,
+            pc,
+        }
     }
 
     pub fn from_tb(client: &Client, shm: &BrokerSHMTB) -> Self {
-        Self::new(client.id, client.name.clone(), client.run_count, shm.tb_info.pc)
+        Self::new(
+            client.id,
+            client.name.clone(),
+            client.run_count,
+            shm.tb_info.pc,
+        )
     }
 
     pub fn from_insn(client: &Client, shm: &BrokerSHMExec) -> Self {
-        Self::new(client.id, client.name.clone(), client.run_count, shm.insn_info.pc)
+        Self::new(
+            client.id,
+            client.name.clone(),
+            client.run_count,
+            shm.insn_info.pc,
+        )
     }
 }

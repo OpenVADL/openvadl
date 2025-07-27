@@ -1,18 +1,12 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use rusqlite::Connection;
 use tracing::debug;
 
 use crate::{
     config::{Config, TracingMode},
-    diff::{diff::diff_cpus, DiffContextClient, DiffEntry, Report},
+    diff::{DiffContextClient, DiffEntry, Report, diff::diff_cpus},
     ipc::qemu::Client,
-    trace::{
-        connect, 
-        get_client_trace, 
-        store_trace, 
-        trace_collect, 
-        TraceStore
-    },
+    trace::{TraceStore, connect, get_client_trace, store_trace, trace_collect},
 };
 
 #[derive(Debug)]
@@ -32,7 +26,7 @@ impl ClientSyncInfo {
 
 pub struct Broker {
     clients: Vec<Client>,
-    trace_store: TraceStore, 
+    trace_store: TraceStore,
     trace_connection: Connection,
 }
 
@@ -142,11 +136,10 @@ impl Broker {
         let start_pcs = self
             .clients
             .iter()
-            .map(|c| {
-                match config.testing.protocol.layer {
-                    crate::config::ProtocolLayer::Insn => unsafe { &c.shm.get().data.shm_exec }.insn_info.pc,
-                    crate::config::ProtocolLayer::TB |
-                    crate::config::ProtocolLayer::TBStrict => unsafe { &c.shm.get().data.shm_tb }.tb_info.pc,
+            .map(|c| match config.testing.protocol.layer {
+                crate::config::ProtocolLayer::Insn => c.shm.get_exec().insn_info.pc,
+                crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
+                    c.shm.get_tb().tb_info.pc
                 }
             })
             .collect::<Vec<_>>();
@@ -163,9 +156,8 @@ impl Broker {
         let mut insns_executed_per_client = vec![0; self.clients.len()];
 
         for (idx, client) in &mut self.clients.iter_mut().enumerate() {
-            let client_shm = client.shm.clone();
             while client.is_open {
-                let shm = unsafe { &client_shm.get().data.shm_tb };
+                let shm = client.shm.get_tb();
                 let start_pc = shm.tb_info.pc;
                 let insn_sizes = shm
                     .tb_info
@@ -176,6 +168,7 @@ impl Broker {
                 insns_executed_per_client[idx] = insn_sizes.len();
 
                 if client.run(config) {
+                    let shm = client.shm.get_tb();
                     let end_pc = shm.tb_info.pc;
                     let sync_info = ClientSyncInfo {
                         start_pc,
@@ -260,8 +253,8 @@ impl Broker {
 
                 match config.testing.protocol.layer {
                     crate::config::ProtocolLayer::Insn => {
-                        let c1insn = unsafe { &c1.shm.get().data.shm_exec };
-                        let c2insn = unsafe { &c2.shm.get().data.shm_exec };
+                        let c1insn = c1.shm.get_exec();
+                        let c2insn = c2.shm.get_exec();
 
                         let ctx1 = DiffContextClient::from_insn(c1, c1insn);
                         let ctx2 = DiffContextClient::from_insn(c2, c2insn);
@@ -276,8 +269,8 @@ impl Broker {
                         );
                     }
                     crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-                        let c1insn = unsafe { &c1.shm.get().data.shm_tb };
-                        let c2insn = unsafe { &c2.shm.get().data.shm_tb };
+                        let c1insn = c1.shm.get_tb();
+                        let c2insn = c2.shm.get_tb();
 
                         let ctx1 = DiffContextClient::from_tb(c1, c1insn);
                         let ctx2 = DiffContextClient::from_tb(c2, c2insn);
@@ -318,11 +311,11 @@ impl Broker {
             }
             TracingMode::Sync => {
                 for client in &self.clients {
-                    let trace = get_client_trace(client, config); 
+                    let trace = get_client_trace(client, config);
                     store_trace(trace, &self.trace_connection)?;
                 }
                 Ok(())
-            },
+            }
         }
     }
 }

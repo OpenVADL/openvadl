@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use crate::{
     config::Config,
     diff::{DiffContext, DiffEntry},
-    ipc::cstructs::{SHMRegister, MAX_CPU_COUNT, MAX_CPU_REGISTERS, SHMCPU},
+    ipc::cstructs::{MAX_CPU_COUNT, MAX_CPU_REGISTERS, SHMCPU, SHMRegister},
 };
 
 // NOTE: Technically it is more performant to pass in the memo-vec as an argument to not have
@@ -77,11 +77,7 @@ pub fn diff_cpu(
         let csub_reg = &sub_cpu.registers_slice()[reg_index];
         let rsub_name = csub_reg.mapped_name(config);
 
-        if config
-            .qemu
-            .ignore_registers
-            .contains(rsub_name)
-        {
+        if config.qemu.ignore_registers.contains(rsub_name) {
             continue;
         }
 
@@ -91,7 +87,12 @@ pub fn diff_cpu(
             continue;
         }
 
-        let csuper_reg_idx = reg_idx_by_name_memoed(super_cpu.registers_slice(), csub_reg.name.as_str(), config, reg_index);
+        let csuper_reg_idx = reg_idx_by_name_memoed(
+            super_cpu.registers_slice(),
+            csub_reg.name.as_str(),
+            config,
+            reg_index,
+        );
         let csuper_reg = &super_cpu.registers_slice()[csuper_reg_idx];
 
         diff_register(
@@ -146,8 +147,13 @@ pub fn diff_register(
     }
 }
 
-fn reg_idx_by_name_memoed(registers: &[SHMRegister], name: &str, config: &Config, reg_index: usize) -> usize {
-    REG_MAP_MEMO.with_borrow_mut(|memo | {
+fn reg_idx_by_name_memoed(
+    registers: &[SHMRegister],
+    name: &str,
+    config: &Config,
+    reg_index: usize,
+) -> usize {
+    REG_MAP_MEMO.with_borrow_mut(|memo| {
         assert!(reg_index < memo.len(), "invalid memo length");
         if let Some(memo_reg) = memo[reg_index] {
             return memo_reg;
@@ -157,7 +163,6 @@ fn reg_idx_by_name_memoed(registers: &[SHMRegister], name: &str, config: &Config
         memo[reg_index] = Some(reg);
         reg
     })
-
 }
 
 fn reg_idx_by_name(registers: &[SHMRegister], name: &str, config: &Config) -> usize {

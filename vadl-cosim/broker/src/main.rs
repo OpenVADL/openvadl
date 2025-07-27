@@ -11,9 +11,9 @@ use tracing::{Level, info};
 use cosim_lib::{
     cli::Cli,
     config::Config,
-    cosim::Broker, trace::{connect, db::setup_database},
+    cosim::Broker,
+    trace::{connect, db::setup_database},
 };
-
 
 fn main() -> Result<()> {
     let cli = Cli::parse();

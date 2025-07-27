@@ -1,5 +1,4 @@
-use libc::{pthread_cond_t, pthread_mutex_t};
-use serde::{ser::SerializeStruct, Serialize};
+use serde::{Serialize, ser::SerializeStruct};
 
 use crate::{config::Config, ipc::sem::Semaphore};
 
@@ -21,7 +20,8 @@ pub struct SHMString {
 impl Serialize for SHMString {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer {
+        S: serde::Serializer,
+    {
         serializer.serialize_str(self.as_str())
     }
 }
@@ -62,7 +62,8 @@ impl SHMRegister {
 impl Serialize for SHMRegister {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer {
+        S: serde::Serializer,
+    {
         let mut s = serializer.serialize_struct("register", 3)?;
         s.serialize_field("size", &self.size)?;
         s.serialize_field("data", &self.data_slice_fmt())?;
@@ -88,7 +89,8 @@ impl SHMCPU {
 impl Serialize for SHMCPU {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer {
+        S: serde::Serializer,
+    {
         let mut s = serializer.serialize_struct("cpu", 3)?;
         s.serialize_field("idx", &self.idx)?;
         s.serialize_field("registers_size", &self.registers_size)?;
@@ -113,7 +115,8 @@ impl InsnData {
 impl Serialize for InsnData {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer {
+        S: serde::Serializer,
+    {
         let mut s = serializer.serialize_struct("insn-data", 2)?;
         s.serialize_field("size", &self.size)?;
         s.serialize_field("buffer", &self.buffer_slice())?;
@@ -149,7 +152,8 @@ impl TBInfo {
 impl Serialize for TBInfo {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer {
+        S: serde::Serializer,
+    {
         let mut s = serializer.serialize_struct("tb-info", 3)?;
         s.serialize_field("pc", &self.pc)?;
         s.serialize_field("insns_info_size", &self.insns_info_size)?;
@@ -170,7 +174,8 @@ pub struct BrokerSHMTB {
 impl Serialize for BrokerSHMTB {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer {
+        S: serde::Serializer,
+    {
         let mut s = serializer.serialize_struct("shm-tb", 3)?;
         s.serialize_field("init_mask", &self.init_mask)?;
 
@@ -200,7 +205,8 @@ pub struct BrokerSHMExec {
 impl Serialize for BrokerSHMExec {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer {
+        S: serde::Serializer,
+    {
         let mut s = serializer.serialize_struct("shm-tb", 3)?;
         s.serialize_field("init_mask", &self.init_mask)?;
 

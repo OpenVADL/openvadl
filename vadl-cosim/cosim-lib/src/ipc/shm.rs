@@ -1,17 +1,23 @@
-use std::{ffi::CString, marker::PhantomData, ptr, time::Duration};
+use std::{ffi::CString, marker::PhantomData, mem::ManuallyDrop, ptr, time::Duration};
 
 use anyhow::{Context, Result, bail};
 use libc::{
     MAP_FAILED, MAP_SHARED, O_CREAT, O_RDWR, PROT_READ, PROT_WRITE, close, ftruncate, mmap, munmap,
     shm_open, shm_unlink,
 };
-use tracing::debug;
 
-use crate::ipc::{cstructs::BrokerSHM, get_errno, get_last_error, sem::TimedWaitState, PERMISSONS};
+use crate::{
+    bail_on_libc_err, eprintln_on_libc_err,
+    ipc::{
+        PERMISSONS,
+        cstructs::{BrokerSHM, BrokerSHMExec, BrokerSHMTB},
+        get_last_error,
+        sem::{Semaphore, TimedWaitState},
+    },
+};
 
 pub struct SharedMemory<T: Sized> {
     mmap_ptr: *mut u8,
-    mmap_path: String,
     mmap_path_c: CString,
     size: usize,
     fd: i32,
@@ -19,19 +25,28 @@ pub struct SharedMemory<T: Sized> {
 }
 
 impl SharedMemory<BrokerSHM> {
-    pub fn release_client(&self) -> Result<()> {
-        debug!("releasing client: {}", self.fd);
+    pub fn release_client(&mut self) -> Result<()> {
         self.get_mut().sync.post()
     }
 
-    pub fn wait_client(&self) -> Result<()> {
-        debug!("waiting client: {}", self.fd);
+    pub fn wait_client(&mut self) -> Result<()> {
         self.get_mut().sync.wait()
     }
 
-    pub fn timedwait_client(&self, duration: Duration) -> Result<TimedWaitState> {
-        debug!("waiting client timed: {}, {:?}", self.fd, duration);
+    pub fn timedwait_client(&mut self, duration: Duration) -> Result<TimedWaitState> {
         self.get_mut().sync.timedwait(duration)
+    }
+
+    pub fn get_exec(&self) -> &ManuallyDrop<BrokerSHMExec> {
+        unsafe { &self.get().data.shm_exec }
+    }
+
+    pub fn get_tb(&self) -> &ManuallyDrop<BrokerSHMTB> {
+        unsafe { &self.get().data.shm_tb }
+    }
+
+    pub fn get_sync(&self) -> &Semaphore {
+        &self.get().sync
     }
 }
 
@@ -47,40 +62,37 @@ impl<T: Sized> SharedMemory<T> {
     /// * `Err(String)` on failure.
     pub fn create(mmap_path: &str) -> Result<Self> {
         let size = size_of::<T>();
+
         let mmap_path_c =
             CString::new(mmap_path).with_context(|| format!("Invalid mmap_path: {mmap_path}"))?;
-        unsafe {
-            let fd = shm_open(mmap_path_c.as_ptr(), O_CREAT | O_RDWR, PERMISSONS);
-            if fd == -1 {
-                bail!(get_last_error("Failed to open shared memory"));
-            }
 
-            if ftruncate(fd, size as i64) == -1 {
-                bail!(get_last_error("Failed to truncate shared memory"));
-            }
+        let fd = unsafe {
+            bail_on_libc_err!(shm_open(mmap_path_c.as_ptr(), O_CREAT | O_RDWR, PERMISSONS))
+        };
 
-            let addr = mmap(
-                ptr::null_mut(),
-                size,
-                PROT_READ | PROT_WRITE,
-                MAP_SHARED,
-                fd,
-                0,
-            );
+        unsafe { bail_on_libc_err!(ftruncate(fd, size as i64)) };
 
-            if addr == MAP_FAILED {
-                bail!(get_last_error(&format!("Failed to map memory {mmap_path}")));
-            }
+        let addr = unsafe {
+            bail_on_libc_err!(
+                mmap(
+                    ptr::null_mut(),
+                    size,
+                    PROT_READ | PROT_WRITE,
+                    MAP_SHARED,
+                    fd,
+                    0,
+                ),
+                MAP_FAILED
+            )
+        };
 
-            Ok(Self {
-                mmap_ptr: addr as *mut u8,
-                mmap_path: mmap_path.to_string(),
-                mmap_path_c,
-                size,
-                fd,
-                _phantom: PhantomData,
-            })
-        }
+        Ok(Self {
+            mmap_ptr: addr as *mut u8,
+            mmap_path_c,
+            size,
+            fd,
+            _phantom: PhantomData,
+        })
     }
 
     /// Reads and deserializes data from shared memory.
@@ -92,7 +104,7 @@ impl<T: Sized> SharedMemory<T> {
     }
 
     #[allow(clippy::mut_from_ref)]
-    pub fn get_mut(&self) -> &mut T {
+    pub fn get_mut(&mut self) -> &mut T {
         let data_ptr = self.mmap_ptr as *mut T;
         let shared: &mut T = unsafe { &mut *data_ptr };
         shared
@@ -102,26 +114,9 @@ impl<T: Sized> SharedMemory<T> {
 impl<T: Sized> Drop for SharedMemory<T> {
     fn drop(&mut self) {
         unsafe {
-            if munmap(self.mmap_ptr as *mut _, self.size) == -1 {
-                let err = get_errno();
-                eprintln!("Warning: munmap failed on {}: {}", self.mmap_path, err);
-            }
-
-            if close(self.fd) == -1 {
-                let err = get_errno();
-                eprintln!(
-                    "Warning: close failed on {} (fd={}): {}",
-                    self.mmap_path, self.fd, err
-                );
-            }
-
-            if shm_unlink(self.mmap_path_c.as_ptr()) == -1 {
-                let err = get_errno();
-                eprintln!(
-                    "Warning: shm_unlink failed on {} (fd={}): {}",
-                    self.mmap_path, self.fd, err
-                );
-            }
+            eprintln_on_libc_err!(munmap(self.mmap_ptr as *mut _, self.size));
+            eprintln_on_libc_err!(close(self.fd));
+            eprintln_on_libc_err!(shm_unlink(self.mmap_path_c.as_ptr()));
         }
     }
 }

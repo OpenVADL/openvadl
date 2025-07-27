@@ -334,11 +334,8 @@ static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
 static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
   pthread_mutex_lock(&shm->sync.mutex);
   while(shm->sync.is_server) {
-    PLUGIN_PRINTLN("waiting... %d", shm->sync.is_server);
     pthread_cond_wait(&shm->sync.cond_client, &shm->sync.mutex);
   }
-
-  PLUGIN_PRINTLN("got it!");
 
   TBInsnInfo *tbinsn_info = udata;
 
@@ -354,7 +351,6 @@ static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
   shm->sync.is_server = true;
   pthread_cond_broadcast(&shm->sync.cond_server);
   pthread_mutex_unlock(&shm->sync.mutex);
-  PLUGIN_PRINTLN("unlocked! %d", shm->sync.is_server);
 }
 
 static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
