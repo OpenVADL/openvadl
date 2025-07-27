@@ -23,6 +23,7 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.annotations.HalfWidthOfAnnotation;
 import vadl.gcb.passes.GenerateCompilerRegistersPass;
 import vadl.gcb.valuetypes.CompilerRegister;
 import vadl.gcb.valuetypes.CompilerRegisterClass;
@@ -34,6 +35,8 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClas
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.types.Type;
+import vadl.viam.Definition;
 import vadl.viam.RegisterTensor.Constraint;
 import vadl.viam.Specification;
 
@@ -121,6 +124,40 @@ public class GenerateTableGenRegistersPass extends Pass {
 
       var type = ValueType.from(compilerRegisterClass.registerFile().resultType()).get();
       registerClasses.add(
+          new TableGenRegisterClass(
+              configuration.targetName(),
+              compilerRegisterClass.name(),
+              compilerRegisterClass.alignment().bitAlignment(),
+              List.of(type),
+              classRegisters,
+              compilerRegisterClass.registerFile())
+      );
+    }
+
+    for (var compilerRegisterClass : output.aliasRegisterClasses()) {
+      var classRegisters = new ArrayList<TableGenRegister>();
+      for (var compilerRegister : compilerRegisterClass.registers()) {
+        var register = new TableGenRegister(
+            configuration.targetName(),
+            compilerRegister,
+            Objects.requireNonNull(compilerRegisterClass.registerFile().addressType()).bitWidth()
+                - 1,
+            Optional.of(compilerRegister.hwEncodingValue()),
+            compilerRegister.isArtificial()
+        );
+        registers.add(register);
+        classRegisters.add(register);
+      }
+
+      var type = ValueType.from(compilerRegisterClass.registerFile().resultType()).get();
+
+      if (compilerRegisterClass.registerFile() instanceof Definition def
+          && def.hasAnnotation(HalfWidthOfAnnotation.class)) {
+        var annotation = Objects.requireNonNull(def.annotation(HalfWidthOfAnnotation.class));
+        type = ValueType.from(Type.bits(1 + annotation.hi() - annotation.lo())).get();
+      }
+
+      aliasRegisterClasses.add(
           new TableGenRegisterClass(
               configuration.targetName(),
               compilerRegisterClass.name(),

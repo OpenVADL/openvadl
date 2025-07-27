@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.gcb.valuetypes.ValueType;
+import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.RegisterTensor;
 
 /**
@@ -31,7 +32,7 @@ public record TableGenRegisterClass(TargetName namespace,
                                     int alignment,
                                     List<ValueType> regTypes,
                                     List<TableGenRegister> registers,
-                                    RegisterTensor registerFileRef) {
+                                    GeneratesRegisterFileName registerFileRef) {
   public String regTypesString() {
     return regTypes.stream().map(ValueType::getLlvmType).collect(Collectors.joining(", "));
   }

@@ -85,7 +85,8 @@ public class AssemblyInstructionPrinterLabelHandler
   protected void writeImmediateWithRadix(Format.FieldAccess fieldAccess,
                                          CGenContext<Node> ctx,
                                          int radix,
-                                         SourceLocation sourceLocation) {
+                                         SourceLocation sourceLocation,
+                                         boolean isSigned) {
     var indexInOperands = ensurePresent(indexInInputsOrOutputs(fieldAccess), () ->
         Diagnostic.error("Immediate must be part of an tablegen input or output.",
             sourceLocation)
@@ -99,7 +100,8 @@ public class AssemblyInstructionPrinterLabelHandler
   protected void writeImmediateWithRadix(Format.Field field,
                                          CGenContext<Node> ctx,
                                          int radix,
-                                         SourceLocation sourceLocation) {
+                                         SourceLocation sourceLocation,
+                                         boolean isSigned) {
     var indexInOperands = ensurePresent(indexInInputsOrOutputs(field), () ->
         Diagnostic.error("Immediate must be part of an tablegen input or output.",
             sourceLocation)
@@ -113,7 +115,8 @@ public class AssemblyInstructionPrinterLabelHandler
   protected void writeImmediateWithRadix(FuncParamNode node,
                                          CGenContext<Node> ctx,
                                          int radix,
-                                         SourceLocation sourceLocation) {
+                                         SourceLocation sourceLocation,
+                                         boolean isSigned) {
     var indexInOperands = ensurePresent(indexInInputsOrOutputs(node), () ->
         Diagnostic.error("Immediate must be part of an tablegen input or output.",
             sourceLocation)

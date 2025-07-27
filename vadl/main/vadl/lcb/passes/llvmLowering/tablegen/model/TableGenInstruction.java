@@ -17,6 +17,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.List;
+import java.util.stream.Stream;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.RegisterRef;
 import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
@@ -92,6 +93,15 @@ public abstract class TableGenInstruction {
 
   public String getName() {
     return name;
+  }
+
+  /**
+   * Get operand by index.
+   */
+  public GcbInstructionOperand getOperand(int index) {
+    return Stream.concat(outOperands.stream(), inOperands.stream())
+        .toList()
+        .get(index);
   }
 
   /**

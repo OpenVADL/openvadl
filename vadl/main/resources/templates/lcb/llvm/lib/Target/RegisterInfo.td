@@ -54,3 +54,14 @@ def [(${wrapped.registerFile.name})] : RegisterClass
   let RegInfos = [(${wrapped.registerFile.name})]LenRI;
 }
 [/]
+
+[# th:each="wrapped : ${aliasRegisterFiles}" ]
+def [(${wrapped.registerFile.name})] : RegisterClass
+< /* namespace = */ "[(${wrapped.registerFile.namespace})]"
+, /* regTypes  = */  [  [(${wrapped.registerFile.regTypesString})] ]
+, /* alignment = */ [(${wrapped.registerFile.alignment})]
+, /* regList   = */
+  ( add [(${wrapped.allocationSequence})] )
+> {
+}
+[/]

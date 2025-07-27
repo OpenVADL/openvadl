@@ -8,7 +8,7 @@ use tracing::{debug, error, info};
 use crate::{
     config::Config,
     ipc::{
-        cstructs::BrokerSHM,
+        cstructs::{BrokerSHM, BrokerSHMData},
         sem::{Semaphore, TimedWaitState},
         shm::SharedMemory,
     },
@@ -17,8 +17,6 @@ use crate::{
 pub struct Client {
     pub id: usize,
     pub shm: Arc<SharedMemory<BrokerSHM>>,
-    pub sem_server: Semaphore,
-    pub sem_client: Semaphore,
     pub is_open: bool,
     pub process: Child,
     pub name: Option<String>,
@@ -61,6 +59,7 @@ impl Client {
                         Ok(None) => {
                             error!(
                                 client_id = self.id,
+                                is_server = self.shm.get().sync.is_server,
                                 "client is still running but unresponive"
                             );
                         }
@@ -81,14 +80,14 @@ impl Client {
     }
 
     fn run_inner(&mut self, config: &Config) -> Result<bool> {
-        self.sem_client.post()?;
+        self.shm.release_client()?;
 
         if config.for_client(self.id).gdb.enable {
-            self.sem_server.wait()?;
+            self.shm.wait_client()?;
             return Ok(true);
         }
 
-        let wait_res = self.sem_server.timedwait(Duration::from_secs(1))?;
+        let wait_res = self.shm.timedwait_client(Duration::from_secs(1))?;
         match wait_res {
             TimedWaitState::Timeout => Ok(false),
             TimedWaitState::Success => Ok(true),
@@ -100,8 +99,7 @@ impl Client {
 
         let shm: SharedMemory<BrokerSHM> =
             SharedMemory::create(&format!("/cosimulation-shm-{client_idx}"))?;
-        let sem_server = Semaphore::create(&format!("/cosimulation-sem-server-{client_idx}"), 0)?;
-        let sem_client = Semaphore::create(&format!("/cosimulation-sem-client-{client_idx}"), 0)?;
+        shm.get_mut().sync = Semaphore::create();
 
         info!(
             client_id = client_idx,
@@ -184,8 +182,6 @@ impl Client {
         Ok(Self {
             id: client_idx,
             shm: shm.into(),
-            sem_server,
-            sem_client,
             is_open: true,
             process: client_process,
             name: client_cfg.name.clone(),

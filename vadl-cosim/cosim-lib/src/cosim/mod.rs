@@ -144,9 +144,9 @@ impl Broker {
             .iter()
             .map(|c| {
                 match config.testing.protocol.layer {
-                    crate::config::ProtocolLayer::Insn => unsafe { &c.shm.read().shm_exec }.insn_info.pc,
+                    crate::config::ProtocolLayer::Insn => unsafe { &c.shm.get().data.shm_exec }.insn_info.pc,
                     crate::config::ProtocolLayer::TB |
-                    crate::config::ProtocolLayer::TBStrict => unsafe { &c.shm.read().shm_tb }.tb_info.pc,
+                    crate::config::ProtocolLayer::TBStrict => unsafe { &c.shm.get().data.shm_tb }.tb_info.pc,
                 }
             })
             .collect::<Vec<_>>();
@@ -165,7 +165,7 @@ impl Broker {
         for (idx, client) in &mut self.clients.iter_mut().enumerate() {
             let client_shm = client.shm.clone();
             while client.is_open {
-                let shm = unsafe { &client_shm.read().shm_tb };
+                let shm = unsafe { &client_shm.get().data.shm_tb };
                 let start_pc = shm.tb_info.pc;
                 let insn_sizes = shm
                     .tb_info
@@ -260,8 +260,8 @@ impl Broker {
 
                 match config.testing.protocol.layer {
                     crate::config::ProtocolLayer::Insn => {
-                        let c1insn = unsafe { &c1.shm.read().shm_exec };
-                        let c2insn = unsafe { &c2.shm.read().shm_exec };
+                        let c1insn = unsafe { &c1.shm.get().data.shm_exec };
+                        let c2insn = unsafe { &c2.shm.get().data.shm_exec };
 
                         let ctx1 = DiffContextClient::from_insn(c1, c1insn);
                         let ctx2 = DiffContextClient::from_insn(c2, c2insn);
@@ -276,8 +276,8 @@ impl Broker {
                         );
                     }
                     crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-                        let c1insn = unsafe { &c1.shm.read().shm_tb };
-                        let c2insn = unsafe { &c2.shm.read().shm_tb };
+                        let c1insn = unsafe { &c1.shm.get().data.shm_tb };
+                        let c2insn = unsafe { &c2.shm.get().data.shm_tb };
 
                         let ctx1 = DiffContextClient::from_tb(c1, c1insn);
                         let ctx2 = DiffContextClient::from_tb(c2, c2insn);

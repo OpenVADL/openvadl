@@ -178,10 +178,12 @@ public class AssemblyInstructionPrinterImmediateHandler
             .build();
       }
       // TODO: Implement UDEC builtin
+    } else if (node.builtIn() == BuiltInTable.UDEC) {
+      writeImmediateWithRadix(node, ctx, 10, false);
     } else if (node.builtIn() == BuiltInTable.SDEC) {
-      writeImmediateWithRadix(node, ctx, 10);
+      writeImmediateWithRadix(node, ctx, 10, true);
     } else if (node.builtIn() == BuiltInTable.HEX) {
-      writeImmediateWithRadix(node, ctx, 16);
+      writeImmediateWithRadix(node, ctx, 16, false);
     } else if (node.builtIn() == BuiltInTable.EQU) {
       handleConditional(node, ctx, "==");
     } else if (node.builtIn() == BuiltInTable.NEQ) {
@@ -438,21 +440,24 @@ public class AssemblyInstructionPrinterImmediateHandler
     ctx.wr(", %d, &MAI)", radix);
   }
 
-  private void writeImmediateWithRadix(BuiltInCall node, CGenContext<Node> ctx, int radix) {
+  private void writeImmediateWithRadix(BuiltInCall node, CGenContext<Node> ctx, int radix,
+                                       boolean isSigned) {
     if (node.arguments().getFirst() instanceof FieldRefNode fieldRefNode) {
       writeImmediateWithRadix(fieldRefNode.formatField(),
           ctx,
           radix,
-          fieldRefNode.location());
+          fieldRefNode.location(),
+          isSigned);
     } else if (node.arguments().getFirst() instanceof FieldAccessRefNode fieldAccessRefNode) {
       writeImmediateWithRadix(fieldAccessRefNode.fieldAccess(),
           ctx,
           radix,
-          fieldAccessRefNode.location());
+          fieldAccessRefNode.location(),
+          isSigned);
     } else if (node.arguments().getFirst() instanceof FuncParamNode funcParamNode) {
       // This case is for pseudo instructions because they arguments are not fields,
       // but function parameter nodes.
-      writeImmediateWithRadix(funcParamNode, ctx, radix, funcParamNode.location());
+      writeImmediateWithRadix(funcParamNode, ctx, radix, funcParamNode.location(), isSigned);
     } else if (node.arguments().getFirst() instanceof ConstantNode constantNode) {
       writeImmediateWithRadix(constantNode, ctx, radix);
     } else {
@@ -469,7 +474,8 @@ public class AssemblyInstructionPrinterImmediateHandler
   protected void writeImmediateWithRadix(Format.Field field,
                                          CGenContext<Node> ctx,
                                          int radix,
-                                         SourceLocation sourceLocation) {
+                                         SourceLocation sourceLocation,
+                                         boolean isSigned) {
     // If this instruction is a machine instruction then ...
     if (instruction instanceof Instruction machineInstruction) {
       var originalGraph = getUnmodifiedOriginalGraph(machineInstruction);
@@ -496,11 +502,21 @@ public class AssemblyInstructionPrinterImmediateHandler
             CreateFunctionsFromImmediatesPass.createParametersForEncodingFunctionFromInputOperands(
                     tableGenInstruction)
                 .stream()
-                .map(x -> String.format("MI->getOperand(%s).getImm()",
-                    indexInInputsOrOutputs(x.operand().immediateOperand().fieldAccessRef()).get()))
+                .map(x -> {
+                  var index = indexInInputsOrOutputs(
+                      x.operand().immediateOperand().fieldAccessRef()).get();
+                  var operand = tableGenInstruction.getOperand(index);
+                  var isUsedAsImmediate = operand instanceof GcbInstructionImmediateOperand;
+                  // You can also use a register as immediate, but then you need to call ".getReg".
+                  if (isUsedAsImmediate) {
+                    return String.format("MI->getOperand(%s).getImm()", index);
+                  } else {
+                    return String.format("MI->getOperand(%s).getReg()", index);
+                  }
+                })
                 .collect(Collectors.joining(", "));
 
-        if (radix == 10) {
+        if (isSigned) {
           // The sign extension function needs to know which bit it should consider.
           int width = fieldEncoding.get().targetField().size();
           ctx.wr("AsmUtils::formatImm(VADL_sextract(%s(%s), %d), %d, &MAI)",
@@ -508,14 +524,11 @@ public class AssemblyInstructionPrinterImmediateHandler
               argumentsForEncodingFunction,
               width,
               radix);
-        } else if (radix == 16) {
+        } else {
           ctx.wr("AsmUtils::formatImm(%s(%s), %d, &MAI)",
               encodingFunction.header().functionName().lower(),
               argumentsForEncodingFunction,
               radix);
-        } else {
-          throw Diagnostic.error("There are no casting semantics defined for this builtin. "
-              + "See issue #382", field.location()).build();
         }
       } else {
         var indexInOperands = ensurePresent(indexInInputsOrOutputs(field), () ->
@@ -540,47 +553,51 @@ public class AssemblyInstructionPrinterImmediateHandler
   protected void writeImmediateWithRadix(Format.FieldAccess fieldAccess,
                                          CGenContext<Node> ctx,
                                          int radix,
-                                         SourceLocation sourceLocation) {
+                                         SourceLocation sourceLocation,
+                                         boolean isSigned) {
     var indexInOperands = ensurePresent(indexInInputsOrOutputs(fieldAccess), () ->
         Diagnostic.error("Immediate must be part of an tablegen input or output.",
             sourceLocation)
     );
 
-    formatImm(ctx, radix, indexInOperands, sourceLocation);
+    formatImm(ctx, radix, indexInOperands, isSigned);
   }
 
   protected void writeImmediateWithRadix(FuncParamNode node,
                                          CGenContext<Node> ctx,
                                          int radix,
-                                         SourceLocation sourceLocation) {
+                                         SourceLocation sourceLocation,
+                                         boolean isSigned) {
     var indexInOperands = ensurePresent(indexInInputsOrOutputs(node), () ->
         Diagnostic.error("Immediate must be part of an tablegen input or output.",
             sourceLocation)
     );
 
-    formatImm(ctx, radix, indexInOperands, sourceLocation);
+    formatImm(ctx, radix, indexInOperands, isSigned);
   }
 
   private void writeFieldWithRawImmediateWithRadix(int indexInOperands,
                                                    int radix) {
-    ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
-        indexInOperands, radix);
+    // Operand must not be necessarily an immediate, but can also be a register.
+    if (tableGenInstruction.getOperand(indexInOperands) instanceof GcbInstructionImmediateOperand) {
+      ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
+          indexInOperands, radix);
+    } else {
+      ctx.wr("std::to_string(MI->getOperand(%s).getReg())", indexInOperands);
+    }
   }
 
   private void formatImm(CGenContext<Node> ctx,
                          int radix,
                          Integer indexInOperands,
-                         SourceLocation sourceLocation) {
-    if (radix == 10) {
+                         boolean isSigned) {
+    if (isSigned) {
       // default is always signed
       ctx.wr("AsmUtils::formatImm(MI->getOperand(%s).getImm(), %d, &MAI)",
           indexInOperands, radix);
-    } else if (radix == 16) {
+    } else {
       ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
           indexInOperands, radix);
-    } else {
-      throw Diagnostic.error("There are no casting semantics defined for this builtin. "
-          + "See issue #382", sourceLocation).build();
     }
   }
 

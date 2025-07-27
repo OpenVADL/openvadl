@@ -16,17 +16,15 @@
 
 package vadl.lcb.template.lib.Target;
 
-import static vadl.viam.ViamError.ensurePresent;
-
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
-import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
 import vadl.lcb.template.CommonVarNames;
@@ -85,14 +83,6 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
     var abi = specification.abi().orElseThrow();
     var registerClasses = output.registerClasses();
 
-    if (registerClasses.size() > 1) {
-      throw Diagnostic.error("Supporting only one register file", specification.location())
-          .build();
-    }
-
-    var registerClass = ensurePresent(registerClasses.stream().findFirst(), "must be present");
-
-
     // The order of registers represents the preferred allocation sequence.
     // Registers are listed in the order caller-save, callee-save, specials.
     var callerSaved = abi.callerSaved().stream().map(Abi.RegisterRef::render).toList();
@@ -108,27 +98,41 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
     var calleeSaved = abi.calleeSaved().stream()
         .map(Abi.RegisterRef::render)
-        .filter(render -> !exceptions.contains(render)).toList();
+        .filter(render -> !exceptions.contains(render))
+        .toList();
 
-    HashSet<String> both = new HashSet<>();
-    both.addAll(callerSaved);
-    both.addAll(calleeSaved);
-    var specials =
-        registerClass.registers().stream().map(
-                register -> register.compilerRegister().name()).filter(x -> !both.contains(x))
-            .toList();
-    var allocationSeq =
-        Stream.concat(callerSaved.stream(), Stream.concat(calleeSaved.stream(), specials.stream()))
-            .collect(
-                Collectors.joining(", "));
+    var outputRegisterClasses = new ArrayList<WrappedRegisterFile>();
+    var outputAliasRegisterClasses = new ArrayList<WrappedRegisterFile>();
+    for (var registerClass : registerClasses) {
+      HashSet<String> both = new HashSet<>();
+      both.addAll(callerSaved);
+      both.addAll(calleeSaved);
+      var specials =
+          registerClass.registers().stream().map(
+                  register -> register.compilerRegister().name()).filter(x -> !both.contains(x))
+              .toList();
+      var allocationSeq =
+          Stream.concat(callerSaved.stream(),
+                  Stream.concat(calleeSaved.stream(), specials.stream()))
+              .collect(
+                  Collectors.joining(", "));
+
+      outputRegisterClasses.add(new WrappedRegisterFile(registerClass, allocationSeq));
+    }
+
+    for (var registerClass : output.aliasRegisterClasses()) {
+      var allocationSeq = IntStream.range(0, registerClass.registers().size()).mapToObj(
+          x -> registerClass.name() + x).collect(Collectors.joining(", "));
+      outputAliasRegisterClasses.add(new WrappedRegisterFile(registerClass, allocationSeq));
+    }
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "pointerAlignment", DataLayoutProvider.pointerAlignment(abi),
         "registers", output.registers(),
         "aliasRegisters", output.aliasRegisters(),
-        "registerFiles", List.of(
-            new WrappedRegisterFile(registerClass, allocationSeq)
-        ));
+        "registerFiles", outputRegisterClasses,
+        "aliasRegisterFiles", outputAliasRegisterClasses
+    );
   }
 }

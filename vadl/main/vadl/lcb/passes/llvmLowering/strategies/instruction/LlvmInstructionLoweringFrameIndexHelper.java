@@ -23,12 +23,12 @@ import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionFrameRegisterOperand;
 import vadl.utils.Pair;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 
 /**
  * Common superclass for {@link LlvmInstructionLoweringMemoryLoadStrategyImpl} and
@@ -51,7 +51,7 @@ public abstract class LlvmInstructionLoweringFrameIndexHelper
     var copy = copyBaseBehavior.copy();
 
     // We just replace the first occurrence and ignore the rest.
-    var readRegNode = copy.getNodes(LlvmReadRegFileNode.class)
+    var readRegNode = copy.getNodes(ReadRegTensorNode.class)
         .findFirst()
         .orElseThrow(() -> Diagnostic.error("Cannot find a read from a register file",
             instruction.location()).build());

@@ -13,7 +13,7 @@ instruction set architecture AArch64Temp extending AArch64Base = {
   pseudo instruction TEMP_RET =
   {
   }
-  assembly TEMP_RET = mnemonic
+  assembly TEMP_RET = "ret"
 
   pseudo instruction TEMP_LA =
   {
@@ -72,7 +72,7 @@ application binary interface ABI for AArch64Temp = {
    return address = A_LR
    frame pointer = A_FP
 
-   special return instruction = TEMP_RET
+   special return instruction = TEMP_RET // the normal RET is an indirect jump
    special call instruction = TEMP_CALL
    special local address load instruction = TEMP_LA
    special absolute address load instruction = TEMP_LA
@@ -83,12 +83,13 @@ application binary interface ABI for AArch64Temp = {
    caller saved = [ X{9..15} ]
    callee saved = [ A_LR, X{19..28} ]
 
-   /*
    constant sequence(rd: Bits<5>, val: SInt<32>) =
    {
-
+     MOVZWPos00 { rd = rd, imm16 = (val & 0xFFFF) as Bits<16> }
+     MOVKWPos16 { rd = rd, imm16 = ((val >> 16) & 0xFFFF) as Bits<16> }
    }
 
+   /*
    register adjustment sequence( rd : Bits<5>, rs1: Bits<5>, imm : SInt<12> ) =
    {
 

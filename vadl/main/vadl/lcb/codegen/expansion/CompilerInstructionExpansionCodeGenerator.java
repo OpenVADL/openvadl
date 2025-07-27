@@ -42,6 +42,7 @@ import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.context.CNodeWithBaggageContext;
+import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.cppCodeGen.model.GcbCppAccessFunction;
 import vadl.cppCodeGen.model.GcbCppEncodeFunction;
 import vadl.error.Diagnostic;
@@ -50,6 +51,8 @@ import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.gcb.valuetypes.VariantKind;
+import vadl.javaannotations.DispatchFor;
+import vadl.javaannotations.Handler;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
@@ -79,12 +82,15 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.ReadStageOutputNode;
+import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.passes.CfgTraverser;
 
 /**
@@ -417,6 +423,10 @@ interface CaseHandler {
       CNodeWithBaggageContext newContext, InstrCallNode instrCallNode, Format.Field field,
       FuncCallNode funcCallNode);
 
+  void fieldUsedAsImmediateAndFieldAssignmentAndArbitraryExpression(
+      CNodeWithBaggageContext newContext, InstrCallNode instrCallNode, Format.Field field,
+      ExpressionNode expr);
+
   void fieldUsedAsImmediateAndFieldAccessAssignmentAndExpressionConstant(
       CNodeWithBaggageContext newContext, InstrCallNode instrCallNode,
       Format.FieldAccess fieldAccess,
@@ -500,6 +510,14 @@ interface CaseHandler {
           instrCallNode,
           Objects.requireNonNull(fieldAccess),
           funcCallNode);
+    } else if (isAssignmentToField) {
+      // handle arbitrary expressions
+      fieldUsedAsImmediateAndFieldAssignmentAndArbitraryExpression(
+          newContext,
+          instrCallNode,
+          Objects.requireNonNull(field),
+          expr
+      );
     }
   }
 
@@ -704,6 +722,23 @@ class GenerateRawFieldsHandler implements CaseHandler {
   }
 
   @Override
+  public void fieldUsedAsImmediateAndFieldAssignmentAndArbitraryExpression(
+      CNodeWithBaggageContext ctx, InstrCallNode instrCallNode, Format.Field field,
+      ExpressionNode expr) {
+    var funcParamNodes = new ArrayList<FuncParamNode>();
+    expr.collectInputsWithChildren(funcParamNodes, FuncParamNode.class);
+    ensure(!funcParamNodes.isEmpty(),
+        () -> Diagnostic.error("Expect only one func parameter", expr.location()));
+    var funcParamNode = funcParamNodes.getFirst();
+    var pseudoInstructionIndex =
+        getOperandIndexFromCompilerInstruction(compilerInstruction, field,
+            funcParamNode,
+            funcParamNode.parameter().identifier);
+    ctx.ln("%s = instruction.getOperand(%d).getImm();", field.identifier.simpleName(),
+        pseudoInstructionIndex);
+  }
+
+  @Override
   public void fieldUsedAsImmediateAndFieldAccessAssignmentAndExpressionConstant(
       CNodeWithBaggageContext ctx,
       InstrCallNode instrCallNode,
@@ -818,6 +853,13 @@ class DecodeFieldAccessesHandler implements CaseHandler {
   }
 
   @Override
+  public void fieldUsedAsImmediateAndFieldAssignmentAndArbitraryExpression(
+      CNodeWithBaggageContext newContext, InstrCallNode instrCallNode, Format.Field field,
+      ExpressionNode expr) {
+
+  }
+
+  @Override
   public void fieldUsedAsImmediateAndFieldAccessAssignmentAndExpressionConstant(
       CNodeWithBaggageContext ctx,
       InstrCallNode instrCallNode,
@@ -910,6 +952,89 @@ class DecodeFieldAccessesHandler implements CaseHandler {
   @Override
   public IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages() {
     return fieldUsages;
+  }
+}
+
+@DispatchFor(
+    value = ExpressionNode.class,
+    context = CNodeContext.class,
+    include = "vadl.viam"
+)
+class InstructionExpansionCodeGenerator implements CDefaultMixins.AllExpressions {
+  protected final CNodeContext context;
+  protected final StringBuilder builder;
+  protected final Format.Field field;
+
+  /**
+   * Constructor.
+   */
+  public InstructionExpansionCodeGenerator(Format.Field field) {
+    this.builder = new StringBuilder();
+    this.field = field;
+    this.context = new CNodeContext(
+        builder::append,
+        (ctx, node)
+            -> InstructionExpansionCodeGeneratorDispatcher.dispatch(this, ctx,
+            (ExpressionNode) node)
+    );
+  }
+
+  /**
+   * Generate cpp code for the given expression.
+   */
+  public String generate(ExpressionNode expr) {
+    InstructionExpansionCodeGeneratorDispatcher.dispatch(this, context, expr);
+    return builder.toString();
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, FuncParamNode toHandle) {
+    ctx.wr(field.identifier.simpleName());
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, ReadRegTensorNode toHandle) {
+    throwNotAllowed(toHandle, "Register reads");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, ReadMemNode toHandle) {
+    throwNotAllowed(toHandle, "Memory reads");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, ReadArtificialResNode toHandle) {
+    throwNotAllowed(toHandle, "Artificial resource reads");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle) {
+    throwNotAllowed(toHandle, "Asm builtin calls");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, FieldAccessRefNode toHandle) {
+    throwNotAllowed(toHandle, "Field access ref");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, FoldNode toHandle) {
+    throwNotAllowed(toHandle, "fold node");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, FieldRefNode toHandle) {
+    throwNotAllowed(toHandle, "field ref node");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, TensorNode toHandle) {
+    throwNotAllowed(toHandle, "tensor node");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, ReadStageOutputNode toHandle) {
+    throwNotAllowed(toHandle, "read stage output node");
   }
 }
 
@@ -1240,6 +1365,21 @@ class AddingOperands implements CaseHandler {
       throw Diagnostic.error("not supported", funcCallNode.location()).build();
     }
 
+    addedOperand++;
+  }
+
+  @Override
+  public void fieldUsedAsImmediateAndFieldAssignmentAndArbitraryExpression(
+      CNodeWithBaggageContext ctx,
+      InstrCallNode instrCallNode,
+      Format.Field field,
+      ExpressionNode expr) {
+    var cppCodegen = new InstructionExpansionCodeGenerator(field);
+    var code = cppCodegen.generate(expr);
+    var instructionSymbol = ctx.getString(INSTRUCTION_SYMBOL);
+    ctx.ln(String.format("%s.addOperand(MCOperand::createImm(%s));",
+        instructionSymbol,
+        code));
     addedOperand++;
   }
 

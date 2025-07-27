@@ -31,7 +31,7 @@ define signext i32 @mul_constant(i32 %a) nounwind {
 define i32 @mul_pow2(i32 %a) nounwind {
 ; CHECK-LABEL: mul_pow2: # @mul_pow2
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: SLLI a0,a0,0x3
+; CHECK-NEXT: SLLI a0,a0,3
 ; CHECK-NEXT: RET
   %1 = mul i32 %a, 8
   ret i32 %1
@@ -120,7 +120,7 @@ define i32 @mulhsu(i32 %a, i32 %b) nounwind {
 ; CHECK-LABEL: mulhsu: # @mulhsu
 ; CHECK-LABEL: # %bb.0:
 ; CHECK-NEXT: MULHU a2,a0,a1
-; CHECK-NEXT: SRAI a1,a1,0x1f
+; CHECK-NEXT: SRAI a1,a1,31
 ; CHECK-NEXT: MUL a0,a0,a1
 ; CHECK-NEXT: ADD a0,a2,a0
 ; CHECK-NEXT: RET
@@ -148,7 +148,7 @@ define i32 @mulhu_constant(i32 %a) nounwind {
 define i8 @muladd_demand(i8 %x, i8 %y) nounwind {
 ; CHECK-LABEL: muladd_demand: # @muladd_demand
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: SLLI a0,a0,0x1
+; CHECK-NEXT: SLLI a0,a0,1
 ; CHECK-NEXT: SUB a0,a1,a0
 ; CHECK-NEXT: ANDI a0,a0,15
 ; CHECK-NEXT: RET
@@ -161,7 +161,7 @@ define i8 @muladd_demand(i8 %x, i8 %y) nounwind {
 define i8 @mulsub_demand(i8 %x, i8 %y) nounwind {
 ; CHECK-LABEL: mulsub_demand: # @mulsub_demand
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: SLLI a0,a0,0x1
+; CHECK-NEXT: SLLI a0,a0,1
 ; CHECK-NEXT: ADD a0,a1,a0
 ; CHECK-NEXT: ANDI a0,a0,15
 ; CHECK-NEXT: RET
@@ -174,7 +174,7 @@ define i8 @mulsub_demand(i8 %x, i8 %y) nounwind {
 define i8 @muladd_demand_2(i8 %x, i8 %y) nounwind {
 ; CHECK-LABEL: muladd_demand_2: # @muladd_demand_2
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: SLLI a0,a0,0x1
+; CHECK-NEXT: SLLI a0,a0,1
 ; CHECK-NEXT: SUB a0,a1,a0
 ; CHECK-NEXT: ORI a0,a0,-16
 ; CHECK-NEXT: RET
@@ -187,7 +187,7 @@ define i8 @muladd_demand_2(i8 %x, i8 %y) nounwind {
 define i8 @mulsub_demand_2(i8 %x, i8 %y) nounwind {
 ; CHECK-LABEL: mulsub_demand_2: # @mulsub_demand_2
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: SLLI a0,a0,0x1
+; CHECK-NEXT: SLLI a0,a0,1
 ; CHECK-NEXT: ADD a0,a1,a0
 ; CHECK-NEXT: ORI a0,a0,-16
 ; CHECK-NEXT: RET

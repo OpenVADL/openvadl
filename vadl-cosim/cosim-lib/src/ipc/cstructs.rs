@@ -1,6 +1,7 @@
+use libc::{pthread_cond_t, pthread_mutex_t};
 use serde::{ser::SerializeStruct, Serialize};
 
-use crate::config::Config;
+use crate::{config::Config, ipc::sem::Semaphore};
 
 pub const SHMSTRING_MAX_LEN: usize = 256;
 pub const TBINSNINFO_ENTRIES: usize = 64;
@@ -218,7 +219,13 @@ impl Serialize for BrokerSHMExec {
 }
 
 #[repr(C)]
-pub union BrokerSHM {
+pub union BrokerSHMData {
     pub shm_tb: std::mem::ManuallyDrop<BrokerSHMTB>,
     pub shm_exec: std::mem::ManuallyDrop<BrokerSHMExec>,
+}
+
+#[repr(C)]
+pub struct BrokerSHM {
+    pub data: BrokerSHMData,
+    pub sync: Semaphore,
 }
