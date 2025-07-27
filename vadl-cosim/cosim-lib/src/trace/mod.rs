@@ -1,4 +1,4 @@
-use std::{mem::ManuallyDrop, path::Path};
+use std::path::Path;
 
 use anyhow::{Context, Result};
 use serde::Serialize;
@@ -45,15 +45,11 @@ pub fn store_trace(trace: TraceData, connection: &Connection) -> Result<()> {
 pub fn get_client_trace(client: &crate::ipc::qemu::Client, config: &Config) -> TraceData {
     match config.testing.protocol.layer {
         crate::config::ProtocolLayer::Insn => {
-            let exec = client.shm.get_exec().clone();
-            let exec = ManuallyDrop::into_inner(exec);
-            let exec = Box::new(exec);
+            let exec = Box::new(client.shm.get_exec().clone());
             TraceData::Exec(exec)
         }
         crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-            let tb = client.shm.get_tb().clone();
-            let tb = ManuallyDrop::into_inner(tb);
-            let tb = Box::new(tb);
+            let tb = Box::new(client.shm.get_tb().clone());
             TraceData::TB(tb)
         }
     }

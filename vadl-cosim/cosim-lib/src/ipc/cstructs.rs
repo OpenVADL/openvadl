@@ -46,7 +46,12 @@ impl SHMRegister {
     }
 
     pub fn data_slice_fmt(&self) -> String {
-        format!("{:02X?}", self.data_slice())
+        let s = self.data_slice()
+            .iter()
+            .map(|b| format!("{b:02X?}"))
+            .collect::<String>();
+
+        format!("0x{s}")
     }
 
     pub fn mapped_name<'a>(&'a self, config: &'a Config) -> &'a str {
@@ -109,6 +114,15 @@ pub struct InsnData {
 impl InsnData {
     pub fn buffer_slice(&self) -> &[u8] {
         &self.buffer[..self.size]
+    }
+
+    pub fn buffer_slice_fmt(&self) -> String {
+        let s = self.buffer_slice()
+            .iter()
+            .map(|b| format!("{b:02X?}"))
+            .collect::<String>();
+
+        format!("0x{s}")
     }
 }
 

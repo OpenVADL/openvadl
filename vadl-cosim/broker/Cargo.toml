@@ -13,3 +13,4 @@ figment = { version = "0.10.19", features = ["toml"] }
 
 tracing = { version = "0.1.41", features = ["attributes"] }
 tracing-subscriber = "0.3.19"
+serde_json = "1.0.141"

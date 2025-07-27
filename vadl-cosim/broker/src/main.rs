@@ -31,6 +31,7 @@ fn main() -> Result<()> {
         tracing_subscriber::fmt()
             .pretty()
             .with_max_level(level)
+            .with_writer(std::io::stderr)
             .init();
     }
 
@@ -47,7 +48,9 @@ fn main() -> Result<()> {
     let mut broker = Broker::create(&config)?;
     let report = broker.run(&config)?;
 
-    dbg!(report);
+    let report_json = serde_json::to_string_pretty(&report)?;
+
+    println!("{report_json}");
 
     broker.finish(&config)?;
 

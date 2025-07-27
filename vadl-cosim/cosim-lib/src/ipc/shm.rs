@@ -1,4 +1,4 @@
-use std::{ffi::CString, marker::PhantomData, mem::ManuallyDrop, ptr, time::Duration};
+use std::{ffi::CString, marker::PhantomData, ptr, time::Duration};
 
 use anyhow::{Context, Result, bail};
 use libc::{
@@ -37,11 +37,11 @@ impl SharedMemory<BrokerSHM> {
         self.get_mut().sync.timedwait(duration)
     }
 
-    pub fn get_exec(&self) -> &ManuallyDrop<BrokerSHMExec> {
+    pub fn get_exec(&self) -> &BrokerSHMExec {
         unsafe { &self.get().data.shm_exec }
     }
 
-    pub fn get_tb(&self) -> &ManuallyDrop<BrokerSHMTB> {
+    pub fn get_tb(&self) -> &BrokerSHMTB {
         unsafe { &self.get().data.shm_tb }
     }
 
@@ -67,7 +67,7 @@ impl<T: Sized> SharedMemory<T> {
             CString::new(mmap_path).with_context(|| format!("Invalid mmap_path: {mmap_path}"))?;
 
         let fd = unsafe {
-            bail_on_libc_err!(shm_open(mmap_path_c.as_ptr(), O_CREAT | O_RDWR, PERMISSONS))
+            bail_on_libc_err!(shm_open(mmap_path_c.as_ptr(), O_CREAT | O_RDWR, PERMISSONS), -1)
         };
 
         unsafe { bail_on_libc_err!(ftruncate(fd, size as i64)) };
