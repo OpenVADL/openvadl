@@ -11,15 +11,51 @@ use tracing::{debug, error, info};
 use crate::{
     config::Config,
     ipc::{
-        cstructs::BrokerSHM,
+        cstructs::{BrokerSHM, BrokerSem},
         sem::{Semaphore, TimedWaitState},
         shm::SharedMemory,
     },
 };
 
+const SHMQUEUE_LEN: usize = 2;
+
+pub struct SHMQueue {
+    data: [SharedMemory<BrokerSHM>; SHMQUEUE_LEN],
+    idx: usize,
+}
+
+impl SHMQueue {
+    pub fn new(data: [SharedMemory<BrokerSHM>; SHMQUEUE_LEN]) -> Self {
+        Self { data, idx: 0 }
+    }
+
+    pub fn current(&self) -> &SharedMemory<BrokerSHM> {
+        &self.data[self.idx]
+    }
+
+    pub fn previous(&self) -> &SharedMemory<BrokerSHM> {
+        if self.idx == 0 {
+            &self.data[SHMQUEUE_LEN - 1]
+        } else {
+            &self.data[self.idx - 1]
+        }
+    }
+
+    pub fn next(&mut self) {
+        self.idx += 1;
+        self.idx %= SHMQUEUE_LEN;
+    }
+
+    pub fn get_next(&mut self) -> &SharedMemory<BrokerSHM> {
+        self.next();
+        self.current()
+    }
+}
+
 pub struct Client {
     pub id: usize,
-    pub shm: SharedMemory<BrokerSHM>,
+    pub shms: SHMQueue,
+    pub sem: SharedMemory<BrokerSem>,
     pub is_open: bool,
     pub process: Child,
     pub name: Option<String>,
@@ -62,7 +98,7 @@ impl Client {
                         Ok(None) => {
                             error!(
                                 client_id = self.id,
-                                is_server = self.shm.get_sync().is_server,
+                                is_server = self.sem.get_sync().is_server,
                                 "client is still running but unresponive"
                             );
                         }
@@ -83,14 +119,15 @@ impl Client {
     }
 
     fn run_inner(&mut self, config: &Config) -> Result<bool> {
-        self.shm.release_client()?;
+        self.shms.next();
+        self.sem.release_client()?;
 
         if config.for_client(self.id).gdb.enable {
-            self.shm.wait_client()?;
+            self.sem.wait_client()?;
             return Ok(true);
         }
 
-        let wait_res = self.shm.timedwait_client(Duration::from_secs(1))?;
+        let wait_res = self.sem.timedwait_client(Duration::from_secs(1))?;
         match wait_res {
             TimedWaitState::Timeout => Ok(false),
             TimedWaitState::Success => Ok(true),
@@ -100,9 +137,16 @@ impl Client {
     pub fn create(config: &Config, client_idx: usize) -> Result<Self> {
         let client_cfg = config.for_client(client_idx);
 
-        let mut shm: SharedMemory<BrokerSHM> =
-            SharedMemory::create(&format!("/cosimulation-shm-{client_idx}"))?;
-        shm.get_mut().sync = Semaphore::create()?;
+        let shm0: SharedMemory<BrokerSHM> =
+            SharedMemory::create(&format!("/cosimulation-shm-{client_idx}-0"))?;
+        let shm1: SharedMemory<BrokerSHM> =
+            SharedMemory::create(&format!("/cosimulation-shm-{client_idx}-1"))?;
+
+        let shms_queue = SHMQueue::new([shm0, shm1]);
+
+        let mut sem: SharedMemory<BrokerSem> =
+            SharedMemory::create(&format!("/cosimulation-sem-{client_idx}"))?;
+        sem.get_mut().sync = Semaphore::create()?;
 
         info!(
             client_id = client_idx,
@@ -184,7 +228,8 @@ impl Client {
 
         Ok(Self {
             id: client_idx,
-            shm,
+            shms: shms_queue,
+            sem,
             is_open: true,
             process: client_process,
             name: client_cfg.name.clone(),

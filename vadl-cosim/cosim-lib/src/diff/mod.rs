@@ -137,12 +137,12 @@ pub fn get_all_clients_instructions(
 pub fn get_client_instructions(client: &Client, config: &Config) -> DiffContextClientInstructions {
     match config.testing.protocol.layer {
         crate::config::ProtocolLayer::Insn => {
-            let exec = &client.shm.get_exec().insn_info;
+            let exec = &client.shms.current().get_exec().insn_info;
             let insn = exec.into();
             DiffContextClientInstructions(vec![insn])
         }
         crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-            let tb = client.shm.get_tb();
+            let tb = client.shms.current().get_tb();
             let insns = tb
                 .tb_info
                 .insns_info_slice()
@@ -165,60 +165,40 @@ impl From<&TBInsnInfo> for DiffContextClientInstruction {
     }
 }
 
-/// A wrapper around the SHM-Data. This is primarily used during the diff-context collection.
-/// Why: The before-state needs to be saved (cloned) since the data changes when a client is run.
-///      While it is possible to directly save the DiffContextClientState, this involves a lot of
-///      string-formatting operations which is significantly slower than just copying the data.
-///      Therefore the data is first cloned and then later (when a diff is actually found)
-///      converted.
-/// NOTE: While this is already much better performance-wise, another (more performant) solution
-/// might be:
-///     1. Use two shared-memory objects instead of one
-///     2. Alternate between them both from the broker and the qemu-client side
-///     3. The currenlty used object contains the "after" state, while the previous one still
-///        contains the "before" state.
-///     This way no cloning has to be done and the memory is allocated once at program-start.
-///     With the only "downside" being that this would obviously allocated double the amount of
-///     memory for the SHM-Data during the whole cosimulation process.
-#[allow(clippy::large_enum_variant)]
-pub enum BrokerSHMWrapper {
-    TB(BrokerSHMTB),
-    Exec(BrokerSHMExec),
-}
-
-pub fn clone_client_shms(clients: &[Client], config: &Config) -> Vec<BrokerSHMWrapper> {
-    clients
-        .iter()
-        .map(|client| match config.testing.protocol.layer {
-            crate::config::ProtocolLayer::Insn => BrokerSHMWrapper::Exec(client.shm.get_exec().clone()),
-            crate::config::ProtocolLayer::TB |
-            crate::config::ProtocolLayer::TBStrict => BrokerSHMWrapper::TB(client.shm.get_tb().clone()),
-        })
-        .collect()
-}
-
-pub fn get_all_clients_contexts(
+pub fn get_all_clients_contexts_before(
     clients: &[Client],
     config: &Config,
 ) -> Vec<DiffContextClientState> {
     clients
         .iter()
-        .map(|client| get_client_context(client, config))
+        .map(|client| get_client_context_before(client, config))
         .collect()
 }
 
-pub fn get_client_context_from_wrapper(wrapper: BrokerSHMWrapper, config: &Config) -> DiffContextClientState {
-    match wrapper {
-        BrokerSHMWrapper::TB(broker_shmtb) => (&broker_shmtb, config).into(),
-        BrokerSHMWrapper::Exec(broker_shmexec) => (&broker_shmexec, config).into(),
+pub fn get_client_context_before(client: &Client, config: &Config) -> DiffContextClientState {
+    match config.testing.protocol.layer {
+        crate::config::ProtocolLayer::Insn => (client.shms.previous().get_exec(), config).into(),
+        crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
+            (client.shms.previous().get_tb(), config).into()
+        }
     }
 }
 
-pub fn get_client_context(client: &Client, config: &Config) -> DiffContextClientState {
+pub fn get_all_clients_contexts_current(
+    clients: &[Client],
+    config: &Config,
+) -> Vec<DiffContextClientState> {
+    clients
+        .iter()
+        .map(|client| get_client_context_current(client, config))
+        .collect()
+}
+
+pub fn get_client_context_current(client: &Client, config: &Config) -> DiffContextClientState {
     match config.testing.protocol.layer {
-        crate::config::ProtocolLayer::Insn => (client.shm.get_exec(), config).into(),
+        crate::config::ProtocolLayer::Insn => (client.shms.current().get_exec(), config).into(),
         crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-            (client.shm.get_tb(), config).into()
+            (client.shms.current().get_tb(), config).into()
         }
     }
 }

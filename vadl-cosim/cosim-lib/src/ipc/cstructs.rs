@@ -46,7 +46,8 @@ impl SHMRegister {
     }
 
     pub fn data_slice_fmt(&self) -> String {
-        let s = self.data_slice()
+        let s = self
+            .data_slice()
             .iter()
             .map(|b| format!("{b:02X?}"))
             .collect::<String>();
@@ -117,7 +118,8 @@ impl InsnData {
     }
 
     pub fn buffer_slice_fmt(&self) -> String {
-        let s = self.buffer_slice()
+        let s = self
+            .buffer_slice()
             .iter()
             .map(|b| format!("{b:02X?}"))
             .collect::<String>();
@@ -247,5 +249,9 @@ pub union BrokerSHMData {
 #[repr(C)]
 pub struct BrokerSHM {
     pub data: BrokerSHMData,
+}
+
+#[repr(C)]
+pub struct BrokerSem {
     pub sync: Semaphore,
 }

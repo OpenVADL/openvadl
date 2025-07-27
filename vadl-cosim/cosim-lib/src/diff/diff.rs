@@ -91,14 +91,7 @@ pub fn diff_cpu(
         );
         let csuper_reg = &super_cpu.registers_slice()[csuper_reg_idx];
 
-        diff_register(
-            csub_reg,
-            csuper_reg,
-            cpu_index,
-            reg_index,
-            config,
-            diffs,
-        );
+        diff_register(csub_reg, csuper_reg, cpu_index, reg_index, config, diffs);
     }
 }
 

@@ -10,7 +10,7 @@ use crate::{
     bail_on_libc_err, eprintln_on_libc_err,
     ipc::{
         PERMISSONS,
-        cstructs::{BrokerSHM, BrokerSHMExec, BrokerSHMTB},
+        cstructs::{BrokerSHM, BrokerSHMExec, BrokerSHMTB, BrokerSem},
         get_last_error,
         sem::{Semaphore, TimedWaitState},
     },
@@ -24,7 +24,7 @@ pub struct SharedMemory<T: Sized> {
     _phantom: PhantomData<T>,
 }
 
-impl SharedMemory<BrokerSHM> {
+impl SharedMemory<BrokerSem> {
     pub fn release_client(&mut self) -> Result<()> {
         self.get_mut().sync.post()
     }
@@ -37,16 +37,18 @@ impl SharedMemory<BrokerSHM> {
         self.get_mut().sync.timedwait(duration)
     }
 
+    pub fn get_sync(&self) -> &Semaphore {
+        &self.get().sync
+    }
+}
+
+impl SharedMemory<BrokerSHM> {
     pub fn get_exec(&self) -> &BrokerSHMExec {
         unsafe { &self.get().data.shm_exec }
     }
 
     pub fn get_tb(&self) -> &BrokerSHMTB {
         unsafe { &self.get().data.shm_tb }
-    }
-
-    pub fn get_sync(&self) -> &Semaphore {
-        &self.get().sync
     }
 }
 
@@ -67,7 +69,10 @@ impl<T: Sized> SharedMemory<T> {
             CString::new(mmap_path).with_context(|| format!("Invalid mmap_path: {mmap_path}"))?;
 
         let fd = unsafe {
-            bail_on_libc_err!(shm_open(mmap_path_c.as_ptr(), O_CREAT | O_RDWR, PERMISSONS), -1)
+            bail_on_libc_err!(
+                shm_open(mmap_path_c.as_ptr(), O_CREAT | O_RDWR, PERMISSONS),
+                -1
+            )
         };
 
         unsafe { bail_on_libc_err!(ftruncate(fd, size as i64)) };

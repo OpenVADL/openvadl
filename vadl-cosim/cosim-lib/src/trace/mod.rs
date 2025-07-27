@@ -45,11 +45,11 @@ pub fn store_trace(trace: TraceData, connection: &Connection) -> Result<()> {
 pub fn get_client_trace(client: &crate::ipc::qemu::Client, config: &Config) -> TraceData {
     match config.testing.protocol.layer {
         crate::config::ProtocolLayer::Insn => {
-            let exec = Box::new(client.shm.get_exec().clone());
+            let exec = Box::new(client.shms.current().get_exec().clone());
             TraceData::Exec(exec)
         }
         crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-            let tb = Box::new(client.shm.get_tb().clone());
+            let tb = Box::new(client.shms.current().get_tb().clone());
             TraceData::TB(tb)
         }
     }

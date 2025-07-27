@@ -5,10 +5,12 @@ use tracing::debug;
 use crate::{
     config::{Config, TracingMode},
     diff::{
-        diff::diff_cpus, get_all_clients_contexts, clone_client_shms, get_all_clients_instructions, get_client_context_from_wrapper, BrokerSHMWrapper, DiffContext, DiffContextClient, DiffEntry, Report
+        DiffContext, DiffContextClient, DiffEntry, Report, diff::diff_cpus,
+        get_all_clients_contexts_before, get_all_clients_contexts_current,
+        get_all_clients_instructions,
     },
     ipc::qemu::Client,
-    trace::{connect, get_client_trace, store_trace, trace_collect, TraceStore},
+    trace::{TraceStore, connect, get_client_trace, store_trace, trace_collect},
 };
 
 #[derive(Debug)]
@@ -91,8 +93,6 @@ impl Broker {
         self.check_clients_are_initially_synchronized(config)?;
 
         while self.any_client_open() {
-            let before_states = clone_client_shms(&self.clients, config);
-
             match config.testing.protocol.layer {
                 crate::config::ProtocolLayer::Insn | crate::config::ProtocolLayer::TBStrict => {
                     for client in &mut self.clients {
@@ -104,7 +104,7 @@ impl Broker {
                 crate::config::ProtocolLayer::TB => {
                     if let TBSyncResult::Diverged(diff_entry) = self.tb_sync_clients(config) {
                         debug!("client diverged during tb synchronization");
-                        let diff_context = self.build_diff_context(before_states, config);
+                        let diff_context = self.build_diff_context(config);
                         diffs.push(diff_entry);
                         return Ok(Report::failed(diffs, diff_context));
                     }
@@ -123,7 +123,7 @@ impl Broker {
             diffs.append(&mut self.diff_clients(config));
 
             if !diffs.is_empty() {
-                let diff_context = self.build_diff_context(before_states, config);
+                let diff_context = self.build_diff_context(config);
                 return Ok(Report::failed(diffs, diff_context));
             }
         }
@@ -140,9 +140,9 @@ impl Broker {
             .clients
             .iter()
             .map(|c| match config.testing.protocol.layer {
-                crate::config::ProtocolLayer::Insn => c.shm.get_exec().insn_info.pc,
+                crate::config::ProtocolLayer::Insn => c.shms.current().get_exec().insn_info.pc,
                 crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-                    c.shm.get_tb().tb_info.pc
+                    c.shms.current().get_tb().tb_info.pc
                 }
             })
             .collect::<Vec<_>>();
@@ -160,7 +160,7 @@ impl Broker {
 
         for (idx, client) in &mut self.clients.iter_mut().enumerate() {
             while client.is_open {
-                let shm = client.shm.get_tb();
+                let shm = client.shms.current().get_tb();
                 let start_pc = shm.tb_info.pc;
                 let insn_sizes = shm
                     .tb_info
@@ -171,7 +171,7 @@ impl Broker {
                 insns_executed_per_client[idx] = insn_sizes.len();
 
                 if client.run(config) {
-                    let shm = client.shm.get_tb();
+                    let shm = client.shms.current().get_tb();
                     let end_pc = shm.tb_info.pc;
                     let sync_info = ClientSyncInfo {
                         start_pc,
@@ -235,8 +235,8 @@ impl Broker {
 
                 match config.testing.protocol.layer {
                     crate::config::ProtocolLayer::Insn => {
-                        let c1insn = c1.shm.get_exec();
-                        let c2insn = c2.shm.get_exec();
+                        let c1insn = c1.shms.current().get_exec();
+                        let c2insn = c2.shms.current().get_exec();
 
                         return diff_cpus(
                             &c1insn.cpus,
@@ -247,8 +247,8 @@ impl Broker {
                         );
                     }
                     crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-                        let c1insn = c1.shm.get_tb();
-                        let c2insn = c2.shm.get_tb();
+                        let c1insn = c1.shms.current().get_tb();
+                        let c2insn = c2.shms.current().get_tb();
 
                         return diff_cpus(
                             &c1insn.cpus,
@@ -293,14 +293,14 @@ impl Broker {
         }
     }
 
-    fn build_diff_context(&self, mut before_states: Vec<BrokerSHMWrapper>, config: &Config) -> DiffContext {
-        let mut after_states = get_all_clients_contexts(&self.clients, config);
+    fn build_diff_context(&self, config: &Config) -> DiffContext {
+        let mut before_states = get_all_clients_contexts_before(&self.clients, config);
+        let mut after_states = get_all_clients_contexts_current(&self.clients, config);
         let mut error_instructions = get_all_clients_instructions(&self.clients, config);
         let mut diff_context = vec![];
 
         for client in &self.clients {
             let before_state = before_states.pop().unwrap();
-            let before_state = get_client_context_from_wrapper(before_state, config);
             let error_instruction = error_instructions.pop().unwrap();
             let after_state = after_states.pop().unwrap();
 
