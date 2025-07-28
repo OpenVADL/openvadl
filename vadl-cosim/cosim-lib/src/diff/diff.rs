@@ -2,8 +2,8 @@ use std::cell::RefCell;
 
 use crate::{
     config::Config,
-    diff::{DiffContext, DiffEntry},
-    ipc::cstructs::{SHMRegister, MAX_CPU_COUNT, MAX_CPU_REGISTERS, SHMCPU},
+    diff::DiffEntry,
+    ipc::cstructs::{MAX_CPU_COUNT, MAX_CPU_REGISTERS, SHMCPU, SHMRegister},
 };
 
 // NOTE: Technically it is more performant to pass in the memo-vec as an argument to not have
@@ -20,7 +20,6 @@ pub fn diff_cpus(
     cpus2: &[SHMCPU; MAX_CPU_COUNT],
     init_mask2: i32,
     config: &Config,
-    context: DiffContext,
 ) -> Vec<DiffEntry> {
     let mut diffs = vec![];
 
@@ -29,7 +28,6 @@ pub fn diff_cpus(
             "cpu.init_mask",
             vec![init_mask1.to_string(), init_mask2.to_string()],
             "The init masks of the cpu differ - meaning different CPUs were used during execution",
-            context,
         ));
 
         return diffs;
@@ -40,7 +38,7 @@ pub fn diff_cpus(
         if flag == 1 {
             let cpu1 = &cpus1[idx];
             let cpu2 = &cpus2[idx];
-            diff_cpu(cpu1, cpu2, idx, config, context.clone(), &mut diffs);
+            diff_cpu(cpu1, cpu2, idx, config, &mut diffs);
         }
     }
 
@@ -52,7 +50,6 @@ pub fn diff_cpu(
     cpu2: &SHMCPU,
     cpu_index: usize,
     config: &Config,
-    context: DiffContext,
     diffs: &mut Vec<DiffEntry>,
 ) {
     if !config.qemu.ignore_unset_registers && cpu1.registers_size != cpu2.registers_size {
@@ -63,7 +60,6 @@ pub fn diff_cpu(
                 cpu2.registers_size.to_string(),
             ],
             "different number of CPU registers",
-            context,
         ));
 
         return;
@@ -77,11 +73,7 @@ pub fn diff_cpu(
         let csub_reg = &sub_cpu.registers_slice()[reg_index];
         let rsub_name = csub_reg.mapped_name(config);
 
-        if config
-            .qemu
-            .ignore_registers
-            .contains(rsub_name)
-        {
+        if config.qemu.ignore_registers.contains(rsub_name) {
             continue;
         }
 
@@ -91,18 +83,15 @@ pub fn diff_cpu(
             continue;
         }
 
-        let csuper_reg_idx = reg_idx_by_name_memoed(super_cpu.registers_slice(), csub_reg.name.as_str(), config, reg_index);
+        let csuper_reg_idx = reg_idx_by_name_memoed(
+            super_cpu.registers_slice(),
+            csub_reg.name.as_str(),
+            config,
+            reg_index,
+        );
         let csuper_reg = &super_cpu.registers_slice()[csuper_reg_idx];
 
-        diff_register(
-            csub_reg,
-            csuper_reg,
-            cpu_index,
-            reg_index,
-            config,
-            context.clone(),
-            diffs,
-        );
+        diff_register(csub_reg, csuper_reg, cpu_index, reg_index, config, diffs);
     }
 }
 
@@ -112,7 +101,6 @@ pub fn diff_register(
     cpu_index: usize,
     reg_index: usize,
     config: &Config,
-    context: DiffContext,
     diffs: &mut Vec<DiffEntry>,
 ) {
     let r1name = reg1.mapped_name(config);
@@ -123,7 +111,6 @@ pub fn diff_register(
             format!("cpu[{cpu_index}].registers[{reg_index}].size"),
             vec![reg1.size.to_string(), reg2.size.to_string()],
             format!("different register sizes for {r1name}"),
-            context.clone(),
         ));
     }
 
@@ -132,7 +119,6 @@ pub fn diff_register(
             format!("cpu[{cpu_index}].registers[{reg_index}].name"),
             vec![r1name.to_string(), r2name.to_string()],
             "different register names",
-            context.clone(),
         ));
     }
 
@@ -141,13 +127,17 @@ pub fn diff_register(
             format!("cpu[{cpu_index}].registers[{reg_index}].data"),
             vec![reg1.data_slice_fmt(), reg2.data_slice_fmt()],
             format!("different register data for {r1name}"),
-            context.clone(),
         ));
     }
 }
 
-fn reg_idx_by_name_memoed(registers: &[SHMRegister], name: &str, config: &Config, reg_index: usize) -> usize {
-    REG_MAP_MEMO.with_borrow_mut(|memo | {
+fn reg_idx_by_name_memoed(
+    registers: &[SHMRegister],
+    name: &str,
+    config: &Config,
+    reg_index: usize,
+) -> usize {
+    REG_MAP_MEMO.with_borrow_mut(|memo| {
         assert!(reg_index < memo.len(), "invalid memo length");
         if let Some(memo_reg) = memo[reg_index] {
             return memo_reg;
@@ -157,7 +147,6 @@ fn reg_idx_by_name_memoed(registers: &[SHMRegister], name: &str, config: &Config
         memo[reg_index] = Some(reg);
         reg
     })
-
 }
 
 fn reg_idx_by_name(registers: &[SHMRegister], name: &str, config: &Config) -> usize {

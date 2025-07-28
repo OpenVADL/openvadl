@@ -11,9 +11,10 @@ use tracing::{Level, info};
 use cosim_lib::{
     cli::Cli,
     config::Config,
-    cosim::Broker, trace::{connect, db::setup_database},
+    cosim::Broker,
+    diff::Report,
+    trace::{connect, db::setup_database},
 };
-
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -31,6 +32,7 @@ fn main() -> Result<()> {
         tracing_subscriber::fmt()
             .pretty()
             .with_max_level(level)
+            .with_writer(std::io::stderr)
             .init();
     }
 
@@ -45,11 +47,65 @@ fn main() -> Result<()> {
     }
 
     let mut broker = Broker::create(&config)?;
-    let report = broker.run(&config)?;
+    let report_data = broker.run(&config)?;
 
-    dbg!(report);
+    let report = match &config.testing.protocol.out.verbosity {
+        cosim_lib::config::OutVerbosity::Full => serde_json::to_string_pretty(&report_data)?,
+        cosim_lib::config::OutVerbosity::Short => {
+            let mut buf = String::new();
+            if report_data.passed {
+                buf.push_str("Cosimulation passed!");
+            } else {
+                add_plain_report_summary(&mut buf, &report_data);
+            }
+            buf
+        }
+    };
+
+    match config.testing.protocol.out.file {
+        Some(ref file) => {
+            std::fs::write(file, report)?;
+        }
+        None => println!("{report}"),
+    }
 
     broker.finish(&config)?;
 
     Ok(())
+}
+
+fn add_plain_report_summary(buf: &mut String, report: &Report) {
+    buf.push_str("Cosimulation failed!\n");
+    let pc = report.diff_context[0].after_state.pc;
+    buf.push_str(&format!("Failure at pc = 0x{pc:02X?} ({pc})\n\n"));
+
+    buf.push_str("The following divergences were found:\n");
+
+    for diff in &report.diffs {
+        let desc = &diff.description;
+        buf.push_str(&format!("- \"{desc}\":\n"));
+        for i in 0..diff.values.len() {
+            let v = &diff.values[i];
+            let ctx = &report.diff_context[i];
+            let name = ctx.client_name.clone().unwrap_or(ctx.client_id.to_string());
+
+            buf.push_str(&format!("\t- In \"{name}\" the value is \"{v}\"\n"));
+        }
+    }
+
+    buf.push_str("\nThe divergence occurred after the following instructions were executed:\n");
+
+    let min_insns = report
+        .diff_context
+        .iter()
+        .map(|ctx| &ctx.error_instruction.0)
+        .min_by_key(|insns| insns.len())
+        .unwrap();
+
+    for insn in min_insns {
+        let pc = insn.pc;
+        let disas = &insn.disas;
+        let insn_data = &insn.insn_data;
+        buf.push_str(&format!("- (pc={pc}): {disas} ({insn_data})\n"));
+    }
 }

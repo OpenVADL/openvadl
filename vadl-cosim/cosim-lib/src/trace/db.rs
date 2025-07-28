@@ -4,7 +4,7 @@ const CREATES_SQL: &str = include_str!("../../res/creates.sql");
 const DROPS_SQL: &str = include_str!("../../res/drops.sql");
 
 pub fn setup_database(pool: &DBConnection) -> Result<(), rusqlite::Error> {
-    let tx = pool.unchecked_transaction()?;  
+    let tx = pool.unchecked_transaction()?;
     tx.execute_batch(&format!("{DROPS_SQL}; {CREATES_SQL}"))?;
     tx.commit()?;
     Ok(())

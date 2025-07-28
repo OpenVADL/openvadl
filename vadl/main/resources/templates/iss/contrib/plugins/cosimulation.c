@@ -24,6 +24,7 @@
 #include <glib.h>
 #include <qemu-plugin.h>
 #include <semaphore.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
@@ -156,8 +157,11 @@ typedef struct {
 
 typedef struct {
   BrokerSHMData data;
-  Semaphore sync;
 } BrokerSHM;
+
+typedef struct {
+  Semaphore sync;
+} BrokerSem;
 
 typedef enum {
   INVALID_MODE = 0,
@@ -175,7 +179,27 @@ typedef struct {
 static GArray *cpus;
 
 static Arguments args;
-static BrokerSHM *shm;
+
+static BrokerSem *sem;
+
+#define SHM_QUEUE_SIZE 2
+
+static BrokerSHM *shm[SHM_QUEUE_SIZE];
+static size_t shm_idx = 0;
+
+static BrokerSHM *get_shm(void) {
+  return shm[shm_idx];
+}
+
+static void rotate_shm(void) {
+  shm_idx++;
+  shm_idx %= SHM_QUEUE_SIZE;
+}
+
+static BrokerSHM *next_shm(void) {
+  rotate_shm();
+  return get_shm();
+}
 
 static CPU *get_cpu(int vcpu_index) {
   CPU *c;
@@ -243,10 +267,39 @@ static void plugin_exit(qemu_plugin_id_t id, void *p) {
   PLUGIN_PRINTLN("plugin_exit");
 }
 
+static BrokerSem *connect_to_broker_sem(void) {
+  gchar *sem_name = g_strdup_printf("/cosimulation-sem-%s", args.client_id);
+  int sem_fd = shm_open(sem_name, O_RDWR, 0600);
+  if (sem_fd == -1) {
+    char *err = strerror(errno);
+    g_error("failed to open shared memory for client: %s -> %s", args.client_id,
+            err);
+    return NULL;
+  }
+
+  if (ftruncate(sem_fd, sizeof(BrokerSem)) == -1) {
+    char *err = strerror(errno);
+    g_error("failed to truncate shared memory for client: %s -> %s",
+            args.client_id, err);
+    return NULL;
+  }
+
+  BrokerSem *sem = mmap(NULL, sizeof(BrokerSem), PROT_READ | PROT_WRITE,
+                        MAP_SHARED, sem_fd, 0);
+  if (sem == MAP_FAILED) {
+    char *err = strerror(errno);
+    g_error("failed to mmap shared memory for client: %s -> %s", args.client_id,
+            err);
+    return NULL;
+  }
+
+  return sem;
+}
+
 // Connects to the broker by accessing the assigned shared memory
 // The shared memory is located under /cosimulation/shm-{client_id}
-static BrokerSHM *connect_to_broker(void) {
-  gchar *shm_name = g_strdup_printf("/cosimulation-shm-%s", args.client_id);
+static BrokerSHM *connect_to_broker_data(size_t shm_idx) {
+  gchar *shm_name = g_strdup_printf("/cosimulation-shm-%s-%lu", args.client_id, shm_idx);
   int shm_fd = shm_open(shm_name, O_RDWR, 0600);
   if (shm_fd == -1) {
     char *err = strerror(errno);
@@ -332,13 +385,12 @@ static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
 }
 
 static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
-  pthread_mutex_lock(&shm->sync.mutex);
-  while(shm->sync.is_server) {
-    PLUGIN_PRINTLN("waiting... %d", shm->sync.is_server);
-    pthread_cond_wait(&shm->sync.cond_client, &shm->sync.mutex);
+  pthread_mutex_lock(&sem->sync.mutex);
+  while(sem->sync.is_server) {
+    pthread_cond_wait(&sem->sync.cond_client, &sem->sync.mutex);
   }
 
-  PLUGIN_PRINTLN("got it!");
+  BrokerSHM *shm = next_shm();
 
   TBInsnInfo *tbinsn_info = udata;
 
@@ -351,17 +403,18 @@ static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
   // TODO: we cannot free here because the same callback might be used multiple times when a tb gets reused
   // g_free(tbinsn_info);
 
-  shm->sync.is_server = true;
-  pthread_cond_broadcast(&shm->sync.cond_server);
-  pthread_mutex_unlock(&shm->sync.mutex);
-  PLUGIN_PRINTLN("unlocked! %d", shm->sync.is_server);
+  sem->sync.is_server = true;
+  pthread_cond_broadcast(&sem->sync.cond_server);
+  pthread_mutex_unlock(&sem->sync.mutex);
 }
 
 static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
-  pthread_mutex_lock(&shm->sync.mutex);
-  while(shm->sync.is_server) {
-    pthread_cond_wait(&shm->sync.cond_client, &shm->sync.mutex);
+  pthread_mutex_lock(&sem->sync.mutex);
+  while(sem->sync.is_server) {
+    pthread_cond_wait(&sem->sync.cond_client, &sem->sync.mutex);
   }
+
+  BrokerSHM *shm = next_shm();
 
   SHMCPU cpu = get_cpu_state(cpu_index);
 
@@ -374,9 +427,9 @@ static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
   // TODO: we cannot free here because the same callback might be used multiple times when a tb gets reused
   // g_free(tb_info);
 
-  shm->sync.is_server = true;
-  pthread_cond_broadcast(&shm->sync.cond_server);
-  pthread_mutex_unlock(&shm->sync.mutex);
+  sem->sync.is_server = true;
+  pthread_cond_broadcast(&sem->sync.cond_server);
+  pthread_mutex_unlock(&sem->sync.mutex);
 }
 
 static void vcpu_tb_trans(qemu_plugin_id_t id, struct qemu_plugin_tb *tb) {
@@ -467,13 +520,16 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
 
   PLUGIN_PRINTLN("::qemu_plugin_install");
 
-  shm = connect_to_broker();
-  if (shm == NULL) {
+  sem = connect_to_broker_sem();
+  if (sem == NULL) {
     return EXIT_FAILURE;
   }
 
-  if (args.mode == INSN_MODE) {
-    shm->data.shm_exec.init_mask = 0;
+  for (int i = 0; i < SHM_QUEUE_SIZE; i++) {
+    shm[i] = connect_to_broker_data(i);
+    if (shm[i] == NULL) {
+      return EXIT_FAILURE;
+    }
   }
 
   plugin_id = id;

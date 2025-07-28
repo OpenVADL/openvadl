@@ -1,18 +1,16 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use rusqlite::Connection;
 use tracing::debug;
 
 use crate::{
     config::{Config, TracingMode},
-    diff::{diff::diff_cpus, DiffContextClient, DiffEntry, Report},
-    ipc::qemu::Client,
-    trace::{
-        connect, 
-        get_client_trace, 
-        store_trace, 
-        trace_collect, 
-        TraceStore
+    diff::{
+        DiffContext, DiffContextClient, DiffEntry, Report, diff::diff_cpus,
+        get_all_clients_contexts_before, get_all_clients_contexts_current,
+        get_all_clients_instructions,
     },
+    ipc::qemu::Client,
+    trace::{TraceStore, connect, get_client_trace, store_trace, trace_collect},
 };
 
 #[derive(Debug)]
@@ -20,7 +18,6 @@ struct ClientSyncInfo {
     start_pc: u64,
     end_pc: u64,
     insn_sizes: Vec<u64>,
-    client_id: usize,
 }
 
 impl ClientSyncInfo {
@@ -32,7 +29,7 @@ impl ClientSyncInfo {
 
 pub struct Broker {
     clients: Vec<Client>,
-    trace_store: TraceStore, 
+    trace_store: TraceStore,
     trace_connection: Connection,
 }
 
@@ -65,11 +62,9 @@ impl Broker {
     pub fn run(&mut self, config: &Config) -> Result<Report> {
         debug!(?config, "running broker");
 
-        let diffs = match config.testing.protocol.mode {
+        match config.testing.protocol.mode {
             crate::config::ProtocolMode::Lockstep => self.run_lockstep(config),
-        }?;
-
-        Ok(diffs.into())
+        }
     }
 
     pub fn finish(mut self, config: &Config) -> Result<()> {
@@ -86,7 +81,7 @@ impl Broker {
         Ok(())
     }
 
-    fn run_lockstep(&mut self, config: &Config) -> Result<Vec<DiffEntry>> {
+    fn run_lockstep(&mut self, config: &Config) -> Result<Report> {
         for (idx, client) in self.clients.iter_mut().enumerate() {
             let client_cfg = config.for_client(idx);
             client.run_n_times(client_cfg.skip_n_instructions, config);
@@ -109,8 +104,9 @@ impl Broker {
                 crate::config::ProtocolLayer::TB => {
                     if let TBSyncResult::Diverged(diff_entry) = self.tb_sync_clients(config) {
                         debug!("client diverged during tb synchronization");
+                        let diff_context = self.build_diff_context(config);
                         diffs.push(diff_entry);
-                        return Ok(diffs);
+                        return Ok(Report::failed(diffs, diff_context));
                     }
                 }
             };
@@ -119,7 +115,7 @@ impl Broker {
                 if stop_after > 0 {
                     stop_after -= 1;
                 } else {
-                    return Ok(diffs);
+                    return Ok(Report::passed());
                 }
             }
 
@@ -127,11 +123,12 @@ impl Broker {
             diffs.append(&mut self.diff_clients(config));
 
             if !diffs.is_empty() {
-                return Ok(diffs);
+                let diff_context = self.build_diff_context(config);
+                return Ok(Report::failed(diffs, diff_context));
             }
         }
 
-        Ok(diffs)
+        Ok(Report::passed())
     }
 
     fn any_client_open(&self) -> bool {
@@ -142,11 +139,10 @@ impl Broker {
         let start_pcs = self
             .clients
             .iter()
-            .map(|c| {
-                match config.testing.protocol.layer {
-                    crate::config::ProtocolLayer::Insn => unsafe { &c.shm.get().data.shm_exec }.insn_info.pc,
-                    crate::config::ProtocolLayer::TB |
-                    crate::config::ProtocolLayer::TBStrict => unsafe { &c.shm.get().data.shm_tb }.tb_info.pc,
+            .map(|c| match config.testing.protocol.layer {
+                crate::config::ProtocolLayer::Insn => c.shms.current().get_exec().insn_info.pc,
+                crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
+                    c.shms.current().get_tb().tb_info.pc
                 }
             })
             .collect::<Vec<_>>();
@@ -163,9 +159,8 @@ impl Broker {
         let mut insns_executed_per_client = vec![0; self.clients.len()];
 
         for (idx, client) in &mut self.clients.iter_mut().enumerate() {
-            let client_shm = client.shm.clone();
             while client.is_open {
-                let shm = unsafe { &client_shm.get().data.shm_tb };
+                let shm = client.shms.current().get_tb();
                 let start_pc = shm.tb_info.pc;
                 let insn_sizes = shm
                     .tb_info
@@ -176,12 +171,12 @@ impl Broker {
                 insns_executed_per_client[idx] = insn_sizes.len();
 
                 if client.run(config) {
+                    let shm = client.shms.current().get_tb();
                     let end_pc = shm.tb_info.pc;
                     let sync_info = ClientSyncInfo {
                         start_pc,
                         end_pc,
                         insn_sizes,
-                        client_id: client.id,
                     };
 
                     if sync_info.is_jump() {
@@ -205,21 +200,11 @@ impl Broker {
                 .map(|i| i.end_pc.to_string())
                 .collect();
 
-            let diff_contexts = client_sync_infos
-                .iter()
-                .map(|i| (&self.clients[i.client_id], i.end_pc))
-                .map(|(c, end_pc)| {
-                    DiffContextClient::new(c.id, c.name.clone(), c.run_count, end_pc)
-                })
-                .collect();
-
-            let diff = DiffEntry::new(
+            return TBSyncResult::Diverged(DiffEntry::new(
                 "tb_info",
                 end_pcs,
                 "clients reached a different end-pc at the end of tb-synchronization",
-                diff_contexts,
-            );
-            return TBSyncResult::Diverged(diff);
+            ));
         }
 
         let insns_executed_diverged = insns_executed_per_client
@@ -232,21 +217,11 @@ impl Broker {
                 .map(|i| i.to_string())
                 .collect();
 
-            let diff_contexts = client_sync_infos
-                .iter()
-                .map(|i| (&self.clients[i.client_id], i.end_pc))
-                .map(|(c, end_pc)| {
-                    DiffContextClient::new(c.id, c.name.clone(), c.run_count, end_pc)
-                })
-                .collect();
-
-            let diff = DiffEntry::new(
+            return TBSyncResult::Diverged(DiffEntry::new(
                 "tb_info.insns_info_size",
                 instr_counts,
                 "clients reached the same end-pc, but executed a different number of instructions",
-                diff_contexts,
-            );
-            return TBSyncResult::Diverged(diff);
+            ));
         }
 
         TBSyncResult::Success
@@ -260,11 +235,8 @@ impl Broker {
 
                 match config.testing.protocol.layer {
                     crate::config::ProtocolLayer::Insn => {
-                        let c1insn = unsafe { &c1.shm.get().data.shm_exec };
-                        let c2insn = unsafe { &c2.shm.get().data.shm_exec };
-
-                        let ctx1 = DiffContextClient::from_insn(c1, c1insn);
-                        let ctx2 = DiffContextClient::from_insn(c2, c2insn);
+                        let c1insn = c1.shms.current().get_exec();
+                        let c2insn = c2.shms.current().get_exec();
 
                         return diff_cpus(
                             &c1insn.cpus,
@@ -272,15 +244,11 @@ impl Broker {
                             &c2insn.cpus,
                             c2insn.init_mask,
                             config,
-                            vec![ctx1, ctx2],
                         );
                     }
                     crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-                        let c1insn = unsafe { &c1.shm.get().data.shm_tb };
-                        let c2insn = unsafe { &c2.shm.get().data.shm_tb };
-
-                        let ctx1 = DiffContextClient::from_tb(c1, c1insn);
-                        let ctx2 = DiffContextClient::from_tb(c2, c2insn);
+                        let c1insn = c1.shms.current().get_tb();
+                        let c2insn = c2.shms.current().get_tb();
 
                         return diff_cpus(
                             &c1insn.cpus,
@@ -288,7 +256,6 @@ impl Broker {
                             &c2insn.cpus,
                             c2insn.init_mask,
                             config,
-                            vec![ctx1, ctx2],
                         );
                     }
                 }
@@ -318,11 +285,39 @@ impl Broker {
             }
             TracingMode::Sync => {
                 for client in &self.clients {
-                    let trace = get_client_trace(client, config); 
+                    let trace = get_client_trace(client, config);
                     store_trace(trace, &self.trace_connection)?;
                 }
                 Ok(())
-            },
+            }
         }
+    }
+
+    fn build_diff_context(&self, config: &Config) -> DiffContext {
+        let mut before_states = get_all_clients_contexts_before(&self.clients, config);
+        let mut after_states = get_all_clients_contexts_current(&self.clients, config);
+        let mut error_instructions = get_all_clients_instructions(&self.clients, config);
+        let mut diff_context = vec![];
+
+        for client in &self.clients {
+            let before_state = before_states.pop().unwrap();
+            let error_instruction = error_instructions.pop().unwrap();
+            let after_state = after_states.pop().unwrap();
+
+            let client_id = client.id;
+            let client_name = client.name.clone();
+            let client_run_count = client.run_count;
+
+            diff_context.push(DiffContextClient::new(
+                client_id,
+                client_name,
+                client_run_count,
+                before_state,
+                error_instruction,
+                after_state,
+            ));
+        }
+
+        diff_context
     }
 }

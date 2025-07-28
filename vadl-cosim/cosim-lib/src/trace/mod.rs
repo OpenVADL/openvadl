@@ -1,7 +1,4 @@
-use std::{
-    mem::ManuallyDrop,
-    path::Path,
-};
+use std::path::Path;
 
 use anyhow::{Context, Result};
 use serde::Serialize;
@@ -32,17 +29,14 @@ pub fn connect(config: &Config) -> Result<Connection> {
         .context("failed to open sqlite connection for tracing")
 }
 
-pub fn store_trace(
-    trace: TraceData,
-    connection: &Connection,
-) -> Result<()> {
+pub fn store_trace(trace: TraceData, connection: &Connection) -> Result<()> {
     match trace {
         TraceData::TB(broker_shmtb) => {
             insert_broker_shm_tb(connection, &broker_shmtb)?;
-        },
+        }
         TraceData::Exec(broker_shmexec) => {
             insert_broker_shm_exec(connection, &broker_shmexec)?;
-        },
+        }
     };
 
     Ok(())
@@ -51,20 +45,13 @@ pub fn store_trace(
 pub fn get_client_trace(client: &crate::ipc::qemu::Client, config: &Config) -> TraceData {
     match config.testing.protocol.layer {
         crate::config::ProtocolLayer::Insn => {
-            let exec = unsafe { &client.shm.read().shm_exec };
-            let exec = exec.clone();
-            let exec = ManuallyDrop::into_inner(exec);
-            let exec = Box::new(exec);
+            let exec = Box::new(client.shms.current().get_exec().clone());
             TraceData::Exec(exec)
         }
-        crate::config::ProtocolLayer::TB |
-        crate::config::ProtocolLayer::TBStrict => {
-            let tb = unsafe { &client.shm.read().shm_tb };
-            let tb = tb.clone();
-            let tb = ManuallyDrop::into_inner(tb);
-            let tb = Box::new(tb);
+        crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
+            let tb = Box::new(client.shms.current().get_tb().clone());
             TraceData::TB(tb)
-        },
+        }
     }
 }
 
@@ -74,7 +61,8 @@ pub fn trace_collect(
     config: &crate::config::Config,
     store: &mut TraceStore,
 ) {
-    clients.iter()
+    clients
+        .iter()
         .map(|c| get_client_trace(c, config))
         .for_each(|t| store.push(t));
 }
