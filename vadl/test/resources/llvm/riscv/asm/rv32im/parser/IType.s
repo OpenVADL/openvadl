@@ -41,3 +41,15 @@ JALR x14, x15, 45
 # CHECK-NEXT: <MCOperand Reg:16>
 # CHECK-NEXT: <MCOperand Reg:17>
 # CHECK-NEXT: <MCOperand Imm:45>>
+
+JALR x15
+# CHECK: <MCInst #{{[0-9]+}} JALR
+# CHECK-NEXT: <MCOperand Reg:3>
+# CHECK-NEXT: <MCOperand Reg:17>
+# CHECK-NEXT: <MCOperand Imm:0>>
+
+JALR x14, 45(x15)
+# CHECK: <MCInst #{{[0-9]+}} JALR
+# CHECK-NEXT: <MCOperand Reg:16>
+# CHECK-NEXT: <MCOperand Reg:17>
+# CHECK-NEXT: <MCOperand Imm:45>>

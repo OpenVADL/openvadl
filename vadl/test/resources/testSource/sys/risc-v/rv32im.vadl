@@ -155,19 +155,26 @@ assembly description ASM for ABI = {
         ) @operand
     ;
 
+    // FIXME: Fix constant types in typechecker to allow just '1' instead of '1 as Bits<1>'
     JalrInstruction @instruction:
+      var rdTmp = null @operand
       var rs1Tmp = null @operand
       var immTmp = null @operand
       mnemonic = "JALR" @operand
-      rd = Register@operand ","
-      // FIXME: Fix constant types in typechecker to allow just '1' instead of '1 as Bits<1>'
-      (  ?(laideq(1 as Bits<1>, ","))
-          rs1Tmp = Register@operand ","
-          immTmp = JalrImmediateOperand
-        |
-          immTmp = JalrImmediateOperand
-          "(" rs1Tmp = Register@operand  ")"
+      ( ?(laideq(1 as Bits<1>, ",") )
+          rdTmp = Register@operand ","
+          ( ?(laideq(1 as Bits<1>, ",") )         // jalr rd, rs, imm
+              rs1Tmp = Register@operand ","
+              immTmp = JalrImmediateOperand
+            |
+              immTmp = JalrImmediateOperand       // jalr rd, imm(rs)
+              "(" rs1Tmp = Register@operand  ")"
+          )
+      | rdTmp = (x1_string @register) @operand    // jalr rs
+        rs1Tmp = Register@operand
+        immTmp = zero_const @operand
       )
+      rd = rdTmp
       rs1 = rs1Tmp
       immS = immTmp
     ;
@@ -323,6 +330,9 @@ assembly description ASM for ABI = {
       symbol = ImmediateOperand
     ;
   }
+
+  function x1_string -> String = "x1"
+  function zero_const -> SInt<64> = 0
 
   function lga_32_string -> String = "LGA_32"
 
