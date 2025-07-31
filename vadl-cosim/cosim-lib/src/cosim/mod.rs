@@ -10,7 +10,11 @@ use crate::{
         get_all_clients_instructions,
     },
     ipc::qemu::Client,
-    trace::{TraceStore, connect, get_client_trace, store_trace, trace_collect},
+    trace::{
+        TraceEntryData, TraceStore, connect,
+        db::{CosimRunInfo, finish_cosimulation_run_trace, insert_new_cosimulation_run},
+        get_client_trace, store_trace, trace_collect,
+    },
 };
 
 #[derive(Debug)]
@@ -87,7 +91,11 @@ impl Broker {
         }
 
         if config.tracing.mode.enabled() {
-            finish_cosimulation_run_trace(&mut self.trace_connection, self.run_info.unwrap(), passed)?;
+            finish_cosimulation_run_trace(
+                &mut self.trace_connection,
+                self.run_info.unwrap(),
+                passed,
+            )?;
         }
 
         for client in &mut self.clients {

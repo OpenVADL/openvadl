@@ -21,11 +21,12 @@ pub struct TraceEntryData {
 
 impl TraceEntryData {
     pub fn new(client_db_id: i64, broker_data: TraceBrokerData) -> Self {
-        Self { client_db_id, broker_data }
+        Self {
+            client_db_id,
+            broker_data,
+        }
     }
 }
-
-
 
 #[derive(Debug)]
 pub enum TraceBrokerData {
@@ -42,7 +43,6 @@ pub fn connect(config: &Config) -> Result<Connection> {
     Connection::open_with_flags(path, connect_flags)
         .context("failed to open sqlite connection for tracing")
 }
-
 
 pub fn store_trace(trace: TraceEntryData, connection: &mut Connection) -> Result<()> {
     let broker_id = match trace.broker_data {
@@ -77,11 +77,19 @@ pub fn trace_collect(
     config: &crate::config::Config,
     store: &mut TraceStore,
 ) {
-    assert!(clients.len() == client_ids.len(), "illegal call to trace_collect with different client-lens: {} != {}", clients.len(), client_ids.len());
+    assert!(
+        clients.len() == client_ids.len(),
+        "illegal call to trace_collect with different client-lens: {} != {}",
+        clients.len(),
+        client_ids.len()
+    );
     clients
         .iter()
         .map(|c| get_client_trace(c, config))
         .enumerate()
-        .map(|(idx, broker_data)| TraceEntryData { client_db_id: client_ids[idx], broker_data } )
+        .map(|(idx, broker_data)| TraceEntryData {
+            client_db_id: client_ids[idx],
+            broker_data,
+        })
         .for_each(|t| store.push(t));
 }

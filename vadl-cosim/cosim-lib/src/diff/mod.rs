@@ -5,7 +5,7 @@ use serde::Serialize;
 use crate::{
     config::Config,
     ipc::{
-        cstructs::{BrokerSHMExec, BrokerSHMTB, SHMCPU, SHMRegister, TBInsnInfo},
+        cstructs::{BrokerSHMInsn, BrokerSHMTB, SHMCPU, SHMRegister, TBInsnInfo},
         qemu::Client,
     },
 };
@@ -222,8 +222,8 @@ impl From<(&BrokerSHMTB, &Config)> for DiffContextClientState {
     }
 }
 
-impl From<(&BrokerSHMExec, &Config)> for DiffContextClientState {
-    fn from((value, config): (&BrokerSHMExec, &Config)) -> Self {
+impl From<(&BrokerSHMInsn, &Config)> for DiffContextClientState {
+    fn from((value, config): (&BrokerSHMInsn, &Config)) -> Self {
         let cpus = value.cpus.iter().map(|cpu| (cpu, config).into()).collect();
 
         DiffContextClientState {

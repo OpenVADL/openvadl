@@ -1,3 +1,8 @@
+DROP TABLE IF EXISTS client_entry;
+DROP TABLE IF EXISTS cosimulation_run_clients;
+DROP TABLE IF EXISTS cosimulation_run;
+DROP TABLE IF EXISTS client;
+DROP TABLE IF EXISTS broker_shm;
 DROP TABLE IF EXISTS broker_shm_insn;
 DROP TABLE IF EXISTS broker_shm_tb;
 DROP TABLE IF EXISTS tb_info;

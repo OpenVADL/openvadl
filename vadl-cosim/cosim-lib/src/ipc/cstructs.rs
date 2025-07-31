@@ -205,6 +205,22 @@ impl TBInsnInfo {
     }
 }
 
+impl Serialize for TBInsnInfo {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut s = serializer.serialize_struct("tb-insn-info", 6)?;
+        s.serialize_field("pc", &self.pc)?;
+        s.serialize_field("size", &self.size)?;
+        s.serialize_field("symbol", &self.symbol)?;
+        s.serialize_field("hwaddr", &self.hwaddr)?;
+        s.serialize_field("disas", &self.disas)?;
+        s.serialize_field("data", &self.data)?;
+        s.end()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct TBInfo {
@@ -294,7 +310,7 @@ pub struct BrokerSHMInsn {
     pub insn_info: TBInsnInfo,
 }
 
-impl Serialize for BrokerSHMExec {
+impl Serialize for BrokerSHMInsn {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,

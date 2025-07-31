@@ -47,8 +47,8 @@ fn main() -> Result<()> {
     }
 
     let mut broker = Broker::create(&config)?;
-    let report = broker.run(&config)?;
-    let passed = report.passed;
+    let report_data = broker.run(&config)?;
+    let passed = report_data.passed;
 
     let report = match &config.testing.protocol.out.verbosity {
         cosim_lib::config::OutVerbosity::Full => serde_json::to_string_pretty(&report_data)?,

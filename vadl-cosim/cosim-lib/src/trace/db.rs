@@ -1,12 +1,15 @@
-use rusqlite::{params, Transaction};
+use rusqlite::{Transaction, params};
 
-use crate::{cosim::DBConnection, ipc::{cstructs::*, qemu}};
+use crate::{
+    cosim::DBConnection,
+    ipc::{cstructs::*, qemu},
+};
 
 const CREATES_SQL: &str = include_str!("../../res/creates.sql");
 const DROPS_SQL: &str = include_str!("../../res/drops.sql");
 
 pub fn setup_database(pool: &mut DBConnection) -> Result<(), rusqlite::Error> {
-    let tx = pool.transaction()?;  
+    let tx = pool.transaction()?;
     tx.execute_batch(&format!("{DROPS_SQL}; {CREATES_SQL}"))?;
     tx.commit()?;
     Ok(())
@@ -25,7 +28,7 @@ pub fn insert_new_cosimulation_run(
     clients: &Vec<qemu::Client>,
 ) -> Result<CosimRunInfo, rusqlite::Error> {
     let tx = pool.transaction()?;
-    
+
     tx.execute(r#"INSERT INTO cosimulation_run DEFAULT VALUES"#, params![])?;
     let run_id = tx.last_insert_rowid();
 
@@ -46,14 +49,14 @@ pub fn finish_cosimulation_run_trace(
     run: CosimRunInfo,
     passed: bool,
 ) -> Result<(), rusqlite::Error> {
-    pool.execute(r#"UPDATE cosimulation_run SET end = CURRENT_TIMESTAMP, passed = ? WHERE id = ?"#, params![passed, run.run_id])?;
+    pool.execute(
+        r#"UPDATE cosimulation_run SET end = CURRENT_TIMESTAMP, passed = ? WHERE id = ?"#,
+        params![passed, run.run_id],
+    )?;
     Ok(())
 }
 
-pub fn insert_client(
-    tx: &Transaction<'_>,
-    name: Option<String>,
-) -> Result<i64, rusqlite::Error> {
+pub fn insert_client(tx: &Transaction<'_>, name: Option<String>) -> Result<i64, rusqlite::Error> {
     tx.execute(r#"INSERT INTO client(name) VALUES (?)"#, params![name])?;
 
     Ok(tx.last_insert_rowid())
@@ -64,7 +67,10 @@ pub fn insert_client_entry(
     client_id: i64,
     broker_id: i64,
 ) -> Result<(), rusqlite::Error> {
-    pool.execute(r#"INSERT INTO client_entry(client_id, broker_shm_id) VALUES (?, ?)"#, params![client_id, broker_id])?;
+    pool.execute(
+        r#"INSERT INTO client_entry(client_id, broker_shm_id) VALUES (?, ?)"#,
+        params![client_id, broker_id],
+    )?;
     Ok(())
 }
 
@@ -73,7 +79,10 @@ pub fn insert_cosim_run_client(
     run_id: i64,
     client_id: i64,
 ) -> Result<(), rusqlite::Error> {
-    tx.execute(r#"INSERT INTO cosimulation_run_clients(run_id, client_id) VALUES (?, ?)"#, params![run_id, client_id])?;
+    tx.execute(
+        r#"INSERT INTO cosimulation_run_clients(run_id, client_id) VALUES (?, ?)"#,
+        params![run_id, client_id],
+    )?;
     Ok(())
 }
 
@@ -102,7 +111,7 @@ pub fn insert_broker_shm_tb(
            INSERT INTO broker_shm_tb (id, tb_info_id) 
            VALUES (?, ?)
         "#,
-        params![broker_id, tb_info_id]
+        params![broker_id, tb_info_id],
     )?;
 
     // Insert CPUs and their registers
@@ -142,7 +151,7 @@ pub fn insert_broker_shm_insn(
            INSERT INTO broker_shm_insn (id, insn_info_id) 
            VALUES (?, ?)
         "#,
-        params![broker_id, insn_info_id]
+        params![broker_id, insn_info_id],
     )?;
 
     // Insert CPUs and registers
