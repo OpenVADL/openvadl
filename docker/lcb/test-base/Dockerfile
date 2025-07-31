@@ -54,6 +54,7 @@ WORKDIR /qemu/build
 RUN ../configure --prefix=/opt/qemu --target-list=riscv32-softmmu,riscv64-softmmu,aarch64-softmmu
 RUN make -j $(nproc)
 RUN make install
+RUN mkdir /opt/qemu/plugins && cp -r /qemu/build/tests/tcg/plugins /opt/qemu/plugins
 
 # The LCB Test Base image, which contains the QEMU binaries, toolchains and sccache
 FROM ubuntu:22.04 AS lcb-test-base
