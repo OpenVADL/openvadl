@@ -29,40 +29,40 @@ CREATE TABLE tb_insn_info (
 
 CREATE TABLE tb_info (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    pc INTEGER NOT NULL,
+    pc INTEGER NOT NULL
 );
 
 CREATE TABLE broker_shm_tb (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     tb_info_id INTEGER NOT NULL,
-    FOREIGN KEY (id) REFERENCES broker_shm(id)
-    FOREIGN KEY (tb_info_id) REFERENCES tb_info(id),
+    FOREIGN KEY (id) REFERENCES broker_shm(id),
+    FOREIGN KEY (tb_info_id) REFERENCES tb_info(id)
 );
 
 CREATE TABLE broker_shm_insn (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     insn_info_id INTEGER NOT NULL,
-    FOREIGN KEY (id) REFERENCES broker_shm(id)
-    FOREIGN KEY (insn_info_id) REFERENCES tb_insn_info(id),
+    FOREIGN KEY (id) REFERENCES broker_shm(id),
+    FOREIGN KEY (insn_info_id) REFERENCES tb_insn_info(id)
 );
 
 CREATE TABLE broker_shm (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
     init_mask INTEGER NOT NULL,
-	-- shm_type: 0 = insn, 1 = tb
-	shm_type INTEGER CHECK ( shm_type IN (0, 1) ),
+	-- shm_type: 0 = tb, 1 = insn
+	shm_type INTEGER CHECK ( shm_type IN (0, 1) )
 );
 
 CREATE TABLE client (
 	id INTEGER PRIMARY KEY,
-	name TEXT NULL,
+	name TEXT NULL
 );
 
 CREATE TABLE cosimulation_run (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
     start DATETIME DEFAULT CURRENT_TIMESTAMP,
 	end DATETIME DEFAULT NULL,
-	passed BOOLEAN, -- NULL means not finished yet
+	passed BOOLEAN -- NULL means not finished yet
 );
 
 CREATE TABLE cosimulation_run_clients (
@@ -71,13 +71,14 @@ CREATE TABLE cosimulation_run_clients (
 
 	PRIMARY KEY (run_id, client_id),
 	FOREIGN KEY (run_id) REFERENCES cosimulation_run(id),
-	FOREIGN KEY (client_id) REFERENCES client(id),
+	FOREIGN KEY (client_id) REFERENCES client(id)
 );
 
 CREATE TABLE client_entry (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	client_id INTEGER NOT NULL,
 	broker_shm_id INTEGER NOT NULL,
+	run_count INTEGER NOT NULL,
 	FOREIGN KEY (client_id) REFERENCES client(id),
 	FOREIGN KEY (broker_shm_id) REFERENCES broker_shm(id)
 );

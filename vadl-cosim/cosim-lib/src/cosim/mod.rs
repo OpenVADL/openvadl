@@ -316,7 +316,7 @@ impl Broker {
                 for (idx, client) in self.clients.iter().enumerate() {
                     let broker_data = get_client_trace(client, config);
                     let client_id = self.run_info.as_ref().unwrap().client_ids[idx];
-                    let trace = TraceEntryData::new(client_id, broker_data);
+                    let trace = TraceEntryData::new(client_id, client.run_count, broker_data);
                     store_trace(trace, &mut self.trace_connection)?;
                 }
                 Ok(())

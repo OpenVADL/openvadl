@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::Parser;
 use figment::{
     Figment,
@@ -43,7 +43,8 @@ fn main() -> Result<()> {
 
     if config.tracing.clear_on_rerun {
         let mut conn = connect(&config)?;
-        setup_database(&mut conn)?;
+        setup_database(&mut conn)
+            .context("failed to setup database")?;
     }
 
     let mut broker = Broker::create(&config)?;

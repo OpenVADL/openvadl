@@ -66,10 +66,11 @@ pub fn insert_client_entry(
     pool: &mut DBConnection,
     client_id: i64,
     broker_id: i64,
+    run_count: u64,
 ) -> Result<(), rusqlite::Error> {
     pool.execute(
-        r#"INSERT INTO client_entry(client_id, broker_shm_id) VALUES (?, ?)"#,
-        params![client_id, broker_id],
+        r#"INSERT INTO client_entry(client_id, broker_shm_id, run_count) VALUES (?, ?, ?)"#,
+        params![client_id, broker_id, run_count],
     )?;
     Ok(())
 }

@@ -16,13 +16,15 @@ pub mod db;
 pub struct TraceEntryData {
     /// The id of the `client` table in the database
     client_db_id: i64,
+    run_count: u64,
     broker_data: TraceBrokerData,
 }
 
 impl TraceEntryData {
-    pub fn new(client_db_id: i64, broker_data: TraceBrokerData) -> Self {
+    pub fn new(client_db_id: i64, run_count: u64, broker_data: TraceBrokerData) -> Self {
         Self {
             client_db_id,
+            run_count,
             broker_data,
         }
     }
@@ -52,7 +54,7 @@ pub fn store_trace(trace: TraceEntryData, connection: &mut Connection) -> Result
         }
     }?;
 
-    insert_client_entry(connection, trace.client_db_id, broker_id)?;
+    insert_client_entry(connection, trace.client_db_id, broker_id, trace.run_count)?;
 
     Ok(())
 }
@@ -81,15 +83,17 @@ pub fn trace_collect(
         clients.len() == client_ids.len(),
         "illegal call to trace_collect with different client-lens: {} != {}",
         clients.len(),
-        client_ids.len()
+        client_ids.len(),
     );
+
     clients
         .iter()
         .map(|c| get_client_trace(c, config))
         .enumerate()
-        .map(|(idx, broker_data)| TraceEntryData {
-            client_db_id: client_ids[idx],
+        .map(|(idx, broker_data)| TraceEntryData::new(
+            client_ids[idx],
+            clients[idx].run_count,
             broker_data,
-        })
+        ))
         .for_each(|t| store.push(t));
 }
