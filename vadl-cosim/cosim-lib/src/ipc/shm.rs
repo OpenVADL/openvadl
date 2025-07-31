@@ -43,7 +43,7 @@ impl SharedMemory<BrokerSem> {
 }
 
 impl SharedMemory<BrokerSHM> {
-    pub fn get_exec(&self) -> &BrokerSHMExec {
+    pub fn get_insn(&self) -> &BrokerSHMExec {
         unsafe { &self.get().data.shm_exec }
     }
 

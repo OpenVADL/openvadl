@@ -145,7 +145,7 @@ pub fn get_all_clients_instructions(
 pub fn get_client_instructions(client: &Client, config: &Config) -> DiffContextClientInstructions {
     match config.testing.protocol.layer {
         crate::config::ProtocolLayer::Insn => {
-            let exec = &client.shms.current().get_exec().insn_info;
+            let exec = &client.shms.current().get_insn().insn_info;
             let insn = exec.into();
             DiffContextClientInstructions(vec![insn])
         }
@@ -185,7 +185,7 @@ pub fn get_all_clients_contexts_before(
 
 pub fn get_client_context_before(client: &Client, config: &Config) -> DiffContextClientState {
     match config.testing.protocol.layer {
-        crate::config::ProtocolLayer::Insn => (client.shms.previous().get_exec(), config).into(),
+        crate::config::ProtocolLayer::Insn => (client.shms.previous().get_insn(), config).into(),
         crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
             (client.shms.previous().get_tb(), config).into()
         }
@@ -204,7 +204,7 @@ pub fn get_all_clients_contexts_current(
 
 pub fn get_client_context_current(client: &Client, config: &Config) -> DiffContextClientState {
     match config.testing.protocol.layer {
-        crate::config::ProtocolLayer::Insn => (client.shms.current().get_exec(), config).into(),
+        crate::config::ProtocolLayer::Insn => (client.shms.current().get_insn(), config).into(),
         crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
             (client.shms.current().get_tb(), config).into()
         }

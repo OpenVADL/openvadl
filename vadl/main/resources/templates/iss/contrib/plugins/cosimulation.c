@@ -134,17 +134,17 @@ typedef struct {
   int init_mask;
   SHMCPU cpus[MAX_CPU_COUNT];
   TBInfo tb_info;
-} BrokerSHM_TB;
+} BrokerSHMTB;
 
 typedef struct {
   int init_mask;
   SHMCPU cpus[MAX_CPU_COUNT];
   TBInsnInfo insn_info;
-} BrokerSHM_Exec;
+} BrokerSHMInsn;
 
 typedef union {
-  BrokerSHM_TB shm_tb;
-  BrokerSHM_Exec shm_exec;
+  BrokerSHMTB shm_tb;
+  BrokerSHMInsn shm_insn;
 } BrokerSHMData;
 
 typedef struct {
@@ -396,9 +396,9 @@ static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
 
   SHMCPU cpu = get_cpu_state(cpu_index);
 
-  shm->data.shm_exec.cpus[cpu_index] = cpu;
-  shm->data.shm_exec.init_mask |= (1 << cpu_index);
-  shm->data.shm_exec.insn_info = *tbinsn_info;
+  shm->data.shm_insn.cpus[cpu_index] = cpu;
+  shm->data.shm_insn.init_mask |= (1 << cpu_index);
+  shm->data.shm_insn.insn_info = *tbinsn_info;
 
   // TODO: we cannot free here because the same callback might be used multiple times when a tb gets reused
   // g_free(tbinsn_info);

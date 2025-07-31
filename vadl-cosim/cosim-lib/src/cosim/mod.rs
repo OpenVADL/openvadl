@@ -29,6 +29,7 @@ impl ClientSyncInfo {
 
 pub struct Broker {
     clients: Vec<Client>,
+    run_info: Option<CosimRunInfo>,
     trace_store: TraceStore,
     trace_connection: Connection,
 }
@@ -50,13 +51,24 @@ impl Broker {
             .map(|(idx, _)| Client::create(config, idx))
             .collect::<Result<Vec<_>>>()?;
 
-        let trace_connection = connect(config)?;
+        let mut trace_connection = connect(config)?;
 
-        Ok(Self {
-            clients,
-            trace_store: TraceStore::new(),
-            trace_connection,
-        })
+        if config.tracing.mode.enabled() {
+            let run_info = insert_new_cosimulation_run(&mut trace_connection, &clients)?;
+            Ok(Self {
+                clients,
+                run_info: Some(run_info),
+                trace_store: TraceStore::new(),
+                trace_connection,
+            })
+        } else {
+            Ok(Self {
+                clients,
+                run_info: None,
+                trace_store: TraceStore::new(),
+                trace_connection,
+            })
+        }
     }
 
     pub fn run(&mut self, config: &Config) -> Result<Report> {
@@ -67,11 +79,15 @@ impl Broker {
         }
     }
 
-    pub fn finish(mut self, config: &Config) -> Result<()> {
+    pub fn finish(mut self, passed: bool, config: &Config) -> Result<()> {
         if config.tracing.mode == crate::config::TracingMode::Collect {
             for entry in self.trace_store {
-                store_trace(entry, &self.trace_connection)?;
+                store_trace(entry, &mut self.trace_connection)?;
             }
+        }
+
+        if config.tracing.mode.enabled() {
+            finish_cosimulation_run_trace(&mut self.trace_connection, self.run_info.unwrap(), passed)?;
         }
 
         for client in &mut self.clients {
@@ -140,7 +156,7 @@ impl Broker {
             .clients
             .iter()
             .map(|c| match config.testing.protocol.layer {
-                crate::config::ProtocolLayer::Insn => c.shms.current().get_exec().insn_info.pc,
+                crate::config::ProtocolLayer::Insn => c.shms.current().get_insn().insn_info.pc,
                 crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
                     c.shms.current().get_tb().tb_info.pc
                 }
@@ -235,8 +251,8 @@ impl Broker {
 
                 match config.testing.protocol.layer {
                     crate::config::ProtocolLayer::Insn => {
-                        let c1insn = c1.shms.current().get_exec();
-                        let c2insn = c2.shms.current().get_exec();
+                        let c1insn = c1.shms.current().get_insn();
+                        let c2insn = c2.shms.current().get_insn();
 
                         return diff_cpus(
                             &c1insn.cpus,
@@ -280,13 +296,20 @@ impl Broker {
         match config.tracing.mode {
             TracingMode::None => Ok(()),
             TracingMode::Collect => {
-                trace_collect(&self.clients, config, &mut self.trace_store);
+                trace_collect(
+                    &self.clients,
+                    &self.run_info.as_ref().unwrap().client_ids,
+                    config,
+                    &mut self.trace_store,
+                );
                 Ok(())
             }
             TracingMode::Sync => {
-                for client in &self.clients {
-                    let trace = get_client_trace(client, config);
-                    store_trace(trace, &self.trace_connection)?;
+                for (idx, client) in self.clients.iter().enumerate() {
+                    let broker_data = get_client_trace(client, config);
+                    let client_id = self.run_info.as_ref().unwrap().client_ids[idx];
+                    let trace = TraceEntryData::new(client_id, broker_data);
+                    store_trace(trace, &mut self.trace_connection)?;
                 }
                 Ok(())
             }
