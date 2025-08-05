@@ -582,12 +582,16 @@ PRODUCTIONS
 
   aliasDefinition<out Definition def>                 (. var startLocation = nextTokenLoc(); AliasDefinition.AliasKind kind = null;
                                                          TypeLiteral aliasType = null; TypeLiteral targetType = null;
-                                                         IdentifierOrPlaceholder id = null;
+                                                         IdentifierOrPlaceholder id = null;  var params = new ArrayList<Identifier>();
                                                       .)
   = ALIAS
     (
       REGISTER                                        (. kind = AliasDefinition.AliasKind.REGISTER; .)
       identifierOrPlaceholder<out id>
+      { SYM_PAREN_OPEN
+        identifier<out Identifier param>                (. params.add(param); .)
+        SYM_PAREN_CLOSE
+      }
       // FIXME: This should probably use the same relationType as the register definition
       [
         SYM_COLON
@@ -605,7 +609,7 @@ PRODUCTIONS
       ]
     )
     SYM_EQ
-    callOrBinaryExpression<out Expr value, false>     (. def = new AliasDefinition(id, kind, aliasType, targetType, value, startLocation.join(lastTokenLoc())); .)
+    callOrBinaryExpression<out Expr value, false>     (. def = new AliasDefinition(id, kind, params, aliasType, targetType, value, startLocation.join(lastTokenLoc())); .)
   .
 
   usingDefinition<out Definition def>                         (. var start = nextTokenLoc(); .)

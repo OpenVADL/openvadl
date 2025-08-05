@@ -56,6 +56,18 @@ public class TensorType extends DataType {
     this.innerType = extending.innerType;
   }
 
+  BitsType innerType() {
+    return innerType;
+  }
+
+  int numberOfIndexDims() {
+    return dimensions.size();
+  }
+
+  List<Integer> indexDims() {
+    return dimensions;
+  }
+
   /**
    * Returns the type if the outermost dimension is removed.
    *

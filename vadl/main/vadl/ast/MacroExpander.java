@@ -683,7 +683,8 @@ class MacroExpander
   public Definition visit(AliasDefinition definition) {
     var id = expandId(definition.id);
     var value = expandExpr(definition.value);
-    return new AliasDefinition(id, definition.kind, definition.aliasType, definition.targetType,
+    return new AliasDefinition(id, definition.kind, definition.params, definition.aliasType,
+        definition.targetType,
         value, copyLoc(definition.loc)).withAnnotations(definition.annotations);
   }
 

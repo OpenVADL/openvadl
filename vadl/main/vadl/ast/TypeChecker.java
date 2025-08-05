@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
@@ -906,6 +907,7 @@ public class TypeChecker
           .build();
     };
 
+    definition.computedFixedArgs = List.of();
     if (definition.kind == AliasDefinition.AliasKind.REGISTER) {
       var reg = definition.symbolTable().findAs(targetIdent, RegisterDefinition.class);
       if (reg == null) {
@@ -931,14 +933,87 @@ public class TypeChecker
                 definition.loc.toIDEString()));
       }
 
-      var valType = check(definition.value);
-      definition.computedFixedArgs = List.of();
-      if (definition.value instanceof CallIndexExpr callIndexExpr) {
+      // we have to check the CallIndexExpr "manually" as the normal check cannot handle
+      // the param identifiers of the alias definition
+      if (definition.value instanceof Identifier targetReg) {
+        ensure(definition.params.isEmpty(), () ->
+            error("Unused alias register params", targetReg)
+                .description("All alias register parameters must be used: %s",
+                    definition.params.stream().map(i -> i.name).collect(
+                        Collectors.joining(", ")))
+        );
+        check(targetReg);
+      } else if (definition.value instanceof CallIndexExpr expr) {
+
+        var i = 0;
+        var foundParams = new ArrayList<Pair<Integer, Identifier>>();
+        CallIndexExpr.Arguments slice = null;
+        var dummyArgs = new ArrayList<CallIndexExpr.Arguments>();
+
+        for (var arg : expr.argsIndices) {
+          ensure(arg.values.size() == 1,
+              () -> error("All arguments must have exactly one value", definition.value));
+
+          var argVal = arg.values.getFirst();
+          if (argVal instanceof Identifier paramId && definition.params.contains(
+              paramId.target())) {
+            foundParams.add(Pair.of(i, paramId));
+          } else if (argVal instanceof RangeExpr) {
+            ensure(i == expr.argsIndices.size() - 1, () ->
+                error("Slices can only be done on the innermost dimension.", argVal));
+            slice = arg;
+          } else {
+            ensure(foundParams.isEmpty(),
+                () -> error("Constant accesses cannot occure after param accesses.", argVal));
+            dummyArgs.add(arg);
+          }
+
+          i++;
+        }
+
+        if (dummyArgs.size() > 0) {
+          var dummyCallIndexExpr =
+              new CallIndexExpr(targetIdent, dummyArgs, List.of(), expr.location);
+          dummyCallIndexExpr.symbolTable = expr.symbolTable;
+          expr.type = check(dummyCallIndexExpr);
+          expr.typeBeforeSlice = dummyCallIndexExpr.typeBeforeSlice;
+        } else {
+          expr.type = reg.type;
+          expr.typeBeforeSlice = reg.type;
+        }
+
         // If the target is a call index expression, we get all fixed arguments of the
         // alias register call.
-        definition.computedFixedArgs = AstUtils.flatArguments(callIndexExpr.args());
+        definition.computedFixedArgs = AstUtils.flatArguments(dummyArgs);
+
+        if (slice != null) {
+          var typeBeforeSlice = switch (expr.type()) {
+            case TensorType type -> {
+              ensure(type.numberOfIndexDims() >= foundParams.size(),
+                  () -> error("Invalid number of parameters", expr));
+              yield type.innerType();
+            }
+            case ConcreteRelationType type -> {
+              ensure(type.argTypes().size() == foundParams.size(), () ->
+                  error("Invalid number of parameters", expr));
+              yield type.resultType();
+            }
+            default -> {
+              ensure(foundParams.isEmpty(),
+                  () -> error("Params can only access tensor types", expr));
+              yield expr.type();
+            }
+          };
+
+          var oldType = expr.type();
+          visitSliceIndexCall(expr, typeBeforeSlice, List.of(slice));
+          var innerMostType = (BitsType) expr.type();
+          expr.type = setInnerMostType(oldType, innerMostType);
+          definition.slice = slice.computedBitSlice;
+        }
       }
 
+      var valType = definition.value.type();
       if (definition.aliasType != null) {
         definition.type = check(definition.aliasType);
         definition.value = tryWrapImplicitCast(definition.value, definition.type);
@@ -952,6 +1027,14 @@ public class TypeChecker
     throw new IllegalStateException(
         "Kind %s not yet implemented, found at: %s".formatted(definition.kind,
             definition.loc.toIDEString()));
+  }
+
+  private Type setInnerMostType(Type type, BitsType innerType) {
+    return switch (type) {
+      case TensorType tType -> new TensorType(tType.indexDims(), innerType);
+      case ConcreteRelationType rType -> Type.concreteRelation(rType.argTypes(), innerType);
+      default -> innerType;
+    };
   }
 
   @Override

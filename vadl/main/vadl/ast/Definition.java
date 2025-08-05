@@ -34,6 +34,7 @@ import vadl.types.ConcreteRelationType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
+import vadl.viam.Constant;
 import vadl.viam.asm.AsmToken;
 
 /**
@@ -2004,6 +2005,7 @@ class FunctionDefinition extends Definition implements IdentifiableNode, TypedNo
 class AliasDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder id;
   AliasKind kind;
+  List<Identifier> params;
   @Nullable
   @Child
   TypeLiteral aliasType;
@@ -2028,11 +2030,15 @@ class AliasDefinition extends Definition implements IdentifiableNode, TypedNode 
   @Nullable
   List<Expr> computedFixedArgs;
 
-  AliasDefinition(IdentifierOrPlaceholder id, AliasKind kind,
+  @Nullable
+  Constant.BitSlice slice;
+
+  AliasDefinition(IdentifierOrPlaceholder id, AliasKind kind, List<Identifier> params,
                   @Nullable TypeLiteral aliasType, @Nullable TypeLiteral targetType, Expr value,
                   SourceLocation location) {
     this.id = id;
     this.kind = kind;
+    this.params = params;
     this.aliasType = aliasType;
     this.targetType = targetType;
     this.value = value;
