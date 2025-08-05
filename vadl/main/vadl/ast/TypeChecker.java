@@ -985,6 +985,7 @@ public class TypeChecker
         // If the target is a call index expression, we get all fixed arguments of the
         // alias register call.
         definition.computedFixedArgs = AstUtils.flatArguments(dummyArgs);
+        definition.computedFixedArgs.forEach(this::check);
 
         if (slice != null) {
           var typeBeforeSlice = switch (expr.type()) {
@@ -1031,8 +1032,8 @@ public class TypeChecker
 
   private Type setInnerMostType(Type type, BitsType innerType) {
     return switch (type) {
-      case TensorType tType -> new TensorType(tType.indexDims(), innerType);
-      case ConcreteRelationType rType -> Type.concreteRelation(rType.argTypes(), innerType);
+      case TensorType tensorType -> new TensorType(tensorType.indexDims(), innerType);
+      case ConcreteRelationType relType -> Type.concreteRelation(relType.argTypes(), innerType);
       default -> innerType;
     };
   }

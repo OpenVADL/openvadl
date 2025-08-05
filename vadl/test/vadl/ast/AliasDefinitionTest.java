@@ -28,8 +28,15 @@ public class AliasDefinitionTest {
           register A: Bits<64>
           register B: Bits<5> -> Bits<64>
           register C: Bits<32><64>
+          register D: Bits<32><32><64>
         
           %s
+        
+          format F : Bits<32> =
+            { one : Bits<15>
+            , two : Bits<15>
+            , three : Bits<2>
+            }
         }
         """.formatted(content);
   }
@@ -37,11 +44,25 @@ public class AliasDefinitionTest {
   @Test
   void constantRegister() {
     var prog = prog("""
+        alias register W = A(12..0)
         alias register X(i) = B(i)(12..0)
+        alias register Y(i) = C(i)(12..0)
+        alias register U(j)(i) = D(j)(i)(12..0)
+        
+        function func(a: Bits<13>) -> Bits<13> = a
+        
+        instruction Test: F = {
+          W := func(W)
+          X(1) := func(X(2))
+          Y(2) := func(Y(2))
+          // U is not yet supported to write (even for normal registers)
+        }
+        encoding Test = { one = 0 }
+        assembly Test = ""
         """);
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-
+    new ViamLowering().generate(ast).verify();
   }
 }
