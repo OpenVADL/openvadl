@@ -27,6 +27,18 @@ Because, the code emitter always works with the binary encoding, we only need to
 instruction whether print the human readable representation of the binary encoded value - so the instruction field
 value - or the LLVM value, which can be defined by using the field access function.
 
+### Developer Documentation
+
+#### How do I benchmark the LCB manually?
+
+First of, you will need a LCB generated compiler. We have tests which can setup the entire environment for you:
+
+```
+export EMBENCH_BENCHMARK_RESULT_HOST_PATH=/home/kper/dipl/open-vadl/riscv32.csv
+export EMBENCH_BENCHMARK_RESULT_GUEST_PATH=/src/embench/result/executed_instructions_relative.csv
+./gradlew test -i --tests EmbenchBenchmarkRiscv32Test  -DincludeTags=BenchmarkTest
+```
+
 <div class="section_buttons">
 
 | Previous                            |                             |
