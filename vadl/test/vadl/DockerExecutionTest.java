@@ -195,6 +195,32 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * It will write the given {@code content} into a temporary file. The
    * temporary file requires a {@code prefix} and {@code suffix}.
    * Copies the data from {@code copyMappings}. Additionally, it will
+   * set environment variables based on {@code environmentMappings}.
+   *
+   * @param image               is the docker image for the {@link GenericContainer}.
+   * @param copyMappings        is a list where each {@link Pair} indicates what should be copied
+   *                            from the host to the container.
+   * @param environmentMappings is a list where each entry defines an environment variable which
+   *                            will be set in the container.
+   * @param cmd                 is the command which is executed.
+   */
+  protected void runContainerAndCopyInputIntoContainer(
+      ImageFromDockerfile image,
+      List<Pair<Path, String>> copyMappings,
+      Map<String, String> environmentMappings,
+      String cmd) {
+    runContainerAndCopyInputIntoContainerAndCopyFromContainerToHost(image,
+        copyMappings,
+        environmentMappings,
+        Collections.emptyList(),
+        cmd);
+  }
+
+  /**
+   * Starts a container and checks the status code for the exited container.
+   * It will write the given {@code content} into a temporary file. The
+   * temporary file requires a {@code prefix} and {@code suffix}.
+   * Copies the data from {@code copyMappings}. Additionally, it will
    * set environment variables based on {@code environmentMappings}. The {@code copyFromContainerToHost}
    * can be used to define mappings between host and guest system.
    *
@@ -235,32 +261,6 @@ public abstract class DockerExecutionTest extends AbstractTest {
         container.copyFileFromContainer(mapping.left(), mapping.right());
       }
     });
-  }
-
-  /**
-   * Starts a container and checks the status code for the exited container.
-   * It will write the given {@code content} into a temporary file. The
-   * temporary file requires a {@code prefix} and {@code suffix}.
-   * Copies the data from {@code copyMappings}. Additionally, it will
-   * set environment variables based on {@code environmentMappings}.
-   *
-   * @param image               is the docker image for the {@link GenericContainer}.
-   * @param copyMappings        is a list where each {@link Pair} indicates what should be copied
-   *                            from the host to the container.
-   * @param environmentMappings is a list where each entry defines an environment variable which
-   *                            will be set in the container.
-   * @param cmd                 is the command which is executed.
-   */
-  protected void runContainerAndCopyInputIntoContainer(
-      ImageFromDockerfile image,
-      List<Pair<Path, String>> copyMappings,
-      Map<String, String> environmentMappings,
-      String cmd) {
-    runContainerAndCopyInputIntoContainerAndCopyFromContainerToHost(image,
-        copyMappings,
-        environmentMappings,
-        Collections.emptyList(),
-        cmd);
   }
 
   /**
