@@ -4,8 +4,9 @@ FROM ghcr.io/openvadl/merged-toolchain@sha256:2ceaf5369996a5f3db0e0bb8e16ae5fe53
 
 FROM ubuntu:22.04 AS build
 
-ARG QEMU_VERSION="9.2.2"
-ENV QEMU_RELEASE="https://github.com/qemu/qemu/archive/refs/tags/v$QEMU_VERSION.tar.gz"
+# Enable when https://lists.nongnu.org/archive/html/qemu-discuss/2025-08/msg00000.html is fixed
+#ARG QEMU_VERSION="9.2.2"
+#ENV QEMU_RELEASE="https://github.com/qemu/qemu/archive/refs/tags/v$QEMU_VERSION.tar.gz"
 ENV QEMU_DIR=/qemu
 ENV PATH=$QEMU_DIR/build:$PATH
 
@@ -30,7 +31,8 @@ RUN apt update &&  \
 RUN pip install pyyaml qemu.qmp tomli
 
 # download qemu into the current directory
-RUN curl -L $QEMU_RELEASE | tar -xvz --strip-components=1
+#RUN curl -L $ | tar -xvz --strip-components=1
+RUN git clone -b stable-9.2 https://github.com/OpenVADL/qemu .
 
 # just make build dir
 RUN mkdir build
