@@ -23,7 +23,6 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.annotations.HalfWidthOfAnnotation;
 import vadl.gcb.passes.GenerateCompilerRegistersPass;
 import vadl.gcb.valuetypes.CompilerRegister;
 import vadl.gcb.valuetypes.CompilerRegisterClass;
@@ -156,12 +155,6 @@ public class GenerateTableGenRegistersPass extends Pass {
       }
 
       var type = ValueType.from(compilerRegisterClass.registerFile().resultType()).get();
-
-      if (compilerRegisterClass.registerFile() instanceof Definition def
-          && def.hasAnnotation(HalfWidthOfAnnotation.class)) {
-        var annotation = Objects.requireNonNull(def.annotation(HalfWidthOfAnnotation.class));
-        type = ValueType.from(Type.bits(1 + annotation.hi() - annotation.lo())).get();
-      }
 
       aliasRegisterClasses.add(
           new TableGenRegisterClass(
