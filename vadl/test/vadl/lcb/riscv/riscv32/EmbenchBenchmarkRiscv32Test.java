@@ -23,10 +23,11 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.TargetName;
+import vadl.lcb.LcbDockerExecutionTest;
 import vadl.lcb.riscv.DockerRiscvImageProvider;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
-public class EmbenchBenchmarkRiscv32Test extends EmbenchSpikeRiscv32SimulationTest {
+public class EmbenchBenchmarkRiscv32Test extends LcbDockerExecutionTest {
   @Tag("BenchmarkTest")
   @Test
   void runO3() throws DuplicatedPassKeyException, IOException {
@@ -69,5 +70,31 @@ public class EmbenchBenchmarkRiscv32Test extends EmbenchSpikeRiscv32SimulationTe
         hostPath,
         guestPath,
         cmd);
+  }
+
+
+  @Override
+  protected String getTarget() {
+    return "rv32im";
+  }
+
+  @Override
+  protected String getUpstreamBuildTarget() {
+    return "RISCV";
+  }
+
+  @Override
+  protected String getUpstreamClangTarget() {
+    return "riscv32";
+  }
+
+  @Override
+  protected String getSpikeTarget() {
+    return "rv64im";
+  }
+
+  @Override
+  protected String getAbi() {
+    return "ilp32";
   }
 }
