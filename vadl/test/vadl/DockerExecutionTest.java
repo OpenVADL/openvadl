@@ -126,7 +126,37 @@ public abstract class DockerExecutionTest extends AbstractTest {
       List<Pair<String, String>> copyMappings,
       String hostOutputPath,
       String containerResultPath) {
+    runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(image, copyMappings, hostOutputPath,
+        containerResultPath, null);
+  }
+
+  /**
+   * Starts a container and checks the status code for the exited container.
+   * It will copy the copy mappings into the container. After the container was
+   * executed it will copy a file back to read the result.
+   * It will assert that the status code is zero. If the check takes longer
+   * than 10 seconds or the status code is not zero then it will throw an
+   * exception.
+   *
+   * @param image               is the docker image for the {@link GenericContainer}.
+   * @param copyMappings        are mappings from the host to the container for the files which should
+   *                            be copied.
+   * @param hostOutputPath      is the path where the {@code containerResultPath} should be copied
+   *                            to.
+   * @param containerResultPath is the path of a file which the container has computed and should
+   *                            be copied to the host.
+   * @param cmd                 overwrites the command which will be executed on startup.
+   */
+  protected void runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(
+      ImageFromDockerfile image,
+      List<Pair<String, String>> copyMappings,
+      String hostOutputPath,
+      String containerResultPath,
+      @Nullable String cmd) {
     runContainer(image, (container) -> {
+          if (cmd != null) {
+            container.setCommand(cmd);
+          }
           for (var mapping : copyMappings) {
             container.withCopyToContainer(MountableFile.forHostPath(mapping.left()), mapping.right());
           }
@@ -135,7 +165,6 @@ public abstract class DockerExecutionTest extends AbstractTest {
         (container) -> container.copyFileFromContainer(containerResultPath, hostOutputPath)
     );
   }
-
 
   /**
    * Starts a container and checks the status code for the exited container.
@@ -151,50 +180,14 @@ public abstract class DockerExecutionTest extends AbstractTest {
    *                      temp file.
    * @throws IOException when the temp file is writable.
    */
-  protected void runContainerAndCopyInputIntoContainer(ImageFromDockerfile image,
-                                                       String content,
-                                                       String containerPath) throws IOException {
+  protected void runContainerAndCopyInputIntoContainer(
+      ImageFromDockerfile image,
+      String content,
+      String containerPath) throws IOException {
     runContainer(image, (container) -> container
             .withCopyToContainer(Transferable.of(content), containerPath),
         null
     );
-  }
-
-
-  /**
-   * Starts a container and checks the status code for the exited container.
-   * It will write the given {@code content} into a temporary file. The
-   * temporary file requires a {@code prefix} and {@code suffix}.
-   * Copies the data from {@code copyMappings}. Additionally, it will
-   * set environment variables based on {@code environmentMappings}.
-   *
-   * @param image               is the docker image for the {@link GenericContainer}.
-   * @param copyMappings        is a list where each {@link Pair} indicates what should be copied
-   *                            from the host to the container.
-   * @param environmentMappings is a list where each entry defines an environment variable which
-   *                            will be set in the container.
-   */
-  protected void runContainerAndCopyInputIntoContainer(ImageFromDockerfile image,
-                                                       List<Pair<Path, String>> copyMappings,
-                                                       Map<String, String> environmentMappings) {
-    runContainer(image, (container) -> {
-      for (var mapping : copyMappings) {
-        container
-            .withCopyFileToContainer(
-                MountableFile.forHostPath(mapping.left()),
-                mapping.right());
-      }
-
-      for (var mapping : environmentMappings.entrySet()) {
-        container
-            .withEnv(
-                mapping.getKey(),
-                mapping.getValue());
-      }
-
-      return container;
-    }, (container) -> {
-    });
   }
 
   /**
@@ -213,11 +206,12 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * @param copyFromContainerToHost copies from guest to host.
    * @param cmd                     is the command which is executed.
    */
-  protected void runContainerAndCopyInputIntoContainer(ImageFromDockerfile image,
-                                                       List<Pair<Path, String>> copyMappings,
-                                                       Map<String, String> environmentMappings,
-                                                       List<Pair<String, String>> copyFromContainerToHost,
-                                                       String cmd) {
+  protected void runContainerAndCopyInputIntoContainerAndCopyFromContainerToHost(
+      ImageFromDockerfile image,
+      List<Pair<Path, String>> copyMappings,
+      Map<String, String> environmentMappings,
+      List<Pair<String, String>> copyFromContainerToHost,
+      String cmd) {
     runContainer(image, (container) -> {
       for (var mapping : copyMappings) {
         container
@@ -257,11 +251,12 @@ public abstract class DockerExecutionTest extends AbstractTest {
    *                            will be set in the container.
    * @param cmd                 is the command which is executed.
    */
-  protected void runContainerAndCopyInputIntoContainer(ImageFromDockerfile image,
-                                                       List<Pair<Path, String>> copyMappings,
-                                                       Map<String, String> environmentMappings,
-                                                       String cmd) {
-    runContainerAndCopyInputIntoContainer(image,
+  protected void runContainerAndCopyInputIntoContainer(
+      ImageFromDockerfile image,
+      List<Pair<Path, String>> copyMappings,
+      Map<String, String> environmentMappings,
+      String cmd) {
+    runContainerAndCopyInputIntoContainerAndCopyFromContainerToHost(image,
         copyMappings,
         environmentMappings,
         Collections.emptyList(),

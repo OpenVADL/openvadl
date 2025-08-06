@@ -17,11 +17,16 @@
 package vadl.lcb.riscv.riscv32;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import vadl.configuration.LcbConfiguration;
+import vadl.gcb.valuetypes.TargetName;
+import vadl.lcb.riscv.DockerRiscvImageProvider;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
-public class EmbenchBenchmarkRiscv32 extends EmbenchSpikeRiscv32SimulationTest {
+public class EmbenchBenchmarkRiscv32Test extends EmbenchSpikeRiscv32SimulationTest {
   @Tag("BenchmarkTest")
   @Test
   void runO3() throws DuplicatedPassKeyException, IOException {
@@ -29,7 +34,40 @@ public class EmbenchBenchmarkRiscv32 extends EmbenchSpikeRiscv32SimulationTest {
   }
 
   protected void testEmbench(int optLevel) throws IOException, DuplicatedPassKeyException {
-    var cmd = "sh /src/embench/qemu_get_number_executed_instructions.sh riscv32";
-    run("sys/risc-v/rv32im.vadl", cmd);
+    var cmd =
+        "sh /src/embench/benchmark-extras/rv32-get-number-executed-instructions-spike-clang-lcb.sh";
+    run("sys/risc-v/rv32im.vadl", cmd, defaultEnvironment());
+  }
+
+  @Override
+  protected void run(String specPath, String cmd, Map<String, String> environments)
+      throws DuplicatedPassKeyException, IOException {
+    var doDebug = enableDebug();
+
+    var hostPath = System.getenv("EMBENCH_BENCHMARK_RESULT_HOST_PATH");
+    var guestPath = System.getenv("EMBENCH_BENCHMARK_RESULT_GUEST_PATH");
+
+    var configuration = new LcbConfiguration(getConfiguration(false),
+        new TargetName(getTarget()));
+
+    runLcb(configuration, specPath);
+    copyIntoDockerContext(configuration);
+
+    var redisCache = getRunningRedisCache();
+    var cachedImage =
+        DockerRiscvImageProvider.image(redisCache,
+            configuration.outputPath() + "/lcb/Dockerfile",
+            getTarget(),
+            getUpstreamBuildTarget(),
+            getUpstreamClangTarget(),
+            getSpikeTarget(),
+            getAbi(),
+            doDebug);
+
+    runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(cachedImage,
+        List.of(),
+        hostPath,
+        guestPath,
+        cmd);
   }
 }

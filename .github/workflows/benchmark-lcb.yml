@@ -39,10 +39,9 @@ jobs:
           cache: 'gradle'
       - name: Run tests
         run: |
-          ./gradlew test --tests EmbenchBenchmarkNumberOfExecutedInstructionsSpikeRiscv32SimulationTest -DincludeTags=BenchmarkTest
+          ./gradlew test -i --tests EmbenchBenchmarkRiscv32Test -DincludeTags=BenchmarkTest
         env:
           isCI: true
-          GATE_KEEPER_EMBENCH_NUMBER_EXECUTED_INSTRUCTIONS: true
           EMBENCH_BENCHMARK_RESULT_HOST_PATH: ${{ github.workspace }}/riscv32.csv
           EMBENCH_BENCHMARK_RESULT_GUEST_PATH: /src/embench/result/executed_instructions_relative.csv
       - name: Read

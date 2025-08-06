@@ -105,7 +105,9 @@ val createProperties by tasks.registering {
 
 
 tasks.withType<Test> {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags("BenchmarkTest")
+    }
     jvmArgs("--enable-preview")
     reports {
         junitXml.required.set(true)
