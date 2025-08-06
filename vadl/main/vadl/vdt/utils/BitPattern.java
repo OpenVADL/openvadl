@@ -78,6 +78,28 @@ public class BitPattern implements Vector<PBit>, Predicate<BitVector> {
   }
 
   /**
+   * Creates a bit pattern from the given value and maks, indicating which bits should are relevant.
+   *
+   * @param mask  The mask bits
+   * @param value The value bits
+   * @return The bit pattern.
+   */
+  public static BitPattern fromBitVector(BitVector mask, BitVector value) {
+    final PBit[] bits = new PBit[mask.width()];
+    if (mask.width() != value.width()) {
+      throw new IllegalArgumentException("Bit vectors must be aligned");
+    }
+    for (int i = 0; i < bits.length; i++) {
+      if (!mask.get(i).value()) {
+        bits[i] = new PBit(PBit.Value.DONT_CARE);
+        continue;
+      }
+      bits[i] = new PBit(value.get(i).value() ? PBit.Value.ONE : PBit.Value.ZERO);
+    }
+    return new BitPattern(bits);
+  }
+
+  /**
    * Creates an 'empty' bit pattern, i.e.: one where all bits are set to <i>don't care</i>.
    *
    * @param width The width of the bit pattern
@@ -104,6 +126,42 @@ public class BitPattern implements Vector<PBit>, Predicate<BitVector> {
       veBits[i] = new Bit(bits[i].getValue() != PBit.Value.DONT_CARE);
     }
     return new BitVector(veBits);
+  }
+
+  /**
+   * Left pads the bit vector with <i>don't care</i> bits.
+   *
+   * @param padding the padding
+   * @return the padded bit pattern
+   */
+  public BitPattern leftPad(int padding) {
+    final int target = padding + width();
+    final PBit[] result = new PBit[target];
+    for (int i = 0; i < padding; i++) {
+      result[i] = new PBit(PBit.Value.DONT_CARE);
+    }
+    for (int i = padding; i < target; i++) {
+      result[i] = get(i - padding);
+    }
+    return new BitPattern(result);
+  }
+
+  /**
+   * Right pads the bit vector with <i>don't care</i> bits.
+   *
+   * @param padding the padding
+   * @return the padded bit pattern
+   */
+  public BitPattern rightPad(int padding) {
+    final int target = padding + width();
+    final PBit[] result = new PBit[target];
+    for (int i = 0; i < width(); i++) {
+      result[i] = get(i);
+    }
+    for (int i = width(); i < target; i++) {
+      result[i] = new PBit(PBit.Value.DONT_CARE);
+    }
+    return new BitPattern(result);
   }
 
   /**

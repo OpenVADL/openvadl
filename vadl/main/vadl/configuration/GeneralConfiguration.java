@@ -33,8 +33,15 @@ public class GeneralConfiguration {
     this.doDump = doDump;
   }
 
+  /**
+   * Construct from an existing configuration.
+   *
+   * @param generalConfig the configuration to copy.
+   */
   public GeneralConfiguration(GeneralConfiguration generalConfig) {
     this(generalConfig.outputPath, generalConfig.doDump);
+    decoderOptions = generalConfig.getDecoderOptions();
+    dryRun = generalConfig.isDryRun();
   }
 
   public Path outputPath() {

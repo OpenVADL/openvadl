@@ -137,7 +137,11 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
     // Generate the actual decision tree code
     tree.accept(this);
 
-    appendable.append("return 0;\n");
+    if (!(tree instanceof SingleDecisionNode sn) || sn.getOtherChild() != null) {
+      // In case of a single decision node with an "else" branch, we already return 0 after the
+      // 'then' branch.
+      appendable.append("return 0;\n");
+    }
 
     appendable.unindent();
     appendable.append("}\n");
@@ -259,16 +263,22 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
 
     int shift = insnWidth - (node.getOffset() + length);
     if (offset > 0 && shift > 0) {
-      appendable.append("if ((insn >> %d) & 0x%x == 0x%x) {\n"
-          .formatted(shift, mask, value));
+      appendable.append("if (((insn >> %d) & 0x%x) %s 0x%x) {\n"
+          .formatted(shift, mask, node.isMatch() ? "==" : "!=", value));
     } else {
-      appendable.append("if (insn & 0x%x ==  0x%x) {\n"
-          .formatted(mask, value));
+      appendable.append("if ((insn & 0x%x) %s 0x%x) {\n"
+          .formatted(mask, node.isMatch() ? "==" : "!=", value));
     }
 
     appendable.indent();
     node.getMatchingChild().accept(this);
     appendable.unindent();
+
+    if (node.getOtherChild() == null) {
+      appendable.appendLn("}");
+      appendable.appendLn("return 0;");
+      return null;
+    }
 
     appendable.appendLn("} else {");
 
@@ -276,7 +286,7 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
     node.getOtherChild().accept(this);
     appendable.unindent();
 
-    appendable.append("}\n");
+    appendable.appendLn("}");
 
     return null;
   }
@@ -323,7 +333,7 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
           .append(insn.source().simpleName().toLowerCase(Locale.US))
           .append("(")
           .append(argsStr)
-          .appendLn(")) { return false; }");
+          .appendLn(")) { return 0; }");
     }
 
     // Call the translation function

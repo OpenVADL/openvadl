@@ -16,15 +16,25 @@
 
 package vadl.vdt.impl.irregular;
 
+import static vadl.vdt.utils.PatternUtils.toFixedBitPattern;
+
 import java.io.IOException;
+import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import vadl.TestUtils;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -37,12 +47,17 @@ import vadl.vdt.model.Node;
 import vadl.vdt.passes.VdtConstraintSynthesisPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
+import vadl.vdt.target.common.CheckedBitsCollector;
 import vadl.vdt.target.common.DecisionTreeDecoder;
+import vadl.vdt.target.dump.TextGraphGenerator;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
 import vadl.vdt.utils.Instruction;
+import vadl.vdt.utils.PBit;
 
 class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
+
+  private static final Logger log = LoggerFactory.getLogger(IrregularDecodeTreeGeneratorTest.class);
 
   @Test
   void testGenerate_simpleInstructions_succeeds() {
@@ -377,6 +392,123 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     assertDecision(decoder, "01110000", "I7");
   }
 
+  @Test
+  void testEncodingConstraints_checkRemainingConditions()
+      throws DuplicatedPassKeyException, IOException {
+
+    /* GIVEN */
+    var spec = TestUtils.compileToViam("""
+        instruction set architecture TEST = {
+        
+          register X: Bits<5>
+        
+          format Format: Bits<8> =
+          { a  [7..4]
+          , b  [3..2]
+          , c  [1..0]
+          }
+        
+          instruction I1: Format = { }
+        
+          assembly I1 = ( mnemonic )
+        
+          [select when: a = 0b0000 && (b != 0b01 || c = 0b00)]
+          encoding I1 = { a = 0b0000 }
+        }
+        """);
+    var config = new GeneralConfiguration(Path.of("build/test-output"), false);
+
+    var passManager = new PassManager();
+    passManager.add(new VdtInputPreparationPass(config));
+    passManager.add(new VdtConstraintSynthesisPass(config));
+    passManager.add(new VdtLoweringPass(config));
+
+    /* WHEN */
+    passManager.run(spec);
+
+    /* THEN */
+    final Node dt = getResult(passManager, VdtLoweringPass.class);
+    Assertions.assertNotNull(dt);
+
+    final DecisionTreeDecoder decoder = new DecisionTreeDecoder(dt);
+
+    assertDecision(decoder, "0000 0000", "I1");
+    assertDecision(decoder, "0000 0100", "I1");
+    assertDecision(decoder, "0000 1001", "I1");
+
+    assertNoDecision(decoder, "0000 0101");
+    assertNoDecision(decoder, "0000 0110");
+  }
+
+  @ParameterizedTest
+  @MethodSource("checkRemainingConditions_testSource")
+  void testEncodingConstraints_checkRemainingConditions_parameterized(String fixedEncoding,
+                                                                      String constraint)
+      throws DuplicatedPassKeyException, IOException {
+
+    /* GIVEN */
+    var spec = TestUtils.compileToViam("""
+        instruction set architecture TEST = {
+        
+          register X: Bits<5>
+        
+          format Format: Bits<8> =
+          { a  [7..4]
+          , b  [3..2]
+          , c  [1..0]
+          }
+        
+          instruction I1: Format = { }
+        
+          assembly I1 = ( mnemonic )
+        
+          [select when: %s]
+          encoding I1 = { %s }
+        }
+        """.formatted(constraint, fixedEncoding));
+    var config = new GeneralConfiguration(Path.of("build/test-output"), false);
+
+    var passManager = new PassManager();
+    passManager.add(new VdtInputPreparationPass(config));
+    passManager.add(new VdtConstraintSynthesisPass(config));
+    passManager.add(new VdtLoweringPass(config));
+
+    /* WHEN */
+    passManager.run(spec);
+
+    /* THEN */
+    final Node dt = getResult(passManager, VdtLoweringPass.class);
+    Assertions.assertNotNull(dt);
+
+    var decisionTable = new CheckedBitsCollector(dt).collect();
+
+    for (var checkedBits : decisionTable.entrySet()) {
+
+      final vadl.viam.Instruction i = checkedBits.getKey();
+      final BitPattern iPattern = toFixedBitPattern(i, ByteOrder.LITTLE_ENDIAN);
+
+      final BitPattern checkedPattern = checkedBits.getValue();
+
+      Assertions.assertEquals(
+          iPattern.width(), checkedPattern.width(),
+          "Instruction '%s' has a different width than the checked pattern.".formatted(
+              i.simpleName()));
+
+      Assertions.assertTrue(contains(checkedPattern, iPattern),
+          "Expected the checked pattern '%s' to be more specific than or equal to the instruction's fixed bits '%s'."
+              .formatted(checkedPattern, iPattern));
+    }
+  }
+
+  static Stream<Arguments> checkRemainingConditions_testSource() {
+    return Stream.of(
+        Arguments.of("b = 0b00", "c = 0b01"),
+        Arguments.of("b = 0b00", "b = 0b00"),
+        Arguments.of("b = 0b00", "c != 0b01"),
+        Arguments.of("b = 0b00", "c != 0b01 || a = 0b0000")
+    );
+  }
+
   @SuppressWarnings("unchecked")
   private <T, U extends Pass> T getResult(PassManager passManager, Class<U> passType) {
     return (T) passManager.getPassResults().lastResultOf(passType);
@@ -418,5 +550,27 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     Instruction decision = decoder.decide(BitVector.fromString(insn, insn.length()));
     Assertions.assertNotNull(decision);
     Assertions.assertEquals(expectedName, decision.source().simpleName());
+  }
+
+  private void assertNoDecision(DecisionTreeDecoder decoder, String insn) {
+    insn = insn.replace(" ", "");
+    String finalInsn = insn;
+    RuntimeException e = Assertions.assertThrows(RuntimeException.class,
+        () -> decoder.decide(BitVector.fromString(finalInsn, finalInsn.length())));
+    Assertions.assertTrue(e.getMessage().startsWith("No decision found"));
+  }
+
+  /**
+   * Checks whether the first pattern contains all fixed bits of the second pattern. I.e. whether
+   * p1 is more (or equally) specific than p2.
+   *
+   * @param p1 The first pattern to check.
+   * @param p2 The second pattern to check.
+   * @return true if p1 contains all fixed bits of p2, false otherwise.
+   */
+  private boolean contains(BitPattern p1, BitPattern p2) {
+    return IntStream.range(0, p1.width())
+        .allMatch(
+            i -> p1.get(i).equals(p2.get(i)) || p2.get(i).getValue() == PBit.Value.DONT_CARE);
   }
 }

@@ -16,33 +16,39 @@
 
 package vadl.vdt.impl.regular;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static vadl.vdt.target.common.DecisionTreeStatsCalculator.statistics;
-
 import java.io.IOException;
 import java.nio.file.Path;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import vadl.AbstractTest;
 import vadl.configuration.DecoderOptions;
 import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.IssConfiguration;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.model.Node;
 import vadl.vdt.passes.VdtConstraintSynthesisPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
+import vadl.vdt.target.common.DecisionTreeStatsCalculator;
+import vadl.vdt.target.dump.TextGraphGenerator;
 
-class RiscV64ITest extends AbstractTest {
+class Aarch64Test extends AbstractTest {
+
+  private static final Logger log = LoggerFactory.getLogger(Aarch64Test.class);
 
   @Test
-  void test_generate_tree() throws IOException, DuplicatedPassKeyException {
+  void testGenerateVDT() throws IOException, DuplicatedPassKeyException {
 
     /* GIVEN */
-    var config = new GeneralConfiguration(Path.of("build/test-output"), false);
+
+    var config =
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));
     config.getDecoderOptions().setGenerator(DecoderOptions.Generator.REGULAR);
 
-    var spec = runAndGetViamSpecification("sys/risc-v/rv64i.vadl");
+    var spec = runAndGetViamSpecification("sys/aarch64/virt.vadl");
 
     var manager = new PassManager();
     manager.add(new VdtInputPreparationPass(config));
@@ -53,16 +59,13 @@ class RiscV64ITest extends AbstractTest {
     manager.run(spec);
 
     /* THEN */
-    var tree = manager.getPassResults().lastResultOf(VdtLoweringPass.class, Node.class);
 
-    assertNotNull(tree);
+    var decodeTree = manager.getPassResults().lastResultOf(VdtLoweringPass.class, Node.class);
 
-    final var stats = statistics(tree);
+    Assertions.assertNotNull(decodeTree);
 
-    assertEquals(65, stats.getNumberOfNodes());
-    assertEquals(3, stats.getMaxDepth());
-    assertEquals(1, stats.getMinDepth());
-    assertEquals(2.06, Math.round(stats.getAvgDepth() * 100.0) / 100.0);
+    log.info("VDT: {}", DecisionTreeStatsCalculator.statistics(decodeTree));
+    log.info("Decoder: \n{}", new TextGraphGenerator(decodeTree).generate());
   }
 
 }

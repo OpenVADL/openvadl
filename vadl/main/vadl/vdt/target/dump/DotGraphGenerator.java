@@ -214,7 +214,8 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
     int shift = insnWidth - (node.getOffset() + length);
     if (offset > 0 && shift > 0) {
       lines.add(
-          "    %d [label=\"(insn >> %d) & 0x%x == 0x%x\"];\n".formatted(id, shift, mask, value));
+          "    %d [label=\"(insn >> %d) & 0x%x %s 0x%x\"];\n".formatted(id, shift, mask,
+              node.isMatch() ? "==" : "!=", value));
     } else {
       lines.add("    %d [label=\"insn & 0x%x == 0x%x\"];\n".formatted(id, mask, value));
     }
@@ -224,6 +225,10 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
     if (matchingResult != null) {
       lines.addAll(matchingResult.right());
       lines.add("    %d -> %d [label=\"Yes\"];\n".formatted(id, matchingResult.left()));
+    }
+
+    if (node.getOtherChild() == null) {
+      return Pair.of(id, lines);
     }
 
     var otherResult = node.getOtherChild().accept(this);
