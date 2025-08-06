@@ -414,7 +414,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
           ArtificialResource.Kind.REGISTER,
           innerResource,
           new BehaviorLowering(this).getRegisterAliasReadFunc(definition),
-          new BehaviorLowering(this).getRegisterAliasWriteProc(definition)
+          new BehaviorLowering(this).getRegisterAliasWriteProc(definition),
+          definition.slice
       ));
     }
 

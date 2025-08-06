@@ -18,6 +18,7 @@ package vadl.viam;
 
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 
@@ -47,6 +48,8 @@ public class ArtificialResource extends Resource implements GeneratesRegisterFil
 
   private final Function readFunction;
   private final Procedure writeProcedure;
+  @Nullable
+  private final Constant.BitSlice aliasSlice;
 
 
   /**
@@ -58,13 +61,14 @@ public class ArtificialResource extends Resource implements GeneratesRegisterFil
                             Kind kind,
                             Resource innerResourceRef,
                             Function readFunction,
-                            Procedure writeProcedure
+                            Procedure writeProcedure, @Nullable Constant.BitSlice aliasSlice
   ) {
     super(identifier);
     this.kind = kind;
     this.innerResourceRef = innerResourceRef;
     this.readFunction = readFunction;
     this.writeProcedure = writeProcedure;
+    this.aliasSlice = aliasSlice;
   }
 
   public Kind kind() {
@@ -81,6 +85,10 @@ public class ArtificialResource extends Resource implements GeneratesRegisterFil
 
   public Procedure writeProcedure() {
     return writeProcedure;
+  }
+
+  public @Nullable Constant.BitSlice aliasSlice() {
+    return aliasSlice;
   }
 
   @Override

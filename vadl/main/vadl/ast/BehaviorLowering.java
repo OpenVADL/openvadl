@@ -17,12 +17,15 @@
 package vadl.ast;
 
 
+import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
 import static vadl.utils.GraphUtils.ifElseSideEffect;
 import static vadl.utils.GraphUtils.intU;
 import static vadl.utils.GraphUtils.neq;
 import static vadl.utils.GraphUtils.or;
 import static vadl.utils.GraphUtils.select;
+import static vadl.utils.GraphUtils.truncate;
+import static vadl.utils.GraphUtils.zeroExtend;
 
 import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.concurrent.LazyInit;
@@ -300,6 +303,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       );
     }
 
+    if (definition.slice != null) {
+      regAccess = truncate(regAccess, Type.bits(definition.slice.bitSize()));
+    }
+
     var returnNode = graph.addWithInputs(new ReturnNode(regAccess));
     graph.addWithInputs(new StartNode(returnNode));
 
@@ -355,16 +362,26 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         1);
     params.add(valueParam);
 
+    ExpressionNode writeValue = new FuncParamNode(valueParam);
+
+    var regFile = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
+
+    if (definition.slice != null) {
+      ensure(definition.slice.lsb() == 0,
+          () -> error("Unsupported alias slice", definition)
+              .description("Currently, the alias slice MSB must be 0."));
+      writeValue = zeroExtend(writeValue, regFile.resultType(indices.size()));
+    }
+
     // FIXME: Support pre-indexed registers, for example:
     //  register X = Bits<3><4><32>
     //  register alias Z = X(1, 2)
     // FIXME: Wrap input and output in casts
     // FIXME: Add conditions based on annotations
-    var regFile = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
     var regfileWrite = new WriteRegTensorNode(
         regFile,
         indices,
-        new FuncParamNode(valueParam),
+        writeValue,
         null,
         null
     );
