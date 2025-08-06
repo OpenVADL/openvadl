@@ -63,6 +63,7 @@ instruction set architecture AArch64Base = {
   alias register R(i) = S(i)(31..0)   // lower half of general purpose register file with stack pointer
   [zero : X(31)]                      // X(31) is the zero register
   alias register  X = S               // general purpose register file with zero register
+  [zero : W(31)]                      // X(31) is the zero register
   alias register W(i) = X(i)(31..0)   // lower half of general purpose register file with zero register
   alias register SP : Address = S(31) // stack pointer
   alias register LR : Address = S(30) // link register (return address)
