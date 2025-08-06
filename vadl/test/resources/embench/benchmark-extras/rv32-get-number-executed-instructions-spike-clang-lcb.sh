@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-set -e
+#set -e
 
 cd $(realpath $(dirname "$0"))
 
-SPIKE_TARGET='rv32im'
+SPIKE_TARGET='riscv32'
 
 mkdir ../result
 
@@ -11,7 +11,7 @@ mkdir ../result
 # This builds in the binaries in the `bd` folder.
 # Then, we calculate the number of executed instructions for upstream.
 sh run-benchmarks-spike-clang-upstream-O3.sh
-sh ../spike_get_number_executed_instructions.sh $SPIKE_TARGET
+sh ../qemu_get_number_executed_instructions.sh $SPIKE_TARGET
 # Finally, we save the result for later.
 mv ../bd/executed_instructions_absolute.csv ../result/executed_instructions_absolute_upstream.csv
 
@@ -24,7 +24,7 @@ echo "Upstream is done."
 # an unintentional side effect. We do not need that, but we want to execute the same
 # downstream benchmarks but do not want to declare them twice.
 sh rv32-run-benchmarks-spike-clang-lcb-O3.sh
-sh ../spike_get_number_executed_instructions.sh $SPIKE_TARGET
+sh ../qemu_get_number_executed_instructions.sh $SPIKE_TARGET
 # Finally, we save the result for later.
 mv ../bd/executed_instructions_absolute.csv ../result/executed_instructions_absolute_lcb.csv
 

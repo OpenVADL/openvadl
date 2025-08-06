@@ -1,4 +1,4 @@
-FROM ghcr.io/openvadl/lcb-test-base@sha256:88d6f4e766b96ce74bd0b4fa9a5608a6eff0331ff21fe14eb16d30b9946723bf AS riscv-toolchain
+FROM ghcr.io/openvadl/lcb-test-base@sha256:c3cce3f0bc3bfe905668cd3528151c0465ad12aaca0fdd43f8e1bf39dc1c3def AS riscv-toolchain
 
 # Build elf updater tool
 FROM rust:1.87 AS rust-builder

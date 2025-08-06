@@ -58,7 +58,7 @@ public class EmbenchSpikeRiscv32SimulationTest extends LcbDockerExecutionTest {
     return "ilp32";
   }
 
-  void testEmbench(int optLevel) throws IOException, DuplicatedPassKeyException {
+  protected void testEmbench(int optLevel) throws IOException, DuplicatedPassKeyException {
     var cmd = "sh /src/embench/benchmark-extras/rv32-run-benchmarks-spike-clang-lcb-O" + optLevel
         + ".sh";
     run("sys/risc-v/rv32im.vadl", cmd);

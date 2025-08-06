@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.TargetName;
-import vadl.lcb.riscv.SpikeRiscvImageProvider;
+import vadl.lcb.riscv.DockerRiscvImageProvider;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 
@@ -74,7 +74,7 @@ public abstract class LcbDockerInputFileExecutionTest extends LcbDockerExecution
 
     var redisCache = getRunningRedisCache();
     var cachedImage =
-        SpikeRiscvImageProvider.image(redisCache,
+        DockerRiscvImageProvider.image(redisCache,
             configuration.outputPath() + "/lcb/Dockerfile",
             getTarget(),
             getUpstreamBuildTarget(),

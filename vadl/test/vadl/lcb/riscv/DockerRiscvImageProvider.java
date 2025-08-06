@@ -26,7 +26,7 @@ import vadl.DockerExecutionTest;
  * A singleton implementation to keep the reference to a {@link ImageFromDockerfile} to avoid
  * recompilation between {@link LlvmRiscvAssemblyTest} and {@link SpikeRiscvSimulationTest}.
  */
-public class SpikeRiscvImageProvider {
+public class DockerRiscvImageProvider {
   private static Map<String, ImageFromDockerfile> images = new HashMap<>();
 
   /**
@@ -61,7 +61,7 @@ public class SpikeRiscvImageProvider {
         throw new RuntimeException("It is not allowed to activate 'deleteOnExit' in the CI");
       }
 
-      var img = redisCache.setupEnv(new ImageFromDockerfile("tc_spike_riscv"
+      var img = redisCache.setupEnv(new ImageFromDockerfile("tc_spike_riscv_"
           + target, deleteOnExit)
           .withDockerfile(Paths.get(pathDockerFile))
           .withBuildArg("TARGET", target)

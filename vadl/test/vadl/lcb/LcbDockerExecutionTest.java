@@ -22,16 +22,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.TargetName;
-import vadl.lcb.riscv.SpikeRiscvImageProvider;
+import vadl.lcb.riscv.DockerRiscvImageProvider;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 
 public abstract class LcbDockerExecutionTest extends AbstractLcbTest {
+  protected boolean enableDebug() {
+    return false;
+  }
+
   protected abstract String getTarget();
 
   protected abstract String getUpstreamBuildTarget();
@@ -65,8 +70,21 @@ public abstract class LcbDockerExecutionTest extends AbstractLcbTest {
     copyEmbenchIntoDockerContext(configuration);
   }
 
+  protected Map<String, String> defaultEnvironment() {
+    var map = new HashMap<String, String>();
+    map.put("LLVM_PARALLEL_COMPILE_JOBS", "4");
+    map.put("LLVM_PARALLEL_LINK_JOBS", "2");
+    return map;
+  }
+
   protected void run(String specPath, String cmd) throws DuplicatedPassKeyException, IOException {
-    var doDebug = false;
+    var environment = defaultEnvironment();
+    run(specPath, cmd, environment);
+  }
+
+  protected void run(String specPath, String cmd, Map<String, String> environments)
+      throws DuplicatedPassKeyException, IOException {
+    var doDebug = enableDebug();
     var configuration = new LcbConfiguration(getConfiguration(false),
         new TargetName(getTarget()));
 
@@ -75,7 +93,7 @@ public abstract class LcbDockerExecutionTest extends AbstractLcbTest {
 
     var redisCache = getRunningRedisCache();
     var cachedImage =
-        SpikeRiscvImageProvider.image(redisCache,
+        DockerRiscvImageProvider.image(redisCache,
             configuration.outputPath() + "/lcb/Dockerfile",
             getTarget(),
             getUpstreamBuildTarget(),
@@ -87,9 +105,7 @@ public abstract class LcbDockerExecutionTest extends AbstractLcbTest {
     runContainerAndCopyInputIntoContainer(cachedImage,
         List.of(Pair.of(Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
             "/src/inputs")),
-        Map.of(
-            "LLVM_PARALLEL_COMPILE_JOBS", "4",
-            "LLVM_PARALLEL_LINK_JOBS", "2"),
+        environments,
         cmd);
   }
 }
