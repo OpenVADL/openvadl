@@ -5,12 +5,10 @@ use anyhow::{Context, Result};
 use crate::{
     config::Config,
     ipc::cstructs::{BrokerSHMInsn, BrokerSHMTB},
-    trace::db::{insert_broker_shm_insn, insert_broker_shm_tb, insert_client_entry},
+    db::{insert_broker_shm_insn, insert_broker_shm_tb, insert_client_entry},
 };
 
 use rusqlite::{Connection, OpenFlags};
-
-pub mod db;
 
 #[derive(Debug)]
 pub struct TraceEntryData {

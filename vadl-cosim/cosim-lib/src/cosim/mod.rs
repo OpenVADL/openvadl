@@ -4,17 +4,14 @@ use tracing::debug;
 
 use crate::{
     config::{Config, TracingMode},
+    db::{CosimRunInfo, finish_cosimulation_run_trace, insert_new_cosimulation_run},
     diff::{
         DiffContext, DiffContextClient, DiffEntry, Report, diff::diff_cpus,
         get_all_clients_contexts_before, get_all_clients_contexts_current,
         get_all_clients_instructions,
     },
     ipc::qemu::Client,
-    trace::{
-        TraceEntryData, TraceStore, connect,
-        db::{CosimRunInfo, finish_cosimulation_run_trace, insert_new_cosimulation_run},
-        get_client_trace, store_trace, trace_collect,
-    },
+    trace::{TraceEntryData, TraceStore, connect, get_client_trace, store_trace, trace_collect},
 };
 
 #[derive(Debug)]
@@ -108,7 +105,7 @@ impl Broker {
     fn run_lockstep(&mut self, config: &Config) -> Result<Report> {
         for (idx, client) in self.clients.iter_mut().enumerate() {
             let client_cfg = config.for_client(idx);
-            client.run_n_times(client_cfg.skip_n_instructions, config);
+            client.skip_n_times(client_cfg.skip_n_instructions, config);
         }
 
         let mut diffs = vec![];
@@ -121,7 +118,7 @@ impl Broker {
                 crate::config::ProtocolLayer::Insn | crate::config::ProtocolLayer::TBStrict => {
                     for client in &mut self.clients {
                         if client.is_open {
-                            client.run(config);
+                            let _ = client.run(config);
                         }
                     }
                 }
@@ -194,7 +191,10 @@ impl Broker {
                     .collect::<Vec<_>>();
                 insns_executed_per_client[idx] = insn_sizes.len();
 
-                if client.run(config) {
+                // The run_count is not incremented (skipped) when synchronizing clients
+                // Rather, the run_count is incremented once the synchronization finished for the
+                // client (= the while-loop is exited)
+                if client.skip(config) {
                     let shm = client.shms.current().get_tb();
                     let end_pc = shm.tb_info.pc;
                     let sync_info = ClientSyncInfo {
@@ -210,6 +210,9 @@ impl Broker {
                     }
                 }
             }
+
+            // Client finished its synchronization -> increase run_count by one
+            client.run_count += 1;
         }
 
         // Every client reached a jump-instruction - therefore all should be at the same PC

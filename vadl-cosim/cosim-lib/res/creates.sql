@@ -1,17 +1,17 @@
-CREATE TABLE shm_register (
+CREATE TABLE register (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     cpu_id INTEGER, 
     size INTEGER NOT NULL,
     data BLOB NOT NULL,
     name TEXT NOT NULL,
-    FOREIGN KEY (cpu_id) REFERENCES shm_cpu(id)
+    FOREIGN KEY (cpu_id) REFERENCES cpu(id)
 );
 
-CREATE TABLE shm_cpu (
+CREATE TABLE cpu (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     idx INTEGER NOT NULL,
-	broker_shm_id INTEGER NOT NULL,
-	FOREIGN KEY (broker_shm_id) REFERENCES broker_shm(id)
+	broker_id INTEGER NOT NULL,
+	FOREIGN KEY (broker_id) REFERENCES broker(id)
 );
 
 CREATE TABLE tb_insn_info (
@@ -32,25 +32,25 @@ CREATE TABLE tb_info (
     pc INTEGER NOT NULL
 );
 
-CREATE TABLE broker_shm_tb (
+CREATE TABLE broker_tb (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     tb_info_id INTEGER NOT NULL,
-    FOREIGN KEY (id) REFERENCES broker_shm(id),
+    FOREIGN KEY (id) REFERENCES broker(id),
     FOREIGN KEY (tb_info_id) REFERENCES tb_info(id)
 );
 
-CREATE TABLE broker_shm_insn (
+CREATE TABLE broker_insn (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     insn_info_id INTEGER NOT NULL,
-    FOREIGN KEY (id) REFERENCES broker_shm(id),
+    FOREIGN KEY (id) REFERENCES broker(id),
     FOREIGN KEY (insn_info_id) REFERENCES tb_insn_info(id)
 );
 
-CREATE TABLE broker_shm (
+CREATE TABLE broker (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
     init_mask INTEGER NOT NULL,
-	-- shm_type: 0 = tb, 1 = insn
-	shm_type INTEGER CHECK ( shm_type IN (0, 1) )
+	-- type: 0 = tb, 1 = insn
+	type INTEGER CHECK ( type IN (0, 1) )
 );
 
 CREATE TABLE client (
@@ -77,8 +77,8 @@ CREATE TABLE cosimulation_run_clients (
 CREATE TABLE client_entry (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	client_id INTEGER NOT NULL,
-	broker_shm_id INTEGER NOT NULL,
+	broker_id INTEGER NOT NULL,
 	run_count INTEGER NOT NULL,
 	FOREIGN KEY (client_id) REFERENCES client(id),
-	FOREIGN KEY (broker_shm_id) REFERENCES broker_shm(id)
+	FOREIGN KEY (broker_id) REFERENCES broker(id)
 );
