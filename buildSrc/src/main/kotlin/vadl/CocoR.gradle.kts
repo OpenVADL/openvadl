@@ -54,7 +54,7 @@ open class GenerateCocoParserTask @Inject constructor(
             println("Generating from $it...")
             execOps.exec {
                 commandLine(
-                    "java", "-jar", cocoJar.get().asFile.absolutePath,
+                    "/home/kper/.sdkman/candidates/java/21.0.6-graal/bin/java", "-jar", cocoJar.get().asFile.absolutePath,
                     "-o", outputDirFile.path,
                     *opts.toTypedArray(),
                     it
