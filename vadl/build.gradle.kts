@@ -31,9 +31,9 @@ dependencies {
     implementation(project(":java-annotations"))
     implementation("org.thymeleaf:thymeleaf:3.1.2.RELEASE")
     implementation("com.google.guava:guava:33.2.1-jre")
-    implementation("ch.qos.logback:logback-classic:1.5.6")
+    implementation("ch.qos.logback:logback-classic:1.5.13")
     implementation("commons-io:commons-io:2.16.1")
-    implementation("org.apache.commons:commons-lang3:3.17.0")
+    implementation("org.apache.commons:commons-lang3:3.18.0")
     implementation("org.apache.commons:commons-text:1.10.0")
 
 
@@ -41,7 +41,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.assertj:assertj-core:3.26.3")
     testImplementation("org.awaitility:awaitility:4.2.1")
-    testImplementation("org.testcontainers:testcontainers:1.20.6")
+    testImplementation("org.testcontainers:testcontainers:1.21.3")
     testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
     testAnnotationProcessor(project(":java-annotations"))
     // Helps getting test files small and concise
