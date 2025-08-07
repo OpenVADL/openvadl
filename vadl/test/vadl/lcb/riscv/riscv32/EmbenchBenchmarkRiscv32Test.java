@@ -31,10 +31,10 @@ public class EmbenchBenchmarkRiscv32Test extends LcbDockerExecutionTest {
   @Tag("BenchmarkTest")
   @Test
   void runO3() throws DuplicatedPassKeyException, IOException {
-    testEmbench(3);
+    testEmbench();
   }
 
-  protected void testEmbench(int optLevel) throws IOException, DuplicatedPassKeyException {
+  protected void testEmbench() throws IOException, DuplicatedPassKeyException {
     var cmd =
         "sh /src/embench/benchmark-extras/rv32-get-number-executed-instructions-spike-clang-lcb.sh";
     run("sys/risc-v/rv32im.vadl", cmd, defaultEnvironment());

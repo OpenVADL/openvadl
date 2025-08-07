@@ -106,7 +106,19 @@ val createProperties by tasks.registering {
 
 tasks.withType<Test> {
     useJUnitPlatform {
-        excludeTags("BenchmarkTest")
+        val include = System.getProperty("tags.include")
+        val exclude = System.getProperty("tags.exclude")
+
+        if (include != null) {
+            includeTags(include)
+        } else {
+            // Default: exclude fast
+            excludeTags("BenchmarkTest")
+        }
+
+        if (exclude != null) {
+            excludeTags(exclude)
+        }
     }
     jvmArgs("--enable-preview")
     reports {
