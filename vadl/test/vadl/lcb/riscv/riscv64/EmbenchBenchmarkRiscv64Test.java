@@ -23,7 +23,7 @@ import vadl.lcb.riscv.AbstractLcbBenchmarkTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
 public class EmbenchBenchmarkRiscv64Test extends AbstractLcbBenchmarkTest {
-  @Tag("BenchmarkTest")
+  //@Tag("BenchmarkTest")
   @Test
   void runO3() throws DuplicatedPassKeyException, IOException {
     testEmbench();
