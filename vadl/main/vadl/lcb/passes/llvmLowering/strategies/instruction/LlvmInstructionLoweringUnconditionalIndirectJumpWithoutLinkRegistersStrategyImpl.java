@@ -66,7 +66,6 @@ public class LlvmInstructionLoweringUnconditionalIndirectJumpWithoutLinkRegister
       replaceNode(instruction, node);
     }
 
-    copy.deinitializeNodes();
     return Optional.of(
         createIntermediateResult(instruction, copy, registerDefsUses));
   }

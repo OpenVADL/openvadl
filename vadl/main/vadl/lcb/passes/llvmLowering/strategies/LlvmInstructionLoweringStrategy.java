@@ -304,8 +304,6 @@ public abstract class LlvmInstructionLoweringStrategy {
 
     var isLowerable = !hasRedFlags(instruction, copy);
     var info = lowerBaseInfo(instruction, copy, registerDefsUses);
-    copy.deinitializeNodes();
-
 
     if (isLowerable) {
       var additionalBehaviors = new ArrayList<Pair<Graph, List<GcbInstructionOperand>>>();
