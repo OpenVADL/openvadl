@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.riscv.riscv32;
+package vadl.lcb.riscv.riscv64;
 
 import java.io.IOException;
 import org.junit.jupiter.api.Tag;
@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import vadl.lcb.riscv.AbstractLcbBenchmarkTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
-public class EmbenchBenchmarkRiscv32Test extends AbstractLcbBenchmarkTest {
+public class EmbenchBenchmarkRiscv64Test extends AbstractLcbBenchmarkTest {
   @Tag("BenchmarkTest")
   @Test
   void runO3() throws DuplicatedPassKeyException, IOException {
@@ -31,13 +31,13 @@ public class EmbenchBenchmarkRiscv32Test extends AbstractLcbBenchmarkTest {
 
   protected void testEmbench() throws IOException, DuplicatedPassKeyException {
     var cmd =
-        "sh /src/embench/benchmark-extras/rv32-get-number-executed-instructions-spike-clang-lcb.sh";
-    run("sys/risc-v/rv32im.vadl", cmd, defaultEnvironment());
+        "sh /src/embench/benchmark-extras/rv64-get-number-executed-instructions-spike-clang-lcb.sh";
+    run("sys/risc-v/rv64im.vadl", cmd, defaultEnvironment());
   }
 
   @Override
   protected String getTarget() {
-    return "rv32im";
+    return "rv64im";
   }
 
   @Override
@@ -47,7 +47,7 @@ public class EmbenchBenchmarkRiscv32Test extends AbstractLcbBenchmarkTest {
 
   @Override
   protected String getUpstreamClangTarget() {
-    return "riscv32";
+    return "riscv64";
   }
 
   @Override
@@ -57,6 +57,6 @@ public class EmbenchBenchmarkRiscv32Test extends AbstractLcbBenchmarkTest {
 
   @Override
   protected String getAbi() {
-    return "ilp32";
+    return "lp64";
   }
 }

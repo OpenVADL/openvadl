@@ -3,14 +3,14 @@
 
 cd $(realpath $(dirname "$0"))
 
-SPIKE_TARGET='riscv32'
+SPIKE_TARGET='riscv64'
 
 mkdir ../result
 
 # First, we run the benchmarks for clang.
 # This builds in the binaries in the `bd` folder.
 # Then, we calculate the number of executed instructions for upstream.
-sh run-rv32-benchmarks-spike-clang-upstream-O3.sh
+sh run-benchmarks-spike-clang-upstream-O3.sh
 sh ../qemu_get_number_executed_instructions.sh $SPIKE_TARGET
 # Finally, we save the result for later.
 mv ../bd/executed_instructions_absolute.csv ../result/executed_instructions_absolute_upstream.csv
