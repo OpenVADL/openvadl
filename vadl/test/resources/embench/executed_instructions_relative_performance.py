@@ -13,4 +13,4 @@ p["rel"] = p['upstream'] / p['lcb']
 p.to_csv('../result/executed_instructions_relative.csv', header=None, index=False)
 mean = stats.gmean(p["rel"])
 print("Upstream / LCB")
-print("Lcb emits more instructions than upstream: " + str(mean) + "(" + str(1 - mean) + ")"
+print("Lcb emits more instructions than upstream: " + str(mean) + "(" + str(1 - mean) + ")")
