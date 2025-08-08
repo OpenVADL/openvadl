@@ -10,7 +10,7 @@ WORKDIR /usr/src/elf_machine_updater
 RUN cargo build --release
 
 # LLVM
-FROM ghcr.io/openvadl/llvm19-base@sha256:f753f892f576f82f477d2c597d84207bc874d89ecda1c7644dbaf95f81439cb5
+FROM ghcr.io/openvadl/llvm19-base@sha256:743dc3df521b6721ee4a74126aff198f40b6fc585d2c06b76869cabbb3d2c015
 RUN apt update -y
 RUN apt-get install -y device-tree-compiler python3 python3-pip python3-pandas vim libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev libslirp0 time
 COPY --from=riscv-toolchain /opt/riscv /opt/riscv
