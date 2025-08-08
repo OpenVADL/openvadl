@@ -99,7 +99,6 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       replaceNode(instruction, node);
     }
 
-    copy.deinitializeNodes();
     return Optional.of(
         createIntermediateResult(labelledMachineInstructions, instruction, copy, abi,
             registerDefsUses));
