@@ -184,174 +184,6 @@ def SelectCC_S: Instruction {
 
 
 
-class AArch64Base_STPW_offWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STPW_wrapper";
-  let DecoderMethod = "AArch64Base_STPW_offWSize_decode_wrapper";
-}
-
-def AArch64Base_STPW_offWSizeAsInt64
-    : AArch64Base_STPW_offWSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STPW_offWSize_predicate(Imm); }]>;
-
-def AArch64Base_STPW_offWSizeAsLabel : AArch64Base_STPW_offWSize<OtherVT>;
-
-class AArch64Base_CCMPINEW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPINEW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPINEW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPINEW_immXAsInt64
-    : AArch64Base_CCMPINEW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPINEW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPINEW_immXAsLabel : AArch64Base_CCMPINEW_immX<OtherVT>;
-
-class AArch64Base_CCMPINEW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPINEW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPINEW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPINEW_nzcvAsInt8
-    : AArch64Base_CCMPINEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPINEW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPINEW_nzcvAsLabel : AArch64Base_CCMPINEW_nzcv<OtherVT>;
-
-class AArch64Base_SUBXSXSB_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXSXSB_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSXSB_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBXSXSB_imm3AsInt8
-    : AArch64Base_SUBXSXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSXSB_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBXSXSB_imm3AsLabel : AArch64Base_SUBXSXSB_imm3<OtherVT>;
-
-class AArch64Base_CCMNCSW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNCSW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNCSW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNCSW_nzcvAsInt8
-    : AArch64Base_CCMNCSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNCSW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNCSW_nzcvAsLabel : AArch64Base_CCMNCSW_nzcv<OtherVT>;
-
-class AArch64Base_CCMNEQX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNEQX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNEQX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNEQX_nzcvAsInt8
-    : AArch64Base_CCMNEQX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNEQX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNEQX_nzcvAsLabel : AArch64Base_CCMNEQX_nzcv<OtherVT>;
-
-class AArch64Base_CCMNCSX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNCSX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNCSX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNCSX_nzcvAsInt8
-    : AArch64Base_CCMNCSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNCSX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNCSX_nzcvAsLabel : AArch64Base_CCMNCSX_nzcv<OtherVT>;
-
-class AArch64Base_CCMPINEX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPINEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPINEX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPINEX_immXAsInt64
-    : AArch64Base_CCMPINEX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPINEX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPINEX_immXAsLabel : AArch64Base_CCMPINEX_immX<OtherVT>;
-
-class AArch64Base_CCMPINEX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPINEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPINEX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPINEX_nzcvAsInt8
-    : AArch64Base_CCMPINEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPINEX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPINEX_nzcvAsLabel : AArch64Base_CCMPINEX_nzcv<OtherVT>;
-
-class AArch64Base_ADDXSUXSH_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXSUXSH_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXSUXSH_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDXSUXSH_imm3AsInt8
-    : AArch64Base_ADDXSUXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSUXSH_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDXSUXSH_imm3AsLabel : AArch64Base_ADDXSUXSH_imm3<OtherVT>;
-
-class AArch64Base_CCMPPLX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPPLX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPPLX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPPLX_nzcvAsInt8
-    : AArch64Base_CCMPPLX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPPLX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPPLX_nzcvAsLabel : AArch64Base_CCMPPLX_nzcv<OtherVT>;
-
-class AArch64Base_ORRIW_immWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ORRIW_wrapper";
-  let DecoderMethod = "AArch64Base_ORRIW_immWSize_decode_wrapper";
-}
-
-def AArch64Base_ORRIW_immWSizeAsInt32
-    : AArch64Base_ORRIW_immWSize<i32>
-    , ImmLeaf<i32, [{ return AArch64Base_ORRIW_immWSize_predicate(Imm); }]>;
-
-def AArch64Base_ORRIW_immWSizeAsLabel : AArch64Base_ORRIW_immWSize<OtherVT>;
-
-class AArch64Base_ADDWUXSX_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWUXSX_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWUXSX_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDWUXSX_imm3AsInt8
-    : AArch64Base_ADDWUXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWUXSX_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDWUXSX_imm3AsLabel : AArch64Base_ADDWUXSX_imm3<OtherVT>;
-
-class AArch64Base_SUBXSUXSH_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXSUXSH_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSUXSH_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBXSUXSH_imm3AsInt8
-    : AArch64Base_SUBXSUXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSUXSH_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBXSUXSH_imm3AsLabel : AArch64Base_SUBXSUXSH_imm3<OtherVT>;
-
 class AArch64Base_ORNWLSR_imm6<ValueType ty> : Operand<ty>
 {
   let EncoderMethod = "AArch64Base_ORNWLSR_wrapper";
@@ -363,1830 +195,6 @@ def AArch64Base_ORNWLSR_imm6AsInt8
     , ImmLeaf<i8, [{ return AArch64Base_ORNWLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORNWLSR_imm6AsLabel : AArch64Base_ORNWLSR_imm6<OtherVT>;
-
-class AArch64Base_CCMNIEQW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIEQW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIEQW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNIEQW_immXAsInt64
-    : AArch64Base_CCMNIEQW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNIEQW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIEQW_immXAsLabel : AArch64Base_CCMNIEQW_immX<OtherVT>;
-
-class AArch64Base_CCMNIEQW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIEQW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIEQW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNIEQW_nzcvAsInt8
-    : AArch64Base_CCMNIEQW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIEQW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIEQW_nzcvAsLabel : AArch64Base_CCMNIEQW_nzcv<OtherVT>;
-
-class AArch64Base_SBFMX_leftXSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SBFMX_wrapper";
-  let DecoderMethod = "AArch64Base_SBFMX_leftXSize_decode_wrapper";
-}
-
-def AArch64Base_SBFMX_leftXSizeAsInt8
-    : AArch64Base_SBFMX_leftXSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SBFMX_leftXSize_predicate(Imm); }]>;
-
-def AArch64Base_SBFMX_leftXSizeAsLabel : AArch64Base_SBFMX_leftXSize<OtherVT>;
-
-class AArch64Base_SBFMX_rightXSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SBFMX_wrapper";
-  let DecoderMethod = "AArch64Base_SBFMX_rightXSize_decode_wrapper";
-}
-
-def AArch64Base_SBFMX_rightXSizeAsInt8
-    : AArch64Base_SBFMX_rightXSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SBFMX_rightXSize_predicate(Imm); }]>;
-
-def AArch64Base_SBFMX_rightXSizeAsLabel : AArch64Base_SBFMX_rightXSize<OtherVT>;
-
-class AArch64Base_ADDWLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWLSL_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_ADDWLSL_imm6AsInt8
-    : AArch64Base_ADDWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ADDWLSL_imm6AsLabel : AArch64Base_ADDWLSL_imm6<OtherVT>;
-
-class AArch64Base_CCMPILTX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPILTX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPILTX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPILTX_immXAsInt64
-    : AArch64Base_CCMPILTX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPILTX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPILTX_immXAsLabel : AArch64Base_CCMPILTX_immX<OtherVT>;
-
-class AArch64Base_CCMPILTX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPILTX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPILTX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPILTX_nzcvAsInt8
-    : AArch64Base_CCMPILTX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPILTX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPILTX_nzcvAsLabel : AArch64Base_CCMPILTX_nzcv<OtherVT>;
-
-class AArch64Base_SUBXI_imm12X<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXI_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXI_imm12X_decode_wrapper";
-}
-
-def AArch64Base_SUBXI_imm12XAsInt64
-    : AArch64Base_SUBXI_imm12X<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_SUBXI_imm12X_predicate(Imm); }]>;
-
-def AArch64Base_SUBXI_imm12XAsLabel : AArch64Base_SUBXI_imm12X<OtherVT>;
-
-class AArch64Base_ADDWUXSH_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWUXSH_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWUXSH_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDWUXSH_imm3AsInt8
-    : AArch64Base_ADDWUXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWUXSH_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDWUXSH_imm3AsLabel : AArch64Base_ADDWUXSH_imm3<OtherVT>;
-
-class AArch64Base_LDRSBX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRSBX_wrapper";
-  let DecoderMethod = "AArch64Base_LDRSBX_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRSBX_offsetAsInt64
-    : AArch64Base_LDRSBX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRSBX_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRSBX_offsetAsLabel : AArch64Base_LDRSBX_offset<OtherVT>;
-
-class AArch64Base_EORWROR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EORWROR_wrapper";
-  let DecoderMethod = "AArch64Base_EORWROR_imm6_decode_wrapper";
-}
-
-def AArch64Base_EORWROR_imm6AsInt8
-    : AArch64Base_EORWROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EORWROR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_EORWROR_imm6AsLabel : AArch64Base_EORWROR_imm6<OtherVT>;
-
-class AArch64Base_MOVKWPos00_imm16<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MOVKWPos00_wrapper";
-  let DecoderMethod = "AArch64Base_MOVKWPos00_imm16_decode_wrapper";
-}
-
-def AArch64Base_MOVKWPos00_imm16AsInt16
-    : AArch64Base_MOVKWPos00_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVKWPos00_imm16_predicate(Imm); }]>;
-
-def AArch64Base_MOVKWPos00_imm16AsLabel : AArch64Base_MOVKWPos00_imm16<OtherVT>;
-
-class AArch64Base_B_MI_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_MI_wrapper";
-  let DecoderMethod = "AArch64Base_B_MI_offset_decode_wrapper";
-}
-
-def AArch64Base_B_MI_offsetAsInt64
-    : AArch64Base_B_MI_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_MI_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_MI_offsetAsLabel : AArch64Base_B_MI_offset<OtherVT>;
-
-class AArch64Base_ANDSWLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDSWLSR_wrapper";
-  let DecoderMethod = "AArch64Base_ANDSWLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ANDSWLSR_imm6AsInt8
-    : AArch64Base_ANDSWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDSWLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ANDSWLSR_imm6AsLabel : AArch64Base_ANDSWLSR_imm6<OtherVT>;
-
-class AArch64Base_SUBWSI12_imm12S<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWSI12_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSI12_imm12S_decode_wrapper";
-}
-
-def AArch64Base_SUBWSI12_imm12SAsInt64
-    : AArch64Base_SUBWSI12_imm12S<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_SUBWSI12_imm12S_predicate(Imm); }]>;
-
-def AArch64Base_SUBWSI12_imm12SAsLabel : AArch64Base_SUBWSI12_imm12S<OtherVT>;
-
-class AArch64Base_CCMNPLX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNPLX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNPLX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNPLX_nzcvAsInt8
-    : AArch64Base_CCMNPLX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNPLX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNPLX_nzcvAsLabel : AArch64Base_CCMNPLX_nzcv<OtherVT>;
-
-class AArch64Base_MOVKXPos16_imm16<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MOVKXPos16_wrapper";
-  let DecoderMethod = "AArch64Base_MOVKXPos16_imm16_decode_wrapper";
-}
-
-def AArch64Base_MOVKXPos16_imm16AsInt16
-    : AArch64Base_MOVKXPos16_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVKXPos16_imm16_predicate(Imm); }]>;
-
-def AArch64Base_MOVKXPos16_imm16AsLabel : AArch64Base_MOVKXPos16_imm16<OtherVT>;
-
-class AArch64Base_EORXLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EORXLSL_wrapper";
-  let DecoderMethod = "AArch64Base_EORXLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_EORXLSL_imm6AsInt8
-    : AArch64Base_EORXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EORXLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_EORXLSL_imm6AsLabel : AArch64Base_EORXLSL_imm6<OtherVT>;
-
-class AArch64Base_CCMPIALX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIALX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIALX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPIALX_immXAsInt64
-    : AArch64Base_CCMPIALX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPIALX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIALX_immXAsLabel : AArch64Base_CCMPIALX_immX<OtherVT>;
-
-class AArch64Base_CCMPIALX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIALX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIALX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPIALX_nzcvAsInt8
-    : AArch64Base_CCMPIALX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIALX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIALX_nzcvAsLabel : AArch64Base_CCMPIALX_nzcv<OtherVT>;
-
-class AArch64Base_BICSWROR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BICSWROR_wrapper";
-  let DecoderMethod = "AArch64Base_BICSWROR_imm6_decode_wrapper";
-}
-
-def AArch64Base_BICSWROR_imm6AsInt8
-    : AArch64Base_BICSWROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICSWROR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_BICSWROR_imm6AsLabel : AArch64Base_BICSWROR_imm6<OtherVT>;
-
-class AArch64Base_CCMPCSW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPCSW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPCSW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPCSW_nzcvAsInt8
-    : AArch64Base_CCMPCSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPCSW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPCSW_nzcvAsLabel : AArch64Base_CCMPCSW_nzcv<OtherVT>;
-
-class AArch64Base_CCMNILEX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNILEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNILEX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNILEX_immXAsInt64
-    : AArch64Base_CCMNILEX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNILEX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNILEX_immXAsLabel : AArch64Base_CCMNILEX_immX<OtherVT>;
-
-class AArch64Base_CCMNILEX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNILEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNILEX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNILEX_nzcvAsInt8
-    : AArch64Base_CCMNILEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNILEX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNILEX_nzcvAsLabel : AArch64Base_CCMNILEX_nzcv<OtherVT>;
-
-class AArch64Base_CCMNPLW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNPLW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNPLW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNPLW_nzcvAsInt8
-    : AArch64Base_CCMNPLW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNPLW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNPLW_nzcvAsLabel : AArch64Base_CCMNPLW_nzcv<OtherVT>;
-
-class AArch64Base_CCMPIMIX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIMIX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIMIX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPIMIX_immXAsInt64
-    : AArch64Base_CCMPIMIX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPIMIX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIMIX_immXAsLabel : AArch64Base_CCMPIMIX_immX<OtherVT>;
-
-class AArch64Base_CCMPIMIX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIMIX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIMIX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPIMIX_nzcvAsInt8
-    : AArch64Base_CCMPIMIX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIMIX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIMIX_nzcvAsLabel : AArch64Base_CCMPIMIX_nzcv<OtherVT>;
-
-class AArch64Base_CCMPGTW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPGTW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPGTW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPGTW_nzcvAsInt8
-    : AArch64Base_CCMPGTW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPGTW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPGTW_nzcvAsLabel : AArch64Base_CCMPGTW_nzcv<OtherVT>;
-
-class AArch64Base_EONWASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EONWASR_wrapper";
-  let DecoderMethod = "AArch64Base_EONWASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_EONWASR_imm6AsInt8
-    : AArch64Base_EONWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EONWASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_EONWASR_imm6AsLabel : AArch64Base_EONWASR_imm6<OtherVT>;
-
-class AArch64Base_ANDXROR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDXROR_wrapper";
-  let DecoderMethod = "AArch64Base_ANDXROR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ANDXROR_imm6AsInt8
-    : AArch64Base_ANDXROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDXROR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ANDXROR_imm6AsLabel : AArch64Base_ANDXROR_imm6<OtherVT>;
-
-class AArch64Base_UBFMW_leftWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_UBFMW_wrapper";
-  let DecoderMethod = "AArch64Base_UBFMW_leftWSize_decode_wrapper";
-}
-
-def AArch64Base_UBFMW_leftWSizeAsInt8
-    : AArch64Base_UBFMW_leftWSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_UBFMW_leftWSize_predicate(Imm); }]>;
-
-def AArch64Base_UBFMW_leftWSizeAsLabel : AArch64Base_UBFMW_leftWSize<OtherVT>;
-
-class AArch64Base_UBFMW_rightWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_UBFMW_wrapper";
-  let DecoderMethod = "AArch64Base_UBFMW_rightWSize_decode_wrapper";
-}
-
-def AArch64Base_UBFMW_rightWSizeAsInt8
-    : AArch64Base_UBFMW_rightWSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_UBFMW_rightWSize_predicate(Imm); }]>;
-
-def AArch64Base_UBFMW_rightWSizeAsLabel : AArch64Base_UBFMW_rightWSize<OtherVT>;
-
-class AArch64Base_SUBWSSXSH_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWSSXSH_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSSXSH_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBWSSXSH_imm3AsInt8
-    : AArch64Base_SUBWSSXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSSXSH_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBWSSXSH_imm3AsLabel : AArch64Base_SUBWSSXSH_imm3<OtherVT>;
-
-class AArch64Base_B_HI_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_HI_wrapper";
-  let DecoderMethod = "AArch64Base_B_HI_offset_decode_wrapper";
-}
-
-def AArch64Base_B_HI_offsetAsInt64
-    : AArch64Base_B_HI_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_HI_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_HI_offsetAsLabel : AArch64Base_B_HI_offset<OtherVT>;
-
-class AArch64Base_STRPstH_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STRPstH_wrapper";
-  let DecoderMethod = "AArch64Base_STRPstH_offset_decode_wrapper";
-}
-
-def AArch64Base_STRPstH_offsetAsInt64
-    : AArch64Base_STRPstH_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STRPstH_offset_predicate(Imm); }]>;
-
-def AArch64Base_STRPstH_offsetAsLabel : AArch64Base_STRPstH_offset<OtherVT>;
-
-class AArch64Base_CCMPIGEW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIGEW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIGEW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPIGEW_immXAsInt64
-    : AArch64Base_CCMPIGEW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPIGEW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIGEW_immXAsLabel : AArch64Base_CCMPIGEW_immX<OtherVT>;
-
-class AArch64Base_CCMPIGEW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIGEW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIGEW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPIGEW_nzcvAsInt8
-    : AArch64Base_CCMPIGEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIGEW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIGEW_nzcvAsLabel : AArch64Base_CCMPIGEW_nzcv<OtherVT>;
-
-class AArch64Base_SUBWI_imm12X<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWI_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWI_imm12X_decode_wrapper";
-}
-
-def AArch64Base_SUBWI_imm12XAsInt64
-    : AArch64Base_SUBWI_imm12X<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_SUBWI_imm12X_predicate(Imm); }]>;
-
-def AArch64Base_SUBWI_imm12XAsLabel : AArch64Base_SUBWI_imm12X<OtherVT>;
-
-class AArch64Base_CCMPGTX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPGTX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPGTX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPGTX_nzcvAsInt8
-    : AArch64Base_CCMPGTX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPGTX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPGTX_nzcvAsLabel : AArch64Base_CCMPGTX_nzcv<OtherVT>;
-
-class AArch64Base_B_AL_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_AL_wrapper";
-  let DecoderMethod = "AArch64Base_B_AL_offset_decode_wrapper";
-}
-
-def AArch64Base_B_AL_offsetAsInt64
-    : AArch64Base_B_AL_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_AL_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_AL_offsetAsLabel : AArch64Base_B_AL_offset<OtherVT>;
-
-class AArch64Base_ANDSWLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDSWLSL_wrapper";
-  let DecoderMethod = "AArch64Base_ANDSWLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_ANDSWLSL_imm6AsInt8
-    : AArch64Base_ANDSWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDSWLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ANDSWLSL_imm6AsLabel : AArch64Base_ANDSWLSL_imm6<OtherVT>;
-
-class AArch64Base_ADDWUXSB_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWUXSB_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWUXSB_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDWUXSB_imm3AsInt8
-    : AArch64Base_ADDWUXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWUXSB_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDWUXSB_imm3AsLabel : AArch64Base_ADDWUXSB_imm3<OtherVT>;
-
-class AArch64Base_STRPreH_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STRPreH_wrapper";
-  let DecoderMethod = "AArch64Base_STRPreH_offset_decode_wrapper";
-}
-
-def AArch64Base_STRPreH_offsetAsInt64
-    : AArch64Base_STRPreH_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STRPreH_offset_predicate(Imm); }]>;
-
-def AArch64Base_STRPreH_offsetAsLabel : AArch64Base_STRPreH_offset<OtherVT>;
-
-class AArch64Base_CBNZW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CBNZW_wrapper";
-  let DecoderMethod = "AArch64Base_CBNZW_offset_decode_wrapper";
-}
-
-def AArch64Base_CBNZW_offsetAsInt64
-    : AArch64Base_CBNZW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CBNZW_offset_predicate(Imm); }]>;
-
-def AArch64Base_CBNZW_offsetAsLabel : AArch64Base_CBNZW_offset<OtherVT>;
-
-class AArch64Base_ANDSWASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDSWASR_wrapper";
-  let DecoderMethod = "AArch64Base_ANDSWASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ANDSWASR_imm6AsInt8
-    : AArch64Base_ANDSWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDSWASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ANDSWASR_imm6AsLabel : AArch64Base_ANDSWASR_imm6<OtherVT>;
-
-class AArch64Base_STURW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STURW_wrapper";
-  let DecoderMethod = "AArch64Base_STURW_offset_decode_wrapper";
-}
-
-def AArch64Base_STURW_offsetAsInt64
-    : AArch64Base_STURW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STURW_offset_predicate(Imm); }]>;
-
-def AArch64Base_STURW_offsetAsLabel : AArch64Base_STURW_offset<OtherVT>;
-
-class AArch64Base_SUBWUXSH_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWUXSH_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWUXSH_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBWUXSH_imm3AsInt8
-    : AArch64Base_SUBWUXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWUXSH_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBWUXSH_imm3AsLabel : AArch64Base_SUBWUXSH_imm3<OtherVT>;
-
-class AArch64Base_CCMNIHIW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIHIW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIHIW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNIHIW_immXAsInt64
-    : AArch64Base_CCMNIHIW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNIHIW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIHIW_immXAsLabel : AArch64Base_CCMNIHIW_immX<OtherVT>;
-
-class AArch64Base_CCMNIHIW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIHIW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIHIW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNIHIW_nzcvAsInt8
-    : AArch64Base_CCMNIHIW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIHIW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIHIW_nzcvAsLabel : AArch64Base_CCMNIHIW_nzcv<OtherVT>;
-
-class AArch64Base_ADDWSUXSB_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWSUXSB_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSUXSB_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDWSUXSB_imm3AsInt8
-    : AArch64Base_ADDWSUXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSUXSB_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDWSUXSB_imm3AsLabel : AArch64Base_ADDWSUXSB_imm3<OtherVT>;
-
-class AArch64Base_CCMNNVW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNNVW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNNVW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNNVW_nzcvAsInt8
-    : AArch64Base_CCMNNVW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNNVW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNNVW_nzcvAsLabel : AArch64Base_CCMNNVW_nzcv<OtherVT>;
-
-class AArch64Base_BICXROR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BICXROR_wrapper";
-  let DecoderMethod = "AArch64Base_BICXROR_imm6_decode_wrapper";
-}
-
-def AArch64Base_BICXROR_imm6AsInt8
-    : AArch64Base_BICXROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICXROR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_BICXROR_imm6AsLabel : AArch64Base_BICXROR_imm6<OtherVT>;
-
-class AArch64Base_CBNZX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CBNZX_wrapper";
-  let DecoderMethod = "AArch64Base_CBNZX_offset_decode_wrapper";
-}
-
-def AArch64Base_CBNZX_offsetAsInt64
-    : AArch64Base_CBNZX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CBNZX_offset_predicate(Imm); }]>;
-
-def AArch64Base_CBNZX_offsetAsLabel : AArch64Base_CBNZX_offset<OtherVT>;
-
-class AArch64Base_LDRPreH_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRPreH_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPreH_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRPreH_offsetAsInt64
-    : AArch64Base_LDRPreH_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPreH_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRPreH_offsetAsLabel : AArch64Base_LDRPreH_offset<OtherVT>;
-
-class AArch64Base_LDURSHX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDURSHX_wrapper";
-  let DecoderMethod = "AArch64Base_LDURSHX_offset_decode_wrapper";
-}
-
-def AArch64Base_LDURSHX_offsetAsInt64
-    : AArch64Base_LDURSHX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDURSHX_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDURSHX_offsetAsLabel : AArch64Base_LDURSHX_offset<OtherVT>;
-
-class AArch64Base_CCMNCCW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNCCW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNCCW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNCCW_nzcvAsInt8
-    : AArch64Base_CCMNCCW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNCCW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNCCW_nzcvAsLabel : AArch64Base_CCMNCCW_nzcv<OtherVT>;
-
-class AArch64Base_CCMNIGTW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIGTW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIGTW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNIGTW_immXAsInt64
-    : AArch64Base_CCMNIGTW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNIGTW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIGTW_immXAsLabel : AArch64Base_CCMNIGTW_immX<OtherVT>;
-
-class AArch64Base_CCMNIGTW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIGTW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIGTW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNIGTW_nzcvAsInt8
-    : AArch64Base_CCMNIGTW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIGTW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIGTW_nzcvAsLabel : AArch64Base_CCMNIGTW_nzcv<OtherVT>;
-
-class AArch64Base_ADDWSLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWSLSR_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ADDWSLSR_imm6AsInt8
-    : AArch64Base_ADDWSLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ADDWSLSR_imm6AsLabel : AArch64Base_ADDWSLSR_imm6<OtherVT>;
-
-class AArch64Base_SUBXLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXLSR_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_SUBXLSR_imm6AsInt8
-    : AArch64Base_SUBXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_SUBXLSR_imm6AsLabel : AArch64Base_SUBXLSR_imm6<OtherVT>;
-
-class AArch64Base_LDRSHX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRSHX_wrapper";
-  let DecoderMethod = "AArch64Base_LDRSHX_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRSHX_offsetAsInt64
-    : AArch64Base_LDRSHX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRSHX_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRSHX_offsetAsLabel : AArch64Base_LDRSHX_offset<OtherVT>;
-
-class AArch64Base_LDRPreB_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRPreB_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPreB_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRPreB_offsetAsInt64
-    : AArch64Base_LDRPreB_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPreB_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRPreB_offsetAsLabel : AArch64Base_LDRPreB_offset<OtherVT>;
-
-class AArch64Base_SUBXSI_imm12X<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXSI_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSI_imm12X_decode_wrapper";
-}
-
-def AArch64Base_SUBXSI_imm12XAsInt64
-    : AArch64Base_SUBXSI_imm12X<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_SUBXSI_imm12X_predicate(Imm); }]>;
-
-def AArch64Base_SUBXSI_imm12XAsLabel : AArch64Base_SUBXSI_imm12X<OtherVT>;
-
-class AArch64Base_EONWLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EONWLSL_wrapper";
-  let DecoderMethod = "AArch64Base_EONWLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_EONWLSL_imm6AsInt8
-    : AArch64Base_EONWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EONWLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_EONWLSL_imm6AsLabel : AArch64Base_EONWLSL_imm6<OtherVT>;
-
-class AArch64Base_CCMPMIW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPMIW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPMIW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPMIW_nzcvAsInt8
-    : AArch64Base_CCMPMIW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPMIW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPMIW_nzcvAsLabel : AArch64Base_CCMPMIW_nzcv<OtherVT>;
-
-class AArch64Base_LDRSWX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRSWX_wrapper";
-  let DecoderMethod = "AArch64Base_LDRSWX_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRSWX_offsetAsInt64
-    : AArch64Base_LDRSWX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRSWX_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRSWX_offsetAsLabel : AArch64Base_LDRSWX_offset<OtherVT>;
-
-class AArch64Base_ANDWROR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDWROR_wrapper";
-  let DecoderMethod = "AArch64Base_ANDWROR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ANDWROR_imm6AsInt8
-    : AArch64Base_ANDWROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDWROR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ANDWROR_imm6AsLabel : AArch64Base_ANDWROR_imm6<OtherVT>;
-
-class AArch64Base_ADDXASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXASR_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ADDXASR_imm6AsInt8
-    : AArch64Base_ADDXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ADDXASR_imm6AsLabel : AArch64Base_ADDXASR_imm6<OtherVT>;
-
-class AArch64Base_SUBXASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXASR_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_SUBXASR_imm6AsInt8
-    : AArch64Base_SUBXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_SUBXASR_imm6AsLabel : AArch64Base_SUBXASR_imm6<OtherVT>;
-
-class AArch64Base_LDURW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDURW_wrapper";
-  let DecoderMethod = "AArch64Base_LDURW_offset_decode_wrapper";
-}
-
-def AArch64Base_LDURW_offsetAsInt64
-    : AArch64Base_LDURW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDURW_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDURW_offsetAsLabel : AArch64Base_LDURW_offset<OtherVT>;
-
-class AArch64Base_ANDXASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDXASR_wrapper";
-  let DecoderMethod = "AArch64Base_ANDXASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ANDXASR_imm6AsInt8
-    : AArch64Base_ANDXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDXASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ANDXASR_imm6AsLabel : AArch64Base_ANDXASR_imm6<OtherVT>;
-
-class AArch64Base_EORIX_immXSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EORIX_wrapper";
-  let DecoderMethod = "AArch64Base_EORIX_immXSize_decode_wrapper";
-}
-
-def AArch64Base_EORIX_immXSizeAsInt64
-    : AArch64Base_EORIX_immXSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_EORIX_immXSize_predicate(Imm); }]>;
-
-def AArch64Base_EORIX_immXSizeAsLabel : AArch64Base_EORIX_immXSize<OtherVT>;
-
-class AArch64Base_LDRPreSBX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRPreSBX_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPreSBX_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRPreSBX_offsetAsInt64
-    : AArch64Base_LDRPreSBX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPreSBX_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRPreSBX_offsetAsLabel : AArch64Base_LDRPreSBX_offset<OtherVT>;
-
-class AArch64Base_CCMPIPLW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIPLW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIPLW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPIPLW_immXAsInt64
-    : AArch64Base_CCMPIPLW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPIPLW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIPLW_immXAsLabel : AArch64Base_CCMPIPLW_immX<OtherVT>;
-
-class AArch64Base_CCMPIPLW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIPLW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIPLW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPIPLW_nzcvAsInt8
-    : AArch64Base_CCMPIPLW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIPLW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIPLW_nzcvAsLabel : AArch64Base_CCMPIPLW_nzcv<OtherVT>;
-
-class AArch64Base_ADDWSLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWSLSL_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_ADDWSLSL_imm6AsInt8
-    : AArch64Base_ADDWSLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ADDWSLSL_imm6AsLabel : AArch64Base_ADDWSLSL_imm6<OtherVT>;
-
-class AArch64Base_B_LT_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_LT_wrapper";
-  let DecoderMethod = "AArch64Base_B_LT_offset_decode_wrapper";
-}
-
-def AArch64Base_B_LT_offsetAsInt64
-    : AArch64Base_B_LT_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_LT_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_LT_offsetAsLabel : AArch64Base_B_LT_offset<OtherVT>;
-
-class AArch64Base_LDPWPre_offWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDPWPre_wrapper";
-  let DecoderMethod = "AArch64Base_LDPWPre_offWSize_decode_wrapper";
-}
-
-def AArch64Base_LDPWPre_offWSizeAsInt64
-    : AArch64Base_LDPWPre_offWSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDPWPre_offWSize_predicate(Imm); }]>;
-
-def AArch64Base_LDPWPre_offWSizeAsLabel : AArch64Base_LDPWPre_offWSize<OtherVT>;
-
-class AArch64Base_LDURSBX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDURSBX_wrapper";
-  let DecoderMethod = "AArch64Base_LDURSBX_offset_decode_wrapper";
-}
-
-def AArch64Base_LDURSBX_offsetAsInt64
-    : AArch64Base_LDURSBX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDURSBX_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDURSBX_offsetAsLabel : AArch64Base_LDURSBX_offset<OtherVT>;
-
-class AArch64Base_SUBXSUXSW_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXSUXSW_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSUXSW_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBXSUXSW_imm3AsInt8
-    : AArch64Base_SUBXSUXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSUXSW_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBXSUXSW_imm3AsLabel : AArch64Base_SUBXSUXSW_imm3<OtherVT>;
-
-class AArch64Base_LDRX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRX_wrapper";
-  let DecoderMethod = "AArch64Base_LDRX_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRX_offsetAsInt64
-    : AArch64Base_LDRX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRX_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRX_offsetAsLabel : AArch64Base_LDRX_offset<OtherVT>;
-
-class AArch64Base_SUBWI12_imm12S<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWI12_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWI12_imm12S_decode_wrapper";
-}
-
-def AArch64Base_SUBWI12_imm12SAsInt64
-    : AArch64Base_SUBWI12_imm12S<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_SUBWI12_imm12S_predicate(Imm); }]>;
-
-def AArch64Base_SUBWI12_imm12SAsLabel : AArch64Base_SUBWI12_imm12S<OtherVT>;
-
-class AArch64Base_SUBXUXSX_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXUXSX_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXUXSX_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBXUXSX_imm3AsInt8
-    : AArch64Base_SUBXUXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXUXSX_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBXUXSX_imm3AsLabel : AArch64Base_SUBXUXSX_imm3<OtherVT>;
-
-class AArch64Base_SUBWSSXSX_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWSSXSX_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSSXSX_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBWSSXSX_imm3AsInt8
-    : AArch64Base_SUBWSSXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSSXSX_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBWSSXSX_imm3AsLabel : AArch64Base_SUBWSSXSX_imm3<OtherVT>;
-
-class AArch64Base_CCMPLSX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPLSX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPLSX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPLSX_nzcvAsInt8
-    : AArch64Base_CCMPLSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPLSX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPLSX_nzcvAsLabel : AArch64Base_CCMPLSX_nzcv<OtherVT>;
-
-class AArch64Base_CCMNALW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNALW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNALW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNALW_nzcvAsInt8
-    : AArch64Base_CCMNALW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNALW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNALW_nzcvAsLabel : AArch64Base_CCMNALW_nzcv<OtherVT>;
-
-class AArch64Base_CCMNLEX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNLEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNLEX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNLEX_nzcvAsInt8
-    : AArch64Base_CCMNLEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNLEX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNLEX_nzcvAsLabel : AArch64Base_CCMNLEX_nzcv<OtherVT>;
-
-class AArch64Base_BICWASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BICWASR_wrapper";
-  let DecoderMethod = "AArch64Base_BICWASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_BICWASR_imm6AsInt8
-    : AArch64Base_BICWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICWASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_BICWASR_imm6AsLabel : AArch64Base_BICWASR_imm6<OtherVT>;
-
-class AArch64Base_MOVKXPos32_imm16<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MOVKXPos32_wrapper";
-  let DecoderMethod = "AArch64Base_MOVKXPos32_imm16_decode_wrapper";
-}
-
-def AArch64Base_MOVKXPos32_imm16AsInt16
-    : AArch64Base_MOVKXPos32_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVKXPos32_imm16_predicate(Imm); }]>;
-
-def AArch64Base_MOVKXPos32_imm16AsLabel : AArch64Base_MOVKXPos32_imm16<OtherVT>;
-
-class AArch64Base_CCMPILEW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPILEW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPILEW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPILEW_immXAsInt64
-    : AArch64Base_CCMPILEW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPILEW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPILEW_immXAsLabel : AArch64Base_CCMPILEW_immX<OtherVT>;
-
-class AArch64Base_CCMPILEW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPILEW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPILEW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPILEW_nzcvAsInt8
-    : AArch64Base_CCMPILEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPILEW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPILEW_nzcvAsLabel : AArch64Base_CCMPILEW_nzcv<OtherVT>;
-
-class AArch64Base_SUBWSXSW_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWSXSW_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSXSW_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBWSXSW_imm3AsInt8
-    : AArch64Base_SUBWSXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSXSW_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBWSXSW_imm3AsLabel : AArch64Base_SUBWSXSW_imm3<OtherVT>;
-
-class AArch64Base_SUBXSUXSB_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXSUXSB_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSUXSB_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBXSUXSB_imm3AsInt8
-    : AArch64Base_SUBXSUXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSUXSB_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBXSUXSB_imm3AsLabel : AArch64Base_SUBXSUXSB_imm3<OtherVT>;
-
-class AArch64Base_ADDXLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXLSL_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_ADDXLSL_imm6AsInt8
-    : AArch64Base_ADDXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ADDXLSL_imm6AsLabel : AArch64Base_ADDXLSL_imm6<OtherVT>;
-
-class AArch64Base_ANDXLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDXLSL_wrapper";
-  let DecoderMethod = "AArch64Base_ANDXLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_ANDXLSL_imm6AsInt8
-    : AArch64Base_ANDXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDXLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ANDXLSL_imm6AsLabel : AArch64Base_ANDXLSL_imm6<OtherVT>;
-
-class AArch64Base_EORWASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EORWASR_wrapper";
-  let DecoderMethod = "AArch64Base_EORWASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_EORWASR_imm6AsInt8
-    : AArch64Base_EORWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EORWASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_EORWASR_imm6AsLabel : AArch64Base_EORWASR_imm6<OtherVT>;
-
-class AArch64Base_CCMNNEX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNNEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNNEX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNNEX_nzcvAsInt8
-    : AArch64Base_CCMNNEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNNEX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNNEX_nzcvAsLabel : AArch64Base_CCMNNEX_nzcv<OtherVT>;
-
-class AArch64Base_CCMPLTW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPLTW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPLTW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPLTW_nzcvAsInt8
-    : AArch64Base_CCMPLTW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPLTW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPLTW_nzcvAsLabel : AArch64Base_CCMPLTW_nzcv<OtherVT>;
-
-class AArch64Base_ORRWLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ORRWLSL_wrapper";
-  let DecoderMethod = "AArch64Base_ORRWLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_ORRWLSL_imm6AsInt8
-    : AArch64Base_ORRWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORRWLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ORRWLSL_imm6AsLabel : AArch64Base_ORRWLSL_imm6<OtherVT>;
-
-class AArch64Base_EORIW_immWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EORIW_wrapper";
-  let DecoderMethod = "AArch64Base_EORIW_immWSize_decode_wrapper";
-}
-
-def AArch64Base_EORIW_immWSizeAsInt32
-    : AArch64Base_EORIW_immWSize<i32>
-    , ImmLeaf<i32, [{ return AArch64Base_EORIW_immWSize_predicate(Imm); }]>;
-
-def AArch64Base_EORIW_immWSizeAsLabel : AArch64Base_EORIW_immWSize<OtherVT>;
-
-class AArch64Base_MOVZXPos48_imm16<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MOVZXPos48_wrapper";
-  let DecoderMethod = "AArch64Base_MOVZXPos48_imm16_decode_wrapper";
-}
-
-def AArch64Base_MOVZXPos48_imm16AsInt16
-    : AArch64Base_MOVZXPos48_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVZXPos48_imm16_predicate(Imm); }]>;
-
-def AArch64Base_MOVZXPos48_imm16AsLabel : AArch64Base_MOVZXPos48_imm16<OtherVT>;
-
-class AArch64Base_ADDWASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWASR_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ADDWASR_imm6AsInt8
-    : AArch64Base_ADDWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ADDWASR_imm6AsLabel : AArch64Base_ADDWASR_imm6<OtherVT>;
-
-class AArch64Base_CBZX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CBZX_wrapper";
-  let DecoderMethod = "AArch64Base_CBZX_offset_decode_wrapper";
-}
-
-def AArch64Base_CBZX_offsetAsInt64
-    : AArch64Base_CBZX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CBZX_offset_predicate(Imm); }]>;
-
-def AArch64Base_CBZX_offsetAsLabel : AArch64Base_CBZX_offset<OtherVT>;
-
-class AArch64Base_CCMNGTX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNGTX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNGTX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNGTX_nzcvAsInt8
-    : AArch64Base_CCMNGTX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNGTX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNGTX_nzcvAsLabel : AArch64Base_CCMNGTX_nzcv<OtherVT>;
-
-class AArch64Base_STURH_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STURH_wrapper";
-  let DecoderMethod = "AArch64Base_STURH_offset_decode_wrapper";
-}
-
-def AArch64Base_STURH_offsetAsInt64
-    : AArch64Base_STURH_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STURH_offset_predicate(Imm); }]>;
-
-def AArch64Base_STURH_offsetAsLabel : AArch64Base_STURH_offset<OtherVT>;
-
-class AArch64Base_STPXPst_offXSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STPXPst_wrapper";
-  let DecoderMethod = "AArch64Base_STPXPst_offXSize_decode_wrapper";
-}
-
-def AArch64Base_STPXPst_offXSizeAsInt64
-    : AArch64Base_STPXPst_offXSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STPXPst_offXSize_predicate(Imm); }]>;
-
-def AArch64Base_STPXPst_offXSizeAsLabel : AArch64Base_STPXPst_offXSize<OtherVT>;
-
-class AArch64Base_CCMPILTW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPILTW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPILTW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPILTW_immXAsInt64
-    : AArch64Base_CCMPILTW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPILTW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPILTW_immXAsLabel : AArch64Base_CCMPILTW_immX<OtherVT>;
-
-class AArch64Base_CCMPILTW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPILTW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPILTW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPILTW_nzcvAsInt8
-    : AArch64Base_CCMPILTW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPILTW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPILTW_nzcvAsLabel : AArch64Base_CCMPILTW_nzcv<OtherVT>;
-
-class AArch64Base_CCMPVCX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPVCX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPVCX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPVCX_nzcvAsInt8
-    : AArch64Base_CCMPVCX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPVCX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPVCX_nzcvAsLabel : AArch64Base_CCMPVCX_nzcv<OtherVT>;
-
-class AArch64Base_CCMNNEW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNNEW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNNEW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNNEW_nzcvAsInt8
-    : AArch64Base_CCMNNEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNNEW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNNEW_nzcvAsLabel : AArch64Base_CCMNNEW_nzcv<OtherVT>;
-
-class AArch64Base_CCMPICCX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPICCX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPICCX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPICCX_immXAsInt64
-    : AArch64Base_CCMPICCX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPICCX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPICCX_immXAsLabel : AArch64Base_CCMPICCX_immX<OtherVT>;
-
-class AArch64Base_CCMPICCX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPICCX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPICCX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPICCX_nzcvAsInt8
-    : AArch64Base_CCMPICCX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPICCX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPICCX_nzcvAsLabel : AArch64Base_CCMPICCX_nzcv<OtherVT>;
-
-class AArch64Base_ADDWSI_imm12X<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWSI_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSI_imm12X_decode_wrapper";
-}
-
-def AArch64Base_ADDWSI_imm12XAsInt64
-    : AArch64Base_ADDWSI_imm12X<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_ADDWSI_imm12X_predicate(Imm); }]>;
-
-def AArch64Base_ADDWSI_imm12XAsLabel : AArch64Base_ADDWSI_imm12X<OtherVT>;
-
-class AArch64Base_LDRPstX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRPstX_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPstX_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRPstX_offsetAsInt64
-    : AArch64Base_LDRPstX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPstX_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRPstX_offsetAsLabel : AArch64Base_LDRPstX_offset<OtherVT>;
-
-class AArch64Base_ADDXSI12_imm12S<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXSI12_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXSI12_imm12S_decode_wrapper";
-}
-
-def AArch64Base_ADDXSI12_imm12SAsInt64
-    : AArch64Base_ADDXSI12_imm12S<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_ADDXSI12_imm12S_predicate(Imm); }]>;
-
-def AArch64Base_ADDXSI12_imm12SAsLabel : AArch64Base_ADDXSI12_imm12S<OtherVT>;
-
-class AArch64Base_B_GE_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_GE_wrapper";
-  let DecoderMethod = "AArch64Base_B_GE_offset_decode_wrapper";
-}
-
-def AArch64Base_B_GE_offsetAsInt64
-    : AArch64Base_B_GE_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_GE_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_GE_offsetAsLabel : AArch64Base_B_GE_offset<OtherVT>;
-
-class AArch64Base_CCMPCSX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPCSX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPCSX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPCSX_nzcvAsInt8
-    : AArch64Base_CCMPCSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPCSX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPCSX_nzcvAsLabel : AArch64Base_CCMPCSX_nzcv<OtherVT>;
-
-class AArch64Base_CCMPNEW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPNEW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPNEW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPNEW_nzcvAsInt8
-    : AArch64Base_CCMPNEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPNEW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPNEW_nzcvAsLabel : AArch64Base_CCMPNEW_nzcv<OtherVT>;
-
-class AArch64Base_STRW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STRW_wrapper";
-  let DecoderMethod = "AArch64Base_STRW_offset_decode_wrapper";
-}
-
-def AArch64Base_STRW_offsetAsInt64
-    : AArch64Base_STRW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STRW_offset_predicate(Imm); }]>;
-
-def AArch64Base_STRW_offsetAsLabel : AArch64Base_STRW_offset<OtherVT>;
-
-class AArch64Base_BICSWLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BICSWLSR_wrapper";
-  let DecoderMethod = "AArch64Base_BICSWLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_BICSWLSR_imm6AsInt8
-    : AArch64Base_BICSWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICSWLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_BICSWLSR_imm6AsLabel : AArch64Base_BICSWLSR_imm6<OtherVT>;
-
-class AArch64Base_CCMPICCW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPICCW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPICCW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPICCW_immXAsInt64
-    : AArch64Base_CCMPICCW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPICCW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPICCW_immXAsLabel : AArch64Base_CCMPICCW_immX<OtherVT>;
-
-class AArch64Base_CCMPICCW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPICCW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPICCW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPICCW_nzcvAsInt8
-    : AArch64Base_CCMPICCW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPICCW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPICCW_nzcvAsLabel : AArch64Base_CCMPICCW_nzcv<OtherVT>;
-
-class AArch64Base_CCMPCCW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPCCW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPCCW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPCCW_nzcvAsInt8
-    : AArch64Base_CCMPCCW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPCCW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPCCW_nzcvAsLabel : AArch64Base_CCMPCCW_nzcv<OtherVT>;
-
-class AArch64Base_SUBWSXSH_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWSXSH_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSXSH_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBWSXSH_imm3AsInt8
-    : AArch64Base_SUBWSXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSXSH_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBWSXSH_imm3AsLabel : AArch64Base_SUBWSXSH_imm3<OtherVT>;
-
-class AArch64Base_MSR_sysreg<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MSR_wrapper";
-  let DecoderMethod = "AArch64Base_MSR_sysreg_decode_wrapper";
-}
-
-def AArch64Base_MSR_sysregAsInt16
-    : AArch64Base_MSR_sysreg<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MSR_sysreg_predicate(Imm); }]>;
-
-def AArch64Base_MSR_sysregAsLabel : AArch64Base_MSR_sysreg<OtherVT>;
-
-class AArch64Base_LDRPstSHX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRPstSHX_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPstSHX_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRPstSHX_offsetAsInt64
-    : AArch64Base_LDRPstSHX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPstSHX_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRPstSHX_offsetAsLabel : AArch64Base_LDRPstSHX_offset<OtherVT>;
-
-class AArch64Base_ADDWSASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWSASR_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ADDWSASR_imm6AsInt8
-    : AArch64Base_ADDWSASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ADDWSASR_imm6AsLabel : AArch64Base_ADDWSASR_imm6<OtherVT>;
-
-class AArch64Base_ORNWLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ORNWLSL_wrapper";
-  let DecoderMethod = "AArch64Base_ORNWLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_ORNWLSL_imm6AsInt8
-    : AArch64Base_ORNWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORNWLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ORNWLSL_imm6AsLabel : AArch64Base_ORNWLSL_imm6<OtherVT>;
-
-class AArch64Base_CCMNILSW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNILSW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNILSW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNILSW_immXAsInt64
-    : AArch64Base_CCMNILSW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNILSW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNILSW_immXAsLabel : AArch64Base_CCMNILSW_immX<OtherVT>;
-
-class AArch64Base_CCMNILSW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNILSW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNILSW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNILSW_nzcvAsInt8
-    : AArch64Base_CCMNILSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNILSW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNILSW_nzcvAsLabel : AArch64Base_CCMNILSW_nzcv<OtherVT>;
-
-class AArch64Base_B_EQ_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_EQ_wrapper";
-  let DecoderMethod = "AArch64Base_B_EQ_offset_decode_wrapper";
-}
-
-def AArch64Base_B_EQ_offsetAsInt64
-    : AArch64Base_B_EQ_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_EQ_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_EQ_offsetAsLabel : AArch64Base_B_EQ_offset<OtherVT>;
-
-class AArch64Base_SUBXSSXSH_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXSSXSH_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSSXSH_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBXSSXSH_imm3AsInt8
-    : AArch64Base_SUBXSSXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSSXSH_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBXSSXSH_imm3AsLabel : AArch64Base_SUBXSSXSH_imm3<OtherVT>;
-
-class AArch64Base_B_LE_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_LE_wrapper";
-  let DecoderMethod = "AArch64Base_B_LE_offset_decode_wrapper";
-}
-
-def AArch64Base_B_LE_offsetAsInt64
-    : AArch64Base_B_LE_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_LE_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_LE_offsetAsLabel : AArch64Base_B_LE_offset<OtherVT>;
-
-class AArch64Base_TBNZ_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_TBNZ_wrapper";
-  let DecoderMethod = "AArch64Base_TBNZ_offset_decode_wrapper";
-}
-
-def AArch64Base_TBNZ_offsetAsInt64
-    : AArch64Base_TBNZ_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_TBNZ_offset_predicate(Imm); }]>;
-
-def AArch64Base_TBNZ_offsetAsLabel : AArch64Base_TBNZ_offset<OtherVT>;
-
-class AArch64Base_TBNZ_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_TBNZ_wrapper";
-  let DecoderMethod = "AArch64Base_TBNZ_imm6_decode_wrapper";
-}
-
-def AArch64Base_TBNZ_imm6AsInt8
-    : AArch64Base_TBNZ_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_TBNZ_imm6_predicate(Imm); }]>;
-
-def AArch64Base_TBNZ_imm6AsLabel : AArch64Base_TBNZ_imm6<OtherVT>;
-
-class AArch64Base_B_CC_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_CC_wrapper";
-  let DecoderMethod = "AArch64Base_B_CC_offset_decode_wrapper";
-}
-
-def AArch64Base_B_CC_offsetAsInt64
-    : AArch64Base_B_CC_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_CC_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_CC_offsetAsLabel : AArch64Base_B_CC_offset<OtherVT>;
-
-class AArch64Base_ADDWI_imm12X<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWI_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWI_imm12X_decode_wrapper";
-}
-
-def AArch64Base_ADDWI_imm12XAsInt64
-    : AArch64Base_ADDWI_imm12X<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_ADDWI_imm12X_predicate(Imm); }]>;
-
-def AArch64Base_ADDWI_imm12XAsLabel : AArch64Base_ADDWI_imm12X<OtherVT>;
-
-class AArch64Base_CCMNINVX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNINVX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNINVX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNINVX_immXAsInt64
-    : AArch64Base_CCMNINVX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNINVX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNINVX_immXAsLabel : AArch64Base_CCMNINVX_immX<OtherVT>;
-
-class AArch64Base_CCMNINVX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNINVX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNINVX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNINVX_nzcvAsInt8
-    : AArch64Base_CCMNINVX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNINVX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNINVX_nzcvAsLabel : AArch64Base_CCMNINVX_nzcv<OtherVT>;
-
-class AArch64Base_STRX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STRX_wrapper";
-  let DecoderMethod = "AArch64Base_STRX_offset_decode_wrapper";
-}
-
-def AArch64Base_STRX_offsetAsInt64
-    : AArch64Base_STRX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STRX_offset_predicate(Imm); }]>;
-
-def AArch64Base_STRX_offsetAsLabel : AArch64Base_STRX_offset<OtherVT>;
-
-class AArch64Base_ANDSIX_immXSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDSIX_wrapper";
-  let DecoderMethod = "AArch64Base_ANDSIX_immXSize_decode_wrapper";
-}
-
-def AArch64Base_ANDSIX_immXSizeAsInt64
-    : AArch64Base_ANDSIX_immXSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_ANDSIX_immXSize_predicate(Imm); }]>;
-
-def AArch64Base_ANDSIX_immXSizeAsLabel : AArch64Base_ANDSIX_immXSize<OtherVT>;
-
-class AArch64Base_ADDWUXSW_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWUXSW_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWUXSW_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDWUXSW_imm3AsInt8
-    : AArch64Base_ADDWUXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWUXSW_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDWUXSW_imm3AsLabel : AArch64Base_ADDWUXSW_imm3<OtherVT>;
-
-class AArch64Base_MOVZXPos16_imm16<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MOVZXPos16_wrapper";
-  let DecoderMethod = "AArch64Base_MOVZXPos16_imm16_decode_wrapper";
-}
-
-def AArch64Base_MOVZXPos16_imm16AsInt16
-    : AArch64Base_MOVZXPos16_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVZXPos16_imm16_predicate(Imm); }]>;
-
-def AArch64Base_MOVZXPos16_imm16AsLabel : AArch64Base_MOVZXPos16_imm16<OtherVT>;
-
-class AArch64Base_MOVZWPos00_imm16<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MOVZWPos00_wrapper";
-  let DecoderMethod = "AArch64Base_MOVZWPos00_imm16_decode_wrapper";
-}
-
-def AArch64Base_MOVZWPos00_imm16AsInt16
-    : AArch64Base_MOVZWPos00_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVZWPos00_imm16_predicate(Imm); }]>;
-
-def AArch64Base_MOVZWPos00_imm16AsLabel : AArch64Base_MOVZWPos00_imm16<OtherVT>;
-
-class AArch64Base_SUBXSXSX_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXSXSX_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSXSX_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBXSXSX_imm3AsInt8
-    : AArch64Base_SUBXSXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSXSX_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBXSXSX_imm3AsLabel : AArch64Base_SUBXSXSX_imm3<OtherVT>;
-
-class AArch64Base_B_LS_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_LS_wrapper";
-  let DecoderMethod = "AArch64Base_B_LS_offset_decode_wrapper";
-}
-
-def AArch64Base_B_LS_offsetAsInt64
-    : AArch64Base_B_LS_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_LS_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_LS_offsetAsLabel : AArch64Base_B_LS_offset<OtherVT>;
-
-class AArch64Base_ADDXUXSB_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXUXSB_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXUXSB_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDXUXSB_imm3AsInt8
-    : AArch64Base_ADDXUXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXUXSB_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDXUXSB_imm3AsLabel : AArch64Base_ADDXUXSB_imm3<OtherVT>;
-
-class AArch64Base_SUBXUXSB_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXUXSB_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXUXSB_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBXUXSB_imm3AsInt8
-    : AArch64Base_SUBXUXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXUXSB_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBXUXSB_imm3AsLabel : AArch64Base_SUBXUXSB_imm3<OtherVT>;
-
-class AArch64Base_SUBXSLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXSLSR_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_SUBXSLSR_imm6AsInt8
-    : AArch64Base_SUBXSLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_SUBXSLSR_imm6AsLabel : AArch64Base_SUBXSLSR_imm6<OtherVT>;
-
-class AArch64Base_B_VS_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_VS_wrapper";
-  let DecoderMethod = "AArch64Base_B_VS_offset_decode_wrapper";
-}
-
-def AArch64Base_B_VS_offsetAsInt64
-    : AArch64Base_B_VS_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_VS_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_VS_offsetAsLabel : AArch64Base_B_VS_offset<OtherVT>;
-
-class AArch64Base_SUBXUXSH_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXUXSH_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXUXSH_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBXUXSH_imm3AsInt8
-    : AArch64Base_SUBXUXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXUXSH_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBXUXSH_imm3AsLabel : AArch64Base_SUBXUXSH_imm3<OtherVT>;
-
-class AArch64Base_ORNWASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ORNWASR_wrapper";
-  let DecoderMethod = "AArch64Base_ORNWASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ORNWASR_imm6AsInt8
-    : AArch64Base_ORNWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORNWASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ORNWASR_imm6AsLabel : AArch64Base_ORNWASR_imm6<OtherVT>;
 
 class AArch64Base_CCMPVCW_nzcv<ValueType ty> : Operand<ty>
 {
@@ -2200,6 +208,18 @@ def AArch64Base_CCMPVCW_nzcvAsInt8
 
 def AArch64Base_CCMPVCW_nzcvAsLabel : AArch64Base_CCMPVCW_nzcv<OtherVT>;
 
+class AArch64Base_CCMPGEX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPGEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPGEX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPGEX_nzcvAsInt8
+    : AArch64Base_CCMPGEX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPGEX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPGEX_nzcvAsLabel : AArch64Base_CCMPGEX_nzcv<OtherVT>;
+
 class AArch64Base_CCMPNEX_nzcv<ValueType ty> : Operand<ty>
 {
   let EncoderMethod = "AArch64Base_CCMPNEX_wrapper";
@@ -2211,858 +231,6 @@ def AArch64Base_CCMPNEX_nzcvAsInt8
     , ImmLeaf<i8, [{ return AArch64Base_CCMPNEX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPNEX_nzcvAsLabel : AArch64Base_CCMPNEX_nzcv<OtherVT>;
-
-class AArch64Base_CCMPIVSX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIVSX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIVSX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPIVSX_immXAsInt64
-    : AArch64Base_CCMPIVSX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPIVSX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIVSX_immXAsLabel : AArch64Base_CCMPIVSX_immX<OtherVT>;
-
-class AArch64Base_CCMPIVSX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIVSX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIVSX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPIVSX_nzcvAsInt8
-    : AArch64Base_CCMPIVSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIVSX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIVSX_nzcvAsLabel : AArch64Base_CCMPIVSX_nzcv<OtherVT>;
-
-class AArch64Base_ANDWASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDWASR_wrapper";
-  let DecoderMethod = "AArch64Base_ANDWASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ANDWASR_imm6AsInt8
-    : AArch64Base_ANDWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDWASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ANDWASR_imm6AsLabel : AArch64Base_ANDWASR_imm6<OtherVT>;
-
-class AArch64Base_CCMPEQX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPEQX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPEQX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPEQX_nzcvAsInt8
-    : AArch64Base_CCMPEQX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPEQX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPEQX_nzcvAsLabel : AArch64Base_CCMPEQX_nzcv<OtherVT>;
-
-class AArch64Base_CCMNICSW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNICSW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNICSW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNICSW_immXAsInt64
-    : AArch64Base_CCMNICSW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNICSW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNICSW_immXAsLabel : AArch64Base_CCMNICSW_immX<OtherVT>;
-
-class AArch64Base_CCMNICSW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNICSW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNICSW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNICSW_nzcvAsInt8
-    : AArch64Base_CCMNICSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNICSW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNICSW_nzcvAsLabel : AArch64Base_CCMNICSW_nzcv<OtherVT>;
-
-class AArch64Base_STPXPre_offXSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STPXPre_wrapper";
-  let DecoderMethod = "AArch64Base_STPXPre_offXSize_decode_wrapper";
-}
-
-def AArch64Base_STPXPre_offXSizeAsInt64
-    : AArch64Base_STPXPre_offXSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STPXPre_offXSize_predicate(Imm); }]>;
-
-def AArch64Base_STPXPre_offXSizeAsLabel : AArch64Base_STPXPre_offXSize<OtherVT>;
-
-class AArch64Base_ADDWSXSH_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWSXSH_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSXSH_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDWSXSH_imm3AsInt8
-    : AArch64Base_ADDWSXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSXSH_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDWSXSH_imm3AsLabel : AArch64Base_ADDWSXSH_imm3<OtherVT>;
-
-class AArch64Base_CCMPICSX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPICSX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPICSX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPICSX_immXAsInt64
-    : AArch64Base_CCMPICSX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPICSX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPICSX_immXAsLabel : AArch64Base_CCMPICSX_immX<OtherVT>;
-
-class AArch64Base_CCMPICSX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPICSX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPICSX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPICSX_nzcvAsInt8
-    : AArch64Base_CCMPICSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPICSX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPICSX_nzcvAsLabel : AArch64Base_CCMPICSX_nzcv<OtherVT>;
-
-class AArch64Base_CCMNHIX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNHIX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNHIX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNHIX_nzcvAsInt8
-    : AArch64Base_CCMNHIX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNHIX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNHIX_nzcvAsLabel : AArch64Base_CCMNHIX_nzcv<OtherVT>;
-
-class AArch64Base_SUBWLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWLSR_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_SUBWLSR_imm6AsInt8
-    : AArch64Base_SUBWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_SUBWLSR_imm6AsLabel : AArch64Base_SUBWLSR_imm6<OtherVT>;
-
-class AArch64Base_ANDSXROR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDSXROR_wrapper";
-  let DecoderMethod = "AArch64Base_ANDSXROR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ANDSXROR_imm6AsInt8
-    : AArch64Base_ANDSXROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDSXROR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ANDSXROR_imm6AsLabel : AArch64Base_ANDSXROR_imm6<OtherVT>;
-
-class AArch64Base_BICXASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BICXASR_wrapper";
-  let DecoderMethod = "AArch64Base_BICXASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_BICXASR_imm6AsInt8
-    : AArch64Base_BICXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICXASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_BICXASR_imm6AsLabel : AArch64Base_BICXASR_imm6<OtherVT>;
-
-class AArch64Base_SUBXUXSW_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXUXSW_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXUXSW_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBXUXSW_imm3AsInt8
-    : AArch64Base_SUBXUXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXUXSW_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBXUXSW_imm3AsLabel : AArch64Base_SUBXUXSW_imm3<OtherVT>;
-
-class AArch64Base_CCMNLSW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNLSW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNLSW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNLSW_nzcvAsInt8
-    : AArch64Base_CCMNLSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNLSW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNLSW_nzcvAsLabel : AArch64Base_CCMNLSW_nzcv<OtherVT>;
-
-class AArch64Base_ADDXUXSW_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXUXSW_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXUXSW_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDXUXSW_imm3AsInt8
-    : AArch64Base_ADDXUXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXUXSW_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDXUXSW_imm3AsLabel : AArch64Base_ADDXUXSW_imm3<OtherVT>;
-
-class AArch64Base_SUBWASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWASR_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_SUBWASR_imm6AsInt8
-    : AArch64Base_SUBWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_SUBWASR_imm6AsLabel : AArch64Base_SUBWASR_imm6<OtherVT>;
-
-class AArch64Base_SUBXSSXSB_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXSSXSB_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSSXSB_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBXSSXSB_imm3AsInt8
-    : AArch64Base_SUBXSSXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSSXSB_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBXSSXSB_imm3AsLabel : AArch64Base_SUBXSSXSB_imm3<OtherVT>;
-
-class AArch64Base_LDPXPst_offXSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDPXPst_wrapper";
-  let DecoderMethod = "AArch64Base_LDPXPst_offXSize_decode_wrapper";
-}
-
-def AArch64Base_LDPXPst_offXSizeAsInt64
-    : AArch64Base_LDPXPst_offXSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDPXPst_offXSize_predicate(Imm); }]>;
-
-def AArch64Base_LDPXPst_offXSizeAsLabel : AArch64Base_LDPXPst_offXSize<OtherVT>;
-
-class AArch64Base_ADDXSASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXSASR_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXSASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ADDXSASR_imm6AsInt8
-    : AArch64Base_ADDXSASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ADDXSASR_imm6AsLabel : AArch64Base_ADDXSASR_imm6<OtherVT>;
-
-class AArch64Base_ADDXI12_imm12S<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXI12_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXI12_imm12S_decode_wrapper";
-}
-
-def AArch64Base_ADDXI12_imm12SAsInt64
-    : AArch64Base_ADDXI12_imm12S<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_ADDXI12_imm12S_predicate(Imm); }]>;
-
-def AArch64Base_ADDXI12_imm12SAsLabel : AArch64Base_ADDXI12_imm12S<OtherVT>;
-
-class AArch64Base_ORRWLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ORRWLSR_wrapper";
-  let DecoderMethod = "AArch64Base_ORRWLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ORRWLSR_imm6AsInt8
-    : AArch64Base_ORRWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORRWLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ORRWLSR_imm6AsLabel : AArch64Base_ORRWLSR_imm6<OtherVT>;
-
-class AArch64Base_SUBXSXSW_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXSXSW_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSXSW_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBXSXSW_imm3AsInt8
-    : AArch64Base_SUBXSXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSXSW_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBXSXSW_imm3AsLabel : AArch64Base_SUBXSXSW_imm3<OtherVT>;
-
-class AArch64Base_CCMPALX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPALX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPALX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPALX_nzcvAsInt8
-    : AArch64Base_CCMPALX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPALX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPALX_nzcvAsLabel : AArch64Base_CCMPALX_nzcv<OtherVT>;
-
-class AArch64Base_B_NV_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_NV_wrapper";
-  let DecoderMethod = "AArch64Base_B_NV_offset_decode_wrapper";
-}
-
-def AArch64Base_B_NV_offsetAsInt64
-    : AArch64Base_B_NV_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_NV_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_NV_offsetAsLabel : AArch64Base_B_NV_offset<OtherVT>;
-
-class AArch64Base_SUBXSLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXSLSL_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_SUBXSLSL_imm6AsInt8
-    : AArch64Base_SUBXSLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_SUBXSLSL_imm6AsLabel : AArch64Base_SUBXSLSL_imm6<OtherVT>;
-
-class AArch64Base_CCMNIGEX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIGEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIGEX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNIGEX_immXAsInt64
-    : AArch64Base_CCMNIGEX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNIGEX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIGEX_immXAsLabel : AArch64Base_CCMNIGEX_immX<OtherVT>;
-
-class AArch64Base_CCMNIGEX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIGEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIGEX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNIGEX_nzcvAsInt8
-    : AArch64Base_CCMNIGEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIGEX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIGEX_nzcvAsLabel : AArch64Base_CCMNIGEX_nzcv<OtherVT>;
-
-class AArch64Base_ADDXSUXSB_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXSUXSB_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXSUXSB_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDXSUXSB_imm3AsInt8
-    : AArch64Base_ADDXSUXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSUXSB_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDXSUXSB_imm3AsLabel : AArch64Base_ADDXSUXSB_imm3<OtherVT>;
-
-class AArch64Base_LDPWPst_offWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDPWPst_wrapper";
-  let DecoderMethod = "AArch64Base_LDPWPst_offWSize_decode_wrapper";
-}
-
-def AArch64Base_LDPWPst_offWSizeAsInt64
-    : AArch64Base_LDPWPst_offWSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDPWPst_offWSize_predicate(Imm); }]>;
-
-def AArch64Base_LDPWPst_offWSizeAsLabel : AArch64Base_LDPWPst_offWSize<OtherVT>;
-
-class AArch64Base_CCMNINEW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNINEW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNINEW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNINEW_immXAsInt64
-    : AArch64Base_CCMNINEW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNINEW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNINEW_immXAsLabel : AArch64Base_CCMNINEW_immX<OtherVT>;
-
-class AArch64Base_CCMNINEW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNINEW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNINEW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNINEW_nzcvAsInt8
-    : AArch64Base_CCMNINEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNINEW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNINEW_nzcvAsLabel : AArch64Base_CCMNINEW_nzcv<OtherVT>;
-
-class AArch64Base_CCMNIVSW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIVSW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIVSW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNIVSW_immXAsInt64
-    : AArch64Base_CCMNIVSW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNIVSW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIVSW_immXAsLabel : AArch64Base_CCMNIVSW_immX<OtherVT>;
-
-class AArch64Base_CCMNIVSW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIVSW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIVSW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNIVSW_nzcvAsInt8
-    : AArch64Base_CCMNIVSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIVSW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIVSW_nzcvAsLabel : AArch64Base_CCMNIVSW_nzcv<OtherVT>;
-
-class AArch64Base_LDRPreSBW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRPreSBW_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPreSBW_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRPreSBW_offsetAsInt64
-    : AArch64Base_LDRPreSBW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPreSBW_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRPreSBW_offsetAsLabel : AArch64Base_LDRPreSBW_offset<OtherVT>;
-
-class AArch64Base_CCMPIPLX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIPLX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIPLX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPIPLX_immXAsInt64
-    : AArch64Base_CCMPIPLX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPIPLX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIPLX_immXAsLabel : AArch64Base_CCMPIPLX_immX<OtherVT>;
-
-class AArch64Base_CCMPIPLX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIPLX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIPLX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPIPLX_nzcvAsInt8
-    : AArch64Base_CCMPIPLX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIPLX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIPLX_nzcvAsLabel : AArch64Base_CCMPIPLX_nzcv<OtherVT>;
-
-class AArch64Base_CCMNMIW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNMIW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNMIW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNMIW_nzcvAsInt8
-    : AArch64Base_CCMNMIW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNMIW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNMIW_nzcvAsLabel : AArch64Base_CCMNMIW_nzcv<OtherVT>;
-
-class AArch64Base_ORNXROR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ORNXROR_wrapper";
-  let DecoderMethod = "AArch64Base_ORNXROR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ORNXROR_imm6AsInt8
-    : AArch64Base_ORNXROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORNXROR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ORNXROR_imm6AsLabel : AArch64Base_ORNXROR_imm6<OtherVT>;
-
-class AArch64Base_BICWLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BICWLSR_wrapper";
-  let DecoderMethod = "AArch64Base_BICWLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_BICWLSR_imm6AsInt8
-    : AArch64Base_BICWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICWLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_BICWLSR_imm6AsLabel : AArch64Base_BICWLSR_imm6<OtherVT>;
-
-class AArch64Base_EORXROR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EORXROR_wrapper";
-  let DecoderMethod = "AArch64Base_EORXROR_imm6_decode_wrapper";
-}
-
-def AArch64Base_EORXROR_imm6AsInt8
-    : AArch64Base_EORXROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EORXROR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_EORXROR_imm6AsLabel : AArch64Base_EORXROR_imm6<OtherVT>;
-
-class AArch64Base_CCMNIVCX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIVCX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIVCX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNIVCX_immXAsInt64
-    : AArch64Base_CCMNIVCX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNIVCX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIVCX_immXAsLabel : AArch64Base_CCMNIVCX_immX<OtherVT>;
-
-class AArch64Base_CCMNIVCX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIVCX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIVCX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNIVCX_nzcvAsInt8
-    : AArch64Base_CCMNIVCX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIVCX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIVCX_nzcvAsLabel : AArch64Base_CCMNIVCX_nzcv<OtherVT>;
-
-class AArch64Base_CCMNALX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNALX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNALX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNALX_nzcvAsInt8
-    : AArch64Base_CCMNALX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNALX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNALX_nzcvAsLabel : AArch64Base_CCMNALX_nzcv<OtherVT>;
-
-class AArch64Base_CCMNGEW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNGEW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNGEW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNGEW_nzcvAsInt8
-    : AArch64Base_CCMNGEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNGEW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNGEW_nzcvAsLabel : AArch64Base_CCMNGEW_nzcv<OtherVT>;
-
-class AArch64Base_SUBWSLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWSLSR_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_SUBWSLSR_imm6AsInt8
-    : AArch64Base_SUBWSLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_SUBWSLSR_imm6AsLabel : AArch64Base_SUBWSLSR_imm6<OtherVT>;
-
-class AArch64Base_SUBXSASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXSASR_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_SUBXSASR_imm6AsInt8
-    : AArch64Base_SUBXSASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_SUBXSASR_imm6AsLabel : AArch64Base_SUBXSASR_imm6<OtherVT>;
-
-class AArch64Base_ANDSXLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDSXLSR_wrapper";
-  let DecoderMethod = "AArch64Base_ANDSXLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ANDSXLSR_imm6AsInt8
-    : AArch64Base_ANDSXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDSXLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ANDSXLSR_imm6AsLabel : AArch64Base_ANDSXLSR_imm6<OtherVT>;
-
-class AArch64Base_ADDWSSXSX_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWSSXSX_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSSXSX_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDWSSXSX_imm3AsInt8
-    : AArch64Base_ADDWSSXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSSXSX_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDWSSXSX_imm3AsLabel : AArch64Base_ADDWSSXSX_imm3<OtherVT>;
-
-class AArch64Base_LDRPstSBX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRPstSBX_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPstSBX_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRPstSBX_offsetAsInt64
-    : AArch64Base_LDRPstSBX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPstSBX_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRPstSBX_offsetAsLabel : AArch64Base_LDRPstSBX_offset<OtherVT>;
-
-class AArch64Base_ANDSIW_immWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDSIW_wrapper";
-  let DecoderMethod = "AArch64Base_ANDSIW_immWSize_decode_wrapper";
-}
-
-def AArch64Base_ANDSIW_immWSizeAsInt32
-    : AArch64Base_ANDSIW_immWSize<i32>
-    , ImmLeaf<i32, [{ return AArch64Base_ANDSIW_immWSize_predicate(Imm); }]>;
-
-def AArch64Base_ANDSIW_immWSizeAsLabel : AArch64Base_ANDSIW_immWSize<OtherVT>;
-
-class AArch64Base_ANDXLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDXLSR_wrapper";
-  let DecoderMethod = "AArch64Base_ANDXLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ANDXLSR_imm6AsInt8
-    : AArch64Base_ANDXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDXLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ANDXLSR_imm6AsLabel : AArch64Base_ANDXLSR_imm6<OtherVT>;
-
-class AArch64Base_CCMPIHIX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIHIX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIHIX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPIHIX_immXAsInt64
-    : AArch64Base_CCMPIHIX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPIHIX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIHIX_immXAsLabel : AArch64Base_CCMPIHIX_immX<OtherVT>;
-
-class AArch64Base_CCMPIHIX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIHIX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIHIX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPIHIX_nzcvAsInt8
-    : AArch64Base_CCMPIHIX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIHIX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIHIX_nzcvAsLabel : AArch64Base_CCMPIHIX_nzcv<OtherVT>;
-
-class AArch64Base_CCMNLEW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNLEW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNLEW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNLEW_nzcvAsInt8
-    : AArch64Base_CCMNLEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNLEW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNLEW_nzcvAsLabel : AArch64Base_CCMNLEW_nzcv<OtherVT>;
-
-class AArch64Base_LDURSBW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDURSBW_wrapper";
-  let DecoderMethod = "AArch64Base_LDURSBW_offset_decode_wrapper";
-}
-
-def AArch64Base_LDURSBW_offsetAsInt64
-    : AArch64Base_LDURSBW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDURSBW_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDURSBW_offsetAsLabel : AArch64Base_LDURSBW_offset<OtherVT>;
-
-class AArch64Base_ADDXUXSH_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXUXSH_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXUXSH_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDXUXSH_imm3AsInt8
-    : AArch64Base_ADDXUXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXUXSH_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDXUXSH_imm3AsLabel : AArch64Base_ADDXUXSH_imm3<OtherVT>;
-
-class AArch64Base_ORNXLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ORNXLSL_wrapper";
-  let DecoderMethod = "AArch64Base_ORNXLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_ORNXLSL_imm6AsInt8
-    : AArch64Base_ORNXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORNXLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ORNXLSL_imm6AsLabel : AArch64Base_ORNXLSL_imm6<OtherVT>;
-
-class AArch64Base_SUBWSSXSW_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWSSXSW_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSSXSW_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBWSSXSW_imm3AsInt8
-    : AArch64Base_SUBWSSXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSSXSW_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBWSSXSW_imm3AsLabel : AArch64Base_SUBWSSXSW_imm3<OtherVT>;
-
-class AArch64Base_BICSXROR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BICSXROR_wrapper";
-  let DecoderMethod = "AArch64Base_BICSXROR_imm6_decode_wrapper";
-}
-
-def AArch64Base_BICSXROR_imm6AsInt8
-    : AArch64Base_BICSXROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICSXROR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_BICSXROR_imm6AsLabel : AArch64Base_BICSXROR_imm6<OtherVT>;
-
-class AArch64Base_CCMPIGTX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIGTX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIGTX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPIGTX_immXAsInt64
-    : AArch64Base_CCMPIGTX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPIGTX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIGTX_immXAsLabel : AArch64Base_CCMPIGTX_immX<OtherVT>;
-
-class AArch64Base_CCMPIGTX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIGTX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIGTX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPIGTX_nzcvAsInt8
-    : AArch64Base_CCMPIGTX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIGTX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIGTX_nzcvAsLabel : AArch64Base_CCMPIGTX_nzcv<OtherVT>;
-
-class AArch64Base_CCMPIGTW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIGTW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIGTW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPIGTW_immXAsInt64
-    : AArch64Base_CCMPIGTW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPIGTW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIGTW_immXAsLabel : AArch64Base_CCMPIGTW_immX<OtherVT>;
-
-class AArch64Base_CCMPIGTW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIGTW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIGTW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPIGTW_nzcvAsInt8
-    : AArch64Base_CCMPIGTW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIGTW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIGTW_nzcvAsLabel : AArch64Base_CCMPIGTW_nzcv<OtherVT>;
-
-class AArch64Base_CCMPIVCW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIVCW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIVCW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPIVCW_immXAsInt64
-    : AArch64Base_CCMPIVCW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPIVCW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIVCW_immXAsLabel : AArch64Base_CCMPIVCW_immX<OtherVT>;
-
-class AArch64Base_CCMPIVCW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIVCW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIVCW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPIVCW_nzcvAsInt8
-    : AArch64Base_CCMPIVCW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIVCW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIVCW_nzcvAsLabel : AArch64Base_CCMPIVCW_nzcv<OtherVT>;
-
-class AArch64Base_CCMPILEX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPILEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPILEX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPILEX_immXAsInt64
-    : AArch64Base_CCMPILEX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPILEX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPILEX_immXAsLabel : AArch64Base_CCMPILEX_immX<OtherVT>;
-
-class AArch64Base_CCMPILEX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPILEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPILEX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPILEX_nzcvAsInt8
-    : AArch64Base_CCMPILEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPILEX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPILEX_nzcvAsLabel : AArch64Base_CCMPILEX_nzcv<OtherVT>;
-
-class AArch64Base_ADDWLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWLSR_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ADDWLSR_imm6AsInt8
-    : AArch64Base_ADDWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ADDWLSR_imm6AsLabel : AArch64Base_ADDWLSR_imm6<OtherVT>;
-
-class AArch64Base_CCMNMIX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNMIX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNMIX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNMIX_nzcvAsInt8
-    : AArch64Base_CCMNMIX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNMIX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNMIX_nzcvAsLabel : AArch64Base_CCMNMIX_nzcv<OtherVT>;
 
 class AArch64Base_CCMPIVCX_immX<ValueType ty> : Operand<ty>
 {
@@ -3088,881 +256,17 @@ def AArch64Base_CCMPIVCX_nzcvAsInt8
 
 def AArch64Base_CCMPIVCX_nzcvAsLabel : AArch64Base_CCMPIVCX_nzcv<OtherVT>;
 
-class AArch64Base_ADDXSXSX_imm3<ValueType ty> : Operand<ty>
+class AArch64Base_MOVZXPos32_imm16<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_ADDXSXSX_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXSXSX_imm3_decode_wrapper";
+  let EncoderMethod = "AArch64Base_MOVZXPos32_wrapper";
+  let DecoderMethod = "AArch64Base_MOVZXPos32_imm16_decode_wrapper";
 }
 
-def AArch64Base_ADDXSXSX_imm3AsInt8
-    : AArch64Base_ADDXSXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_MOVZXPos32_imm16AsInt16
+    : AArch64Base_MOVZXPos32_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVZXPos32_imm16_predicate(Imm); }]>;
 
-def AArch64Base_ADDXSXSX_imm3AsLabel : AArch64Base_ADDXSXSX_imm3<OtherVT>;
-
-class AArch64Base_CCMNICCX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNICCX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNICCX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNICCX_immXAsInt64
-    : AArch64Base_CCMNICCX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNICCX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNICCX_immXAsLabel : AArch64Base_CCMNICCX_immX<OtherVT>;
-
-class AArch64Base_CCMNICCX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNICCX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNICCX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNICCX_nzcvAsInt8
-    : AArch64Base_CCMNICCX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNICCX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNICCX_nzcvAsLabel : AArch64Base_CCMNICCX_nzcv<OtherVT>;
-
-class AArch64Base_LDRPreSHX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRPreSHX_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPreSHX_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRPreSHX_offsetAsInt64
-    : AArch64Base_LDRPreSHX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPreSHX_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRPreSHX_offsetAsLabel : AArch64Base_LDRPreSHX_offset<OtherVT>;
-
-class AArch64Base_CBZW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CBZW_wrapper";
-  let DecoderMethod = "AArch64Base_CBZW_offset_decode_wrapper";
-}
-
-def AArch64Base_CBZW_offsetAsInt64
-    : AArch64Base_CBZW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CBZW_offset_predicate(Imm); }]>;
-
-def AArch64Base_CBZW_offsetAsLabel : AArch64Base_CBZW_offset<OtherVT>;
-
-class AArch64Base_LDRPreSWX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRPreSWX_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPreSWX_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRPreSWX_offsetAsInt64
-    : AArch64Base_LDRPreSWX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPreSWX_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRPreSWX_offsetAsLabel : AArch64Base_LDRPreSWX_offset<OtherVT>;
-
-class AArch64Base_CCMPHIW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPHIW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPHIW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPHIW_nzcvAsInt8
-    : AArch64Base_CCMPHIW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPHIW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPHIW_nzcvAsLabel : AArch64Base_CCMPHIW_nzcv<OtherVT>;
-
-class AArch64Base_SUBWSUXSH_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWSUXSH_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSUXSH_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBWSUXSH_imm3AsInt8
-    : AArch64Base_SUBWSUXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSUXSH_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBWSUXSH_imm3AsLabel : AArch64Base_SUBWSUXSH_imm3<OtherVT>;
-
-class AArch64Base_STURB_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STURB_wrapper";
-  let DecoderMethod = "AArch64Base_STURB_offset_decode_wrapper";
-}
-
-def AArch64Base_STURB_offsetAsInt64
-    : AArch64Base_STURB_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STURB_offset_predicate(Imm); }]>;
-
-def AArch64Base_STURB_offsetAsLabel : AArch64Base_STURB_offset<OtherVT>;
-
-class AArch64Base_ADR_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADR_wrapper";
-  let DecoderMethod = "AArch64Base_ADR_offset_decode_wrapper";
-}
-
-def AArch64Base_ADR_offsetAsInt64
-    : AArch64Base_ADR_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_ADR_offset_predicate(Imm); }]>;
-
-def AArch64Base_ADR_offsetAsLabel : AArch64Base_ADR_offset<OtherVT>;
-
-class AArch64Base_CCMPILSX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPILSX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPILSX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPILSX_immXAsInt64
-    : AArch64Base_CCMPILSX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPILSX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPILSX_immXAsLabel : AArch64Base_CCMPILSX_immX<OtherVT>;
-
-class AArch64Base_CCMPILSX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPILSX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPILSX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPILSX_nzcvAsInt8
-    : AArch64Base_CCMPILSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPILSX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPILSX_nzcvAsLabel : AArch64Base_CCMPILSX_nzcv<OtherVT>;
-
-class AArch64Base_LDPSPst_offWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDPSPst_wrapper";
-  let DecoderMethod = "AArch64Base_LDPSPst_offWSize_decode_wrapper";
-}
-
-def AArch64Base_LDPSPst_offWSizeAsInt64
-    : AArch64Base_LDPSPst_offWSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDPSPst_offWSize_predicate(Imm); }]>;
-
-def AArch64Base_LDPSPst_offWSizeAsLabel : AArch64Base_LDPSPst_offWSize<OtherVT>;
-
-class AArch64Base_STRPreB_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STRPreB_wrapper";
-  let DecoderMethod = "AArch64Base_STRPreB_offset_decode_wrapper";
-}
-
-def AArch64Base_STRPreB_offsetAsInt64
-    : AArch64Base_STRPreB_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STRPreB_offset_predicate(Imm); }]>;
-
-def AArch64Base_STRPreB_offsetAsLabel : AArch64Base_STRPreB_offset<OtherVT>;
-
-class AArch64Base_SUBXSSXSX_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXSSXSX_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSSXSX_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBXSSXSX_imm3AsInt8
-    : AArch64Base_SUBXSSXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSSXSX_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBXSSXSX_imm3AsLabel : AArch64Base_SUBXSSXSX_imm3<OtherVT>;
-
-class AArch64Base_EONXLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EONXLSL_wrapper";
-  let DecoderMethod = "AArch64Base_EONXLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_EONXLSL_imm6AsInt8
-    : AArch64Base_EONXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EONXLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_EONXLSL_imm6AsLabel : AArch64Base_EONXLSL_imm6<OtherVT>;
-
-class AArch64Base_MOVNXPos48_imm16<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MOVNXPos48_wrapper";
-  let DecoderMethod = "AArch64Base_MOVNXPos48_imm16_decode_wrapper";
-}
-
-def AArch64Base_MOVNXPos48_imm16AsInt16
-    : AArch64Base_MOVNXPos48_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVNXPos48_imm16_predicate(Imm); }]>;
-
-def AArch64Base_MOVNXPos48_imm16AsLabel : AArch64Base_MOVNXPos48_imm16<OtherVT>;
-
-class AArch64Base_CCMPMIX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPMIX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPMIX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPMIX_nzcvAsInt8
-    : AArch64Base_CCMPMIX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPMIX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPMIX_nzcvAsLabel : AArch64Base_CCMPMIX_nzcv<OtherVT>;
-
-class AArch64Base_SUBWSUXSB_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWSUXSB_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSUXSB_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBWSUXSB_imm3AsInt8
-    : AArch64Base_SUBWSUXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSUXSB_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBWSUXSB_imm3AsLabel : AArch64Base_SUBWSUXSB_imm3<OtherVT>;
-
-class AArch64Base_CCMPIEQX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIEQX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIEQX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPIEQX_immXAsInt64
-    : AArch64Base_CCMPIEQX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPIEQX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIEQX_immXAsLabel : AArch64Base_CCMPIEQX_immX<OtherVT>;
-
-class AArch64Base_CCMPIEQX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIEQX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIEQX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPIEQX_nzcvAsInt8
-    : AArch64Base_CCMPIEQX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIEQX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIEQX_nzcvAsLabel : AArch64Base_CCMPIEQX_nzcv<OtherVT>;
-
-class AArch64Base_SUBWSLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWSLSL_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_SUBWSLSL_imm6AsInt8
-    : AArch64Base_SUBWSLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_SUBWSLSL_imm6AsLabel : AArch64Base_SUBWSLSL_imm6<OtherVT>;
-
-class AArch64Base_LDRPstH_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRPstH_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPstH_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRPstH_offsetAsInt64
-    : AArch64Base_LDRPstH_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPstH_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRPstH_offsetAsLabel : AArch64Base_LDRPstH_offset<OtherVT>;
-
-class AArch64Base_ANDWLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDWLSL_wrapper";
-  let DecoderMethod = "AArch64Base_ANDWLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_ANDWLSL_imm6AsInt8
-    : AArch64Base_ANDWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDWLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ANDWLSL_imm6AsLabel : AArch64Base_ANDWLSL_imm6<OtherVT>;
-
-class AArch64Base_CCMPCCX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPCCX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPCCX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPCCX_nzcvAsInt8
-    : AArch64Base_CCMPCCX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPCCX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPCCX_nzcvAsLabel : AArch64Base_CCMPCCX_nzcv<OtherVT>;
-
-class AArch64Base_MOVNWPos16_imm16<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MOVNWPos16_wrapper";
-  let DecoderMethod = "AArch64Base_MOVNWPos16_imm16_decode_wrapper";
-}
-
-def AArch64Base_MOVNWPos16_imm16AsInt16
-    : AArch64Base_MOVNWPos16_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVNWPos16_imm16_predicate(Imm); }]>;
-
-def AArch64Base_MOVNWPos16_imm16AsLabel : AArch64Base_MOVNWPos16_imm16<OtherVT>;
-
-class AArch64Base_CCMNIALX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIALX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIALX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNIALX_immXAsInt64
-    : AArch64Base_CCMNIALX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNIALX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIALX_immXAsLabel : AArch64Base_CCMNIALX_immX<OtherVT>;
-
-class AArch64Base_CCMNIALX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIALX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIALX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNIALX_nzcvAsInt8
-    : AArch64Base_CCMNIALX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIALX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIALX_nzcvAsLabel : AArch64Base_CCMNIALX_nzcv<OtherVT>;
-
-class AArch64Base_CCMNVCW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNVCW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNVCW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNVCW_nzcvAsInt8
-    : AArch64Base_CCMNVCW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNVCW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNVCW_nzcvAsLabel : AArch64Base_CCMNVCW_nzcv<OtherVT>;
-
-class AArch64Base_CCMNIPLX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIPLX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIPLX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNIPLX_immXAsInt64
-    : AArch64Base_CCMNIPLX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNIPLX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIPLX_immXAsLabel : AArch64Base_CCMNIPLX_immX<OtherVT>;
-
-class AArch64Base_CCMNIPLX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIPLX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIPLX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNIPLX_nzcvAsInt8
-    : AArch64Base_CCMNIPLX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIPLX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIPLX_nzcvAsLabel : AArch64Base_CCMNIPLX_nzcv<OtherVT>;
-
-class AArch64Base_STRPreX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STRPreX_wrapper";
-  let DecoderMethod = "AArch64Base_STRPreX_offset_decode_wrapper";
-}
-
-def AArch64Base_STRPreX_offsetAsInt64
-    : AArch64Base_STRPreX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STRPreX_offset_predicate(Imm); }]>;
-
-def AArch64Base_STRPreX_offsetAsLabel : AArch64Base_STRPreX_offset<OtherVT>;
-
-class AArch64Base_LDRLitW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRLitW_wrapper";
-  let DecoderMethod = "AArch64Base_LDRLitW_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRLitW_offsetAsInt64
-    : AArch64Base_LDRLitW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRLitW_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRLitW_offsetAsLabel : AArch64Base_LDRLitW_offset<OtherVT>;
-
-class AArch64Base_BICWROR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BICWROR_wrapper";
-  let DecoderMethod = "AArch64Base_BICWROR_imm6_decode_wrapper";
-}
-
-def AArch64Base_BICWROR_imm6AsInt8
-    : AArch64Base_BICWROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICWROR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_BICWROR_imm6AsLabel : AArch64Base_BICWROR_imm6<OtherVT>;
-
-class AArch64Base_SUBWLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWLSL_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_SUBWLSL_imm6AsInt8
-    : AArch64Base_SUBWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_SUBWLSL_imm6AsLabel : AArch64Base_SUBWLSL_imm6<OtherVT>;
-
-class AArch64Base_EXTRX_shiftXSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EXTRX_wrapper";
-  let DecoderMethod = "AArch64Base_EXTRX_shiftXSize_decode_wrapper";
-}
-
-def AArch64Base_EXTRX_shiftXSizeAsInt8
-    : AArch64Base_EXTRX_shiftXSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EXTRX_shiftXSize_predicate(Imm); }]>;
-
-def AArch64Base_EXTRX_shiftXSizeAsLabel : AArch64Base_EXTRX_shiftXSize<OtherVT>;
-
-class AArch64Base_ANDIW_immWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDIW_wrapper";
-  let DecoderMethod = "AArch64Base_ANDIW_immWSize_decode_wrapper";
-}
-
-def AArch64Base_ANDIW_immWSizeAsInt32
-    : AArch64Base_ANDIW_immWSize<i32>
-    , ImmLeaf<i32, [{ return AArch64Base_ANDIW_immWSize_predicate(Imm); }]>;
-
-def AArch64Base_ANDIW_immWSizeAsLabel : AArch64Base_ANDIW_immWSize<OtherVT>;
-
-class AArch64Base_MOVNXPos32_imm16<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MOVNXPos32_wrapper";
-  let DecoderMethod = "AArch64Base_MOVNXPos32_imm16_decode_wrapper";
-}
-
-def AArch64Base_MOVNXPos32_imm16AsInt16
-    : AArch64Base_MOVNXPos32_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVNXPos32_imm16_predicate(Imm); }]>;
-
-def AArch64Base_MOVNXPos32_imm16AsLabel : AArch64Base_MOVNXPos32_imm16<OtherVT>;
-
-class AArch64Base_CCMPIMIW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIMIW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIMIW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPIMIW_immXAsInt64
-    : AArch64Base_CCMPIMIW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPIMIW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIMIW_immXAsLabel : AArch64Base_CCMPIMIW_immX<OtherVT>;
-
-class AArch64Base_CCMPIMIW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIMIW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIMIW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPIMIW_nzcvAsInt8
-    : AArch64Base_CCMPIMIW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIMIW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIMIW_nzcvAsLabel : AArch64Base_CCMPIMIW_nzcv<OtherVT>;
-
-class AArch64Base_STRPstX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STRPstX_wrapper";
-  let DecoderMethod = "AArch64Base_STRPstX_offset_decode_wrapper";
-}
-
-def AArch64Base_STRPstX_offsetAsInt64
-    : AArch64Base_STRPstX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STRPstX_offset_predicate(Imm); }]>;
-
-def AArch64Base_STRPstX_offsetAsLabel : AArch64Base_STRPstX_offset<OtherVT>;
-
-class AArch64Base_LDPS_offWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDPS_wrapper";
-  let DecoderMethod = "AArch64Base_LDPS_offWSize_decode_wrapper";
-}
-
-def AArch64Base_LDPS_offWSizeAsInt64
-    : AArch64Base_LDPS_offWSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDPS_offWSize_predicate(Imm); }]>;
-
-def AArch64Base_LDPS_offWSizeAsLabel : AArch64Base_LDPS_offWSize<OtherVT>;
-
-class AArch64Base_EONWLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EONWLSR_wrapper";
-  let DecoderMethod = "AArch64Base_EONWLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_EONWLSR_imm6AsInt8
-    : AArch64Base_EONWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EONWLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_EONWLSR_imm6AsLabel : AArch64Base_EONWLSR_imm6<OtherVT>;
-
-class AArch64Base_BICSXLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BICSXLSR_wrapper";
-  let DecoderMethod = "AArch64Base_BICSXLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_BICSXLSR_imm6AsInt8
-    : AArch64Base_BICSXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICSXLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_BICSXLSR_imm6AsLabel : AArch64Base_BICSXLSR_imm6<OtherVT>;
-
-class AArch64Base_CCMPIHIW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIHIW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIHIW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPIHIW_immXAsInt64
-    : AArch64Base_CCMPIHIW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPIHIW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIHIW_immXAsLabel : AArch64Base_CCMPIHIW_immX<OtherVT>;
-
-class AArch64Base_CCMPIHIW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIHIW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIHIW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPIHIW_nzcvAsInt8
-    : AArch64Base_CCMPIHIW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIHIW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIHIW_nzcvAsLabel : AArch64Base_CCMPIHIW_nzcv<OtherVT>;
-
-class AArch64Base_CCMNVSW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNVSW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNVSW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNVSW_nzcvAsInt8
-    : AArch64Base_CCMNVSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNVSW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNVSW_nzcvAsLabel : AArch64Base_CCMNVSW_nzcv<OtherVT>;
-
-class AArch64Base_MOVNWPos00_imm16<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MOVNWPos00_wrapper";
-  let DecoderMethod = "AArch64Base_MOVNWPos00_imm16_decode_wrapper";
-}
-
-def AArch64Base_MOVNWPos00_imm16AsInt16
-    : AArch64Base_MOVNWPos00_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVNWPos00_imm16_predicate(Imm); }]>;
-
-def AArch64Base_MOVNWPos00_imm16AsLabel : AArch64Base_MOVNWPos00_imm16<OtherVT>;
-
-class AArch64Base_CCMNEQW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNEQW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNEQW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNEQW_nzcvAsInt8
-    : AArch64Base_CCMNEQW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNEQW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNEQW_nzcvAsLabel : AArch64Base_CCMNEQW_nzcv<OtherVT>;
-
-class AArch64Base_B_GT_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_GT_wrapper";
-  let DecoderMethod = "AArch64Base_B_GT_offset_decode_wrapper";
-}
-
-def AArch64Base_B_GT_offsetAsInt64
-    : AArch64Base_B_GT_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_GT_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_GT_offsetAsLabel : AArch64Base_B_GT_offset<OtherVT>;
-
-class AArch64Base_BICSXASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BICSXASR_wrapper";
-  let DecoderMethod = "AArch64Base_BICSXASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_BICSXASR_imm6AsInt8
-    : AArch64Base_BICSXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICSXASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_BICSXASR_imm6AsLabel : AArch64Base_BICSXASR_imm6<OtherVT>;
-
-class AArch64Base_CCMNLSX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNLSX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNLSX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNLSX_nzcvAsInt8
-    : AArch64Base_CCMNLSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNLSX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNLSX_nzcvAsLabel : AArch64Base_CCMNLSX_nzcv<OtherVT>;
-
-class AArch64Base_SUBWSASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWSASR_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_SUBWSASR_imm6AsInt8
-    : AArch64Base_SUBWSASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_SUBWSASR_imm6AsLabel : AArch64Base_SUBWSASR_imm6<OtherVT>;
-
-class AArch64Base_ORNXLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ORNXLSR_wrapper";
-  let DecoderMethod = "AArch64Base_ORNXLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ORNXLSR_imm6AsInt8
-    : AArch64Base_ORNXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORNXLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ORNXLSR_imm6AsLabel : AArch64Base_ORNXLSR_imm6<OtherVT>;
-
-class AArch64Base_ADDXSSXSH_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXSSXSH_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXSSXSH_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDXSSXSH_imm3AsInt8
-    : AArch64Base_ADDXSSXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSSXSH_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDXSSXSH_imm3AsLabel : AArch64Base_ADDXSSXSH_imm3<OtherVT>;
-
-class AArch64Base_CCMPINVW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPINVW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPINVW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPINVW_immXAsInt64
-    : AArch64Base_CCMPINVW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPINVW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPINVW_immXAsLabel : AArch64Base_CCMPINVW_immX<OtherVT>;
-
-class AArch64Base_CCMPINVW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPINVW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPINVW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPINVW_nzcvAsInt8
-    : AArch64Base_CCMPINVW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPINVW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPINVW_nzcvAsLabel : AArch64Base_CCMPINVW_nzcv<OtherVT>;
-
-class AArch64Base_UBFMX_leftXSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_UBFMX_wrapper";
-  let DecoderMethod = "AArch64Base_UBFMX_leftXSize_decode_wrapper";
-}
-
-def AArch64Base_UBFMX_leftXSizeAsInt8
-    : AArch64Base_UBFMX_leftXSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_UBFMX_leftXSize_predicate(Imm); }]>;
-
-def AArch64Base_UBFMX_leftXSizeAsLabel : AArch64Base_UBFMX_leftXSize<OtherVT>;
-
-class AArch64Base_UBFMX_rightXSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_UBFMX_wrapper";
-  let DecoderMethod = "AArch64Base_UBFMX_rightXSize_decode_wrapper";
-}
-
-def AArch64Base_UBFMX_rightXSizeAsInt8
-    : AArch64Base_UBFMX_rightXSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_UBFMX_rightXSize_predicate(Imm); }]>;
-
-def AArch64Base_UBFMX_rightXSizeAsLabel : AArch64Base_UBFMX_rightXSize<OtherVT>;
-
-class AArch64Base_SUBWUXSX_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWUXSX_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWUXSX_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBWUXSX_imm3AsInt8
-    : AArch64Base_SUBWUXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWUXSX_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBWUXSX_imm3AsLabel : AArch64Base_SUBWUXSX_imm3<OtherVT>;
-
-class AArch64Base_LDRPstSHW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRPstSHW_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPstSHW_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRPstSHW_offsetAsInt64
-    : AArch64Base_LDRPstSHW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPstSHW_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRPstSHW_offsetAsLabel : AArch64Base_LDRPstSHW_offset<OtherVT>;
-
-class AArch64Base_CCMPIGEX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIGEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIGEX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPIGEX_immXAsInt64
-    : AArch64Base_CCMPIGEX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPIGEX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIGEX_immXAsLabel : AArch64Base_CCMPIGEX_immX<OtherVT>;
-
-class AArch64Base_CCMPIGEX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIGEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIGEX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPIGEX_nzcvAsInt8
-    : AArch64Base_CCMPIGEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIGEX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIGEX_nzcvAsLabel : AArch64Base_CCMPIGEX_nzcv<OtherVT>;
-
-class AArch64Base_CCMNILEW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNILEW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNILEW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNILEW_immXAsInt64
-    : AArch64Base_CCMNILEW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNILEW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNILEW_immXAsLabel : AArch64Base_CCMNILEW_immX<OtherVT>;
-
-class AArch64Base_CCMNILEW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNILEW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNILEW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNILEW_nzcvAsInt8
-    : AArch64Base_CCMNILEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNILEW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNILEW_nzcvAsLabel : AArch64Base_CCMNILEW_nzcv<OtherVT>;
-
-class AArch64Base_LDURH_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDURH_wrapper";
-  let DecoderMethod = "AArch64Base_LDURH_offset_decode_wrapper";
-}
-
-def AArch64Base_LDURH_offsetAsInt64
-    : AArch64Base_LDURH_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDURH_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDURH_offsetAsLabel : AArch64Base_LDURH_offset<OtherVT>;
-
-class AArch64Base_ADDXLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXLSR_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ADDXLSR_imm6AsInt8
-    : AArch64Base_ADDXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ADDXLSR_imm6AsLabel : AArch64Base_ADDXLSR_imm6<OtherVT>;
-
-class AArch64Base_SUBXSSXSW_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXSSXSW_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSSXSW_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBXSSXSW_imm3AsInt8
-    : AArch64Base_SUBXSSXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSSXSW_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBXSSXSW_imm3AsLabel : AArch64Base_SUBXSSXSW_imm3<OtherVT>;
-
-class AArch64Base_ADDWSSXSW_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWSSXSW_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSSXSW_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDWSSXSW_imm3AsInt8
-    : AArch64Base_ADDWSSXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSSXSW_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDWSSXSW_imm3AsLabel : AArch64Base_ADDWSSXSW_imm3<OtherVT>;
-
-class AArch64Base_CCMNINEX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNINEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNINEX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNINEX_immXAsInt64
-    : AArch64Base_CCMNINEX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNINEX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNINEX_immXAsLabel : AArch64Base_CCMNINEX_immX<OtherVT>;
-
-class AArch64Base_CCMNINEX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNINEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNINEX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNINEX_nzcvAsInt8
-    : AArch64Base_CCMNINEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNINEX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNINEX_nzcvAsLabel : AArch64Base_CCMNINEX_nzcv<OtherVT>;
-
-class AArch64Base_CCMNLTW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNLTW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNLTW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNLTW_nzcvAsInt8
-    : AArch64Base_CCMNLTW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNLTW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNLTW_nzcvAsLabel : AArch64Base_CCMNLTW_nzcv<OtherVT>;
-
-class AArch64Base_ADDWSSXSH_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWSSXSH_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSSXSH_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDWSSXSH_imm3AsInt8
-    : AArch64Base_ADDWSSXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSSXSH_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDWSSXSH_imm3AsLabel : AArch64Base_ADDWSSXSH_imm3<OtherVT>;
+def AArch64Base_MOVZXPos32_imm16AsLabel : AArch64Base_MOVZXPos32_imm16<OtherVT>;
 
 class AArch64Base_ORRXLSR_imm6<ValueType ty> : Operand<ty>
 {
@@ -3975,318 +279,6 @@ def AArch64Base_ORRXLSR_imm6AsInt8
     , ImmLeaf<i8, [{ return AArch64Base_ORRXLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORRXLSR_imm6AsLabel : AArch64Base_ORRXLSR_imm6<OtherVT>;
-
-class AArch64Base_SUBXLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXLSL_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_SUBXLSL_imm6AsInt8
-    : AArch64Base_SUBXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_SUBXLSL_imm6AsLabel : AArch64Base_SUBXLSL_imm6<OtherVT>;
-
-class AArch64Base_LDRPstW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRPstW_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPstW_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRPstW_offsetAsInt64
-    : AArch64Base_LDRPstW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPstW_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRPstW_offsetAsLabel : AArch64Base_LDRPstW_offset<OtherVT>;
-
-class AArch64Base_SUBWSXSB_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWSXSB_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSXSB_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBWSXSB_imm3AsInt8
-    : AArch64Base_SUBWSXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSXSB_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBWSXSB_imm3AsLabel : AArch64Base_SUBWSXSB_imm3<OtherVT>;
-
-class AArch64Base_ADDXSUXSX_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXSUXSX_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXSUXSX_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDXSUXSX_imm3AsInt8
-    : AArch64Base_ADDXSUXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSUXSX_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDXSUXSX_imm3AsLabel : AArch64Base_ADDXSUXSX_imm3<OtherVT>;
-
-class AArch64Base_ORRXROR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ORRXROR_wrapper";
-  let DecoderMethod = "AArch64Base_ORRXROR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ORRXROR_imm6AsInt8
-    : AArch64Base_ORRXROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORRXROR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ORRXROR_imm6AsLabel : AArch64Base_ORRXROR_imm6<OtherVT>;
-
-class AArch64Base_ORNXASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ORNXASR_wrapper";
-  let DecoderMethod = "AArch64Base_ORNXASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ORNXASR_imm6AsInt8
-    : AArch64Base_ORNXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORNXASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ORNXASR_imm6AsLabel : AArch64Base_ORNXASR_imm6<OtherVT>;
-
-class AArch64Base_STPWPre_offWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STPWPre_wrapper";
-  let DecoderMethod = "AArch64Base_STPWPre_offWSize_decode_wrapper";
-}
-
-def AArch64Base_STPWPre_offWSizeAsInt64
-    : AArch64Base_STPWPre_offWSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STPWPre_offWSize_predicate(Imm); }]>;
-
-def AArch64Base_STPWPre_offWSizeAsLabel : AArch64Base_STPWPre_offWSize<OtherVT>;
-
-class AArch64Base_ADDXSLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXSLSL_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXSLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_ADDXSLSL_imm6AsInt8
-    : AArch64Base_ADDXSLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ADDXSLSL_imm6AsLabel : AArch64Base_ADDXSLSL_imm6<OtherVT>;
-
-class AArch64Base_ADDWSUXSW_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWSUXSW_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSUXSW_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDWSUXSW_imm3AsInt8
-    : AArch64Base_ADDWSUXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSUXSW_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDWSUXSW_imm3AsLabel : AArch64Base_ADDWSUXSW_imm3<OtherVT>;
-
-class AArch64Base_ORNWROR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ORNWROR_wrapper";
-  let DecoderMethod = "AArch64Base_ORNWROR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ORNWROR_imm6AsInt8
-    : AArch64Base_ORNWROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORNWROR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ORNWROR_imm6AsLabel : AArch64Base_ORNWROR_imm6<OtherVT>;
-
-class AArch64Base_CCMPIEQW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIEQW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIEQW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPIEQW_immXAsInt64
-    : AArch64Base_CCMPIEQW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPIEQW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIEQW_immXAsLabel : AArch64Base_CCMPIEQW_immX<OtherVT>;
-
-class AArch64Base_CCMPIEQW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIEQW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIEQW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPIEQW_nzcvAsInt8
-    : AArch64Base_CCMPIEQW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIEQW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIEQW_nzcvAsLabel : AArch64Base_CCMPIEQW_nzcv<OtherVT>;
-
-class AArch64Base_CCMNIVSX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIVSX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIVSX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNIVSX_immXAsInt64
-    : AArch64Base_CCMNIVSX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNIVSX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIVSX_immXAsLabel : AArch64Base_CCMNIVSX_immX<OtherVT>;
-
-class AArch64Base_CCMNIVSX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIVSX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIVSX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNIVSX_nzcvAsInt8
-    : AArch64Base_CCMNIVSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIVSX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIVSX_nzcvAsLabel : AArch64Base_CCMNIVSX_nzcv<OtherVT>;
-
-class AArch64Base_LDRSBW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRSBW_wrapper";
-  let DecoderMethod = "AArch64Base_LDRSBW_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRSBW_offsetAsInt64
-    : AArch64Base_LDRSBW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRSBW_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRSBW_offsetAsLabel : AArch64Base_LDRSBW_offset<OtherVT>;
-
-class AArch64Base_LDURSHW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDURSHW_wrapper";
-  let DecoderMethod = "AArch64Base_LDURSHW_offset_decode_wrapper";
-}
-
-def AArch64Base_LDURSHW_offsetAsInt64
-    : AArch64Base_LDURSHW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDURSHW_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDURSHW_offsetAsLabel : AArch64Base_LDURSHW_offset<OtherVT>;
-
-class AArch64Base_SUBXSI12_imm12S<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXSI12_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSI12_imm12S_decode_wrapper";
-}
-
-def AArch64Base_SUBXSI12_imm12SAsInt64
-    : AArch64Base_SUBXSI12_imm12S<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_SUBXSI12_imm12S_predicate(Imm); }]>;
-
-def AArch64Base_SUBXSI12_imm12SAsLabel : AArch64Base_SUBXSI12_imm12S<OtherVT>;
-
-class AArch64Base_CCMNIGTX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIGTX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIGTX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNIGTX_immXAsInt64
-    : AArch64Base_CCMNIGTX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNIGTX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIGTX_immXAsLabel : AArch64Base_CCMNIGTX_immX<OtherVT>;
-
-class AArch64Base_CCMNIGTX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIGTX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIGTX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNIGTX_nzcvAsInt8
-    : AArch64Base_CCMNIGTX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIGTX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIGTX_nzcvAsLabel : AArch64Base_CCMNIGTX_nzcv<OtherVT>;
-
-class AArch64Base_ORRIX_immXSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ORRIX_wrapper";
-  let DecoderMethod = "AArch64Base_ORRIX_immXSize_decode_wrapper";
-}
-
-def AArch64Base_ORRIX_immXSizeAsInt64
-    : AArch64Base_ORRIX_immXSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_ORRIX_immXSize_predicate(Imm); }]>;
-
-def AArch64Base_ORRIX_immXSizeAsLabel : AArch64Base_ORRIX_immXSize<OtherVT>;
-
-class AArch64Base_CCMNIALW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIALW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIALW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNIALW_immXAsInt64
-    : AArch64Base_CCMNIALW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNIALW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIALW_immXAsLabel : AArch64Base_CCMNIALW_immX<OtherVT>;
-
-class AArch64Base_CCMNIALW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIALW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIALW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNIALW_nzcvAsInt8
-    : AArch64Base_CCMNIALW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIALW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIALW_nzcvAsLabel : AArch64Base_CCMNIALW_nzcv<OtherVT>;
-
-class AArch64Base_CCMPIVSW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIVSW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIVSW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPIVSW_immXAsInt64
-    : AArch64Base_CCMPIVSW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPIVSW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIVSW_immXAsLabel : AArch64Base_CCMPIVSW_immX<OtherVT>;
-
-class AArch64Base_CCMPIVSW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPIVSW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPIVSW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPIVSW_nzcvAsInt8
-    : AArch64Base_CCMPIVSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIVSW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPIVSW_nzcvAsLabel : AArch64Base_CCMPIVSW_nzcv<OtherVT>;
-
-class AArch64Base_ADDXI_imm12X<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXI_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXI_imm12X_decode_wrapper";
-}
-
-def AArch64Base_ADDXI_imm12XAsInt64
-    : AArch64Base_ADDXI_imm12X<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_ADDXI_imm12X_predicate(Imm); }]>;
-
-def AArch64Base_ADDXI_imm12XAsLabel : AArch64Base_ADDXI_imm12X<OtherVT>;
-
-class AArch64Base_B_PL_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_PL_wrapper";
-  let DecoderMethod = "AArch64Base_B_PL_offset_decode_wrapper";
-}
-
-def AArch64Base_B_PL_offsetAsInt64
-    : AArch64Base_B_PL_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_PL_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_PL_offsetAsLabel : AArch64Base_B_PL_offset<OtherVT>;
 
 class AArch64Base_CCMNIEQX_immX<ValueType ty> : Operand<ty>
 {
@@ -4312,701 +304,17 @@ def AArch64Base_CCMNIEQX_nzcvAsInt8
 
 def AArch64Base_CCMNIEQX_nzcvAsLabel : AArch64Base_CCMNIEQX_nzcv<OtherVT>;
 
-class AArch64Base_ADDXSSXSB_imm3<ValueType ty> : Operand<ty>
+class AArch64Base_SUBWSXSH_imm3<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_ADDXSSXSB_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXSSXSB_imm3_decode_wrapper";
+  let EncoderMethod = "AArch64Base_SUBWSXSH_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXSSXSB_imm3AsInt8
-    : AArch64Base_ADDXSSXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSSXSB_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDXSSXSB_imm3AsLabel : AArch64Base_ADDXSSXSB_imm3<OtherVT>;
-
-class AArch64Base_EORXLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EORXLSR_wrapper";
-  let DecoderMethod = "AArch64Base_EORXLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_EORXLSR_imm6AsInt8
-    : AArch64Base_EORXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EORXLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_EORXLSR_imm6AsLabel : AArch64Base_EORXLSR_imm6<OtherVT>;
-
-class AArch64Base_CCMNNVX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNNVX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNNVX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNNVX_nzcvAsInt8
-    : AArch64Base_CCMNNVX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNNVX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNNVX_nzcvAsLabel : AArch64Base_CCMNNVX_nzcv<OtherVT>;
-
-class AArch64Base_MRS_sysreg<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MRS_wrapper";
-  let DecoderMethod = "AArch64Base_MRS_sysreg_decode_wrapper";
-}
-
-def AArch64Base_MRS_sysregAsInt16
-    : AArch64Base_MRS_sysreg<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MRS_sysreg_predicate(Imm); }]>;
-
-def AArch64Base_MRS_sysregAsLabel : AArch64Base_MRS_sysreg<OtherVT>;
-
-class AArch64Base_ADDWSXSW_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWSXSW_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSXSW_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDWSXSW_imm3AsInt8
-    : AArch64Base_ADDWSXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSXSW_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDWSXSW_imm3AsLabel : AArch64Base_ADDWSXSW_imm3<OtherVT>;
-
-class AArch64Base_SUBWSSXSB_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWSSXSB_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSSXSB_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBWSSXSB_imm3AsInt8
-    : AArch64Base_SUBWSSXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSSXSB_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBWSSXSB_imm3AsLabel : AArch64Base_SUBWSSXSB_imm3<OtherVT>;
-
-class AArch64Base_LDURB_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDURB_wrapper";
-  let DecoderMethod = "AArch64Base_LDURB_offset_decode_wrapper";
-}
-
-def AArch64Base_LDURB_offsetAsInt64
-    : AArch64Base_LDURB_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDURB_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDURB_offsetAsLabel : AArch64Base_LDURB_offset<OtherVT>;
-
-class AArch64Base_LDURX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDURX_wrapper";
-  let DecoderMethod = "AArch64Base_LDURX_offset_decode_wrapper";
-}
-
-def AArch64Base_LDURX_offsetAsInt64
-    : AArch64Base_LDURX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDURX_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDURX_offsetAsLabel : AArch64Base_LDURX_offset<OtherVT>;
-
-class AArch64Base_ADDXSXSH_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXSXSH_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXSXSH_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDXSXSH_imm3AsInt8
-    : AArch64Base_ADDXSXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSXSH_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDXSXSH_imm3AsLabel : AArch64Base_ADDXSXSH_imm3<OtherVT>;
-
-class AArch64Base_SUBWSXSX_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWSXSX_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSXSX_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBWSXSX_imm3AsInt8
-    : AArch64Base_SUBWSXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSXSX_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBWSXSX_imm3AsLabel : AArch64Base_SUBWSXSX_imm3<OtherVT>;
-
-class AArch64Base_LDRPstSBW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRPstSBW_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPstSBW_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRPstSBW_offsetAsInt64
-    : AArch64Base_LDRPstSBW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPstSBW_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRPstSBW_offsetAsLabel : AArch64Base_LDRPstSBW_offset<OtherVT>;
-
-class AArch64Base_LDPSPre_offWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDPSPre_wrapper";
-  let DecoderMethod = "AArch64Base_LDPSPre_offWSize_decode_wrapper";
-}
-
-def AArch64Base_LDPSPre_offWSizeAsInt64
-    : AArch64Base_LDPSPre_offWSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDPSPre_offWSize_predicate(Imm); }]>;
-
-def AArch64Base_LDPSPre_offWSizeAsLabel : AArch64Base_LDPSPre_offWSize<OtherVT>;
-
-class AArch64Base_ORRXLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ORRXLSL_wrapper";
-  let DecoderMethod = "AArch64Base_ORRXLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_ORRXLSL_imm6AsInt8
-    : AArch64Base_ORRXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORRXLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ORRXLSL_imm6AsLabel : AArch64Base_ORRXLSL_imm6<OtherVT>;
-
-class AArch64Base_MOVKXPos00_imm16<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MOVKXPos00_wrapper";
-  let DecoderMethod = "AArch64Base_MOVKXPos00_imm16_decode_wrapper";
-}
-
-def AArch64Base_MOVKXPos00_imm16AsInt16
-    : AArch64Base_MOVKXPos00_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVKXPos00_imm16_predicate(Imm); }]>;
-
-def AArch64Base_MOVKXPos00_imm16AsLabel : AArch64Base_MOVKXPos00_imm16<OtherVT>;
-
-class AArch64Base_CCMNILTW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNILTW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNILTW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNILTW_immXAsInt64
-    : AArch64Base_CCMNILTW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNILTW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNILTW_immXAsLabel : AArch64Base_CCMNILTW_immX<OtherVT>;
-
-class AArch64Base_CCMNILTW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNILTW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNILTW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNILTW_nzcvAsInt8
-    : AArch64Base_CCMNILTW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNILTW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNILTW_nzcvAsLabel : AArch64Base_CCMNILTW_nzcv<OtherVT>;
-
-class AArch64Base_CCMPINVX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPINVX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPINVX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPINVX_immXAsInt64
-    : AArch64Base_CCMPINVX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPINVX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPINVX_immXAsLabel : AArch64Base_CCMPINVX_immX<OtherVT>;
-
-class AArch64Base_CCMPINVX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPINVX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPINVX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPINVX_nzcvAsInt8
-    : AArch64Base_CCMPINVX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPINVX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPINVX_nzcvAsLabel : AArch64Base_CCMPINVX_nzcv<OtherVT>;
-
-class AArch64Base_BL_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BL_wrapper";
-  let DecoderMethod = "AArch64Base_BL_offset_decode_wrapper";
-}
-
-def AArch64Base_BL_offsetAsInt64
-    : AArch64Base_BL_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_BL_offset_predicate(Imm); }]>;
-
-def AArch64Base_BL_offsetAsLabel : AArch64Base_BL_offset<OtherVT>;
-
-class AArch64Base_B_VC_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_VC_wrapper";
-  let DecoderMethod = "AArch64Base_B_VC_offset_decode_wrapper";
-}
-
-def AArch64Base_B_VC_offsetAsInt64
-    : AArch64Base_B_VC_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_VC_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_VC_offsetAsLabel : AArch64Base_B_VC_offset<OtherVT>;
-
-class AArch64Base_CCMNIHIX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIHIX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIHIX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNIHIX_immXAsInt64
-    : AArch64Base_CCMNIHIX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNIHIX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIHIX_immXAsLabel : AArch64Base_CCMNIHIX_immX<OtherVT>;
-
-class AArch64Base_CCMNIHIX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIHIX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIHIX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNIHIX_nzcvAsInt8
-    : AArch64Base_CCMNIHIX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIHIX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIHIX_nzcvAsLabel : AArch64Base_CCMNIHIX_nzcv<OtherVT>;
-
-class AArch64Base_ADDXSLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXSLSR_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXSLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ADDXSLSR_imm6AsInt8
-    : AArch64Base_ADDXSLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ADDXSLSR_imm6AsLabel : AArch64Base_ADDXSLSR_imm6<OtherVT>;
-
-class AArch64Base_CCMPVSW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPVSW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPVSW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPVSW_nzcvAsInt8
-    : AArch64Base_CCMPVSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPVSW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPVSW_nzcvAsLabel : AArch64Base_CCMPVSW_nzcv<OtherVT>;
-
-class AArch64Base_CCMPALW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPALW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPALW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPALW_nzcvAsInt8
-    : AArch64Base_CCMPALW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPALW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPALW_nzcvAsLabel : AArch64Base_CCMPALW_nzcv<OtherVT>;
-
-class AArch64Base_CCMNIPLW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIPLW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIPLW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNIPLW_immXAsInt64
-    : AArch64Base_CCMNIPLW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNIPLW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIPLW_immXAsLabel : AArch64Base_CCMNIPLW_immX<OtherVT>;
-
-class AArch64Base_CCMNIPLW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIPLW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIPLW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNIPLW_nzcvAsInt8
-    : AArch64Base_CCMNIPLW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIPLW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIPLW_nzcvAsLabel : AArch64Base_CCMNIPLW_nzcv<OtherVT>;
-
-class AArch64Base_CCMNHIW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNHIW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNHIW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNHIW_nzcvAsInt8
-    : AArch64Base_CCMNHIW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNHIW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNHIW_nzcvAsLabel : AArch64Base_CCMNHIW_nzcv<OtherVT>;
-
-class AArch64Base_CCMNLTX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNLTX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNLTX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNLTX_nzcvAsInt8
-    : AArch64Base_CCMNLTX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNLTX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNLTX_nzcvAsLabel : AArch64Base_CCMNLTX_nzcv<OtherVT>;
-
-class AArch64Base_LDRB_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRB_wrapper";
-  let DecoderMethod = "AArch64Base_LDRB_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRB_offsetAsInt64
-    : AArch64Base_LDRB_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRB_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRB_offsetAsLabel : AArch64Base_LDRB_offset<OtherVT>;
-
-class AArch64Base_BICSWLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BICSWLSL_wrapper";
-  let DecoderMethod = "AArch64Base_BICSWLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_BICSWLSL_imm6AsInt8
-    : AArch64Base_BICSWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICSWLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_BICSWLSL_imm6AsLabel : AArch64Base_BICSWLSL_imm6<OtherVT>;
-
-class AArch64Base_ADDXSI_imm12X<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXSI_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXSI_imm12X_decode_wrapper";
-}
-
-def AArch64Base_ADDXSI_imm12XAsInt64
-    : AArch64Base_ADDXSI_imm12X<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_ADDXSI_imm12X_predicate(Imm); }]>;
-
-def AArch64Base_ADDXSI_imm12XAsLabel : AArch64Base_ADDXSI_imm12X<OtherVT>;
-
-class AArch64Base_BICSWASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BICSWASR_wrapper";
-  let DecoderMethod = "AArch64Base_BICSWASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_BICSWASR_imm6AsInt8
-    : AArch64Base_BICSWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICSWASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_BICSWASR_imm6AsLabel : AArch64Base_BICSWASR_imm6<OtherVT>;
-
-class AArch64Base_LDPXPre_offXSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDPXPre_wrapper";
-  let DecoderMethod = "AArch64Base_LDPXPre_offXSize_decode_wrapper";
-}
-
-def AArch64Base_LDPXPre_offXSizeAsInt64
-    : AArch64Base_LDPXPre_offXSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDPXPre_offXSize_predicate(Imm); }]>;
-
-def AArch64Base_LDPXPre_offXSizeAsLabel : AArch64Base_LDPXPre_offXSize<OtherVT>;
-
-class AArch64Base_EONWROR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EONWROR_wrapper";
-  let DecoderMethod = "AArch64Base_EONWROR_imm6_decode_wrapper";
-}
-
-def AArch64Base_EONWROR_imm6AsInt8
-    : AArch64Base_EONWROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EONWROR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_EONWROR_imm6AsLabel : AArch64Base_EONWROR_imm6<OtherVT>;
-
-class AArch64Base_CCMPNVW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPNVW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPNVW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPNVW_nzcvAsInt8
-    : AArch64Base_CCMPNVW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPNVW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPNVW_nzcvAsLabel : AArch64Base_CCMPNVW_nzcv<OtherVT>;
-
-class AArch64Base_ADDWSSXSB_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWSSXSB_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSSXSB_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDWSSXSB_imm3AsInt8
-    : AArch64Base_ADDWSSXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSSXSB_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDWSSXSB_imm3AsLabel : AArch64Base_ADDWSSXSB_imm3<OtherVT>;
-
-class AArch64Base_TBZ_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_TBZ_wrapper";
-  let DecoderMethod = "AArch64Base_TBZ_offset_decode_wrapper";
-}
-
-def AArch64Base_TBZ_offsetAsInt64
-    : AArch64Base_TBZ_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_TBZ_offset_predicate(Imm); }]>;
-
-def AArch64Base_TBZ_offsetAsLabel : AArch64Base_TBZ_offset<OtherVT>;
-
-class AArch64Base_TBZ_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_TBZ_wrapper";
-  let DecoderMethod = "AArch64Base_TBZ_imm6_decode_wrapper";
-}
-
-def AArch64Base_TBZ_imm6AsInt8
-    : AArch64Base_TBZ_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_TBZ_imm6_predicate(Imm); }]>;
-
-def AArch64Base_TBZ_imm6AsLabel : AArch64Base_TBZ_imm6<OtherVT>;
-
-class AArch64Base_EONXROR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EONXROR_wrapper";
-  let DecoderMethod = "AArch64Base_EONXROR_imm6_decode_wrapper";
-}
-
-def AArch64Base_EONXROR_imm6AsInt8
-    : AArch64Base_EONXROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EONXROR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_EONXROR_imm6AsLabel : AArch64Base_EONXROR_imm6<OtherVT>;
-
-class AArch64Base_MOVKXPos48_imm16<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MOVKXPos48_wrapper";
-  let DecoderMethod = "AArch64Base_MOVKXPos48_imm16_decode_wrapper";
-}
-
-def AArch64Base_MOVKXPos48_imm16AsInt16
-    : AArch64Base_MOVKXPos48_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVKXPos48_imm16_predicate(Imm); }]>;
-
-def AArch64Base_MOVKXPos48_imm16AsLabel : AArch64Base_MOVKXPos48_imm16<OtherVT>;
-
-class AArch64Base_ANDSXLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDSXLSL_wrapper";
-  let DecoderMethod = "AArch64Base_ANDSXLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_ANDSXLSL_imm6AsInt8
-    : AArch64Base_ANDSXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDSXLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ANDSXLSL_imm6AsLabel : AArch64Base_ANDSXLSL_imm6<OtherVT>;
-
-class AArch64Base_CCMNIMIW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIMIW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIMIW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNIMIW_immXAsInt64
-    : AArch64Base_CCMNIMIW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNIMIW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIMIW_immXAsLabel : AArch64Base_CCMNIMIW_immX<OtherVT>;
-
-class AArch64Base_CCMNIMIW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIMIW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIMIW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNIMIW_nzcvAsInt8
-    : AArch64Base_CCMNIMIW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIMIW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIMIW_nzcvAsLabel : AArch64Base_CCMNIMIW_nzcv<OtherVT>;
-
-class AArch64Base_SUBXI12_imm12S<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXI12_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXI12_imm12S_decode_wrapper";
-}
-
-def AArch64Base_SUBXI12_imm12SAsInt64
-    : AArch64Base_SUBXI12_imm12S<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_SUBXI12_imm12S_predicate(Imm); }]>;
-
-def AArch64Base_SUBXI12_imm12SAsLabel : AArch64Base_SUBXI12_imm12S<OtherVT>;
-
-class AArch64Base_ADDXSXSB_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXSXSB_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXSXSB_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDXSXSB_imm3AsInt8
-    : AArch64Base_ADDXSXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSXSB_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDXSXSB_imm3AsLabel : AArch64Base_ADDXSXSB_imm3<OtherVT>;
-
-class AArch64Base_LDPW_offWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDPW_wrapper";
-  let DecoderMethod = "AArch64Base_LDPW_offWSize_decode_wrapper";
-}
-
-def AArch64Base_LDPW_offWSizeAsInt64
-    : AArch64Base_LDPW_offWSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDPW_offWSize_predicate(Imm); }]>;
-
-def AArch64Base_LDPW_offWSizeAsLabel : AArch64Base_LDPW_offWSize<OtherVT>;
-
-class AArch64Base_EORWLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EORWLSL_wrapper";
-  let DecoderMethod = "AArch64Base_EORWLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_EORWLSL_imm6AsInt8
-    : AArch64Base_EORWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EORWLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_EORWLSL_imm6AsLabel : AArch64Base_EORWLSL_imm6<OtherVT>;
-
-class AArch64Base_BFMX_leftXSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BFMX_wrapper";
-  let DecoderMethod = "AArch64Base_BFMX_leftXSize_decode_wrapper";
-}
-
-def AArch64Base_BFMX_leftXSizeAsInt8
-    : AArch64Base_BFMX_leftXSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BFMX_leftXSize_predicate(Imm); }]>;
-
-def AArch64Base_BFMX_leftXSizeAsLabel : AArch64Base_BFMX_leftXSize<OtherVT>;
-
-class AArch64Base_BFMX_rightXSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BFMX_wrapper";
-  let DecoderMethod = "AArch64Base_BFMX_rightXSize_decode_wrapper";
-}
-
-def AArch64Base_BFMX_rightXSizeAsInt8
-    : AArch64Base_BFMX_rightXSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BFMX_rightXSize_predicate(Imm); }]>;
-
-def AArch64Base_BFMX_rightXSizeAsLabel : AArch64Base_BFMX_rightXSize<OtherVT>;
-
-class AArch64Base_LDRPreSHW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRPreSHW_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPreSHW_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRPreSHW_offsetAsInt64
-    : AArch64Base_LDRPreSHW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPreSHW_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRPreSHW_offsetAsLabel : AArch64Base_LDRPreSHW_offset<OtherVT>;
-
-class AArch64Base_ANDSWROR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDSWROR_wrapper";
-  let DecoderMethod = "AArch64Base_ANDSWROR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ANDSWROR_imm6AsInt8
-    : AArch64Base_ANDSWROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDSWROR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ANDSWROR_imm6AsLabel : AArch64Base_ANDSWROR_imm6<OtherVT>;
-
-class AArch64Base_BICSXLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BICSXLSL_wrapper";
-  let DecoderMethod = "AArch64Base_BICSXLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_BICSXLSL_imm6AsInt8
-    : AArch64Base_BICSXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICSXLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_BICSXLSL_imm6AsLabel : AArch64Base_BICSXLSL_imm6<OtherVT>;
-
-class AArch64Base_SBFMW_leftWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SBFMW_wrapper";
-  let DecoderMethod = "AArch64Base_SBFMW_leftWSize_decode_wrapper";
-}
-
-def AArch64Base_SBFMW_leftWSizeAsInt8
-    : AArch64Base_SBFMW_leftWSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SBFMW_leftWSize_predicate(Imm); }]>;
-
-def AArch64Base_SBFMW_leftWSizeAsLabel : AArch64Base_SBFMW_leftWSize<OtherVT>;
-
-class AArch64Base_SBFMW_rightWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SBFMW_wrapper";
-  let DecoderMethod = "AArch64Base_SBFMW_rightWSize_decode_wrapper";
-}
-
-def AArch64Base_SBFMW_rightWSizeAsInt8
-    : AArch64Base_SBFMW_rightWSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SBFMW_rightWSize_predicate(Imm); }]>;
-
-def AArch64Base_SBFMW_rightWSizeAsLabel : AArch64Base_SBFMW_rightWSize<OtherVT>;
-
-class AArch64Base_STPWPst_offWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STPWPst_wrapper";
-  let DecoderMethod = "AArch64Base_STPWPst_offWSize_decode_wrapper";
-}
-
-def AArch64Base_STPWPst_offWSizeAsInt64
-    : AArch64Base_STPWPst_offWSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STPWPst_offWSize_predicate(Imm); }]>;
-
-def AArch64Base_STPWPst_offWSizeAsLabel : AArch64Base_STPWPst_offWSize<OtherVT>;
-
-class AArch64Base_ADRP_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADRP_wrapper";
-  let DecoderMethod = "AArch64Base_ADRP_offset_decode_wrapper";
-}
-
-def AArch64Base_ADRP_offsetAsInt64
-    : AArch64Base_ADRP_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_ADRP_offset_predicate(Imm); }]>;
-
-def AArch64Base_ADRP_offsetAsLabel : AArch64Base_ADRP_offset<OtherVT>;
-
-class AArch64Base_EORWLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EORWLSR_wrapper";
-  let DecoderMethod = "AArch64Base_EORWLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_EORWLSR_imm6AsInt8
-    : AArch64Base_EORWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EORWLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_EORWLSR_imm6AsLabel : AArch64Base_EORWLSR_imm6<OtherVT>;
+def AArch64Base_SUBWSXSH_imm3AsInt8
+    : AArch64Base_SUBWSXSH_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWSXSH_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBWSXSH_imm3AsLabel : AArch64Base_SUBWSXSH_imm3<OtherVT>;
 
 class AArch64Base_EORXASR_imm6<ValueType ty> : Operand<ty>
 {
@@ -5020,725 +328,29 @@ def AArch64Base_EORXASR_imm6AsInt8
 
 def AArch64Base_EORXASR_imm6AsLabel : AArch64Base_EORXASR_imm6<OtherVT>;
 
-class AArch64Base_LDRPstB_offset<ValueType ty> : Operand<ty>
+class AArch64Base_LDURSBX_offset<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_LDRPstB_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPstB_offset_decode_wrapper";
+  let EncoderMethod = "AArch64Base_LDURSBX_wrapper";
+  let DecoderMethod = "AArch64Base_LDURSBX_offset_decode_wrapper";
 }
 
-def AArch64Base_LDRPstB_offsetAsInt64
-    : AArch64Base_LDRPstB_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPstB_offset_predicate(Imm); }]>;
+def AArch64Base_LDURSBX_offsetAsInt64
+    : AArch64Base_LDURSBX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDURSBX_offset_predicate(Imm); }]>;
 
-def AArch64Base_LDRPstB_offsetAsLabel : AArch64Base_LDRPstB_offset<OtherVT>;
+def AArch64Base_LDURSBX_offsetAsLabel : AArch64Base_LDURSBX_offset<OtherVT>;
 
-class AArch64Base_CCMNCCX_nzcv<ValueType ty> : Operand<ty>
+class AArch64Base_LDRPreSBX_offset<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_CCMNCCX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNCCX_nzcv_decode_wrapper";
+  let EncoderMethod = "AArch64Base_LDRPreSBX_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPreSBX_offset_decode_wrapper";
 }
 
-def AArch64Base_CCMNCCX_nzcvAsInt8
-    : AArch64Base_CCMNCCX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNCCX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNCCX_nzcvAsLabel : AArch64Base_CCMNCCX_nzcv<OtherVT>;
-
-class AArch64Base_MOVNXPos16_imm16<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MOVNXPos16_wrapper";
-  let DecoderMethod = "AArch64Base_MOVNXPos16_imm16_decode_wrapper";
-}
-
-def AArch64Base_MOVNXPos16_imm16AsInt16
-    : AArch64Base_MOVNXPos16_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVNXPos16_imm16_predicate(Imm); }]>;
-
-def AArch64Base_MOVNXPos16_imm16AsLabel : AArch64Base_MOVNXPos16_imm16<OtherVT>;
-
-class AArch64Base_ADDXUXSX_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDXUXSX_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXUXSX_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDXUXSX_imm3AsInt8
-    : AArch64Base_ADDXUXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXUXSX_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDXUXSX_imm3AsLabel : AArch64Base_ADDXUXSX_imm3<OtherVT>;
-
-class AArch64Base_BICWLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BICWLSL_wrapper";
-  let DecoderMethod = "AArch64Base_BICWLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_BICWLSL_imm6AsInt8
-    : AArch64Base_BICWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICWLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_BICWLSL_imm6AsLabel : AArch64Base_BICWLSL_imm6<OtherVT>;
-
-class AArch64Base_MOVZXPos32_imm16<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MOVZXPos32_wrapper";
-  let DecoderMethod = "AArch64Base_MOVZXPos32_imm16_decode_wrapper";
-}
-
-def AArch64Base_MOVZXPos32_imm16AsInt16
-    : AArch64Base_MOVZXPos32_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVZXPos32_imm16_predicate(Imm); }]>;
-
-def AArch64Base_MOVZXPos32_imm16AsLabel : AArch64Base_MOVZXPos32_imm16<OtherVT>;
-
-class AArch64Base_B_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_wrapper";
-  let DecoderMethod = "AArch64Base_B_offset_decode_wrapper";
-}
-
-def AArch64Base_B_offsetAsInt64
-    : AArch64Base_B_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_offsetAsLabel : AArch64Base_B_offset<OtherVT>;
-
-class AArch64Base_SUBXSXSH_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBXSXSH_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSXSH_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBXSXSH_imm3AsInt8
-    : AArch64Base_SUBXSXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSXSH_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBXSXSH_imm3AsLabel : AArch64Base_SUBXSXSH_imm3<OtherVT>;
-
-class AArch64Base_MOVZWPos16_imm16<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MOVZWPos16_wrapper";
-  let DecoderMethod = "AArch64Base_MOVZWPos16_imm16_decode_wrapper";
-}
-
-def AArch64Base_MOVZWPos16_imm16AsInt16
-    : AArch64Base_MOVZWPos16_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVZWPos16_imm16_predicate(Imm); }]>;
-
-def AArch64Base_MOVZWPos16_imm16AsLabel : AArch64Base_MOVZWPos16_imm16<OtherVT>;
-
-class AArch64Base_CCMPILSW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPILSW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPILSW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMPILSW_immXAsInt64
-    : AArch64Base_CCMPILSW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMPILSW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMPILSW_immXAsLabel : AArch64Base_CCMPILSW_immX<OtherVT>;
-
-class AArch64Base_CCMPILSW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPILSW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPILSW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPILSW_nzcvAsInt8
-    : AArch64Base_CCMPILSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPILSW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPILSW_nzcvAsLabel : AArch64Base_CCMPILSW_nzcv<OtherVT>;
-
-class AArch64Base_LDRSHW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRSHW_wrapper";
-  let DecoderMethod = "AArch64Base_LDRSHW_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRSHW_offsetAsInt64
-    : AArch64Base_LDRSHW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRSHW_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRSHW_offsetAsLabel : AArch64Base_LDRSHW_offset<OtherVT>;
-
-class AArch64Base_SUBWSUXSW_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWSUXSW_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSUXSW_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBWSUXSW_imm3AsInt8
-    : AArch64Base_SUBWSUXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSUXSW_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBWSUXSW_imm3AsLabel : AArch64Base_SUBWSUXSW_imm3<OtherVT>;
-
-class AArch64Base_LDRPreW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRPreW_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPreW_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRPreW_offsetAsInt64
-    : AArch64Base_LDRPreW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPreW_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRPreW_offsetAsLabel : AArch64Base_LDRPreW_offset<OtherVT>;
-
-class AArch64Base_STRB_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STRB_wrapper";
-  let DecoderMethod = "AArch64Base_STRB_offset_decode_wrapper";
-}
-
-def AArch64Base_STRB_offsetAsInt64
-    : AArch64Base_STRB_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STRB_offset_predicate(Imm); }]>;
-
-def AArch64Base_STRB_offsetAsLabel : AArch64Base_STRB_offset<OtherVT>;
-
-class AArch64Base_CCMNILTX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNILTX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNILTX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNILTX_immXAsInt64
-    : AArch64Base_CCMNILTX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNILTX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNILTX_immXAsLabel : AArch64Base_CCMNILTX_immX<OtherVT>;
-
-class AArch64Base_CCMNILTX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNILTX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNILTX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNILTX_nzcvAsInt8
-    : AArch64Base_CCMNILTX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNILTX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNILTX_nzcvAsLabel : AArch64Base_CCMNILTX_nzcv<OtherVT>;
-
-class AArch64Base_LDRH_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRH_wrapper";
-  let DecoderMethod = "AArch64Base_LDRH_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRH_offsetAsInt64
-    : AArch64Base_LDRH_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRH_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRH_offsetAsLabel : AArch64Base_LDRH_offset<OtherVT>;
-
-class AArch64Base_CCMPGEX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPGEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPGEX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPGEX_nzcvAsInt8
-    : AArch64Base_CCMPGEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPGEX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPGEX_nzcvAsLabel : AArch64Base_CCMPGEX_nzcv<OtherVT>;
-
-class AArch64Base_CCMNIVCW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIVCW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIVCW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNIVCW_immXAsInt64
-    : AArch64Base_CCMNIVCW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNIVCW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIVCW_immXAsLabel : AArch64Base_CCMNIVCW_immX<OtherVT>;
-
-class AArch64Base_CCMNIVCW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIVCW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIVCW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNIVCW_nzcvAsInt8
-    : AArch64Base_CCMNIVCW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIVCW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIVCW_nzcvAsLabel : AArch64Base_CCMNIVCW_nzcv<OtherVT>;
-
-class AArch64Base_STRPstW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STRPstW_wrapper";
-  let DecoderMethod = "AArch64Base_STRPstW_offset_decode_wrapper";
-}
-
-def AArch64Base_STRPstW_offsetAsInt64
-    : AArch64Base_STRPstW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STRPstW_offset_predicate(Imm); }]>;
-
-def AArch64Base_STRPstW_offsetAsLabel : AArch64Base_STRPstW_offset<OtherVT>;
-
-class AArch64Base_ADDWSUXSH_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWSUXSH_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSUXSH_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDWSUXSH_imm3AsInt8
-    : AArch64Base_ADDWSUXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSUXSH_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDWSUXSH_imm3AsLabel : AArch64Base_ADDWSUXSH_imm3<OtherVT>;
-
-class AArch64Base_CCMNVCX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNVCX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNVCX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNVCX_nzcvAsInt8
-    : AArch64Base_CCMNVCX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNVCX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNVCX_nzcvAsLabel : AArch64Base_CCMNVCX_nzcv<OtherVT>;
-
-class AArch64Base_LDRPreX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRPreX_wrapper";
-  let DecoderMethod = "AArch64Base_LDRPreX_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRPreX_offsetAsInt64
-    : AArch64Base_LDRPreX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRPreX_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRPreX_offsetAsLabel : AArch64Base_LDRPreX_offset<OtherVT>;
-
-class AArch64Base_B_CS_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_CS_wrapper";
-  let DecoderMethod = "AArch64Base_B_CS_offset_decode_wrapper";
-}
-
-def AArch64Base_B_CS_offsetAsInt64
-    : AArch64Base_B_CS_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_CS_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_CS_offsetAsLabel : AArch64Base_B_CS_offset<OtherVT>;
-
-class AArch64Base_SUBWUXSB_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_SUBWUXSB_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWUXSB_imm3_decode_wrapper";
-}
-
-def AArch64Base_SUBWUXSB_imm3AsInt8
-    : AArch64Base_SUBWUXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWUXSB_imm3_predicate(Imm); }]>;
-
-def AArch64Base_SUBWUXSB_imm3AsLabel : AArch64Base_SUBWUXSB_imm3<OtherVT>;
-
-class AArch64Base_ADDWI12_imm12S<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWI12_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWI12_imm12S_decode_wrapper";
-}
-
-def AArch64Base_ADDWI12_imm12SAsInt64
-    : AArch64Base_ADDWI12_imm12S<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_ADDWI12_imm12S_predicate(Imm); }]>;
-
-def AArch64Base_ADDWI12_imm12SAsLabel : AArch64Base_ADDWI12_imm12S<OtherVT>;
-
-class AArch64Base_ADDWSI12_imm12S<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWSI12_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSI12_imm12S_decode_wrapper";
-}
-
-def AArch64Base_ADDWSI12_imm12SAsInt64
-    : AArch64Base_ADDWSI12_imm12S<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_ADDWSI12_imm12S_predicate(Imm); }]>;
-
-def AArch64Base_ADDWSI12_imm12SAsLabel : AArch64Base_ADDWSI12_imm12S<OtherVT>;
-
-class AArch64Base_CCMNINVW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNINVW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNINVW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNINVW_immXAsInt64
-    : AArch64Base_CCMNINVW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNINVW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNINVW_immXAsLabel : AArch64Base_CCMNINVW_immX<OtherVT>;
-
-class AArch64Base_CCMNINVW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNINVW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNINVW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNINVW_nzcvAsInt8
-    : AArch64Base_CCMNINVW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNINVW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNINVW_nzcvAsLabel : AArch64Base_CCMNINVW_nzcv<OtherVT>;
-
-class AArch64Base_BICXLSL_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_BICXLSL_wrapper";
-  let DecoderMethod = "AArch64Base_BICXLSL_imm6_decode_wrapper";
-}
-
-def AArch64Base_BICXLSL_imm6AsInt8
-    : AArch64Base_BICXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICXLSL_imm6_predicate(Imm); }]>;
-
-def AArch64Base_BICXLSL_imm6AsLabel : AArch64Base_BICXLSL_imm6<OtherVT>;
-
-class AArch64Base_CCMNIMIX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIMIX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIMIX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNIMIX_immXAsInt64
-    : AArch64Base_CCMNIMIX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNIMIX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIMIX_immXAsLabel : AArch64Base_CCMNIMIX_immX<OtherVT>;
-
-class AArch64Base_CCMNIMIX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNIMIX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNIMIX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNIMIX_nzcvAsInt8
-    : AArch64Base_CCMNIMIX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIMIX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNIMIX_nzcvAsLabel : AArch64Base_CCMNIMIX_nzcv<OtherVT>;
-
-class AArch64Base_B_NE_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_B_NE_wrapper";
-  let DecoderMethod = "AArch64Base_B_NE_offset_decode_wrapper";
-}
-
-def AArch64Base_B_NE_offsetAsInt64
-    : AArch64Base_B_NE_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_B_NE_offset_predicate(Imm); }]>;
-
-def AArch64Base_B_NE_offsetAsLabel : AArch64Base_B_NE_offset<OtherVT>;
-
-class AArch64Base_CCMNGTW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNGTW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNGTW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNGTW_nzcvAsInt8
-    : AArch64Base_CCMNGTW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNGTW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNGTW_nzcvAsLabel : AArch64Base_CCMNGTW_nzcv<OtherVT>;
-
-class AArch64Base_EONXASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EONXASR_wrapper";
-  let DecoderMethod = "AArch64Base_EONXASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_EONXASR_imm6AsInt8
-    : AArch64Base_EONXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EONXASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_EONXASR_imm6AsLabel : AArch64Base_EONXASR_imm6<OtherVT>;
-
-class AArch64Base_CCMPLEX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPLEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPLEX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPLEX_nzcvAsInt8
-    : AArch64Base_CCMPLEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPLEX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPLEX_nzcvAsLabel : AArch64Base_CCMPLEX_nzcv<OtherVT>;
-
-class AArch64Base_CCMPLTX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPLTX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPLTX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPLTX_nzcvAsInt8
-    : AArch64Base_CCMPLTX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPLTX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPLTX_nzcvAsLabel : AArch64Base_CCMPLTX_nzcv<OtherVT>;
-
-class AArch64Base_LDURSWX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDURSWX_wrapper";
-  let DecoderMethod = "AArch64Base_LDURSWX_offset_decode_wrapper";
-}
-
-def AArch64Base_LDURSWX_offsetAsInt64
-    : AArch64Base_LDURSWX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDURSWX_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDURSWX_offsetAsLabel : AArch64Base_LDURSWX_offset<OtherVT>;
-
-class AArch64Base_ANDSXASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ANDSXASR_wrapper";
-  let DecoderMethod = "AArch64Base_ANDSXASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ANDSXASR_imm6AsInt8
-    : AArch64Base_ANDSXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDSXASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ANDSXASR_imm6AsLabel : AArch64Base_ANDSXASR_imm6<OtherVT>;
-
-class AArch64Base_CCMNICCW_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNICCW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNICCW_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNICCW_immXAsInt64
-    : AArch64Base_CCMNICCW_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNICCW_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNICCW_immXAsLabel : AArch64Base_CCMNICCW_immX<OtherVT>;
-
-class AArch64Base_CCMNICCW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNICCW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNICCW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNICCW_nzcvAsInt8
-    : AArch64Base_CCMNICCW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNICCW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNICCW_nzcvAsLabel : AArch64Base_CCMNICCW_nzcv<OtherVT>;
-
-class AArch64Base_CCMPLSW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPLSW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPLSW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPLSW_nzcvAsInt8
-    : AArch64Base_CCMPLSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPLSW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPLSW_nzcvAsLabel : AArch64Base_CCMPLSW_nzcv<OtherVT>;
-
-class AArch64Base_STRPreW_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STRPreW_wrapper";
-  let DecoderMethod = "AArch64Base_STRPreW_offset_decode_wrapper";
-}
-
-def AArch64Base_STRPreW_offsetAsInt64
-    : AArch64Base_STRPreW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STRPreW_offset_predicate(Imm); }]>;
-
-def AArch64Base_STRPreW_offsetAsLabel : AArch64Base_STRPreW_offset<OtherVT>;
-
-class AArch64Base_STURX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_STURX_wrapper";
-  let DecoderMethod = "AArch64Base_STURX_offset_decode_wrapper";
-}
-
-def AArch64Base_STURX_offsetAsInt64
-    : AArch64Base_STURX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STURX_offset_predicate(Imm); }]>;
-
-def AArch64Base_STURX_offsetAsLabel : AArch64Base_STURX_offset<OtherVT>;
-
-class AArch64Base_EXTRW_shiftWSize<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EXTRW_wrapper";
-  let DecoderMethod = "AArch64Base_EXTRW_shiftWSize_decode_wrapper";
-}
-
-def AArch64Base_EXTRW_shiftWSizeAsInt8
-    : AArch64Base_EXTRW_shiftWSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EXTRW_shiftWSize_predicate(Imm); }]>;
-
-def AArch64Base_EXTRW_shiftWSizeAsLabel : AArch64Base_EXTRW_shiftWSize<OtherVT>;
-
-class AArch64Base_MOVNXPos00_imm16<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_MOVNXPos00_wrapper";
-  let DecoderMethod = "AArch64Base_MOVNXPos00_imm16_decode_wrapper";
-}
-
-def AArch64Base_MOVNXPos00_imm16AsInt16
-    : AArch64Base_MOVNXPos00_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVNXPos00_imm16_predicate(Imm); }]>;
-
-def AArch64Base_MOVNXPos00_imm16AsLabel : AArch64Base_MOVNXPos00_imm16<OtherVT>;
-
-class AArch64Base_LDRLitSWX_offset<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_LDRLitSWX_wrapper";
-  let DecoderMethod = "AArch64Base_LDRLitSWX_offset_decode_wrapper";
-}
-
-def AArch64Base_LDRLitSWX_offsetAsInt64
-    : AArch64Base_LDRLitSWX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRLitSWX_offset_predicate(Imm); }]>;
-
-def AArch64Base_LDRLitSWX_offsetAsLabel : AArch64Base_LDRLitSWX_offset<OtherVT>;
-
-class AArch64Base_CCMPVSX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPVSX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPVSX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPVSX_nzcvAsInt8
-    : AArch64Base_CCMPVSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPVSX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPVSX_nzcvAsLabel : AArch64Base_CCMPVSX_nzcv<OtherVT>;
-
-class AArch64Base_ADDWSXSB_imm3<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ADDWSXSB_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSXSB_imm3_decode_wrapper";
-}
-
-def AArch64Base_ADDWSXSB_imm3AsInt8
-    : AArch64Base_ADDWSXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSXSB_imm3_predicate(Imm); }]>;
-
-def AArch64Base_ADDWSXSB_imm3AsLabel : AArch64Base_ADDWSXSB_imm3<OtherVT>;
-
-class AArch64Base_CCMNVSX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNVSX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNVSX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNVSX_nzcvAsInt8
-    : AArch64Base_CCMNVSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNVSX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNVSX_nzcvAsLabel : AArch64Base_CCMNVSX_nzcv<OtherVT>;
-
-class AArch64Base_ORRWASR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_ORRWASR_wrapper";
-  let DecoderMethod = "AArch64Base_ORRWASR_imm6_decode_wrapper";
-}
-
-def AArch64Base_ORRWASR_imm6AsInt8
-    : AArch64Base_ORRWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORRWASR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_ORRWASR_imm6AsLabel : AArch64Base_ORRWASR_imm6<OtherVT>;
-
-class AArch64Base_CCMPHIX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPHIX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPHIX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPHIX_nzcvAsInt8
-    : AArch64Base_CCMPHIX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPHIX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPHIX_nzcvAsLabel : AArch64Base_CCMPHIX_nzcv<OtherVT>;
-
-class AArch64Base_CCMPNVX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPNVX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPNVX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPNVX_nzcvAsInt8
-    : AArch64Base_CCMPNVX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPNVX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPNVX_nzcvAsLabel : AArch64Base_CCMPNVX_nzcv<OtherVT>;
-
-class AArch64Base_EONXLSR_imm6<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_EONXLSR_wrapper";
-  let DecoderMethod = "AArch64Base_EONXLSR_imm6_decode_wrapper";
-}
-
-def AArch64Base_EONXLSR_imm6AsInt8
-    : AArch64Base_EONXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EONXLSR_imm6_predicate(Imm); }]>;
-
-def AArch64Base_EONXLSR_imm6AsLabel : AArch64Base_EONXLSR_imm6<OtherVT>;
-
-class AArch64Base_CCMPGEW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPGEW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPGEW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPGEW_nzcvAsInt8
-    : AArch64Base_CCMPGEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPGEW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPGEW_nzcvAsLabel : AArch64Base_CCMPGEW_nzcv<OtherVT>;
-
-class AArch64Base_CCMNILSX_immX<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNILSX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNILSX_immX_decode_wrapper";
-}
-
-def AArch64Base_CCMNILSX_immXAsInt64
-    : AArch64Base_CCMNILSX_immX<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_CCMNILSX_immX_predicate(Imm); }]>;
-
-def AArch64Base_CCMNILSX_immXAsLabel : AArch64Base_CCMNILSX_immX<OtherVT>;
-
-class AArch64Base_CCMNILSX_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMNILSX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNILSX_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMNILSX_nzcvAsInt8
-    : AArch64Base_CCMNILSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNILSX_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMNILSX_nzcvAsLabel : AArch64Base_CCMNILSX_nzcv<OtherVT>;
-
-class AArch64Base_CCMPLEW_nzcv<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "AArch64Base_CCMPLEW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPLEW_nzcv_decode_wrapper";
-}
-
-def AArch64Base_CCMPLEW_nzcvAsInt8
-    : AArch64Base_CCMPLEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPLEW_nzcv_predicate(Imm); }]>;
-
-def AArch64Base_CCMPLEW_nzcvAsLabel : AArch64Base_CCMPLEW_nzcv<OtherVT>;
+def AArch64Base_LDRPreSBX_offsetAsInt64
+    : AArch64Base_LDRPreSBX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPreSBX_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRPreSBX_offsetAsLabel : AArch64Base_LDRPreSBX_offset<OtherVT>;
 
 class AArch64Base_CCMNICSX_immX<ValueType ty> : Operand<ty>
 {
@@ -5764,6 +376,2166 @@ def AArch64Base_CCMNICSX_nzcvAsInt8
 
 def AArch64Base_CCMNICSX_nzcvAsLabel : AArch64Base_CCMNICSX_nzcv<OtherVT>;
 
+class AArch64Base_SUBWSXSW_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWSXSW_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSXSW_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBWSXSW_imm3AsInt8
+    : AArch64Base_SUBWSXSW_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWSXSW_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBWSXSW_imm3AsLabel : AArch64Base_SUBWSXSW_imm3<OtherVT>;
+
+class AArch64Base_ADDWUXSW_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWUXSW_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWUXSW_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDWUXSW_imm3AsInt8
+    : AArch64Base_ADDWUXSW_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWUXSW_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDWUXSW_imm3AsLabel : AArch64Base_ADDWUXSW_imm3<OtherVT>;
+
+class AArch64Base_CCMNCSW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNCSW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNCSW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNCSW_nzcvAsInt8
+    : AArch64Base_CCMNCSW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNCSW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNCSW_nzcvAsLabel : AArch64Base_CCMNCSW_nzcv<OtherVT>;
+
+class AArch64Base_CCMPLTW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPLTW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPLTW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPLTW_nzcvAsInt8
+    : AArch64Base_CCMPLTW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPLTW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPLTW_nzcvAsLabel : AArch64Base_CCMPLTW_nzcv<OtherVT>;
+
+class AArch64Base_ORNWASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ORNWASR_wrapper";
+  let DecoderMethod = "AArch64Base_ORNWASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ORNWASR_imm6AsInt8
+    : AArch64Base_ORNWASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ORNWASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ORNWASR_imm6AsLabel : AArch64Base_ORNWASR_imm6<OtherVT>;
+
+class AArch64Base_BICXROR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BICXROR_wrapper";
+  let DecoderMethod = "AArch64Base_BICXROR_imm6_decode_wrapper";
+}
+
+def AArch64Base_BICXROR_imm6AsInt8
+    : AArch64Base_BICXROR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BICXROR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_BICXROR_imm6AsLabel : AArch64Base_BICXROR_imm6<OtherVT>;
+
+class AArch64Base_BICSWLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BICSWLSL_wrapper";
+  let DecoderMethod = "AArch64Base_BICSWLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_BICSWLSL_imm6AsInt8
+    : AArch64Base_BICSWLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BICSWLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_BICSWLSL_imm6AsLabel : AArch64Base_BICSWLSL_imm6<OtherVT>;
+
+class AArch64Base_EXTRW_shiftWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EXTRW_wrapper";
+  let DecoderMethod = "AArch64Base_EXTRW_shiftWSize_decode_wrapper";
+}
+
+def AArch64Base_EXTRW_shiftWSizeAsInt8
+    : AArch64Base_EXTRW_shiftWSize<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EXTRW_shiftWSize_predicate(Imm); }]>;
+
+def AArch64Base_EXTRW_shiftWSizeAsLabel : AArch64Base_EXTRW_shiftWSize<OtherVT>;
+
+class AArch64Base_CCMPIVCW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIVCW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIVCW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPIVCW_immXAsInt64
+    : AArch64Base_CCMPIVCW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPIVCW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIVCW_immXAsLabel : AArch64Base_CCMPIVCW_immX<OtherVT>;
+
+class AArch64Base_CCMPIVCW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIVCW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIVCW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPIVCW_nzcvAsInt8
+    : AArch64Base_CCMPIVCW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPIVCW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIVCW_nzcvAsLabel : AArch64Base_CCMPIVCW_nzcv<OtherVT>;
+
+class AArch64Base_ORRXROR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ORRXROR_wrapper";
+  let DecoderMethod = "AArch64Base_ORRXROR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ORRXROR_imm6AsInt8
+    : AArch64Base_ORRXROR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ORRXROR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ORRXROR_imm6AsLabel : AArch64Base_ORRXROR_imm6<OtherVT>;
+
+class AArch64Base_LDRLitX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRLitX_wrapper";
+  let DecoderMethod = "AArch64Base_LDRLitX_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRLitX_offsetAsInt64
+    : AArch64Base_LDRLitX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRLitX_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRLitX_offsetAsLabel : AArch64Base_LDRLitX_offset<OtherVT>;
+
+class AArch64Base_LDPW_offWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDPW_wrapper";
+  let DecoderMethod = "AArch64Base_LDPW_offWSize_decode_wrapper";
+}
+
+def AArch64Base_LDPW_offWSizeAsInt64
+    : AArch64Base_LDPW_offWSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDPW_offWSize_predicate(Imm); }]>;
+
+def AArch64Base_LDPW_offWSizeAsLabel : AArch64Base_LDPW_offWSize<OtherVT>;
+
+class AArch64Base_EORXLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EORXLSR_wrapper";
+  let DecoderMethod = "AArch64Base_EORXLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_EORXLSR_imm6AsInt8
+    : AArch64Base_EORXLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EORXLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_EORXLSR_imm6AsLabel : AArch64Base_EORXLSR_imm6<OtherVT>;
+
+class AArch64Base_ANDXLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDXLSL_wrapper";
+  let DecoderMethod = "AArch64Base_ANDXLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_ANDXLSL_imm6AsInt8
+    : AArch64Base_ANDXLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ANDXLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ANDXLSL_imm6AsLabel : AArch64Base_ANDXLSL_imm6<OtherVT>;
+
+class AArch64Base_LDPWPre_offWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDPWPre_wrapper";
+  let DecoderMethod = "AArch64Base_LDPWPre_offWSize_decode_wrapper";
+}
+
+def AArch64Base_LDPWPre_offWSizeAsInt64
+    : AArch64Base_LDPWPre_offWSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDPWPre_offWSize_predicate(Imm); }]>;
+
+def AArch64Base_LDPWPre_offWSizeAsLabel : AArch64Base_LDPWPre_offWSize<OtherVT>;
+
+class AArch64Base_ANDSWROR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDSWROR_wrapper";
+  let DecoderMethod = "AArch64Base_ANDSWROR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ANDSWROR_imm6AsInt8
+    : AArch64Base_ANDSWROR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ANDSWROR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ANDSWROR_imm6AsLabel : AArch64Base_ANDSWROR_imm6<OtherVT>;
+
+class AArch64Base_STURX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STURX_wrapper";
+  let DecoderMethod = "AArch64Base_STURX_offset_decode_wrapper";
+}
+
+def AArch64Base_STURX_offsetAsInt64
+    : AArch64Base_STURX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STURX_offset_predicate(Imm); }]>;
+
+def AArch64Base_STURX_offsetAsLabel : AArch64Base_STURX_offset<OtherVT>;
+
+class AArch64Base_SUBWUXSB_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWUXSB_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWUXSB_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBWUXSB_imm3AsInt8
+    : AArch64Base_SUBWUXSB_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWUXSB_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBWUXSB_imm3AsLabel : AArch64Base_SUBWUXSB_imm3<OtherVT>;
+
+class AArch64Base_BICWLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BICWLSL_wrapper";
+  let DecoderMethod = "AArch64Base_BICWLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_BICWLSL_imm6AsInt8
+    : AArch64Base_BICWLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BICWLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_BICWLSL_imm6AsLabel : AArch64Base_BICWLSL_imm6<OtherVT>;
+
+class AArch64Base_SUBWSSXSW_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWSSXSW_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSSXSW_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBWSSXSW_imm3AsInt8
+    : AArch64Base_SUBWSSXSW_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWSSXSW_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBWSSXSW_imm3AsLabel : AArch64Base_SUBWSSXSW_imm3<OtherVT>;
+
+class AArch64Base_CCMPGEW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPGEW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPGEW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPGEW_nzcvAsInt8
+    : AArch64Base_CCMPGEW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPGEW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPGEW_nzcvAsLabel : AArch64Base_CCMPGEW_nzcv<OtherVT>;
+
+class AArch64Base_CCMNINEW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNINEW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNINEW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNINEW_immXAsInt64
+    : AArch64Base_CCMNINEW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNINEW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNINEW_immXAsLabel : AArch64Base_CCMNINEW_immX<OtherVT>;
+
+class AArch64Base_CCMNINEW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNINEW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNINEW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNINEW_nzcvAsInt8
+    : AArch64Base_CCMNINEW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNINEW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNINEW_nzcvAsLabel : AArch64Base_CCMNINEW_nzcv<OtherVT>;
+
+class AArch64Base_STPXPst_offXSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STPXPst_wrapper";
+  let DecoderMethod = "AArch64Base_STPXPst_offXSize_decode_wrapper";
+}
+
+def AArch64Base_STPXPst_offXSizeAsInt64
+    : AArch64Base_STPXPst_offXSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STPXPst_offXSize_predicate(Imm); }]>;
+
+def AArch64Base_STPXPst_offXSizeAsLabel : AArch64Base_STPXPst_offXSize<OtherVT>;
+
+class AArch64Base_STRPreB_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STRPreB_wrapper";
+  let DecoderMethod = "AArch64Base_STRPreB_offset_decode_wrapper";
+}
+
+def AArch64Base_STRPreB_offsetAsInt64
+    : AArch64Base_STRPreB_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STRPreB_offset_predicate(Imm); }]>;
+
+def AArch64Base_STRPreB_offsetAsLabel : AArch64Base_STRPreB_offset<OtherVT>;
+
+class AArch64Base_ANDXLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDXLSR_wrapper";
+  let DecoderMethod = "AArch64Base_ANDXLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ANDXLSR_imm6AsInt8
+    : AArch64Base_ANDXLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ANDXLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ANDXLSR_imm6AsLabel : AArch64Base_ANDXLSR_imm6<OtherVT>;
+
+class AArch64Base_CCMPHIW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPHIW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPHIW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPHIW_nzcvAsInt8
+    : AArch64Base_CCMPHIW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPHIW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPHIW_nzcvAsLabel : AArch64Base_CCMPHIW_nzcv<OtherVT>;
+
+class AArch64Base_CCMPCSW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPCSW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPCSW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPCSW_nzcvAsInt8
+    : AArch64Base_CCMPCSW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPCSW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPCSW_nzcvAsLabel : AArch64Base_CCMPCSW_nzcv<OtherVT>;
+
+class AArch64Base_CCMNNVW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNNVW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNNVW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNNVW_nzcvAsInt8
+    : AArch64Base_CCMNNVW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNNVW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNNVW_nzcvAsLabel : AArch64Base_CCMNNVW_nzcv<OtherVT>;
+
+class AArch64Base_ORRIX_immXSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ORRIX_wrapper";
+  let DecoderMethod = "AArch64Base_ORRIX_immXSize_decode_wrapper";
+}
+
+def AArch64Base_ORRIX_immXSizeAsInt64
+    : AArch64Base_ORRIX_immXSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_ORRIX_immXSize_predicate(Imm); }]>;
+
+def AArch64Base_ORRIX_immXSizeAsLabel : AArch64Base_ORRIX_immXSize<OtherVT>;
+
+class AArch64Base_SUBWSASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWSASR_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_SUBWSASR_imm6AsInt8
+    : AArch64Base_SUBWSASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWSASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_SUBWSASR_imm6AsLabel : AArch64Base_SUBWSASR_imm6<OtherVT>;
+
+class AArch64Base_LDURH_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDURH_wrapper";
+  let DecoderMethod = "AArch64Base_LDURH_offset_decode_wrapper";
+}
+
+def AArch64Base_LDURH_offsetAsInt64
+    : AArch64Base_LDURH_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDURH_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDURH_offsetAsLabel : AArch64Base_LDURH_offset<OtherVT>;
+
+class AArch64Base_EORIX_immXSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EORIX_wrapper";
+  let DecoderMethod = "AArch64Base_EORIX_immXSize_decode_wrapper";
+}
+
+def AArch64Base_EORIX_immXSizeAsInt64
+    : AArch64Base_EORIX_immXSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_EORIX_immXSize_predicate(Imm); }]>;
+
+def AArch64Base_EORIX_immXSizeAsLabel : AArch64Base_EORIX_immXSize<OtherVT>;
+
+class AArch64Base_CCMPIGTX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIGTX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIGTX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPIGTX_immXAsInt64
+    : AArch64Base_CCMPIGTX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPIGTX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIGTX_immXAsLabel : AArch64Base_CCMPIGTX_immX<OtherVT>;
+
+class AArch64Base_CCMPIGTX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIGTX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIGTX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPIGTX_nzcvAsInt8
+    : AArch64Base_CCMPIGTX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPIGTX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIGTX_nzcvAsLabel : AArch64Base_CCMPIGTX_nzcv<OtherVT>;
+
+class AArch64Base_CCMPIVSW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIVSW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIVSW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPIVSW_immXAsInt64
+    : AArch64Base_CCMPIVSW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPIVSW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIVSW_immXAsLabel : AArch64Base_CCMPIVSW_immX<OtherVT>;
+
+class AArch64Base_CCMPIVSW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIVSW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIVSW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPIVSW_nzcvAsInt8
+    : AArch64Base_CCMPIVSW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPIVSW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIVSW_nzcvAsLabel : AArch64Base_CCMPIVSW_nzcv<OtherVT>;
+
+class AArch64Base_LDRPreW_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRPreW_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPreW_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRPreW_offsetAsInt64
+    : AArch64Base_LDRPreW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPreW_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRPreW_offsetAsLabel : AArch64Base_LDRPreW_offset<OtherVT>;
+
+class AArch64Base_CCMPILTX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPILTX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPILTX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPILTX_immXAsInt64
+    : AArch64Base_CCMPILTX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPILTX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPILTX_immXAsLabel : AArch64Base_CCMPILTX_immX<OtherVT>;
+
+class AArch64Base_CCMPILTX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPILTX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPILTX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPILTX_nzcvAsInt8
+    : AArch64Base_CCMPILTX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPILTX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPILTX_nzcvAsLabel : AArch64Base_CCMPILTX_nzcv<OtherVT>;
+
+class AArch64Base_SUBXUXSW_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXUXSW_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXUXSW_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBXUXSW_imm3AsInt8
+    : AArch64Base_SUBXUXSW_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXUXSW_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBXUXSW_imm3AsLabel : AArch64Base_SUBXUXSW_imm3<OtherVT>;
+
+class AArch64Base_LDRSBX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRSBX_wrapper";
+  let DecoderMethod = "AArch64Base_LDRSBX_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRSBX_offsetAsInt64
+    : AArch64Base_LDRSBX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRSBX_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRSBX_offsetAsLabel : AArch64Base_LDRSBX_offset<OtherVT>;
+
+class AArch64Base_SUBXI_imm12X<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXI_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXI_imm12X_decode_wrapper";
+}
+
+def AArch64Base_SUBXI_imm12XAsInt64
+    : AArch64Base_SUBXI_imm12X<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_SUBXI_imm12X_predicate(Imm); }]>;
+
+def AArch64Base_SUBXI_imm12XAsLabel : AArch64Base_SUBXI_imm12X<OtherVT>;
+
+class AArch64Base_CCMNALW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNALW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNALW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNALW_nzcvAsInt8
+    : AArch64Base_CCMNALW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNALW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNALW_nzcvAsLabel : AArch64Base_CCMNALW_nzcv<OtherVT>;
+
+class AArch64Base_B_GT_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_B_GT_wrapper";
+  let DecoderMethod = "AArch64Base_B_GT_offset_decode_wrapper";
+}
+
+def AArch64Base_B_GT_offsetAsInt64
+    : AArch64Base_B_GT_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_GT_offset_predicate(Imm); }]>;
+
+def AArch64Base_B_GT_offsetAsLabel : AArch64Base_B_GT_offset<OtherVT>;
+
+class AArch64Base_CCMNIMIW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIMIW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIMIW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNIMIW_immXAsInt64
+    : AArch64Base_CCMNIMIW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNIMIW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIMIW_immXAsLabel : AArch64Base_CCMNIMIW_immX<OtherVT>;
+
+class AArch64Base_CCMNIMIW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIMIW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIMIW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNIMIW_nzcvAsInt8
+    : AArch64Base_CCMNIMIW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNIMIW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIMIW_nzcvAsLabel : AArch64Base_CCMNIMIW_nzcv<OtherVT>;
+
+class AArch64Base_ADDWSLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWSLSR_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ADDWSLSR_imm6AsInt8
+    : AArch64Base_ADDWSLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWSLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ADDWSLSR_imm6AsLabel : AArch64Base_ADDWSLSR_imm6<OtherVT>;
+
+class AArch64Base_CCMPIPLW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIPLW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIPLW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPIPLW_immXAsInt64
+    : AArch64Base_CCMPIPLW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPIPLW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIPLW_immXAsLabel : AArch64Base_CCMPIPLW_immX<OtherVT>;
+
+class AArch64Base_CCMPIPLW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIPLW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIPLW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPIPLW_nzcvAsInt8
+    : AArch64Base_CCMPIPLW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPIPLW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIPLW_nzcvAsLabel : AArch64Base_CCMPIPLW_nzcv<OtherVT>;
+
+class AArch64Base_CCMPMIW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPMIW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPMIW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPMIW_nzcvAsInt8
+    : AArch64Base_CCMPMIW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPMIW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPMIW_nzcvAsLabel : AArch64Base_CCMPMIW_nzcv<OtherVT>;
+
+class AArch64Base_ADDXUXSX_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXUXSX_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXUXSX_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDXUXSX_imm3AsInt8
+    : AArch64Base_ADDXUXSX_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXUXSX_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDXUXSX_imm3AsLabel : AArch64Base_ADDXUXSX_imm3<OtherVT>;
+
+class AArch64Base_STRPreH_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STRPreH_wrapper";
+  let DecoderMethod = "AArch64Base_STRPreH_offset_decode_wrapper";
+}
+
+def AArch64Base_STRPreH_offsetAsInt64
+    : AArch64Base_STRPreH_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STRPreH_offset_predicate(Imm); }]>;
+
+def AArch64Base_STRPreH_offsetAsLabel : AArch64Base_STRPreH_offset<OtherVT>;
+
+class AArch64Base_MOVZWPos00_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MOVZWPos00_wrapper";
+  let DecoderMethod = "AArch64Base_MOVZWPos00_imm16_decode_wrapper";
+}
+
+def AArch64Base_MOVZWPos00_imm16AsInt16
+    : AArch64Base_MOVZWPos00_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVZWPos00_imm16_predicate(Imm); }]>;
+
+def AArch64Base_MOVZWPos00_imm16AsLabel : AArch64Base_MOVZWPos00_imm16<OtherVT>;
+
+class AArch64Base_SUBXSSXSX_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXSSXSX_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSSXSX_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBXSSXSX_imm3AsInt8
+    : AArch64Base_SUBXSSXSX_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXSSXSX_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBXSSXSX_imm3AsLabel : AArch64Base_SUBXSSXSX_imm3<OtherVT>;
+
+class AArch64Base_STPX_offXSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STPX_wrapper";
+  let DecoderMethod = "AArch64Base_STPX_offXSize_decode_wrapper";
+}
+
+def AArch64Base_STPX_offXSizeAsInt64
+    : AArch64Base_STPX_offXSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STPX_offXSize_predicate(Imm); }]>;
+
+def AArch64Base_STPX_offXSizeAsLabel : AArch64Base_STPX_offXSize<OtherVT>;
+
+class AArch64Base_CCMNIPLW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIPLW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIPLW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNIPLW_immXAsInt64
+    : AArch64Base_CCMNIPLW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNIPLW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIPLW_immXAsLabel : AArch64Base_CCMNIPLW_immX<OtherVT>;
+
+class AArch64Base_CCMNIPLW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIPLW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIPLW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNIPLW_nzcvAsInt8
+    : AArch64Base_CCMNIPLW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNIPLW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIPLW_nzcvAsLabel : AArch64Base_CCMNIPLW_nzcv<OtherVT>;
+
+class AArch64Base_ADDXSXSW_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXSXSW_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXSXSW_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDXSXSW_imm3AsInt8
+    : AArch64Base_ADDXSXSW_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXSXSW_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDXSXSW_imm3AsLabel : AArch64Base_ADDXSXSW_imm3<OtherVT>;
+
+class AArch64Base_CCMPIEQX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIEQX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIEQX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPIEQX_immXAsInt64
+    : AArch64Base_CCMPIEQX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPIEQX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIEQX_immXAsLabel : AArch64Base_CCMPIEQX_immX<OtherVT>;
+
+class AArch64Base_CCMPIEQX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIEQX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIEQX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPIEQX_nzcvAsInt8
+    : AArch64Base_CCMPIEQX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPIEQX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIEQX_nzcvAsLabel : AArch64Base_CCMPIEQX_nzcv<OtherVT>;
+
+class AArch64Base_CCMNINEX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNINEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNINEX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNINEX_immXAsInt64
+    : AArch64Base_CCMNINEX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNINEX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNINEX_immXAsLabel : AArch64Base_CCMNINEX_immX<OtherVT>;
+
+class AArch64Base_CCMNINEX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNINEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNINEX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNINEX_nzcvAsInt8
+    : AArch64Base_CCMNINEX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNINEX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNINEX_nzcvAsLabel : AArch64Base_CCMNINEX_nzcv<OtherVT>;
+
+class AArch64Base_CCMNVCW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNVCW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNVCW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNVCW_nzcvAsInt8
+    : AArch64Base_CCMNVCW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNVCW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNVCW_nzcvAsLabel : AArch64Base_CCMNVCW_nzcv<OtherVT>;
+
+class AArch64Base_CCMPINVX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPINVX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPINVX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPINVX_immXAsInt64
+    : AArch64Base_CCMPINVX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPINVX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPINVX_immXAsLabel : AArch64Base_CCMPINVX_immX<OtherVT>;
+
+class AArch64Base_CCMPINVX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPINVX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPINVX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPINVX_nzcvAsInt8
+    : AArch64Base_CCMPINVX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPINVX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPINVX_nzcvAsLabel : AArch64Base_CCMPINVX_nzcv<OtherVT>;
+
+class AArch64Base_CCMPLTX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPLTX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPLTX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPLTX_nzcvAsInt8
+    : AArch64Base_CCMPLTX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPLTX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPLTX_nzcvAsLabel : AArch64Base_CCMPLTX_nzcv<OtherVT>;
+
+class AArch64Base_CCMNILEX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNILEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNILEX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNILEX_immXAsInt64
+    : AArch64Base_CCMNILEX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNILEX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNILEX_immXAsLabel : AArch64Base_CCMNILEX_immX<OtherVT>;
+
+class AArch64Base_CCMNILEX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNILEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNILEX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNILEX_nzcvAsInt8
+    : AArch64Base_CCMNILEX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNILEX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNILEX_nzcvAsLabel : AArch64Base_CCMNILEX_nzcv<OtherVT>;
+
+class AArch64Base_ORRWASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ORRWASR_wrapper";
+  let DecoderMethod = "AArch64Base_ORRWASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ORRWASR_imm6AsInt8
+    : AArch64Base_ORRWASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ORRWASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ORRWASR_imm6AsLabel : AArch64Base_ORRWASR_imm6<OtherVT>;
+
+class AArch64Base_CCMPLSW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPLSW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPLSW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPLSW_nzcvAsInt8
+    : AArch64Base_CCMPLSW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPLSW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPLSW_nzcvAsLabel : AArch64Base_CCMPLSW_nzcv<OtherVT>;
+
+class AArch64Base_B_HI_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_B_HI_wrapper";
+  let DecoderMethod = "AArch64Base_B_HI_offset_decode_wrapper";
+}
+
+def AArch64Base_B_HI_offsetAsInt64
+    : AArch64Base_B_HI_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_HI_offset_predicate(Imm); }]>;
+
+def AArch64Base_B_HI_offsetAsLabel : AArch64Base_B_HI_offset<OtherVT>;
+
+class AArch64Base_LDPS_offWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDPS_wrapper";
+  let DecoderMethod = "AArch64Base_LDPS_offWSize_decode_wrapper";
+}
+
+def AArch64Base_LDPS_offWSizeAsInt64
+    : AArch64Base_LDPS_offWSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDPS_offWSize_predicate(Imm); }]>;
+
+def AArch64Base_LDPS_offWSizeAsLabel : AArch64Base_LDPS_offWSize<OtherVT>;
+
+class AArch64Base_SUBWLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWLSR_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_SUBWLSR_imm6AsInt8
+    : AArch64Base_SUBWLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_SUBWLSR_imm6AsLabel : AArch64Base_SUBWLSR_imm6<OtherVT>;
+
+class AArch64Base_ADDWI_imm12X<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWI_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWI_imm12X_decode_wrapper";
+}
+
+def AArch64Base_ADDWI_imm12XAsInt64
+    : AArch64Base_ADDWI_imm12X<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_ADDWI_imm12X_predicate(Imm); }]>;
+
+def AArch64Base_ADDWI_imm12XAsLabel : AArch64Base_ADDWI_imm12X<OtherVT>;
+
+class AArch64Base_CCMPHIX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPHIX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPHIX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPHIX_nzcvAsInt8
+    : AArch64Base_CCMPHIX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPHIX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPHIX_nzcvAsLabel : AArch64Base_CCMPHIX_nzcv<OtherVT>;
+
+class AArch64Base_ADDWUXSH_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWUXSH_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWUXSH_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDWUXSH_imm3AsInt8
+    : AArch64Base_ADDWUXSH_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWUXSH_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDWUXSH_imm3AsLabel : AArch64Base_ADDWUXSH_imm3<OtherVT>;
+
+class AArch64Base_MOVKXPos48_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MOVKXPos48_wrapper";
+  let DecoderMethod = "AArch64Base_MOVKXPos48_imm16_decode_wrapper";
+}
+
+def AArch64Base_MOVKXPos48_imm16AsInt16
+    : AArch64Base_MOVKXPos48_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVKXPos48_imm16_predicate(Imm); }]>;
+
+def AArch64Base_MOVKXPos48_imm16AsLabel : AArch64Base_MOVKXPos48_imm16<OtherVT>;
+
+class AArch64Base_LDURW_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDURW_wrapper";
+  let DecoderMethod = "AArch64Base_LDURW_offset_decode_wrapper";
+}
+
+def AArch64Base_LDURW_offsetAsInt64
+    : AArch64Base_LDURW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDURW_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDURW_offsetAsLabel : AArch64Base_LDURW_offset<OtherVT>;
+
+class AArch64Base_MOVZXPos48_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MOVZXPos48_wrapper";
+  let DecoderMethod = "AArch64Base_MOVZXPos48_imm16_decode_wrapper";
+}
+
+def AArch64Base_MOVZXPos48_imm16AsInt16
+    : AArch64Base_MOVZXPos48_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVZXPos48_imm16_predicate(Imm); }]>;
+
+def AArch64Base_MOVZXPos48_imm16AsLabel : AArch64Base_MOVZXPos48_imm16<OtherVT>;
+
+class AArch64Base_ADRP_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADRP_wrapper";
+  let DecoderMethod = "AArch64Base_ADRP_offset_decode_wrapper";
+}
+
+def AArch64Base_ADRP_offsetAsInt64
+    : AArch64Base_ADRP_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_ADRP_offset_predicate(Imm); }]>;
+
+def AArch64Base_ADRP_offsetAsLabel : AArch64Base_ADRP_offset<OtherVT>;
+
+class AArch64Base_CCMPIVSX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIVSX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIVSX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPIVSX_immXAsInt64
+    : AArch64Base_CCMPIVSX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPIVSX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIVSX_immXAsLabel : AArch64Base_CCMPIVSX_immX<OtherVT>;
+
+class AArch64Base_CCMPIVSX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIVSX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIVSX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPIVSX_nzcvAsInt8
+    : AArch64Base_CCMPIVSX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPIVSX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIVSX_nzcvAsLabel : AArch64Base_CCMPIVSX_nzcv<OtherVT>;
+
+class AArch64Base_ADDWSXSX_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWSXSX_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSXSX_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDWSXSX_imm3AsInt8
+    : AArch64Base_ADDWSXSX_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWSXSX_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDWSXSX_imm3AsLabel : AArch64Base_ADDWSXSX_imm3<OtherVT>;
+
+class AArch64Base_SUBWI12_imm12S<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWI12_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWI12_imm12S_decode_wrapper";
+}
+
+def AArch64Base_SUBWI12_imm12SAsInt64
+    : AArch64Base_SUBWI12_imm12S<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_SUBWI12_imm12S_predicate(Imm); }]>;
+
+def AArch64Base_SUBWI12_imm12SAsLabel : AArch64Base_SUBWI12_imm12S<OtherVT>;
+
+class AArch64Base_ADDXSI12_imm12S<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXSI12_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXSI12_imm12S_decode_wrapper";
+}
+
+def AArch64Base_ADDXSI12_imm12SAsInt64
+    : AArch64Base_ADDXSI12_imm12S<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_ADDXSI12_imm12S_predicate(Imm); }]>;
+
+def AArch64Base_ADDXSI12_imm12SAsLabel : AArch64Base_ADDXSI12_imm12S<OtherVT>;
+
+class AArch64Base_CCMNICSW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNICSW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNICSW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNICSW_immXAsInt64
+    : AArch64Base_CCMNICSW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNICSW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNICSW_immXAsLabel : AArch64Base_CCMNICSW_immX<OtherVT>;
+
+class AArch64Base_CCMNICSW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNICSW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNICSW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNICSW_nzcvAsInt8
+    : AArch64Base_CCMNICSW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNICSW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNICSW_nzcvAsLabel : AArch64Base_CCMNICSW_nzcv<OtherVT>;
+
+class AArch64Base_CCMPLEW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPLEW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPLEW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPLEW_nzcvAsInt8
+    : AArch64Base_CCMPLEW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPLEW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPLEW_nzcvAsLabel : AArch64Base_CCMPLEW_nzcv<OtherVT>;
+
+class AArch64Base_ADDXSXSX_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXSXSX_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXSXSX_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDXSXSX_imm3AsInt8
+    : AArch64Base_ADDXSXSX_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXSXSX_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDXSXSX_imm3AsLabel : AArch64Base_ADDXSXSX_imm3<OtherVT>;
+
+class AArch64Base_SUBXSXSH_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXSXSH_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSXSH_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBXSXSH_imm3AsInt8
+    : AArch64Base_SUBXSXSH_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXSXSH_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBXSXSH_imm3AsLabel : AArch64Base_SUBXSXSH_imm3<OtherVT>;
+
+class AArch64Base_LDRX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRX_wrapper";
+  let DecoderMethod = "AArch64Base_LDRX_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRX_offsetAsInt64
+    : AArch64Base_LDRX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRX_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRX_offsetAsLabel : AArch64Base_LDRX_offset<OtherVT>;
+
+class AArch64Base_CCMPPLW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPPLW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPPLW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPPLW_nzcvAsInt8
+    : AArch64Base_CCMPPLW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPPLW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPPLW_nzcvAsLabel : AArch64Base_CCMPPLW_nzcv<OtherVT>;
+
+class AArch64Base_EONWLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EONWLSL_wrapper";
+  let DecoderMethod = "AArch64Base_EONWLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_EONWLSL_imm6AsInt8
+    : AArch64Base_EONWLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EONWLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_EONWLSL_imm6AsLabel : AArch64Base_EONWLSL_imm6<OtherVT>;
+
+class AArch64Base_LDRPreX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRPreX_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPreX_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRPreX_offsetAsInt64
+    : AArch64Base_LDRPreX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPreX_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRPreX_offsetAsLabel : AArch64Base_LDRPreX_offset<OtherVT>;
+
+class AArch64Base_EORWLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EORWLSL_wrapper";
+  let DecoderMethod = "AArch64Base_EORWLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_EORWLSL_imm6AsInt8
+    : AArch64Base_EORWLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EORWLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_EORWLSL_imm6AsLabel : AArch64Base_EORWLSL_imm6<OtherVT>;
+
+class AArch64Base_CCMNLTW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNLTW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNLTW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNLTW_nzcvAsInt8
+    : AArch64Base_CCMNLTW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNLTW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNLTW_nzcvAsLabel : AArch64Base_CCMNLTW_nzcv<OtherVT>;
+
+class AArch64Base_CCMPICCX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPICCX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPICCX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPICCX_immXAsInt64
+    : AArch64Base_CCMPICCX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPICCX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPICCX_immXAsLabel : AArch64Base_CCMPICCX_immX<OtherVT>;
+
+class AArch64Base_CCMPICCX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPICCX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPICCX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPICCX_nzcvAsInt8
+    : AArch64Base_CCMPICCX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPICCX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPICCX_nzcvAsLabel : AArch64Base_CCMPICCX_nzcv<OtherVT>;
+
+class AArch64Base_CCMPILEW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPILEW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPILEW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPILEW_immXAsInt64
+    : AArch64Base_CCMPILEW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPILEW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPILEW_immXAsLabel : AArch64Base_CCMPILEW_immX<OtherVT>;
+
+class AArch64Base_CCMPILEW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPILEW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPILEW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPILEW_nzcvAsInt8
+    : AArch64Base_CCMPILEW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPILEW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPILEW_nzcvAsLabel : AArch64Base_CCMPILEW_nzcv<OtherVT>;
+
+class AArch64Base_STPWPst_offWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STPWPst_wrapper";
+  let DecoderMethod = "AArch64Base_STPWPst_offWSize_decode_wrapper";
+}
+
+def AArch64Base_STPWPst_offWSizeAsInt64
+    : AArch64Base_STPWPst_offWSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STPWPst_offWSize_predicate(Imm); }]>;
+
+def AArch64Base_STPWPst_offWSizeAsLabel : AArch64Base_STPWPst_offWSize<OtherVT>;
+
+class AArch64Base_CCMNHIX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNHIX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNHIX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNHIX_nzcvAsInt8
+    : AArch64Base_CCMNHIX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNHIX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNHIX_nzcvAsLabel : AArch64Base_CCMNHIX_nzcv<OtherVT>;
+
+class AArch64Base_SUBWLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWLSL_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_SUBWLSL_imm6AsInt8
+    : AArch64Base_SUBWLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_SUBWLSL_imm6AsLabel : AArch64Base_SUBWLSL_imm6<OtherVT>;
+
+class AArch64Base_CCMNINVX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNINVX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNINVX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNINVX_immXAsInt64
+    : AArch64Base_CCMNINVX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNINVX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNINVX_immXAsLabel : AArch64Base_CCMNINVX_immX<OtherVT>;
+
+class AArch64Base_CCMNINVX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNINVX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNINVX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNINVX_nzcvAsInt8
+    : AArch64Base_CCMNINVX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNINVX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNINVX_nzcvAsLabel : AArch64Base_CCMNINVX_nzcv<OtherVT>;
+
+class AArch64Base_LDPWPst_offWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDPWPst_wrapper";
+  let DecoderMethod = "AArch64Base_LDPWPst_offWSize_decode_wrapper";
+}
+
+def AArch64Base_LDPWPst_offWSizeAsInt64
+    : AArch64Base_LDPWPst_offWSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDPWPst_offWSize_predicate(Imm); }]>;
+
+def AArch64Base_LDPWPst_offWSizeAsLabel : AArch64Base_LDPWPst_offWSize<OtherVT>;
+
+class AArch64Base_LDURB_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDURB_wrapper";
+  let DecoderMethod = "AArch64Base_LDURB_offset_decode_wrapper";
+}
+
+def AArch64Base_LDURB_offsetAsInt64
+    : AArch64Base_LDURB_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDURB_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDURB_offsetAsLabel : AArch64Base_LDURB_offset<OtherVT>;
+
+class AArch64Base_ORRWROR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ORRWROR_wrapper";
+  let DecoderMethod = "AArch64Base_ORRWROR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ORRWROR_imm6AsInt8
+    : AArch64Base_ORRWROR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ORRWROR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ORRWROR_imm6AsLabel : AArch64Base_ORRWROR_imm6<OtherVT>;
+
+class AArch64Base_SUBWSUXSW_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWSUXSW_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSUXSW_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBWSUXSW_imm3AsInt8
+    : AArch64Base_SUBWSUXSW_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWSUXSW_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBWSUXSW_imm3AsLabel : AArch64Base_SUBWSUXSW_imm3<OtherVT>;
+
+class AArch64Base_B_EQ_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_B_EQ_wrapper";
+  let DecoderMethod = "AArch64Base_B_EQ_offset_decode_wrapper";
+}
+
+def AArch64Base_B_EQ_offsetAsInt64
+    : AArch64Base_B_EQ_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_EQ_offset_predicate(Imm); }]>;
+
+def AArch64Base_B_EQ_offsetAsLabel : AArch64Base_B_EQ_offset<OtherVT>;
+
+class AArch64Base_LDRPreSWX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRPreSWX_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPreSWX_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRPreSWX_offsetAsInt64
+    : AArch64Base_LDRPreSWX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPreSWX_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRPreSWX_offsetAsLabel : AArch64Base_LDRPreSWX_offset<OtherVT>;
+
+class AArch64Base_STRPstW_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STRPstW_wrapper";
+  let DecoderMethod = "AArch64Base_STRPstW_offset_decode_wrapper";
+}
+
+def AArch64Base_STRPstW_offsetAsInt64
+    : AArch64Base_STRPstW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STRPstW_offset_predicate(Imm); }]>;
+
+def AArch64Base_STRPstW_offsetAsLabel : AArch64Base_STRPstW_offset<OtherVT>;
+
+class AArch64Base_ADDXSUXSB_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXSUXSB_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXSUXSB_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDXSUXSB_imm3AsInt8
+    : AArch64Base_ADDXSUXSB_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXSUXSB_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDXSUXSB_imm3AsLabel : AArch64Base_ADDXSUXSB_imm3<OtherVT>;
+
+class AArch64Base_CCMPINEW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPINEW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPINEW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPINEW_immXAsInt64
+    : AArch64Base_CCMPINEW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPINEW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPINEW_immXAsLabel : AArch64Base_CCMPINEW_immX<OtherVT>;
+
+class AArch64Base_CCMPINEW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPINEW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPINEW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPINEW_nzcvAsInt8
+    : AArch64Base_CCMPINEW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPINEW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPINEW_nzcvAsLabel : AArch64Base_CCMPINEW_nzcv<OtherVT>;
+
+class AArch64Base_CCMPALX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPALX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPALX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPALX_nzcvAsInt8
+    : AArch64Base_CCMPALX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPALX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPALX_nzcvAsLabel : AArch64Base_CCMPALX_nzcv<OtherVT>;
+
+class AArch64Base_ADDWSSXSB_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWSSXSB_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSSXSB_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDWSSXSB_imm3AsInt8
+    : AArch64Base_ADDWSSXSB_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWSSXSB_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDWSSXSB_imm3AsLabel : AArch64Base_ADDWSSXSB_imm3<OtherVT>;
+
+class AArch64Base_ADDWSASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWSASR_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ADDWSASR_imm6AsInt8
+    : AArch64Base_ADDWSASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWSASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ADDWSASR_imm6AsLabel : AArch64Base_ADDWSASR_imm6<OtherVT>;
+
+class AArch64Base_CCMPINEX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPINEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPINEX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPINEX_immXAsInt64
+    : AArch64Base_CCMPINEX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPINEX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPINEX_immXAsLabel : AArch64Base_CCMPINEX_immX<OtherVT>;
+
+class AArch64Base_CCMPINEX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPINEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPINEX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPINEX_nzcvAsInt8
+    : AArch64Base_CCMPINEX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPINEX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPINEX_nzcvAsLabel : AArch64Base_CCMPINEX_nzcv<OtherVT>;
+
+class AArch64Base_CCMNNVX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNNVX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNNVX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNNVX_nzcvAsInt8
+    : AArch64Base_CCMNNVX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNNVX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNNVX_nzcvAsLabel : AArch64Base_CCMNNVX_nzcv<OtherVT>;
+
+class AArch64Base_CCMNIHIX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIHIX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIHIX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNIHIX_immXAsInt64
+    : AArch64Base_CCMNIHIX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNIHIX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIHIX_immXAsLabel : AArch64Base_CCMNIHIX_immX<OtherVT>;
+
+class AArch64Base_CCMNIHIX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIHIX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIHIX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNIHIX_nzcvAsInt8
+    : AArch64Base_CCMNIHIX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNIHIX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIHIX_nzcvAsLabel : AArch64Base_CCMNIHIX_nzcv<OtherVT>;
+
+class AArch64Base_SUBXSUXSH_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXSUXSH_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSUXSH_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBXSUXSH_imm3AsInt8
+    : AArch64Base_SUBXSUXSH_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXSUXSH_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBXSUXSH_imm3AsLabel : AArch64Base_SUBXSUXSH_imm3<OtherVT>;
+
+class AArch64Base_CCMNCCW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNCCW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNCCW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNCCW_nzcvAsInt8
+    : AArch64Base_CCMNCCW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNCCW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNCCW_nzcvAsLabel : AArch64Base_CCMNCCW_nzcv<OtherVT>;
+
+class AArch64Base_STRW_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STRW_wrapper";
+  let DecoderMethod = "AArch64Base_STRW_offset_decode_wrapper";
+}
+
+def AArch64Base_STRW_offsetAsInt64
+    : AArch64Base_STRW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STRW_offset_predicate(Imm); }]>;
+
+def AArch64Base_STRW_offsetAsLabel : AArch64Base_STRW_offset<OtherVT>;
+
+class AArch64Base_CCMPVCX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPVCX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPVCX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPVCX_nzcvAsInt8
+    : AArch64Base_CCMPVCX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPVCX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPVCX_nzcvAsLabel : AArch64Base_CCMPVCX_nzcv<OtherVT>;
+
+class AArch64Base_ORNWLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ORNWLSL_wrapper";
+  let DecoderMethod = "AArch64Base_ORNWLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_ORNWLSL_imm6AsInt8
+    : AArch64Base_ORNWLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ORNWLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ORNWLSL_imm6AsLabel : AArch64Base_ORNWLSL_imm6<OtherVT>;
+
+class AArch64Base_B_LT_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_B_LT_wrapper";
+  let DecoderMethod = "AArch64Base_B_LT_offset_decode_wrapper";
+}
+
+def AArch64Base_B_LT_offsetAsInt64
+    : AArch64Base_B_LT_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_LT_offset_predicate(Imm); }]>;
+
+def AArch64Base_B_LT_offsetAsLabel : AArch64Base_B_LT_offset<OtherVT>;
+
+class AArch64Base_CCMPIHIX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIHIX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIHIX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPIHIX_immXAsInt64
+    : AArch64Base_CCMPIHIX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPIHIX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIHIX_immXAsLabel : AArch64Base_CCMPIHIX_immX<OtherVT>;
+
+class AArch64Base_CCMPIHIX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIHIX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIHIX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPIHIX_nzcvAsInt8
+    : AArch64Base_CCMPIHIX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPIHIX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIHIX_nzcvAsLabel : AArch64Base_CCMPIHIX_nzcv<OtherVT>;
+
+class AArch64Base_EORXROR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EORXROR_wrapper";
+  let DecoderMethod = "AArch64Base_EORXROR_imm6_decode_wrapper";
+}
+
+def AArch64Base_EORXROR_imm6AsInt8
+    : AArch64Base_EORXROR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EORXROR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_EORXROR_imm6AsLabel : AArch64Base_EORXROR_imm6<OtherVT>;
+
+class AArch64Base_CCMNIGTW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIGTW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIGTW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNIGTW_immXAsInt64
+    : AArch64Base_CCMNIGTW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNIGTW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIGTW_immXAsLabel : AArch64Base_CCMNIGTW_immX<OtherVT>;
+
+class AArch64Base_CCMNIGTW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIGTW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIGTW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNIGTW_nzcvAsInt8
+    : AArch64Base_CCMNIGTW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNIGTW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIGTW_nzcvAsLabel : AArch64Base_CCMNIGTW_nzcv<OtherVT>;
+
+class AArch64Base_MOVNXPos48_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MOVNXPos48_wrapper";
+  let DecoderMethod = "AArch64Base_MOVNXPos48_imm16_decode_wrapper";
+}
+
+def AArch64Base_MOVNXPos48_imm16AsInt16
+    : AArch64Base_MOVNXPos48_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVNXPos48_imm16_predicate(Imm); }]>;
+
+def AArch64Base_MOVNXPos48_imm16AsLabel : AArch64Base_MOVNXPos48_imm16<OtherVT>;
+
+class AArch64Base_LDRW_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRW_wrapper";
+  let DecoderMethod = "AArch64Base_LDRW_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRW_offsetAsInt64
+    : AArch64Base_LDRW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRW_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRW_offsetAsLabel : AArch64Base_LDRW_offset<OtherVT>;
+
+class AArch64Base_CCMNLEX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNLEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNLEX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNLEX_nzcvAsInt8
+    : AArch64Base_CCMNLEX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNLEX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNLEX_nzcvAsLabel : AArch64Base_CCMNLEX_nzcv<OtherVT>;
+
+class AArch64Base_ADDXSSXSH_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXSSXSH_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXSSXSH_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDXSSXSH_imm3AsInt8
+    : AArch64Base_ADDXSSXSH_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXSSXSH_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDXSSXSH_imm3AsLabel : AArch64Base_ADDXSSXSH_imm3<OtherVT>;
+
+class AArch64Base_ADDWSUXSB_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWSUXSB_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSUXSB_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDWSUXSB_imm3AsInt8
+    : AArch64Base_ADDWSUXSB_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWSUXSB_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDWSUXSB_imm3AsLabel : AArch64Base_ADDWSUXSB_imm3<OtherVT>;
+
+class AArch64Base_EORWROR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EORWROR_wrapper";
+  let DecoderMethod = "AArch64Base_EORWROR_imm6_decode_wrapper";
+}
+
+def AArch64Base_EORWROR_imm6AsInt8
+    : AArch64Base_EORWROR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EORWROR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_EORWROR_imm6AsLabel : AArch64Base_EORWROR_imm6<OtherVT>;
+
+class AArch64Base_LDRPstSBX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRPstSBX_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPstSBX_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRPstSBX_offsetAsInt64
+    : AArch64Base_LDRPstSBX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPstSBX_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRPstSBX_offsetAsLabel : AArch64Base_LDRPstSBX_offset<OtherVT>;
+
+class AArch64Base_MOVKWPos16_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MOVKWPos16_wrapper";
+  let DecoderMethod = "AArch64Base_MOVKWPos16_imm16_decode_wrapper";
+}
+
+def AArch64Base_MOVKWPos16_imm16AsInt16
+    : AArch64Base_MOVKWPos16_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVKWPos16_imm16_predicate(Imm); }]>;
+
+def AArch64Base_MOVKWPos16_imm16AsLabel : AArch64Base_MOVKWPos16_imm16<OtherVT>;
+
+class AArch64Base_ANDSIX_immXSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDSIX_wrapper";
+  let DecoderMethod = "AArch64Base_ANDSIX_immXSize_decode_wrapper";
+}
+
+def AArch64Base_ANDSIX_immXSizeAsInt64
+    : AArch64Base_ANDSIX_immXSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_ANDSIX_immXSize_predicate(Imm); }]>;
+
+def AArch64Base_ANDSIX_immXSizeAsLabel : AArch64Base_ANDSIX_immXSize<OtherVT>;
+
+class AArch64Base_CCMPIGEW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIGEW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIGEW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPIGEW_immXAsInt64
+    : AArch64Base_CCMPIGEW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPIGEW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIGEW_immXAsLabel : AArch64Base_CCMPIGEW_immX<OtherVT>;
+
+class AArch64Base_CCMPIGEW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIGEW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIGEW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPIGEW_nzcvAsInt8
+    : AArch64Base_CCMPIGEW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPIGEW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIGEW_nzcvAsLabel : AArch64Base_CCMPIGEW_nzcv<OtherVT>;
+
+class AArch64Base_SUBWUXSH_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWUXSH_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWUXSH_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBWUXSH_imm3AsInt8
+    : AArch64Base_SUBWUXSH_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWUXSH_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBWUXSH_imm3AsLabel : AArch64Base_SUBWUXSH_imm3<OtherVT>;
+
+class AArch64Base_EONXLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EONXLSL_wrapper";
+  let DecoderMethod = "AArch64Base_EONXLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_EONXLSL_imm6AsInt8
+    : AArch64Base_EONXLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EONXLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_EONXLSL_imm6AsLabel : AArch64Base_EONXLSL_imm6<OtherVT>;
+
+class AArch64Base_LDRSHX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRSHX_wrapper";
+  let DecoderMethod = "AArch64Base_LDRSHX_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRSHX_offsetAsInt64
+    : AArch64Base_LDRSHX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRSHX_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRSHX_offsetAsLabel : AArch64Base_LDRSHX_offset<OtherVT>;
+
+class AArch64Base_STRPstX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STRPstX_wrapper";
+  let DecoderMethod = "AArch64Base_STRPstX_offset_decode_wrapper";
+}
+
+def AArch64Base_STRPstX_offsetAsInt64
+    : AArch64Base_STRPstX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STRPstX_offset_predicate(Imm); }]>;
+
+def AArch64Base_STRPstX_offsetAsLabel : AArch64Base_STRPstX_offset<OtherVT>;
+
+class AArch64Base_CCMPLEX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPLEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPLEX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPLEX_nzcvAsInt8
+    : AArch64Base_CCMPLEX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPLEX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPLEX_nzcvAsLabel : AArch64Base_CCMPLEX_nzcv<OtherVT>;
+
+class AArch64Base_EONXROR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EONXROR_wrapper";
+  let DecoderMethod = "AArch64Base_EONXROR_imm6_decode_wrapper";
+}
+
+def AArch64Base_EONXROR_imm6AsInt8
+    : AArch64Base_EONXROR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EONXROR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_EONXROR_imm6AsLabel : AArch64Base_EONXROR_imm6<OtherVT>;
+
+class AArch64Base_CCMNIALX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIALX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIALX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNIALX_immXAsInt64
+    : AArch64Base_CCMNIALX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNIALX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIALX_immXAsLabel : AArch64Base_CCMNIALX_immX<OtherVT>;
+
+class AArch64Base_CCMNIALX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIALX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIALX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNIALX_nzcvAsInt8
+    : AArch64Base_CCMNIALX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNIALX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIALX_nzcvAsLabel : AArch64Base_CCMNIALX_nzcv<OtherVT>;
+
+class AArch64Base_BICXLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BICXLSR_wrapper";
+  let DecoderMethod = "AArch64Base_BICXLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_BICXLSR_imm6AsInt8
+    : AArch64Base_BICXLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BICXLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_BICXLSR_imm6AsLabel : AArch64Base_BICXLSR_imm6<OtherVT>;
+
+class AArch64Base_ADDWSSXSX_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWSSXSX_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSSXSX_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDWSSXSX_imm3AsInt8
+    : AArch64Base_ADDWSSXSX_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWSSXSX_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDWSSXSX_imm3AsLabel : AArch64Base_ADDWSSXSX_imm3<OtherVT>;
+
+class AArch64Base_ADDXSUXSW_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXSUXSW_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXSUXSW_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDXSUXSW_imm3AsInt8
+    : AArch64Base_ADDXSUXSW_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXSUXSW_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDXSUXSW_imm3AsLabel : AArch64Base_ADDXSUXSW_imm3<OtherVT>;
+
+class AArch64Base_CCMPALW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPALW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPALW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPALW_nzcvAsInt8
+    : AArch64Base_CCMPALW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPALW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPALW_nzcvAsLabel : AArch64Base_CCMPALW_nzcv<OtherVT>;
+
+class AArch64Base_CCMPIPLX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIPLX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIPLX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPIPLX_immXAsInt64
+    : AArch64Base_CCMPIPLX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPIPLX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIPLX_immXAsLabel : AArch64Base_CCMPIPLX_immX<OtherVT>;
+
+class AArch64Base_CCMPIPLX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIPLX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIPLX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPIPLX_nzcvAsInt8
+    : AArch64Base_CCMPIPLX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPIPLX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIPLX_nzcvAsLabel : AArch64Base_CCMPIPLX_nzcv<OtherVT>;
+
+class AArch64Base_CBNZX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CBNZX_wrapper";
+  let DecoderMethod = "AArch64Base_CBNZX_offset_decode_wrapper";
+}
+
+def AArch64Base_CBNZX_offsetAsInt64
+    : AArch64Base_CBNZX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CBNZX_offset_predicate(Imm); }]>;
+
+def AArch64Base_CBNZX_offsetAsLabel : AArch64Base_CBNZX_offset<OtherVT>;
+
+class AArch64Base_ORNXASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ORNXASR_wrapper";
+  let DecoderMethod = "AArch64Base_ORNXASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ORNXASR_imm6AsInt8
+    : AArch64Base_ORNXASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ORNXASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ORNXASR_imm6AsLabel : AArch64Base_ORNXASR_imm6<OtherVT>;
+
+class AArch64Base_ADDWSLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWSLSL_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_ADDWSLSL_imm6AsInt8
+    : AArch64Base_ADDWSLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWSLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ADDWSLSL_imm6AsLabel : AArch64Base_ADDWSLSL_imm6<OtherVT>;
+
+class AArch64Base_ADDXLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXLSR_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ADDXLSR_imm6AsInt8
+    : AArch64Base_ADDXLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ADDXLSR_imm6AsLabel : AArch64Base_ADDXLSR_imm6<OtherVT>;
+
+class AArch64Base_CCMPIHIW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIHIW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIHIW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPIHIW_immXAsInt64
+    : AArch64Base_CCMPIHIW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPIHIW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIHIW_immXAsLabel : AArch64Base_CCMPIHIW_immX<OtherVT>;
+
+class AArch64Base_CCMPIHIW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIHIW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIHIW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPIHIW_nzcvAsInt8
+    : AArch64Base_CCMPIHIW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPIHIW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIHIW_nzcvAsLabel : AArch64Base_CCMPIHIW_nzcv<OtherVT>;
+
+class AArch64Base_SUBWSSXSB_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWSSXSB_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSSXSB_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBWSSXSB_imm3AsInt8
+    : AArch64Base_SUBWSSXSB_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWSSXSB_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBWSSXSB_imm3AsLabel : AArch64Base_SUBWSSXSB_imm3<OtherVT>;
+
+class AArch64Base_CBNZW_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CBNZW_wrapper";
+  let DecoderMethod = "AArch64Base_CBNZW_offset_decode_wrapper";
+}
+
+def AArch64Base_CBNZW_offsetAsInt64
+    : AArch64Base_CBNZW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CBNZW_offset_predicate(Imm); }]>;
+
+def AArch64Base_CBNZW_offsetAsLabel : AArch64Base_CBNZW_offset<OtherVT>;
+
+class AArch64Base_MOVKWPos00_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MOVKWPos00_wrapper";
+  let DecoderMethod = "AArch64Base_MOVKWPos00_imm16_decode_wrapper";
+}
+
+def AArch64Base_MOVKWPos00_imm16AsInt16
+    : AArch64Base_MOVKWPos00_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVKWPos00_imm16_predicate(Imm); }]>;
+
+def AArch64Base_MOVKWPos00_imm16AsLabel : AArch64Base_MOVKWPos00_imm16<OtherVT>;
+
+class AArch64Base_CCMNICCX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNICCX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNICCX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNICCX_immXAsInt64
+    : AArch64Base_CCMNICCX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNICCX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNICCX_immXAsLabel : AArch64Base_CCMNICCX_immX<OtherVT>;
+
+class AArch64Base_CCMNICCX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNICCX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNICCX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNICCX_nzcvAsInt8
+    : AArch64Base_CCMNICCX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNICCX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNICCX_nzcvAsLabel : AArch64Base_CCMNICCX_nzcv<OtherVT>;
+
+class AArch64Base_ADDXSLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXSLSL_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXSLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_ADDXSLSL_imm6AsInt8
+    : AArch64Base_ADDXSLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXSLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ADDXSLSL_imm6AsLabel : AArch64Base_ADDXSLSL_imm6<OtherVT>;
+
+class AArch64Base_B_CC_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_B_CC_wrapper";
+  let DecoderMethod = "AArch64Base_B_CC_offset_decode_wrapper";
+}
+
+def AArch64Base_B_CC_offsetAsInt64
+    : AArch64Base_B_CC_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_CC_offset_predicate(Imm); }]>;
+
+def AArch64Base_B_CC_offsetAsLabel : AArch64Base_B_CC_offset<OtherVT>;
+
+class AArch64Base_ADDWSSXSH_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWSSXSH_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSSXSH_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDWSSXSH_imm3AsInt8
+    : AArch64Base_ADDWSSXSH_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWSSXSH_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDWSSXSH_imm3AsLabel : AArch64Base_ADDWSSXSH_imm3<OtherVT>;
+
+class AArch64Base_BICWROR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BICWROR_wrapper";
+  let DecoderMethod = "AArch64Base_BICWROR_imm6_decode_wrapper";
+}
+
+def AArch64Base_BICWROR_imm6AsInt8
+    : AArch64Base_BICWROR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BICWROR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_BICWROR_imm6AsLabel : AArch64Base_BICWROR_imm6<OtherVT>;
+
+class AArch64Base_SUBXUXSH_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXUXSH_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXUXSH_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBXUXSH_imm3AsInt8
+    : AArch64Base_SUBXUXSH_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXUXSH_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBXUXSH_imm3AsLabel : AArch64Base_SUBXUXSH_imm3<OtherVT>;
+
+class AArch64Base_SUBWASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWASR_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_SUBWASR_imm6AsInt8
+    : AArch64Base_SUBWASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_SUBWASR_imm6AsLabel : AArch64Base_SUBWASR_imm6<OtherVT>;
+
+class AArch64Base_ADDWUXSX_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWUXSX_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWUXSX_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDWUXSX_imm3AsInt8
+    : AArch64Base_ADDWUXSX_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWUXSX_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDWUXSX_imm3AsLabel : AArch64Base_ADDWUXSX_imm3<OtherVT>;
+
+class AArch64Base_ADDWSXSH_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWSXSH_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSXSH_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDWSXSH_imm3AsInt8
+    : AArch64Base_ADDWSXSH_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWSXSH_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDWSXSH_imm3AsLabel : AArch64Base_ADDWSXSH_imm3<OtherVT>;
+
 class AArch64Base_CCMPICSW_immX<ValueType ty> : Operand<ty>
 {
   let EncoderMethod = "AArch64Base_CCMPICSW_wrapper";
@@ -5788,173 +2560,653 @@ def AArch64Base_CCMPICSW_nzcvAsInt8
 
 def AArch64Base_CCMPICSW_nzcvAsLabel : AArch64Base_CCMPICSW_nzcv<OtherVT>;
 
-class AArch64Base_ADDWSXSX_imm3<ValueType ty> : Operand<ty>
+class AArch64Base_EORWLSR_imm6<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_ADDWSXSX_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSXSX_imm3_decode_wrapper";
+  let EncoderMethod = "AArch64Base_EORWLSR_wrapper";
+  let DecoderMethod = "AArch64Base_EORWLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ADDWSXSX_imm3AsInt8
-    : AArch64Base_ADDWSXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_EORWLSR_imm6AsInt8
+    : AArch64Base_EORWLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EORWLSR_imm6_predicate(Imm); }]>;
 
-def AArch64Base_ADDWSXSX_imm3AsLabel : AArch64Base_ADDWSXSX_imm3<OtherVT>;
+def AArch64Base_EORWLSR_imm6AsLabel : AArch64Base_EORWLSR_imm6<OtherVT>;
 
-class AArch64Base_SUBWSUXSX_imm3<ValueType ty> : Operand<ty>
+class AArch64Base_MOVZXPos16_imm16<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_SUBWSUXSX_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSUXSX_imm3_decode_wrapper";
+  let EncoderMethod = "AArch64Base_MOVZXPos16_wrapper";
+  let DecoderMethod = "AArch64Base_MOVZXPos16_imm16_decode_wrapper";
 }
 
-def AArch64Base_SUBWSUXSX_imm3AsInt8
-    : AArch64Base_SUBWSUXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSUXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_MOVZXPos16_imm16AsInt16
+    : AArch64Base_MOVZXPos16_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVZXPos16_imm16_predicate(Imm); }]>;
 
-def AArch64Base_SUBWSUXSX_imm3AsLabel : AArch64Base_SUBWSUXSX_imm3<OtherVT>;
+def AArch64Base_MOVZXPos16_imm16AsLabel : AArch64Base_MOVZXPos16_imm16<OtherVT>;
 
-class AArch64Base_ANDWLSR_imm6<ValueType ty> : Operand<ty>
+class AArch64Base_CCMNCCX_nzcv<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_ANDWLSR_wrapper";
-  let DecoderMethod = "AArch64Base_ANDWLSR_imm6_decode_wrapper";
+  let EncoderMethod = "AArch64Base_CCMNCCX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNCCX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_ANDWLSR_imm6AsInt8
-    : AArch64Base_ANDWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDWLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_CCMNCCX_nzcvAsInt8
+    : AArch64Base_CCMNCCX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNCCX_nzcv_predicate(Imm); }]>;
 
-def AArch64Base_ANDWLSR_imm6AsLabel : AArch64Base_ANDWLSR_imm6<OtherVT>;
+def AArch64Base_CCMNCCX_nzcvAsLabel : AArch64Base_CCMNCCX_nzcv<OtherVT>;
 
-class AArch64Base_LDRLitX_offset<ValueType ty> : Operand<ty>
+class AArch64Base_MOVKXPos16_imm16<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_LDRLitX_wrapper";
-  let DecoderMethod = "AArch64Base_LDRLitX_offset_decode_wrapper";
+  let EncoderMethod = "AArch64Base_MOVKXPos16_wrapper";
+  let DecoderMethod = "AArch64Base_MOVKXPos16_imm16_decode_wrapper";
 }
 
-def AArch64Base_LDRLitX_offsetAsInt64
-    : AArch64Base_LDRLitX_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRLitX_offset_predicate(Imm); }]>;
+def AArch64Base_MOVKXPos16_imm16AsInt16
+    : AArch64Base_MOVKXPos16_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVKXPos16_imm16_predicate(Imm); }]>;
 
-def AArch64Base_LDRLitX_offsetAsLabel : AArch64Base_LDRLitX_offset<OtherVT>;
+def AArch64Base_MOVKXPos16_imm16AsLabel : AArch64Base_MOVKXPos16_imm16<OtherVT>;
 
-class AArch64Base_CCMPPLW_nzcv<ValueType ty> : Operand<ty>
+class AArch64Base_STRPreX_offset<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_CCMPPLW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPPLW_nzcv_decode_wrapper";
+  let EncoderMethod = "AArch64Base_STRPreX_wrapper";
+  let DecoderMethod = "AArch64Base_STRPreX_offset_decode_wrapper";
 }
 
-def AArch64Base_CCMPPLW_nzcvAsInt8
-    : AArch64Base_CCMPPLW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPPLW_nzcv_predicate(Imm); }]>;
+def AArch64Base_STRPreX_offsetAsInt64
+    : AArch64Base_STRPreX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STRPreX_offset_predicate(Imm); }]>;
 
-def AArch64Base_CCMPPLW_nzcvAsLabel : AArch64Base_CCMPPLW_nzcv<OtherVT>;
+def AArch64Base_STRPreX_offsetAsLabel : AArch64Base_STRPreX_offset<OtherVT>;
 
-class AArch64Base_STRH_offset<ValueType ty> : Operand<ty>
+class AArch64Base_SUBXLSL_imm6<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_STRH_wrapper";
-  let DecoderMethod = "AArch64Base_STRH_offset_decode_wrapper";
+  let EncoderMethod = "AArch64Base_SUBXLSL_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_STRH_offsetAsInt64
-    : AArch64Base_STRH_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STRH_offset_predicate(Imm); }]>;
+def AArch64Base_SUBXLSL_imm6AsInt8
+    : AArch64Base_SUBXLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXLSL_imm6_predicate(Imm); }]>;
 
-def AArch64Base_STRH_offsetAsLabel : AArch64Base_STRH_offset<OtherVT>;
+def AArch64Base_SUBXLSL_imm6AsLabel : AArch64Base_SUBXLSL_imm6<OtherVT>;
 
-class AArch64Base_LDPX_offXSize<ValueType ty> : Operand<ty>
+class AArch64Base_STRPreW_offset<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_LDPX_wrapper";
-  let DecoderMethod = "AArch64Base_LDPX_offXSize_decode_wrapper";
+  let EncoderMethod = "AArch64Base_STRPreW_wrapper";
+  let DecoderMethod = "AArch64Base_STRPreW_offset_decode_wrapper";
 }
 
-def AArch64Base_LDPX_offXSizeAsInt64
-    : AArch64Base_LDPX_offXSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDPX_offXSize_predicate(Imm); }]>;
+def AArch64Base_STRPreW_offsetAsInt64
+    : AArch64Base_STRPreW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STRPreW_offset_predicate(Imm); }]>;
 
-def AArch64Base_LDPX_offXSizeAsLabel : AArch64Base_LDPX_offXSize<OtherVT>;
+def AArch64Base_STRPreW_offsetAsLabel : AArch64Base_STRPreW_offset<OtherVT>;
 
-class AArch64Base_BFMW_leftWSize<ValueType ty> : Operand<ty>
+class AArch64Base_SUBXSXSW_imm3<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_BFMW_wrapper";
-  let DecoderMethod = "AArch64Base_BFMW_leftWSize_decode_wrapper";
+  let EncoderMethod = "AArch64Base_SUBXSXSW_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_BFMW_leftWSizeAsInt8
-    : AArch64Base_BFMW_leftWSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BFMW_leftWSize_predicate(Imm); }]>;
+def AArch64Base_SUBXSXSW_imm3AsInt8
+    : AArch64Base_SUBXSXSW_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXSXSW_imm3_predicate(Imm); }]>;
 
-def AArch64Base_BFMW_leftWSizeAsLabel : AArch64Base_BFMW_leftWSize<OtherVT>;
+def AArch64Base_SUBXSXSW_imm3AsLabel : AArch64Base_SUBXSXSW_imm3<OtherVT>;
 
-class AArch64Base_BFMW_rightWSize<ValueType ty> : Operand<ty>
+class AArch64Base_LDRPstSHX_offset<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_BFMW_wrapper";
-  let DecoderMethod = "AArch64Base_BFMW_rightWSize_decode_wrapper";
+  let EncoderMethod = "AArch64Base_LDRPstSHX_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPstSHX_offset_decode_wrapper";
 }
 
-def AArch64Base_BFMW_rightWSizeAsInt8
-    : AArch64Base_BFMW_rightWSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BFMW_rightWSize_predicate(Imm); }]>;
+def AArch64Base_LDRPstSHX_offsetAsInt64
+    : AArch64Base_LDRPstSHX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPstSHX_offset_predicate(Imm); }]>;
 
-def AArch64Base_BFMW_rightWSizeAsLabel : AArch64Base_BFMW_rightWSize<OtherVT>;
+def AArch64Base_LDRPstSHX_offsetAsLabel : AArch64Base_LDRPstSHX_offset<OtherVT>;
 
-class AArch64Base_ADDWSUXSX_imm3<ValueType ty> : Operand<ty>
+class AArch64Base_CCMPIALX_immX<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_ADDWSUXSX_wrapper";
-  let DecoderMethod = "AArch64Base_ADDWSUXSX_imm3_decode_wrapper";
+  let EncoderMethod = "AArch64Base_CCMPIALX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIALX_immX_decode_wrapper";
 }
 
-def AArch64Base_ADDWSUXSX_imm3AsInt8
-    : AArch64Base_ADDWSUXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSUXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_CCMPIALX_immXAsInt64
+    : AArch64Base_CCMPIALX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPIALX_immX_predicate(Imm); }]>;
 
-def AArch64Base_ADDWSUXSX_imm3AsLabel : AArch64Base_ADDWSUXSX_imm3<OtherVT>;
+def AArch64Base_CCMPIALX_immXAsLabel : AArch64Base_CCMPIALX_immX<OtherVT>;
 
-class AArch64Base_CCMNGEX_nzcv<ValueType ty> : Operand<ty>
+class AArch64Base_CCMPIALX_nzcv<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_CCMNGEX_wrapper";
-  let DecoderMethod = "AArch64Base_CCMNGEX_nzcv_decode_wrapper";
+  let EncoderMethod = "AArch64Base_CCMPIALX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIALX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNGEX_nzcvAsInt8
-    : AArch64Base_CCMNGEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNGEX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIALX_nzcvAsInt8
+    : AArch64Base_CCMPIALX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPIALX_nzcv_predicate(Imm); }]>;
 
-def AArch64Base_CCMNGEX_nzcvAsLabel : AArch64Base_CCMNGEX_nzcv<OtherVT>;
+def AArch64Base_CCMPIALX_nzcvAsLabel : AArch64Base_CCMPIALX_nzcv<OtherVT>;
 
-class AArch64Base_SUBXSUXSX_imm3<ValueType ty> : Operand<ty>
+class AArch64Base_LDURSHW_offset<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_SUBXSUXSX_wrapper";
-  let DecoderMethod = "AArch64Base_SUBXSUXSX_imm3_decode_wrapper";
+  let EncoderMethod = "AArch64Base_LDURSHW_wrapper";
+  let DecoderMethod = "AArch64Base_LDURSHW_offset_decode_wrapper";
 }
 
-def AArch64Base_SUBXSUXSX_imm3AsInt8
-    : AArch64Base_SUBXSUXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSUXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_LDURSHW_offsetAsInt64
+    : AArch64Base_LDURSHW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDURSHW_offset_predicate(Imm); }]>;
 
-def AArch64Base_SUBXSUXSX_imm3AsLabel : AArch64Base_SUBXSUXSX_imm3<OtherVT>;
+def AArch64Base_LDURSHW_offsetAsLabel : AArch64Base_LDURSHW_offset<OtherVT>;
 
-class AArch64Base_ADDXSXSW_imm3<ValueType ty> : Operand<ty>
+class AArch64Base_LDRPreSHX_offset<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_ADDXSXSW_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXSXSW_imm3_decode_wrapper";
+  let EncoderMethod = "AArch64Base_LDRPreSHX_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPreSHX_offset_decode_wrapper";
 }
 
-def AArch64Base_ADDXSXSW_imm3AsInt8
-    : AArch64Base_ADDXSXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_LDRPreSHX_offsetAsInt64
+    : AArch64Base_LDRPreSHX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPreSHX_offset_predicate(Imm); }]>;
 
-def AArch64Base_ADDXSXSW_imm3AsLabel : AArch64Base_ADDXSXSW_imm3<OtherVT>;
+def AArch64Base_LDRPreSHX_offsetAsLabel : AArch64Base_LDRPreSHX_offset<OtherVT>;
 
-class AArch64Base_SUBWUXSW_imm3<ValueType ty> : Operand<ty>
+class AArch64Base_CCMPIGEX_immX<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_SUBWUXSW_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWUXSW_imm3_decode_wrapper";
+  let EncoderMethod = "AArch64Base_CCMPIGEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIGEX_immX_decode_wrapper";
 }
 
-def AArch64Base_SUBWUXSW_imm3AsInt8
-    : AArch64Base_SUBWUXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWUXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_CCMPIGEX_immXAsInt64
+    : AArch64Base_CCMPIGEX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPIGEX_immX_predicate(Imm); }]>;
 
-def AArch64Base_SUBWUXSW_imm3AsLabel : AArch64Base_SUBWUXSW_imm3<OtherVT>;
+def AArch64Base_CCMPIGEX_immXAsLabel : AArch64Base_CCMPIGEX_immX<OtherVT>;
+
+class AArch64Base_CCMPIGEX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIGEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIGEX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPIGEX_nzcvAsInt8
+    : AArch64Base_CCMPIGEX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPIGEX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIGEX_nzcvAsLabel : AArch64Base_CCMPIGEX_nzcv<OtherVT>;
+
+class AArch64Base_CCMPCCW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPCCW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPCCW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPCCW_nzcvAsInt8
+    : AArch64Base_CCMPCCW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPCCW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPCCW_nzcvAsLabel : AArch64Base_CCMPCCW_nzcv<OtherVT>;
+
+class AArch64Base_MSR_sysreg<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MSR_wrapper";
+  let DecoderMethod = "AArch64Base_MSR_sysreg_decode_wrapper";
+}
+
+def AArch64Base_MSR_sysregAsInt16
+    : AArch64Base_MSR_sysreg<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MSR_sysreg_predicate(Imm); }]>;
+
+def AArch64Base_MSR_sysregAsLabel : AArch64Base_MSR_sysreg<OtherVT>;
+
+class AArch64Base_CCMNIEQW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIEQW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIEQW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNIEQW_immXAsInt64
+    : AArch64Base_CCMNIEQW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNIEQW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIEQW_immXAsLabel : AArch64Base_CCMNIEQW_immX<OtherVT>;
+
+class AArch64Base_CCMNIEQW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIEQW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIEQW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNIEQW_nzcvAsInt8
+    : AArch64Base_CCMNIEQW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNIEQW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIEQW_nzcvAsLabel : AArch64Base_CCMNIEQW_nzcv<OtherVT>;
+
+class AArch64Base_CCMPICSX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPICSX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPICSX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPICSX_immXAsInt64
+    : AArch64Base_CCMPICSX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPICSX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPICSX_immXAsLabel : AArch64Base_CCMPICSX_immX<OtherVT>;
+
+class AArch64Base_CCMPICSX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPICSX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPICSX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPICSX_nzcvAsInt8
+    : AArch64Base_CCMPICSX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPICSX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPICSX_nzcvAsLabel : AArch64Base_CCMPICSX_nzcv<OtherVT>;
+
+class AArch64Base_CCMPEQW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPEQW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPEQW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPEQW_nzcvAsInt8
+    : AArch64Base_CCMPEQW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPEQW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPEQW_nzcvAsLabel : AArch64Base_CCMPEQW_nzcv<OtherVT>;
+
+class AArch64Base_BICXASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BICXASR_wrapper";
+  let DecoderMethod = "AArch64Base_BICXASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_BICXASR_imm6AsInt8
+    : AArch64Base_BICXASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BICXASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_BICXASR_imm6AsLabel : AArch64Base_BICXASR_imm6<OtherVT>;
+
+class AArch64Base_CCMNVSX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNVSX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNVSX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNVSX_nzcvAsInt8
+    : AArch64Base_CCMNVSX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNVSX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNVSX_nzcvAsLabel : AArch64Base_CCMNVSX_nzcv<OtherVT>;
+
+class AArch64Base_ADDXLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXLSL_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_ADDXLSL_imm6AsInt8
+    : AArch64Base_ADDXLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ADDXLSL_imm6AsLabel : AArch64Base_ADDXLSL_imm6<OtherVT>;
+
+class AArch64Base_CCMNGEW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNGEW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNGEW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNGEW_nzcvAsInt8
+    : AArch64Base_CCMNGEW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNGEW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNGEW_nzcvAsLabel : AArch64Base_CCMNGEW_nzcv<OtherVT>;
+
+class AArch64Base_ADDXUXSH_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXUXSH_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXUXSH_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDXUXSH_imm3AsInt8
+    : AArch64Base_ADDXUXSH_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXUXSH_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDXUXSH_imm3AsLabel : AArch64Base_ADDXUXSH_imm3<OtherVT>;
+
+class AArch64Base_MOVKXPos32_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MOVKXPos32_wrapper";
+  let DecoderMethod = "AArch64Base_MOVKXPos32_imm16_decode_wrapper";
+}
+
+def AArch64Base_MOVKXPos32_imm16AsInt16
+    : AArch64Base_MOVKXPos32_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVKXPos32_imm16_predicate(Imm); }]>;
+
+def AArch64Base_MOVKXPos32_imm16AsLabel : AArch64Base_MOVKXPos32_imm16<OtherVT>;
+
+class AArch64Base_EORXLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EORXLSL_wrapper";
+  let DecoderMethod = "AArch64Base_EORXLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_EORXLSL_imm6AsInt8
+    : AArch64Base_EORXLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EORXLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_EORXLSL_imm6AsLabel : AArch64Base_EORXLSL_imm6<OtherVT>;
+
+class AArch64Base_EONXASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EONXASR_wrapper";
+  let DecoderMethod = "AArch64Base_EONXASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_EONXASR_imm6AsInt8
+    : AArch64Base_EONXASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EONXASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_EONXASR_imm6AsLabel : AArch64Base_EONXASR_imm6<OtherVT>;
+
+class AArch64Base_SUBWSSXSH_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWSSXSH_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSSXSH_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBWSSXSH_imm3AsInt8
+    : AArch64Base_SUBWSSXSH_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWSSXSH_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBWSSXSH_imm3AsLabel : AArch64Base_SUBWSSXSH_imm3<OtherVT>;
+
+class AArch64Base_ORNXLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ORNXLSR_wrapper";
+  let DecoderMethod = "AArch64Base_ORNXLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ORNXLSR_imm6AsInt8
+    : AArch64Base_ORNXLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ORNXLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ORNXLSR_imm6AsLabel : AArch64Base_ORNXLSR_imm6<OtherVT>;
+
+class AArch64Base_TBNZ_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_TBNZ_wrapper";
+  let DecoderMethod = "AArch64Base_TBNZ_offset_decode_wrapper";
+}
+
+def AArch64Base_TBNZ_offsetAsInt64
+    : AArch64Base_TBNZ_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_TBNZ_offset_predicate(Imm); }]>;
+
+def AArch64Base_TBNZ_offsetAsLabel : AArch64Base_TBNZ_offset<OtherVT>;
+
+class AArch64Base_TBNZ_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_TBNZ_wrapper";
+  let DecoderMethod = "AArch64Base_TBNZ_imm6_decode_wrapper";
+}
+
+def AArch64Base_TBNZ_imm6AsInt8
+    : AArch64Base_TBNZ_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_TBNZ_imm6_predicate(Imm); }]>;
+
+def AArch64Base_TBNZ_imm6AsLabel : AArch64Base_TBNZ_imm6<OtherVT>;
+
+class AArch64Base_CCMPGTX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPGTX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPGTX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPGTX_nzcvAsInt8
+    : AArch64Base_CCMPGTX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPGTX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPGTX_nzcvAsLabel : AArch64Base_CCMPGTX_nzcv<OtherVT>;
+
+class AArch64Base_CCMNGTX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNGTX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNGTX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNGTX_nzcvAsInt8
+    : AArch64Base_CCMNGTX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNGTX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNGTX_nzcvAsLabel : AArch64Base_CCMNGTX_nzcv<OtherVT>;
+
+class AArch64Base_CCMNPLW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNPLW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNPLW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNPLW_nzcvAsInt8
+    : AArch64Base_CCMNPLW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNPLW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNPLW_nzcvAsLabel : AArch64Base_CCMNPLW_nzcv<OtherVT>;
+
+class AArch64Base_SUBWSUXSB_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWSUXSB_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSUXSB_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBWSUXSB_imm3AsInt8
+    : AArch64Base_SUBWSUXSB_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWSUXSB_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBWSUXSB_imm3AsLabel : AArch64Base_SUBWSUXSB_imm3<OtherVT>;
+
+class AArch64Base_LDRB_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRB_wrapper";
+  let DecoderMethod = "AArch64Base_LDRB_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRB_offsetAsInt64
+    : AArch64Base_LDRB_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRB_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRB_offsetAsLabel : AArch64Base_LDRB_offset<OtherVT>;
+
+class AArch64Base_CCMNIALW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIALW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIALW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNIALW_immXAsInt64
+    : AArch64Base_CCMNIALW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNIALW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIALW_immXAsLabel : AArch64Base_CCMNIALW_immX<OtherVT>;
+
+class AArch64Base_CCMNIALW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIALW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIALW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNIALW_nzcvAsInt8
+    : AArch64Base_CCMNIALW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNIALW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIALW_nzcvAsLabel : AArch64Base_CCMNIALW_nzcv<OtherVT>;
+
+class AArch64Base_EONWROR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EONWROR_wrapper";
+  let DecoderMethod = "AArch64Base_EONWROR_imm6_decode_wrapper";
+}
+
+def AArch64Base_EONWROR_imm6AsInt8
+    : AArch64Base_EONWROR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EONWROR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_EONWROR_imm6AsLabel : AArch64Base_EONWROR_imm6<OtherVT>;
+
+class AArch64Base_ANDWLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDWLSL_wrapper";
+  let DecoderMethod = "AArch64Base_ANDWLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_ANDWLSL_imm6AsInt8
+    : AArch64Base_ANDWLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ANDWLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ANDWLSL_imm6AsLabel : AArch64Base_ANDWLSL_imm6<OtherVT>;
+
+class AArch64Base_CCMNILSW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNILSW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNILSW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNILSW_immXAsInt64
+    : AArch64Base_CCMNILSW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNILSW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNILSW_immXAsLabel : AArch64Base_CCMNILSW_immX<OtherVT>;
+
+class AArch64Base_CCMNILSW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNILSW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNILSW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNILSW_nzcvAsInt8
+    : AArch64Base_CCMNILSW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNILSW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNILSW_nzcvAsLabel : AArch64Base_CCMNILSW_nzcv<OtherVT>;
+
+class AArch64Base_CCMPILTW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPILTW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPILTW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPILTW_immXAsInt64
+    : AArch64Base_CCMPILTW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPILTW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPILTW_immXAsLabel : AArch64Base_CCMPILTW_immX<OtherVT>;
+
+class AArch64Base_CCMPILTW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPILTW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPILTW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPILTW_nzcvAsInt8
+    : AArch64Base_CCMPILTW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPILTW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPILTW_nzcvAsLabel : AArch64Base_CCMPILTW_nzcv<OtherVT>;
+
+class AArch64Base_B_NV_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_B_NV_wrapper";
+  let DecoderMethod = "AArch64Base_B_NV_offset_decode_wrapper";
+}
+
+def AArch64Base_B_NV_offsetAsInt64
+    : AArch64Base_B_NV_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_NV_offset_predicate(Imm); }]>;
+
+def AArch64Base_B_NV_offsetAsLabel : AArch64Base_B_NV_offset<OtherVT>;
+
+class AArch64Base_ANDSXASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDSXASR_wrapper";
+  let DecoderMethod = "AArch64Base_ANDSXASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ANDSXASR_imm6AsInt8
+    : AArch64Base_ANDSXASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ANDSXASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ANDSXASR_imm6AsLabel : AArch64Base_ANDSXASR_imm6<OtherVT>;
+
+class AArch64Base_SUBXSI12_imm12S<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXSI12_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSI12_imm12S_decode_wrapper";
+}
+
+def AArch64Base_SUBXSI12_imm12SAsInt64
+    : AArch64Base_SUBXSI12_imm12S<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_SUBXSI12_imm12S_predicate(Imm); }]>;
+
+def AArch64Base_SUBXSI12_imm12SAsLabel : AArch64Base_SUBXSI12_imm12S<OtherVT>;
+
+class AArch64Base_B_NE_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_B_NE_wrapper";
+  let DecoderMethod = "AArch64Base_B_NE_offset_decode_wrapper";
+}
+
+def AArch64Base_B_NE_offsetAsInt64
+    : AArch64Base_B_NE_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_NE_offset_predicate(Imm); }]>;
+
+def AArch64Base_B_NE_offsetAsLabel : AArch64Base_B_NE_offset<OtherVT>;
+
+class AArch64Base_ANDIW_immWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDIW_wrapper";
+  let DecoderMethod = "AArch64Base_ANDIW_immWSize_decode_wrapper";
+}
+
+def AArch64Base_ANDIW_immWSizeAsInt32
+    : AArch64Base_ANDIW_immWSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDIW_immWSize_predicate(Imm); }]>;
+
+def AArch64Base_ANDIW_immWSizeAsLabel : AArch64Base_ANDIW_immWSize<OtherVT>;
+
+class AArch64Base_BICWLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BICWLSR_wrapper";
+  let DecoderMethod = "AArch64Base_BICWLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_BICWLSR_imm6AsInt8
+    : AArch64Base_BICWLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BICWLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_BICWLSR_imm6AsLabel : AArch64Base_BICWLSR_imm6<OtherVT>;
+
+class AArch64Base_LDRLitSWX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRLitSWX_wrapper";
+  let DecoderMethod = "AArch64Base_LDRLitSWX_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRLitSWX_offsetAsInt64
+    : AArch64Base_LDRLitSWX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRLitSWX_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRLitSWX_offsetAsLabel : AArch64Base_LDRLitSWX_offset<OtherVT>;
 
 class AArch64Base_CCMPIALW_immX<ValueType ty> : Operand<ty>
 {
@@ -5980,41 +3232,41 @@ def AArch64Base_CCMPIALW_nzcvAsInt8
 
 def AArch64Base_CCMPIALW_nzcvAsLabel : AArch64Base_CCMPIALW_nzcv<OtherVT>;
 
-class AArch64Base_ADDXSSXSX_imm3<ValueType ty> : Operand<ty>
+class AArch64Base_ORNXROR_imm6<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_ADDXSSXSX_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXSSXSX_imm3_decode_wrapper";
+  let EncoderMethod = "AArch64Base_ORNXROR_wrapper";
+  let DecoderMethod = "AArch64Base_ORNXROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ADDXSSXSX_imm3AsInt8
-    : AArch64Base_ADDXSSXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSSXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_ORNXROR_imm6AsInt8
+    : AArch64Base_ORNXROR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ORNXROR_imm6_predicate(Imm); }]>;
 
-def AArch64Base_ADDXSSXSX_imm3AsLabel : AArch64Base_ADDXSSXSX_imm3<OtherVT>;
+def AArch64Base_ORNXROR_imm6AsLabel : AArch64Base_ORNXROR_imm6<OtherVT>;
 
-class AArch64Base_ANDIX_immXSize<ValueType ty> : Operand<ty>
+class AArch64Base_CCMNIHIW_immX<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_ANDIX_wrapper";
-  let DecoderMethod = "AArch64Base_ANDIX_immXSize_decode_wrapper";
+  let EncoderMethod = "AArch64Base_CCMNIHIW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIHIW_immX_decode_wrapper";
 }
 
-def AArch64Base_ANDIX_immXSizeAsInt64
-    : AArch64Base_ANDIX_immXSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_ANDIX_immXSize_predicate(Imm); }]>;
+def AArch64Base_CCMNIHIW_immXAsInt64
+    : AArch64Base_CCMNIHIW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNIHIW_immX_predicate(Imm); }]>;
 
-def AArch64Base_ANDIX_immXSizeAsLabel : AArch64Base_ANDIX_immXSize<OtherVT>;
+def AArch64Base_CCMNIHIW_immXAsLabel : AArch64Base_CCMNIHIW_immX<OtherVT>;
 
-class AArch64Base_STPX_offXSize<ValueType ty> : Operand<ty>
+class AArch64Base_CCMNIHIW_nzcv<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_STPX_wrapper";
-  let DecoderMethod = "AArch64Base_STPX_offXSize_decode_wrapper";
+  let EncoderMethod = "AArch64Base_CCMNIHIW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIHIW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_STPX_offXSizeAsInt64
-    : AArch64Base_STPX_offXSize<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STPX_offXSize_predicate(Imm); }]>;
+def AArch64Base_CCMNIHIW_nzcvAsInt8
+    : AArch64Base_CCMNIHIW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNIHIW_nzcv_predicate(Imm); }]>;
 
-def AArch64Base_STPX_offXSizeAsLabel : AArch64Base_STPX_offXSize<OtherVT>;
+def AArch64Base_CCMNIHIW_nzcvAsLabel : AArch64Base_CCMNIHIW_nzcv<OtherVT>;
 
 class AArch64Base_ORRXASR_imm6<ValueType ty> : Operand<ty>
 {
@@ -6028,17 +3280,749 @@ def AArch64Base_ORRXASR_imm6AsInt8
 
 def AArch64Base_ORRXASR_imm6AsLabel : AArch64Base_ORRXASR_imm6<OtherVT>;
 
-class AArch64Base_STRPstB_offset<ValueType ty> : Operand<ty>
+class AArch64Base_LDRSBW_offset<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_STRPstB_wrapper";
-  let DecoderMethod = "AArch64Base_STRPstB_offset_decode_wrapper";
+  let EncoderMethod = "AArch64Base_LDRSBW_wrapper";
+  let DecoderMethod = "AArch64Base_LDRSBW_offset_decode_wrapper";
 }
 
-def AArch64Base_STRPstB_offsetAsInt64
-    : AArch64Base_STRPstB_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_STRPstB_offset_predicate(Imm); }]>;
+def AArch64Base_LDRSBW_offsetAsInt64
+    : AArch64Base_LDRSBW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRSBW_offset_predicate(Imm); }]>;
 
-def AArch64Base_STRPstB_offsetAsLabel : AArch64Base_STRPstB_offset<OtherVT>;
+def AArch64Base_LDRSBW_offsetAsLabel : AArch64Base_LDRSBW_offset<OtherVT>;
+
+class AArch64Base_CCMNEQW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNEQW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNEQW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNEQW_nzcvAsInt8
+    : AArch64Base_CCMNEQW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNEQW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNEQW_nzcvAsLabel : AArch64Base_CCMNEQW_nzcv<OtherVT>;
+
+class AArch64Base_ANDSXROR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDSXROR_wrapper";
+  let DecoderMethod = "AArch64Base_ANDSXROR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ANDSXROR_imm6AsInt8
+    : AArch64Base_ANDSXROR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ANDSXROR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ANDSXROR_imm6AsLabel : AArch64Base_ANDSXROR_imm6<OtherVT>;
+
+class AArch64Base_SUBWSLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWSLSL_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_SUBWSLSL_imm6AsInt8
+    : AArch64Base_SUBWSLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWSLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_SUBWSLSL_imm6AsLabel : AArch64Base_SUBWSLSL_imm6<OtherVT>;
+
+class AArch64Base_CCMNIMIX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIMIX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIMIX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNIMIX_immXAsInt64
+    : AArch64Base_CCMNIMIX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNIMIX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIMIX_immXAsLabel : AArch64Base_CCMNIMIX_immX<OtherVT>;
+
+class AArch64Base_CCMNIMIX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIMIX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIMIX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNIMIX_nzcvAsInt8
+    : AArch64Base_CCMNIMIX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNIMIX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIMIX_nzcvAsLabel : AArch64Base_CCMNIMIX_nzcv<OtherVT>;
+
+class AArch64Base_CCMNLEW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNLEW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNLEW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNLEW_nzcvAsInt8
+    : AArch64Base_CCMNLEW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNLEW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNLEW_nzcvAsLabel : AArch64Base_CCMNLEW_nzcv<OtherVT>;
+
+class AArch64Base_MOVZXPos00_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MOVZXPos00_wrapper";
+  let DecoderMethod = "AArch64Base_MOVZXPos00_imm16_decode_wrapper";
+}
+
+def AArch64Base_MOVZXPos00_imm16AsInt16
+    : AArch64Base_MOVZXPos00_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVZXPos00_imm16_predicate(Imm); }]>;
+
+def AArch64Base_MOVZXPos00_imm16AsLabel : AArch64Base_MOVZXPos00_imm16<OtherVT>;
+
+class AArch64Base_MOVZWPos16_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MOVZWPos16_wrapper";
+  let DecoderMethod = "AArch64Base_MOVZWPos16_imm16_decode_wrapper";
+}
+
+def AArch64Base_MOVZWPos16_imm16AsInt16
+    : AArch64Base_MOVZWPos16_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVZWPos16_imm16_predicate(Imm); }]>;
+
+def AArch64Base_MOVZWPos16_imm16AsLabel : AArch64Base_MOVZWPos16_imm16<OtherVT>;
+
+class AArch64Base_EORIW_immWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EORIW_wrapper";
+  let DecoderMethod = "AArch64Base_EORIW_immWSize_decode_wrapper";
+}
+
+def AArch64Base_EORIW_immWSizeAsInt32
+    : AArch64Base_EORIW_immWSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EORIW_immWSize_predicate(Imm); }]>;
+
+def AArch64Base_EORIW_immWSizeAsLabel : AArch64Base_EORIW_immWSize<OtherVT>;
+
+class AArch64Base_CCMPNEW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPNEW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPNEW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPNEW_nzcvAsInt8
+    : AArch64Base_CCMPNEW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPNEW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPNEW_nzcvAsLabel : AArch64Base_CCMPNEW_nzcv<OtherVT>;
+
+class AArch64Base_SUBWUXSX_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWUXSX_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWUXSX_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBWUXSX_imm3AsInt8
+    : AArch64Base_SUBWUXSX_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWUXSX_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBWUXSX_imm3AsLabel : AArch64Base_SUBWUXSX_imm3<OtherVT>;
+
+class AArch64Base_SUBXSXSB_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXSXSB_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSXSB_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBXSXSB_imm3AsInt8
+    : AArch64Base_SUBXSXSB_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXSXSB_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBXSXSB_imm3AsLabel : AArch64Base_SUBXSXSB_imm3<OtherVT>;
+
+class AArch64Base_CCMNCSX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNCSX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNCSX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNCSX_nzcvAsInt8
+    : AArch64Base_CCMNCSX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNCSX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNCSX_nzcvAsLabel : AArch64Base_CCMNCSX_nzcv<OtherVT>;
+
+class AArch64Base_ORRIW_immWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ORRIW_wrapper";
+  let DecoderMethod = "AArch64Base_ORRIW_immWSize_decode_wrapper";
+}
+
+def AArch64Base_ORRIW_immWSizeAsInt32
+    : AArch64Base_ORRIW_immWSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORRIW_immWSize_predicate(Imm); }]>;
+
+def AArch64Base_ORRIW_immWSizeAsLabel : AArch64Base_ORRIW_immWSize<OtherVT>;
+
+class AArch64Base_ORNWROR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ORNWROR_wrapper";
+  let DecoderMethod = "AArch64Base_ORNWROR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ORNWROR_imm6AsInt8
+    : AArch64Base_ORNWROR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ORNWROR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ORNWROR_imm6AsLabel : AArch64Base_ORNWROR_imm6<OtherVT>;
+
+class AArch64Base_B_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_B_wrapper";
+  let DecoderMethod = "AArch64Base_B_offset_decode_wrapper";
+}
+
+def AArch64Base_B_offsetAsInt64
+    : AArch64Base_B_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_offset_predicate(Imm); }]>;
+
+def AArch64Base_B_offsetAsLabel : AArch64Base_B_offset<OtherVT>;
+
+class AArch64Base_CCMNHIW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNHIW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNHIW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNHIW_nzcvAsInt8
+    : AArch64Base_CCMNHIW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNHIW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNHIW_nzcvAsLabel : AArch64Base_CCMNHIW_nzcv<OtherVT>;
+
+class AArch64Base_CCMPCCX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPCCX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPCCX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPCCX_nzcvAsInt8
+    : AArch64Base_CCMPCCX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPCCX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPCCX_nzcvAsLabel : AArch64Base_CCMPCCX_nzcv<OtherVT>;
+
+class AArch64Base_CCMPIMIW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIMIW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIMIW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPIMIW_immXAsInt64
+    : AArch64Base_CCMPIMIW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPIMIW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIMIW_immXAsLabel : AArch64Base_CCMPIMIW_immX<OtherVT>;
+
+class AArch64Base_CCMPIMIW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIMIW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIMIW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPIMIW_nzcvAsInt8
+    : AArch64Base_CCMPIMIW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPIMIW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIMIW_nzcvAsLabel : AArch64Base_CCMPIMIW_nzcv<OtherVT>;
+
+class AArch64Base_CCMPILSX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPILSX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPILSX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPILSX_immXAsInt64
+    : AArch64Base_CCMPILSX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPILSX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPILSX_immXAsLabel : AArch64Base_CCMPILSX_immX<OtherVT>;
+
+class AArch64Base_CCMPILSX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPILSX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPILSX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPILSX_nzcvAsInt8
+    : AArch64Base_CCMPILSX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPILSX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPILSX_nzcvAsLabel : AArch64Base_CCMPILSX_nzcv<OtherVT>;
+
+class AArch64Base_TBZ_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_TBZ_wrapper";
+  let DecoderMethod = "AArch64Base_TBZ_offset_decode_wrapper";
+}
+
+def AArch64Base_TBZ_offsetAsInt64
+    : AArch64Base_TBZ_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_TBZ_offset_predicate(Imm); }]>;
+
+def AArch64Base_TBZ_offsetAsLabel : AArch64Base_TBZ_offset<OtherVT>;
+
+class AArch64Base_TBZ_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_TBZ_wrapper";
+  let DecoderMethod = "AArch64Base_TBZ_imm6_decode_wrapper";
+}
+
+def AArch64Base_TBZ_imm6AsInt8
+    : AArch64Base_TBZ_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_TBZ_imm6_predicate(Imm); }]>;
+
+def AArch64Base_TBZ_imm6AsLabel : AArch64Base_TBZ_imm6<OtherVT>;
+
+class AArch64Base_SUBXSI_imm12X<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXSI_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSI_imm12X_decode_wrapper";
+}
+
+def AArch64Base_SUBXSI_imm12XAsInt64
+    : AArch64Base_SUBXSI_imm12X<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_SUBXSI_imm12X_predicate(Imm); }]>;
+
+def AArch64Base_SUBXSI_imm12XAsLabel : AArch64Base_SUBXSI_imm12X<OtherVT>;
+
+class AArch64Base_STURB_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STURB_wrapper";
+  let DecoderMethod = "AArch64Base_STURB_offset_decode_wrapper";
+}
+
+def AArch64Base_STURB_offsetAsInt64
+    : AArch64Base_STURB_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STURB_offset_predicate(Imm); }]>;
+
+def AArch64Base_STURB_offsetAsLabel : AArch64Base_STURB_offset<OtherVT>;
+
+class AArch64Base_UBFMX_leftXSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_UBFMX_wrapper";
+  let DecoderMethod = "AArch64Base_UBFMX_leftXSize_decode_wrapper";
+}
+
+def AArch64Base_UBFMX_leftXSizeAsInt8
+    : AArch64Base_UBFMX_leftXSize<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_UBFMX_leftXSize_predicate(Imm); }]>;
+
+def AArch64Base_UBFMX_leftXSizeAsLabel : AArch64Base_UBFMX_leftXSize<OtherVT>;
+
+class AArch64Base_UBFMX_rightXSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_UBFMX_wrapper";
+  let DecoderMethod = "AArch64Base_UBFMX_rightXSize_decode_wrapper";
+}
+
+def AArch64Base_UBFMX_rightXSizeAsInt8
+    : AArch64Base_UBFMX_rightXSize<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_UBFMX_rightXSize_predicate(Imm); }]>;
+
+def AArch64Base_UBFMX_rightXSizeAsLabel : AArch64Base_UBFMX_rightXSize<OtherVT>;
+
+class AArch64Base_CCMPPLX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPPLX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPPLX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPPLX_nzcvAsInt8
+    : AArch64Base_CCMPPLX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPPLX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPPLX_nzcvAsLabel : AArch64Base_CCMPPLX_nzcv<OtherVT>;
+
+class AArch64Base_ANDWROR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDWROR_wrapper";
+  let DecoderMethod = "AArch64Base_ANDWROR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ANDWROR_imm6AsInt8
+    : AArch64Base_ANDWROR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ANDWROR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ANDWROR_imm6AsLabel : AArch64Base_ANDWROR_imm6<OtherVT>;
+
+class AArch64Base_SUBXUXSX_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXUXSX_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXUXSX_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBXUXSX_imm3AsInt8
+    : AArch64Base_SUBXUXSX_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXUXSX_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBXUXSX_imm3AsLabel : AArch64Base_SUBXUXSX_imm3<OtherVT>;
+
+class AArch64Base_ANDSXLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDSXLSL_wrapper";
+  let DecoderMethod = "AArch64Base_ANDSXLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_ANDSXLSL_imm6AsInt8
+    : AArch64Base_ANDSXLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ANDSXLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ANDSXLSL_imm6AsLabel : AArch64Base_ANDSXLSL_imm6<OtherVT>;
+
+class AArch64Base_CCMPCSX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPCSX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPCSX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPCSX_nzcvAsInt8
+    : AArch64Base_CCMPCSX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPCSX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPCSX_nzcvAsLabel : AArch64Base_CCMPCSX_nzcv<OtherVT>;
+
+class AArch64Base_B_MI_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_B_MI_wrapper";
+  let DecoderMethod = "AArch64Base_B_MI_offset_decode_wrapper";
+}
+
+def AArch64Base_B_MI_offsetAsInt64
+    : AArch64Base_B_MI_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_MI_offset_predicate(Imm); }]>;
+
+def AArch64Base_B_MI_offsetAsLabel : AArch64Base_B_MI_offset<OtherVT>;
+
+class AArch64Base_LDRPreH_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRPreH_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPreH_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRPreH_offsetAsInt64
+    : AArch64Base_LDRPreH_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPreH_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRPreH_offsetAsLabel : AArch64Base_LDRPreH_offset<OtherVT>;
+
+class AArch64Base_SUBXSLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXSLSL_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_SUBXSLSL_imm6AsInt8
+    : AArch64Base_SUBXSLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXSLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_SUBXSLSL_imm6AsLabel : AArch64Base_SUBXSLSL_imm6<OtherVT>;
+
+class AArch64Base_CCMPNVX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPNVX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPNVX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPNVX_nzcvAsInt8
+    : AArch64Base_CCMPNVX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPNVX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPNVX_nzcvAsLabel : AArch64Base_CCMPNVX_nzcv<OtherVT>;
+
+class AArch64Base_B_LS_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_B_LS_wrapper";
+  let DecoderMethod = "AArch64Base_B_LS_offset_decode_wrapper";
+}
+
+def AArch64Base_B_LS_offsetAsInt64
+    : AArch64Base_B_LS_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_LS_offset_predicate(Imm); }]>;
+
+def AArch64Base_B_LS_offsetAsLabel : AArch64Base_B_LS_offset<OtherVT>;
+
+class AArch64Base_LDURSWX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDURSWX_wrapper";
+  let DecoderMethod = "AArch64Base_LDURSWX_offset_decode_wrapper";
+}
+
+def AArch64Base_LDURSWX_offsetAsInt64
+    : AArch64Base_LDURSWX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDURSWX_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDURSWX_offsetAsLabel : AArch64Base_LDURSWX_offset<OtherVT>;
+
+class AArch64Base_CCMPIMIX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIMIX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIMIX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPIMIX_immXAsInt64
+    : AArch64Base_CCMPIMIX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPIMIX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIMIX_immXAsLabel : AArch64Base_CCMPIMIX_immX<OtherVT>;
+
+class AArch64Base_CCMPIMIX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIMIX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIMIX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPIMIX_nzcvAsInt8
+    : AArch64Base_CCMPIMIX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPIMIX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIMIX_nzcvAsLabel : AArch64Base_CCMPIMIX_nzcv<OtherVT>;
+
+class AArch64Base_SUBWSXSX_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWSXSX_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSXSX_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBWSXSX_imm3AsInt8
+    : AArch64Base_SUBWSXSX_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWSXSX_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBWSXSX_imm3AsLabel : AArch64Base_SUBWSXSX_imm3<OtherVT>;
+
+class AArch64Base_CCMNVSW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNVSW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNVSW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNVSW_nzcvAsInt8
+    : AArch64Base_CCMNVSW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNVSW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNVSW_nzcvAsLabel : AArch64Base_CCMNVSW_nzcv<OtherVT>;
+
+class AArch64Base_CCMNGTW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNGTW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNGTW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNGTW_nzcvAsInt8
+    : AArch64Base_CCMNGTW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNGTW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNGTW_nzcvAsLabel : AArch64Base_CCMNGTW_nzcv<OtherVT>;
+
+class AArch64Base_STPW_offWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STPW_wrapper";
+  let DecoderMethod = "AArch64Base_STPW_offWSize_decode_wrapper";
+}
+
+def AArch64Base_STPW_offWSizeAsInt64
+    : AArch64Base_STPW_offWSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STPW_offWSize_predicate(Imm); }]>;
+
+def AArch64Base_STPW_offWSizeAsLabel : AArch64Base_STPW_offWSize<OtherVT>;
+
+class AArch64Base_ADDWSI_imm12X<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWSI_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSI_imm12X_decode_wrapper";
+}
+
+def AArch64Base_ADDWSI_imm12XAsInt64
+    : AArch64Base_ADDWSI_imm12X<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_ADDWSI_imm12X_predicate(Imm); }]>;
+
+def AArch64Base_ADDWSI_imm12XAsLabel : AArch64Base_ADDWSI_imm12X<OtherVT>;
+
+class AArch64Base_CCMNILTX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNILTX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNILTX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNILTX_immXAsInt64
+    : AArch64Base_CCMNILTX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNILTX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNILTX_immXAsLabel : AArch64Base_CCMNILTX_immX<OtherVT>;
+
+class AArch64Base_CCMNILTX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNILTX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNILTX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNILTX_nzcvAsInt8
+    : AArch64Base_CCMNILTX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNILTX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNILTX_nzcvAsLabel : AArch64Base_CCMNILTX_nzcv<OtherVT>;
+
+class AArch64Base_CCMNVCX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNVCX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNVCX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNVCX_nzcvAsInt8
+    : AArch64Base_CCMNVCX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNVCX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNVCX_nzcvAsLabel : AArch64Base_CCMNVCX_nzcv<OtherVT>;
+
+class AArch64Base_LDRPreSBW_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRPreSBW_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPreSBW_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRPreSBW_offsetAsInt64
+    : AArch64Base_LDRPreSBW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPreSBW_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRPreSBW_offsetAsLabel : AArch64Base_LDRPreSBW_offset<OtherVT>;
+
+class AArch64Base_ADDXUXSW_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXUXSW_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXUXSW_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDXUXSW_imm3AsInt8
+    : AArch64Base_ADDXUXSW_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXUXSW_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDXUXSW_imm3AsLabel : AArch64Base_ADDXUXSW_imm3<OtherVT>;
+
+class AArch64Base_ADDXSXSH_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXSXSH_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXSXSH_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDXSXSH_imm3AsInt8
+    : AArch64Base_ADDXSXSH_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXSXSH_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDXSXSH_imm3AsLabel : AArch64Base_ADDXSXSH_imm3<OtherVT>;
+
+class AArch64Base_SUBXSASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXSASR_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_SUBXSASR_imm6AsInt8
+    : AArch64Base_SUBXSASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXSASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_SUBXSASR_imm6AsLabel : AArch64Base_SUBXSASR_imm6<OtherVT>;
+
+class AArch64Base_CCMNINVW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNINVW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNINVW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNINVW_immXAsInt64
+    : AArch64Base_CCMNINVW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNINVW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNINVW_immXAsLabel : AArch64Base_CCMNINVW_immX<OtherVT>;
+
+class AArch64Base_CCMNINVW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNINVW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNINVW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNINVW_nzcvAsInt8
+    : AArch64Base_CCMNINVW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNINVW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNINVW_nzcvAsLabel : AArch64Base_CCMNINVW_nzcv<OtherVT>;
+
+class AArch64Base_STURH_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STURH_wrapper";
+  let DecoderMethod = "AArch64Base_STURH_offset_decode_wrapper";
+}
+
+def AArch64Base_STURH_offsetAsInt64
+    : AArch64Base_STURH_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STURH_offset_predicate(Imm); }]>;
+
+def AArch64Base_STURH_offsetAsLabel : AArch64Base_STURH_offset<OtherVT>;
+
+class AArch64Base_CCMNALX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNALX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNALX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNALX_nzcvAsInt8
+    : AArch64Base_CCMNALX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNALX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNALX_nzcvAsLabel : AArch64Base_CCMNALX_nzcv<OtherVT>;
+
+class AArch64Base_EXTRX_shiftXSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EXTRX_wrapper";
+  let DecoderMethod = "AArch64Base_EXTRX_shiftXSize_decode_wrapper";
+}
+
+def AArch64Base_EXTRX_shiftXSizeAsInt8
+    : AArch64Base_EXTRX_shiftXSize<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EXTRX_shiftXSize_predicate(Imm); }]>;
+
+def AArch64Base_EXTRX_shiftXSizeAsLabel : AArch64Base_EXTRX_shiftXSize<OtherVT>;
+
+class AArch64Base_SUBWSI12_imm12S<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWSI12_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSI12_imm12S_decode_wrapper";
+}
+
+def AArch64Base_SUBWSI12_imm12SAsInt64
+    : AArch64Base_SUBWSI12_imm12S<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_SUBWSI12_imm12S_predicate(Imm); }]>;
+
+def AArch64Base_SUBWSI12_imm12SAsLabel : AArch64Base_SUBWSI12_imm12S<OtherVT>;
+
+class AArch64Base_STPXPre_offXSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STPXPre_wrapper";
+  let DecoderMethod = "AArch64Base_STPXPre_offXSize_decode_wrapper";
+}
+
+def AArch64Base_STPXPre_offXSizeAsInt64
+    : AArch64Base_STPXPre_offXSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STPXPre_offXSize_predicate(Imm); }]>;
+
+def AArch64Base_STPXPre_offXSizeAsLabel : AArch64Base_STPXPre_offXSize<OtherVT>;
+
+class AArch64Base_SUBXSUXSX_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXSUXSX_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSUXSX_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBXSUXSX_imm3AsInt8
+    : AArch64Base_SUBXSUXSX_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXSUXSX_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBXSUXSX_imm3AsLabel : AArch64Base_SUBXSUXSX_imm3<OtherVT>;
 
 class AArch64Base_LDRPstSWX_offset<ValueType ty> : Operand<ty>
 {
@@ -6052,29 +4036,113 @@ def AArch64Base_LDRPstSWX_offsetAsInt64
 
 def AArch64Base_LDRPstSWX_offsetAsLabel : AArch64Base_LDRPstSWX_offset<OtherVT>;
 
-class AArch64Base_LDRW_offset<ValueType ty> : Operand<ty>
+class AArch64Base_SUBWSUXSH_imm3<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_LDRW_wrapper";
-  let DecoderMethod = "AArch64Base_LDRW_offset_decode_wrapper";
+  let EncoderMethod = "AArch64Base_SUBWSUXSH_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSUXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_LDRW_offsetAsInt64
-    : AArch64Base_LDRW_offset<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_LDRW_offset_predicate(Imm); }]>;
+def AArch64Base_SUBWSUXSH_imm3AsInt8
+    : AArch64Base_SUBWSUXSH_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWSUXSH_imm3_predicate(Imm); }]>;
 
-def AArch64Base_LDRW_offsetAsLabel : AArch64Base_LDRW_offset<OtherVT>;
+def AArch64Base_SUBWSUXSH_imm3AsLabel : AArch64Base_SUBWSUXSH_imm3<OtherVT>;
 
-class AArch64Base_ORRWROR_imm6<ValueType ty> : Operand<ty>
+class AArch64Base_ADDWUXSB_imm3<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_ORRWROR_wrapper";
-  let DecoderMethod = "AArch64Base_ORRWROR_imm6_decode_wrapper";
+  let EncoderMethod = "AArch64Base_ADDWUXSB_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWUXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_ORRWROR_imm6AsInt8
-    : AArch64Base_ORRWROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORRWROR_imm6_predicate(Imm); }]>;
+def AArch64Base_ADDWUXSB_imm3AsInt8
+    : AArch64Base_ADDWUXSB_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWUXSB_imm3_predicate(Imm); }]>;
 
-def AArch64Base_ORRWROR_imm6AsLabel : AArch64Base_ORRWROR_imm6<OtherVT>;
+def AArch64Base_ADDWUXSB_imm3AsLabel : AArch64Base_ADDWUXSB_imm3<OtherVT>;
+
+class AArch64Base_STRX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STRX_wrapper";
+  let DecoderMethod = "AArch64Base_STRX_offset_decode_wrapper";
+}
+
+def AArch64Base_STRX_offsetAsInt64
+    : AArch64Base_STRX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STRX_offset_predicate(Imm); }]>;
+
+def AArch64Base_STRX_offsetAsLabel : AArch64Base_STRX_offset<OtherVT>;
+
+class AArch64Base_ADDXASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXASR_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ADDXASR_imm6AsInt8
+    : AArch64Base_ADDXASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ADDXASR_imm6AsLabel : AArch64Base_ADDXASR_imm6<OtherVT>;
+
+class AArch64Base_LDRPreSHW_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRPreSHW_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPreSHW_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRPreSHW_offsetAsInt64
+    : AArch64Base_LDRPreSHW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPreSHW_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRPreSHW_offsetAsLabel : AArch64Base_LDRPreSHW_offset<OtherVT>;
+
+class AArch64Base_CCMNNEX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNNEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNNEX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNNEX_nzcvAsInt8
+    : AArch64Base_CCMNNEX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNNEX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNNEX_nzcvAsLabel : AArch64Base_CCMNNEX_nzcv<OtherVT>;
+
+class AArch64Base_SUBWI_imm12X<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWI_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWI_imm12X_decode_wrapper";
+}
+
+def AArch64Base_SUBWI_imm12XAsInt64
+    : AArch64Base_SUBWI_imm12X<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_SUBWI_imm12X_predicate(Imm); }]>;
+
+def AArch64Base_SUBWI_imm12XAsLabel : AArch64Base_SUBWI_imm12X<OtherVT>;
+
+class AArch64Base_CCMPNVW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPNVW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPNVW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPNVW_nzcvAsInt8
+    : AArch64Base_CCMPNVW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPNVW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPNVW_nzcvAsLabel : AArch64Base_CCMPNVW_nzcv<OtherVT>;
+
+class AArch64Base_STRPstH_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STRPstH_wrapper";
+  let DecoderMethod = "AArch64Base_STRPstH_offset_decode_wrapper";
+}
+
+def AArch64Base_STRPstH_offsetAsInt64
+    : AArch64Base_STRPstH_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STRPstH_offset_predicate(Imm); }]>;
+
+def AArch64Base_STRPstH_offsetAsLabel : AArch64Base_STRPstH_offset<OtherVT>;
 
 class AArch64Base_CCMNIGEW_immX<ValueType ty> : Operand<ty>
 {
@@ -6100,17 +4168,1469 @@ def AArch64Base_CCMNIGEW_nzcvAsInt8
 
 def AArch64Base_CCMNIGEW_nzcvAsLabel : AArch64Base_CCMNIGEW_nzcv<OtherVT>;
 
-class AArch64Base_MOVKWPos16_imm16<ValueType ty> : Operand<ty>
+class AArch64Base_BICSXROR_imm6<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_MOVKWPos16_wrapper";
-  let DecoderMethod = "AArch64Base_MOVKWPos16_imm16_decode_wrapper";
+  let EncoderMethod = "AArch64Base_BICSXROR_wrapper";
+  let DecoderMethod = "AArch64Base_BICSXROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_MOVKWPos16_imm16AsInt16
-    : AArch64Base_MOVKWPos16_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVKWPos16_imm16_predicate(Imm); }]>;
+def AArch64Base_BICSXROR_imm6AsInt8
+    : AArch64Base_BICSXROR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BICSXROR_imm6_predicate(Imm); }]>;
 
-def AArch64Base_MOVKWPos16_imm16AsLabel : AArch64Base_MOVKWPos16_imm16<OtherVT>;
+def AArch64Base_BICSXROR_imm6AsLabel : AArch64Base_BICSXROR_imm6<OtherVT>;
+
+class AArch64Base_ADDWI12_imm12S<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWI12_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWI12_imm12S_decode_wrapper";
+}
+
+def AArch64Base_ADDWI12_imm12SAsInt64
+    : AArch64Base_ADDWI12_imm12S<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_ADDWI12_imm12S_predicate(Imm); }]>;
+
+def AArch64Base_ADDWI12_imm12SAsLabel : AArch64Base_ADDWI12_imm12S<OtherVT>;
+
+class AArch64Base_CCMPICCW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPICCW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPICCW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPICCW_immXAsInt64
+    : AArch64Base_CCMPICCW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPICCW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPICCW_immXAsLabel : AArch64Base_CCMPICCW_immX<OtherVT>;
+
+class AArch64Base_CCMPICCW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPICCW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPICCW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPICCW_nzcvAsInt8
+    : AArch64Base_CCMPICCW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPICCW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPICCW_nzcvAsLabel : AArch64Base_CCMPICCW_nzcv<OtherVT>;
+
+class AArch64Base_ADDWSI12_imm12S<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWSI12_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSI12_imm12S_decode_wrapper";
+}
+
+def AArch64Base_ADDWSI12_imm12SAsInt64
+    : AArch64Base_ADDWSI12_imm12S<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_ADDWSI12_imm12S_predicate(Imm); }]>;
+
+def AArch64Base_ADDWSI12_imm12SAsLabel : AArch64Base_ADDWSI12_imm12S<OtherVT>;
+
+class AArch64Base_ANDSWLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDSWLSL_wrapper";
+  let DecoderMethod = "AArch64Base_ANDSWLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_ANDSWLSL_imm6AsInt8
+    : AArch64Base_ANDSWLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ANDSWLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ANDSWLSL_imm6AsLabel : AArch64Base_ANDSWLSL_imm6<OtherVT>;
+
+class AArch64Base_BICSXASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BICSXASR_wrapper";
+  let DecoderMethod = "AArch64Base_BICSXASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_BICSXASR_imm6AsInt8
+    : AArch64Base_BICSXASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BICSXASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_BICSXASR_imm6AsLabel : AArch64Base_BICSXASR_imm6<OtherVT>;
+
+class AArch64Base_CCMNIVSX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIVSX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIVSX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNIVSX_immXAsInt64
+    : AArch64Base_CCMNIVSX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNIVSX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIVSX_immXAsLabel : AArch64Base_CCMNIVSX_immX<OtherVT>;
+
+class AArch64Base_CCMNIVSX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIVSX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIVSX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNIVSX_nzcvAsInt8
+    : AArch64Base_CCMNIVSX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNIVSX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIVSX_nzcvAsLabel : AArch64Base_CCMNIVSX_nzcv<OtherVT>;
+
+class AArch64Base_LDRPstSBW_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRPstSBW_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPstSBW_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRPstSBW_offsetAsInt64
+    : AArch64Base_LDRPstSBW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPstSBW_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRPstSBW_offsetAsLabel : AArch64Base_LDRPstSBW_offset<OtherVT>;
+
+class AArch64Base_STRPstB_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STRPstB_wrapper";
+  let DecoderMethod = "AArch64Base_STRPstB_offset_decode_wrapper";
+}
+
+def AArch64Base_STRPstB_offsetAsInt64
+    : AArch64Base_STRPstB_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STRPstB_offset_predicate(Imm); }]>;
+
+def AArch64Base_STRPstB_offsetAsLabel : AArch64Base_STRPstB_offset<OtherVT>;
+
+class AArch64Base_B_GE_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_B_GE_wrapper";
+  let DecoderMethod = "AArch64Base_B_GE_offset_decode_wrapper";
+}
+
+def AArch64Base_B_GE_offsetAsInt64
+    : AArch64Base_B_GE_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_GE_offset_predicate(Imm); }]>;
+
+def AArch64Base_B_GE_offsetAsLabel : AArch64Base_B_GE_offset<OtherVT>;
+
+class AArch64Base_SUBXI12_imm12S<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXI12_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXI12_imm12S_decode_wrapper";
+}
+
+def AArch64Base_SUBXI12_imm12SAsInt64
+    : AArch64Base_SUBXI12_imm12S<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_SUBXI12_imm12S_predicate(Imm); }]>;
+
+def AArch64Base_SUBXI12_imm12SAsLabel : AArch64Base_SUBXI12_imm12S<OtherVT>;
+
+class AArch64Base_BICWASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BICWASR_wrapper";
+  let DecoderMethod = "AArch64Base_BICWASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_BICWASR_imm6AsInt8
+    : AArch64Base_BICWASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BICWASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_BICWASR_imm6AsLabel : AArch64Base_BICWASR_imm6<OtherVT>;
+
+class AArch64Base_EONWLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EONWLSR_wrapper";
+  let DecoderMethod = "AArch64Base_EONWLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_EONWLSR_imm6AsInt8
+    : AArch64Base_EONWLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EONWLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_EONWLSR_imm6AsLabel : AArch64Base_EONWLSR_imm6<OtherVT>;
+
+class AArch64Base_LDRH_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRH_wrapper";
+  let DecoderMethod = "AArch64Base_LDRH_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRH_offsetAsInt64
+    : AArch64Base_LDRH_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRH_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRH_offsetAsLabel : AArch64Base_LDRH_offset<OtherVT>;
+
+class AArch64Base_SUBWSXSB_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWSXSB_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSXSB_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBWSXSB_imm3AsInt8
+    : AArch64Base_SUBWSXSB_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWSXSB_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBWSXSB_imm3AsLabel : AArch64Base_SUBWSXSB_imm3<OtherVT>;
+
+class AArch64Base_CCMNIGTX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIGTX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIGTX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNIGTX_immXAsInt64
+    : AArch64Base_CCMNIGTX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNIGTX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIGTX_immXAsLabel : AArch64Base_CCMNIGTX_immX<OtherVT>;
+
+class AArch64Base_CCMNIGTX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIGTX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIGTX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNIGTX_nzcvAsInt8
+    : AArch64Base_CCMNIGTX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNIGTX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIGTX_nzcvAsLabel : AArch64Base_CCMNIGTX_nzcv<OtherVT>;
+
+class AArch64Base_CCMPILSW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPILSW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPILSW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPILSW_immXAsInt64
+    : AArch64Base_CCMPILSW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPILSW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPILSW_immXAsLabel : AArch64Base_CCMPILSW_immX<OtherVT>;
+
+class AArch64Base_CCMPILSW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPILSW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPILSW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPILSW_nzcvAsInt8
+    : AArch64Base_CCMPILSW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPILSW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPILSW_nzcvAsLabel : AArch64Base_CCMPILSW_nzcv<OtherVT>;
+
+class AArch64Base_LDRPstX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRPstX_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPstX_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRPstX_offsetAsInt64
+    : AArch64Base_LDRPstX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPstX_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRPstX_offsetAsLabel : AArch64Base_LDRPstX_offset<OtherVT>;
+
+class AArch64Base_BICXLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BICXLSL_wrapper";
+  let DecoderMethod = "AArch64Base_BICXLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_BICXLSL_imm6AsInt8
+    : AArch64Base_BICXLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BICXLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_BICXLSL_imm6AsLabel : AArch64Base_BICXLSL_imm6<OtherVT>;
+
+class AArch64Base_CCMNGEX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNGEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNGEX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNGEX_nzcvAsInt8
+    : AArch64Base_CCMNGEX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNGEX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNGEX_nzcvAsLabel : AArch64Base_CCMNGEX_nzcv<OtherVT>;
+
+class AArch64Base_LDPSPre_offWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDPSPre_wrapper";
+  let DecoderMethod = "AArch64Base_LDPSPre_offWSize_decode_wrapper";
+}
+
+def AArch64Base_LDPSPre_offWSizeAsInt64
+    : AArch64Base_LDPSPre_offWSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDPSPre_offWSize_predicate(Imm); }]>;
+
+def AArch64Base_LDPSPre_offWSizeAsLabel : AArch64Base_LDPSPre_offWSize<OtherVT>;
+
+class AArch64Base_LDURSHX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDURSHX_wrapper";
+  let DecoderMethod = "AArch64Base_LDURSHX_offset_decode_wrapper";
+}
+
+def AArch64Base_LDURSHX_offsetAsInt64
+    : AArch64Base_LDURSHX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDURSHX_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDURSHX_offsetAsLabel : AArch64Base_LDURSHX_offset<OtherVT>;
+
+class AArch64Base_ADDWSUXSW_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWSUXSW_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSUXSW_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDWSUXSW_imm3AsInt8
+    : AArch64Base_ADDWSUXSW_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWSUXSW_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDWSUXSW_imm3AsLabel : AArch64Base_ADDWSUXSW_imm3<OtherVT>;
+
+class AArch64Base_LDRPstSHW_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRPstSHW_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPstSHW_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRPstSHW_offsetAsInt64
+    : AArch64Base_LDRPstSHW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPstSHW_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRPstSHW_offsetAsLabel : AArch64Base_LDRPstSHW_offset<OtherVT>;
+
+class AArch64Base_BICSXLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BICSXLSL_wrapper";
+  let DecoderMethod = "AArch64Base_BICSXLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_BICSXLSL_imm6AsInt8
+    : AArch64Base_BICSXLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BICSXLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_BICSXLSL_imm6AsLabel : AArch64Base_BICSXLSL_imm6<OtherVT>;
+
+class AArch64Base_STURW_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STURW_wrapper";
+  let DecoderMethod = "AArch64Base_STURW_offset_decode_wrapper";
+}
+
+def AArch64Base_STURW_offsetAsInt64
+    : AArch64Base_STURW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STURW_offset_predicate(Imm); }]>;
+
+def AArch64Base_STURW_offsetAsLabel : AArch64Base_STURW_offset<OtherVT>;
+
+class AArch64Base_MOVNXPos32_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MOVNXPos32_wrapper";
+  let DecoderMethod = "AArch64Base_MOVNXPos32_imm16_decode_wrapper";
+}
+
+def AArch64Base_MOVNXPos32_imm16AsInt16
+    : AArch64Base_MOVNXPos32_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVNXPos32_imm16_predicate(Imm); }]>;
+
+def AArch64Base_MOVNXPos32_imm16AsLabel : AArch64Base_MOVNXPos32_imm16<OtherVT>;
+
+class AArch64Base_ADDXSI_imm12X<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXSI_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXSI_imm12X_decode_wrapper";
+}
+
+def AArch64Base_ADDXSI_imm12XAsInt64
+    : AArch64Base_ADDXSI_imm12X<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_ADDXSI_imm12X_predicate(Imm); }]>;
+
+def AArch64Base_ADDXSI_imm12XAsLabel : AArch64Base_ADDXSI_imm12X<OtherVT>;
+
+class AArch64Base_LDRLitW_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRLitW_wrapper";
+  let DecoderMethod = "AArch64Base_LDRLitW_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRLitW_offsetAsInt64
+    : AArch64Base_LDRLitW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRLitW_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRLitW_offsetAsLabel : AArch64Base_LDRLitW_offset<OtherVT>;
+
+class AArch64Base_LDPX_offXSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDPX_wrapper";
+  let DecoderMethod = "AArch64Base_LDPX_offXSize_decode_wrapper";
+}
+
+def AArch64Base_LDPX_offXSizeAsInt64
+    : AArch64Base_LDPX_offXSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDPX_offXSize_predicate(Imm); }]>;
+
+def AArch64Base_LDPX_offXSizeAsLabel : AArch64Base_LDPX_offXSize<OtherVT>;
+
+class AArch64Base_SUBXSSXSH_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXSSXSH_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSSXSH_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBXSSXSH_imm3AsInt8
+    : AArch64Base_SUBXSSXSH_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXSSXSH_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBXSSXSH_imm3AsLabel : AArch64Base_SUBXSSXSH_imm3<OtherVT>;
+
+class AArch64Base_ANDWLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDWLSR_wrapper";
+  let DecoderMethod = "AArch64Base_ANDWLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ANDWLSR_imm6AsInt8
+    : AArch64Base_ANDWLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ANDWLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ANDWLSR_imm6AsLabel : AArch64Base_ANDWLSR_imm6<OtherVT>;
+
+class AArch64Base_SUBXSXSX_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXSXSX_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSXSX_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBXSXSX_imm3AsInt8
+    : AArch64Base_SUBXSXSX_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXSXSX_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBXSXSX_imm3AsLabel : AArch64Base_SUBXSXSX_imm3<OtherVT>;
+
+class AArch64Base_CBZW_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CBZW_wrapper";
+  let DecoderMethod = "AArch64Base_CBZW_offset_decode_wrapper";
+}
+
+def AArch64Base_CBZW_offsetAsInt64
+    : AArch64Base_CBZW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CBZW_offset_predicate(Imm); }]>;
+
+def AArch64Base_CBZW_offsetAsLabel : AArch64Base_CBZW_offset<OtherVT>;
+
+class AArch64Base_ADR_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADR_wrapper";
+  let DecoderMethod = "AArch64Base_ADR_offset_decode_wrapper";
+}
+
+def AArch64Base_ADR_offsetAsInt64
+    : AArch64Base_ADR_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_ADR_offset_predicate(Imm); }]>;
+
+def AArch64Base_ADR_offsetAsLabel : AArch64Base_ADR_offset<OtherVT>;
+
+class AArch64Base_CCMNLSW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNLSW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNLSW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNLSW_nzcvAsInt8
+    : AArch64Base_CCMNLSW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNLSW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNLSW_nzcvAsLabel : AArch64Base_CCMNLSW_nzcv<OtherVT>;
+
+class AArch64Base_LDPXPre_offXSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDPXPre_wrapper";
+  let DecoderMethod = "AArch64Base_LDPXPre_offXSize_decode_wrapper";
+}
+
+def AArch64Base_LDPXPre_offXSizeAsInt64
+    : AArch64Base_LDPXPre_offXSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDPXPre_offXSize_predicate(Imm); }]>;
+
+def AArch64Base_LDPXPre_offXSizeAsLabel : AArch64Base_LDPXPre_offXSize<OtherVT>;
+
+class AArch64Base_CCMPIGTW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIGTW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIGTW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPIGTW_immXAsInt64
+    : AArch64Base_CCMPIGTW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPIGTW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIGTW_immXAsLabel : AArch64Base_CCMPIGTW_immX<OtherVT>;
+
+class AArch64Base_CCMPIGTW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIGTW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIGTW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPIGTW_nzcvAsInt8
+    : AArch64Base_CCMPIGTW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPIGTW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIGTW_nzcvAsLabel : AArch64Base_CCMPIGTW_nzcv<OtherVT>;
+
+class AArch64Base_CCMPEQX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPEQX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPEQX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPEQX_nzcvAsInt8
+    : AArch64Base_CCMPEQX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPEQX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPEQX_nzcvAsLabel : AArch64Base_CCMPEQX_nzcv<OtherVT>;
+
+class AArch64Base_SBFMX_leftXSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SBFMX_wrapper";
+  let DecoderMethod = "AArch64Base_SBFMX_leftXSize_decode_wrapper";
+}
+
+def AArch64Base_SBFMX_leftXSizeAsInt8
+    : AArch64Base_SBFMX_leftXSize<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SBFMX_leftXSize_predicate(Imm); }]>;
+
+def AArch64Base_SBFMX_leftXSizeAsLabel : AArch64Base_SBFMX_leftXSize<OtherVT>;
+
+class AArch64Base_SBFMX_rightXSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SBFMX_wrapper";
+  let DecoderMethod = "AArch64Base_SBFMX_rightXSize_decode_wrapper";
+}
+
+def AArch64Base_SBFMX_rightXSizeAsInt8
+    : AArch64Base_SBFMX_rightXSize<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SBFMX_rightXSize_predicate(Imm); }]>;
+
+def AArch64Base_SBFMX_rightXSizeAsLabel : AArch64Base_SBFMX_rightXSize<OtherVT>;
+
+class AArch64Base_ADDXI_imm12X<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXI_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXI_imm12X_decode_wrapper";
+}
+
+def AArch64Base_ADDXI_imm12XAsInt64
+    : AArch64Base_ADDXI_imm12X<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_ADDXI_imm12X_predicate(Imm); }]>;
+
+def AArch64Base_ADDXI_imm12XAsLabel : AArch64Base_ADDXI_imm12X<OtherVT>;
+
+class AArch64Base_BFMW_leftWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BFMW_wrapper";
+  let DecoderMethod = "AArch64Base_BFMW_leftWSize_decode_wrapper";
+}
+
+def AArch64Base_BFMW_leftWSizeAsInt8
+    : AArch64Base_BFMW_leftWSize<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BFMW_leftWSize_predicate(Imm); }]>;
+
+def AArch64Base_BFMW_leftWSizeAsLabel : AArch64Base_BFMW_leftWSize<OtherVT>;
+
+class AArch64Base_BFMW_rightWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BFMW_wrapper";
+  let DecoderMethod = "AArch64Base_BFMW_rightWSize_decode_wrapper";
+}
+
+def AArch64Base_BFMW_rightWSizeAsInt8
+    : AArch64Base_BFMW_rightWSize<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BFMW_rightWSize_predicate(Imm); }]>;
+
+def AArch64Base_BFMW_rightWSizeAsLabel : AArch64Base_BFMW_rightWSize<OtherVT>;
+
+class AArch64Base_MOVNXPos16_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MOVNXPos16_wrapper";
+  let DecoderMethod = "AArch64Base_MOVNXPos16_imm16_decode_wrapper";
+}
+
+def AArch64Base_MOVNXPos16_imm16AsInt16
+    : AArch64Base_MOVNXPos16_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVNXPos16_imm16_predicate(Imm); }]>;
+
+def AArch64Base_MOVNXPos16_imm16AsLabel : AArch64Base_MOVNXPos16_imm16<OtherVT>;
+
+class AArch64Base_ADDWSSXSW_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWSSXSW_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSSXSW_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDWSSXSW_imm3AsInt8
+    : AArch64Base_ADDWSSXSW_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWSSXSW_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDWSSXSW_imm3AsLabel : AArch64Base_ADDWSSXSW_imm3<OtherVT>;
+
+class AArch64Base_CCMNILSX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNILSX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNILSX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNILSX_immXAsInt64
+    : AArch64Base_CCMNILSX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNILSX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNILSX_immXAsLabel : AArch64Base_CCMNILSX_immX<OtherVT>;
+
+class AArch64Base_CCMNILSX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNILSX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNILSX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNILSX_nzcvAsInt8
+    : AArch64Base_CCMNILSX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNILSX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNILSX_nzcvAsLabel : AArch64Base_CCMNILSX_nzcv<OtherVT>;
+
+class AArch64Base_STPWPre_offWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STPWPre_wrapper";
+  let DecoderMethod = "AArch64Base_STPWPre_offWSize_decode_wrapper";
+}
+
+def AArch64Base_STPWPre_offWSizeAsInt64
+    : AArch64Base_STPWPre_offWSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STPWPre_offWSize_predicate(Imm); }]>;
+
+def AArch64Base_STPWPre_offWSizeAsLabel : AArch64Base_STPWPre_offWSize<OtherVT>;
+
+class AArch64Base_ORRWLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ORRWLSL_wrapper";
+  let DecoderMethod = "AArch64Base_ORRWLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_ORRWLSL_imm6AsInt8
+    : AArch64Base_ORRWLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ORRWLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ORRWLSL_imm6AsLabel : AArch64Base_ORRWLSL_imm6<OtherVT>;
+
+class AArch64Base_SUBXSUXSW_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXSUXSW_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSUXSW_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBXSUXSW_imm3AsInt8
+    : AArch64Base_SUBXSUXSW_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXSUXSW_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBXSUXSW_imm3AsLabel : AArch64Base_SUBXSUXSW_imm3<OtherVT>;
+
+class AArch64Base_ANDWASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDWASR_wrapper";
+  let DecoderMethod = "AArch64Base_ANDWASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ANDWASR_imm6AsInt8
+    : AArch64Base_ANDWASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ANDWASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ANDWASR_imm6AsLabel : AArch64Base_ANDWASR_imm6<OtherVT>;
+
+class AArch64Base_ANDSXLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDSXLSR_wrapper";
+  let DecoderMethod = "AArch64Base_ANDSXLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ANDSXLSR_imm6AsInt8
+    : AArch64Base_ANDSXLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ANDSXLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ANDSXLSR_imm6AsLabel : AArch64Base_ANDSXLSR_imm6<OtherVT>;
+
+class AArch64Base_CCMNILTW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNILTW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNILTW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNILTW_immXAsInt64
+    : AArch64Base_CCMNILTW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNILTW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNILTW_immXAsLabel : AArch64Base_CCMNILTW_immX<OtherVT>;
+
+class AArch64Base_CCMNILTW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNILTW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNILTW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNILTW_nzcvAsInt8
+    : AArch64Base_CCMNILTW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNILTW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNILTW_nzcvAsLabel : AArch64Base_CCMNILTW_nzcv<OtherVT>;
+
+class AArch64Base_B_VS_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_B_VS_wrapper";
+  let DecoderMethod = "AArch64Base_B_VS_offset_decode_wrapper";
+}
+
+def AArch64Base_B_VS_offsetAsInt64
+    : AArch64Base_B_VS_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_VS_offset_predicate(Imm); }]>;
+
+def AArch64Base_B_VS_offsetAsLabel : AArch64Base_B_VS_offset<OtherVT>;
+
+class AArch64Base_BICSWLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BICSWLSR_wrapper";
+  let DecoderMethod = "AArch64Base_BICSWLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_BICSWLSR_imm6AsInt8
+    : AArch64Base_BICSWLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BICSWLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_BICSWLSR_imm6AsLabel : AArch64Base_BICSWLSR_imm6<OtherVT>;
+
+class AArch64Base_ADDXSXSB_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXSXSB_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXSXSB_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDXSXSB_imm3AsInt8
+    : AArch64Base_ADDXSXSB_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXSXSB_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDXSXSB_imm3AsLabel : AArch64Base_ADDXSXSB_imm3<OtherVT>;
+
+class AArch64Base_ADDXSUXSH_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXSUXSH_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXSUXSH_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDXSUXSH_imm3AsInt8
+    : AArch64Base_ADDXSUXSH_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXSUXSH_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDXSUXSH_imm3AsLabel : AArch64Base_ADDXSUXSH_imm3<OtherVT>;
+
+class AArch64Base_SUBXUXSB_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXUXSB_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXUXSB_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBXUXSB_imm3AsInt8
+    : AArch64Base_SUBXUXSB_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXUXSB_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBXUXSB_imm3AsLabel : AArch64Base_SUBXUXSB_imm3<OtherVT>;
+
+class AArch64Base_LDRPstB_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRPstB_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPstB_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRPstB_offsetAsInt64
+    : AArch64Base_LDRPstB_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPstB_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRPstB_offsetAsLabel : AArch64Base_LDRPstB_offset<OtherVT>;
+
+class AArch64Base_LDURX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDURX_wrapper";
+  let DecoderMethod = "AArch64Base_LDURX_offset_decode_wrapper";
+}
+
+def AArch64Base_LDURX_offsetAsInt64
+    : AArch64Base_LDURX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDURX_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDURX_offsetAsLabel : AArch64Base_LDURX_offset<OtherVT>;
+
+class AArch64Base_ORRWLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ORRWLSR_wrapper";
+  let DecoderMethod = "AArch64Base_ORRWLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ORRWLSR_imm6AsInt8
+    : AArch64Base_ORRWLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ORRWLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ORRWLSR_imm6AsLabel : AArch64Base_ORRWLSR_imm6<OtherVT>;
+
+class AArch64Base_BICSXLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BICSXLSR_wrapper";
+  let DecoderMethod = "AArch64Base_BICSXLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_BICSXLSR_imm6AsInt8
+    : AArch64Base_BICSXLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BICSXLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_BICSXLSR_imm6AsLabel : AArch64Base_BICSXLSR_imm6<OtherVT>;
+
+class AArch64Base_ADDXUXSB_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXUXSB_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXUXSB_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDXUXSB_imm3AsInt8
+    : AArch64Base_ADDXUXSB_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXUXSB_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDXUXSB_imm3AsLabel : AArch64Base_ADDXUXSB_imm3<OtherVT>;
+
+class AArch64Base_SUBXLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXLSR_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_SUBXLSR_imm6AsInt8
+    : AArch64Base_SUBXLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_SUBXLSR_imm6AsLabel : AArch64Base_SUBXLSR_imm6<OtherVT>;
+
+class AArch64Base_CCMPLSX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPLSX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPLSX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPLSX_nzcvAsInt8
+    : AArch64Base_CCMPLSX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPLSX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPLSX_nzcvAsLabel : AArch64Base_CCMPLSX_nzcv<OtherVT>;
+
+class AArch64Base_B_CS_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_B_CS_wrapper";
+  let DecoderMethod = "AArch64Base_B_CS_offset_decode_wrapper";
+}
+
+def AArch64Base_B_CS_offsetAsInt64
+    : AArch64Base_B_CS_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_CS_offset_predicate(Imm); }]>;
+
+def AArch64Base_B_CS_offsetAsLabel : AArch64Base_B_CS_offset<OtherVT>;
+
+class AArch64Base_ADDWLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWLSR_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ADDWLSR_imm6AsInt8
+    : AArch64Base_ADDWLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ADDWLSR_imm6AsLabel : AArch64Base_ADDWLSR_imm6<OtherVT>;
+
+class AArch64Base_ANDXROR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDXROR_wrapper";
+  let DecoderMethod = "AArch64Base_ANDXROR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ANDXROR_imm6AsInt8
+    : AArch64Base_ANDXROR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ANDXROR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ANDXROR_imm6AsLabel : AArch64Base_ANDXROR_imm6<OtherVT>;
+
+class AArch64Base_CCMNIVCX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIVCX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIVCX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNIVCX_immXAsInt64
+    : AArch64Base_CCMNIVCX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNIVCX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIVCX_immXAsLabel : AArch64Base_CCMNIVCX_immX<OtherVT>;
+
+class AArch64Base_CCMNIVCX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIVCX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIVCX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNIVCX_nzcvAsInt8
+    : AArch64Base_CCMNIVCX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNIVCX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIVCX_nzcvAsLabel : AArch64Base_CCMNIVCX_nzcv<OtherVT>;
+
+class AArch64Base_SUBWUXSW_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWUXSW_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWUXSW_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBWUXSW_imm3AsInt8
+    : AArch64Base_SUBWUXSW_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWUXSW_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBWUXSW_imm3AsLabel : AArch64Base_SUBWUXSW_imm3<OtherVT>;
+
+class AArch64Base_ORRXLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ORRXLSL_wrapper";
+  let DecoderMethod = "AArch64Base_ORRXLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_ORRXLSL_imm6AsInt8
+    : AArch64Base_ORRXLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ORRXLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ORRXLSL_imm6AsLabel : AArch64Base_ORRXLSL_imm6<OtherVT>;
+
+class AArch64Base_CCMNNEW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNNEW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNNEW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNNEW_nzcvAsInt8
+    : AArch64Base_CCMNNEW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNNEW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNNEW_nzcvAsLabel : AArch64Base_CCMNNEW_nzcv<OtherVT>;
+
+class AArch64Base_ADDWASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWASR_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ADDWASR_imm6AsInt8
+    : AArch64Base_ADDWASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ADDWASR_imm6AsLabel : AArch64Base_ADDWASR_imm6<OtherVT>;
+
+class AArch64Base_EONXLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EONXLSR_wrapper";
+  let DecoderMethod = "AArch64Base_EONXLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_EONXLSR_imm6AsInt8
+    : AArch64Base_EONXLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EONXLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_EONXLSR_imm6AsLabel : AArch64Base_EONXLSR_imm6<OtherVT>;
+
+class AArch64Base_CCMNPLX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNPLX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNPLX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNPLX_nzcvAsInt8
+    : AArch64Base_CCMNPLX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNPLX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNPLX_nzcvAsLabel : AArch64Base_CCMNPLX_nzcv<OtherVT>;
+
+class AArch64Base_CCMNIVCW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIVCW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIVCW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNIVCW_immXAsInt64
+    : AArch64Base_CCMNIVCW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNIVCW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIVCW_immXAsLabel : AArch64Base_CCMNIVCW_immX<OtherVT>;
+
+class AArch64Base_CCMNIVCW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIVCW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIVCW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNIVCW_nzcvAsInt8
+    : AArch64Base_CCMNIVCW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNIVCW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIVCW_nzcvAsLabel : AArch64Base_CCMNIVCW_nzcv<OtherVT>;
+
+class AArch64Base_ADDXSSXSX_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXSSXSX_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXSSXSX_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDXSSXSX_imm3AsInt8
+    : AArch64Base_ADDXSSXSX_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXSSXSX_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDXSSXSX_imm3AsLabel : AArch64Base_ADDXSSXSX_imm3<OtherVT>;
+
+class AArch64Base_SUBXSSXSW_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXSSXSW_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSSXSW_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBXSSXSW_imm3AsInt8
+    : AArch64Base_SUBXSSXSW_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXSSXSW_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBXSSXSW_imm3AsLabel : AArch64Base_SUBXSSXSW_imm3<OtherVT>;
+
+class AArch64Base_SUBWSI_imm12X<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWSI_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSI_imm12X_decode_wrapper";
+}
+
+def AArch64Base_SUBWSI_imm12XAsInt64
+    : AArch64Base_SUBWSI_imm12X<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_SUBWSI_imm12X_predicate(Imm); }]>;
+
+def AArch64Base_SUBWSI_imm12XAsLabel : AArch64Base_SUBWSI_imm12X<OtherVT>;
+
+class AArch64Base_EONWASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EONWASR_wrapper";
+  let DecoderMethod = "AArch64Base_EONWASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_EONWASR_imm6AsInt8
+    : AArch64Base_EONWASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EONWASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_EONWASR_imm6AsLabel : AArch64Base_EONWASR_imm6<OtherVT>;
+
+class AArch64Base_CCMNLSX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNLSX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNLSX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNLSX_nzcvAsInt8
+    : AArch64Base_CCMNLSX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNLSX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNLSX_nzcvAsLabel : AArch64Base_CCMNLSX_nzcv<OtherVT>;
+
+class AArch64Base_CCMNILEW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNILEW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNILEW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNILEW_immXAsInt64
+    : AArch64Base_CCMNILEW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNILEW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNILEW_immXAsLabel : AArch64Base_CCMNILEW_immX<OtherVT>;
+
+class AArch64Base_CCMNILEW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNILEW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNILEW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNILEW_nzcvAsInt8
+    : AArch64Base_CCMNILEW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNILEW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNILEW_nzcvAsLabel : AArch64Base_CCMNILEW_nzcv<OtherVT>;
+
+class AArch64Base_ADDXSASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXSASR_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXSASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ADDXSASR_imm6AsInt8
+    : AArch64Base_ADDXSASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXSASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ADDXSASR_imm6AsLabel : AArch64Base_ADDXSASR_imm6<OtherVT>;
+
+class AArch64Base_LDRSWX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRSWX_wrapper";
+  let DecoderMethod = "AArch64Base_LDRSWX_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRSWX_offsetAsInt64
+    : AArch64Base_LDRSWX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRSWX_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRSWX_offsetAsLabel : AArch64Base_LDRSWX_offset<OtherVT>;
+
+class AArch64Base_LDRPstH_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRPstH_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPstH_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRPstH_offsetAsInt64
+    : AArch64Base_LDRPstH_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPstH_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRPstH_offsetAsLabel : AArch64Base_LDRPstH_offset<OtherVT>;
+
+class AArch64Base_SBFMW_leftWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SBFMW_wrapper";
+  let DecoderMethod = "AArch64Base_SBFMW_leftWSize_decode_wrapper";
+}
+
+def AArch64Base_SBFMW_leftWSizeAsInt8
+    : AArch64Base_SBFMW_leftWSize<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SBFMW_leftWSize_predicate(Imm); }]>;
+
+def AArch64Base_SBFMW_leftWSizeAsLabel : AArch64Base_SBFMW_leftWSize<OtherVT>;
+
+class AArch64Base_SBFMW_rightWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SBFMW_wrapper";
+  let DecoderMethod = "AArch64Base_SBFMW_rightWSize_decode_wrapper";
+}
+
+def AArch64Base_SBFMW_rightWSizeAsInt8
+    : AArch64Base_SBFMW_rightWSize<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SBFMW_rightWSize_predicate(Imm); }]>;
+
+def AArch64Base_SBFMW_rightWSizeAsLabel : AArch64Base_SBFMW_rightWSize<OtherVT>;
+
+class AArch64Base_MOVNWPos00_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MOVNWPos00_wrapper";
+  let DecoderMethod = "AArch64Base_MOVNWPos00_imm16_decode_wrapper";
+}
+
+def AArch64Base_MOVNWPos00_imm16AsInt16
+    : AArch64Base_MOVNWPos00_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVNWPos00_imm16_predicate(Imm); }]>;
+
+def AArch64Base_MOVNWPos00_imm16AsLabel : AArch64Base_MOVNWPos00_imm16<OtherVT>;
+
+class AArch64Base_ADDXSSXSB_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXSSXSB_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXSSXSB_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDXSSXSB_imm3AsInt8
+    : AArch64Base_ADDXSSXSB_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXSSXSB_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDXSSXSB_imm3AsLabel : AArch64Base_ADDXSSXSB_imm3<OtherVT>;
+
+class AArch64Base_CCMPVSX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPVSX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPVSX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPVSX_nzcvAsInt8
+    : AArch64Base_CCMPVSX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPVSX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPVSX_nzcvAsLabel : AArch64Base_CCMPVSX_nzcv<OtherVT>;
+
+class AArch64Base_ANDSIW_immWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDSIW_wrapper";
+  let DecoderMethod = "AArch64Base_ANDSIW_immWSize_decode_wrapper";
+}
+
+def AArch64Base_ANDSIW_immWSizeAsInt32
+    : AArch64Base_ANDSIW_immWSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDSIW_immWSize_predicate(Imm); }]>;
+
+def AArch64Base_ANDSIW_immWSizeAsLabel : AArch64Base_ANDSIW_immWSize<OtherVT>;
+
+class AArch64Base_SUBXSSXSB_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXSSXSB_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSSXSB_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBXSSXSB_imm3AsInt8
+    : AArch64Base_SUBXSSXSB_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXSSXSB_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBXSSXSB_imm3AsLabel : AArch64Base_SUBXSSXSB_imm3<OtherVT>;
+
+class AArch64Base_STRB_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STRB_wrapper";
+  let DecoderMethod = "AArch64Base_STRB_offset_decode_wrapper";
+}
+
+def AArch64Base_STRB_offsetAsInt64
+    : AArch64Base_STRB_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STRB_offset_predicate(Imm); }]>;
+
+def AArch64Base_STRB_offsetAsLabel : AArch64Base_STRB_offset<OtherVT>;
+
+class AArch64Base_BL_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BL_wrapper";
+  let DecoderMethod = "AArch64Base_BL_offset_decode_wrapper";
+}
+
+def AArch64Base_BL_offsetAsInt64
+    : AArch64Base_BL_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_BL_offset_predicate(Imm); }]>;
+
+def AArch64Base_BL_offsetAsLabel : AArch64Base_BL_offset<OtherVT>;
+
+class AArch64Base_BICSWASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BICSWASR_wrapper";
+  let DecoderMethod = "AArch64Base_BICSWASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_BICSWASR_imm6AsInt8
+    : AArch64Base_BICSWASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BICSWASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_BICSWASR_imm6AsLabel : AArch64Base_BICSWASR_imm6<OtherVT>;
+
+class AArch64Base_ADDWSUXSX_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWSUXSX_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSUXSX_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDWSUXSX_imm3AsInt8
+    : AArch64Base_ADDWSUXSX_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWSUXSX_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDWSUXSX_imm3AsLabel : AArch64Base_ADDWSUXSX_imm3<OtherVT>;
+
+class AArch64Base_CCMNMIW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNMIW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNMIW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNMIW_nzcvAsInt8
+    : AArch64Base_CCMNMIW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNMIW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNMIW_nzcvAsLabel : AArch64Base_CCMNMIW_nzcv<OtherVT>;
+
+class AArch64Base_CCMPVSW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPVSW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPVSW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPVSW_nzcvAsInt8
+    : AArch64Base_CCMPVSW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPVSW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPVSW_nzcvAsLabel : AArch64Base_CCMPVSW_nzcv<OtherVT>;
+
+class AArch64Base_B_LE_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_B_LE_wrapper";
+  let DecoderMethod = "AArch64Base_B_LE_offset_decode_wrapper";
+}
+
+def AArch64Base_B_LE_offsetAsInt64
+    : AArch64Base_B_LE_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_LE_offset_predicate(Imm); }]>;
+
+def AArch64Base_B_LE_offsetAsLabel : AArch64Base_B_LE_offset<OtherVT>;
+
+class AArch64Base_CCMPILEX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPILEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPILEX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPILEX_immXAsInt64
+    : AArch64Base_CCMPILEX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPILEX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPILEX_immXAsLabel : AArch64Base_CCMPILEX_immX<OtherVT>;
+
+class AArch64Base_CCMPILEX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPILEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPILEX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPILEX_nzcvAsInt8
+    : AArch64Base_CCMPILEX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPILEX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPILEX_nzcvAsLabel : AArch64Base_CCMPILEX_nzcv<OtherVT>;
+
+class AArch64Base_CCMNEQX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNEQX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNEQX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNEQX_nzcvAsInt8
+    : AArch64Base_CCMNEQX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNEQX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNEQX_nzcvAsLabel : AArch64Base_CCMNEQX_nzcv<OtherVT>;
+
+class AArch64Base_BFMX_leftXSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BFMX_wrapper";
+  let DecoderMethod = "AArch64Base_BFMX_leftXSize_decode_wrapper";
+}
+
+def AArch64Base_BFMX_leftXSizeAsInt8
+    : AArch64Base_BFMX_leftXSize<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BFMX_leftXSize_predicate(Imm); }]>;
+
+def AArch64Base_BFMX_leftXSizeAsLabel : AArch64Base_BFMX_leftXSize<OtherVT>;
+
+class AArch64Base_BFMX_rightXSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BFMX_wrapper";
+  let DecoderMethod = "AArch64Base_BFMX_rightXSize_decode_wrapper";
+}
+
+def AArch64Base_BFMX_rightXSizeAsInt8
+    : AArch64Base_BFMX_rightXSize<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BFMX_rightXSize_predicate(Imm); }]>;
+
+def AArch64Base_BFMX_rightXSizeAsLabel : AArch64Base_BFMX_rightXSize<OtherVT>;
+
+class AArch64Base_MOVNWPos16_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MOVNWPos16_wrapper";
+  let DecoderMethod = "AArch64Base_MOVNWPos16_imm16_decode_wrapper";
+}
+
+def AArch64Base_MOVNWPos16_imm16AsInt16
+    : AArch64Base_MOVNWPos16_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVNWPos16_imm16_predicate(Imm); }]>;
+
+def AArch64Base_MOVNWPos16_imm16AsLabel : AArch64Base_MOVNWPos16_imm16<OtherVT>;
+
+class AArch64Base_UBFMW_leftWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_UBFMW_wrapper";
+  let DecoderMethod = "AArch64Base_UBFMW_leftWSize_decode_wrapper";
+}
+
+def AArch64Base_UBFMW_leftWSizeAsInt8
+    : AArch64Base_UBFMW_leftWSize<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_UBFMW_leftWSize_predicate(Imm); }]>;
+
+def AArch64Base_UBFMW_leftWSizeAsLabel : AArch64Base_UBFMW_leftWSize<OtherVT>;
+
+class AArch64Base_UBFMW_rightWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_UBFMW_wrapper";
+  let DecoderMethod = "AArch64Base_UBFMW_rightWSize_decode_wrapper";
+}
+
+def AArch64Base_UBFMW_rightWSizeAsInt8
+    : AArch64Base_UBFMW_rightWSize<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_UBFMW_rightWSize_predicate(Imm); }]>;
+
+def AArch64Base_UBFMW_rightWSizeAsLabel : AArch64Base_UBFMW_rightWSize<OtherVT>;
+
+class AArch64Base_SUBWSUXSX_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWSUXSX_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSUXSX_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBWSUXSX_imm3AsInt8
+    : AArch64Base_SUBWSUXSX_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWSUXSX_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBWSUXSX_imm3AsLabel : AArch64Base_SUBWSUXSX_imm3<OtherVT>;
+
+class AArch64Base_EORWASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_EORWASR_wrapper";
+  let DecoderMethod = "AArch64Base_EORWASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_EORWASR_imm6AsInt8
+    : AArch64Base_EORWASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_EORWASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_EORWASR_imm6AsLabel : AArch64Base_EORWASR_imm6<OtherVT>;
+
+class AArch64Base_SUBWSLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWSLSR_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_SUBWSLSR_imm6AsInt8
+    : AArch64Base_SUBWSLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWSLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_SUBWSLSR_imm6AsLabel : AArch64Base_SUBWSLSR_imm6<OtherVT>;
+
+class AArch64Base_B_VC_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_B_VC_wrapper";
+  let DecoderMethod = "AArch64Base_B_VC_offset_decode_wrapper";
+}
+
+def AArch64Base_B_VC_offsetAsInt64
+    : AArch64Base_B_VC_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_VC_offset_predicate(Imm); }]>;
+
+def AArch64Base_B_VC_offsetAsLabel : AArch64Base_B_VC_offset<OtherVT>;
+
+class AArch64Base_LDRPstW_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRPstW_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPstW_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRPstW_offsetAsInt64
+    : AArch64Base_LDRPstW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPstW_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRPstW_offsetAsLabel : AArch64Base_LDRPstW_offset<OtherVT>;
 
 class AArch64Base_ADDXSSXSW_imm3<ValueType ty> : Operand<ty>
 {
@@ -6124,65 +5644,545 @@ def AArch64Base_ADDXSSXSW_imm3AsInt8
 
 def AArch64Base_ADDXSSXSW_imm3AsLabel : AArch64Base_ADDXSSXSW_imm3<OtherVT>;
 
-class AArch64Base_CCMPEQW_nzcv<ValueType ty> : Operand<ty>
+class AArch64Base_LDPXPst_offXSize<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_CCMPEQW_wrapper";
-  let DecoderMethod = "AArch64Base_CCMPEQW_nzcv_decode_wrapper";
+  let EncoderMethod = "AArch64Base_LDPXPst_wrapper";
+  let DecoderMethod = "AArch64Base_LDPXPst_offXSize_decode_wrapper";
 }
 
-def AArch64Base_CCMPEQW_nzcvAsInt8
-    : AArch64Base_CCMPEQW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPEQW_nzcv_predicate(Imm); }]>;
+def AArch64Base_LDPXPst_offXSizeAsInt64
+    : AArch64Base_LDPXPst_offXSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDPXPst_offXSize_predicate(Imm); }]>;
 
-def AArch64Base_CCMPEQW_nzcvAsLabel : AArch64Base_CCMPEQW_nzcv<OtherVT>;
+def AArch64Base_LDPXPst_offXSizeAsLabel : AArch64Base_LDPXPst_offXSize<OtherVT>;
 
-class AArch64Base_MOVZXPos00_imm16<ValueType ty> : Operand<ty>
+class AArch64Base_ADDWSXSW_imm3<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_MOVZXPos00_wrapper";
-  let DecoderMethod = "AArch64Base_MOVZXPos00_imm16_decode_wrapper";
+  let EncoderMethod = "AArch64Base_ADDWSXSW_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_MOVZXPos00_imm16AsInt16
-    : AArch64Base_MOVZXPos00_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVZXPos00_imm16_predicate(Imm); }]>;
+def AArch64Base_ADDWSXSW_imm3AsInt8
+    : AArch64Base_ADDWSXSW_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWSXSW_imm3_predicate(Imm); }]>;
 
-def AArch64Base_MOVZXPos00_imm16AsLabel : AArch64Base_MOVZXPos00_imm16<OtherVT>;
+def AArch64Base_ADDWSXSW_imm3AsLabel : AArch64Base_ADDWSXSW_imm3<OtherVT>;
 
-class AArch64Base_ADDXSUXSW_imm3<ValueType ty> : Operand<ty>
+class AArch64Base_ANDSWASR_imm6<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_ADDXSUXSW_wrapper";
-  let DecoderMethod = "AArch64Base_ADDXSUXSW_imm3_decode_wrapper";
+  let EncoderMethod = "AArch64Base_ANDSWASR_wrapper";
+  let DecoderMethod = "AArch64Base_ANDSWASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ADDXSUXSW_imm3AsInt8
-    : AArch64Base_ADDXSUXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSUXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_ANDSWASR_imm6AsInt8
+    : AArch64Base_ANDSWASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ANDSWASR_imm6_predicate(Imm); }]>;
 
-def AArch64Base_ADDXSUXSW_imm3AsLabel : AArch64Base_ADDXSUXSW_imm3<OtherVT>;
+def AArch64Base_ANDSWASR_imm6AsLabel : AArch64Base_ANDSWASR_imm6<OtherVT>;
 
-class AArch64Base_BICXLSR_imm6<ValueType ty> : Operand<ty>
+class AArch64Base_B_PL_offset<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_BICXLSR_wrapper";
-  let DecoderMethod = "AArch64Base_BICXLSR_imm6_decode_wrapper";
+  let EncoderMethod = "AArch64Base_B_PL_wrapper";
+  let DecoderMethod = "AArch64Base_B_PL_offset_decode_wrapper";
 }
 
-def AArch64Base_BICXLSR_imm6AsInt8
-    : AArch64Base_BICXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICXLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_B_PL_offsetAsInt64
+    : AArch64Base_B_PL_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_PL_offset_predicate(Imm); }]>;
 
-def AArch64Base_BICXLSR_imm6AsLabel : AArch64Base_BICXLSR_imm6<OtherVT>;
+def AArch64Base_B_PL_offsetAsLabel : AArch64Base_B_PL_offset<OtherVT>;
 
-class AArch64Base_SUBWSI_imm12X<ValueType ty> : Operand<ty>
+class AArch64Base_CCMPINVW_immX<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "AArch64Base_SUBWSI_wrapper";
-  let DecoderMethod = "AArch64Base_SUBWSI_imm12X_decode_wrapper";
+  let EncoderMethod = "AArch64Base_CCMPINVW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPINVW_immX_decode_wrapper";
 }
 
-def AArch64Base_SUBWSI_imm12XAsInt64
-    : AArch64Base_SUBWSI_imm12X<i64>
-    , ImmLeaf<i64, [{ return AArch64Base_SUBWSI_imm12X_predicate(Imm); }]>;
+def AArch64Base_CCMPINVW_immXAsInt64
+    : AArch64Base_CCMPINVW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPINVW_immX_predicate(Imm); }]>;
 
-def AArch64Base_SUBWSI_imm12XAsLabel : AArch64Base_SUBWSI_imm12X<OtherVT>;
+def AArch64Base_CCMPINVW_immXAsLabel : AArch64Base_CCMPINVW_immX<OtherVT>;
+
+class AArch64Base_CCMPINVW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPINVW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPINVW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPINVW_nzcvAsInt8
+    : AArch64Base_CCMPINVW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPINVW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPINVW_nzcvAsLabel : AArch64Base_CCMPINVW_nzcv<OtherVT>;
+
+class AArch64Base_CCMNICCW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNICCW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNICCW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNICCW_immXAsInt64
+    : AArch64Base_CCMNICCW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNICCW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNICCW_immXAsLabel : AArch64Base_CCMNICCW_immX<OtherVT>;
+
+class AArch64Base_CCMNICCW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNICCW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNICCW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNICCW_nzcvAsInt8
+    : AArch64Base_CCMNICCW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNICCW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNICCW_nzcvAsLabel : AArch64Base_CCMNICCW_nzcv<OtherVT>;
+
+class AArch64Base_CCMNIPLX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIPLX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIPLX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNIPLX_immXAsInt64
+    : AArch64Base_CCMNIPLX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNIPLX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIPLX_immXAsLabel : AArch64Base_CCMNIPLX_immX<OtherVT>;
+
+class AArch64Base_CCMNIPLX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIPLX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIPLX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNIPLX_nzcvAsInt8
+    : AArch64Base_CCMNIPLX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNIPLX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIPLX_nzcvAsLabel : AArch64Base_CCMNIPLX_nzcv<OtherVT>;
+
+class AArch64Base_ADDXSLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXSLSR_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXSLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ADDXSLSR_imm6AsInt8
+    : AArch64Base_ADDXSLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXSLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ADDXSLSR_imm6AsLabel : AArch64Base_ADDXSLSR_imm6<OtherVT>;
+
+class AArch64Base_ADDXSUXSX_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXSUXSX_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXSUXSX_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDXSUXSX_imm3AsInt8
+    : AArch64Base_ADDXSUXSX_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDXSUXSX_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDXSUXSX_imm3AsLabel : AArch64Base_ADDXSUXSX_imm3<OtherVT>;
+
+class AArch64Base_CBZX_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CBZX_wrapper";
+  let DecoderMethod = "AArch64Base_CBZX_offset_decode_wrapper";
+}
+
+def AArch64Base_CBZX_offsetAsInt64
+    : AArch64Base_CBZX_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CBZX_offset_predicate(Imm); }]>;
+
+def AArch64Base_CBZX_offsetAsLabel : AArch64Base_CBZX_offset<OtherVT>;
+
+class AArch64Base_CCMNMIX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNMIX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNMIX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNMIX_nzcvAsInt8
+    : AArch64Base_CCMNMIX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNMIX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNMIX_nzcvAsLabel : AArch64Base_CCMNMIX_nzcv<OtherVT>;
+
+class AArch64Base_CCMNIVSW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIVSW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIVSW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNIVSW_immXAsInt64
+    : AArch64Base_CCMNIVSW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNIVSW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIVSW_immXAsLabel : AArch64Base_CCMNIVSW_immX<OtherVT>;
+
+class AArch64Base_CCMNIVSW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIVSW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIVSW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNIVSW_nzcvAsInt8
+    : AArch64Base_CCMNIVSW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNIVSW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIVSW_nzcvAsLabel : AArch64Base_CCMNIVSW_nzcv<OtherVT>;
+
+class AArch64Base_CCMNLTX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNLTX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNLTX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNLTX_nzcvAsInt8
+    : AArch64Base_CCMNLTX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNLTX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNLTX_nzcvAsLabel : AArch64Base_CCMNLTX_nzcv<OtherVT>;
+
+class AArch64Base_B_AL_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_B_AL_wrapper";
+  let DecoderMethod = "AArch64Base_B_AL_offset_decode_wrapper";
+}
+
+def AArch64Base_B_AL_offsetAsInt64
+    : AArch64Base_B_AL_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_B_AL_offset_predicate(Imm); }]>;
+
+def AArch64Base_B_AL_offsetAsLabel : AArch64Base_B_AL_offset<OtherVT>;
+
+class AArch64Base_SUBXASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXASR_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_SUBXASR_imm6AsInt8
+    : AArch64Base_SUBXASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_SUBXASR_imm6AsLabel : AArch64Base_SUBXASR_imm6<OtherVT>;
+
+class AArch64Base_ADDXI12_imm12S<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDXI12_wrapper";
+  let DecoderMethod = "AArch64Base_ADDXI12_imm12S_decode_wrapper";
+}
+
+def AArch64Base_ADDXI12_imm12SAsInt64
+    : AArch64Base_ADDXI12_imm12S<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_ADDXI12_imm12S_predicate(Imm); }]>;
+
+def AArch64Base_ADDXI12_imm12SAsLabel : AArch64Base_ADDXI12_imm12S<OtherVT>;
+
+class AArch64Base_CCMPMIX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPMIX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPMIX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPMIX_nzcvAsInt8
+    : AArch64Base_CCMPMIX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPMIX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPMIX_nzcvAsLabel : AArch64Base_CCMPMIX_nzcv<OtherVT>;
+
+class AArch64Base_LDRPreB_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRPreB_wrapper";
+  let DecoderMethod = "AArch64Base_LDRPreB_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRPreB_offsetAsInt64
+    : AArch64Base_LDRPreB_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRPreB_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRPreB_offsetAsLabel : AArch64Base_LDRPreB_offset<OtherVT>;
+
+class AArch64Base_SUBWSSXSX_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBWSSXSX_wrapper";
+  let DecoderMethod = "AArch64Base_SUBWSSXSX_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBWSSXSX_imm3AsInt8
+    : AArch64Base_SUBWSSXSX_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBWSSXSX_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBWSSXSX_imm3AsLabel : AArch64Base_SUBWSSXSX_imm3<OtherVT>;
+
+class AArch64Base_ANDSWLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDSWLSR_wrapper";
+  let DecoderMethod = "AArch64Base_ANDSWLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ANDSWLSR_imm6AsInt8
+    : AArch64Base_ANDSWLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ANDSWLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ANDSWLSR_imm6AsLabel : AArch64Base_ANDSWLSR_imm6<OtherVT>;
+
+class AArch64Base_ORNXLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ORNXLSL_wrapper";
+  let DecoderMethod = "AArch64Base_ORNXLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_ORNXLSL_imm6AsInt8
+    : AArch64Base_ORNXLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ORNXLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ORNXLSL_imm6AsLabel : AArch64Base_ORNXLSL_imm6<OtherVT>;
+
+class AArch64Base_LDPSPst_offWSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDPSPst_wrapper";
+  let DecoderMethod = "AArch64Base_LDPSPst_offWSize_decode_wrapper";
+}
+
+def AArch64Base_LDPSPst_offWSizeAsInt64
+    : AArch64Base_LDPSPst_offWSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDPSPst_offWSize_predicate(Imm); }]>;
+
+def AArch64Base_LDPSPst_offWSizeAsLabel : AArch64Base_LDPSPst_offWSize<OtherVT>;
+
+class AArch64Base_ADDWSXSB_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWSXSB_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSXSB_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDWSXSB_imm3AsInt8
+    : AArch64Base_ADDWSXSB_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWSXSB_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDWSXSB_imm3AsLabel : AArch64Base_ADDWSXSB_imm3<OtherVT>;
+
+class AArch64Base_MOVNXPos00_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MOVNXPos00_wrapper";
+  let DecoderMethod = "AArch64Base_MOVNXPos00_imm16_decode_wrapper";
+}
+
+def AArch64Base_MOVNXPos00_imm16AsInt16
+    : AArch64Base_MOVNXPos00_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVNXPos00_imm16_predicate(Imm); }]>;
+
+def AArch64Base_MOVNXPos00_imm16AsLabel : AArch64Base_MOVNXPos00_imm16<OtherVT>;
+
+class AArch64Base_ANDXASR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDXASR_wrapper";
+  let DecoderMethod = "AArch64Base_ANDXASR_imm6_decode_wrapper";
+}
+
+def AArch64Base_ANDXASR_imm6AsInt8
+    : AArch64Base_ANDXASR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ANDXASR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ANDXASR_imm6AsLabel : AArch64Base_ANDXASR_imm6<OtherVT>;
+
+class AArch64Base_MRS_sysreg<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MRS_wrapper";
+  let DecoderMethod = "AArch64Base_MRS_sysreg_decode_wrapper";
+}
+
+def AArch64Base_MRS_sysregAsInt16
+    : AArch64Base_MRS_sysreg<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MRS_sysreg_predicate(Imm); }]>;
+
+def AArch64Base_MRS_sysregAsLabel : AArch64Base_MRS_sysreg<OtherVT>;
+
+class AArch64Base_ANDIX_immXSize<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ANDIX_wrapper";
+  let DecoderMethod = "AArch64Base_ANDIX_immXSize_decode_wrapper";
+}
+
+def AArch64Base_ANDIX_immXSizeAsInt64
+    : AArch64Base_ANDIX_immXSize<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_ANDIX_immXSize_predicate(Imm); }]>;
+
+def AArch64Base_ANDIX_immXSizeAsLabel : AArch64Base_ANDIX_immXSize<OtherVT>;
+
+class AArch64Base_LDRSHW_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDRSHW_wrapper";
+  let DecoderMethod = "AArch64Base_LDRSHW_offset_decode_wrapper";
+}
+
+def AArch64Base_LDRSHW_offsetAsInt64
+    : AArch64Base_LDRSHW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDRSHW_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDRSHW_offsetAsLabel : AArch64Base_LDRSHW_offset<OtherVT>;
+
+class AArch64Base_CCMPGTW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPGTW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPGTW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPGTW_nzcvAsInt8
+    : AArch64Base_CCMPGTW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPGTW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPGTW_nzcvAsLabel : AArch64Base_CCMPGTW_nzcv<OtherVT>;
+
+class AArch64Base_SUBXSUXSB_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXSUXSB_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSUXSB_imm3_decode_wrapper";
+}
+
+def AArch64Base_SUBXSUXSB_imm3AsInt8
+    : AArch64Base_SUBXSUXSB_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXSUXSB_imm3_predicate(Imm); }]>;
+
+def AArch64Base_SUBXSUXSB_imm3AsLabel : AArch64Base_SUBXSUXSB_imm3<OtherVT>;
+
+class AArch64Base_LDURSBW_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_LDURSBW_wrapper";
+  let DecoderMethod = "AArch64Base_LDURSBW_offset_decode_wrapper";
+}
+
+def AArch64Base_LDURSBW_offsetAsInt64
+    : AArch64Base_LDURSBW_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_LDURSBW_offset_predicate(Imm); }]>;
+
+def AArch64Base_LDURSBW_offsetAsLabel : AArch64Base_LDURSBW_offset<OtherVT>;
+
+class AArch64Base_ADDWSUXSH_imm3<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWSUXSH_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWSUXSH_imm3_decode_wrapper";
+}
+
+def AArch64Base_ADDWSUXSH_imm3AsInt8
+    : AArch64Base_ADDWSUXSH_imm3<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWSUXSH_imm3_predicate(Imm); }]>;
+
+def AArch64Base_ADDWSUXSH_imm3AsLabel : AArch64Base_ADDWSUXSH_imm3<OtherVT>;
+
+class AArch64Base_CCMPIEQW_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIEQW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIEQW_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMPIEQW_immXAsInt64
+    : AArch64Base_CCMPIEQW_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMPIEQW_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIEQW_immXAsLabel : AArch64Base_CCMPIEQW_immX<OtherVT>;
+
+class AArch64Base_CCMPIEQW_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMPIEQW_wrapper";
+  let DecoderMethod = "AArch64Base_CCMPIEQW_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMPIEQW_nzcvAsInt8
+    : AArch64Base_CCMPIEQW_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMPIEQW_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMPIEQW_nzcvAsLabel : AArch64Base_CCMPIEQW_nzcv<OtherVT>;
+
+class AArch64Base_MOVKXPos00_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_MOVKXPos00_wrapper";
+  let DecoderMethod = "AArch64Base_MOVKXPos00_imm16_decode_wrapper";
+}
+
+def AArch64Base_MOVKXPos00_imm16AsInt16
+    : AArch64Base_MOVKXPos00_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_MOVKXPos00_imm16_predicate(Imm); }]>;
+
+def AArch64Base_MOVKXPos00_imm16AsLabel : AArch64Base_MOVKXPos00_imm16<OtherVT>;
+
+class AArch64Base_SUBXSLSR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SUBXSLSR_wrapper";
+  let DecoderMethod = "AArch64Base_SUBXSLSR_imm6_decode_wrapper";
+}
+
+def AArch64Base_SUBXSLSR_imm6AsInt8
+    : AArch64Base_SUBXSLSR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_SUBXSLSR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_SUBXSLSR_imm6AsLabel : AArch64Base_SUBXSLSR_imm6<OtherVT>;
+
+class AArch64Base_ADDWLSL_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_ADDWLSL_wrapper";
+  let DecoderMethod = "AArch64Base_ADDWLSL_imm6_decode_wrapper";
+}
+
+def AArch64Base_ADDWLSL_imm6AsInt8
+    : AArch64Base_ADDWLSL_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_ADDWLSL_imm6_predicate(Imm); }]>;
+
+def AArch64Base_ADDWLSL_imm6AsLabel : AArch64Base_ADDWLSL_imm6<OtherVT>;
+
+class AArch64Base_BICSWROR_imm6<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BICSWROR_wrapper";
+  let DecoderMethod = "AArch64Base_BICSWROR_imm6_decode_wrapper";
+}
+
+def AArch64Base_BICSWROR_imm6AsInt8
+    : AArch64Base_BICSWROR_imm6<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BICSWROR_imm6_predicate(Imm); }]>;
+
+def AArch64Base_BICSWROR_imm6AsLabel : AArch64Base_BICSWROR_imm6<OtherVT>;
+
+class AArch64Base_CCMNIGEX_immX<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIGEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIGEX_immX_decode_wrapper";
+}
+
+def AArch64Base_CCMNIGEX_immXAsInt64
+    : AArch64Base_CCMNIGEX_immX<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_CCMNIGEX_immX_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIGEX_immXAsLabel : AArch64Base_CCMNIGEX_immX<OtherVT>;
+
+class AArch64Base_CCMNIGEX_nzcv<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_CCMNIGEX_wrapper";
+  let DecoderMethod = "AArch64Base_CCMNIGEX_nzcv_decode_wrapper";
+}
+
+def AArch64Base_CCMNIGEX_nzcvAsInt8
+    : AArch64Base_CCMNIGEX_nzcv<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_CCMNIGEX_nzcv_predicate(Imm); }]>;
+
+def AArch64Base_CCMNIGEX_nzcvAsLabel : AArch64Base_CCMNIGEX_nzcv<OtherVT>;
+
+class AArch64Base_STRH_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_STRH_wrapper";
+  let DecoderMethod = "AArch64Base_STRH_offset_decode_wrapper";
+}
+
+def AArch64Base_STRH_offsetAsInt64
+    : AArch64Base_STRH_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Base_STRH_offset_predicate(Imm); }]>;
+
+def AArch64Base_STRH_offsetAsLabel : AArch64Base_STRH_offset<OtherVT>;
 
 
 
