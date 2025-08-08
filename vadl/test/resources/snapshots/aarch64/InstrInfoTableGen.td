@@ -52190,7 +52190,7 @@ def : Pat<(add S:$rn, (srl S:$rm, AArch64Base_ADDWSLSR_imm6AsInt64:$imm6)),
         (ADDWSLSR S:$rn, S:$rm, AArch64Base_ADDWSLSR_imm6AsInt64:$imm6)>;
 
 
-def : Pat<(add S:$rn, (shl (sext S:$rm), AArch64Base_ADDWSSXSW_imm3AsInt64:$imm3)),
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSSXSW_imm3AsInt64:$imm3)),
         (ADDWSSXSW S:$rn, S:$rm, AArch64Base_ADDWSSXSW_imm3AsInt64:$imm3)>;
 
 
@@ -52198,7 +52198,7 @@ def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSSXSX_imm3AsInt64:$imm3)),
         (ADDWSSXSX S:$rn, S:$rm, AArch64Base_ADDWSSXSX_imm3AsInt64:$imm3)>;
 
 
-def : Pat<(add S:$rn, (sext S:$rm)),
+def : Pat<(add S:$rn, S:$rm),
         (ADDWSSXTW S:$rn, S:$rm)>;
 
 
@@ -52222,7 +52222,7 @@ def : Pat<(add S:$rn, S:$rm),
         (ADDWSUXTX S:$rn, S:$rm)>;
 
 
-def : Pat<(add S:$rn, (shl (sext S:$rm), AArch64Base_ADDWSXSW_imm3AsInt64:$imm3)),
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSXSW_imm3AsInt64:$imm3)),
         (ADDWSXSW S:$rn, S:$rm, AArch64Base_ADDWSXSW_imm3AsInt64:$imm3)>;
 
 
@@ -52230,7 +52230,7 @@ def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSXSX_imm3AsInt64:$imm3)),
         (ADDWSXSX S:$rn, S:$rm, AArch64Base_ADDWSXSX_imm3AsInt64:$imm3)>;
 
 
-def : Pat<(add S:$rn, (sext S:$rm)),
+def : Pat<(add S:$rn, S:$rm),
         (ADDWSXTW S:$rn, S:$rm)>;
 
 
@@ -52305,7 +52305,7 @@ def : Pat<(add S:$rn, (srl S:$rm, AArch64Base_ADDXSLSR_imm6AsInt64:$imm6)),
         (ADDXSLSR S:$rm, S:$rn, AArch64Base_ADDXSLSR_imm6AsInt64:$imm6)>;
 
 
-def : Pat<(add S:$rn, (shl (sext S:$rm), AArch64Base_ADDXSSXSW_imm3AsInt64:$imm3)),
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSSXSW_imm3AsInt64:$imm3)),
         (ADDXSSXSW S:$rm, S:$rn, AArch64Base_ADDXSSXSW_imm3AsInt64:$imm3)>;
 
 
@@ -52313,7 +52313,7 @@ def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSSXSX_imm3AsInt64:$imm3)),
         (ADDXSSXSX S:$rm, S:$rn, AArch64Base_ADDXSSXSX_imm3AsInt64:$imm3)>;
 
 
-def : Pat<(add S:$rn, (sext S:$rm)),
+def : Pat<(add S:$rn, S:$rm),
         (ADDXSSXTW S:$rm, S:$rn)>;
 
 
@@ -52337,7 +52337,7 @@ def : Pat<(add S:$rn, S:$rm),
         (ADDXSUXTX S:$rm, S:$rn)>;
 
 
-def : Pat<(add S:$rn, (shl (sext S:$rm), AArch64Base_ADDXSXSW_imm3AsInt64:$imm3)),
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSXSW_imm3AsInt64:$imm3)),
         (ADDXSXSW S:$rm, S:$rn, AArch64Base_ADDXSXSW_imm3AsInt64:$imm3)>;
 
 
@@ -52345,7 +52345,7 @@ def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSXSX_imm3AsInt64:$imm3)),
         (ADDXSXSX S:$rm, S:$rn, AArch64Base_ADDXSXSX_imm3AsInt64:$imm3)>;
 
 
-def : Pat<(add S:$rn, (sext S:$rm)),
+def : Pat<(add S:$rn, S:$rm),
         (ADDXSXTW S:$rm, S:$rn)>;
 
 
@@ -52979,7 +52979,7 @@ def : Pat<(sub S:$rn, (srl S:$rm, AArch64Base_SUBWSLSR_imm6AsInt64:$imm6)),
         (SUBWSLSR S:$rn, S:$rm, AArch64Base_SUBWSLSR_imm6AsInt64:$imm6)>;
 
 
-def : Pat<(sub S:$rn, (shl (sext S:$rm), AArch64Base_SUBWSSXSW_imm3AsInt64:$imm3)),
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSSXSW_imm3AsInt64:$imm3)),
         (SUBWSSXSW S:$rn, S:$rm, AArch64Base_SUBWSSXSW_imm3AsInt64:$imm3)>;
 
 
@@ -52987,7 +52987,7 @@ def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSSXSX_imm3AsInt64:$imm3)),
         (SUBWSSXSX S:$rn, S:$rm, AArch64Base_SUBWSSXSX_imm3AsInt64:$imm3)>;
 
 
-def : Pat<(sub S:$rn, (sext S:$rm)),
+def : Pat<(sub S:$rn, S:$rm),
         (SUBWSSXTW S:$rn, S:$rm)>;
 
 
@@ -53011,7 +53011,7 @@ def : Pat<(sub S:$rn, S:$rm),
         (SUBWSUXTX S:$rn, S:$rm)>;
 
 
-def : Pat<(sub S:$rn, (shl (sext S:$rm), AArch64Base_SUBWSXSW_imm3AsInt64:$imm3)),
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSXSW_imm3AsInt64:$imm3)),
         (SUBWSXSW S:$rn, S:$rm, AArch64Base_SUBWSXSW_imm3AsInt64:$imm3)>;
 
 
@@ -53019,7 +53019,7 @@ def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSXSX_imm3AsInt64:$imm3)),
         (SUBWSXSX S:$rn, S:$rm, AArch64Base_SUBWSXSX_imm3AsInt64:$imm3)>;
 
 
-def : Pat<(sub S:$rn, (sext S:$rm)),
+def : Pat<(sub S:$rn, S:$rm),
         (SUBWSXTW S:$rn, S:$rm)>;
 
 
@@ -53091,7 +53091,7 @@ def : Pat<(sub S:$rn, (srl S:$rm, AArch64Base_SUBXSLSR_imm6AsInt64:$imm6)),
         (SUBXSLSR S:$rm, S:$rn, AArch64Base_SUBXSLSR_imm6AsInt64:$imm6)>;
 
 
-def : Pat<(sub S:$rn, (shl (sext S:$rm), AArch64Base_SUBXSSXSW_imm3AsInt64:$imm3)),
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSSXSW_imm3AsInt64:$imm3)),
         (SUBXSSXSW S:$rm, S:$rn, AArch64Base_SUBXSSXSW_imm3AsInt64:$imm3)>;
 
 
@@ -53099,7 +53099,7 @@ def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSSXSX_imm3AsInt64:$imm3)),
         (SUBXSSXSX S:$rm, S:$rn, AArch64Base_SUBXSSXSX_imm3AsInt64:$imm3)>;
 
 
-def : Pat<(sub S:$rn, (sext S:$rm)),
+def : Pat<(sub S:$rn, S:$rm),
         (SUBXSSXTW S:$rm, S:$rn)>;
 
 
@@ -53123,7 +53123,7 @@ def : Pat<(sub S:$rn, S:$rm),
         (SUBXSUXTX S:$rm, S:$rn)>;
 
 
-def : Pat<(sub S:$rn, (shl (sext S:$rm), AArch64Base_SUBXSXSW_imm3AsInt64:$imm3)),
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSXSW_imm3AsInt64:$imm3)),
         (SUBXSXSW S:$rm, S:$rn, AArch64Base_SUBXSXSW_imm3AsInt64:$imm3)>;
 
 
@@ -53131,7 +53131,7 @@ def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSXSX_imm3AsInt64:$imm3)),
         (SUBXSXSX S:$rm, S:$rn, AArch64Base_SUBXSXSX_imm3AsInt64:$imm3)>;
 
 
-def : Pat<(sub S:$rn, (sext S:$rm)),
+def : Pat<(sub S:$rn, S:$rm),
         (SUBXSXTW S:$rm, S:$rn)>;
 
 

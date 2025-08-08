@@ -574,24 +574,6 @@ public class Graph {
   }
 
   /**
-   * When {@link #copy()} then all the nodes remain activated. This can lead to crashes
-   * when calling e.g {@link Node#replaceAndDelete(Node)}. This method deactivates all the ids.
-   * This method is idempotent.
-   *
-   * @deprecated Because it leaves the given graph in an inconsistent state.
-   *     If you want to copy a sub-graph to another graph, you want to use a {@link Node#copy()}
-   *     version of the node that should be added.
-   *     So transfering a node from one graph to another is done by copying the node.
-   *     E.g. take a look at {@link vadl.viam.passes.functionInliner.FunctionInlinerPass#execute}
-   */
-  @Deprecated
-  public void deinitializeNodes() {
-    this.nodes.stream().filter(Objects::nonNull).filter(node -> node.id() != null)
-        .map(node -> node.id)
-        .forEach(Node.Id::deactivate);
-  }
-
-  /**
    * Gets the root {@link Node} from the graph which are dataflow nodes.
    * This is useful when we know that the graph has no control nodes, and we would like to apply
    * a recursive visitor.
