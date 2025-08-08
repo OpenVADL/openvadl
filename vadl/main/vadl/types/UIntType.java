@@ -33,6 +33,7 @@ public class UIntType extends BitsType {
   /**
    * Returns a signed integer with the same {@code bitWidth}.
    */
+  @Override
   public SIntType makeSigned() {
     return new SIntType(bitWidth);
   }
