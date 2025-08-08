@@ -46,14 +46,24 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
+        let Namespace = "processornamevalue" in {
+        // SubRegIndexes for GPR registers
+        def sub_32   : SubRegIndex<32>;
+        def sub_32_hi : SubRegIndex<32, 32>;
+        def full_64    : SubRegIndex<64>;
+        }
+        
+        
+        
+        
         def PC : Register<"PC">
         {
         let Namespace = "processorNameValue";
         let AsmName = "PC";
         let AltNames = [   ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 0 ];
         list<int> CostPerUse = [0];
@@ -62,7 +72,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         
         let HWEncoding = 0;
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X0 : Register<"X0">
         {
@@ -70,8 +80,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "zero";
         let AltNames = [ "zero"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 1 ];
         list<int> CostPerUse = [0];
@@ -80,7 +90,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 0;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X1 : Register<"X1">
         {
@@ -88,8 +98,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "ra";
         let AltNames = [ "ra"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 2 ];
         list<int> CostPerUse = [0];
@@ -98,7 +108,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 1;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X2 : Register<"X2">
         {
@@ -106,8 +116,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "sp";
         let AltNames = [ "sp"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 3 ];
         list<int> CostPerUse = [0];
@@ -116,7 +126,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 2;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X3 : Register<"X3">
         {
@@ -124,8 +134,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "gp";
         let AltNames = [ "gp"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 4 ];
         list<int> CostPerUse = [0];
@@ -134,7 +144,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 3;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X4 : Register<"X4">
         {
@@ -142,8 +152,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "tp";
         let AltNames = [ "tp"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 5 ];
         list<int> CostPerUse = [0];
@@ -152,7 +162,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 4;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X5 : Register<"X5">
         {
@@ -160,8 +170,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "t0";
         let AltNames = [ "t0"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 6 ];
         list<int> CostPerUse = [0];
@@ -170,7 +180,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 5;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X6 : Register<"X6">
         {
@@ -178,8 +188,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "t1";
         let AltNames = [ "t1"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 7 ];
         list<int> CostPerUse = [0];
@@ -188,7 +198,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 6;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X7 : Register<"X7">
         {
@@ -196,8 +206,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "t2";
         let AltNames = [ "t2"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 8 ];
         list<int> CostPerUse = [0];
@@ -206,7 +216,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 7;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X8 : Register<"X8">
         {
@@ -214,8 +224,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "fp";
         let AltNames = [ "fp", "s0"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 9 ];
         list<int> CostPerUse = [0];
@@ -224,7 +234,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 8;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X9 : Register<"X9">
         {
@@ -232,8 +242,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "s1";
         let AltNames = [ "s1"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 10 ];
         list<int> CostPerUse = [0];
@@ -242,7 +252,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 9;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X10 : Register<"X10">
         {
@@ -250,8 +260,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "a0";
         let AltNames = [ "a0"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 11 ];
         list<int> CostPerUse = [0];
@@ -260,7 +270,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 10;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X11 : Register<"X11">
         {
@@ -268,8 +278,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "a1";
         let AltNames = [ "a1"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 12 ];
         list<int> CostPerUse = [0];
@@ -278,7 +288,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 11;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X12 : Register<"X12">
         {
@@ -286,8 +296,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "a2";
         let AltNames = [ "a2"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 13 ];
         list<int> CostPerUse = [0];
@@ -296,7 +306,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 12;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X13 : Register<"X13">
         {
@@ -304,8 +314,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "a3";
         let AltNames = [ "a3"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 14 ];
         list<int> CostPerUse = [0];
@@ -314,7 +324,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 13;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X14 : Register<"X14">
         {
@@ -322,8 +332,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "a4";
         let AltNames = [ "a4"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 15 ];
         list<int> CostPerUse = [0];
@@ -332,7 +342,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 14;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X15 : Register<"X15">
         {
@@ -340,8 +350,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "a5";
         let AltNames = [ "a5"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 16 ];
         list<int> CostPerUse = [0];
@@ -350,7 +360,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 15;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X16 : Register<"X16">
         {
@@ -358,8 +368,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "a6";
         let AltNames = [ "a6"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 17 ];
         list<int> CostPerUse = [0];
@@ -368,7 +378,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 16;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X17 : Register<"X17">
         {
@@ -376,8 +386,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "a7";
         let AltNames = [ "a7"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 18 ];
         list<int> CostPerUse = [0];
@@ -386,7 +396,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 17;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X18 : Register<"X18">
         {
@@ -394,8 +404,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "s2";
         let AltNames = [ "s2"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 19 ];
         list<int> CostPerUse = [0];
@@ -404,7 +414,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 18;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X19 : Register<"X19">
         {
@@ -412,8 +422,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "s3";
         let AltNames = [ "s3"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 20 ];
         list<int> CostPerUse = [0];
@@ -422,7 +432,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 19;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X20 : Register<"X20">
         {
@@ -430,8 +440,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "s4";
         let AltNames = [ "s4"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 21 ];
         list<int> CostPerUse = [0];
@@ -440,7 +450,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 20;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X21 : Register<"X21">
         {
@@ -448,8 +458,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "s5";
         let AltNames = [ "s5"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 22 ];
         list<int> CostPerUse = [0];
@@ -458,7 +468,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 21;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X22 : Register<"X22">
         {
@@ -466,8 +476,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "s6";
         let AltNames = [ "s6"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 23 ];
         list<int> CostPerUse = [0];
@@ -476,7 +486,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 22;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X23 : Register<"X23">
         {
@@ -484,8 +494,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "s7";
         let AltNames = [ "s7"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 24 ];
         list<int> CostPerUse = [0];
@@ -494,7 +504,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 23;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X24 : Register<"X24">
         {
@@ -502,8 +512,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "s8";
         let AltNames = [ "s8"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 25 ];
         list<int> CostPerUse = [0];
@@ -512,7 +522,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 24;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X25 : Register<"X25">
         {
@@ -520,8 +530,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "s9";
         let AltNames = [ "s9"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 26 ];
         list<int> CostPerUse = [0];
@@ -530,7 +540,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 25;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X26 : Register<"X26">
         {
@@ -538,8 +548,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "s10";
         let AltNames = [ "s10"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 27 ];
         list<int> CostPerUse = [0];
@@ -548,7 +558,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 26;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X27 : Register<"X27">
         {
@@ -556,8 +566,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "s11";
         let AltNames = [ "s11"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 28 ];
         list<int> CostPerUse = [0];
@@ -566,7 +576,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 27;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X28 : Register<"X28">
         {
@@ -574,8 +584,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "t3";
         let AltNames = [ "t3"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 29 ];
         list<int> CostPerUse = [0];
@@ -584,7 +594,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 28;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X29 : Register<"X29">
         {
@@ -592,8 +602,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "t4";
         let AltNames = [ "t4"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 30 ];
         list<int> CostPerUse = [0];
@@ -602,7 +612,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 29;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X30 : Register<"X30">
         {
@@ -610,8 +620,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "t5";
         let AltNames = [ "t5"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 31 ];
         list<int> CostPerUse = [0];
@@ -620,7 +630,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 30;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
         def X31 : Register<"X31">
         {
@@ -628,8 +638,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let AsmName = "t6";
         let AltNames = [ "t6"  ];
         let Aliases = [ ];
-        let SubRegs = [ ];
-        let SubRegIndices = [ ];
+        let SubRegs = [  ];
+        let SubRegIndices = [  ];
         let RegAltNameIndices = [];
         let DwarfNumbers = [ 32 ];
         list<int> CostPerUse = [0];
@@ -638,10 +648,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         let HWEncoding{4-0} = 31;
         
         
-        let isArtificial = 0;
+        let isArtificial = false;
         }
-        
-        
         
         
         defvar processornamevalue = DefaultMode;

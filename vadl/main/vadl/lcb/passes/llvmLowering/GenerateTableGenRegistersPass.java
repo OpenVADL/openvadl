@@ -23,7 +23,6 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.annotations.HalfWidthOfAnnotation;
 import vadl.gcb.passes.GenerateCompilerRegistersPass;
 import vadl.gcb.valuetypes.CompilerRegister;
 import vadl.gcb.valuetypes.CompilerRegisterClass;
@@ -90,6 +89,8 @@ public class GenerateTableGenRegistersPass extends Pass {
       var register = new TableGenRegister(
           configuration.targetName(),
           compilerRegister,
+          compilerRegister.subRegs(),
+          compilerRegister.subRegIndices(),
           compilerRegister.hwEncodingValue(),
           Optional.empty(),
           compilerRegister.isArtificial()
@@ -113,6 +114,8 @@ public class GenerateTableGenRegistersPass extends Pass {
         var register = new TableGenRegister(
             configuration.targetName(),
             compilerRegister,
+            compilerRegister.subRegs(),
+            compilerRegister.subRegIndices(),
             Objects.requireNonNull(compilerRegisterClass.registerFile().addressType()).bitWidth()
                 - 1,
             Optional.of(compilerRegister.hwEncodingValue()),
@@ -140,6 +143,8 @@ public class GenerateTableGenRegistersPass extends Pass {
         var register = new TableGenRegister(
             configuration.targetName(),
             compilerRegister,
+            compilerRegister.subRegs(),
+            compilerRegister.subRegIndices(),
             Objects.requireNonNull(compilerRegisterClass.registerFile().addressType()).bitWidth()
                 - 1,
             Optional.of(compilerRegister.hwEncodingValue()),
@@ -150,12 +155,6 @@ public class GenerateTableGenRegistersPass extends Pass {
       }
 
       var type = ValueType.from(compilerRegisterClass.registerFile().resultType()).get();
-
-      if (compilerRegisterClass.registerFile() instanceof Definition def
-          && def.hasAnnotation(HalfWidthOfAnnotation.class)) {
-        var annotation = Objects.requireNonNull(def.annotation(HalfWidthOfAnnotation.class));
-        type = ValueType.from(Type.bits(1 + annotation.hi() - annotation.lo())).get();
-      }
 
       aliasRegisterClasses.add(
           new TableGenRegisterClass(

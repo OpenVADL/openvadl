@@ -32,6 +32,7 @@ import vadl.gcb.valuetypes.IndexedCompilerRegister;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.types.BitsType;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
 import vadl.viam.ArtificialResource;
@@ -82,11 +83,42 @@ public class GenerateCompilerRegistersPass extends Pass {
         viam.artificialResources().filter(ArtificialResource::isRegisterFile).toList(), abi,
         registerClasses.right());
 
+    createSubRegisters(aliasRegisterFiles.left(), registerClasses.left());
+
     return new Output(generalRegisters,
         aliasRegisters.left(),
         registerClasses.left(),
         aliasRegisterFiles.left());
   }
+
+  private void createSubRegisters(List<CompilerRegisterClass> aliasRegisterClasses,
+                                  List<CompilerRegisterClass> registerClasses) {
+
+    for (var registerClass : registerClasses) {
+      for (var aliasRegisterClass : aliasRegisterClasses) {
+        var artificialResource = (ArtificialResource) aliasRegisterClass.registerFile();
+        var referencesResource = (RegisterTensor) artificialResource.innerResourceRef();
+
+        // If yes then the alias points to real register file.
+        if (registerClass.registerFile().equals(referencesResource)) {
+          var hasEqualType = artificialResource.type().asDataType()
+              .equals(referencesResource.resultType().asDataType());
+
+          for (int i = 0; i < registerClass.registers().size(); i++) {
+            var aliasRegister = aliasRegisterClass.registers().get(i);
+            var realRegister = registerClass.registers().get(i);
+
+            if (hasEqualType && artificialResource.type().equals(BitsType.bits(64))) {
+              realRegister.addSubReg(aliasRegister, CompilerRegister.SubRegIndex.FULL_64);
+            } else {
+              realRegister.addSubReg(aliasRegister, CompilerRegister.SubRegIndex.SUB_32);
+            }
+          }
+        }
+      }
+    }
+  }
+
 
   private List<CompilerRegister> generalRegisters(List<RegisterTensor> registers) {
     var compilerRegisters = new ArrayList<CompilerRegister>();
@@ -152,7 +184,7 @@ public class GenerateCompilerRegistersPass extends Pass {
       if (artificialResource.innerResourceRef() instanceof RegisterTensor registerTensor
           && registerTensor.isRegisterFile()) {
         var registers =
-            IndexedCompilerRegister.fromRegisterFile(artificialResource, abi, dwarfOffset, true);
+            IndexedCompilerRegister.fromRegisterFile(artificialResource, abi, dwarfOffset, false);
         dwarfOffset += registers.size();
 
         var alignment = ensureNonNull(abi.registerFileAlignment().get(registerTensor),
