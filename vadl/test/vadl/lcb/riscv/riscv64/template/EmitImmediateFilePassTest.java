@@ -161,41 +161,11 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static int64_t RV3264Base_XORI_immS_decode(uint16_t imm) {
         return VADL_sextract(imm, 12);
         }
-        static int64_t RV3264I_EBREAK_immS_decode(uint16_t imm) {
-        return VADL_sextract(imm, 12);
-        }
-        static int64_t RV3264I_ECALL_immS_decode(uint16_t imm) {
-        return VADL_sextract(imm, 12);
-        }
-        static uint8_t RV3264Base_ADDW_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264Base_ADD_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264Base_AND_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264Base_OR_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
         static uint8_t RV3264Base_SLLIW_shamt_decode(uint8_t rs2) {
         return rs2;
         }
         static uint8_t RV3264Base_SLLI_shamt_decode(uint8_t sft) {
         return sft;
-        }
-        static uint8_t RV3264Base_SLLW_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264Base_SLL_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264Base_SLTU_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264Base_SLT_shamt_decode(uint8_t rs2) {
-        return rs2;
         }
         static uint8_t RV3264Base_SRAIW_shamt_decode(uint8_t rs2) {
         return rs2;
@@ -203,71 +173,11 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static uint8_t RV3264Base_SRAI_shamt_decode(uint8_t sft) {
         return sft;
         }
-        static uint8_t RV3264Base_SRAW_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264Base_SRA_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
         static uint8_t RV3264Base_SRLIW_shamt_decode(uint8_t rs2) {
         return rs2;
         }
         static uint8_t RV3264Base_SRLI_shamt_decode(uint8_t sft) {
         return sft;
-        }
-        static uint8_t RV3264Base_SRLW_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264Base_SRL_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264Base_SUBW_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264Base_SUB_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264Base_XOR_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264M_DIVUW_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264M_DIVU_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264M_DIVW_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264M_DIV_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264M_MULHSU_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264M_MULHU_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264M_MULH_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264M_MULW_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264M_MUL_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264M_REMUW_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264M_REMU_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264M_REMW_shamt_decode(uint8_t rs2) {
-        return rs2;
-        }
-        static uint8_t RV3264M_REM_shamt_decode(uint8_t rs2) {
-        return rs2;
         }
         
         
@@ -384,17 +294,8 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static bool RV3264Base_ADDI_immS_predicate(uint64_t immS) {
         return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
-        static bool RV3264Base_ADDW_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_ADD_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
         static bool RV3264Base_ANDI_immS_predicate(uint64_t immS) {
         return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_AND_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
         static bool RV3264Base_AUIPC_immUp_predicate(uint64_t immUp) {
         return (VADL_and(VADL_equ(VADL_and(immUp, 64, ((int64_t) 0x800 ), 64), 64, ((uint64_t) 0x0 ), 64), 1, VADL_and(VADL_sleq(immUp, 64, ((int64_t) 0x7fffffff ), 64), 1, VADL_sgeq(immUp, 64, ((int64_t) 0xffffffff80000000 ), 64), 1), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
@@ -450,9 +351,6 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static bool RV3264Base_ORI_immS_predicate(uint64_t immS) {
         return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
-        static bool RV3264Base_OR_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
         static bool RV3264Base_SB_immS_predicate(uint64_t immS) {
         return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
@@ -468,23 +366,11 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static bool RV3264Base_SLLI_shamt_predicate(uint64_t shamt) {
         return (VADL_and(VADL_sgeq(shamt, 6, ((int64_t) 0xffffffffffffffe0 ), 64), 1, VADL_sleq(shamt, 6, ((int64_t) 0x1f ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
-        static bool RV3264Base_SLLW_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SLL_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
         static bool RV3264Base_SLTIU_immS_predicate(uint64_t immS) {
         return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
         static bool RV3264Base_SLTI_immS_predicate(uint64_t immS) {
         return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SLTU_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SLT_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
         static bool RV3264Base_SRAIW_shamt_predicate(uint64_t shamt) {
         return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
@@ -492,83 +378,17 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static bool RV3264Base_SRAI_shamt_predicate(uint64_t shamt) {
         return (VADL_and(VADL_sgeq(shamt, 6, ((int64_t) 0xffffffffffffffe0 ), 64), 1, VADL_sleq(shamt, 6, ((int64_t) 0x1f ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
-        static bool RV3264Base_SRAW_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SRA_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
         static bool RV3264Base_SRLIW_shamt_predicate(uint64_t shamt) {
         return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
         static bool RV3264Base_SRLI_shamt_predicate(uint64_t shamt) {
         return (VADL_and(VADL_sgeq(shamt, 6, ((int64_t) 0xffffffffffffffe0 ), 64), 1, VADL_sleq(shamt, 6, ((int64_t) 0x1f ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
-        static bool RV3264Base_SRLW_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SRL_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SUBW_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SUB_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
         static bool RV3264Base_SW_immS_predicate(uint64_t immS) {
         return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
         static bool RV3264Base_XORI_immS_predicate(uint64_t immS) {
         return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_XOR_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264I_EBREAK_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264I_ECALL_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264M_DIVUW_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264M_DIVU_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264M_DIVW_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264M_DIV_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264M_MULHSU_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264M_MULHU_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264M_MULH_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264M_MULW_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264M_MUL_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264M_REMUW_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264M_REMU_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264M_REMW_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264M_REM_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
         
         
@@ -583,10 +403,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         
         , IK_RV3264Base_ADDIW_immS_decode
         , IK_RV3264Base_ADDI_immS_decode
-        , IK_RV3264Base_ADDW_shamt_decode
-        , IK_RV3264Base_ADD_shamt_decode
         , IK_RV3264Base_ANDI_immS_decode
-        , IK_RV3264Base_AND_shamt_decode
         , IK_RV3264Base_AUIPC_immUp_decode
         , IK_RV3264Base_BEQ_immS_decode
         , IK_RV3264Base_BGEU_immS_decode
@@ -605,46 +422,19 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         , IK_RV3264Base_LWU_immS_decode
         , IK_RV3264Base_LW_immS_decode
         , IK_RV3264Base_ORI_immS_decode
-        , IK_RV3264Base_OR_shamt_decode
         , IK_RV3264Base_SB_immS_decode
         , IK_RV3264Base_SD_immS_decode
         , IK_RV3264Base_SH_immS_decode
         , IK_RV3264Base_SLLIW_shamt_decode
         , IK_RV3264Base_SLLI_shamt_decode
-        , IK_RV3264Base_SLLW_shamt_decode
-        , IK_RV3264Base_SLL_shamt_decode
         , IK_RV3264Base_SLTIU_immS_decode
         , IK_RV3264Base_SLTI_immS_decode
-        , IK_RV3264Base_SLTU_shamt_decode
-        , IK_RV3264Base_SLT_shamt_decode
         , IK_RV3264Base_SRAIW_shamt_decode
         , IK_RV3264Base_SRAI_shamt_decode
-        , IK_RV3264Base_SRAW_shamt_decode
-        , IK_RV3264Base_SRA_shamt_decode
         , IK_RV3264Base_SRLIW_shamt_decode
         , IK_RV3264Base_SRLI_shamt_decode
-        , IK_RV3264Base_SRLW_shamt_decode
-        , IK_RV3264Base_SRL_shamt_decode
-        , IK_RV3264Base_SUBW_shamt_decode
-        , IK_RV3264Base_SUB_shamt_decode
         , IK_RV3264Base_SW_immS_decode
         , IK_RV3264Base_XORI_immS_decode
-        , IK_RV3264Base_XOR_shamt_decode
-        , IK_RV3264I_EBREAK_immS_decode
-        , IK_RV3264I_ECALL_immS_decode
-        , IK_RV3264M_DIVUW_shamt_decode
-        , IK_RV3264M_DIVU_shamt_decode
-        , IK_RV3264M_DIVW_shamt_decode
-        , IK_RV3264M_DIV_shamt_decode
-        , IK_RV3264M_MULHSU_shamt_decode
-        , IK_RV3264M_MULHU_shamt_decode
-        , IK_RV3264M_MULH_shamt_decode
-        , IK_RV3264M_MULW_shamt_decode
-        , IK_RV3264M_MUL_shamt_decode
-        , IK_RV3264M_REMUW_shamt_decode
-        , IK_RV3264M_REMU_shamt_decode
-        , IK_RV3264M_REMW_shamt_decode
-        , IK_RV3264M_REM_shamt_decode
         
         };
         };
