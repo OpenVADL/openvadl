@@ -20,6 +20,7 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -65,38 +66,42 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
     var immediates = new ArrayList<TableGenImmediateRecord>();
 
     // We do it first for machine instructions.
-    snapshots.forEach(
-        (instruction, graph) -> {
-          var fieldAccesses = graph.getNodes(FieldAccessRefNode.class).toList();
+    snapshots.entrySet().stream().sorted(
+            Comparator.comparing(o -> o.getKey().identifier.simpleName()))
+        .forEach(
+            (entry) -> {
+              var instruction = entry.getKey();
+              var graph = entry.getValue();
+              var fieldAccesses = graph.getNodes(FieldAccessRefNode.class).toList();
 
-          fieldAccesses.forEach(fieldAccessRefNode -> {
-            var fieldAccess = fieldAccessRefNode.fieldAccess();
-            // When a field access is changed to a field access function it is
-            // added the instruction format's field accesses. Therefore,
-            // we will have a lot field accesses which are not part of the instruction's behavior.
-            if (fieldAccess
-                instanceof NormalizeFieldsToFieldAccessFunctionsPass.GeneratedFieldAccess
-                genFieldAccess) {
-              if (!genFieldAccess.instruction().equals(instruction)) {
-                // If we have generated a field access for an instruction then only generate
-                // an immediate record if it's the same instruction.
-                return;
-              }
-            }
+              fieldAccesses.forEach(fieldAccessRefNode -> {
+                var fieldAccess = fieldAccessRefNode.fieldAccess();
+                // When a field access is changed to a field access function it is
+                // added the instruction format's field accesses. Therefore,
+                // we will have a lot field accesses which are not part of the instruction's behavior.
+                if (fieldAccess
+                    instanceof NormalizeFieldsToFieldAccessFunctionsPass.GeneratedFieldAccess
+                    genFieldAccess) {
+                  if (!genFieldAccess.instruction().equals(instruction)) {
+                    // If we have generated a field access for an instruction then only generate
+                    // an immediate record if it's the same instruction.
+                    return;
+                  }
+                }
 
-            var type = (BitsType) fieldAccessRefNode.type().asDataType();
-            var upcastedType = CppTypeMap.upcast(type.makeSigned());
-            var upcastedValueType =
-                ensurePresent(ValueType.from(upcastedType), () -> Diagnostic.error(
-                    "Compiler generator was not able to change the type to the architecture's "
-                        + "bit width: " + upcastedType.toString(),
-                    fieldAccess.location()));
-            immediates.add(new TableGenImmediateRecord(instruction,
-                fieldAccess,
-                upcastedValueType));
+                var type = (BitsType) fieldAccessRefNode.type().asDataType();
+                var upcastedType = CppTypeMap.upcast(type.makeSigned());
+                var upcastedValueType =
+                    ensurePresent(ValueType.from(upcastedType), () -> Diagnostic.error(
+                        "Compiler generator was not able to change the type to the architecture's "
+                            + "bit width: " + upcastedType.toString(),
+                        fieldAccess.location()));
+                immediates.add(new TableGenImmediateRecord(instruction,
+                    fieldAccess,
+                    upcastedValueType));
 
-          });
-        });
+              });
+            });
 
     // But, we also have to do it for pseudo instructions.
     // Because, we generate immediates for every instruction (and not format anymore).
