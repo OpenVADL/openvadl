@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.valuetypes.ValueType;
@@ -412,13 +413,15 @@ public class LcbNodeReplacementHandler {
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(FieldAccessRefNode fieldAccessRefNode) {
     var originalType = fieldAccessRefNode.fieldAccess().accessFunction().returnType();
+    var llvmType = ValueType.from(CppTypeMap.upcast(originalType)).orElseThrow(() ->
+        Diagnostic.error("Cannot construct LLVM type", fieldAccessRefNode.location()).build());
 
     fieldAccessRefNode.replaceAndDelete(
         new LlvmFieldAccessRefNode(
             printableInstruction,
             fieldAccessRefNode.fieldAccess(),
             originalType,
-            architectureType,
+            llvmType,
             LlvmFieldAccessRefNode.Usage.Immediate));
   }
 

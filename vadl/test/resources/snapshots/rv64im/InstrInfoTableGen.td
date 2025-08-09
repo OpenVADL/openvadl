@@ -184,54 +184,6 @@ def SelectCC_X: Instruction {
 
 
 
-class RV3264Base_BGE_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_BGE_wrapper";
-  let DecoderMethod = "RV3264Base_BGE_immS_decode_wrapper";
-}
-
-def RV3264Base_BGE_immSAsInt64
-    : RV3264Base_BGE_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_BGE_immS_predicate(Imm); }]>;
-
-def RV3264Base_BGE_immSAsLabel : RV3264Base_BGE_immS<OtherVT>;
-
-class RV3264Base_JAL_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_JAL_wrapper";
-  let DecoderMethod = "RV3264Base_JAL_immS_decode_wrapper";
-}
-
-def RV3264Base_JAL_immSAsInt64
-    : RV3264Base_JAL_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_JAL_immS_predicate(Imm); }]>;
-
-def RV3264Base_JAL_immSAsLabel : RV3264Base_JAL_immS<OtherVT>;
-
-class RV3264Base_BEQ_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_BEQ_wrapper";
-  let DecoderMethod = "RV3264Base_BEQ_immS_decode_wrapper";
-}
-
-def RV3264Base_BEQ_immSAsInt64
-    : RV3264Base_BEQ_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_BEQ_immS_predicate(Imm); }]>;
-
-def RV3264Base_BEQ_immSAsLabel : RV3264Base_BEQ_immS<OtherVT>;
-
-class RV3264Base_SRAI_shamt<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_SRAI_wrapper";
-  let DecoderMethod = "RV3264Base_SRAI_shamt_decode_wrapper";
-}
-
-def RV3264Base_SRAI_shamtAsInt8
-    : RV3264Base_SRAI_shamt<i8>
-    , ImmLeaf<i8, [{ return RV3264Base_SRAI_shamt_predicate(Imm); }]>;
-
-def RV3264Base_SRAI_shamtAsLabel : RV3264Base_SRAI_shamt<OtherVT>;
-
 class RV3264Base_ADDI_immS<ValueType ty> : Operand<ty>
 {
   let EncoderMethod = "RV3264Base_ADDI_wrapper";
@@ -243,30 +195,6 @@ def RV3264Base_ADDI_immSAsInt64
     , ImmLeaf<i64, [{ return RV3264Base_ADDI_immS_predicate(Imm); }]>;
 
 def RV3264Base_ADDI_immSAsLabel : RV3264Base_ADDI_immS<OtherVT>;
-
-class RV3264Base_ANDI_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_ANDI_wrapper";
-  let DecoderMethod = "RV3264Base_ANDI_immS_decode_wrapper";
-}
-
-def RV3264Base_ANDI_immSAsInt64
-    : RV3264Base_ANDI_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_ANDI_immS_predicate(Imm); }]>;
-
-def RV3264Base_ANDI_immSAsLabel : RV3264Base_ANDI_immS<OtherVT>;
-
-class RV3264Base_JALR_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_JALR_wrapper";
-  let DecoderMethod = "RV3264Base_JALR_immS_decode_wrapper";
-}
-
-def RV3264Base_JALR_immSAsInt64
-    : RV3264Base_JALR_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_JALR_immS_predicate(Imm); }]>;
-
-def RV3264Base_JALR_immSAsLabel : RV3264Base_JALR_immS<OtherVT>;
 
 class RV3264Base_ADDIW_immS<ValueType ty> : Operand<ty>
 {
@@ -280,233 +208,17 @@ def RV3264Base_ADDIW_immSAsInt64
 
 def RV3264Base_ADDIW_immSAsLabel : RV3264Base_ADDIW_immS<OtherVT>;
 
-class RV3264Base_LW_immS<ValueType ty> : Operand<ty>
+class RV3264Base_ANDI_immS<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "RV3264Base_LW_wrapper";
-  let DecoderMethod = "RV3264Base_LW_immS_decode_wrapper";
+  let EncoderMethod = "RV3264Base_ANDI_wrapper";
+  let DecoderMethod = "RV3264Base_ANDI_immS_decode_wrapper";
 }
 
-def RV3264Base_LW_immSAsInt64
-    : RV3264Base_LW_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_LW_immS_predicate(Imm); }]>;
+def RV3264Base_ANDI_immSAsInt64
+    : RV3264Base_ANDI_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_ANDI_immS_predicate(Imm); }]>;
 
-def RV3264Base_LW_immSAsLabel : RV3264Base_LW_immS<OtherVT>;
-
-class RV3264Base_ORI_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_ORI_wrapper";
-  let DecoderMethod = "RV3264Base_ORI_immS_decode_wrapper";
-}
-
-def RV3264Base_ORI_immSAsInt64
-    : RV3264Base_ORI_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_ORI_immS_predicate(Imm); }]>;
-
-def RV3264Base_ORI_immSAsLabel : RV3264Base_ORI_immS<OtherVT>;
-
-class RV3264Base_LUI_immUp<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_LUI_wrapper";
-  let DecoderMethod = "RV3264Base_LUI_immUp_decode_wrapper";
-}
-
-def RV3264Base_LUI_immUpAsInt64
-    : RV3264Base_LUI_immUp<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_LUI_immUp_predicate(Imm); }]>;
-
-def RV3264Base_LUI_immUpAsLabel : RV3264Base_LUI_immUp<OtherVT>;
-
-class RV3264Base_LHU_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_LHU_wrapper";
-  let DecoderMethod = "RV3264Base_LHU_immS_decode_wrapper";
-}
-
-def RV3264Base_LHU_immSAsInt64
-    : RV3264Base_LHU_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_LHU_immS_predicate(Imm); }]>;
-
-def RV3264Base_LHU_immSAsLabel : RV3264Base_LHU_immS<OtherVT>;
-
-class RV3264Base_BGEU_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_BGEU_wrapper";
-  let DecoderMethod = "RV3264Base_BGEU_immS_decode_wrapper";
-}
-
-def RV3264Base_BGEU_immSAsInt64
-    : RV3264Base_BGEU_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_BGEU_immS_predicate(Imm); }]>;
-
-def RV3264Base_BGEU_immSAsLabel : RV3264Base_BGEU_immS<OtherVT>;
-
-class RV3264Base_LBU_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_LBU_wrapper";
-  let DecoderMethod = "RV3264Base_LBU_immS_decode_wrapper";
-}
-
-def RV3264Base_LBU_immSAsInt64
-    : RV3264Base_LBU_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_LBU_immS_predicate(Imm); }]>;
-
-def RV3264Base_LBU_immSAsLabel : RV3264Base_LBU_immS<OtherVT>;
-
-class RV3264Base_BLT_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_BLT_wrapper";
-  let DecoderMethod = "RV3264Base_BLT_immS_decode_wrapper";
-}
-
-def RV3264Base_BLT_immSAsInt64
-    : RV3264Base_BLT_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_BLT_immS_predicate(Imm); }]>;
-
-def RV3264Base_BLT_immSAsLabel : RV3264Base_BLT_immS<OtherVT>;
-
-class RV3264Base_SRLI_shamt<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_SRLI_wrapper";
-  let DecoderMethod = "RV3264Base_SRLI_shamt_decode_wrapper";
-}
-
-def RV3264Base_SRLI_shamtAsInt8
-    : RV3264Base_SRLI_shamt<i8>
-    , ImmLeaf<i8, [{ return RV3264Base_SRLI_shamt_predicate(Imm); }]>;
-
-def RV3264Base_SRLI_shamtAsLabel : RV3264Base_SRLI_shamt<OtherVT>;
-
-class RV3264Base_SLTIU_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_SLTIU_wrapper";
-  let DecoderMethod = "RV3264Base_SLTIU_immS_decode_wrapper";
-}
-
-def RV3264Base_SLTIU_immSAsInt64
-    : RV3264Base_SLTIU_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_SLTIU_immS_predicate(Imm); }]>;
-
-def RV3264Base_SLTIU_immSAsLabel : RV3264Base_SLTIU_immS<OtherVT>;
-
-class RV3264Base_LB_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_LB_wrapper";
-  let DecoderMethod = "RV3264Base_LB_immS_decode_wrapper";
-}
-
-def RV3264Base_LB_immSAsInt64
-    : RV3264Base_LB_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_LB_immS_predicate(Imm); }]>;
-
-def RV3264Base_LB_immSAsLabel : RV3264Base_LB_immS<OtherVT>;
-
-class RV3264Base_LH_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_LH_wrapper";
-  let DecoderMethod = "RV3264Base_LH_immS_decode_wrapper";
-}
-
-def RV3264Base_LH_immSAsInt64
-    : RV3264Base_LH_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_LH_immS_predicate(Imm); }]>;
-
-def RV3264Base_LH_immSAsLabel : RV3264Base_LH_immS<OtherVT>;
-
-class RV3264Base_SW_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_SW_wrapper";
-  let DecoderMethod = "RV3264Base_SW_immS_decode_wrapper";
-}
-
-def RV3264Base_SW_immSAsInt64
-    : RV3264Base_SW_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_SW_immS_predicate(Imm); }]>;
-
-def RV3264Base_SW_immSAsLabel : RV3264Base_SW_immS<OtherVT>;
-
-class RV3264Base_BLTU_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_BLTU_wrapper";
-  let DecoderMethod = "RV3264Base_BLTU_immS_decode_wrapper";
-}
-
-def RV3264Base_BLTU_immSAsInt64
-    : RV3264Base_BLTU_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_BLTU_immS_predicate(Imm); }]>;
-
-def RV3264Base_BLTU_immSAsLabel : RV3264Base_BLTU_immS<OtherVT>;
-
-class RV3264Base_LWU_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_LWU_wrapper";
-  let DecoderMethod = "RV3264Base_LWU_immS_decode_wrapper";
-}
-
-def RV3264Base_LWU_immSAsInt64
-    : RV3264Base_LWU_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_LWU_immS_predicate(Imm); }]>;
-
-def RV3264Base_LWU_immSAsLabel : RV3264Base_LWU_immS<OtherVT>;
-
-class RV3264Base_SD_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_SD_wrapper";
-  let DecoderMethod = "RV3264Base_SD_immS_decode_wrapper";
-}
-
-def RV3264Base_SD_immSAsInt64
-    : RV3264Base_SD_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_SD_immS_predicate(Imm); }]>;
-
-def RV3264Base_SD_immSAsLabel : RV3264Base_SD_immS<OtherVT>;
-
-class RV3264Base_SB_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_SB_wrapper";
-  let DecoderMethod = "RV3264Base_SB_immS_decode_wrapper";
-}
-
-def RV3264Base_SB_immSAsInt64
-    : RV3264Base_SB_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_SB_immS_predicate(Imm); }]>;
-
-def RV3264Base_SB_immSAsLabel : RV3264Base_SB_immS<OtherVT>;
-
-class RV3264Base_SLTI_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_SLTI_wrapper";
-  let DecoderMethod = "RV3264Base_SLTI_immS_decode_wrapper";
-}
-
-def RV3264Base_SLTI_immSAsInt64
-    : RV3264Base_SLTI_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_SLTI_immS_predicate(Imm); }]>;
-
-def RV3264Base_SLTI_immSAsLabel : RV3264Base_SLTI_immS<OtherVT>;
-
-class RV3264Base_SH_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_SH_wrapper";
-  let DecoderMethod = "RV3264Base_SH_immS_decode_wrapper";
-}
-
-def RV3264Base_SH_immSAsInt64
-    : RV3264Base_SH_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_SH_immS_predicate(Imm); }]>;
-
-def RV3264Base_SH_immSAsLabel : RV3264Base_SH_immS<OtherVT>;
-
-class RV3264Base_LD_immS<ValueType ty> : Operand<ty>
-{
-  let EncoderMethod = "RV3264Base_LD_wrapper";
-  let DecoderMethod = "RV3264Base_LD_immS_decode_wrapper";
-}
-
-def RV3264Base_LD_immSAsInt64
-    : RV3264Base_LD_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_LD_immS_predicate(Imm); }]>;
-
-def RV3264Base_LD_immSAsLabel : RV3264Base_LD_immS<OtherVT>;
+def RV3264Base_ANDI_immSAsLabel : RV3264Base_ANDI_immS<OtherVT>;
 
 class RV3264Base_AUIPC_immUp<ValueType ty> : Operand<ty>
 {
@@ -520,53 +232,65 @@ def RV3264Base_AUIPC_immUpAsInt64
 
 def RV3264Base_AUIPC_immUpAsLabel : RV3264Base_AUIPC_immUp<OtherVT>;
 
-class RV3264Base_XORI_immS<ValueType ty> : Operand<ty>
+class RV3264Base_BEQ_immS<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "RV3264Base_XORI_wrapper";
-  let DecoderMethod = "RV3264Base_XORI_immS_decode_wrapper";
+  let EncoderMethod = "RV3264Base_BEQ_wrapper";
+  let DecoderMethod = "RV3264Base_BEQ_immS_decode_wrapper";
 }
 
-def RV3264Base_XORI_immSAsInt64
-    : RV3264Base_XORI_immS<i64>
-    , ImmLeaf<i64, [{ return RV3264Base_XORI_immS_predicate(Imm); }]>;
+def RV3264Base_BEQ_immSAsInt64
+    : RV3264Base_BEQ_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_BEQ_immS_predicate(Imm); }]>;
 
-def RV3264Base_XORI_immSAsLabel : RV3264Base_XORI_immS<OtherVT>;
+def RV3264Base_BEQ_immSAsLabel : RV3264Base_BEQ_immS<OtherVT>;
 
-class RV3264Base_SLLIW_shamt<ValueType ty> : Operand<ty>
+class RV3264Base_BGE_immS<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "RV3264Base_SLLIW_wrapper";
-  let DecoderMethod = "RV3264Base_SLLIW_shamt_decode_wrapper";
+  let EncoderMethod = "RV3264Base_BGE_wrapper";
+  let DecoderMethod = "RV3264Base_BGE_immS_decode_wrapper";
 }
 
-def RV3264Base_SLLIW_shamtAsInt8
-    : RV3264Base_SLLIW_shamt<i8>
-    , ImmLeaf<i8, [{ return RV3264Base_SLLIW_shamt_predicate(Imm); }]>;
+def RV3264Base_BGE_immSAsInt64
+    : RV3264Base_BGE_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_BGE_immS_predicate(Imm); }]>;
 
-def RV3264Base_SLLIW_shamtAsLabel : RV3264Base_SLLIW_shamt<OtherVT>;
+def RV3264Base_BGE_immSAsLabel : RV3264Base_BGE_immS<OtherVT>;
 
-class RV3264Base_SRAIW_shamt<ValueType ty> : Operand<ty>
+class RV3264Base_BGEU_immS<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "RV3264Base_SRAIW_wrapper";
-  let DecoderMethod = "RV3264Base_SRAIW_shamt_decode_wrapper";
+  let EncoderMethod = "RV3264Base_BGEU_wrapper";
+  let DecoderMethod = "RV3264Base_BGEU_immS_decode_wrapper";
 }
 
-def RV3264Base_SRAIW_shamtAsInt8
-    : RV3264Base_SRAIW_shamt<i8>
-    , ImmLeaf<i8, [{ return RV3264Base_SRAIW_shamt_predicate(Imm); }]>;
+def RV3264Base_BGEU_immSAsInt64
+    : RV3264Base_BGEU_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_BGEU_immS_predicate(Imm); }]>;
 
-def RV3264Base_SRAIW_shamtAsLabel : RV3264Base_SRAIW_shamt<OtherVT>;
+def RV3264Base_BGEU_immSAsLabel : RV3264Base_BGEU_immS<OtherVT>;
 
-class RV3264Base_SLLI_shamt<ValueType ty> : Operand<ty>
+class RV3264Base_BLT_immS<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "RV3264Base_SLLI_wrapper";
-  let DecoderMethod = "RV3264Base_SLLI_shamt_decode_wrapper";
+  let EncoderMethod = "RV3264Base_BLT_wrapper";
+  let DecoderMethod = "RV3264Base_BLT_immS_decode_wrapper";
 }
 
-def RV3264Base_SLLI_shamtAsInt8
-    : RV3264Base_SLLI_shamt<i8>
-    , ImmLeaf<i8, [{ return RV3264Base_SLLI_shamt_predicate(Imm); }]>;
+def RV3264Base_BLT_immSAsInt64
+    : RV3264Base_BLT_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_BLT_immS_predicate(Imm); }]>;
 
-def RV3264Base_SLLI_shamtAsLabel : RV3264Base_SLLI_shamt<OtherVT>;
+def RV3264Base_BLT_immSAsLabel : RV3264Base_BLT_immS<OtherVT>;
+
+class RV3264Base_BLTU_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_BLTU_wrapper";
+  let DecoderMethod = "RV3264Base_BLTU_immS_decode_wrapper";
+}
+
+def RV3264Base_BLTU_immSAsInt64
+    : RV3264Base_BLTU_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_BLTU_immS_predicate(Imm); }]>;
+
+def RV3264Base_BLTU_immSAsLabel : RV3264Base_BLTU_immS<OtherVT>;
 
 class RV3264Base_BNE_immS<ValueType ty> : Operand<ty>
 {
@@ -580,6 +304,258 @@ def RV3264Base_BNE_immSAsInt64
 
 def RV3264Base_BNE_immSAsLabel : RV3264Base_BNE_immS<OtherVT>;
 
+class RV3264Base_JAL_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_JAL_wrapper";
+  let DecoderMethod = "RV3264Base_JAL_immS_decode_wrapper";
+}
+
+def RV3264Base_JAL_immSAsInt64
+    : RV3264Base_JAL_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_JAL_immS_predicate(Imm); }]>;
+
+def RV3264Base_JAL_immSAsLabel : RV3264Base_JAL_immS<OtherVT>;
+
+class RV3264Base_JALR_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_JALR_wrapper";
+  let DecoderMethod = "RV3264Base_JALR_immS_decode_wrapper";
+}
+
+def RV3264Base_JALR_immSAsInt64
+    : RV3264Base_JALR_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_JALR_immS_predicate(Imm); }]>;
+
+def RV3264Base_JALR_immSAsLabel : RV3264Base_JALR_immS<OtherVT>;
+
+class RV3264Base_LB_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_LB_wrapper";
+  let DecoderMethod = "RV3264Base_LB_immS_decode_wrapper";
+}
+
+def RV3264Base_LB_immSAsInt64
+    : RV3264Base_LB_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_LB_immS_predicate(Imm); }]>;
+
+def RV3264Base_LB_immSAsLabel : RV3264Base_LB_immS<OtherVT>;
+
+class RV3264Base_LBU_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_LBU_wrapper";
+  let DecoderMethod = "RV3264Base_LBU_immS_decode_wrapper";
+}
+
+def RV3264Base_LBU_immSAsInt64
+    : RV3264Base_LBU_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_LBU_immS_predicate(Imm); }]>;
+
+def RV3264Base_LBU_immSAsLabel : RV3264Base_LBU_immS<OtherVT>;
+
+class RV3264Base_LD_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_LD_wrapper";
+  let DecoderMethod = "RV3264Base_LD_immS_decode_wrapper";
+}
+
+def RV3264Base_LD_immSAsInt64
+    : RV3264Base_LD_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_LD_immS_predicate(Imm); }]>;
+
+def RV3264Base_LD_immSAsLabel : RV3264Base_LD_immS<OtherVT>;
+
+class RV3264Base_LH_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_LH_wrapper";
+  let DecoderMethod = "RV3264Base_LH_immS_decode_wrapper";
+}
+
+def RV3264Base_LH_immSAsInt64
+    : RV3264Base_LH_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_LH_immS_predicate(Imm); }]>;
+
+def RV3264Base_LH_immSAsLabel : RV3264Base_LH_immS<OtherVT>;
+
+class RV3264Base_LHU_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_LHU_wrapper";
+  let DecoderMethod = "RV3264Base_LHU_immS_decode_wrapper";
+}
+
+def RV3264Base_LHU_immSAsInt64
+    : RV3264Base_LHU_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_LHU_immS_predicate(Imm); }]>;
+
+def RV3264Base_LHU_immSAsLabel : RV3264Base_LHU_immS<OtherVT>;
+
+class RV3264Base_LUI_immUp<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_LUI_wrapper";
+  let DecoderMethod = "RV3264Base_LUI_immUp_decode_wrapper";
+}
+
+def RV3264Base_LUI_immUpAsInt64
+    : RV3264Base_LUI_immUp<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_LUI_immUp_predicate(Imm); }]>;
+
+def RV3264Base_LUI_immUpAsLabel : RV3264Base_LUI_immUp<OtherVT>;
+
+class RV3264Base_LW_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_LW_wrapper";
+  let DecoderMethod = "RV3264Base_LW_immS_decode_wrapper";
+}
+
+def RV3264Base_LW_immSAsInt64
+    : RV3264Base_LW_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_LW_immS_predicate(Imm); }]>;
+
+def RV3264Base_LW_immSAsLabel : RV3264Base_LW_immS<OtherVT>;
+
+class RV3264Base_LWU_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_LWU_wrapper";
+  let DecoderMethod = "RV3264Base_LWU_immS_decode_wrapper";
+}
+
+def RV3264Base_LWU_immSAsInt64
+    : RV3264Base_LWU_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_LWU_immS_predicate(Imm); }]>;
+
+def RV3264Base_LWU_immSAsLabel : RV3264Base_LWU_immS<OtherVT>;
+
+class RV3264Base_ORI_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_ORI_wrapper";
+  let DecoderMethod = "RV3264Base_ORI_immS_decode_wrapper";
+}
+
+def RV3264Base_ORI_immSAsInt64
+    : RV3264Base_ORI_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_ORI_immS_predicate(Imm); }]>;
+
+def RV3264Base_ORI_immSAsLabel : RV3264Base_ORI_immS<OtherVT>;
+
+class RV3264Base_SB_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_SB_wrapper";
+  let DecoderMethod = "RV3264Base_SB_immS_decode_wrapper";
+}
+
+def RV3264Base_SB_immSAsInt64
+    : RV3264Base_SB_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_SB_immS_predicate(Imm); }]>;
+
+def RV3264Base_SB_immSAsLabel : RV3264Base_SB_immS<OtherVT>;
+
+class RV3264Base_SD_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_SD_wrapper";
+  let DecoderMethod = "RV3264Base_SD_immS_decode_wrapper";
+}
+
+def RV3264Base_SD_immSAsInt64
+    : RV3264Base_SD_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_SD_immS_predicate(Imm); }]>;
+
+def RV3264Base_SD_immSAsLabel : RV3264Base_SD_immS<OtherVT>;
+
+class RV3264Base_SH_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_SH_wrapper";
+  let DecoderMethod = "RV3264Base_SH_immS_decode_wrapper";
+}
+
+def RV3264Base_SH_immSAsInt64
+    : RV3264Base_SH_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_SH_immS_predicate(Imm); }]>;
+
+def RV3264Base_SH_immSAsLabel : RV3264Base_SH_immS<OtherVT>;
+
+class RV3264Base_SLLI_shamt<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_SLLI_wrapper";
+  let DecoderMethod = "RV3264Base_SLLI_shamt_decode_wrapper";
+}
+
+def RV3264Base_SLLI_shamtAsInt8
+    : RV3264Base_SLLI_shamt<i8>
+    , ImmLeaf<i8, [{ return RV3264Base_SLLI_shamt_predicate(Imm); }]>;
+
+def RV3264Base_SLLI_shamtAsLabel : RV3264Base_SLLI_shamt<OtherVT>;
+
+class RV3264Base_SLLIW_shamt<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_SLLIW_wrapper";
+  let DecoderMethod = "RV3264Base_SLLIW_shamt_decode_wrapper";
+}
+
+def RV3264Base_SLLIW_shamtAsInt8
+    : RV3264Base_SLLIW_shamt<i8>
+    , ImmLeaf<i8, [{ return RV3264Base_SLLIW_shamt_predicate(Imm); }]>;
+
+def RV3264Base_SLLIW_shamtAsLabel : RV3264Base_SLLIW_shamt<OtherVT>;
+
+class RV3264Base_SLTI_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_SLTI_wrapper";
+  let DecoderMethod = "RV3264Base_SLTI_immS_decode_wrapper";
+}
+
+def RV3264Base_SLTI_immSAsInt64
+    : RV3264Base_SLTI_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_SLTI_immS_predicate(Imm); }]>;
+
+def RV3264Base_SLTI_immSAsLabel : RV3264Base_SLTI_immS<OtherVT>;
+
+class RV3264Base_SLTIU_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_SLTIU_wrapper";
+  let DecoderMethod = "RV3264Base_SLTIU_immS_decode_wrapper";
+}
+
+def RV3264Base_SLTIU_immSAsInt64
+    : RV3264Base_SLTIU_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_SLTIU_immS_predicate(Imm); }]>;
+
+def RV3264Base_SLTIU_immSAsLabel : RV3264Base_SLTIU_immS<OtherVT>;
+
+class RV3264Base_SRAI_shamt<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_SRAI_wrapper";
+  let DecoderMethod = "RV3264Base_SRAI_shamt_decode_wrapper";
+}
+
+def RV3264Base_SRAI_shamtAsInt8
+    : RV3264Base_SRAI_shamt<i8>
+    , ImmLeaf<i8, [{ return RV3264Base_SRAI_shamt_predicate(Imm); }]>;
+
+def RV3264Base_SRAI_shamtAsLabel : RV3264Base_SRAI_shamt<OtherVT>;
+
+class RV3264Base_SRAIW_shamt<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_SRAIW_wrapper";
+  let DecoderMethod = "RV3264Base_SRAIW_shamt_decode_wrapper";
+}
+
+def RV3264Base_SRAIW_shamtAsInt8
+    : RV3264Base_SRAIW_shamt<i8>
+    , ImmLeaf<i8, [{ return RV3264Base_SRAIW_shamt_predicate(Imm); }]>;
+
+def RV3264Base_SRAIW_shamtAsLabel : RV3264Base_SRAIW_shamt<OtherVT>;
+
+class RV3264Base_SRLI_shamt<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_SRLI_wrapper";
+  let DecoderMethod = "RV3264Base_SRLI_shamt_decode_wrapper";
+}
+
+def RV3264Base_SRLI_shamtAsInt8
+    : RV3264Base_SRLI_shamt<i8>
+    , ImmLeaf<i8, [{ return RV3264Base_SRLI_shamt_predicate(Imm); }]>;
+
+def RV3264Base_SRLI_shamtAsLabel : RV3264Base_SRLI_shamt<OtherVT>;
+
 class RV3264Base_SRLIW_shamt<ValueType ty> : Operand<ty>
 {
   let EncoderMethod = "RV3264Base_SRLIW_wrapper";
@@ -591,6 +567,30 @@ def RV3264Base_SRLIW_shamtAsInt8
     , ImmLeaf<i8, [{ return RV3264Base_SRLIW_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SRLIW_shamtAsLabel : RV3264Base_SRLIW_shamt<OtherVT>;
+
+class RV3264Base_SW_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_SW_wrapper";
+  let DecoderMethod = "RV3264Base_SW_immS_decode_wrapper";
+}
+
+def RV3264Base_SW_immSAsInt64
+    : RV3264Base_SW_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_SW_immS_predicate(Imm); }]>;
+
+def RV3264Base_SW_immSAsLabel : RV3264Base_SW_immS<OtherVT>;
+
+class RV3264Base_XORI_immS<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "RV3264Base_XORI_wrapper";
+  let DecoderMethod = "RV3264Base_XORI_immS_decode_wrapper";
+}
+
+def RV3264Base_XORI_immSAsInt64
+    : RV3264Base_XORI_immS<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_XORI_immS_predicate(Imm); }]>;
+
+def RV3264Base_XORI_immSAsLabel : RV3264Base_XORI_immS<OtherVT>;
 
 class RV3264Base_J_immS<ValueType ty> : Operand<ty>
 {
@@ -2979,7 +2979,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SLLI_shamtAsInt64:$shamt );
+let InOperandList = ( ins X:$rs1, RV3264Base_SLLI_shamtAsInt8:$shamt );
 
 field bits<32> Inst;
 
@@ -3034,7 +3034,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SLLIW_shamtAsInt64:$shamt );
+let InOperandList = ( ins X:$rs1, RV3264Base_SLLIW_shamtAsInt8:$shamt );
 
 field bits<32> Inst;
 
@@ -3401,7 +3401,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SRAI_shamtAsInt64:$shamt );
+let InOperandList = ( ins X:$rs1, RV3264Base_SRAI_shamtAsInt8:$shamt );
 
 field bits<32> Inst;
 
@@ -3456,7 +3456,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SRAIW_shamtAsInt64:$shamt );
+let InOperandList = ( ins X:$rs1, RV3264Base_SRAIW_shamtAsInt8:$shamt );
 
 field bits<32> Inst;
 
@@ -3615,7 +3615,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SRLI_shamtAsInt64:$shamt );
+let InOperandList = ( ins X:$rs1, RV3264Base_SRLI_shamtAsInt8:$shamt );
 
 field bits<32> Inst;
 
@@ -3670,7 +3670,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SRLIW_shamtAsInt64:$shamt );
+let InOperandList = ( ins X:$rs1, RV3264Base_SRLIW_shamtAsInt8:$shamt );
 
 field bits<32> Inst;
 
@@ -5068,8 +5068,8 @@ def : Pat<(shl X:$rs1, X:$rs2),
         (SLL X:$rs1, X:$rs2)>;
 
 
-def : Pat<(shl X:$rs1, RV3264Base_SLLI_shamtAsInt64:$shamt),
-        (SLLI X:$rs1, RV3264Base_SLLI_shamtAsInt64:$shamt)>;
+def : Pat<(shl X:$rs1, RV3264Base_SLLI_shamtAsInt8:$shamt),
+        (SLLI X:$rs1, RV3264Base_SLLI_shamtAsInt8:$shamt)>;
 
 
 def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
@@ -5119,16 +5119,16 @@ def : Pat<(sra X:$rs1, X:$rs2),
         (SRA X:$rs1, X:$rs2)>;
 
 
-def : Pat<(sra X:$rs1, RV3264Base_SRAI_shamtAsInt64:$shamt),
-        (SRAI X:$rs1, RV3264Base_SRAI_shamtAsInt64:$shamt)>;
+def : Pat<(sra X:$rs1, RV3264Base_SRAI_shamtAsInt8:$shamt),
+        (SRAI X:$rs1, RV3264Base_SRAI_shamtAsInt8:$shamt)>;
 
 
 def : Pat<(srl X:$rs1, X:$rs2),
         (SRL X:$rs1, X:$rs2)>;
 
 
-def : Pat<(srl X:$rs1, RV3264Base_SRLI_shamtAsInt64:$shamt),
-        (SRLI X:$rs1, RV3264Base_SRLI_shamtAsInt64:$shamt)>;
+def : Pat<(srl X:$rs1, RV3264Base_SRLI_shamtAsInt8:$shamt),
+        (SRLI X:$rs1, RV3264Base_SRLI_shamtAsInt8:$shamt)>;
 
 
 def : Pat<(sub X:$rs1, X:$rs2),

@@ -6462,7 +6462,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -6633,7 +6633,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -6692,7 +6692,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -6810,7 +6810,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -6981,7 +6981,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -7040,7 +7040,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -7099,7 +7099,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSSXSB_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -7157,7 +7157,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSSXSH_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -7215,7 +7215,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSSXSW_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -7273,7 +7273,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSSXSX_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -7563,7 +7563,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSUXSB_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -7621,7 +7621,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSUXSH_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -7679,7 +7679,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSUXSW_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -7737,7 +7737,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSUXSX_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -8027,7 +8027,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSXSB_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -8085,7 +8085,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSXSH_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -8143,7 +8143,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSXSW_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -8201,7 +8201,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSXSX_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -8491,7 +8491,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWUXSB_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -8549,7 +8549,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWUXSH_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -8607,7 +8607,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWUXSW_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -8665,7 +8665,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWUXSX_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ADDWUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -9014,7 +9014,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -9185,7 +9185,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -9244,7 +9244,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -9362,7 +9362,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -9533,7 +9533,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -9592,7 +9592,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -9651,7 +9651,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSSXSB_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -9709,7 +9709,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSSXSH_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -9767,7 +9767,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSSXSW_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -9825,7 +9825,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSSXSX_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -10115,7 +10115,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSUXSB_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -10173,7 +10173,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSUXSH_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -10231,7 +10231,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSUXSW_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -10289,7 +10289,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSUXSX_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -10579,7 +10579,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSXSB_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -10637,7 +10637,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSXSH_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -10695,7 +10695,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSXSW_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -10753,7 +10753,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSXSX_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -11043,7 +11043,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXUXSB_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -11101,7 +11101,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXUXSH_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -11159,7 +11159,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXUXSW_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -11217,7 +11217,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXUXSX_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ADDXUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -11605,7 +11605,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, AArch64Base_ANDIW_immWSizeAsInt64:$immWSize );
+let InOperandList = ( ins S:$rn, AArch64Base_ANDIW_immWSizeAsInt32:$immWSize );
 
 field bits<32> Inst;
 
@@ -11707,7 +11707,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, AArch64Base_ANDSIW_immWSizeAsInt64:$immWSize );
+let InOperandList = ( ins S:$rn, AArch64Base_ANDSIW_immWSizeAsInt32:$immWSize );
 
 field bits<32> Inst;
 
@@ -11865,7 +11865,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ANDSWASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -11921,7 +11921,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ANDSWLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -11977,7 +11977,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ANDSWLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -12033,7 +12033,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ANDSWROR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ANDSWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -12145,7 +12145,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ANDSXASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ANDSXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -12201,7 +12201,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ANDSXLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ANDSXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -12257,7 +12257,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ANDSXLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -12313,7 +12313,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ANDSXROR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ANDSXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -12425,7 +12425,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ANDWASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -12481,7 +12481,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ANDWLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -12537,7 +12537,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ANDWLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -12593,7 +12593,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ANDWROR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ANDWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -12705,7 +12705,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ANDXASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ANDXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -12761,7 +12761,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ANDXLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ANDXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -12817,7 +12817,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ANDXLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ANDXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -12873,7 +12873,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ANDXROR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ANDXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -13082,7 +13082,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, AArch64Base_BFMW_leftWSizeAsInt64:$leftWSize, AArch64Base_BFMW_rightWSizeAsInt64:$rightWSize );
+let InOperandList = ( ins S:$rn, AArch64Base_BFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_BFMW_rightWSizeAsInt8:$rightWSize );
 
 field bits<32> Inst;
 
@@ -13137,7 +13137,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, AArch64Base_BFMX_leftXSizeAsInt64:$leftXSize, AArch64Base_BFMX_rightXSizeAsInt64:$rightXSize );
+let InOperandList = ( ins S:$rn, AArch64Base_BFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_BFMX_rightXSizeAsInt8:$rightXSize );
 
 field bits<32> Inst;
 
@@ -13248,7 +13248,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_BICSWASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_BICSWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -13304,7 +13304,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_BICSWLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_BICSWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -13360,7 +13360,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_BICSWLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_BICSWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -13416,7 +13416,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_BICSWROR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_BICSWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -13528,7 +13528,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_BICSXASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_BICSXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -13584,7 +13584,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_BICSXLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_BICSXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -13640,7 +13640,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_BICSXLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_BICSXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -13696,7 +13696,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_BICSXROR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_BICSXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -13808,7 +13808,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_BICWASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_BICWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -13864,7 +13864,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_BICWLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_BICWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -13920,7 +13920,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_BICWLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_BICWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -13976,7 +13976,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_BICWROR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_BICWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -14088,7 +14088,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_BICXASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_BICXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -14144,7 +14144,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_BICXLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_BICXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -14200,7 +14200,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_BICXLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_BICXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -14256,7 +14256,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_BICXROR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_BICXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -15523,7 +15523,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNCCW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNCCW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -15578,7 +15578,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNCCX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNCCX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -15633,7 +15633,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNCSW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNCSW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -15688,7 +15688,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNCSX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNCSX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -15743,7 +15743,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNEQW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNEQW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -15798,7 +15798,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNEQX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNEQX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -15853,7 +15853,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNGEW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNGEW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -15908,7 +15908,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNGEX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNGEX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -15963,7 +15963,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNGTW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNGTW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -16018,7 +16018,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNGTX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNGTX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -16073,7 +16073,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNHIW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNHIW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -16128,7 +16128,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNHIX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNHIX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -16293,7 +16293,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNICCW_immXAsInt64:$immX, AArch64Base_CCMNICCW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNICCW_immXAsInt64:$immX, AArch64Base_CCMNICCW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -16348,7 +16348,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNICCX_immXAsInt64:$immX, AArch64Base_CCMNICCX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNICCX_immXAsInt64:$immX, AArch64Base_CCMNICCX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -16403,7 +16403,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNICSW_immXAsInt64:$immX, AArch64Base_CCMNICSW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNICSW_immXAsInt64:$immX, AArch64Base_CCMNICSW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -16458,7 +16458,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNICSX_immXAsInt64:$immX, AArch64Base_CCMNICSX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNICSX_immXAsInt64:$immX, AArch64Base_CCMNICSX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -16513,7 +16513,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNIEQW_immXAsInt64:$immX, AArch64Base_CCMNIEQW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNIEQW_immXAsInt64:$immX, AArch64Base_CCMNIEQW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -16568,7 +16568,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNIEQX_immXAsInt64:$immX, AArch64Base_CCMNIEQX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNIEQX_immXAsInt64:$immX, AArch64Base_CCMNIEQX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -16623,7 +16623,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNIGEW_immXAsInt64:$immX, AArch64Base_CCMNIGEW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNIGEW_immXAsInt64:$immX, AArch64Base_CCMNIGEW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -16678,7 +16678,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNIGEX_immXAsInt64:$immX, AArch64Base_CCMNIGEX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNIGEX_immXAsInt64:$immX, AArch64Base_CCMNIGEX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -16733,7 +16733,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNIGTW_immXAsInt64:$immX, AArch64Base_CCMNIGTW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNIGTW_immXAsInt64:$immX, AArch64Base_CCMNIGTW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -16788,7 +16788,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNIGTX_immXAsInt64:$immX, AArch64Base_CCMNIGTX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNIGTX_immXAsInt64:$immX, AArch64Base_CCMNIGTX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -16843,7 +16843,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNIHIW_immXAsInt64:$immX, AArch64Base_CCMNIHIW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNIHIW_immXAsInt64:$immX, AArch64Base_CCMNIHIW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -16898,7 +16898,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNIHIX_immXAsInt64:$immX, AArch64Base_CCMNIHIX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNIHIX_immXAsInt64:$immX, AArch64Base_CCMNIHIX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -16953,7 +16953,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNILEW_immXAsInt64:$immX, AArch64Base_CCMNILEW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNILEW_immXAsInt64:$immX, AArch64Base_CCMNILEW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17008,7 +17008,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNILEX_immXAsInt64:$immX, AArch64Base_CCMNILEX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNILEX_immXAsInt64:$immX, AArch64Base_CCMNILEX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17063,7 +17063,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNILSW_immXAsInt64:$immX, AArch64Base_CCMNILSW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNILSW_immXAsInt64:$immX, AArch64Base_CCMNILSW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17118,7 +17118,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNILSX_immXAsInt64:$immX, AArch64Base_CCMNILSX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNILSX_immXAsInt64:$immX, AArch64Base_CCMNILSX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17173,7 +17173,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNILTW_immXAsInt64:$immX, AArch64Base_CCMNILTW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNILTW_immXAsInt64:$immX, AArch64Base_CCMNILTW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17228,7 +17228,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNILTX_immXAsInt64:$immX, AArch64Base_CCMNILTX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNILTX_immXAsInt64:$immX, AArch64Base_CCMNILTX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17283,7 +17283,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNIMIW_immXAsInt64:$immX, AArch64Base_CCMNIMIW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNIMIW_immXAsInt64:$immX, AArch64Base_CCMNIMIW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17338,7 +17338,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNIMIX_immXAsInt64:$immX, AArch64Base_CCMNIMIX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNIMIX_immXAsInt64:$immX, AArch64Base_CCMNIMIX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17393,7 +17393,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNINEW_immXAsInt64:$immX, AArch64Base_CCMNINEW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNINEW_immXAsInt64:$immX, AArch64Base_CCMNINEW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17448,7 +17448,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNINEX_immXAsInt64:$immX, AArch64Base_CCMNINEX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNINEX_immXAsInt64:$immX, AArch64Base_CCMNINEX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17613,7 +17613,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNIPLW_immXAsInt64:$immX, AArch64Base_CCMNIPLW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNIPLW_immXAsInt64:$immX, AArch64Base_CCMNIPLW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17668,7 +17668,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNIPLX_immXAsInt64:$immX, AArch64Base_CCMNIPLX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNIPLX_immXAsInt64:$immX, AArch64Base_CCMNIPLX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17723,7 +17723,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNIVCW_immXAsInt64:$immX, AArch64Base_CCMNIVCW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNIVCW_immXAsInt64:$immX, AArch64Base_CCMNIVCW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17778,7 +17778,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNIVCX_immXAsInt64:$immX, AArch64Base_CCMNIVCX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNIVCX_immXAsInt64:$immX, AArch64Base_CCMNIVCX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17833,7 +17833,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNIVSW_immXAsInt64:$immX, AArch64Base_CCMNIVSW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNIVSW_immXAsInt64:$immX, AArch64Base_CCMNIVSW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17888,7 +17888,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMNIVSX_immXAsInt64:$immX, AArch64Base_CCMNIVSX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMNIVSX_immXAsInt64:$immX, AArch64Base_CCMNIVSX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17943,7 +17943,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNLEW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNLEW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -17998,7 +17998,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNLEX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNLEX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -18053,7 +18053,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNLSW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNLSW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -18108,7 +18108,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNLSX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNLSX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -18163,7 +18163,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNLTW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNLTW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -18218,7 +18218,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNLTX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNLTX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -18273,7 +18273,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNMIW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNMIW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -18328,7 +18328,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNMIX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNMIX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -18383,7 +18383,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNNEW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNNEW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -18438,7 +18438,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNNEX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNNEX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -18603,7 +18603,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNPLW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNPLW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -18658,7 +18658,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNPLX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNPLX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -18713,7 +18713,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNVCW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNVCW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -18768,7 +18768,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNVCX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNVCX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -18823,7 +18823,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNVSW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNVSW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -18878,7 +18878,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNVSX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMNVSX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -19043,7 +19043,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPCCW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPCCW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -19098,7 +19098,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPCCX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPCCX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -19153,7 +19153,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPCSW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPCSW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -19208,7 +19208,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPCSX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPCSX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -19263,7 +19263,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPEQW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPEQW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -19318,7 +19318,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPEQX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPEQX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -19373,7 +19373,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPGEW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPGEW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -19428,7 +19428,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPGEX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPGEX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -19483,7 +19483,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPGTW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPGTW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -19538,7 +19538,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPGTX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPGTX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -19593,7 +19593,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPHIW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPHIW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -19648,7 +19648,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPHIX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPHIX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -19813,7 +19813,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPICCW_immXAsInt64:$immX, AArch64Base_CCMPICCW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPICCW_immXAsInt64:$immX, AArch64Base_CCMPICCW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -19868,7 +19868,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPICCX_immXAsInt64:$immX, AArch64Base_CCMPICCX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPICCX_immXAsInt64:$immX, AArch64Base_CCMPICCX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -19923,7 +19923,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPICSW_immXAsInt64:$immX, AArch64Base_CCMPICSW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPICSW_immXAsInt64:$immX, AArch64Base_CCMPICSW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -19978,7 +19978,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPICSX_immXAsInt64:$immX, AArch64Base_CCMPICSX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPICSX_immXAsInt64:$immX, AArch64Base_CCMPICSX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20033,7 +20033,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPIEQW_immXAsInt64:$immX, AArch64Base_CCMPIEQW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPIEQW_immXAsInt64:$immX, AArch64Base_CCMPIEQW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20088,7 +20088,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPIEQX_immXAsInt64:$immX, AArch64Base_CCMPIEQX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPIEQX_immXAsInt64:$immX, AArch64Base_CCMPIEQX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20143,7 +20143,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPIGEW_immXAsInt64:$immX, AArch64Base_CCMPIGEW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPIGEW_immXAsInt64:$immX, AArch64Base_CCMPIGEW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20198,7 +20198,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPIGEX_immXAsInt64:$immX, AArch64Base_CCMPIGEX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPIGEX_immXAsInt64:$immX, AArch64Base_CCMPIGEX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20253,7 +20253,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPIGTW_immXAsInt64:$immX, AArch64Base_CCMPIGTW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPIGTW_immXAsInt64:$immX, AArch64Base_CCMPIGTW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20308,7 +20308,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPIGTX_immXAsInt64:$immX, AArch64Base_CCMPIGTX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPIGTX_immXAsInt64:$immX, AArch64Base_CCMPIGTX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20363,7 +20363,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPIHIW_immXAsInt64:$immX, AArch64Base_CCMPIHIW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPIHIW_immXAsInt64:$immX, AArch64Base_CCMPIHIW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20418,7 +20418,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPIHIX_immXAsInt64:$immX, AArch64Base_CCMPIHIX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPIHIX_immXAsInt64:$immX, AArch64Base_CCMPIHIX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20473,7 +20473,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPILEW_immXAsInt64:$immX, AArch64Base_CCMPILEW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPILEW_immXAsInt64:$immX, AArch64Base_CCMPILEW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20528,7 +20528,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPILEX_immXAsInt64:$immX, AArch64Base_CCMPILEX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPILEX_immXAsInt64:$immX, AArch64Base_CCMPILEX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20583,7 +20583,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPILSW_immXAsInt64:$immX, AArch64Base_CCMPILSW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPILSW_immXAsInt64:$immX, AArch64Base_CCMPILSW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20638,7 +20638,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPILSX_immXAsInt64:$immX, AArch64Base_CCMPILSX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPILSX_immXAsInt64:$immX, AArch64Base_CCMPILSX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20693,7 +20693,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPILTW_immXAsInt64:$immX, AArch64Base_CCMPILTW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPILTW_immXAsInt64:$immX, AArch64Base_CCMPILTW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20748,7 +20748,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPILTX_immXAsInt64:$immX, AArch64Base_CCMPILTX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPILTX_immXAsInt64:$immX, AArch64Base_CCMPILTX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20803,7 +20803,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPIMIW_immXAsInt64:$immX, AArch64Base_CCMPIMIW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPIMIW_immXAsInt64:$immX, AArch64Base_CCMPIMIW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20858,7 +20858,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPIMIX_immXAsInt64:$immX, AArch64Base_CCMPIMIX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPIMIX_immXAsInt64:$immX, AArch64Base_CCMPIMIX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20913,7 +20913,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPINEW_immXAsInt64:$immX, AArch64Base_CCMPINEW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPINEW_immXAsInt64:$immX, AArch64Base_CCMPINEW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -20968,7 +20968,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPINEX_immXAsInt64:$immX, AArch64Base_CCMPINEX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPINEX_immXAsInt64:$immX, AArch64Base_CCMPINEX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -21133,7 +21133,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPIPLW_immXAsInt64:$immX, AArch64Base_CCMPIPLW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPIPLW_immXAsInt64:$immX, AArch64Base_CCMPIPLW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -21188,7 +21188,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPIPLX_immXAsInt64:$immX, AArch64Base_CCMPIPLX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPIPLX_immXAsInt64:$immX, AArch64Base_CCMPIPLX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -21243,7 +21243,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPIVCW_immXAsInt64:$immX, AArch64Base_CCMPIVCW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPIVCW_immXAsInt64:$immX, AArch64Base_CCMPIVCW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -21298,7 +21298,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPIVCX_immXAsInt64:$immX, AArch64Base_CCMPIVCX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPIVCX_immXAsInt64:$immX, AArch64Base_CCMPIVCX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -21353,7 +21353,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPIVSW_immXAsInt64:$immX, AArch64Base_CCMPIVSW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPIVSW_immXAsInt64:$immX, AArch64Base_CCMPIVSW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -21408,7 +21408,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, AArch64Base_CCMPIVSX_immXAsInt64:$immX, AArch64Base_CCMPIVSX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, AArch64Base_CCMPIVSX_immXAsInt64:$immX, AArch64Base_CCMPIVSX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -21463,7 +21463,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPLEW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPLEW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -21518,7 +21518,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPLEX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPLEX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -21573,7 +21573,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPLSW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPLSW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -21628,7 +21628,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPLSX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPLSX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -21683,7 +21683,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPLTW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPLTW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -21738,7 +21738,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPLTX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPLTX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -21793,7 +21793,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPMIW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPMIW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -21848,7 +21848,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPMIX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPMIX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -21903,7 +21903,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPNEW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPNEW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -21958,7 +21958,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPNEX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPNEX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -22123,7 +22123,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPPLW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPPLW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -22178,7 +22178,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPPLX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPPLX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -22233,7 +22233,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPVCW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPVCW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -22288,7 +22288,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPVCX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPVCX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -22343,7 +22343,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPVSW_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPVSW_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -22398,7 +22398,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPVSX_nzcvAsInt64:$nzcv );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_CCMPVSX_nzcvAsInt8:$nzcv );
 
 field bits<32> Inst;
 
@@ -29617,7 +29617,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EONWASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EONWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -29673,7 +29673,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EONWLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EONWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -29729,7 +29729,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EONWLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EONWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -29785,7 +29785,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EONWROR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EONWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -29897,7 +29897,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_EONXASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_EONXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -29953,7 +29953,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_EONXLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_EONXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -30009,7 +30009,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_EONXLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_EONXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -30065,7 +30065,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_EONXROR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_EONXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -30121,7 +30121,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, AArch64Base_EORIW_immWSizeAsInt64:$immWSize );
+let InOperandList = ( ins S:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize );
 
 field bits<32> Inst;
 
@@ -30279,7 +30279,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EORWASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -30335,7 +30335,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EORWLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -30391,7 +30391,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EORWLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -30447,7 +30447,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EORWROR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EORWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -30559,7 +30559,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_EORXASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_EORXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -30615,7 +30615,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_EORXLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_EORXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -30671,7 +30671,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_EORXLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_EORXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -30727,7 +30727,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_EORXROR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_EORXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -30783,7 +30783,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EXTRW_shiftWSizeAsInt64:$shiftWSize );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EXTRW_shiftWSizeAsInt8:$shiftWSize );
 
 field bits<32> Inst;
 
@@ -30839,7 +30839,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EXTRX_shiftXSizeAsInt64:$shiftXSize );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_EXTRX_shiftXSizeAsInt8:$shiftXSize );
 
 field bits<32> Inst;
 
@@ -38080,7 +38080,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVKWPos00_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKWPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38131,7 +38131,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVKWPos16_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKWPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38182,7 +38182,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVKXPos00_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKXPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38233,7 +38233,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVKXPos16_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKXPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38284,7 +38284,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVKXPos32_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKXPos32_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38335,7 +38335,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVKXPos48_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKXPos48_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38386,7 +38386,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVNWPos00_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVNWPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38437,7 +38437,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVNWPos16_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVNWPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38488,7 +38488,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVNXPos00_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVNXPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38539,7 +38539,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVNXPos16_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVNXPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38590,7 +38590,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVNXPos32_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVNXPos32_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38641,7 +38641,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVNXPos48_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVNXPos48_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38692,7 +38692,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVZWPos00_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVZWPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38743,7 +38743,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVZWPos16_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVZWPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38794,7 +38794,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVZXPos00_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVZXPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38845,7 +38845,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVZXPos16_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVZXPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38896,7 +38896,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVZXPos32_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVZXPos32_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38947,7 +38947,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins AArch64Base_MOVZXPos48_imm16AsInt64:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVZXPos48_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38998,7 +38998,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rt );
-let InOperandList = ( ins AArch64Base_MRS_sysregAsInt64:$sysreg );
+let InOperandList = ( ins AArch64Base_MRS_sysregAsInt16:$sysreg );
 
 field bits<32> Inst;
 
@@ -39045,7 +39045,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rt, AArch64Base_MSR_sysregAsInt64:$sysreg );
+let InOperandList = ( ins S:$rt, AArch64Base_MSR_sysregAsInt16:$sysreg );
 
 field bits<32> Inst;
 
@@ -39301,7 +39301,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ORNWASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ORNWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -39357,7 +39357,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ORNWLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ORNWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -39413,7 +39413,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ORNWLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ORNWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -39469,7 +39469,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ORNWROR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ORNWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -39581,7 +39581,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ORNXASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ORNXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -39637,7 +39637,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ORNXLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ORNXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -39693,7 +39693,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ORNXLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ORNXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -39749,7 +39749,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ORNXROR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ORNXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -39805,7 +39805,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, AArch64Base_ORRIW_immWSizeAsInt64:$immWSize );
+let InOperandList = ( ins S:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize );
 
 field bits<32> Inst;
 
@@ -39963,7 +39963,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ORRWASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -40019,7 +40019,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ORRWLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -40075,7 +40075,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ORRWLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -40131,7 +40131,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ORRWROR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_ORRWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -40243,7 +40243,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ORRXASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ORRXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -40299,7 +40299,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ORRXLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ORRXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -40355,7 +40355,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ORRXLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ORRXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -40411,7 +40411,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ORRXROR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_ORRXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -41172,7 +41172,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, AArch64Base_SBFMW_leftWSizeAsInt64:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt64:$rightWSize );
+let InOperandList = ( ins S:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize );
 
 field bits<32> Inst;
 
@@ -41227,7 +41227,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, AArch64Base_SBFMX_leftXSizeAsInt64:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt64:$rightXSize );
+let InOperandList = ( ins S:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize );
 
 field bits<32> Inst;
 
@@ -44701,7 +44701,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -44872,7 +44872,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -44931,7 +44931,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -45049,7 +45049,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -45220,7 +45220,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -45279,7 +45279,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -45338,7 +45338,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSSXSB_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -45396,7 +45396,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSSXSH_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -45454,7 +45454,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSSXSW_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -45512,7 +45512,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSSXSX_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -45802,7 +45802,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSUXSB_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -45860,7 +45860,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSUXSH_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -45918,7 +45918,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSUXSW_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -45976,7 +45976,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSUXSX_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -46266,7 +46266,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSXSB_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -46324,7 +46324,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSXSH_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -46382,7 +46382,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSXSW_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -46440,7 +46440,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSXSX_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -46730,7 +46730,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWUXSB_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -46788,7 +46788,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWUXSH_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -46846,7 +46846,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWUXSW_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -46904,7 +46904,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWUXSX_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rn, S:$rm, AArch64Base_SUBWUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -47253,7 +47253,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -47424,7 +47424,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -47483,7 +47483,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -47601,7 +47601,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSASR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -47772,7 +47772,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSLSL_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -47831,7 +47831,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSLSR_imm6AsInt64:$imm6 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -47890,7 +47890,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSSXSB_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -47948,7 +47948,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSSXSH_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -48006,7 +48006,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSSXSW_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -48064,7 +48064,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSSXSX_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -48354,7 +48354,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSUXSB_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -48412,7 +48412,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSUXSH_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -48470,7 +48470,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSUXSW_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -48528,7 +48528,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSUXSX_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -48818,7 +48818,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSXSB_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -48876,7 +48876,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSXSH_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -48934,7 +48934,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSXSW_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -48992,7 +48992,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSXSX_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -49282,7 +49282,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXUXSB_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -49340,7 +49340,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXUXSH_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -49398,7 +49398,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXUXSW_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -49456,7 +49456,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXUXSX_imm3AsInt64:$imm3 );
+let InOperandList = ( ins S:$rm, S:$rn, AArch64Base_SUBXUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
 
@@ -49846,7 +49846,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, AArch64Base_UBFMW_leftWSizeAsInt64:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt64:$rightWSize );
+let InOperandList = ( ins S:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize );
 
 field bits<32> Inst;
 
@@ -49901,7 +49901,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, AArch64Base_UBFMX_leftXSizeAsInt64:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt64:$rightXSize );
+let InOperandList = ( ins S:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize );
 
 field bits<32> Inst;
 
@@ -50742,8 +50742,8 @@ def : Pat<(add S:$rn, S:$rm),
         (ADDW S:$rn, S:$rm)>;
 
 
-def : Pat<(add S:$rn, (sra S:$rm, AArch64Base_ADDWASR_imm6AsInt64:$imm6)),
-        (ADDWASR S:$rn, S:$rm, AArch64Base_ADDWASR_imm6AsInt64:$imm6)>;
+def : Pat<(add S:$rn, (sra S:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6)),
+        (ADDWASR S:$rn, S:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(add S:$rn, AArch64Base_ADDWI_imm12XAsInt64:$imm12X),
@@ -50754,20 +50754,20 @@ def : Pat<(add S:$rn, AArch64Base_ADDWI12_imm12SAsInt64:$imm12S),
         (ADDWI12 S:$rn, AArch64Base_ADDWI12_imm12SAsInt64:$imm12S)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWLSL_imm6AsInt64:$imm6)),
-        (ADDWLSL S:$rn, S:$rm, AArch64Base_ADDWLSL_imm6AsInt64:$imm6)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6)),
+        (ADDWLSL S:$rn, S:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(add S:$rn, (srl S:$rm, AArch64Base_ADDWLSR_imm6AsInt64:$imm6)),
-        (ADDWLSR S:$rn, S:$rm, AArch64Base_ADDWLSR_imm6AsInt64:$imm6)>;
+def : Pat<(add S:$rn, (srl S:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6)),
+        (ADDWLSR S:$rn, S:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(add S:$rn, S:$rm),
         (ADDWS S:$rn, S:$rm)>;
 
 
-def : Pat<(add S:$rn, (sra S:$rm, AArch64Base_ADDWSASR_imm6AsInt64:$imm6)),
-        (ADDWSASR S:$rn, S:$rm, AArch64Base_ADDWSASR_imm6AsInt64:$imm6)>;
+def : Pat<(add S:$rn, (sra S:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6)),
+        (ADDWSASR S:$rn, S:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(add S:$rn, AArch64Base_ADDWSI_imm12XAsInt64:$imm12X),
@@ -50778,20 +50778,20 @@ def : Pat<(add S:$rn, AArch64Base_ADDWSI12_imm12SAsInt64:$imm12S),
         (ADDWSI12 S:$rn, AArch64Base_ADDWSI12_imm12SAsInt64:$imm12S)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSLSL_imm6AsInt64:$imm6)),
-        (ADDWSLSL S:$rn, S:$rm, AArch64Base_ADDWSLSL_imm6AsInt64:$imm6)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6)),
+        (ADDWSLSL S:$rn, S:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(add S:$rn, (srl S:$rm, AArch64Base_ADDWSLSR_imm6AsInt64:$imm6)),
-        (ADDWSLSR S:$rn, S:$rm, AArch64Base_ADDWSLSR_imm6AsInt64:$imm6)>;
+def : Pat<(add S:$rn, (srl S:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6)),
+        (ADDWSLSR S:$rn, S:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSSXSW_imm3AsInt64:$imm3)),
-        (ADDWSSXSW S:$rn, S:$rm, AArch64Base_ADDWSSXSW_imm3AsInt64:$imm3)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSSXSW_imm3AsInt8:$imm3)),
+        (ADDWSSXSW S:$rn, S:$rm, AArch64Base_ADDWSSXSW_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSSXSX_imm3AsInt64:$imm3)),
-        (ADDWSSXSX S:$rn, S:$rm, AArch64Base_ADDWSSXSX_imm3AsInt64:$imm3)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSSXSX_imm3AsInt8:$imm3)),
+        (ADDWSSXSX S:$rn, S:$rm, AArch64Base_ADDWSSXSX_imm3AsInt8:$imm3)>;
 
 
 def : Pat<(add S:$rn, S:$rm),
@@ -50802,12 +50802,12 @@ def : Pat<(add S:$rn, S:$rm),
         (ADDWSSXTX S:$rn, S:$rm)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSUXSW_imm3AsInt64:$imm3)),
-        (ADDWSUXSW S:$rn, S:$rm, AArch64Base_ADDWSUXSW_imm3AsInt64:$imm3)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSUXSW_imm3AsInt8:$imm3)),
+        (ADDWSUXSW S:$rn, S:$rm, AArch64Base_ADDWSUXSW_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSUXSX_imm3AsInt64:$imm3)),
-        (ADDWSUXSX S:$rn, S:$rm, AArch64Base_ADDWSUXSX_imm3AsInt64:$imm3)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSUXSX_imm3AsInt8:$imm3)),
+        (ADDWSUXSX S:$rn, S:$rm, AArch64Base_ADDWSUXSX_imm3AsInt8:$imm3)>;
 
 
 def : Pat<(add S:$rn, S:$rm),
@@ -50818,12 +50818,12 @@ def : Pat<(add S:$rn, S:$rm),
         (ADDWSUXTX S:$rn, S:$rm)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSXSW_imm3AsInt64:$imm3)),
-        (ADDWSXSW S:$rn, S:$rm, AArch64Base_ADDWSXSW_imm3AsInt64:$imm3)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSXSW_imm3AsInt8:$imm3)),
+        (ADDWSXSW S:$rn, S:$rm, AArch64Base_ADDWSXSW_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSXSX_imm3AsInt64:$imm3)),
-        (ADDWSXSX S:$rn, S:$rm, AArch64Base_ADDWSXSX_imm3AsInt64:$imm3)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSXSX_imm3AsInt8:$imm3)),
+        (ADDWSXSX S:$rn, S:$rm, AArch64Base_ADDWSXSX_imm3AsInt8:$imm3)>;
 
 
 def : Pat<(add S:$rn, S:$rm),
@@ -50834,12 +50834,12 @@ def : Pat<(add S:$rn, S:$rm),
         (ADDWSXTX S:$rn, S:$rm)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWUXSW_imm3AsInt64:$imm3)),
-        (ADDWUXSW S:$rn, S:$rm, AArch64Base_ADDWUXSW_imm3AsInt64:$imm3)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWUXSW_imm3AsInt8:$imm3)),
+        (ADDWUXSW S:$rn, S:$rm, AArch64Base_ADDWUXSW_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWUXSX_imm3AsInt64:$imm3)),
-        (ADDWUXSX S:$rn, S:$rm, AArch64Base_ADDWUXSX_imm3AsInt64:$imm3)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWUXSX_imm3AsInt8:$imm3)),
+        (ADDWUXSX S:$rn, S:$rm, AArch64Base_ADDWUXSX_imm3AsInt8:$imm3)>;
 
 
 def : Pat<(add S:$rn, S:$rm),
@@ -50854,8 +50854,8 @@ def : Pat<(add S:$rn, S:$rm),
         (ADDX S:$rn, S:$rm)>;
 
 
-def : Pat<(add S:$rn, (sra S:$rm, AArch64Base_ADDXASR_imm6AsInt64:$imm6)),
-        (ADDXASR S:$rm, S:$rn, AArch64Base_ADDXASR_imm6AsInt64:$imm6)>;
+def : Pat<(add S:$rn, (sra S:$rm, AArch64Base_ADDXASR_imm6AsInt8:$imm6)),
+        (ADDXASR S:$rm, S:$rn, AArch64Base_ADDXASR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(add S:$rn, AArch64Base_ADDXI_imm12XAsInt64:$imm12X),
@@ -50869,20 +50869,20 @@ def : Pat<(add S:$rn, AArch64Base_ADDXI12_imm12SAsInt64:$imm12S),
         (ADDXI12 S:$rn, AArch64Base_ADDXI12_imm12SAsInt64:$imm12S)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXLSL_imm6AsInt64:$imm6)),
-        (ADDXLSL S:$rm, S:$rn, AArch64Base_ADDXLSL_imm6AsInt64:$imm6)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXLSL_imm6AsInt8:$imm6)),
+        (ADDXLSL S:$rm, S:$rn, AArch64Base_ADDXLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(add S:$rn, (srl S:$rm, AArch64Base_ADDXLSR_imm6AsInt64:$imm6)),
-        (ADDXLSR S:$rm, S:$rn, AArch64Base_ADDXLSR_imm6AsInt64:$imm6)>;
+def : Pat<(add S:$rn, (srl S:$rm, AArch64Base_ADDXLSR_imm6AsInt8:$imm6)),
+        (ADDXLSR S:$rm, S:$rn, AArch64Base_ADDXLSR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(add S:$rn, S:$rm),
         (ADDXS S:$rn, S:$rm)>;
 
 
-def : Pat<(add S:$rn, (sra S:$rm, AArch64Base_ADDXSASR_imm6AsInt64:$imm6)),
-        (ADDXSASR S:$rm, S:$rn, AArch64Base_ADDXSASR_imm6AsInt64:$imm6)>;
+def : Pat<(add S:$rn, (sra S:$rm, AArch64Base_ADDXSASR_imm6AsInt8:$imm6)),
+        (ADDXSASR S:$rm, S:$rn, AArch64Base_ADDXSASR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(add S:$rn, AArch64Base_ADDXSI_imm12XAsInt64:$imm12X),
@@ -50893,20 +50893,20 @@ def : Pat<(add S:$rn, AArch64Base_ADDXSI12_imm12SAsInt64:$imm12S),
         (ADDXSI12 S:$rn, AArch64Base_ADDXSI12_imm12SAsInt64:$imm12S)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSLSL_imm6AsInt64:$imm6)),
-        (ADDXSLSL S:$rm, S:$rn, AArch64Base_ADDXSLSL_imm6AsInt64:$imm6)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSLSL_imm6AsInt8:$imm6)),
+        (ADDXSLSL S:$rm, S:$rn, AArch64Base_ADDXSLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(add S:$rn, (srl S:$rm, AArch64Base_ADDXSLSR_imm6AsInt64:$imm6)),
-        (ADDXSLSR S:$rm, S:$rn, AArch64Base_ADDXSLSR_imm6AsInt64:$imm6)>;
+def : Pat<(add S:$rn, (srl S:$rm, AArch64Base_ADDXSLSR_imm6AsInt8:$imm6)),
+        (ADDXSLSR S:$rm, S:$rn, AArch64Base_ADDXSLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSSXSW_imm3AsInt64:$imm3)),
-        (ADDXSSXSW S:$rm, S:$rn, AArch64Base_ADDXSSXSW_imm3AsInt64:$imm3)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSSXSW_imm3AsInt8:$imm3)),
+        (ADDXSSXSW S:$rm, S:$rn, AArch64Base_ADDXSSXSW_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSSXSX_imm3AsInt64:$imm3)),
-        (ADDXSSXSX S:$rm, S:$rn, AArch64Base_ADDXSSXSX_imm3AsInt64:$imm3)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSSXSX_imm3AsInt8:$imm3)),
+        (ADDXSSXSX S:$rm, S:$rn, AArch64Base_ADDXSSXSX_imm3AsInt8:$imm3)>;
 
 
 def : Pat<(add S:$rn, S:$rm),
@@ -50917,12 +50917,12 @@ def : Pat<(add S:$rn, S:$rm),
         (ADDXSSXTX S:$rm, S:$rn)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSUXSW_imm3AsInt64:$imm3)),
-        (ADDXSUXSW S:$rm, S:$rn, AArch64Base_ADDXSUXSW_imm3AsInt64:$imm3)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSUXSW_imm3AsInt8:$imm3)),
+        (ADDXSUXSW S:$rm, S:$rn, AArch64Base_ADDXSUXSW_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSUXSX_imm3AsInt64:$imm3)),
-        (ADDXSUXSX S:$rm, S:$rn, AArch64Base_ADDXSUXSX_imm3AsInt64:$imm3)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSUXSX_imm3AsInt8:$imm3)),
+        (ADDXSUXSX S:$rm, S:$rn, AArch64Base_ADDXSUXSX_imm3AsInt8:$imm3)>;
 
 
 def : Pat<(add S:$rn, S:$rm),
@@ -50933,12 +50933,12 @@ def : Pat<(add S:$rn, S:$rm),
         (ADDXSUXTX S:$rm, S:$rn)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSXSW_imm3AsInt64:$imm3)),
-        (ADDXSXSW S:$rm, S:$rn, AArch64Base_ADDXSXSW_imm3AsInt64:$imm3)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSXSW_imm3AsInt8:$imm3)),
+        (ADDXSXSW S:$rm, S:$rn, AArch64Base_ADDXSXSW_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSXSX_imm3AsInt64:$imm3)),
-        (ADDXSXSX S:$rm, S:$rn, AArch64Base_ADDXSXSX_imm3AsInt64:$imm3)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSXSX_imm3AsInt8:$imm3)),
+        (ADDXSXSX S:$rm, S:$rn, AArch64Base_ADDXSXSX_imm3AsInt8:$imm3)>;
 
 
 def : Pat<(add S:$rn, S:$rm),
@@ -50949,12 +50949,12 @@ def : Pat<(add S:$rn, S:$rm),
         (ADDXSXTX S:$rm, S:$rn)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXUXSW_imm3AsInt64:$imm3)),
-        (ADDXUXSW S:$rm, S:$rn, AArch64Base_ADDXUXSW_imm3AsInt64:$imm3)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXUXSW_imm3AsInt8:$imm3)),
+        (ADDXUXSW S:$rm, S:$rn, AArch64Base_ADDXUXSW_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXUXSX_imm3AsInt64:$imm3)),
-        (ADDXUXSX S:$rm, S:$rn, AArch64Base_ADDXUXSX_imm3AsInt64:$imm3)>;
+def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXUXSX_imm3AsInt8:$imm3)),
+        (ADDXUXSX S:$rm, S:$rn, AArch64Base_ADDXUXSX_imm3AsInt8:$imm3)>;
 
 
 def : Pat<(add S:$rn, S:$rm),
@@ -50965,16 +50965,16 @@ def : Pat<(add S:$rn, S:$rm),
         (ADDXUXTX S:$rm, S:$rn)>;
 
 
-def : Pat<(and S:$rn, AArch64Base_ANDIW_immWSizeAsInt64:$immWSize),
-        (ANDIW S:$rn, AArch64Base_ANDIW_immWSizeAsInt64:$immWSize)>;
+def : Pat<(and S:$rn, AArch64Base_ANDIW_immWSizeAsInt32:$immWSize),
+        (ANDIW S:$rn, AArch64Base_ANDIW_immWSizeAsInt32:$immWSize)>;
 
 
 def : Pat<(and S:$rn, AArch64Base_ANDIX_immXSizeAsInt64:$immXSize),
         (ANDIX S:$rn, AArch64Base_ANDIX_immXSizeAsInt64:$immXSize)>;
 
 
-def : Pat<(and S:$rn, AArch64Base_ANDSIW_immWSizeAsInt64:$immWSize),
-        (ANDSIW S:$rn, AArch64Base_ANDSIW_immWSizeAsInt64:$immWSize)>;
+def : Pat<(and S:$rn, AArch64Base_ANDSIW_immWSizeAsInt32:$immWSize),
+        (ANDSIW S:$rn, AArch64Base_ANDSIW_immWSizeAsInt32:$immWSize)>;
 
 
 def : Pat<(and S:$rn, AArch64Base_ANDSIX_immXSizeAsInt64:$immXSize),
@@ -50985,64 +50985,64 @@ def : Pat<(and S:$rn, S:$rm),
         (ANDSW S:$rn, S:$rm)>;
 
 
-def : Pat<(and S:$rn, (sra S:$rm, AArch64Base_ANDSWASR_imm6AsInt64:$imm6)),
-        (ANDSWASR S:$rn, S:$rm, AArch64Base_ANDSWASR_imm6AsInt64:$imm6)>;
+def : Pat<(and S:$rn, (sra S:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6)),
+        (ANDSWASR S:$rn, S:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(and S:$rn, (shl S:$rm, AArch64Base_ANDSWLSL_imm6AsInt64:$imm6)),
-        (ANDSWLSL S:$rn, S:$rm, AArch64Base_ANDSWLSL_imm6AsInt64:$imm6)>;
+def : Pat<(and S:$rn, (shl S:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6)),
+        (ANDSWLSL S:$rn, S:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(and S:$rn, (srl S:$rm, AArch64Base_ANDSWLSR_imm6AsInt64:$imm6)),
-        (ANDSWLSR S:$rn, S:$rm, AArch64Base_ANDSWLSR_imm6AsInt64:$imm6)>;
+def : Pat<(and S:$rn, (srl S:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6)),
+        (ANDSWLSR S:$rn, S:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(and S:$rn, S:$rm),
         (ANDSX S:$rn, S:$rm)>;
 
 
-def : Pat<(and S:$rn, (sra S:$rm, AArch64Base_ANDSXASR_imm6AsInt64:$imm6)),
-        (ANDSXASR S:$rm, S:$rn, AArch64Base_ANDSXASR_imm6AsInt64:$imm6)>;
+def : Pat<(and S:$rn, (sra S:$rm, AArch64Base_ANDSXASR_imm6AsInt8:$imm6)),
+        (ANDSXASR S:$rm, S:$rn, AArch64Base_ANDSXASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(and S:$rn, (shl S:$rm, AArch64Base_ANDSXLSL_imm6AsInt64:$imm6)),
-        (ANDSXLSL S:$rm, S:$rn, AArch64Base_ANDSXLSL_imm6AsInt64:$imm6)>;
+def : Pat<(and S:$rn, (shl S:$rm, AArch64Base_ANDSXLSL_imm6AsInt8:$imm6)),
+        (ANDSXLSL S:$rm, S:$rn, AArch64Base_ANDSXLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(and S:$rn, (srl S:$rm, AArch64Base_ANDSXLSR_imm6AsInt64:$imm6)),
-        (ANDSXLSR S:$rm, S:$rn, AArch64Base_ANDSXLSR_imm6AsInt64:$imm6)>;
+def : Pat<(and S:$rn, (srl S:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6)),
+        (ANDSXLSR S:$rm, S:$rn, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(and S:$rn, S:$rm),
         (ANDW S:$rn, S:$rm)>;
 
 
-def : Pat<(and S:$rn, (sra S:$rm, AArch64Base_ANDWASR_imm6AsInt64:$imm6)),
-        (ANDWASR S:$rn, S:$rm, AArch64Base_ANDWASR_imm6AsInt64:$imm6)>;
+def : Pat<(and S:$rn, (sra S:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6)),
+        (ANDWASR S:$rn, S:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(and S:$rn, (shl S:$rm, AArch64Base_ANDWLSL_imm6AsInt64:$imm6)),
-        (ANDWLSL S:$rn, S:$rm, AArch64Base_ANDWLSL_imm6AsInt64:$imm6)>;
+def : Pat<(and S:$rn, (shl S:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6)),
+        (ANDWLSL S:$rn, S:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(and S:$rn, (srl S:$rm, AArch64Base_ANDWLSR_imm6AsInt64:$imm6)),
-        (ANDWLSR S:$rn, S:$rm, AArch64Base_ANDWLSR_imm6AsInt64:$imm6)>;
+def : Pat<(and S:$rn, (srl S:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6)),
+        (ANDWLSR S:$rn, S:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(and S:$rn, S:$rm),
         (ANDX S:$rn, S:$rm)>;
 
 
-def : Pat<(and S:$rn, (sra S:$rm, AArch64Base_ANDXASR_imm6AsInt64:$imm6)),
-        (ANDXASR S:$rm, S:$rn, AArch64Base_ANDXASR_imm6AsInt64:$imm6)>;
+def : Pat<(and S:$rn, (sra S:$rm, AArch64Base_ANDXASR_imm6AsInt8:$imm6)),
+        (ANDXASR S:$rm, S:$rn, AArch64Base_ANDXASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(and S:$rn, (shl S:$rm, AArch64Base_ANDXLSL_imm6AsInt64:$imm6)),
-        (ANDXLSL S:$rm, S:$rn, AArch64Base_ANDXLSL_imm6AsInt64:$imm6)>;
+def : Pat<(and S:$rn, (shl S:$rm, AArch64Base_ANDXLSL_imm6AsInt8:$imm6)),
+        (ANDXLSL S:$rm, S:$rn, AArch64Base_ANDXLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(and S:$rn, (srl S:$rm, AArch64Base_ANDXLSR_imm6AsInt64:$imm6)),
-        (ANDXLSR S:$rm, S:$rn, AArch64Base_ANDXLSR_imm6AsInt64:$imm6)>;
+def : Pat<(and S:$rn, (srl S:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6)),
+        (ANDXLSR S:$rm, S:$rn, AArch64Base_ANDXLSR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(sra S:$rn, S:$rm),
@@ -51053,8 +51053,8 @@ def : Pat<(sra S:$rn, S:$rm),
         (ASRX S:$rn, S:$rm)>;
 
 
-def : Pat<(xor S:$rn, AArch64Base_EORIW_immWSizeAsInt64:$immWSize),
-        (EORIW S:$rn, AArch64Base_EORIW_immWSizeAsInt64:$immWSize)>;
+def : Pat<(xor S:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize),
+        (EORIW S:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize)>;
 
 
 def : Pat<(xor S:$rn, AArch64Base_EORIX_immXSizeAsInt64:$immXSize),
@@ -51065,32 +51065,32 @@ def : Pat<(xor S:$rn, S:$rm),
         (EORW S:$rn, S:$rm)>;
 
 
-def : Pat<(xor S:$rn, (sra S:$rm, AArch64Base_EORWASR_imm6AsInt64:$imm6)),
-        (EORWASR S:$rn, S:$rm, AArch64Base_EORWASR_imm6AsInt64:$imm6)>;
+def : Pat<(xor S:$rn, (sra S:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6)),
+        (EORWASR S:$rn, S:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(xor S:$rn, (shl S:$rm, AArch64Base_EORWLSL_imm6AsInt64:$imm6)),
-        (EORWLSL S:$rn, S:$rm, AArch64Base_EORWLSL_imm6AsInt64:$imm6)>;
+def : Pat<(xor S:$rn, (shl S:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6)),
+        (EORWLSL S:$rn, S:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(xor S:$rn, (srl S:$rm, AArch64Base_EORWLSR_imm6AsInt64:$imm6)),
-        (EORWLSR S:$rn, S:$rm, AArch64Base_EORWLSR_imm6AsInt64:$imm6)>;
+def : Pat<(xor S:$rn, (srl S:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6)),
+        (EORWLSR S:$rn, S:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(xor S:$rn, S:$rm),
         (EORX S:$rn, S:$rm)>;
 
 
-def : Pat<(xor S:$rn, (sra S:$rm, AArch64Base_EORXASR_imm6AsInt64:$imm6)),
-        (EORXASR S:$rm, S:$rn, AArch64Base_EORXASR_imm6AsInt64:$imm6)>;
+def : Pat<(xor S:$rn, (sra S:$rm, AArch64Base_EORXASR_imm6AsInt8:$imm6)),
+        (EORXASR S:$rm, S:$rn, AArch64Base_EORXASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(xor S:$rn, (shl S:$rm, AArch64Base_EORXLSL_imm6AsInt64:$imm6)),
-        (EORXLSL S:$rm, S:$rn, AArch64Base_EORXLSL_imm6AsInt64:$imm6)>;
+def : Pat<(xor S:$rn, (shl S:$rm, AArch64Base_EORXLSL_imm6AsInt8:$imm6)),
+        (EORXLSL S:$rm, S:$rn, AArch64Base_EORXLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(xor S:$rn, (srl S:$rm, AArch64Base_EORXLSR_imm6AsInt64:$imm6)),
-        (EORXLSR S:$rm, S:$rn, AArch64Base_EORXLSR_imm6AsInt64:$imm6)>;
+def : Pat<(xor S:$rn, (srl S:$rm, AArch64Base_EORXLSR_imm6AsInt8:$imm6)),
+        (EORXLSR S:$rm, S:$rn, AArch64Base_EORXLSR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(zextloadi8 (add S:$rn, AArch64Base_LDRB_offsetAsInt64:$offset)),
@@ -51357,20 +51357,20 @@ def : Pat<(add S:$ra, (mul S:$rn, S:$rm)),
         (MADDX S:$rn, S:$rm, S:$ra)>;
 
 
-def : Pat<(shl AArch64Base_MOVZWPos16_imm16AsInt64:$imm16, (i32 16)),
-        (MOVZWPos16 AArch64Base_MOVZWPos16_imm16AsInt64:$imm16)>;
+def : Pat<(shl AArch64Base_MOVZWPos16_imm16AsInt16:$imm16, (i32 16)),
+        (MOVZWPos16 AArch64Base_MOVZWPos16_imm16AsInt16:$imm16)>;
 
 
-def : Pat<(shl AArch64Base_MOVZXPos16_imm16AsInt64:$imm16, (i64 16)),
-        (MOVZXPos16 AArch64Base_MOVZXPos16_imm16AsInt64:$imm16)>;
+def : Pat<(shl AArch64Base_MOVZXPos16_imm16AsInt16:$imm16, (i64 16)),
+        (MOVZXPos16 AArch64Base_MOVZXPos16_imm16AsInt16:$imm16)>;
 
 
-def : Pat<(shl AArch64Base_MOVZXPos32_imm16AsInt64:$imm16, (i64 32)),
-        (MOVZXPos32 AArch64Base_MOVZXPos32_imm16AsInt64:$imm16)>;
+def : Pat<(shl AArch64Base_MOVZXPos32_imm16AsInt16:$imm16, (i64 32)),
+        (MOVZXPos32 AArch64Base_MOVZXPos32_imm16AsInt16:$imm16)>;
 
 
-def : Pat<(shl AArch64Base_MOVZXPos48_imm16AsInt64:$imm16, (i64 48)),
-        (MOVZXPos48 AArch64Base_MOVZXPos48_imm16AsInt64:$imm16)>;
+def : Pat<(shl AArch64Base_MOVZXPos48_imm16AsInt16:$imm16, (i64 48)),
+        (MOVZXPos48 AArch64Base_MOVZXPos48_imm16AsInt16:$imm16)>;
 
 
 def : Pat<(sub S:$ra, (mul S:$rn, S:$rm)),
@@ -51381,8 +51381,8 @@ def : Pat<(sub S:$ra, (mul S:$rn, S:$rm)),
         (MSUBX S:$rn, S:$rm, S:$ra)>;
 
 
-def : Pat<(or S:$rn, AArch64Base_ORRIW_immWSizeAsInt64:$immWSize),
-        (ORRIW S:$rn, AArch64Base_ORRIW_immWSizeAsInt64:$immWSize)>;
+def : Pat<(or S:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize),
+        (ORRIW S:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize)>;
 
 
 def : Pat<(or S:$rn, AArch64Base_ORRIX_immXSizeAsInt64:$immXSize),
@@ -51393,40 +51393,40 @@ def : Pat<(or S:$rn, S:$rm),
         (ORRW S:$rn, S:$rm)>;
 
 
-def : Pat<(or S:$rn, (sra S:$rm, AArch64Base_ORRWASR_imm6AsInt64:$imm6)),
-        (ORRWASR S:$rn, S:$rm, AArch64Base_ORRWASR_imm6AsInt64:$imm6)>;
+def : Pat<(or S:$rn, (sra S:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6)),
+        (ORRWASR S:$rn, S:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(or S:$rn, (shl S:$rm, AArch64Base_ORRWLSL_imm6AsInt64:$imm6)),
-        (ORRWLSL S:$rn, S:$rm, AArch64Base_ORRWLSL_imm6AsInt64:$imm6)>;
+def : Pat<(or S:$rn, (shl S:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6)),
+        (ORRWLSL S:$rn, S:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(or S:$rn, (srl S:$rm, AArch64Base_ORRWLSR_imm6AsInt64:$imm6)),
-        (ORRWLSR S:$rn, S:$rm, AArch64Base_ORRWLSR_imm6AsInt64:$imm6)>;
+def : Pat<(or S:$rn, (srl S:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6)),
+        (ORRWLSR S:$rn, S:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(or S:$rn, S:$rm),
         (ORRX S:$rn, S:$rm)>;
 
 
-def : Pat<(or S:$rn, (sra S:$rm, AArch64Base_ORRXASR_imm6AsInt64:$imm6)),
-        (ORRXASR S:$rm, S:$rn, AArch64Base_ORRXASR_imm6AsInt64:$imm6)>;
+def : Pat<(or S:$rn, (sra S:$rm, AArch64Base_ORRXASR_imm6AsInt8:$imm6)),
+        (ORRXASR S:$rm, S:$rn, AArch64Base_ORRXASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(or S:$rn, (shl S:$rm, AArch64Base_ORRXLSL_imm6AsInt64:$imm6)),
-        (ORRXLSL S:$rm, S:$rn, AArch64Base_ORRXLSL_imm6AsInt64:$imm6)>;
+def : Pat<(or S:$rn, (shl S:$rm, AArch64Base_ORRXLSL_imm6AsInt8:$imm6)),
+        (ORRXLSL S:$rm, S:$rn, AArch64Base_ORRXLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(or S:$rn, (srl S:$rm, AArch64Base_ORRXLSR_imm6AsInt64:$imm6)),
-        (ORRXLSR S:$rm, S:$rn, AArch64Base_ORRXLSR_imm6AsInt64:$imm6)>;
+def : Pat<(or S:$rn, (srl S:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6)),
+        (ORRXLSR S:$rm, S:$rn, AArch64Base_ORRXLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(sra (shl S:$rn, AArch64Base_SBFMW_leftWSizeAsInt64:$leftWSize), AArch64Base_SBFMW_rightWSizeAsInt64:$rightWSize),
-        (SBFMW S:$rn, AArch64Base_SBFMW_leftWSizeAsInt64:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt64:$rightWSize)>;
+def : Pat<(sra (shl S:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize), AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize),
+        (SBFMW S:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize)>;
 
 
-def : Pat<(sra (shl S:$rn, AArch64Base_SBFMX_leftXSizeAsInt64:$leftXSize), AArch64Base_SBFMX_rightXSizeAsInt64:$rightXSize),
-        (SBFMX S:$rn, AArch64Base_SBFMX_leftXSizeAsInt64:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt64:$rightXSize)>;
+def : Pat<(sra (shl S:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize), AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize),
+        (SBFMX S:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize)>;
 
 
 def : Pat<(sdiv S:$rn, S:$rm),
@@ -51531,8 +51531,8 @@ def : Pat<(sub S:$rn, S:$rm),
         (SUBW S:$rn, S:$rm)>;
 
 
-def : Pat<(sub S:$rn, (sra S:$rm, AArch64Base_SUBWASR_imm6AsInt64:$imm6)),
-        (SUBWASR S:$rn, S:$rm, AArch64Base_SUBWASR_imm6AsInt64:$imm6)>;
+def : Pat<(sub S:$rn, (sra S:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6)),
+        (SUBWASR S:$rn, S:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(sub S:$rn, AArch64Base_SUBWI_imm12XAsInt64:$imm12X),
@@ -51543,20 +51543,20 @@ def : Pat<(sub S:$rn, AArch64Base_SUBWI12_imm12SAsInt64:$imm12S),
         (SUBWI12 S:$rn, AArch64Base_SUBWI12_imm12SAsInt64:$imm12S)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWLSL_imm6AsInt64:$imm6)),
-        (SUBWLSL S:$rn, S:$rm, AArch64Base_SUBWLSL_imm6AsInt64:$imm6)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6)),
+        (SUBWLSL S:$rn, S:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(sub S:$rn, (srl S:$rm, AArch64Base_SUBWLSR_imm6AsInt64:$imm6)),
-        (SUBWLSR S:$rn, S:$rm, AArch64Base_SUBWLSR_imm6AsInt64:$imm6)>;
+def : Pat<(sub S:$rn, (srl S:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6)),
+        (SUBWLSR S:$rn, S:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(sub S:$rn, S:$rm),
         (SUBWS S:$rn, S:$rm)>;
 
 
-def : Pat<(sub S:$rn, (sra S:$rm, AArch64Base_SUBWSASR_imm6AsInt64:$imm6)),
-        (SUBWSASR S:$rn, S:$rm, AArch64Base_SUBWSASR_imm6AsInt64:$imm6)>;
+def : Pat<(sub S:$rn, (sra S:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6)),
+        (SUBWSASR S:$rn, S:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(sub S:$rn, AArch64Base_SUBWSI_imm12XAsInt64:$imm12X),
@@ -51567,20 +51567,20 @@ def : Pat<(sub S:$rn, AArch64Base_SUBWSI12_imm12SAsInt64:$imm12S),
         (SUBWSI12 S:$rn, AArch64Base_SUBWSI12_imm12SAsInt64:$imm12S)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSLSL_imm6AsInt64:$imm6)),
-        (SUBWSLSL S:$rn, S:$rm, AArch64Base_SUBWSLSL_imm6AsInt64:$imm6)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6)),
+        (SUBWSLSL S:$rn, S:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(sub S:$rn, (srl S:$rm, AArch64Base_SUBWSLSR_imm6AsInt64:$imm6)),
-        (SUBWSLSR S:$rn, S:$rm, AArch64Base_SUBWSLSR_imm6AsInt64:$imm6)>;
+def : Pat<(sub S:$rn, (srl S:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6)),
+        (SUBWSLSR S:$rn, S:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSSXSW_imm3AsInt64:$imm3)),
-        (SUBWSSXSW S:$rn, S:$rm, AArch64Base_SUBWSSXSW_imm3AsInt64:$imm3)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSSXSW_imm3AsInt8:$imm3)),
+        (SUBWSSXSW S:$rn, S:$rm, AArch64Base_SUBWSSXSW_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSSXSX_imm3AsInt64:$imm3)),
-        (SUBWSSXSX S:$rn, S:$rm, AArch64Base_SUBWSSXSX_imm3AsInt64:$imm3)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSSXSX_imm3AsInt8:$imm3)),
+        (SUBWSSXSX S:$rn, S:$rm, AArch64Base_SUBWSSXSX_imm3AsInt8:$imm3)>;
 
 
 def : Pat<(sub S:$rn, S:$rm),
@@ -51591,12 +51591,12 @@ def : Pat<(sub S:$rn, S:$rm),
         (SUBWSSXTX S:$rn, S:$rm)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSUXSW_imm3AsInt64:$imm3)),
-        (SUBWSUXSW S:$rn, S:$rm, AArch64Base_SUBWSUXSW_imm3AsInt64:$imm3)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSUXSW_imm3AsInt8:$imm3)),
+        (SUBWSUXSW S:$rn, S:$rm, AArch64Base_SUBWSUXSW_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSUXSX_imm3AsInt64:$imm3)),
-        (SUBWSUXSX S:$rn, S:$rm, AArch64Base_SUBWSUXSX_imm3AsInt64:$imm3)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSUXSX_imm3AsInt8:$imm3)),
+        (SUBWSUXSX S:$rn, S:$rm, AArch64Base_SUBWSUXSX_imm3AsInt8:$imm3)>;
 
 
 def : Pat<(sub S:$rn, S:$rm),
@@ -51607,12 +51607,12 @@ def : Pat<(sub S:$rn, S:$rm),
         (SUBWSUXTX S:$rn, S:$rm)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSXSW_imm3AsInt64:$imm3)),
-        (SUBWSXSW S:$rn, S:$rm, AArch64Base_SUBWSXSW_imm3AsInt64:$imm3)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSXSW_imm3AsInt8:$imm3)),
+        (SUBWSXSW S:$rn, S:$rm, AArch64Base_SUBWSXSW_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSXSX_imm3AsInt64:$imm3)),
-        (SUBWSXSX S:$rn, S:$rm, AArch64Base_SUBWSXSX_imm3AsInt64:$imm3)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSXSX_imm3AsInt8:$imm3)),
+        (SUBWSXSX S:$rn, S:$rm, AArch64Base_SUBWSXSX_imm3AsInt8:$imm3)>;
 
 
 def : Pat<(sub S:$rn, S:$rm),
@@ -51623,12 +51623,12 @@ def : Pat<(sub S:$rn, S:$rm),
         (SUBWSXTX S:$rn, S:$rm)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWUXSW_imm3AsInt64:$imm3)),
-        (SUBWUXSW S:$rn, S:$rm, AArch64Base_SUBWUXSW_imm3AsInt64:$imm3)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWUXSW_imm3AsInt8:$imm3)),
+        (SUBWUXSW S:$rn, S:$rm, AArch64Base_SUBWUXSW_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWUXSX_imm3AsInt64:$imm3)),
-        (SUBWUXSX S:$rn, S:$rm, AArch64Base_SUBWUXSX_imm3AsInt64:$imm3)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWUXSX_imm3AsInt8:$imm3)),
+        (SUBWUXSX S:$rn, S:$rm, AArch64Base_SUBWUXSX_imm3AsInt8:$imm3)>;
 
 
 def : Pat<(sub S:$rn, S:$rm),
@@ -51643,8 +51643,8 @@ def : Pat<(sub S:$rn, S:$rm),
         (SUBX S:$rn, S:$rm)>;
 
 
-def : Pat<(sub S:$rn, (sra S:$rm, AArch64Base_SUBXASR_imm6AsInt64:$imm6)),
-        (SUBXASR S:$rm, S:$rn, AArch64Base_SUBXASR_imm6AsInt64:$imm6)>;
+def : Pat<(sub S:$rn, (sra S:$rm, AArch64Base_SUBXASR_imm6AsInt8:$imm6)),
+        (SUBXASR S:$rm, S:$rn, AArch64Base_SUBXASR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(sub S:$rn, AArch64Base_SUBXI_imm12XAsInt64:$imm12X),
@@ -51655,20 +51655,20 @@ def : Pat<(sub S:$rn, AArch64Base_SUBXI12_imm12SAsInt64:$imm12S),
         (SUBXI12 S:$rn, AArch64Base_SUBXI12_imm12SAsInt64:$imm12S)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXLSL_imm6AsInt64:$imm6)),
-        (SUBXLSL S:$rm, S:$rn, AArch64Base_SUBXLSL_imm6AsInt64:$imm6)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXLSL_imm6AsInt8:$imm6)),
+        (SUBXLSL S:$rm, S:$rn, AArch64Base_SUBXLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(sub S:$rn, (srl S:$rm, AArch64Base_SUBXLSR_imm6AsInt64:$imm6)),
-        (SUBXLSR S:$rm, S:$rn, AArch64Base_SUBXLSR_imm6AsInt64:$imm6)>;
+def : Pat<(sub S:$rn, (srl S:$rm, AArch64Base_SUBXLSR_imm6AsInt8:$imm6)),
+        (SUBXLSR S:$rm, S:$rn, AArch64Base_SUBXLSR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(sub S:$rn, S:$rm),
         (SUBXS S:$rn, S:$rm)>;
 
 
-def : Pat<(sub S:$rn, (sra S:$rm, AArch64Base_SUBXSASR_imm6AsInt64:$imm6)),
-        (SUBXSASR S:$rm, S:$rn, AArch64Base_SUBXSASR_imm6AsInt64:$imm6)>;
+def : Pat<(sub S:$rn, (sra S:$rm, AArch64Base_SUBXSASR_imm6AsInt8:$imm6)),
+        (SUBXSASR S:$rm, S:$rn, AArch64Base_SUBXSASR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(sub S:$rn, AArch64Base_SUBXSI_imm12XAsInt64:$imm12X),
@@ -51679,20 +51679,20 @@ def : Pat<(sub S:$rn, AArch64Base_SUBXSI12_imm12SAsInt64:$imm12S),
         (SUBXSI12 S:$rn, AArch64Base_SUBXSI12_imm12SAsInt64:$imm12S)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSLSL_imm6AsInt64:$imm6)),
-        (SUBXSLSL S:$rm, S:$rn, AArch64Base_SUBXSLSL_imm6AsInt64:$imm6)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSLSL_imm6AsInt8:$imm6)),
+        (SUBXSLSL S:$rm, S:$rn, AArch64Base_SUBXSLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(sub S:$rn, (srl S:$rm, AArch64Base_SUBXSLSR_imm6AsInt64:$imm6)),
-        (SUBXSLSR S:$rm, S:$rn, AArch64Base_SUBXSLSR_imm6AsInt64:$imm6)>;
+def : Pat<(sub S:$rn, (srl S:$rm, AArch64Base_SUBXSLSR_imm6AsInt8:$imm6)),
+        (SUBXSLSR S:$rm, S:$rn, AArch64Base_SUBXSLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSSXSW_imm3AsInt64:$imm3)),
-        (SUBXSSXSW S:$rm, S:$rn, AArch64Base_SUBXSSXSW_imm3AsInt64:$imm3)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSSXSW_imm3AsInt8:$imm3)),
+        (SUBXSSXSW S:$rm, S:$rn, AArch64Base_SUBXSSXSW_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSSXSX_imm3AsInt64:$imm3)),
-        (SUBXSSXSX S:$rm, S:$rn, AArch64Base_SUBXSSXSX_imm3AsInt64:$imm3)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSSXSX_imm3AsInt8:$imm3)),
+        (SUBXSSXSX S:$rm, S:$rn, AArch64Base_SUBXSSXSX_imm3AsInt8:$imm3)>;
 
 
 def : Pat<(sub S:$rn, S:$rm),
@@ -51703,12 +51703,12 @@ def : Pat<(sub S:$rn, S:$rm),
         (SUBXSSXTX S:$rm, S:$rn)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSUXSW_imm3AsInt64:$imm3)),
-        (SUBXSUXSW S:$rm, S:$rn, AArch64Base_SUBXSUXSW_imm3AsInt64:$imm3)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSUXSW_imm3AsInt8:$imm3)),
+        (SUBXSUXSW S:$rm, S:$rn, AArch64Base_SUBXSUXSW_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSUXSX_imm3AsInt64:$imm3)),
-        (SUBXSUXSX S:$rm, S:$rn, AArch64Base_SUBXSUXSX_imm3AsInt64:$imm3)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSUXSX_imm3AsInt8:$imm3)),
+        (SUBXSUXSX S:$rm, S:$rn, AArch64Base_SUBXSUXSX_imm3AsInt8:$imm3)>;
 
 
 def : Pat<(sub S:$rn, S:$rm),
@@ -51719,12 +51719,12 @@ def : Pat<(sub S:$rn, S:$rm),
         (SUBXSUXTX S:$rm, S:$rn)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSXSW_imm3AsInt64:$imm3)),
-        (SUBXSXSW S:$rm, S:$rn, AArch64Base_SUBXSXSW_imm3AsInt64:$imm3)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSXSW_imm3AsInt8:$imm3)),
+        (SUBXSXSW S:$rm, S:$rn, AArch64Base_SUBXSXSW_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSXSX_imm3AsInt64:$imm3)),
-        (SUBXSXSX S:$rm, S:$rn, AArch64Base_SUBXSXSX_imm3AsInt64:$imm3)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSXSX_imm3AsInt8:$imm3)),
+        (SUBXSXSX S:$rm, S:$rn, AArch64Base_SUBXSXSX_imm3AsInt8:$imm3)>;
 
 
 def : Pat<(sub S:$rn, S:$rm),
@@ -51735,12 +51735,12 @@ def : Pat<(sub S:$rn, S:$rm),
         (SUBXSXTX S:$rm, S:$rn)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXUXSW_imm3AsInt64:$imm3)),
-        (SUBXUXSW S:$rm, S:$rn, AArch64Base_SUBXUXSW_imm3AsInt64:$imm3)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXUXSW_imm3AsInt8:$imm3)),
+        (SUBXUXSW S:$rm, S:$rn, AArch64Base_SUBXUXSW_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXUXSX_imm3AsInt64:$imm3)),
-        (SUBXUXSX S:$rm, S:$rn, AArch64Base_SUBXUXSX_imm3AsInt64:$imm3)>;
+def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXUXSX_imm3AsInt8:$imm3)),
+        (SUBXUXSX S:$rm, S:$rn, AArch64Base_SUBXUXSX_imm3AsInt8:$imm3)>;
 
 
 def : Pat<(sub S:$rn, S:$rm),
@@ -51751,12 +51751,12 @@ def : Pat<(sub S:$rn, S:$rm),
         (SUBXUXTX S:$rm, S:$rn)>;
 
 
-def : Pat<(srl (shl S:$rn, AArch64Base_UBFMW_leftWSizeAsInt64:$leftWSize), AArch64Base_UBFMW_rightWSizeAsInt64:$rightWSize),
-        (UBFMW S:$rn, AArch64Base_UBFMW_leftWSizeAsInt64:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt64:$rightWSize)>;
+def : Pat<(srl (shl S:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize), AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize),
+        (UBFMW S:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize)>;
 
 
-def : Pat<(srl (shl S:$rn, AArch64Base_UBFMX_leftXSizeAsInt64:$leftXSize), AArch64Base_UBFMX_rightXSizeAsInt64:$rightXSize),
-        (UBFMX S:$rn, AArch64Base_UBFMX_leftXSizeAsInt64:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt64:$rightXSize)>;
+def : Pat<(srl (shl S:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize), AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize),
+        (UBFMX S:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize)>;
 
 
 def : Pat<(udiv S:$rn, S:$rm),
