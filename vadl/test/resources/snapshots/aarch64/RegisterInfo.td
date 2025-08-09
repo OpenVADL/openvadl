@@ -1,9 +1,7 @@
-let Namespace = "aarch64temp" in {
 // SubRegIndexes for GPR registers
-def sub_32   : SubRegIndex<32>;
-def sub_32_hi : SubRegIndex<32, 32>;
-def full_64    : SubRegIndex<64>;
-}
+def SUB_32   : SubRegIndex<32>;
+def SUB_32_HI : SubRegIndex<32, 32>;
+def FULL_64    : SubRegIndex<64>;
 
 
 def SP : Register<"SP">
@@ -270,582 +268,6 @@ let CoveredBySubRegs = 0;
 
 
 let HWEncoding = 0;
-
-let isArtificial = false;
-}
-def S0 : Register<"S0">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X0";
-let AltNames = [ "X0"  ];
-let Aliases = [ ];
-let SubRegs = [ R0, X0, W0 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 15 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 0;
-
-
-let isArtificial = false;
-}
-def S1 : Register<"S1">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X1";
-let AltNames = [ "X1"  ];
-let Aliases = [ ];
-let SubRegs = [ R1, X1, W1 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 16 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 1;
-
-
-let isArtificial = false;
-}
-def S2 : Register<"S2">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X2";
-let AltNames = [ "X2"  ];
-let Aliases = [ ];
-let SubRegs = [ R2, X2, W2 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 17 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 2;
-
-
-let isArtificial = false;
-}
-def S3 : Register<"S3">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X3";
-let AltNames = [ "X3"  ];
-let Aliases = [ ];
-let SubRegs = [ R3, X3, W3 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 18 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 3;
-
-
-let isArtificial = false;
-}
-def S4 : Register<"S4">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X4";
-let AltNames = [ "X4"  ];
-let Aliases = [ ];
-let SubRegs = [ R4, X4, W4 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 19 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 4;
-
-
-let isArtificial = false;
-}
-def S5 : Register<"S5">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X5";
-let AltNames = [ "X5"  ];
-let Aliases = [ ];
-let SubRegs = [ R5, X5, W5 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 20 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 5;
-
-
-let isArtificial = false;
-}
-def S6 : Register<"S6">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X6";
-let AltNames = [ "X6"  ];
-let Aliases = [ ];
-let SubRegs = [ R6, X6, W6 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 21 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 6;
-
-
-let isArtificial = false;
-}
-def S7 : Register<"S7">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X7";
-let AltNames = [ "X7"  ];
-let Aliases = [ ];
-let SubRegs = [ R7, X7, W7 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 22 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 7;
-
-
-let isArtificial = false;
-}
-def S8 : Register<"S8">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X8";
-let AltNames = [ "X8"  ];
-let Aliases = [ ];
-let SubRegs = [ R8, X8, W8 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 23 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 8;
-
-
-let isArtificial = false;
-}
-def S9 : Register<"S9">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X9";
-let AltNames = [ "X9"  ];
-let Aliases = [ ];
-let SubRegs = [ R9, X9, W9 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 24 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 9;
-
-
-let isArtificial = false;
-}
-def S10 : Register<"S10">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X10";
-let AltNames = [ "X10"  ];
-let Aliases = [ ];
-let SubRegs = [ R10, X10, W10 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 25 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 10;
-
-
-let isArtificial = false;
-}
-def S11 : Register<"S11">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X11";
-let AltNames = [ "X11"  ];
-let Aliases = [ ];
-let SubRegs = [ R11, X11, W11 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 26 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 11;
-
-
-let isArtificial = false;
-}
-def S12 : Register<"S12">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X12";
-let AltNames = [ "X12"  ];
-let Aliases = [ ];
-let SubRegs = [ R12, X12, W12 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 27 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 12;
-
-
-let isArtificial = false;
-}
-def S13 : Register<"S13">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X13";
-let AltNames = [ "X13"  ];
-let Aliases = [ ];
-let SubRegs = [ R13, X13, W13 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 28 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 13;
-
-
-let isArtificial = false;
-}
-def S14 : Register<"S14">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X14";
-let AltNames = [ "X14"  ];
-let Aliases = [ ];
-let SubRegs = [ R14, X14, W14 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 29 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 14;
-
-
-let isArtificial = false;
-}
-def S15 : Register<"S15">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X15";
-let AltNames = [ "X15"  ];
-let Aliases = [ ];
-let SubRegs = [ R15, X15, W15 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 30 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 15;
-
-
-let isArtificial = false;
-}
-def S16 : Register<"S16">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X16";
-let AltNames = [ "X16"  ];
-let Aliases = [ ];
-let SubRegs = [ R16, X16, W16 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 31 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 16;
-
-
-let isArtificial = false;
-}
-def S17 : Register<"S17">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X17";
-let AltNames = [ "X17"  ];
-let Aliases = [ ];
-let SubRegs = [ R17, X17, W17 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 32 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 17;
-
-
-let isArtificial = false;
-}
-def S18 : Register<"S18">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X18";
-let AltNames = [ "X18"  ];
-let Aliases = [ ];
-let SubRegs = [ R18, X18, W18 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 33 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 18;
-
-
-let isArtificial = false;
-}
-def S19 : Register<"S19">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X19";
-let AltNames = [ "X19"  ];
-let Aliases = [ ];
-let SubRegs = [ R19, X19, W19 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 34 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 19;
-
-
-let isArtificial = false;
-}
-def S20 : Register<"S20">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X20";
-let AltNames = [ "X20"  ];
-let Aliases = [ ];
-let SubRegs = [ R20, X20, W20 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 35 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 20;
-
-
-let isArtificial = false;
-}
-def S21 : Register<"S21">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X21";
-let AltNames = [ "X21"  ];
-let Aliases = [ ];
-let SubRegs = [ R21, X21, W21 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 36 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 21;
-
-
-let isArtificial = false;
-}
-def S22 : Register<"S22">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X22";
-let AltNames = [ "X22"  ];
-let Aliases = [ ];
-let SubRegs = [ R22, X22, W22 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 37 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 22;
-
-
-let isArtificial = false;
-}
-def S23 : Register<"S23">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X23";
-let AltNames = [ "X23"  ];
-let Aliases = [ ];
-let SubRegs = [ R23, X23, W23 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 38 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 23;
-
-
-let isArtificial = false;
-}
-def S24 : Register<"S24">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X24";
-let AltNames = [ "X24"  ];
-let Aliases = [ ];
-let SubRegs = [ R24, X24, W24 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 39 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 24;
-
-
-let isArtificial = false;
-}
-def S25 : Register<"S25">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X25";
-let AltNames = [ "X25"  ];
-let Aliases = [ ];
-let SubRegs = [ R25, X25, W25 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 40 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 25;
-
-
-let isArtificial = false;
-}
-def S26 : Register<"S26">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X26";
-let AltNames = [ "X26"  ];
-let Aliases = [ ];
-let SubRegs = [ R26, X26, W26 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 41 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 26;
-
-
-let isArtificial = false;
-}
-def S27 : Register<"S27">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X27";
-let AltNames = [ "X27"  ];
-let Aliases = [ ];
-let SubRegs = [ R27, X27, W27 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 42 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 27;
-
-
-let isArtificial = false;
-}
-def S28 : Register<"S28">
-{
-let Namespace = "aarch64temp";
-let AsmName = "X28";
-let AltNames = [ "X28"  ];
-let Aliases = [ ];
-let SubRegs = [ R28, X28, W28 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 43 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 28;
-
-
-let isArtificial = false;
-}
-def S29 : Register<"S29">
-{
-let Namespace = "aarch64temp";
-let AsmName = "A_FP";
-let AltNames = [ "A_FP"  ];
-let Aliases = [ ];
-let SubRegs = [ R29, X29, W29 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 44 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 29;
-
-
-let isArtificial = false;
-}
-def S30 : Register<"S30">
-{
-let Namespace = "aarch64temp";
-let AsmName = "A_LR";
-let AltNames = [ "A_LR"  ];
-let Aliases = [ ];
-let SubRegs = [ R30, X30, W30 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 45 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 30;
-
-
-let isArtificial = false;
-}
-def S31 : Register<"S31">
-{
-let Namespace = "aarch64temp";
-let AsmName = "A_SP";
-let AltNames = [ "A_SP"  ];
-let Aliases = [ ];
-let SubRegs = [ R31, X31, W31 ];
-let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
-let RegAltNameIndices = [];
-let DwarfNumbers = [ 46 ];
-list<int> CostPerUse = [0];
-let CoveredBySubRegs = 0;
-
-let HWEncoding{4-0} = 31;
-
 
 let isArtificial = false;
 }
@@ -2569,6 +1991,582 @@ let SubRegs = [  ];
 let SubRegIndices = [  ];
 let RegAltNameIndices = [];
 let DwarfNumbers = [ 142 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 31;
+
+
+let isArtificial = false;
+}
+def S0 : Register<"S0">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X0";
+let AltNames = [ "X0"  ];
+let Aliases = [ ];
+let SubRegs = [ R0, X0, W0 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 15 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 0;
+
+
+let isArtificial = false;
+}
+def S1 : Register<"S1">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X1";
+let AltNames = [ "X1"  ];
+let Aliases = [ ];
+let SubRegs = [ R1, X1, W1 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 16 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 1;
+
+
+let isArtificial = false;
+}
+def S2 : Register<"S2">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X2";
+let AltNames = [ "X2"  ];
+let Aliases = [ ];
+let SubRegs = [ R2, X2, W2 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 17 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 2;
+
+
+let isArtificial = false;
+}
+def S3 : Register<"S3">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X3";
+let AltNames = [ "X3"  ];
+let Aliases = [ ];
+let SubRegs = [ R3, X3, W3 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 18 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 3;
+
+
+let isArtificial = false;
+}
+def S4 : Register<"S4">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X4";
+let AltNames = [ "X4"  ];
+let Aliases = [ ];
+let SubRegs = [ R4, X4, W4 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 19 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 4;
+
+
+let isArtificial = false;
+}
+def S5 : Register<"S5">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X5";
+let AltNames = [ "X5"  ];
+let Aliases = [ ];
+let SubRegs = [ R5, X5, W5 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 20 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 5;
+
+
+let isArtificial = false;
+}
+def S6 : Register<"S6">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X6";
+let AltNames = [ "X6"  ];
+let Aliases = [ ];
+let SubRegs = [ R6, X6, W6 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 21 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 6;
+
+
+let isArtificial = false;
+}
+def S7 : Register<"S7">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X7";
+let AltNames = [ "X7"  ];
+let Aliases = [ ];
+let SubRegs = [ R7, X7, W7 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 22 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 7;
+
+
+let isArtificial = false;
+}
+def S8 : Register<"S8">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X8";
+let AltNames = [ "X8"  ];
+let Aliases = [ ];
+let SubRegs = [ R8, X8, W8 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 23 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 8;
+
+
+let isArtificial = false;
+}
+def S9 : Register<"S9">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X9";
+let AltNames = [ "X9"  ];
+let Aliases = [ ];
+let SubRegs = [ R9, X9, W9 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 24 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 9;
+
+
+let isArtificial = false;
+}
+def S10 : Register<"S10">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X10";
+let AltNames = [ "X10"  ];
+let Aliases = [ ];
+let SubRegs = [ R10, X10, W10 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 25 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 10;
+
+
+let isArtificial = false;
+}
+def S11 : Register<"S11">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X11";
+let AltNames = [ "X11"  ];
+let Aliases = [ ];
+let SubRegs = [ R11, X11, W11 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 26 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 11;
+
+
+let isArtificial = false;
+}
+def S12 : Register<"S12">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X12";
+let AltNames = [ "X12"  ];
+let Aliases = [ ];
+let SubRegs = [ R12, X12, W12 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 27 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 12;
+
+
+let isArtificial = false;
+}
+def S13 : Register<"S13">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X13";
+let AltNames = [ "X13"  ];
+let Aliases = [ ];
+let SubRegs = [ R13, X13, W13 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 28 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 13;
+
+
+let isArtificial = false;
+}
+def S14 : Register<"S14">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X14";
+let AltNames = [ "X14"  ];
+let Aliases = [ ];
+let SubRegs = [ R14, X14, W14 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 29 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 14;
+
+
+let isArtificial = false;
+}
+def S15 : Register<"S15">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X15";
+let AltNames = [ "X15"  ];
+let Aliases = [ ];
+let SubRegs = [ R15, X15, W15 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 30 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 15;
+
+
+let isArtificial = false;
+}
+def S16 : Register<"S16">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X16";
+let AltNames = [ "X16"  ];
+let Aliases = [ ];
+let SubRegs = [ R16, X16, W16 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 31 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 16;
+
+
+let isArtificial = false;
+}
+def S17 : Register<"S17">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X17";
+let AltNames = [ "X17"  ];
+let Aliases = [ ];
+let SubRegs = [ R17, X17, W17 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 32 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 17;
+
+
+let isArtificial = false;
+}
+def S18 : Register<"S18">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X18";
+let AltNames = [ "X18"  ];
+let Aliases = [ ];
+let SubRegs = [ R18, X18, W18 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 33 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 18;
+
+
+let isArtificial = false;
+}
+def S19 : Register<"S19">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X19";
+let AltNames = [ "X19"  ];
+let Aliases = [ ];
+let SubRegs = [ R19, X19, W19 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 34 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 19;
+
+
+let isArtificial = false;
+}
+def S20 : Register<"S20">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X20";
+let AltNames = [ "X20"  ];
+let Aliases = [ ];
+let SubRegs = [ R20, X20, W20 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 35 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 20;
+
+
+let isArtificial = false;
+}
+def S21 : Register<"S21">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X21";
+let AltNames = [ "X21"  ];
+let Aliases = [ ];
+let SubRegs = [ R21, X21, W21 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 36 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 21;
+
+
+let isArtificial = false;
+}
+def S22 : Register<"S22">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X22";
+let AltNames = [ "X22"  ];
+let Aliases = [ ];
+let SubRegs = [ R22, X22, W22 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 37 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 22;
+
+
+let isArtificial = false;
+}
+def S23 : Register<"S23">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X23";
+let AltNames = [ "X23"  ];
+let Aliases = [ ];
+let SubRegs = [ R23, X23, W23 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 38 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 23;
+
+
+let isArtificial = false;
+}
+def S24 : Register<"S24">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X24";
+let AltNames = [ "X24"  ];
+let Aliases = [ ];
+let SubRegs = [ R24, X24, W24 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 39 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 24;
+
+
+let isArtificial = false;
+}
+def S25 : Register<"S25">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X25";
+let AltNames = [ "X25"  ];
+let Aliases = [ ];
+let SubRegs = [ R25, X25, W25 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 40 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 25;
+
+
+let isArtificial = false;
+}
+def S26 : Register<"S26">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X26";
+let AltNames = [ "X26"  ];
+let Aliases = [ ];
+let SubRegs = [ R26, X26, W26 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 41 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 26;
+
+
+let isArtificial = false;
+}
+def S27 : Register<"S27">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X27";
+let AltNames = [ "X27"  ];
+let Aliases = [ ];
+let SubRegs = [ R27, X27, W27 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 42 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 27;
+
+
+let isArtificial = false;
+}
+def S28 : Register<"S28">
+{
+let Namespace = "aarch64temp";
+let AsmName = "X28";
+let AltNames = [ "X28"  ];
+let Aliases = [ ];
+let SubRegs = [ R28, X28, W28 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 43 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 28;
+
+
+let isArtificial = false;
+}
+def S29 : Register<"S29">
+{
+let Namespace = "aarch64temp";
+let AsmName = "A_FP";
+let AltNames = [ "A_FP"  ];
+let Aliases = [ ];
+let SubRegs = [ R29, X29, W29 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 44 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 29;
+
+
+let isArtificial = false;
+}
+def S30 : Register<"S30">
+{
+let Namespace = "aarch64temp";
+let AsmName = "A_LR";
+let AltNames = [ "A_LR"  ];
+let Aliases = [ ];
+let SubRegs = [ R30, X30, W30 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 45 ];
+list<int> CostPerUse = [0];
+let CoveredBySubRegs = 0;
+
+let HWEncoding{4-0} = 30;
+
+
+let isArtificial = false;
+}
+def S31 : Register<"S31">
+{
+let Namespace = "aarch64temp";
+let AsmName = "A_SP";
+let AltNames = [ "A_SP"  ];
+let Aliases = [ ];
+let SubRegs = [ R31, X31, W31 ];
+let SubRegIndices = [ SUB_32, FULL_64, SUB_32 ];
+let RegAltNameIndices = [];
+let DwarfNumbers = [ 46 ];
 list<int> CostPerUse = [0];
 let CoveredBySubRegs = 0;
 
