@@ -165,4 +165,11 @@ public class BitsType extends DataType {
   public BitsType withBitWidth(int bitWidth) {
     return Type.bits(bitWidth);
   }
+
+  /**
+   * Makes a type signed if it unsigned. So u8 becomes i8.
+   */
+  public BitsType makeSigned() {
+    return new SIntType(bitWidth);
+  }
 }

@@ -370,8 +370,8 @@ public class GenerateInstructionOperandsPass extends Pass {
    */
   private GcbInstructionOperand mapFrom(
       ReadRegTensorNode node) {
-    if (node.address() instanceof FieldRefNode field) {
-      return new GcbInstructionRegisterFileOperand(node, field);
+    if (node.address() instanceof FieldRefNode fieldRefNode) {
+      return new GcbInstructionRegisterFileOperand(node, fieldRefNode.formatField());
     } else if (node.address() instanceof FuncParamNode funcParamNode) {
       return new GcbInstructionIndexedRegisterFileOperand(node, funcParamNode);
     } else if (node.address() instanceof ConstantNode constantNode) {
@@ -399,7 +399,6 @@ public class GenerateInstructionOperandsPass extends Pass {
           node.address().location()).build();
     }
   }
-
 
   /**
    * Returns a {@link GcbInstructionOperand} given a {@link Node}.

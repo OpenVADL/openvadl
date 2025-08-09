@@ -126,14 +126,14 @@ public class CppTypeMap {
   }
 
   /**
-   * Upcast the given type to the next fitting bit size. It will not upcast {@code type} when it
+   * Upcast the given type to the next fitting bit size. It will not upcast the {@code type} when it
    * is already a valid cpp type.
    */
   public static BitsType upcast(Type type) {
     if (type instanceof BitsType cast) {
       return cast.withBitWidth(nextFittingBitSize(cast.bitWidth()));
     } else {
-      throw new RuntimeException("Non bits type are not supported");
+      throw new RuntimeException("Non bits type are not supported: " + type.name());
     }
   }
 

@@ -20,7 +20,9 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
@@ -30,10 +32,14 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.viam.Abi;
+import vadl.types.BitsType;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.passes.NormalizeFieldsToFieldAccessFunctionsPass;
+import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 
 /**
  * This pass extracts the immediates from the TableGen records.
@@ -53,46 +59,48 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
   @Override
   public List<TableGenImmediateRecord> execute(PassResults passResults,
                                                Specification viam) throws IOException {
-    var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().orElseThrow();
+    var snapshots =
+        (Map<Instruction, Graph>) passResults.lastResultOf(SnapshotInstructionBehaviorPass.class);
     var immediates = new ArrayList<TableGenImmediateRecord>();
 
     // We do it first for machine instructions.
-    viam.isa().orElseThrow()
-        .ownInstructions().forEach(instruction -> {
-          instruction.format().fieldAccesses().forEach(fieldAccess -> {
-            // When a field access is changed to a field access function it is
-            // added the instruction format's field accesses. Therefore,
-            // we will have a lot field accesses which are not part of the instruction's behavior.
-            if (fieldAccess
-                instanceof NormalizeFieldsToFieldAccessFunctionsPass.GeneratedFieldAccess
-                genFieldAccess) {
-              if (!genFieldAccess.instruction().equals(instruction)) {
-                // If we have generated a field access for an instruction then only generate
-                // an immediate record if it's the same instruction.
-                return;
-              }
-            }
+    snapshots.entrySet().stream().sorted(
+            Comparator.comparing(o -> o.getKey().identifier.simpleName()))
+        .forEach(
+            (entry) -> {
+              var instruction = entry.getKey();
+              var graph = entry.getValue();
+              var fieldAccesses = graph.getNodes(FieldAccessRefNode.class).toList();
 
-            var originalType = abi.stackPointer().registerFile().resultType();
-            var llvmType = ValueType.from(originalType);
+              fieldAccesses.forEach(fieldAccessRefNode -> {
+                var fieldAccess = fieldAccessRefNode.fieldAccess();
+                // When a field access is changed to a field access function it is
+                // added the instruction format's field accesses. Therefore,
+                // we will have a lot field accesses which are not part of the instruction's
+                // behavior.
+                if (fieldAccess
+                    instanceof NormalizeFieldsToFieldAccessFunctionsPass.GeneratedFieldAccess
+                    genFieldAccess) {
+                  if (!genFieldAccess.instruction().equals(instruction)) {
+                    // If we have generated a field access for an instruction then only generate
+                    // an immediate record if it's the same instruction.
+                    return;
+                  }
+                }
 
-            if (llvmType.isEmpty()) {
-              var upcastedType = CppTypeMap.upcast(originalType);
-              var upcastedValueType =
-                  ensurePresent(ValueType.from(upcastedType), () -> Diagnostic.error(
-                      "Compiler generator was not able to change the type to the architecture's "
-                          + "bit width: " + upcastedType.toString(),
-                      fieldAccess.location()));
-              immediates.add(new TableGenImmediateRecord(instruction,
-                  fieldAccess,
-                  upcastedValueType));
-            } else {
-              immediates.add(new TableGenImmediateRecord(instruction,
-                  fieldAccess,
-                  llvmType.get()));
-            }
-          });
-        });
+                var type = (BitsType) fieldAccessRefNode.type().asDataType();
+                var upcastedType = CppTypeMap.upcast(type.makeSigned());
+                var upcastedValueType =
+                    ensurePresent(ValueType.from(upcastedType), () -> Diagnostic.error(
+                        "Compiler generator was not able to change the type to the architecture's "
+                            + "bit width: " + upcastedType.toString(),
+                        fieldAccess.location()));
+                immediates.add(new TableGenImmediateRecord(instruction,
+                    fieldAccess,
+                    upcastedValueType));
+
+              });
+            });
 
     // But, we also have to do it for pseudo instructions.
     // Because, we generate immediates for every instruction (and not format anymore).
@@ -111,8 +119,8 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
                */
               if (operand.isRight()) {
                 var fieldAccess = operand.right();
-                var originalType = abi.stackPointer().registerFile().resultType();
-                var llvmType = ValueType.from(originalType);
+                var llvmType = ValueType.from(CppTypeMap.upcast(
+                    fieldAccess.accessFunction().signature().resultType()));
                 immediates.add(
                     new TableGenImmediateRecord(pseudoInstruction, fieldAccess, llvmType.get()));
               }
