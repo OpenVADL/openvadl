@@ -78,7 +78,8 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
                 var fieldAccess = fieldAccessRefNode.fieldAccess();
                 // When a field access is changed to a field access function it is
                 // added the instruction format's field accesses. Therefore,
-                // we will have a lot field accesses which are not part of the instruction's behavior.
+                // we will have a lot field accesses which are not part of the instruction's
+                // behavior.
                 if (fieldAccess
                     instanceof NormalizeFieldsToFieldAccessFunctionsPass.GeneratedFieldAccess
                     genFieldAccess) {
