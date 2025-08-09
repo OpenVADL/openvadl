@@ -46,12 +46,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
-        let Namespace = "processornamevalue" in {
         // SubRegIndexes for GPR registers
-        def sub_32   : SubRegIndex<32>;
-        def sub_32_hi : SubRegIndex<32, 32>;
-        def full_64    : SubRegIndex<64>;
-        }
+        def SUB_32   : SubRegIndex<32>;
+        def SUB_32_HI : SubRegIndex<32, 32>;
+        def FULL_64    : SubRegIndex<64>;
         
         
         

@@ -19,13 +19,16 @@ package vadl.lcb.template.lib.Target;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.valuetypes.CompilerRegister;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegister;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -126,13 +129,31 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
       outputAliasRegisterClasses.add(new WrappedRegisterFile(registerClass, allocationSeq));
     }
 
+    var registers = sortRegisters(output.registers());
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "pointerAlignment", DataLayoutProvider.pointerAlignment(abi),
-        "registers", output.registers(),
+        "registers", registers,
         "aliasRegisters", output.aliasRegisters(),
         "registerFiles", outputRegisterClasses,
         "aliasRegisterFiles", outputAliasRegisterClasses
     );
+  }
+
+  private List<TableGenRegister> sortRegisters(List<TableGenRegister> registers) {
+    var result = new ArrayList<TableGenRegister>();
+    var ready = new HashSet<CompilerRegister>();
+
+    while (result.size() != registers.size()) {
+      for (var register : registers) {
+        var allSubRegisters = ready.containsAll(register.subRegs());
+        if (allSubRegisters && !ready.contains(register.compilerRegister())) {
+          ready.add(register.compilerRegister());
+          result.add(register);
+        }
+      }
+    }
+
+    return result;
   }
 }
