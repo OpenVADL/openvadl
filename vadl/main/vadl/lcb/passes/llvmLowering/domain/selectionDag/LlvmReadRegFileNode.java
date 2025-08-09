@@ -50,7 +50,7 @@ public class LlvmReadRegFileNode extends ReadRegTensorNode implements LlvmNodeLo
                              DataType type,
                              @Nullable Counter staticCounterAccess) {
     super(registerFile, new NodeList<>(address), type, staticCounterAccess);
-    instructionOperand = new GcbInstructionRegisterFileOperand(this, address);
+    instructionOperand = new GcbInstructionRegisterFileOperand(this, address.formatField());
   }
 
   /**
@@ -62,7 +62,7 @@ public class LlvmReadRegFileNode extends ReadRegTensorNode implements LlvmNodeLo
                              @Nullable Counter staticCounterAccess) {
     super(registerFile, new NodeList<>(address), type, staticCounterAccess);
     if (address instanceof FieldRefNode fieldRefNode) {
-      instructionOperand = new GcbInstructionRegisterFileOperand(this, fieldRefNode);
+      instructionOperand = new GcbInstructionRegisterFileOperand(this, fieldRefNode.formatField());
     } else if (address instanceof FuncParamNode funcParamNode) {
       instructionOperand = new GcbInstructionIndexedRegisterFileOperand(this, funcParamNode);
     } else {

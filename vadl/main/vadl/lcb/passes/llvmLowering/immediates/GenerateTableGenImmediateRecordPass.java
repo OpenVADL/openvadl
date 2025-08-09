@@ -62,7 +62,6 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
                                                Specification viam) throws IOException {
     var snapshots =
         (Map<Instruction, Graph>) passResults.lastResultOf(SnapshotInstructionBehaviorPass.class);
-    var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().orElseThrow();
     var immediates = new ArrayList<TableGenImmediateRecord>();
 
     // We do it first for machine instructions.
@@ -121,8 +120,8 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
                */
               if (operand.isRight()) {
                 var fieldAccess = operand.right();
-                var originalType = abi.stackPointer().registerFile().resultType();
-                var llvmType = ValueType.from(originalType);
+                var llvmType = ValueType.from(CppTypeMap.upcast(
+                    fieldAccess.accessFunction().signature().resultType()));
                 immediates.add(
                     new TableGenImmediateRecord(pseudoInstruction, fieldAccess, llvmType.get()));
               }

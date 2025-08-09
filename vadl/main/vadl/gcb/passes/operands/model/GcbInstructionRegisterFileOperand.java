@@ -63,13 +63,6 @@ public class GcbInstructionRegisterFileOperand
   /**
    * Constructor.
    */
-  public GcbInstructionRegisterFileOperand(ReadRegTensorNode node, FieldRefNode address) {
-    this(node, address.formatField());
-  }
-
-  /**
-   * Constructor.
-   */
   public GcbInstructionRegisterFileOperand(WriteRegTensorNode node, FieldRefNode address) {
     super(node, node.regTensor().simpleName(), address.formatField().identifier.simpleName());
     this.registerFile = node.regTensor();

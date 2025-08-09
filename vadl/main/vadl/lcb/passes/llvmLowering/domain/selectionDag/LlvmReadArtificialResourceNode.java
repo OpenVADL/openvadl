@@ -64,7 +64,8 @@ public class LlvmReadArtificialResourceNode extends ReadRegTensorNode implements
           constantNode.constant().asVal().intValue(),
           this);
     } else {
-      instructionOperand = new GcbInstructionRegisterFileOperand(this, (FieldRefNode) address);
+      instructionOperand =
+          new GcbInstructionRegisterFileOperand(this, ((FieldRefNode) address).formatField());
     }
   }
 

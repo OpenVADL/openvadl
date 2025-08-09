@@ -195,7 +195,7 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
         false,
         false,
         List.of(
-            new GcbInstructionRegisterFileOperand(llvmReadRegFile, address)
+            new GcbInstructionRegisterFileOperand(llvmReadRegFile, address.formatField())
         ), Collections.emptyList(),
         List.of(
             new RegisterRef(abi.returnAddress().registerFile(),
@@ -249,7 +249,7 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
         true,
         true,
         List.of(
-            new GcbInstructionRegisterFileOperand(ref, address),
+            new GcbInstructionRegisterFileOperand(ref, address.formatField()),
             new TableGenInstructionImmediateOperand(fieldRef)
         ), Collections.emptyList(),
         Collections.emptyList());
