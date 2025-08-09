@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
@@ -247,11 +248,15 @@ public abstract class LlvmInstructionLoweringStrategy {
         // This branch is taken when the field access was removed from the instruction's behavior
         // because of optimisations. However, we still need to replace this operand.
         var fieldAccess = immediateOperand.fieldAccess();
+        var upcastedType =
+            ValueType.from(CppTypeMap.upcast(fieldAccess.accessFunction().returnType()))
+                .orElseThrow(
+                    () -> Diagnostic.error("Cannot cast type", fieldAccess.location()).build());
         var llvmNode =
             new LlvmFieldAccessRefNode(instruction,
                 fieldAccess,
                 fieldAccess.type(),
-                architectureType,
+                upcastedType,
                 LlvmFieldAccessRefNode.Usage.Immediate);
         operands.set(i, new TableGenInstructionImmediateOperand(llvmNode));
       } else if (operand instanceof GcbInstructionRegisterFileOperand registerFileOperand
