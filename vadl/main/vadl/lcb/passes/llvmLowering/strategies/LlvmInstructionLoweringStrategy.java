@@ -90,6 +90,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -428,7 +429,8 @@ public abstract class LlvmInstructionLoweringStrategy {
         || hasMultipleOutputs(graph)
         || rejectWhenReadingFromMemory(graph)
         || rejectWhenWritingToMemory(graph)
-        || hasUnreplacedBuiltins(graph)) {
+        || hasUnreplacedBuiltins(graph)
+        || hasSelectNodes(graph)) {
       return true;
     }
 
@@ -453,6 +455,13 @@ public abstract class LlvmInstructionLoweringStrategy {
         && graph.getNodes(ReadResourceNode.class).toList().size() == 1
         && graph.getNodes(WriteResourceNode.class)
         .anyMatch(writeResourceNode -> writeResourceNode.value() instanceof ReadResourceNode);
+  }
+
+  /**
+   * If there are any {@link SelectNode} in the graph.
+   */
+  private boolean hasSelectNodes(Graph graph) {
+    return graph.getNodes(SelectNode.class).toList().size() == 1;
   }
 
   /**
