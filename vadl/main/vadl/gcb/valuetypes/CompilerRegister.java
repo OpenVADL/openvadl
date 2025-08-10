@@ -43,6 +43,9 @@ public abstract class CompilerRegister {
     }
   }
 
+  /**
+   * Represents an index for a sub register.
+   */
   public static class SubRegIndex {
     private final SubRegIndexEnum subRegIndex;
     private int version = 0;
@@ -55,6 +58,9 @@ public abstract class CompilerRegister {
       return subRegIndex;
     }
 
+    /**
+     * Get the name of the register.
+     */
     public String name() {
       if (version == 0) {
         return subRegIndex.name();
