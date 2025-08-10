@@ -43,6 +43,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrindSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadResourceFactory;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTargetCallSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
@@ -52,8 +53,8 @@ import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
 import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
+import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.Instruction;
-import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -166,10 +167,13 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     var selector = new Graph("selector");
     var ref = (ReadRegTensorNode) inputRegister.origin().copy();
     var address = (FieldRefNode) ref.address().copy();
-    selector.addWithInputs(new LlvmTargetCallSD(new NodeList<>(new LlvmReadRegFileNode(
-        inputRegister.registerFile(), address, inputRegister.formatField().type(),
-        ref.staticCounterAccess()
-    )),
+    var factory = new LlvmReadResourceFactory();
+    selector.addWithInputs(new LlvmTargetCallSD(
+        new NodeList<>(
+            factory.create(inputRegister.registerFile(), address,
+                inputRegister.formatField().type(),
+                ref.staticCounterAccess())
+        ),
         Type.dummy()));
 
     var database = new Database(supportedInstructions);
@@ -272,7 +276,8 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     var selector = new Graph("selector");
     var ref = (ReadRegTensorNode) inputRegister.origin().copy();
     var address = (FieldRefNode) ref.address().copy();
-    var llvmRegister = new LlvmReadRegFileNode(
+    var factory = new LlvmReadResourceFactory();
+    var llvmRegister = factory.create(
         inputRegister.registerFile(), address, inputRegister.formatField().type(),
         ref.staticCounterAccess()
     );
@@ -301,7 +306,8 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     var selector = new Graph("selector");
     var ref = (ReadRegTensorNode) inputRegister.origin().copy();
     var address = (FieldRefNode) ref.address().copy();
-    var llvmRegister = new LlvmReadRegFileNode(
+    var factory = new LlvmReadResourceFactory();
+    var llvmRegister = factory.create(
         inputRegister.registerFile(), address, inputRegister.formatField().type(),
         ref.staticCounterAccess()
     );
@@ -319,7 +325,7 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     return new TableGenSelectionWithOutputPattern(selector, machine);
   }
 
-  private static String zeroRegister(RegisterTensor registerFile) {
+  private static String zeroRegister(GeneratesRegisterFileName registerFile) {
     var constraint =
         ensurePresent(
             Arrays.stream(registerFile.constraints()).filter(x -> x.value().intValue() == 0)
@@ -328,6 +334,6 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
                 registerFile.location())
         );
 
-    return registerFile.simpleName() + constraint.indices().getFirst().intValue();
+    return registerFile.identifier().simpleName() + constraint.indices().getFirst().intValue();
   }
 }

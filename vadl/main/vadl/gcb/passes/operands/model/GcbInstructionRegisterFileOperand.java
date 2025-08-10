@@ -19,9 +19,9 @@ package vadl.gcb.passes.operands.model;
 import java.util.List;
 import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.viam.Format;
+import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
@@ -33,7 +33,7 @@ import vadl.viam.graph.dependency.WriteRegTensorNode;
 public class GcbInstructionRegisterFileOperand
     extends GcbDefaultInstructionOperand
     implements ReferencesFormatField {
-  private final RegisterTensor registerFile;
+  private final GeneratesRegisterFileName registerFile;
   private final Format.Field formatField;
 
   /**
@@ -42,7 +42,6 @@ public class GcbInstructionRegisterFileOperand
   public GcbInstructionRegisterFileOperand(ReadRegTensorNode node, Format.Field address) {
     super(node, node.regTensor().simpleName(), address.identifier.simpleName());
     this.registerFile = node.regTensor();
-    this.registerFile.ensure(registerFile.isRegisterFile(), "must be registerfile");
     this.formatField = address;
     node.regTensor().ensure(registerFile.isRegisterFile(), "must be registerfile");
   }
@@ -51,10 +50,9 @@ public class GcbInstructionRegisterFileOperand
    * Constructor.
    */
   public GcbInstructionRegisterFileOperand(ReadArtificialResNode node, Format.Field address) {
-    super(node, node.resourceDefinition().innerResourceRef().simpleName(),
+    super(node, node.resourceDefinition().simpleName(),
         address.identifier.simpleName());
-    this.registerFile = (RegisterTensor) node.resourceDefinition().innerResourceRef();
-    this.registerFile.ensure(registerFile.isRegisterFile(), "must be registerfile");
+    this.registerFile = node.resourceDefinition();
     this.formatField = address;
     node.resourceDefinition().innerResourceRef()
         .ensure(registerFile.isRegisterFile(), "must be registerfile");
@@ -66,7 +64,6 @@ public class GcbInstructionRegisterFileOperand
   public GcbInstructionRegisterFileOperand(WriteRegTensorNode node, FieldRefNode address) {
     super(node, node.regTensor().simpleName(), address.formatField().identifier.simpleName());
     this.registerFile = node.regTensor();
-    this.registerFile.ensure(registerFile.isRegisterFile(), "must be registerfile");
     this.formatField = address.formatField();
   }
 
@@ -77,27 +74,12 @@ public class GcbInstructionRegisterFileOperand
     super(node, node.resourceDefinition().innerResourceRef().simpleName(),
         address.identifier.simpleName());
     this.registerFile = (RegisterTensor) node.resourceDefinition().innerResourceRef();
-    this.registerFile.ensure(registerFile.isRegisterFile(), "must be registerfile");
     this.formatField = address;
     node.resourceDefinition().innerResourceRef()
         .ensure(registerFile.isRegisterFile(), "must be registerfile");
   }
 
-  /**
-   * Constructor for pseudo instructions. Pseudo instructions will have a {@link ReadRegTensorNode}
-   * or {@link WriteRegTensorNode} because they are constructed over {@link FuncParamNode}.
-   */
-  public GcbInstructionRegisterFileOperand(RegisterTensor registerFile,
-                                           Format.Field field,
-                                           FuncParamNode funcParamNode) {
-    super(funcParamNode, registerFile.simpleName(),
-        funcParamNode.parameter().identifier.simpleName());
-    this.registerFile = registerFile;
-    this.formatField = field;
-    this.registerFile.ensure(registerFile.isRegisterFile(), "must be registerfile");
-  }
-
-  public RegisterTensor registerFile() {
+  public GeneratesRegisterFileName registerFile() {
     return registerFile;
   }
 
