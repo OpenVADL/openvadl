@@ -130,10 +130,35 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
     }
 
     var registers = sortRegisters(output.registers());
+
+    var sub32 = new ArrayList<String>();
+    var sub32Hi = new ArrayList<String>();
+    var full64 = new ArrayList<String>();
+
+    for (var register : registers) {
+      var seen = new HashSet<String>();
+      for (var subRegIndex : register.subRegIndices()) {
+        if (seen.contains(subRegIndex.name())) {
+          subRegIndex.incrementVersion();
+        }
+
+        var name = subRegIndex.name();
+        seen.add(name);
+        switch (subRegIndex.inner()) {
+          case SUB_32 -> sub32.add(name);
+          case FULL_64 -> full64.add(name);
+          case SUB_32_HI -> sub32Hi.add(name);
+        }
+      }
+    }
+
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "pointerAlignment", DataLayoutProvider.pointerAlignment(abi),
         "registers", registers,
+        "sub32", sub32.stream().distinct().toList(),
+        "sub32Hi", sub32Hi.stream().distinct().toList(),
+        "full64", full64.stream().distinct().toList(),
         "aliasRegisters", output.aliasRegisters(),
         "registerFiles", outputRegisterClasses,
         "aliasRegisterFiles", outputAliasRegisterClasses

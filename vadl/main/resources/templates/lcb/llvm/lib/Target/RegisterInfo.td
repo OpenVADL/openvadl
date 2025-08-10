@@ -1,7 +1,12 @@
-// SubRegIndexes for GPR registers
-def SUB_32   : SubRegIndex<32>;
-def SUB_32_HI : SubRegIndex<32, 32>;
-def FULL_64    : SubRegIndex<64>;
+[# th:each="index : ${sub32}" ]
+def [(${index})]  : SubRegIndex<32>;
+[/]
+[# th:each="index : ${sub32Hi}" ]
+def [(${index})] : SubRegIndex<32, 32>;
+[/]
+[# th:each="index : ${full64}" ]
+def [(${index})]    : SubRegIndex<64>;
+[/]
 
 [# th:each="register, iterStat : ${aliasRegisters}" ]
 def [(${register.name})] : Register<"[(${register.name})]">

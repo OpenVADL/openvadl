@@ -55,7 +55,8 @@ public record TableGenRegister(TargetName namespace,
     map.put("subRegs",
         subRegs.stream().map(CompilerRegister::name).collect(Collectors.joining(", ")));
     map.put("subRegIndices",
-        subRegIndices.stream().map(Enum::name).collect(Collectors.joining(", ")));
+        subRegIndices.stream().map(CompilerRegister.SubRegIndex::name)
+            .collect(Collectors.joining(", ")));
     index.ifPresent(integer -> map.put("index", integer));
     return map;
   }

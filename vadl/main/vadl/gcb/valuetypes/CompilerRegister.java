@@ -18,6 +18,7 @@ package vadl.gcb.valuetypes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Extends the register with information which a compiler requires.
@@ -26,19 +27,64 @@ public abstract class CompilerRegister {
   /**
    * Indicates the indices for sub registers.
    */
-  public enum SubRegIndex {
+  public enum SubRegIndexEnum {
     SUB_32("sub_32"),
     SUB_32_HI("sub_32_hi"),
     FULL_64("full_64");
 
     private final String name;
 
-    SubRegIndex(String name) {
+    SubRegIndexEnum(String name) {
       this.name = name;
     }
 
     public String getName() {
       return name;
+    }
+  }
+
+  /**
+   * Represents an index for a sub register.
+   */
+  public static class SubRegIndex {
+    private final SubRegIndexEnum subRegIndex;
+    private int version = 0;
+
+    public SubRegIndex(SubRegIndexEnum subRegIndex) {
+      this.subRegIndex = subRegIndex;
+    }
+
+    public SubRegIndexEnum inner() {
+      return subRegIndex;
+    }
+
+    /**
+     * Get the name of the register.
+     */
+    public String name() {
+      if (version == 0) {
+        return subRegIndex.name();
+      } else {
+        return subRegIndex.name() + "_" + version;
+      }
+    }
+
+    public void incrementVersion() {
+      version++;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      SubRegIndex that = (SubRegIndex) o;
+      return version == that.version && subRegIndex == that.subRegIndex;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(subRegIndex, version);
     }
   }
 
