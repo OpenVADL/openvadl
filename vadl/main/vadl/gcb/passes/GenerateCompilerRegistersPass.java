@@ -109,9 +109,11 @@ public class GenerateCompilerRegistersPass extends Pass {
             var realRegister = registerClass.registers().get(i);
 
             if (hasEqualType && artificialResource.type().equals(BitsType.bits(64))) {
-              realRegister.addSubReg(aliasRegister, CompilerRegister.SubRegIndex.FULL_64);
+              realRegister.addSubReg(aliasRegister, new CompilerRegister.SubRegIndex(
+                  CompilerRegister.SubRegIndexEnum.FULL_64));
             } else {
-              realRegister.addSubReg(aliasRegister, CompilerRegister.SubRegIndex.SUB_32);
+              realRegister.addSubReg(aliasRegister, new CompilerRegister.SubRegIndex(
+                  CompilerRegister.SubRegIndexEnum.SUB_32));
             }
           }
         }

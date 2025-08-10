@@ -16,7 +16,6 @@
 
 package vadl.lcb.passes.llvmLowering.tablegen.model.register;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,19 +43,6 @@ public record TableGenRegister(TargetName namespace,
 
   @Override
   public Map<String, Object> renderObj() {
-    var indices = new ArrayList<String>();
-    var seen = new HashMap<CompilerRegister.SubRegIndex, Integer>();
-    for (var subRegIndex : subRegIndices) {
-      seen.computeIfPresent(subRegIndex, (k, v) -> v + 1);
-      seen.putIfAbsent(subRegIndex, 0);
-      indices.add(compilerRegister.name() + "_" + subRegIndex.name() + "_" + seen.get(subRegIndex));
-    }
-
-    var maxList = new ArrayList<>();
-    for (int i = 0; i <= seen.values().stream().mapToInt(j -> j).max().orElse(0); i++) {
-      maxList.add(i);
-    }
-
     var map = new HashMap<String, Object>();
     map.put("namespace", namespace);
     map.put("name", compilerRegister.name());
@@ -66,10 +52,11 @@ public record TableGenRegister(TargetName namespace,
     map.put("hwEncodingValue", compilerRegister.hwEncodingValue());
     map.put("altNamesString", altNamesString());
     map.put("isArtificial", isArtificial);
-    map.put("maxList", maxList);
     map.put("subRegs",
         subRegs.stream().map(CompilerRegister::name).collect(Collectors.joining(", ")));
-    map.put("subRegIndices", String.join(", ", indices));
+    map.put("subRegIndices",
+        subRegIndices.stream().map(CompilerRegister.SubRegIndex::name)
+            .collect(Collectors.joining(", ")));
     index.ifPresent(integer -> map.put("index", integer));
     return map;
   }

@@ -1,9 +1,14 @@
-[# th:each="register, iterStat : ${aliasRegisters}" ]
-[# th:each="index : ${register.maxList}" ]
-def [(${register.name})]_SUB_32_[(${index})]  : SubRegIndex<32>;
-def [(${register.name})]_SUB_32_HI_[(${index})] : SubRegIndex<32, 32>;
-def [(${register.name})]_FULL_64_[(${index})]    : SubRegIndex<64>;
+[# th:each="index : ${sub32}" ]
+def [(${index})]  : SubRegIndex<32>;
 [/]
+[# th:each="index : ${sub32Hi}" ]
+def [(${index})] : SubRegIndex<32, 32>;
+[/]
+[# th:each="index : ${full64}" ]
+def [(${index})]    : SubRegIndex<64>;
+[/]
+
+[# th:each="register, iterStat : ${aliasRegisters}" ]
 def [(${register.name})] : Register<"[(${register.name})]">
 {
     let Namespace = "[(${register.namespace.value})]";
@@ -22,11 +27,6 @@ def [(${register.name})] : Register<"[(${register.name})]">
 [/]
 
 [# th:each="register, iterStat : ${registers}" ]
-[# th:each="index : ${register.maxList}" ]
-def [(${register.name})]_SUB_32_[(${index})]  : SubRegIndex<32>;
-def [(${register.name})]_SUB_32_HI_[(${index})] : SubRegIndex<32, 32>;
-def [(${register.name})]_FULL_64_[(${index})]    : SubRegIndex<64>;
-[/]
 def [(${register.name})] : Register<"[(${register.name})]">
 {
     let Namespace = "[(${register.namespace.value})]";
