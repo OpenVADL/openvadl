@@ -33,6 +33,7 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.operands.model.GcbConstantOperand;
+import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionIndexedRegisterFileOperand;
@@ -486,11 +487,13 @@ public class GenerateInstructionOperandsPass extends Pass {
         outputOperands.stream()
             .filter(x -> x instanceof GcbInstructionRegisterFileOperand
                 || x instanceof GcbInstructionIndexedRegisterFileOperand)
+            .map(x -> ((GcbDefaultInstructionOperand) x).name())
             .collect(Collectors.toSet());
 
     return stream
         .filter(
-            node -> !visited.contains(node));
+            node -> node instanceof GcbDefaultInstructionOperand defaultInstructionOperand
+                && !visited.contains(defaultInstructionOperand.name()));
   }
 
   /**

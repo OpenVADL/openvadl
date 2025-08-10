@@ -13082,7 +13082,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins X:$rd, W:$rn, AArch64Base_BFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_BFMW_rightWSizeAsInt8:$rightWSize );
+let InOperandList = ( ins W:$rn, AArch64Base_BFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_BFMW_rightWSizeAsInt8:$rightWSize );
 
 field bits<32> Inst;
 
@@ -13137,7 +13137,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins X:$rd, X:$rn, AArch64Base_BFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_BFMX_rightXSizeAsInt8:$rightXSize );
+let InOperandList = ( ins X:$rn, AArch64Base_BFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_BFMX_rightXSizeAsInt8:$rightXSize );
 
 field bits<32> Inst;
 
@@ -38080,7 +38080,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins X:$rd, AArch64Base_MOVKWPos00_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKWPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38131,7 +38131,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins X:$rd, AArch64Base_MOVKWPos16_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKWPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38182,7 +38182,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins X:$rd, AArch64Base_MOVKXPos00_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKXPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38233,7 +38233,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins X:$rd, AArch64Base_MOVKXPos16_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKXPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38284,7 +38284,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins X:$rd, AArch64Base_MOVKXPos32_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKXPos32_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38335,7 +38335,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins X:$rd, AArch64Base_MOVKXPos48_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVKXPos48_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
