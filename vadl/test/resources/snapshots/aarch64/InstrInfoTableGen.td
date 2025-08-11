@@ -50738,6 +50738,86 @@ let Defs = [  ];
 
 
 
+def : Pat<(zext (add W:$rn, W:$rm)),
+        (ADDW W:$rn, W:$rm)>;
+
+
+def : Pat<(zext (add W:$rn, (sra W:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6))),
+        (ADDWASR W:$rn, W:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (add R:$rn, (trunc AArch64Base_ADDWI_imm12XAsInt64:$imm12X))),
+        (ADDWI R:$rn, AArch64Base_ADDWI_imm12XAsInt64:$imm12X)>;
+
+
+def : Pat<(zext (add R:$rn, (trunc AArch64Base_ADDWI12_imm12SAsInt64:$imm12S))),
+        (ADDWI12 R:$rn, AArch64Base_ADDWI12_imm12SAsInt64:$imm12S)>;
+
+
+def : Pat<(zext (add W:$rn, (shl W:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6))),
+        (ADDWLSL W:$rn, W:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (add W:$rn, (srl W:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6))),
+        (ADDWLSR W:$rn, W:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (add W:$rn, W:$rm)),
+        (ADDWS W:$rn, W:$rm)>;
+
+
+def : Pat<(zext (add W:$rn, (sra W:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6))),
+        (ADDWSASR W:$rn, W:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (add R:$rn, (trunc AArch64Base_ADDWSI_imm12XAsInt64:$imm12X))),
+        (ADDWSI R:$rn, AArch64Base_ADDWSI_imm12XAsInt64:$imm12X)>;
+
+
+def : Pat<(zext (add R:$rn, (trunc AArch64Base_ADDWSI12_imm12SAsInt64:$imm12S))),
+        (ADDWSI12 R:$rn, AArch64Base_ADDWSI12_imm12SAsInt64:$imm12S)>;
+
+
+def : Pat<(zext (add W:$rn, (shl W:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6))),
+        (ADDWSLSL W:$rn, W:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (add W:$rn, (srl W:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6))),
+        (ADDWSLSR W:$rn, W:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (add R:$rn, (trunc (shl X:$rm, AArch64Base_ADDWSSXSX_imm3AsInt8:$imm3)))),
+        (ADDWSSXSX R:$rn, X:$rm, AArch64Base_ADDWSSXSX_imm3AsInt8:$imm3)>;
+
+
+def : Pat<(zext (add R:$rn, (trunc X:$rm))),
+        (ADDWSSXTX R:$rn, X:$rm)>;
+
+
+def : Pat<(zext (add R:$rn, (trunc (shl X:$rm, AArch64Base_ADDWSUXSX_imm3AsInt8:$imm3)))),
+        (ADDWSUXSX R:$rn, X:$rm, AArch64Base_ADDWSUXSX_imm3AsInt8:$imm3)>;
+
+
+def : Pat<(zext (add R:$rn, (trunc X:$rm))),
+        (ADDWSUXTX R:$rn, X:$rm)>;
+
+
+def : Pat<(zext (add R:$rn, (trunc (shl X:$rm, AArch64Base_ADDWSXSX_imm3AsInt8:$imm3)))),
+        (ADDWSXSX R:$rn, X:$rm, AArch64Base_ADDWSXSX_imm3AsInt8:$imm3)>;
+
+
+def : Pat<(zext (add R:$rn, (trunc X:$rm))),
+        (ADDWSXTX R:$rn, X:$rm)>;
+
+
+def : Pat<(zext (add R:$rn, (trunc (shl X:$rm, AArch64Base_ADDWUXSX_imm3AsInt8:$imm3)))),
+        (ADDWUXSX R:$rn, X:$rm, AArch64Base_ADDWUXSX_imm3AsInt8:$imm3)>;
+
+
+def : Pat<(zext (add R:$rn, (trunc X:$rm))),
+        (ADDWUXTX R:$rn, X:$rm)>;
+
+
 def : Pat<(add X:$rn, X:$rm),
         (ADDX X:$rn, X:$rm)>;
 
@@ -50821,12 +50901,36 @@ def : Pat<(add S:$rn, X:$rm),
         (ADDXUXTX S:$rn, X:$rm)>;
 
 
+def : Pat<(zext (and W:$rn, AArch64Base_ANDIW_immWSizeAsInt32:$immWSize)),
+        (ANDIW W:$rn, AArch64Base_ANDIW_immWSizeAsInt32:$immWSize)>;
+
+
 def : Pat<(and X:$rn, AArch64Base_ANDIX_immXSizeAsInt64:$immXSize),
         (ANDIX X:$rn, AArch64Base_ANDIX_immXSizeAsInt64:$immXSize)>;
 
 
+def : Pat<(zext (and W:$rn, AArch64Base_ANDSIW_immWSizeAsInt32:$immWSize)),
+        (ANDSIW W:$rn, AArch64Base_ANDSIW_immWSizeAsInt32:$immWSize)>;
+
+
 def : Pat<(and X:$rn, AArch64Base_ANDSIX_immXSizeAsInt64:$immXSize),
         (ANDSIX X:$rn, AArch64Base_ANDSIX_immXSizeAsInt64:$immXSize)>;
+
+
+def : Pat<(zext (and W:$rn, W:$rm)),
+        (ANDSW W:$rn, W:$rm)>;
+
+
+def : Pat<(zext (and W:$rn, (sra W:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6))),
+        (ANDSWASR W:$rn, W:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (and W:$rn, (shl W:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6))),
+        (ANDSWLSL W:$rn, W:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (and W:$rn, (srl W:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6))),
+        (ANDSWLSR W:$rn, W:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(and X:$rn, X:$rm),
@@ -50845,6 +50949,22 @@ def : Pat<(and X:$rn, (srl X:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6)),
         (ANDSXLSR X:$rn, X:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6)>;
 
 
+def : Pat<(zext (and W:$rn, W:$rm)),
+        (ANDW W:$rn, W:$rm)>;
+
+
+def : Pat<(zext (and W:$rn, (sra W:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6))),
+        (ANDWASR W:$rn, W:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (and W:$rn, (shl W:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6))),
+        (ANDWLSL W:$rn, W:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (and W:$rn, (srl W:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6))),
+        (ANDWLSR W:$rn, W:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6)>;
+
+
 def : Pat<(and X:$rn, X:$rm),
         (ANDX X:$rn, X:$rm)>;
 
@@ -50861,12 +50981,36 @@ def : Pat<(and X:$rn, (srl X:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6)),
         (ANDXLSR X:$rn, X:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6)>;
 
 
+def : Pat<(zext (sra W:$rn, W:$rm)),
+        (ASRW W:$rn, W:$rm)>;
+
+
 def : Pat<(sra X:$rn, X:$rm),
         (ASRX X:$rn, X:$rm)>;
 
 
+def : Pat<(zext (xor W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize)),
+        (EORIW W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize)>;
+
+
 def : Pat<(xor X:$rn, AArch64Base_EORIX_immXSizeAsInt64:$immXSize),
         (EORIX X:$rn, AArch64Base_EORIX_immXSizeAsInt64:$immXSize)>;
+
+
+def : Pat<(zext (xor W:$rn, W:$rm)),
+        (EORW W:$rn, W:$rm)>;
+
+
+def : Pat<(zext (xor W:$rn, (sra W:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6))),
+        (EORWASR W:$rn, W:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (xor W:$rn, (shl W:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6))),
+        (EORWLSL W:$rn, W:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (xor W:$rn, (srl W:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6))),
+        (EORWLSR W:$rn, W:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(xor X:$rn, X:$rm),
@@ -51125,16 +51269,40 @@ def : Pat<(load AddrFI:$rn),
         (LDURX AddrFI:$rn, (i64 0))>;
 
 
+def : Pat<(zext (shl W:$rn, W:$rm)),
+        (LSLW W:$rn, W:$rm)>;
+
+
 def : Pat<(shl X:$rn, X:$rm),
         (LSLX X:$rn, X:$rm)>;
+
+
+def : Pat<(zext (srl W:$rn, W:$rm)),
+        (LSRW W:$rn, W:$rm)>;
 
 
 def : Pat<(srl X:$rn, X:$rm),
         (LSRX X:$rn, X:$rm)>;
 
 
+def : Pat<(zext (add W:$ra, (mul W:$rn, W:$rm))),
+        (MADDW W:$ra, W:$rn, W:$rm)>;
+
+
 def : Pat<(add X:$ra, (mul X:$rn, X:$rm)),
         (MADDX X:$ra, X:$rn, X:$rm)>;
+
+
+def : Pat<(zext (zext AArch64Base_MOVZWPos00_imm16AsInt16:$imm16)),
+        (MOVZWPos00 AArch64Base_MOVZWPos00_imm16AsInt16:$imm16)>;
+
+
+def : Pat<(zext (shl (zext AArch64Base_MOVZWPos16_imm16AsInt16:$imm16), (i32 16))),
+        (MOVZWPos16 AArch64Base_MOVZWPos16_imm16AsInt16:$imm16)>;
+
+
+def : Pat<(zext AArch64Base_MOVZXPos00_imm16AsInt16:$imm16),
+        (MOVZXPos00 AArch64Base_MOVZXPos00_imm16AsInt16:$imm16)>;
 
 
 def : Pat<(shl (zext AArch64Base_MOVZXPos16_imm16AsInt16:$imm16), (i64 16)),
@@ -51149,12 +51317,36 @@ def : Pat<(shl (zext AArch64Base_MOVZXPos48_imm16AsInt16:$imm16), (i64 48)),
         (MOVZXPos48 AArch64Base_MOVZXPos48_imm16AsInt16:$imm16)>;
 
 
+def : Pat<(zext (sub W:$ra, (mul W:$rn, W:$rm))),
+        (MSUBW W:$ra, W:$rn, W:$rm)>;
+
+
 def : Pat<(sub X:$ra, (mul X:$rn, X:$rm)),
         (MSUBX X:$ra, X:$rn, X:$rm)>;
 
 
+def : Pat<(zext (or W:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize)),
+        (ORRIW W:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize)>;
+
+
 def : Pat<(or X:$rn, AArch64Base_ORRIX_immXSizeAsInt64:$immXSize),
         (ORRIX X:$rn, AArch64Base_ORRIX_immXSizeAsInt64:$immXSize)>;
+
+
+def : Pat<(zext (or W:$rn, W:$rm)),
+        (ORRW W:$rn, W:$rm)>;
+
+
+def : Pat<(zext (or W:$rn, (sra W:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6))),
+        (ORRWASR W:$rn, W:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (or W:$rn, (shl W:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6))),
+        (ORRWLSL W:$rn, W:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (or W:$rn, (srl W:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6))),
+        (ORRWLSR W:$rn, W:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6)>;
 
 
 def : Pat<(or X:$rn, X:$rm),
@@ -51173,8 +51365,16 @@ def : Pat<(or X:$rn, (srl X:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6)),
         (ORRXLSR X:$rn, X:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6)>;
 
 
+def : Pat<(zext (sra (shl W:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize), AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize)),
+        (SBFMW W:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize)>;
+
+
 def : Pat<(sra (shl X:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize), AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize),
         (SBFMX X:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize)>;
+
+
+def : Pat<(zext (sdiv W:$rn, W:$rm)),
+        (SDIVW W:$rm, W:$rn)>;
 
 
 def : Pat<(sdiv X:$rn, X:$rm),
@@ -51271,6 +51471,86 @@ def : Pat<(store X:$rt, AddrFI:$rn),
         (STURX AddrFI:$rn, X:$rt, (i64 0))>;
 
 
+def : Pat<(zext (sub W:$rn, W:$rm)),
+        (SUBW W:$rn, W:$rm)>;
+
+
+def : Pat<(zext (sub W:$rn, (sra W:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6))),
+        (SUBWASR W:$rn, W:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (sub R:$rn, (trunc AArch64Base_SUBWI_imm12XAsInt64:$imm12X))),
+        (SUBWI R:$rn, AArch64Base_SUBWI_imm12XAsInt64:$imm12X)>;
+
+
+def : Pat<(zext (sub R:$rn, (trunc AArch64Base_SUBWI12_imm12SAsInt64:$imm12S))),
+        (SUBWI12 R:$rn, AArch64Base_SUBWI12_imm12SAsInt64:$imm12S)>;
+
+
+def : Pat<(zext (sub W:$rn, (shl W:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6))),
+        (SUBWLSL W:$rn, W:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (sub W:$rn, (srl W:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6))),
+        (SUBWLSR W:$rn, W:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (sub W:$rn, W:$rm)),
+        (SUBWS W:$rn, W:$rm)>;
+
+
+def : Pat<(zext (sub W:$rn, (sra W:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6))),
+        (SUBWSASR W:$rn, W:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (sub R:$rn, (trunc AArch64Base_SUBWSI_imm12XAsInt64:$imm12X))),
+        (SUBWSI R:$rn, AArch64Base_SUBWSI_imm12XAsInt64:$imm12X)>;
+
+
+def : Pat<(zext (sub R:$rn, (trunc AArch64Base_SUBWSI12_imm12SAsInt64:$imm12S))),
+        (SUBWSI12 R:$rn, AArch64Base_SUBWSI12_imm12SAsInt64:$imm12S)>;
+
+
+def : Pat<(zext (sub W:$rn, (shl W:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6))),
+        (SUBWSLSL W:$rn, W:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (sub W:$rn, (srl W:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6))),
+        (SUBWSLSR W:$rn, W:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6)>;
+
+
+def : Pat<(zext (sub R:$rn, (trunc (shl X:$rm, AArch64Base_SUBWSSXSX_imm3AsInt8:$imm3)))),
+        (SUBWSSXSX R:$rn, X:$rm, AArch64Base_SUBWSSXSX_imm3AsInt8:$imm3)>;
+
+
+def : Pat<(zext (sub R:$rn, (trunc X:$rm))),
+        (SUBWSSXTX R:$rn, X:$rm)>;
+
+
+def : Pat<(zext (sub R:$rn, (trunc (shl X:$rm, AArch64Base_SUBWSUXSX_imm3AsInt8:$imm3)))),
+        (SUBWSUXSX R:$rn, X:$rm, AArch64Base_SUBWSUXSX_imm3AsInt8:$imm3)>;
+
+
+def : Pat<(zext (sub R:$rn, (trunc X:$rm))),
+        (SUBWSUXTX R:$rn, X:$rm)>;
+
+
+def : Pat<(zext (sub R:$rn, (trunc (shl X:$rm, AArch64Base_SUBWSXSX_imm3AsInt8:$imm3)))),
+        (SUBWSXSX R:$rn, X:$rm, AArch64Base_SUBWSXSX_imm3AsInt8:$imm3)>;
+
+
+def : Pat<(zext (sub R:$rn, (trunc X:$rm))),
+        (SUBWSXTX R:$rn, X:$rm)>;
+
+
+def : Pat<(zext (sub R:$rn, (trunc (shl X:$rm, AArch64Base_SUBWUXSX_imm3AsInt8:$imm3)))),
+        (SUBWUXSX R:$rn, X:$rm, AArch64Base_SUBWUXSX_imm3AsInt8:$imm3)>;
+
+
+def : Pat<(zext (sub R:$rn, (trunc X:$rm))),
+        (SUBWUXTX R:$rn, X:$rm)>;
+
+
 def : Pat<(sub X:$rn, X:$rm),
         (SUBX X:$rn, X:$rm)>;
 
@@ -51351,8 +51631,16 @@ def : Pat<(sub S:$rn, X:$rm),
         (SUBXUXTX S:$rn, X:$rm)>;
 
 
+def : Pat<(zext (srl (shl W:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize), AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize)),
+        (UBFMW W:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize)>;
+
+
 def : Pat<(srl (shl X:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize), AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize),
         (UBFMX X:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize)>;
+
+
+def : Pat<(zext (udiv W:$rn, W:$rm)),
+        (UDIVW W:$rm, W:$rn)>;
 
 
 def : Pat<(udiv X:$rn, X:$rm),

@@ -357,7 +357,9 @@ public class TableGenPatternPrinterVisitor
 
   @Override
   public void visit(TruncateNode node) {
-
+    writer.write("(trunc ");
+    visit(node.value());
+    writer.write(")");
   }
 
   @Override
