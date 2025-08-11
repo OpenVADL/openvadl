@@ -38,6 +38,7 @@ import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.operands.GenerateInstructionOperandsPass;
 import vadl.gcb.passes.operands.InstructionOperandsCtx;
 import vadl.gcb.passes.operands.model.GcbConstantOperand;
+import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionIndexedRegisterFileOperand;
@@ -431,7 +432,8 @@ public abstract class LlvmInstructionLoweringStrategy {
         || rejectWhenReadingFromMemory(graph)
         || rejectWhenWritingToMemory(graph)
         || hasUnreplacedBuiltins(graph)
-        || hasSelectNodes(graph)) {
+        || hasSelectNodes(graph)
+        || hasNotAllOperandsUsed(instruction, graph)) {
       return true;
     }
 
@@ -456,6 +458,30 @@ public abstract class LlvmInstructionLoweringStrategy {
         && graph.getNodes(ReadResourceNode.class).toList().size() == 1
         && graph.getNodes(WriteResourceNode.class)
         .anyMatch(writeResourceNode -> writeResourceNode.value() instanceof ReadResourceNode);
+  }
+
+  /**
+   * TableGen requires that all the operands are used in the pattern. If it doesn't then the
+   * instruction is not lowerable.
+   */
+  private boolean hasNotAllOperandsUsed(Instruction instruction, Graph graph) {
+    var ctx = instruction.expectExtension(InstructionOperandsCtx.class);
+    var operands = ctx.inputs();
+
+    for (var operand : operands) {
+      if (operand instanceof GcbInstructionRegisterFileOperand registerFileOperand) {
+        var name = registerFileOperand.name();
+        var match = graph.getNodes(FieldRefNode.class)
+            .anyMatch(fieldRefNode -> fieldRefNode.formatField().simpleName().equals(name));
+
+        // If no format field is using the operand then we can't lower.
+        if (!match) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   /**
