@@ -6403,7 +6403,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, X:$rm );
+let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
 
@@ -6462,7 +6462,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, X:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -6633,7 +6633,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, X:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -6692,7 +6692,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, X:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -6751,7 +6751,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, X:$rm );
+let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
 
@@ -6810,7 +6810,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, X:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -6981,7 +6981,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, X:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -7040,7 +7040,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, X:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -44642,7 +44642,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, X:$rm );
+let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
 
@@ -44701,7 +44701,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, X:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -44872,7 +44872,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, X:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -44931,7 +44931,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, X:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -44990,7 +44990,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, X:$rm );
+let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
 
@@ -45049,7 +45049,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, X:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -45220,7 +45220,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, X:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -45279,7 +45279,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, X:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
 
@@ -50738,91 +50738,11 @@ let Defs = [  ];
 
 
 
-def : Pat<(add S:$rn, S:$rm),
-        (ADDW W:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rn, (sra S:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6)),
-        (ADDWASR W:$rn, X:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(add S:$rn, AArch64Base_ADDWI_imm12XAsInt64:$imm12X),
-        (ADDWI R:$rn, AArch64Base_ADDWI_imm12XAsInt64:$imm12X)>;
-
-
-def : Pat<(add S:$rn, AArch64Base_ADDWI12_imm12SAsInt64:$imm12S),
-        (ADDWI12 R:$rn, AArch64Base_ADDWI12_imm12SAsInt64:$imm12S)>;
-
-
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6)),
-        (ADDWLSL W:$rn, X:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(add S:$rn, (srl S:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6)),
-        (ADDWLSR W:$rn, X:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(add S:$rn, S:$rm),
-        (ADDWS W:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rn, (sra S:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6)),
-        (ADDWSASR W:$rn, X:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(add S:$rn, AArch64Base_ADDWSI_imm12XAsInt64:$imm12X),
-        (ADDWSI R:$rn, AArch64Base_ADDWSI_imm12XAsInt64:$imm12X)>;
-
-
-def : Pat<(add S:$rn, AArch64Base_ADDWSI12_imm12SAsInt64:$imm12S),
-        (ADDWSI12 R:$rn, AArch64Base_ADDWSI12_imm12SAsInt64:$imm12S)>;
-
-
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6)),
-        (ADDWSLSL W:$rn, X:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(add S:$rn, (srl S:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6)),
-        (ADDWSLSR W:$rn, X:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSSXSX_imm3AsInt8:$imm3)),
-        (ADDWSSXSX R:$rn, X:$rm, AArch64Base_ADDWSSXSX_imm3AsInt8:$imm3)>;
-
-
-def : Pat<(add S:$rn, S:$rm),
-        (ADDWSSXTX R:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSUXSX_imm3AsInt8:$imm3)),
-        (ADDWSUXSX R:$rn, X:$rm, AArch64Base_ADDWSUXSX_imm3AsInt8:$imm3)>;
-
-
-def : Pat<(add S:$rn, S:$rm),
-        (ADDWSUXTX R:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWSXSX_imm3AsInt8:$imm3)),
-        (ADDWSXSX R:$rn, X:$rm, AArch64Base_ADDWSXSX_imm3AsInt8:$imm3)>;
-
-
-def : Pat<(add S:$rn, S:$rm),
-        (ADDWSXTX R:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDWUXSX_imm3AsInt8:$imm3)),
-        (ADDWUXSX R:$rn, X:$rm, AArch64Base_ADDWUXSX_imm3AsInt8:$imm3)>;
-
-
-def : Pat<(add S:$rn, S:$rm),
-        (ADDWUXTX R:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rn, S:$rm),
+def : Pat<(add X:$rn, X:$rm),
         (ADDX X:$rn, X:$rm)>;
 
 
-def : Pat<(add S:$rn, (sra S:$rm, AArch64Base_ADDXASR_imm6AsInt8:$imm6)),
+def : Pat<(add X:$rn, (sra X:$rm, AArch64Base_ADDXASR_imm6AsInt8:$imm6)),
         (ADDXASR X:$rn, X:$rm, AArch64Base_ADDXASR_imm6AsInt8:$imm6)>;
 
 
@@ -50837,19 +50757,19 @@ def : Pat<(add S:$rn, AArch64Base_ADDXI12_imm12SAsInt64:$imm12S),
         (ADDXI12 S:$rn, AArch64Base_ADDXI12_imm12SAsInt64:$imm12S)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXLSL_imm6AsInt8:$imm6)),
+def : Pat<(add X:$rn, (shl X:$rm, AArch64Base_ADDXLSL_imm6AsInt8:$imm6)),
         (ADDXLSL X:$rn, X:$rm, AArch64Base_ADDXLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(add S:$rn, (srl S:$rm, AArch64Base_ADDXLSR_imm6AsInt8:$imm6)),
+def : Pat<(add X:$rn, (srl X:$rm, AArch64Base_ADDXLSR_imm6AsInt8:$imm6)),
         (ADDXLSR X:$rn, X:$rm, AArch64Base_ADDXLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(add S:$rn, S:$rm),
+def : Pat<(add X:$rn, X:$rm),
         (ADDXS X:$rn, X:$rm)>;
 
 
-def : Pat<(add S:$rn, (sra S:$rm, AArch64Base_ADDXSASR_imm6AsInt8:$imm6)),
+def : Pat<(add X:$rn, (sra X:$rm, AArch64Base_ADDXSASR_imm6AsInt8:$imm6)),
         (ADDXSASR X:$rn, X:$rm, AArch64Base_ADDXSASR_imm6AsInt8:$imm6)>;
 
 
@@ -50861,259 +50781,107 @@ def : Pat<(add S:$rn, AArch64Base_ADDXSI12_imm12SAsInt64:$imm12S),
         (ADDXSI12 S:$rn, AArch64Base_ADDXSI12_imm12SAsInt64:$imm12S)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSLSL_imm6AsInt8:$imm6)),
+def : Pat<(add X:$rn, (shl X:$rm, AArch64Base_ADDXSLSL_imm6AsInt8:$imm6)),
         (ADDXSLSL X:$rn, X:$rm, AArch64Base_ADDXSLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(add S:$rn, (srl S:$rm, AArch64Base_ADDXSLSR_imm6AsInt8:$imm6)),
+def : Pat<(add X:$rn, (srl X:$rm, AArch64Base_ADDXSLSR_imm6AsInt8:$imm6)),
         (ADDXSLSR X:$rn, X:$rm, AArch64Base_ADDXSLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSSXSX_imm3AsInt8:$imm3)),
+def : Pat<(add S:$rn, (shl X:$rm, AArch64Base_ADDXSSXSX_imm3AsInt8:$imm3)),
         (ADDXSSXSX S:$rn, X:$rm, AArch64Base_ADDXSSXSX_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(add S:$rn, S:$rm),
+def : Pat<(add S:$rn, X:$rm),
         (ADDXSSXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSUXSX_imm3AsInt8:$imm3)),
+def : Pat<(add S:$rn, (shl X:$rm, AArch64Base_ADDXSUXSX_imm3AsInt8:$imm3)),
         (ADDXSUXSX S:$rn, X:$rm, AArch64Base_ADDXSUXSX_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(add S:$rn, S:$rm),
+def : Pat<(add S:$rn, X:$rm),
         (ADDXSUXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXSXSX_imm3AsInt8:$imm3)),
+def : Pat<(add S:$rn, (shl X:$rm, AArch64Base_ADDXSXSX_imm3AsInt8:$imm3)),
         (ADDXSXSX S:$rn, X:$rm, AArch64Base_ADDXSXSX_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(add S:$rn, S:$rm),
+def : Pat<(add S:$rn, X:$rm),
         (ADDXSXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(add S:$rn, (shl S:$rm, AArch64Base_ADDXUXSX_imm3AsInt8:$imm3)),
+def : Pat<(add S:$rn, (shl X:$rm, AArch64Base_ADDXUXSX_imm3AsInt8:$imm3)),
         (ADDXUXSX S:$rn, X:$rm, AArch64Base_ADDXUXSX_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(add S:$rn, S:$rm),
+def : Pat<(add S:$rn, X:$rm),
         (ADDXUXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(and S:$rn, AArch64Base_ANDIW_immWSizeAsInt32:$immWSize),
-        (ANDIW W:$rn, AArch64Base_ANDIW_immWSizeAsInt32:$immWSize)>;
-
-
-def : Pat<(and S:$rn, AArch64Base_ANDIX_immXSizeAsInt64:$immXSize),
+def : Pat<(and X:$rn, AArch64Base_ANDIX_immXSizeAsInt64:$immXSize),
         (ANDIX X:$rn, AArch64Base_ANDIX_immXSizeAsInt64:$immXSize)>;
 
 
-def : Pat<(and S:$rn, AArch64Base_ANDSIW_immWSizeAsInt32:$immWSize),
-        (ANDSIW W:$rn, AArch64Base_ANDSIW_immWSizeAsInt32:$immWSize)>;
-
-
-def : Pat<(and S:$rn, AArch64Base_ANDSIX_immXSizeAsInt64:$immXSize),
+def : Pat<(and X:$rn, AArch64Base_ANDSIX_immXSizeAsInt64:$immXSize),
         (ANDSIX X:$rn, AArch64Base_ANDSIX_immXSizeAsInt64:$immXSize)>;
 
 
-def : Pat<(and S:$rn, S:$rm),
-        (ANDSW W:$rn, W:$rm)>;
-
-
-def : Pat<(and S:$rn, (sra S:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6)),
-        (ANDSWASR W:$rn, W:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(and S:$rn, (shl S:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6)),
-        (ANDSWLSL W:$rn, W:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(and S:$rn, (srl S:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6)),
-        (ANDSWLSR W:$rn, W:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(and S:$rn, S:$rm),
+def : Pat<(and X:$rn, X:$rm),
         (ANDSX X:$rn, X:$rm)>;
 
 
-def : Pat<(and S:$rn, (sra S:$rm, AArch64Base_ANDSXASR_imm6AsInt8:$imm6)),
+def : Pat<(and X:$rn, (sra X:$rm, AArch64Base_ANDSXASR_imm6AsInt8:$imm6)),
         (ANDSXASR X:$rn, X:$rm, AArch64Base_ANDSXASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(and S:$rn, (shl S:$rm, AArch64Base_ANDSXLSL_imm6AsInt8:$imm6)),
+def : Pat<(and X:$rn, (shl X:$rm, AArch64Base_ANDSXLSL_imm6AsInt8:$imm6)),
         (ANDSXLSL X:$rn, X:$rm, AArch64Base_ANDSXLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(and S:$rn, (srl S:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6)),
+def : Pat<(and X:$rn, (srl X:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6)),
         (ANDSXLSR X:$rn, X:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(and S:$rn, S:$rm),
-        (ANDW W:$rn, W:$rm)>;
-
-
-def : Pat<(and S:$rn, (sra S:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6)),
-        (ANDWASR W:$rn, W:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(and S:$rn, (shl S:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6)),
-        (ANDWLSL W:$rn, W:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(and S:$rn, (srl S:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6)),
-        (ANDWLSR W:$rn, W:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(and S:$rn, S:$rm),
+def : Pat<(and X:$rn, X:$rm),
         (ANDX X:$rn, X:$rm)>;
 
 
-def : Pat<(and S:$rn, (sra S:$rm, AArch64Base_ANDXASR_imm6AsInt8:$imm6)),
+def : Pat<(and X:$rn, (sra X:$rm, AArch64Base_ANDXASR_imm6AsInt8:$imm6)),
         (ANDXASR X:$rn, X:$rm, AArch64Base_ANDXASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(and S:$rn, (shl S:$rm, AArch64Base_ANDXLSL_imm6AsInt8:$imm6)),
+def : Pat<(and X:$rn, (shl X:$rm, AArch64Base_ANDXLSL_imm6AsInt8:$imm6)),
         (ANDXLSL X:$rn, X:$rm, AArch64Base_ANDXLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(and S:$rn, (srl S:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6)),
+def : Pat<(and X:$rn, (srl X:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6)),
         (ANDXLSR X:$rn, X:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(sra S:$rn, S:$rm),
-        (ASRW W:$rn, W:$rm)>;
-
-
-def : Pat<(sra S:$rn, S:$rm),
+def : Pat<(sra X:$rn, X:$rm),
         (ASRX X:$rn, X:$rm)>;
 
 
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCCCW X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCCCX X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCCSW X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCCSX X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCEQW X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCEQX X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCGEW X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCGEX X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCGTW X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCGTX X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCHIW X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCHIX X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCMIW X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCMIX X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCNEW X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCNEX X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCPLW X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCPLX X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCVCW X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCVCX X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCVSW X:$rn, X:$rm)>;
-
-
-def : Pat<(add S:$rm, (i64 1)),
-        (CSINCVSX X:$rn, X:$rm)>;
-
-
-def : Pat<(xor S:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize),
-        (EORIW W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize)>;
-
-
-def : Pat<(xor S:$rn, AArch64Base_EORIX_immXSizeAsInt64:$immXSize),
+def : Pat<(xor X:$rn, AArch64Base_EORIX_immXSizeAsInt64:$immXSize),
         (EORIX X:$rn, AArch64Base_EORIX_immXSizeAsInt64:$immXSize)>;
 
 
-def : Pat<(xor S:$rn, S:$rm),
-        (EORW W:$rn, W:$rm)>;
-
-
-def : Pat<(xor S:$rn, (sra S:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6)),
-        (EORWASR W:$rn, W:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(xor S:$rn, (shl S:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6)),
-        (EORWLSL W:$rn, W:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(xor S:$rn, (srl S:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6)),
-        (EORWLSR W:$rn, W:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(xor S:$rn, S:$rm),
+def : Pat<(xor X:$rn, X:$rm),
         (EORX X:$rn, X:$rm)>;
 
 
-def : Pat<(xor S:$rn, (sra S:$rm, AArch64Base_EORXASR_imm6AsInt8:$imm6)),
+def : Pat<(xor X:$rn, (sra X:$rm, AArch64Base_EORXASR_imm6AsInt8:$imm6)),
         (EORXASR X:$rn, X:$rm, AArch64Base_EORXASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(xor S:$rn, (shl S:$rm, AArch64Base_EORXLSL_imm6AsInt8:$imm6)),
+def : Pat<(xor X:$rn, (shl X:$rm, AArch64Base_EORXLSL_imm6AsInt8:$imm6)),
         (EORXLSL X:$rn, X:$rm, AArch64Base_EORXLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(xor S:$rn, (srl S:$rm, AArch64Base_EORXLSR_imm6AsInt8:$imm6)),
+def : Pat<(xor X:$rn, (srl X:$rm, AArch64Base_EORXLSR_imm6AsInt8:$imm6)),
         (EORXLSR X:$rn, X:$rm, AArch64Base_EORXLSR_imm6AsInt8:$imm6)>;
 
 
@@ -51357,285 +51125,157 @@ def : Pat<(load AddrFI:$rn),
         (LDURX AddrFI:$rn, (i64 0))>;
 
 
-def : Pat<(shl S:$rn, S:$rm),
-        (LSLW W:$rn, W:$rm)>;
-
-
-def : Pat<(shl S:$rn, S:$rm),
+def : Pat<(shl X:$rn, X:$rm),
         (LSLX X:$rn, X:$rm)>;
 
 
-def : Pat<(srl S:$rn, S:$rm),
-        (LSRW W:$rn, W:$rm)>;
-
-
-def : Pat<(srl S:$rn, S:$rm),
+def : Pat<(srl X:$rn, X:$rm),
         (LSRX X:$rn, X:$rm)>;
 
 
-def : Pat<(add S:$ra, (mul S:$rn, S:$rm)),
-        (MADDW W:$ra, W:$rn, W:$rm)>;
-
-
-def : Pat<(add S:$ra, (mul S:$rn, S:$rm)),
+def : Pat<(add X:$ra, (mul X:$rn, X:$rm)),
         (MADDX X:$ra, X:$rn, X:$rm)>;
 
 
-def : Pat<(shl AArch64Base_MOVZWPos16_imm16AsInt16:$imm16, (i32 16)),
-        (MOVZWPos16 AArch64Base_MOVZWPos16_imm16AsInt16:$imm16)>;
-
-
-def : Pat<(shl AArch64Base_MOVZXPos16_imm16AsInt16:$imm16, (i64 16)),
+def : Pat<(shl (zext AArch64Base_MOVZXPos16_imm16AsInt16:$imm16), (i64 16)),
         (MOVZXPos16 AArch64Base_MOVZXPos16_imm16AsInt16:$imm16)>;
 
 
-def : Pat<(shl AArch64Base_MOVZXPos32_imm16AsInt16:$imm16, (i64 32)),
+def : Pat<(shl (zext AArch64Base_MOVZXPos32_imm16AsInt16:$imm16), (i64 32)),
         (MOVZXPos32 AArch64Base_MOVZXPos32_imm16AsInt16:$imm16)>;
 
 
-def : Pat<(shl AArch64Base_MOVZXPos48_imm16AsInt16:$imm16, (i64 48)),
+def : Pat<(shl (zext AArch64Base_MOVZXPos48_imm16AsInt16:$imm16), (i64 48)),
         (MOVZXPos48 AArch64Base_MOVZXPos48_imm16AsInt16:$imm16)>;
 
 
-def : Pat<(sub S:$ra, (mul S:$rn, S:$rm)),
-        (MSUBW W:$ra, W:$rn, W:$rm)>;
-
-
-def : Pat<(sub S:$ra, (mul S:$rn, S:$rm)),
+def : Pat<(sub X:$ra, (mul X:$rn, X:$rm)),
         (MSUBX X:$ra, X:$rn, X:$rm)>;
 
 
-def : Pat<(or S:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize),
-        (ORRIW W:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize)>;
-
-
-def : Pat<(or S:$rn, AArch64Base_ORRIX_immXSizeAsInt64:$immXSize),
+def : Pat<(or X:$rn, AArch64Base_ORRIX_immXSizeAsInt64:$immXSize),
         (ORRIX X:$rn, AArch64Base_ORRIX_immXSizeAsInt64:$immXSize)>;
 
 
-def : Pat<(or S:$rn, S:$rm),
-        (ORRW W:$rn, W:$rm)>;
-
-
-def : Pat<(or S:$rn, (sra S:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6)),
-        (ORRWASR W:$rn, W:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(or S:$rn, (shl S:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6)),
-        (ORRWLSL W:$rn, W:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(or S:$rn, (srl S:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6)),
-        (ORRWLSR W:$rn, W:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(or S:$rn, S:$rm),
+def : Pat<(or X:$rn, X:$rm),
         (ORRX X:$rn, X:$rm)>;
 
 
-def : Pat<(or S:$rn, (sra S:$rm, AArch64Base_ORRXASR_imm6AsInt8:$imm6)),
+def : Pat<(or X:$rn, (sra X:$rm, AArch64Base_ORRXASR_imm6AsInt8:$imm6)),
         (ORRXASR X:$rn, X:$rm, AArch64Base_ORRXASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(or S:$rn, (shl S:$rm, AArch64Base_ORRXLSL_imm6AsInt8:$imm6)),
+def : Pat<(or X:$rn, (shl X:$rm, AArch64Base_ORRXLSL_imm6AsInt8:$imm6)),
         (ORRXLSL X:$rn, X:$rm, AArch64Base_ORRXLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(or S:$rn, (srl S:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6)),
+def : Pat<(or X:$rn, (srl X:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6)),
         (ORRXLSR X:$rn, X:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(sra (shl S:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize), AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize),
-        (SBFMW W:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize)>;
-
-
-def : Pat<(sra (shl S:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize), AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize),
+def : Pat<(sra (shl X:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize), AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize),
         (SBFMX X:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize)>;
 
 
-def : Pat<(sdiv S:$rn, S:$rm),
-        (SDIVW W:$rm, W:$rn)>;
-
-
-def : Pat<(sdiv S:$rn, S:$rm),
+def : Pat<(sdiv X:$rn, X:$rm),
         (SDIVX X:$rm, X:$rn)>;
 
 
-def : Pat<(mulhs S:$rn, S:$rm),
+def : Pat<(mulhs X:$rn, X:$rm),
         (SMULH X:$rn, X:$rm)>;
 
 
-def : Pat<(truncstorei8 S:$rt, (add S:$rn, AArch64Base_STRB_offsetAsInt64:$offset)),
+def : Pat<(truncstorei8 X:$rt, (add S:$rn, AArch64Base_STRB_offsetAsInt64:$offset)),
         (STRB S:$rn, X:$rt, AArch64Base_STRB_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei8 S:$rt, (add AddrFI:$rn, AArch64Base_STRB_offsetAsInt64:$offset)),
+def : Pat<(truncstorei8 X:$rt, (add AddrFI:$rn, AArch64Base_STRB_offsetAsInt64:$offset)),
         (STRB AddrFI:$rn, X:$rt, AArch64Base_STRB_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei8 S:$rt, S:$rn),
+def : Pat<(truncstorei8 X:$rt, S:$rn),
         (STRB S:$rn, X:$rt, (i64 0))>;
 
-def : Pat<(truncstorei8 S:$rt, AddrFI:$rn),
+def : Pat<(truncstorei8 X:$rt, AddrFI:$rn),
         (STRB AddrFI:$rn, X:$rt, (i64 0))>;
 
 
-def : Pat<(truncstorei16 S:$rt, (add S:$rn, (shl AArch64Base_STRH_offsetAsInt64:$offset, (i64 1)))),
+def : Pat<(truncstorei16 X:$rt, (add S:$rn, (shl AArch64Base_STRH_offsetAsInt64:$offset, (i64 1)))),
         (STRH S:$rn, X:$rt, AArch64Base_STRH_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei16 S:$rt, (add AddrFI:$rn, (shl AArch64Base_STRH_offsetAsInt64:$offset, (i64 1)))),
+def : Pat<(truncstorei16 X:$rt, (add AddrFI:$rn, (shl AArch64Base_STRH_offsetAsInt64:$offset, (i64 1)))),
         (STRH AddrFI:$rn, X:$rt, AArch64Base_STRH_offsetAsInt64:$offset)>;
 
 
-def : Pat<(truncstorei32 S:$rt, (add S:$rn, (shl AArch64Base_STRW_offsetAsInt64:$offset, (i64 2)))),
+def : Pat<(truncstorei32 X:$rt, (add S:$rn, (shl AArch64Base_STRW_offsetAsInt64:$offset, (i64 2)))),
         (STRW S:$rn, X:$rt, AArch64Base_STRW_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei32 S:$rt, (add AddrFI:$rn, (shl AArch64Base_STRW_offsetAsInt64:$offset, (i64 2)))),
+def : Pat<(truncstorei32 X:$rt, (add AddrFI:$rn, (shl AArch64Base_STRW_offsetAsInt64:$offset, (i64 2)))),
         (STRW AddrFI:$rn, X:$rt, AArch64Base_STRW_offsetAsInt64:$offset)>;
 
 
-def : Pat<(store S:$rt, (add S:$rn, (shl AArch64Base_STRX_offsetAsInt64:$offset, (i64 3)))),
+def : Pat<(store X:$rt, (add S:$rn, (shl AArch64Base_STRX_offsetAsInt64:$offset, (i64 3)))),
         (STRX S:$rn, X:$rt, AArch64Base_STRX_offsetAsInt64:$offset)>;
 
-def : Pat<(store S:$rt, (add AddrFI:$rn, (shl AArch64Base_STRX_offsetAsInt64:$offset, (i64 3)))),
+def : Pat<(store X:$rt, (add AddrFI:$rn, (shl AArch64Base_STRX_offsetAsInt64:$offset, (i64 3)))),
         (STRX AddrFI:$rn, X:$rt, AArch64Base_STRX_offsetAsInt64:$offset)>;
 
 
-def : Pat<(truncstorei8 S:$rt, (add S:$rn, AArch64Base_STURB_offsetAsInt64:$offset)),
+def : Pat<(truncstorei8 X:$rt, (add S:$rn, AArch64Base_STURB_offsetAsInt64:$offset)),
         (STURB S:$rn, X:$rt, AArch64Base_STURB_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei8 S:$rt, (add AddrFI:$rn, AArch64Base_STURB_offsetAsInt64:$offset)),
+def : Pat<(truncstorei8 X:$rt, (add AddrFI:$rn, AArch64Base_STURB_offsetAsInt64:$offset)),
         (STURB AddrFI:$rn, X:$rt, AArch64Base_STURB_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei8 S:$rt, S:$rn),
+def : Pat<(truncstorei8 X:$rt, S:$rn),
         (STURB S:$rn, X:$rt, (i64 0))>;
 
-def : Pat<(truncstorei8 S:$rt, AddrFI:$rn),
+def : Pat<(truncstorei8 X:$rt, AddrFI:$rn),
         (STURB AddrFI:$rn, X:$rt, (i64 0))>;
 
 
-def : Pat<(truncstorei16 S:$rt, (add S:$rn, AArch64Base_STURH_offsetAsInt64:$offset)),
+def : Pat<(truncstorei16 X:$rt, (add S:$rn, AArch64Base_STURH_offsetAsInt64:$offset)),
         (STURH S:$rn, X:$rt, AArch64Base_STURH_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei16 S:$rt, (add AddrFI:$rn, AArch64Base_STURH_offsetAsInt64:$offset)),
+def : Pat<(truncstorei16 X:$rt, (add AddrFI:$rn, AArch64Base_STURH_offsetAsInt64:$offset)),
         (STURH AddrFI:$rn, X:$rt, AArch64Base_STURH_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei16 S:$rt, S:$rn),
+def : Pat<(truncstorei16 X:$rt, S:$rn),
         (STURH S:$rn, X:$rt, (i64 0))>;
 
-def : Pat<(truncstorei16 S:$rt, AddrFI:$rn),
+def : Pat<(truncstorei16 X:$rt, AddrFI:$rn),
         (STURH AddrFI:$rn, X:$rt, (i64 0))>;
 
 
-def : Pat<(truncstorei32 S:$rt, (add S:$rn, AArch64Base_STURW_offsetAsInt64:$offset)),
+def : Pat<(truncstorei32 X:$rt, (add S:$rn, AArch64Base_STURW_offsetAsInt64:$offset)),
         (STURW S:$rn, X:$rt, AArch64Base_STURW_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei32 S:$rt, (add AddrFI:$rn, AArch64Base_STURW_offsetAsInt64:$offset)),
+def : Pat<(truncstorei32 X:$rt, (add AddrFI:$rn, AArch64Base_STURW_offsetAsInt64:$offset)),
         (STURW AddrFI:$rn, X:$rt, AArch64Base_STURW_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei32 S:$rt, S:$rn),
+def : Pat<(truncstorei32 X:$rt, S:$rn),
         (STURW S:$rn, X:$rt, (i64 0))>;
 
-def : Pat<(truncstorei32 S:$rt, AddrFI:$rn),
+def : Pat<(truncstorei32 X:$rt, AddrFI:$rn),
         (STURW AddrFI:$rn, X:$rt, (i64 0))>;
 
 
-def : Pat<(store S:$rt, (add S:$rn, AArch64Base_STURX_offsetAsInt64:$offset)),
+def : Pat<(store X:$rt, (add S:$rn, AArch64Base_STURX_offsetAsInt64:$offset)),
         (STURX S:$rn, X:$rt, AArch64Base_STURX_offsetAsInt64:$offset)>;
 
-def : Pat<(store S:$rt, (add AddrFI:$rn, AArch64Base_STURX_offsetAsInt64:$offset)),
+def : Pat<(store X:$rt, (add AddrFI:$rn, AArch64Base_STURX_offsetAsInt64:$offset)),
         (STURX AddrFI:$rn, X:$rt, AArch64Base_STURX_offsetAsInt64:$offset)>;
 
-def : Pat<(store S:$rt, S:$rn),
+def : Pat<(store X:$rt, S:$rn),
         (STURX S:$rn, X:$rt, (i64 0))>;
 
-def : Pat<(store S:$rt, AddrFI:$rn),
+def : Pat<(store X:$rt, AddrFI:$rn),
         (STURX AddrFI:$rn, X:$rt, (i64 0))>;
 
 
-def : Pat<(sub S:$rn, S:$rm),
-        (SUBW W:$rn, X:$rm)>;
-
-
-def : Pat<(sub S:$rn, (sra S:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6)),
-        (SUBWASR W:$rn, X:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(sub S:$rn, AArch64Base_SUBWI_imm12XAsInt64:$imm12X),
-        (SUBWI R:$rn, AArch64Base_SUBWI_imm12XAsInt64:$imm12X)>;
-
-
-def : Pat<(sub S:$rn, AArch64Base_SUBWI12_imm12SAsInt64:$imm12S),
-        (SUBWI12 R:$rn, AArch64Base_SUBWI12_imm12SAsInt64:$imm12S)>;
-
-
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6)),
-        (SUBWLSL W:$rn, X:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(sub S:$rn, (srl S:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6)),
-        (SUBWLSR W:$rn, X:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(sub S:$rn, S:$rm),
-        (SUBWS W:$rn, X:$rm)>;
-
-
-def : Pat<(sub S:$rn, (sra S:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6)),
-        (SUBWSASR W:$rn, X:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(sub S:$rn, AArch64Base_SUBWSI_imm12XAsInt64:$imm12X),
-        (SUBWSI R:$rn, AArch64Base_SUBWSI_imm12XAsInt64:$imm12X)>;
-
-
-def : Pat<(sub S:$rn, AArch64Base_SUBWSI12_imm12SAsInt64:$imm12S),
-        (SUBWSI12 R:$rn, AArch64Base_SUBWSI12_imm12SAsInt64:$imm12S)>;
-
-
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6)),
-        (SUBWSLSL W:$rn, X:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(sub S:$rn, (srl S:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6)),
-        (SUBWSLSR W:$rn, X:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6)>;
-
-
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSSXSX_imm3AsInt8:$imm3)),
-        (SUBWSSXSX R:$rn, X:$rm, AArch64Base_SUBWSSXSX_imm3AsInt8:$imm3)>;
-
-
-def : Pat<(sub S:$rn, S:$rm),
-        (SUBWSSXTX R:$rn, X:$rm)>;
-
-
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSUXSX_imm3AsInt8:$imm3)),
-        (SUBWSUXSX R:$rn, X:$rm, AArch64Base_SUBWSUXSX_imm3AsInt8:$imm3)>;
-
-
-def : Pat<(sub S:$rn, S:$rm),
-        (SUBWSUXTX R:$rn, X:$rm)>;
-
-
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWSXSX_imm3AsInt8:$imm3)),
-        (SUBWSXSX R:$rn, X:$rm, AArch64Base_SUBWSXSX_imm3AsInt8:$imm3)>;
-
-
-def : Pat<(sub S:$rn, S:$rm),
-        (SUBWSXTX R:$rn, X:$rm)>;
-
-
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBWUXSX_imm3AsInt8:$imm3)),
-        (SUBWUXSX R:$rn, X:$rm, AArch64Base_SUBWUXSX_imm3AsInt8:$imm3)>;
-
-
-def : Pat<(sub S:$rn, S:$rm),
-        (SUBWUXTX R:$rn, X:$rm)>;
-
-
-def : Pat<(sub S:$rn, S:$rm),
+def : Pat<(sub X:$rn, X:$rm),
         (SUBX X:$rn, X:$rm)>;
 
 
-def : Pat<(sub S:$rn, (sra S:$rm, AArch64Base_SUBXASR_imm6AsInt8:$imm6)),
+def : Pat<(sub X:$rn, (sra X:$rm, AArch64Base_SUBXASR_imm6AsInt8:$imm6)),
         (SUBXASR X:$rn, X:$rm, AArch64Base_SUBXASR_imm6AsInt8:$imm6)>;
 
 
@@ -51647,19 +51287,19 @@ def : Pat<(sub S:$rn, AArch64Base_SUBXI12_imm12SAsInt64:$imm12S),
         (SUBXI12 S:$rn, AArch64Base_SUBXI12_imm12SAsInt64:$imm12S)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXLSL_imm6AsInt8:$imm6)),
+def : Pat<(sub X:$rn, (shl X:$rm, AArch64Base_SUBXLSL_imm6AsInt8:$imm6)),
         (SUBXLSL X:$rn, X:$rm, AArch64Base_SUBXLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(sub S:$rn, (srl S:$rm, AArch64Base_SUBXLSR_imm6AsInt8:$imm6)),
+def : Pat<(sub X:$rn, (srl X:$rm, AArch64Base_SUBXLSR_imm6AsInt8:$imm6)),
         (SUBXLSR X:$rn, X:$rm, AArch64Base_SUBXLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(sub S:$rn, S:$rm),
+def : Pat<(sub X:$rn, X:$rm),
         (SUBXS X:$rn, X:$rm)>;
 
 
-def : Pat<(sub S:$rn, (sra S:$rm, AArch64Base_SUBXSASR_imm6AsInt8:$imm6)),
+def : Pat<(sub X:$rn, (sra X:$rm, AArch64Base_SUBXSASR_imm6AsInt8:$imm6)),
         (SUBXSASR X:$rn, X:$rm, AArch64Base_SUBXSASR_imm6AsInt8:$imm6)>;
 
 
@@ -51671,61 +51311,53 @@ def : Pat<(sub S:$rn, AArch64Base_SUBXSI12_imm12SAsInt64:$imm12S),
         (SUBXSI12 S:$rn, AArch64Base_SUBXSI12_imm12SAsInt64:$imm12S)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSLSL_imm6AsInt8:$imm6)),
+def : Pat<(sub X:$rn, (shl X:$rm, AArch64Base_SUBXSLSL_imm6AsInt8:$imm6)),
         (SUBXSLSL X:$rn, X:$rm, AArch64Base_SUBXSLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(sub S:$rn, (srl S:$rm, AArch64Base_SUBXSLSR_imm6AsInt8:$imm6)),
+def : Pat<(sub X:$rn, (srl X:$rm, AArch64Base_SUBXSLSR_imm6AsInt8:$imm6)),
         (SUBXSLSR X:$rn, X:$rm, AArch64Base_SUBXSLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSSXSX_imm3AsInt8:$imm3)),
+def : Pat<(sub S:$rn, (shl X:$rm, AArch64Base_SUBXSSXSX_imm3AsInt8:$imm3)),
         (SUBXSSXSX S:$rn, X:$rm, AArch64Base_SUBXSSXSX_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(sub S:$rn, S:$rm),
+def : Pat<(sub S:$rn, X:$rm),
         (SUBXSSXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSUXSX_imm3AsInt8:$imm3)),
+def : Pat<(sub S:$rn, (shl X:$rm, AArch64Base_SUBXSUXSX_imm3AsInt8:$imm3)),
         (SUBXSUXSX S:$rn, X:$rm, AArch64Base_SUBXSUXSX_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(sub S:$rn, S:$rm),
+def : Pat<(sub S:$rn, X:$rm),
         (SUBXSUXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXSXSX_imm3AsInt8:$imm3)),
+def : Pat<(sub S:$rn, (shl X:$rm, AArch64Base_SUBXSXSX_imm3AsInt8:$imm3)),
         (SUBXSXSX S:$rn, X:$rm, AArch64Base_SUBXSXSX_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(sub S:$rn, S:$rm),
+def : Pat<(sub S:$rn, X:$rm),
         (SUBXSXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(sub S:$rn, (shl S:$rm, AArch64Base_SUBXUXSX_imm3AsInt8:$imm3)),
+def : Pat<(sub S:$rn, (shl X:$rm, AArch64Base_SUBXUXSX_imm3AsInt8:$imm3)),
         (SUBXUXSX S:$rn, X:$rm, AArch64Base_SUBXUXSX_imm3AsInt8:$imm3)>;
 
 
-def : Pat<(sub S:$rn, S:$rm),
+def : Pat<(sub S:$rn, X:$rm),
         (SUBXUXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(srl (shl S:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize), AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize),
-        (UBFMW W:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize)>;
-
-
-def : Pat<(srl (shl S:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize), AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize),
+def : Pat<(srl (shl X:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize), AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize),
         (UBFMX X:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize)>;
 
 
-def : Pat<(udiv S:$rn, S:$rm),
-        (UDIVW W:$rm, W:$rn)>;
-
-
-def : Pat<(udiv S:$rn, S:$rm),
+def : Pat<(udiv X:$rn, X:$rm),
         (UDIVX X:$rm, X:$rn)>;
 
 
-def : Pat<(mulhu S:$rn, S:$rm),
+def : Pat<(mulhu X:$rn, X:$rm),
         (UMULH X:$rn, X:$rm)>;

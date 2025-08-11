@@ -5072,49 +5072,6 @@ def : Pat<(shl X:$rs1, RV3264Base_SLLI_shamtAsInt8:$shamt),
         (SLLI X:$rs1, RV3264Base_SLLI_shamtAsInt8:$shamt)>;
 
 
-def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
-        (SLT X:$rs1, X:$rs2)>;
-
-def : Pat<(setcc X:$rs1, X:$rs2, SETEQ),
-        (SLTIU (XOR X:$rs1, X:$rs2), 1)>;
-
-def : Pat<(setcc X:$rs1, X:$rs2, SETGT),
-        (SLT X:$rs2, X:$rs1)>;
-
-def : Pat<(setcc X:$rs1, X:$rs2, SETLE),
-        (XORI (SLT X:$rs2, X:$rs1), 1)>;
-
-def : Pat<(setcc X:$rs1, X:$rs2, SETGE),
-        (XORI (SLT X:$rs1, X:$rs2), 1)>;
-
-
-def : Pat<(setcc X:$rs1, RV3264Base_SLTI_immSAsInt64:$immS, SETLT),
-        (SLTI X:$rs1, RV3264Base_SLTI_immSAsInt64:$immS)>;
-
-
-def : Pat<(setcc X:$rs1, RV3264Base_SLTIU_immSAsInt64:$immS, SETULT),
-        (SLTIU X:$rs1, RV3264Base_SLTIU_immSAsInt64:$immS)>;
-
-def : Pat<(setcc X:$rs1, RV3264Base_SLTIU_immSAsInt64:$immS, SETNE),
-        (SLTU X0, (XORI X:$rs1, RV3264Base_SLTIU_immSAsInt64:$immS))>;
-
-
-def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
-        (SLTU X:$rs1, X:$rs2)>;
-
-def : Pat<(setcc X:$rs1, X:$rs2, SETNE),
-        (SLTU X0, (XOR X:$rs1, X:$rs2))>;
-
-def : Pat<(setcc X:$rs1, X:$rs2, SETUGE),
-        (XORI (SLTU X:$rs1, X:$rs2), 1)>;
-
-def : Pat<(setcc X:$rs1, X:$rs2, SETUGT),
-        (SLTU X:$rs2, X:$rs1)>;
-
-def : Pat<(setcc X:$rs1, X:$rs2, SETULE),
-        (XORI (SLTU X:$rs2, X:$rs1), 1)>;
-
-
 def : Pat<(sra X:$rs1, X:$rs2),
         (SRA X:$rs1, X:$rs2)>;
 
