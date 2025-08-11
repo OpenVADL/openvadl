@@ -103,6 +103,7 @@ import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
+import vadl.viam.graph.dependency.UnaryNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
@@ -366,6 +367,16 @@ public class LcbNodeReplacementHandler {
       var newArg = new ConstantNode(new Constant.Str(replaced.llvmCondCode().name()));
       ensure(replaced.graph() != null, "graph must exist");
       replaced.arguments().add(replaced.graph().addWithInputs(newArg));
+
+      // setcc must not be wrapped by a zext.
+      var unary =
+          replaced.usages().filter(x -> x instanceof SignExtendNode || x instanceof ZeroExtendNode)
+              .map(x -> (UnaryNode) x)
+              .toList();
+
+      for (var x : unary) {
+        x.replaceAndDelete(x.value());
+      }
     } else {
       Objects.requireNonNull(node.graph())
           .add(new LlvmUnlowerableSD(node.arguments(), node.type()));
@@ -580,11 +591,7 @@ public class LcbNodeReplacementHandler {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(TruncateNode truncateNode) {
-    // Remove all nodes
-    for (var usage : truncateNode.usages().toList()) {
-      usage.replaceInput(truncateNode, truncateNode.value());
-    }
-
+    Objects.requireNonNull(truncateNode.graph()).add(new LlvmUnlowerableSD());
     LcbNodeReplacementHandlerDispatcher.dispatch(this, truncateNode.value());
   }
 
@@ -733,10 +740,6 @@ public class LcbNodeReplacementHandler {
       node.replaceAndDelete(new LlvmZExtLoad(readMemNode));
       LcbNodeReplacementHandlerDispatcher.dispatch(this, readMemNode.address());
     } else {
-      // Remove all nodes
-      for (var usage : node.usages().toList()) {
-        usage.replaceInput(node, node.value());
-      }
       LcbNodeReplacementHandlerDispatcher.dispatch(this, node.value());
     }
   }

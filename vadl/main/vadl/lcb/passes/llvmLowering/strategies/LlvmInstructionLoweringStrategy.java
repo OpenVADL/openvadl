@@ -38,6 +38,7 @@ import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.operands.GenerateInstructionOperandsPass;
 import vadl.gcb.passes.operands.InstructionOperandsCtx;
 import vadl.gcb.passes.operands.model.GcbConstantOperand;
+import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionIndexedRegisterFileOperand;
@@ -87,6 +88,7 @@ import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
@@ -430,7 +432,8 @@ public abstract class LlvmInstructionLoweringStrategy {
         || rejectWhenReadingFromMemory(graph)
         || rejectWhenWritingToMemory(graph)
         || hasUnreplacedBuiltins(graph)
-        || hasSelectNodes(graph)) {
+        || hasSelectNodes(graph)
+        || hasNotAllOperandsUsed(instruction, graph)) {
       return true;
     }
 
@@ -455,6 +458,30 @@ public abstract class LlvmInstructionLoweringStrategy {
         && graph.getNodes(ReadResourceNode.class).toList().size() == 1
         && graph.getNodes(WriteResourceNode.class)
         .anyMatch(writeResourceNode -> writeResourceNode.value() instanceof ReadResourceNode);
+  }
+
+  /**
+   * TableGen requires that all the operands are used in the pattern. If it doesn't then the
+   * instruction is not lowerable.
+   */
+  private boolean hasNotAllOperandsUsed(Instruction instruction, Graph graph) {
+    var ctx = instruction.expectExtension(InstructionOperandsCtx.class);
+    var operands = ctx.inputs();
+
+    for (var operand : operands) {
+      if (operand instanceof GcbInstructionRegisterFileOperand registerFileOperand) {
+        var name = registerFileOperand.name();
+        var match = graph.getNodes(FieldRefNode.class)
+            .anyMatch(fieldRefNode -> fieldRefNode.formatField().simpleName().equals(name));
+
+        // If no format field is using the operand then we can't lower.
+        if (!match) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -632,6 +659,20 @@ public abstract class LlvmInstructionLoweringStrategy {
       return new TableGenInstructionLabelOperand(node);
     } else {
       throw Diagnostic.error("Not supported usage", node.location()).build();
+    }
+  }
+
+  private static GcbInstructionOperand generateInstructionOperandRegisterFile(
+      ReadArtificialResNode node) {
+    if (node.address() instanceof FieldRefNode field) {
+      return new GcbInstructionRegisterFileOperand(node, field.formatField());
+    } else if (node.address() instanceof FuncParamNode funcParamNode) {
+      return new GcbInstructionIndexedRegisterFileOperand(node, funcParamNode);
+    } else {
+      throw Diagnostic.error(
+          "The compiler generator needs to generate a tablegen instruction operand from this "
+              + "address for a field but it does not support it.",
+          node.address().location()).build();
     }
   }
 

@@ -121,24 +121,6 @@ public class LlvmLoweringPass extends Pass {
       return result;
     }
 
-    /**
-     * Return the format fields of the {@link #outputs} and {@link #inputs}.
-     *
-     * @throws Diagnostic if any operand is not a {@link ReferencesFormatField}.
-     */
-    public List<Format.Field> outputInputOperandsFormatFields() {
-      var result = new ArrayList<Format.Field>();
-      for (var operand : outputInputOperands()) {
-        if (operand instanceof ReferencesFormatField x) {
-          result.addAll(x.formatFields());
-        } else {
-          throw Diagnostic.error("Expected to find format field on operand.",
-              SourceLocation.INVALID_SOURCE_LOCATION).build();
-        }
-      }
-      return result;
-    }
-
     public BaseInstructionInfo withFlags(LlvmLoweringPass.Flags newFlags) {
       return new BaseInstructionInfo(inputs, outputs, newFlags, uses, defs);
     }

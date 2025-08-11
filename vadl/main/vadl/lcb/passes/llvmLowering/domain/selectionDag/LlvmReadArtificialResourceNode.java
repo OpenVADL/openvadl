@@ -33,12 +33,13 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 
 /**
  * LLVM node for the selection dag.
  */
-public class LlvmReadArtificialResourceNode extends ReadRegTensorNode implements LlvmNodeLowerable,
+public class LlvmReadArtificialResourceNode extends ReadArtificialResNode
+    implements LlvmNodeLowerable,
     LlvmNodeReplaceable {
   protected final ArtificialResource artificialResource;
   protected GcbDefaultInstructionOperand instructionOperand;
@@ -49,10 +50,9 @@ public class LlvmReadArtificialResourceNode extends ReadRegTensorNode implements
   public LlvmReadArtificialResourceNode(ArtificialResource artificialResource,
                                         ExpressionNode address,
                                         DataType type) {
-    super((RegisterTensor) artificialResource.innerResourceRef(),
+    super(artificialResource,
         new NodeList<>(address),
-        type,
-        null);
+        type);
     this.artificialResource = artificialResource;
     if (artificialResource.readFunction().parameters().length == 0) {
       // It is a register
