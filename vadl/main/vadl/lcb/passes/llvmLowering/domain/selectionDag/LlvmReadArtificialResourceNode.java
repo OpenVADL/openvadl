@@ -34,12 +34,12 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
-import vadl.viam.graph.dependency.ReadRegTensorNode;
 
 /**
  * LLVM node for the selection dag.
  */
-public class LlvmReadArtificialResourceNode extends ReadArtificialResNode implements LlvmNodeLowerable,
+public class LlvmReadArtificialResourceNode extends ReadArtificialResNode
+    implements LlvmNodeLowerable,
     LlvmNodeReplaceable {
   protected final ArtificialResource artificialResource;
   protected GcbDefaultInstructionOperand instructionOperand;

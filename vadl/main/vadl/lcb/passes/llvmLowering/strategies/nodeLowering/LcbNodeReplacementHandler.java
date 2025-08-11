@@ -580,11 +580,6 @@ public class LcbNodeReplacementHandler {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(TruncateNode truncateNode) {
-    // Remove all nodes
-    // for (var usage : truncateNode.usages().toList()) {
-      // usage.replaceInput(truncateNode, truncateNode.value());
-    // }
-
     LcbNodeReplacementHandlerDispatcher.dispatch(this, truncateNode.value());
   }
 
