@@ -581,9 +581,9 @@ public class LcbNodeReplacementHandler {
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(TruncateNode truncateNode) {
     // Remove all nodes
-    for (var usage : truncateNode.usages().toList()) {
-      usage.replaceInput(truncateNode, truncateNode.value());
-    }
+    // for (var usage : truncateNode.usages().toList()) {
+      // usage.replaceInput(truncateNode, truncateNode.value());
+    // }
 
     LcbNodeReplacementHandlerDispatcher.dispatch(this, truncateNode.value());
   }
@@ -733,10 +733,6 @@ public class LcbNodeReplacementHandler {
       node.replaceAndDelete(new LlvmZExtLoad(readMemNode));
       LcbNodeReplacementHandlerDispatcher.dispatch(this, readMemNode.address());
     } else {
-      // Remove all nodes
-      for (var usage : node.usages().toList()) {
-        usage.replaceInput(node, node.value());
-      }
       LcbNodeReplacementHandlerDispatcher.dispatch(this, node.value());
     }
   }

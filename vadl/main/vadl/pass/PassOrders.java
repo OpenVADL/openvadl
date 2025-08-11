@@ -83,6 +83,7 @@ import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.ISelLoweringOperationActionPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.RemoveRegisterWritesPass;
+import vadl.lcb.passes.llvmLowering.RemoveTruncationAndAnyExtPass;
 import vadl.lcb.passes.llvmLowering.ReplaceStatusBuiltinsByNonStatusBuiltinsPass;
 import vadl.lcb.passes.llvmLowering.compensation.CompensationPatternPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
@@ -258,6 +259,8 @@ public class PassOrders {
     order.add(new PseudoExpansionFunctionGeneratorPass(configuration));
     order.add(new AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass(
         configuration));
+
+    order.add(new RemoveTruncationAndAnyExtPass(configuration));
 
     order.add(new IsaRelocationMatchingPass(configuration));
     order.add(new GenerateTableGenRegistersPass(configuration));

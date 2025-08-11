@@ -1406,13 +1406,16 @@ public class BuiltInTable {
     private final @Nullable String operator;
     private final RelationType signature;
     private final Kind kind;
+    private final boolean hasSameBitWidth;
 
     private BuiltIn(String name, @Nullable String operator,
-                    RelationType signature, Kind kind) {
+                    RelationType signature, Kind kind,
+                    boolean hasSameBitWidth) {
       this.name = name;
       this.operator = operator;
       this.signature = signature;
       this.kind = kind;
+      this.hasSameBitWidth = hasSameBitWidth;
     }
 
     public String name() {
@@ -1430,6 +1433,10 @@ public class BuiltInTable {
 
     public RelationType signature() {
       return signature;
+    }
+
+    public boolean hasSameBitWidth() {
+      return hasSameBitWidth;
     }
 
     public Optional<Constant> compute(List<Constant> args) {
@@ -1592,6 +1599,7 @@ public class BuiltInTable {
     private Function<List<Type>, Boolean> takesFunction;
     @Nullable
     private Function<List<Type>, Type> returnsFunction;
+    private boolean hasSameBitWidth = false;
 
     BuiltInBuilder(String name, @Nullable String operator, RelationType signature,
                    BuiltIn.Kind kind) {
@@ -1655,12 +1663,14 @@ public class BuiltInTable {
     public BuiltInBuilder takesAllWithSameBitWidths() {
       takesData((args) -> !args.isEmpty()
           && args.stream().allMatch(a -> a.bitWidth() == args.get(0).bitWidth()));
+      this.hasSameBitWidth = true;
       return this;
     }
 
     public BuiltInBuilder takesFirstTwoWithSameBitWidths() {
       takesData((args) -> args.size() >= 2
           && args.get(0).bitWidth() == args.get(1).bitWidth());
+      this.hasSameBitWidth = true;
       return this;
     }
 
@@ -1727,7 +1737,7 @@ public class BuiltInTable {
           "Built-in construction failed: No `returns` function specified for built-in %s",
           name);
 
-      return new BuiltIn(name, operator, signature, kind) {
+      return new BuiltIn(name, operator, signature, kind, hasSameBitWidth) {
         @Override
         public Optional<Constant> compute(List<Constant> args) {
           if (computeFunction == null) {
