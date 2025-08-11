@@ -58,6 +58,11 @@ public class RemoveTruncationAndAnyExtPass extends Pass {
             .filter(x -> !x.builtIn().hasSameBitWidth())
             .toList();
 
+        if (!behavior.getNodes(SignExtendNode.class).toList().isEmpty()
+            || !behavior.getNodes(ZeroExtendNode.class).toList().isEmpty()) {
+          continue;
+        }
+
         for (var candidate : candidates) {
           for (var arg : candidate.arguments()) {
             if (arg instanceof TruncateNode truncateNode) {

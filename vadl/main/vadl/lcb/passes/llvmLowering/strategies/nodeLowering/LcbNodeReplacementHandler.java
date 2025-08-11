@@ -591,6 +591,7 @@ public class LcbNodeReplacementHandler {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(TruncateNode truncateNode) {
+    Objects.requireNonNull(truncateNode.graph()).add(new LlvmUnlowerableSD());
     LcbNodeReplacementHandlerDispatcher.dispatch(this, truncateNode.value());
   }
 

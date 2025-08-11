@@ -4796,14 +4796,6 @@ def : Pat<(add AddrFI:$rs1, RV3264Base_ADDI_immSAsInt64:$immS),
         (ADDI AddrFI:$rs1, RV3264Base_ADDI_immSAsInt64:$immS)>;
 
 
-def : Pat<(sext (add (trunc X:$rs1), (trunc RV3264Base_ADDIW_immSAsInt64:$immS))),
-        (ADDIW X:$rs1, RV3264Base_ADDIW_immSAsInt64:$immS)>;
-
-
-def : Pat<(sext (add (trunc X:$rs1), (trunc X:$rs2))),
-        (ADDW X:$rs1, X:$rs2)>;
-
-
 def : Pat<(and X:$rs1, X:$rs2),
         (AND X:$rs1, X:$rs2)>;
 
@@ -4887,14 +4879,6 @@ def : Pat<(sdiv X:$rs1, X:$rs2),
 
 def : Pat<(udiv X:$rs1, X:$rs2),
         (DIVU X:$rs2, X:$rs1)>;
-
-
-def : Pat<(sext (udiv (trunc X:$rs1), (trunc X:$rs2))),
-        (DIVUW X:$rs2, X:$rs1)>;
-
-
-def : Pat<(sext (sdiv (trunc X:$rs1), (trunc X:$rs2))),
-        (DIVW X:$rs2, X:$rs1)>;
 
 
 def : Pat<(brind X:$rs1),
@@ -5025,10 +5009,6 @@ def : Pat<(mulhu X:$rs1, X:$rs2),
         (MULHU X:$rs1, X:$rs2)>;
 
 
-def : Pat<(sext (mul (trunc X:$rs1), (trunc X:$rs2))),
-        (MULW X:$rs1, X:$rs2)>;
-
-
 def : Pat<(or X:$rs1, X:$rs2),
         (OR X:$rs1, X:$rs2)>;
 
@@ -5043,14 +5023,6 @@ def : Pat<(srem X:$rs1, X:$rs2),
 
 def : Pat<(urem X:$rs1, X:$rs2),
         (REMU X:$rs2, X:$rs1)>;
-
-
-def : Pat<(sext (urem (trunc X:$rs1), (trunc X:$rs2))),
-        (REMUW X:$rs2, X:$rs1)>;
-
-
-def : Pat<(sext (srem (trunc X:$rs1), (trunc X:$rs2))),
-        (REMW X:$rs2, X:$rs1)>;
 
 
 def : Pat<(truncstorei8 X:$rs2, (add X:$rs1, RV3264Base_SB_immSAsInt64:$immS)),
@@ -5098,14 +5070,6 @@ def : Pat<(shl X:$rs1, X:$rs2),
 
 def : Pat<(shl X:$rs1, RV3264Base_SLLI_shamtAsInt8:$shamt),
         (SLLI X:$rs1, RV3264Base_SLLI_shamtAsInt8:$shamt)>;
-
-
-def : Pat<(sext (shl X:$rs1, RV3264Base_SLLIW_shamtAsInt8:$shamt)),
-        (SLLIW X:$rs1, RV3264Base_SLLIW_shamtAsInt8:$shamt)>;
-
-
-def : Pat<(sext (shl X:$rs1, X:$rs2)),
-        (SLLW X:$rs1, X:$rs2)>;
 
 
 def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
@@ -5159,14 +5123,6 @@ def : Pat<(sra X:$rs1, RV3264Base_SRAI_shamtAsInt8:$shamt),
         (SRAI X:$rs1, RV3264Base_SRAI_shamtAsInt8:$shamt)>;
 
 
-def : Pat<(sext (sra X:$rs1, RV3264Base_SRAIW_shamtAsInt8:$shamt)),
-        (SRAIW X:$rs1, RV3264Base_SRAIW_shamtAsInt8:$shamt)>;
-
-
-def : Pat<(sext (sra X:$rs1, X:$rs2)),
-        (SRAW X:$rs1, X:$rs2)>;
-
-
 def : Pat<(srl X:$rs1, X:$rs2),
         (SRL X:$rs1, X:$rs2)>;
 
@@ -5175,20 +5131,8 @@ def : Pat<(srl X:$rs1, RV3264Base_SRLI_shamtAsInt8:$shamt),
         (SRLI X:$rs1, RV3264Base_SRLI_shamtAsInt8:$shamt)>;
 
 
-def : Pat<(sext (srl X:$rs1, RV3264Base_SRLIW_shamtAsInt8:$shamt)),
-        (SRLIW X:$rs1, RV3264Base_SRLIW_shamtAsInt8:$shamt)>;
-
-
-def : Pat<(sext (srl X:$rs1, X:$rs2)),
-        (SRLW X:$rs1, X:$rs2)>;
-
-
 def : Pat<(sub X:$rs1, X:$rs2),
         (SUB X:$rs1, X:$rs2)>;
-
-
-def : Pat<(sext (sub (trunc X:$rs1), (trunc X:$rs2))),
-        (SUBW X:$rs1, X:$rs2)>;
 
 
 def : Pat<(truncstorei32 X:$rs2, (add X:$rs1, RV3264Base_SW_immSAsInt64:$immS)),

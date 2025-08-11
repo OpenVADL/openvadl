@@ -37,6 +37,12 @@ public class LcbNodeReplacementHandlerForMemoryInstructionsReplacement
 
   @Override
   @SuppressWarnings("MissingJavadocMethod")
+  public void handle(TruncateNode truncateNode) {
+    LcbNodeReplacementHandlerDispatcher.dispatch(this, truncateNode.value());
+  }
+
+  @Override
+  @SuppressWarnings("MissingJavadocMethod")
   public void handle(WriteMemNode writeMemNode) {
     // LLVM has a special selection dag node when the memory
     // is written and the value truncated.
