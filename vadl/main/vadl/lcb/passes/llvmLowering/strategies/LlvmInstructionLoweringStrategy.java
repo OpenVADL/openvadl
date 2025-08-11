@@ -87,6 +87,7 @@ import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
@@ -632,6 +633,20 @@ public abstract class LlvmInstructionLoweringStrategy {
       return new TableGenInstructionLabelOperand(node);
     } else {
       throw Diagnostic.error("Not supported usage", node.location()).build();
+    }
+  }
+
+  private static GcbInstructionOperand generateInstructionOperandRegisterFile(
+      ReadArtificialResNode node) {
+    if (node.address() instanceof FieldRefNode field) {
+      return new GcbInstructionRegisterFileOperand(node, field.formatField());
+    } else if (node.address() instanceof FuncParamNode funcParamNode) {
+      return new GcbInstructionIndexedRegisterFileOperand(node, funcParamNode);
+    } else {
+      throw Diagnostic.error(
+          "The compiler generator needs to generate a tablegen instruction operand from this "
+              + "address for a field but it does not support it.",
+          node.address().location()).build();
     }
   }
 
