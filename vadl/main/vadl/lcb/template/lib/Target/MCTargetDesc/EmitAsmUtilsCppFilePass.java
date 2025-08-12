@@ -129,6 +129,9 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
+  /**
+   * Generate registers from the specification.
+   */
   public static List<RegisterUtils.Register> registers(Specification specification, Abi abi) {
     var all = new ArrayList<RegisterUtils.Register>();
     var real = specification.registerTensors().filter(RegisterTensor::isRegisterFile)
@@ -147,6 +150,9 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
     return all;
   }
 
+  /**
+   * Generate registers classes from the specification.
+   */
   public static List<RegisterUtils.RegisterClass> registerClasses(Specification specification,
                                                                   Abi abi) {
     var all = new ArrayList<RegisterUtils.RegisterClass>();

@@ -118,8 +118,8 @@ public class RegisterUtils {
   public static RegisterClass getRegisterClass(
       ArtificialResource artificialResource) {
     return new RegisterClass(artificialResource,
-        IntStream.range(0,
-                (int) Math.pow(2, Objects.requireNonNull(artificialResource.addressType()).bitWidth()))
+        IntStream.range(0, (int) Math.pow(2,
+                Objects.requireNonNull(artificialResource.addressType()).bitWidth()))
             .mapToObj(i -> {
               var name = artificialResource.identifier.simpleName() + i;
               return new Register(i, name, Collections.emptyList());
