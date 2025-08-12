@@ -84,6 +84,12 @@ public class ZeroExtendNode extends UnaryNode implements Canonicalizable {
       return value;
     }
 
+    // zext (zext X) -> zext X
+    if (value instanceof ZeroExtendNode subNode) {
+      replaceInput(value, subNode.value);
+      subNode.safeDelete();
+    }
+
     return this;
   }
 }

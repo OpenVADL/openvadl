@@ -84,6 +84,12 @@ public class SignExtendNode extends UnaryNode implements Canonicalizable {
       return value;
     }
 
+    // sext (sext X) -> sext X
+    if (value instanceof SignExtendNode subNode) {
+      replaceInput(value, subNode.value);
+      subNode.safeDelete();
+    }
+
     return this;
   }
 }
