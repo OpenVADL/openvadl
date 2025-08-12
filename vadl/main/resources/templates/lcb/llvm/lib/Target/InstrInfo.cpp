@@ -123,8 +123,19 @@ static [(${namespace})]CC::CondCode getCondFromBranchOpc(unsigned Opc) {
 void [(${namespace})]InstrInfo::copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI, const DebugLoc &DL, MCRegister DestReg, MCRegister SrcReg, bool KillSrc) const
 {
   [# th:each="r : ${copyPhysInstructions}" ]
-  if ( [(${namespace})]::[(${r.destRegisterFile})]RegClass.contains( DestReg )
-                && [(${namespace})]::[(${r.srcRegisterFile})]RegClass.contains( SrcReg ) )
+  if ( (
+    [# th:each="dest,iterStat : ${r.destRegisterFile}" ]
+    [#th:block th:if="${!iterStat.first}"] || [/th:block]
+      [(${namespace})]::[(${dest})]RegClass.contains( DestReg )
+    [/]
+    )
+                &&
+    (
+    [# th:each="src,iterStat : ${r.srcRegisterFile}" ]
+    [#th:block th:if="${!iterStat.first}"] || [/th:block]
+      [(${namespace})]::[(${src})]RegClass.contains( SrcReg )
+    [/]
+    ))
     {
         BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction})] ) )
             .addReg( DestReg, RegState::Define )
