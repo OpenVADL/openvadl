@@ -21,11 +21,9 @@ import java.util.Map;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
-import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Abi;
-import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -65,19 +63,12 @@ public class EmitAsmUtilsHeaderFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var abi =
         (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
-    var registerFiles =
-        specification.registerTensors().filter(RegisterTensor::isRegisterFile)
-            .map(x -> new RegisterClass(x.identifier.simpleName()))
-            .toList();
+    var registers = EmitAsmUtilsCppFilePass.registers(specification, abi);
+    var registerClasses = EmitAsmUtilsCppFilePass.registerClasses(specification, abi);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
-        CommonVarNames.REGISTERS_CLASSES, registerFiles,
-        "registers",
-        specification.registerTensors().filter(RegisterTensor::isRegisterFile)
-            .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
-            .flatMap(x -> x.registers().stream())
-            .toList());
+        "registers", registers,
+        "registerClasses", registerClasses
+    );
   }
-
-
 }
