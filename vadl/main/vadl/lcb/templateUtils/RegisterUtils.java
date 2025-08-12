@@ -17,6 +17,7 @@
 package vadl.lcb.templateUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -27,6 +28,8 @@ import javax.annotation.Nullable;
 import vadl.template.Renderable;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
+import vadl.viam.ArtificialResource;
+import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.RegisterTensor;
 
 /**
@@ -69,7 +72,7 @@ public class RegisterUtils {
    * Wrapper class for register file because the register file does
    * not specify the individual registers.
    */
-  public record RegisterClass(RegisterTensor registerFile, List<Register> registers)
+  public record RegisterClass(GeneratesRegisterFileName registerFile, List<Register> registers)
       implements
       Renderable {
 
@@ -77,7 +80,7 @@ public class RegisterUtils {
     public Map<String, Object> renderObj() {
       return Map.of(
           "registerFile", Map.of(
-              "name", registerFile.simpleName()
+              "name", registerFile.identifier().simpleName()
           ),
           "registers", registers
       );
@@ -105,6 +108,21 @@ public class RegisterUtils {
                 );
               }
               return new Register(i, name, aliasesNames);
+            }).toList());
+  }
+
+  /**
+   * Constructing a {@link RegisterClass} from registerFile.
+   */
+  @Nonnull
+  public static RegisterClass getRegisterClass(
+      ArtificialResource artificialResource) {
+    return new RegisterClass(artificialResource,
+        IntStream.range(0,
+                (int) Math.pow(2, Objects.requireNonNull(artificialResource.addressType()).bitWidth()))
+            .mapToObj(i -> {
+              var name = artificialResource.identifier.simpleName() + i;
+              return new Register(i, name, Collections.emptyList());
             }).toList());
   }
 }

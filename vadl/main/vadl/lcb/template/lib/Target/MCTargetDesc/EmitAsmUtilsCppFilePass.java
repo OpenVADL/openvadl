@@ -19,6 +19,7 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Abi;
+import vadl.viam.ArtificialResource;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Definition;
 import vadl.viam.RegisterTensor;
@@ -127,6 +129,41 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
+  public static List<RegisterUtils.Register> registers(Specification specification, Abi abi) {
+    var all = new ArrayList<RegisterUtils.Register>();
+    var real = specification.registerTensors().filter(RegisterTensor::isRegisterFile)
+        .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
+        .flatMap(x -> x.registers().stream())
+        .toList();
+    var aliases = specification.artificialResources()
+        .filter(ArtificialResource::isRegisterFile)
+        .map(RegisterUtils::getRegisterClass)
+        .flatMap(x -> x.registers().stream())
+        .toList();
+
+    all.addAll(real);
+    all.addAll(aliases);
+
+    return all;
+  }
+
+  public static List<RegisterUtils.RegisterClass> registerClasses(Specification specification,
+                                                                  Abi abi) {
+    var all = new ArrayList<RegisterUtils.RegisterClass>();
+    var real = specification.registerTensors().filter(RegisterTensor::isRegisterFile)
+        .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
+        .toList();
+    var aliases = specification.artificialResources()
+        .filter(ArtificialResource::isRegisterFile)
+        .map(RegisterUtils::getRegisterClass)
+        .toList();
+
+    all.addAll(real);
+    all.addAll(aliases);
+
+    return all;
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
@@ -136,16 +173,12 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
         GenerateLinkerComponentsPass.class);
     var modifiers = formatModifier(passResults);
 
+    var registers = registers(specification, abi);
+    var registerClasses = registerClasses(specification, abi);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
-        "registers",
-        specification.registerTensors().filter(RegisterTensor::isRegisterFile)
-            .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
-            .flatMap(x -> x.registers().stream()).toList(),
-        "registerClasses",
-        specification.registerTensors().filter(RegisterTensor::isRegisterFile)
-            .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
-            .toList(),
+        "registers", registers,
+        "registerClasses", registerClasses,
         "asmCompareFunction", stringCompareFunction(specification),
         "instructionNames", instructionsNames(specification),
         "modifierMappings", modifierMappings(specification, linkerInformation),

@@ -36,7 +36,7 @@ namespace llvm
             static std::string getRegisterName( unsigned RegNo );
 
             [# th:each="rg : ${registerClasses}" ]
-            static std::string getRegisterNameFrom[(${rg.simpleName})]ByIndex( unsigned RegIndex );
+            static std::string getRegisterNameFrom[(${rg.registerFile.name})]ByIndex( unsigned RegIndex );
             [/]
     };
 
@@ -60,19 +60,6 @@ namespace llvm
                     [# th:each="rg : ${registers}" ]
                       case [(${namespace})]::[(${rg.name})]: return [(${rg.index})];
                     [/]
-                    /*
-                    switch( MCOp.getReg() )
-                    {
-                        «FOR hwc : processor.list( HardwareRegisterClass ).filter[ sideEffect == false ]»
-                            «FOR reg : hwc.asList»
-                                case [(${namespace})]::«reg.simpleName» : return «reg.hardwareEncoding»;
-                            «ENDFOR»
-                        «ENDFOR»
-                        «FOR reg : processor.list( Register ).filter[ sideEffect == false ]»
-                            case [(${namespace})]::«reg.simpleName» : return «reg.hardwareEncoding»;
-                        «ENDFOR»
-                    }
-                    */
                     }
 
                     report_fatal_error("Cannot convert register operand to integral value.");
