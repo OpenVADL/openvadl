@@ -51245,7 +51245,7 @@ def : Pat<(add X:$ra, (mul X:$rn, X:$rm)),
         (MADDX X:$ra, X:$rn, X:$rm)>;
 
 
-def : Pat<(zext (zext AArch64Base_MOVZWPos00_imm16AsInt16:$imm16)),
+def : Pat<(zext AArch64Base_MOVZWPos00_imm16AsInt16:$imm16),
         (MOVZWPos00 AArch64Base_MOVZWPos00_imm16AsInt16:$imm16)>;
 
 

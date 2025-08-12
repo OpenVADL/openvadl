@@ -82,6 +82,4 @@ public class FunctionInlinerPass extends Pass {
     Inliner.inlineFuncs(behavior);
     return new UninlinedGraph(copy, def.asDefinition());
   }
-
-
 }
