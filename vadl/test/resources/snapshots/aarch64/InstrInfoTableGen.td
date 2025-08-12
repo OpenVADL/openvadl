@@ -51249,10 +51249,6 @@ def : Pat<(zext AArch64Base_MOVZWPos00_imm16AsInt16:$imm16),
         (MOVZWPos00 AArch64Base_MOVZWPos00_imm16AsInt16:$imm16)>;
 
 
-def : Pat<(zext (shl (zext AArch64Base_MOVZWPos16_imm16AsInt16:$imm16), (i32 16))),
-        (MOVZWPos16 AArch64Base_MOVZWPos16_imm16AsInt16:$imm16)>;
-
-
 def : Pat<(zext AArch64Base_MOVZXPos00_imm16AsInt16:$imm16),
         (MOVZXPos00 AArch64Base_MOVZXPos00_imm16AsInt16:$imm16)>;
 

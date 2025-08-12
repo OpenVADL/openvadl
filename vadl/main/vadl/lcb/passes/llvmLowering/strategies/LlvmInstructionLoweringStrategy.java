@@ -38,7 +38,6 @@ import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.operands.GenerateInstructionOperandsPass;
 import vadl.gcb.passes.operands.InstructionOperandsCtx;
 import vadl.gcb.passes.operands.model.GcbConstantOperand;
-import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionIndexedRegisterFileOperand;
@@ -98,6 +97,7 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplifier;
 import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
@@ -433,7 +433,8 @@ public abstract class LlvmInstructionLoweringStrategy {
         || rejectWhenWritingToMemory(graph)
         || hasUnreplacedBuiltins(graph)
         || hasSelectNodes(graph)
-        || hasNotAllOperandsUsed(instruction, graph)) {
+        || hasNotAllOperandsUsed(instruction, graph)
+        || hasMultipleUnaryNodes(graph)) {
       return true;
     }
 
@@ -458,6 +459,16 @@ public abstract class LlvmInstructionLoweringStrategy {
         && graph.getNodes(ReadResourceNode.class).toList().size() == 1
         && graph.getNodes(WriteResourceNode.class)
         .anyMatch(writeResourceNode -> writeResourceNode.value() instanceof ReadResourceNode);
+  }
+
+  /**
+   * TableGen doesn't like it when they are multiple sext or zext nodes.
+   */
+  private boolean hasMultipleUnaryNodes(Graph graph) {
+    var sext = graph.getNodes(SignExtendNode.class).count();
+    var zext = graph.getNodes(ZeroExtendNode.class).count();
+
+    return sext + zext > 1;
   }
 
   /**
