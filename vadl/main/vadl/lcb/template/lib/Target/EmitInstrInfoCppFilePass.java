@@ -49,7 +49,9 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.types.BuiltInTable;
+import vadl.viam.ArtificialResource;
 import vadl.viam.Definition;
+import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterTensor;
@@ -95,8 +97,8 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
    * @param destRegisterFile is the register file for the destination register in LLVM.
    */
   record CopyPhysRegInstruction(Instruction instruction,
-                                RegisterTensor srcRegisterFile,
-                                RegisterTensor destRegisterFile) {
+                                List<GeneratesRegisterFileName> srcRegisterFile,
+                                List<GeneratesRegisterFileName> destRegisterFile) {
   }
 
   /**
@@ -121,10 +123,11 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
   }
 
-  private List<CopyPhysRegInstruction> getMovInstructions(
+  private List<CopyPhysRegInstruction> physInstructions(
+      Specification viam,
       Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
-    var addi32 = mapWithInstructionLabel(MachineInstructionLabel.ADDI_32, isaMatching);
-    var addi64 = mapWithInstructionLabel(MachineInstructionLabel.ADDI_64, isaMatching);
+    var addi32 = mapWithInstructionLabel(viam, MachineInstructionLabel.ADDI_32, isaMatching);
+    var addi64 = mapWithInstructionLabel(viam, MachineInstructionLabel.ADDI_64, isaMatching);
 
     return Stream.concat(addi32.stream(), addi64.stream()).toList();
   }
@@ -177,6 +180,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<CopyPhysRegInstruction> mapWithInstructionLabel(
+      Specification viam,
       MachineInstructionLabel label,
       Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
     var instructions =
@@ -189,13 +193,34 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
                       .filter(HasRegisterTensor::hasRegisterFile)
                       .findFirst(),
                   "There must be destination register").registerTensor();
+
+          var destAliases = viam.isa().get().artificialResources()
+              .stream()
+              .filter(x -> x.aliasSlice() == null)
+              .filter(ArtificialResource::isRegisterFile)
+              .filter(x -> x.innerResourceRef() == destRegisterFile)
+              .toList();
+
           var srcRegisterFile =
               ensurePresent(i.behavior().getNodes(ReadsRegisterTensor.class)
                       .filter(HasRegisterTensor::hasRegisterFile)
                       .findFirst(),
                   "There must be source register").registerTensor();
 
-          return new CopyPhysRegInstruction(i, srcRegisterFile, destRegisterFile);
+          var srcAliases = viam.isa().get().artificialResources()
+              .stream()
+              .filter(x -> x.aliasSlice() == null)
+              .filter(ArtificialResource::isRegisterFile)
+              .filter(x -> x.innerResourceRef() == destRegisterFile)
+              .toList();
+
+          List<GeneratesRegisterFileName> srcResult = new ArrayList<>(srcAliases);
+          srcResult.add(srcRegisterFile);
+
+          List<GeneratesRegisterFileName> destResult = new ArrayList<>(destAliases);
+          destResult.add(destRegisterFile);
+
+          return new CopyPhysRegInstruction(i, srcResult, destResult);
         })
         .toList();
   }
@@ -337,7 +362,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE, lcbConfiguration().targetName().value().toLowerCase());
     map.put("copyPhysInstructions",
-        getMovInstructions(isaMatches).stream().map(this::map).toList());
+        physInstructions(specification, isaMatches).stream().map(this::map).toList());
     map.put("storeStackSlotInstructions",
         getStoreMemoryInstructions(isaMatches).stream().map(this::map).toList());
     map.put("loadStackSlotInstructions",
@@ -466,8 +491,10 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
   private Map<String, Object> map(CopyPhysRegInstruction obj) {
     return Map.of(
-        "destRegisterFile", obj.destRegisterFile.simpleName(),
-        "srcRegisterFile", obj.srcRegisterFile.simpleName(),
+        "destRegisterFile",
+        obj.destRegisterFile.stream().map(x -> x.identifier().simpleName()).toList(),
+        "srcRegisterFile",
+        obj.srcRegisterFile.stream().map(x -> x.identifier().simpleName()).toList(),
         "instruction", obj.instruction.simpleName()
     );
   }
