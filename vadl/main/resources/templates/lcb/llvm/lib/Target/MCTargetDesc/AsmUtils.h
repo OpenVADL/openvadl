@@ -5,11 +5,14 @@
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCRegister.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "MCTargetDesc/[(${namespace})]MCExpr.h"
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
 #include <string>
+#include <iostream>
 
 namespace llvm
 {
@@ -38,6 +41,27 @@ namespace llvm
             [# th:each="rg : ${registerClasses}" ]
             static std::string getRegisterNameFrom[(${rg.registerFile.name})]ByIndex( unsigned RegIndex );
             [/]
+
+            static std::string unwrapToIntegralStr(std::string reg)
+            {
+              return std::to_string(unwrapToIntegral(std::stoi(reg)));
+            }
+
+            static int64_t unwrapToIntegral(MCRegister reg)
+            {
+              return unwrapToIntegral(reg.id());
+            }
+
+            static int64_t unwrapToIntegral(int reg)
+            {
+              switch(reg) {
+              [# th:each="rg : ${registers}" ]
+              case [(${namespace})]::[(${rg.name})]: return [(${rg.index})];
+              [/]
+              }
+
+              report_fatal_error("Cannot convert register operand to integral value.");
+            }
     };
 
     class MCOperandWrapper

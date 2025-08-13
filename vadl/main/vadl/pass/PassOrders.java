@@ -72,6 +72,7 @@ import vadl.iss.template.target.EmitIssGdbStubPass;
 import vadl.iss.template.target.EmitIssInsnTransCIncPass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslateCPass;
+import vadl.lcb.codegen.assembly.WrapInIntegralPass;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaRelocationMatchingPass;
@@ -285,6 +286,8 @@ public class PassOrders {
     order.add(new CompensationPatternPass(configuration));
     order.add(new ISelLoweringOperationActionPass(configuration));
     order.add(new GenerateLinkerComponentsPass(configuration));
+
+    order.add(new WrapInIntegralPass(configuration));
 
     addHtmlDump(order, configuration,
         "lcbLlvmLowering",
