@@ -1,22 +1,37 @@
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use serde::Serialize;
 
 use crate::{
     config::Config,
-    ipc::cstructs::{BrokerSHMExec, BrokerSHMTB},
-    trace::db::{insert_broker_shm_exec, insert_broker_shm_tb},
+    ipc::cstructs::{BrokerSHMInsn, BrokerSHMTB},
+    db::{insert_broker_shm_insn, insert_broker_shm_tb, insert_client_entry},
 };
 
 use rusqlite::{Connection, OpenFlags};
 
-pub mod db;
+#[derive(Debug)]
+pub struct TraceEntryData {
+    /// The id of the `client` table in the database
+    client_db_id: i64,
+    run_count: u64,
+    broker_data: TraceBrokerData,
+}
 
-#[derive(Debug, Serialize)]
-pub enum TraceData {
+impl TraceEntryData {
+    pub fn new(client_db_id: i64, run_count: u64, broker_data: TraceBrokerData) -> Self {
+        Self {
+            client_db_id,
+            run_count,
+            broker_data,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum TraceBrokerData {
     TB(Box<BrokerSHMTB>),
-    Exec(Box<BrokerSHMExec>),
+    Insn(Box<BrokerSHMInsn>),
 }
 
 pub fn connect(config: &Config) -> Result<Connection> {
@@ -29,40 +44,54 @@ pub fn connect(config: &Config) -> Result<Connection> {
         .context("failed to open sqlite connection for tracing")
 }
 
-pub fn store_trace(trace: TraceData, connection: &Connection) -> Result<()> {
-    match trace {
-        TraceData::TB(broker_shmtb) => {
-            insert_broker_shm_tb(connection, &broker_shmtb)?;
+pub fn store_trace(trace: TraceEntryData, connection: &mut Connection) -> Result<()> {
+    let broker_id = match trace.broker_data {
+        TraceBrokerData::TB(broker_shmtb) => insert_broker_shm_tb(connection, &broker_shmtb),
+        TraceBrokerData::Insn(broker_shmexec) => {
+            insert_broker_shm_insn(connection, &broker_shmexec)
         }
-        TraceData::Exec(broker_shmexec) => {
-            insert_broker_shm_exec(connection, &broker_shmexec)?;
-        }
-    };
+    }?;
+
+    insert_client_entry(connection, trace.client_db_id, broker_id, trace.run_count)?;
 
     Ok(())
 }
 
-pub fn get_client_trace(client: &crate::ipc::qemu::Client, config: &Config) -> TraceData {
+pub fn get_client_trace(client: &crate::ipc::qemu::Client, config: &Config) -> TraceBrokerData {
     match config.testing.protocol.layer {
         crate::config::ProtocolLayer::Insn => {
-            let exec = Box::new(client.shms.current().get_exec().clone());
-            TraceData::Exec(exec)
+            let insn = Box::new(client.shms.current().get_insn().clone());
+            TraceBrokerData::Insn(insn)
         }
         crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
             let tb = Box::new(client.shms.current().get_tb().clone());
-            TraceData::TB(tb)
+            TraceBrokerData::TB(tb)
         }
     }
 }
 
-pub type TraceStore = Vec<TraceData>;
+pub type TraceStore = Vec<TraceEntryData>;
 pub fn trace_collect(
     clients: &[crate::ipc::qemu::Client],
+    client_ids: &[i64],
     config: &crate::config::Config,
     store: &mut TraceStore,
 ) {
+    assert!(
+        clients.len() == client_ids.len(),
+        "illegal call to trace_collect with different client-lens: {} != {}",
+        clients.len(),
+        client_ids.len(),
+    );
+
     clients
         .iter()
         .map(|c| get_client_trace(c, config))
+        .enumerate()
+        .map(|(idx, broker_data)| TraceEntryData::new(
+            client_ids[idx],
+            clients[idx].run_count,
+            broker_data,
+        ))
         .for_each(|t| store.push(t));
 }

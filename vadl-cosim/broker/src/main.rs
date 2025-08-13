@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::Parser;
 use figment::{
     Figment,
@@ -9,12 +9,24 @@ use figment::{
 use tracing::{Level, info};
 
 use cosim_lib::{
-    cli::Cli,
-    config::Config,
-    cosim::Broker,
-    diff::Report,
-    trace::{connect, db::setup_database},
+    config::Config, cosim::Broker, db::setup_database, diff::Report, trace::connect,
 };
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+pub struct Cli {
+    /// Path to the (toml) config file
+    #[arg(short, long, value_name="FILE", default_value_t = default_config_file())]
+    pub config: String,
+
+    /// Defines where the test-executable is passed to when starting the QEMU-client
+    #[arg(short, long, value_name = "FILE")]
+    pub test_exec: Option<String>,
+}
+
+fn default_config_file() -> String {
+    "./config.toml".into()
+}
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -42,12 +54,13 @@ fn main() -> Result<()> {
     }
 
     if config.tracing.clear_on_rerun {
-        let conn = connect(&config)?;
-        setup_database(&conn)?;
+        let mut conn = connect(&config)?;
+        setup_database(&mut conn).context("failed to setup database")?;
     }
 
     let mut broker = Broker::create(&config)?;
     let report_data = broker.run(&config)?;
+    let passed = report_data.passed;
 
     let report = match &config.testing.protocol.out.verbosity {
         cosim_lib::config::OutVerbosity::Full => serde_json::to_string_pretty(&report_data)?,
@@ -69,7 +82,7 @@ fn main() -> Result<()> {
         None => println!("{report}"),
     }
 
-    broker.finish(&config)?;
+    broker.finish(passed, &config)?;
 
     Ok(())
 }

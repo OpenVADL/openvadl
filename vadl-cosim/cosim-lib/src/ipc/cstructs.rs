@@ -27,8 +27,22 @@ impl Serialize for SHMString {
 }
 
 impl SHMString {
+    pub fn new(len: usize, value: [u8; SHMSTRING_MAX_LEN]) -> Self {
+        Self { len, value }
+    }
+
     pub fn as_str(&self) -> &str {
         std::str::from_utf8(&self.value[..self.len]).expect("valid utf8 sequence in SHMString")
+    }
+}
+
+impl From<String> for SHMString {
+    fn from(value: String) -> Self {
+        let len = value.len();
+        assert!(len < SHMSTRING_MAX_LEN);
+        let mut slice = [0u8; SHMSTRING_MAX_LEN];
+        slice[..len].copy_from_slice(value.as_bytes());
+        Self::new(len, slice)
     }
 }
 
@@ -41,6 +55,10 @@ pub struct SHMRegister {
 }
 
 impl SHMRegister {
+    pub fn new(size: i32, data: [u8; MAX_REGISTER_DATA_SIZE], name: SHMString) -> Self {
+        Self { size, data, name }
+    }
+
     pub fn data_slice(&self) -> &[u8] {
         &self.data[..self.size as usize]
     }
@@ -87,6 +105,18 @@ pub struct SHMCPU {
 }
 
 impl SHMCPU {
+    pub fn new(
+        idx: u32,
+        registers_size: usize,
+        registers: [SHMRegister; MAX_CPU_REGISTERS],
+    ) -> Self {
+        Self {
+            idx,
+            registers_size,
+            registers,
+        }
+    }
+
     pub fn registers_slice(&self) -> &[SHMRegister] {
         &self.registers[..self.registers_size]
     }
@@ -113,6 +143,10 @@ pub struct InsnData {
 }
 
 impl InsnData {
+    pub fn new(size: usize, buffer: [u8; MAX_INSN_DATA_SIZE]) -> Self {
+        Self { size, buffer }
+    }
+
     pub fn buffer_slice(&self) -> &[u8] {
         &self.buffer[..self.size]
     }
@@ -141,7 +175,7 @@ impl Serialize for InsnData {
 }
 
 #[repr(C)]
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Clone)]
 pub struct TBInsnInfo {
     pub pc: u64,
     pub size: usize,
@@ -149,6 +183,42 @@ pub struct TBInsnInfo {
     pub hwaddr: SHMString,
     pub disas: SHMString,
     pub data: InsnData,
+}
+
+impl TBInsnInfo {
+    pub fn new(
+        pc: u64,
+        size: usize,
+        symbol: SHMString,
+        hwaddr: SHMString,
+        disas: SHMString,
+        data: InsnData,
+    ) -> Self {
+        Self {
+            pc,
+            size,
+            symbol,
+            hwaddr,
+            disas,
+            data,
+        }
+    }
+}
+
+impl Serialize for TBInsnInfo {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut s = serializer.serialize_struct("tb-insn-info", 6)?;
+        s.serialize_field("pc", &self.pc)?;
+        s.serialize_field("size", &self.size)?;
+        s.serialize_field("symbol", &self.symbol)?;
+        s.serialize_field("hwaddr", &self.hwaddr)?;
+        s.serialize_field("disas", &self.disas)?;
+        s.serialize_field("data", &self.data)?;
+        s.end()
+    }
 }
 
 #[repr(C)]
@@ -160,6 +230,18 @@ pub struct TBInfo {
 }
 
 impl TBInfo {
+    pub fn new(
+        pc: u64,
+        insns_info_size: usize,
+        insns_info: [TBInsnInfo; TBINSNINFO_ENTRIES],
+    ) -> Self {
+        Self {
+            pc,
+            insns_info_size,
+            insns_info,
+        }
+    }
+
     pub fn insns_info_slice(&self) -> &[TBInsnInfo] {
         &self.insns_info[..self.insns_info_size]
     }
@@ -209,16 +291,26 @@ impl Serialize for BrokerSHMTB {
     }
 }
 
+impl BrokerSHMTB {
+    pub fn new(init_mask: i32, cpus: [SHMCPU; MAX_CPU_COUNT], tb_info: TBInfo) -> Self {
+        Self {
+            init_mask,
+            cpus,
+            tb_info,
+        }
+    }
+}
+
 #[repr(C)]
 #[derive(Debug, Clone)]
-pub struct BrokerSHMExec {
+pub struct BrokerSHMInsn {
     /// A bit-mask indicating which cpu-indicies are set
     pub init_mask: i32,
     pub cpus: [SHMCPU; MAX_CPU_COUNT],
     pub insn_info: TBInsnInfo,
 }
 
-impl Serialize for BrokerSHMExec {
+impl Serialize for BrokerSHMInsn {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -240,10 +332,20 @@ impl Serialize for BrokerSHMExec {
     }
 }
 
+impl BrokerSHMInsn {
+    pub fn new(init_mask: i32, cpus: [SHMCPU; MAX_CPU_COUNT], insn_info: TBInsnInfo) -> Self {
+        Self {
+            init_mask,
+            cpus,
+            insn_info,
+        }
+    }
+}
+
 #[repr(C)]
 pub union BrokerSHMData {
     pub shm_tb: std::mem::ManuallyDrop<BrokerSHMTB>,
-    pub shm_exec: std::mem::ManuallyDrop<BrokerSHMExec>,
+    pub shm_insn: std::mem::ManuallyDrop<BrokerSHMInsn>,
 }
 
 #[repr(C)]

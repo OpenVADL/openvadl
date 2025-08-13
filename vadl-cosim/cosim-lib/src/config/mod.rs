@@ -41,6 +41,16 @@ pub enum TracingMode {
     Sync,
 }
 
+impl TracingMode {
+    pub fn enabled(&self) -> bool {
+        *self != TracingMode::None
+    }
+
+    pub fn disabled(&self) -> bool {
+        *self == TracingMode::None
+    }
+}
+
 fn default_tracing_file() -> String {
     "trace.sqlite3".into()
 }

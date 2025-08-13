@@ -63,22 +63,39 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn run_n_times(&mut self, n: u32, config: &Config) {
+    // TODO: maybe check whether all skips were successful for easier initial setup debugging
+    pub fn skip_n_times(&mut self, n: u32, config: &Config) {
         for _ in 0..n {
             if self.is_open {
-                self.run(config);
+                let _ = self.skip(config);
             } else {
                 break; // stop running if client already closed
             }
         }
     }
 
+    /// skip does not increment the run_count, which is important for tracing information
+    #[must_use]
+    pub fn skip(&mut self, config: &Config) -> bool {
+        assert!(self.is_open, "called client.skip() on a closed client");
+
+        let run_result = self.run_inner(config);
+        self.handle_run_result(run_result)
+    }
+
+    #[must_use]
     pub fn run(&mut self, config: &Config) -> bool {
         assert!(self.is_open, "called client.run() on a closed client");
 
         self.run_count += 1;
 
-        match self.run_inner(config) {
+        let run_result = self.run_inner(config);
+        self.handle_run_result(run_result)
+    }
+
+    #[must_use]
+    fn handle_run_result(&mut self, run_result: Result<bool>) -> bool {
+        match run_result {
             Ok(wait_res) => {
                 if !wait_res {
                     debug!(
@@ -118,6 +135,7 @@ impl Client {
         }
     }
 
+    #[must_use]
     fn run_inner(&mut self, config: &Config) -> Result<bool> {
         self.shms.next();
         self.sem.release_client()?;
