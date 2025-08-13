@@ -177,13 +177,17 @@ public class AssemblyInstructionPrinterImmediateHandler
                 argument.location())
             .build();
       }
-      // TODO: Implement UDEC builtin
     } else if (node.builtIn() == BuiltInTable.UDEC) {
       writeImmediateWithRadix(node, ctx, 10, false);
     } else if (node.builtIn() == BuiltInTable.SDEC) {
       writeImmediateWithRadix(node, ctx, 10, true);
     } else if (node.builtIn() == BuiltInTable.HEX) {
       writeImmediateWithRadix(node, ctx, 16, false);
+    } else if (node.builtIn() == BuiltInTable.INTEGRAL) {
+      ctx.wr("AsmUtils::unwrapToIntegral(");
+      AssemblyInstructionPrinterImmediateHandlerDispatcher.dispatch(this, (CNodeContext) ctx,
+          node.arg(0));
+      ctx.wr(")");
     } else if (node.builtIn() == BuiltInTable.EQU) {
       handleConditional(node, ctx, "==");
     } else if (node.builtIn() == BuiltInTable.NEQ) {
@@ -442,7 +446,12 @@ public class AssemblyInstructionPrinterImmediateHandler
 
   private void writeImmediateWithRadix(BuiltInCall node, CGenContext<Node> ctx, int radix,
                                        boolean isSigned) {
-    if (node.arguments().getFirst() instanceof FieldRefNode fieldRefNode) {
+    if (node.arguments().getFirst() instanceof BuiltInCall bc
+        && bc.builtIn() == BuiltInTable.INTEGRAL) {
+      ctx.wr("AsmUtils::unwrapToIntegralStr(");
+      writeImmediateWithRadix(bc, ctx, radix, isSigned);
+      ctx.wr(")");
+    } else if (node.arguments().getFirst() instanceof FieldRefNode fieldRefNode) {
       writeImmediateWithRadix(fieldRefNode.formatField(),
           ctx,
           radix,

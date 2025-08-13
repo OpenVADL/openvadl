@@ -1023,6 +1023,18 @@ public class BuiltInTable {
           .build();
 
   /**
+   * Returns the register index from an internal value.
+   *
+   * <p>{@code function integral(Bits<N>) -> BitsType<M>}
+   */
+  public static final BuiltIn INTEGRAL =
+      func("integral",
+          Type.relation(BitsType.class, BitsType.class))
+          .takesDefault()
+          .returns(Type.string())
+          .build();
+
+  /**
    * Formats value to binary string.
    *
    * <p>{@code function binary(Bits<N>) -> String<M>}
