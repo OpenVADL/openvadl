@@ -74,7 +74,7 @@ public class EmitMCAsmInfoCppFilePass extends LcbTemplateRenderingPass {
   private String asmCommentString(Specification specification) {
     return specification.assemblyDescription()
         .map(asmDesc -> asmDesc.annotation(AsmParserCommentString.class))
-        .map(AsmParserCommentString::getCommentString).orElse("//");
+        .map(AsmParserCommentString::getCommentString).orElse("#");
   }
 
   private boolean asmAlignmentIsInBytes(Specification specification) {
