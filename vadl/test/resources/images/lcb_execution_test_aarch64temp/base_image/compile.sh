@@ -1,0 +1,1 @@
+/src/llvm-final/build/bin/clang --target=${TARGET} -I/opt/aarch64/aarch64-none-linux-gnu/include -S -fPIC -O${OPT_LEVEL} -c /src/inputs/$INPUT -o /tmp/main.s && chmod 777 /tmp/main.s && cat /tmp/main.s && sh /work/lcb_wrapper.sh
