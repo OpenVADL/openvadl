@@ -248,7 +248,12 @@ bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBl
     [#th:block th:if="${!iterStat.first}"]else[/th:block] if(Val >= [(${cons.lowestValue})] && Val <= [(${cons.highestValue})]) {
      BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${cons.instruction})]))
           .addReg(ScratchReg, RegState::Define)
+          [#th:block th:if="${cons.onlyNegative == false}"]
           .addImm(Val)
+          [/th:block]
+          [#th:block th:if="${cons.onlyNegative == true}"]
+          .addImm(std::abs(Val)) // only negative annotation indicates that we need the absolute value.
+          [/th:block]
           .setMIFlag(Flag);
     }
     [/]

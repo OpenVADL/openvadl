@@ -30,7 +30,6 @@ import vadl.configuration.IssConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
-import vadl.gcb.passes.ApplyCompilerRegisterRenamingPass;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.DetermineRelocationTypeForFieldPass;
 import vadl.gcb.passes.GenerateCompilerRegistersPass;
@@ -175,7 +174,6 @@ public class PassOrders {
 
     order.add(new DetectRegisterIndicesPass(configuration));
     order.add(new NormalizeFieldsToFieldAccessFunctionsPass(configuration));
-    order.add(new ApplyCompilerRegisterRenamingPass(configuration));
     order.add(new SnapshotInstructionBehaviorPass(configuration));
 
     order.add(new RemoveUnusedStatusFlagsFromBuiltinsPass(configuration));
@@ -446,7 +444,6 @@ public class PassOrders {
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
-    order.skip(ApplyCompilerRegisterRenamingPass.class);
 
     // iss function passes
     order
@@ -590,7 +587,6 @@ public class PassOrders {
     var order = viam(config);
 
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
-    order.skip(ApplyCompilerRegisterRenamingPass.class);
 
     // TODO: Remove once frontend creates it
     order.add(new DummyMiaPass(config));

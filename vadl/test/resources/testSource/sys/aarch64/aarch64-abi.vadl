@@ -83,10 +83,18 @@ application binary interface ABI for AArch64Temp = {
    caller saved = [ X{9..15} ]
    callee saved = [ A_LR, X{19..28} ]
 
-   constant sequence(rd: Bits<5>, val: SInt<32>) =
+   constant sequence(rd: Bits<5>, val: UInt<32>) =
    {
      MOVZWPos00 { rd = rd, imm16 = (val & 0xFFFF) as Bits<16> }
      MOVKWPos16 { rd = rd, imm16 = ((val >> 16) & 0xFFFF) as Bits<16> }
+   }
+
+   [ only negative ] // val becomes automatically positive
+   constant sequence(rd: Bits<5>, val: SInt<32>) =
+   {
+      MOVZWPos00 { rd = rd, imm16 = (val & 0xFFFF) as Bits<16> }
+      MOVKWPos16 { rd = rd, imm16 = ((val >> 16) & 0xFFFF) as Bits<16> }
+      SUBX { rd = rd, rn = 31, rm = rd }
    }
 
    /*
@@ -95,4 +103,9 @@ application binary interface ABI for AArch64Temp = {
 
    }
    */
+}
+
+[ comment string: "//" ]
+assembly description ASM for ABI = {
+
 }
