@@ -341,8 +341,7 @@ public class LlvmLoweringPass extends Pass {
 
             // Okay, we have to save record.
             record.ifPresent(llvmLoweringIntermediateResult -> {
-              tableGenRecords.put(instruction,
-                  llvmLoweringIntermediateResult);
+              tableGenRecords.put(instruction, llvmLoweringIntermediateResult);
 
               // Also attach it as extension to the instruction.
               instruction.attachExtension(

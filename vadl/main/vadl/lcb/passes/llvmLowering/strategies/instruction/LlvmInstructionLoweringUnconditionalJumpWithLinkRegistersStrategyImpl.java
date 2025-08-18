@@ -30,6 +30,7 @@ import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionConstraint;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
@@ -61,18 +62,20 @@ public class LlvmInstructionLoweringUnconditionalJumpWithLinkRegistersStrategyIm
       DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
     var copy = uninlinedBehavior.copy();
 
+    var constraints = generateConstraints(copy);
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {
       replaceNode(instruction, node);
     }
 
     return Optional.of(
-        createIntermediateResult(instruction, copy, registerDefsUses));
+        createIntermediateResult(instruction, copy, registerDefsUses, constraints));
   }
 
   private LlvmLoweringRecord.Machine createIntermediateResult(
       Instruction instruction,
       Graph uninlinedGraph,
-      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses,
+      List<TableGenInstructionConstraint> constraints) {
 
     var info = lowerBaseInfo(instruction, uninlinedGraph, registerDefsUses);
     var unchangedFlags = getFlags(uninlinedGraph);
@@ -83,7 +86,8 @@ public class LlvmInstructionLoweringUnconditionalJumpWithLinkRegistersStrategyIm
         instruction,
         info.withFlags(flags),
         Collections.emptyList(),
-        Collections.emptyList());
+        Collections.emptyList(),
+        constraints);
   }
 
 

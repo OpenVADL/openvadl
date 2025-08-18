@@ -19,6 +19,8 @@ package vadl.gcb.passes;
 import vadl.types.DataType;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 
 /**
@@ -27,6 +29,9 @@ import vadl.viam.graph.dependency.FieldRefNode;
  * remain the same.
  */
 public class RenamedFieldRefNode extends FieldRefNode {
+  private final int counter;
+  private final Format.Field original;
+
   /**
    * Constructs a new {@link FieldRefNode} object with the given format field and data type.
    * The type of the formatField must be implicitly cast-able to the given type of the
@@ -38,7 +43,27 @@ public class RenamedFieldRefNode extends FieldRefNode {
    */
   public RenamedFieldRefNode(Format.Field formatField, DataType type, int counter) {
     super(formatField, type);
+    this.original = formatField;
     this.formatField = new RenamedField(formatField, counter);
+    this.counter = counter;
+  }
+
+  public Format.Field originalField() {
+    return original;
+  }
+
+  public Format.Field replaced() {
+    return formatField;
+  }
+
+  @Override
+  public ExpressionNode copy() {
+    return new RenamedFieldRefNode(formatField, type().asDataType(), counter);
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new RenamedFieldRefNode(formatField, type().asDataType(), counter);
   }
 
   static class RenamedField extends Format.Field {

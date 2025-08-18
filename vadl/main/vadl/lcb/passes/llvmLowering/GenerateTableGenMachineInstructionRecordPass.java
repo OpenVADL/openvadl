@@ -77,7 +77,7 @@ public class GenerateTableGenMachineInstructionRecordPass extends Pass {
                   result.info().uses(),
                   result.info().defs(),
                   result.patterns(),
-                  Collections.emptyList()
+                  result.constraints()
               );
             })
             .toList();
