@@ -136,7 +136,9 @@ public final class TableGenInstructionRenderer {
   }
 
   private static String renderConstraint(TableGenInstructionConstraint constraint) {
-    return String.format("%s = %s", constraint.left().toString(), constraint.right().toString());
+    return String.format("$%s = $%s",
+        constraint.left().simpleName(),
+        constraint.right().simpleName());
   }
 
   /**

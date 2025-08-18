@@ -48,6 +48,16 @@ public class RenamedFieldRefNode extends FieldRefNode {
     this.counter = counter;
   }
 
+  private RenamedFieldRefNode(Format.Field formatField,
+                              Format.Field original,
+                              DataType type,
+                              int counter) {
+    super(original, type);
+    this.original = original;
+    this.formatField = formatField;
+    this.counter = counter;
+  }
+
   public Format.Field originalField() {
     return original;
   }
@@ -58,12 +68,12 @@ public class RenamedFieldRefNode extends FieldRefNode {
 
   @Override
   public ExpressionNode copy() {
-    return new RenamedFieldRefNode(formatField, type().asDataType(), counter);
+    return new RenamedFieldRefNode(formatField, original, type().asDataType(), counter);
   }
 
   @Override
   public Node shallowCopy() {
-    return new RenamedFieldRefNode(formatField, type().asDataType(), counter);
+    return new RenamedFieldRefNode(formatField, original, type().asDataType(), counter);
   }
 
   static class RenamedField extends Format.Field {
