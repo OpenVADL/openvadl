@@ -16,9 +16,7 @@
 
 package vadl.vdt.target.dump;
 
-import static vadl.vdt.target.common.DecisionTreeStatsCalculator.statistics;
 import static vadl.vdt.target.dump.DotGraphGeneratorDispatcher.dispatch;
-import static vadl.vdt.utils.BitVectorUtils.fittingPowerOfTwo;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -36,7 +34,6 @@ import vadl.vdt.model.LeafNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
 import vadl.vdt.model.impl.LeafNodeImpl;
-import vadl.vdt.target.common.dto.DecisionTreeStatistics;
 
 /**
  * Generates a simple dot graph from a VDT.
@@ -45,7 +42,6 @@ import vadl.vdt.target.common.dto.DecisionTreeStatistics;
 public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequence>>> {
 
   private final Node tree;
-  private final DecisionTreeStatistics stats;
   private final AtomicInteger counter = new AtomicInteger();
 
   /**
@@ -55,7 +51,6 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
    */
   public DotGraphGenerator(Node tree) {
     this.tree = tree;
-    this.stats = statistics(tree);
   }
 
   /**
@@ -163,18 +158,9 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
 
     final List<CharSequence> lines = new ArrayList<>();
 
-    final int insnWidth = fittingPowerOfTwo(stats.getMaxInstructionWidth());
-
     final BigInteger mask = node.getMask().toValue();
-    final int offset = node.getOffset();
-    final int length = node.getLength();
 
-    int shift = insnWidth - (node.getOffset() + length);
-    if (offset > 0 && shift > 0) {
-      lines.add("    %d [label=\"(insn >> %d) & 0x%x\"];\n".formatted(id, shift, mask));
-    } else {
-      lines.add("    %d [label=\"Mask 0x%x\"];\n".formatted(id, mask));
-    }
+    lines.add("    %d [label=\"Mask 0x%x\"];\n".formatted(id, mask));
 
     // Handle switch cases
     node.getChildren().forEach((pattern, child) -> {
@@ -204,21 +190,10 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
 
     final List<CharSequence> lines = new ArrayList<>();
 
-    final int insnWidth = fittingPowerOfTwo(stats.getMaxInstructionWidth());
-
     final BigInteger mask = node.getPattern().toMaskVector().toValue();
     final BigInteger value = node.getPattern().toBitVector().toValue();
-    final int offset = node.getOffset();
-    final int length = node.getLength();
 
-    int shift = insnWidth - (node.getOffset() + length);
-    if (offset > 0 && shift > 0) {
-      lines.add(
-          "    %d [label=\"(insn >> %d) & 0x%x %s 0x%x\"];\n".formatted(id, shift, mask,
-              node.isMatch() ? "==" : "!=", value));
-    } else {
-      lines.add("    %d [label=\"insn & 0x%x == 0x%x\"];\n".formatted(id, mask, value));
-    }
+    lines.add("    %d [label=\"insn & 0x%x == 0x%x\"];\n".formatted(id, mask, value));
 
     // Handle if/else case
     var matchingResult = node.getMatchingChild().accept(this);

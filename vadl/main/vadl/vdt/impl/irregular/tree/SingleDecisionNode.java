@@ -19,6 +19,7 @@ package vadl.vdt.impl.irregular.tree;
 import java.util.Collection;
 import java.util.Set;
 import javax.annotation.Nullable;
+import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
 import vadl.vdt.utils.Bit;
@@ -28,7 +29,7 @@ import vadl.vdt.utils.BitVector;
 /**
  * Select the child based on a single matching bit pattern.
  */
-public class SingleDecisionNode extends AbstractTruncatingDecisionNode {
+public class SingleDecisionNode implements InnerNode {
 
   private final BitPattern pattern;
   private final Node matchingChild;
@@ -44,15 +45,11 @@ public class SingleDecisionNode extends AbstractTruncatingDecisionNode {
   /**
    * Creates a new inner node.
    *
-   * @param offset        the offset of bits to skip prior to matching
-   * @param length        the number of bits to match
    * @param pattern       the pattern to check
    * @param matchingChild the child to select upon matching the pattern
    * @param otherChild    the child to select if the pattern does not match
    */
-  public SingleDecisionNode(int offset, int length, BitPattern pattern, Node matchingChild,
-                            @Nullable Node otherChild) {
-    super(offset, length);
+  public SingleDecisionNode(BitPattern pattern, Node matchingChild, @Nullable Node otherChild) {
     this.pattern = pattern;
     this.match = true; // default to matching
     this.matchingChild = matchingChild;
@@ -62,16 +59,13 @@ public class SingleDecisionNode extends AbstractTruncatingDecisionNode {
   /**
    * Creates a new inner node.
    *
-   * @param offset        the offset of bits to skip prior to matching
-   * @param length        the number of bits to match
    * @param pattern       the pattern to check
    * @param match         whether to check for matching (or unmatching) of the pattern
    * @param matchingChild the child to select upon matching the pattern
    * @param otherChild    the child to select if the pattern does not match
    */
-  public SingleDecisionNode(int offset, int length, BitPattern pattern, boolean match,
-                            Node matchingChild, @Nullable Node otherChild) {
-    super(offset, length);
+  public SingleDecisionNode(BitPattern pattern, boolean match, Node matchingChild,
+                            @Nullable Node otherChild) {
     this.pattern = pattern;
     this.match = match;
     this.matchingChild = matchingChild;
@@ -83,8 +77,7 @@ public class SingleDecisionNode extends AbstractTruncatingDecisionNode {
 
     // extend/truncate the instruction to the relevant bits before testing
     final BitVector i = insn
-        .rightPad(getOffset() + getLength(), new Bit(false))
-        .truncate(getOffset(), getLength());
+        .rightPad(pattern.width(), new Bit(false));
 
     final boolean matches = pattern.test(i);
 

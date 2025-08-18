@@ -201,25 +201,15 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
   @Handler
   public Void handle(MultiDecisionNode node) {
 
-    final DataType insnType = getInsnWordType();
-    final int insnWidth = insnType.bitWidth();
-
     final BigInteger mask = node.getMask().toValue();
-    final int offset = node.getOffset();
-    final int length = node.getLength();
 
     final Map<BitPattern, Node> children = node.getChildren();
 
-    int shift = insnWidth - (node.getOffset() + length);
-    if (offset > 0 && shift > 0) {
-      appendable.append("switch ((insn >> %d) & 0x%s) {\n".formatted(
-          shift, mask.toString(16)
-      ));
-    } else {
-      appendable.append("switch (insn & 0x")
-          .append(mask.toString(16))
-          .append(") {\n");
-    }
+    // TODO: Possibly shift the value to avoid large integer constants
+    //  (-> evaluate if there is a runtime penalty either way)
+    appendable.append("switch (insn & 0x")
+        .append(mask.toString(16))
+        .append(") {\n");
 
     appendable.indent();
 
@@ -253,22 +243,13 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
   @Handler
   public Void handle(SingleDecisionNode node) {
 
-    final DataType insnType = getInsnWordType();
-    final int insnWidth = insnType.bitWidth();
-
     final BigInteger mask = node.getPattern().toMaskVector().toValue();
     final BigInteger value = node.getPattern().toBitVector().toValue();
-    final int offset = node.getOffset();
-    final int length = node.getLength();
 
-    int shift = insnWidth - (node.getOffset() + length);
-    if (offset > 0 && shift > 0) {
-      appendable.append("if (((insn >> %d) & 0x%x) %s 0x%x) {\n"
-          .formatted(shift, mask, node.isMatch() ? "==" : "!=", value));
-    } else {
-      appendable.append("if ((insn & 0x%x) %s 0x%x) {\n"
-          .formatted(mask, node.isMatch() ? "==" : "!=", value));
-    }
+    // TODO: Possibly shift the value to avoid large integer constants
+    //  (-> evaluate if there is a runtime penalty either way)
+    appendable.appendLn("if ((insn & 0x%x) %s 0x%x) {"
+        .formatted(mask, node.isMatch() ? "==" : "!=", value));
 
     appendable.indent();
     node.getMatchingChild().accept(this);

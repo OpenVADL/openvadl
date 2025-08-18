@@ -16,9 +16,6 @@
 
 package vadl.vdt.target.dump;
 
-import static vadl.vdt.target.common.DecisionTreeStatsCalculator.statistics;
-import static vadl.vdt.utils.BitVectorUtils.fittingPowerOfTwo;
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +29,6 @@ import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.LeafNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
-import vadl.vdt.target.common.dto.DecisionTreeStatistics;
 
 /**
  * Generates a simple text table to list the decision path for each instruction.
@@ -41,7 +37,6 @@ import vadl.vdt.target.common.dto.DecisionTreeStatistics;
 public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequence>>> {
 
   private final Node tree;
-  private final DecisionTreeStatistics stats;
 
   /**
    * Construct the decision table generator.
@@ -50,7 +45,6 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
    */
   public InsnDecisionTableGenerator(Node tree) {
     this.tree = tree;
-    this.stats = statistics(tree);
   }
 
   /**
@@ -156,17 +150,9 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
 
     var label = new StringBuilder();
 
-    final int insnWidth = fittingPowerOfTwo(stats.getMaxInstructionWidth());
     final BigInteger mask = node.getMask().toValue();
-    final int offset = node.getOffset();
-    final int length = node.getLength();
-    int shift = insnWidth - (node.getOffset() + length);
 
-    if (offset > 0 && shift > 0) {
-      label.append("(insn >> %d) & 0x%x".formatted(shift, mask));
-    } else {
-      label.append("insn & 0x%x".formatted(mask));
-    }
+    label.append("insn & 0x%x".formatted(mask));
 
     var result = new ArrayList<List<CharSequence>>();
 
@@ -197,18 +183,10 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
 
     var label = new StringBuilder();
 
-    final int insnWidth = fittingPowerOfTwo(stats.getMaxInstructionWidth());
     final BigInteger mask = node.getPattern().toMaskVector().toValue();
     final BigInteger value = node.getPattern().toBitVector().toValue();
-    final int offset = node.getOffset();
-    final int length = node.getLength();
-    int shift = insnWidth - (node.getOffset() + length);
 
-    if (offset > 0 && shift > 0) {
-      label.append("(insn >> %d) & 0x%x".formatted(shift, mask));
-    } else {
-      label.append("insn & 0x%x".formatted(mask));
-    }
+    label.append("insn & 0x%x".formatted(mask));
 
     var result = new ArrayList<List<CharSequence>>();
 

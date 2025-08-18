@@ -133,13 +133,11 @@ public class CheckedBitsCollector implements Visitor<Map<Instruction, BitPattern
       }
 
       for (var child : children.entrySet()) {
-        var childPattern = child.getValue();
 
         var pattern = entry.getKey();
-        var alignedPattern = pattern.leftPad(node.getOffset())
-            .rightPad(insnWidth - node.getOffset() - pattern.width());
-
-        result.put(child.getKey(), combinePatterns(alignedPattern, childPattern));
+        var childPattern = child.getValue();
+        
+        result.put(child.getKey(), combinePatterns(pattern, childPattern));
       }
     }
 
@@ -177,13 +175,11 @@ public class CheckedBitsCollector implements Visitor<Map<Instruction, BitPattern
     }
 
     for (var child : matchingChildren.entrySet()) {
-      var childPattern = child.getValue();
 
       var pattern = node.getPattern();
-      var alignedPattern = pattern.leftPad(node.getOffset())
-          .rightPad(insnWidth - node.getOffset() - pattern.width());
+      var childPattern = child.getValue();
 
-      result.put(child.getKey(), combinePatterns(alignedPattern, childPattern));
+      result.put(child.getKey(), combinePatterns(pattern, childPattern));
     }
 
     if (node.getOtherChild() == null) {
