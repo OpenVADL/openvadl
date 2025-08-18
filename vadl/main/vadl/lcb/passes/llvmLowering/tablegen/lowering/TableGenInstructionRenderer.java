@@ -28,6 +28,7 @@ import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenCompilerInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionConstraint;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
@@ -82,7 +83,7 @@ public final class TableGenInstructionRenderer {
             let isReMaterializable = %d;
             let isAsCheapAsAMove   = %d;
             
-            let Constraints = "";
+            let Constraints = "%s";
             let AddedComplexity = 0;
             
             let Pattern = [%s];
@@ -116,6 +117,10 @@ public final class TableGenInstructionRenderer {
         toInt(instruction.getFlags().isBarrier()),
         toInt(instruction.getFlags().isRematerialisable()),
         toInt(instruction.getFlags().isAsCheapAsAMove()),
+        instruction.constraints()
+            .stream()
+            .map(TableGenInstructionRenderer::renderConstraint)
+            .collect(Collectors.joining(", ")),
         instruction.getAnonymousPatterns()
             .stream()
             .filter(x -> x instanceof TableGenSelectionPattern)
@@ -128,6 +133,10 @@ public final class TableGenInstructionRenderer {
             .collect(Collectors.joining(","))
     );
     return y;
+  }
+
+  private static String renderConstraint(TableGenInstructionConstraint constraint) {
+    return String.format("%s = %s", constraint.left().toString(), constraint.right().toString());
   }
 
   /**
