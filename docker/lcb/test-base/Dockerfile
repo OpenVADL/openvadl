@@ -53,7 +53,7 @@ RUN set -ex; \
     | tar -xz -C /opt/sccache --strip-components=1
 
 WORKDIR /qemu/build
-RUN ../configure --prefix=/opt/qemu --target-list=riscv32-softmmu,riscv64-softmmu,aarch64-softmmu
+RUN ../configure --prefix=/opt/qemu --target-list=riscv32-softmmu,riscv64-softmmu,aarch64-softmmu,aarch64-linux-user,riscv32-linux-user,riscv64-linux-user
 RUN make -j $(nproc)
 RUN make install
 RUN mkdir /opt/qemu/plugins && cp -r /qemu/build/tests/tcg/plugins /opt/qemu/plugins
