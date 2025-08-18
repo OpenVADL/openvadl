@@ -75,7 +75,8 @@ public class AnnotationTable {
     annotationOn(AsmDescriptionDefinition.class, "comment string", StringAnnotation::new)
         .applyViam((def, annotation, lowering) -> {
           var asmDescription = (AssemblyDescription) def;
-          asmDescription.addAnnotation(new AsmParserCommentString(annotation.value));
+          var strLit = (StringLiteral) annotation.definition.values.getFirst();
+          asmDescription.addAnnotation(new AsmParserCommentString(strLit.value));
         })
         .build();
 
