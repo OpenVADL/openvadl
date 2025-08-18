@@ -807,7 +807,7 @@ public class AssemblyInstructionPrinterImmediateHandler
         .filter(x -> x.formatField().equals(fieldRefNode.formatField()))
         .flatMap(Node::usages)
         .filter(x -> x instanceof HasRegisterTensor y && y.hasRegisterFile())
-        .map(x -> (HasRegisterTensor) x)
+        .map(x -> ((HasRegisterTensor) x).registerTensor())
         .collect(Collectors.toSet());
 
     if (candidates.isEmpty()) {
@@ -823,7 +823,7 @@ public class AssemblyInstructionPrinterImmediateHandler
               "detect the register file for the assembly.",
           fieldRefNode.location()).build();
     } else {
-      return candidates.iterator().next().registerTensor().identifier.simpleName();
+      return candidates.iterator().next().identifier.simpleName();
     }
   }
 
