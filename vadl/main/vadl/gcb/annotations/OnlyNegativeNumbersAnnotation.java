@@ -16,42 +16,18 @@
 
 package vadl.gcb.annotations;
 
+import vadl.gcb.passes.InstructionPatternPruningPass;
 import vadl.viam.Annotation;
-import vadl.viam.ArtificialResource;
-import vadl.viam.Resource;
+import vadl.viam.CompilerInstruction;
+import vadl.viam.Instruction;
 
 /**
- * Annotation indicating the size of the alias which is crucial for
- * {@link CompilerRegisterRenamingAnnotation}.
+ * This annotation defines that an {@link Instruction} should not be pruned in
+ * {@link InstructionPatternPruningPass}.
  */
-public class HalfWidthOfAnnotation extends Annotation<ArtificialResource> {
-  private final int lo;
-  private final int hi;
-  private final Resource resource;
-
-  /**
-   * Constructor.
-   */
-  public HalfWidthOfAnnotation(int lo, int hi, Resource resource) {
-    this.lo = lo;
-    this.hi = hi;
-    this.resource = resource;
-  }
-
+public class OnlyNegativeNumbersAnnotation extends Annotation<CompilerInstruction> {
   @Override
-  public Class<ArtificialResource> parentDefinitionClass() {
-    return ArtificialResource.class;
-  }
-
-  public int hi() {
-    return hi;
-  }
-
-  public int lo() {
-    return lo;
-  }
-
-  public Resource resource() {
-    return resource;
+  public Class<CompilerInstruction> parentDefinitionClass() {
+    return CompilerInstruction.class;
   }
 }

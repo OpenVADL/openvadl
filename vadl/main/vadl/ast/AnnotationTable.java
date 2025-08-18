@@ -35,8 +35,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import vadl.gcb.annotations.CompilerRegisterRenamingAnnotation;
-import vadl.gcb.annotations.HalfWidthOfAnnotation;
+import vadl.gcb.annotations.OnlyNegativeNumbersAnnotation;
 import vadl.gcb.annotations.SkipPruningAnnotation;
 import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.types.Type;
@@ -44,7 +43,6 @@ import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 import vadl.utils.functionInterfaces.TriConsumer;
-import vadl.viam.ArtificialResource;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Constant;
 import vadl.viam.Encoding;
@@ -52,7 +50,6 @@ import vadl.viam.Instruction;
 import vadl.viam.MemoryRegion;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
-import vadl.viam.Resource;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
 import vadl.viam.annotations.EnableHtifAnno;
@@ -236,27 +233,13 @@ public class AnnotationTable {
           }
         }).build();
 
-    // TODO: also add it for register definitions
-    annotationOn(AliasDefinition.class, "half width of", DefinitionRefAnnotation::new)
-        .check((def, annotation, lowering) -> {
-          var alias = annotation.verifyDefinitionType(AliasDefinition.class);
-          ensure(alias.computedTarget instanceof RegisterDefinition,
-              () -> error("Invalid annotation", annotation)
-                  .description("Alias must reference a register."));
-        })
+    annotationOn(AbiSequenceDefinition.class, "only negative", EnableAnnotation::new)
         .applyViam((def, annotation, lowering) -> {
-          var resource = (ArtificialResource) lowering.fetch(annotation.def).orElseThrow();
-          var lo = 0;
-          var hi = (resource.resultType().bitWidth() / 2) - 1;
-          def.addAnnotation(new HalfWidthOfAnnotation(lo, hi, resource));
+          if (annotation.isEnabled) {
+            def.addAnnotation(new OnlyNegativeNumbersAnnotation());
+          }
         }).build();
-
-    annotationOn(AliasDefinition.class, "regfile renaming", EnableAnnotation::new)
-        .applyViam((def, annotation, lowering) -> def.addAnnotation(
-            new CompilerRegisterRenamingAnnotation()))
-        .build();
   }
-
 
   /**
    * Creates an annotation from the given AST definition.

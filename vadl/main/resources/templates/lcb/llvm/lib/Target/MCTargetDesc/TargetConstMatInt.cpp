@@ -22,10 +22,18 @@ namespace llvm::[(${namespace})]MatInt {
     }
     [/]
     [# th:if="${cons.isSigned == true}" ]
+    [# th:if="${cons.onlyNegative == false}" ]
     if(Val >= [(${cons.lowestValue})] && Val <= [(${cons.highestValue})]) {
       Res.emplace_back([(${namespace})]::[(${cons.instruction})], Val);
       return Res;
     }
+    [/]
+    [# th:if="${cons.onlyNegative == true}" ]
+    if(Val >= [(${cons.lowestValue})] && Val <= [(${cons.highestValue})]) {
+      Res.emplace_back([(${namespace})]::[(${cons.instruction})], uVal);
+      return Res;
+    }
+    [/]
     [/]
     [/]
 

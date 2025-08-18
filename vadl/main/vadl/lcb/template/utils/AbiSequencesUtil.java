@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
+import vadl.gcb.annotations.OnlyNegativeNumbersAnnotation;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.template.Renderable;
 import vadl.types.BitsType;
@@ -37,6 +38,7 @@ public class AbiSequencesUtil {
    * Helper record to construct constant sequences.
    */
   public record ConstantSequence(CompilerInstruction instruction,
+                                 boolean onlyNegative,
                                  boolean isSigned,
                                  long highestValue,
                                  long lowestValue) implements Renderable {
@@ -46,6 +48,7 @@ public class AbiSequencesUtil {
       return Map.of(
           "instruction", instruction.identifier.simpleName(),
           "isSigned", isSigned,
+          "onlyNegative", onlyNegative,
           "highestValue", highestValue,
           "lowestValue", lowestValue
       );
@@ -101,10 +104,12 @@ public class AbiSequencesUtil {
     var param = x.getLargestParameter();
     var ty = (BitsType) param.type().asDataType();
 
-    var highest = GenerateValueRangeImmediatePass.highestPossibleValue(ty);
+    var highest = x.hasAnnotation(OnlyNegativeNumbersAnnotation.class) ? 0
+        : GenerateValueRangeImmediatePass.highestPossibleValue(ty);
     var lowest = GenerateValueRangeImmediatePass.lowestPossibleValue(ty);
 
     return new ConstantSequence(x,
+        x.hasAnnotation(OnlyNegativeNumbersAnnotation.class),
         Arrays.stream(x.parameters()).anyMatch(y -> y.type().asDataType().isSigned()),
         highest,
         lowest

@@ -24,7 +24,7 @@ import org.junit.jupiter.api.TestFactory;
 import vadl.lcb.LcbDockerInputFileExecutionTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
-@Disabled
+//@Disabled
 public class QemuAarch64SimulationTest extends LcbDockerInputFileExecutionTest {
   @Override
   protected String getTarget() {
