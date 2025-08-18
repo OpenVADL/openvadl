@@ -23,6 +23,7 @@ import static vadl.vdt.utils.PBit.Value.ZERO;
 import java.math.BigInteger;
 import java.nio.ByteOrder;
 import java.util.List;
+import java.util.stream.IntStream;
 import vadl.viam.Constant;
 import vadl.viam.Constant.BitSlice;
 import vadl.viam.Encoding;
@@ -201,22 +202,49 @@ public class PatternUtils {
   }
 
   /**
-   * Combine the two bit-patterns to one. Align the second pattern by the given offset.
+   * True if two bit patterns (of the same length) do not collide. I.e. there is no bit which is
+   * set in both patterns and the values don't match.
+   * <br>
+   * Another way to look at it could be to say pattern p1 matches pattern p2 (and vice versa).
    *
-   * @param p1     The first pattern
-   * @param offset The offset tho shift the second pattern by
-   * @param p2     The second pattern (will be aligned by the offset)
-   * @return The combined pattern.
+   * @param p1 The first pattern
+   * @param p2 The second pattern
+   * @return Whether the patterns are compatible or not.
    */
-  public static BitPattern combinePatterns(BitPattern p1, int offset, BitPattern p2) {
+  public static boolean compatible(BitPattern p1, BitPattern p2) {
+    return IntStream.range(0, p1.width())
+        .allMatch(
+            i -> p1.get(i).equals(p2.get(i)) || p1.get(i).getValue() == PBit.Value.DONT_CARE
+                || p2.get(i).getValue() == PBit.Value.DONT_CARE);
+  }
 
-    int targetWidth = p1.width();
+  /**
+   * True if pattern p1 matches a subset of the bit vectors that match pattern p2. I.e. pattern p1
+   * is more (or equally) specific. Thus, if a bit vector matches p1 it also matches p2.s
+   *
+   * @param p1 The first pattern
+   * @param p2 The second pattern
+   * @return Whether the first pattern is a subset of the second pattern.
+   */
+  public static boolean contain(BitPattern p1, BitPattern p2) {
+    return IntStream.range(0, p1.width())
+        .allMatch(
+            i -> p1.get(i).equals(p2.get(i)) || p2.get(i).getValue() == PBit.Value.DONT_CARE);
+  }
 
-    if (offset + p2.width() > targetWidth) {
-      throw new IllegalArgumentException("Patterns cannot be combined");
+  /**
+   * Replace bits in p with <i>don't care</i> if they are set in the input pattern.
+   *
+   * @param p            The pattern to remove certain bit from
+   * @param inputPattern The pattern specifying the bits to remove.
+   * @return A copy of the original pattern p with some bits switched to <i>don't care</i>.
+   */
+  public static BitPattern invalidate(BitPattern p, BitPattern inputPattern) {
+    final PBit[] bits = new PBit[inputPattern.width()];
+    for (int i = 0; i < inputPattern.width(); i++) {
+      bits[i] = inputPattern.get(i).getValue() == PBit.Value.DONT_CARE ? p.get(i) :
+          new PBit(PBit.Value.DONT_CARE);
     }
-
-    var alignedP2 = p2.leftPad(offset).rightPad(targetWidth - p2.width() - offset);
-    return combinePatterns(p1, alignedP2);
+    return new BitPattern(bits);
   }
 }

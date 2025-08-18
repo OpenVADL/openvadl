@@ -19,6 +19,9 @@ package vadl.vdt.impl.irregular;
 import static vadl.error.Diagnostic.error;
 import static vadl.vdt.utils.BitPattern.fromBitVector;
 import static vadl.vdt.utils.PatternUtils.combinePatterns;
+import static vadl.vdt.utils.PatternUtils.compatible;
+import static vadl.vdt.utils.PatternUtils.contain;
+import static vadl.vdt.utils.PatternUtils.invalidate;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -30,9 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
@@ -193,10 +195,10 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
 
     // Step 1
     final List<DecodeEntry> matchingEntries = decodeEntries.stream()
-        .filter(d -> match(d.pattern(), pattern))
+        .filter(d -> compatible(d.pattern(), pattern))
         .filter(d -> d.exclusionConditions().stream()
             .noneMatch(c -> contain(pattern, c.matching())
-                && c.unmatching().stream().noneMatch(p -> match(pattern, p))))
+                && c.unmatching().stream().noneMatch(p -> compatible(pattern, p))))
         .toList();
 
     // Step 2
@@ -204,11 +206,11 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     for (DecodeEntry e : matchingEntries) {
 
       final Set<ExclusionCondition> ex = e.exclusionConditions().stream()
-          .filter(c -> match(pattern, c.matching()) && c.unmatching().stream()
+          .filter(c -> compatible(pattern, c.matching()) && c.unmatching().stream()
               .noneMatch(pu -> contain(pattern, pu)))
           .map(c -> {
             final Set<BitPattern> newUnmatching = c.unmatching().stream()
-                .filter(pu -> match(pattern, pu))
+                .filter(pu -> compatible(pattern, pu))
                 .collect(Collectors.toSet());
             return new ExclusionCondition(c.matching(), newUnmatching);
           })
@@ -360,28 +362,6 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     return diagnostic.build();
   }
 
-  private boolean match(BitPattern p1, BitPattern p2) {
-    return IntStream.range(0, p1.width())
-        .allMatch(
-            i -> p1.get(i).equals(p2.get(i)) || p1.get(i).getValue() == PBit.Value.DONT_CARE
-                || p2.get(i).getValue() == PBit.Value.DONT_CARE);
-  }
-
-  private boolean contain(BitPattern p1, BitPattern p2) {
-    return IntStream.range(0, p1.width())
-        .allMatch(
-            i -> p1.get(i).equals(p2.get(i)) || p2.get(i).getValue() == PBit.Value.DONT_CARE);
-  }
-
-  private BitPattern invalidate(BitPattern p, BitPattern inputPattern) {
-    final PBit[] bits = new PBit[inputPattern.width()];
-    for (int i = 0; i < inputPattern.width(); i++) {
-      bits[i] = inputPattern.get(i).getValue() == PBit.Value.DONT_CARE ? p.get(i) :
-          new PBit(PBit.Value.DONT_CARE);
-    }
-    return new BitPattern(bits);
-  }
-
   /**
    * Prepare the input decode entries for the generator. This includes padding the patterns to the
    * same width.
@@ -416,7 +396,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
    * @param transformer The transformation function
    * @return The modified entry
    */
-  private DecodeEntry transform(DecodeEntry entry, Function<BitPattern, BitPattern> transformer) {
+  private DecodeEntry transform(DecodeEntry entry, UnaryOperator<BitPattern> transformer) {
 
     final BitPattern pattern = entry.pattern();
     final BitPattern transformedPattern = transformer.apply(pattern);
@@ -460,7 +440,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
 
     for (ExclusionCondition c : entry.exclusionConditions()) {
 
-      if (!match(checkedBits, c.matching())) {
+      if (!compatible(checkedBits, c.matching())) {
         // The exclusion condition cannot match, it collides with the already known bits
         continue;
       }
@@ -476,7 +456,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
       final Set<BitPattern> unmatchingConditions = new HashSet<>();
       for (BitPattern pu : c.unmatching()) {
 
-        if (!match(checkedBits, pu) || contain(checkedBits, pu)) {
+        if (!compatible(checkedBits, pu) || contain(checkedBits, pu)) {
           // The unmatching condition cannot match, or it has already been checked
           continue;
         }
