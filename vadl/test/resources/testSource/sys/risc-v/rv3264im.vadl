@@ -528,11 +528,5 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   $DivModInstr(REMUW ; % ; 0b111 ; 0b011'1011 ; UIntW ; UInt)  // unsigned remainder word
 
 )           // ))))))))))))))))))))))))))))))))))))))))
-
-instruction FMA : Rtype =
-        X(rd) := X(rd) + (X(rs1) * X(rs2))
-encoding FMA = { opcode = 0b011'1011, funct3 = 0001, funct7 = 0001 }
-assembly FMA = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
-
-  }
+}
 
