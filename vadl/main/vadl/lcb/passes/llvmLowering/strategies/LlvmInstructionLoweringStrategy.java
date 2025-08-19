@@ -333,6 +333,7 @@ public abstract class LlvmInstructionLoweringStrategy {
         var inputOperands = pair.right();
 
         var localPatterns = generatePatterns(instruction,
+            behavior,
             inputOperands,
             behavior.getNodes(WriteResourceNode.class).toList());
         var localAlternatives =
@@ -756,6 +757,7 @@ public abstract class LlvmInstructionLoweringStrategy {
 
   protected List<TableGenPattern> generatePatterns(
       Instruction instruction,
+      Graph behavior,
       List<GcbInstructionOperand> inputOperands,
       List<WriteResourceNode> sideEffectNodes) {
     ArrayList<TableGenPattern> patterns = new ArrayList<>();
