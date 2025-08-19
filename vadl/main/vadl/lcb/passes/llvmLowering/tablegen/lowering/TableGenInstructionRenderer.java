@@ -135,12 +135,6 @@ public final class TableGenInstructionRenderer {
     return y;
   }
 
-  private static String renderConstraint(TableGenInstructionConstraint constraint) {
-    return String.format("$%s = $%s",
-        constraint.left().simpleName(),
-        constraint.right().simpleName());
-  }
-
   /**
    * Transforms the given {@link PseudoInstruction} into a string which can be used by LLVM's
    * TableGen.
@@ -342,6 +336,12 @@ public final class TableGenInstructionRenderer {
     return String.format("let Inst{%s} = %s{%s};", inst,
         fieldEncoding.getSourceBitBlockName(),
         source);
+  }
+
+  private static String renderConstraint(TableGenInstructionConstraint constraint) {
+    return String.format("$%s = $%s",
+        constraint.left().simpleName(),
+        constraint.right().simpleName());
   }
 
   private static String renderRegisterRef(RegisterRef x) {
