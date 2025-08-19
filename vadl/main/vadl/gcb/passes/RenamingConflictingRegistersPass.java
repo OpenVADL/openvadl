@@ -30,6 +30,11 @@ import vadl.viam.graph.ReadsRegisterTensor;
 import vadl.viam.graph.WritesRegisterTensor;
 import vadl.viam.graph.dependency.FieldRefNode;
 
+/**
+ * A pass which renames registers which writes and reads from the same register. This is required
+ * since LLVM does not allow that the same register is both an input and output operand. Instead,
+ * we rename it and add a constraint that both must be the same later.
+ */
 public class RenamingConflictingRegistersPass extends Pass {
   public RenamingConflictingRegistersPass(GeneralConfiguration configuration) {
     super(configuration);
