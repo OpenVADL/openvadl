@@ -130,7 +130,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     }
 
     var writes = visitedGraph.getNodes(WriteResourceNode.class).toList();
-    var patterns = generatePatterns(instruction, info.inputs(), writes);
+    var patterns = generatePatterns(instruction, instruction.behavior(), info.inputs(), writes);
     var alternatives =
         generatePatternVariations(instruction,
             supportedInstructions,

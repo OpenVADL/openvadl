@@ -13037,7 +13037,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_B_offsetAsLabel:$offset );
 
 field bits<32> Inst;
 
@@ -13054,14 +13054,14 @@ let Inst{31-26} = op{5-0};
 let Inst{25-0} = offset{25-0};
 
 let isTerminator       = 1;
-let isBranch           = 0;
+let isBranch           = 1;
 let isCall             = 0;
 let isReturn           = 0;
 let isPseudo           = 0;
 let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
-let isBarrier          = 0;
+let isBarrier          = 1;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
 
@@ -14449,7 +14449,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_AL_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_B_AL_offsetAsLabel:$offset );
 
 field bits<32> Inst;
 
@@ -14469,14 +14469,14 @@ let Inst{23-5} = offset{18-0};
 let Inst{3-0} = cc{3-0};
 
 let isTerminator       = 1;
-let isBranch           = 0;
+let isBranch           = 1;
 let isCall             = 0;
 let isReturn           = 0;
 let isPseudo           = 0;
 let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
-let isBarrier          = 0;
+let isBarrier          = 1;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
 
@@ -15025,7 +15025,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_NV_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_B_NV_offsetAsLabel:$offset );
 
 field bits<32> Inst;
 
@@ -15045,14 +15045,14 @@ let Inst{23-5} = offset{18-0};
 let Inst{3-0} = cc{3-0};
 
 let isTerminator       = 1;
-let isBranch           = 0;
+let isBranch           = 1;
 let isCall             = 0;
 let isReturn           = 0;
 let isPseudo           = 0;
 let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
-let isBarrier          = 0;
+let isBarrier          = 1;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
 
@@ -50967,6 +50967,18 @@ def : Pat<(zext (sra W:$rn, W:$rm)),
 
 def : Pat<(sra X:$rn, X:$rm),
         (ASRX X:$rn, X:$rm)>;
+
+
+def : Pat<(br bb:$offset),
+        (B bb:$offset)>;
+
+
+def : Pat<(br bb:$offset),
+        (B_AL bb:$offset)>;
+
+
+def : Pat<(br bb:$offset),
+        (B_NV bb:$offset)>;
 
 
 def : Pat<(zext (xor W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize)),
