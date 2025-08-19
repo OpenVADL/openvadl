@@ -94,7 +94,8 @@ public class LlvmInstructionLoweringUnconditionalIndirectJumpWithoutLinkRegister
 
   @Override
   protected List<TableGenPattern> generatePatterns(Instruction instruction,
-                                                   Graph behavior, List<GcbInstructionOperand> inputOperands,
+                                                   Graph behavior,
+                                                   List<GcbInstructionOperand> inputOperands,
                                                    List<WriteResourceNode> sideEffectNodes) {
     throw new RuntimeException("Must not be called. Use the other method");
   }
