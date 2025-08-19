@@ -35,6 +35,7 @@ import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.MachineInstructionLabel;
+import vadl.gcb.passes.RenamedFieldRefNode;
 import vadl.gcb.passes.operands.GenerateInstructionOperandsPass;
 import vadl.gcb.passes.operands.InstructionOperandsCtx;
 import vadl.gcb.passes.operands.model.GcbConstantOperand;
@@ -64,6 +65,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandler;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerDispatcher;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionConstraint;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionFrameRegisterOperand;
@@ -305,6 +307,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       return Optional.empty();
     }
 
+    var constraints = generateConstraints(copy);
     lowerNodes(instruction, copy);
 
     var isLowerable = !hasRedFlags(instruction, copy);
@@ -351,15 +354,27 @@ public abstract class LlvmInstructionLoweringStrategy {
           instruction,
           info,
           Stream.concat(patterns.stream(), alternatives.stream()).toList(),
-          additionalBehaviorsBookkeeping
+          additionalBehaviorsBookkeeping,
+          constraints
       ));
     } else {
       return Optional.of(new LlvmLoweringRecord.Machine(
           instruction,
           info,
           Collections.emptyList(),
-          Collections.emptyList()));
+          Collections.emptyList(),
+          constraints));
     }
+  }
+
+  /**
+   * Return the fields which require a constraint.
+   */
+  protected List<TableGenInstructionConstraint> generateConstraints(Graph copy) {
+    return copy.getNodes(RenamedFieldRefNode.class)
+        .map(renamedFieldRefNode -> new TableGenInstructionConstraint(
+            renamedFieldRefNode.originalField(), renamedFieldRefNode.replaced()))
+        .toList();
   }
 
   private void lowerNodes(Instruction instruction, Graph copy) {

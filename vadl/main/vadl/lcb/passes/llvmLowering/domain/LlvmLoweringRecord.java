@@ -22,6 +22,7 @@ import java.util.List;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionConstraint;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.Instruction;
@@ -65,6 +66,7 @@ public abstract class LlvmLoweringRecord {
     private final Instruction instructionRef;
     private final List<LlvmInstructionLoweringStrategy.DerivedGraphOptimisationResult>
         optimisationResult;
+    private final List<TableGenInstructionConstraint> constraints;
 
     /**
      * Constructor.
@@ -73,10 +75,12 @@ public abstract class LlvmLoweringRecord {
                    LlvmLoweringPass.BaseInstructionInfo info,
                    List<TableGenPattern> patterns,
                    List<LlvmInstructionLoweringStrategy.DerivedGraphOptimisationResult>
-                       optimisationResults) {
+                       optimisationResults,
+                   List<TableGenInstructionConstraint> constraints) {
       super(info, patterns);
       this.instructionRef = instructionRef;
       this.optimisationResult = optimisationResults;
+      this.constraints = constraints;
     }
 
 
@@ -86,11 +90,16 @@ public abstract class LlvmLoweringRecord {
 
     @Override
     public LlvmLoweringRecord withInfo(LlvmLoweringPass.BaseInstructionInfo baseInstructionInfo) {
-      return new Machine(instructionRef, baseInstructionInfo, patterns(), optimisationResult);
+      return new Machine(instructionRef, baseInstructionInfo, patterns(), optimisationResult,
+          constraints);
     }
 
     public List<LlvmInstructionLoweringStrategy.DerivedGraphOptimisationResult> optResults() {
       return optimisationResult;
+    }
+
+    public List<TableGenInstructionConstraint> constraints() {
+      return constraints;
     }
   }
 
