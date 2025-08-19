@@ -96,6 +96,7 @@ public class LlvmInstructionLoweringUnconditionalJumpWithoutLinkRegistersStrateg
         instruction,
         info.withFlags(flags),
         patterns,
+        Collections.emptyList(),
         Collections.emptyList());
   }
 
