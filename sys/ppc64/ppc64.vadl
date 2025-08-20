@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-instruction set architecture PPC64 = {
+instruction set architecture PPC64SFS = {
 
   constant mask32  : Bits<64> = 0x0000'0000'FFFF'FFFF      // mask for lower 32-bits
 
@@ -1326,8 +1326,8 @@ instruction set architecture PPC64 = {
   $SCFormSysCallInstr((SCV; 0b01); SysCallVectored)
 }
 
-processor CPU implements PPC64 = {
-  reset = PC := 0x0
+processor Power implements PPC64SFS = {
+  reset = PC := 0x0000'0000'0000'0100
 
   [ firmware ]
   [ base: 0x00000000 ]
