@@ -72,6 +72,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
 import vadl.error.Diagnostic;
+import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.gcb.passes.IsaMatchingUtils;
 import vadl.gcb.passes.MachineInstructionCtx;
 import vadl.gcb.passes.MachineInstructionLabel;
@@ -92,6 +93,7 @@ import vadl.viam.graph.ReadsRegisterTensor;
 import vadl.viam.graph.WritesRegisterTensor;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -241,34 +243,46 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SLLI, ty));
       } else if (findRR(behavior, List.of(LSR, LSRS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SRL, ty));
-      } else if (findBranchWithConditional(behavior, EQU)) {
+      }
+      // Status Registers
+      else if (findBranchWithConditionalWithStatusRegisters(behavior, EQU)) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.BEQ_BY_STATUS_REGISTER,
+                Optional.empty()));
+      } else if (findBranchWithConditionalWithStatusRegisters(behavior, NEQ)) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.BNEQ_BY_STATUS_REGISTER,
+                Optional.empty()));
+      }
+      // Without Status Registers
+      else if (findBranchWithConditionalWithoutStatusRegisters(behavior, EQU)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BEQ, Optional.empty()));
-      } else if (findBranchWithConditional(behavior, NEQ)) {
+      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, NEQ)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BNEQ, Optional.empty()));
-      } else if (findBranchWithConditional(behavior, Set.of(SGEQ))) {
+      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, SGEQ)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSGEQ, Optional.empty()));
-      } else if (findBranchWithConditional(behavior, Set.of(UGEQ))) {
+      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, UGEQ)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BUGEQ, Optional.empty()));
-      } else if (findBranchWithConditional(behavior, Set.of(SLEQ))) {
+      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, SLEQ)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSLEQ, Optional.empty()));
-      } else if (findBranchWithConditional(behavior, Set.of(ULEQ))) {
+      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, ULEQ)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BULEQ, Optional.empty()));
-      } else if (findBranchWithConditional(behavior, Set.of(SLTH))) {
+      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, SLTH)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSLTH, Optional.empty()));
-      } else if (findBranchWithConditional(behavior, Set.of(ULTH))) {
+      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, ULTH)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BULTH, Optional.empty()));
-      } else if (findBranchWithConditional(behavior, Set.of(SGTH))) {
+      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, SGTH)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSGTH, Optional.empty()));
-      } else if (findBranchWithConditional(behavior, Set.of(UGTH))) {
+      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, UGTH)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BUGTH, Optional.empty()));
       } else if (findRR(behavior, List.of(SLTH))) {
@@ -575,22 +589,78 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         && writesExactlyOneRegisterClassWithType(behavior, Type.bits(bitWidth));
   }
 
-  private boolean findBranchWithConditional(UninlinedGraph behavior,
-                                            BuiltInTable.BuiltIn builtin) {
-    return findBranchWithConditional(behavior, Set.of(builtin));
-  }
-
-  private boolean findBranchWithConditional(UninlinedGraph behavior,
-                                            Set<BuiltInTable.BuiltIn> builtins) {
+  private boolean findBranchWithConditional(
+      UninlinedGraph behavior,
+      BuiltInTable.BuiltIn builtin) {
     var hasCondition =
         behavior.getNodes(IfNode.class)
             .anyMatch(
-                x -> x.condition() instanceof BuiltInCall
-                    && builtins.contains(((BuiltInCall) x.condition()).builtIn()));
+                x -> x.condition() instanceof BuiltInCall bc
+                    && builtin == bc.builtIn());
     var writesPc = behavior.getNodes(WriteRegTensorNode.class)
         .anyMatch(x -> x.staticCounterAccess() != null);
 
     return hasCondition && writesPc;
+  }
+
+  private boolean findBranchWithConditionalWithoutStatusRegisters(
+      UninlinedGraph behavior,
+      BuiltInTable.BuiltIn builtin) {
+    var base = findBranchWithConditional(behavior, builtin);
+    var statusRegisters = behavior.getNodes(ReadsRegisterTensor.class)
+        .filter(x -> x.registerTensor().hasAnnotation(StatusRegisterAnnotation.class))
+        .toList();
+
+    return base && statusRegisters.isEmpty();
+  }
+
+  private boolean findBranchWithConditionalWithStatusRegisters(UninlinedGraph behavior,
+                                                               BuiltInTable.BuiltIn builtin) {
+    var writesPc = behavior.getNodes(WriteRegTensorNode.class)
+        .anyMatch(x -> x.staticCounterAccess() != null);
+    var hasIfNode = behavior.getNodes(IfNode.class).toList();
+    var statusRegisters = behavior.getNodes(ReadsRegisterTensor.class)
+        .filter(x -> x.registerTensor().hasAnnotation(StatusRegisterAnnotation.class))
+        .toList();
+
+    return !hasIfNode.isEmpty()
+        && writesPc
+        && !statusRegisters.isEmpty()
+        && checkConditionsForBase(builtin, behavior, statusRegisters);
+  }
+
+  /**
+   * We would like to see whether the instruction fulfills all the condition to be matched for
+   * the given {@code base}. For example, if the {@code base} is "equality" then it needs a
+   * status register which is the Zero Register and a constant which is {@code 1}.
+   */
+  private boolean checkConditionsForBase(BuiltInTable.BuiltIn base,
+                                         UninlinedGraph behavior,
+                                         List<ReadsRegisterTensor> registers) {
+    if (base == EQU) {
+      // Z == 1
+      if (registers.size() == 1) {
+        var hasConstant = behavior.getNodes(ConstantNode.class)
+            .anyMatch(x -> x.isConstant() && x.constant().asVal().intValue() == 1);
+        var register = registers.stream().findFirst().get();
+        return register.registerTensor()
+            .hasAnnotation(StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class)
+            && hasConstant;
+      }
+    } else if (base == NEQ) {
+      // Z == 0
+      if (registers.size() == 1) {
+        var hasConstant = behavior.getNodes(ConstantNode.class)
+            .anyMatch(x -> x.isConstant() && x.constant().asVal().intValue() == 0);
+        var register = registers.stream().findFirst().get();
+        return register.registerTensor()
+            .hasAnnotation(StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class)
+            && hasConstant;
+      }
+    }
+
+    // Default
+    return false;
   }
 
   /**
@@ -691,9 +761,10 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         matcher,
         matcher.swapOperands()
     );
-    var inputRegister = TreeMatcher.matches(() -> behavior.getNodes(BuiltInCall.class).map(x -> x),
-        matchers
-    );
+    var inputRegister =
+        TreeMatcher.matches(() -> behavior.getNodes(BuiltInCall.class).map(x -> x),
+            matchers
+        );
 
     return writesPc.size() == 1 && writesRegFile.size() == 1 && !inputRegister.isEmpty();
   }

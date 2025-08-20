@@ -82,6 +82,8 @@ public enum MachineInstructionLabel {
   BULEQ,
   BULTH,
   BUGTH,
+  BEQ_BY_STATUS_REGISTER,
+  BNEQ_BY_STATUS_REGISTER,
   /*
   UNCONDITIONAL JUMPS
    */

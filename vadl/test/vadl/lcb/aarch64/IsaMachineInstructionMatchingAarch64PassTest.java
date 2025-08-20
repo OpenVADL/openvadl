@@ -41,7 +41,17 @@ public class IsaMachineInstructionMatchingAarch64PassTest extends AbstractLcbTes
   private static Stream<Arguments> getExpectedMatchings() {
     return Stream.of(
         Arguments.of(List.of("B", "B_AL", "B_NV"), MachineInstructionLabel.J,
-            Optional.of(DataType.bits(64)))
+            Optional.of(DataType.bits(64))),
+        Arguments.of(
+            List.of("B_EQ"),
+            MachineInstructionLabel.BEQ_BY_STATUS_REGISTER,
+            Optional.empty()),
+        Arguments.of(List.of("B_NE"), MachineInstructionLabel.BNEQ_BY_STATUS_REGISTER,
+            Optional.empty()),
+        Arguments.of(List.of("CBZW", "CBZX", "TBZ"), MachineInstructionLabel.BEQ,
+            Optional.empty()),
+        Arguments.of(List.of("CBNZW", "CBNZX", "TBNZ"), MachineInstructionLabel.BNEQ,
+            Optional.empty())
     );
   }
 
