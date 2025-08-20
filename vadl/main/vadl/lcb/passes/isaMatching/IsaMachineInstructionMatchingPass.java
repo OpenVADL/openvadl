@@ -89,11 +89,13 @@ import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ReadsRegisterTensor;
 import vadl.viam.graph.WritesRegisterTensor;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -252,6 +254,22 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       } else if (findBranchWithConditionalWithStatusRegisters(behavior, NEQ)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BNEQ_BY_STATUS_REGISTER,
+                Optional.empty()));
+      } else if (findBranchWithConditionalWithStatusRegisters(behavior, SGEQ)) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.BSGEQ_BY_STATUS_REGISTER,
+                Optional.empty()));
+      } else if (findBranchWithConditionalWithStatusRegisters(behavior, SGTH)) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.BSGTH_BY_STATUS_REGISTER,
+                Optional.empty()));
+      } else if (findBranchWithConditionalWithStatusRegisters(behavior, SLEQ)) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.BSLEQ_BY_STATUS_REGISTER,
+                Optional.empty()));
+      } else if (findBranchWithConditionalWithStatusRegisters(behavior, SLTH)) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.BSLTH_BY_STATUS_REGISTER,
                 Optional.empty()));
       }
       // Without Status Registers
@@ -667,10 +685,142 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
                 && register.registerTensor()
                 .hasAnnotation(StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class);
       }
+    } else if (base == SGEQ) {
+      // NZCV_N = NZCV_V
+      if (registers.size() == 2) {
+        var builtin =
+            behavior.getNodes(IfNode.class).filter(x -> x.condition() instanceof BuiltInCall bc
+                    && bc.builtIn() == EQU)
+                .map(x -> (BuiltInCall) x.condition())
+                .findFirst();
+
+        if (builtin.isPresent()) {
+          var arguments = builtin.get().arguments();
+          return hasAllAnnotations(arguments, Set.of(
+              StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
+              StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class));
+        }
+      }
+    } else if (base == SLTH) {
+      // NZCV_N != NZCV_V
+      if (registers.size() == 2) {
+        var builtin =
+            behavior.getNodes(IfNode.class).filter(x -> x.condition() instanceof BuiltInCall bc
+                    && bc.builtIn() == NEQ)
+                .map(x -> (BuiltInCall) x.condition())
+                .findFirst();
+
+        if (builtin.isPresent()) {
+          var arguments = builtin.get().arguments();
+
+          return hasAllAnnotations(arguments, Set.of(
+              StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
+              StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class));
+        }
+      }
+    } else if (base == SGTH) {
+      // N == V and Z == 0
+      if (registers.size() == 3) {
+        var builtins =
+            behavior.getNodes(BuiltInCall.class).filter(x -> x instanceof BuiltInCall bc
+                    && bc.builtIn() == EQU)
+                .toList();
+
+        // Needs at least one AND.
+        if (behavior.getNodes(BuiltInCall.class).noneMatch(x -> x.builtIn() == AND)) {
+          return false;
+        }
+
+        if (builtins.size() == 2) {
+          for (var condBuiltin : builtins) {
+            var arguments = condBuiltin.arguments();
+
+            var negativeAndOverflow = hasAllAnnotations(arguments,
+                Set.of(StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
+                    StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class));
+            var zeroFlag = hasAllAnnotations(arguments,
+                Set.of(StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class));
+
+            if (negativeAndOverflow) {
+              return true;
+            } else if (zeroFlag) {
+              return arguments.stream().anyMatch(x -> x instanceof ConstantNode constantNode
+                  && constantNode.constant().asVal().intValue() == 0);
+            }
+          }
+        }
+      }
+    } else if (base == SLEQ) {
+      // N != V  or Z == 1
+      if (registers.size() == 3) {
+        var builtins =
+            behavior.getNodes(BuiltInCall.class).filter(x -> x instanceof BuiltInCall bc
+                    && (bc.builtIn() == EQU || bc.builtIn() == NEQ))
+                .toList();
+
+        // Needs at least one AND.
+        if (behavior.getNodes(BuiltInCall.class).noneMatch(x -> x.builtIn() == OR)) {
+          return false;
+        }
+
+        if (builtins.size() == 2) {
+          for (var condBuiltin : builtins) {
+            var arguments = condBuiltin.arguments();
+
+            var negativeAndOverflow = hasAllAnnotations(arguments,
+                Set.of(StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
+                    StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class));
+            var zeroFlag = hasAllAnnotations(arguments,
+                Set.of(StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class));
+
+            if (negativeAndOverflow) {
+              return true;
+            } else if (zeroFlag) {
+              return arguments.stream().anyMatch(x -> x instanceof ConstantNode constantNode
+                  && constantNode.constant().asVal().intValue() == 1);
+            }
+          }
+        }
+      }
     }
 
     // Default
     return false;
+  }
+
+  private boolean hasAllAnnotations(NodeList<ExpressionNode> arguments,
+                                    Set<Class<? extends StatusRegisterAnnotation>> annotations) {
+    for (var annotation : annotations) {
+      var result =
+          arguments.stream().anyMatch(x -> x instanceof ReadsRegisterTensor readsRegisterTensor
+              && readsRegisterTensor.registerTensor()
+              .hasAnnotation(annotation));
+
+      if (!result) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Return {@code true} if it has two arguments where one is a
+   * {@link vadl.gcb.annotations.StatusRegisterAnnotation.NegativeStatusRegisterAnnotation}
+   * and {@link vadl.gcb.annotations.StatusRegisterAnnotation.OverflowStatusRegisterAnnotation}.
+   */
+  private boolean hasNegativeAnnotationAndOverflowAnnotation(NodeList<ExpressionNode> arguments) {
+    var neg =
+        arguments.stream().anyMatch(x -> x instanceof ReadsRegisterTensor readsRegisterTensor
+            && readsRegisterTensor.registerTensor()
+            .hasAnnotation(StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class));
+    var overflow =
+        arguments.stream().anyMatch(x -> x instanceof ReadsRegisterTensor readsRegisterTensor
+            && readsRegisterTensor.registerTensor()
+            .hasAnnotation(
+                StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class));
+
+    return neg && overflow;
   }
 
   /**
