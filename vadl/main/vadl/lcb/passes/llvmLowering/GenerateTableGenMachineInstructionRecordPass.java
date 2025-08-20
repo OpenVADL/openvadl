@@ -19,6 +19,7 @@ package vadl.lcb.passes.llvmLowering;
 import static vadl.viam.ViamError.ensureNonNull;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -75,7 +76,8 @@ public class GenerateTableGenMachineInstructionRecordPass extends Pass {
                   result.info().outputs(),
                   result.info().uses(),
                   result.info().defs(),
-                  result.patterns()
+                  result.patterns(),
+                  result.constraints()
               );
             })
             .toList();

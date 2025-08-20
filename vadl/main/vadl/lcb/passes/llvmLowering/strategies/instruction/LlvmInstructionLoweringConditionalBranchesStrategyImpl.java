@@ -53,6 +53,7 @@ import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LoweringStrategyUtils;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandler;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerWithBasicBlockReplacement;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionConstraint;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.viam.Abi;
@@ -95,13 +96,14 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
     var copy = uninlinedBehavior.copy();
 
+    var constraints = generateConstraints(copy);
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {
       replaceNode(instruction, node);
     }
 
     return Optional.of(
         createIntermediateResult(labelledMachineInstructions, instruction, copy, abi,
-            registerDefsUses));
+            registerDefsUses, constraints));
   }
 
   @Override
@@ -115,18 +117,20 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Instruction instruction,
       Graph visitedGraph,
       Abi abi,
-      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses,
+      List<TableGenInstructionConstraint> constraints) {
     var info = lowerBaseInfo(instruction, visitedGraph, registerDefsUses);
 
     if (hasRedFlags(instruction, visitedGraph)) {
       return new LlvmLoweringRecord.Machine(instruction,
           info,
           Collections.emptyList(),
-          Collections.emptyList());
+          Collections.emptyList(),
+          constraints);
     }
 
     var writes = visitedGraph.getNodes(WriteResourceNode.class).toList();
-    var patterns = generatePatterns(instruction, info.inputs(), writes);
+    var patterns = generatePatterns(instruction, instruction.behavior(), info.inputs(), writes);
     var alternatives =
         generatePatternVariations(instruction,
             supportedInstructions,
@@ -144,7 +148,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
         instruction,
         info,
         allPatterns,
-        Collections.emptyList());
+        Collections.emptyList(),
+        constraints);
   }
 
   @Override

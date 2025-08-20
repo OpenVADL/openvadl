@@ -16,7 +16,7 @@
 
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
-import static vadl.gcb.passes.MachineInstructionLabel.JAL;
+import static vadl.gcb.passes.MachineInstructionLabel.J;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,28 +29,35 @@ import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionConstraint;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandler;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerWithBasicBlockReplacement;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
  * Lowering unconditional jump instructions into TableGen patterns.
  */
-public class LlvmInstructionLoweringUnconditionalJumpWithLinkRegistersStrategyImpl
+public class LlvmInstructionLoweringUnconditionalJumpWithoutLinkRegistersStrategyImpl
     extends LlvmInstructionLoweringStrategy {
-  public LlvmInstructionLoweringUnconditionalJumpWithLinkRegistersStrategyImpl(
+  public LlvmInstructionLoweringUnconditionalJumpWithoutLinkRegistersStrategyImpl(
       ValueType architectureType) {
     super(architectureType);
   }
 
   @Override
   protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
-    return Set.of(JAL);
+    return Set.of(J);
   }
 
   @Override
@@ -62,32 +69,40 @@ public class LlvmInstructionLoweringUnconditionalJumpWithLinkRegistersStrategyIm
       DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
     var copy = uninlinedBehavior.copy();
 
-    var constraints = generateConstraints(copy);
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {
       replaceNode(instruction, node);
     }
 
     return Optional.of(
-        createIntermediateResult(instruction, copy, registerDefsUses, constraints));
+        createIntermediateResult(instruction, copy, registerDefsUses));
   }
 
   private LlvmLoweringRecord.Machine createIntermediateResult(
       Instruction instruction,
       Graph uninlinedGraph,
-      DetermineRegisterUsesAndDefsPass.Info registerDefsUses,
-      List<TableGenInstructionConstraint> constraints) {
-
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
     var info = lowerBaseInfo(instruction, uninlinedGraph, registerDefsUses);
     var unchangedFlags = getFlags(uninlinedGraph);
-    var flags = LlvmLoweringPass.Flags.withNoTerminator(
-        LlvmLoweringPass.Flags.withNoBranch(unchangedFlags));
+    var flags = LlvmLoweringPass.Flags.withTerminator(
+        LlvmLoweringPass.Flags.withBranch(
+            LlvmLoweringPass.Flags.withBarrier(unchangedFlags)));
+
+    var patterns = generatePatterns(instruction,
+        uninlinedGraph,
+        info.inputs(),
+        uninlinedGraph.getNodes(WriteResourceNode.class).toList());
 
     return new LlvmLoweringRecord.Machine(
         instruction,
         info.withFlags(flags),
+        patterns,
         Collections.emptyList(),
-        Collections.emptyList(),
-        constraints);
+        Collections.emptyList());
+  }
+
+  @Override
+  protected LcbNodeReplacementHandler getReplacementHandler(PrintableInstruction instruction) {
+    return new LcbNodeReplacementHandlerWithBasicBlockReplacement(instruction, architectureType);
   }
 
   @Override
@@ -95,7 +110,17 @@ public class LlvmInstructionLoweringUnconditionalJumpWithLinkRegistersStrategyIm
                                                    Graph behavior,
                                                    List<GcbInstructionOperand> inputOperands,
                                                    List<WriteResourceNode> sideEffectNodes) {
-    throw new RuntimeException("Must not be called. Use the other method");
+    var bb = behavior.getNodes(LlvmBasicBlockSD.class).toList().getFirst();
+    var selector = new Graph("selector.lowering");
+    selector.addWithInputs(new LlvmBrSD(bb.copy()));
+
+    var machine = new Graph("machine.lowering");
+    machine.addWithInputs(new LcbMachineInstructionNode(
+        new NodeList<>(bb.copy()),
+        instruction
+    ));
+
+    return List.of(new TableGenSelectionWithOutputPattern(selector, machine));
   }
 
   @Override

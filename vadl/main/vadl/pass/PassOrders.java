@@ -37,6 +37,7 @@ import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.InstructionPatternPruningPass;
 import vadl.gcb.passes.PredicateFunctionInlinerPass;
+import vadl.gcb.passes.RenamingConflictingRegistersPass;
 import vadl.gcb.passes.SetMissingConfigurationValuesPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingAndPredicateFunctionsPass;
@@ -174,6 +175,7 @@ public class PassOrders {
 
     order.add(new DetectRegisterIndicesPass(configuration));
     order.add(new NormalizeFieldsToFieldAccessFunctionsPass(configuration));
+    order.add(new RenamingConflictingRegistersPass(configuration));
     order.add(new SnapshotInstructionBehaviorPass(configuration));
 
     order.add(new RemoveUnusedStatusFlagsFromBuiltinsPass(configuration));
@@ -225,6 +227,7 @@ public class PassOrders {
 
     // We need to keep the aliases.
     order.skip(ArtificialResInlinerPass.class);
+
 
     order.add(new GenerateCompilerRegistersPass(gcbConfiguration));
     // skip inlining of field access
@@ -444,6 +447,7 @@ public class PassOrders {
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
+    order.skip(RenamingConflictingRegistersPass.class);
 
     // iss function passes
     order
@@ -587,6 +591,7 @@ public class PassOrders {
     var order = viam(config);
 
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
+    order.skip(RenamingConflictingRegistersPass.class);
 
     // TODO: Remove once frontend creates it
     order.add(new DummyMiaPass(config));

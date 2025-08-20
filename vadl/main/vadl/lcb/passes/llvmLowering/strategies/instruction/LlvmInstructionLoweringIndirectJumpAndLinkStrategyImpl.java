@@ -109,6 +109,7 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
       DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
     var copy = unmodifiedBehavior.copy();
 
+    var constraints = generateConstraints(copy);
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {
       replaceNode(instruction, node);
     }
@@ -130,7 +131,8 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
         instruction,
         info,
         patterns,
-        Collections.emptyList()));
+        Collections.emptyList(),
+        constraints));
   }
 
   @Override

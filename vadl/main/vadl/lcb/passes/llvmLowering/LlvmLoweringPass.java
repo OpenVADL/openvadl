@@ -52,6 +52,7 @@ import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweri
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringMemoryStoreStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringUnconditionalIndirectJumpWithoutLinkRegistersStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringUnconditionalJumpWithLinkRegistersStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringUnconditionalJumpWithoutLinkRegistersStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringXoriAndOriStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmPseudoInstructionLoweringDefaultStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmPseudoInstructionLoweringLoadGlobalAddressStrategyImpl;
@@ -64,7 +65,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImm
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.utils.SourceLocation;
 import vadl.viam.Abi;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.Format;
@@ -278,6 +278,8 @@ public class LlvmLoweringPass extends Pass {
             new LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl(architectureType),
             new LlvmInstructionLoweringLessThanImmediateUnsignedConditionalsStrategyImpl(
                 architectureType),
+            new LlvmInstructionLoweringUnconditionalJumpWithoutLinkRegistersStrategyImpl(
+                architectureType),
             new LlvmInstructionLoweringUnconditionalJumpWithLinkRegistersStrategyImpl(
                 architectureType),
             new LlvmInstructionLoweringUnconditionalIndirectJumpWithoutLinkRegistersStrategyImpl(
@@ -341,8 +343,7 @@ public class LlvmLoweringPass extends Pass {
 
             // Okay, we have to save record.
             record.ifPresent(llvmLoweringIntermediateResult -> {
-              tableGenRecords.put(instruction,
-                  llvmLoweringIntermediateResult);
+              tableGenRecords.put(instruction, llvmLoweringIntermediateResult);
 
               // Also attach it as extension to the instruction.
               instruction.attachExtension(

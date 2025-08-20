@@ -44,7 +44,7 @@ public class TableGenMachineInstruction extends TableGenInstruction {
   private final List<FieldEncoding> fieldEncodings;
   private final Instruction instruction;
   private final LlvmLoweringRecord.Machine llvmLoweringRecord;
-
+  private final List<TableGenInstructionConstraint> constraints;
 
   /**
    * Constructor for an instruction in TableGen. It wraps the {@link LlvmLoweringRecord}.
@@ -58,7 +58,8 @@ public class TableGenMachineInstruction extends TableGenInstruction {
                                     List<GcbInstructionOperand> outOperands,
                                     List<RegisterRef> uses,
                                     List<RegisterRef> defs,
-                                    List<TableGenPattern> anonymousPatterns) {
+                                    List<TableGenPattern> anonymousPatterns,
+                                    List<TableGenInstructionConstraint> constraints) {
     super(name, namespace, flags, inOperands, outOperands, uses, defs, anonymousPatterns);
     this.formatSize = instruction.encoding().format().type().bitWidth();
     this.size = instruction.encoding().format().type().bitWidth() / 8;
@@ -67,6 +68,7 @@ public class TableGenMachineInstruction extends TableGenInstruction {
     this.fieldEncodings = FieldEncoding.from(instruction.encoding(), inOperands);
     this.instruction = instruction;
     this.llvmLoweringRecord = llvmLoweringRecord;
+    this.constraints = constraints;
   }
 
   public int getSize() {
@@ -95,6 +97,10 @@ public class TableGenMachineInstruction extends TableGenInstruction {
 
   public LlvmLoweringRecord.Machine llvmLoweringRecord() {
     return llvmLoweringRecord;
+  }
+
+  public List<TableGenInstructionConstraint> constraints() {
+    return constraints;
   }
 
   /**
