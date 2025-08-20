@@ -64,6 +64,10 @@ void [(${namespace})]TargetLowering::anchor() {}
         setLoadExtAction(N, MVT::[(${stackPointerType})], MVT::i1, Promote);
     }
 
+    [#th:block th:if="${mergedCmpAndBranch}"]
+    setOperationAction(ISD::BRCOND, MVT::Other, Custom);
+    [/th:block]
+
     setBooleanContents(ZeroOrOneBooleanContent);
 
     // Compute derived properties from the register classes
@@ -109,9 +113,31 @@ SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG 
     case ISD::SELECT:
         return lowerSelect(Op, DAG);
     [/th:block]
+    [#th:block th:if="${mergedCmpAndBranch}"]
+    case ISD::BRCOND:
+        return lowerBRCOND(Op, DAG);
+    [/th:block]
     default : llvm_unreachable("unimplemented operand");
     }
 }
+
+[#th:block th:if="${mergedCmpAndBranch}"]
+static SDValue lowerBRCOND(SDValue Op, SelectionDAG &DAG) {
+  SDValue Chain = Op.getOperand(0);
+  SDValue Cond = Op.getOperand(1);
+  SDValue Dest = Op.getOperand(2);
+
+  AArch64CC::CondCode CC;
+  if (SDValue Cmp = emitConjunction(DAG, Cond, CC)) {
+    SDLoc dl(Op);
+    SDValue CCVal = DAG.getConstant(CC, dl, MVT::i32);
+    return DAG.getNode(AArch64ISD::BRCOND, dl, MVT::Other, Chain, Dest, CCVal,
+                       Cmp);
+  }
+
+  return SDValue();
+}
+[/th:block]
 
 SDValue [(${namespace})]TargetLowering::lowerConstant(SDValue Op, SelectionDAG &DAG) const
 {
