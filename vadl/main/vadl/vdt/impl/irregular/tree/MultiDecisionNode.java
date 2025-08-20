@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import javax.annotation.Nullable;
+import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
 import vadl.vdt.utils.Bit;
@@ -30,7 +31,7 @@ import vadl.vdt.utils.BitVector;
  * Simple implementation of an inner node, deciding the matching child node based on pattern
  * matching.
  */
-public class MultiDecisionNode extends AbstractTruncatingDecisionNode {
+public class MultiDecisionNode implements InnerNode {
 
   private final BitVector mask;
   private final Map<BitPattern, Node> children;
@@ -38,12 +39,9 @@ public class MultiDecisionNode extends AbstractTruncatingDecisionNode {
   /**
    * Creates a new inner node.
    *
-   * @param offset   The offset of bits to skip prior to matching
-   * @param length   The number of bits to match
    * @param children The children to match against
    */
-  public MultiDecisionNode(int offset, int length, BitVector mask, Map<BitPattern, Node> children) {
-    super(offset, length);
+  public MultiDecisionNode(BitVector mask, Map<BitPattern, Node> children) {
     this.mask = mask;
     this.children = children;
   }
@@ -53,8 +51,7 @@ public class MultiDecisionNode extends AbstractTruncatingDecisionNode {
 
     // extend/truncate the instruction to the relevant bits before testing
     final BitVector i = insn
-        .rightPad(getOffset() + getLength(), new Bit(false))
-        .truncate(getOffset(), getLength());
+        .rightPad(mask.width(), new Bit(false));
 
     for (Map.Entry<BitPattern, Node> entry : children.entrySet()) {
       if (entry.getKey().test(i)) {
