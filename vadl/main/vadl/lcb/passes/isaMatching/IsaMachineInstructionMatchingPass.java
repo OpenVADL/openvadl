@@ -640,22 +640,32 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     if (base == EQU) {
       // Z == 1
       if (registers.size() == 1) {
+        var hasCondition =
+            behavior.getNodes(IfNode.class).allMatch(x -> x.condition() instanceof BuiltInCall bc
+                && bc.builtIn() == EQU);
         var hasConstant = behavior.getNodes(ConstantNode.class)
             .anyMatch(x -> x.isConstant() && x.constant().asVal().intValue() == 1);
         var register = registers.stream().findFirst().get();
-        return register.registerTensor()
-            .hasAnnotation(StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class)
-            && hasConstant;
+        return
+            hasCondition
+                && hasConstant
+                && register.registerTensor()
+                .hasAnnotation(StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class);
       }
     } else if (base == NEQ) {
       // Z == 0
       if (registers.size() == 1) {
+        var hasCondition =
+            behavior.getNodes(IfNode.class).allMatch(x -> x.condition() instanceof BuiltInCall bc
+                && bc.builtIn() == EQU);
         var hasConstant = behavior.getNodes(ConstantNode.class)
             .anyMatch(x -> x.isConstant() && x.constant().asVal().intValue() == 0);
         var register = registers.stream().findFirst().get();
-        return register.registerTensor()
-            .hasAnnotation(StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class)
-            && hasConstant;
+        return
+            hasCondition
+                && hasConstant
+                && register.registerTensor()
+                .hasAnnotation(StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class);
       }
     }
 
