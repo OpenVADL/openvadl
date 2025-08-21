@@ -81,7 +81,7 @@ public class RenamedFieldRefNode extends FieldRefNode {
    * to rename the field and add a constraint.
    */
   public static class RenamedField extends Format.Field {
-    private Format.Field inner;
+    private final Format.Field inner;
 
     /**
      * Constructs a Field object.
