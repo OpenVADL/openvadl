@@ -76,7 +76,13 @@ public class RenamedFieldRefNode extends FieldRefNode {
     return new RenamedFieldRefNode(formatField, original, type().asDataType(), counter);
   }
 
-  static class RenamedField extends Format.Field {
+  /**
+   * When a register is both read and written, the compiler has a conflict. In that case, we need
+   * to rename the field and add a constraint.
+   */
+  public static class RenamedField extends Format.Field {
+    private final Format.Field inner;
+
     /**
      * Constructs a Field object.
      */
@@ -85,6 +91,11 @@ public class RenamedFieldRefNode extends FieldRefNode {
           field.type(),
           field.bitSlice(),
           field.format());
+      this.inner = field;
+    }
+
+    public Format.Field inner() {
+      return inner;
     }
   }
 }
