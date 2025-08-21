@@ -22,6 +22,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBSwapSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmMulSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmRotlSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmRotrSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSMulSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmShlPartsSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSraPartsSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSrlPartsSD;
@@ -56,6 +57,8 @@ public class SelectionDagToISDNameMapper {
       return "UMUL_LOHI";
     } else if (nodeLowerable.isAssignableFrom(LlvmMulSD.class)) {
       return "MUL";
+    } else if (nodeLowerable.isAssignableFrom(LlvmSMulSD.class)) {
+      return "SMUL_LOHI";
     }
 
     throw Diagnostic.error("Cannot map to class name", SourceLocation.INVALID_SOURCE_LOCATION)
