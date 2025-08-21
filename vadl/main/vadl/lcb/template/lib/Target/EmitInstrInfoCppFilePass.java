@@ -466,7 +466,13 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         MachineInstructionLabel.BUGEQ,
         MachineInstructionLabel.BUGTH,
         MachineInstructionLabel.BULEQ,
-        MachineInstructionLabel.BULTH
+        MachineInstructionLabel.BULTH,
+        MachineInstructionLabel.BEQ_BY_STATUS_REGISTER,
+        MachineInstructionLabel.BNEQ_BY_STATUS_REGISTER,
+        MachineInstructionLabel.BSGEQ_BY_STATUS_REGISTER,
+        MachineInstructionLabel.BSLEQ_BY_STATUS_REGISTER,
+        MachineInstructionLabel.BSLTH_BY_STATUS_REGISTER,
+        MachineInstructionLabel.BSGTH_BY_STATUS_REGISTER
     )).build());
 
     final Predicate<Node> isPc = (x) -> x instanceof ReadRegTensorNode node && node.isPcAccess();
