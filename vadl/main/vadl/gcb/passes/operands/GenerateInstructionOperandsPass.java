@@ -32,6 +32,7 @@ import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.RenamedFieldRefNode;
 import vadl.gcb.passes.operands.model.GcbConstantOperand;
 import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
@@ -633,14 +634,22 @@ class PseudoNodeOperandCollector {
   protected void handle(ReadArtificialResNode node) {
     if (node.resourceDefinition().innerResourceRef() instanceof RegisterTensor tensor
         && tensor.isRegisterFile()) {
-      operands.add(node);
+      // We do not want renamed field ref nodes.
+      // Example: MOVKWPos16; here we would have `rd` in the outputs and `rd_1` in the input
+      if (!(node.address() instanceof RenamedFieldRefNode)) {
+        operands.add(node);
+      }
     }
   }
 
   @Handler
   protected void handle(ReadRegTensorNode node) {
     if (node.regTensor().isRegisterFile()) {
-      operands.add(node);
+      // We do not want renamed field ref nodes.
+      // Example: MOVKWPos16; here we would have `rd` in the outputs and `rd_1` in the input
+      if (!(node.address() instanceof RenamedFieldRefNode)) {
+        operands.add(node);
+      }
     }
   }
 
