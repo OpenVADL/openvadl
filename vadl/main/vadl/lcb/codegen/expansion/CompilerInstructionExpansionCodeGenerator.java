@@ -47,6 +47,8 @@ import vadl.cppCodeGen.model.GcbCppAccessFunction;
 import vadl.cppCodeGen.model.GcbCppEncodeFunction;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
+import vadl.gcb.passes.RenamedFieldRefNode.RenamedField;
+import vadl.gcb.passes.RenamingConflictingRegistersPass;
 import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.gcb.valuetypes.TargetName;
@@ -317,6 +319,9 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
    * The order of the parameters is not necessarily the order in which the expansion should happen.
    * This function looks at the {@link LlvmLoweringRecord} of the corresponding instruction
    * and reorders the list according to the order of outputs and inputs.
+   * Additionally, {@link RenamingConflictingRegistersPass} creates new operands to resolve
+   * conflicts. A user will not create the operands manually. This method has also to do
+   * create missing operands.
    */
   private List<Pair<Either<Format.Field, Format.FieldAccess>, ExpressionNode>> reorderParameters(
       Instruction instruction,
@@ -346,20 +351,43 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
             if (lookupFields.containsKey(field)) {
               var value = lookupFields.get(field);
               result.add(Pair.of(new Either<>(field, null), value));
+            } else {
+              throw Diagnostic.error("Cannot assign field. Aborting because operands mismatch",
+                  field.location()).build();
             }
           });
         }
       } else if (item instanceof ReferencesFormatField referencesFormatField) {
         for (var field : referencesFormatField.formatFields()) {
-          if (lookupFields.containsKey(field)) {
-            var value = lookupFields.get(field);
+          var canonicalizedField = canonicalizeField(field);
+
+          if (lookupFields.containsKey(canonicalizedField)) {
+            var value = lookupFields.get(canonicalizedField);
             result.add(Pair.of(new Either<>(field, null), value));
+          } else {
+            throw Diagnostic.error("Cannot assign field. Aborting because operands mismatch",
+                field.location()).build();
           }
         }
       }
     }
 
     return result;
+  }
+
+  /**
+   * The code generator is using a lookup table to assign the field. However,
+   * {@link RenamingConflictingRegistersPass} introduced new node {@link RenamedField}.
+   * We need to map them back from {@link RenamedField} to {@link Format.Field}, so the lookup
+   * works.
+   */
+  private Format.Field canonicalizeField(Format.Field field) {
+    if (field instanceof RenamedField renamedField) {
+      // rd_0 drops to rd
+      return renamedField.inner();
+    }
+
+    return field;
   }
 
   @Override

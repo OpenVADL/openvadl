@@ -76,7 +76,9 @@ public class RenamedFieldRefNode extends FieldRefNode {
     return new RenamedFieldRefNode(formatField, original, type().asDataType(), counter);
   }
 
-  static class RenamedField extends Format.Field {
+  public static class RenamedField extends Format.Field {
+    private Format.Field inner;
+
     /**
      * Constructs a Field object.
      */
@@ -85,6 +87,11 @@ public class RenamedFieldRefNode extends FieldRefNode {
           field.type(),
           field.bitSlice(),
           field.format());
+      this.inner = field;
+    }
+
+    public Format.Field inner() {
+      return inner;
     }
   }
 }
