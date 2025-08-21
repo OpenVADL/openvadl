@@ -87,6 +87,7 @@ import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -117,6 +118,7 @@ import vadl.viam.matching.impl.FieldAccessRefMatcher;
 import vadl.viam.matching.impl.IsReadRegMatcher;
 import vadl.viam.matching.impl.ReadRegisterCounterMatcher;
 import vadl.viam.matching.impl.WriteResourceMatcherForValue;
+import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
@@ -161,6 +163,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         ((FunctionInlinerPass.Output) passResults
             .lastResultOf(FunctionInlinerPass.class)).behaviors();
     Objects.requireNonNull(uninlined);
+    var snapshots =
+        (Map<Instruction, Graph>) passResults.lastResultOf(SnapshotInstructionBehaviorPass.class);
 
     var isa = viam.isa().orElse(null);
     if (isa == null) {
@@ -177,6 +181,9 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       // Get uninlined or the normal behaviors if nothing was uninlined.
       var behavior = ensureNonNull(uninlined.get(instruction),
           () -> Diagnostic.error("Cannot find the uninlined graph of this instruction",
+              instruction.location()));
+      var originalGraph = ensureNonNull(snapshots.get(instruction),
+          () -> Diagnostic.error("Cannot find the unmodified graph of this instruction",
               instruction.location()));
 
       var ty = getType(behavior);
@@ -207,6 +214,12 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
           List.of(UMOD, UMODS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.UMOD, ty));
+      } else if (findSubS(behavior, originalGraph, Type.bits(64))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_64, ty));
+      } else if (findSubS(behavior, originalGraph, Type.bits(32))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_32, ty));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, SUB)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUB, ty));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,

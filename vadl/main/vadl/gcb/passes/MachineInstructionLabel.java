@@ -40,6 +40,8 @@ public enum MachineInstructionLabel {
   OR,
   ORI,
   SUB,
+  SUB_RR_WITH_STATUS_REGISTER_64, // subtraction (register register) and sets status flags
+  SUB_RR_WITH_STATUS_REGISTER_32, // subtraction (register register) and sets status flags
   MUL,
   SUBB,
   SUBC,
