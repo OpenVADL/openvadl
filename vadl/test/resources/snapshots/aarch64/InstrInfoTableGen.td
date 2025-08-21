@@ -50692,7 +50692,7 @@ def constMat0 : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins bare_symbol:$val, X:$rd_1 );
+let InOperandList = ( ins bare_symbol:$val );
 
 let isTerminator  = 0;
 let isBranch      = 0;
@@ -50720,7 +50720,7 @@ def constMat1 : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins bare_symbol:$val, X:$rd_1 );
+let InOperandList = ( ins bare_symbol:$val );
 
 let isTerminator  = 0;
 let isBranch      = 0;
