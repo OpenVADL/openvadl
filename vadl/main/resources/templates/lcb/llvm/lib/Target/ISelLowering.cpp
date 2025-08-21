@@ -66,6 +66,7 @@ void [(${namespace})]TargetLowering::anchor() {}
 
     [#th:block th:if="${mergedCmpAndBranch}"]
     setOperationAction(ISD::BRCOND, MVT::Other, Custom);
+    setOperationAction(ISD::BR_CC, MVT::Other, Custom);
     [/th:block]
 
     setBooleanContents(ZeroOrOneBooleanContent);
@@ -90,6 +91,40 @@ const char *[(${namespace})]TargetLowering::getTargetNodeName(unsigned Opcode) c
         llvm_unreachable("unknown opcode");
     }
 }
+
+[#th:block th:if="${mergedCmpAndBranch}"]
+static SDValue lowerBRCOND(SDValue Op, SelectionDAG &DAG) {
+  SDValue Chain = Op.getOperand(0);
+  SDValue Cond = Op.getOperand(1);
+  SDValue Dest = Op.getOperand(2);
+
+  AArch64CC::CondCode CC;
+  if (SDValue Cmp = emitConjunction(DAG, Cond, CC)) {
+    SDLoc dl(Op);
+    SDValue CCVal = DAG.getConstant(CC, dl, MVT::i32);
+    return DAG.getNode(AArch64ISD::BRCOND, dl, MVT::Other, Chain, Dest, CCVal,
+                       Cmp);
+  }
+
+  return SDValue();
+}
+
+static SDValue lowerBR_CC(SDValue Op, SelectionDAG &DAG) {
+  SDValue Chain = Op.getOperand(0);
+  SDValue Cond = Op.getOperand(1);
+  SDValue Dest = Op.getOperand(2);
+
+  AArch64CC::CondCode CC;
+  if (SDValue Cmp = emitConjunction(DAG, Cond, CC)) {
+    SDLoc dl(Op);
+    SDValue CCVal = DAG.getConstant(CC, dl, MVT::i32);
+    return DAG.getNode(AArch64ISD::BRCOND, dl, MVT::Other, Chain, Dest, CCVal,
+                       Cmp);
+  }
+
+  return SDValue();
+}
+[/th:block]
 
 SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
 {
@@ -116,28 +151,12 @@ SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG 
     [#th:block th:if="${mergedCmpAndBranch}"]
     case ISD::BRCOND:
         return lowerBRCOND(Op, DAG);
+    case ISD::BR_CC:
+        return lowerBR_CC(Op, DAG);
     [/th:block]
     default : llvm_unreachable("unimplemented operand");
     }
 }
-
-[#th:block th:if="${mergedCmpAndBranch}"]
-static SDValue lowerBRCOND(SDValue Op, SelectionDAG &DAG) {
-  SDValue Chain = Op.getOperand(0);
-  SDValue Cond = Op.getOperand(1);
-  SDValue Dest = Op.getOperand(2);
-
-  AArch64CC::CondCode CC;
-  if (SDValue Cmp = emitConjunction(DAG, Cond, CC)) {
-    SDLoc dl(Op);
-    SDValue CCVal = DAG.getConstant(CC, dl, MVT::i32);
-    return DAG.getNode(AArch64ISD::BRCOND, dl, MVT::Other, Chain, Dest, CCVal,
-                       Cmp);
-  }
-
-  return SDValue();
-}
-[/th:block]
 
 SDValue [(${namespace})]TargetLowering::lowerConstant(SDValue Op, SelectionDAG &DAG) const
 {
