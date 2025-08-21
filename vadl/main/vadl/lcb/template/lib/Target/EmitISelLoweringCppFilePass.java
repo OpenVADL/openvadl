@@ -149,22 +149,34 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
                     MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_32 :
                     MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_64)
             .build())));
-        map.put("B_LT", getFirstNameOrEmpty(database.run(
-            new Query.Builder().machineInstructionLabel(
-                    MachineInstructionLabel.BSLTH_BY_STATUS_REGISTER)
-                .build())));
+    map.put("B_LT", getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(
+                MachineInstructionLabel.BSLTH_BY_STATUS_REGISTER)
+            .build())));
     map.put("B_EQ", getFirstNameOrEmpty(database.run(
         new Query.Builder().machineInstructionLabel(MachineInstructionLabel.BEQ_BY_STATUS_REGISTER)
             .build())));
     map.put("B_NEQ", getFirstNameOrEmpty(database.run(
         new Query.Builder().machineInstructionLabel(MachineInstructionLabel.BNEQ_BY_STATUS_REGISTER)
             .build())));
+    map.put("B_LE", getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(
+                MachineInstructionLabel.BSLEQ_BY_STATUS_REGISTER)
+            .build())));
+    map.put("B_GT", getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(
+                MachineInstructionLabel.BSGTH_BY_STATUS_REGISTER)
+            .build())));
+    map.put("B_GE", getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(
+                MachineInstructionLabel.BSGEQ_BY_STATUS_REGISTER)
+            .build())));
     return map;
   }
 
   private String getFirstNameOrEmpty(QueryResult result) {
     return result.machineInstructions().stream().map(x -> x.identifier().simpleName()).findFirst()
-        .orElse("NOP");
+        .orElse("");
   }
 
   private ISelInstruction getAddImmediate(Database database) {

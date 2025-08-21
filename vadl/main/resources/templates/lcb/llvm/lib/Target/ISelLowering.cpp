@@ -114,6 +114,15 @@ static SDValue lowerBR_CC(SDValue Op, SelectionDAG &DAG) {
     case ISD::CondCode::SETLT:
       return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_LT})], dl, MVT::Other, Dest, ConditionFlag), 0);
     break;
+    case ISD::CondCode::SETLE:
+      return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_LE})], dl, MVT::Other, Dest, ConditionFlag), 0);
+    break;
+    case ISD::CondCode::SETGT:
+      return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_GT})], dl, MVT::Other, Dest, ConditionFlag), 0);
+    break;
+    case ISD::CondCode::SETGE:
+      return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_GE})], dl, MVT::Other, Dest, ConditionFlag), 0);
+    break;
     default:
       llvm_unreachable("unimplemented operand");
    }
