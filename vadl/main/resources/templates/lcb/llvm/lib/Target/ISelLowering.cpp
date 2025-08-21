@@ -101,7 +101,7 @@ static SDValue lowerBR_CC(SDValue Op, SelectionDAG &DAG) {
    SDValue Dest = Op.getOperand(4);
    SDLoc dl(Op);
 
-   auto Sub = DAG.getMachineNode([(${namespace})]::SUBXS, dl, { MVT::i64, MVT::Other },  {LHS, RHS, Chain});
+   auto Sub = DAG.getMachineNode([(${namespace})]::[(${SUBS})], dl, { MVT::i64, MVT::Other },  {LHS, RHS, Chain});
    SDValue ConditionFlag = SDValue(Sub, 1);
 
    switch(CC) {
