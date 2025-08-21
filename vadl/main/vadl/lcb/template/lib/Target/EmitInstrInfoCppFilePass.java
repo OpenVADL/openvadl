@@ -456,6 +456,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
       Database database,
       List<BranchInstruction> branchInstructions) {
     var result = database.run(new Query.Builder().machineInstructionLabels(List.of(
+        MachineInstructionLabel.J,
         MachineInstructionLabel.BEQ,
         MachineInstructionLabel.BNEQ,
         MachineInstructionLabel.BSGEQ,
