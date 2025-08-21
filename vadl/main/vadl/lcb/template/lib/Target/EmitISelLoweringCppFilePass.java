@@ -36,6 +36,7 @@ import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
+import vadl.lcb.passes.isaMatching.database.QueryResult;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.ISelLoweringOperationActionPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmMachineInstructionUtil;
@@ -140,7 +141,23 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("conditionalValueRangeLowest", conditionalValueRange.lowest());
     map.put("conditionalValueRangeHighest", conditionalValueRange.highest());
     map.put("expandableDagNodes", coverageSummary.notCoveredSelectionDagNodes());
+    map.put("mergedCmpAndBranch", true);
+    map.put("B_LT", getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(
+                MachineInstructionLabel.BSLTH_BY_STATUS_REGISTER)
+            .build())));
+    map.put("B_EQ", getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(MachineInstructionLabel.BEQ_BY_STATUS_REGISTER)
+            .build())));
+    map.put("B_NEQ", getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(MachineInstructionLabel.BNEQ_BY_STATUS_REGISTER)
+            .build())));
     return map;
+  }
+
+  private String getFirstNameOrEmpty(QueryResult result) {
+    return result.machineInstructions().stream().map(x -> x.identifier().simpleName()).findFirst()
+        .orElse("NOP");
   }
 
   private ISelInstruction getAddImmediate(Database database) {

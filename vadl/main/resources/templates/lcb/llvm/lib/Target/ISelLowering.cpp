@@ -65,8 +65,8 @@ void [(${namespace})]TargetLowering::anchor() {}
     }
 
     [#th:block th:if="${mergedCmpAndBranch}"]
-    setOperationAction(ISD::BRCOND, MVT::Other, Custom);
-    setOperationAction(ISD::BR_CC, MVT::Other, Custom);
+    setOperationAction(ISD::BRCOND, MVT::Other, Expand);
+    setOperationAction(ISD::BR_CC, MVT::[(${stackPointerType})], Custom);
     [/th:block]
 
     setBooleanContents(ZeroOrOneBooleanContent);
@@ -93,37 +93,32 @@ const char *[(${namespace})]TargetLowering::getTargetNodeName(unsigned Opcode) c
 }
 
 [#th:block th:if="${mergedCmpAndBranch}"]
-static SDValue lowerBRCOND(SDValue Op, SelectionDAG &DAG) {
-  SDValue Chain = Op.getOperand(0);
-  SDValue Cond = Op.getOperand(1);
-  SDValue Dest = Op.getOperand(2);
-
-  AArch64CC::CondCode CC;
-  if (SDValue Cmp = emitConjunction(DAG, Cond, CC)) {
-    SDLoc dl(Op);
-    SDValue CCVal = DAG.getConstant(CC, dl, MVT::i32);
-    return DAG.getNode(AArch64ISD::BRCOND, dl, MVT::Other, Chain, Dest, CCVal,
-                       Cmp);
-  }
-
-  return SDValue();
-}
-
 static SDValue lowerBR_CC(SDValue Op, SelectionDAG &DAG) {
-  SDValue Chain = Op.getOperand(0);
-  SDValue Cond = Op.getOperand(1);
-  SDValue Dest = Op.getOperand(2);
+   SDValue Chain = Op.getOperand(0);
+   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(1))->get();
+   SDValue LHS = Op.getOperand(2);
+   SDValue RHS = Op.getOperand(3);
+   SDValue Dest = Op.getOperand(4);
+   SDLoc dl(Op);
 
-  AArch64CC::CondCode CC;
-  if (SDValue Cmp = emitConjunction(DAG, Cond, CC)) {
-    SDLoc dl(Op);
-    SDValue CCVal = DAG.getConstant(CC, dl, MVT::i32);
-    return DAG.getNode(AArch64ISD::BRCOND, dl, MVT::Other, Chain, Dest, CCVal,
-                       Cmp);
-  }
+   auto Sub = DAG.getMachineNode([(${namespace})]::SUBXS, dl, { MVT::i64, MVT::Other },  {LHS, RHS, Chain});
+   SDValue ConditionFlag = SDValue(Sub, 1);
 
-  return SDValue();
+   switch(CC) {
+    case ISD::CondCode::SETEQ:
+      return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_EQ})], dl, MVT::Other, Dest, ConditionFlag), 0);
+    break;
+    case ISD::CondCode::SETNE:
+      return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_NEQ})], dl, MVT::Other, Dest, ConditionFlag), 0);
+    break;
+    case ISD::CondCode::SETLT:
+      return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_LT})], dl, MVT::Other, Dest, ConditionFlag), 0);
+    break;
+    default:
+      llvm_unreachable("unimplemented operand");
+   }
 }
+
 [/th:block]
 
 SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
@@ -149,8 +144,6 @@ SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG 
         return lowerSelect(Op, DAG);
     [/th:block]
     [#th:block th:if="${mergedCmpAndBranch}"]
-    case ISD::BRCOND:
-        return lowerBRCOND(Op, DAG);
     case ISD::BR_CC:
         return lowerBR_CC(Op, DAG);
     [/th:block]
