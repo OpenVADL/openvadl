@@ -735,8 +735,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       // N == V and Z == 0
       if (registers.size() == 3) {
         var builtins =
-            behavior.getNodes(BuiltInCall.class).filter(x -> x instanceof BuiltInCall bc
-                    && bc.builtIn() == EQU)
+            behavior.getNodes(BuiltInCall.class).filter(x -> x.builtIn() == EQU)
                 .toList();
 
         // Needs at least one AND.
@@ -767,8 +766,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       // N != V  or Z == 1
       if (registers.size() == 3) {
         var builtins =
-            behavior.getNodes(BuiltInCall.class).filter(x -> x instanceof BuiltInCall bc
-                    && (bc.builtIn() == EQU || bc.builtIn() == NEQ))
+            behavior.getNodes(BuiltInCall.class)
+                .filter(x -> x.builtIn() == EQU || x.builtIn() == NEQ)
                 .toList();
 
         // Needs at least one AND.
@@ -815,25 +814,6 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     }
 
     return true;
-  }
-
-  /**
-   * Return {@code true} if it has two arguments where one is a
-   * {@link vadl.gcb.annotations.StatusRegisterAnnotation.NegativeStatusRegisterAnnotation}
-   * and {@link vadl.gcb.annotations.StatusRegisterAnnotation.OverflowStatusRegisterAnnotation}.
-   */
-  private boolean hasNegativeAnnotationAndOverflowAnnotation(NodeList<ExpressionNode> arguments) {
-    var neg =
-        arguments.stream().anyMatch(x -> x instanceof ReadsRegisterTensor readsRegisterTensor
-            && readsRegisterTensor.registerTensor()
-            .hasAnnotation(StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class));
-    var overflow =
-        arguments.stream().anyMatch(x -> x instanceof ReadsRegisterTensor readsRegisterTensor
-            && readsRegisterTensor.registerTensor()
-            .hasAnnotation(
-                StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class));
-
-    return neg && overflow;
   }
 
   /**
