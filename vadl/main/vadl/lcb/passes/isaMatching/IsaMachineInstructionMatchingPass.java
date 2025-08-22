@@ -214,10 +214,12 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.UMOD, ty));
       } else if (findSubS(behavior, originalGraph, Type.bits(64))) {
         instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_64, ty));
+            new MachineInstructionCtx(MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_64,
+                Optional.empty()));
       } else if (findSubS(behavior, originalGraph, Type.bits(32))) {
         instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_32, ty));
+            new MachineInstructionCtx(MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_32,
+                Optional.empty()));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, SUB)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUB, ty));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
