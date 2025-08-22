@@ -62,10 +62,10 @@ public class IsaMachineInstructionMatchingAarch64PassTest extends AbstractLcbTes
             Optional.empty()),
         Arguments.of(List.of("SUBXS", "SUBXSSXTX", "SUBXSUXTX"),
             MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_64,
-            Optional.of(DataType.bits(64))),
+            Optional.of(DataType.bits(1))),
         Arguments.of(List.of("SUBWS", "SUBWSSXTX", "SUBWSUXTX"),
             MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_32,
-            Optional.of(DataType.bits(32)))
+            Optional.of(DataType.bits(1)))
     );
   }
 
