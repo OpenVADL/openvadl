@@ -75,8 +75,10 @@ public class LlvmInstructionLoweringConditionalBranchesWithStatusRegistersStrate
     }
 
     return Optional.of(
-        createIntermediateResult(labelledMachineInstructions, instruction, copy, abi,
-            registerDefsUses, constraints));
+        createIntermediateResult(instruction,
+            copy,
+            registerDefsUses,
+            constraints));
   }
 
   @Override
@@ -86,10 +88,8 @@ public class LlvmInstructionLoweringConditionalBranchesWithStatusRegistersStrate
   }
 
   private LlvmLoweringRecord.Machine createIntermediateResult(
-      IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Instruction instruction,
       Graph visitedGraph,
-      Abi abi,
       DetermineRegisterUsesAndDefsPass.Info registerDefsUses,
       List<TableGenInstructionConstraint> constraints) {
     var info = lowerBaseInfo(instruction, visitedGraph, registerDefsUses);
