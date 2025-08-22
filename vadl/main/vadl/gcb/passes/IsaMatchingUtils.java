@@ -144,6 +144,13 @@ public interface IsaMatchingUtils {
     return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior) && noPcAccess(behavior);
   }
 
+  /**
+   * Find an instruction which acts as subtraction but also sets the flags.
+   *
+   * @param behavior is a modified but uninlined graph.
+   * @param original is the original VIAM.
+   * @param ty       is the type of the result.
+   */
   default boolean findSubS(UninlinedGraph behavior, Graph original, BitsType ty) {
     var writes =
         original.getNodes(WritesRegisterTensor.class).toList();

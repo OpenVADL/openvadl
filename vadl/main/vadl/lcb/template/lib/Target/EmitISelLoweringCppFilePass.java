@@ -145,8 +145,8 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("mergedCmpAndBranch", true);
     map.put("SUBS", getFirstNameOrEmpty(database.run(
         new Query.Builder().machineInstructionLabel(
-                stackPointerType == ValueType.I32 ?
-                    MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_32 :
+                stackPointerType == ValueType.I32
+                    ? MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_32 :
                     MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_64)
             .build())));
     map.put("B_LT", getFirstNameOrEmpty(database.run(

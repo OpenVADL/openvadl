@@ -154,16 +154,14 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
 
   @Nullable
   @Override
-  public Result execute(PassResults passResults,
-                        Specification viam)
-      throws IOException {
+  public Result execute(PassResults passResults, Specification viam) throws IOException {
     // The instruction matching happens on the uninlined graph
     // because the field accesses are uninlined.
     IdentityHashMap<Instruction, UninlinedGraph> uninlined =
-        ((FunctionInlinerPass.Output) passResults
-            .lastResultOf(FunctionInlinerPass.class)).behaviors();
+        ((FunctionInlinerPass.Output) passResults.lastResultOf(
+            FunctionInlinerPass.class)).behaviors();
     Objects.requireNonNull(uninlined);
-    var snapshots =
+    final var snapshots =
         (Map<Instruction, Graph>) passResults.lastResultOf(SnapshotInstructionBehaviorPass.class);
 
     var isa = viam.isa().orElse(null);
@@ -251,16 +249,13 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.MUL, ty));
       } else if (findRR(behavior, List.of(LSL, LSLS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SLL, ty));
-      } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(LSL, LSLS))
-          /* the `hasNot` constraints are to differentiate between `SLLI` and `SLLIW` */
-          && hasNot(behavior, TruncateNode.class)
-          && hasNot(behavior, SignExtendNode.class)) {
+      } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(LSL, LSLS)) && hasNot(
+          behavior, TruncateNode.class) && hasNot(behavior, SignExtendNode.class)) {
+        /* the `hasNot` constraints are to differentiate between `SLLI` and `SLLIW` */
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SLLI, ty));
       } else if (findRR(behavior, List.of(LSR, LSRS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SRL, ty));
-      }
-      // Status Registers
-      else if (findBranchWithConditionalWithStatusRegisters(behavior, EQU)) {
+      } else if (findBranchWithConditionalWithStatusRegisters(behavior, EQU)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BEQ_BY_STATUS_REGISTER,
                 Optional.empty()));
@@ -284,9 +279,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSLTH_BY_STATUS_REGISTER,
                 Optional.empty()));
-      }
-      // Without Status Registers
-      else if (findBranchWithConditionalWithoutStatusRegisters(behavior, EQU)) {
+      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, EQU)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BEQ, Optional.empty()));
       } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, NEQ)) {
@@ -325,8 +318,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(ULTH))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTIU, ty));
       } else if (findWriteMem(behavior)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.STORE_MEM_WITH_IMMEDIATE, ty));
+        instruction.attachExtension(new MachineInstructionCtx(
+            MachineInstructionLabel.STORE_MEM_WITH_IMMEDIATE, ty));
       } else if (findLoadMem(behavior)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.LOAD_MEM_WITH_IMMEDIATE, ty));
@@ -346,34 +339,27 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   }
 
   private Optional<BitsType> getType(UninlinedGraph behavior) {
-    var candidates =
-        Stream.concat(
+    var candidates = Stream.concat(
+            behavior.getNodes(WriteRegTensorNode.class).filter(x -> x.regTensor().isRegisterFile())
+                .map(x -> (DataType) x.value().type()), Stream.concat(
                 behavior.getNodes(WriteRegTensorNode.class)
-                    .filter(x -> x.regTensor().isRegisterFile())
-                    .map(x -> (DataType) x.value().type()),
-                Stream.concat(
-                    behavior.getNodes(WriteRegTensorNode.class)
+                    .filter(x -> x.regTensor().isSingleRegister())
+                    .map(x -> (DataType) x.value().type()), Stream.concat(
+                    behavior.getNodes(ReadRegTensorNode.class)
                         .filter(x -> x.regTensor().isSingleRegister())
-                        .map(x -> (DataType) x.value().type()),
-                    Stream.concat(
-                        behavior.getNodes(ReadRegTensorNode.class)
-                            .filter(x -> x.regTensor().isSingleRegister())
-                            .map(x -> x.regTensor().resultType()),
-                        behavior.getNodes(ReadRegTensorNode.class)
-                            .filter(x -> x.regTensor().isRegisterFile())
-                            .map(x -> x.regTensor().resultType())
-                    )
-                )
-            )
-            .map(x -> BitsType.bits(x.bitWidth())) // LLVM only accepts signed integers anyway
-            .toList();
+                        .map(x -> x.regTensor().resultType()),
+                    behavior.getNodes(ReadRegTensorNode.class)
+                        .filter(x -> x.regTensor().isRegisterFile())
+                        .map(x -> x.regTensor().resultType()))))
+        .map(x -> BitsType.bits(x.bitWidth())) // LLVM only accepts signed integers anyway
+        .toList();
 
     if (candidates.isEmpty()) {
       return Optional.empty();
     }
 
-    var allSame = candidates.stream()
-        .allMatch(element -> Objects.equals(candidates.get(0), element));
+    var allSame =
+        candidates.stream().allMatch(element -> Objects.equals(candidates.get(0), element));
 
     if (allSame) {
       return candidates.stream().findFirst();
@@ -395,44 +381,31 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     // (1) Cut the result
     // (2) Cut the inputs
     return TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
-            new BuiltInMatcher(builtins, List.of(
-                new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
-                new AnyChildMatcher(new AnyReadRegisterFileMatcher())
-            )))
-        .stream()
-        .map(x -> (BuiltInCall) x)
-        .anyMatch(x -> x.usages().allMatch(y -> y instanceof TruncateNode)
-            || x.arguments().stream().allMatch(arg -> arg instanceof TruncateNode)
-            || behavior.getNodes(TruncateNode.class).findAny().isEmpty()
-        );
+            new BuiltInMatcher(builtins, List.of(new AnyChildMatcher(
+                    new AnyReadRegisterFileMatcher()),
+                new AnyChildMatcher(new AnyReadRegisterFileMatcher())))).stream()
+        .map(x -> (BuiltInCall) x).anyMatch(
+            x -> x.usages().allMatch(y -> y instanceof TruncateNode) || x.arguments().stream()
+                .allMatch(arg -> arg instanceof TruncateNode) || behavior.getNodes(
+                TruncateNode.class).findAny().isEmpty());
   }
 
   private boolean findRR_MultiplicationHigh(UninlinedGraph behavior,
                                             Set<BuiltInTable.BuiltIn> builtins) {
     // We need a multiplication which is defined in `builtins` and then a slice node
     // which gets the top part.
-    return
-        TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
-                new BuiltInMatcher(builtins, List.of(
-                    new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
-                    new AnyChildMatcher(new AnyReadRegisterFileMatcher())
-                )))
-            .stream()
-            .map(x -> (BuiltInCall) x)
-            .anyMatch(node -> {
-              /*
-                Example: `ty` is `int128`
-                then `high` is `128` and `64`.
-                A SliceNode requires the bounds `lsb` = `64` and `msb` = `127`.
-               */
-              var ty = (BitsType) node.type();
-              var high = ty.bitWidth();
-              var low = high / 2;
-              return node.usages().allMatch(
-                  usage -> usage instanceof SliceNode sliceNode
-                      && sliceNode.bitSlice().lsb() == low
-                      && sliceNode.bitSlice().msb() == high - 1);
-            }) && writesExactlyOneRegisterClass(behavior);
+    return TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
+            new BuiltInMatcher(builtins, List.of(new AnyChildMatcher(
+                    new AnyReadRegisterFileMatcher()),
+                new AnyChildMatcher(new AnyReadRegisterFileMatcher())))).stream()
+        .map(x -> (BuiltInCall) x).anyMatch(node -> {
+          var ty = (BitsType) node.type();
+          var high = ty.bitWidth();
+          var low = high / 2;
+          return node.usages().allMatch(
+              usage -> usage instanceof SliceNode sliceNode && sliceNode.bitSlice().lsb() == low
+                  && sliceNode.bitSlice().msb() == high - 1);
+        }) && writesExactlyOneRegisterClass(behavior);
   }
 
   @Override
@@ -446,24 +419,22 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
             || ext.label() == MachineInstructionLabel.ADDI_32);
       });
 
-      ensure(hasAddi,
-          () -> Diagnostic.error(
-              "There must be an instruction (addition with immediate), but we haven't found any.",
-              viam.location()));
+      ensure(hasAddi, () -> Diagnostic.error(
+          "There must be an instruction (addition with immediate), but we haven't found any.",
+          viam.location()));
     });
   }
 
   private boolean findLoadMem(UninlinedGraph graph) {
-    var writesRegFile = graph.getNodes(WritesRegisterTensor.class)
-        .filter(HasRegisterTensor::hasRegisterFile)
-        .count();
+    var writesRegFile =
+        graph.getNodes(WritesRegisterTensor.class).filter(HasRegisterTensor::hasRegisterFile)
+            .count();
 
-    var writesReg = graph.getNodes(WriteRegTensorNode.class)
-        .filter(e -> e.regTensor().isSingleRegister())
-        .count();
+    var writesReg =
+        graph.getNodes(WriteRegTensorNode.class).filter(e -> e.regTensor().isSingleRegister())
+            .count();
 
-    var immediates = graph.getNodes(FieldAccessRefNode.class)
-        .count();
+    var immediates = graph.getNodes(FieldAccessRefNode.class).count();
 
     var readsMem = graph.getNodes(ReadMemNode.class).count();
 
@@ -489,8 +460,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       return false;
     }
 
-    var matched = TreeMatcher.matches(
-        graph.getNodes(WriteResourceNode.class).map(x -> x),
+    var matched = TreeMatcher.matches(graph.getNodes(WriteResourceNode.class).map(x -> x),
         new WriteResourceMatcherForValue(new AnyChildMatcher(new AnyReadMemMatcher())));
 
     return !matched.isEmpty();
@@ -501,16 +471,15 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       return false;
     }
 
-    var writesRegFile = graph.getNodes(WritesRegisterTensor.class)
-        .filter(HasRegisterTensor::hasRegisterFile)
-        .count();
+    var writesRegFile =
+        graph.getNodes(WritesRegisterTensor.class).filter(HasRegisterTensor::hasRegisterFile)
+            .count();
 
-    var writesReg = graph.getNodes(WriteRegTensorNode.class)
-        .filter(e -> e.regTensor().isSingleRegister())
-        .count();
+    var writesReg =
+        graph.getNodes(WriteRegTensorNode.class).filter(e -> e.regTensor().isSingleRegister())
+            .count();
 
-    var immediates = graph.getNodes(FieldAccessRefNode.class)
-        .count();
+    var immediates = graph.getNodes(FieldAccessRefNode.class).count();
 
     // no writes except memory
     if (writesRegFile != 0 || writesReg != 0) {
@@ -533,21 +502,13 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
 
     if (fieldAccess.isPresent()) {
       var matched = TreeMatcher.matches(
-              fieldAccess.get()
-                  .fieldAccess()
-                  .accessFunction()
-                  .behavior()
+              fieldAccess.get().fieldAccess().accessFunction().behavior()
                   .getNodes(BuiltInCall.class)
                   .map(x -> x),
-              new BuiltInMatcher(LSL, List.of(
-                  new AnyNodeMatcher(),
-                  new AnyConstantValueMatcher()
-              )))
-          .stream()
-          .findFirst();
+              new BuiltInMatcher(LSL, List.of(new AnyNodeMatcher(), new AnyConstantValueMatcher())))
+          .stream().findFirst();
 
-      return matched.isPresent()
-          && writesExactlyOneRegisterClass(behavior)
+      return matched.isPresent() && writesExactlyOneRegisterClass(behavior)
           // does not access PC
           && !hasAccessToPc(behavior);
     }
@@ -570,17 +531,14 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
 
   private boolean findAdd(UninlinedGraph behavior, int bitWidth) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
-            new BuiltInMatcher(List.of(ADD, ADDS), List.of(
-                new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
-                new AnyChildMatcher(new AnyReadRegisterFileMatcher())
-            )))
-        .stream()
+            new BuiltInMatcher(List.of(ADD, ADDS),
+                List.of(new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
+                    new AnyChildMatcher(new AnyReadRegisterFileMatcher())))).stream()
         .map(x -> ((BuiltInCall) x).type())
-        .filter(ty -> ty instanceof BitsType bi && bi.bitWidth() == bitWidth)
-        .findFirst();
+        .filter(ty -> ty instanceof BitsType bi && bi.bitWidth() == bitWidth).findFirst();
 
-    return matched.isPresent()
-        && writesExactlyOneRegisterClassWithType(behavior, Type.bits(bitWidth));
+    return matched.isPresent() && writesExactlyOneRegisterClassWithType(behavior,
+        Type.bits(bitWidth));
   }
 
   private boolean findAddWithImmediate32Bit(UninlinedGraph behavior) {
@@ -592,72 +550,56 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   }
 
   private boolean findAddWithImmediate(UninlinedGraph behavior, int bitWidth) {
-    var matcher =
-        new BuiltInMatcher(List.of(ADD, ADDS),
-            List.of(new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
-                new AnyChildMatcher(new FieldAccessRefMatcher())));
+    var matcher = new BuiltInMatcher(List.of(ADD, ADDS),
+        List.of(new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
+            new AnyChildMatcher(new FieldAccessRefMatcher())));
 
     // We use a set because we want to allow commutativity.
-    Set<Matcher> matchers = Set.of(
-        matcher,
-        matcher.swapOperands()
-    );
+    Set<Matcher> matchers = Set.of(matcher, matcher.swapOperands());
 
-    var matched = TreeMatcher.matches(
-            () -> behavior.getNodes(BuiltInCall.class).map(x -> x), matchers)
-        .stream()
-        .map(x -> ((BuiltInCall) x).type())
-        .filter(ty -> ty instanceof BitsType && ((BitsType) ty).bitWidth() == bitWidth)
-        .findFirst();
+    var matched =
+        TreeMatcher.matches(() -> behavior.getNodes(BuiltInCall.class).map(x -> x), matchers)
+            .stream().map(x -> ((BuiltInCall) x).type())
+            .filter(ty -> ty instanceof BitsType && ((BitsType) ty).bitWidth() == bitWidth)
+            .findFirst();
 
     // only one read is allowed
-    var registerReads = behavior.getNodes(ReadsRegisterTensor.class)
-        .filter(HasRegisterTensor::hasRegisterFile)
-        .toList();
+    var registerReads =
+        behavior.getNodes(ReadsRegisterTensor.class).filter(HasRegisterTensor::hasRegisterFile)
+            .toList();
 
-    return registerReads.size() == 1
-        && matched.isPresent()
+    return registerReads.size() == 1 && matched.isPresent()
         && writesExactlyOneRegisterClassWithType(behavior, Type.bits(bitWidth));
   }
 
-  private boolean findBranchWithConditional(
-      UninlinedGraph behavior,
-      BuiltInTable.BuiltIn builtin) {
-    var hasCondition =
-        behavior.getNodes(IfNode.class)
-            .anyMatch(
-                x -> x.condition() instanceof BuiltInCall bc
-                    && builtin == bc.builtIn());
-    var writesPc = behavior.getNodes(WriteRegTensorNode.class)
-        .anyMatch(x -> x.staticCounterAccess() != null);
+  private boolean findBranchWithConditional(UninlinedGraph behavior, BuiltInTable.BuiltIn builtin) {
+    var hasCondition = behavior.getNodes(IfNode.class)
+        .anyMatch(x -> x.condition() instanceof BuiltInCall bc && builtin == bc.builtIn());
+    var writesPc =
+        behavior.getNodes(WriteRegTensorNode.class).anyMatch(x -> x.staticCounterAccess() != null);
 
     return hasCondition && writesPc;
   }
 
-  private boolean findBranchWithConditionalWithoutStatusRegisters(
-      UninlinedGraph behavior,
-      BuiltInTable.BuiltIn builtin) {
+  private boolean findBranchWithConditionalWithoutStatusRegisters(UninlinedGraph behavior,
+                                                                  BuiltInTable.BuiltIn builtin) {
     var base = findBranchWithConditional(behavior, builtin);
     var statusRegisters = behavior.getNodes(ReadsRegisterTensor.class)
-        .filter(x -> x.registerTensor().hasAnnotation(StatusRegisterAnnotation.class))
-        .toList();
+        .filter(x -> x.registerTensor().hasAnnotation(StatusRegisterAnnotation.class)).toList();
 
     return base && statusRegisters.isEmpty();
   }
 
   private boolean findBranchWithConditionalWithStatusRegisters(UninlinedGraph behavior,
                                                                BuiltInTable.BuiltIn builtin) {
-    var writesPc = behavior.getNodes(WriteRegTensorNode.class)
-        .anyMatch(x -> x.staticCounterAccess() != null);
+    var writesPc =
+        behavior.getNodes(WriteRegTensorNode.class).anyMatch(x -> x.staticCounterAccess() != null);
     var hasIfNode = behavior.getNodes(IfNode.class).toList();
     var statusRegisters = behavior.getNodes(ReadsRegisterTensor.class)
-        .filter(x -> x.registerTensor().hasAnnotation(StatusRegisterAnnotation.class))
-        .toList();
+        .filter(x -> x.registerTensor().hasAnnotation(StatusRegisterAnnotation.class)).toList();
 
-    return !hasIfNode.isEmpty()
-        && writesPc
-        && !statusRegisters.isEmpty()
-        && checkConditionsForBase(builtin, behavior, statusRegisters);
+    return !hasIfNode.isEmpty() && writesPc && !statusRegisters.isEmpty() && checkConditionsForBase(
+        builtin, behavior, statusRegisters);
   }
 
   /**
@@ -665,78 +607,64 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
    * the given {@code base}. For example, if the {@code base} is "equality" then it needs a
    * status register which is the Zero Register and a constant which is {@code 1}.
    */
-  private boolean checkConditionsForBase(BuiltInTable.BuiltIn base,
-                                         UninlinedGraph behavior,
+  private boolean checkConditionsForBase(BuiltInTable.BuiltIn base, UninlinedGraph behavior,
                                          List<ReadsRegisterTensor> registers) {
     if (base == EQU) {
       // Z == 1
       if (registers.size() == 1) {
-        var hasCondition =
-            behavior.getNodes(IfNode.class).allMatch(x -> x.condition() instanceof BuiltInCall bc
-                && bc.builtIn() == EQU);
+        var hasCondition = behavior.getNodes(IfNode.class)
+            .allMatch(x -> x.condition() instanceof BuiltInCall bc && bc.builtIn() == EQU);
         var hasConstant = behavior.getNodes(ConstantNode.class)
             .anyMatch(x -> x.isConstant() && x.constant().asVal().intValue() == 1);
         var register = registers.stream().findFirst().get();
-        return
-            hasCondition
-                && hasConstant
-                && register.registerTensor()
-                .hasAnnotation(StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class);
+        return hasCondition && hasConstant && register.registerTensor()
+            .hasAnnotation(StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class);
       }
     } else if (base == NEQ) {
       // Z == 0
       if (registers.size() == 1) {
-        var hasCondition =
-            behavior.getNodes(IfNode.class).allMatch(x -> x.condition() instanceof BuiltInCall bc
-                && bc.builtIn() == EQU);
+        var hasCondition = behavior.getNodes(IfNode.class)
+            .allMatch(x -> x.condition() instanceof BuiltInCall bc && bc.builtIn() == EQU);
         var hasConstant = behavior.getNodes(ConstantNode.class)
             .anyMatch(x -> x.isConstant() && x.constant().asVal().intValue() == 0);
         var register = registers.stream().findFirst().get();
-        return
-            hasCondition
-                && hasConstant
-                && register.registerTensor()
-                .hasAnnotation(StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class);
+        return hasCondition && hasConstant && register.registerTensor()
+            .hasAnnotation(StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class);
       }
     } else if (base == SGEQ) {
       // NZCV_N = NZCV_V
       if (registers.size() == 2) {
-        var builtin =
-            behavior.getNodes(IfNode.class).filter(x -> x.condition() instanceof BuiltInCall bc
-                    && bc.builtIn() == EQU)
-                .map(x -> (BuiltInCall) x.condition())
-                .findFirst();
+        var builtin = behavior.getNodes(IfNode.class)
+            .filter(x -> x.condition() instanceof BuiltInCall bc && bc.builtIn() == EQU)
+            .map(x -> (BuiltInCall) x.condition()).findFirst();
 
         if (builtin.isPresent()) {
           var arguments = builtin.get().arguments();
-          return hasAllAnnotations(arguments, Set.of(
-              StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
-              StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class));
+          return hasAllAnnotations(arguments,
+              Set.of(StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
+                  StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class));
         }
       }
     } else if (base == SLTH) {
       // NZCV_N != NZCV_V
       if (registers.size() == 2) {
-        var builtin =
-            behavior.getNodes(IfNode.class).filter(x -> x.condition() instanceof BuiltInCall bc
-                    && bc.builtIn() == NEQ)
-                .map(x -> (BuiltInCall) x.condition())
-                .findFirst();
+        var builtin = behavior.getNodes(IfNode.class)
+            .filter(x -> x.condition() instanceof BuiltInCall bc && bc.builtIn() == NEQ)
+            .map(x -> (BuiltInCall) x.condition()).findFirst();
 
         if (builtin.isPresent()) {
           var arguments = builtin.get().arguments();
 
-          return hasAllAnnotations(arguments, Set.of(
-              StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
-              StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class));
+          return hasAllAnnotations(arguments,
+              Set.of(StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
+                  StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class));
         }
       }
     } else if (base == SGTH) {
       // N == V and Z == 0
       if (registers.size() == 3) {
         var builtins =
-            behavior.getNodes(BuiltInCall.class).filter(x -> x.builtIn() == EQU)
-                .toList();
+            behavior.getNodes(BuiltInCall.class).filter(x -> x.builtIn() == EQU).toList();
 
         // Needs at least one AND.
         if (behavior.getNodes(BuiltInCall.class).noneMatch(x -> x.builtIn() == AND)) {
@@ -765,10 +693,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     } else if (base == SLEQ) {
       // N != V  or Z == 1
       if (registers.size() == 3) {
-        var builtins =
-            behavior.getNodes(BuiltInCall.class)
-                .filter(x -> x.builtIn() == EQU || x.builtIn() == NEQ)
-                .toList();
+        var builtins = behavior.getNodes(BuiltInCall.class)
+            .filter(x -> x.builtIn() == EQU || x.builtIn() == NEQ).toList();
 
         // Needs at least one AND.
         if (behavior.getNodes(BuiltInCall.class).noneMatch(x -> x.builtIn() == OR)) {
@@ -803,10 +729,9 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   private boolean hasAllAnnotations(NodeList<ExpressionNode> arguments,
                                     Set<Class<? extends StatusRegisterAnnotation>> annotations) {
     for (var annotation : annotations) {
-      var result =
-          arguments.stream().anyMatch(x -> x instanceof ReadsRegisterTensor readsRegisterTensor
-              && readsRegisterTensor.registerTensor()
-              .hasAnnotation(annotation));
+      var result = arguments.stream().anyMatch(
+          x -> x instanceof ReadsRegisterTensor readsRegisterTensor
+              && readsRegisterTensor.registerTensor().hasAnnotation(annotation));
 
       if (!result) {
         return false;
@@ -821,26 +746,18 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
    * a register file and has an operation (ADD, SUB) where one input is a registerfile.
    */
   private boolean findJalr(UninlinedGraph behavior, Counter pcRegister) {
-    var writesPc =
-        behavior.getNodes(WriteRegTensorNode.class)
-            .filter(x -> x.regTensor().equals(pcRegister.registerTensor()))
+    var writesPc = behavior.getNodes(WriteRegTensorNode.class)
+        .filter(x -> x.regTensor().equals(pcRegister.registerTensor())).toList();
+    var writesRegFile =
+        behavior.getNodes(WriteRegTensorNode.class).filter(w -> w.regTensor().isRegisterFile())
             .toList();
-    var writesRegFile = behavior.getNodes(WriteRegTensorNode.class)
-        .filter(w -> w.regTensor().isRegisterFile()).toList();
 
-    var matcher = new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB), List.of(
-        new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
-        new AnyNodeMatcher()
-    ));
-    Set<Matcher> matchers = Set.of(
-        matcher,
-        matcher.swapOperands()
-    );
+    var matcher = new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB),
+        List.of(new AnyChildMatcher(new AnyReadRegisterFileMatcher()), new AnyNodeMatcher()));
+    Set<Matcher> matchers = Set.of(matcher, matcher.swapOperands());
 
-    var inputRegister = TreeMatcher.matches(
-        () -> behavior.getNodes(BuiltInCall.class).map(x -> x),
-        matchers
-    );
+    var inputRegister =
+        TreeMatcher.matches(() -> behavior.getNodes(BuiltInCall.class).map(x -> x), matchers);
 
     return writesPc.size() == 1 && writesRegFile.size() == 1 && !inputRegister.isEmpty();
   }
@@ -850,16 +767,12 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
    * a register.
    */
   private boolean findJR(UninlinedGraph behavior, Counter pcRegister) {
-    var writesPc =
-        behavior.getNodes(WriteRegTensorNode.class)
-            .filter(x -> x.regTensor().equals(pcRegister.registerTensor()))
-            .toList();
+    var writesPc = behavior.getNodes(WriteRegTensorNode.class)
+        .filter(x -> x.regTensor().equals(pcRegister.registerTensor())).toList();
     var writes = behavior.getNodes(WriteResourceNode.class).toList();
     var immediates = behavior.getNodes(FieldAccessRefNode.class).toList();
 
-    return writesPc.size() == 1
-        && writes.size() == 1
-        && immediates.isEmpty();
+    return writesPc.size() == 1 && writes.size() == 1 && immediates.isEmpty();
   }
 
   /**
@@ -867,30 +780,20 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
    * a register.
    */
   private boolean findJ(UninlinedGraph behavior, Counter pcRegister) {
-    var writesPc =
-        behavior.getNodes(WriteRegTensorNode.class)
-            .filter(x -> x.regTensor().equals(pcRegister.registerTensor()))
-            .toList();
+    var writesPc = behavior.getNodes(WriteRegTensorNode.class)
+        .filter(x -> x.regTensor().equals(pcRegister.registerTensor())).toList();
     var writes = behavior.getNodes(WriteResourceNode.class).toList();
     var builtins = behavior.getNodes(BuiltInCall.class).toList();
 
-    var matcher = new BuiltInMatcher(List.of(BuiltInTable.ADD), List.of(
-        new AnyChildMatcher(new ReadRegisterCounterMatcher(pcRegister)),
-        new FieldAccessRefMatcher()
-    ));
-    Set<Matcher> matchers = Set.of(
-        matcher,
-        matcher.swapOperands()
-    );
+    var matcher = new BuiltInMatcher(List.of(BuiltInTable.ADD),
+        List.of(new AnyChildMatcher(new ReadRegisterCounterMatcher(pcRegister)),
+            new FieldAccessRefMatcher()));
+    Set<Matcher> matchers = Set.of(matcher, matcher.swapOperands());
 
-    var addition = TreeMatcher.matches(
-        () -> behavior.getNodes(BuiltInCall.class).map(x -> x),
-        matchers
-    );
+    var addition =
+        TreeMatcher.matches(() -> behavior.getNodes(BuiltInCall.class).map(x -> x), matchers);
 
-    return writesPc.size() == 1
-        && writes.size() == 1
-        && !addition.isEmpty()
+    return writesPc.size() == 1 && writes.size() == 1 && !addition.isEmpty()
         && builtins.size() == 1;
   }
 
@@ -899,25 +802,18 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
    * a register file and has an operation (ADD, SUB) where one input is a PC.
    */
   private boolean findJal(UninlinedGraph behavior, Counter pcRegister) {
-    var writesPc =
-        behavior.getNodes(WriteRegTensorNode.class)
-            .filter(x -> x.regTensor().equals(pcRegister.registerTensor()))
+    var writesPc = behavior.getNodes(WriteRegTensorNode.class)
+        .filter(x -> x.regTensor().equals(pcRegister.registerTensor())).toList();
+    var writesRegFile =
+        behavior.getNodes(WriteRegTensorNode.class).filter(w -> w.regTensor().isRegisterFile())
             .toList();
-    var writesRegFile = behavior.getNodes(WriteRegTensorNode.class)
-        .filter(w -> w.regTensor().isRegisterFile()).toList();
 
-    var matcher = new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB), List.of(
-        new AnyChildMatcher(new IsReadRegMatcher(pcRegister.registerTensor())),
-        new AnyNodeMatcher()
-    ));
-    Set<Matcher> matchers = Set.of(
-        matcher,
-        matcher.swapOperands()
-    );
+    var matcher = new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB),
+        List.of(new AnyChildMatcher(new IsReadRegMatcher(pcRegister.registerTensor())),
+            new AnyNodeMatcher()));
+    Set<Matcher> matchers = Set.of(matcher, matcher.swapOperands());
     var inputRegister =
-        TreeMatcher.matches(() -> behavior.getNodes(BuiltInCall.class).map(x -> x),
-            matchers
-        );
+        TreeMatcher.matches(() -> behavior.getNodes(BuiltInCall.class).map(x -> x), matchers);
 
     return writesPc.size() == 1 && writesRegFile.size() == 1 && !inputRegister.isEmpty();
   }
