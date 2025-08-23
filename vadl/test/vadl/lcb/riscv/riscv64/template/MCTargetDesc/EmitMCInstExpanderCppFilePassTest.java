@@ -375,7 +375,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               // GenerateRawFieldsHandler
               rd = instruction.getOperand(0).getReg();
               if(instruction.getOperand(1).isImm()) {
-                 imm = instruction.getOperand(1).getImm();
+                 imm = instruction.getOperand(1).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -426,7 +426,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               // GenerateRawFieldsHandler
               rd = processorNameValue::X1;
               if(instruction.getOperand(0).isImm()) {
-                 imm = instruction.getOperand(0).getImm();
+                 imm = instruction.getOperand(0).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -453,7 +453,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               rd = processorNameValue::X1;
               rs1 = processorNameValue::X1;
               if(instruction.getOperand(0).isImm()) {
-                 imm = instruction.getOperand(0).getImm();
+                 imm = instruction.getOperand(0).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -487,7 +487,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               // GenerateRawFieldsHandler
               rd = processorNameValue::X6;
               if(instruction.getOperand(0).isImm()) {
-                 imm = instruction.getOperand(0).getImm();
+                 imm = instruction.getOperand(0).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -514,7 +514,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               rd = processorNameValue::X0;
               rs1 = processorNameValue::X6;
               if(instruction.getOperand(0).isImm()) {
-                 imm = instruction.getOperand(0).getImm();
+                 imm = instruction.getOperand(0).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -549,7 +549,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               // GenerateRawFieldsHandler
               rd = processorNameValue::X0;
               rs1 = processorNameValue::X1;
-              imm = 0;
+              imm = 0; // imm
               // DecodeFieldAccessesHandler
               // AddingOperands
               a.addOperand(MCOperand::createReg(rd));
@@ -602,7 +602,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               // GenerateRawFieldsHandler
               rd = processorNameValue::X0;
               rs1 = instruction.getOperand(0).getReg();
-              imm = 0;
+              imm = 0; // imm
               // DecodeFieldAccessesHandler
               // AddingOperands
               a.addOperand(MCOperand::createReg(rd));
@@ -629,7 +629,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               // GenerateRawFieldsHandler
               rd = processorNameValue::X0;
               rs1 = processorNameValue::X0;
-              imm = 0;
+              imm = 0; // imm
               // DecodeFieldAccessesHandler
               // AddingOperands
               a.addOperand(MCOperand::createReg(rd));
@@ -656,7 +656,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               // GenerateRawFieldsHandler
               rd = instruction.getOperand(0).getReg();
               rs1 = instruction.getOperand(1).getReg();
-              imm = 0;
+              imm = 0; // imm
               // DecodeFieldAccessesHandler
               // AddingOperands
               a.addOperand(instruction.getOperand(0)); // rd
@@ -683,7 +683,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               // GenerateRawFieldsHandler
               rd = instruction.getOperand(0).getReg();
               rs1 = instruction.getOperand(1).getReg();
-              imm = 4095;
+              imm = 4095; // imm
               // DecodeFieldAccessesHandler
               // AddingOperands
               a.addOperand(instruction.getOperand(0)); // rd
@@ -991,7 +991,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               // GenerateRawFieldsHandler
               rd = instruction.getOperand(0).getReg();
               if(instruction.getOperand(1).isImm()) {
-                 imm = instruction.getOperand(1).getImm();
+                 imm = instruction.getOperand(1).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -1018,7 +1018,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               rd = instruction.getOperand(0).getReg();
               rs1 = instruction.getOperand(0).getReg();
               if(instruction.getOperand(1).isImm()) {
-                 imm = instruction.getOperand(1).getImm();
+                 imm = instruction.getOperand(1).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -1052,7 +1052,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               // GenerateRawFieldsHandler
               rd = instruction.getOperand(0).getReg();
               if(instruction.getOperand(1).isImm()) {
-                 imm = instruction.getOperand(1).getImm();
+                 imm = instruction.getOperand(1).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -1079,7 +1079,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               rd = instruction.getOperand(0).getReg();
               rs1 = instruction.getOperand(0).getReg();
               if(instruction.getOperand(1).isImm()) {
-                 imm = instruction.getOperand(1).getImm();
+                 imm = instruction.getOperand(1).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -1115,7 +1115,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               // GenerateRawFieldsHandler
               rd = instruction.getOperand(0).getReg();
               if(instruction.getOperand(1).isImm()) {
-                 imm = instruction.getOperand(1).getImm();
+                 imm = instruction.getOperand(1).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -1166,7 +1166,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               // GenerateRawFieldsHandler
               rd = instruction.getOperand(0).getReg();
               if(instruction.getOperand(1).isImm()) {
-                 imm = instruction.getOperand(1).getImm();
+                 imm = instruction.getOperand(1).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -1193,7 +1193,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               rd = instruction.getOperand(0).getReg();
               rs1 = instruction.getOperand(0).getReg();
               if(instruction.getOperand(1).isImm()) {
-                 imm = instruction.getOperand(1).getImm();
+                 imm = instruction.getOperand(1).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -1227,7 +1227,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               // GenerateRawFieldsHandler
               rd = instruction.getOperand(0).getReg();
               if(instruction.getOperand(1).isImm()) {
-                 imm = instruction.getOperand(1).getImm();
+                 imm = instruction.getOperand(1).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -1254,7 +1254,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               rd = instruction.getOperand(0).getReg();
               rs1 = instruction.getOperand(0).getReg();
               if(instruction.getOperand(1).isImm()) {
-                 imm = instruction.getOperand(1).getImm();
+                 imm = instruction.getOperand(1).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -1288,7 +1288,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               // GenerateRawFieldsHandler
               rd = instruction.getOperand(0).getReg();
               if(instruction.getOperand(1).isImm()) {
-                 imm = instruction.getOperand(1).getImm();
+                 imm = instruction.getOperand(1).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -1315,7 +1315,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               rd = instruction.getOperand(0).getReg();
               rs1 = instruction.getOperand(0).getReg();
               if(instruction.getOperand(1).isImm()) {
-                 imm = instruction.getOperand(1).getImm();
+                 imm = instruction.getOperand(1).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -1351,7 +1351,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               rd = instruction.getOperand(0).getReg();
               rs1 = processorNameValue::X0;
               if(instruction.getOperand(1).isImm()) {
-                 imm = instruction.getOperand(1).getImm();
+                 imm = instruction.getOperand(1).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
@@ -1390,7 +1390,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               rd = instruction.getOperand(0).getReg();
               rs1 = instruction.getOperand(1).getReg();
               if(instruction.getOperand(2).isImm()) {
-                 imm = instruction.getOperand(2).getImm();
+                 imm = instruction.getOperand(2).getImm(); // imm
               }
               // DecodeFieldAccessesHandler
               // AddingOperands
