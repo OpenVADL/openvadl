@@ -142,7 +142,13 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("conditionalValueRangeLowest", conditionalValueRange.lowest());
     map.put("conditionalValueRangeHighest", conditionalValueRange.highest());
     map.put("expandableDagNodes", coverageSummary.notCoveredSelectionDagNodes());
-    map.put("mergedCmpAndBranch", true);
+    map.put("mergedCmpAndBranch",
+        !database.run(
+            new Query.Builder().machineInstructionLabels(List.of(
+                    MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_32,
+                    MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_64))
+                .build()).machineInstructions().isEmpty()
+    );
     map.put("SUBS", getFirstNameOrEmpty(database.run(
         new Query.Builder().machineInstructionLabel(
                 stackPointerType == ValueType.I32
