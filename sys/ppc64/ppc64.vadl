@@ -413,12 +413,13 @@ instruction set architecture PPC64SFS = {
     )
 
   // reverses the byte order of each halfword in a word
-  function byterevhinw (n : Word) -> Word =
-    (n(23..16), n(31..24), n(7..0), n(15..8))
-  
+  function byterevhinw (n : Word) -> Word = (n(23..16), n(31..24), n(7..0), n(15..8))
+
+  // reverses the byte order of a half
+  function byterevh (n : Half) -> Half = (n(7..0), n(15..8))
+
   // reverses the byte order of a word
-  function byterevw (n : Word) -> Word =
-    (n(7..0), n(15..8), n(23..16), n(31..24))
+  function byterevw (n : Word) -> Word = (n(7..0), n(15..8), n(23..16), n(31..24))
 
   // generates a wrapping 64-bit mask
   // needs forall
@@ -535,11 +536,10 @@ instruction set architecture PPC64SFS = {
   model ReadMem (ea : Id, unit : SymEx, dst : Ex, rev : Bool, type : Id) : Stat = {
     match : Stat
     ( $unit = Unit::Word => if $rev
-                            then GPR($dst) := ((MEM($ea + 3) as Word << 24) + (MEM($ea + 2) as Word << 16) +
-                                              (MEM($ea + 1) as Word << 8) + (MEM($ea) as Word)) as $type
+                            then GPR($dst) := byterevw(MEM<4>($ea)) as $type
                             else GPR($dst) := MEM<4>($ea) as $type
     ; $unit = Unit::Half => if $rev
-                            then GPR($dst) := ((MEM($ea + 1) as Half << 8) + (MEM($ea) as Half)) as $type
+                            then GPR($dst) := byterevh(MEM<2>($ea)) as $type
                             else GPR($dst) := MEM<2>($ea) as $type
     ; _ => GPR($dst) := MEM($ea) as $type
     )
@@ -549,10 +549,10 @@ instruction set architecture PPC64SFS = {
   model WriteMem (ea : Id, unit : SymEx, src : Id, rev : Bool) : Stat = {
     match : Stat
     ( $unit = Unit::Word => if $rev
-                            then MEM<4>($ea) := (GPR($src)(7..0), GPR($src)(15..8), GPR($src)(23..16), GPR($src)(31..24))
+                            then MEM<4>($ea) := byterevw(GPR($src)(31..0))
                             else MEM<4>($ea) := GPR($src)(31..0)
     ; $unit = Unit::Half => if $rev
-                            then MEM<2>($ea) := (GPR($src)(7..0), GPR($src)(15..8))
+                            then MEM<2>($ea) := byterevh(GPR($src)(15..0))
                             else MEM<2>($ea) := GPR($src)(15..0)
     ; _ => MEM($ea) := GPR($src)(7..0)
     )
