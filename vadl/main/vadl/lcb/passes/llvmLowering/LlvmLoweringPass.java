@@ -45,6 +45,7 @@ import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoInstructionLowerStrateg
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmCompilerInstructionLoweringDefaultStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringAddImmediateStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalBranchesStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalBranchesWithStatusRegistersStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringDefaultStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringLoadUpperImmediateStrategyImpl;
@@ -285,6 +286,8 @@ public class LlvmLoweringPass extends Pass {
             new LlvmInstructionLoweringUnconditionalIndirectJumpWithoutLinkRegistersStrategyImpl(
                 architectureType),
             new LlvmInstructionLoweringConditionalBranchesStrategyImpl(architectureType),
+            new LlvmInstructionLoweringConditionalBranchesWithStatusRegistersStrategyImpl(
+                architectureType),
             new LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl(architectureType),
             new LlvmInstructionLoweringMemoryStoreStrategyImpl(architectureType),
             new LlvmInstructionLoweringMemoryLoadStrategyImpl(architectureType),

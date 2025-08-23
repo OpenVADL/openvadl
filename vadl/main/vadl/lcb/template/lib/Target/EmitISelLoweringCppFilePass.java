@@ -36,6 +36,7 @@ import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
+import vadl.lcb.passes.isaMatching.database.QueryResult;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.ISelLoweringOperationActionPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmMachineInstructionUtil;
@@ -110,6 +111,8 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     var conditionalMove = getConditionalMove(hasCMove32, hasCMove64, labelledMachineInstructions);
     var database = new Database(passResults, specification);
     var conditionalValueRange = getValueRangeCompareInstructions(database);
+    var stackPointerType =
+        ValueType.from(abi.stackPointer().registerFile().resultType()).get();
 
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE, lcbConfiguration().targetName().value().toLowerCase());
@@ -123,8 +126,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("argumentRegisters",
         abi.argumentRegisters().stream().map(Abi.RegisterRef::render).toList());
     map.put("stackPointerBitWidth", abi.stackPointer().registerFile().resultType().bitWidth());
-    map.put("stackPointerType",
-        ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType());
+    map.put("stackPointerType", stackPointerType.getLlvmType());
     map.put("absoluteAddressLoadInstruction",
         absoluteAddressLoadInstruction.identifier().simpleName());
     map.put("hasLocalAddressLoad", abi.localAddressLoad().isPresent());
@@ -140,7 +142,47 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("conditionalValueRangeLowest", conditionalValueRange.lowest());
     map.put("conditionalValueRangeHighest", conditionalValueRange.highest());
     map.put("expandableDagNodes", coverageSummary.notCoveredSelectionDagNodes());
+    map.put("mergedCmpAndBranch",
+        !database.run(
+            new Query.Builder().machineInstructionLabels(List.of(
+                    MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_32,
+                    MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_64))
+                .build()).machineInstructions().isEmpty()
+    );
+    map.put("SUBS", getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(
+                stackPointerType == ValueType.I32
+                    ? MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_32 :
+                    MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_64)
+            .build())));
+    map.put("B_LT", getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(
+                MachineInstructionLabel.BSLTH_BY_STATUS_REGISTER)
+            .build())));
+    map.put("B_EQ", getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(MachineInstructionLabel.BEQ_BY_STATUS_REGISTER)
+            .build())));
+    map.put("B_NEQ", getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(MachineInstructionLabel.BNEQ_BY_STATUS_REGISTER)
+            .build())));
+    map.put("B_LE", getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(
+                MachineInstructionLabel.BSLEQ_BY_STATUS_REGISTER)
+            .build())));
+    map.put("B_GT", getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(
+                MachineInstructionLabel.BSGTH_BY_STATUS_REGISTER)
+            .build())));
+    map.put("B_GE", getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(
+                MachineInstructionLabel.BSGEQ_BY_STATUS_REGISTER)
+            .build())));
     return map;
+  }
+
+  private String getFirstNameOrEmpty(QueryResult result) {
+    return result.machineInstructions().stream().map(x -> x.identifier().simpleName()).findFirst()
+        .orElse("");
   }
 
   private ISelInstruction getAddImmediate(Database database) {

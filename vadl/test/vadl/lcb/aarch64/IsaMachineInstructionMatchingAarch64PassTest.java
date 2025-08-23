@@ -41,7 +41,31 @@ public class IsaMachineInstructionMatchingAarch64PassTest extends AbstractLcbTes
   private static Stream<Arguments> getExpectedMatchings() {
     return Stream.of(
         Arguments.of(List.of("B", "B_AL", "B_NV"), MachineInstructionLabel.J,
-            Optional.of(DataType.bits(64)))
+            Optional.of(DataType.bits(64))),
+        Arguments.of(
+            List.of("B_EQ"),
+            MachineInstructionLabel.BEQ_BY_STATUS_REGISTER,
+            Optional.empty()),
+        Arguments.of(List.of("B_NE"), MachineInstructionLabel.BNEQ_BY_STATUS_REGISTER,
+            Optional.empty()),
+        Arguments.of(List.of("B_GE"), MachineInstructionLabel.BSGEQ_BY_STATUS_REGISTER,
+            Optional.empty()),
+        Arguments.of(List.of("B_GT"), MachineInstructionLabel.BSGTH_BY_STATUS_REGISTER,
+            Optional.empty()),
+        Arguments.of(List.of("B_LT"), MachineInstructionLabel.BSLTH_BY_STATUS_REGISTER,
+            Optional.empty()),
+        Arguments.of(List.of("B_LE"), MachineInstructionLabel.BSLEQ_BY_STATUS_REGISTER,
+            Optional.empty()),
+        Arguments.of(List.of("CBZW", "CBZX", "TBZ"), MachineInstructionLabel.BEQ,
+            Optional.empty()),
+        Arguments.of(List.of("CBNZW", "CBNZX", "TBNZ"), MachineInstructionLabel.BNEQ,
+            Optional.empty()),
+        Arguments.of(List.of("SUBXS", "SUBXSSXTX", "SUBXSUXTX"),
+            MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_64,
+            Optional.empty()),
+        Arguments.of(List.of("SUBWS", "SUBWSSXTX", "SUBWSUXTX"),
+            MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_32,
+            Optional.empty())
     );
   }
 

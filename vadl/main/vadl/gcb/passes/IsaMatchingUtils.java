@@ -25,19 +25,26 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.gcb.valuetypes.RelocationCtx;
 import vadl.gcb.valuetypes.RelocationFunctionLabel;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
+import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
+import vadl.types.TupleType;
 import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Relocation;
 import vadl.viam.Specification;
+import vadl.viam.graph.Graph;
+import vadl.viam.graph.WritesRegisterTensor;
+import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.matching.Matcher;
@@ -135,6 +142,55 @@ public interface IsaMatchingUtils {
     );
 
     return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior) && noPcAccess(behavior);
+  }
+
+  /**
+   * Find an instruction which acts as subtraction but also sets the flags.
+   *
+   * @param behavior is a modified but uninlined graph.
+   * @param original is the original VIAM.
+   * @param ty       is the type of the result.
+   */
+  default boolean findSubS(UninlinedGraph behavior, Graph original, BitsType ty) {
+    var writes =
+        original.getNodes(WritesRegisterTensor.class).toList();
+
+    var hasNegative = false;
+    var hasOverflow = false;
+    var hasZero = false;
+    var hasCarry = false;
+
+    for (var write : writes) {
+      var tensor = write.registerTensor();
+      if (tensor.hasAnnotation(StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class)) {
+        hasNegative = true;
+      } else if (tensor.hasAnnotation(
+          StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class)) {
+        hasZero = true;
+      } else if (tensor.hasAnnotation(
+          StatusRegisterAnnotation.CarryStatusRegisterAnnotation.class)) {
+        hasCarry = true;
+      } else if (tensor.hasAnnotation(
+          StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class)) {
+        hasOverflow = true;
+      }
+    }
+
+    var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
+        new BuiltInMatcher(List.of(BuiltInTable.SUBSC), List.of(
+            new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
+            new AnyChildMatcher(new AnyReadRegisterFileMatcher())
+        )));
+
+    return !matched.isEmpty()
+        && ((TupleType) ((BuiltInCall) matched.getFirst()).type()).first().equals(ty)
+        && behavior.getNodes(Set.of(IfNode.class, SliceNode.class)).toList().isEmpty()
+        && behavior.getNodes(BuiltInCall.class).toList().size() == 1
+        && noPcAccess(behavior)
+        && hasNegative
+        && hasOverflow
+        && hasZero
+        && hasCarry;
   }
 
   /**

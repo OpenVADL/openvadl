@@ -20,6 +20,7 @@ import static java.util.Objects.requireNonNull;
 import static vadl.error.DiagUtils.throwNotAllowed;
 import static vadl.lcb.codegen.expansion.CompilerInstructionExpansionCodeGenerator.COMPILER_INSTRUCTION;
 import static vadl.lcb.codegen.expansion.CompilerInstructionExpansionCodeGenerator.INSTRUCTION_SYMBOL;
+import static vadl.lcb.codegen.expansion.CompilerInstructionExpansionCodeGenerator.canonicalizeField;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
@@ -381,7 +382,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
    * We need to map them back from {@link RenamedField} to {@link Format.Field}, so the lookup
    * works.
    */
-  private Format.Field canonicalizeField(Format.Field field) {
+  static Format.Field canonicalizeField(Format.Field field) {
     if (field instanceof RenamedField renamedField) {
       // rd_0 drops to rd
       return renamedField.inner();
@@ -695,7 +696,8 @@ class GenerateRawFieldsHandler implements CaseHandler {
     var pseudoInstructionIndex =
         getOperandIndexFromCompilerInstruction(compilerInstruction, field, funcParamNode,
             funcParamNode.parameter().identifier);
-    ctx.ln("%s = instruction.getOperand(%d).getReg();", field.identifier.simpleName(),
+    ctx.ln("%s = instruction.getOperand(%d).getReg();",
+        canonicalizeField(field).identifier.simpleName(),
         pseudoInstructionIndex);
   }
 
@@ -712,7 +714,10 @@ class GenerateRawFieldsHandler implements CaseHandler {
       CNodeWithBaggageContext ctx, InstrCallNode instrCallNode, Format.Field field,
       ConstantNode cn) {
     var value = cn.constant().asVal().intValue();
-    ctx.ln("%s = %s;", field.identifier.simpleName(), value);
+    ctx.ln("%s = %s; // %s",
+        canonicalizeField(field).identifier.simpleName(),
+        value,
+        field.identifier.simpleName());
   }
 
   @Override
@@ -724,8 +729,10 @@ class GenerateRawFieldsHandler implements CaseHandler {
             funcParamNode.parameter().identifier);
     ctx.ln("if(instruction.getOperand(%d).isImm()) {", pseudoInstructionIndex)
         .spacedIn()
-        .ln("%s = instruction.getOperand(%d).getImm();", field.identifier.simpleName(),
-            pseudoInstructionIndex)
+        .ln("%s = instruction.getOperand(%d).getImm(); // %s",
+            canonicalizeField(field).identifier.simpleName(),
+            pseudoInstructionIndex,
+            field.identifier.simpleName())
         .spaceOut()
         .ln("}");
   }
@@ -742,8 +749,10 @@ class GenerateRawFieldsHandler implements CaseHandler {
 
       ctx.ln("if(instruction.getOperand(%d).isImm()) {", pseudoInstructionIndex)
           .spacedIn()
-          .ln("%s = instruction.getOperand(%d).getImm();", field.identifier.simpleName(),
-              pseudoInstructionIndex)
+          .ln("%s = instruction.getOperand(%d).getImm(); // %s",
+              canonicalizeField(field).identifier.simpleName(),
+              pseudoInstructionIndex,
+              field.identifier.simpleName())
           .spaceOut()
           .ln("}");
     }
@@ -762,7 +771,8 @@ class GenerateRawFieldsHandler implements CaseHandler {
         getOperandIndexFromCompilerInstruction(compilerInstruction, field,
             funcParamNode,
             funcParamNode.parameter().identifier);
-    ctx.ln("%s = instruction.getOperand(%d).getImm();", field.identifier.simpleName(),
+    ctx.ln("%s = instruction.getOperand(%d).getImm();",
+        canonicalizeField(field).identifier.simpleName(),
         pseudoInstructionIndex);
   }
 

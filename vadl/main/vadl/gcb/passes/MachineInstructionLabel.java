@@ -40,6 +40,8 @@ public enum MachineInstructionLabel {
   OR,
   ORI,
   SUB,
+  SUB_RR_WITH_STATUS_REGISTER_64, // subtraction (register register) and sets status flags
+  SUB_RR_WITH_STATUS_REGISTER_32, // subtraction (register register) and sets status flags
   MUL,
   SUBB,
   SUBC,
@@ -82,6 +84,12 @@ public enum MachineInstructionLabel {
   BULEQ,
   BULTH,
   BUGTH,
+  BEQ_BY_STATUS_REGISTER,
+  BNEQ_BY_STATUS_REGISTER,
+  BSGEQ_BY_STATUS_REGISTER,
+  BSLEQ_BY_STATUS_REGISTER,
+  BSLTH_BY_STATUS_REGISTER,
+  BSGTH_BY_STATUS_REGISTER,
   /*
   UNCONDITIONAL JUMPS
    */

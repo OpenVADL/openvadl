@@ -14497,7 +14497,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_CC_offsetAsLabel:$offset );
+let InOperandList = ( ins AArch64Base_B_CC_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -14545,7 +14545,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_CS_offsetAsLabel:$offset );
+let InOperandList = ( ins AArch64Base_B_CS_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -14641,7 +14641,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_GE_offsetAsLabel:$offset );
+let InOperandList = ( ins AArch64Base_B_GE_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -14881,7 +14881,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_LT_offsetAsLabel:$offset );
+let InOperandList = ( ins AArch64Base_B_LT_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -14929,7 +14929,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_MI_offsetAsLabel:$offset );
+let InOperandList = ( ins AArch64Base_B_MI_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -15073,7 +15073,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_PL_offsetAsLabel:$offset );
+let InOperandList = ( ins AArch64Base_B_PL_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -15121,7 +15121,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_VC_offsetAsLabel:$offset );
+let InOperandList = ( ins AArch64Base_B_VC_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -15169,7 +15169,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_VS_offsetAsLabel:$offset );
+let InOperandList = ( ins AArch64Base_B_VS_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
