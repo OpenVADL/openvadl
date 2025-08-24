@@ -68,6 +68,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
@@ -82,7 +83,9 @@ import vadl.pass.PassResults;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
+import vadl.types.SIntType;
 import vadl.types.Type;
+import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
@@ -100,6 +103,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
@@ -220,6 +224,22 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_32,
                 Optional.empty()));
+      } else if (findCSEL_EQ(originalGraph, Type.signedInt(32))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.CSEL_EQ_I32,
+                Optional.empty()));
+      } else if (findCSEL_EQ(originalGraph, Type.signedInt(64))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.CSEL_EQ_I64,
+                Optional.empty()));
+      } else if (findCSEL_NEQ(originalGraph, Type.signedInt(32))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.CSEL_EQ_I32,
+                Optional.empty()));
+      } else if (findCSEL_NEQ(originalGraph, Type.signedInt(64))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.CSEL_NEQ_I64,
+                Optional.empty()));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, SUB)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUB, ty));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
@@ -338,6 +358,94 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
 
     var labels = createLabelMap(viam);
     return new Result(labels, flipIsaMatching(labels));
+  }
+
+  private boolean findCSEL_32(Graph originalGraph, Constant constant) {
+    var selectNode = originalGraph.getNodes(SelectNode.class).findFirst();
+    var writes = originalGraph.getNodes(WritesRegisterTensor.class).toList();
+
+    if (writes.size() != 1) {
+      return false;
+    }
+
+    if (writes.stream().anyMatch(x -> !x.hasRegisterFile())) {
+      return false;
+    }
+
+    if (selectNode.isPresent()) {
+      Predicate<Node> checkNode = (node) -> node instanceof ReadsRegisterTensor registerTensor
+          && registerTensor.hasRegisterFile();
+
+      if (checkNode.test(selectNode.get().trueCase())
+          && checkNode.test(selectNode.get().falseCase())
+          && selectNode.get().condition() instanceof BuiltInCall bc
+          && bc.builtIn() == EQU
+          && bc.arguments().get(1) instanceof ConstantNode constantNode
+          && constantNode.constant().equals(constant)) {
+        if (originalGraph.getNodes(ReadsRegisterTensor.class).anyMatch(x -> x.registerTensor()
+            .hasAnnotation(StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class))) {
+
+          return originalGraph.getNodes(TruncateNode.class)
+              .anyMatch(x -> x.type().bitWidth() == Type.signedInt(32).bitWidth());
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private boolean findCSEL_64(Graph originalGraph, Constant constant) {
+    var selectNode = originalGraph.getNodes(SelectNode.class).findFirst();
+    var writes = originalGraph.getNodes(WritesRegisterTensor.class).toList();
+
+    if (writes.size() != 1) {
+      return false;
+    }
+
+    if (writes.stream().anyMatch(x -> !x.hasRegisterFile())) {
+      return false;
+    }
+
+    if (selectNode.isPresent()) {
+      Predicate<Node> checkNode = (node) -> node instanceof ReadsRegisterTensor registerTensor
+          && registerTensor.hasRegisterFile();
+
+      if (checkNode.test(selectNode.get().trueCase())
+          && checkNode.test(selectNode.get().falseCase())
+          && selectNode.get().condition() instanceof BuiltInCall bc
+          && bc.builtIn() == EQU
+          && bc.arguments().get(1) instanceof ConstantNode constantNode
+          && constantNode.constant().equals(constant)) {
+        if (originalGraph.getNodes(ReadsRegisterTensor.class).anyMatch(x -> x.registerTensor()
+            .hasAnnotation(StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class))) {
+
+          return originalGraph.getNodes(TruncateNode.class).toList().isEmpty();
+        }
+      }
+    }
+
+    return false;
+  }
+
+
+  private boolean findCSEL_EQ(Graph originalGraph, SIntType ty) {
+    if (ty.bitWidth() == 32) {
+      return findCSEL_32(originalGraph, Constant.Value.one(DataType.bits(1)));
+    } else if (ty.bitWidth() == 64) {
+      return findCSEL_64(originalGraph, Constant.Value.one(DataType.bits(1)));
+    }
+
+    return false;
+  }
+
+  private boolean findCSEL_NEQ(Graph originalGraph, SIntType ty) {
+    if (ty.bitWidth() == 32) {
+      return findCSEL_32(originalGraph, Constant.Value.zero(DataType.bits(1)));
+    } else if (ty.bitWidth() == 64) {
+      return findCSEL_64(originalGraph, Constant.Value.zero(DataType.bits(1)));
+    }
+
+    return false;
   }
 
   private Optional<BitsType> getType(UninlinedGraph behavior) {

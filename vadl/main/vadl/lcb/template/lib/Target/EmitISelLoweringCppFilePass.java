@@ -97,18 +97,9 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     var framePointer = renderRegister(abi.framePointer().registerFile(), abi.framePointer().addr());
     var stackPointer = renderRegister(abi.stackPointer().registerFile(), abi.stackPointer().addr());
     var absoluteAddressLoadInstruction = abi.absoluteAddressLoad();
-    var labelledMachineInstructions = ensureNonNull(
-        (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
-            IsaMachineInstructionMatchingPass.class),
-        () -> Diagnostic.error("Cannot find semantics of the instructions",
-            specification.location()))
-        .labels();
     var coverageSummary =
         (ISelLoweringOperationActionPass.CoverageSummary) passResults.lastResultOf(
             ISelLoweringOperationActionPass.class);
-    var hasCMove32 = labelledMachineInstructions.containsKey(MachineInstructionLabel.CMOVE_32);
-    var hasCMove64 = labelledMachineInstructions.containsKey(MachineInstructionLabel.CMOVE_64);
-    var conditionalMove = getConditionalMove(hasCMove32, hasCMove64, labelledMachineInstructions);
     var database = new Database(passResults, specification);
     var conditionalValueRange = getValueRangeCompareInstructions(database);
     var stackPointerType =
@@ -133,9 +124,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("hasGlobalAddressLoad", abi.globalAddressLoad().isPresent());
     map.put("localAddressLoadInstruction",
         abi.localAddressLoad().map(x -> x.identifier().simpleName()).orElse(""));
-    map.put("hasCMove32", hasCMove32);
-    map.put("hasCMove64", hasCMove64);
-    map.put("conditionalMove", conditionalMove);
     map.put("addImmediateInstruction", getAddImmediate(database));
     map.put("branchInstructions", getBranchInstructions(database));
     map.put("memoryInstructions", getMemoryInstructions(database));
@@ -176,6 +164,19 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("B_GE", getFirstNameOrEmpty(database.run(
         new Query.Builder().machineInstructionLabel(
                 MachineInstructionLabel.BSGEQ_BY_STATUS_REGISTER)
+            .build())));
+    map.put("CSEL_EQ",
+        getFirstNameOrEmpty(database.run(
+            new Query.Builder().machineInstructionLabel(
+                    stackPointerType == ValueType.I32
+                        ? MachineInstructionLabel.CSEL_EQ_I32 :
+                        MachineInstructionLabel.CSEL_EQ_I64)
+                .build())));
+    map.put("CSEL_NEQ", getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(
+                stackPointerType == ValueType.I32
+                    ? MachineInstructionLabel.CSEL_NEQ_I32 :
+                    MachineInstructionLabel.CSEL_NEQ_I64)
             .build())));
     return map;
   }
@@ -291,24 +292,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
                   instruction.location()));
       return new BranchInstruction(instruction.simpleName(), condCode.name());
     }).toList();
-  }
-
-  @Nullable
-  private Instruction getConditionalMove(boolean hasCMove32,
-                                         boolean hasCMove64,
-                                         Map<MachineInstructionLabel,
-                                             List<Instruction>> labelledMachineInstructions) {
-    if (hasCMove64) {
-      var cmove = labelledMachineInstructions.get(MachineInstructionLabel.CMOVE_32);
-      ensureNonNull(cmove, "must not be null");
-      return ensurePresent(cmove.stream().findFirst(), "At least one element should be present");
-    } else if (hasCMove32) {
-      var cmove = labelledMachineInstructions.get(MachineInstructionLabel.CMOVE_64);
-      ensureNonNull(cmove, "must not be null");
-      return ensurePresent(cmove.stream().findFirst(), "At least one element should be present");
-    }
-
-    return null;
   }
 
   private Map<String, Object> mapLlvmRegisterClass(LlvmRegisterFile registerFile) {

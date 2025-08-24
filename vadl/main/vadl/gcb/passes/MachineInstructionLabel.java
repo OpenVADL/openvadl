@@ -100,8 +100,8 @@ public enum MachineInstructionLabel {
   /*
   CONDITIONAL MOVE
    */
-  CMOVE_32,
-  CMOVE_64;
-
-
+  CSEL_EQ_I32,
+  CSEL_EQ_I64,
+  CSEL_NEQ_I32,
+  CSEL_NEQ_I64
 }

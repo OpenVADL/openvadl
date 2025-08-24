@@ -16,6 +16,7 @@
 
 package vadl.viam.graph;
 
+import vadl.types.DataType;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.dependency.ExpressionNode;
 
