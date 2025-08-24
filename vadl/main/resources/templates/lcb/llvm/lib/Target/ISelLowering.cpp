@@ -46,6 +46,7 @@ void [(${namespace})]TargetLowering::anchor() {}
     setOperationAction(ISD::SELECT, MVT::i64, Custom);
     [/th:block]
     setOperationAction(ISD::SELECT_CC, MVT::[(${stackPointerType})], Expand);
+    setOperationAction(ISD::SETCC, MVT::[(${stackPointerType})], Expand);
     setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
     setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
     for (auto VT : {MVT::i1, MVT::i8, MVT::i16, MVT::i32}) {
@@ -90,6 +91,20 @@ const char *[(${namespace})]TargetLowering::getTargetNodeName(unsigned Opcode) c
     default:
         llvm_unreachable("unknown opcode");
     }
+}
+
+static SDValue lowerSetcc(SDValue Op, SelectionDAG &DAG)
+{
+  Op->dump();
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  SDLoc dl(Op);
+
+  EVT VT = Op.getValueType();
+  SDValue TVal = DAG.getConstant(1, dl, VT);
+  SDValue FVal = DAG.getConstant(0, dl, VT);
+
+  return DAG.getNode(ISD::SELECT_CC, dl, Op->getValueType(0), LHS, RHS, TVal, FVal, Op.getOperand(2));
 }
 
 [#th:block th:if="${mergedCmpAndBranch}"]
@@ -148,6 +163,8 @@ SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG 
         return lowerVASTART(Op, DAG);
     case ISD::VAARG:
         return lowerVAARG(Op, DAG);
+    case ISD::SETCC:
+        return lowerSetcc(Op, DAG);
     [#th:block th:if="${!hasConditionalMove}"]
     case ISD::SELECT:
         return lowerSelect(Op, DAG);
