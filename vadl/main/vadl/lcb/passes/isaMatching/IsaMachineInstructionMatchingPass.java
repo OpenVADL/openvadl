@@ -376,8 +376,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       Predicate<Node> checkNode = (node) -> node instanceof ReadsRegisterTensor registerTensor
           && registerTensor.hasRegisterFile();
 
-      if (checkNode.test(selectNode.get().trueCase()) &&
-          checkNode.test(selectNode.get().falseCase())
+      if (checkNode.test(selectNode.get().trueCase())
+          && checkNode.test(selectNode.get().falseCase())
           && selectNode.get().condition() instanceof BuiltInCall bc
           && bc.builtIn() == EQU
           && bc.arguments().get(1) instanceof ConstantNode constantNode
@@ -410,8 +410,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       Predicate<Node> checkNode = (node) -> node instanceof ReadsRegisterTensor registerTensor
           && registerTensor.hasRegisterFile();
 
-      if (checkNode.test(selectNode.get().trueCase()) &&
-          checkNode.test(selectNode.get().falseCase())
+      if (checkNode.test(selectNode.get().trueCase())
+          && checkNode.test(selectNode.get().falseCase())
           && selectNode.get().condition() instanceof BuiltInCall bc
           && bc.builtIn() == EQU
           && bc.arguments().get(1) instanceof ConstantNode constantNode
@@ -428,20 +428,20 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   }
 
 
-  private boolean findCSEL_EQ(Graph originalGraph, SIntType sIntType) {
-    if (sIntType.bitWidth() == 32) {
+  private boolean findCSEL_EQ(Graph originalGraph, SIntType ty) {
+    if (ty.bitWidth() == 32) {
       return findCSEL_32(originalGraph, Constant.Value.one(DataType.bits(1)));
-    } else if (sIntType.bitWidth() == 64) {
+    } else if (ty.bitWidth() == 64) {
       return findCSEL_64(originalGraph, Constant.Value.one(DataType.bits(1)));
     }
 
     return false;
   }
 
-  private boolean findCSEL_NEQ(Graph originalGraph, SIntType sIntType) {
-    if (sIntType.bitWidth() == 32) {
+  private boolean findCSEL_NEQ(Graph originalGraph, SIntType ty) {
+    if (ty.bitWidth() == 32) {
       return findCSEL_32(originalGraph, Constant.Value.zero(DataType.bits(1)));
-    } else if (sIntType.bitWidth() == 64) {
+    } else if (ty.bitWidth() == 64) {
       return findCSEL_64(originalGraph, Constant.Value.zero(DataType.bits(1)));
     }
 
