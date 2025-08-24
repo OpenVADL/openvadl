@@ -177,6 +177,8 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         new Query.Builder().machineInstructionLabel(
                 MachineInstructionLabel.BSGEQ_BY_STATUS_REGISTER)
             .build())));
+    map.put("CSEL_EQ", "CSELEQX");
+    map.put("CSEL_NEQ", "CSELNEX");
     return map;
   }
 

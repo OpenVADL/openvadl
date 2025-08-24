@@ -45,7 +45,6 @@ void [(${namespace})]TargetLowering::anchor() {}
     [#th:block th:if="${!hasCMove64 && stackPointerBitWidth == 64}"]
     setOperationAction(ISD::SELECT, MVT::i64, Custom);
     [/th:block]
-    setOperationAction(ISD::SELECT_CC, MVT::[(${stackPointerType})], Expand);
     setOperationAction(ISD::SETCC, MVT::[(${stackPointerType})], Expand);
     setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
     setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
@@ -68,6 +67,10 @@ void [(${namespace})]TargetLowering::anchor() {}
     [#th:block th:if="${mergedCmpAndBranch}"]
     setOperationAction(ISD::BRCOND, MVT::Other, Expand);
     setOperationAction(ISD::BR_CC, MVT::[(${stackPointerType})], Custom);
+    setOperationAction(ISD::SELECT_CC, MVT::[(${stackPointerType})], Custom);
+    [/th:block]
+    [#th:block th:if="${!mergedCmpAndBranch}"]
+    setOperationAction(ISD::SELECT_CC, MVT::[(${stackPointerType})], Expand);
     [/th:block]
 
     setBooleanContents(ZeroOrOneBooleanContent);
@@ -116,7 +119,7 @@ static SDValue lowerBR_CC(SDValue Op, SelectionDAG &DAG) {
    SDValue Dest = Op.getOperand(4);
    SDLoc dl(Op);
 
-   auto Sub = DAG.getMachineNode([(${namespace})]::[(${SUBS})], dl, { MVT::i64, MVT::Other },  {LHS, RHS, Chain});
+   auto Sub = DAG.getMachineNode([(${namespace})]::[(${SUBS})], dl, { MVT::[(${stackPointerType})], MVT::Other },  {LHS, RHS, Chain});
    SDValue ConditionFlag = SDValue(Sub, 1);
 
    switch(CC) {
@@ -137,6 +140,32 @@ static SDValue lowerBR_CC(SDValue Op, SelectionDAG &DAG) {
     break;
     case ISD::CondCode::SETGE:
       return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_GE})], dl, MVT::Other, Dest, ConditionFlag), 0);
+    break;
+    default:
+      llvm_unreachable("unimplemented operand");
+   }
+}
+
+static SDValue lowerSelectcc(SDValue Op, SelectionDAG &DAG)
+{
+  Op->dump();
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  auto TVal = Op.getOperand(2);
+  auto FVal = Op.getOperand(3);
+
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
+  SDLoc dl(Op);
+
+  auto Sub = DAG.getMachineNode([(${namespace})]::[(${SUBS})], dl, { MVT::[(${stackPointerType})], MVT::Other },  {LHS, RHS});
+  SDValue ConditionFlag = SDValue(Sub, 1);
+
+   switch(CC) {
+    case ISD::CondCode::SETEQ:
+      return SDValue(DAG.getMachineNode([(${namespace})]::[(${CSEL_EQ})], dl, MVT::[(${stackPointerType})], TVal, FVal, ConditionFlag ), 0);
+    break;
+    case ISD::CondCode::SETNE:
+      return SDValue(DAG.getMachineNode([(${namespace})]::[(${CSEL_NEQ})], dl, MVT::[(${stackPointerType})], TVal, FVal, ConditionFlag ), 0);
     break;
     default:
       llvm_unreachable("unimplemented operand");
@@ -170,6 +199,8 @@ SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG 
         return lowerSelect(Op, DAG);
     [/th:block]
     [#th:block th:if="${mergedCmpAndBranch}"]
+    case ISD::SELECT_CC:
+        return lowerSelectcc(Op, DAG);
     case ISD::BR_CC:
         return lowerBR_CC(Op, DAG);
     [/th:block]
