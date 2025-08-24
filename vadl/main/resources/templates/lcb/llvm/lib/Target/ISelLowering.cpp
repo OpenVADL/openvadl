@@ -40,7 +40,6 @@ void [(${namespace})]TargetLowering::anchor() {}
     setOperationAction(ISD::VACOPY, MVT::Other, Expand);
     setOperationAction(ISD::VAEND, MVT::Other, Expand);
     setOperationAction(ISD::SELECT, MVT::[(${stackPointerType})], Custom);
-    setOperationAction(ISD::SETCC, MVT::[(${stackPointerType})], Expand);
     setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
     setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
     for (auto VT : {MVT::i1, MVT::i8, MVT::i16, MVT::i32}) {
@@ -63,6 +62,7 @@ void [(${namespace})]TargetLowering::anchor() {}
     setOperationAction(ISD::BRCOND, MVT::Other, Expand);
     setOperationAction(ISD::BR_CC, MVT::[(${stackPointerType})], Custom);
     setOperationAction(ISD::SELECT_CC, MVT::[(${stackPointerType})], Custom);
+    setOperationAction(ISD::SETCC, MVT::[(${stackPointerType})], Expand);
     [/th:block]
     [#th:block th:if="${!mergedCmpAndBranch}"]
     setOperationAction(ISD::SELECT_CC, MVT::[(${stackPointerType})], Expand);
