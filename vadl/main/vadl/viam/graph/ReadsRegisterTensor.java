@@ -16,9 +16,14 @@
 
 package vadl.viam.graph;
 
+import vadl.types.DataType;
+
 /**
  * Interface to indicate that the implementing class reads from a register file.
  */
 public interface ReadsRegisterTensor extends HasRegisterTensor {
-
+  /**
+   * Get the type of the node.
+   */
+  DataType type();
 }

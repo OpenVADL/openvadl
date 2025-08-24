@@ -97,12 +97,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     var framePointer = renderRegister(abi.framePointer().registerFile(), abi.framePointer().addr());
     var stackPointer = renderRegister(abi.stackPointer().registerFile(), abi.stackPointer().addr());
     var absoluteAddressLoadInstruction = abi.absoluteAddressLoad();
-    var labelledMachineInstructions = ensureNonNull(
-        (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
-            IsaMachineInstructionMatchingPass.class),
-        () -> Diagnostic.error("Cannot find semantics of the instructions",
-            specification.location()))
-        .labels();
     var coverageSummary =
         (ISelLoweringOperationActionPass.CoverageSummary) passResults.lastResultOf(
             ISelLoweringOperationActionPass.class);
@@ -171,8 +165,19 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         new Query.Builder().machineInstructionLabel(
                 MachineInstructionLabel.BSGEQ_BY_STATUS_REGISTER)
             .build())));
-    map.put("CSEL_EQ", "CSELEQX");
-    map.put("CSEL_NEQ", "CSELNEX");
+    map.put("CSEL_EQ",
+        getFirstNameOrEmpty(database.run(
+            new Query.Builder().machineInstructionLabel(
+                    stackPointerType == ValueType.I32
+                        ? MachineInstructionLabel.CSEL_EQ_I32 :
+                        MachineInstructionLabel.CSEL_EQ_I64)
+                .build())));
+    map.put("CSEL_NEQ", getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(
+                stackPointerType == ValueType.I32
+                    ? MachineInstructionLabel.CSEL_NEQ_I32 :
+                    MachineInstructionLabel.CSEL_NEQ_I64)
+            .build())));
     return map;
   }
 
@@ -287,24 +292,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
                   instruction.location()));
       return new BranchInstruction(instruction.simpleName(), condCode.name());
     }).toList();
-  }
-
-  @Nullable
-  private Instruction getConditionalMove(boolean hasCMove32,
-                                         boolean hasCMove64,
-                                         Map<MachineInstructionLabel,
-                                             List<Instruction>> labelledMachineInstructions) {
-    if (hasCMove64) {
-      var cmove = labelledMachineInstructions.get(MachineInstructionLabel.CMOVE_32);
-      ensureNonNull(cmove, "must not be null");
-      return ensurePresent(cmove.stream().findFirst(), "At least one element should be present");
-    } else if (hasCMove32) {
-      var cmove = labelledMachineInstructions.get(MachineInstructionLabel.CMOVE_64);
-      ensureNonNull(cmove, "must not be null");
-      return ensurePresent(cmove.stream().findFirst(), "At least one element should be present");
-    }
-
-    return null;
   }
 
   private Map<String, Object> mapLlvmRegisterClass(LlvmRegisterFile registerFile) {
