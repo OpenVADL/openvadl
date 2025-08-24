@@ -39,12 +39,7 @@ void [(${namespace})]TargetLowering::anchor() {}
     setOperationAction(ISD::VAARG, MVT::Other, Custom);
     setOperationAction(ISD::VACOPY, MVT::Other, Expand);
     setOperationAction(ISD::VAEND, MVT::Other, Expand);
-    [#th:block th:if="${!hasCMove32 && stackPointerBitWidth == 32}"]
-    setOperationAction(ISD::SELECT, MVT::i32, Custom);
-    [/th:block]
-    [#th:block th:if="${!hasCMove64 && stackPointerBitWidth == 64}"]
-    setOperationAction(ISD::SELECT, MVT::i64, Custom);
-    [/th:block]
+    setOperationAction(ISD::SELECT, MVT::[(${stackPointerType})], Custom);
     setOperationAction(ISD::SETCC, MVT::[(${stackPointerType})], Expand);
     setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
     setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
@@ -172,6 +167,20 @@ static SDValue lowerSelectcc(SDValue Op, SelectionDAG &DAG)
    }
 }
 
+static SDValue lowerSelect2(SDValue Op, SelectionDAG &DAG)
+{
+  Op->dump();
+  SDValue Cond = Op.getOperand(0);
+  SDValue LHS = Op.getOperand(1);
+  SDValue RHS = Op.getOperand(2);
+  SDLoc dl(Op);
+
+  auto Sub = DAG.getMachineNode([(${namespace})]::[(${SUBS})], dl, { MVT::[(${stackPointerType})], MVT::Other },  {Cond, Cond});
+  SDValue ConditionFlag = SDValue(Sub, 1);
+
+  return SDValue(DAG.getMachineNode([(${namespace})]::[(${CSEL_EQ})], dl, MVT::[(${stackPointerType})], LHS, RHS, ConditionFlag), 0);
+}
+
 [/th:block]
 
 SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
@@ -194,16 +203,19 @@ SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG 
         return lowerVAARG(Op, DAG);
     case ISD::SETCC:
         return lowerSetcc(Op, DAG);
-    [#th:block th:if="${!hasConditionalMove}"]
-    case ISD::SELECT:
-        return lowerSelect(Op, DAG);
-    [/th:block]
     [#th:block th:if="${mergedCmpAndBranch}"]
     case ISD::SELECT_CC:
         return lowerSelectcc(Op, DAG);
     case ISD::BR_CC:
         return lowerBR_CC(Op, DAG);
+    case ISD::SELECT:
+        return lowerSelect2(Op, DAG);
     [/th:block]
+    [#th:block th:if="${!mergedCmpAndBranch}"]
+    case ISD::SELECT:
+      return lowerSelect(Op, DAG);
+    [/th:block]
+
     default : llvm_unreachable("unimplemented operand");
     }
 }

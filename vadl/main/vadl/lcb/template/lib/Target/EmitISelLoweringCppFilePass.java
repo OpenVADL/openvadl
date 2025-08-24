@@ -106,9 +106,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     var coverageSummary =
         (ISelLoweringOperationActionPass.CoverageSummary) passResults.lastResultOf(
             ISelLoweringOperationActionPass.class);
-    var hasCMove32 = labelledMachineInstructions.containsKey(MachineInstructionLabel.CMOVE_32);
-    var hasCMove64 = labelledMachineInstructions.containsKey(MachineInstructionLabel.CMOVE_64);
-    var conditionalMove = getConditionalMove(hasCMove32, hasCMove64, labelledMachineInstructions);
     var database = new Database(passResults, specification);
     var conditionalValueRange = getValueRangeCompareInstructions(database);
     var stackPointerType =
@@ -133,9 +130,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("hasGlobalAddressLoad", abi.globalAddressLoad().isPresent());
     map.put("localAddressLoadInstruction",
         abi.localAddressLoad().map(x -> x.identifier().simpleName()).orElse(""));
-    map.put("hasCMove32", hasCMove32);
-    map.put("hasCMove64", hasCMove64);
-    map.put("conditionalMove", conditionalMove);
     map.put("addImmediateInstruction", getAddImmediate(database));
     map.put("branchInstructions", getBranchInstructions(database));
     map.put("memoryInstructions", getMemoryInstructions(database));
