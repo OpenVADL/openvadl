@@ -73,7 +73,7 @@ application binary interface ABI for AArch64Temp = {
    frame pointer = A_FP
 
    special return instruction = TEMP_RET // the normal RET is an indirect jump
-   special call instruction = TEMP_CALL
+   special call instruction = BL
    special local address load instruction = TEMP_LA
    special absolute address load instruction = TEMP_LA
 

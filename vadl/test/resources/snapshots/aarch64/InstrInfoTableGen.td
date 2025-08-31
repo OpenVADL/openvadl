@@ -90,6 +90,7 @@ def ADJCALLSTACKUP : Instruction
     let Uses = [ S31 ]; // stack pointer
 }
 
+
 def TEMP_RET : Instruction
 {
     let Namespace = "processornamevalue";
@@ -108,32 +109,8 @@ def TEMP_RET : Instruction
     let Uses = [];
 }
 
-/*
- * PSEUDO_CALL is a pseudo instruction used to represent the
- * 'target_call', which marks a function call.
- * It will be later expanded into the defined calling sequence during code emission.
- */
-def TEMP_CALL : Instruction
-{
-    let Namespace = "processornamevalue";
-    let InOperandList = (ins bare_symbol:$addr);
-    let OutOperandList = (outs);
-    let Pattern = [];
-    let isTerminator  = 0;
-    let isBranch      = 0;
-    let isCall        = 1;
-    let isReturn      = 0;
-    let isPseudo      = 1;
-    let isCodeGenOnly = 1;
-    let mayLoad       = 0;
-    let mayStore      = 0;
-    let Defs = [ S30 ];
-    let Uses = [];
-}
 
-/* Match the call sequence for global and external symbols */
-def : Pat<(target_call tglobaladdr:$func), (TEMP_CALL tglobaladdr:$func)>;
-def : Pat<(target_call texternalsym:$func), (TEMP_CALL texternalsym:$func)>;
+
 
 def SDT_processornamevalueSelectCC     : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
                                          SDTCisSameAs<0, 4>,
@@ -50656,6 +50633,34 @@ let Defs = [  ];
 
 
 
+def TEMP_CALL : Instruction
+{
+let Namespace = "processorNameValue";
+
+let OutOperandList = ( outs  );
+let InOperandList = ( ins  );
+
+let isTerminator  = 0;
+let isBranch      = 0;
+let isCall        = 0;
+let isReturn      = 0;
+let isPseudo      = 1;
+let isCodeGenOnly = 0;
+let mayLoad       = 0;
+let mayStore      = 0;
+let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+
+
 def TEMP_LA : Instruction
 {
 let Namespace = "processorNameValue";
@@ -51589,3 +51594,12 @@ def : Pat<(udiv X:$rn, X:$rm),
 
 def : Pat<(mulhu X:$rn, X:$rm),
         (UMULH X:$rn, X:$rm)>;
+
+
+
+
+
+
+/* Match the call sequence for global and external symbols */
+def : Pat<(target_call tglobaladdr:$func), (BL tglobaladdr:$func)>;
+def : Pat<(target_call texternalsym:$func), (BL texternalsym:$func)>;

@@ -90,6 +90,7 @@ def ADJCALLSTACKUP : Instruction
     let Uses = [ [(${stackPointerRegister})] ]; // stack pointer
 }
 
+[#th:block th:if="${isReturnInstructionPseudo}"]
 def [(${returnInstruction})] : Instruction
 {
     let Namespace = "[(${namespace})]";
@@ -107,7 +108,9 @@ def [(${returnInstruction})] : Instruction
     let Defs = [];
     let Uses = [];
 }
+[/th:block]
 
+[#th:block th:if="${isCallInstructionPseudo}"]
 /*
  * PSEUDO_CALL is a pseudo instruction used to represent the
  * 'target_call', which marks a function call.
@@ -130,10 +133,7 @@ def [(${callInstruction})] : Instruction
     let Defs = [ [(${returnAddress})] ];
     let Uses = [];
 }
-
-/* Match the call sequence for global and external symbols */
-def : Pat<(target_call tglobaladdr:$func), ([(${callInstruction})] tglobaladdr:$func)>;
-def : Pat<(target_call texternalsym:$func), ([(${callInstruction})] texternalsym:$func)>;
+[/th:block]
 
 def SDT_[(${namespace})]SelectCC     : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
                                          SDTCisSameAs<0, 4>,
@@ -239,3 +239,7 @@ def : Pat<([(${stackPointerType})] AddrFI:$rs1),
 [# th:if="${lga != ''}" ]
 def : Pat<(iPTR (vadl_lga tglobaladdr:$in)), ([(${lga})] tglobaladdr:$in)>;
 [/]
+
+/* Match the call sequence for global and external symbols */
+def : Pat<(target_call tglobaladdr:$func), ([(${callInstruction})] tglobaladdr:$func)>;
+def : Pat<(target_call texternalsym:$func), ([(${callInstruction})] texternalsym:$func)>;

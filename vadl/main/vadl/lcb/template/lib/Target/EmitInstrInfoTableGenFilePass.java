@@ -113,12 +113,6 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
     var renderedTableGenMachineRecords = tableGenMachineRecords
         .stream()
-        .filter(record -> {
-          // Return and Call have special entries in the tableGen file
-          // that's why we skip it.
-          return !(record.instruction() == abi.callSequence()
-              || record.instruction() == abi.returnSequence());
-        })
         .map(TableGenInstructionRenderer::lower)
         .toList();
 
@@ -190,7 +184,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     map.put("returnInstruction", abi.returnSequence().identifier().simpleName());
     map.put("callInstruction", abi.callSequence().identifier().simpleName());
     map.put("isCallInstructionPseudo", abi.callSequence() instanceof PseudoInstruction ? 1 : 0);
-    map.put("isReturnInstructionPseudo", abi.callSequence() instanceof PseudoInstruction ? 1 : 0);
+    map.put("isReturnInstructionPseudo", abi.returnSequence() instanceof PseudoInstruction ? 1 : 0);
     map.put("lga", abi.globalAddressLoad().map(x -> x.identifier().simpleName()).orElse(""));
     return map;
   }
