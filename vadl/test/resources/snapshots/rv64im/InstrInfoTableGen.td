@@ -90,6 +90,7 @@ def ADJCALLSTACKUP : Instruction
     let Uses = [ X2 ]; // stack pointer
 }
 
+
 def RET : Instruction
 {
     let Namespace = "processornamevalue";
@@ -107,6 +108,8 @@ def RET : Instruction
     let Defs = [];
     let Uses = [];
 }
+
+
 
 /*
  * PSEUDO_CALL is a pseudo instruction used to represent the
@@ -131,9 +134,6 @@ def CALL : Instruction
     let Uses = [];
 }
 
-/* Match the call sequence for global and external symbols */
-def : Pat<(target_call tglobaladdr:$func), (CALL tglobaladdr:$func)>;
-def : Pat<(target_call texternalsym:$func), (CALL texternalsym:$func)>;
 
 def SDT_processornamevalueSelectCC     : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
                                          SDTCisSameAs<0, 4>,
@@ -5164,3 +5164,8 @@ def : Pat<(br bb:$offset),
 
 
 def : Pat<(iPTR (vadl_lga tglobaladdr:$in)), (LGA_64 tglobaladdr:$in)>;
+
+
+/* Match the call sequence for global and external symbols */
+def : Pat<(target_call tglobaladdr:$func), (CALL tglobaladdr:$func)>;
+def : Pat<(target_call texternalsym:$func), (CALL texternalsym:$func)>;
