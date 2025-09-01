@@ -19,11 +19,11 @@ package vadl.viam.passes;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.gcb.annotations.DefineOperandAnnotation;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
+import vadl.viam.annotations.DefineOperandAnnotation;
 import vadl.viam.graph.dependency.DefinedImmediateSideEffectNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 

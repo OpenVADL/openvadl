@@ -38,7 +38,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
-import vadl.gcb.annotations.DefineOperandAnnotation;
 import vadl.gcb.annotations.OnlyNegativeNumbersAnnotation;
 import vadl.gcb.annotations.SkipPruningAnnotation;
 import vadl.gcb.annotations.StatusRegisterAnnotation;
@@ -57,6 +56,7 @@ import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
+import vadl.viam.annotations.DefineOperandAnnotation;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.annotations.InstructionUndefinedAnno;
 
