@@ -21,6 +21,7 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.util.ArrayList;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
+import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.error.Diagnostic;
 import vadl.javaannotations.DispatchFor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;

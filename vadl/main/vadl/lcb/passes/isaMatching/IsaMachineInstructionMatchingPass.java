@@ -101,6 +101,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SelectNode;
@@ -697,7 +698,9 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     var statusRegisters = behavior.getNodes(ReadsRegisterTensor.class)
         .filter(x -> x.registerTensor().hasAnnotation(StatusRegisterAnnotation.class)).toList();
 
-    return base && statusRegisters.isEmpty();
+    return base
+        && statusRegisters.isEmpty()
+        && behavior.getNodes(ProcCallNode.class).toList().isEmpty();
   }
 
   private boolean findBranchWithConditionalWithStatusRegisters(UninlinedGraph behavior,

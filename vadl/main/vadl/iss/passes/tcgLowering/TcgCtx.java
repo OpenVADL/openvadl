@@ -35,6 +35,7 @@ import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ScheduledNode;
+import vadl.viam.graph.dependency.DefinedImmediateSideEffectNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ProcCallNode;
@@ -180,6 +181,10 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
       throw new IllegalStateException("ProcCallNode should not exist here.");
     }
 
+    @Handler
+    List<TcgVRefNode> handle(DefinedImmediateSideEffectNode toHandle) {
+      throw new IllegalStateException("DefinedImmediateSideEffectNode should not exist");
+    }
 
     private TcgVRefNode toNode(TcgV tcgV) {
       return toNode(tcgV, new NodeList<>());

@@ -122,6 +122,7 @@ import vadl.viam.passes.DuplicateWriteDetectionPass;
 import vadl.viam.passes.HardcodeLGALabelPass;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 import vadl.viam.passes.NormalizeFieldsToFieldAccessFunctionsPass;
+import vadl.viam.passes.OverwriteInputOperandsPass;
 import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
@@ -174,6 +175,7 @@ public class PassOrders {
     order.add(new ViamVerificationPass(configuration));
 
     order.add(new DetectRegisterIndicesPass(configuration));
+    order.add(new OverwriteInputOperandsPass(configuration));
     order.add(new NormalizeFieldsToFieldAccessFunctionsPass(configuration));
     order.add(new RenamingConflictingRegistersPass(configuration));
     order.add(new SnapshotInstructionBehaviorPass(configuration));
@@ -448,6 +450,7 @@ public class PassOrders {
     order.skip(FieldAccessInlinerPass.class);
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
     order.skip(RenamingConflictingRegistersPass.class);
+    order.skip(OverwriteInputOperandsPass.class);
 
     // iss function passes
     order
@@ -592,6 +595,7 @@ public class PassOrders {
 
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
     order.skip(RenamingConflictingRegistersPass.class);
+    order.skip(OverwriteInputOperandsPass.class);
 
     // TODO: Remove once frontend creates it
     order.add(new DummyMiaPass(config));

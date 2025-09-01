@@ -1776,6 +1776,7 @@ instruction set architecture AArch64Base = {
     }
 
   model HaltInstr (i: InstrWithFunct): IsaDefs = {
+    [overwrite operand : imm16]
     instruction $i.id: SuperVisorCallFormat = {}
     $ExceptionCallEncAsm ($i)
     }
@@ -1802,6 +1803,7 @@ instruction set architecture AArch64Base = {
     }
 
   model BTIInstr (i: InstrNoFunct): IsaDefs = {
+    [overwrite operand : bti]
     instruction $i.id: BTIFormat = {}
     encoding $i.id = {op = 0b1101'0101'0000'0011, opc = $i.opcode}
     assembly $i.id = ($i.mnemo, btiOp2(bti))
@@ -1817,11 +1819,11 @@ instruction set architecture AArch64Base = {
   $MsrRegInstr           ((MSR    ; "msr"   ; 0b1101'0101'0001                             ))
   $MrsRegInstr           ((MRS    ; "mrs"   ; 0b1101'0101'0011                             ))
   $ExceptionCallInstr    ((BRK    ; "brk"   ; 0b1101'0100'0010'0000   ; SoftwareBreakpoint ))
-  // $ExceptionCallInstr    ((SVC    ; "svc"   ; 0b1101'0100'0000'0001   ; SupervisorCall     ))
-  // $ExceptionReturnInstr  ((ERET   ; "eret"  ; 0b1101'0110'1001'1111                        ))
-  // $HaltInstr             ((HLT    ; "hlt"   ; 0b1101'0100'0100'0000                        ))
+  $ExceptionCallInstr    ((SVC    ; "svc"   ; 0b1101'0100'0000'0001   ; SupervisorCall     ))
+  $ExceptionReturnInstr  ((ERET   ; "eret"  ; 0b1101'0110'1001'1111                        ))
+  $HaltInstr             ((HLT    ; "hlt"   ; 0b1101'0100'0100'0000                        ))
   $NopInstr              ((NOP    ; "nop"   ; 0b0010'0000'0001'1111                        ))
   $NopInstr              ((YIELD  ; "yield" ; 0b0010'0000'0011'1111                        ))
-  // $BTIInstr              ((BTI    ; "bti"   ; 0b0010'0100'''01'1111                        ))
-  // $UndefinedInstr        ((UDF    ; "udf"   ; 0b0000'0000'0000'0000                        ))
+  $BTIInstr              ((BTI    ; "bti"   ; 0b0010'0100'''01'1111                        ))
+  $UndefinedInstr        ((UDF    ; "udf"   ; 0b0000'0000'0000'0000                        ))
 }
