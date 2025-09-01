@@ -46,6 +46,7 @@ import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.utils.ImmediatePredicateFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.types.BuiltInTable;
@@ -283,7 +284,23 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         .map(Definition::simpleName);
   }
 
-  record BranchInstruction(String name, /* size of the immediate */ int bitWidth) implements
+  record BranchInstruction(String name,
+                           int bitWidth, /* size of the immediate */
+                           String predicateMethod) implements
+      Renderable {
+
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "name", name,
+          "bitWidth", bitWidth,
+          "predicateMethod", predicateMethod
+      );
+    }
+  }
+
+  record PseudoBranchInstruction(String name,
+                                 int bitWidth /* size of the immediate */) implements
       Renderable {
 
     @Override
@@ -370,7 +387,9 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     map.put("additionImm", additionRI.simpleName());
     map.put("addition", additionRR.simpleName());
     map.put("additionRegisterFile", additionRegisterFile.simpleName());
-    map.put("branchInstructions", getBranchInstructions(specification, passResults, fieldUsages));
+    map.put("machineBranchInstructions", machineBranchInstructions(specification, passResults));
+    map.put("pseudoBranchInstructions",
+        pseudoBranchInstructions(specification, passResults, fieldUsages));
     map.put("instructionSizes", instructionSizes(specification));
     map.put("jumpInstruction", jumpInstructionName);
     map.put("beq",
@@ -415,14 +434,24 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         .toList();
   }
 
-  private List<BranchInstruction> getBranchInstructions(
+  private List<BranchInstruction> machineBranchInstructions(
       Specification specification,
-      PassResults passResults,
-      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages) {
+      PassResults passResults) {
     var branchInstructions = new ArrayList<BranchInstruction>();
     var database = new Database(passResults, specification);
 
-    machineInstructions(database, branchInstructions);
+    machineInstructions(passResults, database, branchInstructions);
+
+    return branchInstructions;
+  }
+
+  private List<PseudoBranchInstruction> pseudoBranchInstructions(
+      Specification specification,
+      PassResults passResults,
+      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages) {
+    var branchInstructions = new ArrayList<PseudoBranchInstruction>();
+    var database = new Database(passResults, specification);
+
     pseudoInstructions(fieldUsages, database, branchInstructions);
 
     return branchInstructions;
@@ -431,7 +460,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   private static void pseudoInstructions(
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Database database,
-      List<BranchInstruction> branchInstructions) {
+      List<PseudoBranchInstruction> branchInstructions) {
     var result = database.run(
         new Query.Builder().pseudoInstructionLabel(PseudoInstructionLabel.J).build());
 
@@ -447,14 +476,17 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         var immediate = unwrap(immediates.stream().findFirst());
         int bitWidth = immediate.size();
         branchInstructions.add(
-            new BranchInstruction(pseudoInstruction.identifier.simpleName(), bitWidth));
+            new PseudoBranchInstruction(pseudoInstruction.identifier.simpleName(), bitWidth));
       }
     }
   }
 
   private static void machineInstructions(
+      PassResults passResults,
       Database database,
       List<BranchInstruction> branchInstructions) {
+    var lookup =
+        ImmediatePredicateFunctionProvider.predicateFunctionsByFieldAccess(passResults);
     var result = database.run(new Query.Builder().machineInstructionLabels(List.of(
         MachineInstructionLabel.J,
         MachineInstructionLabel.BEQ,
@@ -490,9 +522,14 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
           () -> Diagnostic.error("We only support branch instructions with one label.",
               machineInstruction.location()));
       var immediate = unwrap(immediates.stream().findFirst());
+      var function = ensureNonNull(lookup.get(immediate.fieldAccess()),
+          () -> Diagnostic.error("Cannot find field access' predicate", immediate.location()));
+      var functionName = function.header().functionName().lower();
       int bitWidth = immediate.fieldAccess().type().asDataType().bitWidth();
       branchInstructions.add(
-          new BranchInstruction(machineInstruction.identifier.simpleName(), bitWidth));
+          new BranchInstruction(machineInstruction.identifier.simpleName(),
+              bitWidth,
+              functionName));
     }
   }
 
