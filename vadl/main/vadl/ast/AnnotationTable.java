@@ -20,10 +20,12 @@ package vadl.ast;
 import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
+import static vadl.viam.ViamError.ensureNonNull;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,6 +37,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import vadl.error.Diagnostic;
+import vadl.gcb.annotations.DefineOperandAnnotation;
 import vadl.gcb.annotations.OnlyNegativeNumbersAnnotation;
 import vadl.gcb.annotations.SkipPruningAnnotation;
 import vadl.gcb.annotations.StatusRegisterAnnotation;
@@ -46,6 +50,7 @@ import vadl.utils.functionInterfaces.TriConsumer;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Constant;
 import vadl.viam.Encoding;
+import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.MemoryRegion;
 import vadl.viam.RegisterTensor;
@@ -240,6 +245,25 @@ public class AnnotationTable {
             def.addAnnotation(new OnlyNegativeNumbersAnnotation());
           }
         }).build();
+
+    annotationOn(InstructionDefinition.class, "overwrite operand", DefinitionRefAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          var instruction = (Instruction) def;
+          var fields = Arrays.stream(instruction.format().fields())
+              .collect(Collectors.toMap(vadl.viam.Definition::simpleName, x -> x));
+          var fieldNames =
+              annotation.definition.values.stream().map(x -> ((Identifier) x).name).toList();
+
+          var result = new ArrayList<Format.Field>();
+          for (var declaredOperand : fieldNames) {
+            var v = ensureNonNull(fields.get(declaredOperand),
+                () -> Diagnostic.error("Cannot find field", annotation.location()));
+            result.add(v);
+          }
+
+          def.addAnnotation(new DefineOperandAnnotation(result));
+        }).build();
+
   }
 
   /**

@@ -1768,6 +1768,7 @@ instruction set architecture AArch64Base = {
     }
 
   model ExceptionCallInstr (i: InstrWithFunct): IsaDefs = {
+    [overwrite operand : imm16]
     instruction $i.id: SuperVisorCallFormat = {
       raise GeneralException (ExceptionClass::$i.funct, 0, PC.next, 0)
       }
@@ -1815,7 +1816,7 @@ instruction set architecture AArch64Base = {
 
   $MsrRegInstr           ((MSR    ; "msr"   ; 0b1101'0101'0001                             ))
   $MrsRegInstr           ((MRS    ; "mrs"   ; 0b1101'0101'0011                             ))
-  // $ExceptionCallInstr    ((BRK    ; "brk"   ; 0b1101'0100'0010'0000   ; SoftwareBreakpoint ))
+  $ExceptionCallInstr    ((BRK    ; "brk"   ; 0b1101'0100'0010'0000   ; SoftwareBreakpoint ))
   // $ExceptionCallInstr    ((SVC    ; "svc"   ; 0b1101'0100'0000'0001   ; SupervisorCall     ))
   // $ExceptionReturnInstr  ((ERET   ; "eret"  ; 0b1101'0110'1001'1111                        ))
   // $HaltInstr             ((HLT    ; "hlt"   ; 0b1101'0100'0100'0000                        ))
