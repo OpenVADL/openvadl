@@ -37,8 +37,8 @@ public class DefinedImmediateSideEffectNode extends SideEffectNode {
 
   @Override
   public Node copy() {
-    return new DefinedImmediateSideEffectNode(condition != null ?
-        condition.copy() : null,
+    return new DefinedImmediateSideEffectNode(condition != null
+        ? condition.copy() : null,
         value.copy());
   }
 
@@ -58,6 +58,7 @@ public class DefinedImmediateSideEffectNode extends SideEffectNode {
     collection.add(value);
   }
 
+  @Override
   public void applyOnInputsUnsafe(
       vadl.viam.graph.GraphVisitor.Applier<vadl.viam.graph.Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
