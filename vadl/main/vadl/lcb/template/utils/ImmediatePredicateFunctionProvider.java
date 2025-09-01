@@ -16,11 +16,13 @@
 
 package vadl.lcb.template.utils;
 
+import java.util.IdentityHashMap;
 import java.util.Map;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.pass.PassResults;
+import vadl.viam.Format;
 
 /**
  * Utility class for predicates.
@@ -33,5 +35,20 @@ public class ImmediatePredicateFunctionProvider {
       PassResults passResults) {
     return ((CreateFunctionsFromImmediatesPass.Output)
         passResults.lastResultOf(CreateFunctionsFromImmediatesPass.class)).predicates();
+  }
+
+  /**
+   * Get the predicate functions by field access.
+   */
+  public static Map<Format.FieldAccess, GcbCppFunctionWithBody> predicateFunctionsByFieldAccess(
+      PassResults passResults) {
+    var result = new IdentityHashMap<Format.FieldAccess, GcbCppFunctionWithBody>();
+    var map = generatePredicateFunctions(passResults);
+
+    for (var entry : map.entrySet()) {
+      result.put(entry.getKey().fieldAccessRef(), entry.getValue());
+    }
+
+    return result;
   }
 }

@@ -356,9 +356,13 @@ bool [(${namespace})]InstrInfo::isBranchOffsetInRange(unsigned BranchOp, int64_t
     default:
       std::cerr << "Op " << BranchOp << std::endl;
       llvm_unreachable("Unexpected opcode!");
-    [# th:each="branch : ${branchInstructions}" ]
+    [# th:each="branch : ${machineBranchInstructions}" ]
     case [(${namespace})]::[(${branch.name})]:
-      return isIntN([(${branch.bitWidth})], BrOffset);
+      return [(${branch.predicateMethod})](BrOffset);
+    [/]
+    [# th:each="branch : ${pseudoBranchInstructions}" ]
+    case [(${namespace})]::[(${branch.name})]:
+       return isIntN([(${branch.bitWidth})], BrOffset);
     [/]
   }
 }
