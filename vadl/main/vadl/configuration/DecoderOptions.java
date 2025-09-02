@@ -73,7 +73,10 @@ public class DecoderOptions {
   public enum OptionToSkip {
 
     OPT_CONSTRAINT_SYNTHESIS("Skip constraint synthesis for decoder generation, default: enabled",
-        "constraint-synthesis");
+        "constraint-synthesis"),
+
+    OPT_ENCODING_VERIFICATION("Skip the encoding verification, default: enabled",
+        "encoding-verification");
 
     private final String selector;
     private final String desc;

@@ -113,6 +113,7 @@ import vadl.rtl.passes.StageOrderingPass;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.vdt.passes.VdtConstraintSynthesisPass;
 import vadl.vdt.passes.VdtEncodingConstraintValidationPass;
+import vadl.vdt.passes.VdtEncodingSemanticVerificationPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
 import vadl.viam.Specification;
@@ -579,6 +580,12 @@ public class PassOrders {
         .anyMatch(o -> o == DecoderOptions.OptionToSkip.OPT_CONSTRAINT_SYNTHESIS);
     if (!skipSynthesis) {
       order.add(new VdtConstraintSynthesisPass(config));
+    }
+
+    var skipVerification = Stream.of(config.getDecoderOptions().getOptsToSkip())
+        .anyMatch(o -> o == DecoderOptions.OptionToSkip.OPT_ENCODING_VERIFICATION);
+    if (!skipVerification) {
+      order.add(new VdtEncodingSemanticVerificationPass(config));
     }
 
     order.add(new VdtLoweringPass(config));

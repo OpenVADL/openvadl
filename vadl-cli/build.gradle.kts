@@ -1,5 +1,6 @@
 plugins {
     application
+    id("io.github.rascmatt.z3") version "1.0.1"
     id("org.graalvm.buildtools.native") version "0.10.2"
 }
 

@@ -77,6 +77,7 @@ with their licence information:
 |        MIT License         | flowbite - tailwind component library                    | https://github.com/themesberg/flowbite                 |
 |     Apache License 2.0     | Error Prone - compile time analysis tool                 | https://github.com/google/error-prone                  |
 |        MIT License         | NullAway - static null checking for java                 | https://github.com/uber/NullAway                       |
+|        MIT License         | Z3 - a theorem prover from Microsoft Research            | https://github.com/Z3Prover/z3                         |
 
 ### Test Libraries
 
