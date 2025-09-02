@@ -19,7 +19,6 @@ import java.util.*
 
 plugins {
     id("vadl.CocoR")
-    id("io.github.rascmatt.z3") version "1.0.1"
 }
 
 
@@ -37,7 +36,6 @@ dependencies {
     implementation("org.apache.commons:commons-lang3:3.18.0")
     implementation("org.apache.commons:commons-text:1.10.0")
 
-    implementation("io.github.rascmatt:z3-bootstrap:1.0.0")
 
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
