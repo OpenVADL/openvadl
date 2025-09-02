@@ -457,7 +457,7 @@ public class AsmLL1CheckerTest {
   void asmBuiltInUsage() {
     var prog = """
           grammar = {
-            RuleA : ?( laidin(2,"A","B","C") ) "A" | "A";
+            RuleA : ?( LaIdIn(2,"A","B","C") ) "A" | "A";
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
@@ -487,7 +487,7 @@ public class AsmLL1CheckerTest {
     var prog = """
           grammar = {
             Inst : inst = (
-              ?(laideq(0,"r1")) A
+              ?(LaIdEq(0,"r1")) A
               | B
             ) @instruction ;
         
