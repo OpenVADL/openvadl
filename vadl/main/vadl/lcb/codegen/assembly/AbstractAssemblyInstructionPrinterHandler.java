@@ -26,7 +26,7 @@ import vadl.javaannotations.Handler;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.DefinedImmediateSideEffectNode;
+import vadl.lcb.graph.DefinedImmediateSideEffectNode;
 
 /**
  * Abstract class for assembly printing functionality.

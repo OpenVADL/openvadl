@@ -19,12 +19,10 @@ package vadl.cppCodeGen.mixins;
 import static vadl.error.DiagUtils.throwNotAllowed;
 
 import vadl.cppCodeGen.context.CGenContext;
-import vadl.error.Diagnostic;
 import vadl.javaannotations.Handler;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
-import vadl.viam.graph.dependency.DefinedImmediateSideEffectNode;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -47,11 +45,6 @@ public interface CInvalidMixins {
   interface SideEffect
       extends WriteRegTensor, WriteMem, WriteArtificialRes, ProcCall,
       WriteStageOutput {
-    @Handler
-    @SuppressWarnings("MissingJavadocMethod")
-    default void handle(CGenContext<Node> ctx, DefinedImmediateSideEffectNode node) {
-      throwNotAllowed(node, "Defined immediate side effect");
-    }
   }
 
   @SuppressWarnings("MissingJavadocType")

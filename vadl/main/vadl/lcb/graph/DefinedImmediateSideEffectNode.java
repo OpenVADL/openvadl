@@ -14,13 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.viam.graph.dependency;
+package vadl.lcb.graph;
 
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 
 /**
  * Node which indicates that a field or field access function is used. This is required for the LCB

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.viam.passes;
+package vadl.lcb.passes;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -24,7 +24,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 import vadl.viam.annotations.DefineOperandAnnotation;
-import vadl.viam.graph.dependency.DefinedImmediateSideEffectNode;
+import vadl.lcb.graph.DefinedImmediateSideEffectNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 
 /**

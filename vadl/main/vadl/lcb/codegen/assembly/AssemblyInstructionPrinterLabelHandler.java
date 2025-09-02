@@ -42,7 +42,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
 @DispatchFor(
     value = Node.class,
     context = CNodeContext.class,
-    include = {"vadl.viam"}
+    include = {"vadl.viam", "vadl.lcb.graph"}
 )
 public class AssemblyInstructionPrinterLabelHandler
     extends AssemblyInstructionPrinterImmediateHandler {

@@ -122,7 +122,7 @@ import vadl.viam.passes.DuplicateWriteDetectionPass;
 import vadl.viam.passes.HardcodeLGALabelPass;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 import vadl.viam.passes.NormalizeFieldsToFieldAccessFunctionsPass;
-import vadl.viam.passes.OverwriteInputOperandsPass;
+import vadl.lcb.passes.OverwriteInputOperandsPass;
 import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;

@@ -96,7 +96,7 @@ import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 @DispatchFor(
     value = Node.class,
     context = CNodeContext.class,
-    include = {"vadl.viam"}
+    include = {"vadl.viam", "vadl.lcb.graph"}
 )
 public class AssemblyInstructionPrinterImmediateHandler
     extends AbstractAssemblyInstructionPrinterHandler {
