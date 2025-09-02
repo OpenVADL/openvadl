@@ -19,12 +19,12 @@ package vadl.lcb.passes;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.lcb.graph.DefinedImmediateSideEffectNode;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 import vadl.viam.annotations.DefineOperandAnnotation;
-import vadl.lcb.graph.DefinedImmediateSideEffectNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 
 /**

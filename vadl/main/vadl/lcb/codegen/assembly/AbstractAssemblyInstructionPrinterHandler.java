@@ -23,10 +23,10 @@ import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.error.Diagnostic;
 import vadl.javaannotations.Handler;
+import vadl.lcb.graph.DefinedImmediateSideEffectNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Node;
-import vadl.lcb.graph.DefinedImmediateSideEffectNode;
 
 /**
  * Abstract class for assembly printing functionality.
