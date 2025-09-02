@@ -1290,8 +1290,7 @@ class InstructionUndefinedAnnotation extends ExprAnnotation {
 }
 
 class DefinitionRefAnnotation extends Annotation {
-  @LazyInit
-  Definition def;
+  List<Definition> def = new ArrayList<>();
 
   private Expr firstVal() {
     return definition.values.getFirst();
@@ -1299,21 +1298,23 @@ class DefinitionRefAnnotation extends Annotation {
 
   @Override
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
-    verifyValuesCnt(definition, 1);
     // resolve the symbol of the value
-    firstVal().accept(resolver);
+    for (var v : definition.values) {
+      v.accept(resolver);
+    }
   }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    var v = firstVal();
-    ensure(v instanceof Identifier, () -> error("Invalid annotation value", v)
-        .description("A single identifier was expected.")
-    );
-    var target = ((Identifier) v).target();
-    ensure(target instanceof Definition, () -> error("Invalid annotation value", v)
-        .description("The identifier must reference a definition."));
-    def = (Definition) target;
+    for (var v : definition.values) {
+      ensure(v instanceof Identifier, () -> error("Invalid annotation value", v)
+          .description("A single identifier was expected.")
+      );
+      var target = ((Identifier) v).target();
+      ensure(target instanceof Definition, () -> error("Invalid annotation value", v)
+          .description("The identifier must reference a definition."));
+      def.add((Definition) target);
+    }
   }
 
   @Override

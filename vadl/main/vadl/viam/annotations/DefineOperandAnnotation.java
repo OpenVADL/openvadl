@@ -25,7 +25,7 @@ import vadl.viam.Instruction;
  * Overwrite the input operands for the instruction.
  */
 public class DefineOperandAnnotation extends Annotation<Instruction> {
-  private List<Format.Field> inputs;
+  private final List<Format.Field> inputs;
 
   /**
    * Create a constructor with a list of fields which are the inputs for the instruction.
