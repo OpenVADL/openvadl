@@ -258,7 +258,8 @@ public class AnnotationTable {
 
     annotationOn(RelocationDefinition.class, "syntax", StringAnnotation::new)
         .applyViam((def, annotation, lowering) -> {
-          def.addAnnotation(new RelocationSyntaxAnnotation("test"));
+          var lit = (StringLiteral) annotation.definition.values.getFirst();
+          def.addAnnotation(new RelocationSyntaxAnnotation(lit.value));
         }).build();
   }
 
