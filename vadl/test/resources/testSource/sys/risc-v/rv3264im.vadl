@@ -284,20 +284,20 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   $IShftInstr (SRAI ; >> ; 0b101 ; 0b01       ; SInt)  // shift right arithmetic immediate
 
 
-  [syntax : "\%hi(%s)"]
+  [syntax : "%hi(%s)"]
   relocation hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
-  [syntax : "\%lo(%s)"]
+  [syntax : "%lo(%s)"]
   relocation lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
 
   [relative]
-  [syntax : "\%pcrel_hi(%s)"]
+  [syntax : "%pcrel_hi(%s)"]
   relocation pcrel_hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
   [relative]
-  [syntax : "\%pcrel_lo(%s)"]
+  [syntax : "%pcrel_lo(%s)"]
   relocation pcrel_lo( symbol : Bits<32> ) -> SInt<12> = (symbol + 4) as SInt<12>
 
   [global offset]
-  [syntax : "\%got_pcrel_hi(%s)"]
+  [syntax : "%got_pcrel_hi(%s)"]
   relocation got_pcrel_hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
 
   pseudo instruction CALL( symbol : Bits<32> ) =
