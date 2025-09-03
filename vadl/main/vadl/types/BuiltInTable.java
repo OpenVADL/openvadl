@@ -1102,10 +1102,10 @@ public class BuiltInTable {
   /**
    * Checks if the token at lookahead {@code n} in the AsmParser is equal to a string {@code s}.
    *
-   * <p>{@code function laideq(n: UInt<N>,s: String) -> Bool}
+   * <p>{@code function LaIdEq(n: UInt<N>,s: String) -> Bool}
    */
   public static final BuiltIn LA_ID_EQ =
-      func("laideq", null, Type.relation(UIntType.class, StringType.class, BoolType.class))
+      func("LaIdEq", null, Type.relation(UIntType.class, StringType.class, BoolType.class))
           .takesDefault()
           .noCompute()
           .returns(Type.bool())
@@ -1114,10 +1114,10 @@ public class BuiltInTable {
   /**
    * Checks if the token at lookahead {@code n} in the AsmParser is any of the strings in {@code s}.
    *
-   * <p>{@code function laidin(n: UInt<N>,s: String...) -> Bool}
+   * <p>{@code function LaIdIn(n: UInt<N>,s: String...) -> Bool}
    */
   public static final BuiltIn LA_ID_IN =
-      func("laidin", null,
+      func("LaIdIn", null,
           Type.relation(List.of(UIntType.class, StringType.class), true, BoolType.class))
           .takesDefault()
           .noCompute()
