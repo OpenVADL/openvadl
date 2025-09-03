@@ -222,6 +222,18 @@ std::string AsmUtils::formatExpr(const MCExpr *Expr, uint8_t Radix, const MCAsmI
     llvm_unreachable("Invalid expression kind!");
 }
 
+
+std::string AsmUtils::FormatModifierString(const [(${namespace})]MCExpr::VariantKind VariantKind)
+{
+    [# th:each="fm : ${formatModifiers}" ]
+    if(VariantKind == [(${namespace})]MCExpr::VariantKind::[(${fm.variantKind})]) {
+      return "[(${fm.formatString})]";
+    }
+    [/]
+
+    return "unknown";
+}
+
 std::string AsmUtils::FormatModifier(const [(${namespace})]MCExpr::VariantKind VariantKind)
 {
     [# th:each="fm : ${formatModifiers}" ]

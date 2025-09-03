@@ -16,6 +16,7 @@
 
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
+import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
+import vadl.gcb.annotations.RelocationSyntaxAnnotation;
 import vadl.gcb.passes.relocation.model.ImplementedUserSpecifiedRelocation;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
@@ -70,7 +72,15 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
         .filter(x -> x instanceof ImplementedUserSpecifiedRelocation)
         .map(x -> (ImplementedUserSpecifiedRelocation) x)
         .filter(distinctByKey(ImplementedUserSpecifiedRelocation::variantKind))
-        .map(x -> new ModifierAggregate(x.variantKind().value(), x.relocation().simpleName()))
+        .map(x -> {
+          var syntaxAnnotation = ensureNonNull(
+              x.relocation().annotation(RelocationSyntaxAnnotation.class),
+              () -> Diagnostic.error("Expected to have a `syntax` annotation.",
+                  x.relocation().location()));
+          return new ModifierAggregate(x.variantKind().value(),
+              x.relocation().simpleName(),
+              syntaxAnnotation.formatString());
+        })
         .toList();
   }
 
@@ -121,11 +131,13 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
     ).toList();
   }
 
-  record ModifierAggregate(String variantKind, String relocationName) implements Renderable {
+  record ModifierAggregate(String variantKind, String relocationName, String formatString)
+      implements Renderable {
     @Override
     public Map<String, Object> renderObj() {
       return Map.of("variantKind", variantKind,
-          "relocationName", relocationName);
+          "relocationName", relocationName,
+          "formatString", formatString);
     }
   }
 

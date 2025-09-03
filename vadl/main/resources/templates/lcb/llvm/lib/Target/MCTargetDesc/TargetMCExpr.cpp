@@ -9,6 +9,10 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <sstream>
+#include <iostream>
+#include <format>
+#include <vector>
 
 using namespace llvm;
 
@@ -26,6 +30,33 @@ const [(${namespace})]MCExpr *[(${namespace})]MCExpr::create(const MCExpr *Expr,
 void [(${namespace})]MCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const
 {
     OS << format(10, MAI);
+}
+
+template<typename T>
+std::string to_string_any(const T& value) {
+    std::ostringstream oss;
+    oss << value;
+    return oss.str();
+}
+
+// Remove when llvm supports C++ 20.
+template<typename... Args>
+std::string custom_format(const std::string& fmt, Args&&... args) {
+    // Convert all arguments to strings
+    std::vector<std::string> values{ to_string_any(std::forward<Args>(args))... };
+
+    std::string result;
+    size_t argIndex = 0;
+
+    for (size_t i = 0; i < fmt.size(); ++i) {
+        if (fmt[i] == '{' && i + 1 < fmt.size() && fmt[i + 1] == '}' && argIndex < values.size()) {
+            result += values[argIndex++];
+            ++i; // skip the '}'
+        } else {
+            result += fmt[i];
+        }
+    }
+    return result;
 }
 
 std::string [(${namespace})]MCExpr::format(uint8_t Radix, const MCAsmInfo *MAI) const
@@ -60,12 +91,9 @@ std::string [(${namespace})]MCExpr::format(uint8_t Radix, const MCAsmInfo *MAI) 
         return subexpr + suffix;
     }
 
-    std::string result = "";
-    result += "%";
-    result += AsmUtils::FormatModifier(getKind());
-    result += "(";
-    result += subexpr;
-    result += ')';
+    std::string fmt = AsmUtils::FormatModifierString(getKind());
+    std::string mod = AsmUtils::FormatModifier(getKind());
+    std::string result = custom_format(fmt, mod, subexpr);
     return result;
 }
 
