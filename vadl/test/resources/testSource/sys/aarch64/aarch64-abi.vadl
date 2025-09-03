@@ -15,10 +15,12 @@ instruction set architecture AArch64Temp extending AArch64Base = {
   }
   assembly TEMP_RET = "ret"
 
-  pseudo instruction TEMP_LA =
+  pseudo instruction PLDR( rd: Index, symbol: Bits<32> ) =
   {
+    ADRP { rd = rd, offset = (symbol >> 11) as SInt<64> }
+    ADDXSI { rd = rd, rn = rd, imm12X = lo12(symbol) as SInt<64> }
   }
-  assembly TEMP_LA = (mnemonic, " ", hex( 1337 as Bits<32> ))
+  assembly PLDR = ("LDR", " ", register(rd), " ", hex(symbol))
 }
 
 application binary interface ABI for AArch64Temp = {
@@ -74,8 +76,8 @@ application binary interface ABI for AArch64Temp = {
 
    special return instruction = TEMP_RET // the normal RET is an indirect jump
    special call instruction = BL
-   special local address load instruction = TEMP_LA
-   special absolute address load instruction = TEMP_LA
+   special local address load instruction = PLDR
+   special absolute address load instruction = PLDR
 
    function argument = X{0..7}
    return value = X{0..1}
