@@ -157,7 +157,7 @@ class TarGzExtractor {
           continue; // Skip entries that are stripped to an empty name
         }
 
-        Path outputPath = outputDir.resolve(entryName).normalize();
+        Path outputPath = outputDir.resolve(entryName);
         if (!outputPath.startsWith(outputDir)) {
           throw new IOException("Entry is outside of the target dir: " + entryName);
         }
