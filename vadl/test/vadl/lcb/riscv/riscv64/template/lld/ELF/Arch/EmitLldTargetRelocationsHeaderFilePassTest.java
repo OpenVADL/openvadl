@@ -57,18 +57,6 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
         int64_t RV3264Base_lo(uint32_t symbol) {
            return  VADL_sextract(VADL_uextract(symbol, 12), 12);
         }
-        int64_t RV3264Base_to32AndHi(uint64_t symbol) {
-           return VADL_uextract(VADL_lsr(VADL_lsr(symbol, 64, ((uint8_t) 0x20 ), 6), 64, ((uint8_t) 0xc ), 4), 20);
-        }
-        int64_t RV3264Base_to32AndLo(uint64_t symbol) {
-           return  VADL_sextract(VADL_uextract(VADL_lsr(symbol, 64, ((uint8_t) 0x20 ), 6), 12), 12);
-        }
-        int64_t RV3264Base_lowerHalfHi(uint64_t symbol) {
-           return  VADL_sextract(VADL_uextract(VADL_lsr(symbol, 64, ((uint8_t) 0x34 ), 6), 12), 12);
-        }
-        int64_t RV3264Base_lowerHalfLo(uint64_t symbol) {
-           return  VADL_sextract(VADL_uextract(symbol, 12), 12);
-        }
         int64_t RV3264Base_pcrel_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
