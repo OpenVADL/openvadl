@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.gcb.annotations.OnlyNegativeNumbersAnnotation;
+import vadl.gcb.annotations.RelocationSyntaxAnnotation;
 import vadl.gcb.annotations.SkipPruningAnnotation;
 import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.types.Type;
@@ -255,6 +256,10 @@ public class AnnotationTable {
           def.addAnnotation(new DefineOperandAnnotation(fields));
         }).build();
 
+    annotationOn(RelocationDefinition.class, "syntax", StringAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          def.addAnnotation(new RelocationSyntaxAnnotation("test"));
+        }).build();
   }
 
   /**
