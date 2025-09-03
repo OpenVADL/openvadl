@@ -1764,6 +1764,7 @@ instruction set architecture AArch64Base = {
     }
 
   model ExceptionCallInstr (i: InstrWithFunct): IsaDefs = {
+    [add operands : imm16]
     instruction $i.id: SuperVisorCallFormat = {
       raise GeneralException (ExceptionClass::$i.funct, 0, PC.next, 0)
       }
@@ -1771,6 +1772,7 @@ instruction set architecture AArch64Base = {
     }
 
   model HaltInstr (i: InstrWithFunct): IsaDefs = {
+    [add operands : imm16]
     instruction $i.id: SuperVisorCallFormat = {}
     $ExceptionCallEncAsm ($i)
     }
@@ -1797,6 +1799,7 @@ instruction set architecture AArch64Base = {
     }
 
   model BTIInstr (i: InstrNoFunct): IsaDefs = {
+    [add operands : bti]
     instruction $i.id: BTIFormat = {}
     encoding $i.id = {op = 0b1101'0101'0000'0011, opc = $i.opcode}
     assembly $i.id = ($i.mnemo, btiOp2(bti))

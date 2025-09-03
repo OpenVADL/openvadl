@@ -245,7 +245,7 @@ public class AnnotationTable {
           }
         }).build();
 
-    annotationOn(InstructionDefinition.class, "overwrite operand", DefinitionRefAnnotation::new)
+    annotationOn(InstructionDefinition.class, "add operands", DefinitionRefAnnotation::new)
         .applyViam((def, annotation, lowering) -> {
           var fields =
               annotation.def.stream()
