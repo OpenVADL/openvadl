@@ -1313,6 +1313,30 @@ def AArch64Base_BL_offsetAsInt64
 
 def AArch64Base_BL_offsetAsLabel : AArch64Base_BL_offset<OtherVT>;
 
+class AArch64Base_BRK_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BRK_wrapper";
+  let DecoderMethod = "AArch64Base_BRK_imm16_decode_wrapper";
+}
+
+def AArch64Base_BRK_imm16AsInt16
+    : AArch64Base_BRK_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_BRK_imm16_predicate(Imm); }]>;
+
+def AArch64Base_BRK_imm16AsLabel : AArch64Base_BRK_imm16<OtherVT>;
+
+class AArch64Base_BTI_bti<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_BTI_wrapper";
+  let DecoderMethod = "AArch64Base_BTI_bti_decode_wrapper";
+}
+
+def AArch64Base_BTI_btiAsInt8
+    : AArch64Base_BTI_bti<i8>
+    , ImmLeaf<i8, [{ return AArch64Base_BTI_bti_predicate(Imm); }]>;
+
+def AArch64Base_BTI_btiAsLabel : AArch64Base_BTI_bti<OtherVT>;
+
 class AArch64Base_B_AL_offset<ValueType ty> : Operand<ty>
 {
   let EncoderMethod = "AArch64Base_B_AL_wrapper";
@@ -4097,6 +4121,18 @@ def AArch64Base_EXTRX_shiftXSizeAsInt8
 
 def AArch64Base_EXTRX_shiftXSizeAsLabel : AArch64Base_EXTRX_shiftXSize<OtherVT>;
 
+class AArch64Base_HLT_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_HLT_wrapper";
+  let DecoderMethod = "AArch64Base_HLT_imm16_decode_wrapper";
+}
+
+def AArch64Base_HLT_imm16AsInt16
+    : AArch64Base_HLT_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_HLT_imm16_predicate(Imm); }]>;
+
+def AArch64Base_HLT_imm16AsLabel : AArch64Base_HLT_imm16<OtherVT>;
+
 class AArch64Base_LDPS_offWSize<ValueType ty> : Operand<ty>
 {
   let EncoderMethod = "AArch64Base_LDPS_wrapper";
@@ -6064,6 +6100,18 @@ def AArch64Base_SUBXUXSX_imm3AsInt8
     , ImmLeaf<i8, [{ return AArch64Base_SUBXUXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXUXSX_imm3AsLabel : AArch64Base_SUBXUXSX_imm3<OtherVT>;
+
+class AArch64Base_SVC_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_SVC_wrapper";
+  let DecoderMethod = "AArch64Base_SVC_imm16_decode_wrapper";
+}
+
+def AArch64Base_SVC_imm16AsInt16
+    : AArch64Base_SVC_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_SVC_imm16_predicate(Imm); }]>;
+
+def AArch64Base_SVC_imm16AsLabel : AArch64Base_SVC_imm16<OtherVT>;
 
 class AArch64Base_TBNZ_offset<ValueType ty> : Operand<ty>
 {
@@ -14396,6 +14444,100 @@ bits<64> rn;
 let Inst{4-0} = op{4-0};
 let Inst{31-10} = op{26-5};
 let Inst{9-5} = rn{4-0};
+
+let isTerminator       = 0;
+let isBranch           = 0;
+let isCall             = 0;
+let isReturn           = 0;
+let isPseudo           = 0;
+let isCodeGenOnly      = 0;
+let mayLoad            = 0;
+let mayStore           = 0;
+let isBarrier          = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Pattern = [];
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+def BRK : Instruction
+{
+let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
+
+let OutOperandList = ( outs  );
+let InOperandList = ( ins AArch64Base_BRK_imm16AsInt16:$imm16 );
+
+field bits<32> Inst;
+
+// SoftFail is a field the disassembler can use to provide a way for
+// instructions to not match without killing the whole decode process. It is
+// mainly used for ARM, but Tablegen expects this field to exist or it fails
+// to build the decode table.
+field bits<32> SoftFail = 0;
+
+bits<16> op = 0b1101010000100000;
+bits<64> imm16;
+
+let Inst{4-0} = op{4-0};
+let Inst{31-21} = op{15-5};
+let Inst{20-5} = imm16{15-0};
+
+let isTerminator       = 0;
+let isBranch           = 0;
+let isCall             = 0;
+let isReturn           = 0;
+let isPseudo           = 0;
+let isCodeGenOnly      = 0;
+let mayLoad            = 0;
+let mayStore           = 0;
+let isBarrier          = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Pattern = [];
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+def BTI : Instruction
+{
+let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
+
+let OutOperandList = ( outs  );
+let InOperandList = ( ins AArch64Base_BTI_btiAsInt8:$bti );
+
+field bits<32> Inst;
+
+// SoftFail is a field the disassembler can use to provide a way for
+// instructions to not match without killing the whole decode process. It is
+// mainly used for ARM, but Tablegen expects this field to exist or it fails
+// to build the decode table.
+field bits<32> SoftFail = 0;
+
+bits<16> op = 0b1101010100000011;
+bits<14> opc = 0b00100100011111;
+bits<64> bti;
+
+let Inst{31-16} = op{15-0};
+let Inst{5-0} = opc{5-0};
+let Inst{15-8} = opc{13-6};
+let Inst{7-6} = bti{1-0};
 
 let isTerminator       = 0;
 let isBranch           = 0;
@@ -30752,6 +30894,51 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
+def ERET : Instruction
+{
+let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
+
+let OutOperandList = ( outs  );
+let InOperandList = ( ins  );
+
+field bits<32> Inst;
+
+// SoftFail is a field the disassembler can use to provide a way for
+// instructions to not match without killing the whole decode process. It is
+// mainly used for ARM, but Tablegen expects this field to exist or it fails
+// to build the decode table.
+field bits<32> SoftFail = 0;
+
+bits<16> op = 0b1101011010011111;
+bits<16> imm16 = 0b0000001111100000;
+
+let Inst{31-16} = op{15-0};
+let Inst{15-0} = imm16{15-0};
+
+let isTerminator       = 1;
+let isBranch           = 1;
+let isCall             = 0;
+let isReturn           = 0;
+let isPseudo           = 0;
+let isCodeGenOnly      = 0;
+let mayLoad            = 0;
+let mayStore           = 0;
+let isBarrier          = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Pattern = [];
+
+let Uses = [ S31 ];
+let Defs = [ SP_EL1,NZCV_N,NZCV_Z,NZCV_C,NZCV_V,CurrentEL,SP ];
+}
+
 def EXTRW : Instruction
 {
 let Namespace = "processorNameValue";
@@ -30842,6 +31029,52 @@ let Inst{20-16} = rm{4-0};
 let Inst{15-10} = shiftXSize{5-0};
 let Inst{9-5} = rn{4-0};
 let Inst{4-0} = rd{4-0};
+
+let isTerminator       = 0;
+let isBranch           = 0;
+let isCall             = 0;
+let isReturn           = 0;
+let isPseudo           = 0;
+let isCodeGenOnly      = 0;
+let mayLoad            = 0;
+let mayStore           = 0;
+let isBarrier          = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Pattern = [];
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+def HLT : Instruction
+{
+let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
+
+let OutOperandList = ( outs  );
+let InOperandList = ( ins AArch64Base_HLT_imm16AsInt16:$imm16 );
+
+field bits<32> Inst;
+
+// SoftFail is a field the disassembler can use to provide a way for
+// instructions to not match without killing the whole decode process. It is
+// mainly used for ARM, but Tablegen expects this field to exist or it fails
+// to build the decode table.
+field bits<32> SoftFail = 0;
+
+bits<16> op = 0b1101010001000000;
+bits<64> imm16;
+
+let Inst{4-0} = op{4-0};
+let Inst{31-21} = op{15-5};
+let Inst{20-5} = imm16{15-0};
 
 let isTerminator       = 0;
 let isBranch           = 0;
@@ -49715,6 +49948,52 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
+def SVC : Instruction
+{
+let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
+
+let OutOperandList = ( outs  );
+let InOperandList = ( ins AArch64Base_SVC_imm16AsInt16:$imm16 );
+
+field bits<32> Inst;
+
+// SoftFail is a field the disassembler can use to provide a way for
+// instructions to not match without killing the whole decode process. It is
+// mainly used for ARM, but Tablegen expects this field to exist or it fails
+// to build the decode table.
+field bits<32> SoftFail = 0;
+
+bits<16> op = 0b1101010000000001;
+bits<64> imm16;
+
+let Inst{4-0} = op{4-0};
+let Inst{31-21} = op{15-5};
+let Inst{20-5} = imm16{15-0};
+
+let isTerminator       = 0;
+let isBranch           = 0;
+let isCall             = 0;
+let isReturn           = 0;
+let isPseudo           = 0;
+let isCodeGenOnly      = 0;
+let mayLoad            = 0;
+let mayStore           = 0;
+let isBarrier          = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Pattern = [];
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
 def TBNZ : Instruction
 {
 let Namespace = "processorNameValue";
@@ -49903,6 +50182,51 @@ let Inst{21-16} = rightXSize{5-0};
 let Inst{15-10} = leftXSize{11-6};
 let Inst{9-5} = rn{4-0};
 let Inst{4-0} = rd{4-0};
+
+let isTerminator       = 0;
+let isBranch           = 0;
+let isCall             = 0;
+let isReturn           = 0;
+let isPseudo           = 0;
+let isCodeGenOnly      = 0;
+let mayLoad            = 0;
+let mayStore           = 0;
+let isBarrier          = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Pattern = [];
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+def UDF : Instruction
+{
+let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
+
+let OutOperandList = ( outs  );
+let InOperandList = ( ins  );
+
+field bits<32> Inst;
+
+// SoftFail is a field the disassembler can use to provide a way for
+// instructions to not match without killing the whole decode process. It is
+// mainly used for ARM, but Tablegen expects this field to exist or it fails
+// to build the decode table.
+field bits<32> SoftFail = 0;
+
+bits<16> op = 0b0000000000000000;
+bits<64> imm16;
+
+let Inst{31-16} = op{15-0};
+let Inst{15-0} = imm16{15-0};
 
 let isTerminator       = 0;
 let isBranch           = 0;

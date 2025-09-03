@@ -45,7 +45,6 @@ public interface CInvalidMixins {
   interface SideEffect
       extends WriteRegTensor, WriteMem, WriteArtificialRes, ProcCall,
       WriteStageOutput {
-
   }
 
   @SuppressWarnings("MissingJavadocType")

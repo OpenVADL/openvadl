@@ -73,6 +73,7 @@ import vadl.iss.template.target.EmitIssInsnTransCIncPass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslateCPass;
 import vadl.lcb.codegen.assembly.WrapInIntegralPass;
+import vadl.lcb.passes.OverwriteInputOperandsPass;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaRelocationMatchingPass;
@@ -175,6 +176,7 @@ public class PassOrders {
     order.add(new ViamVerificationPass(configuration));
 
     order.add(new DetectRegisterIndicesPass(configuration));
+    order.add(new OverwriteInputOperandsPass(configuration));
     order.add(new NormalizeFieldsToFieldAccessFunctionsPass(configuration));
     order.add(new RenamingConflictingRegistersPass(configuration));
     order.add(new SnapshotInstructionBehaviorPass(configuration));
@@ -449,6 +451,7 @@ public class PassOrders {
     order.skip(FieldAccessInlinerPass.class);
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
     order.skip(RenamingConflictingRegistersPass.class);
+    order.skip(OverwriteInputOperandsPass.class);
 
     // iss function passes
     order
@@ -599,6 +602,7 @@ public class PassOrders {
 
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
     order.skip(RenamingConflictingRegistersPass.class);
+    order.skip(OverwriteInputOperandsPass.class);
 
     // TODO: Remove once frontend creates it
     order.add(new DummyMiaPass(config));

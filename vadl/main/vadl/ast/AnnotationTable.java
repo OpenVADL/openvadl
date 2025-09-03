@@ -20,6 +20,7 @@ package vadl.ast;
 import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
+import static vadl.viam.ViamError.ensurePresent;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.math.BigInteger;
@@ -35,6 +36,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import vadl.error.Diagnostic;
 import vadl.gcb.annotations.OnlyNegativeNumbersAnnotation;
 import vadl.gcb.annotations.SkipPruningAnnotation;
 import vadl.gcb.annotations.StatusRegisterAnnotation;
@@ -46,12 +48,14 @@ import vadl.utils.functionInterfaces.TriConsumer;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Constant;
 import vadl.viam.Encoding;
+import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.MemoryRegion;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
+import vadl.viam.annotations.DefineOperandAnnotation;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.annotations.InstructionUndefinedAnno;
 
@@ -240,6 +244,17 @@ public class AnnotationTable {
             def.addAnnotation(new OnlyNegativeNumbersAnnotation());
           }
         }).build();
+
+    annotationOn(InstructionDefinition.class, "add operands", DefinitionRefAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          var fields =
+              annotation.def.stream()
+                  .map(x -> (Format.Field) ensurePresent(lowering.fetch((RangeFormatField) x),
+                      () -> Diagnostic.error("Cannot find field", x.location()))).toList();
+
+          def.addAnnotation(new DefineOperandAnnotation(fields));
+        }).build();
+
   }
 
   /**
@@ -1266,8 +1281,7 @@ class InstructionUndefinedAnnotation extends ExprAnnotation {
 }
 
 class DefinitionRefAnnotation extends Annotation {
-  @LazyInit
-  Definition def;
+  List<Definition> def = new ArrayList<>();
 
   private Expr firstVal() {
     return definition.values.getFirst();
@@ -1275,21 +1289,23 @@ class DefinitionRefAnnotation extends Annotation {
 
   @Override
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
-    verifyValuesCnt(definition, 1);
     // resolve the symbol of the value
-    firstVal().accept(resolver);
+    for (var v : definition.values) {
+      v.accept(resolver);
+    }
   }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    var v = firstVal();
-    ensure(v instanceof Identifier, () -> error("Invalid annotation value", v)
-        .description("A single identifier was expected.")
-    );
-    var target = ((Identifier) v).target();
-    ensure(target instanceof Definition, () -> error("Invalid annotation value", v)
-        .description("The identifier must reference a definition."));
-    def = (Definition) target;
+    for (var v : definition.values) {
+      ensure(v instanceof Identifier, () -> error("Invalid annotation value", v)
+          .description("A single identifier was expected.")
+      );
+      var target = ((Identifier) v).target();
+      ensure(target instanceof Definition, () -> error("Invalid annotation value", v)
+          .description("The identifier must reference a definition."));
+      def.add((Definition) target);
+    }
   }
 
   @Override

@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
+import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.operands.ReferencesFormatField;
@@ -95,7 +96,7 @@ import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 @DispatchFor(
     value = Node.class,
     context = CNodeContext.class,
-    include = {"vadl.viam"}
+    include = {"vadl.viam", "vadl.lcb.graph"}
 )
 public class AssemblyInstructionPrinterImmediateHandler
     extends AbstractAssemblyInstructionPrinterHandler {

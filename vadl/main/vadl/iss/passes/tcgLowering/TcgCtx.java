@@ -180,7 +180,6 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
       throw new IllegalStateException("ProcCallNode should not exist here.");
     }
 
-
     private TcgVRefNode toNode(TcgV tcgV) {
       return toNode(tcgV, new NodeList<>());
     }

@@ -17,16 +17,22 @@
 package vadl.lcb.codegen.assembly;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
+import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
+import vadl.cppCodeGen.mixins.CInvalidMixins;
+import vadl.error.Diagnostic;
+import vadl.javaannotations.Handler;
+import vadl.lcb.graph.DefinedImmediateSideEffectNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.viam.PrintableInstruction;
+import vadl.viam.graph.Node;
 
 /**
  * Abstract class for assembly printing functionality.
  */
 public abstract class AbstractAssemblyInstructionPrinterHandler
-    implements CDefaultMixins.AllExpressions {
+    implements CDefaultMixins.AllExpressions, CInvalidMixins {
 
   protected final PrintableInstruction instruction;
   protected final TableGenInstruction tableGenInstruction;
@@ -42,5 +48,13 @@ public abstract class AbstractAssemblyInstructionPrinterHandler
                                                    TableGenInstruction tableGenInstruction) {
     this.instruction = instruction;
     this.tableGenInstruction = tableGenInstruction;
+  }
+
+  @Handler
+  @SuppressWarnings("MissingJavadocMethod")
+  public void handle(CGenContext<Node> ctx, DefinedImmediateSideEffectNode node) {
+    throw Diagnostic.error(
+        "not supported",
+        node.location()).build();
   }
 }

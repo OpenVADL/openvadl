@@ -207,10 +207,7 @@ public class IdentifyFieldUsagePass extends Pass {
      * {@link Format} then return an empty list.
      */
     public List<FieldUsage> getFieldUsages(Instruction instruction, Field field) {
-      var obj = ensureNonNull(fieldUsage.get(instruction),
-          () -> Diagnostic.error("Cannot find field's usages for instruction",
-              instruction.location()));
-
+      var obj = fieldUsage.getOrDefault(instruction, new IdentityHashMap<>());
       return Optional.ofNullable(obj.get(field)).orElse(Collections.emptyList());
     }
 
