@@ -1812,6 +1812,7 @@ instruction set architecture AArch64Base = {
     }
 
   model UndefinedInstr (i: InstrNoFunct): IsaDefs = {
+    [add operands : imm16]
     instruction $i.id: UndefinedInstrFormat =
       raise $UndefinedException ()
     encoding $i.id = {op = $i.opcode}
