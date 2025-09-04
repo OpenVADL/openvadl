@@ -78,13 +78,17 @@ std::string AsmUtils::formatImm(MCOperandWrapper Op, uint8_t Radix, const MCAsmI
 
 std::string AsmUtils::formatImm(MCOperand Op, uint8_t Radix, const MCAsmInfo *MAI)
 {
+    int64_t value = 0;
     if(Op.isExpr())
     {
         return formatExpr(Op.getExpr(), Radix, MAI);
+    } else if(Op.isReg()) {
+      int64_t value = Op.getReg(); // unwrapToIntegral(Op.getReg());
+      return formatImm(value, Radix, MAI);
+    } else {
+      int64_t value = Op.getImm();
+      return formatImm(value, Radix, MAI);
     }
-
-    int64_t value = Op.getImm();
-    return formatImm(value, Radix, MAI);
 }
 
 std::string AsmUtils::formatImm(int64_t Value, uint8_t Radix, const MCAsmInfo *MAI)
