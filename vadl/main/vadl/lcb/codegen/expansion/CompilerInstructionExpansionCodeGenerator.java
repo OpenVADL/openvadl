@@ -1162,9 +1162,10 @@ class InstructionFieldAccessExpansionCodeGeneratorForImmediateCase
   /**
    * Constructor.
    */
-  public InstructionFieldAccessExpansionCodeGeneratorForImmediateCase(String namespace,
-                                                                      Format.FieldAccess fieldAccess,
-                                                                      PassResults passResults) {
+  public InstructionFieldAccessExpansionCodeGeneratorForImmediateCase(
+      String namespace,
+      Format.FieldAccess fieldAccess,
+      PassResults passResults) {
     this.namespace = namespace;
     this.builder = new StringBuilder();
     this.fieldAccess = fieldAccess;
