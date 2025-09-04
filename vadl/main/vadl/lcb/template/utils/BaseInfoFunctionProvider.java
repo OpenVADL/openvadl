@@ -18,12 +18,21 @@ package vadl.lcb.template.utils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import vadl.cppCodeGen.common.ValueRelocationFunctionCodeGenerator;
 import vadl.cppCodeGen.model.CppFunctionCode;
+import vadl.gcb.passes.relocation.model.RelocationsBeforeElfExpansion;
+import vadl.gcb.passes.relocation.model.UserSpecifiedRelocation;
 import vadl.gcb.valuetypes.VariantKind;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
+import vadl.viam.Relocation;
 
 /**
  * Helper class for baseInfo.
@@ -35,7 +44,8 @@ public class BaseInfoFunctionProvider {
   public record BaseInfoRecord(
       String functionName,
       VariantKind variantKind,
-      CppFunctionCode relocation) implements Renderable {
+      CppFunctionCode relocation,
+      RelocationsBeforeElfExpansion original) implements Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
@@ -50,7 +60,7 @@ public class BaseInfoFunctionProvider {
   /**
    * Get the records.
    */
-  public static List<BaseInfoRecord> getBaseInfoRecords(PassResults passResults) {
+  public static List<BaseInfoRecord> getBaseInfoRecords(PassResults passResults, String namespace) {
     var output =
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
             GenerateLinkerComponentsPass.class);
@@ -61,15 +71,34 @@ public class BaseInfoFunctionProvider {
               new ValueRelocationFunctionCodeGenerator(relocationBeforeExpand.relocation(),
                   relocationBeforeExpand.valueRelocation(),
                   new ValueRelocationFunctionCodeGenerator.Options(
-                      false, true
+                      false, true, Optional.of(namespace + "BaseInfo")
                   ));
           var function = new CppFunctionCode(generator.genFunctionDefinition());
           return new BaseInfoRecord(
               generator.genFunctionName(),
               relocationBeforeExpand.variantKind(),
-              function
+              function,
+              relocationBeforeExpand
           );
         }
-    ).toList();
+    ).filter(distinctByKey(BaseInfoRecord::functionName)).toList();
+  }
+
+  /**
+   * Get the records.
+   */
+  public static Map<Relocation, BaseInfoRecord> baseInfoRecordsByUserSpecifiedRelocations(
+      PassResults passResults, String namespace) {
+    var records = getBaseInfoRecords(passResults, namespace);
+
+    return records.stream()
+        .filter(x -> x.original instanceof UserSpecifiedRelocation)
+        .collect(
+            Collectors.toMap(x -> ((UserSpecifiedRelocation) x.original).relocation(), x -> x));
+  }
+
+  private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+    Set<Object> seen = ConcurrentHashMap.newKeySet();
+    return t -> seen.add(keyExtractor.apply(t));
   }
 }

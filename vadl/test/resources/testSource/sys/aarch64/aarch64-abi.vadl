@@ -15,10 +15,10 @@ instruction set architecture AArch64Temp extending AArch64Base = {
   }
   assembly TEMP_RET = "ret"
 
-  pseudo instruction PLDR( rd: Index, symbol: Bits<32> ) =
+  pseudo instruction PLDR( rd: Index, symbol: SInt<64> ) =
   {
-    ADRP { rd = rd, offset = (symbol >> 11) as SInt<64> }
-    ADDXSI { rd = rd, rn = rd, imm12X = lo12(symbol) as SInt<64> }
+    ADRP { rd = rd, offset = symbol }
+    ADDXSI { rd = rd, rn = rd, imm12X = lo12(symbol) }
   }
   assembly PLDR = ("LDR", " ", register(rd), " ", hex(symbol))
 }

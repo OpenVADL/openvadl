@@ -20,6 +20,7 @@ import static java.util.Objects.requireNonNull;
 import static vadl.error.DiagUtils.throwNotAllowed;
 import static vadl.lcb.codegen.expansion.CompilerInstructionExpansionCodeGenerator.COMPILER_INSTRUCTION;
 import static vadl.lcb.codegen.expansion.CompilerInstructionExpansionCodeGenerator.INSTRUCTION_SYMBOL;
+import static vadl.lcb.codegen.expansion.CompilerInstructionExpansionCodeGenerator.NAMESPACE;
 import static vadl.lcb.codegen.expansion.CompilerInstructionExpansionCodeGenerator.canonicalizeField;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
@@ -60,6 +61,7 @@ import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
+import vadl.lcb.template.utils.BaseInfoFunctionProvider;
 import vadl.lcb.template.utils.ImmediateEncodingFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.utils.Either;
@@ -106,6 +108,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   static final String INSTRUCTION_SYMBOL = "instructionSymbol";
   static final String FIELD_VALUES = "fieldValues";
   static final String COMPILER_INSTRUCTION = "compilerInstruction";
+  static final String NAMESPACE = "namespace";
 
   private final PassResults passResults;
   private final TargetName targetName;
@@ -246,9 +249,11 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
       var newContext = new CNodeWithBaggageContext(context)
           .put(COMPILER_INSTRUCTION, compilerInstruction)
-          .put(INSTRUCTION_CALL_NODE, instrCallNode).put(INSTRUCTION, instrCallNode.target())
+          .put(INSTRUCTION_CALL_NODE, instrCallNode)
+          .put(INSTRUCTION, instrCallNode.target())
           .put(INSTRUCTION_SYMBOL, instructionSymbol)
-          .put(FIELD_VALUES, symbolTableFieldValues);
+          .put(FIELD_VALUES, symbolTableFieldValues)
+          .put(NAMESPACE, targetName.value());
 
       var firstPass = new GenerateRawFieldsHandler(fieldUsages, targetName,
           this.compilerInstruction);
@@ -267,9 +272,11 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
       var newContext = new CNodeWithBaggageContext(context)
           .put(COMPILER_INSTRUCTION, compilerInstruction)
-          .put(INSTRUCTION_CALL_NODE, instrCallNode).put(INSTRUCTION, instrCallNode.target())
+          .put(INSTRUCTION_CALL_NODE, instrCallNode)
+          .put(INSTRUCTION, instrCallNode.target())
           .put(INSTRUCTION_SYMBOL, instructionSymbol)
-          .put(FIELD_VALUES, symbolTableFieldValues);
+          .put(FIELD_VALUES, symbolTableFieldValues)
+          .put(NAMESPACE, targetName.value());
 
       var pass = new DecodeFieldAccessesHandler(passResults,
           fieldUsages,
@@ -292,9 +299,11 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
       var newContext = new CNodeWithBaggageContext(context)
           .put(COMPILER_INSTRUCTION, compilerInstruction)
-          .put(INSTRUCTION_CALL_NODE, instrCallNode).put(INSTRUCTION, instrCallNode.target())
+          .put(INSTRUCTION_CALL_NODE, instrCallNode)
+          .put(INSTRUCTION, instrCallNode.target())
           .put(INSTRUCTION_SYMBOL, instructionSymbol)
-          .put(FIELD_VALUES, symbolTableFieldValues);
+          .put(FIELD_VALUES, symbolTableFieldValues)
+          .put(NAMESPACE, targetName.value());
 
       var pass =
           new AddingOperands(targetName,
@@ -305,6 +314,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
               machineInstructionRecords,
               immediateDecodings,
               labelSymbolNameLookup,
+              passResults,
               addedOperands);
       pass.handle(newContext,
           instrCallNode,
@@ -832,8 +842,13 @@ class GenerateRawFieldsHandler implements CaseHandler {
           getOperandIndexFromCompilerInstruction(compilerInstruction, fieldAccess.fieldRef(),
               funcParamNode,
               funcParamNode.parameter().identifier);
-      ctx.ln("auto %s = instruction.getOperand(%d).getImm();", fieldAccess.identifier.simpleName(),
-          pseudoInstructionIndex);
+      ctx.ln("auto %s = 0;", fieldAccess.identifier.simpleName());
+      ctx.ln("if(instruction.getOperand(%d).isImm()) {", pseudoInstructionIndex)
+          .spacedIn()
+          .ln("%s = instruction.getOperand(%d).getImm();", fieldAccess.identifier.simpleName(),
+              pseudoInstructionIndex)
+          .spaceOut()
+          .ln("}");
     }
   }
 
@@ -843,18 +858,7 @@ class GenerateRawFieldsHandler implements CaseHandler {
       InstrCallNode instrCallNode,
       Format.FieldAccess fieldAccess,
       ExpressionNode expr) {
-    var funcParamNodes = new ArrayList<FuncParamNode>();
-    expr.collectInputsWithChildren(funcParamNodes, FuncParamNode.class);
-
-    ensure(funcParamNodes.size() == 1,
-        () -> Diagnostic.error("only supporting one parameter", expr.location()));
-    var funcParamNode = funcParamNodes.getFirst();
-    var pseudoInstructionIndex =
-        getOperandIndexFromCompilerInstruction(compilerInstruction, fieldAccess.fieldRef(),
-            funcParamNode,
-            funcParamNode.parameter().identifier);
-    ctx.ln("auto %s = instruction.getOperand(%d).getImm();", fieldAccess.identifier.simpleName(),
-        pseudoInstructionIndex);
+    ctx.ln("auto %s = 0;", fieldAccess.identifier.simpleName());
   }
 
   @Override
@@ -1011,11 +1015,26 @@ class DecodeFieldAccessesHandler implements CaseHandler {
 
   @Override
   public void fieldUsedAsImmediateAndFieldAccessAssignmentAndArbitraryExpression(
-      CNodeWithBaggageContext newContext,
+      CNodeWithBaggageContext ctx,
       InstrCallNode instrCallNode,
       Format.FieldAccess fieldAccess,
       ExpressionNode expr) {
-    // do nothing
+    var funcParamNodes = new ArrayList<FuncParamNode>();
+    expr.collectInputsWithChildren(funcParamNodes, FuncParamNode.class);
+
+    ensure(funcParamNodes.size() == 1,
+        () -> Diagnostic.error("only supporting one parameter", expr.location()));
+    var funcParamNode = funcParamNodes.getFirst();
+    var pseudoInstructionIndex =
+        getOperandIndexFromCompilerInstruction(compilerInstruction, fieldAccess.fieldRef(),
+            funcParamNode,
+            funcParamNode.parameter().identifier);
+    ctx.ln("if(instruction.getOperand(%d).isImm()) {", pseudoInstructionIndex)
+        .spacedIn();
+    ctx.ln("%s = instruction.getOperand(%d).getImm();", fieldAccess.identifier.simpleName(),
+            pseudoInstructionIndex)
+        .spaceOut()
+        .ln("}");
   }
 
   private void encodeField(
@@ -1029,7 +1048,7 @@ class DecodeFieldAccessesHandler implements CaseHandler {
         .map(param -> param.identifier.simpleName()).collect(
             Collectors.joining(", "));
 
-    ctx.ln("%s = %s(%s)", fieldToEncode.identifier.simpleName(), encodingFunctionName, params);
+    ctx.ln("%s = %s(%s);", fieldToEncode.identifier.simpleName(), encodingFunctionName, params);
   }
 
   @Override
@@ -1121,26 +1140,40 @@ class InstructionFieldExpansionCodeGenerator implements CDefaultMixins.AllExpres
   }
 }
 
+/**
+ * For the pseudo instruction expansion, we have to have an if conditional. The main branch checks
+ * whether the operand is an immediate. The else branch checks whether the operand is a label.
+ * For the main branch we just need to apply a function in the {@code BaseInfo} class since we
+ * can apply the relocation function directly.
+ */
 @DispatchFor(
     value = ExpressionNode.class,
     context = CNodeContext.class,
     include = "vadl.viam"
 )
-class InstructionFieldAccessExpansionCodeGenerator implements CDefaultMixins.AllExpressions {
+class InstructionFieldAccessExpansionCodeGeneratorForImmediateCase
+    implements CDefaultMixins.AllExpressions {
+  protected final String namespace;
   protected final CNodeContext context;
   protected final StringBuilder builder;
   protected final Format.FieldAccess fieldAccess;
+  protected final PassResults passResults;
 
   /**
    * Constructor.
    */
-  public InstructionFieldAccessExpansionCodeGenerator(Format.FieldAccess fieldAccess) {
+  public InstructionFieldAccessExpansionCodeGeneratorForImmediateCase(String namespace,
+                                                                      Format.FieldAccess fieldAccess,
+                                                                      PassResults passResults) {
+    this.namespace = namespace;
     this.builder = new StringBuilder();
     this.fieldAccess = fieldAccess;
+    this.passResults = passResults;
     this.context = new CNodeContext(
         builder::append,
         (ctx, node)
-            -> InstructionFieldAccessExpansionCodeGeneratorDispatcher.dispatch(this, ctx,
+            -> InstructionFieldAccessExpansionCodeGeneratorForImmediateCaseDispatcher.dispatch(this,
+            ctx,
             (ExpressionNode) node)
     );
   }
@@ -1149,13 +1182,169 @@ class InstructionFieldAccessExpansionCodeGenerator implements CDefaultMixins.All
    * Generate cpp code for the given expression.
    */
   public String generate(ExpressionNode expr) {
-    InstructionFieldAccessExpansionCodeGeneratorDispatcher.dispatch(this, context, expr);
+    InstructionFieldAccessExpansionCodeGeneratorForImmediateCaseDispatcher.dispatch(this, context,
+        expr);
     return builder.toString();
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, FuncCallNode toHandle) {
+    if (toHandle.function() instanceof Relocation relocation) {
+      var baseInfo =
+          ensureNonNull(
+              BaseInfoFunctionProvider.baseInfoRecordsByUserSpecifiedRelocations(
+                      passResults,
+                      namespace)
+                  .get(relocation),
+              () -> Diagnostic.error("Cannot find relocation", relocation.location()));
+
+      ctx.wr(namespace + "BaseInfo::" + baseInfo.functionName())
+          .wr("(");
+      var first = true;
+      for (var arg : toHandle.arguments()) {
+        if (!first) {
+          ctx.wr(", ");
+        }
+        ctx.gen(arg);
+      }
+      ctx.wr(")");
+    } else {
+      CDefaultMixins.AllExpressions.super.handle(ctx, toHandle);
+    }
   }
 
   @Override
   public void handle(CGenContext<Node> ctx, FuncParamNode toHandle) {
     ctx.wr(fieldAccess.identifier.simpleName());
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, ReadRegTensorNode toHandle) {
+    throwNotAllowed(toHandle, "Register reads");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, ReadMemNode toHandle) {
+    throwNotAllowed(toHandle, "Memory reads");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, ReadArtificialResNode toHandle) {
+    throwNotAllowed(toHandle, "Artificial resource reads");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle) {
+    throwNotAllowed(toHandle, "Asm builtin calls");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, FieldAccessRefNode toHandle) {
+    throwNotAllowed(toHandle, "Field access ref");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, FoldNode toHandle) {
+    throwNotAllowed(toHandle, "fold node");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, FieldRefNode toHandle) {
+    throwNotAllowed(toHandle, "field ref node");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, TensorNode toHandle) {
+    throwNotAllowed(toHandle, "tensor node");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, ReadStageOutputNode toHandle) {
+    throwNotAllowed(toHandle, "read stage output node");
+  }
+}
+
+/**
+ * For the pseudo instruction expansion, we have to have an if conditional. The main branch checks
+ * whether the operand is an immediate. The else branch checks whether the operand is a label.
+ * For the else branch we can't apply a function in the {@code BaseInfo} class directly because
+ * the value is determined during linking. We have to apply variant kinds.
+ */
+@DispatchFor(
+    value = ExpressionNode.class,
+    context = CNodeContext.class,
+    include = "vadl.viam"
+)
+class InstructionFieldAccessExpansionCodeGeneratorForLabelCase
+    implements CDefaultMixins.AllExpressions {
+  protected final String namespace;
+  protected final String instructionSymbol;
+  protected final int pseudoInstructionIndex;
+  protected final CNodeContext context;
+  protected final StringBuilder builder;
+  protected final Format.FieldAccess fieldAccess;
+  protected final PassResults passResults;
+  protected final List<HasRelocationComputationAndUpdate> relocations;
+
+  /**
+   * Constructor.
+   */
+  public InstructionFieldAccessExpansionCodeGeneratorForLabelCase(
+      String namespace,
+      String instructionSymbol,
+      int pseudoInstructionIndex,
+      Format.FieldAccess fieldAccess,
+      PassResults passResults,
+      List<HasRelocationComputationAndUpdate> relocations) {
+    this.namespace = namespace;
+    this.builder = new StringBuilder();
+    this.instructionSymbol = instructionSymbol;
+    this.pseudoInstructionIndex = pseudoInstructionIndex;
+    this.fieldAccess = fieldAccess;
+    this.passResults = passResults;
+    this.relocations = relocations;
+    this.context = new CNodeContext(
+        builder::append,
+        (ctx, node)
+            -> InstructionFieldAccessExpansionCodeGeneratorForLabelCaseDispatcher.dispatch(this,
+            ctx,
+            (ExpressionNode) node)
+    );
+  }
+
+  /**
+   * Generate cpp code for the given expression.
+   */
+  public String generate(ExpressionNode expr) {
+    InstructionFieldAccessExpansionCodeGeneratorForLabelCaseDispatcher.dispatch(this, context,
+        expr);
+    return builder.toString();
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, FuncCallNode toHandle) {
+    if (toHandle.function() instanceof Relocation relocation) {
+      var elfRelocation =
+          relocations.stream().filter(x -> x.relocation() == relocation).findFirst();
+      ensure(elfRelocation.isPresent(), "elfRelocation must exist");
+      var variant = elfRelocation.get().variantKind().value();
+
+      var mcExpr =
+          String.format("MCOperandToMCExpr(instruction.getOperand(%d))", pseudoInstructionIndex);
+      var function = String.format("%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx)",
+          namespace, mcExpr, namespace, variant);
+
+      ctx.wr("MCOperand::createExpr(%s)", function);
+    } else {
+      throw Diagnostic.error(
+          "Cannot support arbitrary functions because they are applied at linking time",
+          toHandle.location()).build();
+    }
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, FuncParamNode toHandle) {
+    ctx.wr("instruction.getOperand(%d)", pseudoInstructionIndex);
   }
 
   @Handler
@@ -1214,6 +1403,7 @@ class AddingOperands implements CaseHandler {
   private final Map<Pair<PrintableInstruction, Format.FieldAccess>, GcbCppAccessFunction>
       immediateDecodings;
   private final Map<NewLabelNode, String> labelSymbolNameLookup;
+  private final PassResults passResults;
   // Tracks how many operands were already added.
   private int addedOperand;
 
@@ -1230,6 +1420,7 @@ class AddingOperands implements CaseHandler {
       Map<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords,
       Map<TableGenImmediateRecord, GcbCppAccessFunction> immediateDecodings,
       Map<NewLabelNode, String> labelSymbolNameLookup,
+      PassResults passResults,
       int addedOperands) {
     this.targetName = targetName;
     this.fieldUsages = fieldUsages;
@@ -1245,6 +1436,7 @@ class AddingOperands implements CaseHandler {
           return Pair.of(key.instructionRef(), key.fieldAccessRef());
         }, Map.Entry::getValue));
     this.labelSymbolNameLookup = labelSymbolNameLookup;
+    this.passResults = passResults;
     this.addedOperand = addedOperands;
   }
 
@@ -1659,12 +1851,51 @@ class AddingOperands implements CaseHandler {
       InstrCallNode instrCallNode,
       Format.FieldAccess fieldAccess,
       ExpressionNode expr) {
-    var cppCodegen = new InstructionFieldAccessExpansionCodeGenerator(fieldAccess);
-    var code = cppCodegen.generate(expr);
+    final var compilerInstruction =
+        ctx.get(COMPILER_INSTRUCTION, CompilerInstruction.class);
+    var namespace = ctx.getString(NAMESPACE);
     var instructionSymbol = ctx.getString(INSTRUCTION_SYMBOL);
-    ctx.ln(String.format("%s.addOperand(MCOperand::createImm(%s));",
+    var funcParams = new ArrayList<FuncParamNode>();
+    expr.collectInputsWithChildren(funcParams, FuncParamNode.class);
+    ensure(funcParams.size() == 1,
+        () -> Diagnostic.error("Expected only one parameter", expr.location()));
+    var funcParam = funcParams.getFirst();
+
+    var cppCodegenImm =
+        new InstructionFieldAccessExpansionCodeGeneratorForImmediateCase(namespace, fieldAccess,
+            passResults);
+    var immCase = cppCodegenImm.generate(expr);
+
+    var pseudoInstructionIndex =
+        getOperandIndexFromCompilerInstruction(compilerInstruction, fieldAccess, expr,
+            funcParam.parameter().identifier);
+    var cppCodegenLabel =
+        new InstructionFieldAccessExpansionCodeGeneratorForLabelCase(namespace,
+            instructionSymbol,
+            pseudoInstructionIndex,
+            fieldAccess,
+            passResults,
+            relocations);
+    var labelCase = cppCodegenLabel.generate(expr);
+
+    ctx.ln("if(instruction.getOperand(%d).isImm()) {", pseudoInstructionIndex)
+        .spacedIn();
+
+    ctx.ln(String.format("%s.addOperand(MCOperand::createImm(%s));", instructionSymbol, immCase))
+        .spaceOut()
+        .ln("}")
+        .ln("else {")
+        .spacedIn();
+
+    ctx.ln(
+        "%s.addOperand(MCOperand::createExpr(%s)); // %s",
         instructionSymbol,
-        code));
+        labelCase,
+        instructionSymbol);
+
+    ctx.spaceOut()
+        .ln("}");
+
     addedOperand++;
   }
 

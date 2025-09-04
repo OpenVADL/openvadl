@@ -154,7 +154,7 @@ instruction set architecture AArch64Base = {
     }
 
   [syntax : ":{}:{}"]
-  relocation lo12( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
+  relocation lo12( symbol : Bits<64> ) -> SInt<64> = (symbol as SInt<12>) as SInt<64>
 
 // assembly string functions ***************************************************
 
