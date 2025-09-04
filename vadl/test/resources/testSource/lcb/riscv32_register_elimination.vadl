@@ -103,7 +103,9 @@ instruction set architecture RV3264IM = {
       assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(sft))
   }
 
+  [syntax : "%{}({})"]
   relocation hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
+  [syntax : "%{}({})"]
   relocation lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
 
   $ItypeInstr (ADDI ; +  ; 0b000 ; SInt)               // add immediate

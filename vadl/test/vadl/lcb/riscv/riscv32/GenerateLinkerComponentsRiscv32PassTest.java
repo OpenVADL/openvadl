@@ -36,10 +36,6 @@ public class GenerateLinkerComponentsRiscv32PassTest extends AbstractLcbTest {
     String input = """
         MO_RV3264Base_hi
         MO_RV3264Base_lo
-        MO_RV3264Base_to32AndHi
-        MO_RV3264Base_to32AndLo
-        MO_RV3264Base_lowerHalfHi
-        MO_RV3264Base_lowerHalfLo
         MO_RV3264Base_pcrel_hi
         MO_RV3264Base_pcrel_lo
         MO_RV3264Base_got_pcrel_hi
@@ -125,10 +121,6 @@ public class GenerateLinkerComponentsRiscv32PassTest extends AbstractLcbTest {
          VK_PLT
          VK_ABS_RV3264Base_hi
          VK_ABS_RV3264Base_lo
-         VK_ABS_RV3264Base_to32AndHi
-         VK_ABS_RV3264Base_to32AndLo
-         VK_ABS_RV3264Base_lowerHalfHi
-         VK_ABS_RV3264Base_lowerHalfLo
          VK_PCREL_RV3264Base_pcrel_hi
          VK_PCREL_RV3264Base_pcrel_lo
          VK_GOT_RV3264Base_got_pcrel_hi
@@ -254,30 +246,6 @@ public class GenerateLinkerComponentsRiscv32PassTest extends AbstractLcbTest {
         fixup_lo_RV3264Base_Utype_ABSOLUTE_imm
         fixup_lo_RV3264Base_Stype_ABSOLUTE_imm
         fixup_lo_RV3264Base_Ftype_ABSOLUTE_sft
-        fixup_to32AndHi_RV3264Base_Jtype_ABSOLUTE_imm
-        fixup_to32AndHi_RV3264Base_Btype_ABSOLUTE_imm
-        fixup_to32AndHi_RV3264Base_Itype_ABSOLUTE_imm\s
-        fixup_to32AndHi_RV3264Base_Utype_ABSOLUTE_imm\s
-        fixup_to32AndHi_RV3264Base_Stype_ABSOLUTE_imm\s
-        fixup_to32AndHi_RV3264Base_Ftype_ABSOLUTE_sft\s
-        fixup_to32AndLo_RV3264Base_Jtype_ABSOLUTE_imm\s
-        fixup_to32AndLo_RV3264Base_Btype_ABSOLUTE_imm\s
-        fixup_to32AndLo_RV3264Base_Itype_ABSOLUTE_imm\s
-        fixup_to32AndLo_RV3264Base_Utype_ABSOLUTE_imm\s
-        fixup_to32AndLo_RV3264Base_Stype_ABSOLUTE_imm\s
-        fixup_to32AndLo_RV3264Base_Ftype_ABSOLUTE_sft\s
-        fixup_lowerHalfHi_RV3264Base_Jtype_ABSOLUTE_imm\s
-        fixup_lowerHalfHi_RV3264Base_Btype_ABSOLUTE_imm\s
-        fixup_lowerHalfHi_RV3264Base_Itype_ABSOLUTE_imm\s
-        fixup_lowerHalfHi_RV3264Base_Utype_ABSOLUTE_imm\s
-        fixup_lowerHalfHi_RV3264Base_Stype_ABSOLUTE_imm\s
-        fixup_lowerHalfHi_RV3264Base_Ftype_ABSOLUTE_sft\s
-        fixup_lowerHalfLo_RV3264Base_Jtype_ABSOLUTE_imm\s
-        fixup_lowerHalfLo_RV3264Base_Btype_ABSOLUTE_imm\s
-        fixup_lowerHalfLo_RV3264Base_Itype_ABSOLUTE_imm\s
-        fixup_lowerHalfLo_RV3264Base_Utype_ABSOLUTE_imm\s
-        fixup_lowerHalfLo_RV3264Base_Stype_ABSOLUTE_imm\s
-        fixup_lowerHalfLo_RV3264Base_Ftype_ABSOLUTE_sft\s
         fixup_pcrel_hi_RV3264Base_Jtype_RELATIVE_imm\s
         fixup_pcrel_hi_RV3264Base_Btype_RELATIVE_imm\s
         fixup_pcrel_hi_RV3264Base_Itype_RELATIVE_imm\s

@@ -26,6 +26,7 @@ namespace llvm
             static std::string formatImm(MCOperand Op, uint8_t Radix, const MCAsmInfo *MAI);
             static std::string formatImm(int64_t value, uint8_t Radix, const MCAsmInfo *MAI);
             static std::string formatExpr(const MCExpr *Expr, uint8_t Radix, const MCAsmInfo *MAI);
+            static std::string FormatModifierString(const [(${namespace})]MCExpr::VariantKind VariantKind);
             static std::string FormatModifier(const [(${namespace})]MCExpr::VariantKind VariantKind);
             static std::string FormatModifier(const MCSymbolRefExpr::VariantKind VariantKind);
             static bool MatchRegNo(StringRef Reg, unsigned &RegNo);

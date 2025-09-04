@@ -63,7 +63,9 @@ public class EmitBaseInfoFilePass extends LcbTemplateRenderingPass {
         )
     ).toList();
 
-    var relocations = BaseInfoFunctionProvider.getBaseInfoRecords(passResults);
+    var relocations =
+        BaseInfoFunctionProvider.getBaseInfoRecords(passResults,
+            lcbConfiguration().targetName().value());
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),

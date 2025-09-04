@@ -6209,6 +6209,30 @@ def AArch64Base_UBFMX_rightXSizeAsInt8
 
 def AArch64Base_UBFMX_rightXSizeAsLabel : AArch64Base_UBFMX_rightXSize<OtherVT>;
 
+class AArch64Temp_PLDR_offset<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Temp_PLDR_wrapper";
+  let DecoderMethod = "AArch64Temp_PLDR_offset_decode_wrapper";
+}
+
+def AArch64Temp_PLDR_offsetAsInt64
+    : AArch64Temp_PLDR_offset<i64>
+    , ImmLeaf<i64, [{ return AArch64Temp_PLDR_offset_predicate(Imm); }]>;
+
+def AArch64Temp_PLDR_offsetAsLabel : AArch64Temp_PLDR_offset<OtherVT>;
+
+class AArch64Temp_PLDR_imm12X<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Temp_PLDR_wrapper";
+  let DecoderMethod = "AArch64Temp_PLDR_imm12X_decode_wrapper";
+}
+
+def AArch64Temp_PLDR_imm12XAsInt64
+    : AArch64Temp_PLDR_imm12X<i64>
+    , ImmLeaf<i64, [{ return AArch64Temp_PLDR_imm12X_predicate(Imm); }]>;
+
+def AArch64Temp_PLDR_imm12XAsLabel : AArch64Temp_PLDR_imm12X<OtherVT>;
+
 
 
 
@@ -50957,12 +50981,12 @@ let Defs = [  ];
 
 
 
-def TEMP_CALL : Instruction
+def PLDR : Instruction
 {
 let Namespace = "processorNameValue";
 
-let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let OutOperandList = ( outs S:$rd );
+let InOperandList = ( ins bare_symbol:$symbol );
 
 let isTerminator  = 0;
 let isBranch      = 0;
@@ -50985,7 +51009,7 @@ let Defs = [  ];
 
 
 
-def TEMP_LA : Instruction
+def TEMP_CALL : Instruction
 {
 let Namespace = "processorNameValue";
 

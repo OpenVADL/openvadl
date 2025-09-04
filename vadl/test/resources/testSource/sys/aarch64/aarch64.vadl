@@ -153,6 +153,8 @@ instruction set architecture AArch64Base = {
     , SXTX                            // Signed   eXTend Xword
     }
 
+  [syntax : ":{}:{}"]
+  relocation lo12( symbol : Bits<64> ) -> SInt<64> = (symbol as SInt<12>) as SInt<64>
 
 // assembly string functions ***************************************************
 
