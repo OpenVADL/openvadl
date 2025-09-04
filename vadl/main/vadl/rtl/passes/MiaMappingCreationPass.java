@@ -220,7 +220,8 @@ public class MiaMappingCreationPass extends Pass {
   // expression node with instruction output
   private boolean instructionNode(Node node) {
     if (node instanceof ExpressionNode expr) {
-      return expr.type().isTrivialCastTo(MicroArchitectureType.instruction());
+      return expr.type().isTrivialCastTo(MicroArchitectureType.instruction())
+          || expr.type().isTrivialCastTo(MicroArchitectureType.fetchResult());
     }
     return false;
   }
@@ -235,7 +236,8 @@ public class MiaMappingCreationPass extends Pass {
 
   // expression node with instruction output _and_ instruction inputs
   private boolean isMap(Node node) {
-    if (node instanceof MiaBuiltInCall miaCall && miaCall.builtIn() == BuiltInTable.DECODE) {
+    if (node instanceof MiaBuiltInCall miaCall
+        && Set.of(BuiltInTable.DECODE, BuiltInTable.FETCH_NEXT).contains(miaCall.builtIn())) {
       return true;
     }
     if (node instanceof ExpressionNode expr) {

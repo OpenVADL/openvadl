@@ -26,11 +26,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
+import vadl.rtl.ipg.nodes.RtlReadMemNode;
 import vadl.rtl.utils.GraphMergeUtils;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ReadMemNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * The instruction progress graph is used to combine the behavior of all instructions into
@@ -43,6 +47,12 @@ public class InstructionProgressGraph extends Graph {
 
   private final IdentityHashMap<Node, NodeContext> contexts = new IdentityHashMap<>();
   private final Set<Instruction> instructions = new HashSet<>();
+
+  @Nullable
+  private RtlReadMemNode fetch;
+
+  @Nullable
+  private WriteRegTensorNode pcIncrement;
 
   /**
    * Constructs a new instruction progress graph.
@@ -61,6 +71,34 @@ public class InstructionProgressGraph extends Graph {
    */
   public Set<Instruction> instructions() {
     return instructions;
+  }
+
+  /**
+   * Instruction fetch node.
+   *
+   * @return read memory node
+   */
+  @Nullable
+  public RtlReadMemNode fetch() {
+    return fetch;
+  }
+
+  public void setFetch(@Nullable RtlReadMemNode fetch) {
+    this.fetch = fetch;
+  }
+
+  /**
+   * PC increment node.
+   *
+   * @return write register node
+   */
+  @Nullable
+  public WriteRegTensorNode pcIncrement() {
+    return pcIncrement;
+  }
+
+  public void setPcIncrement(@Nullable WriteRegTensorNode pcIncrement) {
+    this.pcIncrement = pcIncrement;
   }
 
   /**
@@ -209,6 +247,12 @@ public class InstructionProgressGraph extends Graph {
    */
   public <T extends Node> void merge(Set<T> nodes, @Nullable Consumer<T> removed,
                                      @Nullable Consumer<Node> added) {
+    if (fetch != null) {
+      nodes.remove(fetch);
+    }
+    if (pcIncrement != null) {
+      nodes.remove(pcIncrement);
+    }
     var merged = GraphMergeUtils.merge(nodes,
         new GraphMergeUtils.SelectByInstructionInputMergeStrategy<>(
             node -> getContext(node).instructions(),
@@ -286,6 +330,20 @@ public class InstructionProgressGraph extends Graph {
      */
     public Optional<String> shortestNameHint() {
       return nameHints.stream()
+          .min(Comparator.comparing(String::length));
+    }
+
+    /**
+     * Get the shortest name hint in terms of string length.
+     *
+     * @param existing existing names to not consider
+     * @return shortest name hint
+     */
+    public Optional<String> shortestNameHint(Set<String> existing, int maxLength) {
+      return nameHints.stream()
+          .map(name -> StringUtils.truncate(name, maxLength))
+          .map(name -> StringUtils.stripEnd(name, "_"))
+          .filter(name -> !existing.contains(name))
           .min(Comparator.comparing(String::length));
     }
 

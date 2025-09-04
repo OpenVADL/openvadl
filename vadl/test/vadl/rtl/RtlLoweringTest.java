@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.RtlConfiguration;
 import vadl.dump.HtmlDumpPass;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -48,8 +49,9 @@ public class RtlLoweringTest extends AbstractTest {
 
   @Test
   void instructionBehaviorCheck() throws IOException, DuplicatedPassKeyException {
-    var config =
+    var generalConfig =
         new GeneralConfiguration(Path.of("build/test-output"), false);
+    var config = new RtlConfiguration(generalConfig);
 
     var order = PassOrders.rtl(config);
     order.addAfterFirst(PassOrders.ViamCreationPass.class,

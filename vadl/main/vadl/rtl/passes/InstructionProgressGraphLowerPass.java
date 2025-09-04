@@ -27,6 +27,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
+import vadl.rtl.ipg.nodes.RtlInstructionWordSliceNode;
 import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
 import vadl.rtl.ipg.nodes.RtlOneHotDecodeNode;
 import vadl.rtl.ipg.nodes.RtlSelectByInstructionNode;
@@ -88,7 +89,7 @@ public class InstructionProgressGraphLowerPass extends Pass {
       if (select.selection() == null) {
         // generate expression that selects output based on sets of instructions
         var oneHot = select.instructions().stream()
-            .map(ins -> ipg.add(new RtlIsInstructionNode(ins), ins))
+            .map(ins -> ipg.add(new RtlIsInstructionNode(ins, null), ins))
             .map(ExpressionNode.class::cast).toList();
         added.addAll(oneHot);
         var instructions = ipg.getContext(select).instructions();
@@ -107,6 +108,16 @@ public class InstructionProgressGraphLowerPass extends Pass {
     Canonicalizer.canonicalize(ipg);
     new RtlSimplifier(RtlSimplificationRules.rules).run(ipg, mapping);
 
+    // add instruction input to is-instruction nodes and instruction word slices
+    var isInsList = ipg.getNodes(RtlIsInstructionNode.class).toList();
+    for (RtlIsInstructionNode isIns : isInsList) {
+      isIns.setInstruction(ipg.fetch());
+    }
+    var insSliceList = ipg.getNodes(RtlInstructionWordSliceNode.class).toList();
+    for (RtlInstructionWordSliceNode insSlice : insSliceList) {
+      insSlice.setInstruction(ipg.fetch());
+    }
+
     return added;
   }
 
@@ -122,7 +133,7 @@ public class InstructionProgressGraphLowerPass extends Pass {
       }
 
       // if not active in all instructions, patch condition
-      var isIns = ipg.add(new RtlIsInstructionNode(instructions), instructions);
+      var isIns = ipg.add(new RtlIsInstructionNode(instructions, ipg.fetch()), instructions);
       var newCond = ipg.add(GraphUtils.and(cond, isIns), instructions);
       node.replaceInput(cond, newCond);
 

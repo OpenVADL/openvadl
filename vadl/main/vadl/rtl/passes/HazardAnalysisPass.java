@@ -18,7 +18,10 @@ package vadl.rtl.passes;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -26,7 +29,10 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.analysis.HazardAnalysis;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
+import vadl.rtl.ipg.nodes.RtlSelectByInstructionNode;
 import vadl.rtl.map.MiaMapping;
+import vadl.utils.Pair;
+import vadl.viam.Constant;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
@@ -35,6 +41,7 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
@@ -89,7 +96,10 @@ public class HazardAnalysisPass extends Pass {
               stage(mapping, write.value())
           ))
           .collect(Collectors.toSet());
-      var analysis = new HazardAnalysis(resource, reads, writes);
+      var forwards = writes.stream()
+          .flatMap(writeAnalysis -> forward(mapping, writeAnalysis))
+          .collect(Collectors.toSet());
+      var analysis = new HazardAnalysis(resource, reads, writes, forwards);
       resource.attachExtension(analysis);
       result.add(analysis);
     }
@@ -124,6 +134,80 @@ public class HazardAnalysisPass extends Pass {
         .collect(Collectors.toSet());
     return mapping.mia().stages().reversed().stream().filter(stages::contains).findFirst()
         .orElse(null); // get last stage for nodes in list
+  }
+
+  private Stream<HazardAnalysis.ForwardAnalysis> forward(MiaMapping mapping,
+                                                         HazardAnalysis.WriteAnalysis analysis) {
+    var result = new ArrayList<HazardAnalysis.ForwardAnalysis>();
+
+    // stop if we passed stage where address or condition are available
+    var stop = Stream.of(analysis.condition(), analysis.address()).filter(Objects::nonNull)
+        .map(Stage::prev).filter(Objects::nonNull).collect(Collectors.toSet());
+
+    // start with forwarding in write stage
+    var write = analysis.node();
+    var stage = analysis.effect();
+    var conditions = new ArrayList<Pair<ExpressionNode, ExpressionNode>>();
+    conditions.add(Pair.of(write.condition(), Constant.Value.of(true).toNode()));
+    ExpressionNode address = null;
+    if (write.hasAddress()) {
+      address = write.address();
+    }
+    ExpressionNode value = write.value();
+
+    // add forward from write stage (always possible)
+    result.add(new HazardAnalysis.ForwardAnalysis(write, analysis.effect(), stage,
+        new ArrayList<>(conditions), address, value));
+    stage = stage.prev();
+
+    // try to resolve value in previous stage
+    while (stage != null && !stop.contains(stage)) {
+      value = resolveForward(mapping, stage, value, conditions);
+      if (value == null) {
+        break; // can not resolve anymore (provide value and condition for forwarding)
+      }
+      result.add(new HazardAnalysis.ForwardAnalysis(write, analysis.effect(), stage,
+          new ArrayList<>(conditions), address, value));
+      stage = stage.prev();
+    }
+
+    return result.stream();
+  }
+
+  // resolve select-by-instruction and select nodes and collect condition
+  @Nullable
+  private ExpressionNode resolveForward(
+      MiaMapping mapping, Stage stageFrom, ExpressionNode value,
+      List<Pair<ExpressionNode, ExpressionNode>> conditions
+  ) {
+    if (mapping.containsInStage(stageFrom, value)) {
+      return value;
+    }
+    if (value instanceof RtlSelectByInstructionNode select) {
+      for (int i = 0; i < select.instructions().size(); i++) {
+        var val = select.values().get(i);
+        var res = resolveForward(mapping, stageFrom, val, conditions);
+        if (res != null) {
+          var sel = Objects.requireNonNull(select.selection());
+          var index = Constant.Value.of(i, sel.type().asDataType()).toNode();
+          conditions.add(Pair.of(sel, index));
+          return res;
+        }
+      }
+    }
+    if (value instanceof SelectNode select) {
+      var res = resolveForward(mapping, stageFrom, select.trueCase(), conditions);
+      if (res != null) {
+        conditions.add(Pair.of(select.condition(), Constant.Value.of(true).toNode()));
+        return res;
+      }
+      res = resolveForward(mapping, stageFrom, select.falseCase(), conditions);
+      if (res != null) {
+        conditions.add(Pair.of(select.condition(), Constant.Value.of(true).toNode()));
+        return res;
+      }
+    }
+    return null;
   }
 
 }

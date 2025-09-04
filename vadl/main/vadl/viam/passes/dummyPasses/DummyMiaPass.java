@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -32,6 +33,7 @@ import vadl.viam.Identifier;
 import vadl.viam.Logic;
 import vadl.viam.Memory;
 import vadl.viam.MicroArchitecture;
+import vadl.viam.Processor;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
@@ -127,10 +129,21 @@ public class DummyMiaPass extends Pass {
       return null;
     }
 
+//    viam.add(threeStage(viam, mip));
+    viam.add(fiveStage(viam, mip));
+
+    viam.verify();
+
+    return null;
+  }
+
+  private MicroArchitecture fiveStage(Specification viam, Processor mip) {
     var regFile = viam.isa().orElseThrow().registerTensors()
         .stream().filter(RegisterTensor::isRegisterFile).findFirst().get();
     var mem = viam.isa().orElseThrow().ownMemories().get(0);
-    var pc = Objects.requireNonNull(viam.isa().orElseThrow().pc()).registerTensor();
+    var pc = Objects.requireNonNull(mip.isa().pc()).registerTensor();
+    var csr = mip.isa().registerTensors().stream()
+        .filter(reg -> reg.simpleName().equals("CSR")).findAny().orElse(null);
 
     var ident = Identifier.noLocation("MiA");
     var bypass = bypass(ident);
@@ -138,22 +151,17 @@ public class DummyMiaPass extends Pass {
 
     var fetch = fetch(ident.append("FETCH"));
     var decode = decode(ident.append("DECODE"), fetch.outputs().get(0), regFile, bypass);
-    var execute = exec(ident.append("EXECUTE"), decode.outputs().get(0), pc, regFile, bypass);
+    var execute = exec(ident.append("EXECUTE"), decode.outputs().get(0), pc, regFile, csr,
+        bypass);
     var memory = memory(ident.append("MEMORY"), execute.outputs().get(0), mem);
     var writeBack = writeBack(ident.append("WRITE_BACK"), memory.outputs().get(0), regFile);
 
-    var mia = new MicroArchitecture(
+    return new MicroArchitecture(
         ident,
         mip,
         new ArrayList<>(List.of(fetch, decode, execute, memory, writeBack)),
         new ArrayList<>(List.of(bypass, predict))
     );
-
-    viam.add(mia);
-
-    viam.verify();
-
-    return null;
   }
 
   private static StageOutput stageOutput(Identifier ident, Type type) {
@@ -247,10 +255,10 @@ public class DummyMiaPass extends Pass {
    * {
    *   let instr = DECODE.ir in
    *   {
-   *     instr.read( @PC )
+   *     instr.read( @PC, @CSR )
    *     instr.compute
    *     instr.verify
-   *     instr.write( @PC )
+   *     instr.write( @PC, @CSR )
    *     instr.results( @X, @bypass )
    *     ir := instr
    *   }
@@ -258,17 +266,22 @@ public class DummyMiaPass extends Pass {
    * </pre>.
    */
   private static Stage exec(Identifier ident, StageOutput decodeIr, Resource pc,
-                            RegisterTensor regFile, Logic bypass) {
+                            RegisterTensor regFile, @Nullable RegisterTensor csr, Logic bypass) {
     var ir = stageOutput(ident.append("ir"), MicroArchitectureType.instruction());
-    return new Stage(ident, executeBehavior(decodeIr, ir, pc, regFile, bypass), List.of(ir));
+    return new Stage(ident, executeBehavior(decodeIr, ir, pc, regFile, csr, bypass),
+        List.of(ir));
   }
 
   private static Graph executeBehavior(StageOutput decodeIr, StageOutput ir, Resource pc,
-                                       RegisterTensor regFile, Logic bypass) {
+                                       RegisterTensor regFile, @Nullable RegisterTensor csr,
+                                       Logic bypass) {
     var rd = new ReadStageOutputNode(decodeIr);
     var i1 = new MiaBuiltInCall(BuiltInTable.INSTRUCTION_READ, new NodeList<>(rd),
         MicroArchitectureType.instruction());
     i1.add(pc);
+    if (csr != null) {
+      i1.add(csr);
+    }
     var i2 = new MiaBuiltInCall(BuiltInTable.INSTRUCTION_COMPUTE, new NodeList<>(i1),
         MicroArchitectureType.instruction());
     var i3 = new MiaBuiltInCall(BuiltInTable.INSTRUCTION_VERIFY, new NodeList<>(i2),
@@ -276,6 +289,9 @@ public class DummyMiaPass extends Pass {
     var i4 = new MiaBuiltInCall(BuiltInTable.INSTRUCTION_WRITE, new NodeList<>(i3),
         MicroArchitectureType.instruction());
     i4.add(pc);
+    if (csr != null) {
+      i4.add(csr);
+    }
     var i5 = new MiaBuiltInCall(BuiltInTable.INSTRUCTION_RESULTS, new NodeList<>(i4),
         MicroArchitectureType.instruction());
     i5.add(regFile);
@@ -340,6 +356,120 @@ public class DummyMiaPass extends Pass {
         MicroArchitectureType.instruction());
     i1.add(regFile);
     var wr = new WriteStageOutputNode(null, i1);
+    beh.addWithInputs(wr);
+    return beh;
+  }
+
+  private MicroArchitecture threeStage(Specification viam, Processor mip) {
+    var regFile = viam.isa().orElseThrow().registerTensors()
+        .stream().filter(RegisterTensor::isRegisterFile).findFirst().get();
+    var mem = viam.isa().orElseThrow().ownMemories().get(0);
+
+    var ident = Identifier.noLocation("MiA");
+    var bypass = bypass(ident);
+    var predict = predict(ident);
+
+    var ifStage = ifStage(ident.append("IF"));
+    var id = id(ident.append("ID"), ifStage.outputs().get(0), regFile, bypass);
+    var ex = ex(ident.append("EX"), id.outputs().get(0), regFile, mem, bypass);
+
+    return new MicroArchitecture(
+        ident,
+        mip,
+        new ArrayList<>(List.of(ifStage, id, ex)),
+        new ArrayList<>(List.of(bypass, predict))
+    );
+  }
+
+  /**
+   * <pre>
+   * stage IF -> ( fr : FetchResult ) =
+   * {
+   *   fr := fetchNext
+   * }
+   * </pre>.
+   */
+  private static Stage ifStage(Identifier ident) {
+    var fr = stageOutput(ident.append("fr"), MicroArchitectureType.fetchResult());
+    return new Stage(ident, ifBehavior(fr), List.of(fr));
+  }
+
+  private static Graph ifBehavior(StageOutput fr) {
+    var beh = new Graph("IF");
+    var fn = new MiaBuiltInCall(BuiltInTable.FETCH_NEXT, new NodeList<>(),
+        MicroArchitectureType.fetchResult());
+    var wr = new WriteStageOutputNode(fr, fn);
+    beh.addWithInputs(wr);
+    return beh;
+  }
+
+  /**
+   * <pre>
+   * stage ID -> ( ir : Instruction ) =
+   * {
+   *   let instr = decode( IF.fr ) in
+   *   {
+   *     instr.readOrForward( @X, @bypass )
+   *     ir := instr
+   *   }
+   * }
+   * </pre>.
+   */
+  private static Stage id(Identifier ident, StageOutput ifFr, RegisterTensor regFile,
+                          Logic bypass) {
+    var ir = stageOutput(ident.append("ir"), MicroArchitectureType.instruction());
+    return new Stage(ident, idBehavior(ifFr, ir, regFile, bypass), List.of(ir));
+  }
+
+  private static Graph idBehavior(StageOutput ifFr, StageOutput ir, RegisterTensor regFile,
+                                  Logic bypass) {
+    var rd = new ReadStageOutputNode(ifFr);
+    var i1 = new MiaBuiltInCall(BuiltInTable.DECODE, new NodeList<>(rd),
+        MicroArchitectureType.instruction());
+    var i2 = new MiaBuiltInCall(BuiltInTable.INSTRUCTION_READ_OR_FORWARD, new NodeList<>(i1),
+        MicroArchitectureType.instruction());
+    i2.add(regFile);
+    i2.add(bypass);
+    var wr = new WriteStageOutputNode(ir, i2);
+    var beh = new Graph("ID");
+    beh.addWithInputs(wr);
+    return beh;
+  }
+
+  /**
+   * <pre>
+   * stage EX -> ( ir : Instruction ) =
+   * {
+   *   let instr = ID.ir in
+   *   {
+   *     instr.results( @X, @bypass )
+   *     instr.read( @MEM )
+   *     instr.write
+   *     ir := instr
+   *   }
+   * }
+   * </pre>.
+   */
+  private static Stage ex(Identifier ident, StageOutput idIr, RegisterTensor regFile, Memory mem,
+                          Logic bypass) {
+    var ir = stageOutput(ident.append("ir"), MicroArchitectureType.instruction());
+    return new Stage(ident, exBehavior(idIr, ir, regFile, mem, bypass), List.of(ir));
+  }
+
+  private static Graph exBehavior(StageOutput idIr, StageOutput ir, RegisterTensor regFile,
+                                  Memory mem, Logic bypass) {
+    var rd = new ReadStageOutputNode(idIr);
+    var i1 = new MiaBuiltInCall(BuiltInTable.INSTRUCTION_RESULTS, new NodeList<>(rd),
+        MicroArchitectureType.instruction());
+    i1.add(regFile);
+    i1.add(bypass);
+    var i2 = new MiaBuiltInCall(BuiltInTable.INSTRUCTION_READ, new NodeList<>(i1),
+        MicroArchitectureType.instruction());
+    i2.add(mem);
+    var i3 = new MiaBuiltInCall(BuiltInTable.INSTRUCTION_WRITE, new NodeList<>(i2),
+        MicroArchitectureType.instruction());
+    var wr = new WriteStageOutputNode(ir, i3);
+    var beh = new Graph("EX");
     beh.addWithInputs(wr);
     return beh;
   }

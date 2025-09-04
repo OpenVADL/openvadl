@@ -16,12 +16,16 @@
 
 package vadl.rtl.analysis;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
+import vadl.utils.Pair;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.Resource;
 import vadl.viam.Stage;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
@@ -55,9 +59,35 @@ public class HazardAnalysis extends DefinitionExtension<Resource> {
                               @Nullable Stage address, Stage value) {
   }
 
+  /**
+   * Forward analysis for a write node and a stage to forward values to.
+   *
+   * @param node write node
+   * @param writeStage stage the write node is in
+   * @param fromStage stage to forward from
+   * @param conditions condition to determine if forwarding value is available (pairs of equalities)
+   * @param address address node to compare
+   * @param value value node to forward
+   */
+  public record ForwardAnalysis(WriteResourceNode node, Stage writeStage, Stage fromStage,
+                                List<Pair<ExpressionNode, ExpressionNode>> conditions,
+                                @Nullable ExpressionNode address, ExpressionNode value) {
+
+    /**
+     * Forwarding is always possible if the forwarding condition is just the write enable condition.
+     *
+     * @return true if always possible
+     */
+    public boolean alwaysPossible() {
+      return conditions.size() == 1;
+    }
+
+  }
+
   private final Resource resource;
   private final Set<ReadAnalysis> reads;
   private final Set<WriteAnalysis> writes;
+  private final Set<ForwardAnalysis> forwards;
 
   /**
    * Create new hazard analysis for a resource.
@@ -67,10 +97,11 @@ public class HazardAnalysis extends DefinitionExtension<Resource> {
    * @param writes set of write analyses
    */
   public HazardAnalysis(Resource resource, Set<ReadAnalysis> reads,
-                        Set<WriteAnalysis> writes) {
+                        Set<WriteAnalysis> writes, Set<ForwardAnalysis> forwards) {
     this.resource = resource;
     this.reads = reads;
     this.writes = writes;
+    this.forwards = forwards;
   }
 
   public Resource resource() {
@@ -83,6 +114,18 @@ public class HazardAnalysis extends DefinitionExtension<Resource> {
 
   public Set<WriteAnalysis> writes() {
     return writes;
+  }
+
+  public Set<ForwardAnalysis> forwards() {
+    return forwards;
+  }
+
+  @Nullable
+  public ForwardAnalysis forwardWriteFromStage(WriteAnalysis writeAnalysis, Stage stage) {
+    return forwards.stream()
+        .filter(f -> f.node().equals(writeAnalysis.node()))
+        .filter(f -> f.fromStage().equals(stage))
+        .findAny().orElse(null);
   }
 
   @Override

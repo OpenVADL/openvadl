@@ -35,11 +35,14 @@ import vadl.pass.PassResults;
 import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
 import vadl.rtl.ipg.nodes.RtlInstructionWordSliceNode;
+import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
 import vadl.rtl.ipg.nodes.RtlReadMemNode;
 import vadl.rtl.ipg.nodes.RtlReadRegTensorNode;
 import vadl.rtl.ipg.nodes.RtlWriteMemNode;
 import vadl.rtl.utils.GraphMergeUtils;
 import vadl.rtl.utils.RtlSimplificationRules;
+import vadl.types.BitsType;
+import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.GraphUtils;
@@ -49,6 +52,7 @@ import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
+import vadl.viam.Stage;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -62,6 +66,7 @@ import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SideEffectNode;
@@ -113,6 +118,9 @@ public class InstructionProgressGraphCreationPass extends Pass {
     // modify register file reads/writes to be disabled and constants to be returned
     // if a constrained addresses is matched
     inlineRegisterFileConstraints(ipg);
+
+    // create instruction fetch and pc increment nodes
+    inlineInstructionFetch(ipg, optIsa.get());
 
     // optimize because some of the previous steps introduce
     // potentially unnecessary constant nodes
@@ -274,26 +282,33 @@ public class InstructionProgressGraphCreationPass extends Pass {
     });
     map.forEach((read, sideEffects) -> {
       var instructions = ipg.getContext(read.asReadNode()).instructions();
-      sideEffects.stream()
-          .reduce(GraphUtils::or).ifPresent(cond -> {
-            if (hasCycle(read.asReadNode(), cond)) {
-              // over-approximate with true
-              read.setCondition(
-                  ipg.addWithInputs(GraphUtils.bool(true).toNode(), instructions));
-            } else {
-              if (read.condition() != null) {
-                cond = GraphUtils.and(cond, read.condition());
+      if (sideEffects.contains(null) || sideEffects.stream()
+          .anyMatch(e -> e instanceof ConstantNode c && c.constant().asVal().bool())) {
+        // condition is true
+        read.setCondition(
+            ipg.addWithInputs(GraphUtils.bool(true).toNode(), instructions));
+      } else {
+        sideEffects.stream()
+            .reduce(GraphUtils::or).ifPresent(cond -> {
+              if (hasCycle(read.asReadNode(), cond)) {
+                // over-approximate with true
+                read.setCondition(
+                    ipg.addWithInputs(GraphUtils.bool(true).toNode(), instructions));
+              } else {
+                if (read.condition() != null) {
+                  cond = GraphUtils.and(cond, read.condition());
+                }
+                cond = ipg.addWithInputs(cond, instructions);
+                read.setCondition(cond);
               }
-              cond = ipg.addWithInputs(cond, instructions);
-              read.setCondition(cond);
-            }
-          });
+            });
+      }
     });
   }
 
   private void collectSideEffects(Node node, SideEffectNode sideEffect,
                                   Map<RtlConditionalReadNode, Set<ExpressionNode>> map) {
-    if (node instanceof RtlConditionalReadNode read && read.condition() != null) {
+    if (node instanceof RtlConditionalReadNode read) {
       map.computeIfAbsent(read, k -> new HashSet<>())
           .add(sideEffect.condition());
     }
@@ -367,5 +382,53 @@ public class InstructionProgressGraphCreationPass extends Pass {
         )
         .reduce(GraphUtils::or).orElseThrow(() ->
             new ViamError("Malformed register file constraint without indices"));
+  }
+
+  private void inlineInstructionFetch(InstructionProgressGraph ipg,
+                                      InstructionSetArchitecture isa) {
+    var codeMem = isa.codeMemory();
+    var minInsWord = isa.ownFormats().stream().mapToInt(f -> f.type().bitWidth()).min();
+    var maxInsWord = isa.ownFormats().stream().mapToInt(f -> f.type().bitWidth()).max();
+    var pc = isa.pc();
+    if (pc == null || minInsWord.isEmpty() || maxInsWord.isEmpty()
+        || minInsWord.getAsInt() != maxInsWord.getAsInt()) {
+      throw new ViamError("Can only fetch instructions with a single instruction width");
+    }
+    if ((maxInsWord.getAsInt() % codeMem.resultType().bitWidth()) != 0) {
+      throw new ViamError("Instruction word length must be a multiple of code memory result width");
+    }
+    var insWord = maxInsWord.getAsInt();
+    var pcInc = maxInsWord.getAsInt() / codeMem.resultType().bitWidth();
+    var pcIncVal = Constant.Value
+        .of(pcInc, Type.bits(BitsType.minimalRequiredWidthFor(pcInc))).asVal();
+
+    // read at pc address
+    var readPc = new ReadRegTensorNode(pc.registerTensor(), new NodeList<>(),
+        pc.resultType(), pc);
+    var readIns = new RtlReadMemNode(codeMem, pcInc, pcIncVal.toNode(), readPc,
+        Type.bits(insWord), Constant.Value.of(true).toNode());
+    readIns = ipg.addWithInputs(readIns, ipg.instructions());
+    ipg.setFetch(readIns);
+
+    // pc increment, TODO: replace with branch prediction value
+    var pcIncRes = GraphUtils.add(
+        readPc,
+        Constant.Value.of(pcInc, pc.resultType()).asVal().toNode()
+    );
+    var writePc = new WriteRegTensorNode(pc.registerTensor(), new NodeList<>(),
+        pcIncRes, pc, Constant.Value.of(true).toNode());
+    writePc = ipg.addWithInputs(writePc, ipg.instructions());
+    ipg.setPcIncrement(writePc);
+
+    // disable other pc writes if they write the same value
+    // (rollback only considers write enable on other pc writes, would cause unnecessary rollback)
+    ipg.getNodes(WriteRegTensorNode.class).toList().forEach(write -> {
+      if (!write.equals(ipg.pcIncrement())
+          && write.resourceDefinition().equals(pc.registerTensor())) {
+        var cond = GraphUtils.and(write.condition(), GraphUtils.neq(pcIncRes, write.value()));
+        cond = ipg.addWithInputs(cond, ipg.instructions());
+        write.setCondition(cond);
+      }
+    });
   }
 }

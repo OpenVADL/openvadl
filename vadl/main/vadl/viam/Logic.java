@@ -17,18 +17,35 @@
 package vadl.viam;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.Nullable;
+import vadl.types.Type;
+import vadl.viam.graph.Graph;
+import vadl.viam.graph.dependency.ReadResourceNode;
 
 /**
  * Logic definition in MiA description.
  */
-public abstract class Logic extends Definition {
+public abstract class Logic extends Definition implements DefProp.WithBehavior {
 
   @LazyInit
   @SuppressWarnings("unused")
   private MicroArchitecture mia;
 
+  private final List<Signal> signals;
+  private final List<RegisterTensor> registers;
+
+  private Graph behavior;
+
   public Logic(Identifier identifier) {
     super(identifier);
+    this.signals = new ArrayList<>();
+    this.registers = new ArrayList<>();
+    this.behavior = new Graph(identifier.simpleName());
   }
 
   public void setMia(MicroArchitecture mia) {
@@ -45,13 +62,73 @@ public abstract class Logic extends Definition {
     return identifier.simpleName() + ": " + getClass().getSimpleName();
   }
 
+  public List<Signal> signals() {
+    return signals;
+  }
+
+  public void addSignal(Signal signal) {
+    signals.add(signal);
+  }
+
+  public List<RegisterTensor> registers() {
+    return registers;
+  }
+
+  public void addRegister(RegisterTensor register) {
+    registers.add(register);
+  }
+
+  public Graph behavior() {
+    return behavior;
+  }
+
+  @Override
+  public List<Graph> behaviors() {
+    return Collections.singletonList(behavior);
+  }
+
+  /**
+   * Logic definition for control logic (created by MiA synthesis).
+   */
+  public static class Control extends Logic {
+
+    private final Map<Stage, Signal> enable = new HashMap<>();
+
+    public Control(Identifier identifier) {
+      super(identifier);
+    }
+
+    public Signal getEnable(Stage stage) {
+      return enable.computeIfAbsent(stage, s -> {
+        var sig = new Signal(identifier.append(s.simpleName() + "_en"), Type.bool());
+        signals().add(sig);
+        return sig;
+      });
+    }
+
+  }
+
   /**
    * Logic definition for a forwarding unit.
    */
   public static class Forwarding extends Logic {
 
+    private final Map<ReadResourceNode, Signal> enable = new HashMap<>();
+
     public Forwarding(Identifier identifier) {
       super(identifier);
+    }
+
+    public void putEnable(ReadResourceNode node, Signal signal) {
+      enable.put(node, signal);
+      if (!signals().contains(signal)) {
+        signals().add(signal);
+      }
+    }
+
+    @Nullable
+    public Signal getEnable(ReadResourceNode node) {
+      return enable.get(node);
     }
 
   }

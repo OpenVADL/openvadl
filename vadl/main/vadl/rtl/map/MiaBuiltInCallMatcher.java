@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
 import java.util.stream.Collectors;
+import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.nodes.RtlInstructionWordSliceNode;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
@@ -48,6 +49,12 @@ public class MiaBuiltInCallMatcher {
       new IdentityHashMap<>();
 
   static {
+    MATCHERS.put(BuiltInTable.FETCH_NEXT, (matchNode, mapNode, doneNodes) -> {
+      if (matchNode.ensureGraph() instanceof InstructionProgressGraph ipg) {
+        return matchNode.equals(ipg.fetch()) || matchNode.equals(ipg.pcIncrement());
+      }
+      return false;
+    });
     MATCHERS.put(BuiltInTable.DECODE, (matchNode, mapNode, doneNodes) -> {
       if (matchNode instanceof ConstantNode) {
         return false;

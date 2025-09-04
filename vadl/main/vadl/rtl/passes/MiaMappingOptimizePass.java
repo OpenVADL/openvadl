@@ -42,6 +42,9 @@ import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.SignExtendNode;
+import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.canonicalization.Canonicalizer;
 
 /**
@@ -220,9 +223,17 @@ public class MiaMappingOptimizePass extends Pass {
 
   // node can be moved if it has no inputs from the current stage and
   // the bits we save passing between the stages outweigh the bits the node outputs
+  // exception for truncate and extend nodes (no cost in hardware)
   private boolean isCandidate(Stage stage, MiaMapping mapping, Node ipgNode) {
-    return (ipgNode.inputs().noneMatch(node -> mapping.containsInStage(stage, node))
-        && sumInputsWithoutMoreUsages(stage, mapping, ipgNode) > bitWidth(ipgNode));
+    if (ipgNode.inputs().noneMatch(node -> mapping.containsInStage(stage, node))) {
+      if (ipgNode instanceof TruncateNode
+          || ipgNode instanceof ZeroExtendNode
+          || ipgNode instanceof SignExtendNode) {
+        return true;
+      }
+      return sumInputsWithoutMoreUsages(stage, mapping, ipgNode) > bitWidth(ipgNode);
+    }
+    return false;
   }
 
   // sum bit widths of inputs that have no more usages in the current stage

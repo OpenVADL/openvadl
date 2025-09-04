@@ -104,6 +104,10 @@ public class RtlReadMemNode extends ReadResourceNode implements RtlConditionalRe
     return memory;
   }
 
+  public int maxWords() {
+    return maxWords;
+  }
+
   public ExpressionNode words() {
     return words;
   }

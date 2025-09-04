@@ -22,6 +22,7 @@ import com.google.common.html.HtmlEscapers;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.dump.InfoEnricher;
@@ -113,6 +114,24 @@ public class RtlEnricherCollection {
             defEntity.addInfo(InfoUtils.createTableExpandable(
                 "Read/Write Hazards",
                 List.of(nodes, eff, cond, addr, val)
+            ));
+
+            var fwdNodes = col("Nodes", ext.forwards().stream()
+                .map(HazardAnalysis.ForwardAnalysis::node)
+                .map(Node::toString)
+                .map(HtmlEscapers.htmlEscaper()::escape));
+            var fwdWriteStages = col("Write In", ext.forwards().stream()
+                .map(HazardAnalysis.ForwardAnalysis::writeStage)
+                .map(Stage::simpleName));
+            var fwdFromStages = col("Forward From", ext.forwards().stream()
+                .map(HazardAnalysis.ForwardAnalysis::fromStage)
+                .map(Stage::simpleName));
+            var fwdAlwaysPossible = col("Always Possible", ext.forwards().stream()
+                .map(HazardAnalysis.ForwardAnalysis::alwaysPossible)
+                .map(Objects::toString));
+            defEntity.addInfo(InfoUtils.createTableExpandable(
+                "Forwarding",
+                List.of(fwdNodes, fwdWriteStages, fwdFromStages, fwdAlwaysPossible)
             ));
           }
         }
