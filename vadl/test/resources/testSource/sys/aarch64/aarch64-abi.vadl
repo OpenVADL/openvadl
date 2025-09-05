@@ -18,7 +18,7 @@ instruction set architecture AArch64Temp extending AArch64Base = {
   pseudo instruction PLDR( rd: Index, symbol: SInt<64> ) =
   {
     ADRP { rd = rd, offset = symbol }
-    ADDXSI { rd = rd, rn = rd, imm12X = lo12(symbol) }
+    ADDXI { rd = rd, rn = rd, imm12X = lo12(symbol) }
   }
   assembly PLDR = ("LDR", " ", register(rd), " ", hex(symbol))
 }
