@@ -160,19 +160,19 @@ instruction set architecture AArch64Base = {
 
   // assembly W register names or zero
   function WSize (idx: Index) -> String =   // do not rename
-    if idx = 31 then "wzr" else "w" + decimal( idx )
+    if idx = 31 then "wzr" else "w" + udec( idx )
 
   // assembly X register names or zero
   function XSize (idx: Index) -> String =   // do not rename
-    if idx = 31 then "xzr"  else "x" + decimal( idx )
+    if idx = 31 then "xzr"  else "x" + udec( idx )
 
   // assembly W register names or sp
   function WSizeSP (idx: Index) -> String = // do not rename
-    if idx = 31 then "wsp" else "w" + decimal( idx )
+    if idx = 31 then "wsp" else "w" + udec( idx )
 
   // assembly X register names or sp
   function XSizeSP (idx: Index) -> String = // do not rename
-    if idx = 31 then "sp"  else "x" + decimal( idx )
+    if idx = 31 then "sp"  else "x" + udec( idx )
 
   function Imm7decimal  (imm: Bits7)  -> String =
     if imm = 0 then "" else (", #", decimal( imm ))
@@ -314,14 +314,14 @@ instruction set architecture AArch64Base = {
     $AddSubExtInstrBase ($i; SXTW; $size; $f; X(rm)(31..0) as SIntX; SXTW; imm3 = 0; (WSize(rm), ", sxtw"))
     $AddSubExtInstrBase ($i; SXTX; $size; $f; X(rm)(63..0) as SIntX; SXTX; imm3 = 0; ($size(rm), ", sxtx"))
 
-    $AddSubExtInstrBase ($i; UXSB; $size; $f; X(rm)( 7..0) as UIntX << imm3; UXTB; none; (WSize(rm), ", uxtb #", decimal(imm3)))
-    $AddSubExtInstrBase ($i; UXSH; $size; $f; X(rm)(15..0) as UIntX << imm3; UXTH; none; (WSize(rm), ", uxth #", decimal(imm3)))
-    $AddSubExtInstrBase ($i; UXSW; $size; $f; X(rm)(31..0) as UIntX << imm3; UXTW; none; (WSize(rm), ", uxtw #", decimal(imm3)))
-    $AddSubExtInstrBase ($i; UXSX; $size; $f; X(rm)(63..0) as UIntX << imm3; UXTX; none; ($size(rm), ", uxtx #", decimal(imm3)))
-    $AddSubExtInstrBase ($i; SXSB; $size; $f; X(rm)( 7..0) as SIntX << imm3; SXTB; none; (WSize(rm), ", sxtb #", decimal(imm3)))
-    $AddSubExtInstrBase ($i; SXSH; $size; $f; X(rm)(15..0) as SIntX << imm3; SXTH; none; (WSize(rm), ", sxth #", decimal(imm3)))
-    $AddSubExtInstrBase ($i; SXSW; $size; $f; X(rm)(31..0) as SIntX << imm3; SXTW; none; (WSize(rm), ", sxtw #", decimal(imm3)))
-    $AddSubExtInstrBase ($i; SXSX; $size; $f; X(rm)(63..0) as SIntX << imm3; SXTX; none; ($size(rm), ", sxtx #", decimal(imm3)))
+    $AddSubExtInstrBase ($i; UXSB; $size; $f; X(rm)( 7..0) as UIntX << imm3; UXTB; none; (WSize(rm), ", uxtb #", udec(imm3)))
+    $AddSubExtInstrBase ($i; UXSH; $size; $f; X(rm)(15..0) as UIntX << imm3; UXTH; none; (WSize(rm), ", uxth #", udec(imm3)))
+    $AddSubExtInstrBase ($i; UXSW; $size; $f; X(rm)(31..0) as UIntX << imm3; UXTW; none; (WSize(rm), ", uxtw #", udec(imm3)))
+    $AddSubExtInstrBase ($i; UXSX; $size; $f; X(rm)(63..0) as UIntX << imm3; UXTX; none; ($size(rm), ", uxtx #", udec(imm3)))
+    $AddSubExtInstrBase ($i; SXSB; $size; $f; X(rm)( 7..0) as SIntX << imm3; SXTB; none; (WSize(rm), ", sxtb #", udec(imm3)))
+    $AddSubExtInstrBase ($i; SXSH; $size; $f; X(rm)(15..0) as SIntX << imm3; SXTH; none; (WSize(rm), ", sxth #", udec(imm3)))
+    $AddSubExtInstrBase ($i; SXSW; $size; $f; X(rm)(31..0) as SIntX << imm3; SXTW; none; (WSize(rm), ", sxtw #", udec(imm3)))
+    $AddSubExtInstrBase ($i; SXSX; $size; $f; X(rm)(63..0) as SIntX << imm3; SXTX; none; ($size(rm), ", sxtx #", udec(imm3)))
     }
 
 
@@ -346,7 +346,7 @@ instruction set architecture AArch64Base = {
         }
     encoding $i.id = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, sh = $sh }
     assembly $i.id = ( $i.mnemo, $f.mext, ' ', AsId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd),
-                       ', ', AsId($size, "SP")(rn), ', ', "#", decimal($immEx), $asm )
+                       ', ', AsId($size, "SP")(rn), ', ', "#", udec($immEx), $asm )
     }
 
   model ExtInstrStr (i: InstrWithFunct, ext: Str): InstrWithFunct = {
@@ -354,8 +354,8 @@ instruction set architecture AArch64Base = {
     }
 
   model AddSubImmInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
-    $AddSubImmInstrShft ($ExtInstrStr ($i; "I"  ); $size; $f; imm12X; 0 ; "") //  decimal(imm12)
-    $AddSubImmInstrShft ($ExtInstrStr ($i; "I12"); $size; $f; imm12S; 1 ; "") // (decimal(imm12), ", lsl #12")
+    $AddSubImmInstrShft ($ExtInstrStr ($i; "I"  ); $size; $f; imm12X; 0 ; "") //  duec(imm12)
+    $AddSubImmInstrShft ($ExtInstrStr ($i; "I12"); $size; $f; imm12S; 1 ; "") // (udec(imm12), ", lsl #12")
     }
 
 
@@ -385,9 +385,9 @@ instruction set architecture AArch64Base = {
 
   model AddSubSftInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
      $AddSubSftInstrBase ($i; $size; $f; $WXReg(rm; $size); imm6 = 0, shift = ShiftType::LSL; "") // TODO pseudo instruction
-     $AddSubSftInstrBase ($ExtInstrStr ($i; "LSL"); $size; $f; $WXReg(rm; $size) as Bits << imm6; shift = ShiftType::LSL; (", lsl #", decimal(imm6)))
-     $AddSubSftInstrBase ($ExtInstrStr ($i; "LSR"); $size; $f; $WXReg(rm; $size) as UInt >> imm6; shift = ShiftType::LSR; (", lsr #", decimal(imm6)))
-     $AddSubSftInstrBase ($ExtInstrStr ($i; "ASR"); $size; $f; $WXReg(rm; $size) as SInt >> imm6; shift = ShiftType::ASR; (", asr #", decimal(imm6)))
+     $AddSubSftInstrBase ($ExtInstrStr ($i; "LSL"); $size; $f; $WXReg(rm; $size) as Bits << imm6; shift = ShiftType::LSL; (", lsl #", udec(imm6)))
+     $AddSubSftInstrBase ($ExtInstrStr ($i; "LSR"); $size; $f; $WXReg(rm; $size) as UInt >> imm6; shift = ShiftType::LSR; (", lsr #", udec(imm6)))
+     $AddSubSftInstrBase ($ExtInstrStr ($i; "ASR"); $size; $f; $WXReg(rm; $size) as SInt >> imm6; shift = ShiftType::ASR; (", asr #", udec(imm6)))
   }
 
 
@@ -439,7 +439,7 @@ instruction set architecture AArch64Base = {
     instruction $i.id: RelAddressFormat =
       X(rd) := $ex
     encoding $i.id = { op = $i.opcode }
-    assembly $i.id = ($i.mnemo, ' ', decimal(imm21))
+    assembly $i.id = ($i.mnemo, ' ', XSize(rd), ', ', ' ', sdec(imm21))
     }
 
   model AddressRelInstr (i: InstrNoFunct): IsaDefs = {
@@ -745,7 +745,7 @@ instruction set architecture AArch64Base = {
     instruction AsId ($i.id, $pos): MovFormat =
       X(rd) := $posex
     encoding AsId ($i.id, $pos) = { sf = SF::$size, op = $i.opcode, pos = Position::$pos }
-    assembly AsId ($i.id, $pos) = ($i.mnemo, ' ', $size(rd), ', #', decimal(imm16),
+    assembly AsId ($i.id, $pos) = ($i.mnemo, ' ', $size(rd), ', #', udec(imm16),
       match: Str ($pos = Pos00 => ""; $pos = Pos16 => ", LSL #16"; $pos = Pos32 => ", LSL #32"; _ => ", LSL #48"))
     }
 
@@ -1812,6 +1812,7 @@ instruction set architecture AArch64Base = {
     }
 
   model UndefinedInstr (i: InstrNoFunct): IsaDefs = {
+    [add operands : imm16]
     instruction $i.id: UndefinedInstrFormat =
       raise $UndefinedException ()
     encoding $i.id = {op = $i.opcode}

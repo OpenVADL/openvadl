@@ -433,7 +433,7 @@ instruction set architecture AArch64Base = {
     instruction $i.id: RelAddressFormat =
       X(rd) := $ex
     encoding $i.id = { op = $i.opcode }
-    assembly $i.id = ($i.mnemo, ' ', XSize(rd), ', ', sdec(imm21))
+    assembly $i.id = ($i.mnemo, ' ', XSize(rd), ', ', ' ', sdec(imm21))
     }
 
   model AddressRelInstr (i: InstrNoFunct): IsaDefs = {
@@ -1806,6 +1806,7 @@ instruction set architecture AArch64Base = {
     }
 
   model UndefinedInstr (i: InstrNoFunct): IsaDefs = {
+    [add operands : imm16]
     instruction $i.id: UndefinedInstrFormat =
       raise $UndefinedException ()
     encoding $i.id = {op = $i.opcode}

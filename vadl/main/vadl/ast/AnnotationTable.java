@@ -250,7 +250,7 @@ public class AnnotationTable {
         .applyViam((def, annotation, lowering) -> {
           var fields =
               annotation.def.stream()
-                  .map(x -> (Format.Field) ensurePresent(lowering.fetch((RangeFormatField) x),
+                  .map(x -> (Format.Field) ensurePresent(lowering.fetch((FormatField) x),
                       () -> Diagnostic.error("Cannot find field", x.location()))).toList();
 
           def.addAnnotation(new DefineOperandAnnotation(fields));
