@@ -41,10 +41,17 @@ public class RtlCommand extends BaseCommand {
       description = "Don't emit generated files.")
   boolean dryRun;
 
+  @CommandLine.Option(names = {"--dummy-mia"},
+      scope = INHERIT,
+      description = "Select a dummy MiA: ${COMPLETION-CANDIDATES} (stages in pipeline)",
+      defaultValue = "five")
+  RtlConfiguration.DummyMia dummyMia = RtlConfiguration.DummyMia.five;
+
   @Override
   PassOrder passOrder(GeneralConfiguration configuration) throws IOException {
     var rtlConfig = new RtlConfiguration(configuration);
     rtlConfig.setDryRun(dryRun);
+    rtlConfig.setDummyMia(dummyMia);
     return PassOrders.rtl(rtlConfig);
   }
 }

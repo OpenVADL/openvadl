@@ -34,6 +34,12 @@ import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.WriteSignalNode;
 
+/**
+ * Common code for generating control and forwarding logic.
+ *
+ * <p>Provides methods to find specific IPG node values in a stage and connect them through a
+ * signal to the logic element.
+ */
 public abstract class AbstractLogicPass extends Pass {
 
   public AbstractLogicPass(GeneralConfiguration configuration) {

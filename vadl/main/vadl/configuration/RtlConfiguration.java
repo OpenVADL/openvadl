@@ -31,6 +31,13 @@ public class RtlConfiguration extends GeneralConfiguration implements Renderable
 
   private String projectName = "Core";
 
+  /**
+   * Enum to select the dummy MiA to instantiate.
+   */
+  public enum DummyMia { single, three, five }
+
+  private DummyMia dummyMia = DummyMia.five;
+
   public RtlConfiguration(GeneralConfiguration generalConfig) {
     super(generalConfig);
   }
@@ -67,6 +74,14 @@ public class RtlConfiguration extends GeneralConfiguration implements Renderable
 
   public String getProjectName() {
     return projectName;
+  }
+
+  public DummyMia getDummyMia() {
+    return dummyMia;
+  }
+
+  public void setDummyMia(DummyMia dummyMia) {
+    this.dummyMia = dummyMia;
   }
 
   @Override

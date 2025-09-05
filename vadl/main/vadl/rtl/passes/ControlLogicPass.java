@@ -18,14 +18,18 @@ package vadl.rtl.passes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.analysis.HazardAnalysis;
+import vadl.rtl.ipg.nodes.RtlConditionalMemNode;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
 import vadl.rtl.ipg.nodes.RtlReadMemNode;
 import vadl.rtl.ipg.nodes.RtlValidSignalNode;
@@ -43,6 +47,7 @@ import vadl.viam.RegisterTensor;
 import vadl.viam.Signal;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -85,15 +90,11 @@ public class ControlLogicPass extends AbstractLogicPass {
     var control = (Logic.Control) mia.logic().stream()
         .filter(Logic.Control.class::isInstance).findAny()
         .orElseGet(() -> new Logic.Control(mia.identifier.append("control")));
-    var behavior = control.behavior();
 
-    var enableWrMap = new HashMap<Stage, WriteSignalNode>();
-    var fullMap = new HashMap<Stage, RegisterTensor>();
-    var fullRdMap = new HashMap<Stage, ExpressionNode>();
-    var stallMap = new HashMap<Stage, ExpressionNode>();
-    var rollbackMap = new HashMap<Stage, ExpressionNode>();
 
     // full registers
+    var fullMap = new HashMap<Stage, RegisterTensor>();
+    var fullRdMap = new HashMap<Stage, ExpressionNode>();
     mia.stages().stream().skip(1).forEach(stage -> {
       var reg = RegisterTensor.of(control.identifier.append(stage.simpleName() + "_full"), 1);
       fullMap.put(stage, reg);
@@ -109,6 +110,7 @@ public class ControlLogicPass extends AbstractLogicPass {
     }
 
     // rollback signals
+    var rollbackMap = new HashMap<Stage, ExpressionNode>();
     ExpressionNode rbCond = Constant.Value.of(false).toNode();
     for (int i = mia.stages().size() - 1; i >= 0; i--) {
       var stage = mia.stages().get(i);
@@ -127,27 +129,29 @@ public class ControlLogicPass extends AbstractLogicPass {
     }
 
     // stall signals
+    var stallMap = new HashMap<Stage, ExpressionNode>();
     for (int i = mia.stages().size() - 1; i >= 0; i--) {
       var stage = mia.stages().get(i);
       var dhaz = dataHazard(isa, mia, control, stage, fullRdMap, inline, true);
       var fullRd = Objects.requireNonNull(fullRdMap.get(stage));
       var extStall = extStall(stage);
       if (i == mia.stages().size() - 1) {
-        stallMap.put(stage, GraphUtils.and(GraphUtils.or(dhaz, extStall), fullRd)); // TODO ext stall
+        stallMap.put(stage, GraphUtils.and(GraphUtils.or(dhaz, extStall), fullRd));
       } else {
         var stallNext = Objects.requireNonNull(stallMap.get(mia.stages().get(i + 1)));
         stallMap.put(stage, GraphUtils.and(
-            GraphUtils.or(dhaz, extStall, stallNext), fullRd)); // TODO ext stall
+            GraphUtils.or(dhaz, extStall, stallNext), fullRd));
       }
     }
 
     // enable signals
+    var enableWrMap = new HashMap<Stage, WriteSignalNode>();
     for (Stage stage : mia.stages()) {
       var en = Objects.requireNonNull(control.getEnable(stage));
       var fullRd = Objects.requireNonNull(fullRdMap.get(stage));
       var stall = Objects.requireNonNull(stallMap.get(stage));
       var rollback = Objects.requireNonNull(rollbackMap.get(stage));
-      enableWrMap.put(stage, behavior.addWithInputs(
+      enableWrMap.put(stage, control.behavior().addWithInputs(
           new WriteSignalNode(en,
               GraphUtils.and(fullRd, GraphUtils.not(stall), GraphUtils.not(rollback)))));
     }
@@ -160,7 +164,7 @@ public class ControlLogicPass extends AbstractLogicPass {
       var enableWrPrev = Objects.requireNonNull(enableWrMap.get(stagePrev));
       var stall = Objects.requireNonNull(stallMap.get(stage));
       var rollback = Objects.requireNonNull(rollbackMap.get(stage));
-      behavior.addWithInputs(new WriteRegTensorNode(full, new NodeList<>(),
+      control.behavior().addWithInputs(new WriteRegTensorNode(full, new NodeList<>(),
           GraphUtils.and(
               GraphUtils.or(enableWrPrev.value(), stall),
               GraphUtils.or(enableWrPrev.value(), GraphUtils.not(rollback))
@@ -186,8 +190,7 @@ public class ControlLogicPass extends AbstractLogicPass {
         }
       });
       stage.behavior().getNodes(RtlConditionalReadNode.class).forEach(read -> {
-        var enCond = (read instanceof RtlReadMemNode) ? finalFullRd : enRd;
-        var cond = patchCondition(read.condition(), enCond);
+        var cond = patchCondition(read.condition(), finalFullRd);
         read.setCondition(cond);
       });
     }
@@ -199,14 +202,7 @@ public class ControlLogicPass extends AbstractLogicPass {
         for (Stage stage : mia.stages()) {
           var writes = stage.behavior().getNodes(WriteResourceNode.class)
               .filter(wr -> wr.resourceDefinition().equals(reg)).toList();
-          if (writes.size() > 1) {
-            var ex = new ViamGraphError("Concurrent write to same resource in stage");
-            writes.forEach(ex::addContext);
-            ex.addContext(stage);
-            throw ex;
-          }
-          if (writes.size() == 1) {
-            var wr = writes.getFirst();
+          for (WriteResourceNode wr : writes) {
             enList.stream().map(ExpressionNode::copy).reduce(GraphUtils::or)
                 .ifPresent(otherEn -> {
                   var cond = stage.behavior().addWithInputs(
@@ -330,30 +326,43 @@ public class ControlLogicPass extends AbstractLogicPass {
   }
 
   private ExpressionNode extStall(Stage stage) {
-    var res = stage.behavior().getNodes()
+    var extStallNodes = stage.behavior().getNodes(RtlConditionalMemNode.class)
+        .collect(Collectors.toSet());
+    var extStallCond = extStallNodes.stream()
         .flatMap(node -> {
-          if (node instanceof RtlReadMemNode read) {
-            var valid = new RtlValidSignalNode(read);
-            var cond = Objects.requireNonNull(read.condition());
-            return Stream.of(GraphUtils.and(GraphUtils.not(valid), cond));
-          } else if (node instanceof RtlWriteMemNode write) {
-            var valid = new RtlValidSignalNode(write);
-            var cond = Objects.requireNonNull(write.condition());
-            return Stream.of(GraphUtils.and(GraphUtils.not(valid), cond));
+          var valid = new RtlValidSignalNode(node.asNode());
+          var cond = Objects.requireNonNull(node.condition());
+
+          // add valid signals of dependency ext stall nodes to conditions
+          var dep = collectDependencies(new HashSet<>(), extStallNodes, node.asNode());
+          var allValid = dep.stream().map(n -> (ExpressionNode) new RtlValidSignalNode(n))
+              .reduce(GraphUtils::and);
+          if (allValid.isPresent()) {
+            cond = GraphUtils.and(cond, allValid.get());
+            cond = stage.behavior().addWithInputs(cond);
+            node.setCondition(cond);
           }
-          return Stream.empty();
+
+          return Stream.of(GraphUtils.and(GraphUtils.not(valid), cond));
         })
         .reduce(GraphUtils::or);
-    return res.map(stage.behavior()::addWithInputs)
+    return extStallCond.map(stage.behavior()::addWithInputs)
         .map(expr -> getStageSignalRead(stage, expr))
         .orElse(Constant.Value.of(false).toNode());
   }
 
-  private ExpressionNode patchCondition(@Nullable ExpressionNode condition, ExpressionNode enRd) {
+  private Set<Node> collectDependencies(Set<Node> set, Set<RtlConditionalMemNode> filter,
+                                        Node node) {
+    node.inputs().filter(filter::contains).forEach(set::add);
+    node.inputs().forEach(n -> collectDependencies(set, filter, n));
+    return set;
+  }
+
+  private ExpressionNode patchCondition(@Nullable ExpressionNode condition, ExpressionNode en) {
     if (condition == null) {
-      return enRd;
+      return en;
     }
-    return enRd.ensureGraph().add(GraphUtils.and(enRd, condition));
+    return en.ensureGraph().add(GraphUtils.and(en, condition));
   }
 
 }

@@ -37,7 +37,7 @@ import vadl.viam.graph.dependency.WriteResourceNode;
  * the number of words written determined by this input
  * <li> Condition input
  */
-public class RtlWriteMemNode extends WriteResourceNode {
+public class RtlWriteMemNode extends WriteResourceNode implements RtlConditionalMemNode {
 
   @DataValue
   protected Memory memory;
@@ -133,5 +133,10 @@ public class RtlWriteMemNode extends WriteResourceNode {
   @Override
   public <T extends GraphNodeVisitor> void accept(T visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public Node asNode() {
+    return super.asNode();
   }
 }

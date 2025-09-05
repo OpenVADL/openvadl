@@ -96,6 +96,14 @@ class CoreTest extends AnyFunSpec with ChiselSim {
           val pending = new mutable.HashMap[Object, Int]()
 
           dut.io.reset_vector_out.poke(start)
+          dut.io.getElements.foreach {
+            case rd: VADL.MemReadPort[?] =>
+              rd.valid.poke(false)
+            case wr: VADL.MemWritePort[?] =>
+              wr.valid.poke(false)
+            case _ =>
+          }
+
           dut.reset.poke(true.B)
           dut.clock.step(2)
           dut.reset.poke(false.B)
@@ -120,6 +128,8 @@ class CoreTest extends AnyFunSpec with ChiselSim {
                   val p = pending.getOrElse(rd, delayRd())
                   rd.valid.poke(p == 0)
                   pending.put(rd, if (p == 0) delayRd() else (p - 1))
+                } else {
+                  rd.valid.poke(false)
                 }
               case wr: VADL.MemWritePort[Bits] =>
                 // write port
@@ -144,6 +154,8 @@ class CoreTest extends AnyFunSpec with ChiselSim {
                   val p = pending.getOrElse(wr, delayWr())
                   wr.valid.poke(p == 0)
                   pending.put(wr, if (p == 0) delayWr() else (p - 1))
+                } else {
+                  wr.valid.poke(false)
                 }
               case _ =>
             }
