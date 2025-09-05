@@ -6209,6 +6209,18 @@ def AArch64Base_UBFMX_rightXSizeAsInt8
 
 def AArch64Base_UBFMX_rightXSizeAsLabel : AArch64Base_UBFMX_rightXSize<OtherVT>;
 
+class AArch64Base_UDF_imm16<ValueType ty> : Operand<ty>
+{
+  let EncoderMethod = "AArch64Base_UDF_wrapper";
+  let DecoderMethod = "AArch64Base_UDF_imm16_decode_wrapper";
+}
+
+def AArch64Base_UDF_imm16AsInt16
+    : AArch64Base_UDF_imm16<i16>
+    , ImmLeaf<i16, [{ return AArch64Base_UDF_imm16_predicate(Imm); }]>;
+
+def AArch64Base_UDF_imm16AsLabel : AArch64Base_UDF_imm16<OtherVT>;
+
 class AArch64Temp_PLDR_offset<ValueType ty> : Operand<ty>
 {
   let EncoderMethod = "AArch64Temp_PLDR_wrapper";
@@ -50236,7 +50248,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let InOperandList = ( ins AArch64Base_UDF_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
