@@ -1014,7 +1014,7 @@ instruction set architecture AArch64Base = {
 
   model BranchEncAsm (i: InstrNoFunct): IsaDefs = {
     encoding $i.id = { op = $i.opcode }
-    assembly $i.id = ( $i.mnemo, ' ', sdec(imm26))
+    assembly $i.id = ( $i.mnemo, ' ', sdec(offset))
     }
 
   model BranchInstr (i: InstrNoFunct): IsaDefs = {
@@ -1068,7 +1068,7 @@ instruction set architecture AArch64Base = {
       if $c.ex then
         PC := PC + offset
     encoding $i.id = { op = $i.opcode, cc = CondCode::$c.cc }
-    assembly $i.id = ($i.mnemo, $c.mext, ' ', sdec(imm19))
+    assembly $i.id = ($i.mnemo, $c.mext, ' ', sdec(offset))
     }
 
   model ExtendCondInstr (modelid: InstrWithCond, i: InstrWithFunct, c: Cond): IsaDefs = {
@@ -1107,7 +1107,7 @@ instruction set architecture AArch64Base = {
       if VADL::$i.funct ($WXReg(rt; $size), 0) then
         PC := PC + offset
     encoding $i.id = { op = $i.opcode, sf = SF::$size }
-    assembly $i.id = ($i.mnemo, ' ', $size(rt), ', ', sdec(imm19))
+    assembly $i.id = ($i.mnemo, ' ', $size(rt), ', ', sdec(offset))
     }
 
   format TestBitBranchFormat: Instr = // test bit and branch immediate format
@@ -1123,7 +1123,7 @@ instruction set architecture AArch64Base = {
       if VADL::$i.funct ((X(rt) >> imm6) as Bits1, 0) then
         PC := PC + offset
     encoding $i.id = { op = $i.opcode }
-    assembly $i.id = ( $i.mnemo, ' ', XSize(rt), ', #', udec(imm6), ', ', sdec(imm14))
+    assembly $i.id = ( $i.mnemo, ' ', XSize(rt), ', #', udec(imm6), ', ', sdec(offset))
     }
 
 // load / store register models ************************************************
