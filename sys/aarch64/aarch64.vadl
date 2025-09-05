@@ -433,7 +433,7 @@ instruction set architecture AArch64Base = {
     instruction $i.id: RelAddressFormat =
       X(rd) := $ex
     encoding $i.id = { op = $i.opcode }
-    assembly $i.id = ($i.mnemo, XSize(rd), ', ', ' ', sdec(imm21))
+    assembly $i.id = ($i.mnemo, ' ', XSize(rd), ', ', sdec(imm21))
     }
 
   model AddressRelInstr (i: InstrNoFunct): IsaDefs = {
