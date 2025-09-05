@@ -168,14 +168,14 @@ instruction set architecture AArch64Base = {
   function XSizeSP (idx: Index) -> String = // do not rename
     if idx = 31 then "sp"  else "x" + udec( idx )
 
-  function Imm7decimal  (imm: Bits7)  -> String =
-    if imm = 0 then "" else (", #", decimal( imm ))
+  function Imm7decimal  (imm: SIntX)  -> String =
+    if imm = 0 then "" else (", #", sdec( imm ))
 
   function Imm9decimal  (imm: Bits9)  -> String =
-    if imm = 0 then "" else (", #", decimal( imm ))
+    if imm = 0 then "" else (", #", sdec( imm ))
 
   function Imm12decimal (imm: Bits12) -> String =
-    if imm = 0 then "" else (", #", decimal( imm ))
+    if imm = 0 then "" else (", #", udec( imm ))
 
 // syntax records and model types **********************************************
 
@@ -622,7 +622,7 @@ instruction set architecture AArch64Base = {
 
   model LogicImmEncAsm (i: InstrWithFunct, size: Id, ext: Str): IsaDefs = {
     encoding $i.id = { op = $i.opcode, sf = SF::$size }
-    assembly $i.id = ($i.mnemo, ' ', AsId($size, $ext)(rd), ', ', $size(rn), ', #', decimal(AsId(imm, $size)))
+    assembly $i.id = ($i.mnemo, ' ', AsId($size, $ext)(rd), ', ', $size(rn), ', #', udec(AsId(imm, $size)))
     }
 
   model LogicImmFlagInstr (i: InstrWithFunct, size: Id): IsaDefs = {
@@ -689,10 +689,10 @@ instruction set architecture AArch64Base = {
 
   model LogicRegShiftInstr (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct, size: Id): IsaDefs = {
     $LogicRegShiftExtInstr ($modelid; $i; ""   ; $size; ($WXReg(rm; $size) as Bits; imm6 = 0, shift = ShiftType::LSL;  $size(rm))) // TODO pseudo instruction
-    $LogicRegShiftExtInstr ($modelid; $i; "LSL"; $size; ($WXReg(rm; $size) as Bits  << imm6;  shift = ShiftType::LSL; ($size(rm), ", lsl #", decimal(imm6))))
-    $LogicRegShiftExtInstr ($modelid; $i; "LSR"; $size; ($WXReg(rm; $size) as UInt  >> imm6;  shift = ShiftType::LSR; ($size(rm), ", lsr #", decimal(imm6))))
-    $LogicRegShiftExtInstr ($modelid; $i; "ASR"; $size; ($WXReg(rm; $size) as SInt  >> imm6;  shift = ShiftType::ASR; ($size(rm), ", asr #", decimal(imm6))))
-    $LogicRegShiftExtInstr ($modelid; $i; "ROR"; $size; ($WXReg(rm; $size) as Bits <>> imm6;  shift = ShiftType::ROR; ($size(rm), ", ror #", decimal(imm6))))
+    $LogicRegShiftExtInstr ($modelid; $i; "LSL"; $size; ($WXReg(rm; $size) as Bits  << imm6;  shift = ShiftType::LSL; ($size(rm), ", lsl #", udec(imm6))))
+    $LogicRegShiftExtInstr ($modelid; $i; "LSR"; $size; ($WXReg(rm; $size) as UInt  >> imm6;  shift = ShiftType::LSR; ($size(rm), ", lsr #", udec(imm6))))
+    $LogicRegShiftExtInstr ($modelid; $i; "ASR"; $size; ($WXReg(rm; $size) as SInt  >> imm6;  shift = ShiftType::ASR; ($size(rm), ", asr #", udec(imm6))))
+    $LogicRegShiftExtInstr ($modelid; $i; "ROR"; $size; ($WXReg(rm; $size) as Bits <>> imm6;  shift = ShiftType::ROR; ($size(rm), ", ror #", udec(imm6))))
     }
 
 
@@ -791,7 +791,7 @@ instruction set architecture AArch64Base = {
       let pair = ($WXReg(rn; $size), $WXReg(rm; $size)) in
         X(rd) :=  (pair >> AsId (shift, $size)) as Bits<Size::$size> as BitsX
     encoding $i.id = { op = $i.opcode, sf = SF::$size, N = SF::$size }
-    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), ', #', decimal(imms))
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), ', #', udec(imms))
     }
 
 
@@ -859,7 +859,7 @@ instruction set architecture AArch64Base = {
               xrn) in
             X(rd) := result as Bits<Size::$size> as BitsX
     encoding $i.id = { op = $i.opcode, sf = SF::$size, N = SF::$size }
-    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', #', decimal(immr), ', #', decimal(imms))
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', #', udec(immr), ', #', udec(imms))
     }
 
 
@@ -957,12 +957,12 @@ instruction set architecture AArch64Base = {
           NZCV_V := nzcv(0)
           }
     encoding $i.id = { op = $i.opcode, sf = SF::$size, cc = CondCode::$c.cc }
-    assembly $i.id = ( $i.mnemo, ' ', $size(rn), $asm, ', #', decimal(nzcv), ', ', $c.mext )
+    assembly $i.id = ( $i.mnemo, ' ', $size(rn), $asm, ', #', udec(nzcv), ', ', $c.mext )
     }
 
   model CondCompareImmInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
-    $CondCompareBaseInstr ($ExtInstrStr ($i; "W"); $c; WSize; immX as BitsW; (', #', decimal(rm)))
-    $CondCompareBaseInstr ($ExtInstrStr ($i; "X"); $c; XSize; immX         ; (', #', decimal(rm)))
+    $CondCompareBaseInstr ($ExtInstrStr ($i; "W"); $c; WSize; immX as BitsW; (', #', udec(rm)))
+    $CondCompareBaseInstr ($ExtInstrStr ($i; "X"); $c; XSize; immX         ; (', #', udec(rm)))
     }
 
   model CondCompareRegInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
@@ -1014,7 +1014,7 @@ instruction set architecture AArch64Base = {
 
   model BranchEncAsm (i: InstrNoFunct): IsaDefs = {
     encoding $i.id = { op = $i.opcode }
-    assembly $i.id = ( $i.mnemo, ' ', decimal(imm26))
+    assembly $i.id = ( $i.mnemo, ' ', sdec(imm26))
     }
 
   model BranchInstr (i: InstrNoFunct): IsaDefs = {
@@ -1068,7 +1068,7 @@ instruction set architecture AArch64Base = {
       if $c.ex then
         PC := PC + offset
     encoding $i.id = { op = $i.opcode, cc = CondCode::$c.cc }
-    assembly $i.id = ($i.mnemo, $c.mext, ' ', decimal(imm19))
+    assembly $i.id = ($i.mnemo, $c.mext, ' ', sdec(imm19))
     }
 
   model ExtendCondInstr (modelid: InstrWithCond, i: InstrWithFunct, c: Cond): IsaDefs = {
@@ -1107,7 +1107,7 @@ instruction set architecture AArch64Base = {
       if VADL::$i.funct ($WXReg(rt; $size), 0) then
         PC := PC + offset
     encoding $i.id = { op = $i.opcode, sf = SF::$size }
-    assembly $i.id = ($i.mnemo, ' ', $size(rt), ', ', decimal(imm19))
+    assembly $i.id = ($i.mnemo, ' ', $size(rt), ', ', sdec(imm19))
     }
 
   format TestBitBranchFormat: Instr = // test bit and branch immediate format
@@ -1123,7 +1123,7 @@ instruction set architecture AArch64Base = {
       if VADL::$i.funct ((X(rt) >> imm6) as Bits1, 0) then
         PC := PC + offset
     encoding $i.id = { op = $i.opcode }
-    assembly $i.id = ( $i.mnemo, ' ', XSize(rt), ', #', decimal(imm6), ', ', decimal(imm14))
+    assembly $i.id = ( $i.mnemo, ' ', XSize(rt), ', #', udec(imm6), ', ', sdec(imm14))
     }
 
 // load / store register models ************************************************
@@ -1228,14 +1228,14 @@ instruction set architecture AArch64Base = {
     }
 
   model MemoryRegisterInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
-    $MemoryRegisterXtd ($i; $m; UXTW; Un; (WSize(rm), ", uxtw"   );                              X(rm) as UIntW as BitsX)
-    $MemoryRegisterXtd ($i; $m; UXTW; Is; (WSize(rm), ", uxtw #", decimal(AccSize::$m.accsize)); X(rm) as UIntW as BitsX << AccSize::$m.accsize)
-    $MemoryRegisterXtd ($i; $m; UXTX; Un; (XSize(rm)             );                              X(rm))
-    $MemoryRegisterXtd ($i; $m; UXTX; Is; (XSize(rm), ", lsl #",  decimal(AccSize::$m.accsize)); X(rm) << AccSize::$m.accsize)
-    $MemoryRegisterXtd ($i; $m; SXTW; Un; (WSize(rm), ", sxtw"   );                              X(rm) as SIntW as BitsX)
-    $MemoryRegisterXtd ($i; $m; SXTW; Is; (WSize(rm), ", sxtw #", decimal(AccSize::$m.accsize)); X(rm) as SIntW as BitsX << AccSize::$m.accsize)
-    $MemoryRegisterXtd ($i; $m; SXTX; Un; (XSize(rm), ", sxtx"   );                              X(rm))
-    $MemoryRegisterXtd ($i; $m; SXTX; Is; (XSize(rm), ", sxtx #", decimal(AccSize::$m.accsize)); X(rm) << AccSize::$m.accsize)
+    $MemoryRegisterXtd ($i; $m; UXTW; Un; (WSize(rm), ", uxtw"   );                           X(rm) as UIntW as BitsX)
+    $MemoryRegisterXtd ($i; $m; UXTW; Is; (WSize(rm), ", uxtw #", udec(AccSize::$m.accsize)); X(rm) as UIntW as BitsX << AccSize::$m.accsize)
+    $MemoryRegisterXtd ($i; $m; UXTX; Un; (XSize(rm)             );                           X(rm))
+    $MemoryRegisterXtd ($i; $m; UXTX; Is; (XSize(rm), ", lsl #",  udec(AccSize::$m.accsize)); X(rm) << AccSize::$m.accsize)
+    $MemoryRegisterXtd ($i; $m; SXTW; Un; (WSize(rm), ", sxtw"   );                           X(rm) as SIntW as BitsX)
+    $MemoryRegisterXtd ($i; $m; SXTW; Is; (WSize(rm), ", sxtw #", udec(AccSize::$m.accsize)); X(rm) as SIntW as BitsX << AccSize::$m.accsize)
+    $MemoryRegisterXtd ($i; $m; SXTX; Un; (XSize(rm), ", sxtx"   );                           X(rm))
+    $MemoryRegisterXtd ($i; $m; SXTX; Is; (XSize(rm), ", sxtx #", udec(AccSize::$m.accsize)); X(rm) << AccSize::$m.accsize)
     }
 
 // memory literal model ********************************************************
@@ -1252,7 +1252,7 @@ instruction set architecture AArch64Base = {
     instruction $i.id: MemoryLitFormat =
       let addr = PC + offset in $m.stmt
     encoding $i.id = { op = $i.opcode, opc = $m.opc }
-    assembly $i.id = ( $i.mnemo, $m.mext, ' ', $m.regsize(rt), ', ', decimal(imm19))
+    assembly $i.id = ( $i.mnemo, $m.mext, ' ', $m.regsize(rt), ', ', sdec(imm19))
     }
 
 // memory enriching models *****************************************************
@@ -1311,7 +1311,7 @@ instruction set architecture AArch64Base = {
     [undefined when : match: Ex ( $isLoad = true => rt2 = rt ; _=> false)]
     instruction $i.id: MemoryPairFormat = 
       let addr = S(rn) + AsId (off, $size) in { $memstmts }
-    $MemoryRegPairEncAsm ($i; ""; $size; $isLoad; 0b101'010; ("[", XSizeSP(rn), Imm7decimal(imm7), "]"))
+    $MemoryRegPairEncAsm ($i; ""; $size; $isLoad; 0b101'010; ("[", XSizeSP(rn), Imm7decimal(AsId (off, $size)), "]"))
     // TODO check SP alignment
     // TODO add BigEndian variant
     [undefined when : match: Ex ( $isLoad = true => rt2 = rt || rn != 31 && (rt = rn || rt2 = rn); _=> false)]
@@ -1320,7 +1320,7 @@ instruction set architecture AArch64Base = {
           $memstmts
           S(rn) := addr
         }
-    $MemoryRegPairEncAsm ($i; "Pre"; $size; $isLoad; 0b101'011; ("[", XSizeSP(rn), Imm7decimal(imm7), "]!"))
+    $MemoryRegPairEncAsm ($i; "Pre"; $size; $isLoad; 0b101'011; ("[", XSizeSP(rn), Imm7decimal(AsId (off, $size)), "]!"))
     // TODO check SP alignment
     // TODO add BigEndian variant
     [undefined when : match: Ex ( $isLoad = true => rt2 = rt || rn != 31 && (rt = rn || rt2 = rn); _=> false)]
@@ -1329,7 +1329,7 @@ instruction set architecture AArch64Base = {
           $memstmts
           S(rn) := addr + AsId (off, $size)
         }
-    $MemoryRegPairEncAsm ($i; "Pst"; $size; $isLoad; 0b101'001; ("[", XSizeSP(rn), "]", Imm7decimal(imm7)))
+    $MemoryRegPairEncAsm ($i; "Pst"; $size; $isLoad; 0b101'001; ("[", XSizeSP(rn), "]", Imm7decimal(AsId (off, $size))))
     }
 
   model LoadPairInstrW (i: InstrWithFunct): IsaDefs = {
@@ -1369,7 +1369,7 @@ instruction set architecture AArch64Base = {
     pseudo instruction $i.id (rd: Index, rn: Index, shift: Bits6) = {
       $i.funct {rd = rd, rn = rn, immr = shift as Bits<ShiftSize::$size> as Bits6, imms = Size::$size - 1}
       }
-    assembly $i.id = ($i.mnemo, " ", $size(rd), ", ", $size(rn), ", #", decimal(shift))
+    assembly $i.id = ($i.mnemo, " ", $size(rd), ", ", $size(rn), ", #", udec(shift))
     }
 
   model PseudoShiftLeftInstr (i: InstrWithFunct, size: Id): IsaDefs = {
@@ -1377,7 +1377,7 @@ instruction set architecture AArch64Base = {
       $i.funct{rd = rd, rn = rn, immr = - shift as Bits<ShiftSize::$size> as Bits6,
                  imms = Size::$size - 1 - shift as Bits<ShiftSize::$size> as Bits6}
       }
-    assembly $i.id = ($i.mnemo, " ", $size(rd), ", ", $size(rn), ", #", decimal(shift))
+    assembly $i.id = ($i.mnemo, " ", $size(rd), ", ", $size(rn), ", #", udec(shift))
     }
 
 
@@ -1690,11 +1690,11 @@ instruction set architecture AArch64Base = {
       , SysRegEncode::ESR_EL1   => "esr_el1"
       , SysRegEncode::SPSR_EL1  => "spsr_el1"
       , SysRegEncode::VBAR_EL1  => "vbar_el1"
-      , _ => ("S", decimal(sysreg(15..14)), "_",
-                   decimal(sysreg(13..11)), "_",
-                   decimal(sysreg(10.. 7)), "_",
-                   decimal(sysreg( 6.. 3)), "_",
-                   decimal(sysreg( 2.. 0)))
+      , _ => ("S", udec(sysreg(15..14)), "_",
+                   udec(sysreg(13..11)), "_",
+                   udec(sysreg(10.. 7)), "_",
+                   udec(sysreg( 6.. 3)), "_",
+                   udec(sysreg( 2.. 0)))
       }
 
   model MrsRegInstr (i: InstrNoFunct): IsaDefs = {
@@ -1760,7 +1760,7 @@ instruction set architecture AArch64Base = {
 
   model ExceptionCallEncAsm (i: InstrWithFunct): IsaDefs = {
     encoding $i.id = {op = $i.opcode}
-    assembly $i.id = ($i.mnemo, ' #', decimal(imm16))
+    assembly $i.id = ($i.mnemo, ' #', udec(imm16))
     }
 
   model ExceptionCallInstr (i: InstrWithFunct): IsaDefs = {
