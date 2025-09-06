@@ -38,6 +38,16 @@ public class RtlConfiguration extends GeneralConfiguration implements Renderable
 
   private DummyMia dummyMia = DummyMia.five;
 
+  /**
+   * Enum to configure the external memory interface.
+   *
+   * <p>Async memory ignores the valid input and assumes reads/writes to always complete in
+   * the same cycle.
+   */
+  public enum Memory { decoupled, async }
+
+  private Memory memory = Memory.decoupled;
+
   public RtlConfiguration(GeneralConfiguration generalConfig) {
     super(generalConfig);
   }
@@ -82,6 +92,14 @@ public class RtlConfiguration extends GeneralConfiguration implements Renderable
 
   public void setDummyMia(DummyMia dummyMia) {
     this.dummyMia = dummyMia;
+  }
+
+  public Memory getMemory() {
+    return memory;
+  }
+
+  public void setMemory(Memory memory) {
+    this.memory = memory;
   }
 
   @Override

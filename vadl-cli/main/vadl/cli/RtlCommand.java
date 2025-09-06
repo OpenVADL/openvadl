@@ -47,11 +47,18 @@ public class RtlCommand extends BaseCommand {
       defaultValue = "five")
   RtlConfiguration.DummyMia dummyMia = RtlConfiguration.DummyMia.five;
 
+  @CommandLine.Option(names = {"--memory"},
+      scope = INHERIT,
+      description = "Configure external memory interface: ${COMPLETION-CANDIDATES}",
+      defaultValue = "five")
+  RtlConfiguration.Memory memory = RtlConfiguration.Memory.decoupled;
+
   @Override
   PassOrder passOrder(GeneralConfiguration configuration) throws IOException {
     var rtlConfig = new RtlConfiguration(configuration);
     rtlConfig.setDryRun(dryRun);
     rtlConfig.setDummyMia(dummyMia);
+    rtlConfig.setMemory(memory);
     return PassOrders.rtl(rtlConfig);
   }
 }

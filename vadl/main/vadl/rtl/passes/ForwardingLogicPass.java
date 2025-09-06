@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.RtlConfiguration;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.analysis.HazardAnalysis;
@@ -46,7 +47,7 @@ import vadl.viam.passes.canonicalization.Canonicalizer;
 
 public class ForwardingLogicPass extends AbstractLogicPass {
 
-  public ForwardingLogicPass(GeneralConfiguration configuration) {
+  public ForwardingLogicPass(RtlConfiguration configuration) {
     super(configuration);
   }
 

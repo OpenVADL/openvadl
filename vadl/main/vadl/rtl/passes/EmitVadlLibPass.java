@@ -50,7 +50,10 @@ public class EmitVadlLibPass extends RtlTemplateRenderingPass {
                                                  Specification specification,
                                                  Map<String, Object> baseVariables) {
     return List.of(
-        new RenderInput("src/main/scala/VADL.scala", baseVariables)
+        new RenderInput("src/main/scala/VADL.scala",
+            mergeVariables(baseVariables, Map.of(
+                "memoryValid", configuration().getMemory().equals(RtlConfiguration.Memory.decoupled)
+            )))
     );
   }
 }

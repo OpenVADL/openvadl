@@ -45,7 +45,10 @@ public class EmitCoreTestPass extends RtlTemplateRenderingPass {
                                                  Specification specification,
                                                  Map<String, Object> baseVariables) {
     return List.of(
-        new RenderInput("src/test/scala/CoreTest.scala", baseVariables)
+        new RenderInput("src/test/scala/CoreTest.scala",
+            mergeVariables(baseVariables, Map.of(
+                "memoryValid", configuration().getMemory().equals(RtlConfiguration.Memory.decoupled)
+            )))
     );
   }
 }

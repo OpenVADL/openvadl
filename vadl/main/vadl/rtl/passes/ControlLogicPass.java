@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.RtlConfiguration;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.analysis.HazardAnalysis;
@@ -71,7 +72,7 @@ import vadl.viam.passes.canonicalization.Canonicalizer;
  */
 public class ControlLogicPass extends AbstractLogicPass {
 
-  public ControlLogicPass(GeneralConfiguration configuration) {
+  public ControlLogicPass(RtlConfiguration configuration) {
     super(configuration);
   }
 
@@ -326,6 +327,10 @@ public class ControlLogicPass extends AbstractLogicPass {
   }
 
   private ExpressionNode extStall(Stage stage) {
+    if (configuration().getMemory().equals(RtlConfiguration.Memory.async)) {
+      // no external stalls with async memory read/writes
+      return Constant.Value.of(false).toNode();
+    }
     var extStallNodes = stage.behavior().getNodes(RtlConditionalMemNode.class)
         .collect(Collectors.toSet());
     var extStallCond = extStallNodes.stream()

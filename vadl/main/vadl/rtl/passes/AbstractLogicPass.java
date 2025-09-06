@@ -19,6 +19,7 @@ package vadl.rtl.passes;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.RtlConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
@@ -42,8 +43,16 @@ import vadl.viam.graph.dependency.WriteSignalNode;
  */
 public abstract class AbstractLogicPass extends Pass {
 
-  public AbstractLogicPass(GeneralConfiguration configuration) {
+  private final RtlConfiguration configuration;
+
+  public AbstractLogicPass(RtlConfiguration configuration) {
     super(configuration);
+    this.configuration = configuration;
+  }
+
+  @Override
+  public RtlConfiguration configuration() {
+    return configuration;
   }
 
   @Nullable

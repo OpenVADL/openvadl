@@ -19,6 +19,7 @@ package vadl.rtl.template;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
 import vadl.pass.PassResults;
 import vadl.template.AbstractMultiTemplateRenderingPass;
@@ -31,6 +32,11 @@ public abstract class RtlTemplateRenderingPass extends AbstractMultiTemplateRend
   public RtlTemplateRenderingPass(RtlConfiguration configuration) {
     super(configuration, "rtl");
     this.configuration = configuration;
+  }
+
+  @Override
+  public RtlConfiguration configuration() {
+    return configuration;
   }
 
   @Override
@@ -62,5 +68,12 @@ public abstract class RtlTemplateRenderingPass extends AbstractMultiTemplateRend
 
   public String getPackage() {
     return configuration.getScalaPackage();
+  }
+
+  protected Map<String, Object> mergeVariables(Map<String, Object> baseVariables,
+                                             Map<String, Object> variables) {
+    var result = new HashMap<>(baseVariables);
+    result.putAll(variables);
+    return result;
   }
 }

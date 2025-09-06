@@ -58,11 +58,11 @@ object VADL {
   }
 
   class MemReadPort[T <: Data](tpe: T, n: Int, addrWidth: Int) extends RegFileReadPort(Vec(n, tpe), addrWidth) {
-    val valid = Output(Bool())
+    [# th:if="${memoryValid}"]val valid = Output(Bool())[/]
   }
 
   class MemWritePort[T <: Data](tpe: T, n: Int, addrWidth: Int) extends RegFileWritePort(Vec(n, tpe), addrWidth) {
-    val valid = Output(Bool())
+    [# th:if="${memoryValid}"]val valid = Output(Bool())[/]
   }
 
   // Helpers

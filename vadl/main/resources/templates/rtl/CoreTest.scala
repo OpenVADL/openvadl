@@ -96,13 +96,14 @@ class CoreTest extends AnyFunSpec with ChiselSim {
           val pending = new mutable.HashMap[Object, Int]()
 
           dut.io.reset_vector_out.poke(start)
+          [# th:if="${memoryValid}"]
           dut.io.getElements.foreach {
             case rd: VADL.MemReadPort[?] =>
               rd.valid.poke(false)
             case wr: VADL.MemWritePort[?] =>
               wr.valid.poke(false)
             case _ =>
-          }
+          }[/]
 
           dut.reset.poke(true.B)
           dut.clock.step(2)
@@ -124,12 +125,12 @@ class CoreTest extends AnyFunSpec with ChiselSim {
                     for (i <- rd.data.indices) {
                       rd.data(i).poke(1.U)
                     }
-                  }
+                  }[# th:if="${memoryValid}"]
                   val p = pending.getOrElse(rd, delayRd())
                   rd.valid.poke(p == 0)
-                  pending.put(rd, if (p == 0) delayRd() else (p - 1))
+                  pending.put(rd, if (p == 0) delayRd() else (p - 1))[/]
                 } else {
-                  rd.valid.poke(false)
+                  [# th:if="${memoryValid}"]rd.valid.poke(false)[/]
                 }
               case wr: VADL.MemWritePort[Bits] =>
                 // write port
@@ -150,12 +151,12 @@ class CoreTest extends AnyFunSpec with ChiselSim {
                       failed += file.getName
                     }
                     run = false
-                  }
+                  }[# th:if="${memoryValid}"]
                   val p = pending.getOrElse(wr, delayWr())
                   wr.valid.poke(p == 0)
-                  pending.put(wr, if (p == 0) delayWr() else (p - 1))
+                  pending.put(wr, if (p == 0) delayWr() else (p - 1))[/]
                 } else {
-                  wr.valid.poke(false)
+                  [# th:if="${memoryValid}"]wr.valid.poke(false)[/]
                 }
               case _ =>
             }

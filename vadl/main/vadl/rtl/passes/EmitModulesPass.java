@@ -16,9 +16,7 @@
 
 package vadl.rtl.passes;
 
-import com.google.common.collect.HashBiMap;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,7 +29,6 @@ import vadl.rtl.template.HdlEmitContext;
 import vadl.rtl.template.HdlModule;
 import vadl.rtl.template.RtlTemplateRenderingPass;
 import vadl.rtl.template.HdlWiring;
-import vadl.viam.Identifier;
 import vadl.viam.Logic;
 import vadl.viam.Resource;
 import vadl.viam.Signal;
@@ -132,10 +129,4 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
         logic.behavior());
   }
 
-  private Map<String, Object> mergeVariables(Map<String, Object> baseVariables,
-                                             Map<String, Object> variables) {
-    var result = new HashMap<>(baseVariables);
-    result.putAll(variables);
-    return result;
-  }
 }
