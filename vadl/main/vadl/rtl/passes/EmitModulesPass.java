@@ -27,8 +27,8 @@ import vadl.rtl.ipg.nodes.RtlResetSignalNode;
 import vadl.rtl.template.HdlBehavior;
 import vadl.rtl.template.HdlEmitContext;
 import vadl.rtl.template.HdlModule;
-import vadl.rtl.template.RtlTemplateRenderingPass;
 import vadl.rtl.template.HdlWiring;
+import vadl.rtl.template.RtlTemplateRenderingPass;
 import vadl.viam.Logic;
 import vadl.viam.Resource;
 import vadl.viam.Signal;
@@ -87,7 +87,7 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
 
     return modules.stream()
         .map(module -> new RenderInput(
-            "src/main/scala/" + module.name() + ".scala",
+            getSourceFilePath(module.name() + ".scala"),
             mergeVariables(base, module.createVariables())
         )).toList();
   }
@@ -99,7 +99,7 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
     resources.addAll(context.mia().ownMemories());
     resources.addAll(context.mia().signals());
 
-    var behavior = new Graph(context.viam().simpleName());
+    var behavior = new Graph(configuration().getTopModule());
     var pc = Objects.requireNonNull(context.isa().pc());
     var reset = new RtlResetSignalNode();
     var resetVector = new ReadSignalNode(context.resetVector());
@@ -107,8 +107,8 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
         pc, reset);
     behavior.addWithInputs(pcReset);
 
-    var core = new HdlModule(context, context.mia(), null, context.viam().simpleName(), resources,
-        new ArrayList<>(children), behavior);
+    var core = new HdlModule(context, context.mia(), null, configuration().getTopModule(),
+        resources,  new ArrayList<>(children), behavior);
     children.forEach(child -> child.setParent(core));
     return core;
   }

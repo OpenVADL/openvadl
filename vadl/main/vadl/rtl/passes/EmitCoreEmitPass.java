@@ -24,20 +24,20 @@ import vadl.pass.PassResults;
 import vadl.rtl.template.RtlTemplateRenderingPass;
 import vadl.viam.Specification;
 
-public class EmitCoreTestPass extends RtlTemplateRenderingPass {
+public class EmitCoreEmitPass extends RtlTemplateRenderingPass {
 
-  public EmitCoreTestPass(RtlConfiguration configuration) {
+  public EmitCoreEmitPass(RtlConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   public PassName getName() {
-    return PassName.of("Emit CoreTest.scala");
+    return PassName.of("Emit CoreEmit.scala");
   }
 
   @Override
   protected String getTemplatePath() {
-    return "rtl/CoreTest.scala";
+    return "rtl/CoreEmit.scala";
   }
 
   @Override
@@ -45,10 +45,7 @@ public class EmitCoreTestPass extends RtlTemplateRenderingPass {
                                                  Specification specification,
                                                  Map<String, Object> baseVariables) {
     return List.of(
-        new RenderInput(getSourceTestFilePath("CoreTest.scala"),
-            mergeVariables(baseVariables, Map.of(
-                "memoryValid", configuration().getMemory().equals(RtlConfiguration.Memory.decoupled)
-            )))
+        new RenderInput(getSourceTestFilePath("CoreEmit.scala"), baseVariables)
     );
   }
 }

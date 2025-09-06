@@ -16,10 +16,13 @@
 
 package vadl.configuration;
 
-import java.util.Map;
-import vadl.template.Renderable;
+import java.util.Objects;
+import javax.annotation.Nullable;
 
-public class RtlConfiguration extends GeneralConfiguration implements Renderable {
+/**
+ * Configuration values to control how RTL is generated and emitted.
+ */
+public class RtlConfiguration extends GeneralConfiguration {
 
   private String scalaPackage = "";
 
@@ -27,9 +30,17 @@ public class RtlConfiguration extends GeneralConfiguration implements Renderable
 
   private String scalaTestPackageDir = "src/test/scala/";
 
-  private String topModule = "Core";
+  /**
+   * Top module name. This is initialized in {@link vadl.rtl.passes.RtlConfigurationPass}.
+   */
+  @Nullable
+  private String topModule = null;
 
-  private String projectName = "Core";
+  /**
+   * Scala project name. This is initialized in {@link vadl.rtl.passes.RtlConfigurationPass}.
+   */
+  @Nullable
+  private String projectName = null;
 
   /**
    * Enum to select the dummy MiA to instantiate.
@@ -54,12 +65,22 @@ public class RtlConfiguration extends GeneralConfiguration implements Renderable
 
   public void setScalaPackage(String scalaPackage) {
     this.scalaPackage = scalaPackage;
-    this.scalaPackageDir = "src/main/scala/" + scalaPackage.replace('.', '/');
-    this.scalaTestPackageDir = "src/test/scala/" + scalaPackage.replace('.', '/');
   }
 
   public String getScalaPackage() {
     return scalaPackage;
+  }
+
+  /**
+   * Sets the scala package and also updates package directory and test package directory
+   * accordingly.
+   *
+   * @param scalaPackage scala package
+   */
+  public void setScalaPackageAndDirs(String scalaPackage) {
+    this.scalaPackage = scalaPackage;
+    this.scalaPackageDir = "src/main/scala/" + scalaPackage.replace('.', '/');
+    this.scalaTestPackageDir = "src/test/scala/" + scalaPackage.replace('.', '/');
   }
 
   public String getScalaPackageDir() {
@@ -70,20 +91,42 @@ public class RtlConfiguration extends GeneralConfiguration implements Renderable
     return scalaTestPackageDir;
   }
 
-  public void setTopModule(String topModule) {
+  public void setTopModule(@Nullable String topModule) {
     this.topModule = topModule;
   }
 
-  public String getTopModule() {
-    return topModule;
+  /**
+   * Set top module name, if not already set.
+   *
+   * @param topModule top module name
+   */
+  public void setTopModuleIfEmpty(String topModule) {
+    if (this.topModule == null) {
+      this.topModule = topModule;
+    }
   }
 
-  public void setProjectName(String projectName) {
+  public String getTopModule() {
+    return Objects.requireNonNull(topModule);
+  }
+
+  public void setProjectName(@Nullable String projectName) {
     this.projectName = projectName;
   }
 
+  /**
+   * Set project name, if not already set.
+   *
+   * @param projectName project name
+   */
+  public void setProjectNameIfEmpty(String projectName) {
+    if (this.projectName == null) {
+      this.projectName = projectName;
+    }
+  }
+
   public String getProjectName() {
-    return projectName;
+    return Objects.requireNonNull(projectName);
   }
 
   public DummyMia getDummyMia() {
@@ -102,14 +145,4 @@ public class RtlConfiguration extends GeneralConfiguration implements Renderable
     this.memory = memory;
   }
 
-  @Override
-  public Map<String, Object> renderObj() {
-    return Map.of(
-        "scalaPackage", scalaPackage,
-        "scalaPackageDir", scalaPackageDir,
-        "scalaTestPackageDir", scalaTestPackageDir,
-        "topModule", topModule,
-        "projectName", projectName
-    );
-  }
 }

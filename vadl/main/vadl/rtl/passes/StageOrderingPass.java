@@ -48,7 +48,7 @@ public class StageOrderingPass extends Pass {
 
   @Override
   public PassName getName() {
-    return PassName.of("StageOrdering");
+    return PassName.of("Stage Ordering");
   }
 
   @Nullable

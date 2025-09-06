@@ -16,39 +16,40 @@
 
 package vadl.rtl.passes;
 
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import javax.annotation.Nullable;
 import vadl.configuration.RtlConfiguration;
+import vadl.error.Diagnostic;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.rtl.template.RtlTemplateRenderingPass;
+import vadl.viam.Definition;
 import vadl.viam.Specification;
 
-public class EmitCoreTestPass extends RtlTemplateRenderingPass {
+/**
+ * Set fields fo the {@link RtlConfiguration} that depend on the VIAM.
+ */
+public class RtlConfigurationPass extends AbstractRtlPass {
 
-  public EmitCoreTestPass(RtlConfiguration configuration) {
+  public RtlConfigurationPass(RtlConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   public PassName getName() {
-    return PassName.of("Emit CoreTest.scala");
+    return PassName.of("RTL Configuration");
   }
 
+  @Nullable
   @Override
-  protected String getTemplatePath() {
-    return "rtl/CoreTest.scala";
-  }
+  public Object execute(PassResults passResults, Specification viam) throws IOException {
 
-  @Override
-  protected List<RenderInput> createRenderInputs(PassResults passResults,
-                                                 Specification specification,
-                                                 Map<String, Object> baseVariables) {
-    return List.of(
-        new RenderInput(getSourceTestFilePath("CoreTest.scala"),
-            mergeVariables(baseVariables, Map.of(
-                "memoryValid", configuration().getMemory().equals(RtlConfiguration.Memory.decoupled)
-            )))
-    );
+    var processorName = viam.processor().map(Definition::simpleName).orElseThrow(
+        () -> Diagnostic.error("Processor definition required for emitting RTL",
+            viam.location()).build());
+
+    configuration().setTopModuleIfEmpty(processorName);
+    configuration().setProjectNameIfEmpty(viam.simpleName());
+
+    return null;
   }
 }

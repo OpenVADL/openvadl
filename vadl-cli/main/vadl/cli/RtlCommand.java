@@ -19,6 +19,7 @@ package vadl.cli;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import java.io.IOException;
+import javax.annotation.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import vadl.configuration.GeneralConfiguration;
@@ -36,11 +37,6 @@ import vadl.pass.PassOrders;
 )
 public class RtlCommand extends BaseCommand {
 
-  @CommandLine.Option(names = {"--dry-run"},
-      scope = INHERIT,
-      description = "Don't emit generated files.")
-  boolean dryRun;
-
   @CommandLine.Option(names = {"--dummy-mia"},
       scope = INHERIT,
       description = "Select a dummy MiA: ${COMPLETION-CANDIDATES} (stages in pipeline)",
@@ -53,12 +49,40 @@ public class RtlCommand extends BaseCommand {
       defaultValue = "five")
   RtlConfiguration.Memory memory = RtlConfiguration.Memory.decoupled;
 
+  @CommandLine.Option(names = {"--scala-package"},
+      scope = INHERIT,
+      description = "Package to emit scala code in.",
+      defaultValue = "")
+  String scalaPackage = "";
+
+  @CommandLine.Option(names = {"--top-module"},
+      scope = INHERIT,
+      description = "Override the top module name. By default, this is the processor name from the "
+          + "specification.")
+  @Nullable
+  String topModule = null;
+
+  @CommandLine.Option(names = {"--project-name"},
+      scope = INHERIT,
+      description = "Override the project name. By default, this is the basename of the "
+          + "specification file.")
+  @Nullable
+  String projectName = null;
+
+  @CommandLine.Option(names = {"--dry-run"},
+      scope = INHERIT,
+      description = "Don't emit generated files.")
+  boolean dryRun;
+
   @Override
   PassOrder passOrder(GeneralConfiguration configuration) throws IOException {
     var rtlConfig = new RtlConfiguration(configuration);
-    rtlConfig.setDryRun(dryRun);
     rtlConfig.setDummyMia(dummyMia);
     rtlConfig.setMemory(memory);
+    rtlConfig.setScalaPackageAndDirs(scalaPackage);
+    rtlConfig.setTopModule(topModule);
+    rtlConfig.setProjectName(projectName);
+    rtlConfig.setDryRun(dryRun);
     return PassOrders.rtl(rtlConfig);
   }
 }

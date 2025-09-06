@@ -27,6 +27,7 @@ import vadl.configuration.RtlConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.rtl.passes.AbstractRtlPass;
 import vadl.types.BuiltInTable;
 import vadl.types.MicroArchitectureType;
 import vadl.types.Type;
@@ -104,13 +105,10 @@ import vadl.viam.graph.dependency.WriteStageOutputNode;
  * }
  * </pre>
  */
-public class DummyMiaPass extends Pass {
-
-  private final RtlConfiguration configuration;
+public class DummyMiaPass extends AbstractRtlPass {
 
   public DummyMiaPass(RtlConfiguration configuration) {
     super(configuration);
-    this.configuration = configuration;
   }
 
   @Override
@@ -134,7 +132,7 @@ public class DummyMiaPass extends Pass {
     }
 
     viam.add(
-        switch (configuration.getDummyMia()) {
+        switch (configuration().getDummyMia()) {
           case single -> SingleStageDummyMia.mia(mip);
           case three -> ThreeStageDummyMia.mia(viam, mip);
           case five -> FiveStageDummyMia.mia(viam, mip);

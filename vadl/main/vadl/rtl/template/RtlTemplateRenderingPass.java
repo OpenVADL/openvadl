@@ -19,12 +19,18 @@ package vadl.rtl.template;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
+import vadl.error.Diagnostic;
 import vadl.pass.PassResults;
 import vadl.template.AbstractMultiTemplateRenderingPass;
+import vadl.viam.Definition;
 import vadl.viam.Specification;
+import vadl.viam.ViamError;
 
+/**
+ * Base class for all RTL template rendering passes. Defines common variables and generates
+ * filenames based on the {@link RtlConfiguration}.
+ */
 public abstract class RtlTemplateRenderingPass extends AbstractMultiTemplateRenderingPass {
 
   private final RtlConfiguration configuration;
@@ -61,17 +67,24 @@ public abstract class RtlTemplateRenderingPass extends AbstractMultiTemplateRend
 
   protected Map<String, Object> getBaseVariables(PassResults passResults, Specification viam) {
     var vars = new HashMap<String, Object>();
-    vars.put("package", getPackage());
-    vars.put("projectName", viam.simpleName());
+    vars.put("package", configuration.getScalaPackage());
+    vars.put("topModule", configuration.getTopModule());
+    vars.put("projectName", configuration.getProjectName());
+    vars.put("isaName", viam.isa().map(Definition::simpleName).orElseThrow(() ->
+        Diagnostic.error("Can not emit RTL without ISA", viam.location()).build()));
     return vars;
   }
 
-  public String getPackage() {
-    return configuration.getScalaPackage();
+  protected String getSourceFilePath(String filename) {
+    return configuration.getScalaPackageDir() + "/" + filename;
+  }
+
+  protected String getSourceTestFilePath(String filename) {
+    return configuration.getScalaTestPackageDir() + "/" + filename;
   }
 
   protected Map<String, Object> mergeVariables(Map<String, Object> baseVariables,
-                                             Map<String, Object> variables) {
+                                               Map<String, Object> variables) {
     var result = new HashMap<>(baseVariables);
     result.putAll(variables);
     return result;

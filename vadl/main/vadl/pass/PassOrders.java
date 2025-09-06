@@ -104,13 +104,14 @@ import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
 import vadl.lcb.template.lld.ELF.Arch.EmitLldVadlBuiltinsHeaderFilePass;
+import vadl.rtl.passes.CleanupEmitDirectoryPass;
 import vadl.rtl.passes.ControlLogicPass;
 import vadl.rtl.passes.EmitBuildSbtPass;
+import vadl.rtl.passes.EmitCoreEmitPass;
 import vadl.rtl.passes.EmitCoreTestPass;
-import vadl.rtl.passes.EmitRtlMakefilePass;
 import vadl.rtl.passes.EmitModulesPass;
+import vadl.rtl.passes.EmitRtlMakefilePass;
 import vadl.rtl.passes.EmitVadlLibPass;
-import vadl.rtl.passes.FetchLogicPass;
 import vadl.rtl.passes.ForwardingLogicPass;
 import vadl.rtl.passes.HazardAnalysisPass;
 import vadl.rtl.passes.InstructionProgressGraphCreationPass;
@@ -120,6 +121,7 @@ import vadl.rtl.passes.InstructionProgressGraphNamePass;
 import vadl.rtl.passes.MiaMappingCreationPass;
 import vadl.rtl.passes.MiaMappingInlinePass;
 import vadl.rtl.passes.MiaMappingOptimizePass;
+import vadl.rtl.passes.RtlConfigurationPass;
 import vadl.rtl.passes.StageOrderingPass;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.vdt.passes.VdtConstraintSynthesisPass;
@@ -615,6 +617,8 @@ public class PassOrders {
     order.skip(RenamingConflictingRegistersPass.class);
     order.skip(OverwriteInputOperandsPass.class);
 
+    order.add(new RtlConfigurationPass(config));
+
     // TODO: Remove once frontend creates it
     order.add(new DummyMiaPass(config));
     order.add(new StageOrderingPass(config));
@@ -648,7 +652,9 @@ public class PassOrders {
         .add(new EmitRtlMakefilePass(config))
         .add(new EmitModulesPass(config))
         .add(new EmitVadlLibPass(config))
-        .add(new EmitCoreTestPass(config));
+        .add(new EmitCoreTestPass(config))
+        .add(new EmitCoreEmitPass(config))
+        .add(new CleanupEmitDirectoryPass(config));
   }
 
   /**
