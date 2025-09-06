@@ -43,7 +43,7 @@ class CoreTest extends AnyFunSpec with ChiselSim {
   def write(addr: BigInt, value: UInt): Unit =
     mem.put(addr, value)
 
-  it("[(${#strings.substring(isaName, 0, 4)})]ui-p-*") {
+  it("[(${#strings.substring(isaName, 0, 4).toLowerCase()})]ui-p-*") {
     var passed = Set[String]()
     var failed = Set[String]()
     var timeout = Set[String]()
@@ -51,7 +51,7 @@ class CoreTest extends AnyFunSpec with ChiselSim {
     simulate(new [(${topModule})]) { dut =>
       enableWaves()
 
-      new java.io.File("riscv-tests/isa").listFiles(_.getName.matches("rv32ui-p-[^.]*"))
+      new java.io.File("riscv-tests/isa").listFiles(_.getName.matches("[(${#strings.substring(isaName, 0, 4).toLowerCase()})]ui-p-[^.]*"))
         .filter(file => !file.getName.contains("fence")) // not supported
         .foreach(file => {
           println(f"test $file")

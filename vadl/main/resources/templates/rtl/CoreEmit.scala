@@ -1,12 +1,15 @@
 [# th:if="${package != ''}"]package [(${package})]
 
-[/]import org.scalatest.funspec.AnyFunSpec
+[/]import chisel3.simulator.ChiselSim
+import circt.stage.ChiselStage
+import org.scalatest.funspec.AnyFunSpec
 
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Path, Paths}
 
 class CoreEmit extends AnyFunSpec with ChiselSim {
 
   it("emit") {
+    Files.createDirectories(Path.of("build"))
     val sv = ChiselStage.emitSystemVerilog(
       new [(${topModule})],
       firtoolOpts = Array(
@@ -16,6 +19,6 @@ class CoreEmit extends AnyFunSpec with ChiselSim {
         "--disable-layers=Verification"
       )
     )
-    Files.writeString(Paths.get("[(${topModule})].sv"), sv)
+    Files.writeString(Paths.get("build/[(${topModule})].sv"), sv)
   }
 }
