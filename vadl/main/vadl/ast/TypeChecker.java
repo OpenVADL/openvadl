@@ -2762,7 +2762,7 @@ public class TypeChecker
    *
    * <p>Sets expr.type to the the type of the subcalls.
    *
-   * @param expr            to visit
+   * @param expr            to visit.
    * @param typeBeforeSlice is the type just before.
    * @param sliceGroups     the list or arguments which hold slices or indexes
    */
@@ -2797,7 +2797,7 @@ public class TypeChecker
 
         var bitSlice = new Constant.BitSlice(parts.toArray(new Constant.BitSlice.Part[0]));
         if (bitSlice.hasOverlappingParts()) {
-          // Currently, we don't allow overlapping slices for both slices on read values
+          // FIXME: Currently, we don't allow overlapping slices for both slices on read values
           // and write targets.
           // In the future we might want to allow overlapping slices on read values.
           // For written values (`X(1, 1) := 2`) this must not be allowed, as the same value
@@ -2827,43 +2827,60 @@ public class TypeChecker
               .locationDescription(indexExpr, "Tensors cannot be sliced.")
               .build();
         }
+        check(indexExpr);
 
-        int index;
+        @Nullable Integer staticIndex = null;
         try {
-          index = constantEvaluator.eval(indexExpr).value().intValueExact();
+          staticIndex = constantEvaluator.eval(indexExpr).value().intValueExact();
         } catch (EvaluationError e) {
-          // FIXME: This doesn't work because of for all statements and how they are lowered.
-          // Basically the whole slicing/indexing musst be rewritten and can no longer depend on
-          // compiletme known values.
-          throw error("Invalid constant value", indexExpr)
-              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
-              .description("Tensor indexing must be a constant value.")
-              .build();
+          // This is a dynamic slice, that's also fine
         }
 
-        if (index < 0 || index >= currTensoType.outerMostDimension()) {
-          throw error("Tensor Index out of bounds", indexExpr)
-              .locationDescription(indexExpr,
-                  "Invalid index `%d` for tensor `%s`", index, currTensoType)
-              .build();
-        }
-
-        // Note: the computed bitslice here is already for the lowering where we assume all tensors
-        // are flattened
         currType = currTensoType.pop();
-        var bitWidth = switch (currType) {
-          case BitsType bt -> bt.bitWidth();
-          case TensorType tt -> tt.flattenBitsType().bitWidth();
-          default -> throw new IllegalStateException();
-        };
-        slice.computedBitSlice =
-            Constant.BitSlice.of(bitWidth * index + bitWidth - 1, bitWidth * index);
-        slice.type = currType;
+        expr.type = currType;
 
+        // If a static type is declared, verify it's within the bounds and
+        if (staticIndex != null) {
+          if (staticIndex < 0
+              || staticIndex >= currTensoType.outerMostDimension()) {
+            throw error("Tensor Index out of bounds", indexExpr)
+                .locationDescription(indexExpr,
+                    "Invalid index `%d` for tensor `%s`", staticIndex, currTensoType)
+                .build();
+          }
+
+          // Note: the computed bitslice here is already for the lowering where we assume all tensors
+          // are flattened
+          var bitWidth = switch (currType) {
+            case BitsType bt -> bt.bitWidth();
+            case TensorType tt -> tt.flattenBitsType().bitWidth();
+            default -> throw new IllegalStateException();
+          };
+          slice.computedBitSlice =
+              Constant.BitSlice.of(bitWidth * staticIndex + bitWidth - 1, bitWidth * staticIndex);
+          slice.type = currType;
+
+        } else {
+          /* For dynamic indexes we cannot really check anything.
+             Consider the following example:
+             X: Bits<8><64>
+             X(idx) -> Expr has the type Bits<64>
+               ^^^
+               With the type Bits<3> this would fit perfectly because 3^2 == 8
+
+             However for the following example there doesn't exist any type at all that would fit
+             X: Bits<7><64>, because there isn't any x such that x^2 == 7
+
+             Obviously we could add a lot of special cases but we will never be able to solve the
+             underlying problem because our typesystem isn't strong enough (and I would argue it
+             also shouldn't be that strong/complex).
+           */
+          if (!indexExpr.type().isDataType()) {
+            throw typeMismatchError(indexExpr, "numerical datatype", indexExpr.type());
+          }
+        }
       }
     }
-
-    expr.type = currType;
   }
 
   /**
@@ -3337,7 +3354,7 @@ public class TypeChecker
           .locationDescription(expr, "Multiple indicies aren't yet supported.")
           .build();
     }
-    
+
     return null;
   }
 

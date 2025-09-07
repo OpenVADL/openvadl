@@ -1885,6 +1885,11 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     @Nullable
     Type type;
 
+    /**
+     * The computed slices.
+     * Will be set by the typechecker and only if it slicing is staticly known at compiletime,
+     * and not dynamic.
+     */
     @Nullable
     Constant.BitSlice computedBitSlice;
 

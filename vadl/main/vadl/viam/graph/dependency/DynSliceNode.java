@@ -35,6 +35,9 @@ import vadl.viam.graph.Node;
  * Also, this dynamic slice only represents a single range (with one msb and one lsb), compared
  * to the {@link SliceNode} which may represent multiple ranges as part of its
  * {@link vadl.viam.Constant.BitSlice}.
+ * <p><b>Note:</b> It is possible for a {@code SliceNode} to express a slice that is out of range
+ * relative to the value being sliced since the typechecker isn't able to verify the correctness
+ * here.
  */
 public class DynSliceNode extends ExpressionNode implements Canonicalizable {
 

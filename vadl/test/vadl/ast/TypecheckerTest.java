@@ -1212,4 +1212,25 @@ public class TypecheckerTest {
         finder.getConstantValue(ast, "d"));
   }
 
+  @Test
+  public void dynamicTensorSlicingForAllDo() {
+    var prog = """
+          instruction set architecture Tensor = {
+            using Index = Bits<4>
+            register X : Bits<16><32>
+        
+            format F : Bits<16> = {opcode : Bits<4>, rs2: Index, rs1: Index, rd: Index}
+        
+            // initialize 4 consecutive X registers
+            instruction Init4X : F = forall i: Bits<16> in 0 .. 3 do X(i) := 0
+            encoding Init4X = {opcode = 0b1100, rs2 = 0b0000, rs1 = 0b0000, rd = 0b0000}
+            assembly Init4X = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+  }
+
+
 }
