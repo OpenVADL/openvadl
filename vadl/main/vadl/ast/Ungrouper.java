@@ -70,6 +70,11 @@ public class Ungrouper
   }
 
   @Override
+  public Expr visit(WildcardLiteral expr) {
+    return expr;
+  }
+
+  @Override
   public Expr visit(BinaryLiteral expr) {
     return expr;
   }

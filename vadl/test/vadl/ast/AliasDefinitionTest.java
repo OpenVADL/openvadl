@@ -45,9 +45,9 @@ public class AliasDefinitionTest {
   void constantRegister() {
     var prog = prog("""
         alias register W = A(12..0)
-        alias register X(i) = B(i)(12..0)
-        alias register Y(i) = C(i)(12..0)
-        alias register U(j)(i) = D(j)(i)(12..0)
+        alias register X = B(*)(12..0)
+        alias register Y = C(*)(12..0)
+        alias register U = D(*)(*)(12..0)
         
         function func(a: Bits<13>) -> Bits<13> = a
         

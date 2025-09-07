@@ -97,6 +97,8 @@ interface ExprVisitor<R> {
 
   R visit(IntegerLiteral expr);
 
+  R visit(WildcardLiteral expr);
+
   R visit(BinaryLiteral expr);
 
   R visit(BoolLiteral expr);
@@ -613,6 +615,34 @@ class IntegerLiteral extends Expr {
     int result = number.hashCode();
     result = 31 * result + Objects.hashCode(token);
     return result;
+  }
+}
+
+class WildcardLiteral extends Expr {
+  SourceLocation loc;
+
+  public WildcardLiteral(SourceLocation loc) {
+    this.loc = loc;
+  }
+
+  @Override
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+    builder.append("*");
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.SYM_EX;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
   }
 }
 

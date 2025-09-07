@@ -246,6 +246,11 @@ class MacroExpander
   }
 
   @Override
+  public Expr visit(WildcardLiteral expr) {
+    throw new UnsupportedOperationException("Not yet implemented");
+  }
+
+  @Override
   public Expr visit(BinaryLiteral expr) {
     return new BinaryLiteral(expr.token, copyLoc(expr.loc));
   }
@@ -683,7 +688,7 @@ class MacroExpander
   public Definition visit(AliasDefinition definition) {
     var id = expandId(definition.id);
     var value = expandExpr(definition.value);
-    return new AliasDefinition(id, definition.kind, definition.params, definition.aliasType,
+    return new AliasDefinition(id, definition.kind, definition.aliasType,
         definition.targetType,
         value, copyLoc(definition.loc)).withAnnotations(definition.annotations);
   }

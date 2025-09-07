@@ -2005,7 +2005,6 @@ class FunctionDefinition extends Definition implements IdentifiableNode, TypedNo
 class AliasDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder id;
   AliasKind kind;
-  List<Identifier> params;
   @Nullable
   @Child
   TypeLiteral aliasType;
@@ -2033,12 +2032,11 @@ class AliasDefinition extends Definition implements IdentifiableNode, TypedNode 
   @Nullable
   Constant.BitSlice slice;
 
-  AliasDefinition(IdentifierOrPlaceholder id, AliasKind kind, List<Identifier> params,
+  AliasDefinition(IdentifierOrPlaceholder id, AliasKind kind,
                   @Nullable TypeLiteral aliasType, @Nullable TypeLiteral targetType, Expr value,
                   SourceLocation location) {
     this.id = id;
     this.kind = kind;
-    this.params = params;
     this.aliasType = aliasType;
     this.targetType = targetType;
     this.value = value;

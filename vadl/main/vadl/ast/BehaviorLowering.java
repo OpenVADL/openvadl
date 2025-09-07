@@ -674,6 +674,12 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
   @Override
+  public ExpressionNode visit(WildcardLiteral expr) {
+    throw new IllegalStateException(
+        "WildcardLiteral should never be reached in the VIAM lowering.");
+  }
+
+  @Override
   public ExpressionNode visit(BinaryLiteral expr) {
     return new ConstantNode(
         Constant.Value.fromInteger(

@@ -582,16 +582,12 @@ PRODUCTIONS
 
   aliasDefinition<out Definition def>                 (. var startLocation = nextTokenLoc(); AliasDefinition.AliasKind kind = null;
                                                          TypeLiteral aliasType = null; TypeLiteral targetType = null;
-                                                         IdentifierOrPlaceholder id = null;  var params = new ArrayList<Identifier>();
+                                                         IdentifierOrPlaceholder id = null;
                                                       .)
   = ALIAS
     (
       REGISTER                                        (. kind = AliasDefinition.AliasKind.REGISTER; .)
       identifierOrPlaceholder<out id>
-      { SYM_PAREN_OPEN
-        identifier<out Identifier param>                (. params.add(param); .)
-        SYM_PAREN_CLOSE
-      }
       // FIXME: This should probably use the same relationType as the register definition
       [
         SYM_COLON
@@ -609,7 +605,7 @@ PRODUCTIONS
       ]
     )
     SYM_EQ
-    callOrBinaryExpression<out Expr value, false>     (. def = new AliasDefinition(id, kind, params, aliasType, targetType, value, startLocation.join(lastTokenLoc())); .)
+    callOrBinaryExpression<out Expr value, false, true>     (. def = new AliasDefinition(id, kind, aliasType, targetType, value, startLocation.join(lastTokenLoc())); .)
   .
 
   usingDefinition<out Definition def>                         (. var start = nextTokenLoc(); .)
@@ -1275,7 +1271,7 @@ PRODUCTIONS
     | assemblyGrammarOptional<out optionAlternatives>
     | assemblyGrammarRepetition<out repetitionAlternatives>
     | SYM_QUESTION SYM_PAREN_OPEN
-      callOrBinaryExpression<out semanticPred, false>
+      callOrBinaryExpression<out semanticPred, false, false>
       SYM_PAREN_CLOSE
     | stringLiteral<out Expr strLit>
       [assemblyGrammarTypeDefinition<out type>]                      (. asmLiteral = new AsmGrammarLiteralDefinition(null, new ArrayList<>(), strLit, type, start.join(lastTokenLoc())); type = null;.)
@@ -1360,7 +1356,7 @@ PRODUCTIONS
   .
 
   assignmentOrCallStmt<out Statement statement> (. statement = DUMMY_STAT; .)
-  = callOrBinaryExpression<out Expr target, false>
+  = callOrBinaryExpression<out Expr target, false, false>
     [
       SYM_ASSIGN
       expression<out Expr expr, BIN_OPS>        (. statement = new AssignmentStatement(target, expr); .)
@@ -1474,7 +1470,7 @@ PRODUCTIONS
 
   lockStatement<out Statement lock>         (. var start = nextTokenLoc(); .)
   = LOCK
-    callOrBinaryExpression<out Expr expr, false>
+    callOrBinaryExpression<out Expr expr, false, false>
     SYM_IN
     statement<out Statement statement>      (. lock = new LockStatement(expr, statement, start.join(lastTokenLoc())); .)
   .
@@ -1523,41 +1519,49 @@ PRODUCTIONS
   /// Call expressions of form "a::b<3>(1,2)(3,4).c()".
   /// Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
   /// Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
-  callOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = DUMMY_EXPR; .)
+  callOrBinaryExpression<out Expr expr, boolean allowLtOp, boolean allowWildcardArgs> (. expr = DUMMY_EXPR; .)
   = IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.SYM_EX))
-    symbolOrBinaryExpression<out expr, allowLtOp>          (. List<CallIndexExpr.Arguments> argsIndices = new ArrayList<>(); .)
+    symbolOrBinaryExpression<out expr, allowLtOp>               (. List<CallIndexExpr.Arguments> argsIndices = new ArrayList<>(); .)
     {
       // Check if we received a symbol expression -> collect arguments
       // Otherwise, just return the collected binary expression
       IF (la.kind == _SYM_PAREN_OPEN && expr instanceof IsSymExpr)
-      arguments<.out CallIndexExpr.Arguments args.>        (. argsIndices.add(args); .)
-    }                                                      (. List<CallIndexExpr.SubCall> subCalls = new ArrayList<>(); .)
+      arguments<out CallIndexExpr.Arguments args, allowWildcardArgs>         (. argsIndices.add(args); .)
+    }                                                           (. List<CallIndexExpr.SubCall> subCalls = new ArrayList<>(); .)
     {
       IF (la.kind == _SYM_DOT && expr instanceof IsSymExpr)
-      SYM_DOT                                              (. var subCallArgsIndices = new ArrayList<CallIndexExpr.Arguments>(); .)
+      SYM_DOT                                                   (. var subCallArgsIndices = new ArrayList<CallIndexExpr.Arguments>(); .)
       identifier<out Identifier id>
       {
         IF (la.kind == _SYM_PAREN_OPEN)
-        arguments<.out CallIndexExpr.Arguments args.>      (. subCallArgsIndices.add(args); .)
-      }                                                    (. subCalls.add(new CallIndexExpr.SubCall(id, subCallArgsIndices)); .)
-    }                                                      (. if (expr instanceof IsSymExpr symExpr && (!argsIndices.isEmpty() || !subCalls.isEmpty()))
-                                                                expr = new CallIndexExpr(symExpr, argsIndices, subCalls, expr.location().join(lastTokenLoc()));
-                                                           .)
-  | macroReplacement<out Node node>                        (. expr = castExpr(this, node); .)
+        arguments<out CallIndexExpr.Arguments args, false>      (. subCallArgsIndices.add(args); .)
+      }                                                         (. subCalls.add(new CallIndexExpr.SubCall(id, subCallArgsIndices)); .)
+    }                                                           (. if (expr instanceof IsSymExpr symExpr && (!argsIndices.isEmpty() || !subCalls.isEmpty()))
+                                                                     expr = new CallIndexExpr(symExpr, argsIndices, subCalls, expr.location().join(lastTokenLoc()));
+                                                                .)
+  | macroReplacement<out Node node>                             (. expr = castExpr(this, node); .)
   .
 
   /// Represents one set of invocation arguments.
-  /// Multiple invocations (e.g. multi-dimensional access) will need multiple #arguments
-  arguments<.out CallIndexExpr.Arguments args.>    (. var start = nextTokenLoc(); .)
+  /// Multiple invocations (e.g. multi-dimensional access) will need multiple #arguments.
+  /// If allowWildcard is `true`, a argument may be `*`, which will yield a WildcardLiteral expression.
+  arguments<out CallIndexExpr.Arguments args, boolean allowWildcard>    (. var start = nextTokenLoc(); .)
   = SYM_PAREN_OPEN                            (. var values = new ArrayList<Expr>(); .)
-    expression<out Expr arg, BIN_OPS>         (. values.add(arg); .)
-    ( SYM_RANGE
-      expression<out Expr rangeTo, BIN_OPS>   (. values.set(0, new RangeExpr(arg, rangeTo)); .)
-    | {
+    argument<out Expr arg, allowWildcard>     (. values.add(arg); .)
+    {
       SYM_COMMA
-      expression<out Expr nextArg, BIN_OPS>   (. values.add(nextArg); .)
-    })
+      argument<out Expr nextArg, allowWildcard>   (. values.add(nextArg); .)
+    }
     SYM_PAREN_CLOSE                           (. args = new CallIndexExpr.Arguments(values, start.join(lastTokenLoc())); .)
+  .
+
+  argument<out Expr arg, boolean allowWildcard> (. arg = null; .)
+  = IF (allowWildcard && la.kind == _SYM_MUL)
+      SYM_MUL                                 (. arg = new WildcardLiteral(lastTokenLoc()); .)
+    | expression<out arg, BIN_OPS>
+    [ SYM_RANGE
+      expression<out Expr rangeTo, BIN_OPS>   (. arg = new RangeExpr(arg, rangeTo); .)
+    ]
   .
 
   /// Symbol expressions of form "a::b<3>".
@@ -1632,7 +1636,7 @@ PRODUCTIONS
   | IF (la.kind == _MATCH && scanner.Peek().kind != _SYM_COLON) // Disambiguate from macro match
     matchExpression<out expr>
   | IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.CALL_EX))
-    callOrBinaryExpression<out expr, true>
+    callOrBinaryExpression<out expr, true, false>
   | groupedExpression<out expr>
   | IF(isUnaryOperator(la) || isMacroReplacementOfType(this, BasicSyntaxType.UN_OP))
     unary<out expr, allowedOps>
@@ -1927,7 +1931,7 @@ PRODUCTIONS
   identifier<out Identifier id1> (. ident = id1; .)
   {
         // X(1)
-        arguments<out CallIndexExpr.Arguments args>
+        arguments<out CallIndexExpr.Arguments args, false>
         (. ident =  new CallIndexExpr(id1, List.of(args), List.of(), start); .)
     |  // a{0..7}
         SYM_BRACE_OPEN
@@ -2106,7 +2110,7 @@ PRODUCTIONS
     | macroReplacement<out body>
     )
   | IF (type == BasicSyntaxType.CALL_EX)
-    callOrBinaryExpression<out body, false>
+    callOrBinaryExpression<out body, false, false>
   | IF (type == BasicSyntaxType.SYM_EX)
     symbolOrBinaryExpression<out body, false>
   | IF (type == BasicSyntaxType.ID)

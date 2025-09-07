@@ -37,7 +37,6 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
@@ -934,19 +933,12 @@ public class TypeChecker
       }
 
       // we have to check the CallIndexExpr "manually" as the normal check cannot handle
-      // the param identifiers of the alias definition
+      // the wildcards in the alias definition
       if (definition.value instanceof Identifier targetReg) {
-        ensure(definition.params.isEmpty(), () ->
-            error("Unused alias register params", targetReg)
-                .description("All alias register parameters must be used: %s",
-                    definition.params.stream().map(i -> i.name).collect(
-                        Collectors.joining(", ")))
-        );
         check(targetReg);
       } else if (definition.value instanceof CallIndexExpr expr) {
-
         var i = 0;
-        var foundParams = new ArrayList<Pair<Integer, Identifier>>();
+        var wildcardIndices = new ArrayList<Integer>();
         CallIndexExpr.Arguments slice = null;
         var dummyArgs = new ArrayList<CallIndexExpr.Arguments>();
 
@@ -955,15 +947,14 @@ public class TypeChecker
               () -> error("All arguments must have exactly one value", definition.value));
 
           var argVal = arg.values.getFirst();
-          if (argVal instanceof Identifier paramId && definition.params.contains(
-              paramId.target())) {
-            foundParams.add(Pair.of(i, paramId));
+          if (argVal instanceof WildcardLiteral) {
+            wildcardIndices.add(i);
           } else if (argVal instanceof RangeExpr) {
             ensure(i == expr.argsIndices.size() - 1, () ->
                 error("Slices can only be done on the innermost dimension.", argVal));
             slice = arg;
           } else {
-            ensure(foundParams.isEmpty(),
+            ensure(wildcardIndices.isEmpty(),
                 () -> error("Constant accesses cannot occure after param accesses.", argVal));
             dummyArgs.add(arg);
           }
@@ -971,7 +962,8 @@ public class TypeChecker
           i++;
         }
 
-        if (dummyArgs.size() > 0) {
+        // Determine type based on the dummyArgs (none-wildcards or slice args)
+        if (!dummyArgs.isEmpty()) {
           var dummyCallIndexExpr =
               new CallIndexExpr(targetIdent, dummyArgs, List.of(), expr.location);
           dummyCallIndexExpr.symbolTable = expr.symbolTable;
@@ -990,17 +982,17 @@ public class TypeChecker
         if (slice != null) {
           var typeBeforeSlice = switch (expr.type()) {
             case TensorType type -> {
-              ensure(type.numberOfIndexDims() >= foundParams.size(),
+              ensure(type.numberOfIndexDims() >= wildcardIndices.size(),
                   () -> error("Invalid number of parameters", expr));
               yield type.innerType();
             }
             case ConcreteRelationType type -> {
-              ensure(type.argTypes().size() == foundParams.size(), () ->
+              ensure(type.argTypes().size() == wildcardIndices.size(), () ->
                   error("Invalid number of parameters", expr));
               yield type.resultType();
             }
             default -> {
-              ensure(foundParams.isEmpty(),
+              ensure(wildcardIndices.isEmpty(),
                   () -> error("Params can only access tensor types", expr));
               yield expr.type();
             }
@@ -2444,6 +2436,13 @@ public class TypeChecker
   public Void visit(IntegerLiteral expr) {
     expr.type = new ConstantType(expr.number);
     return null;
+  }
+
+  @Override
+  public Void visit(WildcardLiteral expr) {
+    // if a node contains a potential wildcard literal expression, it must ensure that
+    // it is not type checked.
+    throw new IllegalStateException("The wildcard literal should never be typechecked.");
   }
 
   @Override

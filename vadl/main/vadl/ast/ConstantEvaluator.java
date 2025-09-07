@@ -259,6 +259,11 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   }
 
   @Override
+  public ConstantValue visit(WildcardLiteral expr) {
+    throw new UnsupportedOperationException("Not yet implemented");
+  }
+
+  @Override
   public ConstantValue visit(BinaryLiteral expr) {
     return new ConstantValue(expr.number, Type.bits(expr.bitWidth));
   }
