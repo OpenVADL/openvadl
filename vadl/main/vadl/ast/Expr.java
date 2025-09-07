@@ -2486,7 +2486,7 @@ class ExistsInThenExpr extends Expr {
  * forall in fold
  */
 class ForallExpr extends Expr {
-  List<ForallExpr.Index> indices;
+  List<ForallIndex> indices;
 
   /**
    * The kind of forall expression (fold, tensor, etc)
@@ -2504,7 +2504,7 @@ class ForallExpr extends Expr {
 
   SourceLocation loc;
 
-  ForallExpr(List<ForallExpr.Index> indices, Operation operation, @Nullable Operator foldOperator,
+  ForallExpr(List<ForallIndex> indices, Operation operation, @Nullable Operator foldOperator,
              Expr body, SourceLocation loc) {
     this.indices = indices;
     this.operation = operation;
@@ -2527,7 +2527,7 @@ class ForallExpr extends Expr {
   void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("forall ");
     var isFirst = true;
-    for (ForallExpr.Index index : indices) {
+    for (ForallIndex index : indices) {
       if (!isFirst) {
         builder.append(", ");
       }
@@ -2577,68 +2577,6 @@ class ForallExpr extends Expr {
         type);
   }
 
-  static final class Index extends Node implements IdentifiableNode {
-    @Child
-    IsId id;
-
-    @Child
-    @Nullable
-    TypeLiteral typeLiteral;
-
-    @Child
-    Expr domain;
-
-    public Index(IsId id, @Nullable TypeLiteral typeLiteral, Expr domain) {
-      this.id = id;
-      this.typeLiteral = typeLiteral;
-      this.domain = domain;
-    }
-
-    @Override
-    public Identifier identifier() {
-      return (Identifier) id;
-    }
-
-    @Override
-    public SourceLocation location() {
-      return id.location().join(domain.location());
-    }
-
-    @Override
-    SyntaxType syntaxType() {
-      return BasicSyntaxType.INVALID;
-    }
-
-    @Override
-    void prettyPrint(int indent, StringBuilder builder) {
-      id.prettyPrint(0, builder);
-      if (typeLiteral != null) {
-        builder.append(": ");
-        typeLiteral.prettyPrint(0, builder);
-      }
-      builder.append(" in ");
-      domain.prettyPrint(0, builder);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      Index index = (Index) o;
-      return id.equals(index.id) && Objects.equals(typeLiteral, index.typeLiteral)
-          && domain.equals(index.domain);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = id.hashCode();
-      result = 31 * result + Objects.hashCode(typeLiteral);
-      result = 31 * result + domain.hashCode();
-      return result;
-    }
-  }
 
   enum Operation {
     TENSOR("tensor"), FOLD("fold");

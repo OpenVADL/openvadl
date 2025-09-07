@@ -482,7 +482,7 @@ class MacroExpander
   @Override
   public Expr visit(ForallExpr expr) {
     var indices = new ArrayList<>(expr.indices);
-    indices.replaceAll(index -> new ForallExpr.Index(
+    indices.replaceAll(index -> new ForallIndex(
         (IsId) expandExpr(index.identifier()),
         index.typeLiteral == null ? null : (TypeLiteral) expandExpr(index.typeLiteral),
         expandExpr(index.domain)));
@@ -1131,7 +1131,7 @@ class MacroExpander
   public Statement visit(ForallStatement forallStatement) {
     var indices = new ArrayList<>(forallStatement.indices);
     indices.replaceAll(
-        index -> new ForallStatement.Index(
+        index -> new ForallIndex(
             index.identifier(),
             index.typeLiteral == null ? null : (TypeLiteral) expandExpr(index.typeLiteral),
             expandExpr(index.domain)));

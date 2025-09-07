@@ -18,6 +18,7 @@ package vadl.ast;
 
 
 import static java.util.Objects.requireNonNull;
+import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
 import static vadl.utils.GraphUtils.ifElseSideEffect;
 import static vadl.utils.GraphUtils.intU;
@@ -65,6 +66,8 @@ import vadl.viam.graph.control.BeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
+import vadl.viam.graph.control.ForallEndNode;
+import vadl.viam.graph.control.ForallNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
@@ -78,6 +81,7 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
@@ -628,7 +632,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Forall Statement
     if (computedTarget instanceof ForallStatement forallStatement) {
       var index = forallStatement.indices.stream()
-          .filter(idx -> idx.name.name.equals(innerName))
+          .filter(idx -> idx.identifier().name.equals(innerName))
           .findFirst()
           .orElseThrow();
 

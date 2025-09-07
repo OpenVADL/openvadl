@@ -130,7 +130,7 @@ public class TypeChecker
     currentlyVisiting.add(nodeId);
     expr.accept(this);
     currentlyVisiting.pop();
-    return requireNonNull(expr.type);
+    return expr.type();
   }
 
   /**
@@ -2086,10 +2086,10 @@ public class TypeChecker
       // No need to check because this can only be the case if we are inside the for statement.
       expr.type =
           forallStatement.indices.stream()
-              .filter(index -> index.name.name.equals(innerName))
+              .filter(index -> index.identifier().name.equals(innerName))
               .findFirst()
               .orElseThrow()
-              .name.type();
+              .identifier().type();
       return;
     }
 
@@ -3332,7 +3332,12 @@ public class TypeChecker
 
   @Override
   public Void visit(ForallExpr expr) {
-    throwUnimplemented(expr);
+    if (expr.indices.size() > 1) {
+      throw error("Not Supported", expr)
+          .locationDescription(expr, "Multiple indicies aren't yet supported.")
+          .build();
+    }
+    
     return null;
   }
 
@@ -3576,6 +3581,14 @@ public class TypeChecker
 
   @Override
   public Void visit(ForallStatement statement) {
+    // FIXME: multiple indexes are hard to lower so let's throw an temporary error
+
+    if (statement.indices.size() > 1) {
+      throw error("Not Supported", statement)
+          .locationDescription(statement, "Multiple indicies aren't yet supported.")
+          .build();
+    }
+
     statement.indices.forEach(index -> {
       // FIXME: Until we have bidirectional typechecking we need this explicit cast
       if (index.typeLiteral == null) {
@@ -3585,7 +3598,7 @@ public class TypeChecker
             .build();
       }
 
-      index.name.type = check(index.typeLiteral);
+      index.identifier().type = check(index.typeLiteral);
 
       // Check as expression
       if (index.domain instanceof RangeExpr rangeExpr) {

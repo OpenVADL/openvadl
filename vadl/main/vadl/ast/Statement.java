@@ -948,14 +948,14 @@ final class LockStatement extends Statement {
  */
 final class ForallStatement extends Statement {
   @Child
-  List<Index> indices;
+  List<ForallIndex> indices;
 
   @Child
   Statement body;
 
   SourceLocation loc;
 
-  ForallStatement(List<Index> indices, Statement body, SourceLocation loc) {
+  ForallStatement(List<ForallIndex> indices, Statement body, SourceLocation loc) {
     this.indices = indices;
     this.body = body;
     this.loc = loc;
@@ -971,7 +971,7 @@ final class ForallStatement extends Statement {
     builder.append(prettyIndentString(indent));
     builder.append("forall ");
     var isFirst = true;
-    for (Index index : indices) {
+    for (var index : indices) {
       if (!isFirst) {
         builder.append(", ");
       }
@@ -1004,75 +1004,75 @@ final class ForallStatement extends Statement {
     return visitor.visit(this);
   }
 
-  static final class Index extends Node implements IdentifiableNode {
-    @Child
-    Identifier name;
-
-    @Child
-    @Nullable
-    TypeLiteral typeLiteral;
-
-    @Child
-    Expr domain;
-
-    /**
-     * Set by the typechecker.
-     */
-    @Nullable
-    Integer computedFrom;
-    @Nullable
-    Integer computedTo;
-
-    public Index(Identifier name, @Nullable TypeLiteral typeLiteral, Expr domain) {
-      this.name = name;
-      this.typeLiteral = typeLiteral;
-      this.domain = domain;
-    }
-
-    @Override
-    public Identifier identifier() {
-      return name;
-    }
-
-    @Override
-    public SourceLocation location() {
-      return name.location().join(domain.location());
-    }
-
-    @Override
-    SyntaxType syntaxType() {
-      return BasicSyntaxType.INVALID;
-    }
-
-    @Override
-    void prettyPrint(int indent, StringBuilder builder) {
-      name.prettyPrint(0, builder);
-      if (typeLiteral != null) {
-        builder.append(": ");
-        typeLiteral.prettyPrint(0, builder);
-      }
-      builder.append(" in ");
-      domain.prettyPrint(0, builder);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      Index index = (Index) o;
-      return name.equals(index.name) && Objects.equals(typeLiteral, index.typeLiteral)
-          && domain.equals(index.domain);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = name.hashCode();
-      result = 31 * result + Objects.hashCode(typeLiteral);
-      result = 31 * result + domain.hashCode();
-      return result;
-    }
-  }
 }
 
+final class ForallIndex extends Node implements IdentifiableNode {
+  @Child
+  IsId name;
+
+  @Child
+  @Nullable
+  TypeLiteral typeLiteral;
+
+  @Child
+  Expr domain;
+
+  /**
+   * Set by the typechecker.
+   */
+  @Nullable
+  Integer computedFrom;
+  @Nullable
+  Integer computedTo;
+
+  public ForallIndex(IsId name, @Nullable TypeLiteral typeLiteral, Expr domain) {
+    this.name = name;
+    this.typeLiteral = typeLiteral;
+    this.domain = domain;
+  }
+
+  @Override
+  public Identifier identifier() {
+    return (Identifier) name;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return name.location().join(domain.location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    name.prettyPrint(0, builder);
+    if (typeLiteral != null) {
+      builder.append(": ");
+      typeLiteral.prettyPrint(0, builder);
+    }
+    builder.append(" in ");
+    domain.prettyPrint(0, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ForallIndex index = (ForallIndex) o;
+    return name.equals(index.name) && Objects.equals(typeLiteral, index.typeLiteral)
+        && domain.equals(index.domain);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = name.hashCode();
+    result = 31 * result + Objects.hashCode(typeLiteral);
+    result = 31 * result + domain.hashCode();
+    return result;
+  }
+}

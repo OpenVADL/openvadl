@@ -1475,7 +1475,7 @@ PRODUCTIONS
     statement<out Statement statement>      (. lock = new LockStatement(expr, statement, start.join(lastTokenLoc())); .)
   .
 
-  forallStatement<out Statement forall> (. var start = nextTokenLoc(); var indices = new ArrayList<ForallStatement.Index>(); TypeLiteral typeLiteral = null; .)
+  forallStatement<out Statement forall> (. var start = nextTokenLoc(); var indices = new ArrayList<ForallIndex>(); TypeLiteral typeLiteral = null; .)
    = FORALL
     identifier<out Identifier indexName>
     [
@@ -1483,7 +1483,7 @@ PRODUCTIONS
     typeLiteral<out  typeLiteral>
     ]
     SYM_IN
-    rangeExpression<out Expr domain>    (. indices.add(new ForallStatement.Index(indexName, typeLiteral, domain)); .)
+    rangeExpression<out Expr domain>    (. indices.add(new ForallIndex(indexName, typeLiteral, domain)); .)
     {
       SYM_COMMA
       identifier<out indexName>         (. typeLiteral = null; .)
@@ -1492,7 +1492,7 @@ PRODUCTIONS
         typeLiteral<out typeLiteral>
       ]
       SYM_IN
-      rangeExpression<out domain>       (. indices.add(new ForallStatement.Index(indexName, typeLiteral, domain)); .)
+      rangeExpression<out domain>       (. indices.add(new ForallIndex(indexName, typeLiteral, domain)); .)
     }
     DO
     statement<out Statement statement>  (. forall = new ForallStatement(indices, statement, start.join(lastTokenLoc())); .)
@@ -1804,8 +1804,8 @@ PRODUCTIONS
     typeLiteral<out typeLiteral>
     ]
     SYM_IN
-                                                              (. var indices = new ArrayList<ForallExpr.Index>(); .)
-      rangeExpression<out Expr domain>                        (. indices.add(new ForallExpr.Index(id, typeLiteral, domain)); .)
+                                                              (. var indices = new ArrayList<ForallIndex>(); .)
+      rangeExpression<out Expr domain>                        (. indices.add(new ForallIndex(id, typeLiteral, domain)); .)
       {
         SYM_COMMA
         identifierOrPlaceholder<out id>                       (. typeLiteral = null; .)
@@ -1814,7 +1814,7 @@ PRODUCTIONS
           typeLiteral<out typeLiteral>
         ]
         SYM_IN
-        rangeExpression<out domain>                           (. indices.add(new ForallExpr.Index(id, typeLiteral, domain)); .)
+        rangeExpression<out domain>                           (. indices.add(new ForallIndex(id, typeLiteral, domain)); .)
       }                                                       (. ForallExpr.Operation operation = null; Operator foldAction = null; .)
       ( TENSOR                                                (. operation = ForallExpr.Operation.TENSOR; .)
       | FOLD                                                  (. operation = ForallExpr.Operation.FOLD; .)

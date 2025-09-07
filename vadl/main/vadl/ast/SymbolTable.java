@@ -823,8 +823,8 @@ class SymbolTable {
       var childTable = currentSymbols().createChild();
       statement.symbolTable = childTable;
       statement.indices.forEach(index -> {
-        index.name.symbolTable = childTable;
-        childTable.defineSymbol(index.name.name, statement);
+        index.identifier().symbolTable = childTable;
+        childTable.defineSymbol(index.identifier().name, statement);
         if (index.typeLiteral != null) {
           index.typeLiteral.accept(this);
         }
