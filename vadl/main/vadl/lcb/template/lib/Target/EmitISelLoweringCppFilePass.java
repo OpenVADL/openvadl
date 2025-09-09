@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
-import javax.annotation.Nullable;
+import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
@@ -33,7 +33,6 @@ import vadl.gcb.passes.MachineInstructionLabelGroup;
 import vadl.gcb.passes.ValueRange;
 import vadl.gcb.passes.ValueRangeCtx;
 import vadl.gcb.valuetypes.ValueType;
-import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.isaMatching.database.QueryResult;
@@ -46,7 +45,6 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Abi;
-import vadl.viam.Instruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
@@ -92,8 +90,12 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var abi = (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
-    var registerFiles = ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
-        GenerateTableGenRegistersPass.class)).registerClasses();
+    var generateTableGenRegistersPassOutput =
+        ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
+            GenerateTableGenRegistersPass.class));
+    var registerFiles =
+        Stream.concat(generateTableGenRegistersPassOutput.registerClasses().stream(),
+            generateTableGenRegistersPassOutput.aliasRegisterClasses().stream()).toList();
     var framePointer = renderRegister(abi.framePointer().registerFile(), abi.framePointer().addr());
     var stackPointer = renderRegister(abi.stackPointer().registerFile(), abi.stackPointer().addr());
     var absoluteAddressLoadInstruction = abi.absoluteAddressLoad();
