@@ -63,9 +63,9 @@ instruction set architecture PPC64SFS = {
   register X : XIndex -> Reg64                   // 32 general-purpose 64-bit registers
   [zero : XZ(0)]
   alias register XZ = X                          // alias for general-purpose registers where X(0) is always zero
-  alias register XW(i) = X(i)(31..0)             // lowest 32 bits of general-purpose registers
-  alias register XH(i) = X(i)(15..0)             // lowest 16 bits of general-purpose registers
-  alias register XB(i) = X(i)(7..0)              // lowest 8 bits of general-purpose registers
+  alias register XW = X(*)(31..0)                // lowest 32 bits of general-purpose registers
+  alias register XH = X(*)(15..0)                // lowest 16 bits of general-purpose registers
+  alias register XB = X(*)(7..0)                 // lowest 8 bits of general-purpose registers
 
   register XER  : XERFormat                      // exception/ status register
   register LR   : Reg64                          // link register
