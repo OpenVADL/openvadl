@@ -822,11 +822,7 @@ class SymbolTable {
     @Override
     public Void visit(AliasDefinition definition) {
       beforeTravel(definition);
-
-      var childTable = currentSymbols().createChild();
-      definition.params.forEach(param -> childTable.defineSymbol(param.name, param));
-      withSymbols(childTable, () -> definition.children().forEach(this::travel));
-
+      definition.children().forEach(this::travel);
       afterTravel(definition);
       return null;
     }
