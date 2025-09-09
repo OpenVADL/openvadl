@@ -12,6 +12,7 @@ instruction set architecture AArch64Temp extending AArch64Base = {
 
   pseudo instruction TEMP_RET =
   {
+    RET { rn = 30 }
   }
   assembly TEMP_RET = "ret"
 
