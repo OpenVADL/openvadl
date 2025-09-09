@@ -39,7 +39,6 @@ import vadl.lcb.passes.isaMatching.database.QueryResult;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.ISelLoweringOperationActionPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmMachineInstructionUtil;
-import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -109,7 +108,10 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
 
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE, lcbConfiguration().targetName().value().toLowerCase());
-    map.put("registerFiles", registerFiles.stream().map(this::mapRegisterFile).toList());
+    map.put("registerFiles", registerFiles);
+    map.put("mainRegisterFile",
+        registerFiles.stream().filter(x -> x.regTypes().get(0).equals(stackPointerType)).findFirst()
+            .get());
     map.put("framePointer", framePointer);
     map.put("stackPointer", stackPointer);
     map.put("stackPointerByteSize", abi.stackPointer().registerFile().resultType().bitWidth() / 8);
@@ -301,16 +303,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         "name", registerFile.simpleName(),
         "resultWidth", registerFile.resultType().bitWidth(),
         "llvmResultType", registerFile.llvmResultType()
-    );
-  }
-
-  private Map<String, Object> mapRegisterFile(TableGenRegisterClass registerFile) {
-    return Map.of(
-        "name", registerFile.name(),
-        "regTypes", registerFile.regTypes(),
-        "registerFileRef", Map.of(
-            "name", registerFile.registerFileRef().identifier().simpleName()
-        )
     );
   }
 }

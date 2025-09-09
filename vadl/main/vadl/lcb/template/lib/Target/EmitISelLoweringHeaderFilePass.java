@@ -18,7 +18,9 @@ package vadl.lcb.template.lib.Target;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -48,7 +50,14 @@ public class EmitISelLoweringHeaderFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var generateTableGenRegistersPassOutput =
+        ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
+            GenerateTableGenRegistersPass.class));
+    var registerFiles =
+        Stream.concat(generateTableGenRegistersPassOutput.registerClasses().stream(),
+            generateTableGenRegistersPassOutput.aliasRegisterClasses().stream()).toList();
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().targetName().value().toLowerCase());
+        lcbConfiguration().targetName().value().toLowerCase(),
+        "registerFiles", registerFiles);
   }
 }

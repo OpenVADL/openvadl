@@ -17,9 +17,11 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model.register;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.gcb.valuetypes.ValueType;
+import vadl.template.Renderable;
 import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.RegisterTensor;
 
@@ -32,12 +34,24 @@ public record TableGenRegisterClass(TargetName namespace,
                                     int alignment,
                                     List<ValueType> regTypes,
                                     List<TableGenRegister> registers,
-                                    GeneratesRegisterFileName registerFileRef) {
+                                    GeneratesRegisterFileName registerFileRef) implements
+    Renderable {
   public String regTypesString() {
     return regTypes.stream().map(ValueType::getLlvmType).collect(Collectors.joining(", "));
   }
 
   public List<ValueType> regTypes() {
     return regTypes;
+  }
+
+  @Override
+  public Map<String, Object> renderObj() {
+    return Map.of(
+        "name", name(),
+        "regTypes", regTypes(),
+        "registerFileRef", Map.of(
+            "name", registerFileRef().identifier().simpleName()
+        )
+    );
   }
 }
