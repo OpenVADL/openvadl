@@ -403,7 +403,6 @@ static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
 }
 
 static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
-  PLUGIN_PRINTLN("vcpu_insn_exec::(%du) <start>", cpu_index);
   TBInsnInfo *tbinsn_info = udata;
 
   SHMCPU cpu = get_cpu_state(cpu_index);
@@ -418,14 +417,12 @@ static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
 
   ringbuf_write(shm);
 
-  PLUGIN_PRINTLN("vcpu_insn_exec::(%du) <end>", cpu_index);
-
   // TODO: we cannot free here because the same callback might be used multiple
   // times when a tb gets reused g_free(tbinsn_info);
 }
 
-static TBInfo tb_info_collect;
-static int64_t insns_sum_collect;
+static TBInfo tb_info_collect = {0};
+static int64_t insns_sum_collect = 0;
 
 // if the start-pc + the offset of the executed instructions does not equal
 // the new pc, then a jump has occurred
@@ -436,11 +433,12 @@ static bool is_jump(TBInfo *tb_info) {
 static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
   TBInfo *tb_info = udata;
 
-  tb_info_collect.insns_info_size += tb_info->insns_info_size;
   for (int i = 0; i < tb_info->insns_info_size; i++) {
     insns_sum_collect += tb_info->insns_info[i].size;
-    tb_info_collect.insns_info[i + tb_info_collect.insns_info_size] = tb_info->insns_info[i];
   }
+
+  memcpy(&tb_info_collect.insns_info + tb_info_collect.insns_info_size, tb_info->insns_info, sizeof(TBInsnInfo) * tb_info->insns_info_size);
+  tb_info_collect.insns_info_size += tb_info->insns_info_size;
 
   // TB-Data is only returned (= written to the buffer) if a jump occurred, 
   // otherwise the data is simply collected on the qemu-client
@@ -452,7 +450,10 @@ static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
     // TODO: needs a global init_mask to keep track of current state
     // NOTE: rather: refactor to just assign the cpu_index
     shm.shm_tb.init_mask |= (1 << cpu_index);
-    shm.shm_tb.tb_info = *tb_info;
+    shm.shm_tb.tb_info = tb_info_collect;
+
+    tb_info_collect.pc = 0;
+    tb_info_collect.insns_info_size = 0;
 
     ringbuf_write(shm);
   } 
@@ -560,6 +561,9 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
   if (shm_ring_buffer == NULL) {
     return EXIT_FAILURE;
   }
+
+  tb_info_collect.pc = 0;
+  tb_info_collect.insns_info_size = 0;
 
   plugin_id = id;
 

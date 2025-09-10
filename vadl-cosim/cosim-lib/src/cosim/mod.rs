@@ -1,7 +1,6 @@
-use std::{
-    collections::HashSet,
-    thread::{self, JoinHandle}, time::Duration,
-};
+use std::
+    collections::HashSet
+;
 
 use anyhow::{Result, bail};
 use rusqlite::Connection;
@@ -14,20 +13,6 @@ use crate::{
     ipc::{cstructs, qemu::Client},
     trace::{connect, store_trace, trace_collect, TraceStore},
 };
-
-#[derive(Debug)]
-struct ClientSyncInfo {
-    start_pc: u64,
-    end_pc: u64,
-    insn_sizes: Vec<u64>,
-}
-
-impl ClientSyncInfo {
-    fn is_jump(&self) -> bool {
-        let insn_sum: u64 = self.insn_sizes.iter().sum();
-        self.start_pc + insn_sum != self.end_pc
-    }
-}
 
 pub struct Broker {
     clients: Vec<Client>,
@@ -105,8 +90,6 @@ impl Broker {
 
     fn run_lockstep(&mut self, config: &Config) -> Result<Report> {
         // NOTE: maybe move "spawning" the clients into this method
-
-        // TODO: skipping is reading n times from the ring-buffer
         for (idx, client) in self.clients
             .iter_mut()
             .enumerate() {
@@ -120,10 +103,8 @@ impl Broker {
 
         let mut stop_after = config.testing.protocol.stop_after_n_instructions;
 
-        // TODO: inital check is a tb_info diff
-        // self.check_clients_are_initially_synchronized(config)?;
+        self.check_clients_are_initially_synchronized(config)?;
 
-        // TODO: exit condition
         match config.testing.protocol.layer {
             crate::config::ProtocolLayer::Insn => loop {
                 let reads = self
@@ -191,9 +172,15 @@ impl Broker {
                     return Ok(Report::failed(diffs, ctx));
                 }
 
-                stop_after -= 1;
-                if stop_after == 0 {
-                    break;
+                for client in &mut self.clients {
+                    client.shm.end_read_buffer();
+                }
+
+                if !config.testing.protocol.execute_all_remaining_instructions {
+                    stop_after -= 1;
+                    if stop_after == 0 {
+                        break;
+                    }
                 }
             },
         }
@@ -201,28 +188,24 @@ impl Broker {
         Ok(Report::passed())
     }
 
-    fn any_client_open(&self) -> bool {
-        self.clients.iter().any(|c| c.is_open)
-    }
+    fn check_clients_are_initially_synchronized(&self, config: &Config) -> Result<()> {
+        let start_pcs = self
+            .clients
+            .iter()
+            .map(|c| match config.testing.protocol.layer {
+                crate::config::ProtocolLayer::Insn => c.shm.read_buffer_prev().as_insn().insn_info.pc,
+                crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
+                    c.shm.read_buffer_prev().as_tb().tb_info.pc
+                }
+            })
+            .collect::<Vec<_>>();
 
-    // fn check_clients_are_initially_synchronized(&self, config: &Config) -> Result<()> {
-    //     let start_pcs = self
-    //         .clients
-    //         .iter()
-    //         .map(|c| match config.testing.protocol.layer {
-    //             crate::config::ProtocolLayer::Insn => c.shm.current().get_insn().insn_info.pc,
-    //             crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-    //                 c.shm.current().get_tb().tb_info.pc
-    //             }
-    //         })
-    //         .collect::<Vec<_>>();
-    //
-    //     if start_pcs.iter().any(|pc| *pc != start_pcs[0]) {
-    //         bail!("clients started sync from different start-pcs: {start_pcs:?}")
-    //     }
-    //
-    //     Ok(())
-    // }
+        if start_pcs.iter().any(|pc| *pc != start_pcs[0]) {
+            bail!("clients started sync from different start-pcs: {start_pcs:?}")
+        }
+
+        Ok(())
+    }
 
     fn check_if_clients_are_synchronized(data: &[&cstructs::BrokerSHMTB]) -> TBSyncResult {
         // Calling this function assumes that every client reached a jump-instruction -
