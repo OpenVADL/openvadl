@@ -7,13 +7,9 @@ use libc::{
 };
 
 use crate::{
-    bail_on_libc_err, eprintln_on_libc_err,
-    ipc::{
-        PERMISSONS,
-        cstructs::{BrokerSHMRingBuffer, BrokerSHMInsn, BrokerSHMTB, BrokerSem},
-        get_last_error,
-        sem::{Semaphore, TimedWaitState},
-    },
+    bail_on_libc_err, db::dbstructs::BrokerData, eprintln_on_libc_err, ipc::{
+        cstructs::{BrokerSHMData, BrokerSHMInsn, BrokerSHMRingBuffer, BrokerSHMTB, BrokerSem}, get_last_error, sem::{Semaphore, TimedWaitState}, PERMISSONS
+    }
 };
 
 pub struct SharedMemory<T: Sized> {
@@ -43,15 +39,16 @@ impl SharedMemory<BrokerSem> {
 }
 
 impl <const SIZE: usize> SharedMemory<BrokerSHMRingBuffer<SIZE>> {
-    pub fn get_insn(&mut self) -> anyhow::Result<&BrokerSHMInsn> {
-        let data = self.get_mut().start_read()?;
-        Ok(unsafe { &*data.shm_insn })
-        
+    pub fn read_buffer(&mut self) -> anyhow::Result<&BrokerSHMData> {
+        self.get_mut().start_read()
     }
 
-    pub fn get_tb(&mut self) -> anyhow::Result<&BrokerSHMTB> {
-        let data = self.get_mut().start_read()?;
-        Ok(unsafe { &*data.shm_tb })
+    pub fn read_buffer_prev(&self) -> &BrokerSHMData {
+        self.get().read_previous()
+    }
+
+    pub fn end_read_buffer(&mut self) {
+        self.get_mut().end_read();
     }
 }
 

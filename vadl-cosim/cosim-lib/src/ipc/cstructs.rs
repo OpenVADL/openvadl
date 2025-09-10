@@ -1,10 +1,16 @@
-use std::{mem, sync::{atomic::{AtomicU64, AtomicUsize, Ordering}, Condvar, Mutex}, time::Duration};
+use std::{
+    mem::{self, ManuallyDrop},
+    sync::{
+        atomic::{AtomicU64, AtomicUsize, Ordering}, Condvar, Mutex
+    },
+    time::Duration,
+};
 
 use anyhow::bail;
 use serde::{Serialize, ser::SerializeStruct};
 use tracing::{debug, field::debug};
 
-use crate::{config::Config, ipc::sem::Semaphore};
+use crate::{config::Config, db::dbstructs::BrokerData, ipc::sem::Semaphore};
 
 pub const SHMSTRING_MAX_LEN: usize = 256;
 pub const TBINSNINFO_ENTRIES: usize = 64;
@@ -352,6 +358,16 @@ pub union BrokerSHMData {
     pub shm_insn: std::mem::ManuallyDrop<BrokerSHMInsn>,
 }
 
+impl BrokerSHMData {
+    pub fn as_tb(&self) -> &BrokerSHMTB {
+        unsafe { &*self.shm_tb }
+    }
+
+    pub fn as_insn(&self) -> &BrokerSHMInsn {
+        unsafe { &*self.shm_insn }
+    }
+}
+
 #[repr(C)]
 pub struct BrokerSHMRingBuffer<const SIZE: usize> {
     pub data: [BrokerSHMData; SIZE],
@@ -361,16 +377,16 @@ pub struct BrokerSHMRingBuffer<const SIZE: usize> {
     pub notifier: Semaphore,
 }
 
-impl <const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
+impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
     const MASK: usize = SIZE - 1;
 
     pub fn new() -> anyhow::Result<Self> {
         debug!("init rb with size: {SIZE}");
-        let data = [(); SIZE].map(|_| unsafe { mem::zeroed() });
+        let data = unsafe { mem::MaybeUninit::uninit().assume_init() };
         Ok(Self {
             data,
             read_idx: 0,
-            write_idx: 0, 
+            write_idx: 0,
             count: AtomicUsize::new(0),
             notifier: Semaphore::create()?,
         })
@@ -390,17 +406,15 @@ impl <const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
         if count == 0 {
             let res = self.notifier.timedwait(Duration::from_secs(1));
             match res {
-                Ok(res) => {
-                    match res {
-                        crate::ipc::sem::TimedWaitState::Timeout => {
-                            bail!("read timeout");
-                        },
-                        crate::ipc::sem::TimedWaitState::Success => {},
+                Ok(res) => match res {
+                    crate::ipc::sem::TimedWaitState::Timeout => {
+                        bail!("read timeout");
                     }
+                    crate::ipc::sem::TimedWaitState::Success => {}
                 },
                 Err(err) => {
                     return Err(err);
-                },
+                }
             }
         }
 
@@ -408,6 +422,16 @@ impl <const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
         let elem = &self.data[idx];
 
         Ok(elem)
+    }
+
+    // NOTE: to ensure that the previous entry is still valid (i.e. not a new value) the function
+    // has to be called *before* `end_read`.
+    //
+    // Once end_read is called, the reference is no longer valid, therefore the value needs to
+    // already be used or cloned once `end_read` is called.
+    pub const fn read_previous(&self) -> &BrokerSHMData {
+        let idx = self.ring_idx(self.read_idx - 1);
+        &self.data[idx]
     }
 
     pub fn end_read(&mut self) {

@@ -17,7 +17,7 @@ use crate::{
     },
 };
 
-type BrokerSHMRingBuffer32 = BrokerSHMRingBuffer<2>;
+type BrokerSHMRingBuffer32 = BrokerSHMRingBuffer<4>;
 
 pub struct Client {
     pub id: usize,

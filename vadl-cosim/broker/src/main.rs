@@ -95,8 +95,7 @@ fn run(config: Config) -> Result<()> {
 
 fn add_plain_report_summary(buf: &mut String, report: &Report) {
     buf.push_str("Cosimulation failed!\n");
-    let pc = 0;
-    // let pc = report.diff_context[0].after_state.pc;
+    let pc = report.diff_context[0].after_state.pc;
     buf.push_str(&format!("Failure at pc = 0x{pc:02X?} ({pc})\n\n"));
 
     buf.push_str("The following divergences were found:\n");
@@ -106,10 +105,8 @@ fn add_plain_report_summary(buf: &mut String, report: &Report) {
         buf.push_str(&format!("- \"{desc}\":\n"));
         for i in 0..diff.values.len() {
             let v = &diff.values[i];
-            // let ctx = &report.diff_context[i];
-            // let name = ctx.client_name.clone().unwrap_or(ctx.client_id.to_string());
-            //
-            let name = "test";
+            let ctx = &report.diff_context[i];
+            let name = ctx.client_name.clone().unwrap_or(ctx.client_id.to_string());
 
             buf.push_str(&format!("\t- In \"{name}\" the value is \"{v}\"\n"));
         }

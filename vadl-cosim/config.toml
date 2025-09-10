@@ -168,10 +168,11 @@ layer = "insn"
 mode = "lockstep" 
 
 # Execute all remaining instructions (overrides `stop_after_n_instructions` if set to true)
-execute_all_remaining_instructions = true
+execute_all_remaining_instructions = false
 
 # Execute the next (after skipped) n instructions
-stop_after_n_instructions = 0
+stop_after_n_instructions = 100000
+# stop_after_n_instructions = 1
 
 # Where the test result should be saved and in which format
 [testing.protocol.out]

@@ -154,7 +154,7 @@ typedef struct {
   bool msg;
 } Semaphore;
 
-#define RING_BUFFER_SIZE 2
+#define RING_BUFFER_SIZE 4
 #define RING_BUFFER_MASK (RING_BUFFER_SIZE - 1)
 
 typedef struct {
@@ -190,19 +190,15 @@ static BrokerSem *sem;
 
 static BrokerSHMRingBuffer *shm_ring_buffer;
 
-static inline size_t ringbuf_size(size_t read_idx, size_t write_idx) {
-  return (write_idx - read_idx) & ((RING_BUFFER_MASK << 1) | 1);
-}
-
 #define ringbuf_idx(idx) ((idx) & RING_BUFFER_MASK)
 
 static void ringbuf_write(BrokerSHMData data) {
   size_t count = atomic_load(&shm_ring_buffer->count);
 
-  if (count == RING_BUFFER_SIZE) {
-    PLUGIN_PRINTLN("buffer full...");
+  // The buffer keeps the previous value in reserve in case a diff-context needs to be built.
+  if (count == RING_BUFFER_SIZE - 1) {
     pthread_mutex_lock(&shm_ring_buffer->notifier.mutex);
-    while(atomic_load(&shm_ring_buffer->count) == RING_BUFFER_SIZE) {
+    while(atomic_load(&shm_ring_buffer->count) == RING_BUFFER_SIZE - 1) {
       pthread_cond_wait(&shm_ring_buffer->notifier.cvar, &shm_ring_buffer->notifier.mutex) ;
     }
     pthread_mutex_unlock(&shm_ring_buffer->notifier.mutex);
@@ -257,28 +253,28 @@ static SHMCPU get_cpu_state(unsigned int cpu_index) {
 
   // NOTE: The register-count for each cpu is checked once at init. See:
   // vcpu_init
-  // for (int reg_idx = 0; reg_idx < c->registers->len; reg_idx++) {
-  //   Register *reg = c->registers->pdata[reg_idx];
-  //   SHMRegister shm_reg = {};
-  //   GByteArray *buf = g_byte_array_new();
-  //
-  //   shm_reg.size = qemu_plugin_read_register(reg->handle, buf);
-  //   PLUGIN_ASSERT(shm_reg.size != -1,
-  //                 "failed to read size of register at idx: %d", reg_idx);
-  //
-  //   if (reg->name != NULL) {
-  //     strncpy(shm_reg.name.value, reg->name, SHMSTRING_MAX_LEN - 1);
-  //     shm_reg.name.len = strlen(shm_reg.name.value);
-  //   }
-  //
-  //   if (buf->data != NULL) {
-  //     memcpy(shm_reg.data, buf->data, shm_reg.size);
-  //   }
-  //
-  //   g_byte_array_unref(buf);
-  //
-  //   shm_cpu.registers[reg_idx] = shm_reg;
-  // }
+  for (int reg_idx = 0; reg_idx < c->registers->len; reg_idx++) {
+    Register *reg = c->registers->pdata[reg_idx];
+    SHMRegister shm_reg = {};
+    GByteArray *buf = g_byte_array_new();
+
+    shm_reg.size = qemu_plugin_read_register(reg->handle, buf);
+    PLUGIN_ASSERT(shm_reg.size != -1,
+                  "failed to read size of register at idx: %d", reg_idx);
+
+    if (reg->name != NULL) {
+      strncpy(shm_reg.name.value, reg->name, SHMSTRING_MAX_LEN - 1);
+      shm_reg.name.len = strlen(shm_reg.name.value);
+    }
+
+    if (buf->data != NULL) {
+      memcpy(shm_reg.data, buf->data, shm_reg.size);
+    }
+
+    g_byte_array_unref(buf);
+
+    shm_cpu.registers[reg_idx] = shm_reg;
+  }
 
   return shm_cpu;
 };

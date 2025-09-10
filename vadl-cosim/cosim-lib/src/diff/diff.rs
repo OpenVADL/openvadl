@@ -1,5 +1,7 @@
 use std::cell::RefCell;
 
+use tracing::debug;
+
 use crate::{
     config::Config,
     diff::DiffEntry,

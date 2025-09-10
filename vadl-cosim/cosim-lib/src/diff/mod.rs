@@ -143,24 +143,23 @@ pub fn get_all_clients_instructions(
 }
 
 pub fn get_client_instructions(client: &Client, config: &Config) -> DiffContextClientInstructions {
-    DiffContextClientInstructions(vec![])
-    // match config.testing.protocol.layer {
-    //     crate::config::ProtocolLayer::Insn => {
-    //         let exec = &client.shm.current().get_insn().insn_info;
-    //         let insn = exec.into();
-    //         DiffContextClientInstructions(vec![insn])
-    //     }
-    //     crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-    //         let tb = client.shm.current().get_tb();
-    //         let insns = tb
-    //             .tb_info
-    //             .insns_info_slice()
-    //             .iter()
-    //             .map(|insn| insn.into())
-    //             .collect();
-    //         DiffContextClientInstructions(insns)
-    //     }
-    // }
+    match config.testing.protocol.layer {
+        crate::config::ProtocolLayer::Insn => {
+            let exec = &client.shm.read_buffer_prev().as_insn().insn_info;
+            let insn = exec.into();
+            DiffContextClientInstructions(vec![insn])
+        }
+        crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
+            let tb = client.shm.read_buffer_prev().as_tb();
+            let insns = tb
+                .tb_info
+                .insns_info_slice()
+                .iter()
+                .map(|insn| insn.into())
+                .collect();
+            DiffContextClientInstructions(insns)
+        }
+    }
 }
 
 impl From<&TBInsnInfo> for DiffContextClientInstruction {
@@ -185,33 +184,40 @@ pub fn get_all_clients_contexts_before(
 }
 
 pub fn get_client_context_before(client: &Client, config: &Config) -> DiffContextClientState {
-    DiffContextClientState { pc: 1234, cpus: vec![] }
-    // match config.testing.protocol.layer {
-    //     crate::config::ProtocolLayer::Insn => (client.shm.previous().get_insn(), config).into(),
-    //     crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-    //         (client.shm.previous().get_tb(), config).into()
-    //     }
-    // }
+    match config.testing.protocol.layer {
+        crate::config::ProtocolLayer::Insn => {
+            (client.shm.read_buffer_prev().as_insn(), config).into()
+        }
+        crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
+            (client.shm.read_buffer_prev().as_tb(), config).into()
+        }
+    }
 }
 
 pub fn get_all_clients_contexts_current(
-    clients: &[Client],
+    clients: &mut [Client],
     config: &Config,
-) -> Vec<DiffContextClientState> {
+) -> anyhow::Result<Vec<DiffContextClientState>> {
     clients
-        .iter()
+        .iter_mut()
         .map(|client| get_client_context_current(client, config))
         .collect()
 }
 
-pub fn get_client_context_current(client: &Client, config: &Config) -> DiffContextClientState {
-    DiffContextClientState { pc: 1234, cpus: vec![] }
-    // match config.testing.protocol.layer {
-    //     crate::config::ProtocolLayer::Insn => (client.shm.current().get_insn(), config).into(),
-    //     crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-    //         (client.shm.current().get_tb(), config).into()
-    //     }
-    // }
+pub fn get_client_context_current(
+    client: &mut Client,
+    config: &Config,
+) -> anyhow::Result<DiffContextClientState> {
+    match config.testing.protocol.layer {
+        crate::config::ProtocolLayer::Insn => {
+            let ctx = (client.shm.read_buffer()?.as_insn(), config).into();
+            Ok(ctx)
+        }
+        crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
+            let ctx = (client.shm.read_buffer()?.as_tb(), config).into();
+            Ok(ctx)
+        }
+    }
 }
 
 impl From<(&BrokerSHMTB, &Config)> for DiffContextClientState {
