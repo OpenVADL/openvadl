@@ -18,7 +18,7 @@ use cursive::{
     utils::markup::StyledString,
     view::{Resizable, Scrollable},
     views::{
-        Canvas, Dialog, EditView, HideableView, LinearLayout, NamedView, OnEventView, Panel,
+        Canvas, Dialog, EditView, HideableView, LinearLayout, Panel,
         TextView,
     },
 };
@@ -166,7 +166,7 @@ fn main() -> anyhow::Result<()> {
     let mut db_connection = connect(&config)?;
 
     let clients = select_cosim_run_clients(&mut db_connection, run_id)?;
-    assert!(clients.len() > 0, "should've at least one client");
+    assert!(!clients.is_empty(), "should've at least one client");
 
     let mut model = Model {
         run_id,
@@ -239,12 +239,12 @@ fn main() -> anyhow::Result<()> {
     let model = &app_state.model;
     let config = &app_state.config;
 
-    let clients_view = view_clients(&model, &config);
+    let clients_view = view_clients(model, config);
     let main_panel = Panel::new(clients_view)
         .title("Main")
         .with_name("main-panel");
 
-    let filter_panel = Panel::new(view_filter(&model, &config)).title("Filter");
+    let filter_panel = Panel::new(view_filter(model, config)).title("Filter");
 
     let mut main_layout = LinearLayout::horizontal();
     main_layout.add_child(main_panel);
@@ -266,7 +266,7 @@ fn refresh_clients_view(s: &mut Cursive) {
     let config = &app_state.config.clone();
 
     if let Some(mut panel) = s.find_name::<Panel<LinearLayout>>("main-panel") {
-        *panel.get_inner_mut() = view_clients(&model, &config)
+        *panel.get_inner_mut() = view_clients(&model, config)
     }
 }
 
@@ -303,13 +303,13 @@ fn view_enter_run_count_dialog() -> Dialog {
         })
         .fixed_width(20);
 
-    let dialog = Dialog::around(input)
+    
+
+    Dialog::around(input)
         .title("Jump to run-count")
         .button("Cancel", |s| {
             s.pop_layer();
-        });
-
-    dialog
+        })
 }
 
 fn get_app_state(s: &mut Cursive) -> &mut AppState {
@@ -484,9 +484,9 @@ fn view_instructions(data: &BrokerData) -> impl View {
         }
         BrokerData::Insn(data) => {
             let insn = view_instruction(&data.insn_info);
-            let insns = LinearLayout::vertical().child(insn);
+            
 
-            insns
+            LinearLayout::vertical().child(insn)
         }
     }
 }

@@ -1,4 +1,4 @@
-use anyhow::{Context, anyhow, bail};
+use anyhow::bail;
 use rusqlite::{Transaction, params};
 
 use crate::{
@@ -294,13 +294,13 @@ fn map_tb_insn_info_row(row: &rusqlite::Row<'_>) -> Result<TBInsnInfo, rusqlite:
     let size = row.get(1)?;
 
     let symbol: String = row.get(2)?;
-    let symbol = symbol.into();
+    let symbol = symbol;
 
     let hwaddr: String = row.get(3)?;
-    let hwaddr = hwaddr.into();
+    let hwaddr = hwaddr;
 
     let disas: String = row.get(4)?;
-    let disas = disas.into();
+    let disas = disas;
 
     // let data_size = row.get(5)?;
     let data_buffer = row.get(6)?;
@@ -465,7 +465,7 @@ pub fn select_cosim_run_entries_at_run_count(
     run_count: u64,
 ) -> Result<Vec<ClientEntry>, anyhow::Error> {
     client_ids
-        .into_iter()
+        .iter()
         .map(|client_id| {
             let tx = pool.transaction()?;
             let entry = select_client_entry_with_run_count(&tx, *client_id, run_count)?;

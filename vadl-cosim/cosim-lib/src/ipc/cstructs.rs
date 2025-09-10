@@ -1,16 +1,14 @@
 use std::{
-    mem::{self, ManuallyDrop},
-    sync::{
-        atomic::{AtomicU64, AtomicUsize, Ordering}, Condvar, Mutex
-    },
+    mem::{self},
+    sync::atomic::{AtomicUsize, Ordering},
     time::Duration,
 };
 
 use anyhow::bail;
 use serde::{Serialize, ser::SerializeStruct};
-use tracing::{debug, field::debug};
+use tracing::debug;
 
-use crate::{config::Config, db::dbstructs::BrokerData, ipc::sem::Semaphore};
+use crate::{config::Config, ipc::sem::Semaphore};
 
 pub const SHMSTRING_MAX_LEN: usize = 256;
 pub const TBINSNINFO_ENTRIES: usize = 64;
@@ -360,11 +358,11 @@ pub union BrokerSHMData {
 
 impl BrokerSHMData {
     pub fn as_tb(&self) -> &BrokerSHMTB {
-        unsafe { &*self.shm_tb }
+        unsafe { &self.shm_tb }
     }
 
     pub fn as_insn(&self) -> &BrokerSHMInsn {
-        unsafe { &*self.shm_insn }
+        unsafe { &self.shm_insn }
     }
 }
 
