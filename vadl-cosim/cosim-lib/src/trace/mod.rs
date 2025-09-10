@@ -4,8 +4,8 @@ use anyhow::{Context, Result};
 
 use crate::{
     config::Config,
-    ipc::cstructs::{BrokerSHMInsn, BrokerSHMTB},
     db::{insert_broker_shm_insn, insert_broker_shm_tb, insert_client_entry},
+    ipc::cstructs::{BrokerSHMInsn, BrokerSHMTB},
 };
 
 use rusqlite::{Connection, OpenFlags};
@@ -57,26 +57,30 @@ pub fn store_trace(trace: TraceEntryData, connection: &mut Connection) -> Result
     Ok(())
 }
 
-// pub fn get_client_trace(client: &crate::ipc::qemu::Client, config: &Config) -> TraceBrokerData {
-//     match config.testing.protocol.layer {
-//         crate::config::ProtocolLayer::Insn => {
-//             let insn = Box::new(client.shm.current().get_insn().clone());
-//             TraceBrokerData::Insn(insn)
-//         }
-//         crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-//             let tb = Box::new(client.shm.current().get_tb().clone());
-//             TraceBrokerData::TB(tb)
-//         }
-//     }
-// }
+pub fn get_client_trace(
+    client: &mut crate::ipc::qemu::Client,
+    config: &Config,
+) -> anyhow::Result<TraceBrokerData> {
+    let data = match config.testing.protocol.layer {
+        crate::config::ProtocolLayer::Insn => {
+            let insn = Box::new(client.shm.read_buffer()?.as_insn().clone());
+            TraceBrokerData::Insn(insn)
+        }
+        crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
+            let tb = Box::new(client.shm.read_buffer()?.as_tb().clone());
+            TraceBrokerData::TB(tb)
+        }
+    };
+    Ok(data)
+}
 
 pub type TraceStore = Vec<TraceEntryData>;
 pub fn trace_collect(
-    clients: &[crate::ipc::qemu::Client],
+    clients: &mut [crate::ipc::qemu::Client],
     client_ids: &[i64],
     config: &crate::config::Config,
     store: &mut TraceStore,
-) {
+) -> anyhow::Result<()> {
     assert!(
         clients.len() == client_ids.len(),
         "illegal call to trace_collect with different client-lens: {} != {}",
@@ -84,14 +88,11 @@ pub fn trace_collect(
         client_ids.len(),
     );
 
-    // clients
-    //     .iter()
-    //     .map(|c| get_client_trace(c, config))
-    //     .enumerate()
-    //     .map(|(idx, broker_data)| TraceEntryData::new(
-    //         client_ids[idx],
-    //         clients[idx].run_count,
-    //         broker_data,
-    //     ))
-    //     .for_each(|t| store.push(t));
+    for (idx, client) in clients.iter_mut().enumerate() {
+        let broker_data = get_client_trace(client, config)?;
+        let entry = TraceEntryData::new(client_ids[idx], client.run_count, broker_data);
+        store.push(entry);
+    }
+
+    Ok(())
 }

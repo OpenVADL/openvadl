@@ -3,10 +3,10 @@ use std::ffi::CStr;
 use libc::strerror;
 
 pub mod cstructs;
+pub mod mutex;
 pub mod qemu;
 pub mod sem;
 pub mod shm;
-pub mod mutex;
 
 const PERMISSONS: u32 = 0o600;
 

@@ -1,6 +1,4 @@
-use std::
-    collections::HashSet
-;
+use std::collections::HashSet;
 
 use anyhow::{Result, bail};
 use rusqlite::Connection;
@@ -8,10 +6,14 @@ use tracing::debug;
 
 use crate::{
     config::{Config, TracingMode},
-    db::{finish_cosimulation_run_trace, insert_new_cosimulation_run, CosimRunInfo},
-    diff::{diff::diff_cpus, get_all_clients_contexts_before, get_all_clients_contexts_current, get_all_clients_instructions, DiffContext, DiffContextClient, DiffEntry, Report},
+    db::{CosimRunInfo, finish_cosimulation_run_trace, insert_new_cosimulation_run},
+    diff::{
+        DiffContext, DiffContextClient, DiffEntry, Report, diff::diff_cpus,
+        get_all_clients_contexts_before, get_all_clients_contexts_current,
+        get_all_clients_instructions,
+    },
     ipc::{cstructs, qemu::Client},
-    trace::{connect, store_trace, trace_collect, TraceStore},
+    trace::{TraceEntryData, TraceStore, connect, get_client_trace, store_trace, trace_collect},
 };
 
 pub struct Broker {
@@ -90,15 +92,16 @@ impl Broker {
 
     fn run_lockstep(&mut self, config: &Config) -> Result<Report> {
         // NOTE: maybe move "spawning" the clients into this method
-        for (idx, client) in self.clients
-            .iter_mut()
-            .enumerate() {
+        for (idx, client) in self.clients.iter_mut().enumerate() {
             let client_cfg = config.for_client(idx);
             for _ in 0..client_cfg.skip_n_instructions {
                 let _ = client.shm.read_buffer();
                 client.shm.end_read_buffer();
             }
-            debug!("skipped {} instructions for {:?}", client_cfg.skip_n_instructions, client_cfg.name);
+            debug!(
+                "skipped {} instructions for {:?}",
+                client_cfg.skip_n_instructions, client_cfg.name
+            );
         }
 
         let mut stop_after = config.testing.protocol.stop_after_n_instructions;
@@ -110,9 +113,12 @@ impl Broker {
                 let reads = self
                     .clients
                     .iter_mut()
-                    .map(|client| client.shm.read_buffer().map(|i| i.as_insn()))
+                    .map(|client| {
+                        let res = client.shm.read_buffer().map(|i| i.as_insn());
+                        client.run_count += 1;
+                        res
+                    })
                     .collect::<Result<Vec<_>>>()?;
-
 
                 let c1insn = reads[0];
                 let c2insn = reads[1];
@@ -125,6 +131,7 @@ impl Broker {
                     config,
                 );
 
+                self.trace_clients(config)?;
 
                 if !diffs.is_empty() {
                     let ctx = self.build_diff_context(config)?;
@@ -167,6 +174,8 @@ impl Broker {
                     config,
                 );
 
+                self.trace_clients(config)?;
+
                 if !diffs.is_empty() {
                     let ctx = self.build_diff_context(config)?;
                     return Ok(Report::failed(diffs, ctx));
@@ -193,7 +202,9 @@ impl Broker {
             .clients
             .iter()
             .map(|c| match config.testing.protocol.layer {
-                crate::config::ProtocolLayer::Insn => c.shm.read_buffer_prev().as_insn().insn_info.pc,
+                crate::config::ProtocolLayer::Insn => {
+                    c.shm.read_buffer_prev().as_insn().insn_info.pc
+                }
                 crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
                     c.shm.read_buffer_prev().as_tb().tb_info.pc
                 }
@@ -275,21 +286,18 @@ impl Broker {
     fn trace_clients(&mut self, config: &Config) -> Result<()> {
         match config.tracing.mode {
             TracingMode::None => Ok(()),
-            TracingMode::Collect => {
-                trace_collect(
-                    &self.clients,
-                    &self.run_info.as_ref().unwrap().client_ids,
-                    config,
-                    &mut self.trace_store,
-                );
-                Ok(())
-            }
+            TracingMode::Collect => trace_collect(
+                &mut self.clients,
+                &self.run_info.as_ref().unwrap().client_ids,
+                config,
+                &mut self.trace_store,
+            ),
             TracingMode::Sync => {
-                for (idx, client) in self.clients.iter().enumerate() {
-                    // let broker_data = get_client_trace(client, config);
-                    // let client_id = self.run_info.as_ref().unwrap().client_ids[idx];
-                    // let trace = TraceEntryData::new(client_id, client.run_count, broker_data);
-                    // store_trace(trace, &mut self.trace_connection)?;
+                for (idx, client) in self.clients.iter_mut().enumerate() {
+                    let broker_data = get_client_trace(client, config)?;
+                    let client_id = self.run_info.as_ref().unwrap().client_ids[idx];
+                    let trace = TraceEntryData::new(client_id, client.run_count, broker_data);
+                    store_trace(trace, &mut self.trace_connection)?;
                 }
                 Ok(())
             }

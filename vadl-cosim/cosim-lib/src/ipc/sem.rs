@@ -126,9 +126,7 @@ impl Semaphore {
 
         match rc {
             0 => Ok(TimedWaitState::Success),
-            ETIMEDOUT => {
-                Ok(TimedWaitState::Timeout)
-            }
+            ETIMEDOUT => Ok(TimedWaitState::Timeout),
             _ => {
                 bail!("failed to timedwait")
             }
@@ -136,14 +134,12 @@ impl Semaphore {
     }
 
     pub fn post(&mut self) -> Result<()> {
-        let mutex_ptr = &mut self.mutex as *mut _;
         let cond_ptr = &mut self.cvar as *mut _;
 
         self.msg = false;
 
         unsafe {
             bail_on_libc_err!(pthread_cond_broadcast(cond_ptr));
-            // bail_on_libc_err!(pthread_mutex_unlock(mutex_ptr), -1);
         }
 
         Ok(())

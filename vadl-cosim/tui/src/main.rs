@@ -17,10 +17,7 @@ use cursive::{
     theme::{BaseColor, ColorStyle, Style},
     utils::markup::StyledString,
     view::{Resizable, Scrollable},
-    views::{
-        Canvas, Dialog, EditView, HideableView, LinearLayout, Panel,
-        TextView,
-    },
+    views::{Canvas, Dialog, EditView, HideableView, LinearLayout, Panel, TextView},
 };
 use cursive::{
     traits::*,
@@ -303,8 +300,6 @@ fn view_enter_run_count_dialog() -> Dialog {
         })
         .fixed_width(20);
 
-    
-
     Dialog::around(input)
         .title("Jump to run-count")
         .button("Cancel", |s| {
@@ -484,7 +479,6 @@ fn view_instructions(data: &BrokerData) -> impl View {
         }
         BrokerData::Insn(data) => {
             let insn = view_instruction(&data.insn_info);
-            
 
             LinearLayout::vertical().child(insn)
         }

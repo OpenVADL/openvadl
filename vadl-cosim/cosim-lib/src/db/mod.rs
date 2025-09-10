@@ -169,12 +169,12 @@ pub fn insert_broker_shm_insn(
     Ok(broker_id)
 }
 
-fn insert_tb_info(tx: &rusqlite::Transaction<'_>, tb_info: &cstructs::TBInfo) -> Result<i64, anyhow::Error> {
+fn insert_tb_info(
+    tx: &rusqlite::Transaction<'_>,
+    tb_info: &cstructs::TBInfo,
+) -> Result<i64, anyhow::Error> {
     let pc = tb_info.pc as i64;
-    tx.execute(
-        "INSERT INTO tb_info (pc) VALUES (?)",
-        params![pc],
-    )?;
+    tx.execute("INSERT INTO tb_info (pc) VALUES (?)", params![pc])?;
 
     let tb_info_id = tx.last_insert_rowid();
 
@@ -270,10 +270,7 @@ pub fn select_cpu(tx: &rusqlite::Transaction<'_>, cpu_id: i64) -> Result<CPU, an
     Ok(cpu)
 }
 
-pub fn select_broker_cpus(
-    tx: &Transaction<'_>,
-    broker_id: i32,
-) -> Result<Vec<CPU>, anyhow::Error> {
+pub fn select_broker_cpus(tx: &Transaction<'_>, broker_id: i32) -> Result<Vec<CPU>, anyhow::Error> {
     let mut cpus = vec![];
     let mut stmt = tx.prepare(r#"SELECT c.id FROM cpu c WHERE c.broker_id = ?"#)?;
     let cpu_ids = stmt
@@ -290,22 +287,11 @@ pub fn select_broker_cpus(
 
 fn map_tb_insn_info_row(row: &rusqlite::Row<'_>) -> Result<TBInsnInfo, rusqlite::Error> {
     let pc = row.get(0)?;
-
     let size = row.get(1)?;
-
     let symbol: String = row.get(2)?;
-    let symbol = symbol;
-
     let hwaddr: String = row.get(3)?;
-    let hwaddr = hwaddr;
-
     let disas: String = row.get(4)?;
-    let disas = disas;
-
-    // let data_size = row.get(5)?;
     let data_buffer = row.get(6)?;
-
-    // let data = InsnData::new(data_size, data_buffer);
 
     Ok(TBInsnInfo::new(
         pc,
@@ -370,10 +356,7 @@ pub fn select_tb_info_by_id(
     Ok(tb_info)
 }
 
-pub fn select_broker_tb(
-    tx: &Transaction<'_>,
-    broker_id: i32,
-) -> Result<BrokerTB, anyhow::Error> {
+pub fn select_broker_tb(tx: &Transaction<'_>, broker_id: i32) -> Result<BrokerTB, anyhow::Error> {
     let (init_mask, tb_info_id) = tx.query_one(
         r#"
             SELECT init_mask, tb_info_id
@@ -412,10 +395,7 @@ pub fn select_broker_insn(
     Ok(BrokerInsn::new(init_mask, cpus, insn_info))
 }
 
-pub fn select_broker(
-    tx: &Transaction<'_>,
-    broker_id: i32,
-) -> Result<BrokerData, anyhow::Error> {
+pub fn select_broker(tx: &Transaction<'_>, broker_id: i32) -> Result<BrokerData, anyhow::Error> {
     let broker_type = tx.query_one(
         r#"SELECT type FROM broker WHERE id = ?"#,
         params![broker_id],
@@ -449,7 +429,7 @@ pub fn select_client_entry_with_run_count(
             let client_id = row.get(1)?;
             let client_name = row.get(2)?;
             Ok((broker_id, client_id, client_name))
-        }
+        },
     )?;
 
     let broker = select_broker(tx, broker_id)?;
@@ -479,12 +459,14 @@ pub fn select_cosim_run_entries_length(
     pool: &mut DBConnection,
     run_id: i64,
 ) -> Result<u64, anyhow::Error> {
-    let mut stmt = pool.prepare(r#"
+    let mut stmt = pool.prepare(
+        r#"
         SELECT MAX(run_count)
         FROM cosimulation_run_clients crc 
         INNER JOIN client_entry ce ON crc.client_id = ce.client_id
         WHERE crc.run_id = ?;
-    "#)?;
+    "#,
+    )?;
 
     let max_run_count = stmt.query_row(params![run_id], |row| row.get(0))?;
 

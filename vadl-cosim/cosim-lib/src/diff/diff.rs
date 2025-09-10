@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 
-
 use crate::{
     config::Config,
     diff::DiffEntry,

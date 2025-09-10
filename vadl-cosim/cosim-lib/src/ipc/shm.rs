@@ -7,9 +7,13 @@ use libc::{
 };
 
 use crate::{
-    bail_on_libc_err, eprintln_on_libc_err, ipc::{
-        cstructs::{BrokerSHMData, BrokerSHMRingBuffer, BrokerSem}, get_last_error, sem::{Semaphore, TimedWaitState}, PERMISSONS
-    }
+    bail_on_libc_err, eprintln_on_libc_err,
+    ipc::{
+        PERMISSONS,
+        cstructs::{BrokerSHMData, BrokerSHMRingBuffer, BrokerSem},
+        get_last_error,
+        sem::{Semaphore, TimedWaitState},
+    },
 };
 
 pub struct SharedMemory<T: Sized> {
@@ -38,7 +42,7 @@ impl SharedMemory<BrokerSem> {
     }
 }
 
-impl <const SIZE: usize> SharedMemory<BrokerSHMRingBuffer<SIZE>> {
+impl<const SIZE: usize> SharedMemory<BrokerSHMRingBuffer<SIZE>> {
     pub fn read_buffer(&mut self) -> anyhow::Result<&BrokerSHMData> {
         self.get_mut().start_read()
     }
