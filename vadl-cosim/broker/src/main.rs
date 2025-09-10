@@ -8,9 +8,7 @@ use figment::{
 };
 use tracing::{Level, info};
 
-use cosim_lib::{
-    config::Config, cosim::Broker, db::setup_database, diff::Report, trace::connect,
-};
+use cosim_lib::{config::Config, cosim::Broker, db::setup_database, diff::Report, trace::connect};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -58,6 +56,16 @@ fn main() -> Result<()> {
         setup_database(&mut conn).context("failed to setup database")?;
     }
 
+    std::thread::Builder::new()
+        .stack_size(1024 * 1024 * 1024)
+        .spawn(|| run(config))?
+        .join()
+        .unwrap()?;
+
+    Ok(())
+}
+
+fn run(config: Config) -> Result<()> {
     let mut broker = Broker::create(&config)?;
     let report_data = broker.run(&config)?;
     let passed = report_data.passed;
@@ -82,14 +90,13 @@ fn main() -> Result<()> {
         None => println!("{report}"),
     }
 
-    broker.finish(passed, &config)?;
-
-    Ok(())
+    broker.finish(passed, &config)
 }
 
 fn add_plain_report_summary(buf: &mut String, report: &Report) {
     buf.push_str("Cosimulation failed!\n");
-    let pc = report.diff_context[0].after_state.pc;
+    let pc = 0;
+    // let pc = report.diff_context[0].after_state.pc;
     buf.push_str(&format!("Failure at pc = 0x{pc:02X?} ({pc})\n\n"));
 
     buf.push_str("The following divergences were found:\n");
@@ -99,8 +106,10 @@ fn add_plain_report_summary(buf: &mut String, report: &Report) {
         buf.push_str(&format!("- \"{desc}\":\n"));
         for i in 0..diff.values.len() {
             let v = &diff.values[i];
-            let ctx = &report.diff_context[i];
-            let name = ctx.client_name.clone().unwrap_or(ctx.client_id.to_string());
+            // let ctx = &report.diff_context[i];
+            // let name = ctx.client_name.clone().unwrap_or(ctx.client_id.to_string());
+            //
+            let name = "test";
 
             buf.push_str(&format!("\t- In \"{name}\" the value is \"{v}\"\n"));
         }
@@ -112,13 +121,14 @@ fn add_plain_report_summary(buf: &mut String, report: &Report) {
         .diff_context
         .iter()
         .map(|ctx| &ctx.error_instruction.0)
-        .min_by_key(|insns| insns.len())
-        .unwrap();
+        .min_by_key(|insns| insns.len());
 
-    for insn in min_insns {
-        let pc = insn.pc;
-        let disas = &insn.disas;
-        let insn_data = &insn.insn_data;
-        buf.push_str(&format!("- (pc={pc}): {disas} ({insn_data})\n"));
+    if let Some(min_insns) = min_insns {
+        for insn in min_insns {
+            let pc = insn.pc;
+            let disas = &insn.disas;
+            let insn_data = &insn.insn_data;
+            buf.push_str(&format!("- (pc={pc}): {disas} ({insn_data})\n"));
+        }
     }
 }

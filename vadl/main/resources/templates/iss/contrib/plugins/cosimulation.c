@@ -22,8 +22,10 @@
 #include <fcntl.h>
 #include <gio/gio.h>
 #include <glib.h>
+#include <pthread.h>
 #include <qemu-plugin.h>
 #include <semaphore.h>
+#include <stdatomic.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -31,7 +33,6 @@
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
-#include <pthread.h>
 
 QEMU_PLUGIN_EXPORT int qemu_plugin_version = QEMU_PLUGIN_VERSION;
 
@@ -41,7 +42,7 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_version = QEMU_PLUGIN_VERSION;
 #define SHMSTRING_MAX_LEN 256
 #define TBINSNINFO_ENTRIES 64
 
-#define MAX_REGISTER_NAME_SIZE 64 
+#define MAX_REGISTER_NAME_SIZE 64
 #define MAX_REGISTER_DATA_SIZE 256
 #define MAX_CPU_REGISTERS 256
 #define MAX_CPU_COUNT 1
@@ -149,15 +150,20 @@ typedef union {
 
 typedef struct {
   pthread_mutex_t mutex;
-  pthread_cond_t cond_server;
-  pthread_cond_t cond_client;
-  bool is_server;
+  pthread_cond_t cvar;
+  bool msg;
 } Semaphore;
 
+#define RING_BUFFER_SIZE 2
+#define RING_BUFFER_MASK (RING_BUFFER_SIZE - 1)
 
 typedef struct {
-  BrokerSHMData data;
-} BrokerSHM;
+  BrokerSHMData data[RING_BUFFER_SIZE];
+  size_t read_idx;
+  size_t write_idx;
+  atomic_size_t count;
+  Semaphore notifier;
+} BrokerSHMRingBuffer;
 
 typedef struct {
   Semaphore sync;
@@ -182,23 +188,36 @@ static Arguments args;
 
 static BrokerSem *sem;
 
-#define SHM_QUEUE_SIZE 2
+static BrokerSHMRingBuffer *shm_ring_buffer;
 
-static BrokerSHM *shm[SHM_QUEUE_SIZE];
-static size_t shm_idx = 0;
-
-static BrokerSHM *get_shm(void) {
-  return shm[shm_idx];
+static inline size_t ringbuf_size(size_t read_idx, size_t write_idx) {
+  return (write_idx - read_idx) & ((RING_BUFFER_MASK << 1) | 1);
 }
 
-static void rotate_shm(void) {
-  shm_idx++;
-  shm_idx %= SHM_QUEUE_SIZE;
-}
+#define ringbuf_idx(idx) ((idx) & RING_BUFFER_MASK)
 
-static BrokerSHM *next_shm(void) {
-  rotate_shm();
-  return get_shm();
+static void ringbuf_write(BrokerSHMData data) {
+  size_t count = atomic_load(&shm_ring_buffer->count);
+
+  if (count == RING_BUFFER_SIZE) {
+    PLUGIN_PRINTLN("buffer full...");
+    pthread_mutex_lock(&shm_ring_buffer->notifier.mutex);
+    while(atomic_load(&shm_ring_buffer->count) == RING_BUFFER_SIZE) {
+      pthread_cond_wait(&shm_ring_buffer->notifier.cvar, &shm_ring_buffer->notifier.mutex) ;
+    }
+    pthread_mutex_unlock(&shm_ring_buffer->notifier.mutex);
+  }
+
+  shm_ring_buffer->data[ringbuf_idx(shm_ring_buffer->write_idx)] = data;
+  shm_ring_buffer->write_idx++;
+  shm_ring_buffer->notifier.msg = true;
+
+  atomic_fetch_add(&shm_ring_buffer->count, 1);
+
+  pthread_cond_signal(&shm_ring_buffer->notifier.cvar);
+
+  return;
+  errno = EWOULDBLOCK;
 }
 
 static CPU *get_cpu(int vcpu_index) {
@@ -238,27 +257,28 @@ static SHMCPU get_cpu_state(unsigned int cpu_index) {
 
   // NOTE: The register-count for each cpu is checked once at init. See:
   // vcpu_init
-  for (int reg_idx = 0; reg_idx < c->registers->len; reg_idx++) {
-    Register *reg = c->registers->pdata[reg_idx];
-    SHMRegister shm_reg = {};
-    GByteArray *buf = g_byte_array_new();
-
-    shm_reg.size = qemu_plugin_read_register(reg->handle, buf);
-    PLUGIN_ASSERT(shm_reg.size != -1, "failed to read size of register at idx: %d", reg_idx);
-
-    if (reg->name != NULL) {
-      strncpy(shm_reg.name.value, reg->name, SHMSTRING_MAX_LEN - 1);
-      shm_reg.name.len = strlen(shm_reg.name.value);
-    }
-
-    if (buf->data != NULL) {
-      memcpy(shm_reg.data, buf->data, shm_reg.size);
-    }
-
-    g_byte_array_unref(buf);
-
-    shm_cpu.registers[reg_idx] = shm_reg;
-  }
+  // for (int reg_idx = 0; reg_idx < c->registers->len; reg_idx++) {
+  //   Register *reg = c->registers->pdata[reg_idx];
+  //   SHMRegister shm_reg = {};
+  //   GByteArray *buf = g_byte_array_new();
+  //
+  //   shm_reg.size = qemu_plugin_read_register(reg->handle, buf);
+  //   PLUGIN_ASSERT(shm_reg.size != -1,
+  //                 "failed to read size of register at idx: %d", reg_idx);
+  //
+  //   if (reg->name != NULL) {
+  //     strncpy(shm_reg.name.value, reg->name, SHMSTRING_MAX_LEN - 1);
+  //     shm_reg.name.len = strlen(shm_reg.name.value);
+  //   }
+  //
+  //   if (buf->data != NULL) {
+  //     memcpy(shm_reg.data, buf->data, shm_reg.size);
+  //   }
+  //
+  //   g_byte_array_unref(buf);
+  //
+  //   shm_cpu.registers[reg_idx] = shm_reg;
+  // }
 
   return shm_cpu;
 };
@@ -298,8 +318,8 @@ static BrokerSem *connect_to_broker_sem(void) {
 
 // Connects to the broker by accessing the assigned shared memory
 // The shared memory is located under /cosimulation/shm-{client_id}
-static BrokerSHM *connect_to_broker_data(size_t shm_idx) {
-  gchar *shm_name = g_strdup_printf("/cosimulation-shm-%s-%lu", args.client_id, shm_idx);
+static BrokerSHMRingBuffer *connect_to_broker_data(void) {
+  gchar *shm_name = g_strdup_printf("/cosimulation-shm-%s", args.client_id);
   int shm_fd = shm_open(shm_name, O_RDWR, 0600);
   if (shm_fd == -1) {
     char *err = strerror(errno);
@@ -308,23 +328,25 @@ static BrokerSHM *connect_to_broker_data(size_t shm_idx) {
     return NULL;
   }
 
-  if (ftruncate(shm_fd, sizeof(BrokerSHM)) == -1) {
+  if (ftruncate(shm_fd, sizeof(BrokerSHMRingBuffer)) == -1) {
     char *err = strerror(errno);
     g_error("failed to truncate shared memory for client: %s -> %s",
             args.client_id, err);
     return NULL;
   }
 
-  BrokerSHM *shm = mmap(NULL, sizeof(BrokerSHM), PROT_READ | PROT_WRITE,
-                        MAP_SHARED, shm_fd, 0);
-  if (shm == MAP_FAILED) {
+  BrokerSHMRingBuffer *shm_ring_buffer =
+      mmap(NULL, sizeof(BrokerSHMRingBuffer), PROT_READ | PROT_WRITE,
+           MAP_SHARED, shm_fd, 0);
+
+  if (shm_ring_buffer == MAP_FAILED) {
     char *err = strerror(errno);
     g_error("failed to mmap shared memory for client: %s -> %s", args.client_id,
             err);
     return NULL;
   }
 
-  return shm;
+  return shm_ring_buffer;
 }
 
 static TBInsnInfo get_tbinsn_info(struct qemu_plugin_insn *insn) {
@@ -385,51 +407,62 @@ static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
 }
 
 static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
-  pthread_mutex_lock(&sem->sync.mutex);
-  while(sem->sync.is_server) {
-    pthread_cond_wait(&sem->sync.cond_client, &sem->sync.mutex);
-  }
-
-  BrokerSHM *shm = next_shm();
-
+  PLUGIN_PRINTLN("vcpu_insn_exec::(%du) <start>", cpu_index);
   TBInsnInfo *tbinsn_info = udata;
 
   SHMCPU cpu = get_cpu_state(cpu_index);
 
-  shm->data.shm_insn.cpus[cpu_index] = cpu;
-  shm->data.shm_insn.init_mask |= (1 << cpu_index);
-  shm->data.shm_insn.insn_info = *tbinsn_info;
+  BrokerSHMData shm;
+  shm.shm_insn.cpus[cpu_index] = cpu;
 
-  // TODO: we cannot free here because the same callback might be used multiple times when a tb gets reused
-  // g_free(tbinsn_info);
+  // TODO: needs a global init_mask to keep track of current state
+  // NOTE: rather: refactor to just assign the cpu_index
+  shm.shm_insn.init_mask |= (1 << cpu_index);
+  shm.shm_insn.insn_info = *tbinsn_info;
 
-  sem->sync.is_server = true;
-  pthread_cond_broadcast(&sem->sync.cond_server);
-  pthread_mutex_unlock(&sem->sync.mutex);
+  ringbuf_write(shm);
+
+  PLUGIN_PRINTLN("vcpu_insn_exec::(%du) <end>", cpu_index);
+
+  // TODO: we cannot free here because the same callback might be used multiple
+  // times when a tb gets reused g_free(tbinsn_info);
+}
+
+static TBInfo tb_info_collect;
+static int64_t insns_sum_collect;
+
+// if the start-pc + the offset of the executed instructions does not equal
+// the new pc, then a jump has occurred
+static bool is_jump(TBInfo *tb_info) {
+  return tb_info_collect.pc + insns_sum_collect != tb_info->pc;
 }
 
 static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
-  pthread_mutex_lock(&sem->sync.mutex);
-  while(sem->sync.is_server) {
-    pthread_cond_wait(&sem->sync.cond_client, &sem->sync.mutex);
+  TBInfo *tb_info = udata;
+
+  tb_info_collect.insns_info_size += tb_info->insns_info_size;
+  for (int i = 0; i < tb_info->insns_info_size; i++) {
+    insns_sum_collect += tb_info->insns_info[i].size;
+    tb_info_collect.insns_info[i + tb_info_collect.insns_info_size] = tb_info->insns_info[i];
   }
 
-  BrokerSHM *shm = next_shm();
+  // TB-Data is only returned (= written to the buffer) if a jump occurred, 
+  // otherwise the data is simply collected on the qemu-client
+  if (is_jump(tb_info)) {
+    SHMCPU cpu = get_cpu_state(cpu_index);
+    BrokerSHMData shm;
 
-  SHMCPU cpu = get_cpu_state(cpu_index);
+    shm.shm_tb.cpus[cpu_index] = cpu;
+    // TODO: needs a global init_mask to keep track of current state
+    // NOTE: rather: refactor to just assign the cpu_index
+    shm.shm_tb.init_mask |= (1 << cpu_index);
+    shm.shm_tb.tb_info = *tb_info;
 
-  shm->data.shm_tb.cpus[cpu_index] = cpu;
-  shm->data.shm_tb.init_mask |= (1 << cpu_index);
+    ringbuf_write(shm);
+  } 
 
-  TBInfo *tb_info = udata;
-  shm->data.shm_tb.tb_info = *tb_info;
-
-  // TODO: we cannot free here because the same callback might be used multiple times when a tb gets reused
-  // g_free(tb_info);
-
-  sem->sync.is_server = true;
-  pthread_cond_broadcast(&sem->sync.cond_server);
-  pthread_mutex_unlock(&sem->sync.mutex);
+  // TODO: we cannot free here because the same callback might be used multiple
+  // times when a tb gets reused g_free(tb_info);
 }
 
 static void vcpu_tb_trans(qemu_plugin_id_t id, struct qemu_plugin_tb *tb) {
@@ -451,7 +484,10 @@ static void vcpu_tb_trans(qemu_plugin_id_t id, struct qemu_plugin_tb *tb) {
 }
 
 static void vcpu_init(qemu_plugin_id_t id, unsigned int vcpu_index) {
-  PLUGIN_ASSERT(vcpu_index < MAX_CPU_COUNT, "A CPU with vcpu_index larger than MAX_CPU_COUNT was initialized: %d (idx) >= %d (max-len)", vcpu_index, MAX_CPU_COUNT);
+  PLUGIN_ASSERT(vcpu_index < MAX_CPU_COUNT,
+                "A CPU with vcpu_index larger than MAX_CPU_COUNT was "
+                "initialized: %d (idx) >= %d (max-len)",
+                vcpu_index, MAX_CPU_COUNT);
   CPU *c = get_cpu(vcpu_index);
   c->registers = registers_init(vcpu_index);
   PLUGIN_ASSERT(
@@ -478,8 +514,7 @@ static ExecMode parse_mode(const char *mode_str) {
 QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
                                            const qemu_info_t *info, int argc,
                                            char **argv) {
-  cpus = g_array_sized_new(true, true, sizeof(CPU),
-                           MAX_CPU_COUNT);
+  cpus = g_array_sized_new(true, true, sizeof(CPU), MAX_CPU_COUNT);
 
   args.client_name_set = false;
 
@@ -525,11 +560,9 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
     return EXIT_FAILURE;
   }
 
-  for (int i = 0; i < SHM_QUEUE_SIZE; i++) {
-    shm[i] = connect_to_broker_data(i);
-    if (shm[i] == NULL) {
-      return EXIT_FAILURE;
-    }
+  shm_ring_buffer = connect_to_broker_data();
+  if (shm_ring_buffer == NULL) {
+    return EXIT_FAILURE;
   }
 
   plugin_id = id;

@@ -1,4 +1,8 @@
+use std::{mem, sync::{atomic::{AtomicU64, AtomicUsize, Ordering}, Condvar, Mutex}, time::Duration};
+
+use anyhow::bail;
 use serde::{Serialize, ser::SerializeStruct};
+use tracing::{debug, field::debug};
 
 use crate::{config::Config, ipc::sem::Semaphore};
 
@@ -349,8 +353,68 @@ pub union BrokerSHMData {
 }
 
 #[repr(C)]
-pub struct BrokerSHM {
-    pub data: BrokerSHMData,
+pub struct BrokerSHMRingBuffer<const SIZE: usize> {
+    pub data: [BrokerSHMData; SIZE],
+    pub read_idx: usize,
+    pub write_idx: usize,
+    pub count: AtomicUsize,
+    pub notifier: Semaphore,
+}
+
+impl <const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
+    const MASK: usize = SIZE - 1;
+
+    pub fn new() -> anyhow::Result<Self> {
+        debug!("init rb with size: {SIZE}");
+        let data = [(); SIZE].map(|_| unsafe { mem::zeroed() });
+        Ok(Self {
+            data,
+            read_idx: 0,
+            write_idx: 0, 
+            count: AtomicUsize::new(0),
+            notifier: Semaphore::create()?,
+        })
+    }
+
+    pub const fn current_size(&self, read_idx: usize, write_idx: usize) -> usize {
+        (write_idx - read_idx) & ((Self::MASK << 1) | 1)
+    }
+
+    pub const fn ring_idx(&self, idx: usize) -> usize {
+        idx & Self::MASK
+    }
+
+    pub fn start_read(&mut self) -> anyhow::Result<&BrokerSHMData> {
+        let count = self.count.load(Ordering::SeqCst);
+
+        if count == 0 {
+            let res = self.notifier.timedwait(Duration::from_secs(1));
+            match res {
+                Ok(res) => {
+                    match res {
+                        crate::ipc::sem::TimedWaitState::Timeout => {
+                            bail!("read timeout");
+                        },
+                        crate::ipc::sem::TimedWaitState::Success => {},
+                    }
+                },
+                Err(err) => {
+                    return Err(err);
+                },
+            }
+        }
+
+        let idx = self.ring_idx(self.read_idx);
+        let elem = &self.data[idx];
+
+        Ok(elem)
+    }
+
+    pub fn end_read(&mut self) {
+        self.read_idx += 1;
+        let _ = self.notifier.post();
+        self.count.fetch_sub(1, Ordering::SeqCst);
+    }
 }
 
 #[repr(C)]

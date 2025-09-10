@@ -10,7 +10,7 @@ use crate::{
     bail_on_libc_err, eprintln_on_libc_err,
     ipc::{
         PERMISSONS,
-        cstructs::{BrokerSHM, BrokerSHMInsn, BrokerSHMTB, BrokerSem},
+        cstructs::{BrokerSHMRingBuffer, BrokerSHMInsn, BrokerSHMTB, BrokerSem},
         get_last_error,
         sem::{Semaphore, TimedWaitState},
     },
@@ -42,13 +42,16 @@ impl SharedMemory<BrokerSem> {
     }
 }
 
-impl SharedMemory<BrokerSHM> {
-    pub fn get_insn(&self) -> &BrokerSHMInsn {
-        unsafe { &self.get().data.shm_insn }
+impl <const SIZE: usize> SharedMemory<BrokerSHMRingBuffer<SIZE>> {
+    pub fn get_insn(&mut self) -> anyhow::Result<&BrokerSHMInsn> {
+        let data = self.get_mut().start_read()?;
+        Ok(unsafe { &*data.shm_insn })
+        
     }
 
-    pub fn get_tb(&self) -> &BrokerSHMTB {
-        unsafe { &self.get().data.shm_tb }
+    pub fn get_tb(&mut self) -> anyhow::Result<&BrokerSHMTB> {
+        let data = self.get_mut().start_read()?;
+        Ok(unsafe { &*data.shm_tb })
     }
 }
 

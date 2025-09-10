@@ -86,7 +86,7 @@ additional_args = [
 	"-d", "plugin",
 ]
 
-skip_n_instructions = 1
+skip_n_instructions = 0
 
 [qemu.clients.gdb]
 enable = false
@@ -160,7 +160,7 @@ max_trace_length = 2
 # "tb-strict": The execution-step is the *execution of a single translation-blocks*.
 #			   The same as "tb" but without the synchronization logic. Meaning that equal translation-blocks are assumed.
 #			   This option is useful if the instructions of the ISS are already correct and the TB-Block generator needs to be tested.
-layer = "tb"
+layer = "insn"
 
 # "lockstep": All clients are run and compared one *execution-step* at a time.
 # 			  This means that the test will exit on the first divergence (or at the end if no diffs where found) 
@@ -171,7 +171,7 @@ mode = "lockstep"
 execute_all_remaining_instructions = true
 
 # Execute the next (after skipped) n instructions
-stop_after_n_instructions = 10000
+stop_after_n_instructions = 0
 
 # Where the test result should be saved and in which format
 [testing.protocol.out]
@@ -183,7 +183,7 @@ verbosity = "short"
 [logging]
 enable = true 
 # tracing log-levels as defined here: https://docs.rs/tracing/latest/tracing/struct.Level.html#implementations
-level = "info"
+level = "debug"
 
 # The directory will also contain files for the stdout and stderr of each client
 dir = "./cosim-run/log"
@@ -209,7 +209,7 @@ clear_on_rerun = true
 #				 (-): Tracing data is only available at the end of the cosimulation-process.
 #				 => This mode is probably most useful when manually running a test where the test-result is not known beforehand. In most cases using a combination of "none" and "sync" is probably preferred.
 [tracing]
-mode = "sync"
+mode = "none"
 # NOTE: If no db-file is found at the given path then one will be automatically created.
 dir = "./cosim-run/trace"
 file = "trace.sqlite3"

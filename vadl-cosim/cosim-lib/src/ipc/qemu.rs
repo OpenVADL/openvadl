@@ -11,50 +11,18 @@ use tracing::{debug, error, info};
 use crate::{
     config::Config,
     ipc::{
-        cstructs::{BrokerSHM, BrokerSem},
+        cstructs::{BrokerSHMRingBuffer, BrokerSem},
         sem::{Semaphore, TimedWaitState},
         shm::SharedMemory,
     },
 };
 
-const SHMQUEUE_LEN: usize = 2;
-
-pub struct SHMQueue {
-    data: [SharedMemory<BrokerSHM>; SHMQUEUE_LEN],
-    idx: usize,
-}
-
-impl SHMQueue {
-    pub fn new(data: [SharedMemory<BrokerSHM>; SHMQUEUE_LEN]) -> Self {
-        Self { data, idx: 0 }
-    }
-
-    pub fn current(&self) -> &SharedMemory<BrokerSHM> {
-        &self.data[self.idx]
-    }
-
-    pub fn previous(&self) -> &SharedMemory<BrokerSHM> {
-        if self.idx == 0 {
-            &self.data[SHMQUEUE_LEN - 1]
-        } else {
-            &self.data[self.idx - 1]
-        }
-    }
-
-    pub fn next(&mut self) {
-        self.idx += 1;
-        self.idx %= SHMQUEUE_LEN;
-    }
-
-    pub fn get_next(&mut self) -> &SharedMemory<BrokerSHM> {
-        self.next();
-        self.current()
-    }
-}
+type BrokerSHMRingBuffer32 = BrokerSHMRingBuffer<2>;
 
 pub struct Client {
     pub id: usize,
-    pub shms: SHMQueue,
+    // TODO: refactor constant size
+    pub shm: SharedMemory<BrokerSHMRingBuffer32>,
     pub sem: SharedMemory<BrokerSem>,
     pub is_open: bool,
     pub process: Child,
@@ -113,11 +81,11 @@ impl Client {
                             )
                         }
                         Ok(None) => {
-                            error!(
-                                client_id = self.id,
-                                is_server = self.sem.get_sync().is_server,
-                                "client is still running but unresponive"
-                            );
+                            // error!(
+                            //     client_id = self.id,
+                            //     is_server = self.sem.get_sync().is_server,
+                            //     "client is still running but unresponive"
+                            // );
                         }
                         Err(err) => error!(
                             client_id = self.id,
@@ -137,7 +105,6 @@ impl Client {
 
     #[must_use]
     fn run_inner(&mut self, config: &Config) -> Result<bool> {
-        self.shms.next();
         self.sem.release_client()?;
 
         if config.for_client(self.id).gdb.enable {
@@ -155,12 +122,10 @@ impl Client {
     pub fn create(config: &Config, client_idx: usize) -> Result<Self> {
         let client_cfg = config.for_client(client_idx);
 
-        let shm0: SharedMemory<BrokerSHM> =
-            SharedMemory::create(&format!("/cosimulation-shm-{client_idx}-0"))?;
-        let shm1: SharedMemory<BrokerSHM> =
-            SharedMemory::create(&format!("/cosimulation-shm-{client_idx}-1"))?;
+        let mut shm: SharedMemory<BrokerSHMRingBuffer32> =
+            SharedMemory::create(&format!("/cosimulation-shm-{client_idx}"))?;
 
-        let shms_queue = SHMQueue::new([shm0, shm1]);
+        *shm.get_mut() = BrokerSHMRingBuffer32::new()?;
 
         let mut sem: SharedMemory<BrokerSem> =
             SharedMemory::create(&format!("/cosimulation-sem-{client_idx}"))?;
@@ -246,7 +211,7 @@ impl Client {
 
         Ok(Self {
             id: client_idx,
-            shms: shms_queue,
+            shm,
             sem,
             is_open: true,
             process: client_process,

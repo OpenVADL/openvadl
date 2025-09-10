@@ -57,18 +57,18 @@ pub fn store_trace(trace: TraceEntryData, connection: &mut Connection) -> Result
     Ok(())
 }
 
-pub fn get_client_trace(client: &crate::ipc::qemu::Client, config: &Config) -> TraceBrokerData {
-    match config.testing.protocol.layer {
-        crate::config::ProtocolLayer::Insn => {
-            let insn = Box::new(client.shms.current().get_insn().clone());
-            TraceBrokerData::Insn(insn)
-        }
-        crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-            let tb = Box::new(client.shms.current().get_tb().clone());
-            TraceBrokerData::TB(tb)
-        }
-    }
-}
+// pub fn get_client_trace(client: &crate::ipc::qemu::Client, config: &Config) -> TraceBrokerData {
+//     match config.testing.protocol.layer {
+//         crate::config::ProtocolLayer::Insn => {
+//             let insn = Box::new(client.shm.current().get_insn().clone());
+//             TraceBrokerData::Insn(insn)
+//         }
+//         crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
+//             let tb = Box::new(client.shm.current().get_tb().clone());
+//             TraceBrokerData::TB(tb)
+//         }
+//     }
+// }
 
 pub type TraceStore = Vec<TraceEntryData>;
 pub fn trace_collect(
@@ -84,14 +84,14 @@ pub fn trace_collect(
         client_ids.len(),
     );
 
-    clients
-        .iter()
-        .map(|c| get_client_trace(c, config))
-        .enumerate()
-        .map(|(idx, broker_data)| TraceEntryData::new(
-            client_ids[idx],
-            clients[idx].run_count,
-            broker_data,
-        ))
-        .for_each(|t| store.push(t));
+    // clients
+    //     .iter()
+    //     .map(|c| get_client_trace(c, config))
+    //     .enumerate()
+    //     .map(|(idx, broker_data)| TraceEntryData::new(
+    //         client_ids[idx],
+    //         clients[idx].run_count,
+    //         broker_data,
+    //     ))
+    //     .for_each(|t| store.push(t));
 }

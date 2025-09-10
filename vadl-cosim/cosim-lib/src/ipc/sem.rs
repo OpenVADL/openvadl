@@ -16,9 +16,8 @@ use crate::ipc::get_last_error;
 #[repr(C)]
 pub struct Semaphore {
     pub mutex: pthread_mutex_t,
-    pub cond_server: pthread_cond_t,
-    pub cond_client: pthread_cond_t,
-    pub is_server: bool,
+    pub cvar: pthread_cond_t,
+    pub msg: bool,
 }
 
 pub enum TimedWaitState {
@@ -57,38 +56,36 @@ impl Semaphore {
             ));
         }
 
-        let mut cond_server: pthread_cond_t = unsafe { std::mem::zeroed() };
-        let mut cond_client: pthread_cond_t = unsafe { std::mem::zeroed() };
+        let mut cvar: pthread_cond_t = unsafe { std::mem::zeroed() };
 
-        let cond_server_ptr = &mut cond_server as *mut _;
-        let cond_client_ptr = &mut cond_client as *mut _;
+        let cvar_ptr = &mut cvar as *mut _;
 
         unsafe {
-            bail_on_libc_err!(pthread_cond_init(cond_server_ptr, cond_attr_ptr));
-            bail_on_libc_err!(pthread_cond_init(cond_client_ptr, cond_attr_ptr));
+            bail_on_libc_err!(pthread_cond_init(cvar_ptr, cond_attr_ptr));
         }
 
         Ok(Self {
             mutex,
-            cond_server,
-            cond_client,
-            // Initial value is `true` to indicate that the server has the initial mutex lock
-            is_server: true,
+            cvar,
+            msg: false,
         })
     }
 
     pub fn wait(&mut self) -> Result<()> {
         let mutex_ptr = &mut self.mutex as *mut _;
-        let cond_ptr = &mut self.cond_server as *mut _;
+        let cond_ptr = &mut self.cvar as *mut _;
         unsafe {
             bail_on_libc_err!(pthread_mutex_lock(mutex_ptr));
         }
 
         #[allow(clippy::while_immutable_condition)]
-        while !self.is_server {
+        while !self.msg {
             unsafe {
                 bail_on_libc_err!(pthread_cond_wait(cond_ptr, mutex_ptr));
             }
+        }
+        unsafe {
+            bail_on_libc_err!(pthread_mutex_unlock(mutex_ptr));
         }
 
         Ok(())
@@ -102,7 +99,7 @@ impl Semaphore {
 
         let ts_ptr = &mut ts as *mut _;
         let mutex_ptr = &mut self.mutex as *mut _;
-        let cond_ptr = &mut self.cond_server as *mut _;
+        let cond_ptr = &mut self.cvar as *mut _;
 
         unsafe {
             bail_on_libc_err!(pthread_mutex_lock(mutex_ptr));
@@ -121,18 +118,18 @@ impl Semaphore {
         }
 
         let mut rc: i32 = 0;
-        while !self.is_server && rc == 0 {
+        while !self.msg && rc == 0 {
             rc = unsafe { pthread_cond_timedwait(cond_ptr, mutex_ptr, ts_ptr) };
         }
+
+        unsafe { bail_on_libc_err!(pthread_mutex_unlock(mutex_ptr)) };
 
         match rc {
             0 => Ok(TimedWaitState::Success),
             ETIMEDOUT => {
-                unsafe { bail_on_libc_err!(pthread_mutex_unlock(mutex_ptr)) };
                 Ok(TimedWaitState::Timeout)
             }
             _ => {
-                unsafe { bail_on_libc_err!(pthread_mutex_unlock(mutex_ptr)) };
                 bail!("failed to timedwait")
             }
         }
@@ -140,13 +137,13 @@ impl Semaphore {
 
     pub fn post(&mut self) -> Result<()> {
         let mutex_ptr = &mut self.mutex as *mut _;
-        let cond_ptr = &mut self.cond_client as *mut _;
+        let cond_ptr = &mut self.cvar as *mut _;
 
-        self.is_server = false;
+        self.msg = false;
 
         unsafe {
             bail_on_libc_err!(pthread_cond_broadcast(cond_ptr));
-            bail_on_libc_err!(pthread_mutex_unlock(mutex_ptr), -1);
+            // bail_on_libc_err!(pthread_mutex_unlock(mutex_ptr), -1);
         }
 
         Ok(())
@@ -157,12 +154,10 @@ impl Drop for Semaphore {
     /// Closes and optionally removes the semaphore when dropped.
     fn drop(&mut self) {
         let mutex_ptr = &mut self.mutex as *mut _;
-        let cond_server_ptr = &mut self.cond_server as *mut _;
-        let cond_client_ptr = &mut self.cond_client as *mut _;
+        let cvar_ptr = &mut self.cvar as *mut _;
         unsafe {
             eprintln_on_libc_err!(pthread_mutex_destroy(mutex_ptr));
-            eprintln_on_libc_err!(pthread_cond_destroy(cond_server_ptr));
-            eprintln_on_libc_err!(pthread_cond_destroy(cond_client_ptr));
+            eprintln_on_libc_err!(pthread_cond_destroy(cvar_ptr));
         }
     }
 }
