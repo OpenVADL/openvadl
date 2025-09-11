@@ -59,6 +59,9 @@ public class RtlConfiguration extends GeneralConfiguration {
 
   private Memory memory = Memory.decoupled;
 
+  @Nullable
+  private String resetVector = null;
+
   public RtlConfiguration(GeneralConfiguration generalConfig) {
     super(generalConfig);
   }
@@ -145,4 +148,12 @@ public class RtlConfiguration extends GeneralConfiguration {
     this.memory = memory;
   }
 
+  @Nullable
+  public String getResetVector() {
+    return resetVector;
+  }
+
+  public void setResetVector(@Nullable String resetVector) {
+    this.resetVector = resetVector;
+  }
 }

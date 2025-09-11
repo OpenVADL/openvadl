@@ -95,7 +95,7 @@ class CoreTest extends AnyFunSpec with ChiselSim {
           val delayWr = () => 0 // rand.nextInt(4) // test stalling
           val pending = new mutable.HashMap[Object, Int]()
 
-          dut.io.reset_vector_out.poke(start)
+          [# th:if="${resetVector != null}"]dut.io.[(${resetVector})]_out.poke(start)[/]
           [# th:if="${memoryValid}"]
           dut.io.getElements.foreach {
             case rd: VADL.MemReadPort[?] =>
@@ -141,16 +141,25 @@ class CoreTest extends AnyFunSpec with ChiselSim {
                     write(addr + i, wr.data(i).peek().asUInt)
                   }
                   if (tohost.isDefined && addr.toLong.equals(tohost.get)) {
-                    val elems = wr.data.getElements.map(e => e.peek())
-                    println(f"tohost: $elems")
-                    if (elems.forall(_.litValue == 0)) {
-                      println("RVTEST_PASS")
-                      passed += file.getName
-                    } else {
-                      println("RVTEST_FAIL")
-                      failed += file.getName
+                    val elems = wr.data.getElements.map(e => e.peek().asUInt)
+                    var value = BigInt(0)
+                    for (elem <- elems.reverse) {
+                      value = (value << elem.getWidth) | elem.litValue
                     }
-                    run = false
+                    println(f"tohost: $value")
+                    if (value.testBit(0)) {
+                      val result = value >> 1
+                      if (result == 0) {
+                        println("RVTEST_PASS")
+                        passed += file.getName
+                      } else {
+                        println(f"RVTEST_FAIL $result")
+                        failed += file.getName
+                      }
+                      run = false
+                    } else {
+                      println(f"tohost not implemented")
+                    }
                   }[# th:if="${memoryValid}"]
                   val p = pending.getOrElse(wr, delayWr())
                   wr.valid.poke(p == 0)

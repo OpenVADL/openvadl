@@ -25,43 +25,39 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.analysis.HazardAnalysis;
 import vadl.rtl.ipg.nodes.RtlConditionalMemNode;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
-import vadl.rtl.ipg.nodes.RtlReadMemNode;
 import vadl.rtl.ipg.nodes.RtlValidSignalNode;
 import vadl.rtl.ipg.nodes.RtlWriteMemNode;
 import vadl.rtl.utils.RtlSimplificationRules;
 import vadl.rtl.utils.RtlSimplifier;
 import vadl.types.Type;
 import vadl.utils.GraphUtils;
-import vadl.utils.Pair;
 import vadl.viam.Constant;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Logic;
 import vadl.viam.MicroArchitecture;
+import vadl.viam.Processor;
 import vadl.viam.RegisterTensor;
-import vadl.viam.Signal;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
-import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.ReadMemNode;
+import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.SideEffectNode;
-import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.WriteSignalNode;
 import vadl.viam.passes.canonicalization.Canonicalizer;
+import vadl.viam.passes.functionInliner.Inliner;
 
 /**
  * Synthesize control logic for a linear pipeline.
@@ -96,6 +92,7 @@ public class ControlLogicPass extends AbstractLogicPass {
     // full registers
     var fullMap = new HashMap<Stage, RegisterTensor>();
     var fullRdMap = new HashMap<Stage, ExpressionNode>();
+    var stop = viam.processor().map(Processor::stop).orElse(null);
     mia.stages().stream().skip(1).forEach(stage -> {
       var reg = RegisterTensor.of(control.identifier.append(stage.simpleName() + "_full"), 1);
       fullMap.put(stage, reg);
@@ -103,8 +100,17 @@ public class ControlLogicPass extends AbstractLogicPass {
     });
     for (Stage stage : mia.stages()) {
       var full = fullMap.get(stage);
-      ExpressionNode fullRd = Constant.Value.of(true).toNode();
-      if (full != null) {
+      ExpressionNode fullRd;
+      if (full == null) {
+        // first stage
+        if (stop != null) {
+          // empty stage with stop
+          fullRd = GraphUtils.not(new FuncCallNode(stop, new NodeList<>(), Type.bool()));
+        } else {
+          // always full otherwise
+          fullRd = Constant.Value.of(true).toNode();
+        }
+      } else {
         fullRd = new ReadRegTensorNode(full, new NodeList<>(), Type.bool(), null);
       }
       fullRdMap.put(stage, fullRd);
@@ -224,6 +230,7 @@ public class ControlLogicPass extends AbstractLogicPass {
     }
 
     // optimize
+    Inliner.inlineFuncs(control.behavior());
     Canonicalizer.canonicalize(control.behavior());
     new RtlSimplifier(RtlSimplificationRules.rules).run(control.behavior());
 

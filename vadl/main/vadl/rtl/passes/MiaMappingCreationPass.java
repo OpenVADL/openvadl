@@ -76,11 +76,8 @@ public class MiaMappingCreationPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var optIsa = viam.isa();
-    if (optIsa.isEmpty()) {
-      return null;
-    }
     var optMia = viam.mia();
-    if (optMia.isEmpty()) {
+    if (optIsa.isEmpty() || optMia.isEmpty()) {
       return null;
     }
 

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import vadl.configuration.RtlConfiguration;
+import vadl.error.Diagnostic;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.nodes.RtlResetSignalNode;
@@ -29,6 +30,9 @@ import vadl.rtl.template.HdlEmitContext;
 import vadl.rtl.template.HdlModule;
 import vadl.rtl.template.HdlWiring;
 import vadl.rtl.template.RtlTemplateRenderingPass;
+import vadl.rtl.utils.GraphMergeUtils;
+import vadl.viam.Constant;
+import vadl.viam.Counter;
 import vadl.viam.Logic;
 import vadl.viam.Resource;
 import vadl.viam.Signal;
@@ -37,7 +41,10 @@ import vadl.viam.Stage;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ReadSignalNode;
+import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
 
 public class EmitModulesPass extends RtlTemplateRenderingPass {
 
@@ -58,22 +65,23 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
   @Override
   protected List<RenderInput> createRenderInputs(PassResults passResults, Specification viam,
                                                  Map<String, Object> base) {
-    var optMia = viam.mia();
-    if (optMia.isEmpty()) {
+    var mia = viam.mia().orElse(null);
+    var isa = viam.isa().orElse(null);
+    var mip = viam.processor().orElse(null);
+    if (mia == null || isa == null || mip == null) {
       return List.of();
     }
-    var mia = optMia.get();
-    var optIsa = viam.isa();
-    if (optIsa.isEmpty()) {
-      return List.of();
-    }
-    var isa = optIsa.get();
 
     var inlineRes = passResults.lastResultOf(MiaMappingInlinePass.class,
         MiaMappingInlinePass.Result.class);
-    var resetVector = new Signal(mia.identifier.append("reset_vector"),
-            Objects.requireNonNull(isa.pc()).resultType());
-    var context = new HdlEmitContext(viam, isa, mia, inlineRes.inlineMap(), resetVector);
+
+    Signal resetVector = null;
+    if (configuration().getResetVector() != null) {
+      resetVector = new Signal(mia.identifier.append(configuration().getResetVector()),
+          Objects.requireNonNull(isa.pc()).resultType());
+    }
+
+    var context = new HdlEmitContext(viam, isa, mia, mip, inlineRes.inlineMap(), resetVector);
 
     List<HdlModule> modules = new ArrayList<>();
     mia.stages().stream().map(stage -> stage(context, stage)).forEach(modules::add);
@@ -101,23 +109,58 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
 
     var behavior = new Graph(configuration().getTopModule());
     var pc = Objects.requireNonNull(context.isa().pc());
-    var reset = new RtlResetSignalNode();
-    var resetVector = new ReadSignalNode(context.resetVector());
-    var pcReset = new WriteRegTensorNode(pc.registerTensor(), new NodeList<>(), resetVector,
-        pc, reset);
-    behavior.addWithInputs(pcReset);
 
-    var core = new HdlModule(context, context.mia(), null, configuration().getTopModule(),
+    // create reset behavior
+    coreResetBehavior(behavior, context, pc);
+
+    var core = new HdlModule(context, context.mia(), configuration().getTopModule(),
         resources,  new ArrayList<>(children), behavior);
     children.forEach(child -> child.setParent(core));
     return core;
+  }
+
+  private void coreResetBehavior(Graph behavior, HdlEmitContext context,
+                                 Counter pc) {
+    // create reset value write for pc if we have a reset vector input
+    if (context.resetVector() != null) {
+      var resetVector = new ReadSignalNode(context.resetVector());
+      var pcReset = new WriteRegTensorNode(pc.registerTensor(), new NodeList<>(), resetVector,
+          pc, new RtlResetSignalNode());
+      behavior.addWithInputs(pcReset);
+    }
+
+    // copy reset behavior, merge writes to get only one write per resource
+    var resetBehavior = context.processor().reset().behavior().copy();
+    GraphMergeUtils.mergeWritesOnBranches(resetBehavior);
+
+    // copy side effects to behavior, conditional writes
+    resetBehavior.getNodes(SideEffectNode.class).forEach(node -> {
+      if (node instanceof WriteResourceNode write) {
+        if (context.resetVector() != null && write.resourceDefinition()
+            .equals(pc.registerTensor())) {
+          return; // do not copy pc writes if we have an external reset vector
+        }
+        var writeCopy = behavior.addWithInputs(write.copy(WriteResourceNode.class));
+        var cond = writeCopy.nullableCondition();
+        if (cond != null) {
+          // add else case to value input that resets to zero if condition is false
+          var value = behavior.addWithInputs(
+              new SelectNode(cond, writeCopy.value(),
+                  Constant.Value.of(0, writeCopy.value().type().asDataType()).toNode()));
+          writeCopy.replaceInput(writeCopy.value(), value);
+        }
+        writeCopy.setCondition(behavior.add(new RtlResetSignalNode()));
+      } else {
+        throw Diagnostic.error("Reset can only contain write side effects", node).build();
+      }
+    });
   }
 
   private HdlModule stage(HdlEmitContext context, Stage stage) {
     var resources = new ArrayList<Resource>();
     resources.addAll(stage.signals());
     resources.addAll(stage.registers());
-    return new HdlModule(context, stage, null, stage.simpleName(),
+    return new HdlModule(context, stage, stage.simpleName(),
         resources, List.of(), stage.behavior());
   }
 
@@ -125,7 +168,7 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
     var resources = new ArrayList<Resource>();
     resources.addAll(logic.signals());
     resources.addAll(logic.registers());
-    return new HdlModule(context, logic, null, logic.simpleName(), resources, List.of(),
+    return new HdlModule(context, logic, logic.simpleName(), resources, List.of(),
         logic.behavior());
   }
 

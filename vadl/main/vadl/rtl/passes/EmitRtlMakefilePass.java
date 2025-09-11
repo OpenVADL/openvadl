@@ -16,13 +16,16 @@
 
 package vadl.rtl.passes;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.RtlConfiguration;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.template.RtlTemplateRenderingPass;
+import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
+import vadl.viam.graph.dependency.SideEffectNode;
 
 public class EmitRtlMakefilePass extends RtlTemplateRenderingPass {
 
@@ -49,8 +52,17 @@ public class EmitRtlMakefilePass extends RtlTemplateRenderingPass {
   protected List<RenderInput> createRenderInputs(PassResults passResults,
                                                  Specification specification,
                                                  Map<String, Object> baseVariables) {
+    var vars = new HashMap<String, Object>();
+    vars.put("hasEcall", specification.isa().map(this::hasEcall).orElse(false));
     return List.of(
-        new RenderInput("Makefile", baseVariables)
+        new RenderInput("Makefile", mergeVariables(baseVariables, vars))
+    );
+  }
+
+  private boolean hasEcall(InstructionSetArchitecture isa) {
+    return isa.ownInstructions().stream().anyMatch(instr ->
+      instr.simpleName().equals("ECALL")
+          && instr.behavior().getNodes().anyMatch(SideEffectNode.class::isInstance)
     );
   }
 }

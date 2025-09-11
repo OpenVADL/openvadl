@@ -45,12 +45,14 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.WriteSignalNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
@@ -313,8 +315,10 @@ public class HdlBehavior {
       var cond = node.nullableCondition();
       HdlConnection.ExpressionEndpoint condEnd;
       if (cond != null) {
-        if (cond instanceof RtlResetSignalNode) {
-          module.addResourceReset(node.resourceDefinition(), dispatch(node.value()));
+        if (cond instanceof RtlResetSignalNode && node instanceof WriteRegTensorNode write) {
+          if (write.registerTensor().isSingleRegister()) {
+            module.addRegisterReset(write.registerTensor(), dispatch(node.value()));
+          }
           return;
         }
         condEnd = new HdlConnection.ExpressionEndpoint(

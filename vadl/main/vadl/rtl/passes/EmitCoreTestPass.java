@@ -16,6 +16,7 @@
 
 package vadl.rtl.passes;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.RtlConfiguration;
@@ -44,11 +45,12 @@ public class EmitCoreTestPass extends RtlTemplateRenderingPass {
   protected List<RenderInput> createRenderInputs(PassResults passResults,
                                                  Specification specification,
                                                  Map<String, Object> baseVariables) {
+    var vars = new HashMap<String, Object>();
+    vars.put("memoryValid", configuration().getMemory().equals(RtlConfiguration.Memory.decoupled));
+    vars.put("resetVector", configuration().getResetVector());
     return List.of(
         new RenderInput(getSourceTestFilePath("CoreTest.scala"),
-            mergeVariables(baseVariables, Map.of(
-                "memoryValid", configuration().getMemory().equals(RtlConfiguration.Memory.decoupled)
-            )))
+            mergeVariables(baseVariables, vars))
     );
   }
 }

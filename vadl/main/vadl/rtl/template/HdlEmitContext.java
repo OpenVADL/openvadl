@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
 import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.MicroArchitecture;
+import vadl.viam.Processor;
 import vadl.viam.Signal;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
@@ -35,8 +36,9 @@ public record HdlEmitContext(
     Specification viam,
     InstructionSetArchitecture isa,
     MicroArchitecture mia,
+    Processor processor,
     BiMap<Node, Node> inlineMap,
-    Signal resetVector
+    @Nullable Signal resetVector
 ) {
 
   public Optional<Node> ipgNode(Node inlinedNode) {

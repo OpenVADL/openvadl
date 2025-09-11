@@ -22,12 +22,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.viam.Definition;
 import vadl.viam.MicroArchitecture;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Resource;
 import vadl.viam.Signal;
 import vadl.viam.graph.Graph;
@@ -52,17 +52,16 @@ public class HdlModule {
 
   private final List<HdlConnection> connections = new ArrayList<>();
 
-  private final Map<Resource, String> resourceReset = new HashMap<>();
+  private final Map<RegisterTensor, String> regReset = new HashMap<>();
 
   @Nullable
   private final Graph behavior;
 
   public HdlModule(HdlEmitContext context, @Nullable Definition definition,
-                   @Nullable HdlModule parent, String name, List<Resource> resources,
+                   String name, List<Resource> resources,
                    List<HdlModule> children, @Nullable Graph behavior) {
     this.context = context;
     this.definition = definition;
-    this.parent = parent;
     this.name = name;
     this.resources = resources;
     this.children = children;
@@ -99,8 +98,8 @@ public class HdlModule {
     resources.add(resource);
   }
 
-  public void addResourceReset(Resource resource, String reset) {
-    resourceReset.put(resource, reset);
+  public void addRegisterReset(RegisterTensor reg, String resetExpr) {
+    regReset.put(reg, resetExpr);
   }
 
   public List<HdlModule> children() {
@@ -167,7 +166,7 @@ public class HdlModule {
     map.put("name", resource.simpleName());
     map.put("resourceSize", size);
     map.put("resultType", HdlUtils.type(resource.resultType()));
-    map.put("reset", resourceReset.get(resource));
+    map.put("reset", regReset.get(resource));
     return map;
   }
 

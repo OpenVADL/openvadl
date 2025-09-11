@@ -46,7 +46,7 @@ public class RtlCommand extends BaseCommand {
   @CommandLine.Option(names = {"--memory"},
       scope = INHERIT,
       description = "Configure external memory interface: ${COMPLETION-CANDIDATES}",
-      defaultValue = "five")
+      defaultValue = "decoupled")
   RtlConfiguration.Memory memory = RtlConfiguration.Memory.decoupled;
 
   @CommandLine.Option(names = {"--scala-package"},
@@ -69,6 +69,15 @@ public class RtlCommand extends BaseCommand {
   @Nullable
   String projectName = null;
 
+  @CommandLine.Option(names = {"--reset-vector"},
+      scope = INHERIT,
+      description = "Read the reset vector from an external signal with this name. "
+          + "Useful for test benches. "
+          + "Overrides any reset value for the PC in the specification.",
+      defaultValue = "false")
+  @Nullable
+  String resetVector = null;
+
   @CommandLine.Option(names = {"--dry-run"},
       scope = INHERIT,
       description = "Don't emit generated files.")
@@ -79,6 +88,7 @@ public class RtlCommand extends BaseCommand {
     var rtlConfig = new RtlConfiguration(configuration);
     rtlConfig.setDummyMia(dummyMia);
     rtlConfig.setMemory(memory);
+    rtlConfig.setResetVector(resetVector);
     rtlConfig.setScalaPackageAndDirs(scalaPackage);
     rtlConfig.setTopModule(topModule);
     rtlConfig.setProjectName(projectName);
