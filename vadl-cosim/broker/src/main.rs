@@ -57,14 +57,6 @@ fn main() -> Result<()> {
     }
 
     run(config)
-
-    // std::thread::Builder::new()
-    //     .stack_size(1024 * 1024 * 1024)
-    //     .spawn(|| run(config))?
-    //     .join()
-    //     .unwrap()?;
-    //
-    // Ok(())
 }
 
 fn run(config: Config) -> Result<()> {
