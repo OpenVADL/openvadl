@@ -112,7 +112,6 @@ impl<T: Sized> SharedMemory<T> {
         shared
     }
 
-    #[allow(clippy::mut_from_ref)]
     pub fn get_mut(&mut self) -> &mut T {
         let data_ptr = self.mmap_ptr as *mut T;
         let shared: &mut T = unsafe { &mut *data_ptr };

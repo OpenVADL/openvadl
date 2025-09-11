@@ -186,8 +186,6 @@ static GArray *cpus;
 
 static Arguments args;
 
-static BrokerSem *sem;
-
 static BrokerSHMRingBuffer *shm_ring_buffer;
 
 #define ringbuf_idx(idx) ((idx) & RING_BUFFER_MASK)
@@ -281,35 +279,6 @@ static SHMCPU get_cpu_state(unsigned int cpu_index) {
 
 static void plugin_exit(qemu_plugin_id_t id, void *p) {
   PLUGIN_PRINTLN("plugin_exit");
-}
-
-static BrokerSem *connect_to_broker_sem(void) {
-  gchar *sem_name = g_strdup_printf("/cosimulation-sem-%s", args.client_id);
-  int sem_fd = shm_open(sem_name, O_RDWR, 0600);
-  if (sem_fd == -1) {
-    char *err = strerror(errno);
-    g_error("failed to open shared memory for client: %s -> %s", args.client_id,
-            err);
-    return NULL;
-  }
-
-  if (ftruncate(sem_fd, sizeof(BrokerSem)) == -1) {
-    char *err = strerror(errno);
-    g_error("failed to truncate shared memory for client: %s -> %s",
-            args.client_id, err);
-    return NULL;
-  }
-
-  BrokerSem *sem = mmap(NULL, sizeof(BrokerSem), PROT_READ | PROT_WRITE,
-                        MAP_SHARED, sem_fd, 0);
-  if (sem == MAP_FAILED) {
-    char *err = strerror(errno);
-    g_error("failed to mmap shared memory for client: %s -> %s", args.client_id,
-            err);
-    return NULL;
-  }
-
-  return sem;
 }
 
 // Connects to the broker by accessing the assigned shared memory
@@ -551,11 +520,6 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
   }
 
   PLUGIN_PRINTLN("::qemu_plugin_install");
-
-  sem = connect_to_broker_sem();
-  if (sem == NULL) {
-    return EXIT_FAILURE;
-  }
 
   shm_ring_buffer = connect_to_broker_data();
   if (shm_ring_buffer == NULL) {

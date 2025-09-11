@@ -3,7 +3,6 @@ use std::ffi::CStr;
 use libc::strerror;
 
 pub mod cstructs;
-pub mod mutex;
 pub mod qemu;
 pub mod sem;
 pub mod shm;

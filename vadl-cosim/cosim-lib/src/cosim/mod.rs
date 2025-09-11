@@ -222,6 +222,7 @@ impl Broker {
         // Calling this function assumes that every client reached a jump-instruction -
         // therefore all should be at the same PC
         // and have executed the same amount of instructions
+
         let unique_end_pcs = data
             .iter()
             .map(|b| {

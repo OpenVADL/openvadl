@@ -9,20 +9,14 @@ use tracing::info;
 
 use crate::{
     config::Config,
-    ipc::{
-        cstructs::{BrokerSHMRingBuffer, BrokerSem},
-        sem::Semaphore,
-        shm::SharedMemory,
-    },
+    ipc::{cstructs::BrokerSHMRingBuffer, shm::SharedMemory},
 };
 
 type BrokerSHMRingBufferImpl = BrokerSHMRingBuffer<4>;
 
 pub struct Client {
     pub id: usize,
-    // TODO: refactor constant size
     pub shm: SharedMemory<BrokerSHMRingBufferImpl>,
-    pub sem: SharedMemory<BrokerSem>,
     pub is_open: bool,
     pub process: Child,
     pub name: Option<String>,
@@ -36,11 +30,7 @@ impl Client {
         let mut shm: SharedMemory<BrokerSHMRingBufferImpl> =
             SharedMemory::create(&format!("/cosimulation-shm-{client_idx}"))?;
 
-        *shm.get_mut() = BrokerSHMRingBufferImpl::new()?;
-
-        let mut sem: SharedMemory<BrokerSem> =
-            SharedMemory::create(&format!("/cosimulation-sem-{client_idx}"))?;
-        sem.get_mut().sync = Semaphore::create()?;
+        shm.get_mut().init()?;
 
         info!(
             client_id = client_idx,
@@ -123,7 +113,6 @@ impl Client {
         Ok(Self {
             id: client_idx,
             shm,
-            sem,
             is_open: true,
             process: client_process,
             name: client_cfg.name.clone(),

@@ -379,7 +379,8 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
     const MASK: usize = SIZE - 1;
 
     pub fn new() -> anyhow::Result<Self> {
-        debug!("init rb with size: {SIZE}");
+        debug!("init ringbuffer with size: {SIZE}");
+
         let data = unsafe { mem::MaybeUninit::uninit().assume_init() };
         Ok(Self {
             data,
@@ -388,6 +389,17 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
             count: AtomicUsize::new(0),
             notifier: Semaphore::create()?,
         })
+    }
+
+    pub fn init(&mut self) -> anyhow::Result<()> {
+        debug!("init ringbuffer with size: {SIZE}");
+
+        self.data = unsafe { mem::zeroed() };
+        self.read_idx = 0;
+        self.write_idx = 0;
+        self.count = AtomicUsize::new(0);
+        self.notifier = Semaphore::create()?;
+        Ok(())
     }
 
     pub const fn current_size(&self, read_idx: usize, write_idx: usize) -> usize {

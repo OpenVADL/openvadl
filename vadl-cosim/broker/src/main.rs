@@ -56,13 +56,15 @@ fn main() -> Result<()> {
         setup_database(&mut conn).context("failed to setup database")?;
     }
 
-    std::thread::Builder::new()
-        .stack_size(1024 * 1024 * 1024)
-        .spawn(|| run(config))?
-        .join()
-        .unwrap()?;
+    run(config)
 
-    Ok(())
+    // std::thread::Builder::new()
+    //     .stack_size(1024 * 1024 * 1024)
+    //     .spawn(|| run(config))?
+    //     .join()
+    //     .unwrap()?;
+    //
+    // Ok(())
 }
 
 fn run(config: Config) -> Result<()> {
