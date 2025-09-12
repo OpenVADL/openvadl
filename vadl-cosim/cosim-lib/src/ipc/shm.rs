@@ -10,7 +10,7 @@ use crate::{
     bail_on_libc_err, eprintln_on_libc_err,
     ipc::{
         PERMISSONS,
-        cstructs::{BrokerSHM, BrokerSHMInsn, BrokerSHMTB, BrokerSem},
+        cstructs::{BrokerSHMData, BrokerSHMRingBuffer, BrokerSem},
         get_last_error,
         sem::{Semaphore, TimedWaitState},
     },
@@ -42,13 +42,17 @@ impl SharedMemory<BrokerSem> {
     }
 }
 
-impl SharedMemory<BrokerSHM> {
-    pub fn get_insn(&self) -> &BrokerSHMInsn {
-        unsafe { &self.get().data.shm_insn }
+impl<const SIZE: usize> SharedMemory<BrokerSHMRingBuffer<SIZE>> {
+    pub fn read_buffer(&mut self) -> anyhow::Result<&BrokerSHMData> {
+        self.get_mut().start_read()
     }
 
-    pub fn get_tb(&self) -> &BrokerSHMTB {
-        unsafe { &self.get().data.shm_tb }
+    pub fn read_buffer_prev(&self) -> &BrokerSHMData {
+        self.get().read_previous()
+    }
+
+    pub fn end_read_buffer(&mut self) {
+        self.get_mut().end_read();
     }
 }
 
@@ -108,7 +112,6 @@ impl<T: Sized> SharedMemory<T> {
         shared
     }
 
-    #[allow(clippy::mut_from_ref)]
     pub fn get_mut(&mut self) -> &mut T {
         let data_ptr = self.mmap_ptr as *mut T;
         let shared: &mut T = unsafe { &mut *data_ptr };

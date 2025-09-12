@@ -8,9 +8,7 @@ use figment::{
 };
 use tracing::{Level, info};
 
-use cosim_lib::{
-    config::Config, cosim::Broker, db::setup_database, diff::Report, trace::connect,
-};
+use cosim_lib::{config::Config, cosim::Broker, db::setup_database, diff::Report, trace::connect};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -58,6 +56,10 @@ fn main() -> Result<()> {
         setup_database(&mut conn).context("failed to setup database")?;
     }
 
+    run(config)
+}
+
+fn run(config: Config) -> Result<()> {
     let mut broker = Broker::create(&config)?;
     let report_data = broker.run(&config)?;
     let passed = report_data.passed;
@@ -82,9 +84,7 @@ fn main() -> Result<()> {
         None => println!("{report}"),
     }
 
-    broker.finish(passed, &config)?;
-
-    Ok(())
+    broker.finish(passed, &config)
 }
 
 fn add_plain_report_summary(buf: &mut String, report: &Report) {
@@ -112,13 +112,14 @@ fn add_plain_report_summary(buf: &mut String, report: &Report) {
         .diff_context
         .iter()
         .map(|ctx| &ctx.error_instruction.0)
-        .min_by_key(|insns| insns.len())
-        .unwrap();
+        .min_by_key(|insns| insns.len());
 
-    for insn in min_insns {
-        let pc = insn.pc;
-        let disas = &insn.disas;
-        let insn_data = &insn.insn_data;
-        buf.push_str(&format!("- (pc={pc}): {disas} ({insn_data})\n"));
+    if let Some(min_insns) = min_insns {
+        for insn in min_insns {
+            let pc = insn.pc;
+            let disas = &insn.disas;
+            let insn_data = &insn.insn_data;
+            buf.push_str(&format!("- (pc={pc}): {disas} ({insn_data})\n"));
+        }
     }
 }

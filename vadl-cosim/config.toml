@@ -27,7 +27,7 @@ ignore_unset_registers = true
 
 # Ignore specific registers
 # Filters in conjunction with `ignore_unset_registers`
-ignore_registers = [ "s0", "x0" ]
+ignore_registers = [ "s0", "x0", "pc" ]
 
 
 # Defines a list of clients to test against
@@ -168,10 +168,11 @@ layer = "tb"
 mode = "lockstep" 
 
 # Execute all remaining instructions (overrides `stop_after_n_instructions` if set to true)
-execute_all_remaining_instructions = true
+execute_all_remaining_instructions = false
 
 # Execute the next (after skipped) n instructions
-stop_after_n_instructions = 10000
+stop_after_n_instructions = 100000
+# stop_after_n_instructions = 1
 
 # Where the test result should be saved and in which format
 [testing.protocol.out]
@@ -183,7 +184,7 @@ verbosity = "short"
 [logging]
 enable = true 
 # tracing log-levels as defined here: https://docs.rs/tracing/latest/tracing/struct.Level.html#implementations
-level = "info"
+level = "debug"
 
 # The directory will also contain files for the stdout and stderr of each client
 dir = "./cosim-run/log"
@@ -209,7 +210,7 @@ clear_on_rerun = true
 #				 (-): Tracing data is only available at the end of the cosimulation-process.
 #				 => This mode is probably most useful when manually running a test where the test-result is not known beforehand. In most cases using a combination of "none" and "sync" is probably preferred.
 [tracing]
-mode = "sync"
+mode = "none"
 # NOTE: If no db-file is found at the given path then one will be automatically created.
 dir = "./cosim-run/trace"
 file = "trace.sqlite3"
