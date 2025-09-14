@@ -1091,7 +1091,7 @@ class SymbolTable {
 
           // Verify that the field specified really is a field in the encoding
           var field = fieldEncoding.field;
-          if (format.getField(field.name) == null) {
+          if (!format.hasField(field.name)) {
             var suggestions = Levenshtein.suggestions(
                 field.name,
                 format.fields.stream().map(f -> f.identifier().name).toList());

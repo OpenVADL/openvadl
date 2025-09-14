@@ -167,6 +167,24 @@ public class NameResolutionTest {
   }
 
   @Test
+  void unknownFieldInEcoding() {
+    // https://github.com/OpenVADL/openvadl/issues/478
+    var prog = """
+        instruction set architecture ISA = {
+          register X : Bits<32>
+          format Btype : Bits<32> = {
+            bits [31..0]
+          }
+          instruction BEQ : Btype = { X := 0 }
+          encoding BEQ = { bit = 8 }
+        }
+        """;
+    var error = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
+        "Should reject typos");
+    Assertions.assertEquals("Unknown Field: \"bit\"", error.items.getFirst().reason);
+  }
+
+  @Test
   void formatFieldsAvailableInInstruction() {
     var prog = """
         instruction set architecture ISA = {
