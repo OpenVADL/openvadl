@@ -13,6 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/* PPC64SFS is a 64-bit implementation of the scalar fixed-point subset defined in PowerISA 3.1b. 
+ * It includes 132 instructions (excluding variants) which are sometimes referred to as the "base 
+ * architecture." The Power ISA represents a unification of the earlier POWER and PowerPC ISAs.
+ *
+ * Most modern 64-bit Power ISA processors support a 32-bit compatibility mode.
+ * In this specification, it is enabled by setting MSR.sf to 0b0.
+ *
+ * Explanation of instruction mnemonic suffixes:
+ * _L : set the link register to PC.next (PC + 4)
+ * _A : use absolute addressing, otherwise the address is relative to PC
+ * _O : set OV and OV32 (64/ 32-bit overflow flags)
+ * _. : set the condition register (See CRField definition for more details)
+ *
+ * Note: in instruction identifiers, "." is written as "_", since dots are not allowed in identifiers
+ */
+
 instruction set architecture PPC64SFS = {
 
   constant mask32  : Bits<64> = 0x0000'0000'FFFF'FFFF      // mask for lower 32-bits
