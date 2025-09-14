@@ -287,7 +287,7 @@ class SymbolTable {
       return origin;
     }
 
-    // FIXME: This rewrite should probably be expanded and life in a shared place.
+    // FIXME: This rewrite should probably be expanded and live in a shared place.
     var definitionNames = Map.of(
         InstructionDefinition.class, "instruction",
         InstructionSetDefinition.class, "ISA",
