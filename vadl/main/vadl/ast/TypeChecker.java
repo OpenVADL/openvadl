@@ -1008,8 +1008,18 @@ public class TypeChecker
 
       var valType = definition.value.type();
       if (definition.aliasType != null) {
-        definition.type = check(definition.aliasType);
-        definition.value = tryWrapImplicitCast(definition.value, definition.type);
+        var aliasType = check(definition.aliasType);
+        definition.type = aliasType;
+
+        if (!(aliasType instanceof DataType aliasDataType
+            && valType instanceof DataType valDataType
+            && aliasDataType.bitWidth() == valDataType.bitWidth())
+        ) {
+          // If it cannot be implicitly cast and the bitwidths don't match,
+          // we must throw a type mismatch error
+          throw typeMismatchError(definition.value, aliasType, valType);
+        }
+        definition.value = new CastExpr(definition.value, aliasType);
       } else {
         definition.type = valType;
       }

@@ -1405,6 +1405,15 @@ final class TypeLiteral extends Expr {
       this.baseType = new Identifier(formatType.format.identifier().name,
           SourceLocation.INVALID_SOURCE_LOCATION);
       this.sizeIndices = List.of();
+    } else if (type instanceof TensorType tensortype) {
+      var innerLiteral = new TypeLiteral(tensortype.innerType(), loc);
+      this.baseType = innerLiteral.baseType;
+      var indices = new ArrayList<Expr>();
+      for (var i : tensortype.indexDims()) {
+        indices.add(new IntegerLiteral(Integer.toString(i), loc));
+      }
+      indices.addAll(innerLiteral.sizeIndices);
+      this.sizeIndices = indices;
     } else {
       throw new IllegalStateException("Unsupported type " + type.getClass().getSimpleName());
     }

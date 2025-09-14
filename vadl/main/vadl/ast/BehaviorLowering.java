@@ -275,14 +275,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           0);
       params.add(param);
       indices.add(new FuncParamNode(param));
-      resultType = relType.resultType().asDataType();
+      resultType = getViamType(relType.resultType()).asDataType();
     } else {
-      resultType = definition.type().asDataType();
+      resultType = getViamType(definition.type()).asDataType();
     }
 
     var reg = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
     var regReadType = regFileDef.type() instanceof ConcreteRelationType relType
-        ? relType.resultType().asDataType() : resultType.asDataType();
+        ? relType.resultType().asDataType() : resultType;
     ExpressionNode regAccess = new ReadRegTensorNode(
         reg,
         indices,
@@ -314,7 +314,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return new Function(
         identifier,
         params.toArray(vadl.viam.Parameter[]::new),
-        getViamType(resultType),
+        resultType,
         graph
     );
   }
@@ -349,16 +349,16 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           0);
       params.add(param);
       indices.add(new FuncParamNode(param));
-      resultType = relType.resultType().asDataType();
+      resultType = getViamType(relType.resultType()).asDataType();
     } else {
-      resultType = definition.type().asDataType();
+      resultType = getViamType(definition.type()).asDataType();
     }
 
     var valueParam = new vadl.viam.Parameter(
         viamLowering.generateIdentifier(
             identifier.name() + "::value",
             identifier.location()),
-        getViamType(resultType),
+        resultType,
         1);
     params.add(valueParam);
 
