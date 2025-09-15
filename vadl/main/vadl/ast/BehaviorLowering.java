@@ -245,6 +245,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         : or(constChecks);
   }
 
+  /**
+   * The function returned represents how the read from the acutal resource will be transformed
+   * to the value the alias read actually returns.
+   *
+   * @param definition of the alias definition for which the read function will be generated.
+   * @return the mapping function.
+   */
   Function getRegisterAliasReadFunc(AliasDefinition definition) {
     var graph = new Graph("%s Read Behavior".formatted(definition.viamId));
     graph.setSourceLocation(definition.location());
@@ -252,8 +259,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     final var identifier =
         viamLowering.generateIdentifier(definition.viamId + "::read", definition.loc);
-    final var regFileDef = (RegisterDefinition) Objects.requireNonNull(definition.computedTarget);
-    final var zeroConst = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
 
     DataType resultType;
     // Initially the indices are all fixed arguments specified in the alias definition.
@@ -280,6 +285,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       resultType = getViamType(definition.type()).asDataType();
     }
 
+    final var regFileDef = (RegisterDefinition) Objects.requireNonNull(definition.computedTarget);
     var reg = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
     var regReadType = regFileDef.type() instanceof ConcreteRelationType relType
         ? relType.resultType().asDataType() : resultType;
@@ -290,6 +296,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         null
     );
 
+    final var zeroConst = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
     if (zeroConst != null) {
       // Wrap the register read in a conditional read, depending on the indices values.
       // Compatibility was already checked by the annotation itself during type checking.

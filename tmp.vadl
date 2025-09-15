@@ -1,0 +1,26 @@
+instruction set architecture PPC64SFS = {
+
+  program counter PC  : Bits<64>
+  memory          MEM : Bits<64> -> Bits<8>
+
+  register CR  : Bits<32>
+  alias register CRF : Bits<8><4> = CR
+
+  format TestForm : Bits<32> =
+    { t : Bits<32>
+    }
+
+  instruction TEST : TestForm =
+        CRF(0) := 0xF
+  encoding TEST = {t = 0b0}
+  assembly TEST = ("test")
+
+}
+
+processor Power implements PPC64SFS = {
+  reset = PC := 0x0000'0000'0000'0100
+
+  [ firmware ]
+  [ base: 0x00000000 ]
+  memory region [RAM] DRAM in MEM
+}
