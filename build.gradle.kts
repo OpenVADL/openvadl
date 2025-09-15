@@ -134,6 +134,7 @@ subprojects {
     }
 
     tasks.withType<JavaExec> {
+        standardInput = System.`in`
         workingDir = rootProject.projectDir
         outputs.upToDateWhen { false }
     }
