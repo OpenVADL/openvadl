@@ -286,7 +286,20 @@ class SymbolTable {
     if (origin != null) {
       return origin;
     }
-    errors.add(error("Unknown name " + usage.pathToString(), usage).build());
+
+    // FIXME: This rewrite should probably be expanded and live in a shared place.
+    var definitionNames = Map.of(
+        InstructionDefinition.class, "instruction",
+        InstructionSetDefinition.class, "ISA",
+        AssemblyDefinition.class, "assembly",
+        ApplicationBinaryInterfaceDefinition.class, "ABI",
+        FormatDefinition.class, "format",
+        MemoryDefinition.class, "memory"
+    );
+    var definitionName = definitionNames.getOrDefault(type, type.getSimpleName());
+
+    var suggestions = Levenshtein.suggestions(usage.pathToString(), allSymbolNamesOf(type));
+    reportUnkownError(definitionName, usage.pathToString(), usage, suggestions);
     return null;
   }
 
