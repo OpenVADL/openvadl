@@ -42,6 +42,10 @@ name = "VADL"
 # The executable of the ISS
 exec = "qemu-system-a64"
 
+# The path to the compiled file to use for testing
+# This file will be passed to all clients
+test_exec="./test-execs/sglib-combined"
+
 # "bios" | "kernel": Defines where the test-executable is passed to when starting the QEMU-client
 pass_test_exec_to = "bios"
 
@@ -75,6 +79,8 @@ remote_target = "/tmp/gdb-cosim-VADL"
 name = "UPSTREAM"
 
 exec = "qemu-system-aarch64"
+
+test_exec="./test-execs/sglib-combined"
 
 pass_test_exec_to = "kernel"
 
@@ -133,15 +139,6 @@ pc = "pc"
 
 # Defines the test-source and how to test
 [testing]
-
-# The path to the compiled file to use for testing
-# This file will be passed to all clients
-test_exec="./test-execs/sglib-combined"
-
-# The maximum trace length during a test-run
-# The trace acts as a sized dequeue, meaning newer trace-entries push out the oldest trace-entries if the length has been reached
-# Use max_trace_length = -1 to keep all traces
-max_trace_length = 2
 
 # The testing-protocol defines how the clients are run and tested against eachother
 [testing.protocol]

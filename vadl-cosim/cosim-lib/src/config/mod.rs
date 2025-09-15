@@ -139,11 +139,7 @@ pub enum ProtocolLayer {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Testing {
-    pub test_exec: String,
-
     pub protocol: Protocol,
-
-    pub max_trace_length: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -170,6 +166,8 @@ pub enum GDBTargetType {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Client {
     pub exec: String,
+
+    pub test_exec: String,
 
     pub pass_test_exec_to: TestExecDestination,
 

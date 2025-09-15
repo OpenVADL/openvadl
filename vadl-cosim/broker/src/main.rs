@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use clap::Parser;
 use figment::{
     Figment,
@@ -18,8 +18,12 @@ pub struct Cli {
     pub config: String,
 
     /// Defines where the test-executable is passed to when starting the QEMU-client
+    /// If not set, the values from the config-file will be taken
+    /// If only one value is set then all clients will receive this path
+    /// If multiple values are set (--test-exec foo --test-exec bar) then each path will be
+    /// assigned to each client with the same order as in the config-file.
     #[arg(short, long, value_name = "FILE")]
-    pub test_exec: Option<String>,
+    pub test_exec: Option<Vec<String>>,
 }
 
 fn default_config_file() -> String {
@@ -34,7 +38,26 @@ fn main() -> Result<()> {
     config.qemu.set_inverse_reg_map();
 
     if let Some(test_exec) = cli.test_exec {
-        config.testing.test_exec = test_exec;
+        match &test_exec[..] {
+            [test_exec] => {
+                for client in &mut config.qemu.clients {
+                    client.test_exec = test_exec.clone();
+                }
+            }
+            test_execs => {
+                if test_execs.len() != config.qemu.clients.len() {
+                    bail!(
+                        "Multiple test-execs were provided using --test-exec, but the provided amount ({}) does not match the amount of clients in the config-file ({})",
+                        test_execs.len(),
+                        config.qemu.clients.len()
+                    );
+                }
+
+                for (i, client) in config.qemu.clients.iter_mut().enumerate() {
+                    client.test_exec = test_execs[i].clone();
+                }
+            }
+        }
     }
 
     if config.logging.enable {
