@@ -56,7 +56,7 @@ impl Client {
         let plugin = plugin.join(",");
         let default_args = vec![
             format!("-{}", client_cfg.pass_test_exec_to),
-            config.testing.test_exec.clone(),
+            client_cfg.test_exec.clone(),
             "-plugin".into(),
             plugin,
         ];
