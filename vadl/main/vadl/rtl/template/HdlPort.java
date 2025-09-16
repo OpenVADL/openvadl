@@ -16,7 +16,8 @@
 
 package vadl.rtl.template;
 
-import javax.annotation.Nullable;
+import java.util.HashSet;
+import java.util.Set;
 import vadl.rtl.ipg.nodes.RtlReadMemNode;
 import vadl.rtl.ipg.nodes.RtlWriteMemNode;
 import vadl.viam.Memory;
@@ -26,13 +27,27 @@ import vadl.viam.Signal;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
 
+/**
+ * Input/output port on a HDL module.
+ *
+ * @param name Port name
+ * @param resource Resource this port reads/writes
+ * @param read True, if this is a read or write port.
+ * @param output True, if this is an output (write nodes create outputs, reads nodes inputs).
+ * @param nodes Read/write nodes this port is connected to. This set is extended when signal or
+ *              register read ports are merged.
+ */
 public record HdlPort(
     String name,
     Resource resource,
     boolean read,
     boolean output,
-    @Nullable Node node
+    Set<Node> nodes
 ) {
+
+  public HdlPort(String name, Resource resource, boolean read, boolean output, Node node) {
+    this(name, resource, read, output, new HashSet<>(Set.of(node)));
+  }
 
   public boolean write() {
     return !read;
@@ -44,17 +59,15 @@ public record HdlPort(
 
   private String resolveIO(String type) {
     if (resource instanceof Signal) {
-      if (read() ^ input()) {
+      if (input()) {
         return "Input(" + type + ")";
       } else {
         return "Output(" + type + ")";
       }
-    }
-    if (resource instanceof RegisterTensor && output()) {
-      return "Flipped(" + type + ")";
-    }
-    if (resource instanceof Memory && output()) {
-      return "Flipped(" + type + ")";
+    } else {
+      if ((read() && input()) || (write() && output())) {
+        return "Flipped(" + type + ")";
+      }
     }
     return type;
   }
@@ -63,6 +76,11 @@ public record HdlPort(
     return resolveIO(getType());
   }
 
+  /**
+   * Type of this port in the HDL description.
+   *
+   * @return HDL type
+   */
   public String getType() {
     if (resource instanceof Signal sig) {
       return HdlUtils.type(sig.resultType());
@@ -87,28 +105,30 @@ public record HdlPort(
         }
       }
     }
-    if (resource instanceof Memory mem && node instanceof RtlReadMemNode node) {
+    if (resource instanceof Memory mem) {
       if (read) {
+        var maxWords = nodes.stream()
+            .mapToInt(node -> (node instanceof RtlReadMemNode rd) ? rd.maxWords() : 0)
+            .max().getAsInt();
         return "new VADL.MemReadPort(%s, %s, %s)"
-            .formatted(HdlUtils.type(mem.resultType()), node.maxWords(), mem.addressType().bitWidth());
+            .formatted(HdlUtils.type(mem.resultType()), maxWords, mem.addressType().bitWidth());
       } else {
+        var maxWords = nodes.stream()
+            .mapToInt(node -> (node instanceof RtlWriteMemNode wr) ? wr.maxWords() : 0)
+            .max().getAsInt();
         return "new VADL.MemWritePort(%s, %s, %s)"
-            .formatted(HdlUtils.type(mem.resultType()), node.maxWords(), mem.addressType().bitWidth());
-      }
-    }
-    if (resource instanceof Memory mem && node instanceof RtlWriteMemNode node) {
-      if (read) {
-        return "new VADL.MemReadPort(%s, %s, %s)"
-            .formatted(HdlUtils.type(mem.resultType()), node.maxWords(), mem.addressType().bitWidth());
-      } else {
-        return "new VADL.MemWritePort(%s, %s, %s)"
-            .formatted(HdlUtils.type(mem.resultType()), node.maxWords(), mem.addressType().bitWidth());
+            .formatted(HdlUtils.type(mem.resultType()), maxWords, mem.addressType().bitWidth());
       }
     }
     throw new ViamError("Can not emit resource %s", resource);
   }
 
-  public String rtlName() {
+  /**
+   * Name of this port in the HDL description.
+   *
+   * @return HDL name
+   */
+  public String hdlName() {
     if (output) {
       return name + "_out";
     }

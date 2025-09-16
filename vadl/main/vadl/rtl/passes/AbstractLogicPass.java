@@ -49,17 +49,11 @@ public abstract class AbstractLogicPass extends AbstractRtlPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
 
-    var optIsa = viam.isa();
-    if (optIsa.isEmpty()) {
+    var isa = viam.isa().orElse(null);
+    var mia = viam.mia().orElse(null);
+    if (isa == null || mia == null) {
       return null;
     }
-    var isa = optIsa.get();
-
-    var optMia = viam.mia();
-    if (optMia.isEmpty()) {
-      return null;
-    }
-    var mia = optMia.get();
 
     return execute(passResults, viam, isa, mia);
   }

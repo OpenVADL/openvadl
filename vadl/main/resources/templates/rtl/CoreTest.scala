@@ -95,7 +95,7 @@ class CoreTest extends AnyFunSpec with ChiselSim {
           val delayWr = () => 0 // rand.nextInt(4) // test stalling
           val pending = new mutable.HashMap[Object, Int]()
 
-          [# th:if="${resetVector != null}"]dut.io.[(${resetVector})]_out.poke(start)[/]
+          [# th:if="${resetVector != null}"]dut.io.[(${resetVector})]_in.poke(start)[/]
           [# th:if="${memoryValid}"]
           dut.io.getElements.foreach {
             case rd: VADL.MemReadPort[?] =>

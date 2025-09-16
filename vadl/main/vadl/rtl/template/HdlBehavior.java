@@ -21,9 +21,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
+import vadl.rtl.ipg.nodes.RtlDebugPrintNode;
 import vadl.rtl.ipg.nodes.RtlInstructionWordSliceNode;
 import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
 import vadl.rtl.ipg.nodes.RtlOneHotDecodeNode;
@@ -37,6 +39,7 @@ import vadl.types.BoolType;
 import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.UIntType;
+import vadl.viam.Definition;
 import vadl.viam.Resource;
 import vadl.viam.Signal;
 import vadl.viam.graph.Node;
@@ -45,7 +48,6 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.LetNode;
-import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.SelectNode;
@@ -57,14 +59,27 @@ import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.WriteSignalNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
+/**
+ * Create HDL signals and ports from HDL module behaviors.
+ */
 public class HdlBehavior {
 
+  /**
+   * Create HDL signals and ports from HDL module behaviors.
+   *
+   * @param modules list of HDL modules
+   */
   public static void create(List<HdlModule> modules) {
     for (HdlModule module : modules) {
       create(module);
     }
   }
 
+  /**
+   * Create HDL signals and ports from an HDL module behavior.
+   *
+   * @param module HDL module
+   */
   public static void create(HdlModule module) {
     var behavior = module.behavior();
     if (behavior == null) {
@@ -74,6 +89,7 @@ public class HdlBehavior {
     // create signals and assignments (connections)
     var collector = new SignalCollector(module);
     behavior.getNodes(WriteResourceNode.class).forEach(collector::handle);
+    behavior.getNodes(RtlDebugPrintNode.class).forEach(collector::handle);
   }
 
   @DispatchFor(
@@ -92,7 +108,7 @@ public class HdlBehavior {
     }
 
     public String dispatch(ExpressionNode node) {
-      return SignalCollectorDispatcher.dispatch(this, node);
+      return exprOrSig(node, () -> SignalCollectorDispatcher.dispatch(this, node));
     }
 
     private String exprOrSig(ExpressionNode node, Supplier<String> getExpr) {
@@ -107,7 +123,7 @@ public class HdlBehavior {
         if (def == null) {
           def = module.context().viam();
         }
-        var name = module.context().name(node, module.localNames(), null);
+        var name = module.context().name(node, module.localNames(), fallbackName(node));
         var id = def.identifier.append(name);
         var signal = new Signal(id, node.type().asDataType());
         module.addResource(signal);
@@ -135,46 +151,53 @@ public class HdlBehavior {
       if (module.resources().contains(resource)) {
         expr = new HdlConnection.ResourceEndpoint(resource, null).rtlName();
       } else {
-        var name = module.context().name(node, module.portNames(), null);
+        var name = module.context().name(node, module.portNames(), fallbackName(node));
         var port = new HdlPort(name, resource, (node instanceof ReadResourceNode),
-            true, node);
+            (node instanceof WriteResourceNode), node);
         module.addPort(port);
-        expr = "io." + port.rtlName();
+        expr = "io." + port.hdlName();
       }
 
       cache.put(node, expr);
       return expr;
     }
 
+    @Nullable
+    private String fallbackName(Node node) {
+      if (node instanceof RtlIsInstructionNode n) {
+        return "is_" + n.instructions().stream()
+            .map(Definition::simpleName).collect(Collectors.joining(""));
+      }
+      return null;
+    }
+
     @Handler
     String handle(BuiltInCall node) {
-      return exprOrSig(node, () -> {
-        var args = node.arguments().stream()
-            .map(this::dispatch)
-            .collect(Collectors.joining(", "));
-        return node.builtIn().name().replace("VADL::", "") + "(" + args + ")";
-      });
+      var args = node.arguments().stream()
+          .map(this::dispatch)
+          .collect(Collectors.joining(", "));
+      return node.builtIn().name().replace("VADL::", "") + "(" + args + ")";
     }
 
     @Handler
     String handle(SelectNode node) {
-      return exprOrSig(node, () -> "Mux((" + dispatch(node.condition()) + ").asBool, " + dispatch(node.trueCase())
-          + ", " + dispatch(node.falseCase()) + ")");
+      return "Mux((" + dispatch(node.condition()) + ").asBool, " + dispatch(node.trueCase())
+          + ", " + dispatch(node.falseCase()) + ")";
     }
 
     @Handler
     String handle(SignExtendNode node) {
-      return exprOrSig(node, () -> dispatch(node.value()) + ".sext(" + node.type().bitWidth() + ".W)");
+      return dispatch(node.value()) + ".sext(" + node.type().bitWidth() + ".W)";
     }
 
     @Handler
     String handle(ZeroExtendNode node) {
-      return exprOrSig(node, () -> dispatch(node.value()) + ".zext.asUInt");
+      return dispatch(node.value()) + ".zext.asUInt";
     }
 
     @Handler
     String handle(TruncateNode node) {
-      return exprOrSig(node, () -> dispatch(node.value()));
+      return dispatch(node.value());
     }
 
     @Handler
@@ -274,7 +297,7 @@ public class HdlBehavior {
     @Handler
     String handle(ReadResourceNode node) {
       var expr = portOrResource(node, node.resourceDefinition());
-      var port = module.ports().stream().filter(p -> node.equals(p.node())).findFirst();
+      var port = module.ports().stream().filter(p -> p.nodes().contains(node)).findFirst();
       var res = module.resources().stream().filter(r -> node.resourceDefinition().equals(r))
           .findFirst();
       if (port.isPresent() && node.hasAddress()) {
@@ -377,12 +400,37 @@ public class HdlBehavior {
         ));
       }
     }
+
+    // not a handler because we generate dispatch only for expression nodes
+    void handle(RtlDebugPrintNode node) {
+      var str = node.render(
+          (placeholder, value) -> "${" + dispatch(value) + "}" + placeholder);
+      var print = "printf(cf\"" + str + "\\n\")";
+      HdlConnection.ExpressionEndpoint cond = null;
+      if (node.nullableCondition() != null) {
+        cond = new HdlConnection.ExpressionEndpoint(null, dispatch(node.condition()));
+      }
+      module.connections().add(new HdlConnection(
+          null,
+          new HdlConnection.ExpressionEndpoint(null, print),
+          false,
+          cond
+      ));
+    }
+
   }
 
+  /**
+   * Determines if a node value needs to be emitted as a signal in HDL.
+   *
+   * @param node expression node
+   * @return True, if expression node needs to be a signal.
+   */
   public static boolean isSignal(ExpressionNode node) {
     if (node instanceof RtlInstructionWordSliceNode
         || node instanceof SliceNode
-        || node instanceof ConstantNode) {
+        || node instanceof ConstantNode
+        || node instanceof ReadSignalNode) {
       return false;
     }
     return (node.usageCount() > 1

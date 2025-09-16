@@ -73,8 +73,7 @@ public class RtlCommand extends BaseCommand {
       scope = INHERIT,
       description = "Read the reset vector from an external signal with this name. "
           + "Useful for test benches. "
-          + "Overrides any reset value for the PC in the specification.",
-      defaultValue = "false")
+          + "Overrides any reset value for the PC in the specification.")
   @Nullable
   String resetVector = null;
 

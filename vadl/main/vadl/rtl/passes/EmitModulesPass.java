@@ -17,6 +17,7 @@
 package vadl.rtl.passes;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,6 +25,7 @@ import vadl.configuration.RtlConfiguration;
 import vadl.error.Diagnostic;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
 import vadl.rtl.ipg.nodes.RtlResetSignalNode;
 import vadl.rtl.template.HdlBehavior;
 import vadl.rtl.template.HdlEmitContext;
@@ -31,6 +33,9 @@ import vadl.rtl.template.HdlModule;
 import vadl.rtl.template.HdlWiring;
 import vadl.rtl.template.RtlTemplateRenderingPass;
 import vadl.rtl.utils.GraphMergeUtils;
+import vadl.rtl.utils.RtlSimplificationRules;
+import vadl.rtl.utils.RtlSimplifier;
+import vadl.utils.GraphUtils;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Logic;
@@ -40,12 +45,18 @@ import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.graph.dependency.WriteStageOutputNode;
+import vadl.viam.passes.canonicalization.Canonicalizer;
 
+/**
+ * Emits stages and logic elements inside a top module as HDL. Also emits reset behavior.
+ */
 public class EmitModulesPass extends RtlTemplateRenderingPass {
 
   public EmitModulesPass(RtlConfiguration configuration) {
@@ -89,6 +100,14 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
 
     var core = core(context, modules);
     modules.add(core);
+
+    for (HdlModule module : modules) {
+      var behavior = module.behavior();
+      if (behavior != null) {
+        Canonicalizer.canonicalize(behavior);
+        new RtlSimplifier(RtlSimplificationRules.rules).run(behavior);
+      }
+    }
 
     HdlBehavior.create(modules);
     HdlWiring.wire(modules);
@@ -160,8 +179,29 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
     var resources = new ArrayList<Resource>();
     resources.addAll(stage.signals());
     resources.addAll(stage.registers());
+
+    // remove stage outputs, they are already lowered to register writes
+    var behavior = stage.behavior().copy();
+    behavior.getNodes(WriteStageOutputNode.class).toList()
+        .forEach(node -> node.safeDelete(true));
+
+    // replace is-instruction nodes matching sets of instructions
+    // with or-expressions of single instruction is-instruction nodes
+    // this results in a cleaner hdl output
+    behavior.getNodes(RtlIsInstructionNode.class).toList()
+        .forEach(node -> {
+          if (node.instructions().size() > 1) {
+            node.instructions().stream()
+                .map(instr -> (ExpressionNode) new RtlIsInstructionNode(
+                    Collections.singleton(instr), node.instruction()))
+                .reduce(GraphUtils::or)
+                .map(behavior::addWithInputs)
+                .ifPresent(node::replaceAndDelete);
+          }
+        });
+
     return new HdlModule(context, stage, stage.simpleName(),
-        resources, List.of(), stage.behavior());
+        resources, List.of(), behavior);
   }
 
   private HdlModule logic(HdlEmitContext context, Logic logic) {

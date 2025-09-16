@@ -17,6 +17,7 @@
 package vadl.rtl.template;
 
 import com.google.common.collect.BiMap;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -32,6 +33,16 @@ import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.WriteSignalNode;
 
+/**
+ * Emit context for HDL generation.
+ *
+ * @param viam VIAM specification
+ * @param isa ISA definition
+ * @param mia MiA definition
+ * @param processor Processor definition
+ * @param inlineMap Inline map from the {@link vadl.rtl.passes.MiaMappingInlinePass}
+ * @param resetVector optional external signal that provides the reset vector for pc reset
+ */
 public record HdlEmitContext(
     Specification viam,
     InstructionSetArchitecture isa,
@@ -45,6 +56,12 @@ public record HdlEmitContext(
     return Optional.ofNullable(inlineMap.inverse().get(inlinedNode));
   }
 
+  /**
+   * Get the IPG node context of an inlined node.
+   *
+   * @param inlinedNode node inlined in a stage.
+   * @return IPG node context
+   */
   public Optional<InstructionProgressGraph.NodeContext> ipgContext(Node inlinedNode) {
     return ipgNode(inlinedNode).map(node -> {
       if (node.ensureGraph() instanceof InstructionProgressGraph ipg) {
@@ -54,24 +71,43 @@ public record HdlEmitContext(
     });
   }
 
-  public String name(@Nullable Node inlinedNode, Set<String> existing, @Nullable String fallback) {
-    if (inlinedNode == null) {
+  public String name(Node inlinedNode, Set<String> existing, @Nullable String fallback) {
+    return name(Set.of(inlinedNode), existing, fallback);
+  }
+
+  /**
+   * Get a new name for a set of nodes inlined in a stage. Gets the first name we can find
+   * in the IPG, return fallback otherwise.
+   *
+   * @param inlinedNodes set of nodes inlined in stages
+   * @param existing existing names
+   * @param fallback fallback name
+   * @return name for inlined nodes
+   */
+  public String name(Collection<Node> inlinedNodes, Set<String> existing,
+                     @Nullable String fallback) {
+
+    if (inlinedNodes.isEmpty()) {
       if (fallback == null) {
         throw new IllegalArgumentException("inlinedNode and fallback is null");
       }
       return fallback;
     }
-    return ipgContext(inlinedNode)
-        .flatMap(nodeContext -> nodeContext.shortestNameHint(existing, 30))
-        .orElseGet(() -> {
-          if (fallback == null || existing.contains(fallback)) {
-            return fallback(inlinedNode, existing);
-          }
-          return fallback;
-        });
+    return inlinedNodes.stream()
+        .map(inlinedNode -> ipgContext(inlinedNode)
+            .map(nodeContext ->
+                nodeContext.shortestNameHint(existing, 30)
+                    .orElse("n_" + nodeContext.node().id().numericId()))
+            .orElseGet(() -> {
+              if (fallback == null || existing.contains(fallback)) {
+                return fallback(inlinedNode, existing);
+              }
+              return fallback;
+            }))
+        .findFirst().get();
   }
 
-  public String fallback(Node node, Set<String> existing) {
+  private String fallback(Node node, Set<String> existing) {
     if (node instanceof ReadResourceNode r) {
       var prefix = (r instanceof ReadSignalNode) ? "" : "read_";
       var name = prefix + r.resourceDefinition().simpleName();

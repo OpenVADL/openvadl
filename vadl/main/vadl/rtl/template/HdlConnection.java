@@ -19,7 +19,6 @@ package vadl.rtl.template;
 import javax.annotation.Nullable;
 import vadl.viam.Resource;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ExpressionNode;
 
 public record HdlConnection(
     @Nullable Endpoint output,
@@ -36,9 +35,9 @@ public record HdlConnection(
     @Override
     public String rtlName() {
       if (child != null) {
-        return child.name() + ".io." + port.rtlName();
+        return child.name() + ".io." + port.hdlName();
       }
-      return "io." + port.rtlName();
+      return "io." + port.hdlName();
     }
   }
 

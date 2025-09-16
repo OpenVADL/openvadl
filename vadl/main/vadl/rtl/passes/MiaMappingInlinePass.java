@@ -54,7 +54,13 @@ import vadl.viam.graph.dependency.WriteRegTensorNode;
  */
 public class MiaMappingInlinePass extends Pass {
 
-  record Result(
+  /**
+   * Result of the {@link MiaMappingInlinePass}.
+   *
+   * @param stageRegisterMap Maps node values and stages to the stage registers they are saved in.
+   * @param inlineMap Maps all IPG nodes to nodes in stage behaviors.
+   */
+  public record Result(
       Map<Pair<Node, Stage>, RegisterTensor> stageRegisterMap,
       BiMap<Node, Node> inlineMap
   ) {

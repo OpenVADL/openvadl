@@ -180,7 +180,8 @@ public class RtlInstructionWordSliceNode extends ExpressionNode {
 
   @Override
   public Node shallowCopy() {
-    return copy();
+    return new RtlInstructionWordSliceNode(formatType, slice, fields, type().asDataType(),
+        instruction);
   }
 
   @Override

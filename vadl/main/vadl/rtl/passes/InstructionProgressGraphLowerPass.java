@@ -19,7 +19,9 @@ package vadl.rtl.passes;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -27,6 +29,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
+import vadl.rtl.ipg.nodes.RtlDebugPrintNode;
 import vadl.rtl.ipg.nodes.RtlInstructionWordSliceNode;
 import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
 import vadl.rtl.ipg.nodes.RtlOneHotDecodeNode;
@@ -37,7 +40,9 @@ import vadl.rtl.utils.RtlSimplifier;
 import vadl.utils.GraphUtils;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.canonicalization.Canonicalizer;
 
@@ -60,17 +65,14 @@ public class InstructionProgressGraphLowerPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var optIsa = viam.isa();
-    if (optIsa.isEmpty()) {
-      return null;
-    }
-    var optMia = viam.mia();
-    if (optMia.isEmpty()) {
+    var isa = viam.isa().orElse(null);
+    var mia = viam.mia().orElse(null);
+    if (isa == null || mia == null) {
       return null;
     }
 
-    var ipg = optIsa.get().expectExtension(InstructionProgressGraphExtension.class).ipg();
-    var mapping = optMia.get().extension(MiaMapping.class);
+    var ipg = isa.expectExtension(InstructionProgressGraphExtension.class).ipg();
+    var mapping = mia.extension(MiaMapping.class);
     if (mapping == null) {
       return null;
     }
@@ -85,6 +87,7 @@ public class InstructionProgressGraphLowerPass extends Pass {
     });
 
     // add select-by-instruction selection inputs
+    var decodeContext = mapping.ensureDecode();
     ipg.getNodes(RtlSelectByInstructionNode.class).forEach(select -> {
       if (select.selection() == null) {
         // generate expression that selects output based on sets of instructions
@@ -98,11 +101,29 @@ public class InstructionProgressGraphLowerPass extends Pass {
         select.setSelection(selection);
 
         // add MiA mapping to decode
-        var context = mapping.ensureDecode();
-        context.ipgNodes().addAll(oneHot);
-        context.ipgNodes().add(selection);
+        decodeContext.ipgNodes().addAll(oneHot);
+        decodeContext.ipgNodes().add(selection);
       }
     });
+
+    // handle undefined instructions
+    // TODO undefined instruction behavior from specification
+    var pc = Objects.requireNonNull(isa.pc());
+    var readPc = new ReadRegTensorNode(pc.registerTensor(), new NodeList<>(),
+        pc.resultType(), pc);
+    var anyIns = ipg.add(
+        new RtlIsInstructionNode(new HashSet<>(isa.ownInstructions()), null),
+        isa.ownInstructions()
+    );
+    var unknownIns = ipg.add(GraphUtils.not(anyIns), isa.ownInstructions());
+    var print = ipg.addWithInputs(
+        new RtlDebugPrintNode(unknownIns, "unknown instruction at %x",
+            new NodeList<>(readPc)),
+        isa.ownInstructions()
+    );
+    decodeContext.ipgNodes().add(anyIns);
+    decodeContext.ipgNodes().add(unknownIns);
+    decodeContext.ipgNodes().add(print);
 
     // optimize
     Canonicalizer.canonicalize(ipg);

@@ -32,6 +32,9 @@ import vadl.viam.Resource;
 import vadl.viam.Signal;
 import vadl.viam.graph.Graph;
 
+/**
+ * HDL module created from the processor description.
+ */
 public class HdlModule {
 
   private final HdlEmitContext context;
@@ -57,6 +60,16 @@ public class HdlModule {
   @Nullable
   private final Graph behavior;
 
+  /**
+   * Create new HDL module.
+   *
+   * @param context HDL emit context
+   * @param definition Definition the module was created from (stage, logic element, ...)
+   * @param name module name
+   * @param resources list of resources the module contains
+   * @param children list of child modules
+   * @param behavior behavior graph
+   */
   public HdlModule(HdlEmitContext context, @Nullable Definition definition,
                    String name, List<Resource> resources,
                    List<HdlModule> children, @Nullable Graph behavior) {
@@ -131,6 +144,11 @@ public class HdlModule {
     return ports.stream().map(HdlPort::name).collect(Collectors.toCollection(HashSet::new));
   }
 
+  /**
+   * Local names to the module, these are resource and child module names.
+   *
+   * @return set of local names
+   */
   public Set<String> localNames() {
     var result = new HashSet<String>();
     resources.stream().map(Definition::simpleName).forEach(result::add);
@@ -138,6 +156,11 @@ public class HdlModule {
     return result;
   }
 
+  /**
+   * Create render variables for this module.
+   *
+   * @return map of render variables
+   */
   public Map<String, Object> createVariables() {
     return Map.of(
         "name", name,
@@ -172,7 +195,7 @@ public class HdlModule {
 
   private Map<String, Object> portVars(HdlPort port) {
     return Map.of(
-        "name", port.rtlName(),
+        "name", port.hdlName(),
         "ioType", port.getIOType(),
         "input", port.input(),
         "output", port.output()

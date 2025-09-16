@@ -20,8 +20,19 @@ import java.util.ArrayList;
 import java.util.List;
 import vadl.viam.Resource;
 
+/**
+ * Wires HDL module ports after they are created by {@link HdlBehavior} from module behavior.
+ * Ports are connected either to other child modules containing the resource required by the port
+ * or up to the parent module. This is repeated until either the resource is found inside an HDL
+ * module and connected or the port is connected to a port on the top module.
+ */
 public class HdlWiring {
 
+  /**
+   * Wire HDL module ports. Connect unconnected ports until all are connected.
+   *
+   * @param modules list of HDL modules
+   */
   public static void wire(List<HdlModule> modules) {
     var change = true;
     while (change) {
@@ -32,6 +43,12 @@ public class HdlWiring {
     }
   }
 
+  /**
+   * Wire HDL module ports.
+   *
+   * @param module HDL module
+   * @return True, if any new connections were made.
+   */
   public static boolean wire(HdlModule module) {
     var change = false;
 
@@ -69,11 +86,11 @@ public class HdlWiring {
           .filter(oc -> containsResource(oc, end.port().resource())).findAny();
       if (otherChild.isPresent()) {
         // connect other child
-        var name = module.context().name(end.port().node(), otherChild.get().portNames(),
+        var name = module.context().name(end.port().nodes(), otherChild.get().portNames(),
             end.port().name());
         var otherPort = new HdlPort(name, end.port().resource(), end.port().read(),
-            !end.port().output(), end.port().node());
-        otherChild.get().addPort(otherPort);
+            !end.port().output(), end.port().nodes());
+        otherPort = addOrMergePort(otherChild.get(), otherPort);
         module.addConnection(new HdlConnection(
             end,
             new HdlConnection.PortEndpoint(otherChild.get(), otherPort),
@@ -81,11 +98,11 @@ public class HdlWiring {
         ));
       } else {
         // add port up in the hierarchy
-        var name = module.context().name(end.port().node(), module.portNames(),
+        var name = module.context().name(end.port().nodes(), module.portNames(),
             end.port().name());
         var upPort = new HdlPort(name, end.port().resource(), end.port().read(),
-            end.port().output(), end.port().node());
-        module.addPort(upPort);
+            end.port().output(), end.port().nodes());
+        upPort = addOrMergePort(module, upPort);
         module.addConnection(new HdlConnection(
             end,
             new HdlConnection.PortEndpoint(null, upPort),
@@ -98,16 +115,35 @@ public class HdlWiring {
   }
 
   private static boolean isNodePort(HdlModule module, HdlPort port) {
-    if (port.node() == null) {
+    if (port.nodes().isEmpty()) {
       return false;
     }
     var behavior = module.behavior();
-    return (behavior != null && behavior.getNodes().anyMatch(port.node()::equals));
+    return (behavior != null && behavior.getNodes().anyMatch(port.nodes()::contains));
   }
 
   private static boolean containsResource(HdlModule module, Resource resource) {
     return module.resources().contains(resource)
         || module.children().stream().anyMatch(child -> containsResource(child, resource));
+  }
+
+  private static HdlPort addOrMergePort(HdlModule module, HdlPort port) {
+    var result = port;
+    if (port.read() && !port.resource().hasAddress()) {
+      var existing = module.ports().stream()
+          .filter(p -> p.resource().equals(port.resource()) && p.read())
+          .findAny();
+      if (existing.isPresent()) {
+        existing.get().nodes().addAll(port.nodes());
+        result = existing.get();
+      }
+    }
+
+    if (!module.ports().contains(result)) {
+      module.addPort(result);
+    }
+
+    return result;
   }
 
 }
