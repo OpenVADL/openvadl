@@ -1174,7 +1174,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       consumed += part.size();
     }
 
-    var mask = slice.mask().castTo(Type.bits(entireRead.type().bitWidth())).toNode();
+    var mask = slice.mask().castTo(Type.bits(entireRead.type().bitWidth())).not().toNode();
     var clearedResource = BuiltInCall.of(BuiltInTable.AND, entireRead, mask);
     return BuiltInCall.of(BuiltInTable.OR, clearedResource, Objects.requireNonNull(injected));
   }

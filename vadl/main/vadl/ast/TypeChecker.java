@@ -1014,7 +1014,7 @@ public class TypeChecker
         // We have special casting rules here.
         // They aren't as strict as implicit casting and not as lax as explicit casting.
         // FIXME: Should we allow same rules as explicit casts here?
-        if (canImplicitCast( valType, aliasType)) {
+        if (canImplicitCast(valType, aliasType)) {
           definition.value = tryWrapImplicitCast(definition.value, definition.type);
         } else if (aliasType instanceof DataType aliasDataType
             && valType instanceof DataType valDataType
