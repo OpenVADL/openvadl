@@ -747,6 +747,10 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     this.loc = location;
   }
 
+  boolean hasField(String name) {
+    return fields.stream().anyMatch(f -> f.identifier().name.equals(name));
+  }
+
   FormatField getField(String name) {
     return fields.stream().filter(f -> f.identifier().name.equals(name)).findFirst().orElseThrow();
   }
