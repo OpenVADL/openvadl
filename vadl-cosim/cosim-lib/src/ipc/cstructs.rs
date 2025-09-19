@@ -14,7 +14,7 @@ pub const SHMSTRING_MAX_LEN: usize = 256;
 pub const TBINSNINFO_ENTRIES: usize = 64;
 pub const MAX_REGISTER_NAME_SIZE: usize = 64;
 pub const MAX_REGISTER_DATA_SIZE: usize = 256;
-pub const MAX_CPU_REGISTERS: usize = 256;
+pub const MAX_CPU_REGISTERS: usize = 512;
 pub const MAX_CPU_COUNT: usize = 1;
 pub const MAX_INSN_DATA_SIZE: usize = 64;
 
@@ -410,15 +410,31 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
         idx & Self::MASK
     }
 
-    pub fn start_read(&mut self) -> anyhow::Result<&BrokerSHMData> {
+    pub const fn writer_is_closed(&self) -> bool {
+        self.write_idx == usize::MAX
+    }
+
+    /// Tries to read the next entry from the ringbuffer
+    /// An error is returned if timedwait returns an error (timeout or other)
+    /// When no more entries are expected (count == 0 and write_idx == usize::MAX) None is
+    /// returned.
+    /// Otherwise a reference to the next data is returned.
+    /// 
+    /// NOTE: `end_read` has to be called once the reference is not needed anymore to free the
+    /// index in the ringbuffer for new writes.
+    pub fn start_read(&mut self) -> anyhow::Result<Option<&BrokerSHMData>> {
         let count = self.count.load(Ordering::SeqCst);
 
         if count == 0 {
-            let res = self.notifier.timedwait(Duration::from_secs(1));
+            let res = self.notifier.timedwait(Duration::from_millis(100));
             match res {
                 Ok(res) => match res {
                     crate::ipc::sem::TimedWaitState::Timeout => {
-                        bail!("read timeout");
+                        if self.writer_is_closed() {
+                            return Ok(None);
+                        } else {
+                            bail!("Failed to wait for a response from a qemu client. Please refer to the logs for more information.");
+                        }
                     }
                     crate::ipc::sem::TimedWaitState::Success => {}
                 },
@@ -431,7 +447,7 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
         let idx = self.ring_idx(self.read_idx);
         let elem = &self.data[idx];
 
-        Ok(elem)
+        Ok(Some(elem))
     }
 
     // NOTE: to ensure that the previous entry is still valid (i.e. not a new value) the function

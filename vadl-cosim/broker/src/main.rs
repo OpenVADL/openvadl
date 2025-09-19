@@ -93,6 +93,14 @@ fn run(config: Config) -> Result<()> {
             let mut buf = String::new();
             if report_data.passed {
                 buf.push_str("Cosimulation passed!");
+                for client in broker.clients() {
+                    let s = format!(
+                        "\n\t\"{}\" executed {} steps",
+                        client.name.clone().unwrap_or(client.id.to_string()),
+                        client.run_count
+                    );
+                    buf.push_str(&s);
+                }
             } else {
                 add_plain_report_summary(&mut buf, &report_data);
             }

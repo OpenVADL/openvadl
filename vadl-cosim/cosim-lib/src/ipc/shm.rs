@@ -43,7 +43,7 @@ impl SharedMemory<BrokerSem> {
 }
 
 impl<const SIZE: usize> SharedMemory<BrokerSHMRingBuffer<SIZE>> {
-    pub fn read_buffer(&mut self) -> anyhow::Result<&BrokerSHMData> {
+    pub fn read_buffer(&mut self) -> anyhow::Result<Option<&BrokerSHMData>> {
         self.get_mut().start_read()
     }
 

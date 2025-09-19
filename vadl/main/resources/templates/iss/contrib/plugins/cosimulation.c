@@ -44,7 +44,7 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_version = QEMU_PLUGIN_VERSION;
 
 #define MAX_REGISTER_NAME_SIZE 64
 #define MAX_REGISTER_DATA_SIZE 256
-#define MAX_CPU_REGISTERS 256
+#define MAX_CPU_REGISTERS 512
 #define MAX_CPU_COUNT 1
 #define MAX_INSN_DATA_SIZE 64
 
@@ -279,6 +279,7 @@ static SHMCPU get_cpu_state(unsigned int cpu_index) {
 
 static void plugin_exit(qemu_plugin_id_t id, void *p) {
   PLUGIN_PRINTLN("plugin_exit");
+  shm_ring_buffer->write_idx = SIZE_MAX;
 }
 
 // Connects to the broker by accessing the assigned shared memory

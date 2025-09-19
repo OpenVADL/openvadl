@@ -90,6 +90,10 @@ impl Broker {
         Ok(())
     }
 
+    pub fn clients(&self) -> &Vec<Client> {
+        &self.clients
+    }
+
     fn run_lockstep(&mut self, config: &Config) -> Result<Report> {
         // NOTE: maybe move "spawning" the clients into this method
         for (idx, client) in self.clients.iter_mut().enumerate() {
@@ -114,7 +118,7 @@ impl Broker {
                     .clients
                     .iter_mut()
                     .map(|client| {
-                        let res = client.shm.read_buffer().map(|i| i.as_insn());
+                        let res = client.shm.read_buffer().map(|opt| opt.map(|i| i.as_insn()));
                         client.run_count += 1;
                         res
                     })
@@ -123,73 +127,109 @@ impl Broker {
                 let c1insn = reads[0];
                 let c2insn = reads[1];
 
-                let diffs = diff_cpus(
-                    &c1insn.cpus,
-                    c1insn.init_mask,
-                    &c2insn.cpus,
-                    c2insn.init_mask,
-                    config,
-                );
+                match (c1insn, c2insn) {
+                    // successfully read both clients -> compare
+                    (Some(c1insn), Some(c2insn)) => {
+                        let diffs = diff_cpus(
+                            &c1insn.cpus,
+                            c1insn.init_mask,
+                            &c2insn.cpus,
+                            c2insn.init_mask,
+                            config,
+                        );
 
-                self.trace_clients(config)?;
+                        self.trace_clients(config)?;
 
-                if !diffs.is_empty() {
-                    let ctx = self.build_diff_context(config)?;
-                    return Ok(Report::failed(diffs, ctx));
-                }
+                        if !diffs.is_empty() {
+                            let ctx = self.build_diff_context(config)?;
+                            return Ok(Report::failed(diffs, ctx));
+                        }
 
-                for client in &mut self.clients {
-                    client.shm.end_read_buffer();
-                }
+                        for client in &mut self.clients {
+                            client.shm.end_read_buffer();
+                        }
 
-                if !config.testing.protocol.execute_all_remaining_instructions {
-                    stop_after -= 1;
-                    if stop_after == 0 {
-                        break;
+                        if !config.testing.protocol.execute_all_remaining_instructions {
+                            stop_after -= 1;
+                            if stop_after == 0 {
+                                break;
+                            }
+                        }
                     }
+
+                    // both clients finished at the same time => stop cosimulation
+                    (None, None) => break,
+
+                    // one client finished while the other still writes to the buffer, error state!
+                    (Some(c1insn), None) => todo!(
+                        "provide report when one client keeps running while the other finished"
+                    ),
+                    (None, Some(c2insn)) => todo!(
+                        "provide report when one client keeps running while the other finished"
+                    ),
                 }
             },
             crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => loop {
                 let reads = self
                     .clients
                     .iter_mut()
-                    .map(|client| client.shm.read_buffer().map(|i| i.as_tb()))
+                    .map(|client| {
+                        let res = client.shm.read_buffer().map(|opt| opt.map(|i| i.as_tb()));
+                        client.run_count += 1;
+                        res
+                    })
                     .collect::<Result<Vec<_>>>()?;
 
                 let c1insn = reads[0];
                 let c2insn = reads[1];
 
-                if let TBSyncResult::Diverged(diff_entry) =
-                    Self::check_if_clients_are_synchronized(&[c1insn, c2insn])
-                {
-                    debug!("client diverged during tb synchronization");
-                    return Ok(Report::failed(vec![diff_entry], vec![]));
-                }
+                match (c1insn, c2insn) {
+                    // successfully read both clients -> compare
+                    (Some(c1insn), Some(c2insn)) => {
+                        if let TBSyncResult::Diverged(diff_entry) =
+                            Self::check_if_clients_are_synchronized(&[c1insn, c2insn])
+                        {
+                            debug!("client diverged during tb synchronization");
+                            return Ok(Report::failed(vec![diff_entry], vec![]));
+                        }
 
-                let diffs = diff_cpus(
-                    &c1insn.cpus,
-                    c1insn.init_mask,
-                    &c2insn.cpus,
-                    c2insn.init_mask,
-                    config,
-                );
+                        let diffs = diff_cpus(
+                            &c1insn.cpus,
+                            c1insn.init_mask,
+                            &c2insn.cpus,
+                            c2insn.init_mask,
+                            config,
+                        );
 
-                self.trace_clients(config)?;
+                        self.trace_clients(config)?;
 
-                if !diffs.is_empty() {
-                    let ctx = self.build_diff_context(config)?;
-                    return Ok(Report::failed(diffs, ctx));
-                }
+                        if !diffs.is_empty() {
+                            let ctx = self.build_diff_context(config)?;
+                            return Ok(Report::failed(diffs, ctx));
+                        }
 
-                for client in &mut self.clients {
-                    client.shm.end_read_buffer();
-                }
+                        for client in &mut self.clients {
+                            client.shm.end_read_buffer();
+                        }
 
-                if !config.testing.protocol.execute_all_remaining_instructions {
-                    stop_after -= 1;
-                    if stop_after == 0 {
-                        break;
+                        if !config.testing.protocol.execute_all_remaining_instructions {
+                            stop_after -= 1;
+                            if stop_after == 0 {
+                                break;
+                            }
+                        }
                     }
+
+                    // both clients finished at the same time => stop cosimulation
+                    (None, None) => break,
+
+                    // one client finished while the other still writes to the buffer, error state!
+                    (Some(c1insn), None) => todo!(
+                        "provide report when one client keeps running while the other finished"
+                    ),
+                    (None, Some(c2insn)) => todo!(
+                        "provide report when one client keeps running while the other finished"
+                    ),
                 }
             },
         }

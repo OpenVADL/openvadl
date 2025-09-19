@@ -167,7 +167,7 @@ fn main() -> anyhow::Result<()> {
 
     let mut model = Model {
         run_id,
-        state_pos: 414,
+        state_pos: 1,
         clients,
         entry_rows: vec![],
         register_filter: init_register_filter(&config),
