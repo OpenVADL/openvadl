@@ -408,21 +408,22 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
     /// When no more entries are expected (count == 0 and write_idx == usize::MAX) None is
     /// returned.
     /// Otherwise a reference to the next data is returned.
-    /// 
+    ///
     /// NOTE: `end_read` has to be called once the reference is not needed anymore to free the
     /// index in the ringbuffer for new writes.
     pub fn start_read(&mut self) -> anyhow::Result<Option<&BrokerSHMData>> {
         if self.count.load(Ordering::SeqCst) == 0 {
             let count_ref = &self.count;
             let write_end_ref = &self.write_end;
-            let cond = || {
-                write_end_ref.load(Ordering::SeqCst) ||  count_ref.load(Ordering::SeqCst) > 0
-            };
+            let cond =
+                || write_end_ref.load(Ordering::SeqCst) || count_ref.load(Ordering::SeqCst) > 0;
             let res = self.notifier.timedwait(Duration::from_millis(100), cond);
             match res {
                 Ok(res) => match res {
                     crate::ipc::sem::TimedWaitState::Timeout => {
-                        bail!("Failed to wait for a response from a qemu client. Please refer to the logs for more information.");
+                        bail!(
+                            "Failed to wait for a response from a qemu client. Please refer to the logs for more information."
+                        );
                     }
                     crate::ipc::sem::TimedWaitState::Success => {
                         // If we successfully got a "response" from the writer, but the count is
