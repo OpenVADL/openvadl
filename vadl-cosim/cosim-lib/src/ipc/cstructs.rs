@@ -1,6 +1,6 @@
 use std::{
     mem::{self},
-    sync::atomic::{AtomicUsize, Ordering},
+    sync::atomic::{AtomicBool, AtomicUsize, Ordering},
     time::Duration,
 };
 
@@ -372,24 +372,12 @@ pub struct BrokerSHMRingBuffer<const SIZE: usize> {
     pub read_idx: usize,
     pub write_idx: usize,
     pub count: AtomicUsize,
+    pub write_end: AtomicBool,
     pub notifier: Semaphore,
 }
 
 impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
     const MASK: usize = SIZE - 1;
-
-    pub fn new() -> anyhow::Result<Self> {
-        debug!("init ringbuffer with size: {SIZE}");
-
-        let data = unsafe { mem::MaybeUninit::uninit().assume_init() };
-        Ok(Self {
-            data,
-            read_idx: 0,
-            write_idx: 0,
-            count: AtomicUsize::new(0),
-            notifier: Semaphore::create()?,
-        })
-    }
 
     pub fn init(&mut self) -> anyhow::Result<()> {
         debug!("init ringbuffer with size: {SIZE}");
@@ -398,6 +386,7 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
         self.read_idx = 0;
         self.write_idx = 0;
         self.count = AtomicUsize::new(0);
+        self.write_end = AtomicBool::new(false);
         self.notifier = Semaphore::create()?;
         Ok(())
     }
@@ -423,20 +412,26 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
     /// NOTE: `end_read` has to be called once the reference is not needed anymore to free the
     /// index in the ringbuffer for new writes.
     pub fn start_read(&mut self) -> anyhow::Result<Option<&BrokerSHMData>> {
-        let count = self.count.load(Ordering::SeqCst);
-
-        if count == 0 {
-            let res = self.notifier.timedwait(Duration::from_millis(100));
+        if self.count.load(Ordering::SeqCst) == 0 {
+            let count_ref = &self.count;
+            let write_end_ref = &self.write_end;
+            let cond = || {
+                write_end_ref.load(Ordering::SeqCst) ||  count_ref.load(Ordering::SeqCst) > 0
+            };
+            let res = self.notifier.timedwait(Duration::from_millis(100), cond);
             match res {
                 Ok(res) => match res {
                     crate::ipc::sem::TimedWaitState::Timeout => {
-                        if self.writer_is_closed() {
+                        bail!("Failed to wait for a response from a qemu client. Please refer to the logs for more information.");
+                    }
+                    crate::ipc::sem::TimedWaitState::Success => {
+                        // If we successfully got a "response" from the writer, but the count is
+                        // still zero, then that means that the response was a write-end message.
+                        // Meaning all data was already read
+                        if self.count.load(Ordering::SeqCst) == 0 {
                             return Ok(None);
-                        } else {
-                            bail!("Failed to wait for a response from a qemu client. Please refer to the logs for more information.");
                         }
                     }
-                    crate::ipc::sem::TimedWaitState::Success => {}
                 },
                 Err(err) => {
                     return Err(err);
@@ -465,9 +460,4 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
         let _ = self.notifier.post();
         self.count.fetch_sub(1, Ordering::SeqCst);
     }
-}
-
-#[repr(C)]
-pub struct BrokerSem {
-    pub sync: Semaphore,
 }

@@ -3,10 +3,9 @@ use anyhow::{Result, bail};
 use libc::{
     CLOCK_REALTIME, ETIMEDOUT, PTHREAD_PROCESS_SHARED, clock_gettime, pthread_cond_broadcast,
     pthread_cond_destroy, pthread_cond_init, pthread_cond_t, pthread_cond_timedwait,
-    pthread_cond_wait, pthread_condattr_init, pthread_condattr_setpshared, pthread_condattr_t,
-    pthread_mutex_destroy, pthread_mutex_init, pthread_mutex_lock, pthread_mutex_t,
-    pthread_mutex_unlock, pthread_mutexattr_init, pthread_mutexattr_setpshared,
-    pthread_mutexattr_t, timespec,
+    pthread_condattr_init, pthread_condattr_setpshared, pthread_condattr_t, pthread_mutex_destroy,
+    pthread_mutex_init, pthread_mutex_lock, pthread_mutex_t, pthread_mutex_unlock,
+    pthread_mutexattr_init, pthread_mutexattr_setpshared, pthread_mutexattr_t, timespec,
 };
 use std::time::Duration;
 
@@ -17,7 +16,6 @@ use crate::ipc::get_last_error;
 pub struct Semaphore {
     pub mutex: pthread_mutex_t,
     pub cvar: pthread_cond_t,
-    pub msg: bool,
 }
 
 pub enum TimedWaitState {
@@ -64,34 +62,13 @@ impl Semaphore {
             bail_on_libc_err!(pthread_cond_init(cvar_ptr, cond_attr_ptr));
         }
 
-        Ok(Self {
-            mutex,
-            cvar,
-            msg: false,
-        })
+        Ok(Self { mutex, cvar })
     }
 
-    pub fn wait(&mut self) -> Result<()> {
-        let mutex_ptr = &mut self.mutex as *mut _;
-        let cond_ptr = &mut self.cvar as *mut _;
-        unsafe {
-            bail_on_libc_err!(pthread_mutex_lock(mutex_ptr));
-        }
-
-        #[allow(clippy::while_immutable_condition)]
-        while !self.msg {
-            unsafe {
-                bail_on_libc_err!(pthread_cond_wait(cond_ptr, mutex_ptr));
-            }
-        }
-        unsafe {
-            bail_on_libc_err!(pthread_mutex_unlock(mutex_ptr));
-        }
-
-        Ok(())
-    }
-
-    pub fn timedwait(&mut self, duration: Duration) -> Result<TimedWaitState> {
+    pub fn timedwait<Cond>(&mut self, duration: Duration, cond: Cond) -> Result<TimedWaitState>
+    where
+        Cond: Fn() -> bool,
+    {
         let mut ts = timespec {
             tv_sec: 0,
             tv_nsec: 0,
@@ -118,7 +95,7 @@ impl Semaphore {
         }
 
         let mut rc: i32 = 0;
-        while !self.msg && rc == 0 {
+        while !cond() && rc == 0 {
             rc = unsafe { pthread_cond_timedwait(cond_ptr, mutex_ptr, ts_ptr) };
         }
 
@@ -135,8 +112,6 @@ impl Semaphore {
 
     pub fn post(&mut self) -> Result<()> {
         let cond_ptr = &mut self.cvar as *mut _;
-
-        self.msg = false;
 
         unsafe {
             bail_on_libc_err!(pthread_cond_broadcast(cond_ptr));
