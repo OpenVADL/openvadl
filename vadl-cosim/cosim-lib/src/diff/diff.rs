@@ -122,12 +122,23 @@ pub fn diff_register(
         ));
     }
 
-    if reg1.data_slice() != reg2.data_slice() {
-        diffs.push(DiffEntry::new(
-            format!("cpu[{cpu_index}].registers[{reg_index}].data"),
-            vec![reg1.data_slice_fmt(), reg2.data_slice_fmt()],
-            format!("different register data for {r1name}"),
-        ));
+    for idx in 0..(reg1.size as usize) {
+        let d1 = reg1.data_slice()[idx];
+        let d2 = if config.qemu.has_equal_endianess() {
+            reg2.data_slice()[idx]
+        } else {
+            reg2.data_slice()[(reg2.size as usize) - idx - 1]
+        };
+
+        if d1 != d2 {
+            diffs.push(DiffEntry::new(
+                format!("cpu[{cpu_index}].registers[{reg_index}].data"),
+                vec![reg1.data_slice_fmt(), reg2.data_slice_fmt()],
+                format!("different register data for {r1name}"),
+            ));
+
+            break;
+        }
     }
 }
 

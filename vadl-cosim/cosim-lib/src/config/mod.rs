@@ -178,6 +178,17 @@ pub struct Client {
     pub skip_n_instructions: u32,
 
     pub name: Option<String>,
+
+    #[serde(default = "Endian::default")]
+    pub endian: Endian,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum Endian {
+    #[default]
+    Big,
+    Little,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -226,6 +237,13 @@ impl Qemu {
             .iter()
             .map(|(k, v)| (v.clone(), k.clone()))
             .collect();
+    }
+
+    pub fn has_equal_endianess(&self) -> bool {
+        match &self.clients[..] {
+            [] => true,
+            [head, tail @ ..] => tail.iter().all(|c| c.endian == head.endian)
+        }
     }
 }
 
