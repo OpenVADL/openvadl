@@ -242,7 +242,7 @@ impl Qemu {
     pub fn has_equal_endianess(&self) -> bool {
         match &self.clients[..] {
             [] => true,
-            [head, tail @ ..] => tail.iter().all(|c| c.endian == head.endian)
+            [head, tail @ ..] => tail.iter().all(|c| c.endian == head.endian),
         }
     }
 }

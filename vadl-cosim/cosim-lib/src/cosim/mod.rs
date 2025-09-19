@@ -12,7 +12,10 @@ use crate::{
         get_all_clients_contexts_before, get_all_clients_contexts_current,
         get_all_clients_instructions,
     },
-    ipc::{cstructs, qemu::Client},
+    ipc::{
+        cstructs::{self, TBInfo, TBInsnInfo},
+        qemu::Client,
+    },
     trace::{TraceEntryData, TraceStore, connect, get_client_trace, store_trace, trace_collect},
 };
 
@@ -161,12 +164,30 @@ impl Broker {
                     (None, None) => break,
 
                     // one client finished while the other still writes to the buffer, error state!
-                    (Some(c1insn), None) => todo!(
-                        "provide report when one client keeps running while the other finished"
-                    ),
-                    (None, Some(c2insn)) => todo!(
-                        "provide report when one client keeps running while the other finished"
-                    ),
+                    (Some(c1insn), None) => {
+                        let diff = DiffEntry::new(
+                            "invalid-execution",
+                            vec![Broker::format_insn_for_diff(&c1insn.insn_info)],
+                            Broker::format_invalid_execution_client_msg(
+                                &self.clients[0],
+                                &self.clients[1],
+                            ),
+                        );
+                        let ctx = self.build_diff_context(config)?;
+                        return Ok(Report::failed(vec![diff], ctx));
+                    }
+                    (None, Some(c2insn)) => {
+                        let diff = DiffEntry::new(
+                            "invalid-execution",
+                            vec![Broker::format_insn_for_diff(&c2insn.insn_info)],
+                            Broker::format_invalid_execution_client_msg(
+                                &self.clients[1],
+                                &self.clients[0],
+                            ),
+                        );
+                        let ctx = self.build_diff_context(config)?;
+                        return Ok(Report::failed(vec![diff], ctx));
+                    }
                 }
             },
             crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => loop {
@@ -224,17 +245,74 @@ impl Broker {
                     (None, None) => break,
 
                     // one client finished while the other still writes to the buffer, error state!
-                    (Some(c1insn), None) => todo!(
-                        "provide report when one client keeps running while the other finished"
-                    ),
-                    (None, Some(c2insn)) => todo!(
-                        "provide report when one client keeps running while the other finished"
-                    ),
+                    (Some(c1tb), None) => {
+                        let diff = DiffEntry::new(
+                            "invalid-execution",
+                            vec![Broker::format_tb_for_diff(&c1tb.tb_info)],
+                            Broker::format_invalid_execution_client_msg(
+                                &self.clients[0],
+                                &self.clients[1],
+                            ),
+                        );
+                        let ctx = self.build_diff_context(config)?;
+                        return Ok(Report::failed(vec![diff], ctx));
+                    }
+                    (None, Some(c2tb)) => {
+                        let diff = DiffEntry::new(
+                            "invalid-execution",
+                            vec![Broker::format_tb_for_diff(&c2tb.tb_info)],
+                            Broker::format_invalid_execution_client_msg(
+                                &self.clients[1],
+                                &self.clients[0],
+                            ),
+                        );
+                        let ctx = self.build_diff_context(config)?;
+                        return Ok(Report::failed(vec![diff], ctx));
+                    }
                 }
             },
         }
 
         Ok(Report::passed())
+    }
+
+    fn format_insn_for_diff(insn: &TBInsnInfo) -> String {
+        format!(
+            "pc={}, size={}, symbol={}, hwaddr={}, disas={}, data={}",
+            insn.pc,
+            insn.size,
+            insn.symbol.as_str(),
+            insn.hwaddr.as_str(),
+            insn.disas.as_str(),
+            insn.data.buffer_slice_fmt(),
+        )
+    }
+
+    fn format_tb_for_diff(tb: &TBInfo) -> String {
+        let insns = tb
+            .insns_info_slice()
+            .iter()
+            .map(Broker::format_insn_for_diff)
+            .collect::<Vec<_>>();
+
+        format!("pc={}, insns={:#?}", tb.pc, insns)
+    }
+
+    fn format_invalid_execution_client_msg(
+        executing_client: &Client,
+        halted_client: &Client,
+    ) -> String {
+        format!(
+            "client \"{}\" executed another instruction while client \"{}\" has already finished",
+            executing_client
+                .name
+                .as_deref()
+                .unwrap_or(&executing_client.id.to_string()),
+            halted_client
+                .name
+                .as_deref()
+                .unwrap_or(&halted_client.id.to_string())
+        )
     }
 
     fn check_clients_are_initially_synchronized(&self, config: &Config) -> Result<()> {
