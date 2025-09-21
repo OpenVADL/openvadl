@@ -247,4 +247,29 @@ public class PatternUtils {
     }
     return new BitPattern(bits);
   }
+
+  /**
+   * Return the common bit pattern of the two argument patterns.
+   *
+   * @param p1 The first pattern
+   * @param p2 The second pattern
+   * @return The common super-pattern.
+   */
+  public static BitPattern commonPattern(BitPattern p1, BitPattern p2) {
+    if (p1.width() != p2.width()) {
+      throw new IllegalArgumentException(
+          "Cannot compute common bits for patterns of different widths");
+    }
+    final PBit[] bits = new PBit[p1.width()];
+    for (int i = 0; i < bits.length; i++) {
+      final PBit.Value v1 = p1.get(i).getValue();
+      final PBit.Value v2 = p2.get(i).getValue();
+      if (v1 == v2) {
+        bits[i] = new PBit(v1);
+      } else {
+        bits[i] = new PBit(DONT_CARE);
+      }
+    }
+    return new BitPattern(bits);
+  }
 }
