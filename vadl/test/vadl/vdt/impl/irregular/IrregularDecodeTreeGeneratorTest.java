@@ -16,9 +16,11 @@
 
 package vadl.vdt.impl.irregular;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static vadl.vdt.utils.PatternUtils.toFixedBitPattern;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -37,18 +39,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.TestUtils;
 import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.IssConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.AbstractDecisionTreeTest;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.impl.irregular.model.ExclusionCondition;
+import vadl.vdt.impl.irregular.tree.MultiDecisionNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.passes.VdtConstraintSynthesisPass;
+import vadl.vdt.passes.VdtEncodingConstraintValidationPass;
+import vadl.vdt.passes.VdtEncodingSemanticVerificationPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
 import vadl.vdt.target.common.CheckedBitsCollector;
 import vadl.vdt.target.common.DecisionTreeDecoder;
+import vadl.vdt.target.common.DecisionTreeStatsCalculator;
 import vadl.vdt.target.dump.TextGraphGenerator;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
@@ -507,6 +514,122 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         Arguments.of("b = 0b00", "c != 0b01"),
         Arguments.of("b = 0b00", "c != 0b01 || a = 0b0000")
     );
+  }
+
+  @Test
+  void test_handleEmptyUnmatchingConditions_test1() throws DuplicatedPassKeyException, IOException {
+
+    /* GIVEN */
+    final String vadl = """
+        instruction set architecture TEST = {
+        
+          register X: Bits<5>
+        
+          format Format: Bits<8> =
+          { a   [7..4]
+          , b   [3..0]
+          }
+        
+          instruction I1: Format = { }
+          [ select when : b = 0b0010 ]
+          encoding I1 = { a = 0b0000 }
+          assembly I1 = ( mnemonic )
+        
+          instruction I2: Format = { }
+          [ select when : b = 0b0001 ]
+          encoding I2 = { a = 0b0000 }
+          assembly I2 = ( mnemonic )
+        }
+        """;
+
+    var config =
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));
+    var spec = TestUtils.compileToViam(vadl);
+
+    var manager = new PassManager();
+    manager.add(new VdtEncodingConstraintValidationPass(config));
+    manager.add(new VdtInputPreparationPass(config));
+    manager.add(new VdtEncodingSemanticVerificationPass(config));
+    manager.add(new VdtLoweringPass(config));
+
+    /* WHEN */
+    manager.run(spec);
+
+    /* THEN */
+    var decodeTree = manager.getPassResults().lastResultOf(VdtLoweringPass.class, Node.class);
+
+    Assertions.assertNotNull(decodeTree);
+
+    var stats = DecisionTreeStatsCalculator.statistics(decodeTree);
+
+    log.info("VDT: {}", stats);
+    log.info("Decoder: \n{}", new TextGraphGenerator(decodeTree).generate());
+
+    Assertions.assertEquals(1, stats.getMaxDepth());
+    Assertions.assertEquals(2, stats.getNumberOfLeafNodes());
+
+    MultiDecisionNode decisionNode = assertInstanceOf(MultiDecisionNode.class, decodeTree);
+    Assertions.assertEquals(
+        BitVector.fromValue(new BigInteger("FF", 16), 8),
+        decisionNode.getMask());
+  }
+
+  @Test
+  void test_handleEmptyUnmatchingConditions_test2() throws DuplicatedPassKeyException, IOException {
+
+    /* GIVEN */
+    final String vadl = """
+        instruction set architecture TEST = {
+        
+          register X: Bits<5>
+        
+          format Format: Bits<8> =
+          { a   [7..4]
+          , b   [3..0]
+          }
+        
+          instruction I1: Format = { }
+          [ select when : b = 0b0010 || b = 0b0100 ]
+          encoding I1 = { a = 0b0000 }
+          assembly I1 = ( mnemonic )
+        
+          instruction I2: Format = { }
+          [ select when : b = 0b0001 ]
+          encoding I2 = { a = 0b0000 }
+          assembly I2 = ( mnemonic )
+        }
+        """;
+
+    var config =
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));
+    var spec = TestUtils.compileToViam(vadl);
+
+    var manager = new PassManager();
+    manager.add(new VdtEncodingConstraintValidationPass(config));
+    manager.add(new VdtInputPreparationPass(config));
+    manager.add(new VdtEncodingSemanticVerificationPass(config));
+    manager.add(new VdtLoweringPass(config));
+
+    /* WHEN */
+    manager.run(spec);
+
+    /* THEN */
+    var decodeTree = manager.getPassResults().lastResultOf(VdtLoweringPass.class, Node.class);
+
+    Assertions.assertNotNull(decodeTree);
+
+    var stats = DecisionTreeStatsCalculator.statistics(decodeTree);
+
+    log.info("VDT: {}", stats);
+    log.info("Decoder: \n{}", new TextGraphGenerator(decodeTree).generate());
+
+    Assertions.assertEquals(1, stats.getMaxDepth());
+    Assertions.assertEquals(3, stats.getNumberOfLeafNodes());
+
+    MultiDecisionNode decisionNode = assertInstanceOf(MultiDecisionNode.class, decodeTree);
+    Assertions.assertEquals(
+        BitVector.fromValue(new BigInteger("FF", 16), 8),
+        decisionNode.getMask());
   }
 
   @SuppressWarnings("unchecked")

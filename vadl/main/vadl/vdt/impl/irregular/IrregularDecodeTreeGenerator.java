@@ -35,6 +35,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
@@ -47,6 +48,7 @@ import vadl.vdt.model.impl.LeafNodeImpl;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
 import vadl.vdt.utils.PBit;
+import vadl.vdt.utils.PatternUtils;
 import vadl.viam.Definition;
 
 /**
@@ -96,7 +98,8 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
       return makeNode(decodeEntries);
     }
 
-    var entry = decodeEntries.entries().getFirst();
+    // It's possible to have multiple decode entries pointing to the same instruction
+    var entry = combineEntries(decodeEntries);
 
     // Determine any unchecked bits in the instruction pattern
     var remainingFixedBitPattern = getUncheckedBits(decodeEntries.checkedBits(), entry.pattern());
@@ -382,10 +385,95 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
         .map(e -> transform(e, p -> p.rightPad(maxWidth - p.width())))
         .toList();
 
+    // Resolve all-matching 'matching' patterns in exclusion conditions
+    final List<DecodeEntry> expandedEntries = expandUnmatchingConditions(entries);
+
     // Initially none are checked
     final BitPattern checkedBits = BitPattern.empty(maxWidth);
 
-    return new DecodeEntries(checkedBits, entries);
+    return new DecodeEntries(checkedBits, expandedEntries);
+  }
+
+  /**
+   * In case of a tautological 'matching' pattern, expand the 'unmatching' patterns to their opcode
+   * pattern.
+   *
+   * @param entries The entry set
+   * @return The expanded entries
+   */
+  @Nonnull
+  private List<DecodeEntry> expandUnmatchingConditions(List<DecodeEntry> entries) {
+
+    final List<DecodeEntry> expandedEntries = new ArrayList<>();
+    for (DecodeEntry e : entries) {
+
+      if (e.exclusionConditions().isEmpty()) {
+        expandedEntries.add(e);
+        continue;
+      }
+
+      final Set<ExclusionCondition> exclusionConditions = new LinkedHashSet<>();
+      for (ExclusionCondition ec : e.exclusionConditions()) {
+
+        if (!ec.matching().doesMatchAll() || ec.unmatching().isEmpty()) {
+          exclusionConditions.add(ec);
+          continue;
+        }
+
+        // Expand the 'unmatching' patterns to their opcode patterns
+        for (BitPattern up : ec.unmatching()) {
+          final BitPattern op = combinePatterns(e.pattern(), up);
+          expandedEntries.add(new DecodeEntry(e.source(), e.width(), op, Set.of()));
+        }
+      }
+
+      if (!exclusionConditions.isEmpty()) {
+        final var def = new DecodeEntry(e.source(), e.width(), e.pattern(), exclusionConditions);
+        expandedEntries.add(def);
+      }
+
+    }
+    return expandedEntries;
+  }
+
+  /**
+   * Combine decode entries for the same instruction into a single decode entry.
+   *
+   * @param decodeEntries Decode entries which all have the same source instruction.
+   * @return The combined entry
+   */
+  private DecodeEntry combineEntries(DecodeEntries decodeEntries) {
+
+    if (decodeEntries.hasMultiple()) {
+      // Should not happen
+      throw new IllegalArgumentException("Multiple instructions not supported");
+    }
+
+    final List<DecodeEntry> entries = decodeEntries.entries();
+    final DecodeEntry first = entries.getFirst();
+    if (entries.size() == 1) {
+      // Nothing to combine
+      return first;
+    }
+
+    final BitPattern commonPattern = entries.stream()
+        .map(DecodeEntry::pattern)
+        .reduce(first.pattern(), PatternUtils::commonPattern);
+
+    final ExclusionConditions conditions = new ExclusionConditions();
+    for (DecodeEntry e : entries) {
+      final BitPattern diff = invalidate(e.pattern(), commonPattern);
+      conditions.add(e.exclusionConditions());
+
+      if (diff.doesMatchAll()) {
+        continue;
+      }
+
+      final var condition = new ExclusionCondition(BitPattern.empty(diff.width()), Set.of(diff));
+      conditions.add(Set.of(condition));
+    }
+
+    return new DecodeEntry(first.source(), first.width(), commonPattern, conditions.conditions());
   }
 
   /**
@@ -513,7 +601,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
   private record DecodeEntries(BitPattern checkedBits, List<DecodeEntry> entries) {
 
     boolean hasMultiple() {
-      return entries.size() > 1;
+      return entries.stream().map(DecodeEntry::source).collect(Collectors.toSet()).size() > 1;
     }
 
   }
@@ -522,6 +610,57 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
 
     boolean hasDecision() {
       return patterns.size() > 1;
+    }
+  }
+
+  private record ExclusionConditions(Set<ExclusionCondition> conditions) {
+
+    private ExclusionConditions(Set<ExclusionCondition> conditions) {
+      this.conditions = new LinkedHashSet<>(conditions);
+    }
+
+    private ExclusionConditions() {
+      this(new LinkedHashSet<>());
+    }
+
+    /**
+     * Combine the exclusion conditions by keeping a single tautological matching pattern.
+     *
+     * @param newConditions The exclusion conditions to add
+     */
+    void add(Collection<ExclusionCondition> newConditions) {
+
+      newConditions = new LinkedHashSet<>(newConditions);
+
+      final ExclusionCondition newDoesMatchAll = newConditions.stream()
+          .filter(c -> c.matching().doesMatchAll())
+          .findFirst().orElse(null);
+
+      if (newDoesMatchAll == null) {
+        conditions.addAll(newConditions);
+        return;
+      }
+
+      final ExclusionCondition existingMatchAll = conditions.stream()
+          .filter(c -> c.matching().doesMatchAll())
+          .findFirst().orElse(null);
+
+      if (existingMatchAll == null) {
+        conditions.addAll(newConditions);
+        return;
+      }
+
+      final Set<BitPattern> union = new LinkedHashSet<>(existingMatchAll.unmatching());
+      union.addAll(newDoesMatchAll.unmatching());
+
+      final ExclusionCondition combined =
+          new ExclusionCondition(existingMatchAll.matching(), union);
+
+      conditions.removeIf(c -> c.matching().doesMatchAll());
+      conditions.add(combined);
+
+      newConditions.removeIf(c -> c.matching().doesMatchAll());
+      conditions.addAll(newConditions);
     }
   }
 }
