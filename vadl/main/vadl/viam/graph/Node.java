@@ -332,10 +332,12 @@ public abstract class Node implements WithLocation {
         return newInput;
       }
 
-      // transfer usage of this from the old input to the new input
-      // -> the old input will not have this node as usage anymore
-      // -> the new input will have this node as usage
-      updateUsageOf(oldInput, newInput);
+      if (!isUninitialized()) {
+        // transfer usage of this from the old input to the new input
+        // -> the old input will not have this node as usage anymore
+        // -> the new input will have this node as usage
+        updateUsageOf(oldInput, newInput);
+      }
 
       return newInput;
     });

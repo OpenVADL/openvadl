@@ -63,8 +63,8 @@ public class SubgraphUtils {
 
     set.stream().filter(n -> n.usages().noneMatch(set::contains))
         .forEach(root -> {
-          var copy = dest.addWithInputs(root.copy());
-          patchInputs(root, copy, set, missingInput, cache);
+          var copy = root.copy();
+          addWithMissingInputs(dest, root, copy, set, missingInput, cache);
         });
 
     set.forEach(node -> {
@@ -83,24 +83,34 @@ public class SubgraphUtils {
     return cache;
   }
 
-  private static void patchInputs(Node original, Node copy, Set<Node> set,
-                                  MissingSupplier missingInput, Map<Node, Node> cache) {
-    cache.put(original, copy);
+  private static Node addWithMissingInputs(Graph dest, Node original, Node copy, Set<Node> set,
+                                           MissingSupplier missingInput, Map<Node, Node> cache) {
+    var cached = cache.get(original);
+    if (cached != null) {
+      return cached;
+    }
 
     Streams.forEachPair(original.inputs(), copy.inputs(), (originalInput, copyInput) -> {
+
+      var newInput = copyInput;
+
       if (set.contains(originalInput)) {
-        patchInputs(originalInput, copyInput, set, missingInput, cache);
+        newInput = addWithMissingInputs(dest, originalInput, copyInput, set, missingInput, cache);
       } else {
-        var newInput = missingInput.supply(original, originalInput, copy);
-        if (newInput != null) {
-          newInput = copy.ensureGraph().addWithInputs(newInput);
-          copy.replaceInput(copyInput, newInput);
-          if (copyInput.isActive() && !copyInput.hasUsages()) {
-            copyInput.safeDelete();
-          }
+        var suppliedInput = missingInput.supply(original, originalInput, copy);
+        if (suppliedInput != null) {
+          newInput = dest.addWithInputs(suppliedInput);
         }
       }
+
+      copy.replaceInput(copyInput, newInput);
+
     });
+
+    var result = dest.add(copy);
+
+    cache.put(original, result);
+    return result;
   }
 
 }
