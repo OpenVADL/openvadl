@@ -20,6 +20,15 @@ import javax.annotation.Nullable;
 import vadl.viam.Resource;
 import vadl.viam.graph.Node;
 
+/**
+ * Record representing a connection or a statement in HDL.
+ *
+ * @param output    output endpoint of this connection, if this is null the record represents a
+ *                  statement without an assignment.
+ * @param input     input endpoint to this connection
+ * @param biDir     if the signals in this connection should be connected bi-directionally
+ * @param condition conditional assignment or statement
+ */
 public record HdlConnection(
     @Nullable Endpoint output,
     Endpoint input,
@@ -27,10 +36,24 @@ public record HdlConnection(
     @Nullable Endpoint condition
 ) {
 
+  /**
+   * HDL Endpoint.
+   */
   public interface Endpoint {
+    /**
+     * Name of this endpoint in HDL.
+     *
+     * @return name
+     */
     String rtlName();
   }
 
+  /**
+   * References a port on the containing module or a child module.
+   *
+   * @param child optional child module
+   * @param port HDL port
+   */
   public record PortEndpoint(@Nullable HdlModule child, HdlPort port) implements Endpoint {
     @Override
     public String rtlName() {
@@ -41,6 +64,13 @@ public record HdlConnection(
     }
   }
 
+  /**
+   * References a resource of the containing module. This is either a resource from the VIAM or a
+   * resource created during HDL generation to hold the value of a node from the module's behavior.
+   *
+   * @param resource resource of the containing module
+   * @param node optional module behavior node, if this resource holds the value of this node
+   */
   public record ResourceEndpoint(Resource resource, @Nullable Node node) implements Endpoint {
     @Override
     public String rtlName() {
@@ -48,13 +78,25 @@ public record HdlConnection(
     }
   }
 
-  public record ExpressionEndpoint(@Nullable Node node, String expression) implements Endpoint {
+  /**
+   * References an HDL expression given as a string.
+   *
+   * @param node node for which this expression was generated
+   * @param expression expression
+   */
+  public record ExpressionEndpoint(Node node, String expression) implements Endpoint {
     @Override
     public String rtlName() {
       return expression;
     }
   }
 
+  /**
+   * Checks if an endpoint is equal to one of the endpoints of this connection.
+   *
+   * @param endpoint endpoint
+   * @return true if the connection includes this endpoint
+   */
   public boolean connects(Endpoint endpoint) {
     return ((output != null && output.equals(endpoint)) || input.equals(endpoint));
   }

@@ -141,10 +141,6 @@ public class HazardAnalysisPass extends Pass {
                                                          HazardAnalysis.WriteAnalysis analysis) {
     var result = new ArrayList<HazardAnalysis.ForwardAnalysis>();
 
-    // stop if we passed stage where address or condition are available
-    var stop = Stream.of(analysis.condition(), analysis.address()).filter(Objects::nonNull)
-        .map(Stage::prev).filter(Objects::nonNull).collect(Collectors.toSet());
-
     // start with forwarding in write stage
     var write = analysis.node();
     var stage = analysis.effect();
@@ -159,9 +155,13 @@ public class HazardAnalysisPass extends Pass {
     // add forward from write stage (always possible)
     result.add(new HazardAnalysis.ForwardAnalysis(write, analysis.effect(), stage,
         new ArrayList<>(conditions), address, value));
-    stage = stage.prev();
 
-    // try to resolve value in previous stage
+    // stop if we passed the stage where address or condition are available
+    var stop = Stream.of(analysis.condition(), analysis.address()).filter(Objects::nonNull)
+        .map(Stage::prev).filter(Objects::nonNull).toList();
+
+    // try to resolve value in previous stages
+    stage = stage.prev();
     while (stage != null && !stop.contains(stage)) {
       value = resolveForward(mapping, stage, value, conditions);
       if (value == null) {

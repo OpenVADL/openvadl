@@ -25,6 +25,10 @@ import vadl.pass.PassResults;
 import vadl.rtl.template.RtlTemplateRenderingPass;
 import vadl.viam.Specification;
 
+/**
+ * Emit a scala test that simulates the core connected to a memory. ELF files can be loaded to
+ * memory. Currently geared towards running the riscv-tests.
+ */
 public class EmitCoreTestPass extends RtlTemplateRenderingPass {
 
   public EmitCoreTestPass(RtlConfiguration configuration) {

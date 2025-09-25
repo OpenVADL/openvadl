@@ -23,6 +23,9 @@ import vadl.viam.Signal;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 
+/**
+ * Representing writing/driving the value of a signal. Any single signal can only have one driver.
+ */
 public class WriteSignalNode extends WriteResourceNode {
 
   @DataValue

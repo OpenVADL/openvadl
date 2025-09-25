@@ -408,11 +408,11 @@ public class HdlBehavior {
       var print = "printf(cf\"%T " + str + "\\n\")";
       HdlConnection.ExpressionEndpoint cond = null;
       if (node.nullableCondition() != null) {
-        cond = new HdlConnection.ExpressionEndpoint(null, dispatch(node.condition()));
+        cond = new HdlConnection.ExpressionEndpoint(node.condition(), dispatch(node.condition()));
       }
       module.connections().add(new HdlConnection(
           null,
-          new HdlConnection.ExpressionEndpoint(null, print),
+          new HdlConnection.ExpressionEndpoint(node, print),
           false,
           cond
       ));

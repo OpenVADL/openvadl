@@ -23,6 +23,9 @@ import vadl.viam.Signal;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 
+/**
+ * Representing reading the value of a signal.
+ */
 public class ReadSignalNode extends ReadResourceNode {
 
   @DataValue

@@ -24,6 +24,9 @@ import vadl.pass.PassResults;
 import vadl.rtl.template.RtlTemplateRenderingPass;
 import vadl.viam.Specification;
 
+/**
+ * Emit build.sbt. This is used by SBT to build the chisel project.
+ */
 public class EmitBuildSbtPass extends RtlTemplateRenderingPass {
 
   public EmitBuildSbtPass(RtlConfiguration configuration) {

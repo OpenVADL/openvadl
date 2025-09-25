@@ -21,6 +21,9 @@ import vadl.types.DataType;
 import vadl.viam.Encoding;
 import vadl.viam.Instruction;
 
+/**
+ * Helpers to generate HDL.
+ */
 public class HdlUtils {
 
   /**

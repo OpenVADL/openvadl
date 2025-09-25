@@ -21,6 +21,10 @@ import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * Represents the reset signal in hardware. This is used as the enable input for writes to describe
+ * reset behavior during HDL generation.
+ */
 public class RtlResetSignalNode extends ExpressionNode {
 
   public RtlResetSignalNode() {

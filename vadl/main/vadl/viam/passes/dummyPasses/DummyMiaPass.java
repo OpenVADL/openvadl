@@ -17,97 +17,24 @@
 package vadl.viam.passes.dummyPasses;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.rtl.passes.AbstractRtlPass;
-import vadl.types.BuiltInTable;
-import vadl.types.MicroArchitectureType;
-import vadl.types.Type;
-import vadl.viam.Identifier;
-import vadl.viam.Logic;
-import vadl.viam.Memory;
-import vadl.viam.MicroArchitecture;
-import vadl.viam.Processor;
-import vadl.viam.RegisterTensor;
-import vadl.viam.Resource;
 import vadl.viam.Specification;
-import vadl.viam.Stage;
-import vadl.viam.StageOutput;
-import vadl.viam.graph.Graph;
-import vadl.viam.graph.NodeList;
-import vadl.viam.graph.dependency.MiaBuiltInCall;
-import vadl.viam.graph.dependency.ReadStageOutputNode;
-import vadl.viam.graph.dependency.WriteStageOutputNode;
 
 /**
  * Adds a hardcoded {@link vadl.viam.MicroArchitecture} definition to the VIAM specification.
  * This is deleted as soon as the frontend can handle the translation.
  *
- * <pre>
- * [forwarding]
- * logic bypass
- *
- * [branch predictor]
- * logic predict
- *
- * stage FETCH -> ( fr : FetchResult ) =
- * {
- *   fr := fetchNext
- * }
- *
- * stage DECODE -> ( ir : Instruction ) =
- * {
- *   let instr = decode( FETCH.fr ) in
- *   {
- *     instr.address( @X )
- *     instr.readOrForward( @X, @bypass )
- *     ir := instr
- *   }
- * }
- *
- * stage EXECUTE -> ( ir : Instruction ) =
- * {
- *   let instr = DECODE.ir in
- *   {
- *     instr.read( @PC )
- *     instr.compute
- *     instr.verify
- *     instr.write( @PC )
- *     instr.results( @X, @bypass )
- *     ir := instr
- *   }
- * }
- *
- * stage MEMORY -> ( ir : Instruction ) =
- * {
- *   let instr = EXECUTE.ir in
- *   {
- *     instr.write( @MEM )
- *     instr.read( @MEM )
- *     ir := instr
- *   }
- * }
- *
- * stage WRITE_BACK =
- * {
- *   let instr = MEMORY.ir in
- *   {
- *     instr.write( @X )
- *   }
- * }
- * </pre>
+ * <p>If the supplied configuration is a {@link RtlConfiguration} the dummy MiA is selected based
+ * on the configuration. Otherwise, the default five stage pipeline is selected.
  */
-public class DummyMiaPass extends AbstractRtlPass {
+public class DummyMiaPass extends Pass {
 
-  public DummyMiaPass(RtlConfiguration configuration) {
+  public DummyMiaPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 
@@ -131,8 +58,13 @@ public class DummyMiaPass extends AbstractRtlPass {
       return null;
     }
 
+    var dummyMia = RtlConfiguration.DummyMia.five;
+    if (configuration() instanceof RtlConfiguration rtlConfig) {
+      dummyMia = rtlConfig.getDummyMia();
+    }
+
     viam.add(
-        switch (configuration().getDummyMia()) {
+        switch (dummyMia) {
           case single -> SingleStageDummyMia.mia(mip);
           case three -> ThreeStageDummyMia.mia(viam, mip);
           case five -> FiveStageDummyMia.mia(viam, mip);

@@ -119,10 +119,17 @@ public class HazardAnalysis extends DefinitionExtension<Resource> {
     return forwards;
   }
 
+  /**
+   * Find forward analysis for a write node and a stage to forward from.
+   *
+   * @param writeNode write node that will write the forwarded value
+   * @param stage stage to forward from
+   * @return forward analysis
+   */
   @Nullable
-  public ForwardAnalysis forwardWriteFromStage(WriteAnalysis writeAnalysis, Stage stage) {
+  public ForwardAnalysis forwardWriteFromStage(WriteResourceNode writeNode, Stage stage) {
     return forwards.stream()
-        .filter(f -> f.node().equals(writeAnalysis.node()))
+        .filter(f -> f.node().equals(writeNode))
         .filter(f -> f.fromStage().equals(stage))
         .findAny().orElse(null);
   }

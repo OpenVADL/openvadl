@@ -24,6 +24,9 @@ import vadl.pass.PassResults;
 import vadl.rtl.template.RtlTemplateRenderingPass;
 import vadl.viam.Specification;
 
+/**
+ * Emit a scala test that generates a System Verilog file from the chisel description.
+ */
 public class EmitCoreEmitPass extends RtlTemplateRenderingPass {
 
   public EmitCoreEmitPass(RtlConfiguration configuration) {

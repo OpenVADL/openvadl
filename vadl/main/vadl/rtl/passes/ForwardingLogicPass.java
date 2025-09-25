@@ -43,6 +43,10 @@ import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.WriteSignalNode;
 
+/**
+ * Synthesize forwarding logic for a linear pipeline. Makes use of the results of the
+ * {@link HazardAnalysisPass}.
+ */
 public class ForwardingLogicPass extends AbstractLogicPass {
 
   public ForwardingLogicPass(RtlConfiguration configuration) {
@@ -91,7 +95,7 @@ public class ForwardingLogicPass extends AbstractLogicPass {
           for (HazardAnalysis.WriteAnalysis wr : hazardWr) {
             var curStage = wr.effect();
             while (curStage != null && !curStage.equals(stage)) {
-              var fwd = analysis.forwardWriteFromStage(wr, curStage);
+              var fwd = analysis.forwardWriteFromStage(wr.node(), curStage);
               if (fwd == null) {
                 break; // not further forward paths
               }

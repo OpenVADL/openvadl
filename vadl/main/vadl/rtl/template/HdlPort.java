@@ -28,14 +28,14 @@ import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
 
 /**
- * Input/output port on a HDL module.
+ * Input/output port on an HDL module.
  *
- * @param name Port name
+ * @param name     Port name
  * @param resource Resource this port reads/writes
- * @param read True, if this is a read or write port.
- * @param output True, if this is an output (write nodes create outputs, reads nodes inputs).
- * @param nodes Read/write nodes this port is connected to. This set is extended when signal or
- *              register read ports are merged.
+ * @param read     True, if this is a read or write port.
+ * @param output   True, if this is an output (write nodes create outputs, reads nodes inputs).
+ * @param nodes    Read/write nodes this port is connected to. This set is extended when signal or
+ *                 register read ports are merged.
  */
 public record HdlPort(
     String name,

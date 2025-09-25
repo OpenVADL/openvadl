@@ -39,13 +39,22 @@ public abstract class Logic extends Definition implements DefProp.WithBehavior {
   private final List<Signal> signals;
   private final List<RegisterTensor> registers;
 
-  private Graph behavior;
+  private final Graph behavior;
 
+  /**
+   * Create new empty logic element.
+   *
+   * @param identifier identifier of the logic element
+   */
   public Logic(Identifier identifier) {
     super(identifier);
     this.signals = new ArrayList<>();
     this.registers = new ArrayList<>();
     this.behavior = new Graph(identifier.simpleName());
+  }
+
+  public MicroArchitecture mia() {
+    return mia;
   }
 
   public void setMia(MicroArchitecture mia) {
@@ -98,6 +107,12 @@ public abstract class Logic extends Definition implements DefProp.WithBehavior {
       super(identifier);
     }
 
+    /**
+     * Get or create an enable signal for the given stage.
+     *
+     * @param stage stage
+     * @return enable signal
+     */
     public Signal getEnable(Stage stage) {
       return enable.computeIfAbsent(stage, s -> {
         var sig = new Signal(identifier.append(s.simpleName() + "_en"), Type.bool());
@@ -119,6 +134,12 @@ public abstract class Logic extends Definition implements DefProp.WithBehavior {
       super(identifier);
     }
 
+    /**
+     * Add a forward enable signal for a read node to the forwarding logic.
+     *
+     * @param node read node
+     * @param signal forward enable signal
+     */
     public void putEnable(ReadResourceNode node, Signal signal) {
       enable.put(node, signal);
       if (!signals().contains(signal)) {
@@ -126,6 +147,12 @@ public abstract class Logic extends Definition implements DefProp.WithBehavior {
       }
     }
 
+    /**
+     * Get the forward enable signal for a read node.
+     *
+     * @param node read node
+     * @return forward enable signal
+     */
     @Nullable
     public Signal getEnable(ReadResourceNode node) {
       return enable.get(node);
