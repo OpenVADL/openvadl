@@ -234,7 +234,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // compare each constraint index value with the given one
       var idxExpr = indices.get(i);
       var idxConst = constraints.get(i).toViamConstant()
-          .zeroExtend(idxExpr.type().asDataType())  // cast constant to same type as expr
+          .zeroExtend(
+              (DataType) getViamType(
+                  idxExpr.type().asDataType()))  // cast constant to same type as expr
           .toNode();
       // check if constraint and expression are different
       constChecks[i] = neq(idxExpr, idxConst);
@@ -292,7 +294,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     ExpressionNode regAccess = new ReadRegTensorNode(
         reg,
         indices,
-        regReadType,
+        (DataType) getViamType(regReadType),
         null
     );
 
@@ -306,7 +308,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       regAccess = select(
           dontMatch,
           regAccess,
-          Constant.Value.of(0, regReadType).toNode()
+          Constant.Value.of(0, (DataType) getViamType(regReadType)).toNode()
       );
     }
 
@@ -321,7 +323,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return new Function(
         identifier,
         params.toArray(vadl.viam.Parameter[]::new),
-        resultType,
+        getViamType(resultType),
         graph
     );
   }
@@ -365,7 +367,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         viamLowering.generateIdentifier(
             identifier.name() + "::value",
             identifier.location()),
-        resultType,
+        getViamType(resultType),
         1);
     params.add(valueParam);
 
@@ -456,7 +458,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
   private static BuiltInCall produceNeqToZero(ExpressionNode node) {
-    var constNode = new ConstantNode(Constant.Value.of(0, (DataType) node.type()));
+    var constNode = new ConstantNode(Constant.Value.of(0, (DataType) getViamType(node.type())));
     constNode.setSourceLocation(node.location());
     return BuiltInCall.of(BuiltInTable.NEQ, node, constNode);
   }
@@ -470,8 +472,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var result = expr.accept(this);
     result.setSourceLocationIfNotSet(expr.location());
     expressionCache.put(expr, result);
+    // FIXME: Should this really be here?
     result.ensure(!(result.type() instanceof ConstantType),
         "Constant types must not exist in the VIAM");
+    result.ensure(!(result.type() instanceof FormatType),
+        "Format types must not exist in the VIAM");
+    result.ensure(!(result.type() instanceof TensorType),
+        "Tensor types must not exist in the VIAM");
     return result;
   }
 
@@ -513,17 +520,17 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (computedTarget instanceof TypedFormatField typedFormatField) {
       return new FieldRefNode(
           (Format.Field) viamLowering.fetch(typedFormatField).orElseThrow(),
-          (DataType) getViamType(Objects.requireNonNull(expr.type)));
+          (DataType) getViamType(expr.type()));
     }
     if (computedTarget instanceof RangeFormatField rangeFormatField) {
       return new FieldRefNode(
           (Format.Field) viamLowering.fetch(rangeFormatField).orElseThrow(),
-          (DataType) getViamType(Objects.requireNonNull(expr.type)));
+          (DataType) getViamType(expr.type()));
     }
     if (computedTarget instanceof DerivedFormatField derivedFormatField) {
       return new FieldAccessRefNode(
           (Format.FieldAccess) viamLowering.fetch(derivedFormatField).orElseThrow(),
-          (DataType) getViamType(Objects.requireNonNull(expr.type)));
+          (DataType) getViamType(expr.type()));
     }
 
     // Register
@@ -532,7 +539,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return new ReadRegTensorNode(
           register,
           new NodeList<>(),
-          (DataType) getViamType(Objects.requireNonNull(expr.type)),
+          (DataType) getViamType(expr.type()),
           null);
     }
 
@@ -566,7 +573,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
         return new ReadRegTensorNode((RegisterTensor) counter.registerTensor(),
             new NodeList<>(),
-            (DataType) getViamType(Objects.requireNonNull(expr.type)),
+            (DataType) getViamType(expr.type()),
             null);
       }
       throw new IllegalStateException("Unsupported counter kind: " + counterDefinition.kind);
@@ -602,7 +609,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (computedTarget instanceof FunctionDefinition functionDefinition) {
       var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
       return new FuncCallNode(function, new NodeList<>(),
-          getViamType(Objects.requireNonNull(expr.type)));
+          getViamType(expr.type()));
     }
 
     // Builtin Call
@@ -614,7 +621,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (matchingBuiltins.size() == 1) {
       var builtin = matchingBuiltins.get(0);
       return new BuiltInCall(builtin, new NodeList<ExpressionNode>(),
-          getViamType(Objects.requireNonNull(expr.type)));
+          getViamType(expr.type()));
     }
 
     throw new RuntimeException(
@@ -634,7 +641,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var left = fetch(expr.left);
     var right = fetch(expr.right);
     return new BuiltInCall(builtin, new NodeList<>(left, right),
-        getViamType(Objects.requireNonNull(expr.type)));
+        getViamType(expr.type()));
   }
 
   @Override
@@ -691,7 +698,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return new ConstantNode(
         Constant.Value.fromInteger(
             expr.number,
-            (DataType) getViamType(Objects.requireNonNull(expr.type))));
+            (DataType) getViamType(expr.type())));
   }
 
   @Override
@@ -740,7 +747,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return new BuiltInCall(
         Objects.requireNonNull(expr.computedTarget),
         new NodeList<>(value),
-        getViamType(Objects.requireNonNull(expr.type)));
+        getViamType(expr.type()));
   }
 
   /**
@@ -831,10 +838,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (expr.computedBuiltIn != null) {
       if (BuiltInTable.ASM_PARSER_BUILT_INS.contains(expr.computedBuiltIn)) {
         exprBeforeSlice = new AsmBuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
-            expr.typeBeforeSlice());
+            typeBeforeSlice);
       } else {
         exprBeforeSlice = new BuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
-            expr.typeBeforeSlice());
+            typeBeforeSlice);
       }
     } else {
       exprBeforeSlice = switch (expr.computedTarget()) {
@@ -865,7 +872,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
         case CounterDefinition counterDef -> new ReadRegTensorNode(
             ((Counter) viamLowering.fetch(counterDef).orElseThrow()).registerTensor(),
-            new NodeList<>(), expr.typeBeforeSlice().asDataType(), null);
+            new NodeList<>(), typeBeforeSlice.asDataType(), null);
 
         default -> fetch((Expr) expr.target);
       };
@@ -894,17 +901,18 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   @Override
   public ExpressionNode visit(CastExpr expr) {
     // Shortcut for constant types
+    var viamType = getViamType(expr.type());
     if (expr.value.type instanceof ConstantType constType) {
       return new ConstantNode(
           Constant.Value.of(constType.getValue().longValueExact(),
-                  (DataType) constType.closestTo(expr.type()))
-              .castTo((DataType) expr.type()));
+                  (DataType) constType.closestTo(viamType))
+              .castTo((DataType) viamType));
     }
 
     // check the different rules and apply them accordingly
     var source = fetch(expr.value);
     var sourceType = getViamType(Objects.requireNonNull(expr.value.type));
-    var targetType = getViamType(Objects.requireNonNull(expr.type));
+    var targetType = getViamType(expr.type());
     if (sourceType.isTrivialCastTo(targetType)) {
       // match 1. rule: same bit representation
       // -> no casting needs to be applied
@@ -1085,6 +1093,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     WriteResourceNode writeNode = switch (viamDef) {
 
+      // No need to call getViamType here as the viam definitions should already have that.
       case RegisterTensor regDef -> new WriteRegTensorNode(regDef, argExprs,
           // slice the written value before writing it
           sliceWriteValue(value,
