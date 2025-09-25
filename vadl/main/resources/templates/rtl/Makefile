@@ -19,3 +19,37 @@ riscv-tests:
 		autoconf && \
 		./configure --prefix=/usr && \
 		RISCV_GCC_OPTS="-static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I/usr/include" make isa
+
+# scalafmt download and format target
+ifeq ($(OS),Windows_NT)
+	SCALAFMT_ARCH = x86_64
+	SCALAFMT_OS = pc-win32
+	SCALAFMT_EXT = .exe
+else
+    UNAME_P := $(shell uname -p)
+	SCALAFMT_ARCH = x86_64
+    ifneq ($(filter arm%,$(UNAME_P)),)
+		SCALAFMT_ARCH = aarch64
+    endif
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Linux)
+		SCALAFMT_OS = pc-linux
+    endif
+    ifeq ($(UNAME_S),Darwin)
+		SCALAFMT_OS = apple-darwin
+    endif
+endif
+
+SCALAFMT_VER = 3.9.10
+SCALAFMT_FILE = scalafmt-$(SCALAFMT_ARCH)-$(SCALAFMT_OS).zip
+SCALAFMT_URL = https://github.com/scalameta/scalafmt/releases/download/v$(SCALAFMT_VER)/$(SCALAFMT_FILE)
+
+.scalafmt/$(SCALAFMT_FILE):
+	mkdir -p $@
+	curl -L --output $@ "$(SCALAFMT_URL)"
+.scalafmt/scalafmt$(SCALAFMT_EXT): .scalafmt/$(SCALAFMT_FILE)
+	unzip -od .scalafmt/ $<
+
+format: .scalafmt/scalafmt$(SCALAFMT_EXT)
+	$< [# th:each="file : ${scalaFiles}"]\
+		[(${file})][/]
