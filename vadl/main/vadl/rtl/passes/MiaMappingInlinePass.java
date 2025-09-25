@@ -21,6 +21,7 @@ import com.google.common.collect.HashBiMap;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -47,6 +48,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
+import vadl.viam.graph.dependency.WriteStageOutputNode;
 
 /**
  * Inline nodes from the instruction progress graph into the MiA description based on the
@@ -101,7 +103,7 @@ public class MiaMappingInlinePass extends Pass {
       var stageContexts = mapping.stageContexts(stage).toList();
       var stageNodes = stageContexts.stream()
           .map(MiaMapping.NodeContext::ipgNodes).flatMap(Collection::stream)
-          .collect(Collectors.toSet());
+          .collect(Collectors.toCollection(LinkedHashSet::new));
 
       // copy subgraph to stage behavior
       // add stage outputs to pass data between stages
@@ -143,6 +145,19 @@ public class MiaMappingInlinePass extends Pass {
         }
       }
 
+      // delete stage outputs of mapping nodes
+      for (MiaMapping.NodeContext context : stageContexts) {
+        var node = context.node();
+        for (Node u : node.usages().toList()) {
+          if (u instanceof WriteStageOutputNode wr) {
+            wr.safeDelete(true);
+            if (wr.stageOutput() != null) {
+              context.stage().removeOutput(wr.stageOutput());
+            }
+          }
+        }
+      }
+
       inlineMap.putAll(copyMap);
     }
 
@@ -150,7 +165,7 @@ public class MiaMappingInlinePass extends Pass {
   }
 
   private RegisterTensor resolveStageOutput(ExpressionNode node, @Nullable Stage stage,
-                                         Map<Pair<Node, Stage>, RegisterTensor> map) {
+                                            Map<Pair<Node, Stage>, RegisterTensor> map) {
     if (stage == null) {
       throw new ViamGraphError("Can not find output of previous stage for node")
           .addContext(node);
@@ -195,10 +210,8 @@ public class MiaMappingInlinePass extends Pass {
 
   private String nameFor(Stage stage, Node node) {
     var fallback = "n" + node.id.numericId();
-    var existing = stage.registers().stream().map(Definition::simpleName)
-        .collect(Collectors.toSet());
     if (node.ensureGraph() instanceof InstructionProgressGraph ipg) {
-      return ipg.getContext(node).shortestNameHint(existing, 30).orElse(fallback);
+      return ipg.getContext(node).shortestNameHint(stage.localNames(), 30).orElse(fallback);
     }
     return fallback;
   }

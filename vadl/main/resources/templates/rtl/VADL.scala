@@ -1,7 +1,6 @@
 [# th:if="${package != ''}"]package [(${package})]
 
 [/]import chisel3._
-import chisel3.experimental.SourceInfo
 
 object VADL {
 
@@ -20,9 +19,6 @@ object VADL {
     def :=(data: T): Unit = {
       when(this.enable) {
         data := this.data
-
-        val d = this.data.asUInt
-        printf(cf"%T write $data%n = $d%x\n")
       }
     }
   }
@@ -35,10 +31,6 @@ object VADL {
       this.data := 0.U.asTypeOf(this.data)
       when(this.enable) {
         this.data := mem(this.address)
-
-        val a = this.address.asUInt
-        val d = this.data.asUInt
-        printf(cf"%T read @$a%x = $d%x\n")
       }
     }
   }
@@ -49,10 +41,6 @@ object VADL {
     def :=(mem: Mem[T]): Unit = {
       when(this.enable) {
         mem(this.address) := this.data
-
-        val a = this.address.asUInt
-        val d = this.data.asUInt
-        printf(cf"%T write @$a%x = $d%x\n")
       }
     }
   }
@@ -67,10 +55,16 @@ object VADL {
 
   // Helpers
 
-  implicit class BitsSExt(a: Bits) {
-    def sext(width: Width): Bits = {
+  implicit class BitsExtTrunc(a: Bits) {
+    def sext(width: Width): UInt = {
       val s = Wire(SInt(width))
       s := a.asSInt
+      s.asUInt
+    }
+
+    def trunc(width: Width): UInt = {
+      val s = Wire(Bits(width))
+      s := a
       s.asUInt
     }
   }

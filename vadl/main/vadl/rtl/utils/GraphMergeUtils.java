@@ -19,7 +19,7 @@ package vadl.rtl.utils;
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -122,7 +122,7 @@ public class GraphMergeUtils {
    * @param behavior behavior graph with control flow
    */
   public static void mergeWritesOnBranches(Graph behavior) {
-    mergeWritesOnBranch(GraphUtils.getSingleNode(behavior, StartNode.class), new HashSet<>());
+    mergeWritesOnBranch(GraphUtils.getSingleNode(behavior, StartNode.class), new LinkedHashSet<>());
   }
 
   private static @Nullable MergeNode mergeWritesOnBranch(AbstractBeginNode beginNode,
@@ -148,7 +148,7 @@ public class GraphMergeUtils {
         var branchWrites = new ArrayList<Set<WriteResourceNode>>();
         var mergeNodes = splitNode.branches().stream()
             .map(branch -> {
-              var writeSet = new HashSet<WriteResourceNode>();
+              var writeSet = new LinkedHashSet<WriteResourceNode>();
               branchWrites.add(writeSet);
               return mergeWritesOnBranch(branch, writeSet);
             })

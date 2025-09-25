@@ -18,6 +18,7 @@ package vadl.rtl.passes;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -86,7 +87,7 @@ public class HazardAnalysisPass extends Pass {
               condition(mapping, read),
               stage(mapping, read.indices())
           ))
-          .collect(Collectors.toSet());
+          .collect(Collectors.toCollection(LinkedHashSet::new));
       var writes = ipg.getNodes(WriteResourceNode.class)
           .filter(n -> n.resourceDefinition().equals(resource))
           .map(write -> new HazardAnalysis.WriteAnalysis(
@@ -95,10 +96,10 @@ public class HazardAnalysisPass extends Pass {
               stage(mapping, write.indices()),
               stage(mapping, write.value())
           ))
-          .collect(Collectors.toSet());
+          .collect(Collectors.toCollection(LinkedHashSet::new));
       var forwards = writes.stream()
           .flatMap(writeAnalysis -> forward(mapping, writeAnalysis))
-          .collect(Collectors.toSet());
+          .collect(Collectors.toCollection(LinkedHashSet::new));
       var analysis = new HazardAnalysis(resource, reads, writes, forwards);
       resource.attachExtension(analysis);
       result.add(analysis);

@@ -106,11 +106,13 @@ import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
 import vadl.lcb.template.lld.ELF.Arch.EmitLldVadlBuiltinsHeaderFilePass;
 import vadl.rtl.passes.CleanupEmitDirectoryPass;
 import vadl.rtl.passes.ControlLogicPass;
+import vadl.rtl.passes.DebugOutputPass;
 import vadl.rtl.passes.EmitBuildSbtPass;
 import vadl.rtl.passes.EmitCoreEmitPass;
 import vadl.rtl.passes.EmitCoreTestPass;
 import vadl.rtl.passes.EmitModulesPass;
 import vadl.rtl.passes.EmitRtlMakefilePass;
+import vadl.rtl.passes.EmitScalafmtConfigPass;
 import vadl.rtl.passes.EmitVadlLibPass;
 import vadl.rtl.passes.ForwardingLogicPass;
 import vadl.rtl.passes.HazardAnalysisPass;
@@ -630,7 +632,8 @@ public class PassOrders {
         .add(new InstructionProgressGraphLowerPass(config))
         .add(new InstructionProgressGraphNamePass(config));
 
-    order.add(new HazardAnalysisPass(config));
+    order.add(new HazardAnalysisPass(config))
+        .add(new DebugOutputPass(config));
 
     order.add(new MiaMappingInlinePass(config))
         .add(new ForwardingLogicPass(config))
@@ -649,11 +652,12 @@ public class PassOrders {
 
   private static void addRtlEmitPasses(PassOrder order, RtlConfiguration config) {
     order.add(new EmitBuildSbtPass(config))
-        .add(new EmitRtlMakefilePass(config))
         .add(new EmitModulesPass(config))
         .add(new EmitVadlLibPass(config))
         .add(new EmitCoreTestPass(config))
         .add(new EmitCoreEmitPass(config))
+        .add(new EmitScalafmtConfigPass(config))
+        .add(new EmitRtlMakefilePass(config))
         .add(new CleanupEmitDirectoryPass(config));
   }
 

@@ -33,7 +33,8 @@ import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ReadMemNode;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
@@ -49,10 +50,16 @@ public class InstructionProgressGraph extends Graph {
   private final Set<Instruction> instructions = new HashSet<>();
 
   @Nullable
+  private ReadRegTensorNode pcRead;
+
+  @Nullable
   private RtlReadMemNode fetch;
 
   @Nullable
   private WriteRegTensorNode pcIncrement;
+
+  @Nullable
+  private ExpressionNode unknownInstruction;
 
   /**
    * Constructs a new instruction progress graph.
@@ -71,6 +78,20 @@ public class InstructionProgressGraph extends Graph {
    */
   public Set<Instruction> instructions() {
     return instructions;
+  }
+
+  /**
+   * Program counter read node.
+   *
+   * @return pc read node
+   */
+  @Nullable
+  public ReadRegTensorNode pcRead() {
+    return pcRead;
+  }
+
+  public void setPcRead(@Nullable ReadRegTensorNode pcRead) {
+    this.pcRead = pcRead;
   }
 
   /**
@@ -99,6 +120,20 @@ public class InstructionProgressGraph extends Graph {
 
   public void setPcIncrement(@Nullable WriteRegTensorNode pcIncrement) {
     this.pcIncrement = pcIncrement;
+  }
+
+  /**
+   * Unknown instruction node.
+   *
+   * @return bool expression node in the decode stage, evaluates to true if instruction is unknown
+   */
+  @Nullable
+  public ExpressionNode unknownInstruction() {
+    return unknownInstruction;
+  }
+
+  public void setUnknownInstruction(@Nullable ExpressionNode unknownInstruction) {
+    this.unknownInstruction = unknownInstruction;
   }
 
   /**

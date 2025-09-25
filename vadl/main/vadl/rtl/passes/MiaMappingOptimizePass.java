@@ -21,8 +21,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,7 +46,6 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
-import vadl.viam.passes.canonicalization.Canonicalizer;
 
 /**
  * Improve the MiA mapping by moving nodes on the fringe of two map nodes if they reduce the size of
@@ -106,7 +106,6 @@ public class MiaMappingOptimizePass extends Pass {
     } while (changes > 0 || !Sets.symmetricDifference(added, removed).isEmpty());
 
     // optimize
-    Canonicalizer.canonicalize(ipg);
     new RtlSimplifier(RtlSimplificationRules.rules).run(ipg, mapping);
 
     return null;
@@ -170,11 +169,11 @@ public class MiaMappingOptimizePass extends Pass {
   private void combineOutputs(List<Stage> stages, MiaMapping mapping,
                               InstructionProgressGraph ipg, Set<Node> added) {
     for (Stage stage : stages) {
-      var outMap = new HashMap<Integer, Set<ExpressionNode>>();
+      var outMap = new LinkedHashMap<Integer, Set<ExpressionNode>>();
       mapping.stageOutputs(stage)
           .filter(n -> bitWidth(n) > 1)
           .forEach(node -> {
-            outMap.computeIfAbsent(bitWidth(node), k -> new HashSet<>()).add(node);
+            outMap.computeIfAbsent(bitWidth(node), k -> new LinkedHashSet<>()).add(node);
           });
       for (Set<ExpressionNode> set : outMap.values()) {
         if (set.size() <= 1) {

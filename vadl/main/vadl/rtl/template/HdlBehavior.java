@@ -19,7 +19,6 @@ package vadl.rtl.template;
 import com.google.common.collect.Streams;
 import java.util.HashMap;
 import java.util.List;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.DispatchFor;
@@ -54,6 +53,7 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.UnaryNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.WriteSignalNode;
@@ -101,21 +101,23 @@ public class HdlBehavior {
 
     private final HdlModule module;
 
-    private final HashMap<Node, String> cache = new HashMap<>();
+    private final HashMap<Node, String> cacheExprOrSig = new HashMap<>();
+
+    private final HashMap<Node, String> cachePortOrRes = new HashMap<>();
 
     SignalCollector(HdlModule module) {
       this.module = module;
     }
 
     public String dispatch(ExpressionNode node) {
-      return exprOrSig(node, () -> SignalCollectorDispatcher.dispatch(this, node));
+      return exprOrSig(node);
     }
 
-    private String exprOrSig(ExpressionNode node, Supplier<String> getExpr) {
-      if (cache.containsKey(node)) {
-        return cache.get(node);
+    private String exprOrSig(ExpressionNode node) {
+      if (cacheExprOrSig.containsKey(node)) {
+        return cacheExprOrSig.get(node);
       }
-      var expr = getExpr.get();
+      var expr = SignalCollectorDispatcher.dispatch(this, node);
 
       // create signal and assignment if necessary
       if (isSignal(node)) {
@@ -128,23 +130,21 @@ public class HdlBehavior {
         var signal = new Signal(id, node.type().asDataType());
         module.addResource(signal);
 
-        if (expr != null) {
-          module.addConnection(new HdlConnection(
-              new HdlConnection.ResourceEndpoint(signal, node),
-              new HdlConnection.ExpressionEndpoint(node, expr),
-              false, null
-          ));
-        }
+        module.addConnection(new HdlConnection(
+            new HdlConnection.ResourceEndpoint(signal, node),
+            new HdlConnection.ExpressionEndpoint(node, expr),
+            false, null
+        ));
         expr = signal.simpleName();
       }
 
-      cache.put(node, expr);
+      cacheExprOrSig.put(node, expr);
       return expr;
     }
 
     private String portOrResource(Node node, Resource resource) {
-      if (cache.containsKey(node)) {
-        return cache.get(node);
+      if (cachePortOrRes.containsKey(node)) {
+        return cachePortOrRes.get(node);
       }
       String expr;
 
@@ -158,7 +158,7 @@ public class HdlBehavior {
         expr = "io." + port.hdlName();
       }
 
-      cache.put(node, expr);
+      cachePortOrRes.put(node, expr);
       return expr;
     }
 
@@ -197,7 +197,7 @@ public class HdlBehavior {
 
     @Handler
     String handle(TruncateNode node) {
-      return dispatch(node.value());
+      return dispatch(node.value()) + ".trunc(" + node.type().bitWidth() + ".W)";
     }
 
     @Handler
@@ -405,7 +405,7 @@ public class HdlBehavior {
     void handle(RtlDebugPrintNode node) {
       var str = node.render(
           (placeholder, value) -> "${" + dispatch(value) + "}" + placeholder);
-      var print = "printf(cf\"" + str + "\\n\")";
+      var print = "printf(cf\"%T " + str + "\\n\")";
       HdlConnection.ExpressionEndpoint cond = null;
       if (node.nullableCondition() != null) {
         cond = new HdlConnection.ExpressionEndpoint(null, dispatch(node.condition()));
@@ -430,16 +430,15 @@ public class HdlBehavior {
     if (node instanceof RtlInstructionWordSliceNode
         || node instanceof SliceNode
         || node instanceof ConstantNode
-        || node instanceof ReadSignalNode) {
+        || node instanceof UnaryNode
+        || node instanceof RtlValidSignalNode
+        || node instanceof ReadResourceNode) {
       return false;
     }
     return (node.usageCount() > 1
-        || node.usages().anyMatch(ReadResourceNode.class::isInstance)
-        || node.usages().anyMatch(WriteResourceNode.class::isInstance)
         || node instanceof LetNode
         || node instanceof SelectNode
-        || node instanceof RtlIsInstructionNode
-        || node instanceof ReadResourceNode);
+        || node instanceof RtlIsInstructionNode);
   }
 
 }

@@ -97,28 +97,30 @@ public record HdlEmitContext(
         .map(inlinedNode -> ipgContext(inlinedNode)
             .map(nodeContext ->
                 nodeContext.shortestNameHint(existing, 30)
+                    .or(() -> fallback(inlinedNode, existing))
                     .orElse("n_" + nodeContext.node().id().numericId()))
             .orElseGet(() -> {
               if (fallback == null || existing.contains(fallback)) {
-                return fallback(inlinedNode, existing);
+                return fallback(inlinedNode, existing)
+                    .orElse("_n_" + inlinedNode.id.numericId());
               }
               return fallback;
             }))
         .findFirst().get();
   }
 
-  private String fallback(Node node, Set<String> existing) {
+  private Optional<String> fallback(Node node, Set<String> existing) {
     if (node instanceof ReadResourceNode r) {
       var prefix = (r instanceof ReadSignalNode) ? "" : "read_";
       var name = prefix + r.resourceDefinition().simpleName();
-      return suffix(name, existing);
+      return Optional.of(suffix(name, existing));
     }
     if (node instanceof WriteResourceNode w) {
       var prefix = (w instanceof WriteSignalNode) ? "" : "write_";
       var name = prefix + w.resourceDefinition().simpleName();
-      return suffix(name, existing);
+      return Optional.of(suffix(name, existing));
     }
-    return "_n_" + node.id.numericId();
+    return Optional.empty();
   }
 
   private String suffix(String name, Set<String> existing) {

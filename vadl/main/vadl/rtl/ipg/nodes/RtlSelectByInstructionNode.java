@@ -18,7 +18,9 @@ package vadl.rtl.ipg.nodes;
 
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -56,7 +58,7 @@ public class RtlSelectByInstructionNode extends ExpressionNode {
    * @param type result type
    */
   public RtlSelectByInstructionNode(Type type) {
-    this(type, new ArrayList<>(), new NodeList<>());
+    this(type, Collections.emptyList(), new NodeList<>());
   }
 
   /**
@@ -88,7 +90,8 @@ public class RtlSelectByInstructionNode extends ExpressionNode {
     super(type);
     ensure(instructions.size() == values.size(),
         "List of instruction sets must have same size as value inputs");
-    this.instructions = instructions;
+    this.instructions = new ArrayList<>();
+    instructions.stream().map(LinkedHashSet::new).forEach(this.instructions::add);
     this.values = values;
     this.selection = selection;
   }

@@ -56,7 +56,6 @@ import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.WriteSignalNode;
-import vadl.viam.passes.canonicalization.Canonicalizer;
 import vadl.viam.passes.functionInliner.Inliner;
 
 /**
@@ -141,7 +140,7 @@ public class ControlLogicPass extends AbstractLogicPass {
       var stage = mia.stages().get(i);
       var dhaz = dataHazard(isa, mia, control, stage, fullRdMap, inline, true);
       var fullRd = Objects.requireNonNull(fullRdMap.get(stage));
-      var extStall = extStall(stage);
+      var extStall = extStall(stage, inline);
       if (i == mia.stages().size() - 1) {
         stallMap.put(stage, GraphUtils.and(GraphUtils.or(dhaz, extStall), fullRd));
       } else {
@@ -217,7 +216,7 @@ public class ControlLogicPass extends AbstractLogicPass {
                   );
                   wr.setCondition(cond);
                 });
-            var en = getStageSignalRead(stage, wr.condition());
+            var en = getStageSignalRead(stage, wr.condition(), inline);
             enList.add(en);
           }
         }
@@ -231,7 +230,6 @@ public class ControlLogicPass extends AbstractLogicPass {
 
     // optimize
     Inliner.inlineFuncs(control.behavior());
-    Canonicalizer.canonicalize(control.behavior());
     new RtlSimplifier(RtlSimplificationRules.rules).run(control.behavior());
 
     return control;
@@ -333,7 +331,7 @@ public class ControlLogicPass extends AbstractLogicPass {
     return null;
   }
 
-  private ExpressionNode extStall(Stage stage) {
+  private ExpressionNode extStall(Stage stage, MiaMappingInlinePass.Result inline) {
     if (configuration().getMemory().equals(RtlConfiguration.Memory.async)) {
       // no external stalls with async memory read/writes
       return Constant.Value.of(false).toNode();
@@ -359,7 +357,7 @@ public class ControlLogicPass extends AbstractLogicPass {
         })
         .reduce(GraphUtils::or);
     return extStallCond.map(stage.behavior()::addWithInputs)
-        .map(expr -> getStageSignalRead(stage, expr))
+        .map(expr -> getStageSignalRead(stage, expr, inline))
         .orElse(Constant.Value.of(false).toNode());
   }
 

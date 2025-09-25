@@ -18,8 +18,10 @@ package vadl.viam;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.viam.graph.Graph;
@@ -47,6 +49,8 @@ public class Stage extends Definition implements DefProp.WithBehavior {
 
   private final List<RegisterTensor> registers;
 
+  private final Set<String> localNames;
+
   private @Nullable Stage prev;
 
   private @Nullable List<Stage> next;
@@ -64,6 +68,7 @@ public class Stage extends Definition implements DefProp.WithBehavior {
     this.outputs = new ArrayList<>(outputs);
     this.signals = new ArrayList<>();
     this.registers = new ArrayList<>();
+    this.localNames = new HashSet<>();
 
     this.behavior.setParentDefinition(this);
   }
@@ -123,10 +128,12 @@ public class Stage extends Definition implements DefProp.WithBehavior {
 
   public void addOutput(StageOutput output) {
     outputs.add(output);
+    localNames.add(output.simpleName());
   }
 
   public void removeOutput(StageOutput output) {
     outputs.remove(output);
+    localNames.remove(output.simpleName());
   }
 
   public List<Signal> signals() {
@@ -135,10 +142,12 @@ public class Stage extends Definition implements DefProp.WithBehavior {
 
   public void addSignal(Signal signal) {
     signals.add(signal);
+    localNames.add(signal.simpleName());
   }
 
   public void removeSignal(Signal signal) {
     signals.remove(signal);
+    localNames.remove(signal.simpleName());
   }
 
   public List<RegisterTensor> registers() {
@@ -147,10 +156,16 @@ public class Stage extends Definition implements DefProp.WithBehavior {
 
   public void addRegister(RegisterTensor register) {
     registers.add(register);
+    localNames.add(register.simpleName());
   }
 
   public void removeRegister(RegisterTensor register) {
     registers.remove(register);
+    localNames.remove(register.simpleName());
+  }
+
+  public Set<String> localNames() {
+    return localNames;
   }
 
   @Override

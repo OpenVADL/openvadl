@@ -17,7 +17,6 @@
 package vadl.rtl.analysis;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.utils.Pair;

@@ -18,6 +18,7 @@ package vadl.rtl.map;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import vadl.rtl.ipg.InstructionProgressGraph;
@@ -186,11 +187,11 @@ public class MiaBuiltInCallMatcher {
   public Set<Node> match(MiaBuiltInCall mapNode, Set<Node> nodes, Set<Node> doneNodes) {
     var matcher = MATCHERS.get(mapNode.builtIn());
     if (matcher == null) {
-      return Collections.emptySet();
+      return new LinkedHashSet<>();
     }
     return nodes.stream()
         .filter(matchNode -> matcher.match(matchNode, mapNode, doneNodes))
-        .collect(Collectors.toSet());
+        .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
 }

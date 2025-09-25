@@ -20,6 +20,7 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 import vadl.configuration.RtlConfiguration;
 import vadl.pass.PassResults;
+import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.utils.Pair;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.MicroArchitecture;
@@ -105,30 +106,50 @@ public abstract class AbstractLogicPass extends AbstractRtlPass {
       }
     }
     if (stageNode != null) {
-      return getStageSignalRead(stage, stageNode);
+      return getStageSignalRead(stage, stageNode, inline);
     }
     return null; // node not available in this stage
   }
 
   protected ExpressionNode getStageSignalRead(Stage stage, ExpressionNode stageNode) {
+    return getStageSignalRead(stage, stageNode, null);
+  }
+
+  protected ExpressionNode getStageSignalRead(Stage stage, ExpressionNode stageNode,
+                                              @Nullable MiaMappingInlinePass.Result inline) {
+    // already a signal
     if (stageNode instanceof ReadSignalNode rd) {
       return new ReadSignalNode(rd.signal());
     }
+
+    // register read without address
     if (stageNode instanceof ReadRegTensorNode rd && !rd.hasAddress()) {
       return new ReadRegTensorNode(rd.regTensor(), new NodeList<>(), rd.regTensor().resultType(),
           rd.staticCounterAccess());
     }
+
+    // check if already placed into a signal
     WriteSignalNode wrSig = (WriteSignalNode) stageNode.usages()
         .filter(WriteSignalNode.class::isInstance).findAny().orElse(null);
     if (wrSig != null) {
       return new ReadSignalNode(wrSig.signal()); // use existing signal
     }
+
     // create new signal
-    var sig = new Signal(stage.identifier.append("n_" + stageNode.id.numericId()),
-        stageNode.type().asDataType());
+    var name = "n_" + stageNode.id.numericId();
+    if (inline != null) {
+      // name from ipg if possible
+      var ipgNode = inline.inlineMap().inverse().get(stageNode);
+      if (ipgNode != null && ipgNode.ensureGraph() instanceof InstructionProgressGraph ipg) {
+        name = ipg.getContext(ipgNode).shortestNameHint(stage.localNames(), 30).orElse(name);
+      }
+    }
+
+    var sig = new Signal(stage.identifier.append(name), stageNode.type().asDataType());
     wrSig = new WriteSignalNode(sig, stageNode);
     stage.behavior().add(wrSig);
     stage.addSignal(sig);
+
     return new ReadSignalNode(sig);
   }
 

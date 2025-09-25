@@ -20,8 +20,8 @@ import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -212,7 +212,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
   }
 
   private void setReadConditions(InstructionProgressGraph ipg) {
-    var map = new HashMap<RtlConditionalReadNode, Set<ExpressionNode>>();
+    var map = new LinkedHashMap<RtlConditionalReadNode, Set<ExpressionNode>>();
     ipg.getNodes(SideEffectNode.class).forEach(sideEffect -> {
       collectSideEffects(sideEffect, sideEffect, map);
     });
@@ -245,7 +245,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
   private void collectSideEffects(Node node, SideEffectNode sideEffect,
                                   Map<RtlConditionalReadNode, Set<ExpressionNode>> map) {
     if (node instanceof RtlConditionalReadNode read) {
-      map.computeIfAbsent(read, k -> new HashSet<>())
+      map.computeIfAbsent(read, k -> new LinkedHashSet<>())
           .add(sideEffect.condition());
     }
     node.inputs().forEach(input -> collectSideEffects(input, sideEffect, map));
@@ -344,6 +344,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
     var readIns = new RtlReadMemNode(codeMem, pcInc, pcIncVal.toNode(), readPc,
         Type.bits(insWord), Constant.Value.of(true).toNode());
     readIns = ipg.addWithInputs(readIns, ipg.instructions());
+    ipg.setPcRead(readPc);
     ipg.setFetch(readIns);
 
     // pc increment, TODO: replace with branch prediction value

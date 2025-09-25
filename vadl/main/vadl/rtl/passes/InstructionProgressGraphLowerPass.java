@@ -19,9 +19,7 @@ package vadl.rtl.passes;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -29,7 +27,6 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
-import vadl.rtl.ipg.nodes.RtlDebugPrintNode;
 import vadl.rtl.ipg.nodes.RtlInstructionWordSliceNode;
 import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
 import vadl.rtl.ipg.nodes.RtlOneHotDecodeNode;
@@ -40,11 +37,8 @@ import vadl.rtl.utils.RtlSimplifier;
 import vadl.utils.GraphUtils;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.passes.canonicalization.Canonicalizer;
 
 /**
  * Lower instruction progress graph by introducing is-instruction nodes for read/write nodes
@@ -108,25 +102,16 @@ public class InstructionProgressGraphLowerPass extends Pass {
 
     // handle undefined instructions
     // TODO undefined instruction behavior from specification
-    var pc = Objects.requireNonNull(isa.pc());
-    var readPc = new ReadRegTensorNode(pc.registerTensor(), new NodeList<>(),
-        pc.resultType(), pc);
     var anyIns = ipg.add(
-        new RtlIsInstructionNode(new HashSet<>(isa.ownInstructions()), null),
+        new RtlIsInstructionNode(isa.ownInstructions(), null),
         isa.ownInstructions()
     );
     var unknownIns = ipg.add(GraphUtils.not(anyIns), isa.ownInstructions());
-    var print = ipg.addWithInputs(
-        new RtlDebugPrintNode(unknownIns, "unknown instruction at %x",
-            new NodeList<>(readPc)),
-        isa.ownInstructions()
-    );
     decodeContext.ipgNodes().add(anyIns);
     decodeContext.ipgNodes().add(unknownIns);
-    decodeContext.ipgNodes().add(print);
+    ipg.setUnknownInstruction(unknownIns);
 
     // optimize
-    Canonicalizer.canonicalize(ipg);
     new RtlSimplifier(RtlSimplificationRules.rules).run(ipg, mapping);
 
     // add instruction input to is-instruction nodes and instruction word slices

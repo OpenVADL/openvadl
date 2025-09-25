@@ -51,8 +51,6 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.graph.dependency.WriteStageOutputNode;
-import vadl.viam.passes.canonicalization.Canonicalizer;
 
 /**
  * Emits stages and logic elements inside a top module as HDL. Also emits reset behavior.
@@ -104,7 +102,6 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
     for (HdlModule module : modules) {
       var behavior = module.behavior();
       if (behavior != null) {
-        Canonicalizer.canonicalize(behavior);
         new RtlSimplifier(RtlSimplificationRules.rules).run(behavior);
       }
     }
@@ -179,11 +176,7 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
     var resources = new ArrayList<Resource>();
     resources.addAll(stage.signals());
     resources.addAll(stage.registers());
-
-    // remove stage outputs, they are already lowered to register writes
-    var behavior = stage.behavior().copy();
-    behavior.getNodes(WriteStageOutputNode.class).toList()
-        .forEach(node -> node.safeDelete(true));
+    var behavior = stage.behavior();
 
     // replace is-instruction nodes matching sets of instructions
     // with or-expressions of single instruction is-instruction nodes

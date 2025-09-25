@@ -16,7 +16,9 @@
 
 package vadl.rtl.ipg.nodes;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -48,13 +50,15 @@ public class RtlIsInstructionNode extends ExpressionNode {
   protected ExpressionNode instruction;
 
   /**
-   * Create a new is-instruction node for a set of instructions.
+   * Create a new is-instruction node for a collection of instructions it should match.
    *
-   * @param instructions set of instructions
+   * @param instructions collection of instructions
+   * @param instruction instruction word input
    */
-  public RtlIsInstructionNode(Set<Instruction> instructions, @Nullable ExpressionNode instruction) {
+  public RtlIsInstructionNode(Collection<Instruction> instructions,
+                              @Nullable ExpressionNode instruction) {
     super(Type.bool());
-    this.instructions = new HashSet<>(instructions);
+    this.instructions = new LinkedHashSet<>(instructions);
     this.instruction = instruction;
   }
 
@@ -67,6 +71,11 @@ public class RtlIsInstructionNode extends ExpressionNode {
     return instructions;
   }
 
+  /**
+   * Instruction word input, set by {@link vadl.rtl.passes.InstructionProgressGraphLowerPass}.
+   *
+   * @return instruction word input
+   */
   @Nullable
   public ExpressionNode instruction() {
     return instruction;

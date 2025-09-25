@@ -19,7 +19,6 @@ package vadl.rtl.passes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -43,7 +42,6 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.WriteSignalNode;
-import vadl.viam.passes.canonicalization.Canonicalizer;
 
 public class ForwardingLogicPass extends AbstractLogicPass {
 
@@ -169,7 +167,6 @@ public class ForwardingLogicPass extends AbstractLogicPass {
     }
 
     // optimize
-    Canonicalizer.canonicalize(forwarding.behavior());
     new RtlSimplifier(RtlSimplificationRules.rules).run(forwarding.behavior());
 
     return forwarding;

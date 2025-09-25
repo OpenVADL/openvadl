@@ -16,11 +16,10 @@
 
 package vadl.rtl.ipg.nodes;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.checkerframework.checker.units.qual.N;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.BitsType;
@@ -62,7 +61,7 @@ public class RtlInstructionWordSliceNode extends ExpressionNode {
     super(type);
     this.formatType = formatType;
     this.slice = slice;
-    this.fields = new HashSet<>();
+    this.fields = new LinkedHashSet<>();
   }
 
   /**
@@ -78,7 +77,7 @@ public class RtlInstructionWordSliceNode extends ExpressionNode {
     super(type);
     this.formatType = formatType;
     this.slice = slice;
-    this.fields = fields;
+    this.fields = new LinkedHashSet<>(fields);
   }
 
   /**
@@ -96,7 +95,7 @@ public class RtlInstructionWordSliceNode extends ExpressionNode {
     super(type);
     this.formatType = formatType;
     this.slice = slice;
-    this.fields = fields;
+    this.fields = new LinkedHashSet<>(fields);
     this.instruction = instruction;
   }
 
