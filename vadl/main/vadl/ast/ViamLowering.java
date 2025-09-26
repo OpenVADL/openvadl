@@ -1597,7 +1597,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   private RegisterTensor.Dimension dimFromMappingType(int index, DataType dataType) {
     // e.g. for `register: Bits<5> -> Bits<32>` the Bits<5> is a mapping type.
     // the corresponding dimension is (index: 0, type: Bits<5>, 32)
-    return new RegisterTensor.Dimension(index, dataType, (int) Math.pow(2, dataType.bitWidth()));
+    return new RegisterTensor.Dimension(index, (DataType) getViamType(dataType),
+        (int) Math.pow(2, dataType.bitWidth()));
   }
 
   private RegisterTensor.Dimension dimFromType(int index, DataType dataType) {
@@ -1628,7 +1629,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     // FIXME: Handle mutli-dimension types
     // now we add the dimensions of the form T<d0><d1>..
-    dimensions.add(dimFromType(dimensions.size(), resultType));
+    dimensions.add(dimFromType(dimensions.size(), (DataType) getViamType(resultType)));
 
     var reg = new RegisterTensor(
         generateIdentifier(definition.viamId, definition.identifier()),
