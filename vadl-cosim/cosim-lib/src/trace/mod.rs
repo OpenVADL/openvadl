@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, anyhow};
 
 use crate::{
     config::Config,
@@ -63,11 +63,25 @@ pub fn get_client_trace(
 ) -> anyhow::Result<TraceBrokerData> {
     let data = match config.testing.protocol.layer {
         crate::config::ProtocolLayer::Insn => {
-            let insn = Box::new(client.shm.read_buffer()?.as_insn().clone());
+            let insn = Box::new(
+                client
+                    .shm
+                    .read_buffer()?
+                    .ok_or(anyhow!("expected to be able to read ringbuffer"))?
+                    .as_insn()
+                    .clone(),
+            );
             TraceBrokerData::Insn(insn)
         }
         crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-            let tb = Box::new(client.shm.read_buffer()?.as_tb().clone());
+            let tb = Box::new(
+                client
+                    .shm
+                    .read_buffer()?
+                    .ok_or(anyhow!("expected to be able to read ringbuffer"))?
+                    .as_tb()
+                    .clone(),
+            );
             TraceBrokerData::TB(tb)
         }
     };

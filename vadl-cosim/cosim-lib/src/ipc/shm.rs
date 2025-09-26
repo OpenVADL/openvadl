@@ -1,4 +1,4 @@
-use std::{ffi::CString, marker::PhantomData, ptr, time::Duration};
+use std::{ffi::CString, marker::PhantomData, ptr};
 
 use anyhow::{Context, Result, bail};
 use libc::{
@@ -10,9 +10,8 @@ use crate::{
     bail_on_libc_err, eprintln_on_libc_err,
     ipc::{
         PERMISSONS,
-        cstructs::{BrokerSHMData, BrokerSHMRingBuffer, BrokerSem},
+        cstructs::{BrokerSHMData, BrokerSHMRingBuffer},
         get_last_error,
-        sem::{Semaphore, TimedWaitState},
     },
 };
 
@@ -24,26 +23,8 @@ pub struct SharedMemory<T: Sized> {
     _phantom: PhantomData<T>,
 }
 
-impl SharedMemory<BrokerSem> {
-    pub fn release_client(&mut self) -> Result<()> {
-        self.get_mut().sync.post()
-    }
-
-    pub fn wait_client(&mut self) -> Result<()> {
-        self.get_mut().sync.wait()
-    }
-
-    pub fn timedwait_client(&mut self, duration: Duration) -> Result<TimedWaitState> {
-        self.get_mut().sync.timedwait(duration)
-    }
-
-    pub fn get_sync(&self) -> &Semaphore {
-        &self.get().sync
-    }
-}
-
 impl<const SIZE: usize> SharedMemory<BrokerSHMRingBuffer<SIZE>> {
-    pub fn read_buffer(&mut self) -> anyhow::Result<&BrokerSHMData> {
+    pub fn read_buffer(&mut self) -> anyhow::Result<Option<&BrokerSHMData>> {
         self.get_mut().start_read()
     }
 

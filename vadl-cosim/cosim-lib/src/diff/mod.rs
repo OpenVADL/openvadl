@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 
+use anyhow::anyhow;
 use serde::Serialize;
 
 use crate::{
@@ -210,11 +211,27 @@ pub fn get_client_context_current(
 ) -> anyhow::Result<DiffContextClientState> {
     match config.testing.protocol.layer {
         crate::config::ProtocolLayer::Insn => {
-            let ctx = (client.shm.read_buffer()?.as_insn(), config).into();
+            let ctx = (
+                client
+                    .shm
+                    .read_buffer()?
+                    .ok_or(anyhow!("expected to be able to read ringbuffer"))?
+                    .as_insn(),
+                config,
+            )
+                .into();
             Ok(ctx)
         }
         crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-            let ctx = (client.shm.read_buffer()?.as_tb(), config).into();
+            let ctx = (
+                client
+                    .shm
+                    .read_buffer()?
+                    .ok_or(anyhow!("expected to be able to read ringbuffer"))?
+                    .as_tb(),
+                config,
+            )
+                .into();
             Ok(ctx)
         }
     }

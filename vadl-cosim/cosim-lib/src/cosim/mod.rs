@@ -12,7 +12,10 @@ use crate::{
         get_all_clients_contexts_before, get_all_clients_contexts_current,
         get_all_clients_instructions,
     },
-    ipc::{cstructs, qemu::Client},
+    ipc::{
+        cstructs::{self, TBInfo, TBInsnInfo},
+        qemu::Client,
+    },
     trace::{TraceEntryData, TraceStore, connect, get_client_trace, store_trace, trace_collect},
 };
 
@@ -90,6 +93,10 @@ impl Broker {
         Ok(())
     }
 
+    pub fn clients(&self) -> &Vec<Client> {
+        &self.clients
+    }
+
     fn run_lockstep(&mut self, config: &Config) -> Result<Report> {
         // NOTE: maybe move "spawning" the clients into this method
         for (idx, client) in self.clients.iter_mut().enumerate() {
@@ -114,7 +121,7 @@ impl Broker {
                     .clients
                     .iter_mut()
                     .map(|client| {
-                        let res = client.shm.read_buffer().map(|i| i.as_insn());
+                        let res = client.shm.read_buffer().map(|opt| opt.map(|i| i.as_insn()));
                         client.run_count += 1;
                         res
                     })
@@ -123,29 +130,63 @@ impl Broker {
                 let c1insn = reads[0];
                 let c2insn = reads[1];
 
-                let diffs = diff_cpus(
-                    &c1insn.cpus,
-                    c1insn.init_mask,
-                    &c2insn.cpus,
-                    c2insn.init_mask,
-                    config,
-                );
+                match (c1insn, c2insn) {
+                    // successfully read both clients -> compare
+                    (Some(c1insn), Some(c2insn)) => {
+                        let diffs = diff_cpus(
+                            &c1insn.cpus,
+                            c1insn.init_mask,
+                            &c2insn.cpus,
+                            c2insn.init_mask,
+                            config,
+                        );
 
-                self.trace_clients(config)?;
+                        self.trace_clients(config)?;
 
-                if !diffs.is_empty() {
-                    let ctx = self.build_diff_context(config)?;
-                    return Ok(Report::failed(diffs, ctx));
-                }
+                        if !diffs.is_empty() {
+                            let ctx = self.build_diff_context(config)?;
+                            return Ok(Report::failed(diffs, ctx));
+                        }
 
-                for client in &mut self.clients {
-                    client.shm.end_read_buffer();
-                }
+                        for client in &mut self.clients {
+                            client.shm.end_read_buffer();
+                        }
 
-                if !config.testing.protocol.execute_all_remaining_instructions {
-                    stop_after -= 1;
-                    if stop_after == 0 {
-                        break;
+                        if !config.testing.protocol.execute_all_remaining_instructions {
+                            stop_after -= 1;
+                            if stop_after == 0 {
+                                break;
+                            }
+                        }
+                    }
+
+                    // both clients finished at the same time => stop cosimulation
+                    (None, None) => break,
+
+                    // one client finished while the other still writes to the buffer, error state!
+                    (Some(c1insn), None) => {
+                        let diff = DiffEntry::new(
+                            "invalid-execution",
+                            vec![Broker::format_insn_for_diff(&c1insn.insn_info)],
+                            Broker::format_invalid_execution_client_msg(
+                                &self.clients[0],
+                                &self.clients[1],
+                            ),
+                        );
+                        let ctx = self.build_diff_context(config)?;
+                        return Ok(Report::failed(vec![diff], ctx));
+                    }
+                    (None, Some(c2insn)) => {
+                        let diff = DiffEntry::new(
+                            "invalid-execution",
+                            vec![Broker::format_insn_for_diff(&c2insn.insn_info)],
+                            Broker::format_invalid_execution_client_msg(
+                                &self.clients[1],
+                                &self.clients[0],
+                            ),
+                        );
+                        let ctx = self.build_diff_context(config)?;
+                        return Ok(Report::failed(vec![diff], ctx));
                     }
                 }
             },
@@ -153,48 +194,125 @@ impl Broker {
                 let reads = self
                     .clients
                     .iter_mut()
-                    .map(|client| client.shm.read_buffer().map(|i| i.as_tb()))
+                    .map(|client| {
+                        let res = client.shm.read_buffer().map(|opt| opt.map(|i| i.as_tb()));
+                        client.run_count += 1;
+                        res
+                    })
                     .collect::<Result<Vec<_>>>()?;
 
                 let c1insn = reads[0];
                 let c2insn = reads[1];
 
-                if let TBSyncResult::Diverged(diff_entry) =
-                    Self::check_if_clients_are_synchronized(&[c1insn, c2insn])
-                {
-                    debug!("client diverged during tb synchronization");
-                    return Ok(Report::failed(vec![diff_entry], vec![]));
-                }
+                match (c1insn, c2insn) {
+                    // successfully read both clients -> compare
+                    (Some(c1insn), Some(c2insn)) => {
+                        if let TBSyncResult::Diverged(diff_entry) =
+                            Self::check_if_clients_are_synchronized(&[c1insn, c2insn])
+                        {
+                            debug!("client diverged during tb synchronization");
+                            return Ok(Report::failed(vec![diff_entry], vec![]));
+                        }
 
-                let diffs = diff_cpus(
-                    &c1insn.cpus,
-                    c1insn.init_mask,
-                    &c2insn.cpus,
-                    c2insn.init_mask,
-                    config,
-                );
+                        let diffs = diff_cpus(
+                            &c1insn.cpus,
+                            c1insn.init_mask,
+                            &c2insn.cpus,
+                            c2insn.init_mask,
+                            config,
+                        );
 
-                self.trace_clients(config)?;
+                        self.trace_clients(config)?;
 
-                if !diffs.is_empty() {
-                    let ctx = self.build_diff_context(config)?;
-                    return Ok(Report::failed(diffs, ctx));
-                }
+                        if !diffs.is_empty() {
+                            let ctx = self.build_diff_context(config)?;
+                            return Ok(Report::failed(diffs, ctx));
+                        }
 
-                for client in &mut self.clients {
-                    client.shm.end_read_buffer();
-                }
+                        for client in &mut self.clients {
+                            client.shm.end_read_buffer();
+                        }
 
-                if !config.testing.protocol.execute_all_remaining_instructions {
-                    stop_after -= 1;
-                    if stop_after == 0 {
-                        break;
+                        if !config.testing.protocol.execute_all_remaining_instructions {
+                            stop_after -= 1;
+                            if stop_after == 0 {
+                                break;
+                            }
+                        }
+                    }
+
+                    // both clients finished at the same time => stop cosimulation
+                    (None, None) => break,
+
+                    // one client finished while the other still writes to the buffer, error state!
+                    (Some(c1tb), None) => {
+                        let diff = DiffEntry::new(
+                            "invalid-execution",
+                            vec![Broker::format_tb_for_diff(&c1tb.tb_info)],
+                            Broker::format_invalid_execution_client_msg(
+                                &self.clients[0],
+                                &self.clients[1],
+                            ),
+                        );
+                        let ctx = self.build_diff_context(config)?;
+                        return Ok(Report::failed(vec![diff], ctx));
+                    }
+                    (None, Some(c2tb)) => {
+                        let diff = DiffEntry::new(
+                            "invalid-execution",
+                            vec![Broker::format_tb_for_diff(&c2tb.tb_info)],
+                            Broker::format_invalid_execution_client_msg(
+                                &self.clients[1],
+                                &self.clients[0],
+                            ),
+                        );
+                        let ctx = self.build_diff_context(config)?;
+                        return Ok(Report::failed(vec![diff], ctx));
                     }
                 }
             },
         }
 
         Ok(Report::passed())
+    }
+
+    fn format_insn_for_diff(insn: &TBInsnInfo) -> String {
+        format!(
+            "pc={}, size={}, symbol={}, hwaddr={}, disas={}, data={}",
+            insn.pc,
+            insn.size,
+            insn.symbol.as_str(),
+            insn.hwaddr.as_str(),
+            insn.disas.as_str(),
+            insn.data.buffer_slice_fmt(),
+        )
+    }
+
+    fn format_tb_for_diff(tb: &TBInfo) -> String {
+        let insns = tb
+            .insns_info_slice()
+            .iter()
+            .map(Broker::format_insn_for_diff)
+            .collect::<Vec<_>>();
+
+        format!("pc={}, insns={:#?}", tb.pc, insns)
+    }
+
+    fn format_invalid_execution_client_msg(
+        executing_client: &Client,
+        halted_client: &Client,
+    ) -> String {
+        format!(
+            "client \"{}\" executed another instruction while client \"{}\" has already finished",
+            executing_client
+                .name
+                .as_deref()
+                .unwrap_or(&executing_client.id.to_string()),
+            halted_client
+                .name
+                .as_deref()
+                .unwrap_or(&halted_client.id.to_string())
+        )
     }
 
     fn check_clients_are_initially_synchronized(&self, config: &Config) -> Result<()> {

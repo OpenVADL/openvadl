@@ -44,7 +44,7 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_version = QEMU_PLUGIN_VERSION;
 
 #define MAX_REGISTER_NAME_SIZE 64
 #define MAX_REGISTER_DATA_SIZE 256
-#define MAX_CPU_REGISTERS 256
+#define MAX_CPU_REGISTERS 512
 #define MAX_CPU_COUNT 1
 #define MAX_INSN_DATA_SIZE 64
 
@@ -151,7 +151,6 @@ typedef union {
 typedef struct {
   pthread_mutex_t mutex;
   pthread_cond_t cvar;
-  bool msg;
 } Semaphore;
 
 #define RING_BUFFER_SIZE 4
@@ -162,12 +161,9 @@ typedef struct {
   size_t read_idx;
   size_t write_idx;
   atomic_size_t count;
+  atomic_bool write_end;
   Semaphore notifier;
 } BrokerSHMRingBuffer;
-
-typedef struct {
-  Semaphore sync;
-} BrokerSem;
 
 typedef enum {
   INVALID_MODE = 0,
@@ -204,7 +200,6 @@ static void ringbuf_write(BrokerSHMData data) {
 
   shm_ring_buffer->data[ringbuf_idx(shm_ring_buffer->write_idx)] = data;
   shm_ring_buffer->write_idx++;
-  shm_ring_buffer->notifier.msg = true;
 
   atomic_fetch_add(&shm_ring_buffer->count, 1);
 
@@ -279,6 +274,8 @@ static SHMCPU get_cpu_state(unsigned int cpu_index) {
 
 static void plugin_exit(qemu_plugin_id_t id, void *p) {
   PLUGIN_PRINTLN("plugin_exit");
+  atomic_store(&shm_ring_buffer->write_end, true);
+  pthread_cond_signal(&shm_ring_buffer->notifier.cvar);
 }
 
 // Connects to the broker by accessing the assigned shared memory
