@@ -36,12 +36,13 @@ import vadl.viam.graph.dependency.WriteSignalNode;
 /**
  * Emit context for HDL generation.
  *
- * @param viam VIAM specification
- * @param isa ISA definition
- * @param mia MiA definition
- * @param processor Processor definition
- * @param inlineMap Inline map from the {@link vadl.rtl.passes.MiaMappingInlinePass}
+ * @param viam        VIAM specification
+ * @param isa         ISA definition
+ * @param mia         MiA definition
+ * @param processor   Processor definition
+ * @param inlineMap   Inline map from the {@link vadl.rtl.passes.MiaMappingInlinePass}
  * @param resetVector optional external signal that provides the reset vector for pc reset
+ * @param keepSignals mark signals to not be optimized or removed
  */
 public record HdlEmitContext(
     Specification viam,
@@ -49,7 +50,8 @@ public record HdlEmitContext(
     MicroArchitecture mia,
     Processor processor,
     BiMap<Node, Node> inlineMap,
-    @Nullable Signal resetVector
+    @Nullable Signal resetVector,
+    boolean keepSignals
 ) {
 
   public Optional<Node> ipgNode(Node inlinedNode) {
@@ -102,7 +104,7 @@ public record HdlEmitContext(
             .orElseGet(() -> {
               if (fallback == null || existing.contains(fallback)) {
                 return fallback(inlinedNode, existing)
-                    .orElse("_n_" + inlinedNode.id.numericId());
+                    .orElse("sig_" + inlinedNode.id.numericId());
               }
               return fallback;
             }))

@@ -77,6 +77,13 @@ public class RtlCommand extends BaseCommand {
   @Nullable
   String resetVector = null;
 
+  @CommandLine.Option(names = {"--keep-signals"},
+      scope = INHERIT,
+      description = "Marks signals in generated HDL to not be optimized or removed during "
+          + "synthesis and simulation.",
+      defaultValue = "false")
+  boolean keepSignals = false;
+
   @CommandLine.Option(names = {"--dry-run"},
       scope = INHERIT,
       description = "Don't emit generated files.")
@@ -88,6 +95,7 @@ public class RtlCommand extends BaseCommand {
     rtlConfig.setDummyMia(dummyMia);
     rtlConfig.setMemory(memory);
     rtlConfig.setResetVector(resetVector);
+    rtlConfig.setKeepSignals(keepSignals);
     rtlConfig.setScalaPackageAndDirs(scalaPackage);
     rtlConfig.setTopModule(topModule);
     rtlConfig.setProjectName(projectName);

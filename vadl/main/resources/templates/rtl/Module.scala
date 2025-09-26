@@ -19,7 +19,10 @@ class [(${name})] extends Module {
   [/]
 
   [# th:each="res : ${resources}" ]val [(${res.name})] = [#
-  th:if="${res.signal}"  ]Wire([(${res.resultType})])[/][#
+  th:if="${res.signal}" ][#
+    th:if="${res.keepSignal}"]dontTouch([/
+    ]Wire([(${res.resultType})])[#
+    th:if="${res.keepSignal}"])[/][/][#
   th:if="!${res.signal}"][#
     th:if="${res.resourceSize} > 1" ]Mem([(${res.resourceSize})], [(${res.resultType})])[/][#
     th:if="${res.resourceSize == 1 && res.reset == null}" ]RegInit(0.U.asTypeOf([(${res.resultType})]))[/][#

@@ -90,7 +90,8 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
           Objects.requireNonNull(isa.pc()).resultType());
     }
 
-    var context = new HdlEmitContext(viam, isa, mia, mip, inlineRes.inlineMap(), resetVector);
+    var context = new HdlEmitContext(viam, isa, mia, mip, inlineRes.inlineMap(), resetVector,
+        configuration().getKeepSignals());
 
     List<HdlModule> modules = new ArrayList<>();
     mia.stages().stream().map(stage -> stage(context, stage)).forEach(modules::add);

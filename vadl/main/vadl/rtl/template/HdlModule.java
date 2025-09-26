@@ -190,6 +190,7 @@ public class HdlModule {
     map.put("resourceSize", size);
     map.put("resultType", HdlUtils.type(resource.resultType()));
     map.put("reset", regReset.get(resource));
+    map.put("keepSignal", context.keepSignals());
     return map;
   }
 

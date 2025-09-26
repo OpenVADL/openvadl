@@ -60,7 +60,7 @@ import vadl.viam.graph.dependency.WriteSignalNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
- * Create HDL signals and ports from HDL module behaviors.
+ * Create HDL signals, ports and connections from HDL module behaviors.
  */
 public class HdlBehavior {
 

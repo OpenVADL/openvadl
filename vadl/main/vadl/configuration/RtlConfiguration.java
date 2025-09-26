@@ -62,6 +62,8 @@ public class RtlConfiguration extends GeneralConfiguration {
   @Nullable
   private String resetVector = null;
 
+  private boolean keepSignals = false;
+
   public RtlConfiguration(GeneralConfiguration generalConfig) {
     super(generalConfig);
   }
@@ -155,5 +157,13 @@ public class RtlConfiguration extends GeneralConfiguration {
 
   public void setResetVector(@Nullable String resetVector) {
     this.resetVector = resetVector;
+  }
+
+  public boolean getKeepSignals() {
+    return keepSignals;
+  }
+
+  public void setKeepSignals(boolean keepSignals) {
+    this.keepSignals = keepSignals;
   }
 }
