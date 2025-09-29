@@ -24,7 +24,7 @@ import static vadl.utils.GraphUtils.intU;
 import static vadl.utils.GraphUtils.neq;
 import static vadl.utils.GraphUtils.or;
 import static vadl.utils.GraphUtils.select;
-import static vadl.utils.GraphUtils.truncate;
+import static vadl.utils.GraphUtils.signExtend;
 import static vadl.utils.GraphUtils.zeroExtend;
 
 import com.google.common.collect.Lists;
@@ -37,6 +37,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.BitsType;
+import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
@@ -312,8 +313,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       );
     }
 
-    if (definition.slice != null) {
-      regAccess = truncate(regAccess, Type.bits(definition.slice.bitSize()));
+    var slice = definition.slice;
+    if (slice != null) {
+      regAccess = new SliceNode(regAccess, slice, Type.bits(slice.bitSize()));
     }
 
     var returnNode = graph.addWithInputs(new ReturnNode(regAccess));
@@ -375,11 +377,28 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var regFile = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
 
-    if (definition.slice != null) {
-      ensure(definition.slice.lsb() == 0,
+    var slice = definition.slice;
+    if (slice != null) {
+      ensure(slice.lsb() == 0,
           () -> error("Unsupported alias slice", definition)
               .description("Currently, the alias slice MSB must be 0."));
-      writeValue = zeroExtend(writeValue, regFile.resultType(indices.size()));
+
+      var sourceRegType = regFile.resultType(indices.size());
+      var overwriteAnno = definition.findAnnotation("overwrite source", EnumAnnotation.class);
+      var overwriteMode = overwriteAnno == null ? null : overwriteAnno.value;
+
+      // If we have a slice, we must adjust the write values accordingly.
+      // By default, we prepare the write values to be sliced by reading the original content.
+      // If the [overwrite source:] annotation is set, we instead either zero or sign extend the
+      // write value to overwrite the whole source register.
+      writeValue = switch (overwriteMode) {
+        case null -> sliceWriteValue(writeValue,
+            new ReadRegTensorNode(regFile, indices, sourceRegType, null), List.of(slice));
+        case "zero" -> zeroExtend(writeValue, sourceRegType);
+        case "sign" -> signExtend(writeValue, sourceRegType);
+        default -> throw new IllegalStateException(
+            "Unexpected value: " + overwriteMode);
+      };
     }
 
     // FIXME: Support pre-indexed registers, for example:
@@ -684,7 +703,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   @Override
   public ExpressionNode visit(IntegerLiteral expr) {
     // IntegerLiteral should never be reached as it should always be substituted by the typechecker.
-    throw new IllegalStateException("IntegerLiteral should never be reached in the VIAM lowering.");
+    throw new IllegalStateException(
+        "IntegerLiteral should never be reached in the VIAM lowering.");
   }
 
   @Override
@@ -771,7 +791,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
                 (DataType) getViamType(Objects.requireNonNull(subCall.formatFieldType)));
         resultExpr = visitSliceIndexCall(slice, subCall.argsIndices);
       } else if (subCall.computedStatusIndex != null) {
-        var indexing = new TupleGetFieldNode(subCall.computedStatusIndex, resultExpr, Type.bool());
+        var indexing =
+            new TupleGetFieldNode(subCall.computedStatusIndex, resultExpr, Type.bool());
         resultExpr = visitSliceIndexCall(indexing, subCall.argsIndices);
       } else if (exprBeforeSubcall instanceof ReadResourceNode resRead) {
         var computedTarget = expr.target.path().target();
@@ -923,7 +944,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var sourceDataType = (DataType) sourceType;
     var targetDataType = (DataType) targetType;
 
-    if (targetType.getClass() == vadl.types.BoolType.class) {
+    if (targetType.getClass() == BoolType.class) {
       // match 2. rule: target type is bool
       // -> produce != 0 call
       //return new BuiltInCall
@@ -1136,7 +1157,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
    * Method that prepares the value so it can be written to a subset region of a resource.
    * The entire resource before writing the value is given by the entireRead node.
    * The subset region of the resource is given by the slices list, that
-   * holds a list of {@link vadl.viam.Constant.BitSlice}.
+   * holds a list of {@link Constant.BitSlice}.
    * E.g. {@code A(3, 15..11) := 0b101111} writes the value's msb `1` at position 3 in the
    * resource,
    * and the rest (0b01111) is written to position 15 to 11 (inclusive) in the resource.
@@ -1266,7 +1287,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     var target =
-        (Instruction) viamLowering.fetch(Objects.requireNonNull(statement.instrDef)).orElseThrow();
+        (Instruction) viamLowering.fetch(Objects.requireNonNull(statement.instrDef))
+            .orElseThrow();
     var fieldMap = Arrays.stream(target.encoding().nonEncodedFormatFields())
         .collect(Collectors.toMap(Definition::simpleName, f -> f));
 
@@ -1492,7 +1514,8 @@ class SubgraphContext {
 
   SubgraphContext setSideEffects(NodeList<SideEffectNode> sideEffects) {
     if (this.sideEffects != null) {
-      throw new IllegalStateException("SideEffects already set to: %s".formatted(this.sideEffects));
+      throw new IllegalStateException(
+          "SideEffects already set to: %s".formatted(this.sideEffects));
     }
     this.sideEffects = sideEffects;
     return this;
