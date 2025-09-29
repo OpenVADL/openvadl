@@ -155,6 +155,13 @@ public class AnnotationTable {
         })
         .build();
 
+    annotationOn(AliasDefinition.class, "overwrite source",
+        () -> new EnumAnnotation(List.of("zero", "sign")))
+        .check((def, annotation, lowering) -> {
+          annotation.verifyValuesCnt(annotation.definition, 1);
+        })
+        .build();
+
     /// PROCESSOR RELATED ///
 
     annotationOn(ProcessorDefinition.class, "htif", EnableAnnotation::new)
@@ -1140,7 +1147,7 @@ class EnumAnnotation extends Annotation {
 
     if (!possibleValues.contains(value)) {
       throw error("Invalid Annotation Argument", definition)
-          .locationDescription(definition, "Expected one of %s but got %s",
+          .locationDescription(definition, "Expected one of %s but got `%s`",
               String.join(", ", possibleValues), value)
           .build();
     }

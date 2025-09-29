@@ -85,6 +85,15 @@ abstract class Definition extends Node {
     }
   }
 
+  @Nullable
+  <T extends Annotation> T findAnnotation(String name, Class<T> annotationClass) {
+    return annotations.stream()
+        .filter(a -> a.name().equals(name))
+        .map(a -> a.annotation)
+        .filter(annotationClass::isInstance)
+        .map(annotationClass::cast).findFirst().orElse(null);
+  }
+
   abstract <R> R accept(DefinitionVisitor<R> visitor);
 }
 
