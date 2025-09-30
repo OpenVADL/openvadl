@@ -108,7 +108,7 @@ bool [(${namespace})]DAGToDAGISel::trySelect(SDNode *Node)
 
          // Handle rest
          int64_t Imm = ConstNode->getSExtValue();
-         ReplaceNode(Node, selectImm(CurDAG, SDLoc(Node), Imm, XLenVT, *Subtarget));
+         ReplaceNode(Node, selectImm(CurDAG, SDLoc(Node), Imm, VT, *Subtarget));
          return true;
        }
        default:

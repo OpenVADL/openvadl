@@ -97,7 +97,7 @@ application binary interface ABI for AArch64Temp = {
    {
       MOVZWPos00 { rd = rd, imm16 = (val & 0xFFFF) as Bits<16> }
       MOVKWPos16 { rd = rd, imm16 = ((val >> 16) & 0xFFFF) as Bits<16> }
-      SUBX { rd = rd, rn = 31, rm = rd }
+      SUBW { rd = rd, rn = 31, rm = rd }
    }
 
    /*
