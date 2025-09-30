@@ -138,8 +138,11 @@ def CALL : Instruction
 def SDT_processornamevalueSelectCC     : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
                                          SDTCisSameAs<0, 4>,
                                          SDTCisSameAs<4, 5>]>;
-def target_selectcc  : SDNode<"processornamevalueISD::SELECT_CC", SDT_processornamevalueSelectCC,
+
+
+def target_selectcc_X : SDNode<"processornamevalueISD::SELECT_CC_X", SDT_processornamevalueSelectCC,
                      [SDNPInGlue]>;
+
 
 def vadl_imm32 : ImmLeaf<i32, [{ return true; }]>, Operand<i32>
 {
@@ -172,7 +175,7 @@ def SelectCC_X: Instruction {
 
     dag OutOperandList = (outs X:$dst);
     dag InOperandList = (ins X:$lhs, X:$rhs, vadl_imm64:$imm, X:$truev, X:$falsev);
-    let Pattern = [ (set X:$dst, (target_selectcc X:$lhs, X:$rhs,
+    let Pattern = [ (set X:$dst, (target_selectcc_X X:$lhs, X:$rhs,
                 (i64 vadl_imm64:$imm), X:$truev, X:$falsev)) ];
 
     let TSFlags{4-0} = 0;
