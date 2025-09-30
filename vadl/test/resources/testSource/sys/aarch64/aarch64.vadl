@@ -752,8 +752,8 @@ instruction set architecture AArch64Base = {
 
   model MovKInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     match: IsaDefs ( $size = WSize
-         => $MovInstr ($i; $size; Pos00; let xrd = X(rd) in (xrd(31..16), imm16) as BitsX)
-            $MovInstr ($i; $size; Pos16; let xrd = X(rd) in (imm16, xrd(15..0 )) as BitsX)
+         => $MovInstr ($i; $size; Pos00; let xrd = W(rd) in (xrd(31..16), imm16) as BitsX)
+            $MovInstr ($i; $size; Pos16; let xrd = W(rd) in (imm16, xrd(15..0 )) as BitsX)
       ; _=> $MovInstr ($i; $size; Pos00; let xrd = X(rd) in (xrd(63..16), imm16            ))
             $MovInstr ($i; $size; Pos16; let xrd = X(rd) in (xrd(63..32), imm16, xrd(15..0)))
             $MovInstr ($i; $size; Pos32; let xrd = X(rd) in (xrd(63..48), imm16, xrd(31..0)))
@@ -1269,9 +1269,9 @@ instruction set architecture AArch64Base = {
     }
 
   model StoreInstr (memmodel: MemoryModel, i: InstrNoFunct): IsaDefs = {
-    $MemoryInstr ($memmodel; $i; "B"  ; (WSize; Byte ;  "b"; 0b00; MEM<1> (addr) := X(rt) as Byte))
-    $MemoryInstr ($memmodel; $i; "H"  ; (WSize; Half ;  "h"; 0b00; MEM<2> (addr) := X(rt) as Half))
-    $MemoryInstr ($memmodel; $i; "W"  ; (WSize; Word ;   ""; 0b00; MEM<4> (addr) := X(rt) as Word))
+    $MemoryInstr ($memmodel; $i; "B"  ; (WSize; Byte ;  "b"; 0b00; MEM<1> (addr) := W(rt) as Byte))
+    $MemoryInstr ($memmodel; $i; "H"  ; (WSize; Half ;  "h"; 0b00; MEM<2> (addr) := W(rt) as Half))
+    $MemoryInstr ($memmodel; $i; "W"  ; (WSize; Word ;   ""; 0b00; MEM<4> (addr) := W(rt) as Word))
     $MemoryInstr ($memmodel; $i; "X"  ; (XSize; XWord;   ""; 0b00; MEM<8> (addr) := X(rt)        ))
     }
 

@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
-import javax.annotation.Nullable;
+import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
@@ -33,20 +33,17 @@ import vadl.gcb.passes.MachineInstructionLabelGroup;
 import vadl.gcb.passes.ValueRange;
 import vadl.gcb.passes.ValueRangeCtx;
 import vadl.gcb.valuetypes.ValueType;
-import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.isaMatching.database.QueryResult;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.ISelLoweringOperationActionPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmMachineInstructionUtil;
-import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Abi;
-import vadl.viam.Instruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
@@ -92,8 +89,12 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var abi = (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
-    var registerFiles = ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
-        GenerateTableGenRegistersPass.class)).registerClasses();
+    var generateTableGenRegistersPassOutput =
+        ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
+            GenerateTableGenRegistersPass.class));
+    var registerFiles =
+        Stream.concat(generateTableGenRegistersPassOutput.registerClasses().stream(),
+            generateTableGenRegistersPassOutput.aliasRegisterClasses().stream()).toList();
     var framePointer = renderRegister(abi.framePointer().registerFile(), abi.framePointer().addr());
     var stackPointer = renderRegister(abi.stackPointer().registerFile(), abi.stackPointer().addr());
     var absoluteAddressLoadInstruction = abi.absoluteAddressLoad();
@@ -107,7 +108,10 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
 
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE, lcbConfiguration().targetName().value().toLowerCase());
-    map.put("registerFiles", registerFiles.stream().map(this::mapRegisterFile).toList());
+    map.put("registerFiles", registerFiles);
+    map.put("mainRegisterFile",
+        registerFiles.stream().filter(x -> x.regTypes().get(0).equals(stackPointerType)).findFirst()
+            .get());
     map.put("framePointer", framePointer);
     map.put("stackPointer", stackPointer);
     map.put("stackPointerByteSize", abi.stackPointer().registerFile().resultType().bitWidth() / 8);
@@ -130,6 +134,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("conditionalValueRangeLowest", conditionalValueRange.lowest());
     map.put("conditionalValueRangeHighest", conditionalValueRange.highest());
     map.put("expandableDagNodes", coverageSummary.notCoveredSelectionDagNodes());
+    map.put("branchTypes", branchTypes(stackPointerType));
     map.put("mergedCmpAndBranch",
         !database.run(
             new Query.Builder().machineInstructionLabels(List.of(
@@ -179,6 +184,14 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
                     MachineInstructionLabel.CSEL_NEQ_I64)
             .build())));
     return map;
+  }
+
+  private String branchTypes(ValueType stackPointerType) {
+    if (stackPointerType == ValueType.I64) {
+      return "MVT::i32, MVT::i64";
+    } else {
+      return "MVT::i32";
+    }
   }
 
   private String getFirstNameOrEmpty(QueryResult result) {
@@ -299,16 +312,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         "name", registerFile.simpleName(),
         "resultWidth", registerFile.resultType().bitWidth(),
         "llvmResultType", registerFile.llvmResultType()
-    );
-  }
-
-  private Map<String, Object> mapRegisterFile(TableGenRegisterClass registerFile) {
-    return Map.of(
-        "name", registerFile.name(),
-        "regTypes", registerFile.regTypes(),
-        "registerFileRef", Map.of(
-            "name", registerFile.registerFileRef().identifier().simpleName()
-        )
     );
   }
 }

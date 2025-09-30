@@ -115,8 +115,17 @@ def TEMP_RET : Instruction
 def SDT_processornamevalueSelectCC     : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
                                          SDTCisSameAs<0, 4>,
                                          SDTCisSameAs<4, 5>]>;
-def target_selectcc  : SDNode<"processornamevalueISD::SELECT_CC", SDT_processornamevalueSelectCC,
+
+
+def target_selectcc_S : SDNode<"processornamevalueISD::SELECT_CC_S", SDT_processornamevalueSelectCC,
                      [SDNPInGlue]>;
+def target_selectcc_R : SDNode<"processornamevalueISD::SELECT_CC_R", SDT_processornamevalueSelectCC,
+                     [SDNPInGlue]>;
+def target_selectcc_X : SDNode<"processornamevalueISD::SELECT_CC_X", SDT_processornamevalueSelectCC,
+                     [SDNPInGlue]>;
+def target_selectcc_W : SDNode<"processornamevalueISD::SELECT_CC_W", SDT_processornamevalueSelectCC,
+                     [SDNPInGlue]>;
+
 
 def vadl_imm32 : ImmLeaf<i32, [{ return true; }]>, Operand<i32>
 {
@@ -149,7 +158,7 @@ def SelectCC_S: Instruction {
 
     dag OutOperandList = (outs S:$dst);
     dag InOperandList = (ins S:$lhs, S:$rhs, vadl_imm64:$imm, S:$truev, S:$falsev);
-    let Pattern = [ (set S:$dst, (target_selectcc S:$lhs, S:$rhs,
+    let Pattern = [ (set S:$dst, (target_selectcc_S S:$lhs, S:$rhs,
                 (i64 vadl_imm64:$imm), S:$truev, S:$falsev)) ];
 
     let TSFlags{4-0} = 0;
@@ -157,6 +166,87 @@ def SelectCC_S: Instruction {
     let isPseudo = 1;
     let isCodeGenOnly = 1;
 }
+
+
+def SelectCC_R: Instruction {
+    field bits<32> Inst;
+    // SoftFail is a field the disassembler can use to provide a way for
+    // instructions to not match without killing the whole decode process. It is
+    // mainly used for ARM, but Tablegen expects this field to exist or it fails
+    // to build the decode table.
+    field bits<32> SoftFail = 0;
+
+    bits<7> Opcode = 0;
+
+    let Inst{6-0} = Opcode;
+
+    let Namespace = "processornamevalue";
+
+    dag OutOperandList = (outs R:$dst);
+    dag InOperandList = (ins R:$lhs, R:$rhs, vadl_imm32:$imm, R:$truev, R:$falsev);
+    let Pattern = [ (set R:$dst, (target_selectcc_R R:$lhs, R:$rhs,
+                (i32 vadl_imm32:$imm), R:$truev, R:$falsev)) ];
+
+    let TSFlags{4-0} = 0;
+    let usesCustomInserter = 1;
+    let isPseudo = 1;
+    let isCodeGenOnly = 1;
+}
+
+
+
+
+def SelectCC_X: Instruction {
+    field bits<64> Inst;
+    // SoftFail is a field the disassembler can use to provide a way for
+    // instructions to not match without killing the whole decode process. It is
+    // mainly used for ARM, but Tablegen expects this field to exist or it fails
+    // to build the decode table.
+    field bits<32> SoftFail = 0;
+
+    bits<7> Opcode = 0;
+
+    let Inst{6-0} = Opcode;
+
+    let Namespace = "processornamevalue";
+
+    dag OutOperandList = (outs X:$dst);
+    dag InOperandList = (ins X:$lhs, X:$rhs, vadl_imm64:$imm, X:$truev, X:$falsev);
+    let Pattern = [ (set X:$dst, (target_selectcc_X X:$lhs, X:$rhs,
+                (i64 vadl_imm64:$imm), X:$truev, X:$falsev)) ];
+
+    let TSFlags{4-0} = 0;
+    let usesCustomInserter = 1;
+    let isPseudo = 1;
+    let isCodeGenOnly = 1;
+}
+
+
+def SelectCC_W: Instruction {
+    field bits<32> Inst;
+    // SoftFail is a field the disassembler can use to provide a way for
+    // instructions to not match without killing the whole decode process. It is
+    // mainly used for ARM, but Tablegen expects this field to exist or it fails
+    // to build the decode table.
+    field bits<32> SoftFail = 0;
+
+    bits<7> Opcode = 0;
+
+    let Inst{6-0} = Opcode;
+
+    let Namespace = "processornamevalue";
+
+    dag OutOperandList = (outs W:$dst);
+    dag InOperandList = (ins W:$lhs, W:$rhs, vadl_imm32:$imm, W:$truev, W:$falsev);
+    let Pattern = [ (set W:$dst, (target_selectcc_W W:$lhs, W:$rhs,
+                (i32 vadl_imm32:$imm), W:$truev, W:$falsev)) ];
+
+    let TSFlags{4-0} = 0;
+    let usesCustomInserter = 1;
+    let isPseudo = 1;
+    let isCodeGenOnly = 1;
+}
+
 
 
 
@@ -38326,7 +38416,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins X:$rd_0, AArch64Base_MOVKWPos00_imm16AsInt16:$imm16 );
+let InOperandList = ( ins W:$rd_0, AArch64Base_MOVKWPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38377,7 +38467,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins X:$rd_1, AArch64Base_MOVKWPos16_imm16AsInt16:$imm16 );
+let InOperandList = ( ins W:$rd_1, AArch64Base_MOVKWPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -42128,7 +42218,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rt, AArch64Base_STRB_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rn, W:$rt, AArch64Base_STRB_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -42181,7 +42271,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rt, AArch64Base_STRH_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rn, W:$rt, AArch64Base_STRH_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -42234,7 +42324,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn_17, X:$rt, AArch64Base_STRPreB_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rn_17, W:$rt, AArch64Base_STRPreB_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -42289,7 +42379,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn_18, X:$rt, AArch64Base_STRPreH_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rn_18, W:$rt, AArch64Base_STRPreH_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -42344,7 +42434,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn_19, X:$rt, AArch64Base_STRPreW_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rn_19, W:$rt, AArch64Base_STRPreW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -42454,7 +42544,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn_30, X:$rt, AArch64Base_STRPstB_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rn_30, W:$rt, AArch64Base_STRPstB_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -42509,7 +42599,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn_31, X:$rt, AArch64Base_STRPstH_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rn_31, W:$rt, AArch64Base_STRPstH_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -42564,7 +42654,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rn );
-let InOperandList = ( ins S:$rn_32, X:$rt, AArch64Base_STRPstW_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rn_32, W:$rt, AArch64Base_STRPstW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -42674,7 +42764,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -42733,7 +42823,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -42792,7 +42882,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -42851,7 +42941,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -42910,7 +43000,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -42969,7 +43059,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43028,7 +43118,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43087,7 +43177,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43146,7 +43236,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43205,7 +43295,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43264,7 +43354,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43323,7 +43413,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43382,7 +43472,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43441,7 +43531,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43500,7 +43590,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43559,7 +43649,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43618,7 +43708,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43677,7 +43767,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43736,7 +43826,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43795,7 +43885,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43854,7 +43944,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43913,7 +44003,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -43972,7 +44062,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -44031,7 +44121,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rm, X:$rt );
+let InOperandList = ( ins S:$rn, X:$rm, W:$rt );
 
 field bits<32> Inst;
 
@@ -44562,7 +44652,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rt, AArch64Base_STRW_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rn, W:$rt, AArch64Base_STRW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -44668,7 +44758,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rt, AArch64Base_STURB_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rn, W:$rt, AArch64Base_STURB_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -44723,7 +44813,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rt, AArch64Base_STURH_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rn, W:$rt, AArch64Base_STURH_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -44778,7 +44868,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins S:$rn, X:$rt, AArch64Base_STURW_offsetAsInt64:$offset );
+let InOperandList = ( ins S:$rn, W:$rt, AArch64Base_STURW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
 
@@ -51738,31 +51828,31 @@ def : Pat<(mulhs X:$rn, X:$rm),
         (SMULH X:$rn, X:$rm)>;
 
 
-def : Pat<(truncstorei8 X:$rt, (add S:$rn, AArch64Base_STRB_offsetAsInt64:$offset)),
-        (STRB S:$rn, X:$rt, AArch64Base_STRB_offsetAsInt64:$offset)>;
+def : Pat<(truncstorei8 W:$rt, (add S:$rn, AArch64Base_STRB_offsetAsInt64:$offset)),
+        (STRB S:$rn, W:$rt, AArch64Base_STRB_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei8 X:$rt, (add AddrFI:$rn, AArch64Base_STRB_offsetAsInt64:$offset)),
-        (STRB AddrFI:$rn, X:$rt, AArch64Base_STRB_offsetAsInt64:$offset)>;
+def : Pat<(truncstorei8 W:$rt, (add AddrFI:$rn, AArch64Base_STRB_offsetAsInt64:$offset)),
+        (STRB AddrFI:$rn, W:$rt, AArch64Base_STRB_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei8 X:$rt, S:$rn),
-        (STRB S:$rn, X:$rt, (i64 0))>;
+def : Pat<(truncstorei8 W:$rt, S:$rn),
+        (STRB S:$rn, W:$rt, (i64 0))>;
 
-def : Pat<(truncstorei8 X:$rt, AddrFI:$rn),
-        (STRB AddrFI:$rn, X:$rt, (i64 0))>;
-
-
-def : Pat<(truncstorei16 X:$rt, (add S:$rn, (shl AArch64Base_STRH_offsetAsInt64:$offset, (i64 1)))),
-        (STRH S:$rn, X:$rt, AArch64Base_STRH_offsetAsInt64:$offset)>;
-
-def : Pat<(truncstorei16 X:$rt, (add AddrFI:$rn, (shl AArch64Base_STRH_offsetAsInt64:$offset, (i64 1)))),
-        (STRH AddrFI:$rn, X:$rt, AArch64Base_STRH_offsetAsInt64:$offset)>;
+def : Pat<(truncstorei8 W:$rt, AddrFI:$rn),
+        (STRB AddrFI:$rn, W:$rt, (i64 0))>;
 
 
-def : Pat<(truncstorei32 X:$rt, (add S:$rn, (shl AArch64Base_STRW_offsetAsInt64:$offset, (i64 2)))),
-        (STRW S:$rn, X:$rt, AArch64Base_STRW_offsetAsInt64:$offset)>;
+def : Pat<(truncstorei16 W:$rt, (add S:$rn, (shl AArch64Base_STRH_offsetAsInt64:$offset, (i64 1)))),
+        (STRH S:$rn, W:$rt, AArch64Base_STRH_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei32 X:$rt, (add AddrFI:$rn, (shl AArch64Base_STRW_offsetAsInt64:$offset, (i64 2)))),
-        (STRW AddrFI:$rn, X:$rt, AArch64Base_STRW_offsetAsInt64:$offset)>;
+def : Pat<(truncstorei16 W:$rt, (add AddrFI:$rn, (shl AArch64Base_STRH_offsetAsInt64:$offset, (i64 1)))),
+        (STRH AddrFI:$rn, W:$rt, AArch64Base_STRH_offsetAsInt64:$offset)>;
+
+
+def : Pat<(store W:$rt, (add S:$rn, (shl AArch64Base_STRW_offsetAsInt64:$offset, (i64 2)))),
+        (STRW S:$rn, W:$rt, AArch64Base_STRW_offsetAsInt64:$offset)>;
+
+def : Pat<(store W:$rt, (add AddrFI:$rn, (shl AArch64Base_STRW_offsetAsInt64:$offset, (i64 2)))),
+        (STRW AddrFI:$rn, W:$rt, AArch64Base_STRW_offsetAsInt64:$offset)>;
 
 
 def : Pat<(store X:$rt, (add S:$rn, (shl AArch64Base_STRX_offsetAsInt64:$offset, (i64 3)))),
@@ -51772,43 +51862,43 @@ def : Pat<(store X:$rt, (add AddrFI:$rn, (shl AArch64Base_STRX_offsetAsInt64:$of
         (STRX AddrFI:$rn, X:$rt, AArch64Base_STRX_offsetAsInt64:$offset)>;
 
 
-def : Pat<(truncstorei8 X:$rt, (add S:$rn, AArch64Base_STURB_offsetAsInt64:$offset)),
-        (STURB S:$rn, X:$rt, AArch64Base_STURB_offsetAsInt64:$offset)>;
+def : Pat<(truncstorei8 W:$rt, (add S:$rn, AArch64Base_STURB_offsetAsInt64:$offset)),
+        (STURB S:$rn, W:$rt, AArch64Base_STURB_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei8 X:$rt, (add AddrFI:$rn, AArch64Base_STURB_offsetAsInt64:$offset)),
-        (STURB AddrFI:$rn, X:$rt, AArch64Base_STURB_offsetAsInt64:$offset)>;
+def : Pat<(truncstorei8 W:$rt, (add AddrFI:$rn, AArch64Base_STURB_offsetAsInt64:$offset)),
+        (STURB AddrFI:$rn, W:$rt, AArch64Base_STURB_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei8 X:$rt, S:$rn),
-        (STURB S:$rn, X:$rt, (i64 0))>;
+def : Pat<(truncstorei8 W:$rt, S:$rn),
+        (STURB S:$rn, W:$rt, (i64 0))>;
 
-def : Pat<(truncstorei8 X:$rt, AddrFI:$rn),
-        (STURB AddrFI:$rn, X:$rt, (i64 0))>;
-
-
-def : Pat<(truncstorei16 X:$rt, (add S:$rn, AArch64Base_STURH_offsetAsInt64:$offset)),
-        (STURH S:$rn, X:$rt, AArch64Base_STURH_offsetAsInt64:$offset)>;
-
-def : Pat<(truncstorei16 X:$rt, (add AddrFI:$rn, AArch64Base_STURH_offsetAsInt64:$offset)),
-        (STURH AddrFI:$rn, X:$rt, AArch64Base_STURH_offsetAsInt64:$offset)>;
-
-def : Pat<(truncstorei16 X:$rt, S:$rn),
-        (STURH S:$rn, X:$rt, (i64 0))>;
-
-def : Pat<(truncstorei16 X:$rt, AddrFI:$rn),
-        (STURH AddrFI:$rn, X:$rt, (i64 0))>;
+def : Pat<(truncstorei8 W:$rt, AddrFI:$rn),
+        (STURB AddrFI:$rn, W:$rt, (i64 0))>;
 
 
-def : Pat<(truncstorei32 X:$rt, (add S:$rn, AArch64Base_STURW_offsetAsInt64:$offset)),
-        (STURW S:$rn, X:$rt, AArch64Base_STURW_offsetAsInt64:$offset)>;
+def : Pat<(truncstorei16 W:$rt, (add S:$rn, AArch64Base_STURH_offsetAsInt64:$offset)),
+        (STURH S:$rn, W:$rt, AArch64Base_STURH_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei32 X:$rt, (add AddrFI:$rn, AArch64Base_STURW_offsetAsInt64:$offset)),
-        (STURW AddrFI:$rn, X:$rt, AArch64Base_STURW_offsetAsInt64:$offset)>;
+def : Pat<(truncstorei16 W:$rt, (add AddrFI:$rn, AArch64Base_STURH_offsetAsInt64:$offset)),
+        (STURH AddrFI:$rn, W:$rt, AArch64Base_STURH_offsetAsInt64:$offset)>;
 
-def : Pat<(truncstorei32 X:$rt, S:$rn),
-        (STURW S:$rn, X:$rt, (i64 0))>;
+def : Pat<(truncstorei16 W:$rt, S:$rn),
+        (STURH S:$rn, W:$rt, (i64 0))>;
 
-def : Pat<(truncstorei32 X:$rt, AddrFI:$rn),
-        (STURW AddrFI:$rn, X:$rt, (i64 0))>;
+def : Pat<(truncstorei16 W:$rt, AddrFI:$rn),
+        (STURH AddrFI:$rn, W:$rt, (i64 0))>;
+
+
+def : Pat<(store W:$rt, (add S:$rn, AArch64Base_STURW_offsetAsInt64:$offset)),
+        (STURW S:$rn, W:$rt, AArch64Base_STURW_offsetAsInt64:$offset)>;
+
+def : Pat<(store W:$rt, (add AddrFI:$rn, AArch64Base_STURW_offsetAsInt64:$offset)),
+        (STURW AddrFI:$rn, W:$rt, AArch64Base_STURW_offsetAsInt64:$offset)>;
+
+def : Pat<(store W:$rt, S:$rn),
+        (STURW S:$rn, W:$rt, (i64 0))>;
+
+def : Pat<(store W:$rt, AddrFI:$rn),
+        (STURW AddrFI:$rn, W:$rt, (i64 0))>;
 
 
 def : Pat<(store X:$rt, (add S:$rn, AArch64Base_STURX_offsetAsInt64:$offset)),

@@ -69,13 +69,13 @@ void [(${namespace})]DAGToDAGISel::Select(SDNode *Node)
 }
 
 static SDNode *selectImm(SelectionDAG *CurDAG, const SDLoc &DL, int64_t Imm,
-                         MVT XLenVT, const [(${namespace})]Subtarget &Subtarget) {
+                         MVT VT, const [(${namespace})]Subtarget &Subtarget) {
   auto Seq = [(${namespace})]MatInt::generateInstSeq(Imm);
 
   SDNode *Result;
   for ([(${namespace})]MatInt::Inst &Inst : Seq) {
-    SDValue SDImm = CurDAG->getTargetConstant(Inst.getImm(), DL, XLenVT);
-    Result = CurDAG->getMachineNode(Inst.getOpcode(), DL, XLenVT, SDImm);
+    SDValue SDImm = CurDAG->getTargetConstant(Inst.getImm(), DL, VT);
+    Result = CurDAG->getMachineNode(Inst.getOpcode(), DL, VT, SDImm);
   }
 
   return Result;
@@ -108,12 +108,8 @@ bool [(${namespace})]DAGToDAGISel::trySelect(SDNode *Node)
 
          // Handle rest
          int64_t Imm = ConstNode->getSExtValue();
-         if (XLenVT == MVT::[(${stackPointerType})]) {
-          ReplaceNode(Node, selectImm(CurDAG, SDLoc(Node), Imm, XLenVT, *Subtarget));
-          return true;
-         }
-
-         return false;
+         ReplaceNode(Node, selectImm(CurDAG, SDLoc(Node), Imm, VT, *Subtarget));
+         return true;
        }
        default:
         return false;

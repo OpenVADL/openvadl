@@ -138,8 +138,11 @@ def [(${callInstruction})] : Instruction
 def SDT_[(${namespace})]SelectCC     : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
                                          SDTCisSameAs<0, 4>,
                                          SDTCisSameAs<4, 5>]>;
-def target_selectcc  : SDNode<"[(${namespace})]ISD::SELECT_CC", SDT_[(${namespace})]SelectCC,
+
+[#th:block th:each="registerFile : ${registerFiles}" ]
+def target_selectcc_[(${registerFile.name})] : SDNode<"[(${namespace})]ISD::SELECT_CC_[(${registerFile.name})]", SDT_[(${namespace})]SelectCC,
                      [SDNPInGlue]>;
+[/th:block]
 
 def vadl_imm32 : ImmLeaf<i32, [{ return true; }]>, Operand<i32>
 {
@@ -171,7 +174,7 @@ def SelectCC_[(${registerFile.name})]: Instruction {
 
     dag OutOperandList = (outs [(${registerFile.name})]:$dst);
     dag InOperandList = (ins [(${registerFile.name})]:$lhs, [(${registerFile.name})]:$rhs, vadl_imm32:$imm, [(${registerFile.name})]:$truev, [(${registerFile.name})]:$falsev);
-    let Pattern = [ (set [(${registerFile.name})]:$dst, (target_selectcc [(${registerFile.name})]:$lhs, [(${registerFile.name})]:$rhs,
+    let Pattern = [ (set [(${registerFile.name})]:$dst, (target_selectcc_[(${registerFile.name})] [(${registerFile.name})]:$lhs, [(${registerFile.name})]:$rhs,
                 (i32 vadl_imm32:$imm), [(${registerFile.name})]:$truev, [(${registerFile.name})]:$falsev)) ];
 
     let TSFlags{4-0} = 0;
@@ -197,7 +200,7 @@ def SelectCC_[(${registerFile.name})]: Instruction {
 
     dag OutOperandList = (outs [(${registerFile.name})]:$dst);
     dag InOperandList = (ins [(${registerFile.name})]:$lhs, [(${registerFile.name})]:$rhs, vadl_imm64:$imm, [(${registerFile.name})]:$truev, [(${registerFile.name})]:$falsev);
-    let Pattern = [ (set [(${registerFile.name})]:$dst, (target_selectcc [(${registerFile.name})]:$lhs, [(${registerFile.name})]:$rhs,
+    let Pattern = [ (set [(${registerFile.name})]:$dst, (target_selectcc_[(${registerFile.name})] [(${registerFile.name})]:$lhs, [(${registerFile.name})]:$rhs,
                 (i64 vadl_imm64:$imm), [(${registerFile.name})]:$truev, [(${registerFile.name})]:$falsev)) ];
 
     let TSFlags{4-0} = 0;

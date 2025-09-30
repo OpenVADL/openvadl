@@ -32,6 +32,7 @@ import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenAbiSequenceInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.compensation.CompensationPatternPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
@@ -46,12 +47,12 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Abi;
 import vadl.viam.PseudoInstruction;
-import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -163,6 +164,15 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
             .filter(x -> !x.equals("\n"))
             .toList();
 
+    var generateTableGenRegistersPassOutput =
+        ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
+            GenerateTableGenRegistersPass.class));
+    var registerFiles =
+        Stream.concat(generateTableGenRegistersPassOutput.registerClasses().stream(),
+                generateTableGenRegistersPassOutput.aliasRegisterClasses().stream())
+            .map(this::map)
+            .toList();
+
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase());
@@ -178,9 +188,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     map.put("compiler", renderedTableGenCompilerInstructionsRecords);
     map.put("instAliases", renderedTableGenInstAliases);
     map.put("patterns", renderedPatterns);
-    map.put("registerFiles",
-        specification.registerTensors().filter(RegisterTensor::isRegisterFile).map(this::map)
-            .toList());
+    map.put("registerFiles", registerFiles);
     map.put("returnInstruction", abi.returnSequence().identifier().simpleName());
     map.put("callInstruction", abi.callSequence().identifier().simpleName());
     map.put("isCallInstructionPseudo", abi.callSequence() instanceof PseudoInstruction ? 1 : 0);
@@ -189,10 +197,10 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     return map;
   }
 
-  private Map<String, Object> map(RegisterTensor obj) {
+  private Map<String, Object> map(TableGenRegisterClass obj) {
     return Map.of(
-        "resultWidth", obj.resultType().bitWidth(),
-        "name", obj.simpleName()
+        "resultWidth", obj.registerFileRef().resultType().bitWidth(),
+        "name", obj.name()
     );
   }
 }
