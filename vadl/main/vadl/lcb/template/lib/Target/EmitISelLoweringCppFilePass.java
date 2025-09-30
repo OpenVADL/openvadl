@@ -134,6 +134,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("conditionalValueRangeLowest", conditionalValueRange.lowest());
     map.put("conditionalValueRangeHighest", conditionalValueRange.highest());
     map.put("expandableDagNodes", coverageSummary.notCoveredSelectionDagNodes());
+    map.put("branchTypes", branchTypes(stackPointerType));
     map.put("mergedCmpAndBranch",
         !database.run(
             new Query.Builder().machineInstructionLabels(List.of(
@@ -183,6 +184,14 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
                     MachineInstructionLabel.CSEL_NEQ_I64)
             .build())));
     return map;
+  }
+
+  private String branchTypes(ValueType stackPointerType) {
+    if (stackPointerType == ValueType.I64) {
+      return "MVT::i32, MVT::i64";
+    } else {
+      return "MVT::i32";
+    }
   }
 
   private String getFirstNameOrEmpty(QueryResult result) {
