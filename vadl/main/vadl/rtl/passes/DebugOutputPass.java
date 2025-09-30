@@ -93,8 +93,8 @@ public class DebugOutputPass extends AbstractRtlPass {
       var node = read.asReadNode();
       var context = mapping.ensureContext(node);
       var addr = node.hasAddress() ? node.address() : null;
-      var print = readWriteOutput(readPc, "rd", node.resourceDefinition(), read.condition(),
-          addr, node);
+      var print = readWriteOutput(readPc, "rd", node.resourceDefinition(),
+          read.nullableCondition(), addr, node);
       print = ipg.addWithInputs(print, ipg.getContext(node).instructions());
       context.ipgNodes().add(print);
     }

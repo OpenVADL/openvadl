@@ -27,6 +27,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
 import vadl.rtl.ipg.nodes.RtlResetSignalNode;
+import vadl.rtl.ipg.nodes.RtlWriteRegTensorNode;
 import vadl.rtl.template.HdlBehavior;
 import vadl.rtl.template.HdlEmitContext;
 import vadl.rtl.template.HdlModule;
@@ -110,6 +111,9 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
     HdlBehavior.create(modules);
     HdlWiring.wire(modules);
 
+    // verify behavior
+    modules.forEach(HdlModule::verify);
+
     return modules.stream()
         .map(module -> new RenderInput(
             getSourceFilePath(module.name() + ".scala"),
@@ -141,7 +145,7 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
     // create reset value write for pc if we have a reset vector input
     if (context.resetVector() != null) {
       var resetVector = new ReadSignalNode(context.resetVector());
-      var pcReset = new WriteRegTensorNode(pc.registerTensor(), new NodeList<>(), resetVector,
+      var pcReset = new RtlWriteRegTensorNode(pc.registerTensor(), new NodeList<>(), resetVector,
           pc, new RtlResetSignalNode());
       behavior.addWithInputs(pcReset);
     }

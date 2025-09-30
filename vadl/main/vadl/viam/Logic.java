@@ -22,10 +22,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.Type;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
+import vadl.viam.graph.dependency.WriteSignalNode;
 
 /**
  * Logic definition in MiA description.
@@ -94,6 +98,26 @@ public abstract class Logic extends Definition implements DefProp.WithBehavior {
   @Override
   public List<Graph> behaviors() {
     return Collections.singletonList(behavior);
+  }
+
+  @Override
+  public void verify() {
+    super.verify();
+    behavior.verify();
+
+    var signalWrites = behavior.getNodes(WriteSignalNode.class)
+        .map(WriteSignalNode::signal)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    signals.forEach(signal -> ensure(signalWrites.contains(signal),
+        "Signal %s is not written to", signal.simpleName()));
+
+    var registerWrites = behavior.getNodes(WriteRegTensorNode.class)
+        .map(WriteRegTensorNode::registerTensor)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    registers.forEach(regTensor -> ensure(registerWrites.contains(regTensor),
+        "Register %s is not written to", regTensor.simpleName()));
   }
 
   /**

@@ -208,7 +208,7 @@ public class InstructionProgressGraphNamePass extends Pass {
       var read = reads.get(i);
       var prefix = "read" + read.asReadNode().resourceDefinition().simpleName() + i;
       name(ipg, read.asReadNode(), prefix + "_result");
-      name(ipg, read.condition(), prefix + "_enable");
+      name(ipg, read.nullableCondition(), prefix + "_enable");
       name(ipg, read.asReadNode().indices(), prefix + "_addr", prefix + "_idx");
       if (read instanceof RtlReadMemNode readMem) {
         name(ipg, readMem.words(), prefix + "_words");

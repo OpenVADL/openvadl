@@ -291,7 +291,8 @@ public class HdlBehavior {
         var expr = portOrResource(write, write.resourceDefinition());
         return expr + ".valid";
       }
-      throw new ViamGraphError("No valid signal for node").addContext(node.validNode());
+      throw new ViamGraphError("No valid signal for node")
+          .addContext(node.validNode().asNode());
     }
 
     @Handler
@@ -302,7 +303,7 @@ public class HdlBehavior {
           .findFirst();
       if (port.isPresent() && node.hasAddress()) {
         if (node instanceof RtlConditionalReadNode read) {
-          var cond = read.condition();
+          var cond = read.nullableCondition();
           if (cond != null) {
             var condEnd = new HdlConnection.ExpressionEndpoint(
                 cond,

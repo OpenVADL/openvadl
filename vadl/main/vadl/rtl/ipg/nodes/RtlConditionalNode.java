@@ -16,13 +16,22 @@
 
 package vadl.rtl.ipg.nodes;
 
-import vadl.viam.graph.dependency.ReadResourceNode;
+import javax.annotation.Nullable;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
- * Interface for all RTL read nodes that have conditions.
+ * Interface for all RTL read/write nodes that have conditions.
  */
-public interface RtlConditionalReadNode extends RtlConditionalNode {
+public interface RtlConditionalNode {
 
-  ReadResourceNode asReadNode();
+  ExpressionNode condition();
+
+  @Nullable
+  ExpressionNode nullableCondition();
+
+  void setCondition(ExpressionNode condition);
+
+  Node asNode();
 
 }

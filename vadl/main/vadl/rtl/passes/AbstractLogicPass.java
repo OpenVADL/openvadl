@@ -28,6 +28,7 @@ import vadl.viam.Signal;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
@@ -117,6 +118,11 @@ public abstract class AbstractLogicPass extends AbstractRtlPass {
 
   protected ExpressionNode getStageSignalRead(Stage stage, ExpressionNode stageNode,
                                               @Nullable MiaMappingInlinePass.Result inline) {
+    // just a constant
+    if (stageNode instanceof ConstantNode c) {
+      return c.copy();
+    }
+
     // already a signal
     if (stageNode instanceof ReadSignalNode rd) {
       return new ReadSignalNode(rd.signal());

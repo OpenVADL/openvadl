@@ -18,31 +18,36 @@ package vadl.rtl.passes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.RtlConfiguration;
+import vadl.error.Diagnostic;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.analysis.HazardAnalysis;
 import vadl.rtl.ipg.nodes.RtlConditionalMemNode;
+import vadl.rtl.ipg.nodes.RtlConditionalNode;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
 import vadl.rtl.ipg.nodes.RtlValidSignalNode;
-import vadl.rtl.ipg.nodes.RtlWriteMemNode;
+import vadl.rtl.ipg.nodes.RtlWriteRegTensorNode;
 import vadl.rtl.utils.RtlSimplificationRules;
 import vadl.rtl.utils.RtlSimplifier;
 import vadl.types.Type;
 import vadl.utils.GraphUtils;
+import vadl.utils.Pair;
 import vadl.viam.Constant;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Logic;
 import vadl.viam.MicroArchitecture;
 import vadl.viam.Processor;
 import vadl.viam.RegisterTensor;
+import vadl.viam.Signal;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.graph.Node;
@@ -52,8 +57,7 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
-import vadl.viam.graph.dependency.SideEffectNode;
-import vadl.viam.graph.dependency.WriteRegTensorNode;
+import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.WriteSignalNode;
 import vadl.viam.passes.functionInliner.Inliner;
@@ -170,7 +174,7 @@ public class ControlLogicPass extends AbstractLogicPass {
       var enableWrPrev = Objects.requireNonNull(enableWrMap.get(stagePrev));
       var stall = Objects.requireNonNull(stallMap.get(stage));
       var rollback = Objects.requireNonNull(rollbackMap.get(stage));
-      control.behavior().addWithInputs(new WriteRegTensorNode(full, new NodeList<>(),
+      control.behavior().addWithInputs(new RtlWriteRegTensorNode(full, new NodeList<>(),
           GraphUtils.and(
               GraphUtils.or(enableWrPrev.value(), stall),
               GraphUtils.or(enableWrPrev.value(), GraphUtils.not(rollback))
@@ -188,17 +192,20 @@ public class ControlLogicPass extends AbstractLogicPass {
         fullRd = new ReadRegTensorNode(full, new NodeList<>(), Type.bool(), null);
       }
       ExpressionNode finalFullRd = stage.behavior().add(fullRd);
-      stage.behavior().getNodes(SideEffectNode.class).forEach(sideEffectNode -> {
-        if (!(sideEffectNode instanceof WriteSignalNode)) {
-          var enCond = (sideEffectNode instanceof RtlWriteMemNode) ? finalFullRd : enRd;
-          var cond = patchCondition(sideEffectNode.nullableCondition(), enCond);
-          sideEffectNode.setCondition(cond);
+      stage.behavior().getNodes(RtlConditionalNode.class).forEach(condNode -> {
+        ExpressionNode enCond =  enRd;
+        if (condNode instanceof RtlConditionalMemNode
+            || condNode instanceof RtlConditionalReadNode) {
+          enCond = finalFullRd;
         }
+        var cond = patchCondition(condNode.nullableCondition(), enCond);
+        condNode.setCondition(cond);
       });
-      stage.behavior().getNodes(RtlConditionalReadNode.class).forEach(read -> {
-        var cond = patchCondition(read.condition(), finalFullRd);
-        read.setCondition(cond);
-      });
+    }
+
+    // patch reads/writes depending on memory reads/writes with valid signals
+    for (Stage stage : mia.stages()) {
+      patchDepReadsWrites(stage);
     }
 
     // patch concurrent writes to single registers, give precedence to earlier stages
@@ -207,7 +214,16 @@ public class ControlLogicPass extends AbstractLogicPass {
         var enList = new ArrayList<ExpressionNode>();
         for (Stage stage : mia.stages()) {
           var writes = stage.behavior().getNodes(WriteResourceNode.class)
-              .filter(wr -> wr.resourceDefinition().equals(reg)).toList();
+              .filter(wr -> wr.resourceDefinition().equals(reg))
+              .collect(Collectors.toCollection(ArrayList::new));
+          if (writes.size() > 1) {
+            fixConcurrentWrites(writes, control.getEnable(stage), inline);
+          }
+          Diagnostic.ensure(writes.size() <= 1, () -> {
+            var error = Diagnostic.error("Stage contains concurrent writes", stage);
+            writes.forEach(write -> error.locationHelp(write, "Write node"));
+            return error;
+          });
           for (WriteResourceNode wr : writes) {
             enList.stream().map(ExpressionNode::copy).reduce(GraphUtils::or)
                 .ifPresent(otherEn -> {
@@ -231,6 +247,9 @@ public class ControlLogicPass extends AbstractLogicPass {
     // optimize
     Inliner.inlineFuncs(control.behavior());
     new RtlSimplifier(RtlSimplificationRules.rules).run(control.behavior());
+
+    // verify
+    control.verify();
 
     return control;
   }
@@ -269,7 +288,7 @@ public class ControlLogicPass extends AbstractLogicPass {
               if (enWr != null) {
                 and = GraphUtils.and(and, enWr);
               }
-              var enRd = resolveStageValue(stage, rd.condition(), inline);
+              var enRd = resolveStageValue(stage, rd.nullableCondition(), inline);
               if (enRd != null) {
                 and = GraphUtils.and(and, enRd);
               }
@@ -338,34 +357,55 @@ public class ControlLogicPass extends AbstractLogicPass {
     }
     var extStallNodes = stage.behavior().getNodes(RtlConditionalMemNode.class)
         .collect(Collectors.toSet());
-    var extStallCond = extStallNodes.stream()
-        .flatMap(node -> {
-          var valid = new RtlValidSignalNode(node.asNode());
-          var cond = Objects.requireNonNull(node.condition());
-
-          // add valid signals of dependency ext stall nodes to conditions
-          var dep = collectDependencies(new HashSet<>(), extStallNodes, node.asNode());
-          var allValid = dep.stream().map(n -> (ExpressionNode) new RtlValidSignalNode(n))
-              .reduce(GraphUtils::and);
-          if (allValid.isPresent()) {
-            cond = GraphUtils.and(cond, allValid.get());
-            cond = stage.behavior().addWithInputs(cond);
-            node.setCondition(cond);
-          }
-
-          return Stream.of(GraphUtils.and(GraphUtils.not(valid), cond));
-        })
-        .reduce(GraphUtils::or);
+    var extStallCond = anyNotValid(extStallNodes);
     return extStallCond.map(stage.behavior()::addWithInputs)
         .map(expr -> getStageSignalRead(stage, expr, inline))
         .orElse(Constant.Value.of(false).toNode());
   }
 
-  private Set<Node> collectDependencies(Set<Node> set, Set<RtlConditionalMemNode> filter,
-                                        Node node) {
-    node.inputs().filter(filter::contains).forEach(set::add);
+  private void patchDepReadsWrites(Stage stage) {
+    if (configuration().getMemory().equals(RtlConfiguration.Memory.async)) {
+      return; // no conditions need to be patched
+    }
+    var extStallNodes = stage.behavior().getNodes(RtlConditionalMemNode.class)
+        .collect(Collectors.toSet());
+
+    // collect ext stall dependencies for all conditional read/writes
+    // and their not valid signals
+    var depsAnyNotValid = new ArrayList<Pair<RtlConditionalNode, ExpressionNode>>();
+    stage.behavior().getNodes(RtlConditionalNode.class)
+        .forEach(condNode -> {
+          var deps = collectDependencies(new LinkedHashSet<>(), extStallNodes, condNode.asNode());
+          anyNotValid(deps)
+              .map(stage.behavior()::addWithInputs)
+              .map(anyNotValid -> Pair.of(condNode, anyNotValid))
+              .ifPresent(depsAnyNotValid::add);
+        });
+
+    // add not valid signals of dependency ext stall nodes to conditions
+    depsAnyNotValid.forEach(pair -> {
+      var cond = pair.left().condition();
+      var allValid = GraphUtils.not(pair.right());
+      cond = stage.behavior().addWithInputs(GraphUtils.and(allValid, cond));
+      pair.left().setCondition(cond);
+    });
+  }
+
+  private Set<RtlConditionalMemNode> collectDependencies(Set<RtlConditionalMemNode> set,
+                                                         Set<RtlConditionalMemNode> filter,
+                                                         Node node) {
+    node.inputs().filter(filter::contains).map(RtlConditionalMemNode.class::cast).forEach(set::add);
     node.inputs().forEach(n -> collectDependencies(set, filter, n));
     return set;
+  }
+
+  private Optional<ExpressionNode> anyNotValid(Set<RtlConditionalMemNode> extStallNodes) {
+    return extStallNodes.stream()
+        .map(n -> GraphUtils.and(
+            n.condition(),
+            GraphUtils.not(new RtlValidSignalNode(n))
+        ))
+        .reduce(GraphUtils::or);
   }
 
   private ExpressionNode patchCondition(@Nullable ExpressionNode condition, ExpressionNode en) {
@@ -373,6 +413,33 @@ public class ControlLogicPass extends AbstractLogicPass {
       return en;
     }
     return en.ensureGraph().add(GraphUtils.and(en, condition));
+  }
+
+  private void fixConcurrentWrites(List<WriteResourceNode> writes, Signal en,
+                                   MiaMappingInlinePass.Result inline) {
+    var pcIncrement =
+        (WriteResourceNode) inline.inlineMap().get(inline.mapping().ipg().pcIncrement());
+
+    if (pcIncrement != null && writes.contains(pcIncrement)) {
+      var others = writes.stream().filter(n -> !pcIncrement.equals(n)).toList();
+      if (others.size() == 1) {
+        // fix concurrent write of pc increment and one other pc write node
+        var other = others.getFirst();
+        var graph = other.ensureGraph();
+
+        if (other.nullableCondition() != null) {
+          // add pc increment as else case to other write
+          var selVal = graph.add(
+              new SelectNode(other.condition(), other.value(), pcIncrement.value()));
+          other.replaceInput(other.value(), selVal);
+          other.setCondition(graph.add(new ReadSignalNode(en)));
+        }
+
+        // remove pc increment as the other node (now) always writes
+        pcIncrement.safeDelete(true);
+        writes.remove(pcIncrement);
+      }
+    }
   }
 
 }

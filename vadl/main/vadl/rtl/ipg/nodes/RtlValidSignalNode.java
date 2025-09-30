@@ -26,20 +26,19 @@ import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
- * Represents a stage signal that checks if a list of reads/writes are finished and their results
- * are valid.
+ * Represents a stage signal that checks if a memory read/write is finished and the result is valid.
  */
 public class RtlValidSignalNode extends ExpressionNode {
 
   @DataValue
-  Node validNode;
+  RtlConditionalMemNode validNode;
 
-  public RtlValidSignalNode(Node validNode) {
+  public RtlValidSignalNode(RtlConditionalMemNode validNode) {
     super(Type.bool());
     this.validNode = validNode;
   }
 
-  public Node validNode() {
+  public RtlConditionalMemNode validNode() {
     return validNode;
   }
 

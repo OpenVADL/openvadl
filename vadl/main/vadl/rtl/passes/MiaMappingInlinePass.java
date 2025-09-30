@@ -32,11 +32,11 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
+import vadl.rtl.ipg.nodes.RtlWriteRegTensorNode;
 import vadl.rtl.map.MiaMapping;
 import vadl.rtl.utils.SubgraphUtils;
 import vadl.utils.GraphUtils;
 import vadl.utils.Pair;
-import vadl.viam.Definition;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
@@ -63,6 +63,7 @@ public class MiaMappingInlinePass extends Pass {
    * @param inlineMap Maps all IPG nodes to nodes in stage behaviors.
    */
   public record Result(
+      MiaMapping mapping,
       Map<Pair<Node, Stage>, RegisterTensor> stageRegisterMap,
       BiMap<Node, Node> inlineMap
   ) {
@@ -122,7 +123,7 @@ public class MiaMappingInlinePass extends Pass {
             if (originalFrom instanceof ExpressionNode originalExpr
                 && copyFrom instanceof ExpressionNode copyExpr) {
               var output = outputFor(originalExpr, stage, stageRegisterMap);
-              return new WriteRegTensorNode(output, new NodeList<>(), copyExpr, null, null);
+              return new RtlWriteRegTensorNode(output, new NodeList<>(), copyExpr, null, null);
             }
             return null;
           });
@@ -137,7 +138,7 @@ public class MiaMappingInlinePass extends Pass {
             node.setCondition(patchCondition(cond, context));
           }
           if (dest instanceof RtlConditionalReadNode read) {
-            var cond = read.condition();
+            var cond = read.nullableCondition();
             read.asReadNode().ensure(cond != null,
                 "Condition input must be set before we extend it");
             read.setCondition(patchCondition(cond, context));
@@ -158,10 +159,13 @@ public class MiaMappingInlinePass extends Pass {
         }
       }
 
+      // verify stage
+      stage.verify();
+
       inlineMap.putAll(copyMap);
     }
 
-    return new Result(stageRegisterMap, HashBiMap.create(inlineMap));
+    return new Result(mapping, stageRegisterMap, HashBiMap.create(inlineMap));
   }
 
   private RegisterTensor resolveStageOutput(ExpressionNode node, @Nullable Stage stage,
@@ -184,7 +188,7 @@ public class MiaMappingInlinePass extends Pass {
     // by introducing a read and write node
     var output = outputFor(node, stage, map);
     var read = new ReadRegTensorNode(inPrev, new NodeList<>(), inPrev.resultType(), null);
-    var write = new WriteRegTensorNode(output, new NodeList<>(), read, null, null);
+    var write = new RtlWriteRegTensorNode(output, new NodeList<>(), read, null, null);
     stage.behavior().addWithInputs(write);
 
     return output;

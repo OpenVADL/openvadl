@@ -27,7 +27,9 @@ import javax.annotation.Nullable;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.graph.dependency.WriteSignalNode;
 import vadl.viam.graph.dependency.WriteStageOutputNode;
 
 /**
@@ -206,11 +208,25 @@ public class Stage extends Definition implements DefProp.WithBehavior {
     super.verify();
     behavior.verify();
 
-    var writes = behavior.getNodes(WriteStageOutputNode.class)
+    var outputWrites = behavior.getNodes(WriteStageOutputNode.class)
         .map(WriteStageOutputNode::stageOutput)
         .filter(Objects::nonNull)
         .collect(Collectors.toSet());
-    outputs.forEach(output -> ensure(writes.contains(output),
+    outputs.forEach(output -> ensure(outputWrites.contains(output),
         "Output %s is not written to", output.simpleName()));
+
+    var signalWrites = behavior.getNodes(WriteSignalNode.class)
+        .map(WriteSignalNode::signal)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    signals.forEach(signal -> ensure(signalWrites.contains(signal),
+        "Signal %s is not written to", signal.simpleName()));
+
+    var registerWrites = behavior.getNodes(WriteRegTensorNode.class)
+        .map(WriteRegTensorNode::registerTensor)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    registers.forEach(regTensor -> ensure(registerWrites.contains(regTensor),
+        "Register %s is not written to", regTensor.simpleName()));
   }
 }

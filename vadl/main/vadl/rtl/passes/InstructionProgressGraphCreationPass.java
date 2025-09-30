@@ -37,6 +37,7 @@ import vadl.rtl.ipg.nodes.RtlInstructionWordSliceNode;
 import vadl.rtl.ipg.nodes.RtlReadMemNode;
 import vadl.rtl.ipg.nodes.RtlReadRegTensorNode;
 import vadl.rtl.ipg.nodes.RtlWriteMemNode;
+import vadl.rtl.ipg.nodes.RtlWriteRegTensorNode;
 import vadl.rtl.utils.GraphMergeUtils;
 import vadl.rtl.utils.RtlSimplificationRules;
 import vadl.types.BitsType;
@@ -161,6 +162,15 @@ public class InstructionProgressGraphCreationPass extends Pass {
             ipg.replaceAndDelete(read, new RtlReadRegTensorNode(reg, read.indices(),
                 read.type().asDataType().toBitsType(), GraphUtils.bool(true).toNode(),
                 read.staticCounterAccess()));
+          });
+    });
+    // replace register tensor writes
+    isa.registerTensors().forEach(reg -> {
+      ipg.getNodes(WriteRegTensorNode.class)
+          .filter(write -> write.resourceDefinition().equals(reg))
+          .toList().forEach(write -> {
+            ipg.replaceAndDelete(write, new RtlWriteRegTensorNode(reg, write.indices(),
+                write.value(), write.staticCounterAccess(), write.condition()));
           });
     });
 
@@ -352,7 +362,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
         readPc,
         Constant.Value.of(pcInc, pc.resultType()).asVal().toNode()
     );
-    var writePc = new WriteRegTensorNode(pc.registerTensor(), new NodeList<>(),
+    var writePc = new RtlWriteRegTensorNode(pc.registerTensor(), new NodeList<>(),
         pcIncRes, pc, Constant.Value.of(true).toNode());
     writePc = ipg.addWithInputs(writePc, ipg.instructions());
     ipg.setPcIncrement(writePc);

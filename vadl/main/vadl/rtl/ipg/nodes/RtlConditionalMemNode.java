@@ -16,20 +16,10 @@
 
 package vadl.rtl.ipg.nodes;
 
-import javax.annotation.Nullable;
-import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ExpressionNode;
-
 /**
- * Interface for all RTL memory read/write nodes with conditions. Used to generate valid signals.
+ * Marker interface for all RTL memory read/write nodes with conditions.
+ * Used to generate valid signals for control logic.
  */
-public interface RtlConditionalMemNode {
-
-  @Nullable
-  ExpressionNode condition();
-
-  void setCondition(ExpressionNode condition);
-
-  Node asNode();
+public interface RtlConditionalMemNode extends RtlConditionalNode {
 
 }

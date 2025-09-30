@@ -110,10 +110,10 @@ public class HazardAnalysisPass extends Pass {
 
   private Stage condition(MiaMapping mapping, Node node) {
     if (node instanceof RtlConditionalReadNode read) {
-      return stage(mapping, read.condition());
+      return stage(mapping, read.nullableCondition());
     }
     if (node instanceof WriteResourceNode write) {
-      return stage(mapping, write.condition());
+      return stage(mapping, write.nullableCondition());
     }
     throw new ViamGraphError("Resource read/write node without condition")
         .addContext(node);

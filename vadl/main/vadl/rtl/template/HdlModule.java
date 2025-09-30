@@ -172,6 +172,15 @@ public class HdlModule {
     );
   }
 
+  /**
+   * Verify module behavior.
+   */
+  public void verify() {
+    if (behavior != null) {
+      behavior.verify();
+    }
+  }
+
   private Map<String, Object> childVars(HdlModule module) {
     return Map.of(
         "name", module.name

@@ -37,6 +37,14 @@ public class WriteSignalNode extends WriteResourceNode {
   }
 
   @Override
+  public void verifyState() {
+    super.verifyState();
+    ensure(condition == null
+            || (condition instanceof ConstantNode c && c.constant().asVal().bool()),
+        "Write signal condition must be null or true");
+  }
+
+  @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(signal);

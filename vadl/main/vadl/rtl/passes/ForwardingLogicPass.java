@@ -149,7 +149,7 @@ public class ForwardingLogicPass extends AbstractLogicPass {
             // patch read condition and read output
             var rdFwdEn = new ReadSignalNode(enSig);
             var rdFwdVal = new ReadSignalNode(valSig);
-            var cond = Objects.requireNonNull(read.condition());
+            var cond = read.condition();
             cond = stage.behavior().addWithInputs(GraphUtils.and(cond, GraphUtils.not(rdFwdEn)));
             read.setCondition(cond);
             var selFwd = new SelectNode(rdFwdEn, rdFwdVal, read.asReadNode());
@@ -172,6 +172,9 @@ public class ForwardingLogicPass extends AbstractLogicPass {
 
     // optimize
     new RtlSimplifier(RtlSimplificationRules.rules).run(forwarding.behavior());
+
+    // verify
+    forwarding.verify();
 
     return forwarding;
   }

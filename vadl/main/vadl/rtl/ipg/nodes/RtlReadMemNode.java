@@ -113,9 +113,15 @@ public class RtlReadMemNode extends ReadResourceNode implements RtlConditionalRe
     return words;
   }
 
-  @Nullable
   @Override
   public ExpressionNode condition() {
+    ensure(condition != null, "Condition was expected to be not null.");
+    return condition;
+  }
+
+  @Nullable
+  @Override
+  public ExpressionNode nullableCondition() {
     return condition;
   }
 

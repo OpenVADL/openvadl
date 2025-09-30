@@ -77,7 +77,7 @@ public class InstructionProgressGraphLowerPass extends Pass {
       added.addAll(patchCondition(write, write.condition(), ipg, mapping));
     });
     ipg.getNodes(RtlConditionalReadNode.class).forEach(read -> {
-      added.addAll(patchCondition(read.asReadNode(), read.condition(), ipg, mapping));
+      added.addAll(patchCondition(read.asReadNode(), read.nullableCondition(), ipg, mapping));
     });
 
     // add select-by-instruction selection inputs
@@ -123,6 +123,9 @@ public class InstructionProgressGraphLowerPass extends Pass {
     for (RtlInstructionWordSliceNode insSlice : insSliceList) {
       insSlice.setInstruction(ipg.fetch());
     }
+
+    // verify ipg
+    ipg.verify();
 
     return added;
   }
