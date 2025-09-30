@@ -15,7 +15,9 @@ namespace llvm
             FIRST_NUMBER = ISD::BUILTIN_OP_END,
             CALL,
             RET_FLAG,
-            SELECT_CC,
+            [# th:each="rg : ${registerFiles}" ]
+            SELECT_CC_[(${rg.registerFileRef.name})],
+            [/]
             LGA = ISD::FIRST_TARGET_MEMORY_OPCODE
         };
     }

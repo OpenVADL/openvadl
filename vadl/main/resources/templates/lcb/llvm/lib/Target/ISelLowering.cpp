@@ -82,8 +82,10 @@ const char *[(${namespace})]TargetLowering::getTargetNodeName(unsigned Opcode) c
         return "[(${namespace})]ISD::RetFlag";
     case [(${namespace})]ISD::CALL:
         return "[(${namespace})]ISD::CALL";
-    case [(${namespace})]ISD::SELECT_CC:
-        return "[(${namespace})]ISD::SELECT_CC";
+    [# th:each="rg : ${registerFiles}" ]
+    case [(${namespace})]ISD::SELECT_CC_[(${rg.registerFileRef.name})]:
+        return "[(${namespace})]ISD::SELECT_CC_[(${rg.registerFileRef.name})]";
+    [/]
     case [(${namespace})]ISD::LGA:
             return "[(${namespace})]ISD::LGA";
     default:
@@ -878,7 +880,7 @@ SDValue [(${namespace})]TargetLowering::lowerSelect(SDValue Op, SelectionDAG &DA
     // lowered SELECT_CC to take advantage of the integer
     // compare+branch instructions. i.e.:
     // (select (setcc lhs, rhs, cc), truev, falsev)
-    // -> (riscvisd::select_cc lhs, rhs, cc, truev, falsev)
+    // -> ([(${namespace})]isd::select_cc lhs, rhs, cc, truev, falsev)
     if (Op.getSimpleValueType() == MVT::[(${stackPointerType})] && CondV.getOpcode() == ISD::SETCC &&
         CondV.getOperand(0).getSimpleValueType() == MVT::[(${stackPointerType})])
     {
@@ -892,7 +894,7 @@ SDValue [(${namespace})]TargetLowering::lowerSelect(SDValue Op, SelectionDAG &DA
         SDValue TargetCC = DAG.getConstant(CCVal, DL, MVT::[(${stackPointerType})]);
         SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
         SDValue Ops[] = {LHS, RHS, TargetCC, TrueV, FalseV};
-        return DAG.getNode([(${namespace})]ISD::SELECT_CC, DL, VTs, Ops);
+        return DAG.getNode([(${namespace})]ISD::SELECT_CC_[(${mainRegisterFile.registerFileRef.name})], DL, VTs, Ops);
     }
 
     // Otherwise:
@@ -904,7 +906,7 @@ SDValue [(${namespace})]TargetLowering::lowerSelect(SDValue Op, SelectionDAG &DA
     SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
     SDValue Ops[] = {CondV, Zero, SetNE, TrueV, FalseV};
 
-    return DAG.getNode([(${namespace})]ISD::SELECT_CC, DL, VTs, Ops);
+    return DAG.getNode([(${namespace})]ISD::SELECT_CC_[(${mainRegisterFile.registerFileRef.name})], DL, VTs, Ops);
 }
 
 MachineBasicBlock *
@@ -920,6 +922,7 @@ MachineBasicBlock *
         llvm_unreachable("Unexpected instr type to insert");
     [# th:each="rg : ${registerFiles}" ]
       case [(${namespace})]::SelectCC_[(${rg.registerFileRef.name})]:
+      {
       // To "insert" a SELECT instruction, we actually have to insert the triangle
       // control-flow pattern.  The incoming instruction knows the destination vreg
       // to set, the condition code register to branch on, the true/false values to
@@ -976,6 +979,7 @@ MachineBasicBlock *
 
       MI.eraseFromParent(); // The pseudo instruction is gone now.
       return TailMBB;
+      }
       break;
     [/]
     }
