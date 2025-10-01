@@ -71,9 +71,9 @@ public class GcbInstructionRegisterFileOperand
    * Constructor.
    */
   public GcbInstructionRegisterFileOperand(WriteArtificialResNode node, Format.Field address) {
-    super(node, node.resourceDefinition().innerResourceRef().simpleName(),
+    super(node, node.resourceDefinition().simpleName(),
         address.identifier.simpleName());
-    this.registerFile = (RegisterTensor) node.resourceDefinition().innerResourceRef();
+    this.registerFile = node.resourceDefinition();
     this.formatField = address;
     node.resourceDefinition().innerResourceRef()
         .ensure(registerFile.isRegisterFile(), "must be registerfile");

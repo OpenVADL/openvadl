@@ -100,7 +100,7 @@ application binary interface ABI for AArch64Temp = {
       SUBW { rd = rd, rn = 31, rm = rd }
    }
 
-   /*
+  /*
    register adjustment sequence( rd : Bits<5>, rs1: Bits<5>, imm : SInt<12> ) =
    {
 

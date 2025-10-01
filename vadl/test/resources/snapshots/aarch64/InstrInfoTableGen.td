@@ -21,7 +21,7 @@ class InstFormat<bits<5> val> {
 
 class GenericInstCommon<dag outs, dag ins, string opcodestr, string argstr,
            list<dag> pattern, InstFormat format> : Instruction {
-    let Namespace = "processornamevalue";
+    let Namespace = "aarch64temp";
 
     dag OutOperandList = outs;
     dag InOperandList = ins;
@@ -52,10 +52,10 @@ class Pseudo<dag outs, dag ins, list<dag> pattern, string opcodestr = "", string
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_CallSeqStart, [SDNPHasChain, SDNPOutGlue]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_CallSeqEnd, [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
-def target_call : SDNode<"processornamevalueISD::CALL", SDT_CPU_Call,
+def target_call : SDNode<"aarch64tempISD::CALL", SDT_CPU_Call,
                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
 
-def target_ret_flag : SDNode<"processornamevalueISD::RET_FLAG", SDTNone,
+def target_ret_flag : SDNode<"aarch64tempISD::RET_FLAG", SDTNone,
                            [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
 /*
@@ -67,7 +67,7 @@ def ADJCALLSTACKDOWN : Instruction
     let InOperandList = (ins i64imm:$amt1, i64imm:$amt2); /* i32imm : Operand<i32> */
     let OutOperandList = (outs);
     let Pattern = [ (callseq_start timm:$amt1, timm:$amt2) ];
-    let Namespace = "processornamevalue";
+    let Namespace = "aarch64temp";
     let isPseudo = 1;
     let isCodeGenOnly = 1;
     let Defs = [ S31 ]; // stack pointer
@@ -83,7 +83,7 @@ def ADJCALLSTACKUP : Instruction
     let InOperandList = (ins i64imm:$amt1, i64imm:$amt2);
     let OutOperandList = (outs);
     let Pattern = [ (callseq_end timm:$amt1, timm:$amt2) ];
-    let Namespace = "processornamevalue";
+    let Namespace = "aarch64temp";
     let isPseudo = 1;
     let isCodeGenOnly = 1;
     let Defs = [ S31 ]; // stack pointer
@@ -93,7 +93,7 @@ def ADJCALLSTACKUP : Instruction
 
 def TEMP_RET : Instruction
 {
-    let Namespace = "processornamevalue";
+    let Namespace = "aarch64temp";
     let InOperandList = (ins);
     let OutOperandList = (outs);
     let Pattern =  [ (target_ret_flag) ];
@@ -112,18 +112,18 @@ def TEMP_RET : Instruction
 
 
 
-def SDT_processornamevalueSelectCC     : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
+def SDT_aarch64tempSelectCC     : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
                                          SDTCisSameAs<0, 4>,
                                          SDTCisSameAs<4, 5>]>;
 
 
-def target_selectcc_S : SDNode<"processornamevalueISD::SELECT_CC_S", SDT_processornamevalueSelectCC,
+def target_selectcc_S : SDNode<"aarch64tempISD::SELECT_CC_S", SDT_aarch64tempSelectCC,
                      [SDNPInGlue]>;
-def target_selectcc_R : SDNode<"processornamevalueISD::SELECT_CC_R", SDT_processornamevalueSelectCC,
+def target_selectcc_R : SDNode<"aarch64tempISD::SELECT_CC_R", SDT_aarch64tempSelectCC,
                      [SDNPInGlue]>;
-def target_selectcc_X : SDNode<"processornamevalueISD::SELECT_CC_X", SDT_processornamevalueSelectCC,
+def target_selectcc_X : SDNode<"aarch64tempISD::SELECT_CC_X", SDT_aarch64tempSelectCC,
                      [SDNPInGlue]>;
-def target_selectcc_W : SDNode<"processornamevalueISD::SELECT_CC_W", SDT_processornamevalueSelectCC,
+def target_selectcc_W : SDNode<"aarch64tempISD::SELECT_CC_W", SDT_aarch64tempSelectCC,
                      [SDNPInGlue]>;
 
 
@@ -137,7 +137,7 @@ def vadl_imm64 : ImmLeaf<i64, [{ return true; }]>, Operand<i64>
 
 }
 
-def vadl_lga : SDNode<"processornamevalueISD::LGA", SDTLoad, [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+def vadl_lga : SDNode<"aarch64tempISD::LGA", SDTLoad, [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
 
 
 
@@ -154,7 +154,7 @@ def SelectCC_S: Instruction {
 
     let Inst{6-0} = Opcode;
 
-    let Namespace = "processornamevalue";
+    let Namespace = "aarch64temp";
 
     dag OutOperandList = (outs S:$dst);
     dag InOperandList = (ins S:$lhs, S:$rhs, vadl_imm64:$imm, S:$truev, S:$falsev);
@@ -180,7 +180,7 @@ def SelectCC_R: Instruction {
 
     let Inst{6-0} = Opcode;
 
-    let Namespace = "processornamevalue";
+    let Namespace = "aarch64temp";
 
     dag OutOperandList = (outs R:$dst);
     dag InOperandList = (ins R:$lhs, R:$rhs, vadl_imm32:$imm, R:$truev, R:$falsev);
@@ -208,7 +208,7 @@ def SelectCC_X: Instruction {
 
     let Inst{6-0} = Opcode;
 
-    let Namespace = "processornamevalue";
+    let Namespace = "aarch64temp";
 
     dag OutOperandList = (outs X:$dst);
     dag InOperandList = (ins X:$lhs, X:$rhs, vadl_imm64:$imm, X:$truev, X:$falsev);
@@ -234,7 +234,7 @@ def SelectCC_W: Instruction {
 
     let Inst{6-0} = Opcode;
 
-    let Namespace = "processornamevalue";
+    let Namespace = "aarch64temp";
 
     dag OutOperandList = (outs W:$dst);
     dag InOperandList = (ins W:$lhs, W:$rhs, vadl_imm32:$imm, W:$truev, W:$falsev);
@@ -6340,12 +6340,12 @@ def AArch64Temp_PLDR_imm12XAsLabel : AArch64Temp_PLDR_imm12X<OtherVT>;
 
 def ADCSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -6392,12 +6392,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADCSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -6444,12 +6444,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -6496,12 +6496,12 @@ let Defs = [  ];
 
 def ADCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -6548,12 +6548,12 @@ let Defs = [  ];
 
 def ADDW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -6607,12 +6607,12 @@ let Defs = [  ];
 
 def ADDWASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -6666,12 +6666,12 @@ let Defs = [  ];
 
 def ADDWI : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, AArch64Base_ADDWI_imm12XAsInt64:$imm12X );
 
 field bits<32> Inst;
@@ -6722,12 +6722,12 @@ let Defs = [  ];
 
 def ADDWI12 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, AArch64Base_ADDWI12_imm12SAsInt64:$imm12S );
 
 field bits<32> Inst;
@@ -6764,8 +6764,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 1;
-let isAsCheapAsAMove   = 1;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -6778,12 +6778,12 @@ let Defs = [  ];
 
 def ADDWLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -6837,12 +6837,12 @@ let Defs = [  ];
 
 def ADDWLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -6896,12 +6896,12 @@ let Defs = [  ];
 
 def ADDWS : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -6955,12 +6955,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -7014,12 +7014,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSI : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, AArch64Base_ADDWSI_imm12XAsInt64:$imm12X );
 
 field bits<32> Inst;
@@ -7070,12 +7070,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSI12 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, AArch64Base_ADDWSI12_imm12SAsInt64:$imm12S );
 
 field bits<32> Inst;
@@ -7126,12 +7126,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -7185,12 +7185,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -7244,12 +7244,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSSXSB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -7302,12 +7302,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSSXSH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -7360,12 +7360,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSSXSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -7418,12 +7418,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSSXSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -7476,12 +7476,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSSXTB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -7534,12 +7534,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSSXTH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -7592,12 +7592,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSSXTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -7650,12 +7650,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSSXTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -7708,12 +7708,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSUXSB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -7766,12 +7766,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSUXSH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -7824,12 +7824,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSUXSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -7882,12 +7882,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSUXSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -7940,12 +7940,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSUXTB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -7998,12 +7998,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSUXTH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8056,12 +8056,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSUXTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8114,12 +8114,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSUXTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8172,12 +8172,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDWSXSB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -8230,12 +8230,12 @@ let Defs = [  ];
 
 def ADDWSXSH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -8288,12 +8288,12 @@ let Defs = [  ];
 
 def ADDWSXSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -8346,12 +8346,12 @@ let Defs = [  ];
 
 def ADDWSXSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -8404,12 +8404,12 @@ let Defs = [  ];
 
 def ADDWSXTB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8462,12 +8462,12 @@ let Defs = [  ];
 
 def ADDWSXTH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8520,12 +8520,12 @@ let Defs = [  ];
 
 def ADDWSXTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8578,12 +8578,12 @@ let Defs = [  ];
 
 def ADDWSXTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8636,12 +8636,12 @@ let Defs = [  ];
 
 def ADDWUXSB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -8694,12 +8694,12 @@ let Defs = [  ];
 
 def ADDWUXSH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -8752,12 +8752,12 @@ let Defs = [  ];
 
 def ADDWUXSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -8810,12 +8810,12 @@ let Defs = [  ];
 
 def ADDWUXSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -8868,12 +8868,12 @@ let Defs = [  ];
 
 def ADDWUXTB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8926,12 +8926,12 @@ let Defs = [  ];
 
 def ADDWUXTH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8984,12 +8984,12 @@ let Defs = [  ];
 
 def ADDWUXTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -9042,12 +9042,12 @@ let Defs = [  ];
 
 def ADDWUXTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -9100,12 +9100,12 @@ let Defs = [  ];
 
 def ADDX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -9159,12 +9159,12 @@ let Defs = [  ];
 
 def ADDXASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -9218,7 +9218,7 @@ let Defs = [  ];
 
 def ADDXI : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -9274,7 +9274,7 @@ let Defs = [  ];
 
 def ADDXI12 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -9330,12 +9330,12 @@ let Defs = [  ];
 
 def ADDXLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -9389,12 +9389,12 @@ let Defs = [  ];
 
 def ADDXLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -9448,12 +9448,12 @@ let Defs = [  ];
 
 def ADDXS : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -9507,12 +9507,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXSASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -9566,12 +9566,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSI : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, AArch64Base_ADDXSI_imm12XAsInt64:$imm12X );
 
 field bits<32> Inst;
@@ -9622,12 +9622,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSI12 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, AArch64Base_ADDXSI12_imm12SAsInt64:$imm12S );
 
 field bits<32> Inst;
@@ -9678,12 +9678,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXSLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -9737,12 +9737,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXSLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -9796,12 +9796,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSSXSB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -9854,12 +9854,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSSXSH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -9912,12 +9912,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSSXSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -9970,12 +9970,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSSXSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -10028,12 +10028,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSSXTB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -10086,12 +10086,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSSXTH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -10144,12 +10144,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSSXTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -10202,12 +10202,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSSXTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -10260,12 +10260,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSUXSB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -10318,12 +10318,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSUXSH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -10376,12 +10376,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSUXSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -10434,12 +10434,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSUXSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -10492,12 +10492,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSUXTB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -10550,12 +10550,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSUXTH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -10608,12 +10608,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSUXTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -10666,12 +10666,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSUXTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -10724,7 +10724,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ADDXSXSB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -10782,7 +10782,7 @@ let Defs = [  ];
 
 def ADDXSXSH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -10840,7 +10840,7 @@ let Defs = [  ];
 
 def ADDXSXSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -10898,7 +10898,7 @@ let Defs = [  ];
 
 def ADDXSXSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -10956,7 +10956,7 @@ let Defs = [  ];
 
 def ADDXSXTB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -11014,7 +11014,7 @@ let Defs = [  ];
 
 def ADDXSXTH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -11072,7 +11072,7 @@ let Defs = [  ];
 
 def ADDXSXTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -11130,7 +11130,7 @@ let Defs = [  ];
 
 def ADDXSXTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -11188,7 +11188,7 @@ let Defs = [  ];
 
 def ADDXUXSB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -11246,7 +11246,7 @@ let Defs = [  ];
 
 def ADDXUXSH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -11304,7 +11304,7 @@ let Defs = [  ];
 
 def ADDXUXSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -11362,7 +11362,7 @@ let Defs = [  ];
 
 def ADDXUXSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -11420,7 +11420,7 @@ let Defs = [  ];
 
 def ADDXUXTB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -11478,7 +11478,7 @@ let Defs = [  ];
 
 def ADDXUXTH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -11536,7 +11536,7 @@ let Defs = [  ];
 
 def ADDXUXTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -11594,7 +11594,7 @@ let Defs = [  ];
 
 def ADDXUXTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -11652,12 +11652,12 @@ let Defs = [  ];
 
 def ADR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_ADR_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -11701,12 +11701,12 @@ let Defs = [  ];
 
 def ADRP : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_ADRP_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -11750,12 +11750,12 @@ let Defs = [  ];
 
 def ANDIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins W:$rn, AArch64Base_ANDIW_immWSizeAsInt32:$immWSize );
 
 field bits<32> Inst;
@@ -11787,8 +11787,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 1;
-let isAsCheapAsAMove   = 1;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -11801,7 +11801,7 @@ let Defs = [  ];
 
 def ANDIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -11852,12 +11852,12 @@ let Defs = [  ];
 
 def ANDSIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, AArch64Base_ANDSIW_immWSizeAsInt32:$immWSize );
 
 field bits<32> Inst;
@@ -11903,12 +11903,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ANDSIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, AArch64Base_ANDSIX_immXSizeAsInt64:$immXSize );
 
 field bits<32> Inst;
@@ -11954,12 +11954,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ANDSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -12010,12 +12010,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ANDSWASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12066,12 +12066,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ANDSWLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12122,12 +12122,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ANDSWLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12178,12 +12178,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ANDSWROR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDSWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12234,12 +12234,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ANDSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -12290,12 +12290,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ANDSXASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDSXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12346,12 +12346,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ANDSXLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDSXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12402,12 +12402,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ANDSXLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12458,12 +12458,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ANDSXROR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDSXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12514,12 +12514,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def ANDW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -12570,12 +12570,12 @@ let Defs = [  ];
 
 def ANDWASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12626,12 +12626,12 @@ let Defs = [  ];
 
 def ANDWLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12682,12 +12682,12 @@ let Defs = [  ];
 
 def ANDWLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12738,12 +12738,12 @@ let Defs = [  ];
 
 def ANDWROR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12794,12 +12794,12 @@ let Defs = [  ];
 
 def ANDX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -12850,12 +12850,12 @@ let Defs = [  ];
 
 def ANDXASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12906,12 +12906,12 @@ let Defs = [  ];
 
 def ANDXLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12962,12 +12962,12 @@ let Defs = [  ];
 
 def ANDXLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13018,12 +13018,12 @@ let Defs = [  ];
 
 def ANDXROR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13074,12 +13074,12 @@ let Defs = [  ];
 
 def ASRW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -13128,12 +13128,12 @@ let Defs = [  ];
 
 def ASRX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -13182,7 +13182,7 @@ let Defs = [  ];
 
 def B : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -13227,13 +13227,13 @@ let Defs = [  ];
 
 def BFMW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins X:$rd_6, W:$rn, AArch64Base_BFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_BFMW_rightWSizeAsInt8:$rightWSize );
+let OutOperandList = ( outs W:$rd );
+let InOperandList = ( ins W:$rd_6, W:$rn, AArch64Base_BFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_BFMW_rightWSizeAsInt8:$rightWSize );
 
 field bits<32> Inst;
 
@@ -13282,12 +13282,12 @@ let Defs = [  ];
 
 def BFMX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rd_7, X:$rn, AArch64Base_BFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_BFMX_rightXSizeAsInt8:$rightXSize );
 
 field bits<32> Inst;
@@ -13337,12 +13337,12 @@ let Defs = [  ];
 
 def BICSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -13393,12 +13393,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def BICSWASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICSWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13449,12 +13449,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def BICSWLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICSWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13505,12 +13505,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def BICSWLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICSWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13561,12 +13561,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def BICSWROR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICSWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13617,12 +13617,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def BICSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -13673,12 +13673,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def BICSXASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICSXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13729,12 +13729,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def BICSXLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICSXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13785,12 +13785,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def BICSXLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICSXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13841,12 +13841,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def BICSXROR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICSXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13897,12 +13897,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def BICW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -13953,12 +13953,12 @@ let Defs = [  ];
 
 def BICWASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -14009,12 +14009,12 @@ let Defs = [  ];
 
 def BICWLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -14065,12 +14065,12 @@ let Defs = [  ];
 
 def BICWLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -14121,12 +14121,12 @@ let Defs = [  ];
 
 def BICWROR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -14177,12 +14177,12 @@ let Defs = [  ];
 
 def BICX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -14233,12 +14233,12 @@ let Defs = [  ];
 
 def BICXASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -14289,12 +14289,12 @@ let Defs = [  ];
 
 def BICXLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -14345,12 +14345,12 @@ let Defs = [  ];
 
 def BICXLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -14401,12 +14401,12 @@ let Defs = [  ];
 
 def BICXROR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -14457,7 +14457,7 @@ let Defs = [  ];
 
 def BL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -14502,7 +14502,7 @@ let Defs = [ LR ];
 
 def BLR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -14548,7 +14548,7 @@ let Defs = [ LR ];
 
 def BR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -14594,7 +14594,7 @@ let Defs = [  ];
 
 def BRK : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -14640,7 +14640,7 @@ let Defs = [  ];
 
 def BTI : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -14688,7 +14688,7 @@ let Defs = [  ];
 
 def B_AL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -14736,13 +14736,13 @@ let Defs = [  ];
 
 def B_CC : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_CC_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_B_CC_offsetAsLabel:$offset );
 
 field bits<32> Inst;
 
@@ -14784,13 +14784,13 @@ let Defs = [  ];
 
 def B_CS : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_CS_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_B_CS_offsetAsLabel:$offset );
 
 field bits<32> Inst;
 
@@ -14832,7 +14832,7 @@ let Defs = [  ];
 
 def B_EQ : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -14880,13 +14880,13 @@ let Defs = [  ];
 
 def B_GE : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_GE_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_B_GE_offsetAsLabel:$offset );
 
 field bits<32> Inst;
 
@@ -14928,7 +14928,7 @@ let Defs = [  ];
 
 def B_GT : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -14976,7 +14976,7 @@ let Defs = [  ];
 
 def B_HI : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -15024,7 +15024,7 @@ let Defs = [  ];
 
 def B_LE : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -15072,7 +15072,7 @@ let Defs = [  ];
 
 def B_LS : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -15120,13 +15120,13 @@ let Defs = [  ];
 
 def B_LT : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_LT_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_B_LT_offsetAsLabel:$offset );
 
 field bits<32> Inst;
 
@@ -15168,13 +15168,13 @@ let Defs = [  ];
 
 def B_MI : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_MI_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_B_MI_offsetAsLabel:$offset );
 
 field bits<32> Inst;
 
@@ -15216,7 +15216,7 @@ let Defs = [  ];
 
 def B_NE : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -15264,7 +15264,7 @@ let Defs = [  ];
 
 def B_NV : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -15312,13 +15312,13 @@ let Defs = [  ];
 
 def B_PL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_PL_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_B_PL_offsetAsLabel:$offset );
 
 field bits<32> Inst;
 
@@ -15360,13 +15360,13 @@ let Defs = [  ];
 
 def B_VC : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_VC_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_B_VC_offsetAsLabel:$offset );
 
 field bits<32> Inst;
 
@@ -15408,13 +15408,13 @@ let Defs = [  ];
 
 def B_VS : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_B_VS_offsetAsInt64:$offset );
+let InOperandList = ( ins AArch64Base_B_VS_offsetAsLabel:$offset );
 
 field bits<32> Inst;
 
@@ -15456,7 +15456,7 @@ let Defs = [  ];
 
 def CBNZW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -15505,7 +15505,7 @@ let Defs = [  ];
 
 def CBNZX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -15554,7 +15554,7 @@ let Defs = [  ];
 
 def CBZW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -15603,7 +15603,7 @@ let Defs = [  ];
 
 def CBZX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -15652,7 +15652,7 @@ let Defs = [  ];
 
 def CCMNALW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -15707,7 +15707,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNALX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -15762,7 +15762,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNCCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -15817,7 +15817,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNCCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -15872,7 +15872,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNCSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -15927,7 +15927,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNCSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -15982,7 +15982,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNEQW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16037,7 +16037,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNEQX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16092,7 +16092,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNGEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16147,7 +16147,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNGEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16202,7 +16202,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNGTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16257,7 +16257,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNGTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16312,7 +16312,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNHIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16367,7 +16367,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNHIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16422,7 +16422,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIALW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16477,7 +16477,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIALX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16532,7 +16532,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNICCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16587,7 +16587,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNICCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16642,7 +16642,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNICSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16697,7 +16697,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNICSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16752,7 +16752,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIEQW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16807,7 +16807,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIEQX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16862,7 +16862,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIGEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16917,7 +16917,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIGEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -16972,7 +16972,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIGTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17027,7 +17027,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIGTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17082,7 +17082,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIHIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17137,7 +17137,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIHIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17192,7 +17192,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNILEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17247,7 +17247,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNILEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17302,7 +17302,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNILSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17357,7 +17357,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNILSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17412,7 +17412,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNILTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17467,7 +17467,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNILTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17522,7 +17522,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIMIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17577,7 +17577,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIMIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17632,7 +17632,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNINEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17687,7 +17687,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNINEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17742,7 +17742,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNINVW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17797,7 +17797,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNINVX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17852,7 +17852,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIPLW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17907,7 +17907,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIPLX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -17962,7 +17962,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIVCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18017,7 +18017,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIVCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18072,7 +18072,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIVSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18127,7 +18127,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNIVSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18182,7 +18182,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNLEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18237,7 +18237,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNLEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18292,7 +18292,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNLSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18347,7 +18347,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNLSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18402,7 +18402,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNLTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18457,7 +18457,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNLTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18512,7 +18512,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNMIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18567,7 +18567,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNMIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18622,7 +18622,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNNEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18677,7 +18677,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNNEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18732,7 +18732,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNNVW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18787,7 +18787,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNNVX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18842,7 +18842,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNPLW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18897,7 +18897,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNPLX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -18952,7 +18952,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNVCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19007,7 +19007,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNVCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19062,7 +19062,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNVSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19117,7 +19117,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMNVSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19172,7 +19172,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPALW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19227,7 +19227,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPALX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19282,7 +19282,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPCCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19337,7 +19337,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPCCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19392,7 +19392,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPCSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19447,7 +19447,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPCSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19502,7 +19502,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPEQW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19557,7 +19557,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPEQX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19612,7 +19612,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPGEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19667,7 +19667,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPGEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19722,7 +19722,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPGTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19777,7 +19777,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPGTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19832,7 +19832,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPHIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19887,7 +19887,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPHIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19942,7 +19942,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIALW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -19997,7 +19997,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIALX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20052,7 +20052,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPICCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20107,7 +20107,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPICCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20162,7 +20162,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPICSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20217,7 +20217,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPICSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20272,7 +20272,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIEQW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20327,7 +20327,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIEQX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20382,7 +20382,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIGEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20437,7 +20437,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIGEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20492,7 +20492,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIGTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20547,7 +20547,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIGTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20602,7 +20602,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIHIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20657,7 +20657,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIHIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20712,7 +20712,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPILEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20767,7 +20767,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPILEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20822,7 +20822,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPILSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20877,7 +20877,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPILSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20932,7 +20932,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPILTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -20987,7 +20987,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPILTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21042,7 +21042,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIMIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21097,7 +21097,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIMIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21152,7 +21152,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPINEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21207,7 +21207,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPINEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21262,7 +21262,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPINVW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21317,7 +21317,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPINVX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21372,7 +21372,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIPLW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21427,7 +21427,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIPLX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21482,7 +21482,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIVCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21537,7 +21537,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIVCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21592,7 +21592,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIVSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21647,7 +21647,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPIVSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21702,7 +21702,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPLEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21757,7 +21757,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPLEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21812,7 +21812,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPLSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21867,7 +21867,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPLSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21922,7 +21922,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPLTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -21977,7 +21977,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPLTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -22032,7 +22032,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPMIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -22087,7 +22087,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPMIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -22142,7 +22142,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPNEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -22197,7 +22197,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPNEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -22252,7 +22252,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPNVW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -22307,7 +22307,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPNVX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -22362,7 +22362,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPPLW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -22417,7 +22417,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPPLX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -22472,7 +22472,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPVCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -22527,7 +22527,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPVCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -22582,7 +22582,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPVSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -22637,7 +22637,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CCMPVSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -22692,12 +22692,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def CLSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn );
 
 field bits<32> Inst;
@@ -22741,12 +22741,12 @@ let Defs = [  ];
 
 def CLSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn );
 
 field bits<32> Inst;
@@ -22790,12 +22790,12 @@ let Defs = [  ];
 
 def CLZW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn );
 
 field bits<32> Inst;
@@ -22839,12 +22839,12 @@ let Defs = [  ];
 
 def CLZX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn );
 
 field bits<32> Inst;
@@ -22888,12 +22888,12 @@ let Defs = [  ];
 
 def CSELALW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -22942,12 +22942,12 @@ let Defs = [  ];
 
 def CSELALX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -22996,12 +22996,12 @@ let Defs = [  ];
 
 def CSELCCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23050,12 +23050,12 @@ let Defs = [  ];
 
 def CSELCCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23104,12 +23104,12 @@ let Defs = [  ];
 
 def CSELCSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23158,12 +23158,12 @@ let Defs = [  ];
 
 def CSELCSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23212,12 +23212,12 @@ let Defs = [  ];
 
 def CSELEQW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23266,12 +23266,12 @@ let Defs = [  ];
 
 def CSELEQX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23320,12 +23320,12 @@ let Defs = [  ];
 
 def CSELGEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23374,12 +23374,12 @@ let Defs = [  ];
 
 def CSELGEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23428,12 +23428,12 @@ let Defs = [  ];
 
 def CSELGTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23482,12 +23482,12 @@ let Defs = [  ];
 
 def CSELGTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23536,12 +23536,12 @@ let Defs = [  ];
 
 def CSELHIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23590,12 +23590,12 @@ let Defs = [  ];
 
 def CSELHIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23644,12 +23644,12 @@ let Defs = [  ];
 
 def CSELLEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23698,12 +23698,12 @@ let Defs = [  ];
 
 def CSELLEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23752,12 +23752,12 @@ let Defs = [  ];
 
 def CSELLSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23806,12 +23806,12 @@ let Defs = [  ];
 
 def CSELLSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23860,12 +23860,12 @@ let Defs = [  ];
 
 def CSELLTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23914,12 +23914,12 @@ let Defs = [  ];
 
 def CSELLTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23968,12 +23968,12 @@ let Defs = [  ];
 
 def CSELMIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24022,12 +24022,12 @@ let Defs = [  ];
 
 def CSELMIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24076,12 +24076,12 @@ let Defs = [  ];
 
 def CSELNEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24130,12 +24130,12 @@ let Defs = [  ];
 
 def CSELNEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24184,12 +24184,12 @@ let Defs = [  ];
 
 def CSELNVW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24238,12 +24238,12 @@ let Defs = [  ];
 
 def CSELNVX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24292,12 +24292,12 @@ let Defs = [  ];
 
 def CSELPLW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24346,12 +24346,12 @@ let Defs = [  ];
 
 def CSELPLX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24400,12 +24400,12 @@ let Defs = [  ];
 
 def CSELVCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24454,12 +24454,12 @@ let Defs = [  ];
 
 def CSELVCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24508,12 +24508,12 @@ let Defs = [  ];
 
 def CSELVSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24562,12 +24562,12 @@ let Defs = [  ];
 
 def CSELVSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24616,12 +24616,12 @@ let Defs = [  ];
 
 def CSINCALW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24670,12 +24670,12 @@ let Defs = [  ];
 
 def CSINCALX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24724,12 +24724,12 @@ let Defs = [  ];
 
 def CSINCCCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24778,12 +24778,12 @@ let Defs = [  ];
 
 def CSINCCCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24832,12 +24832,12 @@ let Defs = [  ];
 
 def CSINCCSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24886,12 +24886,12 @@ let Defs = [  ];
 
 def CSINCCSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24940,12 +24940,12 @@ let Defs = [  ];
 
 def CSINCEQW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24994,12 +24994,12 @@ let Defs = [  ];
 
 def CSINCEQX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25048,12 +25048,12 @@ let Defs = [  ];
 
 def CSINCGEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25102,12 +25102,12 @@ let Defs = [  ];
 
 def CSINCGEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25156,12 +25156,12 @@ let Defs = [  ];
 
 def CSINCGTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25210,12 +25210,12 @@ let Defs = [  ];
 
 def CSINCGTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25264,12 +25264,12 @@ let Defs = [  ];
 
 def CSINCHIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25318,12 +25318,12 @@ let Defs = [  ];
 
 def CSINCHIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25372,12 +25372,12 @@ let Defs = [  ];
 
 def CSINCLEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25426,12 +25426,12 @@ let Defs = [  ];
 
 def CSINCLEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25480,12 +25480,12 @@ let Defs = [  ];
 
 def CSINCLSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25534,12 +25534,12 @@ let Defs = [  ];
 
 def CSINCLSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25588,12 +25588,12 @@ let Defs = [  ];
 
 def CSINCLTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25642,12 +25642,12 @@ let Defs = [  ];
 
 def CSINCLTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25696,12 +25696,12 @@ let Defs = [  ];
 
 def CSINCMIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25750,12 +25750,12 @@ let Defs = [  ];
 
 def CSINCMIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25804,12 +25804,12 @@ let Defs = [  ];
 
 def CSINCNEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25858,12 +25858,12 @@ let Defs = [  ];
 
 def CSINCNEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25912,12 +25912,12 @@ let Defs = [  ];
 
 def CSINCNVW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25966,12 +25966,12 @@ let Defs = [  ];
 
 def CSINCNVX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26020,12 +26020,12 @@ let Defs = [  ];
 
 def CSINCPLW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26074,12 +26074,12 @@ let Defs = [  ];
 
 def CSINCPLX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26128,12 +26128,12 @@ let Defs = [  ];
 
 def CSINCVCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26182,12 +26182,12 @@ let Defs = [  ];
 
 def CSINCVCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26236,12 +26236,12 @@ let Defs = [  ];
 
 def CSINCVSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26290,12 +26290,12 @@ let Defs = [  ];
 
 def CSINCVSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26344,12 +26344,12 @@ let Defs = [  ];
 
 def CSINVALW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26398,12 +26398,12 @@ let Defs = [  ];
 
 def CSINVALX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26452,12 +26452,12 @@ let Defs = [  ];
 
 def CSINVCCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26506,12 +26506,12 @@ let Defs = [  ];
 
 def CSINVCCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26560,12 +26560,12 @@ let Defs = [  ];
 
 def CSINVCSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26614,12 +26614,12 @@ let Defs = [  ];
 
 def CSINVCSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26668,12 +26668,12 @@ let Defs = [  ];
 
 def CSINVEQW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26722,12 +26722,12 @@ let Defs = [  ];
 
 def CSINVEQX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26776,12 +26776,12 @@ let Defs = [  ];
 
 def CSINVGEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26830,12 +26830,12 @@ let Defs = [  ];
 
 def CSINVGEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26884,12 +26884,12 @@ let Defs = [  ];
 
 def CSINVGTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26938,12 +26938,12 @@ let Defs = [  ];
 
 def CSINVGTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26992,12 +26992,12 @@ let Defs = [  ];
 
 def CSINVHIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27046,12 +27046,12 @@ let Defs = [  ];
 
 def CSINVHIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27100,12 +27100,12 @@ let Defs = [  ];
 
 def CSINVLEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27154,12 +27154,12 @@ let Defs = [  ];
 
 def CSINVLEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27208,12 +27208,12 @@ let Defs = [  ];
 
 def CSINVLSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27262,12 +27262,12 @@ let Defs = [  ];
 
 def CSINVLSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27316,12 +27316,12 @@ let Defs = [  ];
 
 def CSINVLTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27370,12 +27370,12 @@ let Defs = [  ];
 
 def CSINVLTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27424,12 +27424,12 @@ let Defs = [  ];
 
 def CSINVMIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27478,12 +27478,12 @@ let Defs = [  ];
 
 def CSINVMIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27532,12 +27532,12 @@ let Defs = [  ];
 
 def CSINVNEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27586,12 +27586,12 @@ let Defs = [  ];
 
 def CSINVNEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27640,12 +27640,12 @@ let Defs = [  ];
 
 def CSINVNVW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27694,12 +27694,12 @@ let Defs = [  ];
 
 def CSINVNVX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27748,12 +27748,12 @@ let Defs = [  ];
 
 def CSINVPLW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27802,12 +27802,12 @@ let Defs = [  ];
 
 def CSINVPLX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27856,12 +27856,12 @@ let Defs = [  ];
 
 def CSINVVCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27910,12 +27910,12 @@ let Defs = [  ];
 
 def CSINVVCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27964,12 +27964,12 @@ let Defs = [  ];
 
 def CSINVVSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28018,12 +28018,12 @@ let Defs = [  ];
 
 def CSINVVSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28072,12 +28072,12 @@ let Defs = [  ];
 
 def CSNEGALW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28126,12 +28126,12 @@ let Defs = [  ];
 
 def CSNEGALX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28180,12 +28180,12 @@ let Defs = [  ];
 
 def CSNEGCCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28234,12 +28234,12 @@ let Defs = [  ];
 
 def CSNEGCCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28288,12 +28288,12 @@ let Defs = [  ];
 
 def CSNEGCSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28342,12 +28342,12 @@ let Defs = [  ];
 
 def CSNEGCSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28396,12 +28396,12 @@ let Defs = [  ];
 
 def CSNEGEQW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28450,12 +28450,12 @@ let Defs = [  ];
 
 def CSNEGEQX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28504,12 +28504,12 @@ let Defs = [  ];
 
 def CSNEGGEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28558,12 +28558,12 @@ let Defs = [  ];
 
 def CSNEGGEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28612,12 +28612,12 @@ let Defs = [  ];
 
 def CSNEGGTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28666,12 +28666,12 @@ let Defs = [  ];
 
 def CSNEGGTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28720,12 +28720,12 @@ let Defs = [  ];
 
 def CSNEGHIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28774,12 +28774,12 @@ let Defs = [  ];
 
 def CSNEGHIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28828,12 +28828,12 @@ let Defs = [  ];
 
 def CSNEGLEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28882,12 +28882,12 @@ let Defs = [  ];
 
 def CSNEGLEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28936,12 +28936,12 @@ let Defs = [  ];
 
 def CSNEGLSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28990,12 +28990,12 @@ let Defs = [  ];
 
 def CSNEGLSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29044,12 +29044,12 @@ let Defs = [  ];
 
 def CSNEGLTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29098,12 +29098,12 @@ let Defs = [  ];
 
 def CSNEGLTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29152,12 +29152,12 @@ let Defs = [  ];
 
 def CSNEGMIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29206,12 +29206,12 @@ let Defs = [  ];
 
 def CSNEGMIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29260,12 +29260,12 @@ let Defs = [  ];
 
 def CSNEGNEW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29314,12 +29314,12 @@ let Defs = [  ];
 
 def CSNEGNEX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29368,12 +29368,12 @@ let Defs = [  ];
 
 def CSNEGNVW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29422,12 +29422,12 @@ let Defs = [  ];
 
 def CSNEGNVX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29476,12 +29476,12 @@ let Defs = [  ];
 
 def CSNEGPLW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29530,12 +29530,12 @@ let Defs = [  ];
 
 def CSNEGPLX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29584,12 +29584,12 @@ let Defs = [  ];
 
 def CSNEGVCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29638,12 +29638,12 @@ let Defs = [  ];
 
 def CSNEGVCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29692,12 +29692,12 @@ let Defs = [  ];
 
 def CSNEGVSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29746,12 +29746,12 @@ let Defs = [  ];
 
 def CSNEGVSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29800,12 +29800,12 @@ let Defs = [  ];
 
 def EONW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -29856,12 +29856,12 @@ let Defs = [  ];
 
 def EONWASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EONWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -29912,12 +29912,12 @@ let Defs = [  ];
 
 def EONWLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EONWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -29968,12 +29968,12 @@ let Defs = [  ];
 
 def EONWLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EONWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30024,12 +30024,12 @@ let Defs = [  ];
 
 def EONWROR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EONWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30080,12 +30080,12 @@ let Defs = [  ];
 
 def EONX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -30136,12 +30136,12 @@ let Defs = [  ];
 
 def EONXASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EONXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30192,12 +30192,12 @@ let Defs = [  ];
 
 def EONXLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EONXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30248,12 +30248,12 @@ let Defs = [  ];
 
 def EONXLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EONXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30304,12 +30304,12 @@ let Defs = [  ];
 
 def EONXROR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EONXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30360,12 +30360,12 @@ let Defs = [  ];
 
 def EORIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize );
 
 field bits<32> Inst;
@@ -30397,8 +30397,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 1;
-let isAsCheapAsAMove   = 1;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -30411,7 +30411,7 @@ let Defs = [  ];
 
 def EORIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -30462,12 +30462,12 @@ let Defs = [  ];
 
 def EORW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -30518,12 +30518,12 @@ let Defs = [  ];
 
 def EORWASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30574,12 +30574,12 @@ let Defs = [  ];
 
 def EORWLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30630,12 +30630,12 @@ let Defs = [  ];
 
 def EORWLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30686,12 +30686,12 @@ let Defs = [  ];
 
 def EORWROR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EORWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30742,12 +30742,12 @@ let Defs = [  ];
 
 def EORX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -30798,12 +30798,12 @@ let Defs = [  ];
 
 def EORXASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EORXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30854,12 +30854,12 @@ let Defs = [  ];
 
 def EORXLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EORXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30910,12 +30910,12 @@ let Defs = [  ];
 
 def EORXLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EORXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30966,12 +30966,12 @@ let Defs = [  ];
 
 def EORXROR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EORXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -31022,7 +31022,7 @@ let Defs = [  ];
 
 def ERET : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -31067,12 +31067,12 @@ let Defs = [ SP_EL1,NZCV_N,NZCV_Z,NZCV_C,NZCV_V,CurrentEL,SP ];
 
 def EXTRW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EXTRW_shiftWSizeAsInt8:$shiftWSize );
 
 field bits<32> Inst;
@@ -31123,12 +31123,12 @@ let Defs = [  ];
 
 def EXTRX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EXTRX_shiftXSizeAsInt8:$shiftXSize );
 
 field bits<32> Inst;
@@ -31179,7 +31179,7 @@ let Defs = [  ];
 
 def HLT : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -31225,12 +31225,12 @@ let Defs = [  ];
 
 def LDPS : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt, S:$rt2 );
+let OutOperandList = ( outs X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn, AArch64Base_LDPS_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
@@ -31281,12 +31281,12 @@ let Defs = [  ];
 
 def LDPSPre : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
+let OutOperandList = ( outs S:$rn, X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn_36, AArch64Base_LDPSPre_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
@@ -31337,12 +31337,12 @@ let Defs = [  ];
 
 def LDPSPst : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
+let OutOperandList = ( outs S:$rn, X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn_37, AArch64Base_LDPSPst_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
@@ -31393,12 +31393,12 @@ let Defs = [  ];
 
 def LDPW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt, S:$rt2 );
+let OutOperandList = ( outs X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn, AArch64Base_LDPW_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
@@ -31449,12 +31449,12 @@ let Defs = [  ];
 
 def LDPWPre : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
+let OutOperandList = ( outs S:$rn, X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn_34, AArch64Base_LDPWPre_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
@@ -31505,12 +31505,12 @@ let Defs = [  ];
 
 def LDPWPst : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
+let OutOperandList = ( outs S:$rn, X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn_35, AArch64Base_LDPWPst_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
@@ -31561,12 +31561,12 @@ let Defs = [  ];
 
 def LDPX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt, S:$rt2 );
+let OutOperandList = ( outs X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn, AArch64Base_LDPX_offXSizeAsInt64:$offXSize );
 
 field bits<32> Inst;
@@ -31617,12 +31617,12 @@ let Defs = [  ];
 
 def LDPXPre : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
+let OutOperandList = ( outs S:$rn, X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn_38, AArch64Base_LDPXPre_offXSizeAsInt64:$offXSize );
 
 field bits<32> Inst;
@@ -31673,12 +31673,12 @@ let Defs = [  ];
 
 def LDPXPst : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
+let OutOperandList = ( outs S:$rn, X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn_39, AArch64Base_LDPXPst_offXSizeAsInt64:$offXSize );
 
 field bits<32> Inst;
@@ -31729,12 +31729,12 @@ let Defs = [  ];
 
 def LDRB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRB_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -31782,12 +31782,12 @@ let Defs = [  ];
 
 def LDRH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRH_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -31835,12 +31835,12 @@ let Defs = [  ];
 
 def LDRLitSWX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins AArch64Base_LDRLitSWX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -31884,12 +31884,12 @@ let Defs = [  ];
 
 def LDRLitW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins AArch64Base_LDRLitW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -31933,12 +31933,12 @@ let Defs = [  ];
 
 def LDRLitX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins AArch64Base_LDRLitX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -31982,12 +31982,12 @@ let Defs = [  ];
 
 def LDRPreB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_8, AArch64Base_LDRPreB_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32037,12 +32037,12 @@ let Defs = [  ];
 
 def LDRPreH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_9, AArch64Base_LDRPreH_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32092,12 +32092,12 @@ let Defs = [  ];
 
 def LDRPreSBW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_15, AArch64Base_LDRPreSBW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32147,12 +32147,12 @@ let Defs = [  ];
 
 def LDRPreSBX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_12, AArch64Base_LDRPreSBX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32202,12 +32202,12 @@ let Defs = [  ];
 
 def LDRPreSHW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_16, AArch64Base_LDRPreSHW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32257,12 +32257,12 @@ let Defs = [  ];
 
 def LDRPreSHX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_13, AArch64Base_LDRPreSHX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32312,12 +32312,12 @@ let Defs = [  ];
 
 def LDRPreSWX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_14, AArch64Base_LDRPreSWX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32367,12 +32367,12 @@ let Defs = [  ];
 
 def LDRPreW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_10, AArch64Base_LDRPreW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32422,12 +32422,12 @@ let Defs = [  ];
 
 def LDRPreX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_11, AArch64Base_LDRPreX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32477,12 +32477,12 @@ let Defs = [  ];
 
 def LDRPstB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_21, AArch64Base_LDRPstB_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32532,12 +32532,12 @@ let Defs = [  ];
 
 def LDRPstH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_22, AArch64Base_LDRPstH_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32587,12 +32587,12 @@ let Defs = [  ];
 
 def LDRPstSBW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_28, AArch64Base_LDRPstSBW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32642,12 +32642,12 @@ let Defs = [  ];
 
 def LDRPstSBX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_25, AArch64Base_LDRPstSBX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32697,12 +32697,12 @@ let Defs = [  ];
 
 def LDRPstSHW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_29, AArch64Base_LDRPstSHW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32752,12 +32752,12 @@ let Defs = [  ];
 
 def LDRPstSHX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_26, AArch64Base_LDRPstSHX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32807,12 +32807,12 @@ let Defs = [  ];
 
 def LDRPstSWX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_27, AArch64Base_LDRPstSWX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32862,12 +32862,12 @@ let Defs = [  ];
 
 def LDRPstW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_23, AArch64Base_LDRPstW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32917,12 +32917,12 @@ let Defs = [  ];
 
 def LDRPstX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_24, AArch64Base_LDRPstX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32972,12 +32972,12 @@ let Defs = [  ];
 
 def LDRRegBSXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33031,12 +33031,12 @@ let Defs = [  ];
 
 def LDRRegBSXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33090,12 +33090,12 @@ let Defs = [  ];
 
 def LDRRegBSXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33149,12 +33149,12 @@ let Defs = [  ];
 
 def LDRRegBSXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33208,12 +33208,12 @@ let Defs = [  ];
 
 def LDRRegBUXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33267,12 +33267,12 @@ let Defs = [  ];
 
 def LDRRegBUXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33326,12 +33326,12 @@ let Defs = [  ];
 
 def LDRRegBUXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33385,12 +33385,12 @@ let Defs = [  ];
 
 def LDRRegBUXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33444,12 +33444,12 @@ let Defs = [  ];
 
 def LDRRegHSXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33503,12 +33503,12 @@ let Defs = [  ];
 
 def LDRRegHSXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33562,12 +33562,12 @@ let Defs = [  ];
 
 def LDRRegHSXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33621,12 +33621,12 @@ let Defs = [  ];
 
 def LDRRegHSXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33680,12 +33680,12 @@ let Defs = [  ];
 
 def LDRRegHUXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33739,12 +33739,12 @@ let Defs = [  ];
 
 def LDRRegHUXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33798,12 +33798,12 @@ let Defs = [  ];
 
 def LDRRegHUXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33857,12 +33857,12 @@ let Defs = [  ];
 
 def LDRRegHUXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33916,12 +33916,12 @@ let Defs = [  ];
 
 def LDRRegSBWSXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33975,12 +33975,12 @@ let Defs = [  ];
 
 def LDRRegSBWSXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34034,12 +34034,12 @@ let Defs = [  ];
 
 def LDRRegSBWSXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34093,12 +34093,12 @@ let Defs = [  ];
 
 def LDRRegSBWSXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34152,12 +34152,12 @@ let Defs = [  ];
 
 def LDRRegSBWUXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34211,12 +34211,12 @@ let Defs = [  ];
 
 def LDRRegSBWUXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34270,12 +34270,12 @@ let Defs = [  ];
 
 def LDRRegSBWUXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34329,12 +34329,12 @@ let Defs = [  ];
 
 def LDRRegSBWUXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34388,12 +34388,12 @@ let Defs = [  ];
 
 def LDRRegSBXSXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34447,12 +34447,12 @@ let Defs = [  ];
 
 def LDRRegSBXSXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34506,12 +34506,12 @@ let Defs = [  ];
 
 def LDRRegSBXSXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34565,12 +34565,12 @@ let Defs = [  ];
 
 def LDRRegSBXSXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34624,12 +34624,12 @@ let Defs = [  ];
 
 def LDRRegSBXUXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34683,12 +34683,12 @@ let Defs = [  ];
 
 def LDRRegSBXUXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34742,12 +34742,12 @@ let Defs = [  ];
 
 def LDRRegSBXUXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34801,12 +34801,12 @@ let Defs = [  ];
 
 def LDRRegSBXUXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34860,12 +34860,12 @@ let Defs = [  ];
 
 def LDRRegSHWSXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34919,12 +34919,12 @@ let Defs = [  ];
 
 def LDRRegSHWSXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34978,12 +34978,12 @@ let Defs = [  ];
 
 def LDRRegSHWSXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35037,12 +35037,12 @@ let Defs = [  ];
 
 def LDRRegSHWSXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35096,12 +35096,12 @@ let Defs = [  ];
 
 def LDRRegSHWUXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35155,12 +35155,12 @@ let Defs = [  ];
 
 def LDRRegSHWUXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35214,12 +35214,12 @@ let Defs = [  ];
 
 def LDRRegSHWUXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35273,12 +35273,12 @@ let Defs = [  ];
 
 def LDRRegSHWUXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35332,12 +35332,12 @@ let Defs = [  ];
 
 def LDRRegSHXSXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35391,12 +35391,12 @@ let Defs = [  ];
 
 def LDRRegSHXSXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35450,12 +35450,12 @@ let Defs = [  ];
 
 def LDRRegSHXSXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35509,12 +35509,12 @@ let Defs = [  ];
 
 def LDRRegSHXSXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35568,12 +35568,12 @@ let Defs = [  ];
 
 def LDRRegSHXUXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35627,12 +35627,12 @@ let Defs = [  ];
 
 def LDRRegSHXUXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35686,12 +35686,12 @@ let Defs = [  ];
 
 def LDRRegSHXUXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35745,12 +35745,12 @@ let Defs = [  ];
 
 def LDRRegSHXUXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35804,12 +35804,12 @@ let Defs = [  ];
 
 def LDRRegSWXSXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35863,12 +35863,12 @@ let Defs = [  ];
 
 def LDRRegSWXSXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35922,12 +35922,12 @@ let Defs = [  ];
 
 def LDRRegSWXSXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35981,12 +35981,12 @@ let Defs = [  ];
 
 def LDRRegSWXSXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36040,12 +36040,12 @@ let Defs = [  ];
 
 def LDRRegSWXUXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36099,12 +36099,12 @@ let Defs = [  ];
 
 def LDRRegSWXUXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36158,12 +36158,12 @@ let Defs = [  ];
 
 def LDRRegSWXUXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36217,12 +36217,12 @@ let Defs = [  ];
 
 def LDRRegSWXUXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36276,12 +36276,12 @@ let Defs = [  ];
 
 def LDRRegWSXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36335,12 +36335,12 @@ let Defs = [  ];
 
 def LDRRegWSXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36394,12 +36394,12 @@ let Defs = [  ];
 
 def LDRRegWSXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36453,12 +36453,12 @@ let Defs = [  ];
 
 def LDRRegWSXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36512,12 +36512,12 @@ let Defs = [  ];
 
 def LDRRegWUXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36571,12 +36571,12 @@ let Defs = [  ];
 
 def LDRRegWUXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36630,12 +36630,12 @@ let Defs = [  ];
 
 def LDRRegWUXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36689,12 +36689,12 @@ let Defs = [  ];
 
 def LDRRegWUXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36748,12 +36748,12 @@ let Defs = [  ];
 
 def LDRRegXSXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36807,12 +36807,12 @@ let Defs = [  ];
 
 def LDRRegXSXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36866,12 +36866,12 @@ let Defs = [  ];
 
 def LDRRegXSXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36925,12 +36925,12 @@ let Defs = [  ];
 
 def LDRRegXSXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36984,12 +36984,12 @@ let Defs = [  ];
 
 def LDRRegXUXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -37043,12 +37043,12 @@ let Defs = [  ];
 
 def LDRRegXUXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -37102,12 +37102,12 @@ let Defs = [  ];
 
 def LDRRegXUXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -37161,12 +37161,12 @@ let Defs = [  ];
 
 def LDRRegXUXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -37220,12 +37220,12 @@ let Defs = [  ];
 
 def LDRSBW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRSBW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37273,12 +37273,12 @@ let Defs = [  ];
 
 def LDRSBX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRSBX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37326,12 +37326,12 @@ let Defs = [  ];
 
 def LDRSHW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRSHW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37379,12 +37379,12 @@ let Defs = [  ];
 
 def LDRSHX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRSHX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37432,12 +37432,12 @@ let Defs = [  ];
 
 def LDRSWX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRSWX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37485,12 +37485,12 @@ let Defs = [  ];
 
 def LDRW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37538,12 +37538,12 @@ let Defs = [  ];
 
 def LDRX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37591,12 +37591,12 @@ let Defs = [  ];
 
 def LDURB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURB_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37646,12 +37646,12 @@ let Defs = [  ];
 
 def LDURH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURH_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37701,12 +37701,12 @@ let Defs = [  ];
 
 def LDURSBW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURSBW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37756,12 +37756,12 @@ let Defs = [  ];
 
 def LDURSBX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURSBX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37811,12 +37811,12 @@ let Defs = [  ];
 
 def LDURSHW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURSHW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37866,12 +37866,12 @@ let Defs = [  ];
 
 def LDURSHX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURSHX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37921,12 +37921,12 @@ let Defs = [  ];
 
 def LDURSWX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURSWX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37976,12 +37976,12 @@ let Defs = [  ];
 
 def LDURW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -38031,12 +38031,12 @@ let Defs = [  ];
 
 def LDURX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -38086,12 +38086,12 @@ let Defs = [  ];
 
 def LSLW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -38140,12 +38140,12 @@ let Defs = [  ];
 
 def LSLX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -38194,12 +38194,12 @@ let Defs = [  ];
 
 def LSRW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -38248,12 +38248,12 @@ let Defs = [  ];
 
 def LSRX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -38302,12 +38302,12 @@ let Defs = [  ];
 
 def MADDW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$ra, W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -38356,12 +38356,12 @@ let Defs = [  ];
 
 def MADDX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$ra, X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -38410,12 +38410,12 @@ let Defs = [  ];
 
 def MOVKWPos00 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rd_0, AArch64Base_MOVKWPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38461,12 +38461,12 @@ let Defs = [  ];
 
 def MOVKWPos16 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rd_1, AArch64Base_MOVKWPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38512,12 +38512,12 @@ let Defs = [  ];
 
 def MOVKXPos00 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rd_2, AArch64Base_MOVKXPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38563,12 +38563,12 @@ let Defs = [  ];
 
 def MOVKXPos16 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rd_3, AArch64Base_MOVKXPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38614,12 +38614,12 @@ let Defs = [  ];
 
 def MOVKXPos32 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rd_4, AArch64Base_MOVKXPos32_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38665,12 +38665,12 @@ let Defs = [  ];
 
 def MOVKXPos48 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rd_5, AArch64Base_MOVKXPos48_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38716,12 +38716,12 @@ let Defs = [  ];
 
 def MOVNWPos00 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins AArch64Base_MOVNWPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38767,12 +38767,12 @@ let Defs = [  ];
 
 def MOVNWPos16 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins AArch64Base_MOVNWPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38818,12 +38818,12 @@ let Defs = [  ];
 
 def MOVNXPos00 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVNXPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38869,12 +38869,12 @@ let Defs = [  ];
 
 def MOVNXPos16 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVNXPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38920,12 +38920,12 @@ let Defs = [  ];
 
 def MOVNXPos32 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVNXPos32_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38971,12 +38971,12 @@ let Defs = [  ];
 
 def MOVNXPos48 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVNXPos48_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -39022,12 +39022,12 @@ let Defs = [  ];
 
 def MOVZWPos00 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins AArch64Base_MOVZWPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -39073,12 +39073,12 @@ let Defs = [  ];
 
 def MOVZWPos16 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins AArch64Base_MOVZWPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -39124,12 +39124,12 @@ let Defs = [  ];
 
 def MOVZXPos00 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVZXPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -39175,12 +39175,12 @@ let Defs = [  ];
 
 def MOVZXPos16 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVZXPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -39226,12 +39226,12 @@ let Defs = [  ];
 
 def MOVZXPos32 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVZXPos32_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -39277,12 +39277,12 @@ let Defs = [  ];
 
 def MOVZXPos48 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVZXPos48_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -39328,12 +39328,12 @@ let Defs = [  ];
 
 def MRS : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins AArch64Base_MRS_sysregAsInt16:$sysreg );
 
 field bits<32> Inst;
@@ -39375,7 +39375,7 @@ let Defs = [ SP_EL1 ];
 
 def MSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -39422,12 +39422,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,VBAR_EL1,ELR_EL1,SP_EL1,SP_EL0,SPSel,ES
 
 def MSUBW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$ra, W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -39476,12 +39476,12 @@ let Defs = [  ];
 
 def MSUBX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$ra, X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -39530,7 +39530,7 @@ let Defs = [  ];
 
 def NOP : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -39575,12 +39575,12 @@ let Defs = [  ];
 
 def ORNW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -39631,12 +39631,12 @@ let Defs = [  ];
 
 def ORNWASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORNWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -39687,12 +39687,12 @@ let Defs = [  ];
 
 def ORNWLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORNWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -39743,12 +39743,12 @@ let Defs = [  ];
 
 def ORNWLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORNWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -39799,12 +39799,12 @@ let Defs = [  ];
 
 def ORNWROR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORNWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -39855,12 +39855,12 @@ let Defs = [  ];
 
 def ORNX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -39911,12 +39911,12 @@ let Defs = [  ];
 
 def ORNXASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORNXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -39967,12 +39967,12 @@ let Defs = [  ];
 
 def ORNXLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORNXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40023,12 +40023,12 @@ let Defs = [  ];
 
 def ORNXLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORNXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40079,12 +40079,12 @@ let Defs = [  ];
 
 def ORNXROR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORNXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40135,12 +40135,12 @@ let Defs = [  ];
 
 def ORRIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins W:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize );
 
 field bits<32> Inst;
@@ -40172,8 +40172,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 1;
-let isAsCheapAsAMove   = 1;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -40186,7 +40186,7 @@ let Defs = [  ];
 
 def ORRIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -40237,12 +40237,12 @@ let Defs = [  ];
 
 def ORRW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -40293,12 +40293,12 @@ let Defs = [  ];
 
 def ORRWASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40349,12 +40349,12 @@ let Defs = [  ];
 
 def ORRWLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40405,12 +40405,12 @@ let Defs = [  ];
 
 def ORRWLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40461,12 +40461,12 @@ let Defs = [  ];
 
 def ORRWROR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORRWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40517,12 +40517,12 @@ let Defs = [  ];
 
 def ORRX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -40573,12 +40573,12 @@ let Defs = [  ];
 
 def ORRXASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORRXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40629,12 +40629,12 @@ let Defs = [  ];
 
 def ORRXLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORRXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40685,12 +40685,12 @@ let Defs = [  ];
 
 def ORRXLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40741,12 +40741,12 @@ let Defs = [  ];
 
 def ORRXROR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORRXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40795,107 +40795,9 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def RBITW : Instruction
-{
-let Namespace = "processorNameValue";
-
-let Size = 4;
-let CodeSize = 4;
-
-let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rn, bare_symbol:$bits );
-
-field bits<32> Inst;
-
-// SoftFail is a field the disassembler can use to provide a way for
-// instructions to not match without killing the whole decode process. It is
-// mainly used for ARM, but Tablegen expects this field to exist or it fails
-// to build the decode table.
-field bits<32> SoftFail = 0;
-
-bits<21> op = 0b101101011000000000000;
-bits<1> sf = 0b0;
-bits<64> rn;
-bits<64> rd;
-
-let Inst{31} = sf{0};
-let Inst{30-10} = op{20-0};
-let Inst{9-5} = rn{4-0};
-let Inst{4-0} = rd{4-0};
-
-let isTerminator       = 0;
-let isBranch           = 0;
-let isCall             = 0;
-let isReturn           = 0;
-let isPseudo           = 0;
-let isCodeGenOnly      = 0;
-let mayLoad            = 0;
-let mayStore           = 0;
-let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
-
-let Constraints = "";
-let AddedComplexity = 0;
-
-let Pattern = [];
-
-let Uses = [  ];
-let Defs = [  ];
-}
-
-def RBITX : Instruction
-{
-let Namespace = "processorNameValue";
-
-let Size = 4;
-let CodeSize = 4;
-
-let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins X:$rn, bare_symbol:$bits );
-
-field bits<32> Inst;
-
-// SoftFail is a field the disassembler can use to provide a way for
-// instructions to not match without killing the whole decode process. It is
-// mainly used for ARM, but Tablegen expects this field to exist or it fails
-// to build the decode table.
-field bits<32> SoftFail = 0;
-
-bits<21> op = 0b101101011000000000000;
-bits<1> sf = 0b1;
-bits<64> rn;
-bits<64> rd;
-
-let Inst{31} = sf{0};
-let Inst{30-10} = op{20-0};
-let Inst{9-5} = rn{4-0};
-let Inst{4-0} = rd{4-0};
-
-let isTerminator       = 0;
-let isBranch           = 0;
-let isCall             = 0;
-let isReturn           = 0;
-let isPseudo           = 0;
-let isCodeGenOnly      = 0;
-let mayLoad            = 0;
-let mayStore           = 0;
-let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
-
-let Constraints = "";
-let AddedComplexity = 0;
-
-let Pattern = [];
-
-let Uses = [  ];
-let Defs = [  ];
-}
-
 def RET : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -40941,12 +40843,12 @@ let Defs = [  ];
 
 def REV16W : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn );
 
 field bits<32> Inst;
@@ -40990,12 +40892,12 @@ let Defs = [  ];
 
 def REV16X : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn );
 
 field bits<32> Inst;
@@ -41039,12 +40941,12 @@ let Defs = [  ];
 
 def REV32 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn );
 
 field bits<32> Inst;
@@ -41088,12 +40990,12 @@ let Defs = [  ];
 
 def REVW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn );
 
 field bits<32> Inst;
@@ -41137,12 +41039,12 @@ let Defs = [  ];
 
 def REVX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn );
 
 field bits<32> Inst;
@@ -41186,12 +41088,12 @@ let Defs = [  ];
 
 def RORW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -41240,12 +41142,12 @@ let Defs = [  ];
 
 def RORX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -41294,12 +41196,12 @@ let Defs = [  ];
 
 def SBCSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -41346,12 +41248,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SBCSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -41398,12 +41300,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SBCW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -41450,12 +41352,12 @@ let Defs = [  ];
 
 def SBCX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -41502,12 +41404,12 @@ let Defs = [  ];
 
 def SBFMW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize );
 
 field bits<32> Inst;
@@ -41557,12 +41459,12 @@ let Defs = [  ];
 
 def SBFMX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize );
 
 field bits<32> Inst;
@@ -41612,12 +41514,12 @@ let Defs = [  ];
 
 def SDIVW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rm, W:$rn );
 
 field bits<32> Inst;
@@ -41664,12 +41566,12 @@ let Defs = [  ];
 
 def SDIVX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rm, X:$rn );
 
 field bits<32> Inst;
@@ -41716,12 +41618,12 @@ let Defs = [  ];
 
 def SMADDL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$ra, W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -41770,12 +41672,12 @@ let Defs = [  ];
 
 def SMSUBL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$ra, W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -41824,12 +41726,12 @@ let Defs = [  ];
 
 def SMULH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -41876,7 +41778,7 @@ let Defs = [  ];
 
 def STPW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -41932,7 +41834,7 @@ let Defs = [  ];
 
 def STPWPre : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -41988,7 +41890,7 @@ let Defs = [  ];
 
 def STPWPst : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42044,7 +41946,7 @@ let Defs = [  ];
 
 def STPX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42100,7 +42002,7 @@ let Defs = [  ];
 
 def STPXPre : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42156,7 +42058,7 @@ let Defs = [  ];
 
 def STPXPst : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42212,7 +42114,7 @@ let Defs = [  ];
 
 def STRB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42265,7 +42167,7 @@ let Defs = [  ];
 
 def STRH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42318,7 +42220,7 @@ let Defs = [  ];
 
 def STRPreB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42373,7 +42275,7 @@ let Defs = [  ];
 
 def STRPreH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42428,7 +42330,7 @@ let Defs = [  ];
 
 def STRPreW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42483,7 +42385,7 @@ let Defs = [  ];
 
 def STRPreX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42538,7 +42440,7 @@ let Defs = [  ];
 
 def STRPstB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42593,7 +42495,7 @@ let Defs = [  ];
 
 def STRPstH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42648,7 +42550,7 @@ let Defs = [  ];
 
 def STRPstW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42703,7 +42605,7 @@ let Defs = [  ];
 
 def STRPstX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42758,7 +42660,7 @@ let Defs = [  ];
 
 def STRRegBSXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42817,7 +42719,7 @@ let Defs = [  ];
 
 def STRRegBSXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42876,7 +42778,7 @@ let Defs = [  ];
 
 def STRRegBSXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42935,7 +42837,7 @@ let Defs = [  ];
 
 def STRRegBSXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -42994,7 +42896,7 @@ let Defs = [  ];
 
 def STRRegBUXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43053,7 +42955,7 @@ let Defs = [  ];
 
 def STRRegBUXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43112,7 +43014,7 @@ let Defs = [  ];
 
 def STRRegBUXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43171,7 +43073,7 @@ let Defs = [  ];
 
 def STRRegBUXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43230,7 +43132,7 @@ let Defs = [  ];
 
 def STRRegHSXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43289,7 +43191,7 @@ let Defs = [  ];
 
 def STRRegHSXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43348,7 +43250,7 @@ let Defs = [  ];
 
 def STRRegHSXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43407,7 +43309,7 @@ let Defs = [  ];
 
 def STRRegHSXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43466,7 +43368,7 @@ let Defs = [  ];
 
 def STRRegHUXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43525,7 +43427,7 @@ let Defs = [  ];
 
 def STRRegHUXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43584,7 +43486,7 @@ let Defs = [  ];
 
 def STRRegHUXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43643,7 +43545,7 @@ let Defs = [  ];
 
 def STRRegHUXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43702,7 +43604,7 @@ let Defs = [  ];
 
 def STRRegWSXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43761,7 +43663,7 @@ let Defs = [  ];
 
 def STRRegWSXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43820,7 +43722,7 @@ let Defs = [  ];
 
 def STRRegWSXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43879,7 +43781,7 @@ let Defs = [  ];
 
 def STRRegWSXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43938,7 +43840,7 @@ let Defs = [  ];
 
 def STRRegWUXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -43997,7 +43899,7 @@ let Defs = [  ];
 
 def STRRegWUXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44056,7 +43958,7 @@ let Defs = [  ];
 
 def STRRegWUXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44115,7 +44017,7 @@ let Defs = [  ];
 
 def STRRegWUXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44174,7 +44076,7 @@ let Defs = [  ];
 
 def STRRegXSXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44233,7 +44135,7 @@ let Defs = [  ];
 
 def STRRegXSXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44292,7 +44194,7 @@ let Defs = [  ];
 
 def STRRegXSXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44351,7 +44253,7 @@ let Defs = [  ];
 
 def STRRegXSXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44410,7 +44312,7 @@ let Defs = [  ];
 
 def STRRegXUXTWIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44469,7 +44371,7 @@ let Defs = [  ];
 
 def STRRegXUXTWUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44528,7 +44430,7 @@ let Defs = [  ];
 
 def STRRegXUXTXIs : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44587,7 +44489,7 @@ let Defs = [  ];
 
 def STRRegXUXTXUn : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44646,7 +44548,7 @@ let Defs = [  ];
 
 def STRW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44699,7 +44601,7 @@ let Defs = [  ];
 
 def STRX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44752,7 +44654,7 @@ let Defs = [  ];
 
 def STURB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44807,7 +44709,7 @@ let Defs = [  ];
 
 def STURH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44862,7 +44764,7 @@ let Defs = [  ];
 
 def STURW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44917,7 +44819,7 @@ let Defs = [  ];
 
 def STURX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -44972,12 +44874,12 @@ let Defs = [  ];
 
 def SUBW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -45031,12 +44933,12 @@ let Defs = [  ];
 
 def SUBWASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -45090,12 +44992,12 @@ let Defs = [  ];
 
 def SUBWI : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, AArch64Base_SUBWI_imm12XAsInt64:$imm12X );
 
 field bits<32> Inst;
@@ -45146,12 +45048,12 @@ let Defs = [  ];
 
 def SUBWI12 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, AArch64Base_SUBWI12_imm12SAsInt64:$imm12S );
 
 field bits<32> Inst;
@@ -45188,8 +45090,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 1;
-let isAsCheapAsAMove   = 1;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -45202,12 +45104,12 @@ let Defs = [  ];
 
 def SUBWLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -45261,12 +45163,12 @@ let Defs = [  ];
 
 def SUBWLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -45320,12 +45222,12 @@ let Defs = [  ];
 
 def SUBWS : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -45379,12 +45281,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -45438,12 +45340,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSI : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, AArch64Base_SUBWSI_imm12XAsInt64:$imm12X );
 
 field bits<32> Inst;
@@ -45494,12 +45396,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSI12 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, AArch64Base_SUBWSI12_imm12SAsInt64:$imm12S );
 
 field bits<32> Inst;
@@ -45550,12 +45452,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -45609,12 +45511,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -45668,12 +45570,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSSXSB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -45726,12 +45628,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSSXSH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -45784,12 +45686,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSSXSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -45842,12 +45744,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSSXSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -45900,12 +45802,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSSXTB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -45958,12 +45860,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSSXTH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46016,12 +45918,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSSXTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46074,12 +45976,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSSXTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46132,12 +46034,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSUXSB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -46190,12 +46092,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSUXSH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -46248,12 +46150,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSUXSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -46306,12 +46208,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSUXSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -46364,12 +46266,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSUXTB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46422,12 +46324,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSUXTH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46480,12 +46382,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSUXTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46538,12 +46440,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSUXTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46596,12 +46498,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBWSXSB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -46654,12 +46556,12 @@ let Defs = [  ];
 
 def SUBWSXSH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -46712,12 +46614,12 @@ let Defs = [  ];
 
 def SUBWSXSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -46770,12 +46672,12 @@ let Defs = [  ];
 
 def SUBWSXSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -46828,12 +46730,12 @@ let Defs = [  ];
 
 def SUBWSXTB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46886,12 +46788,12 @@ let Defs = [  ];
 
 def SUBWSXTH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46944,12 +46846,12 @@ let Defs = [  ];
 
 def SUBWSXTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -47002,12 +46904,12 @@ let Defs = [  ];
 
 def SUBWSXTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -47060,12 +46962,12 @@ let Defs = [  ];
 
 def SUBWUXSB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -47118,12 +47020,12 @@ let Defs = [  ];
 
 def SUBWUXSH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -47176,12 +47078,12 @@ let Defs = [  ];
 
 def SUBWUXSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -47234,12 +47136,12 @@ let Defs = [  ];
 
 def SUBWUXSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -47292,12 +47194,12 @@ let Defs = [  ];
 
 def SUBWUXTB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -47350,12 +47252,12 @@ let Defs = [  ];
 
 def SUBWUXTH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -47408,12 +47310,12 @@ let Defs = [  ];
 
 def SUBWUXTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -47466,12 +47368,12 @@ let Defs = [  ];
 
 def SUBWUXTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -47524,12 +47426,12 @@ let Defs = [  ];
 
 def SUBX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -47583,12 +47485,12 @@ let Defs = [  ];
 
 def SUBXASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -47642,7 +47544,7 @@ let Defs = [  ];
 
 def SUBXI : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -47698,7 +47600,7 @@ let Defs = [  ];
 
 def SUBXI12 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -47754,12 +47656,12 @@ let Defs = [  ];
 
 def SUBXLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -47813,12 +47715,12 @@ let Defs = [  ];
 
 def SUBXLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -47872,12 +47774,12 @@ let Defs = [  ];
 
 def SUBXS : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -47931,12 +47833,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSASR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXSASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -47990,12 +47892,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSI : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, AArch64Base_SUBXSI_imm12XAsInt64:$imm12X );
 
 field bits<32> Inst;
@@ -48046,12 +47948,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSI12 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, AArch64Base_SUBXSI12_imm12SAsInt64:$imm12S );
 
 field bits<32> Inst;
@@ -48102,12 +48004,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSLSL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXSLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -48161,12 +48063,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSLSR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXSLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -48220,12 +48122,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSSXSB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -48278,12 +48180,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSSXSH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -48336,12 +48238,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSSXSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -48394,12 +48296,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSSXSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -48452,12 +48354,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSSXTB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -48510,12 +48412,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSSXTH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -48568,12 +48470,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSSXTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -48626,12 +48528,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSSXTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -48684,12 +48586,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSUXSB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -48742,12 +48644,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSUXSH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -48800,12 +48702,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSUXSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -48858,12 +48760,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSUXSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -48916,12 +48818,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSUXTB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -48974,12 +48876,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSUXTH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -49032,12 +48934,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSUXTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -49090,12 +48992,12 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSUXTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -49148,7 +49050,7 @@ let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V ];
 
 def SUBXSXSB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -49206,7 +49108,7 @@ let Defs = [  ];
 
 def SUBXSXSH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -49264,7 +49166,7 @@ let Defs = [  ];
 
 def SUBXSXSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -49322,7 +49224,7 @@ let Defs = [  ];
 
 def SUBXSXSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -49380,7 +49282,7 @@ let Defs = [  ];
 
 def SUBXSXTB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -49438,7 +49340,7 @@ let Defs = [  ];
 
 def SUBXSXTH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -49496,7 +49398,7 @@ let Defs = [  ];
 
 def SUBXSXTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -49554,7 +49456,7 @@ let Defs = [  ];
 
 def SUBXSXTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -49612,7 +49514,7 @@ let Defs = [  ];
 
 def SUBXUXSB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -49670,7 +49572,7 @@ let Defs = [  ];
 
 def SUBXUXSH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -49728,7 +49630,7 @@ let Defs = [  ];
 
 def SUBXUXSW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -49786,7 +49688,7 @@ let Defs = [  ];
 
 def SUBXUXSX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -49844,7 +49746,7 @@ let Defs = [  ];
 
 def SUBXUXTB : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -49902,7 +49804,7 @@ let Defs = [  ];
 
 def SUBXUXTH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -49960,7 +49862,7 @@ let Defs = [  ];
 
 def SUBXUXTW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -50018,7 +49920,7 @@ let Defs = [  ];
 
 def SUBXUXTX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -50076,7 +49978,7 @@ let Defs = [  ];
 
 def SVC : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -50122,7 +50024,7 @@ let Defs = [  ];
 
 def TBNZ : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -50172,7 +50074,7 @@ let Defs = [  ];
 
 def TBZ : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -50222,12 +50124,12 @@ let Defs = [  ];
 
 def UBFMW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize );
 
 field bits<32> Inst;
@@ -50277,12 +50179,12 @@ let Defs = [  ];
 
 def UBFMX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize );
 
 field bits<32> Inst;
@@ -50332,7 +50234,7 @@ let Defs = [  ];
 
 def UDF : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -50377,12 +50279,12 @@ let Defs = [  ];
 
 def UDIVW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rm, W:$rn );
 
 field bits<32> Inst;
@@ -50429,12 +50331,12 @@ let Defs = [  ];
 
 def UDIVX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rm, X:$rn );
 
 field bits<32> Inst;
@@ -50481,12 +50383,12 @@ let Defs = [  ];
 
 def UMADDL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$ra, W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -50535,12 +50437,12 @@ let Defs = [  ];
 
 def UMSUBL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$ra, W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -50589,12 +50491,12 @@ let Defs = [  ];
 
 def UMULH : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -50641,7 +50543,7 @@ let Defs = [  ];
 
 def YIELD : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let Size = 4;
 let CodeSize = 4;
@@ -50693,7 +50595,7 @@ def : Pat<(i64 AddrFI:$rs1),
 
 def ASRIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, bare_symbol:$shift );
@@ -50721,7 +50623,7 @@ let Defs = [  ];
 
 def ASRIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, bare_symbol:$shift );
@@ -50749,7 +50651,7 @@ let Defs = [  ];
 
 def ASRVW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, S:$rm );
@@ -50777,7 +50679,7 @@ let Defs = [  ];
 
 def ASRVX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, S:$rm );
@@ -50805,7 +50707,7 @@ let Defs = [  ];
 
 def LSLIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, bare_symbol:$shift );
@@ -50833,7 +50735,7 @@ let Defs = [  ];
 
 def LSLIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, bare_symbol:$shift );
@@ -50861,7 +50763,7 @@ let Defs = [  ];
 
 def LSLVW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, S:$rm );
@@ -50889,7 +50791,7 @@ let Defs = [  ];
 
 def LSLVX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, S:$rm );
@@ -50917,7 +50819,7 @@ let Defs = [  ];
 
 def LSRIW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, bare_symbol:$shift );
@@ -50945,7 +50847,7 @@ let Defs = [  ];
 
 def LSRIX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, bare_symbol:$shift );
@@ -50973,7 +50875,7 @@ let Defs = [  ];
 
 def LSRVW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, S:$rm );
@@ -51001,7 +50903,7 @@ let Defs = [  ];
 
 def LSRVX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, S:$rm );
@@ -51029,7 +50931,7 @@ let Defs = [  ];
 
 def MULW : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, S:$rm );
@@ -51057,7 +50959,7 @@ let Defs = [  ];
 
 def MULX : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, S:$rm );
@@ -51085,7 +50987,7 @@ let Defs = [  ];
 
 def PLDR : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins bare_symbol:$symbol );
@@ -51113,7 +51015,7 @@ let Defs = [  ];
 
 def TEMP_CALL : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs  );
 let InOperandList = ( ins  );
@@ -51144,7 +51046,7 @@ let Defs = [  ];
 
 def constMat0 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins bare_symbol:$val );
@@ -51172,7 +51074,7 @@ let Defs = [  ];
 
 def constMat1 : Instruction
 {
-let Namespace = "processorNameValue";
+let Namespace = "aarch64temp";
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins bare_symbol:$val );
@@ -51221,35 +51123,35 @@ let Defs = [  ];
 
 
 
-def : Pat<(zext (add W:$rn, W:$rm)),
+def : Pat<(add W:$rn, W:$rm),
         (ADDW W:$rn, W:$rm)>;
 
 
-def : Pat<(zext (add W:$rn, (sra W:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6))),
+def : Pat<(add W:$rn, (sra W:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6)),
         (ADDWASR W:$rn, W:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (add W:$rn, (shl W:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6))),
+def : Pat<(add W:$rn, (shl W:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6)),
         (ADDWLSL W:$rn, W:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (add W:$rn, (srl W:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6))),
+def : Pat<(add W:$rn, (srl W:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6)),
         (ADDWLSR W:$rn, W:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (add W:$rn, W:$rm)),
+def : Pat<(add W:$rn, W:$rm),
         (ADDWS W:$rn, W:$rm)>;
 
 
-def : Pat<(zext (add W:$rn, (sra W:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6))),
+def : Pat<(add W:$rn, (sra W:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6)),
         (ADDWSASR W:$rn, W:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (add W:$rn, (shl W:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6))),
+def : Pat<(add W:$rn, (shl W:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6)),
         (ADDWSLSL W:$rn, W:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (add W:$rn, (srl W:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6))),
+def : Pat<(add W:$rn, (srl W:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6)),
         (ADDWSLSR W:$rn, W:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6)>;
 
 
@@ -51336,7 +51238,7 @@ def : Pat<(add S:$rn, X:$rm),
         (ADDXUXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(zext (and W:$rn, AArch64Base_ANDIW_immWSizeAsInt32:$immWSize)),
+def : Pat<(and W:$rn, AArch64Base_ANDIW_immWSizeAsInt32:$immWSize),
         (ANDIW W:$rn, AArch64Base_ANDIW_immWSizeAsInt32:$immWSize)>;
 
 
@@ -51344,7 +51246,7 @@ def : Pat<(and X:$rn, AArch64Base_ANDIX_immXSizeAsInt64:$immXSize),
         (ANDIX X:$rn, AArch64Base_ANDIX_immXSizeAsInt64:$immXSize)>;
 
 
-def : Pat<(zext (and W:$rn, AArch64Base_ANDSIW_immWSizeAsInt32:$immWSize)),
+def : Pat<(and W:$rn, AArch64Base_ANDSIW_immWSizeAsInt32:$immWSize),
         (ANDSIW W:$rn, AArch64Base_ANDSIW_immWSizeAsInt32:$immWSize)>;
 
 
@@ -51352,19 +51254,19 @@ def : Pat<(and X:$rn, AArch64Base_ANDSIX_immXSizeAsInt64:$immXSize),
         (ANDSIX X:$rn, AArch64Base_ANDSIX_immXSizeAsInt64:$immXSize)>;
 
 
-def : Pat<(zext (and W:$rn, W:$rm)),
+def : Pat<(and W:$rn, W:$rm),
         (ANDSW W:$rn, W:$rm)>;
 
 
-def : Pat<(zext (and W:$rn, (sra W:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6))),
+def : Pat<(and W:$rn, (sra W:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6)),
         (ANDSWASR W:$rn, W:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (and W:$rn, (shl W:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6))),
+def : Pat<(and W:$rn, (shl W:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6)),
         (ANDSWLSL W:$rn, W:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (and W:$rn, (srl W:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6))),
+def : Pat<(and W:$rn, (srl W:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6)),
         (ANDSWLSR W:$rn, W:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6)>;
 
 
@@ -51384,19 +51286,19 @@ def : Pat<(and X:$rn, (srl X:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6)),
         (ANDSXLSR X:$rn, X:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (and W:$rn, W:$rm)),
+def : Pat<(and W:$rn, W:$rm),
         (ANDW W:$rn, W:$rm)>;
 
 
-def : Pat<(zext (and W:$rn, (sra W:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6))),
+def : Pat<(and W:$rn, (sra W:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6)),
         (ANDWASR W:$rn, W:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (and W:$rn, (shl W:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6))),
+def : Pat<(and W:$rn, (shl W:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6)),
         (ANDWLSL W:$rn, W:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (and W:$rn, (srl W:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6))),
+def : Pat<(and W:$rn, (srl W:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6)),
         (ANDWLSR W:$rn, W:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6)>;
 
 
@@ -51416,7 +51318,7 @@ def : Pat<(and X:$rn, (srl X:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6)),
         (ANDXLSR X:$rn, X:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (sra W:$rn, W:$rm)),
+def : Pat<(sra W:$rn, W:$rm),
         (ASRW W:$rn, W:$rm)>;
 
 
@@ -51436,7 +51338,7 @@ def : Pat<(br bb:$offset),
         (B_NV bb:$offset)>;
 
 
-def : Pat<(zext (xor W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize)),
+def : Pat<(xor W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize),
         (EORIW W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize)>;
 
 
@@ -51444,19 +51346,19 @@ def : Pat<(xor X:$rn, AArch64Base_EORIX_immXSizeAsInt64:$immXSize),
         (EORIX X:$rn, AArch64Base_EORIX_immXSizeAsInt64:$immXSize)>;
 
 
-def : Pat<(zext (xor W:$rn, W:$rm)),
+def : Pat<(xor W:$rn, W:$rm),
         (EORW W:$rn, W:$rm)>;
 
 
-def : Pat<(zext (xor W:$rn, (sra W:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6))),
+def : Pat<(xor W:$rn, (sra W:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6)),
         (EORWASR W:$rn, W:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (xor W:$rn, (shl W:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6))),
+def : Pat<(xor W:$rn, (shl W:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6)),
         (EORWLSL W:$rn, W:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (xor W:$rn, (srl W:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6))),
+def : Pat<(xor W:$rn, (srl W:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6)),
         (EORWLSR W:$rn, W:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6)>;
 
 
@@ -51716,7 +51618,7 @@ def : Pat<(load AddrFI:$rn),
         (LDURX AddrFI:$rn, (i64 0))>;
 
 
-def : Pat<(zext (shl W:$rn, W:$rm)),
+def : Pat<(shl W:$rn, W:$rm),
         (LSLW W:$rn, W:$rm)>;
 
 
@@ -51724,7 +51626,7 @@ def : Pat<(shl X:$rn, X:$rm),
         (LSLX X:$rn, X:$rm)>;
 
 
-def : Pat<(zext (srl W:$rn, W:$rm)),
+def : Pat<(srl W:$rn, W:$rm),
         (LSRW W:$rn, W:$rm)>;
 
 
@@ -51732,7 +51634,7 @@ def : Pat<(srl X:$rn, X:$rm),
         (LSRX X:$rn, X:$rm)>;
 
 
-def : Pat<(zext (add W:$ra, (mul W:$rn, W:$rm))),
+def : Pat<(add W:$ra, (mul W:$rn, W:$rm)),
         (MADDW W:$ra, W:$rn, W:$rm)>;
 
 
@@ -51742,6 +51644,10 @@ def : Pat<(add X:$ra, (mul X:$rn, X:$rm)),
 
 def : Pat<(zext AArch64Base_MOVZWPos00_imm16AsInt16:$imm16),
         (MOVZWPos00 AArch64Base_MOVZWPos00_imm16AsInt16:$imm16)>;
+
+
+def : Pat<(shl (zext AArch64Base_MOVZWPos16_imm16AsInt16:$imm16), (i32 16)),
+        (MOVZWPos16 AArch64Base_MOVZWPos16_imm16AsInt16:$imm16)>;
 
 
 def : Pat<(zext AArch64Base_MOVZXPos00_imm16AsInt16:$imm16),
@@ -51760,7 +51666,7 @@ def : Pat<(shl (zext AArch64Base_MOVZXPos48_imm16AsInt16:$imm16), (i64 48)),
         (MOVZXPos48 AArch64Base_MOVZXPos48_imm16AsInt16:$imm16)>;
 
 
-def : Pat<(zext (sub W:$ra, (mul W:$rn, W:$rm))),
+def : Pat<(sub W:$ra, (mul W:$rn, W:$rm)),
         (MSUBW W:$ra, W:$rn, W:$rm)>;
 
 
@@ -51768,7 +51674,7 @@ def : Pat<(sub X:$ra, (mul X:$rn, X:$rm)),
         (MSUBX X:$ra, X:$rn, X:$rm)>;
 
 
-def : Pat<(zext (or W:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize)),
+def : Pat<(or W:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize),
         (ORRIW W:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize)>;
 
 
@@ -51776,19 +51682,19 @@ def : Pat<(or X:$rn, AArch64Base_ORRIX_immXSizeAsInt64:$immXSize),
         (ORRIX X:$rn, AArch64Base_ORRIX_immXSizeAsInt64:$immXSize)>;
 
 
-def : Pat<(zext (or W:$rn, W:$rm)),
+def : Pat<(or W:$rn, W:$rm),
         (ORRW W:$rn, W:$rm)>;
 
 
-def : Pat<(zext (or W:$rn, (sra W:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6))),
+def : Pat<(or W:$rn, (sra W:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6)),
         (ORRWASR W:$rn, W:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (or W:$rn, (shl W:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6))),
+def : Pat<(or W:$rn, (shl W:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6)),
         (ORRWLSL W:$rn, W:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (or W:$rn, (srl W:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6))),
+def : Pat<(or W:$rn, (srl W:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6)),
         (ORRWLSR W:$rn, W:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6)>;
 
 
@@ -51808,7 +51714,7 @@ def : Pat<(or X:$rn, (srl X:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6)),
         (ORRXLSR X:$rn, X:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (sra (shl W:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize), AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize)),
+def : Pat<(sra (shl W:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize), AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize),
         (SBFMW W:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize)>;
 
 
@@ -51816,7 +51722,7 @@ def : Pat<(sra (shl X:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize), AArch6
         (SBFMX X:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize)>;
 
 
-def : Pat<(zext (sdiv W:$rn, W:$rm)),
+def : Pat<(sdiv W:$rn, W:$rm),
         (SDIVW W:$rm, W:$rn)>;
 
 
@@ -51914,35 +51820,35 @@ def : Pat<(store X:$rt, AddrFI:$rn),
         (STURX AddrFI:$rn, X:$rt, (i64 0))>;
 
 
-def : Pat<(zext (sub W:$rn, W:$rm)),
+def : Pat<(sub W:$rn, W:$rm),
         (SUBW W:$rn, W:$rm)>;
 
 
-def : Pat<(zext (sub W:$rn, (sra W:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6))),
+def : Pat<(sub W:$rn, (sra W:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6)),
         (SUBWASR W:$rn, W:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (sub W:$rn, (shl W:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6))),
+def : Pat<(sub W:$rn, (shl W:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6)),
         (SUBWLSL W:$rn, W:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (sub W:$rn, (srl W:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6))),
+def : Pat<(sub W:$rn, (srl W:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6)),
         (SUBWLSR W:$rn, W:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (sub W:$rn, W:$rm)),
+def : Pat<(sub W:$rn, W:$rm),
         (SUBWS W:$rn, W:$rm)>;
 
 
-def : Pat<(zext (sub W:$rn, (sra W:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6))),
+def : Pat<(sub W:$rn, (sra W:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6)),
         (SUBWSASR W:$rn, W:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (sub W:$rn, (shl W:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6))),
+def : Pat<(sub W:$rn, (shl W:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6)),
         (SUBWSLSL W:$rn, W:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (sub W:$rn, (srl W:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6))),
+def : Pat<(sub W:$rn, (srl W:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6)),
         (SUBWSLSR W:$rn, W:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6)>;
 
 
@@ -52026,7 +51932,7 @@ def : Pat<(sub S:$rn, X:$rm),
         (SUBXUXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(zext (srl (shl W:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize), AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize)),
+def : Pat<(srl (shl W:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize), AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize),
         (UBFMW W:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize)>;
 
 
@@ -52034,7 +51940,7 @@ def : Pat<(srl (shl X:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize), AArch6
         (UBFMX X:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize)>;
 
 
-def : Pat<(zext (udiv W:$rn, W:$rm)),
+def : Pat<(udiv W:$rn, W:$rm),
         (UDIVW W:$rm, W:$rn)>;
 
 
