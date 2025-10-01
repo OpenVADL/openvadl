@@ -735,7 +735,9 @@ instruction set architecture AArch64Base = {
     }
 
   model notOrIdent (not: Id, ex: Ex) : Ex = { match: Ex ($not = not => ~($ex) ;_=> $ex) }
-  
+
+/* correct spec which does not work with TableGen
+
   model MovInstr (i: InstrWithFunct, size: Id, pos: Id, posex: Ex): IsaDefs = {
     // pos is set explicitely, therefore no undefined check for sf = 0 && pos(1) = 1 is required
     instruction AsId ($i.id, $pos): MovFormat =
@@ -766,6 +768,43 @@ instruction set architecture AArch64Base = {
             $MovInstr ($i; $size; Pos48; $notOrIdent($i.funct; imm16 as BitsX << 48))
       )
     }
+
+*/
+
+// begin wrong spec to work with TableGen
+
+  model MovInstr (i: InstrWithFunct, size: Id, pos: Id, posex: Ex): IsaDefs = {
+    // pos is set explicitely, therefore no undefined check for sf = 0 && pos(1) = 1 is required
+    instruction AsId ($i.id, $pos): MovFormat =
+      X(rd) := $posex
+    encoding AsId ($i.id, $pos) = { sf = SF::$size, op = $i.opcode, pos = Position::$pos }
+    assembly AsId ($i.id, $pos) = ($i.mnemo, ' ', $size(rd), ', #', udec(imm16),
+      match: Str ($pos = Pos00 => ""; $pos = Pos16 => ", LSL #16"; $pos = Pos32 => ", LSL #32"; _ => ", LSL #48"))
+    }
+
+  model MovKInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    match: IsaDefs ( $size = WSize
+         => $MovInstr ($i; $size; Pos00; let xrd = X(rd) in (xrd(31..16), imm16) as BitsX)
+            $MovInstr ($i; $size; Pos16; let xrd = X(rd) in (imm16, xrd(15..0 )) as BitsX)
+      ; _=> $MovInstr ($i; $size; Pos00; let xrd = X(rd) in (xrd(63..16), imm16            ))
+            $MovInstr ($i; $size; Pos16; let xrd = X(rd) in (xrd(63..32), imm16, xrd(15..0)))
+            $MovInstr ($i; $size; Pos32; let xrd = X(rd) in (xrd(63..48), imm16, xrd(31..0)))
+            $MovInstr ($i; $size; Pos48; let xrd = X(rd) in (             imm16, xrd(47..0)))
+      )
+    }
+
+  model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    match: IsaDefs ( $size = WSize
+         => $MovInstr ($i; $size; Pos00; $notOrIdent($i.funct; imm16 as BitsX      ))
+            $MovInstr ($i; $size; Pos16; $notOrIdent($i.funct; imm16 as BitsX << 16))
+      ; _=> $MovInstr ($i; $size; Pos00; $notOrIdent($i.funct; imm16 as BitsX      ))
+            $MovInstr ($i; $size; Pos16; $notOrIdent($i.funct; imm16 as BitsX << 16))
+            $MovInstr ($i; $size; Pos32; $notOrIdent($i.funct; imm16 as BitsX << 32))
+            $MovInstr ($i; $size; Pos48; $notOrIdent($i.funct; imm16 as BitsX << 48))
+      )
+    }
+
+// begin wrong spec to work with TableGen
 
 
 // bitfield extract model ******************************************************
