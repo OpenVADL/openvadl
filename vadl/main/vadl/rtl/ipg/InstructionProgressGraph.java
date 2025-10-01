@@ -21,18 +21,23 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
+import vadl.error.Diagnostic;
 import vadl.rtl.ipg.nodes.RtlReadMemNode;
 import vadl.rtl.utils.GraphMergeUtils;
+import vadl.rtl.utils.SubgraphUtils;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
@@ -47,7 +52,7 @@ import vadl.viam.graph.dependency.WriteRegTensorNode;
 public class InstructionProgressGraph extends Graph {
 
   private final IdentityHashMap<Node, NodeContext> contexts = new IdentityHashMap<>();
-  private final Set<Instruction> instructions = new HashSet<>();
+  private final Set<Instruction> instructions = new LinkedHashSet<>();
 
   @Nullable
   private ReadRegTensorNode pcRead;
@@ -222,6 +227,53 @@ public class InstructionProgressGraph extends Graph {
   protected void remove(Node node) {
     super.remove(node);
     contexts.remove(node);
+  }
+
+  @Override
+  protected InstructionProgressGraph createEmptyInstance(String name, Definition parentDefinition) {
+    return new InstructionProgressGraph(name, parentDefinition);
+  }
+
+  @Override
+  public InstructionProgressGraph copy() {
+    return copy(name);
+  }
+
+  @Override
+  public InstructionProgressGraph copy(String name) {
+    // create new ipg
+    var newIpg = createEmptyInstance(name, this.parentDefinition());
+
+    // copy all nodes, get a map from old to new nodes
+    SubgraphUtils.MissingSupplier failOnMissing = (from, to, copyFrom) -> {
+      throw Diagnostic.error("Missing node during IPG copy", to).build();
+    };
+    var copyMap = SubgraphUtils.copy(newIpg, getNodes().collect(Collectors.toSet()),
+        failOnMissing, failOnMissing);
+
+    // update new ipg fields
+    if (pcRead != null) {
+      newIpg.setPcRead((ReadRegTensorNode) copyMap.get(pcRead));
+    }
+    if (fetch != null) {
+      newIpg.setFetch((RtlReadMemNode) copyMap.get(fetch));
+    }
+    if (pcIncrement != null) {
+      newIpg.setPcIncrement((WriteRegTensorNode) copyMap.get(pcIncrement));
+    }
+    if (unknownInstruction != null) {
+      newIpg.setUnknownInstruction((ExpressionNode) copyMap.get(unknownInstruction));
+    }
+
+    // copy contexts
+    for (NodeContext context : contexts.values()) {
+      var newNode = Objects.requireNonNull(copyMap.get(context.node()));
+      var newContext = newIpg.getContext(newNode);
+      newContext.instructions().addAll(context.instructions());
+      newContext.nameHints().addAll(context.nameHints());
+    }
+
+    return newIpg;
   }
 
   /**

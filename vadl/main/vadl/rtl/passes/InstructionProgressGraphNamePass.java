@@ -18,6 +18,7 @@ package vadl.rtl.passes;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -237,7 +238,7 @@ public class InstructionProgressGraphNamePass extends Pass {
   private String nameInsSet(Set<Instruction> instructions, InstructionProgressGraph ipg) {
     if (instructions.size() > ipg.instructions().size() / 2) {
       // generate name for complement
-      var complement = new HashSet<>(ipg.instructions());
+      var complement = new LinkedHashSet<>(ipg.instructions());
       complement.removeAll(instructions);
       return "not_" + nameInsSet(complement, ipg);
     }

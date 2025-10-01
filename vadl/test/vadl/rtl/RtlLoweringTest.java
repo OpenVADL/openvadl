@@ -61,15 +61,21 @@ public class RtlLoweringTest extends AbstractTest {
     addDumpAndCheck(config, order, MiaMappingCreationPass.class);
     addDumpAndCheck(config, order, InstructionProgressGraphMergePass.class);
     addDumpAndCheck(config, order, MiaMappingOptimizePass.class);
-    order.addAfterFirst(InstructionProgressGraphLowerPass.class,
-        new InstructionBehaviorCheckPass(config, false));
+    addDumpAndCheck(config, order, InstructionProgressGraphLowerPass.class, false);
 
     setupPassManagerAndRunSpec("sys/risc-v/rv32i.vadl", order);
     setupPassManagerAndRunSpec("sys/risc-v/rv64im.vadl", order);
+    setupPassManagerAndRunSpec("sys/risc-v/rvcsr.vadl", order);
   }
 
   private void addDumpAndCheck(GeneralConfiguration config, PassOrder order, Class<?> selector) {
-    order.addAfterFirst(selector, new InstructionBehaviorCheckPass(config));
+    addDumpAndCheck(config, order, selector, true);
+  }
+
+  private void addDumpAndCheck(GeneralConfiguration config, PassOrder order, Class<?> selector,
+                               boolean useInstructionContext) {
+
+    order.addAfterFirst(selector, new InstructionBehaviorCheckPass(config, useInstructionContext));
     if (config.doDump()) {
       order.addAfterFirst(selector, new HtmlDumpPass(
           HtmlDumpPass.Config.from(config, "check" + selector.getSimpleName(), "")));

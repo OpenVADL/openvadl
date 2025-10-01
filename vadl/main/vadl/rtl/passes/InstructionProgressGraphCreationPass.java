@@ -348,13 +348,16 @@ public class InstructionProgressGraphCreationPass extends Pass {
     var pcIncVal = Constant.Value
         .of(pcInc, Type.bits(BitsType.minimalRequiredWidthFor(pcInc))).asVal();
 
-    // read at pc address
+    // read pc address
     var readPc = new ReadRegTensorNode(pc.registerTensor(), new NodeList<>(),
         pc.resultType(), pc);
+    readPc = ipg.addWithInputs(readPc, ipg.instructions());
+    ipg.setPcRead(readPc);
+
+    // read instruction at pc
     var readIns = new RtlReadMemNode(codeMem, pcInc, pcIncVal.toNode(), readPc,
         Type.bits(insWord), Constant.Value.of(true).toNode());
     readIns = ipg.addWithInputs(readIns, ipg.instructions());
-    ipg.setPcRead(readPc);
     ipg.setFetch(readIns);
 
     // pc increment, TODO: replace with branch prediction value

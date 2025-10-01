@@ -19,7 +19,10 @@ package vadl.rtl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.Assertions;
 import vadl.configuration.GeneralConfiguration;
@@ -42,9 +45,11 @@ import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -80,20 +85,42 @@ public class InstructionBehaviorCheckPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var isa = viam.isa().orElseThrow();
+    var pc = Objects.requireNonNull(isa.pc()).registerTensor();
     var ipg = isa.expectExtension(InstructionProgressGraphExtension.class).ipg();
 
+    // collect implicit nodes that are in the ipg but not in instruction behaviors
+    var implicit = Stream.of(ipg.pcIncrement(), ipg.fetch())
+        .filter(Objects::nonNull).collect(Collectors.toSet());
+
     for (var curInstr : isa.ownInstructions()) {
+      if (curInstr.behavior().getNodes(ProcCallNode.class).findAny().isPresent()) {
+        continue; // skip for now, since procedure calls are inlined in ipg, skip for now
+      }
+
       Graph graph;
+      Set<Node> ignore;
       if (useInstructionContext) {
         graph = new Graph("IPG graph for " + curInstr.simpleName());
         var ipgNodes = ipg.getNodes()
             .filter(n -> ipg.getContext(n).instructions().contains(curInstr))
             .collect(Collectors.toSet());
-        SubgraphUtils.copy(graph, ipgNodes,
+        var copyMap = SubgraphUtils.copy(graph, ipgNodes,
             (from, to, copyFrom) -> to.copy(),
             (from, to, copyFrom) -> null);
+        ignore = implicit.stream().map(copyMap::get).filter(Objects::nonNull)
+            .collect(Collectors.toSet());
       } else {
-        graph = ipg.copy("IPG graph for " + curInstr.simpleName());
+        var ipgCopy = ipg.copy("IPG graph for " + curInstr.simpleName());
+        graph = ipgCopy;
+        ignore = Stream.of(ipgCopy.pcIncrement(), ipgCopy.fetch())
+            .filter(Objects::nonNull).collect(Collectors.toSet());
+      }
+
+      // remove nodes without usages that are not side effects
+      for (Node node : graph.getNodes().toList()) {
+        if (node.isActive() && !node.hasUsages() && !(node instanceof SideEffectNode)) {
+          node.safeDelete(true);
+        }
       }
 
       // replace is-instruction and select-by-instruction nodes with constants/constant selection
@@ -129,33 +156,38 @@ public class InstructionBehaviorCheckPass extends Pass {
       resources.addAll(isa.ownMemories());
 
       for (Resource res : resources) {
-        compare(curInstr.behavior(), graph, ReadResourceNode.class, res);
-        compare(curInstr.behavior(), graph, ReadRegTensorNode.class, RtlReadRegTensorNode.class, res);
-        compare(curInstr.behavior(), graph, ReadMemNode.class, RtlReadMemNode.class, res);
+        if (!res.equals(pc)) { // ipg always reads the pc, we can not check this
+          compare(curInstr.behavior(), graph, ReadResourceNode.class, res, ignore);
+          compare(curInstr.behavior(), graph, ReadRegTensorNode.class, RtlReadRegTensorNode.class,
+              res, ignore);
+          compare(curInstr.behavior(), graph, ReadMemNode.class, RtlReadMemNode.class, res, ignore);
+        }
 
-        compare(curInstr.behavior(), graph, WriteResourceNode.class, res);
-        compare(curInstr.behavior(), graph, WriteRegTensorNode.class, res);
-        compare(curInstr.behavior(), graph, WriteMemNode.class, RtlWriteMemNode.class, res);
+        compare(curInstr.behavior(), graph, WriteResourceNode.class, res, ignore);
+        compare(curInstr.behavior(), graph, WriteRegTensorNode.class, res, ignore);
+        compare(curInstr.behavior(), graph, WriteMemNode.class, RtlWriteMemNode.class, res, ignore);
       }
     }
 
     return null;
   }
 
-  private void compare(Graph instrBeh, Graph graph, Class<? extends Node> type, Resource resource) {
-    compare(instrBeh, graph, type, type, resource);
+  private void compare(Graph instrBeh, Graph graph, Class<? extends Node> type, Resource resource,
+                       Set<Node> ignore) {
+    compare(instrBeh, graph, type, type, resource, ignore);
   }
 
   private void compare(Graph instrBeh, Graph graph,
                        Class<? extends Node> typeIns, Class<? extends Node> typeIpg,
-                       Resource resource) {
+                       Resource resource, Set<Node> ignore) {
 
     var inInstr = instrBeh.getNodes(typeIns)
         .filter(n -> filterResource(n, resource)).toList();
     var inGraph = graph.getNodes(typeIpg)
+        .filter(node -> !ignore.contains(node))
         .filter(n -> filterResource(n, resource)).toList();
     Assertions.assertEquals(countNodes(inInstr, resource), inGraph.size(),
-        "Number of " + typeIns.getSimpleName() + " nodes does not number of "
+        "Number of " + typeIns.getSimpleName() + " nodes does not match number of "
             + typeIpg.getSimpleName() + " nodes for resource " + resource);
   }
 
