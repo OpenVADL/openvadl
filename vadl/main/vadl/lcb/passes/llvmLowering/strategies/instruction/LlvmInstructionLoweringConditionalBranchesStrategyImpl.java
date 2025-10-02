@@ -214,10 +214,11 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     return new TableGenSelectionWithOutputPattern(selector, machine);
   }
 
+  //TODO: Refactor to use `zeroRegister` method
   private ConstantNode getZeroRegister(RegisterTensor registerFile) {
     var zeroConstraint =
         ensurePresent(
-            Arrays.stream(registerFile.constraints()).filter(x -> x.value().intValue() == 0)
+            registerFile.constraints().stream().filter(x -> x.value().intValue() == 0)
                 .findFirst(),
             () -> Diagnostic.error("Cannot find zero constraint", registerFile.location()));
     var constant =

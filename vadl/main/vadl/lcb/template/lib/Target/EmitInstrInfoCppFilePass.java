@@ -222,15 +222,13 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
                       .findFirst(),
                   "There must be destination register").registerTensor();
 
-          var destAliases = viam.isa().get().artificialResources()
-              .stream()
-              .filter(x -> x.aliasSlice() == null)
-              .filter(ArtificialResource::isRegisterFile)
-              .filter(x -> x.innerResourceRef() == destRegisterFile)
-              //.flatMap(x -> Arrays.stream(x.zer()))
-              .toList();
-
-          var zeroRegister = ensurePresent(destRegisterFile.zeroRegister(),
+          var zeroRegister = ensurePresent(viam.isa().get().artificialResources()
+                  .stream()
+                  .filter(x -> x.aliasSlice() == null)
+                  .filter(ArtificialResource::isRegisterFile)
+                  .filter(x -> x.innerResourceRef() == destRegisterFile)
+                  .flatMap(x -> x.zeroRegister().stream())
+                  .findFirst(),
               () -> Diagnostic.error("There is no zero register for the register file",
                   destRegisterFile.location()))
               .stream()

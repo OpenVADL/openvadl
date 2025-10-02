@@ -136,10 +136,9 @@ public class RegisterTensor extends Resource implements GeneratesRegisterFileNam
     return dimensions.getLast();
   }
 
-  // TODO: Refactor this to return a list instead of an array
   @Override
-  public Constraint[] constraints() {
-    return constraints.toArray(new Constraint[0]);
+  public List<Constraint> constraints() {
+    return constraints;
   }
 
   public void setConstraints(Constraint... constraints) {
@@ -215,16 +214,6 @@ public class RegisterTensor extends Resource implements GeneratesRegisterFileNam
 
     var result = resultType();
     return ConcreteRelationType.concreteRelation(args, result);
-  }
-
-  /**
-   * Return the address of a zero register if it exists.
-   */
-  public Optional<List<Constant.Value>> zeroRegister() {
-    return Arrays.stream(constraints())
-        .filter(c -> c.value().intValue() == 0)
-        .map(c -> c.indices)
-        .findFirst();
   }
 
   @Override

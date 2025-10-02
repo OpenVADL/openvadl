@@ -85,8 +85,7 @@ public class RegisterRef extends Resource {
     this.address = address;
     // Get all the constraints for this register.
     // But types might not match, so just compare the values.
-    this.constraints =
-        Arrays.stream(registerFile.constraints())
+    this.constraints = registerFile.constraints().stream()
             .filter(x -> x.indices().getFirst().intValue() == address.asVal().intValue()).toList();
   }
 

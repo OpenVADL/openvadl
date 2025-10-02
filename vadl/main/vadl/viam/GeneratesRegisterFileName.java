@@ -16,6 +16,8 @@
 
 package vadl.viam;
 
+import java.util.List;
+import java.util.Optional;
 import vadl.types.DataType;
 import vadl.utils.SourceLocation;
 
@@ -62,5 +64,16 @@ public interface GeneratesRegisterFileName {
   /**
    * Get the constraints of the register file.
    */
-  RegisterTensor.Constraint[] constraints();
+  List<RegisterTensor.Constraint> constraints();
+
+  /**
+   * Return the address of a zero register if it exists.
+   */
+  default Optional<List<Constant.Value>> zeroRegister() {
+    return constraints()
+        .stream()
+        .filter(c -> c.value().intValue() == 0)
+        .map(RegisterTensor.Constraint::indices)
+        .findFirst();
+  }
 }

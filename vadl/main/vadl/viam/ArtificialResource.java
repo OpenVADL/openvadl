@@ -16,7 +16,10 @@
 
 package vadl.viam;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vadl.types.ConcreteRelationType;
@@ -50,7 +53,7 @@ public class ArtificialResource extends Resource implements GeneratesRegisterFil
   private final Procedure writeProcedure;
   @Nullable
   private final Constant.BitSlice aliasSlice;
-
+  private final List<RegisterTensor.Constraint> constraints;
 
   /**
    * Constructs the artificial resource.
@@ -61,7 +64,8 @@ public class ArtificialResource extends Resource implements GeneratesRegisterFil
                             Kind kind,
                             Resource innerResourceRef,
                             Function readFunction,
-                            Procedure writeProcedure, @Nullable Constant.BitSlice aliasSlice
+                            Procedure writeProcedure,
+                            @Nullable Constant.BitSlice aliasSlice
   ) {
     super(identifier);
     this.kind = kind;
@@ -69,6 +73,7 @@ public class ArtificialResource extends Resource implements GeneratesRegisterFil
     this.readFunction = readFunction;
     this.writeProcedure = writeProcedure;
     this.aliasSlice = aliasSlice;
+    this.constraints = new ArrayList<>();
   }
 
   public Kind kind() {
@@ -155,13 +160,19 @@ public class ArtificialResource extends Resource implements GeneratesRegisterFil
   }
 
   @Override
-  public RegisterTensor.Constraint[] constraints() {
+  public List<RegisterTensor.Constraint> constraints() {
     if (innerResourceRef instanceof RegisterTensor registerTensor) {
-      return registerTensor.constraints();
+      return Stream.concat(registerTensor.constraints().stream(), constraints.stream()).toList();
     } else {
-      return new RegisterTensor.Constraint[0];
+      return constraints;
     }
   }
+
+  public void addConstraint(RegisterTensor.Constraint constraint) {
+    constraints.add(constraint);
+  }
+
+
 
   @Override
   public DataType resultType() {

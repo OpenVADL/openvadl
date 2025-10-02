@@ -46,6 +46,7 @@ import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 import vadl.utils.functionInterfaces.TriConsumer;
+import vadl.viam.ArtificialResource;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Constant;
 import vadl.viam.Encoding;
@@ -108,6 +109,12 @@ public class AnnotationTable {
               () -> error("Invalid annotation target", annotation)
                   .locationDescription(annotation,
                       "Zero annotation can only be applied on register aliases"));
+        })
+        .applyViam((def, annotation, lowering) -> {
+          var viamDef = (ArtificialResource) def;
+          var indices = annotation.indices.stream().map(ConstantValue::toViamConstant).toList();
+          var zero = Constant.Value.of(0, viamDef.resultType(indices.size()));
+          viamDef.addConstraint(new RegisterTensor.Constraint(indices, zero));
         })
         // this handled in the VIAM lowering when constructing the ArtificialResource
         .build();
