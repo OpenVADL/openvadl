@@ -103,6 +103,26 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   /**
+   * An {@link Instruction} for copying a register.
+   *
+   * @param instruction      is the machine instruction which does the copying.
+   * @param destRegisterFile is the register file for the destination register in LLVM.
+   * @param zeroRegister     is the name of the zero register in the register file.
+   */
+  record TruncateInstruction(Instruction instruction,
+                             GeneratesRegisterFileName destRegisterFile,
+                             String zeroRegister) implements Renderable {
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "instruction", instruction.identifier.simpleName(),
+          "destRegisterFile", destRegisterFile.identifier().simpleName(),
+          "zeroRegister", zeroRegister
+      );
+    }
+  }
+
+  /**
    * An {@link Instruction} for storing on the stack.
    *
    * @param instruction      is the machine instruction which does the storing.
@@ -131,6 +151,13 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     var addi64 = mapWithInstructionLabel(viam, MachineInstructionLabel.ADDI_64, isaMatching);
 
     return Stream.concat(addi32.stream(), addi64.stream()).toList();
+  }
+
+  private List<TruncateInstruction> truncateInstructions(
+      Specification viam,
+      Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
+    return mapTruncateInstructionsWithInstructionLabel(viam, MachineInstructionLabel.OR,
+        isaMatching);
   }
 
   private List<StoreRegSlot> getStoreMemoryInstructions(
@@ -177,6 +204,62 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         })
         // Sort by largest word size descending
         .sorted((loadRegSlot, t1) -> Integer.compare(t1.words, loadRegSlot.words))
+        .toList();
+  }
+
+  private List<TruncateInstruction> mapTruncateInstructionsWithInstructionLabel(
+      Specification viam,
+      MachineInstructionLabel label,
+      Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
+    var instructions =
+        isaMatching.getOrDefault(label, Collections.emptyList());
+
+    return instructions.stream()
+        .map(i -> {
+          var destRegisterFile =
+              ensurePresent(i.behavior().getNodes(WritesRegisterTensor.class)
+                      .filter(HasRegisterTensor::hasRegisterFile)
+                      .findFirst(),
+                  "There must be destination register").registerTensor();
+
+          var destAliases = viam.isa().get().artificialResources()
+              .stream()
+              .filter(x -> x.aliasSlice() == null)
+              .filter(ArtificialResource::isRegisterFile)
+              .filter(x -> x.innerResourceRef() == destRegisterFile)
+              //.flatMap(x -> Arrays.stream(x.zer()))
+              .toList();
+
+          var zeroRegister = ensurePresent(destRegisterFile.zeroRegister(),
+              () -> Diagnostic.error("There is no zero register for the register file",
+                  destRegisterFile.location()))
+              .stream()
+              .findFirst();
+
+          var zeroRegisterValue = ensurePresent(zeroRegister,
+              () -> Diagnostic.error("List has no zero registers", destRegisterFile.location()));
+
+          /*
+          var srcRegisterFile =
+              ensurePresent(i.behavior().getNodes(ReadsRegisterTensor.class)
+                      .filter(HasRegisterTensor::hasRegisterFile)
+                      .findFirst(),
+                  "There must be source register").registerTensor();
+
+          var srcAliases = viam.isa().get().artificialResources()
+              .stream()
+              .filter(x -> x.aliasSlice() == null)
+              .filter(ArtificialResource::isRegisterFile)
+              .filter(x -> x.innerResourceRef() == destRegisterFile)
+              .toList();
+           */
+
+          //List<GeneratesRegisterFileName> srcResult = new ArrayList<>(srcAliases);
+          // srcResult.add(srcRegisterFile);
+
+          return new TruncateInstruction(i, destRegisterFile,
+              destRegisterFile.generateRegisterFileName(zeroRegisterValue.intValue()));
+        })
         .toList();
   }
 
@@ -380,6 +463,9 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     map.put(CommonVarNames.NAMESPACE, lcbConfiguration().targetName().value().toLowerCase());
     map.put("copyPhysInstructions",
         physInstructions(specification, isaMatches).stream().map(this::map).toList());
+    map.put("truncateInstructions",
+        truncateInstructions(specification, isaMatches)
+    );
     map.put("storeStackSlotInstructions",
         getStoreMemoryInstructions(isaMatches).stream().map(this::map).toList());
     map.put("loadStackSlotInstructions",

@@ -147,6 +147,20 @@ void [(${namespace})]InstrInfo::copyPhysReg(MachineBasicBlock &MBB, MachineBasic
     }
   [/]
 
+  [# th:each="r : ${truncateInstructions}" ]
+   if (
+     [# th:each="dest : ${r.destRegisterFile}" ]
+       [(${namespace})]::[(${dest})]RegClass.contains( DestReg )
+     ) {
+        BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction})] ) )
+           .addReg( DestReg, RegState::Define )
+           .addReg( SrcReg, getKillRegState( KillSrc ) )
+           .addReg( [(${namespace})]::[(${r.zeroRegister})])
+           ;
+
+        return; // success
+     }
+
   llvm_unreachable("Can't copy source to destination register");
 }
 
