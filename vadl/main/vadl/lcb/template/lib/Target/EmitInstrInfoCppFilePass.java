@@ -237,24 +237,6 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
           var zeroRegisterValue = ensurePresent(zeroRegister,
               () -> Diagnostic.error("List has no zero registers", destRegisterFile.location()));
 
-          /*
-          var srcRegisterFile =
-              ensurePresent(i.behavior().getNodes(ReadsRegisterTensor.class)
-                      .filter(HasRegisterTensor::hasRegisterFile)
-                      .findFirst(),
-                  "There must be source register").registerTensor();
-
-          var srcAliases = viam.isa().get().artificialResources()
-              .stream()
-              .filter(x -> x.aliasSlice() == null)
-              .filter(ArtificialResource::isRegisterFile)
-              .filter(x -> x.innerResourceRef() == destRegisterFile)
-              .toList();
-           */
-
-          //List<GeneratesRegisterFileName> srcResult = new ArrayList<>(srcAliases);
-          // srcResult.add(srcRegisterFile);
-
           return new TruncateInstruction(i, destRegisterFile,
               destRegisterFile.generateRegisterFileName(zeroRegisterValue.intValue()));
         })
