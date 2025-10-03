@@ -34,6 +34,7 @@ import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.BitsType;
 import vadl.types.DataType;
+import vadl.types.Type;
 import vadl.viam.Definition;
 
 public class IsaMachineInstructionMatchingAarch64PassTest extends AbstractLcbTest {
@@ -74,7 +75,10 @@ public class IsaMachineInstructionMatchingAarch64PassTest extends AbstractLcbTes
             Optional.empty()),
         Arguments.of(List.of("ORRW", "ORRX"),
             MachineInstructionLabel.OR,
-            Optional.empty())
+            Optional.empty()),
+        Arguments.of(List.of("ADDX", "ADDXSXTX", "ADDXUXTX"),
+            MachineInstructionLabel.ADD_64,
+            Optional.of(Type.signedInt(64)))
     );
   }
 

@@ -33,8 +33,8 @@ application binary interface ABI for AArch64Temp = {
    pointer align = 64
 
 
-   alias register A_SP = S(31)
-   alias register A_LR = S(30)
+   alias register A_SP = SP
+   alias register A_LR = LR
    alias register A_FP = X(29)
 
    alias register X0 = X(0)
@@ -88,16 +88,16 @@ application binary interface ABI for AArch64Temp = {
 
    constant sequence(rd: Bits<5>, val: UInt<32>) =
    {
-     MOVZWPos00 { rd = rd, imm16 = (val & 0xFFFF) as Bits<16> }
-     MOVKWPos16 { rd = rd, imm16 = ((val >> 16) & 0xFFFF) as Bits<16> }
+     MOVZXPos00 { rd = rd, imm16 = (val & 0xFFFF) as Bits<16> }
+     MOVKXPos16 { rd = rd, imm16 = ((val >> 16) & 0xFFFF) as Bits<16> }
    }
 
    [ only negative ] // val becomes automatically positive
    constant sequence(rd: Bits<5>, val: SInt<32>) =
    {
-      MOVZWPos00 { rd = rd, imm16 = (val & 0xFFFF) as Bits<16> }
-      MOVKWPos16 { rd = rd, imm16 = ((val >> 16) & 0xFFFF) as Bits<16> }
-      SUBW { rd = rd, rn = 31, rm = rd }
+      MOVZXPos00 { rd = rd, imm16 = (val & 0xFFFF) as Bits<16> }
+      MOVKXPos16 { rd = rd, imm16 = ((val >> 16) & 0xFFFF) as Bits<16> }
+      SUBX { rd = rd, rn = 31, rm = rd }
    }
 
   /*

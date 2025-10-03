@@ -231,19 +231,28 @@ public interface IsaMatchingUtils {
   default boolean writesExactlyOneRegisterClassWithType(UninlinedGraph graph, Type resultType) {
     var writesRegFiles = graph.getNodes(WriteRegTensorNode.class)
         .filter(w -> w.regTensor().isRegisterFile()).toList();
+    var writeArtificialRegFile = graph.getNodes(WriteArtificialResNode.class)
+        .filter(w -> w.resourceDefinition().isRegisterFile()).toList();
     var writesReg = graph.getNodes(WriteRegTensorNode.class)
         .filter(w -> w.regTensor().isSingleRegister()).toList();
     var writesMem = graph.getNodes(WriteMemNode.class).toList();
     var readMem = graph.getNodes(ReadMemNode.class).toList();
 
-    if (writesRegFiles.size() != 1
-        || !writesReg.isEmpty()
+    if (!writesReg.isEmpty()
         || !writesMem.isEmpty()
         || !readMem.isEmpty()) {
       return false;
     }
 
-    return writesRegFiles.get(0).regTensor().resultType() == resultType;
+    if (!writesRegFiles.isEmpty()) {
+      return writesRegFiles.get(0).regTensor().resultType() == resultType;
+    }
+
+    if (!writeArtificialRegFile.isEmpty()) {
+      return writeArtificialRegFile.get(0).resourceDefinition().resultType() == resultType;
+    }
+
+    return false;
   }
 
   /**

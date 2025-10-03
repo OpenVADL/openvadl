@@ -648,8 +648,10 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         .map(x -> ((BuiltInCall) x).type())
         .filter(ty -> ty instanceof BitsType bi && bi.bitWidth() == bitWidth).findFirst();
 
-    return matched.isPresent() && writesExactlyOneRegisterClassWithType(behavior,
-        Type.bits(bitWidth));
+    return matched.isPresent()
+        && writesExactlyOneRegisterClassWithType(behavior, Type.bits(bitWidth))
+        && behavior.getNodes(SliceNode.class).toList().isEmpty() // no slices to exclude `ADDXUXTB`
+        && behavior.getNodes(BuiltInCall.class).count() == 1;
   }
 
   private boolean findAddWithImmediate32Bit(UninlinedGraph behavior) {
