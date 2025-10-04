@@ -141,7 +141,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
    * @param destRegisterFile is the register file for the destination register in LLVM.
    * @param words            indicates how many words are stored.
    */
-  record LoadRegSlot(Instruction instruction, RegisterTensor destRegisterFile, int words) {
+  record LoadRegSlot(Instruction instruction, RegisterResource destRegisterFile, int words) {
 
   }
 
@@ -206,17 +206,28 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
             Collections.emptyList());
 
     return instructions.stream()
-        .map(i -> {
+        .flatMap(i -> {
           var destRegisterFile =
               ensurePresent(i.behavior().getNodes(WritesRegisterTensor.class)
                       .filter(HasRegisterTensor::hasRegisterFile)
                       .findFirst(),
                   () -> Diagnostic.error("There must be a destination register file",
-                      i.location())).registerTensor();
+                      i.location())).registerResource();
           var words =
               ensurePresent(i.behavior().getNodes(ReadMemNode.class).findFirst(),
                   "There must be a read mem node").words();
-          return new LoadRegSlot(i, destRegisterFile, words);
+
+          // If the registerFile is an alias, we also need to load it for the original reference.
+          // However, we skip it when it is an alias with a smaller type.
+          var base = new LoadRegSlot(i, destRegisterFile, words);
+          if (destRegisterFile instanceof ArtificialResource artificialResource
+              && artificialResource.innerResourceRef() instanceof RegisterTensor registerTensor
+              && artificialResource.type().equals(registerTensor.type())) {
+            return Stream.of(base,
+                new LoadRegSlot(i, registerTensor, words));
+          } else {
+            return Stream.of(base);
+          }
         })
         // Sort by largest word size descending
         .sorted((loadRegSlot, t1) -> Integer.compare(t1.words, loadRegSlot.words))
