@@ -168,14 +168,16 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
     return instructions.stream()
         .map(i -> {
+          var writeMemNode = ensurePresent(i.behavior().getNodes(WriteMemNode.class).findFirst(),
+              "There must be a write mem node");
+          var addressNodes = new ArrayList<Node>();
+          writeMemNode.address().collectInputsWithChildren(addressNodes);
           var destRegisterFile =
-              ensurePresent(i.behavior().getNodes(ReadsRegisterTensor.class)
-                      .filter(HasRegisterTensor::hasRegisterFile)
+              ensurePresent(addressNodes.stream().filter(x -> x instanceof ReadsRegisterTensor)
+                      .map(x -> ((ReadsRegisterTensor) x).registerTensor())
                       .findFirst(),
-                  "There must be destination register").registerTensor();
-          var words =
-              ensurePresent(i.behavior().getNodes(WriteMemNode.class).findFirst(),
-                  "There must be a write mem node").words();
+                  "There must be destination register");
+          var words = writeMemNode.words();
           return new StoreRegSlot(i, destRegisterFile, words);
         })
         // Sort by largest word size descending
