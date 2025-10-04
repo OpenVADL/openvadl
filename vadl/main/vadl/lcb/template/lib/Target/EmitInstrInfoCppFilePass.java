@@ -157,7 +157,8 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   private List<TruncateInstruction> truncateInstructions(
       Specification viam,
       Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
-    return mapTruncateInstructionsWithInstructionLabel(viam, MachineInstructionLabel.OR,
+    return mapTruncateInstructionsWithInstructionLabel(
+        MachineInstructionLabel.OR,
         isaMatching);
   }
 
@@ -235,7 +236,6 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<TruncateInstruction> mapTruncateInstructionsWithInstructionLabel(
-      Specification viam,
       MachineInstructionLabel label,
       Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
     var instructions =
