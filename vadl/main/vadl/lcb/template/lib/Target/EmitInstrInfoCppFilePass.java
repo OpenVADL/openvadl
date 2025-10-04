@@ -155,7 +155,6 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<TruncateInstruction> truncateInstructions(
-      Specification viam,
       Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
     return mapTruncateInstructionsWithInstructionLabel(
         MachineInstructionLabel.OR,
@@ -242,7 +241,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         isaMatching.getOrDefault(label, Collections.emptyList());
 
     return instructions.stream()
-        .map(i -> {
+        .flatMap(i -> {
           var destRegisterFile =
               ensurePresent(i.behavior().getNodes(WritesRegisterTensor.class)
                       .filter(HasRegisterTensor::hasRegisterFile)
@@ -258,8 +257,20 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
           var zeroRegisterValue = ensurePresent(zeroRegister,
               () -> Diagnostic.error("List has no zero registers", destRegisterFile.location()));
 
-          return new TruncateInstruction(i, destRegisterFile,
+          // If the registerFile is an alias, we also need to truncate it for the original
+          // reference.
+          // However, we skip it when it is an alias with a smaller type.
+          var base = new TruncateInstruction(i, destRegisterFile,
               destRegisterFile.generateRegisterFileName(zeroRegisterValue.intValue()));
+          if (destRegisterFile instanceof ArtificialResource artificialResource
+              && artificialResource.innerResourceRef() instanceof RegisterTensor registerTensor
+              && artificialResource.type().equals(registerTensor.type())) {
+            return Stream.of(base,
+                new TruncateInstruction(i, registerTensor,
+                    registerTensor.generateRegisterFileName(zeroRegisterValue.intValue())));
+          } else {
+            return Stream.of(base);
+          }
         })
         .toList();
   }
@@ -465,7 +476,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     map.put("copyPhysInstructions",
         physInstructions(specification, isaMatches).stream().map(this::map).toList());
     map.put("truncateInstructions",
-        truncateInstructions(specification, isaMatches)
+        truncateInstructions(isaMatches)
     );
     map.put("storeStackSlotInstructions",
         getStoreMemoryInstructions(isaMatches).stream().map(this::map).toList());
