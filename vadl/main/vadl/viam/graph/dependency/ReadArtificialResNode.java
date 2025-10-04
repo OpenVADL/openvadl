@@ -20,6 +20,7 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
 import vadl.viam.ArtificialResource;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
@@ -65,6 +66,11 @@ public class ReadArtificialResNode extends ReadResourceNode implements ReadsRegi
   @Override
   public <T extends GraphNodeVisitor> void accept(T visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public RegisterResource registerResource() {
+    return resource;
   }
 
   @Override

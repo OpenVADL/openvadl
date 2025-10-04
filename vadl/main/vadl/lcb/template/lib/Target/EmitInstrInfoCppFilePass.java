@@ -55,6 +55,7 @@ import vadl.viam.Definition;
 import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.graph.HasRegisterTensor;
@@ -125,11 +126,11 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   /**
    * An {@link Instruction} for storing on the stack.
    *
-   * @param instruction      is the machine instruction which does the storing.
-   * @param destRegisterFile is the register file for the destination register in LLVM.
-   * @param words            indicates how many words are stored.
+   * @param instruction     is the machine instruction which does the storing.
+   * @param srcRegisterFile is the register file from which the value was read.
+   * @param words           indicates how many words are stored.
    */
-  record StoreRegSlot(Instruction instruction, RegisterTensor destRegisterFile, int words) {
+  record StoreRegSlot(Instruction instruction, RegisterResource srcRegisterFile, int words) {
 
   }
 
@@ -167,18 +168,31 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
             Collections.emptyList());
 
     return instructions.stream()
-        .map(i -> {
+        .flatMap(i -> {
           var writeMemNode = ensurePresent(i.behavior().getNodes(WriteMemNode.class).findFirst(),
               "There must be a write mem node");
-          var addressNodes = new ArrayList<Node>();
-          writeMemNode.address().collectInputsWithChildren(addressNodes);
-          var destRegisterFile =
-              ensurePresent(addressNodes.stream().filter(x -> x instanceof ReadsRegisterTensor)
-                      .map(x -> ((ReadsRegisterTensor) x).registerTensor())
+          var valueNodes = new ArrayList<Node>();
+          valueNodes.add(writeMemNode.value());
+          writeMemNode.value().collectInputsWithChildren(valueNodes);
+          var srcRegisterFile =
+              ensurePresent(valueNodes.stream().filter(x -> x instanceof ReadsRegisterTensor)
+                      .map(x -> ((ReadsRegisterTensor) x).registerResource())
                       .findFirst(),
-                  "There must be destination register");
+                  () -> Diagnostic.error("There must be register or alias as source.",
+                      writeMemNode.location()));
           var words = writeMemNode.words();
-          return new StoreRegSlot(i, destRegisterFile, words);
+
+          // If the registerFile is an alias, we also need to store it for the original reference.
+          // However, we skip it when it is an alias with a smaller type.
+          var base = new StoreRegSlot(i, srcRegisterFile, words);
+          if (srcRegisterFile instanceof ArtificialResource artificialResource
+              && artificialResource.innerResourceRef() instanceof RegisterTensor registerTensor
+              && artificialResource.type().equals(registerTensor.type())) {
+            return Stream.of(base,
+                new StoreRegSlot(i, registerTensor, words));
+          } else {
+            return Stream.of(base);
+          }
         })
         // Sort by largest word size descending
         .sorted((storeRegSlot, t1) -> Integer.compare(t1.words, storeRegSlot.words))
@@ -613,7 +627,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
   private Map<String, Object> map(StoreRegSlot obj) {
     return Map.of(
-        "destRegisterFile", obj.destRegisterFile.simpleName(),
+        "srcRegisterFile", obj.srcRegisterFile.simpleName(),
         "instruction", obj.instruction.simpleName()
     );
   }

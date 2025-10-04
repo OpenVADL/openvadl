@@ -52,7 +52,9 @@ public class WriteMemNode extends WriteResourceNode {
    * @param address the expression representing the memory address
    * @param value   the expression representing the value to write
    */
-  public WriteMemNode(Memory memory, int words, ExpressionNode address, ExpressionNode value) {
+  public WriteMemNode(Memory memory, int words,
+                      ExpressionNode address,
+                      ExpressionNode value) {
     super(address, value);
     this.memory = memory;
     this.words = words;
@@ -107,15 +109,19 @@ public class WriteMemNode extends WriteResourceNode {
 
   @Override
   public Node copy() {
-    return new WriteMemNode(memory, words,
+    var node = new WriteMemNode(memory, words,
         address().copy(),
         value.copy(),
         (condition != null ? condition.copy() : null));
+    node.setSourceLocation(location());
+    return node;
   }
 
   @Override
   public Node shallowCopy() {
-    return new WriteMemNode(memory, words, address(), value, condition);
+    var node = new WriteMemNode(memory, words, address(), value, condition);
+    node.setSourceLocation(location());
+    return node;
   }
 
   @Override

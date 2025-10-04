@@ -185,7 +185,7 @@ void [(${namespace})]InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB, Mach
     MFI.getObjectSize(FrameIndex), MFI.getObjectAlign(FrameIndex));
 
     [# th:each="r : ${storeStackSlotInstructions}" ]
-      if ( [(${namespace})]::[(${r.destRegisterFile})]RegClass.hasSubClassEq(RC) )
+      if ( [(${namespace})]::[(${r.srcRegisterFile})]RegClass.hasSubClassEq(RC) )
       {
           BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction})] ) )
               .addFrameIndex( FrameIndex )
