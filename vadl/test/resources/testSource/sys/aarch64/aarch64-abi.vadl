@@ -37,6 +37,39 @@ application binary interface ABI for AArch64Temp = {
    alias register A_LR = LR
    alias register A_FP = X(29)
 
+   alias register S0 = S(0)
+   alias register S1 = S(1)
+   alias register S2 = S(2)
+   alias register S3 = S(3)
+   alias register S4 = S(4)
+   alias register S5 = S(5)
+   alias register S6 = S(6)
+   alias register S7 = S(7)
+   alias register S8 = S(8)
+   alias register S9 = S(9)
+   alias register S10 = S(10)
+   alias register S11 = S(11)
+   alias register S12 = S(12)
+   alias register S13 = S(13)
+   alias register S14 = S(14)
+   alias register S15 = S(15)
+   alias register S16 = S(16)
+   alias register S17 = S(17)
+   alias register S18 = S(18)
+   alias register S19 = S(19)
+   alias register S20 = S(20)
+   alias register S21 = S(21)
+   alias register S22 = S(22)
+   alias register S23 = S(23)
+   alias register S24 = S(24)
+   alias register S25 = S(25)
+   alias register S26 = S(26)
+   alias register S27 = S(27)
+   alias register S28 = S(28)
+   alias register S29 = S(29)
+   alias register S30 = S(30)
+   alias register S31 = S(31)
+
    alias register X0 = X(0)
    alias register X1 = X(1)
    alias register X2 = X(2)
@@ -99,6 +132,9 @@ application binary interface ABI for AArch64Temp = {
    alias register W26 = W(26)
    alias register W27 = W(27)
    alias register W28 = W(28)
+   alias register W29 = W(29)
+   alias register W30 = W(30)
+   alias register W31 = W(31)
 
    // [ alignment : HalfWord ]
    stack pointer = A_SP
@@ -114,8 +150,10 @@ application binary interface ABI for AArch64Temp = {
    return value = X{0..1} // 64 bits
    return value = W{0..1} // 32 bits
 
-   caller saved = [ X{9..15} ]
-   callee saved = [ A_LR, A_FP, X{19..28} ]
+   // It's important that these are "S" registers because they are used for the order
+   // in the register class.
+   caller saved = [ S{9..15} ]
+   callee saved = [ A_LR, A_FP, S{19..28} ]
 
    constant sequence(rd: Bits<5>, val: UInt<32>) =
    {
