@@ -33,6 +33,11 @@ public interface GeneratesRegisterFileName {
   Identifier identifier();
 
   /**
+   * Get the dimensions of the register file.
+   */
+  List<RegisterTensor.Dimension> dimensions();
+
+  /**
    * Returns whether this register tensor represents a register file.
    * This the case if the number of dimensions is 2.
    */
@@ -64,7 +69,7 @@ public interface GeneratesRegisterFileName {
   /**
    * Get the constraints of the register file.
    */
-  List<RegisterTensor.Constraint> constraints();
+  List<RegisterResource.Constraint> constraints();
 
   /**
    * Return the address of a zero register if it exists.
@@ -73,7 +78,7 @@ public interface GeneratesRegisterFileName {
     return constraints()
         .stream()
         .filter(c -> c.value().intValue() == 0)
-        .map(RegisterTensor.Constraint::indices)
+        .map(RegisterResource.Constraint::indices)
         .findFirst();
   }
 }

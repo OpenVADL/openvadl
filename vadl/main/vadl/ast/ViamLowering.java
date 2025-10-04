@@ -66,6 +66,7 @@ import vadl.viam.Encoding;
 import vadl.viam.ExceptionDef;
 import vadl.viam.Format;
 import vadl.viam.Function;
+import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Memory;
@@ -74,6 +75,7 @@ import vadl.viam.PrintableInstruction;
 import vadl.viam.Procedure;
 import vadl.viam.Processor;
 import vadl.viam.PseudoInstruction;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.Specification;
@@ -109,6 +111,7 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.canonicalization.Canonicalizer;
 import vadl.viam.passes.functionInliner.Inliner;
@@ -455,7 +458,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var framePtr = mapSingleSpecialPurposeRegisterDef(aliasLookup, framePtrDef);
 
     // Calling Convention
-    var returnValueDef = getSpecialPurposeRegisterDefinition(definition.definitions,
+    var returnValueDefs = getSpecialPurposeRegisterDefinitions(definition.definitions,
         SpecialPurposeRegisterDefinition.Purpose.RETURN_VALUE);
     var functionArgumentDef = getSpecialPurposeRegisterDefinition(definition.definitions,
         SpecialPurposeRegisterDefinition.Purpose.FUNCTION_ARGUMENT);
@@ -464,7 +467,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var calleeSavedDef = getSpecialPurposeRegisterDefinition(definition.definitions,
         SpecialPurposeRegisterDefinition.Purpose.CALLEE_SAVED);
 
-    var returnValues = mapSpecialPurposeRegistersDef(aliasLookup, returnValueDef);
+    var returnValues = mapSpecialPurposeRegistersDefs(aliasLookup, returnValueDefs);
     var functionArguments = mapSpecialPurposeRegistersDef(aliasLookup, functionArgumentDef);
     var callerSaved = mapSpecialPurposeRegistersDef(aliasLookup, callerSavedDef);
     var calleeSaved = mapSpecialPurposeRegistersDef(aliasLookup, calleeSavedDef);
@@ -498,7 +501,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         (PrintableInstruction) fetch(specialAbsoluteAddressLoadDef).orElseThrow();
 
     // Aliases
-    Map<Pair<RegisterTensor, Integer>, List<Abi.RegisterAlias>> aliases =
+    Map<Pair<RegisterResource, Integer>, List<Abi.RegisterAlias>> aliases =
         aliasLookup.entrySet()
             .stream()
             .collect(
@@ -1739,6 +1742,25 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .toList();
   }
 
+  /**
+   * Maps a {@link SpecialPurposeRegisterDefinition} to a list of {@link Abi.RegisterRef}.
+   */
+  private List<List<Abi.RegisterRef>> mapSpecialPurposeRegistersDefs(
+      Map<Identifier, Expr> aliasLookup,
+      List<SpecialPurposeRegisterDefinition> specialPurposeRegisterDefs) {
+    List<List<Abi.RegisterRef>> result = new ArrayList<>();
+
+    for (var def : specialPurposeRegisterDefs) {
+      var iter = def.exprs.stream()
+          .map(aliasOrRegister -> getRegisterRefByAliasOrRegister(aliasLookup, aliasOrRegister))
+          .toList();
+
+      result.add(iter);
+    }
+
+    return result;
+  }
+
   private Abi.RegisterRef getRegisterRefByAliasOrRegister(
       Map<Identifier, Expr> aliasLookup,
       ExpandedSequenceCallExpr aliasOrRegister) {
@@ -1773,7 +1795,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   /**
    * An expression {@code X(0)} should be returned as a pair.
    */
-  private Pair<RegisterTensor, Integer> getRegisterFile(Expr expr) {
+  private Pair<RegisterResource, Integer> getRegisterFile(Expr expr) {
     if (expr instanceof CallIndexExpr callExpr
         && callExpr.symbolTable != null
         && callExpr.target instanceof Identifier identifier
@@ -1790,7 +1812,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       if (resource instanceof RegisterTensor registerTensor) {
         return Pair.of(registerTensor, index.value().intValueExact());
       } else if (resource instanceof ArtificialResource artificialResource) {
-        return getRegisterTensorFromArtificialResource(artificialResource, index);
+        return Pair.of(artificialResource, index.toViamConstant()
+            .intValue());
       }
     } else if (expr instanceof Identifier identifier
         && identifier.target != null) {
@@ -1814,7 +1837,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * registers. This method takes an {@link ArtificialResource} and applies the {@code indices} to
    * the function. It returns then the underlying {@link RegisterTensor} with the index.
    */
-  private static Pair<RegisterTensor, Integer> getRegisterTensorFromArtificialResource(
+  private static Pair<RegisterResource, Integer> getRegisterTensorFromArtificialResource(
       ArtificialResource alias,
       ConstantValue... indices) {
     // We have an alias "alias register A_SP = S(31)"
@@ -1829,9 +1852,19 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var registerTensor = (RegisterTensor) alias.innerResourceRef();
 
     if (canonicalized instanceof ReadRegTensorNode readRegTensorNode) {
+      // This is the most common case:
+      // We have an alias "alias register A_SP = S(31)" and we need to extract the `31`.
       var registerIndex =
           ((ConstantNode) readRegTensorNode.indices().get(0)).constant().asVal().intValue();
       return Pair.of(registerTensor, registerIndex);
+    } else if (canonicalized instanceof SliceNode sliceNode
+        && sliceNode.value() instanceof ReadRegTensorNode readRegTensorNode) {
+      // However, if we sliced alias:
+      // We have an alias "alias register A_SP = W(31)" and we need to extract the `31` but the
+      // root node is a slice node.
+      var registerIndex =
+          ((ConstantNode) readRegTensorNode.indices().get(0)).constant().asVal().intValue();
+      return Pair.of(alias, registerIndex);
     } else if (canonicalized instanceof ConstantNode) {
       throw error(
           "The index of the alias is hardwired to a constant value and it is therefore "
@@ -1857,6 +1890,20 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * Extracts a {@link SpecialPurposeRegisterDefinition} with the given {@code purpose}.
    * It will throw an error if none or multiple exist.
    */
+  private List<SpecialPurposeRegisterDefinition> getSpecialPurposeRegisterDefinitions(
+      List<Definition> definitions, SpecialPurposeRegisterDefinition.Purpose purpose) {
+    var registers = definitions
+        .stream()
+        .filter(x -> x instanceof SpecialPurposeRegisterDefinition y && y.purpose == purpose)
+        .toList();
+
+    return registers.stream().map(x -> (SpecialPurposeRegisterDefinition) x).toList();
+  }
+
+  /**
+   * Extracts a {@link SpecialPurposeRegisterDefinition} with the given {@code purpose}.
+   * It will throw an error if none or multiple exist.
+   */
   private SpecialPurposeRegisterDefinition getSpecialPurposeRegisterDefinition(
       List<Definition> definitions, SpecialPurposeRegisterDefinition.Purpose purpose) {
     return getOptionalSpecialPurposeRegisterDefinition(definitions, purpose).get();
@@ -1875,7 +1922,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     return registers.stream().findFirst().map(x -> (SpecialPurposeRegisterDefinition) x);
   }
-
 
   /**
    * Extracts {@link AbiSpecialPurposeInstructionDefinition} from an

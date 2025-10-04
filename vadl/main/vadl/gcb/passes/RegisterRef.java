@@ -16,7 +16,6 @@
 
 package vadl.gcb.passes;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -27,6 +26,7 @@ import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
 import vadl.viam.DefinitionVisitor;
 import vadl.viam.Format;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Resource;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -34,11 +34,11 @@ import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * A {@link RegisterRef} can be a register which comes from {@link ReadRegTensorNode} or
- * {@link WriteRegTensorNode} when the address is constant (or its a single register).
+ * {@link WriteRegTensorNode} when the address is constant (or it's a single register).
  * Since, we have no way to reduce a RegisterFile to a single register,
  * we use {@link RegisterRef} as joined type for both "worlds".
  */
-public class RegisterRef extends Resource {
+public class RegisterRef extends Resource { // TODO probably can replaced by `RegisterResource`
   private final DataType resultType;
   private final ConcreteRelationType relationType;
 
@@ -47,7 +47,7 @@ public class RegisterRef extends Resource {
 
   @Nullable
   private Constant address;
-  private final List<RegisterTensor.Constraint> constraints;
+  private final List<RegisterResource.Constraint> constraints;
 
   /**
    * Constructor.
@@ -77,7 +77,7 @@ public class RegisterRef extends Resource {
   /**
    * Constructor.
    */
-  public RegisterRef(RegisterTensor registerFile, Constant address) {
+  public RegisterRef(RegisterResource registerFile, Constant address) {
     super(registerFile.identifier);
     this.resultType = registerFile.resultType();
     this.relationType = registerFile.relationType();
@@ -137,10 +137,6 @@ public class RegisterRef extends Resource {
   @Nullable
   public Constant address() {
     return address;
-  }
-
-  public List<RegisterTensor.Constraint> constraints() {
-    return constraints;
   }
 
   /**

@@ -53,6 +53,7 @@ import vadl.viam.Encoding;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.MemoryRegion;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.annotations.AsmParserCaseSensitive;
@@ -99,7 +100,7 @@ public class AnnotationTable {
           var viamDef = (RegisterTensor) def;
           var indices = annotation.indices.stream().map(ConstantValue::toViamConstant).toList();
           var zero = Constant.Value.of(0, viamDef.resultType(indices.size()));
-          viamDef.addConstraint(new RegisterTensor.Constraint(indices, zero));
+          viamDef.addConstraint(new RegisterResource.Constraint(indices, zero));
         })
         .build();
 
@@ -114,7 +115,7 @@ public class AnnotationTable {
           var viamDef = (ArtificialResource) def;
           var indices = annotation.indices.stream().map(ConstantValue::toViamConstant).toList();
           var zero = Constant.Value.of(0, viamDef.resultType(indices.size()));
-          viamDef.addConstraint(new RegisterTensor.Constraint(indices, zero));
+          viamDef.addConstraint(new RegisterResource.Constraint(indices, zero));
         })
         // this handled in the VIAM lowering when constructing the ArtificialResource
         .build();

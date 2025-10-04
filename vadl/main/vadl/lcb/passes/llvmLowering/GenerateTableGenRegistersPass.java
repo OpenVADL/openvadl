@@ -34,9 +34,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClas
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.types.Type;
-import vadl.viam.Definition;
-import vadl.viam.RegisterTensor.Constraint;
+import vadl.viam.RegisterResource;
 import vadl.viam.Specification;
 
 /**
@@ -55,7 +53,7 @@ public class GenerateTableGenRegistersPass extends Pass {
   }
 
   /**
-   * Represents a {@link Constraint} in LLVM.
+   * Represents a {@link RegisterResource.Constraint} in LLVM.
    */
   public record LlvmConstraint(ValueType type, int value, TableGenRegister register) {
 

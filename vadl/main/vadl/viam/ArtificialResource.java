@@ -16,10 +16,8 @@
 
 package vadl.viam;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vadl.types.ConcreteRelationType;
@@ -37,7 +35,7 @@ import vadl.types.DataType;
  * to check for 0 when accessing X. This is done using the readFunction and writeProcedure.
  * So in this case X would be turned into an artificial resource.
  */
-public class ArtificialResource extends Resource implements GeneratesRegisterFileName {
+public class ArtificialResource extends RegisterResource {
 
   /**
    * A hint what the artificial resources were created from.
@@ -53,7 +51,6 @@ public class ArtificialResource extends Resource implements GeneratesRegisterFil
   private final Procedure writeProcedure;
   @Nullable
   private final Constant.BitSlice aliasSlice;
-  private final List<RegisterTensor.Constraint> constraints;
 
   /**
    * Constructs the artificial resource.
@@ -73,7 +70,6 @@ public class ArtificialResource extends Resource implements GeneratesRegisterFil
     this.readFunction = readFunction;
     this.writeProcedure = writeProcedure;
     this.aliasSlice = aliasSlice;
-    this.constraints = new ArrayList<>();
   }
 
   public Kind kind() {
@@ -99,6 +95,15 @@ public class ArtificialResource extends Resource implements GeneratesRegisterFil
   @Override
   public Identifier identifier() {
     return identifier;
+  }
+
+  @Override
+  public List<RegisterTensor.Dimension> dimensions() {
+    if (innerResourceRef instanceof RegisterTensor registerTensor) {
+      return registerTensor.dimensions();
+    }
+
+    return Collections.emptyList();
   }
 
   /**
@@ -158,21 +163,6 @@ public class ArtificialResource extends Resource implements GeneratesRegisterFil
   public List<DataType> indexTypes() {
     return List.of(addressType());
   }
-
-  @Override
-  public List<RegisterTensor.Constraint> constraints() {
-    if (innerResourceRef instanceof RegisterTensor registerTensor) {
-      return Stream.concat(registerTensor.constraints().stream(), constraints.stream()).toList();
-    } else {
-      return constraints;
-    }
-  }
-
-  public void addConstraint(RegisterTensor.Constraint constraint) {
-    constraints.add(constraint);
-  }
-
-
 
   @Override
   public DataType resultType() {

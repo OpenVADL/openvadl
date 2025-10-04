@@ -30,6 +30,7 @@ import vadl.utils.Pair;
 import vadl.viam.Abi;
 import vadl.viam.ArtificialResource;
 import vadl.viam.GeneratesRegisterFileName;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 
 /**
@@ -94,7 +95,7 @@ public class RegisterUtils {
   @Nonnull
   public static RegisterClass getRegisterClass(
       RegisterTensor registerFile,
-      @Nullable Map<Pair<RegisterTensor, Integer>, List<Abi.RegisterAlias>> aliases) {
+      @Nullable Map<Pair<RegisterResource, Integer>, List<Abi.RegisterAlias>> aliases) {
     return new RegisterClass(registerFile,
         IntStream.range(0,
                 (int) Math.pow(2, Objects.requireNonNull(registerFile.addressType()).bitWidth()))
