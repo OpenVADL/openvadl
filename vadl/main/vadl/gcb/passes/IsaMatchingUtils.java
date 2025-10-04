@@ -221,7 +221,7 @@ public interface IsaMatchingUtils {
       return true;
     }
 
-    return false;
+    return writeArtificialRegFile.isEmpty() && writesRegFiles.size() == 1;
   }
 
   /**
