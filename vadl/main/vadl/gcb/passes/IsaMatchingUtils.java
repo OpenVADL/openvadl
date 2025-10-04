@@ -111,9 +111,9 @@ public interface IsaMatchingUtils {
   /**
    * Find register-registers instructions when it matches one of the given
    * {@link BuiltInTable.BuiltIn}.
-   * Also, it must only write one register result.
+   * Also, it must only write one register result. Multiple builtins can exist in the behavior.
    */
-  default boolean findRR(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
+  default boolean weakFindRR(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
         new BuiltInMatcher(builtins, List.of(
             new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
@@ -121,9 +121,18 @@ public interface IsaMatchingUtils {
         )));
 
     return !matched.isEmpty()
-        && behavior.getNodes(BuiltInCall.class).count() == 1
         && writesExactlyOneRegisterClass(behavior)
         && noPcAccess(behavior);
+  }
+
+  /**
+   * Find register-registers instructions when it matches one of the given
+   * {@link BuiltInTable.BuiltIn}.
+   * Also, it must only write one register result and only one builtin must exist in the behavior.
+   */
+  default boolean findRR(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
+    return weakFindRR(behavior, builtins)
+        && behavior.getNodes(BuiltInCall.class).count() == 1;
   }
 
   /**

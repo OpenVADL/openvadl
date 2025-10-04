@@ -207,16 +207,16 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADDI_32, ty));
       } else if (findAddWithImmediate64Bit(behavior)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADDI_64, ty));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+      } else if (weakFindRR(behavior,
           List.of(SDIV, SDIVS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SDIV, ty));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+      } else if (weakFindRR(behavior,
           List.of(UDIV, UDIVS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.UDIV, ty));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+      } else if (weakFindRR(behavior,
           List.of(SMOD, SMODS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SMOD, ty));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+      } else if (weakFindRR(behavior,
           List.of(UMOD, UMODS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.UMOD, ty));
       } else if (findSubS(behavior, originalGraph, Type.bits(64))) {
