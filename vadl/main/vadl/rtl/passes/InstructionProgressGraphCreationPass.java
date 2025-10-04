@@ -46,6 +46,7 @@ import vadl.utils.GraphUtils;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
@@ -312,7 +313,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
     ipg.getNodes(RtlReadRegTensorNode.class).toList().forEach(read -> {
       ExpressionNode result = read;
       ExpressionNode cond = read.condition();
-      for (RegisterTensor.Constraint constraint : read.registerTensor().constraints()) {
+      for (RegisterResource.Constraint constraint : read.registerTensor().constraints()) {
         if (constraint.indices().isEmpty()) {
           continue;
         }
@@ -341,7 +342,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
     ipg.getNodes(WriteRegTensorNode.class).toList().forEach(write -> {
       var instructions = ipg.getContext(write).instructions();
       var cond = write.condition();
-      for (RegisterTensor.Constraint constraint : write.registerTensor().constraints()) {
+      for (RegisterResource.Constraint constraint : write.registerTensor().constraints()) {
         if (constraint.indices().isEmpty()) {
           continue;
         }

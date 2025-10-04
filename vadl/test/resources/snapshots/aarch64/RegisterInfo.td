@@ -854,7 +854,7 @@ def X0 : Register<"X0">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X0";
-let AltNames = [   ];
+let AltNames = [ "X0"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -872,7 +872,7 @@ def X1 : Register<"X1">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X1";
-let AltNames = [   ];
+let AltNames = [ "X1"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -890,7 +890,7 @@ def X2 : Register<"X2">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X2";
-let AltNames = [   ];
+let AltNames = [ "X2"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -908,7 +908,7 @@ def X3 : Register<"X3">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X3";
-let AltNames = [   ];
+let AltNames = [ "X3"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -926,7 +926,7 @@ def X4 : Register<"X4">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X4";
-let AltNames = [   ];
+let AltNames = [ "X4"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -944,7 +944,7 @@ def X5 : Register<"X5">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X5";
-let AltNames = [   ];
+let AltNames = [ "X5"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -962,7 +962,7 @@ def X6 : Register<"X6">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X6";
-let AltNames = [   ];
+let AltNames = [ "X6"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -980,7 +980,7 @@ def X7 : Register<"X7">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X7";
-let AltNames = [   ];
+let AltNames = [ "X7"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -998,7 +998,7 @@ def X8 : Register<"X8">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X8";
-let AltNames = [   ];
+let AltNames = [ "X8"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1016,7 +1016,7 @@ def X9 : Register<"X9">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X9";
-let AltNames = [   ];
+let AltNames = [ "X9"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1034,7 +1034,7 @@ def X10 : Register<"X10">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X10";
-let AltNames = [   ];
+let AltNames = [ "X10"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1052,7 +1052,7 @@ def X11 : Register<"X11">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X11";
-let AltNames = [   ];
+let AltNames = [ "X11"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1070,7 +1070,7 @@ def X12 : Register<"X12">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X12";
-let AltNames = [   ];
+let AltNames = [ "X12"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1088,7 +1088,7 @@ def X13 : Register<"X13">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X13";
-let AltNames = [   ];
+let AltNames = [ "X13"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1106,7 +1106,7 @@ def X14 : Register<"X14">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X14";
-let AltNames = [   ];
+let AltNames = [ "X14"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1124,7 +1124,7 @@ def X15 : Register<"X15">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X15";
-let AltNames = [   ];
+let AltNames = [ "X15"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1142,7 +1142,7 @@ def X16 : Register<"X16">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X16";
-let AltNames = [   ];
+let AltNames = [ "X16"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1160,7 +1160,7 @@ def X17 : Register<"X17">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X17";
-let AltNames = [   ];
+let AltNames = [ "X17"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1178,7 +1178,7 @@ def X18 : Register<"X18">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X18";
-let AltNames = [   ];
+let AltNames = [ "X18"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1196,7 +1196,7 @@ def X19 : Register<"X19">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X19";
-let AltNames = [   ];
+let AltNames = [ "X19"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1214,7 +1214,7 @@ def X20 : Register<"X20">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X20";
-let AltNames = [   ];
+let AltNames = [ "X20"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1232,7 +1232,7 @@ def X21 : Register<"X21">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X21";
-let AltNames = [   ];
+let AltNames = [ "X21"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1250,7 +1250,7 @@ def X22 : Register<"X22">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X22";
-let AltNames = [   ];
+let AltNames = [ "X22"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1268,7 +1268,7 @@ def X23 : Register<"X23">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X23";
-let AltNames = [   ];
+let AltNames = [ "X23"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1286,7 +1286,7 @@ def X24 : Register<"X24">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X24";
-let AltNames = [   ];
+let AltNames = [ "X24"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1304,7 +1304,7 @@ def X25 : Register<"X25">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X25";
-let AltNames = [   ];
+let AltNames = [ "X25"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1322,7 +1322,7 @@ def X26 : Register<"X26">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X26";
-let AltNames = [   ];
+let AltNames = [ "X26"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1340,7 +1340,7 @@ def X27 : Register<"X27">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X27";
-let AltNames = [   ];
+let AltNames = [ "X27"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1358,7 +1358,7 @@ def X28 : Register<"X28">
 {
 let Namespace = "aarch64temp";
 let AsmName = "X28";
-let AltNames = [   ];
+let AltNames = [ "X28"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1375,8 +1375,8 @@ let isArtificial = false;
 def X29 : Register<"X29">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X29";
-let AltNames = [   ];
+let AsmName = "A_FP";
+let AltNames = [ "A_FP"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1430,7 +1430,7 @@ def W0 : Register<"W0">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W0";
-let AltNames = [   ];
+let AltNames = [ "W0"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1448,7 +1448,7 @@ def W1 : Register<"W1">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W1";
-let AltNames = [   ];
+let AltNames = [ "W1"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1466,7 +1466,7 @@ def W2 : Register<"W2">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W2";
-let AltNames = [   ];
+let AltNames = [ "W2"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1484,7 +1484,7 @@ def W3 : Register<"W3">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W3";
-let AltNames = [   ];
+let AltNames = [ "W3"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1502,7 +1502,7 @@ def W4 : Register<"W4">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W4";
-let AltNames = [   ];
+let AltNames = [ "W4"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1520,7 +1520,7 @@ def W5 : Register<"W5">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W5";
-let AltNames = [   ];
+let AltNames = [ "W5"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1538,7 +1538,7 @@ def W6 : Register<"W6">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W6";
-let AltNames = [   ];
+let AltNames = [ "W6"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1556,7 +1556,7 @@ def W7 : Register<"W7">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W7";
-let AltNames = [   ];
+let AltNames = [ "W7"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1574,7 +1574,7 @@ def W8 : Register<"W8">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W8";
-let AltNames = [   ];
+let AltNames = [ "W8"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1592,7 +1592,7 @@ def W9 : Register<"W9">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W9";
-let AltNames = [   ];
+let AltNames = [ "W9"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1610,7 +1610,7 @@ def W10 : Register<"W10">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W10";
-let AltNames = [   ];
+let AltNames = [ "W10"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1628,7 +1628,7 @@ def W11 : Register<"W11">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W11";
-let AltNames = [   ];
+let AltNames = [ "W11"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1646,7 +1646,7 @@ def W12 : Register<"W12">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W12";
-let AltNames = [   ];
+let AltNames = [ "W12"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1664,7 +1664,7 @@ def W13 : Register<"W13">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W13";
-let AltNames = [   ];
+let AltNames = [ "W13"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1682,7 +1682,7 @@ def W14 : Register<"W14">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W14";
-let AltNames = [   ];
+let AltNames = [ "W14"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1700,7 +1700,7 @@ def W15 : Register<"W15">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W15";
-let AltNames = [   ];
+let AltNames = [ "W15"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1718,7 +1718,7 @@ def W16 : Register<"W16">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W16";
-let AltNames = [   ];
+let AltNames = [ "W16"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1736,7 +1736,7 @@ def W17 : Register<"W17">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W17";
-let AltNames = [   ];
+let AltNames = [ "W17"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1754,7 +1754,7 @@ def W18 : Register<"W18">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W18";
-let AltNames = [   ];
+let AltNames = [ "W18"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1772,7 +1772,7 @@ def W19 : Register<"W19">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W19";
-let AltNames = [   ];
+let AltNames = [ "W19"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1790,7 +1790,7 @@ def W20 : Register<"W20">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W20";
-let AltNames = [   ];
+let AltNames = [ "W20"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1808,7 +1808,7 @@ def W21 : Register<"W21">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W21";
-let AltNames = [   ];
+let AltNames = [ "W21"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1826,7 +1826,7 @@ def W22 : Register<"W22">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W22";
-let AltNames = [   ];
+let AltNames = [ "W22"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1844,7 +1844,7 @@ def W23 : Register<"W23">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W23";
-let AltNames = [   ];
+let AltNames = [ "W23"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1862,7 +1862,7 @@ def W24 : Register<"W24">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W24";
-let AltNames = [   ];
+let AltNames = [ "W24"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1880,7 +1880,7 @@ def W25 : Register<"W25">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W25";
-let AltNames = [   ];
+let AltNames = [ "W25"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1898,7 +1898,7 @@ def W26 : Register<"W26">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W26";
-let AltNames = [   ];
+let AltNames = [ "W26"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1916,7 +1916,7 @@ def W27 : Register<"W27">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W27";
-let AltNames = [   ];
+let AltNames = [ "W27"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1934,7 +1934,7 @@ def W28 : Register<"W28">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W28";
-let AltNames = [   ];
+let AltNames = [ "W28"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1952,7 +1952,7 @@ def W29 : Register<"W29">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W29";
-let AltNames = [   ];
+let AltNames = [ "W29"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1970,7 +1970,7 @@ def W30 : Register<"W30">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W30";
-let AltNames = [   ];
+let AltNames = [ "W30"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -1988,7 +1988,7 @@ def W31 : Register<"W31">
 {
 let Namespace = "aarch64temp";
 let AsmName = "W31";
-let AltNames = [   ];
+let AltNames = [ "W31"  ];
 let Aliases = [ ];
 let SubRegs = [  ];
 let SubRegIndices = [  ];
@@ -2005,8 +2005,8 @@ let isArtificial = false;
 def S0 : Register<"S0">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X0";
-let AltNames = [ "X0"  ];
+let AsmName = "S0";
+let AltNames = [ "S0"  ];
 let Aliases = [ ];
 let SubRegs = [ R0, X0, W0 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2023,8 +2023,8 @@ let isArtificial = false;
 def S1 : Register<"S1">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X1";
-let AltNames = [ "X1"  ];
+let AsmName = "S1";
+let AltNames = [ "S1"  ];
 let Aliases = [ ];
 let SubRegs = [ R1, X1, W1 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2041,8 +2041,8 @@ let isArtificial = false;
 def S2 : Register<"S2">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X2";
-let AltNames = [ "X2"  ];
+let AsmName = "S2";
+let AltNames = [ "S2"  ];
 let Aliases = [ ];
 let SubRegs = [ R2, X2, W2 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2059,8 +2059,8 @@ let isArtificial = false;
 def S3 : Register<"S3">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X3";
-let AltNames = [ "X3"  ];
+let AsmName = "S3";
+let AltNames = [ "S3"  ];
 let Aliases = [ ];
 let SubRegs = [ R3, X3, W3 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2077,8 +2077,8 @@ let isArtificial = false;
 def S4 : Register<"S4">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X4";
-let AltNames = [ "X4"  ];
+let AsmName = "S4";
+let AltNames = [ "S4"  ];
 let Aliases = [ ];
 let SubRegs = [ R4, X4, W4 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2095,8 +2095,8 @@ let isArtificial = false;
 def S5 : Register<"S5">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X5";
-let AltNames = [ "X5"  ];
+let AsmName = "S5";
+let AltNames = [ "S5"  ];
 let Aliases = [ ];
 let SubRegs = [ R5, X5, W5 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2113,8 +2113,8 @@ let isArtificial = false;
 def S6 : Register<"S6">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X6";
-let AltNames = [ "X6"  ];
+let AsmName = "S6";
+let AltNames = [ "S6"  ];
 let Aliases = [ ];
 let SubRegs = [ R6, X6, W6 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2131,8 +2131,8 @@ let isArtificial = false;
 def S7 : Register<"S7">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X7";
-let AltNames = [ "X7"  ];
+let AsmName = "S7";
+let AltNames = [ "S7"  ];
 let Aliases = [ ];
 let SubRegs = [ R7, X7, W7 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2149,8 +2149,8 @@ let isArtificial = false;
 def S8 : Register<"S8">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X8";
-let AltNames = [ "X8"  ];
+let AsmName = "S8";
+let AltNames = [ "S8"  ];
 let Aliases = [ ];
 let SubRegs = [ R8, X8, W8 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2167,8 +2167,8 @@ let isArtificial = false;
 def S9 : Register<"S9">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X9";
-let AltNames = [ "X9"  ];
+let AsmName = "S9";
+let AltNames = [ "S9"  ];
 let Aliases = [ ];
 let SubRegs = [ R9, X9, W9 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2185,8 +2185,8 @@ let isArtificial = false;
 def S10 : Register<"S10">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X10";
-let AltNames = [ "X10"  ];
+let AsmName = "S10";
+let AltNames = [ "S10"  ];
 let Aliases = [ ];
 let SubRegs = [ R10, X10, W10 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2203,8 +2203,8 @@ let isArtificial = false;
 def S11 : Register<"S11">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X11";
-let AltNames = [ "X11"  ];
+let AsmName = "S11";
+let AltNames = [ "S11"  ];
 let Aliases = [ ];
 let SubRegs = [ R11, X11, W11 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2221,8 +2221,8 @@ let isArtificial = false;
 def S12 : Register<"S12">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X12";
-let AltNames = [ "X12"  ];
+let AsmName = "S12";
+let AltNames = [ "S12"  ];
 let Aliases = [ ];
 let SubRegs = [ R12, X12, W12 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2239,8 +2239,8 @@ let isArtificial = false;
 def S13 : Register<"S13">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X13";
-let AltNames = [ "X13"  ];
+let AsmName = "S13";
+let AltNames = [ "S13"  ];
 let Aliases = [ ];
 let SubRegs = [ R13, X13, W13 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2257,8 +2257,8 @@ let isArtificial = false;
 def S14 : Register<"S14">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X14";
-let AltNames = [ "X14"  ];
+let AsmName = "S14";
+let AltNames = [ "S14"  ];
 let Aliases = [ ];
 let SubRegs = [ R14, X14, W14 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2275,8 +2275,8 @@ let isArtificial = false;
 def S15 : Register<"S15">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X15";
-let AltNames = [ "X15"  ];
+let AsmName = "S15";
+let AltNames = [ "S15"  ];
 let Aliases = [ ];
 let SubRegs = [ R15, X15, W15 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2293,8 +2293,8 @@ let isArtificial = false;
 def S16 : Register<"S16">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X16";
-let AltNames = [ "X16"  ];
+let AsmName = "S16";
+let AltNames = [ "S16"  ];
 let Aliases = [ ];
 let SubRegs = [ R16, X16, W16 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2311,8 +2311,8 @@ let isArtificial = false;
 def S17 : Register<"S17">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X17";
-let AltNames = [ "X17"  ];
+let AsmName = "S17";
+let AltNames = [ "S17"  ];
 let Aliases = [ ];
 let SubRegs = [ R17, X17, W17 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2329,8 +2329,8 @@ let isArtificial = false;
 def S18 : Register<"S18">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X18";
-let AltNames = [ "X18"  ];
+let AsmName = "S18";
+let AltNames = [ "S18"  ];
 let Aliases = [ ];
 let SubRegs = [ R18, X18, W18 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2347,8 +2347,8 @@ let isArtificial = false;
 def S19 : Register<"S19">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X19";
-let AltNames = [ "X19"  ];
+let AsmName = "S19";
+let AltNames = [ "S19"  ];
 let Aliases = [ ];
 let SubRegs = [ R19, X19, W19 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2365,8 +2365,8 @@ let isArtificial = false;
 def S20 : Register<"S20">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X20";
-let AltNames = [ "X20"  ];
+let AsmName = "S20";
+let AltNames = [ "S20"  ];
 let Aliases = [ ];
 let SubRegs = [ R20, X20, W20 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2383,8 +2383,8 @@ let isArtificial = false;
 def S21 : Register<"S21">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X21";
-let AltNames = [ "X21"  ];
+let AsmName = "S21";
+let AltNames = [ "S21"  ];
 let Aliases = [ ];
 let SubRegs = [ R21, X21, W21 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2401,8 +2401,8 @@ let isArtificial = false;
 def S22 : Register<"S22">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X22";
-let AltNames = [ "X22"  ];
+let AsmName = "S22";
+let AltNames = [ "S22"  ];
 let Aliases = [ ];
 let SubRegs = [ R22, X22, W22 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2419,8 +2419,8 @@ let isArtificial = false;
 def S23 : Register<"S23">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X23";
-let AltNames = [ "X23"  ];
+let AsmName = "S23";
+let AltNames = [ "S23"  ];
 let Aliases = [ ];
 let SubRegs = [ R23, X23, W23 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2437,8 +2437,8 @@ let isArtificial = false;
 def S24 : Register<"S24">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X24";
-let AltNames = [ "X24"  ];
+let AsmName = "S24";
+let AltNames = [ "S24"  ];
 let Aliases = [ ];
 let SubRegs = [ R24, X24, W24 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2455,8 +2455,8 @@ let isArtificial = false;
 def S25 : Register<"S25">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X25";
-let AltNames = [ "X25"  ];
+let AsmName = "S25";
+let AltNames = [ "S25"  ];
 let Aliases = [ ];
 let SubRegs = [ R25, X25, W25 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2473,8 +2473,8 @@ let isArtificial = false;
 def S26 : Register<"S26">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X26";
-let AltNames = [ "X26"  ];
+let AsmName = "S26";
+let AltNames = [ "S26"  ];
 let Aliases = [ ];
 let SubRegs = [ R26, X26, W26 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2491,8 +2491,8 @@ let isArtificial = false;
 def S27 : Register<"S27">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X27";
-let AltNames = [ "X27"  ];
+let AsmName = "S27";
+let AltNames = [ "S27"  ];
 let Aliases = [ ];
 let SubRegs = [ R27, X27, W27 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2509,8 +2509,8 @@ let isArtificial = false;
 def S28 : Register<"S28">
 {
 let Namespace = "aarch64temp";
-let AsmName = "X28";
-let AltNames = [ "X28"  ];
+let AsmName = "S28";
+let AltNames = [ "S28"  ];
 let Aliases = [ ];
 let SubRegs = [ R28, X28, W28 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2527,8 +2527,8 @@ let isArtificial = false;
 def S29 : Register<"S29">
 {
 let Namespace = "aarch64temp";
-let AsmName = "A_FP";
-let AltNames = [ "A_FP"  ];
+let AsmName = "S29";
+let AltNames = [ "S29"  ];
 let Aliases = [ ];
 let SubRegs = [ R29, X29, W29 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2546,7 +2546,7 @@ def S30 : Register<"S30">
 {
 let Namespace = "aarch64temp";
 let AsmName = "A_LR";
-let AltNames = [ "A_LR"  ];
+let AltNames = [ "A_LR", "S30"  ];
 let Aliases = [ ];
 let SubRegs = [ R30, X30, W30 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];
@@ -2564,7 +2564,7 @@ def S31 : Register<"S31">
 {
 let Namespace = "aarch64temp";
 let AsmName = "A_SP";
-let AltNames = [ "A_SP"  ];
+let AltNames = [ "A_SP", "S31"  ];
 let Aliases = [ ];
 let SubRegs = [ R31, X31, W31 ];
 let SubRegIndices = [ SUB_32, FULL_64, SUB_32_1 ];

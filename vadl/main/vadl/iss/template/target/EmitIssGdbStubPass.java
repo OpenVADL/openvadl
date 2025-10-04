@@ -18,7 +18,6 @@ package vadl.iss.template.target;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -90,7 +89,7 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
       var writtenBytes = res.resultType().bitWidth() / 8;
 
       var cond =
-          Arrays.stream(res.constraints())
+          res.constraints().stream()
               .map(c -> {
                 var fileSize = res.outermostDim().size();
                 // finds the constraint index based on gdb nr n

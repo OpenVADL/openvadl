@@ -153,7 +153,7 @@ public class LlvmInstructionLoweringLessThanImmediateUnsignedConditionalsStrateg
 
               var zeroConstraint =
                   ensurePresent(
-                      Arrays.stream(registerFile.constraints())
+                      registerFile.constraints().stream()
                           .filter(x -> x.value().intValue() == 0)
                           .findFirst(),
                       () -> Diagnostic.error("Cannot find zero register for register file",

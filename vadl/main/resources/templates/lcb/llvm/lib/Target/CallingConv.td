@@ -24,11 +24,13 @@ def CC_[(${namespace})] : CallingConv<[
 ]>;
 
 def RetCC_[(${namespace})] : CallingConv<[
+    [#th:block th:each="r, iterStat : ${returnIfTypes}" ]
     CCIfType
     <
-    [ [(${returnRegisters.type})] ],
-    CCAssignToReg< [ [(${returnRegisters.registerRefs})] ] >
-    >
+    [ [(${r.type})] ],
+    CCAssignToReg< [ [(${r.registerRefs})] ] >
+    >[#th:block th:if="${!iterStat.last}"],[/th:block]
+[/th:block]
 ]>;
 
 // no preserved mask

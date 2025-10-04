@@ -71,6 +71,12 @@ public class IsaMachineInstructionMatchingAarch64PassTest extends AbstractLcbTes
             Optional.empty()),
         Arguments.of(List.of("CSELNEX"),
             MachineInstructionLabel.CSEL_NEQ_I64,
+            Optional.empty()),
+        Arguments.of(List.of("ORRW", "ORRX"),
+            MachineInstructionLabel.OR,
+            Optional.empty()),
+        Arguments.of(List.of("ADDX", "ADDXSXTX", "ADDXUXTX"),
+            MachineInstructionLabel.ADD_64,
             Optional.empty())
     );
   }

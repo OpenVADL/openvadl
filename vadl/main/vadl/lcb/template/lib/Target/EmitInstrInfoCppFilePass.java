@@ -55,6 +55,7 @@ import vadl.viam.Definition;
 import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.graph.HasRegisterTensor;
@@ -103,13 +104,33 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   /**
+   * An {@link Instruction} for copying a register.
+   *
+   * @param instruction      is the machine instruction which does the copying.
+   * @param destRegisterFile is the register file for the destination register in LLVM.
+   * @param zeroRegister     is the name of the zero register in the register file.
+   */
+  record TruncateInstruction(Instruction instruction,
+                             GeneratesRegisterFileName destRegisterFile,
+                             String zeroRegister) implements Renderable {
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "instruction", instruction.identifier.simpleName(),
+          "destRegisterFile", destRegisterFile.identifier().simpleName(),
+          "zeroRegister", zeroRegister
+      );
+    }
+  }
+
+  /**
    * An {@link Instruction} for storing on the stack.
    *
-   * @param instruction      is the machine instruction which does the storing.
-   * @param destRegisterFile is the register file for the destination register in LLVM.
-   * @param words            indicates how many words are stored.
+   * @param instruction     is the machine instruction which does the storing.
+   * @param srcRegisterFile is the register file from which the value was read.
+   * @param words           indicates how many words are stored.
    */
-  record StoreRegSlot(Instruction instruction, RegisterTensor destRegisterFile, int words) {
+  record StoreRegSlot(Instruction instruction, RegisterResource srcRegisterFile, int words) {
 
   }
 
@@ -120,7 +141,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
    * @param destRegisterFile is the register file for the destination register in LLVM.
    * @param words            indicates how many words are stored.
    */
-  record LoadRegSlot(Instruction instruction, RegisterTensor destRegisterFile, int words) {
+  record LoadRegSlot(Instruction instruction, RegisterResource destRegisterFile, int words) {
 
   }
 
@@ -133,6 +154,13 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     return Stream.concat(addi32.stream(), addi64.stream()).toList();
   }
 
+  private List<TruncateInstruction> truncateInstructions(
+      Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
+    return mapTruncateInstructionsWithInstructionLabel(
+        MachineInstructionLabel.OR,
+        isaMatching);
+  }
+
   private List<StoreRegSlot> getStoreMemoryInstructions(
       Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
     var instructions =
@@ -140,16 +168,31 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
             Collections.emptyList());
 
     return instructions.stream()
-        .map(i -> {
-          var destRegisterFile =
-              ensurePresent(i.behavior().getNodes(ReadsRegisterTensor.class)
-                      .filter(HasRegisterTensor::hasRegisterFile)
+        .flatMap(i -> {
+          var writeMemNode = ensurePresent(i.behavior().getNodes(WriteMemNode.class).findFirst(),
+              "There must be a write mem node");
+          var valueNodes = new ArrayList<Node>();
+          valueNodes.add(writeMemNode.value());
+          writeMemNode.value().collectInputsWithChildren(valueNodes);
+          var srcRegisterFile =
+              ensurePresent(valueNodes.stream().filter(x -> x instanceof ReadsRegisterTensor)
+                      .map(x -> ((ReadsRegisterTensor) x).registerResource())
                       .findFirst(),
-                  "There must be destination register").registerTensor();
-          var words =
-              ensurePresent(i.behavior().getNodes(WriteMemNode.class).findFirst(),
-                  "There must be a write mem node").words();
-          return new StoreRegSlot(i, destRegisterFile, words);
+                  () -> Diagnostic.error("There must be register or alias as source.",
+                      writeMemNode.location()));
+          var words = writeMemNode.words();
+
+          // If the registerFile is an alias, we also need to store it for the original reference.
+          // However, we skip it when it is an alias with a smaller type.
+          var base = new StoreRegSlot(i, srcRegisterFile, words);
+          if (srcRegisterFile instanceof ArtificialResource artificialResource
+              && artificialResource.innerResourceRef() instanceof RegisterTensor registerTensor
+              && artificialResource.type().equals(registerTensor.type())) {
+            return Stream.of(base,
+                new StoreRegSlot(i, registerTensor, words));
+          } else {
+            return Stream.of(base);
+          }
         })
         // Sort by largest word size descending
         .sorted((storeRegSlot, t1) -> Integer.compare(t1.words, storeRegSlot.words))
@@ -163,20 +206,72 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
             Collections.emptyList());
 
     return instructions.stream()
-        .map(i -> {
+        .flatMap(i -> {
           var destRegisterFile =
               ensurePresent(i.behavior().getNodes(WritesRegisterTensor.class)
                       .filter(HasRegisterTensor::hasRegisterFile)
                       .findFirst(),
                   () -> Diagnostic.error("There must be a destination register file",
-                      i.location())).registerTensor();
+                      i.location())).registerResource();
           var words =
               ensurePresent(i.behavior().getNodes(ReadMemNode.class).findFirst(),
                   "There must be a read mem node").words();
-          return new LoadRegSlot(i, destRegisterFile, words);
+
+          // If the registerFile is an alias, we also need to load it for the original reference.
+          // However, we skip it when it is an alias with a smaller type.
+          var base = new LoadRegSlot(i, destRegisterFile, words);
+          if (destRegisterFile instanceof ArtificialResource artificialResource
+              && artificialResource.innerResourceRef() instanceof RegisterTensor registerTensor
+              && artificialResource.type().equals(registerTensor.type())) {
+            return Stream.of(base,
+                new LoadRegSlot(i, registerTensor, words));
+          } else {
+            return Stream.of(base);
+          }
         })
         // Sort by largest word size descending
         .sorted((loadRegSlot, t1) -> Integer.compare(t1.words, loadRegSlot.words))
+        .toList();
+  }
+
+  private List<TruncateInstruction> mapTruncateInstructionsWithInstructionLabel(
+      MachineInstructionLabel label,
+      Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
+    var instructions =
+        isaMatching.getOrDefault(label, Collections.emptyList());
+
+    return instructions.stream()
+        .flatMap(i -> {
+          var destRegisterFile =
+              ensurePresent(i.behavior().getNodes(WritesRegisterTensor.class)
+                      .filter(HasRegisterTensor::hasRegisterFile)
+                      .findFirst(),
+                  "There must be destination register").registerResource();
+
+          var zeroRegister = ensurePresent(destRegisterFile.zeroRegister(),
+              () -> Diagnostic.error("There is no zero register for the register file",
+                  destRegisterFile.location()))
+              .stream()
+              .findFirst();
+
+          var zeroRegisterValue = ensurePresent(zeroRegister,
+              () -> Diagnostic.error("List has no zero registers", destRegisterFile.location()));
+
+          // If the registerFile is an alias, we also need to truncate it for the original
+          // reference.
+          // However, we skip it when it is an alias with a smaller type.
+          var base = new TruncateInstruction(i, destRegisterFile,
+              destRegisterFile.generateRegisterFileName(zeroRegisterValue.intValue()));
+          if (destRegisterFile instanceof ArtificialResource artificialResource
+              && artificialResource.innerResourceRef() instanceof RegisterTensor registerTensor
+              && artificialResource.type().equals(registerTensor.type())) {
+            return Stream.of(base,
+                new TruncateInstruction(i, registerTensor,
+                    registerTensor.generateRegisterFileName(zeroRegisterValue.intValue())));
+          } else {
+            return Stream.of(base);
+          }
+        })
         .toList();
   }
 
@@ -380,6 +475,9 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     map.put(CommonVarNames.NAMESPACE, lcbConfiguration().targetName().value().toLowerCase());
     map.put("copyPhysInstructions",
         physInstructions(specification, isaMatches).stream().map(this::map).toList());
+    map.put("truncateInstructions",
+        truncateInstructions(isaMatches)
+    );
     map.put("storeStackSlotInstructions",
         getStoreMemoryInstructions(isaMatches).stream().map(this::map).toList());
     map.put("loadStackSlotInstructions",
@@ -545,7 +643,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
   private Map<String, Object> map(StoreRegSlot obj) {
     return Map.of(
-        "destRegisterFile", obj.destRegisterFile.simpleName(),
+        "srcRegisterFile", obj.srcRegisterFile.simpleName(),
         "instruction", obj.instruction.simpleName()
     );
   }

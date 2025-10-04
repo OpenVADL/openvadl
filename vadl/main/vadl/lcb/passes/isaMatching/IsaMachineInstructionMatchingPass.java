@@ -198,23 +198,25 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       if (findLui(behavior)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LUI, ty));
       } else if (findAdd32Bit(behavior)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADD_32, ty));
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.ADD_32, Optional.empty()));
       } else if (findAdd64Bit(behavior)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADD_64, ty));
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.ADD_64, Optional.empty()));
       } else if (findAddWithImmediate32Bit(behavior)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADDI_32, ty));
       } else if (findAddWithImmediate64Bit(behavior)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADDI_64, ty));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+      } else if (weakFindRR(behavior,
           List.of(SDIV, SDIVS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SDIV, ty));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+      } else if (weakFindRR(behavior,
           List.of(UDIV, UDIVS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.UDIV, ty));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+      } else if (weakFindRR(behavior,
           List.of(SMOD, SMODS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SMOD, ty));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+      } else if (weakFindRR(behavior,
           List.of(UMOD, UMODS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.UMOD, ty));
       } else if (findSubS(behavior, originalGraph, Type.bits(64))) {
@@ -648,8 +650,10 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         .map(x -> ((BuiltInCall) x).type())
         .filter(ty -> ty instanceof BitsType bi && bi.bitWidth() == bitWidth).findFirst();
 
-    return matched.isPresent() && writesExactlyOneRegisterClassWithType(behavior,
-        Type.bits(bitWidth));
+    return matched.isPresent()
+        && writesExactlyOneRegisterClassWithType(behavior, Type.bits(bitWidth))
+        && behavior.getNodes(SliceNode.class).toList().isEmpty() // no slices to exclude `ADDXUXTB`
+        && behavior.getNodes(BuiltInCall.class).count() == 1;
   }
 
   private boolean findAddWithImmediate32Bit(UninlinedGraph behavior) {

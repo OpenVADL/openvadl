@@ -6345,7 +6345,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -6397,7 +6397,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -6449,7 +6449,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -6501,7 +6501,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -6553,7 +6553,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -6612,7 +6612,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -6671,7 +6671,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, AArch64Base_ADDWI_imm12XAsInt64:$imm12X );
 
 field bits<32> Inst;
@@ -6708,8 +6708,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -6727,7 +6727,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, AArch64Base_ADDWI12_imm12SAsInt64:$imm12S );
 
 field bits<32> Inst;
@@ -6783,7 +6783,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -6842,7 +6842,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -6901,7 +6901,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -6960,7 +6960,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -7019,7 +7019,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, AArch64Base_ADDWSI_imm12XAsInt64:$imm12X );
 
 field bits<32> Inst;
@@ -7075,7 +7075,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, AArch64Base_ADDWSI12_imm12SAsInt64:$imm12S );
 
 field bits<32> Inst;
@@ -7131,7 +7131,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -7190,7 +7190,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -7249,7 +7249,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -7307,7 +7307,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -7365,7 +7365,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -7423,7 +7423,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -7481,7 +7481,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -7539,7 +7539,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -7597,7 +7597,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -7655,7 +7655,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -7713,7 +7713,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -7771,7 +7771,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -7829,7 +7829,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -7887,7 +7887,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -7945,7 +7945,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8003,7 +8003,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8061,7 +8061,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8119,7 +8119,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8177,7 +8177,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -8235,7 +8235,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -8293,7 +8293,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -8351,7 +8351,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -8409,7 +8409,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8467,7 +8467,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8525,7 +8525,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8583,7 +8583,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8641,7 +8641,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -8699,7 +8699,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -8757,7 +8757,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -8815,7 +8815,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -8873,7 +8873,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8931,7 +8931,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -8989,7 +8989,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -9047,7 +9047,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -9105,7 +9105,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -9164,7 +9164,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -9335,7 +9335,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -9394,7 +9394,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -9453,7 +9453,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -9512,7 +9512,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXSASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -9571,7 +9571,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, AArch64Base_ADDXSI_imm12XAsInt64:$imm12X );
 
 field bits<32> Inst;
@@ -9627,7 +9627,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, AArch64Base_ADDXSI12_imm12SAsInt64:$imm12S );
 
 field bits<32> Inst;
@@ -9683,7 +9683,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXSLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -9742,7 +9742,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXSLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -9801,7 +9801,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -9859,7 +9859,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -9917,7 +9917,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -9975,7 +9975,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -10033,7 +10033,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -10091,7 +10091,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -10149,7 +10149,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -10207,7 +10207,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -10265,7 +10265,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -10323,7 +10323,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -10381,7 +10381,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -10439,7 +10439,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -10497,7 +10497,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -10555,7 +10555,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -10613,7 +10613,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -10671,7 +10671,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -11657,7 +11657,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_ADR_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -11706,7 +11706,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_ADRP_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -11755,7 +11755,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins W:$rn, AArch64Base_ANDIW_immWSizeAsInt32:$immWSize );
 
 field bits<32> Inst;
@@ -11857,7 +11857,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, AArch64Base_ANDSIW_immWSizeAsInt32:$immWSize );
 
 field bits<32> Inst;
@@ -11908,7 +11908,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, AArch64Base_ANDSIX_immXSizeAsInt64:$immXSize );
 
 field bits<32> Inst;
@@ -11959,7 +11959,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -12015,7 +12015,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12071,7 +12071,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12127,7 +12127,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12183,7 +12183,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDSWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12239,7 +12239,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -12295,7 +12295,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDSXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12351,7 +12351,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDSXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12407,7 +12407,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12463,7 +12463,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDSXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12519,7 +12519,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -12575,7 +12575,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12631,7 +12631,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12687,7 +12687,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12743,7 +12743,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12799,7 +12799,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -12855,7 +12855,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12911,7 +12911,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -12967,7 +12967,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13023,7 +13023,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13079,7 +13079,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -13133,7 +13133,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -13232,8 +13232,8 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins X:$rd_6, W:$rn, AArch64Base_BFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_BFMW_rightWSizeAsInt8:$rightWSize );
+let OutOperandList = ( outs W:$rd );
+let InOperandList = ( ins W:$rd_6, W:$rn, AArch64Base_BFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_BFMW_rightWSizeAsInt8:$rightWSize );
 
 field bits<32> Inst;
 
@@ -13268,8 +13268,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "$rd = $rd_6";
 let AddedComplexity = 0;
@@ -13287,7 +13287,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rd_7, X:$rn, AArch64Base_BFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_BFMX_rightXSizeAsInt8:$rightXSize );
 
 field bits<32> Inst;
@@ -13323,8 +13323,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "$rd = $rd_7";
 let AddedComplexity = 0;
@@ -13342,7 +13342,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -13398,7 +13398,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICSWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13454,7 +13454,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICSWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13510,7 +13510,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICSWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13566,7 +13566,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICSWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13622,7 +13622,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -13678,7 +13678,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICSXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13734,7 +13734,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICSXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13790,7 +13790,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICSXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13846,7 +13846,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICSXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -13902,7 +13902,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -13958,7 +13958,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -14014,7 +14014,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -14070,7 +14070,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -14126,7 +14126,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -14182,7 +14182,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -14238,7 +14238,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -14294,7 +14294,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -14350,7 +14350,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -14406,7 +14406,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -22697,7 +22697,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn );
 
 field bits<32> Inst;
@@ -22746,7 +22746,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn );
 
 field bits<32> Inst;
@@ -22795,7 +22795,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn );
 
 field bits<32> Inst;
@@ -22844,7 +22844,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn );
 
 field bits<32> Inst;
@@ -22893,7 +22893,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -22947,7 +22947,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23001,7 +23001,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23055,7 +23055,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23109,7 +23109,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23163,7 +23163,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23217,7 +23217,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23271,7 +23271,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23325,7 +23325,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23379,7 +23379,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23433,7 +23433,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23487,7 +23487,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23541,7 +23541,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23595,7 +23595,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23649,7 +23649,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23703,7 +23703,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23757,7 +23757,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23811,7 +23811,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23865,7 +23865,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23919,7 +23919,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -23973,7 +23973,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24027,7 +24027,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24081,7 +24081,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24135,7 +24135,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24189,7 +24189,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24243,7 +24243,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24297,7 +24297,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24351,7 +24351,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24405,7 +24405,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24459,7 +24459,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24513,7 +24513,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24567,7 +24567,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24621,7 +24621,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24675,7 +24675,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24729,7 +24729,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24783,7 +24783,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24837,7 +24837,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24891,7 +24891,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24945,7 +24945,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -24999,7 +24999,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25053,7 +25053,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25107,7 +25107,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25161,7 +25161,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25215,7 +25215,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25269,7 +25269,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25323,7 +25323,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25377,7 +25377,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25431,7 +25431,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25485,7 +25485,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25539,7 +25539,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25593,7 +25593,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25647,7 +25647,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25701,7 +25701,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25755,7 +25755,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25809,7 +25809,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25863,7 +25863,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25917,7 +25917,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -25971,7 +25971,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26025,7 +26025,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26079,7 +26079,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26133,7 +26133,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26187,7 +26187,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26241,7 +26241,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26295,7 +26295,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26349,7 +26349,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26403,7 +26403,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26457,7 +26457,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26511,7 +26511,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26565,7 +26565,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26619,7 +26619,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26673,7 +26673,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26727,7 +26727,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26781,7 +26781,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26835,7 +26835,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26889,7 +26889,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26943,7 +26943,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -26997,7 +26997,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27051,7 +27051,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27105,7 +27105,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27159,7 +27159,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27213,7 +27213,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27267,7 +27267,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27321,7 +27321,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27375,7 +27375,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27429,7 +27429,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27483,7 +27483,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27537,7 +27537,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27591,7 +27591,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27645,7 +27645,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27699,7 +27699,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27753,7 +27753,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27807,7 +27807,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27861,7 +27861,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27915,7 +27915,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -27969,7 +27969,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28023,7 +28023,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28077,7 +28077,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28131,7 +28131,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28185,7 +28185,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28239,7 +28239,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28293,7 +28293,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28347,7 +28347,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28401,7 +28401,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28455,7 +28455,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28509,7 +28509,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28563,7 +28563,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28617,7 +28617,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28671,7 +28671,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28725,7 +28725,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28779,7 +28779,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28833,7 +28833,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28887,7 +28887,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28941,7 +28941,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -28995,7 +28995,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29049,7 +29049,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29103,7 +29103,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29157,7 +29157,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29211,7 +29211,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29265,7 +29265,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29319,7 +29319,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29373,7 +29373,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29427,7 +29427,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29481,7 +29481,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29535,7 +29535,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29589,7 +29589,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29643,7 +29643,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29697,7 +29697,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29751,7 +29751,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -29805,7 +29805,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -29861,7 +29861,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EONWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -29917,7 +29917,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EONWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -29973,7 +29973,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EONWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30029,7 +30029,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EONWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30085,7 +30085,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -30141,7 +30141,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EONXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30197,7 +30197,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EONXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30253,7 +30253,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EONXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30309,7 +30309,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EONXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30365,7 +30365,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize );
 
 field bits<32> Inst;
@@ -30467,7 +30467,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -30523,7 +30523,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30560,8 +30560,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -30579,7 +30579,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30616,8 +30616,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -30635,7 +30635,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30672,8 +30672,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -30691,7 +30691,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EORWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30728,8 +30728,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -30747,7 +30747,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -30803,7 +30803,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EORXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30840,8 +30840,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -30859,7 +30859,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EORXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30896,8 +30896,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -30915,7 +30915,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EORXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -30952,8 +30952,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -30971,7 +30971,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EORXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -31008,8 +31008,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -31072,7 +31072,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EXTRW_shiftWSizeAsInt8:$shiftWSize );
 
 field bits<32> Inst;
@@ -31128,7 +31128,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EXTRX_shiftXSizeAsInt8:$shiftXSize );
 
 field bits<32> Inst;
@@ -31230,7 +31230,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt, S:$rt2 );
+let OutOperandList = ( outs X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn, AArch64Base_LDPS_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
@@ -31286,7 +31286,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
+let OutOperandList = ( outs S:$rn, X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn_36, AArch64Base_LDPSPre_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
@@ -31342,7 +31342,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
+let OutOperandList = ( outs S:$rn, X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn_37, AArch64Base_LDPSPst_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
@@ -31398,7 +31398,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt, S:$rt2 );
+let OutOperandList = ( outs X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn, AArch64Base_LDPW_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
@@ -31454,7 +31454,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
+let OutOperandList = ( outs S:$rn, X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn_34, AArch64Base_LDPWPre_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
@@ -31510,7 +31510,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
+let OutOperandList = ( outs S:$rn, X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn_35, AArch64Base_LDPWPst_offWSizeAsInt64:$offWSize );
 
 field bits<32> Inst;
@@ -31566,7 +31566,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt, S:$rt2 );
+let OutOperandList = ( outs X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn, AArch64Base_LDPX_offXSizeAsInt64:$offXSize );
 
 field bits<32> Inst;
@@ -31622,7 +31622,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
+let OutOperandList = ( outs S:$rn, X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn_38, AArch64Base_LDPXPre_offXSizeAsInt64:$offXSize );
 
 field bits<32> Inst;
@@ -31678,7 +31678,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt, S:$rt2 );
+let OutOperandList = ( outs S:$rn, X:$rt, X:$rt2 );
 let InOperandList = ( ins S:$rn_39, AArch64Base_LDPXPst_offXSizeAsInt64:$offXSize );
 
 field bits<32> Inst;
@@ -31734,7 +31734,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRB_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -31787,7 +31787,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRH_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -31840,7 +31840,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins AArch64Base_LDRLitSWX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -31889,7 +31889,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins AArch64Base_LDRLitW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -31938,7 +31938,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins AArch64Base_LDRLitX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -31987,7 +31987,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_8, AArch64Base_LDRPreB_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32042,7 +32042,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_9, AArch64Base_LDRPreH_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32097,7 +32097,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_15, AArch64Base_LDRPreSBW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32152,7 +32152,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_12, AArch64Base_LDRPreSBX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32207,7 +32207,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_16, AArch64Base_LDRPreSHW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32262,7 +32262,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_13, AArch64Base_LDRPreSHX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32317,7 +32317,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_14, AArch64Base_LDRPreSWX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32372,7 +32372,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_10, AArch64Base_LDRPreW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32427,7 +32427,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_11, AArch64Base_LDRPreX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32482,7 +32482,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_21, AArch64Base_LDRPstB_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32537,7 +32537,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_22, AArch64Base_LDRPstH_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32592,7 +32592,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_28, AArch64Base_LDRPstSBW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32647,7 +32647,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_25, AArch64Base_LDRPstSBX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32702,7 +32702,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_29, AArch64Base_LDRPstSHW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32757,7 +32757,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_26, AArch64Base_LDRPstSHX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32812,7 +32812,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_27, AArch64Base_LDRPstSWX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32867,7 +32867,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_23, AArch64Base_LDRPstW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32922,7 +32922,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, S:$rt );
+let OutOperandList = ( outs S:$rn, X:$rt );
 let InOperandList = ( ins S:$rn_24, AArch64Base_LDRPstX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32977,7 +32977,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33036,7 +33036,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33095,7 +33095,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33154,7 +33154,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33213,7 +33213,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33272,7 +33272,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33331,7 +33331,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33390,7 +33390,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33449,7 +33449,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33508,7 +33508,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33567,7 +33567,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33626,7 +33626,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33685,7 +33685,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33744,7 +33744,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33803,7 +33803,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33862,7 +33862,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33921,7 +33921,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -33980,7 +33980,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34039,7 +34039,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34098,7 +34098,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34157,7 +34157,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34216,7 +34216,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34275,7 +34275,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34334,7 +34334,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34393,7 +34393,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34452,7 +34452,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34511,7 +34511,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34570,7 +34570,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34629,7 +34629,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34688,7 +34688,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34747,7 +34747,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34806,7 +34806,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34865,7 +34865,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34924,7 +34924,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -34983,7 +34983,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35042,7 +35042,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35101,7 +35101,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35160,7 +35160,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35219,7 +35219,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35278,7 +35278,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35337,7 +35337,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35396,7 +35396,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35455,7 +35455,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35514,7 +35514,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35573,7 +35573,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35632,7 +35632,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35691,7 +35691,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35750,7 +35750,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35809,7 +35809,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35868,7 +35868,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35927,7 +35927,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -35986,7 +35986,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36045,7 +36045,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36104,7 +36104,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36163,7 +36163,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36222,7 +36222,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36281,7 +36281,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36340,7 +36340,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36399,7 +36399,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36458,7 +36458,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36517,7 +36517,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36576,7 +36576,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36635,7 +36635,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36694,7 +36694,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36753,7 +36753,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36812,7 +36812,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36871,7 +36871,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36930,7 +36930,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36989,7 +36989,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -37048,7 +37048,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -37107,7 +37107,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -37166,7 +37166,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -37225,7 +37225,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRSBW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37278,7 +37278,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRSBX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37331,7 +37331,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRSHW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37384,7 +37384,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRSHX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37437,7 +37437,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRSWX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37490,7 +37490,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37543,7 +37543,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37596,7 +37596,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURB_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37651,7 +37651,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURH_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37706,7 +37706,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURSBW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37761,7 +37761,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURSBX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37816,7 +37816,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURSHW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37871,7 +37871,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURSHX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37926,7 +37926,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURSWX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37981,7 +37981,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -38036,7 +38036,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURX_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -38091,7 +38091,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -38145,7 +38145,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -38199,7 +38199,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -38253,7 +38253,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -38307,7 +38307,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$ra, W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -38361,7 +38361,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$ra, X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -38415,8 +38415,8 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rd_0, AArch64Base_MOVKWPos00_imm16AsInt16:$imm16 );
+let OutOperandList = ( outs X:$rd );
+let InOperandList = ( ins X:$rd_0, AArch64Base_MOVKWPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38466,8 +38466,8 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins W:$rd_1, AArch64Base_MOVKWPos16_imm16AsInt16:$imm16 );
+let OutOperandList = ( outs X:$rd );
+let InOperandList = ( ins X:$rd_1, AArch64Base_MOVKWPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
 
@@ -38517,7 +38517,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rd_2, AArch64Base_MOVKXPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38568,7 +38568,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rd_3, AArch64Base_MOVKXPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38619,7 +38619,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rd_4, AArch64Base_MOVKXPos32_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38670,7 +38670,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rd_5, AArch64Base_MOVKXPos48_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38721,7 +38721,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVNWPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38772,7 +38772,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVNWPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38823,7 +38823,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVNXPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38874,7 +38874,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVNXPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38925,7 +38925,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVNXPos32_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -38976,7 +38976,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVNXPos48_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -39027,7 +39027,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVZWPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -39078,7 +39078,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVZWPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -39129,7 +39129,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVZXPos00_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -39180,7 +39180,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVZXPos16_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -39231,7 +39231,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVZXPos32_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -39282,7 +39282,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins AArch64Base_MOVZXPos48_imm16AsInt16:$imm16 );
 
 field bits<32> Inst;
@@ -39333,7 +39333,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rt );
+let OutOperandList = ( outs X:$rt );
 let InOperandList = ( ins AArch64Base_MRS_sysregAsInt16:$sysreg );
 
 field bits<32> Inst;
@@ -39427,7 +39427,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$ra, W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -39481,7 +39481,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$ra, X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -39580,7 +39580,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -39636,7 +39636,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORNWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -39692,7 +39692,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORNWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -39748,7 +39748,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORNWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -39804,7 +39804,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORNWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -39860,7 +39860,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -39916,7 +39916,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORNXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -39972,7 +39972,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORNXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40028,7 +40028,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORNXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40084,7 +40084,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORNXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40140,7 +40140,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins W:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize );
 
 field bits<32> Inst;
@@ -40242,7 +40242,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -40298,7 +40298,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40335,8 +40335,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -40354,7 +40354,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40391,8 +40391,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -40410,7 +40410,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40447,8 +40447,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -40466,7 +40466,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORRWROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40503,8 +40503,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -40522,7 +40522,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -40578,7 +40578,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORRXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40615,8 +40615,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -40634,7 +40634,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORRXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40671,8 +40671,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -40690,7 +40690,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40727,8 +40727,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -40746,7 +40746,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORRXROR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -40783,8 +40783,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -40802,7 +40802,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, bare_symbol:$bits );
 
 field bits<32> Inst;
@@ -40851,7 +40851,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, bare_symbol:$bits );
 
 field bits<32> Inst;
@@ -40946,7 +40946,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn );
 
 field bits<32> Inst;
@@ -40995,7 +40995,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn );
 
 field bits<32> Inst;
@@ -41044,7 +41044,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn );
 
 field bits<32> Inst;
@@ -41093,7 +41093,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins X:$rn );
 
 field bits<32> Inst;
@@ -41142,7 +41142,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn );
 
 field bits<32> Inst;
@@ -41191,7 +41191,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -41245,7 +41245,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -41299,7 +41299,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -41351,7 +41351,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -41403,7 +41403,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -41455,7 +41455,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -41507,7 +41507,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize );
 
 field bits<32> Inst;
@@ -41562,7 +41562,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize );
 
 field bits<32> Inst;
@@ -41617,7 +41617,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rm, W:$rn );
 
 field bits<32> Inst;
@@ -41669,7 +41669,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rm, X:$rn );
 
 field bits<32> Inst;
@@ -41721,7 +41721,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$ra, W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -41775,7 +41775,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$ra, W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -41829,7 +41829,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -44977,7 +44977,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -45036,7 +45036,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -45095,7 +45095,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, AArch64Base_SUBWI_imm12XAsInt64:$imm12X );
 
 field bits<32> Inst;
@@ -45151,7 +45151,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, AArch64Base_SUBWI12_imm12SAsInt64:$imm12S );
 
 field bits<32> Inst;
@@ -45207,7 +45207,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -45266,7 +45266,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -45325,7 +45325,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -45384,7 +45384,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -45443,7 +45443,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, AArch64Base_SUBWSI_imm12XAsInt64:$imm12X );
 
 field bits<32> Inst;
@@ -45499,7 +45499,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, AArch64Base_SUBWSI12_imm12SAsInt64:$imm12S );
 
 field bits<32> Inst;
@@ -45555,7 +45555,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -45614,7 +45614,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -45673,7 +45673,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -45731,7 +45731,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -45789,7 +45789,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -45847,7 +45847,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -45905,7 +45905,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -45963,7 +45963,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46021,7 +46021,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46079,7 +46079,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46137,7 +46137,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -46195,7 +46195,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -46253,7 +46253,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -46311,7 +46311,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -46369,7 +46369,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46427,7 +46427,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46485,7 +46485,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46543,7 +46543,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46601,7 +46601,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -46659,7 +46659,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -46717,7 +46717,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -46775,7 +46775,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -46833,7 +46833,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46891,7 +46891,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -46949,7 +46949,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -47007,7 +47007,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -47065,7 +47065,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -47123,7 +47123,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -47181,7 +47181,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -47239,7 +47239,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -47297,7 +47297,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -47355,7 +47355,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -47413,7 +47413,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -47471,7 +47471,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs R:$rd );
 let InOperandList = ( ins R:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -47529,7 +47529,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -47588,7 +47588,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -47759,7 +47759,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -47818,7 +47818,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -47877,7 +47877,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -47936,7 +47936,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXSASR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -47995,7 +47995,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, AArch64Base_SUBXSI_imm12XAsInt64:$imm12X );
 
 field bits<32> Inst;
@@ -48051,7 +48051,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, AArch64Base_SUBXSI12_imm12SAsInt64:$imm12S );
 
 field bits<32> Inst;
@@ -48107,7 +48107,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXSLSL_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -48166,7 +48166,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXSLSR_imm6AsInt8:$imm6 );
 
 field bits<32> Inst;
@@ -48225,7 +48225,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSSXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -48283,7 +48283,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSSXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -48341,7 +48341,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSSXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -48399,7 +48399,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSSXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -48457,7 +48457,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -48515,7 +48515,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -48573,7 +48573,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -48631,7 +48631,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -48689,7 +48689,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSUXSB_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -48747,7 +48747,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSUXSH_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -48805,7 +48805,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSUXSW_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -48863,7 +48863,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSUXSX_imm3AsInt8:$imm3 );
 
 field bits<32> Inst;
@@ -48921,7 +48921,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -48979,7 +48979,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -49037,7 +49037,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -49095,7 +49095,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -50227,7 +50227,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize );
 
 field bits<32> Inst;
@@ -50282,7 +50282,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize );
 
 field bits<32> Inst;
@@ -50382,7 +50382,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs W:$rd );
 let InOperandList = ( ins W:$rm, W:$rn );
 
 field bits<32> Inst;
@@ -50434,7 +50434,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rm, X:$rn );
 
 field bits<32> Inst;
@@ -50486,7 +50486,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$ra, W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -50540,7 +50540,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$ra, W:$rn, W:$rm );
 
 field bits<32> Inst;
@@ -50594,7 +50594,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rd );
+let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -51221,35 +51221,35 @@ let Defs = [  ];
 
 
 
-def : Pat<(zext (add W:$rn, W:$rm)),
+def : Pat<(add W:$rn, W:$rm),
         (ADDW W:$rn, W:$rm)>;
 
 
-def : Pat<(zext (add W:$rn, (sra W:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6))),
+def : Pat<(add W:$rn, (sra W:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6)),
         (ADDWASR W:$rn, W:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (add W:$rn, (shl W:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6))),
+def : Pat<(add W:$rn, (shl W:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6)),
         (ADDWLSL W:$rn, W:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (add W:$rn, (srl W:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6))),
+def : Pat<(add W:$rn, (srl W:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6)),
         (ADDWLSR W:$rn, W:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (add W:$rn, W:$rm)),
+def : Pat<(add W:$rn, W:$rm),
         (ADDWS W:$rn, W:$rm)>;
 
 
-def : Pat<(zext (add W:$rn, (sra W:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6))),
+def : Pat<(add W:$rn, (sra W:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6)),
         (ADDWSASR W:$rn, W:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (add W:$rn, (shl W:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6))),
+def : Pat<(add W:$rn, (shl W:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6)),
         (ADDWSLSL W:$rn, W:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (add W:$rn, (srl W:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6))),
+def : Pat<(add W:$rn, (srl W:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6)),
         (ADDWSLSR W:$rn, W:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6)>;
 
 
@@ -51336,7 +51336,7 @@ def : Pat<(add S:$rn, X:$rm),
         (ADDXUXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(zext (and W:$rn, AArch64Base_ANDIW_immWSizeAsInt32:$immWSize)),
+def : Pat<(and W:$rn, AArch64Base_ANDIW_immWSizeAsInt32:$immWSize),
         (ANDIW W:$rn, AArch64Base_ANDIW_immWSizeAsInt32:$immWSize)>;
 
 
@@ -51344,7 +51344,7 @@ def : Pat<(and X:$rn, AArch64Base_ANDIX_immXSizeAsInt64:$immXSize),
         (ANDIX X:$rn, AArch64Base_ANDIX_immXSizeAsInt64:$immXSize)>;
 
 
-def : Pat<(zext (and W:$rn, AArch64Base_ANDSIW_immWSizeAsInt32:$immWSize)),
+def : Pat<(and W:$rn, AArch64Base_ANDSIW_immWSizeAsInt32:$immWSize),
         (ANDSIW W:$rn, AArch64Base_ANDSIW_immWSizeAsInt32:$immWSize)>;
 
 
@@ -51352,19 +51352,19 @@ def : Pat<(and X:$rn, AArch64Base_ANDSIX_immXSizeAsInt64:$immXSize),
         (ANDSIX X:$rn, AArch64Base_ANDSIX_immXSizeAsInt64:$immXSize)>;
 
 
-def : Pat<(zext (and W:$rn, W:$rm)),
+def : Pat<(and W:$rn, W:$rm),
         (ANDSW W:$rn, W:$rm)>;
 
 
-def : Pat<(zext (and W:$rn, (sra W:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6))),
+def : Pat<(and W:$rn, (sra W:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6)),
         (ANDSWASR W:$rn, W:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (and W:$rn, (shl W:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6))),
+def : Pat<(and W:$rn, (shl W:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6)),
         (ANDSWLSL W:$rn, W:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (and W:$rn, (srl W:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6))),
+def : Pat<(and W:$rn, (srl W:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6)),
         (ANDSWLSR W:$rn, W:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6)>;
 
 
@@ -51384,19 +51384,19 @@ def : Pat<(and X:$rn, (srl X:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6)),
         (ANDSXLSR X:$rn, X:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (and W:$rn, W:$rm)),
+def : Pat<(and W:$rn, W:$rm),
         (ANDW W:$rn, W:$rm)>;
 
 
-def : Pat<(zext (and W:$rn, (sra W:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6))),
+def : Pat<(and W:$rn, (sra W:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6)),
         (ANDWASR W:$rn, W:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (and W:$rn, (shl W:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6))),
+def : Pat<(and W:$rn, (shl W:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6)),
         (ANDWLSL W:$rn, W:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (and W:$rn, (srl W:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6))),
+def : Pat<(and W:$rn, (srl W:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6)),
         (ANDWLSR W:$rn, W:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6)>;
 
 
@@ -51416,7 +51416,7 @@ def : Pat<(and X:$rn, (srl X:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6)),
         (ANDXLSR X:$rn, X:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (sra W:$rn, W:$rm)),
+def : Pat<(sra W:$rn, W:$rm),
         (ASRW W:$rn, W:$rm)>;
 
 
@@ -51436,7 +51436,7 @@ def : Pat<(br bb:$offset),
         (B_NV bb:$offset)>;
 
 
-def : Pat<(zext (xor W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize)),
+def : Pat<(xor W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize),
         (EORIW W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize)>;
 
 
@@ -51444,19 +51444,19 @@ def : Pat<(xor X:$rn, AArch64Base_EORIX_immXSizeAsInt64:$immXSize),
         (EORIX X:$rn, AArch64Base_EORIX_immXSizeAsInt64:$immXSize)>;
 
 
-def : Pat<(zext (xor W:$rn, W:$rm)),
+def : Pat<(xor W:$rn, W:$rm),
         (EORW W:$rn, W:$rm)>;
 
 
-def : Pat<(zext (xor W:$rn, (sra W:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6))),
+def : Pat<(xor W:$rn, (sra W:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6)),
         (EORWASR W:$rn, W:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (xor W:$rn, (shl W:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6))),
+def : Pat<(xor W:$rn, (shl W:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6)),
         (EORWLSL W:$rn, W:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (xor W:$rn, (srl W:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6))),
+def : Pat<(xor W:$rn, (srl W:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6)),
         (EORWLSR W:$rn, W:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6)>;
 
 
@@ -51716,7 +51716,7 @@ def : Pat<(load AddrFI:$rn),
         (LDURX AddrFI:$rn, (i64 0))>;
 
 
-def : Pat<(zext (shl W:$rn, W:$rm)),
+def : Pat<(shl W:$rn, W:$rm),
         (LSLW W:$rn, W:$rm)>;
 
 
@@ -51724,7 +51724,7 @@ def : Pat<(shl X:$rn, X:$rm),
         (LSLX X:$rn, X:$rm)>;
 
 
-def : Pat<(zext (srl W:$rn, W:$rm)),
+def : Pat<(srl W:$rn, W:$rm),
         (LSRW W:$rn, W:$rm)>;
 
 
@@ -51732,7 +51732,7 @@ def : Pat<(srl X:$rn, X:$rm),
         (LSRX X:$rn, X:$rm)>;
 
 
-def : Pat<(zext (add W:$ra, (mul W:$rn, W:$rm))),
+def : Pat<(add W:$ra, (mul W:$rn, W:$rm)),
         (MADDW W:$ra, W:$rn, W:$rm)>;
 
 
@@ -51742,6 +51742,10 @@ def : Pat<(add X:$ra, (mul X:$rn, X:$rm)),
 
 def : Pat<(zext AArch64Base_MOVZWPos00_imm16AsInt16:$imm16),
         (MOVZWPos00 AArch64Base_MOVZWPos00_imm16AsInt16:$imm16)>;
+
+
+def : Pat<(shl (zext AArch64Base_MOVZWPos16_imm16AsInt16:$imm16), (i64 16)),
+        (MOVZWPos16 AArch64Base_MOVZWPos16_imm16AsInt16:$imm16)>;
 
 
 def : Pat<(zext AArch64Base_MOVZXPos00_imm16AsInt16:$imm16),
@@ -51760,7 +51764,7 @@ def : Pat<(shl (zext AArch64Base_MOVZXPos48_imm16AsInt16:$imm16), (i64 48)),
         (MOVZXPos48 AArch64Base_MOVZXPos48_imm16AsInt16:$imm16)>;
 
 
-def : Pat<(zext (sub W:$ra, (mul W:$rn, W:$rm))),
+def : Pat<(sub W:$ra, (mul W:$rn, W:$rm)),
         (MSUBW W:$ra, W:$rn, W:$rm)>;
 
 
@@ -51768,7 +51772,7 @@ def : Pat<(sub X:$ra, (mul X:$rn, X:$rm)),
         (MSUBX X:$ra, X:$rn, X:$rm)>;
 
 
-def : Pat<(zext (or W:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize)),
+def : Pat<(or W:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize),
         (ORRIW W:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize)>;
 
 
@@ -51776,19 +51780,19 @@ def : Pat<(or X:$rn, AArch64Base_ORRIX_immXSizeAsInt64:$immXSize),
         (ORRIX X:$rn, AArch64Base_ORRIX_immXSizeAsInt64:$immXSize)>;
 
 
-def : Pat<(zext (or W:$rn, W:$rm)),
+def : Pat<(or W:$rn, W:$rm),
         (ORRW W:$rn, W:$rm)>;
 
 
-def : Pat<(zext (or W:$rn, (sra W:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6))),
+def : Pat<(or W:$rn, (sra W:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6)),
         (ORRWASR W:$rn, W:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (or W:$rn, (shl W:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6))),
+def : Pat<(or W:$rn, (shl W:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6)),
         (ORRWLSL W:$rn, W:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (or W:$rn, (srl W:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6))),
+def : Pat<(or W:$rn, (srl W:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6)),
         (ORRWLSR W:$rn, W:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6)>;
 
 
@@ -51808,7 +51812,7 @@ def : Pat<(or X:$rn, (srl X:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6)),
         (ORRXLSR X:$rn, X:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (sra (shl W:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize), AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize)),
+def : Pat<(sra (shl W:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize), AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize),
         (SBFMW W:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize)>;
 
 
@@ -51816,7 +51820,7 @@ def : Pat<(sra (shl X:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize), AArch6
         (SBFMX X:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize)>;
 
 
-def : Pat<(zext (sdiv W:$rn, W:$rm)),
+def : Pat<(sdiv W:$rn, W:$rm),
         (SDIVW W:$rm, W:$rn)>;
 
 
@@ -51914,35 +51918,35 @@ def : Pat<(store X:$rt, AddrFI:$rn),
         (STURX AddrFI:$rn, X:$rt, (i64 0))>;
 
 
-def : Pat<(zext (sub W:$rn, W:$rm)),
+def : Pat<(sub W:$rn, W:$rm),
         (SUBW W:$rn, W:$rm)>;
 
 
-def : Pat<(zext (sub W:$rn, (sra W:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6))),
+def : Pat<(sub W:$rn, (sra W:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6)),
         (SUBWASR W:$rn, W:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (sub W:$rn, (shl W:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6))),
+def : Pat<(sub W:$rn, (shl W:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6)),
         (SUBWLSL W:$rn, W:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (sub W:$rn, (srl W:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6))),
+def : Pat<(sub W:$rn, (srl W:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6)),
         (SUBWLSR W:$rn, W:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (sub W:$rn, W:$rm)),
+def : Pat<(sub W:$rn, W:$rm),
         (SUBWS W:$rn, W:$rm)>;
 
 
-def : Pat<(zext (sub W:$rn, (sra W:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6))),
+def : Pat<(sub W:$rn, (sra W:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6)),
         (SUBWSASR W:$rn, W:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (sub W:$rn, (shl W:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6))),
+def : Pat<(sub W:$rn, (shl W:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6)),
         (SUBWSLSL W:$rn, W:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6)>;
 
 
-def : Pat<(zext (sub W:$rn, (srl W:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6))),
+def : Pat<(sub W:$rn, (srl W:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6)),
         (SUBWSLSR W:$rn, W:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6)>;
 
 
@@ -52026,7 +52030,7 @@ def : Pat<(sub S:$rn, X:$rm),
         (SUBXUXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(zext (srl (shl W:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize), AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize)),
+def : Pat<(srl (shl W:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize), AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize),
         (UBFMW W:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize)>;
 
 
@@ -52034,7 +52038,7 @@ def : Pat<(srl (shl X:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize), AArch6
         (UBFMX X:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize)>;
 
 
-def : Pat<(zext (udiv W:$rn, W:$rm)),
+def : Pat<(udiv W:$rn, W:$rm),
         (UDIVW W:$rm, W:$rn)>;
 
 

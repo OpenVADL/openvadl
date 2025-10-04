@@ -531,7 +531,7 @@ public class LcbNodeReplacementHandler {
 
       if (readRegTensorNode.hasConstantAddress()) {
         var address = (ConstantNode) readRegTensorNode.address();
-        var constraint = Arrays.stream(readRegTensorNode.regTensor().constraints())
+        var constraint = readRegTensorNode.regTensor().constraints().stream()
             .filter(c -> c.indices().getFirst().equals(address.constant()))
             .findFirst();
 

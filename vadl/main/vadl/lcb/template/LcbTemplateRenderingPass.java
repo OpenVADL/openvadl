@@ -24,6 +24,7 @@ import java.util.function.Predicate;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.template.AbstractTemplateRenderingPass;
+import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.RegisterTensor;
 
 /**
@@ -38,8 +39,8 @@ public abstract class LcbTemplateRenderingPass extends AbstractTemplateRendering
     return (LcbConfiguration) configuration();
   }
 
-  protected String renderRegister(RegisterTensor registerFile, int addr) {
-    return registerFile.identifier.simpleName() + addr;
+  protected String renderRegister(GeneratesRegisterFileName registerFile, int addr) {
+    return registerFile.generateRegisterFileName(addr);
   }
 
   @Override

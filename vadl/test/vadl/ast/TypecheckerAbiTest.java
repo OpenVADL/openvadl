@@ -393,7 +393,8 @@ public class TypecheckerAbiTest {
     var typechecker = new TypeChecker();
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No RETURN_VALUE registers were declared but one was expected",
+    Assertions.assertEquals(
+        "Zero RETURN_VALUE registers were declared but at least one was expected",
         throwable.reason);
   }
 

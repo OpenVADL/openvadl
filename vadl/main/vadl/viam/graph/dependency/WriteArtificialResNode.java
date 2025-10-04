@@ -20,6 +20,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.ArtificialResource;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
@@ -84,6 +85,11 @@ public class WriteArtificialResNode extends WriteResourceNode implements WritesR
   @Override
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public RegisterResource registerResource() {
+    return resource;
   }
 
   @Override

@@ -30,6 +30,7 @@ import vadl.template.AbstractMultiTemplateRenderingPass;
 import vadl.utils.Pair;
 import vadl.utils.codegen.CodeGeneratorAppendable;
 import vadl.utils.codegen.StringBuilderAppendable;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
@@ -157,7 +158,8 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
     });
   }
 
-  private String genInitConstraintCheck(RegisterTensor reg, RegisterTensor.Constraint constraint) {
+  private String genInitConstraintCheck(RegisterTensor reg,
+                                        RegisterResource.Constraint constraint) {
     return Streams.zip(constraint.indices().stream(),
             reg.indexDimensions().stream().limit(constraint.indices().size()),
             (index, dimension) -> "d" + dimension.index() + " == " + index.intValue())

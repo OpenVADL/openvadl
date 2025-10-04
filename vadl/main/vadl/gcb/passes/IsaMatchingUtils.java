@@ -45,6 +45,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.matching.Matcher;
@@ -110,16 +111,28 @@ public interface IsaMatchingUtils {
   /**
    * Find register-registers instructions when it matches one of the given
    * {@link BuiltInTable.BuiltIn}.
-   * Also, it must only write one register result.
+   * Also, it must only write one register result. Multiple builtins can exist in the behavior.
    */
-  default boolean findRR(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
+  default boolean weakFindRR(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
         new BuiltInMatcher(builtins, List.of(
             new AnyChildMatcher(new AnyReadRegisterFileMatcher()),
             new AnyChildMatcher(new AnyReadRegisterFileMatcher())
         )));
 
-    return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior) && noPcAccess(behavior);
+    return !matched.isEmpty()
+        && writesExactlyOneRegisterClass(behavior)
+        && noPcAccess(behavior);
+  }
+
+  /**
+   * Find register-registers instructions when it matches one of the given
+   * {@link BuiltInTable.BuiltIn}.
+   * Also, it must only write one register result and only one builtin must exist in the behavior.
+   */
+  default boolean findRR(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
+    return weakFindRR(behavior, builtins)
+        && behavior.getNodes(BuiltInCall.class).count() == 1;
   }
 
   /**
@@ -199,19 +212,25 @@ public interface IsaMatchingUtils {
   default boolean writesExactlyOneRegisterClass(UninlinedGraph graph) {
     var writesRegFiles = graph.getNodes(WriteRegTensorNode.class)
         .filter(w -> w.regTensor().isRegisterFile()).toList();
+    var writeArtificialRegFile = graph.getNodes(WriteArtificialResNode.class)
+        .filter(WriteArtificialResNode::hasRegisterFile).toList();
+
     var writesReg = graph.getNodes(WriteRegTensorNode.class)
         .filter(w -> w.regTensor().isSingleRegister()).toList();
     var writesMem = graph.getNodes(WriteMemNode.class).toList();
     var readMem = graph.getNodes(ReadMemNode.class).toList();
 
-    if (writesRegFiles.size() != 1
-        || !writesReg.isEmpty()
+    if (!writesReg.isEmpty()
         || !writesMem.isEmpty()
         || !readMem.isEmpty()) {
       return false;
     }
 
-    return true;
+    if (writeArtificialRegFile.size() == 1 && writesRegFiles.isEmpty()) {
+      return true;
+    }
+
+    return writeArtificialRegFile.isEmpty() && writesRegFiles.size() == 1;
   }
 
   /**
@@ -221,19 +240,28 @@ public interface IsaMatchingUtils {
   default boolean writesExactlyOneRegisterClassWithType(UninlinedGraph graph, Type resultType) {
     var writesRegFiles = graph.getNodes(WriteRegTensorNode.class)
         .filter(w -> w.regTensor().isRegisterFile()).toList();
+    var writeArtificialRegFile = graph.getNodes(WriteArtificialResNode.class)
+        .filter(w -> w.resourceDefinition().isRegisterFile()).toList();
     var writesReg = graph.getNodes(WriteRegTensorNode.class)
         .filter(w -> w.regTensor().isSingleRegister()).toList();
     var writesMem = graph.getNodes(WriteMemNode.class).toList();
     var readMem = graph.getNodes(ReadMemNode.class).toList();
 
-    if (writesRegFiles.size() != 1
-        || !writesReg.isEmpty()
+    if (!writesReg.isEmpty()
         || !writesMem.isEmpty()
         || !readMem.isEmpty()) {
       return false;
     }
 
-    return writesRegFiles.get(0).regTensor().resultType() == resultType;
+    if (!writesRegFiles.isEmpty()) {
+      return writesRegFiles.get(0).regTensor().resultType() == resultType;
+    }
+
+    if (!writeArtificialRegFile.isEmpty()) {
+      return writeArtificialRegFile.get(0).resourceDefinition().resultType() == resultType;
+    }
+
+    return false;
   }
 
   /**

@@ -192,7 +192,7 @@ public class DetermineRegisterUsesAndDefsPass extends Pass {
   private static boolean isRegister(WriteResourceNode node, RegisterTensor tensor) {
     var allAddressesConstant = node.indices().stream()
         .allMatch(ExpressionNode::isConstant);
-    var noConstraints = tensor.constraints().length == 0;
+    var noConstraints = tensor.constraints().isEmpty();
     var noPc = true;
 
     if (node instanceof WriteRegTensorNode tensorNode) {

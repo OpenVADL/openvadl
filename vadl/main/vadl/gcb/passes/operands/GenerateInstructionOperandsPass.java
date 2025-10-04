@@ -22,7 +22,6 @@ import static vadl.viam.ViamError.ensurePresent;
 import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -380,7 +379,7 @@ public class GenerateInstructionOperandsPass extends Pass {
       // The register file has a constant as address.
       // This is ok as long as the value of the register file at the address is also constant.
       // For example, the X0 register in RISC-V which always has a constant value.
-      var constraints = Arrays.stream(node.regTensor().constraints()).toList();
+      var constraints = node.regTensor().constraints();
       var constraintValue = constraints.stream()
           .filter(
               x -> x.indices().getFirst().intValue() == constantNode.constant().asVal().intValue())
@@ -416,7 +415,7 @@ public class GenerateInstructionOperandsPass extends Pass {
       // The register file has a constant as address.
       // This is ok as long as the value of the register file at the address is also constant.
       // For example, the X0 register in RISC-V which always has a constant value.
-      var constraints = Arrays.stream(tensor.constraints()).toList();
+      var constraints = tensor.constraints();
       var constraintValue = constraints.stream()
           .filter(
               x -> x.indices().getFirst().intValue() == constantNode.constant().asVal().intValue())
@@ -558,8 +557,8 @@ public class GenerateInstructionOperandsPass extends Pass {
                         var cast = (HasRegisterTensor) node;
 
                         var constraintValue =
-                            Arrays.stream(cast.registerTensor().constraints()).filter(
-                                c -> c.indices().getFirst().intValue()
+                            cast.registerTensor().constraints().stream()
+                                .filter(c -> c.indices().getFirst().intValue()
                                     == constantNode.constant().asVal().intValue()).findFirst();
 
                         if (constraintValue.isEmpty()) {
@@ -581,7 +580,7 @@ public class GenerateInstructionOperandsPass extends Pass {
                           && writeRegTensorNode.regTensor().isRegisterFile()
                           && writeRegTensorNode.hasConstantAddress()
                           // Check if there is a constraint for this register index.
-                          && Arrays.stream(writeRegTensorNode.regTensor().constraints())
+                          && writeRegTensorNode.regTensor().constraints().stream()
                           .anyMatch(constraint -> constraint.indices().getFirst().intValue()
                               == constantNode.constant().asVal().intValue()))
                       .forEach(Node::safeDelete);

@@ -33,9 +33,42 @@ application binary interface ABI for AArch64Temp = {
    pointer align = 64
 
 
-   alias register A_SP = S(31)
-   alias register A_LR = S(30)
+   alias register A_SP = SP
+   alias register A_LR = LR
    alias register A_FP = X(29)
+
+   alias register S0 = S(0)
+   alias register S1 = S(1)
+   alias register S2 = S(2)
+   alias register S3 = S(3)
+   alias register S4 = S(4)
+   alias register S5 = S(5)
+   alias register S6 = S(6)
+   alias register S7 = S(7)
+   alias register S8 = S(8)
+   alias register S9 = S(9)
+   alias register S10 = S(10)
+   alias register S11 = S(11)
+   alias register S12 = S(12)
+   alias register S13 = S(13)
+   alias register S14 = S(14)
+   alias register S15 = S(15)
+   alias register S16 = S(16)
+   alias register S17 = S(17)
+   alias register S18 = S(18)
+   alias register S19 = S(19)
+   alias register S20 = S(20)
+   alias register S21 = S(21)
+   alias register S22 = S(22)
+   alias register S23 = S(23)
+   alias register S24 = S(24)
+   alias register S25 = S(25)
+   alias register S26 = S(26)
+   alias register S27 = S(27)
+   alias register S28 = S(28)
+   alias register S29 = S(29)
+   alias register S30 = S(30)
+   alias register S31 = S(31)
 
    alias register X0 = X(0)
    alias register X1 = X(1)
@@ -70,6 +103,39 @@ application binary interface ABI for AArch64Temp = {
    // alias register X30 = X(30)
    // alias register X31 = X(31)
 
+   alias register W0 = W(0)
+   alias register W1 = W(1)
+   alias register W2 = W(2)
+   alias register W3 = W(3)
+   alias register W4 = W(4)
+   alias register W5 = W(5)
+   alias register W6 = W(6)
+   alias register W7 = W(7)
+   alias register W8 = W(8)
+   alias register W9 = W(9)
+   alias register W10 = W(10)
+   alias register W11 = W(11)
+   alias register W12 = W(12)
+   alias register W13 = W(13)
+   alias register W14 = W(14)
+   alias register W15 = W(15)
+   alias register W16 = W(16)
+   alias register W17 = W(17)
+   alias register W18 = W(18)
+   alias register W19 = W(19)
+   alias register W20 = W(20)
+   alias register W21 = W(21)
+   alias register W22 = W(22)
+   alias register W23 = W(23)
+   alias register W24 = W(24)
+   alias register W25 = W(25)
+   alias register W26 = W(26)
+   alias register W27 = W(27)
+   alias register W28 = W(28)
+   alias register W29 = W(29)
+   alias register W30 = W(30)
+   alias register W31 = W(31)
+
    // [ alignment : HalfWord ]
    stack pointer = A_SP
    return address = A_LR
@@ -81,26 +147,29 @@ application binary interface ABI for AArch64Temp = {
    special absolute address load instruction = PLDR
 
    function argument = X{0..7}
-   return value = X{0..1}
+   return value = X{0..1} // 64 bits
+   return value = W{0..1} // 32 bits
 
-   caller saved = [ X{9..15} ]
-   callee saved = [ A_LR, X{19..28} ]
+   // It's important that these are "S" registers because they are used for the order
+   // in the register class.
+   caller saved = [ S{9..15} ]
+   callee saved = [ A_LR, A_FP, S{19..28} ]
 
    constant sequence(rd: Bits<5>, val: UInt<32>) =
    {
-     MOVZWPos00 { rd = rd, imm16 = (val & 0xFFFF) as Bits<16> }
-     MOVKWPos16 { rd = rd, imm16 = ((val >> 16) & 0xFFFF) as Bits<16> }
+     MOVZXPos00 { rd = rd, imm16 = (val & 0xFFFF) as Bits<16> }
+     MOVKXPos16 { rd = rd, imm16 = ((val >> 16) & 0xFFFF) as Bits<16> }
    }
 
    [ only negative ] // val becomes automatically positive
    constant sequence(rd: Bits<5>, val: SInt<32>) =
    {
-      MOVZWPos00 { rd = rd, imm16 = (val & 0xFFFF) as Bits<16> }
-      MOVKWPos16 { rd = rd, imm16 = ((val >> 16) & 0xFFFF) as Bits<16> }
-      SUBW { rd = rd, rn = 31, rm = rd }
+      MOVZXPos00 { rd = rd, imm16 = (val & 0xFFFF) as Bits<16> }
+      MOVKXPos16 { rd = rd, imm16 = ((val >> 16) & 0xFFFF) as Bits<16> }
+      SUBX { rd = rd, rn = 31, rm = rd }
    }
 
-   /*
+  /*
    register adjustment sequence( rd : Bits<5>, rs1: Bits<5>, imm : SInt<12> ) =
    {
 

@@ -210,11 +210,11 @@ public class Abi extends Definition {
    *                     E.g., RISC-V's X11 would have {@code addr = 11}.
    * @param alignment    for the spilling of the register.
    */
-  public record RegisterRef(RegisterTensor registerFile,
+  public record RegisterRef(RegisterResource registerFile,
                             int addr,
                             Alignment alignment) {
     public String render() {
-      return registerFile.identifier.simpleName() + addr;
+      return registerFile.generateRegisterFileName(addr);
     }
   }
 
@@ -232,11 +232,11 @@ public class Abi extends Definition {
   private final Optional<RegisterRef> threadPointer;
 
 
-  private final Map<Pair<RegisterTensor, Integer>, List<RegisterAlias>> aliases;
+  private final Map<Pair<RegisterResource, Integer>, List<RegisterAlias>> aliases;
   private final List<RegisterRef> callerSaved;
   private final List<RegisterRef> calleeSaved;
   private final List<RegisterRef> argumentRegisters;
-  private final List<RegisterRef> returnRegisters;
+  private final List<List<RegisterRef>> returnRegisters;
   private final PrintableInstruction returnSequence;
   private final PrintableInstruction callSequence;
   private final Optional<PrintableInstruction> localAddressLoad;
@@ -265,11 +265,11 @@ public class Abi extends Definition {
              RegisterRef framePointer,
              Optional<RegisterRef> globalPointer,
              Optional<RegisterRef> threadPointer,
-             Map<Pair<RegisterTensor, Integer>, List<RegisterAlias>> aliases,
+             Map<Pair<RegisterResource, Integer>, List<RegisterAlias>> aliases,
              List<RegisterRef> callerSaved,
              List<RegisterRef> calleeSaved,
              List<RegisterRef> argumentRegisters,
-             List<RegisterRef> returnRegisters,
+             List<List<RegisterRef>> returnRegisters,
              PrintableInstruction returnSequence,
              PrintableInstruction callSequence,
              Optional<PrintableInstruction> localAddressLoad,
@@ -332,7 +332,7 @@ public class Abi extends Definition {
     return threadPointer;
   }
 
-  public Map<Pair<RegisterTensor, Integer>, List<RegisterAlias>> aliases() {
+  public Map<Pair<RegisterResource, Integer>, List<RegisterAlias>> aliases() {
     return aliases;
   }
 
@@ -348,7 +348,7 @@ public class Abi extends Definition {
     return argumentRegisters;
   }
 
-  public List<RegisterRef> returnRegisters() {
+  public List<List<RegisterRef>> returnRegisters() {
     return returnRegisters;
   }
 

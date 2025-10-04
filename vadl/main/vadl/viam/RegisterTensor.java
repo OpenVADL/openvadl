@@ -17,11 +17,7 @@
 package vadl.viam;
 
 import com.google.common.collect.Streams;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.BitsType;
@@ -48,8 +44,7 @@ import vadl.types.Type;
  * E.g. {@code register X: Bits<5> -> Bits<64>} has dimensions
  * {@code { (Bits<5>, 32), (Bits<6>, 64)}}.</p>
  */
-public class RegisterTensor extends Resource implements GeneratesRegisterFileName {
-
+public class RegisterTensor extends RegisterResource {
   /**
    * A dimension in a {@link RegisterTensor} consists of an index type and a size.
    * The type defines the required size to access an element of the next inner dimension;
@@ -78,7 +73,6 @@ public class RegisterTensor extends Resource implements GeneratesRegisterFileNam
   }
 
   private final List<Dimension> dimensions;
-  private final List<Constraint> constraints;
 
   /**
    * Constructs the register tensor.
@@ -87,7 +81,6 @@ public class RegisterTensor extends Resource implements GeneratesRegisterFileNam
                         List<Dimension> dimensions) {
     super(identifier);
     this.dimensions = dimensions;
-    this.constraints = new ArrayList<>();
   }
 
   public int dimCount() {
@@ -98,6 +91,7 @@ public class RegisterTensor extends Resource implements GeneratesRegisterFileNam
    * The dimensions of this register tensor.
    * The outermost dimension is at the start, the innermost at the end of the list.
    */
+  @Override
   public List<Dimension> dimensions() {
     return dimensions;
   }
@@ -134,21 +128,6 @@ public class RegisterTensor extends Resource implements GeneratesRegisterFileNam
 
   public Dimension innermostDim() {
     return dimensions.getLast();
-  }
-
-  // TODO: Refactor this to return a list instead of an array
-  @Override
-  public Constraint[] constraints() {
-    return constraints.toArray(new Constraint[0]);
-  }
-
-  public void setConstraints(Constraint... constraints) {
-    this.constraints.clear();
-    this.constraints.addAll(Arrays.asList(constraints));
-  }
-
-  public void addConstraint(Constraint constraint) {
-    constraints.add(constraint);
   }
 
   @Override
@@ -217,16 +196,6 @@ public class RegisterTensor extends Resource implements GeneratesRegisterFileNam
     return ConcreteRelationType.concreteRelation(args, result);
   }
 
-  /**
-   * Return the address of a zero register if it exists.
-   */
-  public Optional<List<Constant.Value>> zeroRegister() {
-    return Arrays.stream(constraints())
-        .filter(c -> c.value().intValue() == 0)
-        .map(c -> c.indices)
-        .findFirst();
-  }
-
   @Override
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
@@ -235,11 +204,11 @@ public class RegisterTensor extends Resource implements GeneratesRegisterFileNam
   @Override
   public void verify() {
     super.verify();
-    for (Constraint constraint : constraints) {
-      ensureMatchingIndexTypes(constraint.indices.stream().map(Constant.Value::type).toList());
-      ensure(constraint.value.type().isTrivialCastTo(resultType(constraint.indices().size())),
+    for (Constraint constraint : constraints()) {
+      ensureMatchingIndexTypes(constraint.indices().stream().map(Constant.Value::type).toList());
+      ensure(constraint.value().type().isTrivialCastTo(resultType(constraint.indices().size())),
           "Type mismatch: Can't cast constraint value type %s to register tensor result type %s.",
-          constraint.value.type(), this.resultType());
+          constraint.value().type(), this.resultType());
     }
   }
 
@@ -263,27 +232,5 @@ public class RegisterTensor extends Resource implements GeneratesRegisterFileNam
   public String toString() {
     var indices = dimensions.stream().map(d -> "<" + d.size() + ">").collect(Collectors.joining());
     return "register " + simpleName() + ": Bits" + indices;
-  }
-
-  /**
-   * A register file constraint that statically defines the result value for a specific
-   * index.
-   *
-   * <p>For example<pre>
-   *  {@code
-   * [X(0) = 0]
-   * register file X: Index -> Regs
-   * }
-   * </pre>
-   * defines that the address 0 always results in 0 on register file X.
-   * </p>
-   *
-   * @param indices of constraint
-   * @param value   of constraint
-   */
-  public record Constraint(
-      List<Constant.Value> indices,
-      Constant.Value value
-  ) {
   }
 }

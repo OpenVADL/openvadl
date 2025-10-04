@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
 import vadl.viam.Counter;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.NodeList;
@@ -156,6 +157,11 @@ public class ReadRegTensorNode extends ReadResourceNode implements ReadsRegister
     super.collectData(collection);
     collection.add(regTensor);
     collection.add(staticCounterAccess);
+  }
+
+  @Override
+  public RegisterResource registerResource() {
+    return registerTensor();
   }
 
   @Override

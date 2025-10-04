@@ -330,7 +330,7 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
   private static String zeroRegister(GeneratesRegisterFileName registerFile) {
     var constraint =
         ensurePresent(
-            Arrays.stream(registerFile.constraints()).filter(x -> x.value().intValue() == 0)
+            registerFile.constraints().stream().filter(x -> x.value().intValue() == 0)
                 .findFirst(),
             () -> Diagnostic.error("There must a constraint for the zero register.",
                 registerFile.location())

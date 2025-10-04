@@ -44,6 +44,7 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Abi;
+import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
@@ -72,8 +73,8 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     /**
      * Constructs a new RegisterFile object.
      **/
-    public LlvmRegisterFile(RegisterTensor registerFile) {
-      super(registerFile.identifier,
+    public LlvmRegisterFile(GeneratesRegisterFileName registerFile) {
+      super(registerFile.identifier(),
           registerFile.dimensions());
       for (var c : registerFile.constraints()) {
         addConstraint(c);

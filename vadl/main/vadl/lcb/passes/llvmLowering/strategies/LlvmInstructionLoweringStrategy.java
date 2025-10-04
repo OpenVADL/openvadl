@@ -716,7 +716,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       // The register file has a constant as address.
       // This is ok as long as the value of the register file at the address is also constant.
       // For example, the X0 register in RISC-V which always has a constant value.
-      var constraints = Arrays.stream(node.regTensor().constraints()).toList();
+      var constraints = node.regTensor().constraints();
       var constraintValue = constraints.stream()
           .filter(
               x -> x.indices().getFirst().intValue() == constantNode.constant().asVal().intValue())

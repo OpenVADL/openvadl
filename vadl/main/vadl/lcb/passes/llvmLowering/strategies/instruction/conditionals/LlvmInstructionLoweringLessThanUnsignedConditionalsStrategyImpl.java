@@ -19,7 +19,6 @@ package vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -301,7 +300,7 @@ public class LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl
 
               var zeroConstraint =
                   ensurePresent(
-                      Arrays.stream(registerFile.constraints())
+                      registerFile.constraints().stream()
                           .filter(x -> x.value().intValue() == 0)
                           .findFirst(),
                       () -> Diagnostic.error("Cannot find zero register for register file",

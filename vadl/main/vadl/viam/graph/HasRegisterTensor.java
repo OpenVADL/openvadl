@@ -16,7 +16,8 @@
 
 package vadl.viam.graph;
 
-import vadl.types.DataType;
+import vadl.viam.ArtificialResource;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.dependency.ExpressionNode;
 
@@ -25,7 +26,12 @@ import vadl.viam.graph.dependency.ExpressionNode;
  */
 public interface HasRegisterTensor {
   /**
-   * Get register file.
+   * Get the {@link RegisterTensor} or the {@link ArtificialResource}.
+   */
+  RegisterResource registerResource();
+
+  /**
+   * Get the {@link RegisterTensor}, also when it is an {@link ArtificialResource}.
    */
   RegisterTensor registerTensor();
 

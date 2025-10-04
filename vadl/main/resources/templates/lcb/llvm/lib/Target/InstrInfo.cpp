@@ -147,6 +147,21 @@ void [(${namespace})]InstrInfo::copyPhysReg(MachineBasicBlock &MBB, MachineBasic
     }
   [/]
 
+  [# th:each="r : ${truncateInstructions}" ]
+   // It is flipped, destination becomes source
+   if (
+       [(${namespace})]::[(${r.destRegisterFile})]RegClass.contains( SrcReg )
+     ) {
+        BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction})] ) )
+           .addReg( DestReg, RegState::Define )
+           .addReg( SrcReg, getKillRegState( KillSrc ) )
+           .addReg( [(${namespace})]::[(${r.zeroRegister})])
+           ;
+
+        return; // success
+     }
+  [/]
+
   llvm_unreachable("Can't copy source to destination register");
 }
 
@@ -170,7 +185,7 @@ void [(${namespace})]InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB, Mach
     MFI.getObjectSize(FrameIndex), MFI.getObjectAlign(FrameIndex));
 
     [# th:each="r : ${storeStackSlotInstructions}" ]
-      if ( [(${namespace})]::[(${r.destRegisterFile})]RegClass.hasSubClassEq(RC) )
+      if ( [(${namespace})]::[(${r.srcRegisterFile})]RegClass.hasSubClassEq(RC) )
       {
           BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction})] ) )
               .addFrameIndex( FrameIndex )

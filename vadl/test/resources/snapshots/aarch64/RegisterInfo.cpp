@@ -45,7 +45,7 @@ BitVector processornamevalueRegisterInfo::getReservedRegs(const MachineFunction 
 {
 BitVector Reserved(getNumRegs());
 
-markSuperRegs(Reserved, processornamevalue::S29); // frame pointer
+markSuperRegs(Reserved, processornamevalue::X29); // frame pointer
 markSuperRegs(Reserved, processornamevalue::S31); // stack pointer
 
 
@@ -1660,7 +1660,7 @@ return true;
 Register processornamevalueRegisterInfo::getFrameRegister(const MachineFunction &MF) const
 {
 const TargetFrameLowering *TFI = getFrameLowering(MF);
-return TFI->hasFP(MF) ? processornamevalue::S29 /* FP */ : processornamevalue::S31 /* SP */;
+return TFI->hasFP(MF) ? processornamevalue::X29 /* FP */ : processornamevalue::S31 /* SP */;
 }
 
 const uint32_t * processornamevalueRegisterInfo::getCallPreservedMask(const MachineFunction & /*MF*/

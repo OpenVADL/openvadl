@@ -16,6 +16,7 @@
 
 package vadl.viam;
 
+import java.util.Collections;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ import vadl.types.DataType;
  * to check for 0 when accessing X. This is done using the readFunction and writeProcedure.
  * So in this case X would be turned into an artificial resource.
  */
-public class ArtificialResource extends Resource implements GeneratesRegisterFileName {
+public class ArtificialResource extends RegisterResource {
 
   /**
    * A hint what the artificial resources were created from.
@@ -51,7 +52,6 @@ public class ArtificialResource extends Resource implements GeneratesRegisterFil
   @Nullable
   private final Constant.BitSlice aliasSlice;
 
-
   /**
    * Constructs the artificial resource.
    *
@@ -61,7 +61,8 @@ public class ArtificialResource extends Resource implements GeneratesRegisterFil
                             Kind kind,
                             Resource innerResourceRef,
                             Function readFunction,
-                            Procedure writeProcedure, @Nullable Constant.BitSlice aliasSlice
+                            Procedure writeProcedure,
+                            @Nullable Constant.BitSlice aliasSlice
   ) {
     super(identifier);
     this.kind = kind;
@@ -94,6 +95,15 @@ public class ArtificialResource extends Resource implements GeneratesRegisterFil
   @Override
   public Identifier identifier() {
     return identifier;
+  }
+
+  @Override
+  public List<RegisterTensor.Dimension> dimensions() {
+    if (innerResourceRef instanceof RegisterTensor registerTensor) {
+      return registerTensor.dimensions();
+    }
+
+    return Collections.emptyList();
   }
 
   /**
@@ -152,15 +162,6 @@ public class ArtificialResource extends Resource implements GeneratesRegisterFil
   @Override
   public List<DataType> indexTypes() {
     return List.of(addressType());
-  }
-
-  @Override
-  public RegisterTensor.Constraint[] constraints() {
-    if (innerResourceRef instanceof RegisterTensor registerTensor) {
-      return registerTensor.constraints();
-    } else {
-      return new RegisterTensor.Constraint[0];
-    }
   }
 
   @Override

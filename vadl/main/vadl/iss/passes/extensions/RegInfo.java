@@ -151,7 +151,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
 
   private List<?> renderConstraints(List<?> dims) {
     // TODO: This is not generic and only works for 2-dimensional registers
-    return Arrays.stream(reg().constraints())
+    return reg().constraints().stream()
         .map(c -> {
 
           var check = new StringBuilder();
