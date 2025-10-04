@@ -41,7 +41,7 @@ public class IsaMachineInstructionMatchingRiscv64PassTest extends AbstractLcbTes
   private static Stream<Arguments> getExpectedMatchings() {
     return Stream.of(
         Arguments.of(List.of("ADD"), MachineInstructionLabel.ADD_64,
-            Optional.of(DataType.bits(64))),
+            Optional.empty()),
         Arguments.of(List.of("ADDI"), MachineInstructionLabel.ADDI_64,
             Optional.of(DataType.bits(64))),
         Arguments.of(List.of("BEQ"), MachineInstructionLabel.BEQ, Optional.empty()),
@@ -92,7 +92,8 @@ public class IsaMachineInstructionMatchingRiscv64PassTest extends AbstractLcbTes
             Optional.of(DataType.bits(64))),
         Arguments.of(List.of("LB", "LBU", "LD", "LH", "LHU", "LW", "LWU"),
             MachineInstructionLabel.LOAD_MEM_WITH_IMMEDIATE, Optional.of(DataType.bits(64))),
-        Arguments.of(List.of("SB", "SD", "SH", "SW"), MachineInstructionLabel.STORE_MEM_WITH_IMMEDIATE,
+        Arguments.of(List.of("SB", "SD", "SH", "SW"),
+            MachineInstructionLabel.STORE_MEM_WITH_IMMEDIATE,
             Optional.of(DataType.bits(64))),
         Arguments.of(List.of("JALR"), MachineInstructionLabel.JALR,
             Optional.of(DataType.bits(64))),
