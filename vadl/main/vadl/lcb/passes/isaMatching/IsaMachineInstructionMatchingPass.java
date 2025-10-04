@@ -198,9 +198,11 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       if (findLui(behavior)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LUI, ty));
       } else if (findAdd32Bit(behavior)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADD_32, ty));
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.ADD_32, Optional.empty()));
       } else if (findAdd64Bit(behavior)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADD_64, ty));
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.ADD_64, Optional.empty()));
       } else if (findAddWithImmediate32Bit(behavior)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADDI_32, ty));
       } else if (findAddWithImmediate64Bit(behavior)) {
