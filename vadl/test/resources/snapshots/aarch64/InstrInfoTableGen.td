@@ -32372,7 +32372,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, X:$rt );
+let OutOperandList = ( outs S:$rn, W:$rt );
 let InOperandList = ( ins S:$rn_10, AArch64Base_LDRPreW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -32867,7 +32867,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs S:$rn, X:$rt );
+let OutOperandList = ( outs S:$rn, W:$rt );
 let InOperandList = ( ins S:$rn_23, AArch64Base_LDRPstW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -36281,7 +36281,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs X:$rt );
+let OutOperandList = ( outs W:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36340,7 +36340,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs X:$rt );
+let OutOperandList = ( outs W:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36399,7 +36399,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs X:$rt );
+let OutOperandList = ( outs W:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36458,7 +36458,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs X:$rt );
+let OutOperandList = ( outs W:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36517,7 +36517,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs X:$rt );
+let OutOperandList = ( outs W:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36576,7 +36576,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs X:$rt );
+let OutOperandList = ( outs W:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36635,7 +36635,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs X:$rt );
+let OutOperandList = ( outs W:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -36694,7 +36694,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs X:$rt );
+let OutOperandList = ( outs W:$rt );
 let InOperandList = ( ins S:$rn, X:$rm );
 
 field bits<32> Inst;
@@ -37490,7 +37490,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs X:$rt );
+let OutOperandList = ( outs W:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDRW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -37981,7 +37981,7 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
-let OutOperandList = ( outs X:$rt );
+let OutOperandList = ( outs W:$rt );
 let InOperandList = ( ins S:$rn, AArch64Base_LDURW_offsetAsInt64:$offset );
 
 field bits<32> Inst;
@@ -51555,10 +51555,10 @@ def : Pat<(sextloadi32 (add AddrFI:$rn, (shl AArch64Base_LDRSWX_offsetAsInt64:$o
         (LDRSWX AddrFI:$rn, AArch64Base_LDRSWX_offsetAsInt64:$offset)>;
 
 
-def : Pat<(zextloadi32 (add S:$rn, (shl AArch64Base_LDRW_offsetAsInt64:$offset, (i64 2)))),
+def : Pat<(load (add S:$rn, (shl AArch64Base_LDRW_offsetAsInt64:$offset, (i64 2)))),
         (LDRW S:$rn, AArch64Base_LDRW_offsetAsInt64:$offset)>;
 
-def : Pat<(zextloadi32 (add AddrFI:$rn, (shl AArch64Base_LDRW_offsetAsInt64:$offset, (i64 2)))),
+def : Pat<(load (add AddrFI:$rn, (shl AArch64Base_LDRW_offsetAsInt64:$offset, (i64 2)))),
         (LDRW AddrFI:$rn, AArch64Base_LDRW_offsetAsInt64:$offset)>;
 
 
@@ -51690,16 +51690,16 @@ def : Pat<(extloadi32 AddrFI:$rn),
         (LDURSWX AddrFI:$rn, (i64 0))>;
 
 
-def : Pat<(zextloadi32 (add S:$rn, AArch64Base_LDURW_offsetAsInt64:$offset)),
+def : Pat<(load (add S:$rn, AArch64Base_LDURW_offsetAsInt64:$offset)),
         (LDURW S:$rn, AArch64Base_LDURW_offsetAsInt64:$offset)>;
 
-def : Pat<(zextloadi32 (add AddrFI:$rn, AArch64Base_LDURW_offsetAsInt64:$offset)),
+def : Pat<(load (add AddrFI:$rn, AArch64Base_LDURW_offsetAsInt64:$offset)),
         (LDURW AddrFI:$rn, AArch64Base_LDURW_offsetAsInt64:$offset)>;
 
-def : Pat<(zextloadi32 S:$rn),
+def : Pat<(load S:$rn),
         (LDURW S:$rn, (i64 0))>;
 
-def : Pat<(zextloadi32 AddrFI:$rn),
+def : Pat<(load AddrFI:$rn),
         (LDURW AddrFI:$rn, (i64 0))>;
 
 
