@@ -19,6 +19,7 @@ package vadl.gcb.valuetypes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import vadl.viam.GeneratesRegisterFileName;
 
 /**
  * Extends the register with information which a compiler requires.
@@ -93,6 +94,7 @@ public abstract class CompilerRegister {
   protected final List<String> altNames;
   protected final List<CompilerRegister> subRegs;
   protected final List<SubRegIndex> subRegIndices;
+  protected final GeneratesRegisterFileName registerFile;
 
   protected final int dwarfNumber;
   protected final int hwEncodingValue;
@@ -106,7 +108,8 @@ public abstract class CompilerRegister {
                           List<String> altNames,
                           int dwarfNumber,
                           int hwEncodingValue,
-                          boolean isArtificial) {
+                          boolean isArtificial,
+                          GeneratesRegisterFileName registerFile) {
     this.name = name;
     this.asmName = asmName;
     this.altNames = altNames;
@@ -115,6 +118,7 @@ public abstract class CompilerRegister {
     this.subRegs = new ArrayList<>();
     this.subRegIndices = new ArrayList<>();
     this.isArtificial = isArtificial;
+    this.registerFile = registerFile;
   }
 
   public String name() {
@@ -147,6 +151,10 @@ public abstract class CompilerRegister {
 
   public List<SubRegIndex> subRegIndices() {
     return subRegIndices;
+  }
+
+  public GeneratesRegisterFileName registerFile() {
+    return registerFile;
   }
 
   /**

@@ -67,6 +67,9 @@ void [(${namespace})]TargetLowering::anchor() {}
     [#th:block th:if="${!mergedCmpAndBranch}"]
     setOperationAction(ISD::SELECT_CC, MVT::[(${stackPointerType})], Expand);
     [/th:block]
+    [#th:block th:if="${requiresTruncation}"]
+    setOperationAction(ISD::TRUNCATE, MVT::[(${truncation.dest})], Custom);
+    [/th:block]
 
     setBooleanContents(ZeroOrOneBooleanContent);
 
@@ -145,7 +148,6 @@ static SDValue lowerBR_CC(SDValue Op, SelectionDAG &DAG) {
 
 static SDValue lowerSelectcc(SDValue Op, SelectionDAG &DAG)
 {
-  Op->dump();
   SDValue LHS = Op.getOperand(0);
   SDValue RHS = Op.getOperand(1);
   auto TVal = Op.getOperand(2);
@@ -171,7 +173,6 @@ static SDValue lowerSelectcc(SDValue Op, SelectionDAG &DAG)
 
 static SDValue lowerSelect2(SDValue Op, SelectionDAG &DAG)
 {
-  Op->dump();
   SDValue Cond = Op.getOperand(0);
   SDValue LHS = Op.getOperand(1);
   SDValue RHS = Op.getOperand(2);
@@ -181,6 +182,25 @@ static SDValue lowerSelect2(SDValue Op, SelectionDAG &DAG)
   SDValue ConditionFlag = SDValue(Sub, 1);
 
   return SDValue(DAG.getMachineNode([(${namespace})]::[(${CSEL_EQ})], dl, MVT::[(${stackPointerType})], LHS, RHS, ConditionFlag), 0);
+}
+
+[/th:block]
+
+[#th:block th:if="${requiresTruncation}"]
+static SDValue lowerTruncate(SDValue Op, SelectionDAG &DAG)
+{
+  SDLoc DL(Op);
+
+  SDValue Src = Op.getOperand(0);
+  EVT SrcVT = Src.getValueType();
+  EVT DstVT = Op.getValueType();
+
+  if (SrcVT == MVT::[(${truncation.src})] && DstVT == MVT::[(${truncation.dest})]) {
+    unsigned SubIdx = llvm::[(${truncation.subIdx})];
+    return DAG.getTargetExtractSubreg(SubIdx, DL, DstVT, Src);
+  }
+
+  return SDValue();
 }
 
 [/th:block]
@@ -217,7 +237,10 @@ SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG 
     case ISD::SELECT:
       return lowerSelect(Op, DAG);
     [/th:block]
-
+    [#th:block th:if="${requiresTruncation}"]
+     case ISD::TRUNCATE:
+          return lowerTruncate(Op, DAG);
+    [/th:block]
     default : llvm_unreachable("unimplemented operand");
     }
 }

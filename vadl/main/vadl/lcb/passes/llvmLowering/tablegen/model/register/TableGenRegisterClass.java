@@ -23,19 +23,37 @@ import vadl.gcb.valuetypes.TargetName;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.template.Renderable;
 import vadl.viam.GeneratesRegisterFileName;
-import vadl.viam.RegisterTensor;
 
 /**
  * Represents a single register file in TableGen. This is the lowered representation of a
  * register file.
  */
-public record TableGenRegisterClass(TargetName namespace,
-                                    String name,
-                                    int alignment,
-                                    List<ValueType> regTypes,
-                                    List<TableGenRegister> registers,
-                                    GeneratesRegisterFileName registerFileRef) implements
+public class TableGenRegisterClass implements
     Renderable {
+  private final TargetName namespace;
+  private final String name;
+  private final int alignment;
+  private final List<ValueType> regTypes;
+  private final List<TableGenRegister> registers;
+  private final GeneratesRegisterFileName registerFileRef;
+
+  /**
+   *
+   */
+  public TableGenRegisterClass(TargetName namespace,
+                               String name,
+                               int alignment,
+                               List<ValueType> regTypes,
+                               List<TableGenRegister> registers,
+                               GeneratesRegisterFileName registerFileRef) {
+    this.namespace = namespace;
+    this.name = name;
+    this.alignment = alignment;
+    this.regTypes = regTypes;
+    this.registers = registers;
+    this.registerFileRef = registerFileRef;
+  }
+
   public String regTypesString() {
     return regTypes.stream().map(ValueType::getLlvmType).collect(Collectors.joining(", "));
   }
@@ -53,5 +71,25 @@ public record TableGenRegisterClass(TargetName namespace,
             "name", registerFileRef().identifier().simpleName()
         )
     );
+  }
+
+  public TargetName namespace() {
+    return namespace;
+  }
+
+  public String name() {
+    return name;
+  }
+
+  public int alignment() {
+    return alignment;
+  }
+
+  public List<TableGenRegister> registers() {
+    return registers;
+  }
+
+  public GeneratesRegisterFileName registerFileRef() {
+    return registerFileRef;
   }
 }
