@@ -16,24 +16,30 @@
 
 package vadl.lcb.passes.llvmLowering;
 
+import static vadl.error.Diagnostic.ensure;
+
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
+import vadl.error.Diagnostic;
 import vadl.gcb.passes.GenerateCompilerRegistersPass;
 import vadl.gcb.valuetypes.CompilerRegister;
 import vadl.gcb.valuetypes.CompilerRegisterClass;
 import vadl.gcb.valuetypes.IndexedCompilerRegister;
 import vadl.gcb.valuetypes.ValueType;
+import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenAliasRegisterClass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegister;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.viam.ArtificialResource;
 import vadl.viam.RegisterResource;
 import vadl.viam.Specification;
 
@@ -63,7 +69,7 @@ public class GenerateTableGenRegistersPass extends Pass {
    * Contains the output of the pass.
    */
   public record Output(List<TableGenRegisterClass> registerClasses,
-                       List<TableGenRegisterClass> aliasRegisterClasses,
+                       List<TableGenAliasRegisterClass> aliasRegisterClasses,
                        List<TableGenRegister> registers,
                        List<TableGenRegisterAlias> aliasRegisters,
                        List<LlvmConstraint> constraints) {
@@ -79,7 +85,7 @@ public class GenerateTableGenRegistersPass extends Pass {
     var compilerRegisterClasses = output.registerClasses();
 
     final var registerClasses = new ArrayList<TableGenRegisterClass>();
-    final var aliasRegisterClasses = new ArrayList<TableGenRegisterClass>();
+    final var aliasRegisterClasses = new ArrayList<TableGenAliasRegisterClass>();
     final var registers = new ArrayList<TableGenRegister>();
     final var aliasRegisters = new ArrayList<TableGenRegisterAlias>();
 
@@ -154,20 +160,59 @@ public class GenerateTableGenRegistersPass extends Pass {
 
       var type = ValueType.from(compilerRegisterClass.registerFile().resultType()).get();
 
+      ensure(compilerRegisterClass.registerFile() instanceof ArtificialResource,
+          () -> Diagnostic.error("This must be an alias.",
+              compilerRegisterClass.registerFile().location()));
+
       aliasRegisterClasses.add(
-          new TableGenRegisterClass(
+          new TableGenAliasRegisterClass(
               configuration.targetName(),
               compilerRegisterClass.name(),
               compilerRegisterClass.alignment().bitAlignment(),
               List.of(type),
               classRegisters,
-              compilerRegisterClass.registerFile())
+              (ArtificialResource) compilerRegisterClass.registerFile())
       );
     }
 
     var constraints = getConstraints(registerClasses);
-    return new Output(registerClasses, aliasRegisterClasses, registers, aliasRegisters,
+    var orderedRegisters = sortRegisters(registers);
+
+    nameSubRegisterIndices(orderedRegisters);
+
+    return new Output(registerClasses, aliasRegisterClasses, orderedRegisters, aliasRegisters,
         constraints);
+  }
+
+  private static void nameSubRegisterIndices(List<TableGenRegister> orderedRegisters) {
+    for (var register : orderedRegisters) {
+      var seen = new HashSet<String>();
+      for (var subRegIndex : register.subRegIndices()) {
+        if (seen.contains(subRegIndex.name())) {
+          subRegIndex.incrementVersion();
+        }
+
+        var name = subRegIndex.name();
+        seen.add(name);
+      }
+    }
+  }
+
+  private List<TableGenRegister> sortRegisters(List<TableGenRegister> registers) {
+    var result = new ArrayList<TableGenRegister>();
+    var ready = new HashSet<CompilerRegister>();
+
+    while (result.size() != registers.size()) {
+      for (var register : registers) {
+        var allSubRegisters = ready.containsAll(register.subRegs());
+        if (allSubRegisters && !ready.contains(register.compilerRegister())) {
+          ready.add(register.compilerRegister());
+          result.add(register);
+        }
+      }
+    }
+
+    return result;
   }
 
   private List<LlvmConstraint> getConstraints(List<TableGenRegisterClass> mainRegisterClasses) {

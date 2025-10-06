@@ -59,7 +59,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
         + "RegisterInfo.td";
   }
 
-  record WrappedRegisterFile(TableGenRegisterClass registerFile, String allocationSequence)
+  record WrappedRegisterClass(TableGenRegisterClass registerFile, String allocationSequence)
       implements
       Renderable {
 
@@ -104,8 +104,8 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .filter(render -> !exceptions.contains(render))
         .toList();
 
-    var outputRegisterClasses = new ArrayList<WrappedRegisterFile>();
-    var outputAliasRegisterClasses = new ArrayList<WrappedRegisterFile>();
+    var outputRegisterClasses = new ArrayList<WrappedRegisterClass>();
+    var outputAliasRegisterClasses = new ArrayList<WrappedRegisterClass>();
     for (var registerClass : registerClasses) {
       HashSet<String> both = new HashSet<>();
       both.addAll(callerSaved);
@@ -120,22 +120,20 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
               .collect(
                   Collectors.joining(", "));
 
-      outputRegisterClasses.add(new WrappedRegisterFile(registerClass, allocationSeq));
+      outputRegisterClasses.add(new WrappedRegisterClass(registerClass, allocationSeq));
     }
 
     for (var registerClass : output.aliasRegisterClasses()) {
       var allocationSeq = IntStream.range(0, registerClass.registers().size()).mapToObj(
           x -> registerClass.name() + x).collect(Collectors.joining(", "));
-      outputAliasRegisterClasses.add(new WrappedRegisterFile(registerClass, allocationSeq));
+      outputAliasRegisterClasses.add(new WrappedRegisterClass(registerClass, allocationSeq));
     }
-
-    var registers = sortRegisters(output.registers());
 
     var sub32 = new ArrayList<String>();
     var sub32Hi = new ArrayList<String>();
     var full64 = new ArrayList<String>();
 
-    for (var register : registers) {
+    for (var register : output.registers()) {
       var seen = new HashSet<String>();
       for (var subRegIndex : register.subRegIndices()) {
         if (seen.contains(subRegIndex.name())) {
@@ -155,7 +153,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "pointerAlignment", DataLayoutProvider.pointerAlignment(abi),
-        "registers", registers,
+        "registers", output.registers(),
         "sub32", sub32.stream().distinct().toList(),
         "sub32Hi", sub32Hi.stream().distinct().toList(),
         "full64", full64.stream().distinct().toList(),
@@ -163,22 +161,5 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
         "registerFiles", outputRegisterClasses,
         "aliasRegisterFiles", outputAliasRegisterClasses
     );
-  }
-
-  private List<TableGenRegister> sortRegisters(List<TableGenRegister> registers) {
-    var result = new ArrayList<TableGenRegister>();
-    var ready = new HashSet<CompilerRegister>();
-
-    while (result.size() != registers.size()) {
-      for (var register : registers) {
-        var allSubRegisters = ready.containsAll(register.subRegs());
-        if (allSubRegisters && !ready.contains(register.compilerRegister())) {
-          ready.add(register.compilerRegister());
-          result.add(register);
-        }
-      }
-    }
-
-    return result;
   }
 }

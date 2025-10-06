@@ -35,7 +35,7 @@ public class GeneralCompilerRegister extends CompilerRegister {
                                  String asmName,
                                  List<String> altNames,
                                  int dwarfNumber) {
-    super(generateName(register), asmName, altNames, dwarfNumber, 0, false);
+    super(generateName(register), asmName, altNames, dwarfNumber, 0, false, register);
   }
 
   /**
@@ -47,7 +47,8 @@ public class GeneralCompilerRegister extends CompilerRegister {
                                  String asmName,
                                  List<String> altNames,
                                  int dwarfNumber) {
-    super(generateName(artificialResource), asmName, altNames, dwarfNumber, address, true);
+    super(generateName(artificialResource), asmName, altNames, dwarfNumber, address, true,
+        artificialResource);
   }
 
   /**
@@ -59,7 +60,8 @@ public class GeneralCompilerRegister extends CompilerRegister {
                                  String asmName,
                                  List<String> altNames,
                                  int dwarfNumber) {
-    super(generateName(artificialResource), asmName, altNames, dwarfNumber, 0, true);
+    super(generateName(artificialResource), asmName, altNames, dwarfNumber, 0, true,
+        artificialResource);
   }
 
   /**
