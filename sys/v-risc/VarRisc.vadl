@@ -74,7 +74,7 @@ instruction set architecture VarRISC32 = {
     , rs1     = func5                    // source register index rs1
     , immS    = imm as SIntR             // 32 bit   signed immediate value
     , immU    = imm as UIntR             // 32 bit unsigned immediate value
-    , offsetS = imm as SIntR << 1        // sign extended and shifted branch offset
+    , offsetS = imm as SIntR             // sign extended and shifted branch offset
     }
 
   format TYPE_I : Bits<32> =
