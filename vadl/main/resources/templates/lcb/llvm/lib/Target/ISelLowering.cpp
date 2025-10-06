@@ -62,6 +62,7 @@ void [(${namespace})]TargetLowering::anchor() {}
     setOperationAction(ISD::BRCOND, MVT::Other, Expand);
     setOperationAction(ISD::BR_CC, { [(${branchTypes})] }, Custom);
     setOperationAction(ISD::SELECT_CC, { [(${branchTypes})] }, Custom);
+    setOperationAction(ISD::SETCC, MVT::i32, Expand);
     setOperationAction(ISD::SETCC, MVT::[(${stackPointerType})], Expand);
     [/th:block]
     [#th:block th:if="${!mergedCmpAndBranch}"]
