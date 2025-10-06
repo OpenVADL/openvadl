@@ -38,7 +38,7 @@ public class TableGenRegisterClass implements
   private final GeneratesRegisterFileName registerFileRef;
 
   /**
-   *
+   * Constructor.
    */
   public TableGenRegisterClass(TargetName namespace,
                                String name,

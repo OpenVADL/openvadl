@@ -185,7 +185,7 @@ public class GenerateTableGenRegistersPass extends Pass {
   }
 
   private static void nameSubRegisterIndices(List<TableGenRegister> orderedRegisters) {
-    for(var register: orderedRegisters) {
+    for (var register : orderedRegisters) {
       var seen = new HashSet<String>();
       for (var subRegIndex : register.subRegIndices()) {
         if (seen.contains(subRegIndex.name())) {
