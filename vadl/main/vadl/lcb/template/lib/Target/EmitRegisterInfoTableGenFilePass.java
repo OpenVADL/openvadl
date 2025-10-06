@@ -59,7 +59,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
         + "RegisterInfo.td";
   }
 
-  record WrappedRegisterFile(TableGenRegisterClass registerFile, String allocationSequence)
+  record WrappedRegisterClass(TableGenRegisterClass registerFile, String allocationSequence)
       implements
       Renderable {
 
@@ -104,8 +104,8 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .filter(render -> !exceptions.contains(render))
         .toList();
 
-    var outputRegisterClasses = new ArrayList<WrappedRegisterFile>();
-    var outputAliasRegisterClasses = new ArrayList<WrappedRegisterFile>();
+    var outputRegisterClasses = new ArrayList<WrappedRegisterClass>();
+    var outputAliasRegisterClasses = new ArrayList<WrappedRegisterClass>();
     for (var registerClass : registerClasses) {
       HashSet<String> both = new HashSet<>();
       both.addAll(callerSaved);
@@ -120,13 +120,13 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
               .collect(
                   Collectors.joining(", "));
 
-      outputRegisterClasses.add(new WrappedRegisterFile(registerClass, allocationSeq));
+      outputRegisterClasses.add(new WrappedRegisterClass(registerClass, allocationSeq));
     }
 
     for (var registerClass : output.aliasRegisterClasses()) {
       var allocationSeq = IntStream.range(0, registerClass.registers().size()).mapToObj(
           x -> registerClass.name() + x).collect(Collectors.joining(", "));
-      outputAliasRegisterClasses.add(new WrappedRegisterFile(registerClass, allocationSeq));
+      outputAliasRegisterClasses.add(new WrappedRegisterClass(registerClass, allocationSeq));
     }
 
     var registers = sortRegisters(output.registers());
