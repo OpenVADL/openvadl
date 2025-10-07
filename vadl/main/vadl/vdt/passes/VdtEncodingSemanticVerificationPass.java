@@ -96,7 +96,8 @@ public class VdtEncodingSemanticVerificationPass extends Pass {
 
     try (Context ctx = new Context()) {
 
-      BitVecSort sort = ctx.mkBitVecSort(entries.getFirst().width());
+      int maxWidth = entries.stream().mapToInt(DecodeEntry::width).max().orElse(0);
+      BitVecSort sort = ctx.mkBitVecSort(maxWidth);
       BitVecExpr insn = (BitVecExpr) ctx.mkConst("insn", sort);
 
       List<BoolExpr> constraints = toConstraints(entries, ctx, insn);
@@ -168,9 +169,14 @@ public class VdtEncodingSemanticVerificationPass extends Pass {
   }
 
   private BoolExpr match(Context ctx, BitVecExpr i, BitPattern pattern) {
+
+    // Pad the pattern to the sort width for comparison
+    int sortWidth = i.getSortSize();
+    pattern = pattern.rightPad(sortWidth - pattern.width());
+
     return ctx.mkEq(
-        ctx.mkBVAND(i, ctx.mkBV(pattern.toMaskVector().toValue().intValue(), pattern.width())),
-        ctx.mkBV(pattern.toBitVector().toValue().intValue(), pattern.width())
+        ctx.mkBVAND(i, ctx.mkBV(pattern.toMaskVector().toValue().toString(), sortWidth)),
+        ctx.mkBV(pattern.toBitVector().toValue().toString(), sortWidth)
     );
   }
 
