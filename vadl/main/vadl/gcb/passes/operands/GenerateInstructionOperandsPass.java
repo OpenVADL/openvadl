@@ -58,6 +58,7 @@ import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
@@ -699,6 +700,11 @@ class PseudoNodeOperandCollector {
   @Handler
   protected void handle(SliceNode node) {
     PseudoNodeOperandCollectorDispatcher.dispatch(this, node.value());
+  }
+
+  @Handler
+  protected void handle(DynSliceNode node) {
+    throw Diagnostic.error("not supported", node.location()).build();
   }
 
   @Handler

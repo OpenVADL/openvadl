@@ -28,6 +28,7 @@ import vadl.viam.Constant;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
@@ -299,6 +300,11 @@ class Decomposer
   @Handler
   void handle(Request rq, SliceNode toHandle) {
     throw new UnsupportedOperationException("Type SliceNode not yet implemented");
+  }
+
+  @Handler
+  void handle(Request rq, DynSliceNode toHandle) {
+    throw new UnsupportedOperationException("Type DynSliceNode not yet implemented");
   }
 
   @Handler
