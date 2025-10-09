@@ -95,11 +95,6 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
     var addi32 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_32);
     var addi64 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_64);
-    var luiRaw =
-        Objects.requireNonNull(labelledMachineInstructions.get(MachineInstructionLabel.LUI));
-    var lui = ensurePresent(luiRaw.stream().findFirst(),
-        () -> Diagnostic.error("There must be a load upper immediate instruction",
-            specification.location()));
     var rawAddi = addi64 != null ? addi64 : Objects.requireNonNull(addi32);
 
     var addi = ensurePresent(rawAddi.stream().findFirst(),
@@ -178,7 +173,6 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         lcbConfiguration().targetName().value().toLowerCase());
     map.put("returnAddress", abi.returnAddress().render());
     map.put("addi", addi.simpleName());
-    map.put("lui", lui.simpleName());
     map.put("stackPointerRegister", abi.stackPointer().render());
     map.put("stackPointerType",
         ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType());
