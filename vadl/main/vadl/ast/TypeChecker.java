@@ -406,6 +406,31 @@ public class TypeChecker
   }
 
   /**
+   * Wraps the expr provided with an explicit cast if it is possible, and not useless.
+   *
+   * @param inner expression to wrap.
+   * @param to    which the expression should be casted.
+   * @return the original expression, possibly wrapped.
+   */
+  private static Expr wrapExplicitCast(Expr inner, Type to) {
+    var innerType = requireNonNull(inner.type);
+    if (innerType.equals(to)) {
+      return inner;
+    }
+
+    if (!canExplicitCast(innerType, to)) {
+      if (!(innerType instanceof ConstantType innerConstTyp) || to instanceof ConstantType) {
+        return inner;
+      }
+
+      // For constant types we cast to them anyway to the clostest type to improve the error message
+      return new CastExpr(inner, innerConstTyp.closestTo(to));
+    }
+
+    return new CastExpr(inner, to);
+  }
+
+  /**
    * Wraps the expr provided with an implicit cast if it is possible, and not useless.
    *
    * @param inner expression to wrap.
@@ -428,6 +453,28 @@ public class TypeChecker
     }
 
     return new CastExpr(inner, to);
+  }
+
+  /**
+   * Wraps the expr provided with an explicit cast if it is possible, and not useless.
+   * However, in comparison to {@link #wrapExplicitCast(Expr, Type)}, this will throw a
+   * type mismatch exception,
+   * if the inner expression could not implicitly cast to the given type.
+   *
+   * @param inner expression to wrap.
+   * @param to    which the expression should be cast.
+   * @return the original expression.
+   * @throws Diagnostic if the inner expression cannot be implicitly cast to type.
+   */
+  private static Expr tryWrapExplicitCast(Expr inner, Type to) {
+    if (inner.type == null) {
+      throw new IllegalStateException("The type of the inner expression must be known.");
+    }
+    var wrapped = wrapExplicitCast(inner, to);
+    if (!wrapped.type().equals(to)) {
+      throw typeMismatchError(inner, to, inner.type());
+    }
+    return wrapped;
   }
 
   /**
@@ -3112,6 +3159,27 @@ public class TypeChecker
       // set the arg group type (representing the call result)
       argGroups.getFirst().type = relType.resultType();
 
+    } else if (expr.computedTarget() instanceof RegisterDefinition
+        && type instanceof TensorType tensorType
+        && !argGroups.isEmpty()) {
+      // FIXME: We don't do any typechecking here as the type rules would be a bit murky in my
+      // opinion and hard for users to understand.
+      // However, the VIAM does expect quite explicit types, so we cast it to that type.
+      for (int i = 0; i < argGroups.size(); i++) {
+        var argGroup = argGroups.get(i);
+        if (argGroup.values.size() != 1) {
+          throw error("Invalid tensor index", argGroup.location)
+              .locationDescription(argGroup.location,
+                  "Tensor indexing expects exactly one argument.")
+              .build();
+        }
+        var arg = argGroup.values.getFirst();
+        check(arg);
+        var indexType = Type.bits(BitsType.minimalRequiredWidthFor(tensorType.indexDims().get(i)));
+        argGroup.values.set(i, tryWrapExplicitCast(arg, indexType));
+      }
+
+      expr.typeBeforeSlice = ((TensorType) type).pop(argGroups.size());
     } else {
       if (!argGroups.isEmpty()) {
         // if there are argument groups, there was some logic failure.

@@ -81,6 +81,23 @@ public class TensorType extends DataType {
     return new TensorType(dimensions.subList(1, dimensions.size()), innerType);
   }
 
+  /**
+   * Returns the type if the outermost n dimension are removed.
+   *
+   * @return the original type without the first n dimensions.
+   */
+  Type pop(int n) {
+    if (dimensions.size() < n || n < 0) {
+      throw new IllegalArgumentException();
+    }
+
+    if (n == dimensions.size()) {
+      return innerType;
+    }
+
+    return new TensorType(dimensions.subList(n, dimensions.size()), innerType);
+  }
+
   int outerMostDimension() {
     return dimensions.getFirst();
   }

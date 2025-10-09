@@ -66,7 +66,6 @@ import vadl.viam.Encoding;
 import vadl.viam.ExceptionDef;
 import vadl.viam.Format;
 import vadl.viam.Function;
-import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Memory;
@@ -1613,11 +1612,18 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(RegisterDefinition definition) {
-    var type = getViamType(definition.type());
-
+    var type = definition.type();
     DataType resultType;
     var dimensions = new ArrayList<RegisterTensor.Dimension>();
-    if (type instanceof ConcreteRelationType relType) {
+    if (type instanceof TensorType tensorType) {
+      // FIXME: There must be a better way to do this.
+      for (int i = 0; i < tensorType.indexDims().size(); i++) {
+        var size = tensorType.indexDims().get(i);
+        var indexType = Type.bits(BitsType.minimalRequiredWidthFor(size));
+        dimensions.add(new RegisterTensor.Dimension(i, indexType, size));
+      }
+      resultType = (DataType) getViamType(tensorType.innerType());
+    } else if (type instanceof ConcreteRelationType relType) {
       // if it is a relation type, it is a register file of the form x -> y, otherwise
       var argTypes = relType.argTypes();
       IntStream.range(0, argTypes.size()).forEach(i -> {

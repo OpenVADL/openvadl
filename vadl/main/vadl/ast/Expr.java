@@ -1763,10 +1763,11 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
           return List.of();
         }
         return argsIndices.isEmpty() ? List.of() : List.of(argsIndices.getFirst());
+      } else if (type instanceof TensorType tensorType
+          && computedTarget() instanceof RegisterDefinition) {
+        return new ArrayList<>(argsIndices.subList(0,
+            Math.min(argsIndices.size(), tensorType.indexDims().size())));
       }
-      // in the case of a register:
-      // arguments are all argument groups that don't start with a range expression and
-      // don't exceed the number of tensor indices.
     }
     return List.of();
   }
