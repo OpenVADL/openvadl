@@ -17,6 +17,7 @@
 package vadl.iss.passes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.utils.GraphUtils.checkExecutionPath;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
@@ -252,10 +253,24 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
       return Optional.of(scheduleNode(readResourceNode));
     } else if (toProcess instanceof DependencyNode node) {
       if (TcgPassUtils.isTcg(node)) {
-        // the node was already scheduled
-        return node.usages().filter(u -> u instanceof ScheduledNode)
-            .map(ScheduledNode.class::cast)
-            .findFirst();
+        // the node was already scheduled, we must check if it got already scheduled in our
+        // execution path
+        var searchedNode = node;
+        var found = new java.util.concurrent.atomic.AtomicReference<ScheduledNode>();
+        checkExecutionPath(currentRootUser, (n) -> {
+          if (n instanceof ScheduledNode scheduledNode && scheduledNode.node() == searchedNode) {
+            found.set(scheduledNode);
+            return true;
+          }
+          return false;
+        });
+
+        if (found.get() != null) {
+          // if we have a scheduled node on the path, we can stop.
+          return Optional.ofNullable(found.get());
+        }
+        // otherwise we must continue and schedule it again to ensure that the expression is
+        // available.
       }
 
       // In general, a node is scheduled if one of its inputs is scheduled

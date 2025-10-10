@@ -16,7 +16,13 @@
 
 package vadl.utils;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
@@ -33,6 +39,8 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.BeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
+import vadl.viam.graph.control.ControlSplitNode;
+import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -113,6 +121,20 @@ public class GraphUtils {
   }
 
   /**
+   * Retrieves all dependency root nodes from the specified graph. A dependency root is a
+   * node of type {@link DependencyNode} that is not used by any other DependencyNode.
+   *
+   * @param graph the graph to extract dependency root nodes from
+   * @return a stream of dependency root nodes
+   */
+  public static Stream<DependencyNode> getAllDependencyRoots(Graph graph) {
+    return graph.getNodes(DependencyNode.class)
+        .filter(n -> n.usages()
+            .noneMatch(u -> u instanceof DependencyNode)
+        );
+  }
+
+  /**
    * Recursively finds all input nodes that by a given filter.
    */
   public static Stream<Node> getInputNodes(Node node,
@@ -137,7 +159,48 @@ public class GraphUtils {
             return getUsagesByUnrollingLets(letNode);
           }
           return Stream.of(u);
-        });
+        }).distinct();
+  }
+
+  /**
+   * Retrieves a stream of transient usages for the given dependency node.
+   * This method returns all usages from the provided node, including usages
+   * for any nested dependency nodes, ensuring no duplicates by using a distinct stream.
+   *
+   * @param node the root dependency node whose transient usages are to be retrieved
+   * @return a stream of nodes representing the transient usages
+   */
+  public static Stream<Node> getTransientUsages(DependencyNode node) {
+    return node.usages().flatMap(u -> {
+      var result = Stream.of(u);
+      if (u instanceof DependencyNode du) {
+        result = Stream.concat(result, getTransientUsages(du));
+      }
+      return result;
+    }).distinct();
+  }
+
+  /**
+   * Returns the predecessor of the given control node while skipping over control
+   * splits on the way.If the immediate predecessor is a
+   * {@link MergeNode}, the corresponding {@link ControlSplitNode} is resolved and returned.
+   * This is useful for backward traversals where the
+   * split/merge pair should be treated as one step by ignoring its branches.
+   *
+   * @param node the node whose logical predecessor is requested
+   * @return the predecessor control node with control splits skipped; may be null
+   */
+  @Nullable
+  public static ControlNode predecessorSkippingMerges(ControlNode node) {
+    Node prev = node.predecessor();
+    if (prev instanceof MergeNode merge) {
+      // skip merge nodes by jumping straight to the control split start
+      prev = merge.controlSplit();
+    }
+    if (prev instanceof ControlNode cn) {
+      return cn;
+    }
+    return null;
   }
 
   /**
@@ -198,6 +261,29 @@ public class GraphUtils {
   }
 
   /**
+   * Traverses the execution path starting from the given ControlNode by finding the predecessor
+   * and applies the provided condition to each node.
+   * If the condition is satisfied for any node along the path, this method returns true.
+   *
+   * @param searchStart the starting ControlNode from which to begin traversing the execution path
+   * @param condition   a function that takes a Node as input and returns a boolean indicating
+   *                    whether a specific condition is met
+   * @return true if the condition specified by the check function is satisfied
+   *     for any node in the execution path, false otherwise
+   */
+  public static boolean checkExecutionPath(ControlNode searchStart,
+                                           Function<ControlNode, Boolean> condition) {
+    ControlNode prev = GraphUtils.predecessorSkippingMerges(searchStart);
+    while (prev != null) {
+      if (condition.apply(prev)) {
+        return true;
+      }
+      prev = GraphUtils.predecessorSkippingMerges(prev);
+    }
+    return false;
+  }
+
+  /**
    * Retrieves a single instance of a specified type of user node from the provided node's usages.
    * The method ensures that there is exactly one user of the specified type.
    *
@@ -214,7 +300,40 @@ public class GraphUtils {
     return (T) users.get(0);
   }
 
-  /// / GRAPH CREATION UTILS ////
+  /**
+   * Inserts an if-else region into the graph at the specified position.
+   *
+   * @param position          The node at which the if-else structure is inserted.
+   *                          Must be part of a valid graph.
+   * @param condition         The condition node that determines the branching
+   *                          of the if-else structure.
+   * @param createTrueBranch  A function that defines the true branch of the if-else structure,
+   *                          taking the graph and the true branch
+   *                          end node as input to generate the required control flow node.
+   * @param createFalseBranch A function that defines the false branch of the if-else structure,
+   *                          taking the graph and the false branch
+   *                          end node as input to generate the required control flow node.
+   * @return A pair containing the created {@code IfNode} and the {@code MergeNode}
+   *     that merges the true and false branches of the if-else.
+   */
+
+  public static Pair<IfNode, MergeNode> insertIfElse(
+      DirectionalNode position,
+      ExpressionNode condition,
+      BiFunction<Graph, BranchEndNode, ControlNode> createTrueBranch,
+      BiFunction<Graph, BranchEndNode, ControlNode> createFalseBranch) {
+    var graph = position.ensureGraph();
+    var trueEnd = graph.addWithInputs(new BranchEndNode(new NodeList<>()));
+    var falseEnd = graph.addWithInputs(new BranchEndNode(new NodeList<>()));
+    var trueBranch = createTrueBranch.apply(graph, trueEnd);
+    var falseBranch = createFalseBranch.apply(graph, falseEnd);
+    var trueBegin = graph.addWithInputs(new BeginNode(trueBranch));
+    var falseBegin = graph.addWithInputs(new BeginNode(falseBranch));
+    var ifNode = graph.addWithInputs(new IfNode(condition, trueBegin, falseBegin));
+
+    var mergeNode = graph.addWithInputs(new MergeNode(new NodeList<>(trueEnd, falseEnd)));
+    return Pair.of(ifNode, mergeNode);
+  }
 
   /**
    * Creates a unary operation built-in call with the specified operation and a constant value.
@@ -467,6 +586,62 @@ public class GraphUtils {
   public static Constant.Tuple.Status status(boolean negative, boolean zero, boolean carry,
                                              boolean overflow) {
     return new Constant.Tuple.Status(negative, zero, carry, overflow);
+  }
+
+
+  /**
+   * Computes the topological order of dependency nodes within a given graph.
+   * The method assumes the graph contains nodes that represent dependencies and
+   * outputs a linear order of nodes such that each node appears before any node
+   * that depends on it. If the graph contains cycles, an exception is thrown.
+   *
+   * @param graph the graph containing dependency nodes to be topologically ordered
+   * @return a list of nodes in topological order
+   * @throws IllegalStateException if a cycle is detected within the graph
+   */
+  @SuppressWarnings("NullAway")
+  public static List<Node> topologyOrderOfDependencyNodes(Graph graph) {
+    // compute in-degree map and adjacency
+    Map<Node, Integer> inDeg = new HashMap<>();
+    Map<Node, List<Node>> adj = new HashMap<>();
+
+    var allNodes = graph.getNodes(DependencyNode.class).toList();
+    for (Node n : allNodes) {
+      inDeg.put(n, 0);
+      adj.put(n, new ArrayList<>());
+    }
+    for (Node n : allNodes) {
+      n.inputs().forEach(inp -> {
+        // edge: inp → n  (because n depends on inp; so inp must be before n)
+        adj.get(inp).add(n);
+        inDeg.put(n, inDeg.get(n) + 1);
+      });
+    }
+
+    // queue of zero in-degree
+    Queue<Node> q = new ArrayDeque<>();
+    for (Map.Entry<Node, Integer> e : inDeg.entrySet()) {
+      if (e.getValue() == 0) {
+        q.add(e.getKey());
+      }
+    }
+
+    List<Node> result = new ArrayList<>();
+    while (!q.isEmpty()) {
+      Node n = q.remove();
+      result.add(n);
+      for (Node m : adj.get(n)) {
+        inDeg.put(m, inDeg.get(m) - 1);
+        if (inDeg.get(m) == 0) {
+          q.add(m);
+        }
+      }
+    }
+
+    if (result.size() != allNodes.size()) {
+      throw new IllegalStateException("Cycle detected in graph");
+    }
+    return result;
   }
 
 }

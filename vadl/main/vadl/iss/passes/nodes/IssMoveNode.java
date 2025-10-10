@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.viam.graph.control;
+package vadl.iss.passes.nodes;
 
 import java.util.List;
 import vadl.javaannotations.viam.Input;
@@ -22,54 +22,61 @@ import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.DependencyNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
- * A (single directed) node in the CFG that schedules some dependency.
- * This allows scheduling dependency nodes without transforming them into control nodes.
+ * Represents a move operation of an expression to a {@link TcgVRefNode}.
+ * This is used by the {@link vadl.iss.passes.IssSelectLoweringPass} to provide an expression
+ * while the branch condition is selected using a control flow.
  */
-public class ScheduledNode extends DirectionalNode {
+public class IssMoveNode extends DependencyNode {
+  @Input
+  private TcgVRefNode dest;
 
   @Input
-  private DependencyNode node;
+  private ExpressionNode expr;
 
-  public ScheduledNode(DependencyNode node) {
-    this.node = node;
+
+  public IssMoveNode(TcgVRefNode dest, ExpressionNode expr) {
+    this.expr = expr;
+    this.dest = dest;
   }
 
-  public ScheduledNode(DependencyNode node, ControlNode next) {
-    super(next);
-    this.node = node;
+  public ExpressionNode expr() {
+    return expr;
   }
 
-  public DependencyNode node() {
-    return node;
+  public TcgVRefNode dest() {
+    return dest;
   }
-
 
   @Override
   public Node copy() {
-    return new ScheduledNode(node.copy(DependencyNode.class));
+    return new IssMoveNode(dest.copy(), expr.copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new ScheduledNode(node);
+    return new IssMoveNode(dest, expr);
   }
 
   @Override
   public <T extends GraphNodeVisitor> void accept(T visitor) {
-    // Node visitor is not supported
+
   }
 
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);
-    collection.add(node);
+    collection.add(dest);
+    collection.add(expr);
   }
 
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    node = visitor.apply(this, node, DependencyNode.class);
+    dest = visitor.apply(this, dest, TcgVRefNode.class);
+    expr = visitor.apply(this, expr, ExpressionNode.class);
   }
 }
+

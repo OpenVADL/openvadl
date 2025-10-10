@@ -19,6 +19,7 @@ package vadl.viam.graph.control;
 import java.util.List;
 import java.util.stream.Collectors;
 import vadl.javaannotations.viam.Input;
+import vadl.utils.GraphUtils;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -46,6 +47,21 @@ public class MergeNode extends AbstractBeginNode {
 
   public BranchEndNode falseBranchEnd() {
     return branchEnds.get(branchEnds.size() - 1);
+  }
+
+  /**
+   * Returns the control split that corresponds to this merge. This is the
+   * {@link ControlSplitNode} whose branches terminate at the {@link BranchEndNode}s
+   * consumed by this merge.
+   */
+  public ControlSplitNode controlSplit() {
+    // We can use any branch end; take the first one.
+    ControlNode curr = trueBranchEnd();
+    while (!(curr instanceof ControlSplitNode controlSplitNode)) {
+      ensure(curr != null, "Reached node with no predecessor, which should be impossible.");
+      curr = GraphUtils.predecessorSkippingMerges(curr);
+    }
+    return controlSplitNode;
   }
 
   @Override

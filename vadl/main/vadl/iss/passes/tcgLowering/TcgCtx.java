@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import vadl.iss.passes.TcgPassUtils;
+import vadl.iss.passes.nodes.IssMoveNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
@@ -151,6 +152,10 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
       throw new UnsupportedOperationException("Type WriteArtificialResNode not yet implemented");
     }
 
+    @Handler
+    List<TcgVRefNode> destOf(IssMoveNode toHandle) {
+      return List.of(toHandle.dest());
+    }
 
     @Handler
     List<TcgVRefNode> destOf(ReadRegTensorNode toHandle) {
