@@ -19,7 +19,9 @@ package vadl.iss.codegen;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
+import vadl.iss.passes.nodes.IssMoveNode;
 import vadl.iss.passes.nodes.IssSelectNode;
+import vadl.iss.passes.nodes.IssTempExprNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
 import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
@@ -78,6 +80,17 @@ public interface IssCMixins {
       // IssSelectNodes are always turned into TCG nodes (TcgConstSelect or TcgMovCond).
       // If the original SelectNode was not scheduled, it got not converted to an IssSelectNode.
       throw new IllegalStateException("The IssSelectNode should never be generated as C code.");
+    }
+
+    @Handler
+    default void handle(CGenContext<Node> ctx, IssMoveNode toHandle) {
+      // should be replaced by a TCG move
+      throw new IllegalStateException("The IssMoveExprNode should never be generated as C code.");
+    }
+
+    @Handler
+    default void handle(CGenContext<Node> ctx, IssTempExprNode toHandle) {
+      // does nothing
     }
 
     @Handler

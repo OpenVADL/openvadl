@@ -16,16 +16,29 @@
 
 package vadl.iss.passes;
 
+import static vadl.viam.ViamError.ensure;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
 import vadl.iss.passes.tcgLowering.TcgCondition;
 import vadl.types.BuiltInTable;
+import vadl.utils.GraphUtils;
+import vadl.viam.RegisterTensor;
+import vadl.viam.graph.control.ControlNode;
+import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.ScheduledNode;
+import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.ReadResourceNode;
 
 /**
  * Contains utility methods for TCG passes.
@@ -52,6 +65,24 @@ public class TcgPassUtils {
 
   public static boolean isTcg(DependencyNode node) {
     return node.usages().anyMatch(u -> u instanceof ScheduledNode);
+  }
+
+  /**
+   * Determines whether a given dependency node in the data dependency
+   * graph must be scheduled based on its dependencies. A node is considered
+   * to require scheduling if it has dependencies that are {@link ReadResourceNode}
+   * objects with a resource definition different from the provided tensor.
+   *
+   * @param node the {@link DependencyNode} to be checked
+   * @param pc   the {@link RegisterTensor} against which resource definitions
+   *             in dependencies are compared
+   * @return {@code true} if the node must be scheduled, {@code false} otherwise
+   */
+  public static boolean mustBeScheduled(DependencyNode node, RegisterTensor pc) {
+    return GraphUtils.hasDependencies(node, dep -> dep instanceof ReadResourceNode readResourceNode
+        // pc reads can be done at translation time and are not translated to TCG
+        && readResourceNode.resourceDefinition() != pc
+    );
   }
 
 
@@ -107,5 +138,122 @@ public class TcgPassUtils {
       case TSTNE -> BuiltInTable.AND;
       case TSTEQ -> throw new IllegalArgumentException("No built-in for TSTEQ");
     };
+  }
+
+
+  /**
+   * Finds the latest possible insertion point for the given expression to be scheduled.
+   * This is done by using the {@link #findCommonInsertionPoint(List)}
+   * applied on all usages that are scheduled with a {@link ScheduledNode}.
+   */
+  public static DirectionalNode findLatestSafeInsertionPoint(ExpressionNode node) {
+    var scheduledUsers =
+        GraphUtils.getTransientUsages(node)
+            .filter(u -> u instanceof ControlNode)
+            .map(u -> (ControlNode) u)
+            .toList();
+    return findCommonInsertionPoint(scheduledUsers);
+  }
+
+  /**
+   * Finds the control-flow insertion point for scheduling a dependency so it
+   * executes on every path that reaches all given user branch ends.
+   *
+   * <p>
+   * Used when turning a data dependency into a {@link ScheduledNode} in the CFG.
+   * Given branch ends (the users of the dependency), this method returns the
+   * nearest/common {@link DirectionalNode} that lies on the backward CFG of
+   * every provided end. Inserting a scheduling node <em>after</em> the returned
+   * {@code DirectionalNode} guarantees the dependency is evaluated on all
+   * relevant execution paths.
+   * </p>
+   *
+   * <h4>Assumptions and behavior</h4>
+   * <ul>
+   *   <li>{@code userBranches} must be non-empty; otherwise a
+   *       {@link vadl.viam.graph.ViamGraphError} is thrown.</li>
+   *   <li>For a single user branch end, the insertion point is the
+   *       {@linkplain GraphUtils#predecessorSkippingMerges(ControlNode) merge-skipping}
+   *       predecessor of that end; it must be a {@link DirectionalNode}.</li>
+   *   <li>For multiple ends, the algorithm walks each end’s backward CFG using
+   *       {@code predecessorSkippingMerges}, collecting only {@link DirectionalNode}s
+   *       until the {@link StartNode} is reached. It then picks the nearest (deepest)
+   *       {@code DirectionalNode} that appears on all backward paths.</li>
+   *   <li>If no common node exists, the method fails with a descriptive error
+   *       (malformed/inconsistent CFG).</li>
+   * </ul>
+   *
+   * <h4>Algorithm (informal)</h4>
+   * <ol>
+   *   <li>From the first end’s merge-skipping predecessor, collect the backward
+   *       path of {@link DirectionalNode}s up to (but not including) the {@link StartNode}.</li>
+   *   <li>For each remaining end, collect the set of its backward {@code DirectionalNode}s
+   *       (also merge-skipping) up to the start.</li>
+   *   <li>Iterate the first path from nearest to farthest and return the first node
+   *       contained in all other sets.</li>
+   * </ol>
+   * Complexity is O(k · L), where k is the number of branch ends and L the maximum
+   * inspected backward-path length.
+   *
+   * @param userBranches the control-flow branch ends that must have the dependency executed
+   *                     on every reaching path
+   * @return the nearest/common {@link DirectionalNode} after which the dependency can be
+   *     safely scheduled for all provided ends
+   * @throws vadl.viam.graph.ViamGraphError if {@code userBranches} is empty or no common
+   *                                        insertion point can be found
+   */
+  public static DirectionalNode findCommonInsertionPoint(List<ControlNode> userBranches) {
+    ensure(!userBranches.isEmpty(), "userBranches must not be empty");
+
+    if (userBranches.size() == 1) {
+      var pred = userBranches.getFirst().predecessor();
+      ensure(pred instanceof DirectionalNode, "Predecessor is not a directional node");
+      return (DirectionalNode) pred;
+    }
+
+    // lambda to collect all directional predecessor nodes
+    BiConsumer<ControlNode, Collection<DirectionalNode>> collectDirPreds = (curr, collection) -> {
+      ControlNode prev = GraphUtils.predecessorSkippingMerges(curr);
+      while (!(prev instanceof StartNode startNode)) {
+        ensure(prev != null, "Found node without predecessor during backwards traversal");
+        if (prev instanceof DirectionalNode dir) {
+          collection.add(dir);
+        }
+        prev = GraphUtils.predecessorSkippingMerges(prev);
+      }
+      // finally, add the start node
+      collection.add(startNode);
+    };
+
+    // Collect the backward path (DirectionalNodes) from the first branch end to the start
+    ArrayList<DirectionalNode> firstPath = new ArrayList<>();
+    collectDirPreds.accept(userBranches.getFirst(), firstPath);
+
+    // Build sets for the remaining branch ends for quick membership checks
+    ArrayList<HashSet<DirectionalNode>> otherSets = new ArrayList<>();
+    for (int i = 1; i < userBranches.size(); i++) {
+      var set = new HashSet<DirectionalNode>();
+      var curr = userBranches.get(i);
+      collectDirPreds.accept(curr, set);
+      otherSets.add(set);
+    }
+
+    // Pick the deepest common directional node: iterate along firstPath (from end backwards)
+    for (var dir : firstPath) {
+      boolean common = true;
+      for (var set : otherSets) {
+        if (!set.contains(dir)) {
+          common = false;
+          break;
+        }
+      }
+      if (common) {
+        return dir;
+      }
+    }
+
+    // If no common node was found, this indicates a malformed CFG
+    throw new IllegalStateException(
+        "Failed to find common insertion point for scheduled dependency");
   }
 }
