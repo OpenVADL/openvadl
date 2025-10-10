@@ -2140,6 +2140,17 @@ public class TypeChecker
       return;
     }
 
+    if (origin instanceof ForallExpr forallExpr) {
+      // No need to check because this can only be the case if we are inside the for statement.
+      expr.type =
+          forallExpr.indices.stream()
+              .filter(index -> index.identifier().name.equals(innerName))
+              .findFirst()
+              .orElseThrow()
+              .identifier().type();
+      return;
+    }
+
     if (origin instanceof FunctionDefinition functionDefinition) {
       // It's a call without arguments
       check(functionDefinition);
@@ -2896,8 +2907,8 @@ public class TypeChecker
                 .build();
           }
 
-          // Note: the computed bitslice here is already for the lowering where we assume all tensors
-          // are flattened
+          // Note: the computed bitslice here is already for the lowering where we assume all
+          // tensors are flattened
           var bitWidth = switch (currType) {
             case BitsType bt -> bt.bitWidth();
             case TensorType tt -> tt.flattenBitsType().bitWidth();
@@ -3176,7 +3187,7 @@ public class TypeChecker
         var arg = argGroup.values.getFirst();
         check(arg);
         var indexType = Type.bits(BitsType.minimalRequiredWidthFor(tensorType.indexDims().get(i)));
-        argGroup.values.set(i, tryWrapExplicitCast(arg, indexType));
+        argGroup.values.set(0, tryWrapExplicitCast(arg, indexType));
       }
 
       expr.typeBeforeSlice = ((TensorType) type).pop(argGroups.size());
@@ -3417,11 +3428,60 @@ public class TypeChecker
 
   @Override
   public Void visit(ForallExpr expr) {
+    // FIXME: multiple indexes are hard to lower so let's throw an temporary error
     if (expr.indices.size() > 1) {
       throw error("Not Supported", expr)
           .locationDescription(expr, "Multiple indicies aren't yet supported.")
           .build();
     }
+
+    expr.indices.forEach(index -> {
+      // FIXME: Until we have bidirectional typechecking we need this explicit cast
+      if (index.typeLiteral == null) {
+        throw error("Type Mismatch", index)
+            .locationDescription(index, "A explicit type cast is required here.")
+            .locationNote(index, "In the future this won't be necessary.")
+            .build();
+      }
+
+      index.identifier().type = check(index.typeLiteral);
+
+      // Check as expression
+      if (index.domain instanceof RangeExpr rangeExpr) {
+        try {
+          index.computedFrom = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
+          index.computedTo = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
+        } catch (EvaluationError e) {
+          throw error("Constant value required", e.location)
+              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
+              .build();
+        }
+      } else {
+        try {
+          index.computedFrom = constantEvaluator.eval(index.domain).value().intValueExact();
+          index.computedTo = index.computedFrom;
+        } catch (EvaluationError e) {
+          throw error("Constant value required", e.location)
+              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
+              .build();
+        }
+      }
+    });
+
+    var bodyType = check(expr.body);
+    if (!(bodyType instanceof DataType)) {
+      throw typeMismatchError(expr.body, "Expected a datatype but got", bodyType);
+    }
+
+    var totalIterationSpan = expr.indices.stream()
+        .mapToInt(
+            index -> requireNonNull(index.computedTo) - requireNonNull(index.computedFrom) + 1)
+        .sum();
+
+    expr.type = switch (expr.operation) {
+      case FOLD -> bodyType;
+      case TENSOR -> Type.bits(((DataType) bodyType).bitWidth() * totalIterationSpan);
+    };
 
     return null;
   }

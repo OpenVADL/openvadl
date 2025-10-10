@@ -2488,14 +2488,16 @@ class ExistsInThenExpr extends Expr {
 }
 
 /**
+ * A expression to express tensor operations.
  * forall in tesnor
  * forall in fold
  */
 class ForallExpr extends Expr {
+  @Child
   List<ForallIndex> indices;
 
   /**
-   * The kind of forall expression (fold, tensor, etc)
+   * The kind of forall expression (fold, tensor, etc).
    */
   Operation operation;
 

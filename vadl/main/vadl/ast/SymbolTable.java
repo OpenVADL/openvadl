@@ -869,6 +869,10 @@ class SymbolTable {
       expr.symbolTable = childTable;
       expr.indices.forEach(index -> {
         childTable.defineSymbol(index.identifier().name, expr);
+        index.identifier().symbolTable = childTable;
+        if (index.typeLiteral != null) {
+          index.typeLiteral.accept(this);
+        }
         index.domain.accept(this);
       });
       withSymbols(childTable, () -> expr.body.accept(this));

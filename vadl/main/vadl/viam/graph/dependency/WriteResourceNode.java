@@ -16,6 +16,7 @@
 
 package vadl.viam.graph.dependency;
 
+import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -118,20 +119,18 @@ public abstract class WriteResourceNode extends SideEffectNode {
             + "width of %s.",
         value.type(), writeBitWidth());
 
-    ensure(resource.hasAddress() == hasAddress(),
-        "Resource takes address but this node has no address node.");
+    ensure(resource.indexTypes().size() == indices().size(),
+        "The resource takes %d indices but write provided %d", resource.indexTypes().size(),
+        indices().size());
 
-    if (hasAddress()) {
-      var addressType = address().type();
-      var resAddrType = resource.addressType();
-      Objects.requireNonNull(resAddrType); // just to satisfy errorprone
-      ensure(addressType instanceof DataType,
-          "Address must be a DataValue, was %s", address().type());
-      ensure(addressType.isTrivialCastTo(resAddrType),
-          "Address value cannot be cast to resource's address type. %s vs %s",
-          resource.addressType(), addressType);
-    }
-
+    Streams.forEachPair(indices.stream(), resource.indexTypes().stream(), (index, expectedType) -> {
+      Objects.requireNonNull(index);
+      ensure(index.type() instanceof DataType,
+          "Address must be a DataValue, was %s", index.type());
+      ensure(index.type().isTrivialCastTo(expectedType),
+          "Address value type `%s` cannot be cast to resource's address type `%s`.",
+          index.type(), expectedType);
+    });
   }
 
   @Override

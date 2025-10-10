@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.BitsType;
 import vadl.types.DataType;
-import vadl.types.Type;
 
 /**
  * A type for multidimensional bit vectors. For example {@code Bits<4><8>} in which case
@@ -73,7 +72,7 @@ public class TensorType extends DataType {
    *
    * @return the original type without one dimension.
    */
-  Type pop() {
+  DataType pop() {
     if (dimensions.size() <= 1) {
       return innerType;
     }
@@ -86,7 +85,7 @@ public class TensorType extends DataType {
    *
    * @return the original type without the first n dimensions.
    */
-  Type pop(int n) {
+  DataType pop(int n) {
     if (dimensions.size() < n || n < 0) {
       throw new IllegalArgumentException();
     }

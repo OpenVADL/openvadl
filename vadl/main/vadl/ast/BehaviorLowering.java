@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
@@ -81,6 +80,7 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
@@ -94,6 +94,7 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
@@ -271,12 +272,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     DataType resultType;
     // Initially the indices are all fixed arguments specified in the alias definition.
     // E.g. in `register alias Z = X(1)` is `1` a fixed argument.
-    var indices = Objects.requireNonNull(definition.computedFixedArgs).stream()
+    var indices = requireNonNull(definition.computedFixedArgs).stream()
         .map(this::fetch).collect(Collectors.toCollection(NodeList::new));
     var params = new ArrayList<>();
 
     // FIXME: Support pre-indexed registers, for example:
-    //  register X: Bits<3><4><32>
     //  register alias Z = X(1)(2)
     if (definition.type() instanceof ConcreteRelationType relType) {
       // FIXME: Wrap input and output in casts
@@ -293,7 +293,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       resultType = getViamType(definition.type()).asDataType();
     }
 
-    final var regFileDef = (RegisterDefinition) Objects.requireNonNull(definition.computedTarget);
+    final var regFileDef = (RegisterDefinition) requireNonNull(definition.computedTarget);
     var reg = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
     var regReadType = regFileDef.type() instanceof ConcreteRelationType relType
         ? relType.resultType().asDataType() : resultType;
@@ -348,7 +348,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     DataType resultType;
     // Initially the indices are all fixed arguments specified in the alias definition.
     // E.g. in `register alias Z = X(1)` is `1` a fixed argument.
-    var indices = Objects.requireNonNull(definition.computedFixedArgs).stream()
+    var indices = requireNonNull(definition.computedFixedArgs).stream()
         .map(this::fetch).collect(Collectors.toCollection(NodeList::new));
     var params = new ArrayList<>();
     // FIXME: Support pre-indexed registers, for example:
@@ -410,7 +410,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     //  register X = Bits<3><4><32>
     //  register alias Z = X(1, 2)
     // FIXME: Wrap input and output in casts
-    // FIXME: Add conditions based on annotations
     var regfileWrite = new WriteRegTensorNode(
         regFile,
         indices,
@@ -446,7 +445,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   private <T extends vadl.viam.graph.Node> T addToGraph(T node) {
     if (!node.isActive()) {
-      return Objects.requireNonNull(currentGraph).addWithInputs(node);
+      return requireNonNull(currentGraph).addWithInputs(node);
     }
     return node;
   }
@@ -537,7 +536,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Enum field
     if (computedTarget instanceof EnumerationDefinition.Entry enumField) {
       // Inline the value of the enum
-      return fetch(Objects.requireNonNull(enumField.value));
+      return fetch(requireNonNull(enumField.value));
     }
 
     // Format field
@@ -632,6 +631,19 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Forall Statement
     if (computedTarget instanceof ForallStatement forallStatement) {
       var index = forallStatement.indices.stream()
+          .filter(idx -> idx.identifier().name.equals(innerName))
+          .findFirst()
+          .orElseThrow();
+
+      return new ForIdxNode(
+          getViamType(expr.type()),
+          requireNonNull(index.computedFrom),
+          requireNonNull(index.computedTo));
+    }
+
+    // Forall Expression
+    if (computedTarget instanceof ForallExpr forallExpr) {
+      var index = forallExpr.indices.stream()
           .filter(idx -> idx.identifier().name.equals(innerName))
           .findFirst()
           .orElseThrow();
@@ -1064,8 +1076,56 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(ForallExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    if (expr.indices.size() != 1) {
+      throw new IllegalStateException("Can only lower single index right now");
+    }
+
+    var index = requireNonNull(expr.indices.getFirst());
+    var idx = new ForIdxNode(requireNonNull(index.typeLiteral).type(),
+        requireNonNull(index.computedFrom),
+        requireNonNull(index.computedTo));
+
+    var body = fetch(expr.body);
+    var type = getViamType(expr.type());
+
+    if (expr.operation == ForallExpr.Operation.TENSOR) {
+      return new TensorNode(type, idx, body);
+    }
+
+    if (expr.operation == ForallExpr.Operation.FOLD) {
+      var leftParam =
+          new vadl.viam.Parameter(new vadl.viam.Identifier("AnonymousLeftParam", expr.loc), type,
+              0);
+      var rightParam =
+          new vadl.viam.Parameter(new vadl.viam.Identifier("AnonymousRightParam", expr.loc), type,
+              1);
+      var params = new vadl.viam.Parameter[] {leftParam, rightParam};
+
+      // FIXME: Add all cases
+      @Nullable BuiltInTable.BuiltIn builtIn = null;
+      if (expr.foldOperator == Operator.Add) {
+        builtIn = BuiltInTable.ADD;
+      } else if (expr.foldOperator == Operator.Multiply) {
+        builtIn = BuiltInTable.MUL;
+      } else {
+        throw new IllegalStateException("Unknown fold operator: " + expr.foldOperator);
+      }
+
+      var operation = new BuiltInCall(builtIn,
+          new NodeList<>(new FuncParamNode(leftParam), new FuncParamNode(rightParam)), type);
+      var graph = new Graph("Combiner Graph");
+      var returnNode = graph.addWithInputs(new ReturnNode(operation));
+      graph.addWithInputs(new StartNode(returnNode));
+
+      var combiner =
+          new Function(new vadl.viam.Identifier("AnonymousCombinerFunc", expr.loc), params, type,
+              graph);
+
+      return new FoldNode(type, idx, body, combiner);
+    }
+
+    throw new IllegalStateException(
+        "Forall of kind %s isn't supported yet.".formatted(expr.operation));
   }
 
   @Override
