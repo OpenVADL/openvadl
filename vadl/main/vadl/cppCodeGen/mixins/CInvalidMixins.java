@@ -158,7 +158,7 @@ public interface CInvalidMixins {
   interface WriteSignal {
     @Handler
     default void handle(CGenContext<Node> ctx, WriteSignalNode node) {
-      throwNotAllowed(node, "Read stage output");
+      throwNotAllowed(node, "Write signal");
     }
   }
 
@@ -166,7 +166,7 @@ public interface CInvalidMixins {
   interface ReadSignal {
     @Handler
     default void handle(CGenContext<Node> ctx, ReadSignalNode node) {
-      throwNotAllowed(node, "Read stage output");
+      throwNotAllowed(node, "Read signal");
     }
   }
 
