@@ -75,7 +75,7 @@ public class MiaBuiltInCallMatcher {
       if (matchNode instanceof ConstantNode) {
         return false;
       }
-      return resolveCompute(matchNode, doneNodes);
+      return resolveCompute(matchNode);
     });
     MATCHERS.put(BuiltInTable.INSTRUCTION_ADDRESS, (matchNode, mapNode, doneNodes) -> {
       return matchNode.usages().anyMatch(use -> {
@@ -163,23 +163,16 @@ public class MiaBuiltInCallMatcher {
    * Resolve if the given node should be mapped as part of the compute built-in.
    *
    * @param matchNode node to be mapped
-   * @param doneNodes set of already mapped nodes
    * @return true, if node is part of compute
    */
-  private static boolean resolveCompute(Node matchNode, Set<Node> doneNodes) {
-    if (matchNode instanceof BuiltInCall) {
+  private static boolean resolveCompute(Node matchNode) {
+    if (matchNode instanceof BuiltInCall
+        || matchNode instanceof SelectNode
+        || matchNode instanceof UnaryNode) {
       if (isCompute(matchNode)) {
         return true;
       }
-      return matchNode.inputs()
-          .allMatch(input -> doneNodes.contains(input) || resolveCompute(input, doneNodes));
-    }
-    if (matchNode instanceof ConstantNode) {
-      return true;
-    }
-    if (matchNode instanceof SelectNode || matchNode instanceof UnaryNode) {
-      return matchNode.inputs()
-          .allMatch(input -> doneNodes.contains(input) || resolveCompute(input, doneNodes));
+      return matchNode.inputs().allMatch(MiaBuiltInCallMatcher::resolveCompute);
     }
     return false;
   }

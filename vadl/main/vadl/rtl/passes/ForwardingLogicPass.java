@@ -171,7 +171,9 @@ public class ForwardingLogicPass extends AbstractLogicPass {
     }
 
     // optimize
-    new RtlSimplifier(RtlSimplificationRules.rules).run(forwarding.behavior());
+    var simplifier = new RtlSimplifier(RtlSimplificationRules.rules);
+    simplifier.run(forwarding.behavior());
+    mia.stages().forEach(stage -> simplifier.run(stage.behavior()));
 
     // verify
     forwarding.verify();

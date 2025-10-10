@@ -57,6 +57,8 @@ public class RtlConfiguration extends GeneralConfiguration {
 
   private boolean keepSignals = false;
 
+  private boolean emitDebugPrint = true;
+
   public RtlConfiguration(GeneralConfiguration generalConfig) {
     super(generalConfig);
   }
@@ -150,5 +152,13 @@ public class RtlConfiguration extends GeneralConfiguration {
 
   public void setKeepSignals(boolean keepSignals) {
     this.keepSignals = keepSignals;
+  }
+
+  public boolean isEmitDebugPrint() {
+    return emitDebugPrint;
+  }
+
+  public void setEmitDebugPrint(boolean emitDebugPrint) {
+    this.emitDebugPrint = emitDebugPrint;
   }
 }

@@ -225,7 +225,7 @@ public class MiaMappingOptimizePass extends Pass {
   // the bits we save passing between the stages outweigh the bits the node outputs
   // exception for truncate and extend nodes (no cost in hardware)
   private boolean isCandidate(Stage stage, MiaMapping mapping, Node ipgNode) {
-    if (ipgNode.inputs().noneMatch(node -> mapping.containsInStage(stage, node))) {
+    if (ipgNode.inputs().noneMatch(n -> notConst(n) && mapping.containsInStage(stage, n))) {
       if (ipgNode instanceof TruncateNode
           || ipgNode instanceof ZeroExtendNode
           || ipgNode instanceof SignExtendNode) {
@@ -240,8 +240,12 @@ public class MiaMappingOptimizePass extends Pass {
   // i.e., are saved when moving the node up
   private int sumInputsWithoutMoreUsages(Stage stage, MiaMapping mapping, Node ipgNode) {
     return ipgNode.inputs()
-        .filter(input -> !hasMoreUsages(stage, mapping, ipgNode, input))
+        .filter(input -> notConst(input) && !hasMoreUsages(stage, mapping, ipgNode, input))
         .mapToInt(this::bitWidth).sum();
+  }
+
+  private boolean notConst(Node node) {
+    return !(node instanceof ExpressionNode e) || !e.isConstant();
   }
 
   private int bitWidth(Node input) {

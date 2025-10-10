@@ -214,6 +214,9 @@ public class InstructionProgressGraphCreationPass extends Pass {
               if (value.type().asDataType().bitWidth() < valType.bitWidth()) {
                 value = new ZeroExtendNode(value, valType);
               }
+              if (value.type().asDataType().bitWidth() > valType.bitWidth()) {
+                value = new TruncateNode(value, valType);
+              }
               var rtlWrite = new RtlWriteMemNode(write.memory(), maxWrite.getAsInt(), words,
                   write.address(), value, write.nullableCondition());
               ipg.replaceAndDelete(write, rtlWrite);

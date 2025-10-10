@@ -241,6 +241,9 @@ public class InstructionProgressGraphNamePass extends Pass {
   }
 
   private String nameInsSet(Set<Instruction> instructions, InstructionProgressGraph ipg) {
+    if (instructions.equals(ipg.instructions())) {
+      return "any";
+    }
     if (instructions.size() > ipg.instructions().size() / 2) {
       // generate name for complement
       var complement = new LinkedHashSet<>(ipg.instructions());

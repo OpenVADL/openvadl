@@ -663,8 +663,11 @@ public class PassOrders {
         "mia-map",
         "MiA after mapping instruction behavior");
 
-    order.add(new HazardAnalysisPass(config))
-        .add(new DebugOutputPass(config));
+    order.add(new HazardAnalysisPass(config));
+
+    if (config.isEmitDebugPrint()) {
+      order.add(new DebugOutputPass(config));
+    }
 
     order.add(new MiaMappingInlinePass(config))
         .add(new ForwardingLogicPass(config))

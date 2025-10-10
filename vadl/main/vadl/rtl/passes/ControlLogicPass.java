@@ -107,8 +107,14 @@ public class ControlLogicPass extends AbstractLogicPass {
       if (full == null) {
         // first stage
         if (stop != null) {
-          // empty stage with stop
-          fullRd = GraphUtils.not(new FuncCallNode(stop, new NodeList<>(), Type.bool()));
+          // empty stages with stop (provide this as signal)
+          var fullSig = new Signal(control.identifier.append(stage.simpleName() + "_full"),
+              Type.bool());
+          control.addSignal(fullSig);
+          var notStop = GraphUtils.not(new FuncCallNode(stop, new NodeList<>(), Type.bool()));
+          control.behavior().addWithInputs(new WriteSignalNode(fullSig, notStop));
+
+          fullRd = new ReadSignalNode(fullSig);
         } else {
           // always full otherwise
           fullRd = Constant.Value.of(true).toNode();
@@ -185,18 +191,14 @@ public class ControlLogicPass extends AbstractLogicPass {
     // patch side effects in stages
     for (Stage stage : mia.stages()) {
       var en = Objects.requireNonNull(control.getEnable(stage));
-      var enRd = stage.behavior().add(new ReadSignalNode(en));
-      var full = fullMap.get(stage);
-      ExpressionNode fullRd = Constant.Value.of(true).toNode();
-      if (full != null) {
-        fullRd = new ReadRegTensorNode(full, new NodeList<>(), Type.bool(), null);
-      }
-      ExpressionNode finalFullRd = stage.behavior().add(fullRd);
+      var fullRd = Objects.requireNonNull(fullRdMap.get(stage));
       stage.behavior().getNodes(RtlConditionalNode.class).forEach(condNode -> {
-        ExpressionNode enCond =  enRd;
+        ExpressionNode enCond;
         if (condNode instanceof RtlConditionalMemNode
             || condNode instanceof RtlConditionalReadNode) {
-          enCond = finalFullRd;
+          enCond = stage.behavior().add(fullRd.copy());
+        } else {
+          enCond = stage.behavior().add(new ReadSignalNode(en));
         }
         var cond = patchCondition(condNode.nullableCondition(), enCond);
         condNode.setCondition(cond);
@@ -246,7 +248,9 @@ public class ControlLogicPass extends AbstractLogicPass {
 
     // optimize
     Inliner.inlineFuncs(control.behavior());
-    new RtlSimplifier(RtlSimplificationRules.rules).run(control.behavior());
+    var simplifier = new RtlSimplifier(RtlSimplificationRules.rules);
+    simplifier.run(control.behavior());
+    mia.stages().forEach(stage -> simplifier.run(stage.behavior()));
 
     // verify
     control.verify();
