@@ -18,8 +18,10 @@ package vadl.rtl.map;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.nodes.RtlInstructionWordSliceNode;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
@@ -48,6 +50,12 @@ public class MiaBuiltInCallMatcher {
       new IdentityHashMap<>();
 
   static {
+    MATCHERS.put(BuiltInTable.FETCH_NEXT, (matchNode, mapNode, doneNodes) -> {
+      if (matchNode.ensureGraph() instanceof InstructionProgressGraph ipg) {
+        return matchNode.equals(ipg.fetch()) || matchNode.equals(ipg.pcIncrement());
+      }
+      return false;
+    });
     MATCHERS.put(BuiltInTable.DECODE, (matchNode, mapNode, doneNodes) -> {
       if (matchNode instanceof ConstantNode) {
         return false;
@@ -179,11 +187,11 @@ public class MiaBuiltInCallMatcher {
   public Set<Node> match(MiaBuiltInCall mapNode, Set<Node> nodes, Set<Node> doneNodes) {
     var matcher = MATCHERS.get(mapNode.builtIn());
     if (matcher == null) {
-      return Collections.emptySet();
+      return new LinkedHashSet<>();
     }
     return nodes.stream()
         .filter(matchNode -> matcher.match(matchNode, mapNode, doneNodes))
-        .collect(Collectors.toSet());
+        .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
 }

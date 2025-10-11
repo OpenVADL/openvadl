@@ -17,18 +17,48 @@
 package vadl.viam;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import vadl.types.Type;
+import vadl.viam.graph.Graph;
+import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
+import vadl.viam.graph.dependency.WriteSignalNode;
 
 /**
  * Logic definition in MiA description.
  */
-public abstract class Logic extends Definition {
+public abstract class Logic extends Definition implements DefProp.WithBehavior {
 
   @LazyInit
   @SuppressWarnings("unused")
   private MicroArchitecture mia;
 
+  private final List<Signal> signals;
+  private final List<RegisterTensor> registers;
+
+  private final Graph behavior;
+
+  /**
+   * Create new empty logic element.
+   *
+   * @param identifier identifier of the logic element
+   */
   public Logic(Identifier identifier) {
     super(identifier);
+    this.signals = new ArrayList<>();
+    this.registers = new ArrayList<>();
+    this.behavior = new Graph(identifier.simpleName());
+  }
+
+  public MicroArchitecture mia() {
+    return mia;
   }
 
   public void setMia(MicroArchitecture mia) {
@@ -45,13 +75,111 @@ public abstract class Logic extends Definition {
     return identifier.simpleName() + ": " + getClass().getSimpleName();
   }
 
+  public List<Signal> signals() {
+    return signals;
+  }
+
+  public void addSignal(Signal signal) {
+    signals.add(signal);
+  }
+
+  public List<RegisterTensor> registers() {
+    return registers;
+  }
+
+  public void addRegister(RegisterTensor register) {
+    registers.add(register);
+  }
+
+  public Graph behavior() {
+    return behavior;
+  }
+
+  @Override
+  public List<Graph> behaviors() {
+    return Collections.singletonList(behavior);
+  }
+
+  @Override
+  public void verify() {
+    super.verify();
+    behavior.verify();
+
+    var signalWrites = behavior.getNodes(WriteSignalNode.class)
+        .map(WriteSignalNode::signal)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    signals.forEach(signal -> ensure(signalWrites.contains(signal),
+        "Signal %s is not written to", signal.simpleName()));
+
+    var registerWrites = behavior.getNodes(WriteRegTensorNode.class)
+        .map(WriteRegTensorNode::registerTensor)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    registers.forEach(regTensor -> ensure(registerWrites.contains(regTensor),
+        "Register %s is not written to", regTensor.simpleName()));
+  }
+
+  /**
+   * Logic definition for control logic (created by MiA synthesis).
+   */
+  public static class Control extends Logic {
+
+    private final Map<Stage, Signal> enable = new HashMap<>();
+
+    public Control(Identifier identifier) {
+      super(identifier);
+    }
+
+    /**
+     * Get or create an enable signal for the given stage.
+     *
+     * @param stage stage
+     * @return enable signal
+     */
+    public Signal getEnable(Stage stage) {
+      return enable.computeIfAbsent(stage, s -> {
+        var sig = new Signal(identifier.append(s.simpleName() + "_en"), Type.bool());
+        signals().add(sig);
+        return sig;
+      });
+    }
+
+  }
+
   /**
    * Logic definition for a forwarding unit.
    */
   public static class Forwarding extends Logic {
 
+    private final Map<ReadResourceNode, Signal> enable = new HashMap<>();
+
     public Forwarding(Identifier identifier) {
       super(identifier);
+    }
+
+    /**
+     * Add a forward enable signal for a read node to the forwarding logic.
+     *
+     * @param node read node
+     * @param signal forward enable signal
+     */
+    public void putEnable(ReadResourceNode node, Signal signal) {
+      enable.put(node, signal);
+      if (!signals().contains(signal)) {
+        signals().add(signal);
+      }
+    }
+
+    /**
+     * Get the forward enable signal for a read node.
+     *
+     * @param node read node
+     * @return forward enable signal
+     */
+    @Nullable
+    public Signal getEnable(ReadResourceNode node) {
+      return enable.get(node);
     }
 
   }

@@ -18,6 +18,7 @@ package vadl.rtl.passes;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -47,7 +48,7 @@ public class StageOrderingPass extends Pass {
 
   @Override
   public PassName getName() {
-    return PassName.of("StageOrdering");
+    return PassName.of("Stage Ordering");
   }
 
   @Nullable
@@ -63,6 +64,12 @@ public class StageOrderingPass extends Pass {
 
   private static List<Stage> order(MicroArchitecture mia) {
 
+    // trivially ordered
+    if (mia.stages().size() <= 1) {
+      return new ArrayList<>(mia.stages());
+    }
+
+    // input/output dependencies
     var dep = new HashSet<Pair<Stage, Stage>>(); // stage read from -> stage reading
     for (Stage inputStage : mia.stages()) {
       var inputs = inputStage.inputs();
@@ -70,14 +77,8 @@ public class StageOrderingPass extends Pass {
           .filter(outputStage -> inputs.stream().anyMatch(outputStage.outputs()::contains))
           .forEach(outputStage -> dep.add(Pair.of(outputStage, inputStage)));
     }
-
-    // check input/output dependencies
     var readFrom = dep.stream().map(Pair::left).collect(Collectors.toSet());
     var reading = dep.stream().map(Pair::right).collect(Collectors.toSet());
-    var onlyReadFrom = new HashSet<>(readFrom);
-    onlyReadFrom.removeAll(reading);
-    ViamError.ensure(onlyReadFrom.size() == 1, () -> Diagnostic.error(
-        "Exactly one start stage expected", mia.location()));
 
     // check we can order every stage
     var unordered = new HashSet<>(mia.stages());
@@ -87,8 +88,11 @@ public class StageOrderingPass extends Pass {
     ViamError.ensure(anyUnordered.isEmpty(), () -> Diagnostic.error(
         "All stages need to be ordered", anyUnordered.get().location()));
 
-    var start = onlyReadFrom.stream().findAny().orElseThrow(
-        () -> new ViamError("Exactly one start stage expected").addLocation(mia.location()));
+    // find start stage
+    var notReading = mia.stages().stream().filter(stage -> stage.inputs().isEmpty()).toList();
+    ViamError.ensure(notReading.size() == 1, () -> Diagnostic.error(
+        "Exactly one start stage not reading stage outputs expected", mia.location()));
+    var start = notReading.getFirst();
 
     var order = new ArrayList<Stage>();
     follow(dep, start, order);

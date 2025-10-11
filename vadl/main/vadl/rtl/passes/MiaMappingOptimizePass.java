@@ -21,8 +21,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,7 +43,9 @@ import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.passes.canonicalization.Canonicalizer;
+import vadl.viam.graph.dependency.SignExtendNode;
+import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * Improve the MiA mapping by moving nodes on the fringe of two map nodes if they reduce the size of
@@ -103,7 +106,6 @@ public class MiaMappingOptimizePass extends Pass {
     } while (changes > 0 || !Sets.symmetricDifference(added, removed).isEmpty());
 
     // optimize
-    Canonicalizer.canonicalize(ipg);
     new RtlSimplifier(RtlSimplificationRules.rules).run(ipg, mapping);
 
     return null;
@@ -167,11 +169,11 @@ public class MiaMappingOptimizePass extends Pass {
   private void combineOutputs(List<Stage> stages, MiaMapping mapping,
                               InstructionProgressGraph ipg, Set<Node> added) {
     for (Stage stage : stages) {
-      var outMap = new HashMap<Integer, Set<ExpressionNode>>();
+      var outMap = new LinkedHashMap<Integer, Set<ExpressionNode>>();
       mapping.stageOutputs(stage)
           .filter(n -> bitWidth(n) > 1)
           .forEach(node -> {
-            outMap.computeIfAbsent(bitWidth(node), k -> new HashSet<>()).add(node);
+            outMap.computeIfAbsent(bitWidth(node), k -> new LinkedHashSet<>()).add(node);
           });
       for (Set<ExpressionNode> set : outMap.values()) {
         if (set.size() <= 1) {
@@ -220,9 +222,17 @@ public class MiaMappingOptimizePass extends Pass {
 
   // node can be moved if it has no inputs from the current stage and
   // the bits we save passing between the stages outweigh the bits the node outputs
+  // exception for truncate and extend nodes (no cost in hardware)
   private boolean isCandidate(Stage stage, MiaMapping mapping, Node ipgNode) {
-    return (ipgNode.inputs().noneMatch(node -> mapping.containsInStage(stage, node))
-        && sumInputsWithoutMoreUsages(stage, mapping, ipgNode) > bitWidth(ipgNode));
+    if (ipgNode.inputs().noneMatch(node -> mapping.containsInStage(stage, node))) {
+      if (ipgNode instanceof TruncateNode
+          || ipgNode instanceof ZeroExtendNode
+          || ipgNode instanceof SignExtendNode) {
+        return true;
+      }
+      return sumInputsWithoutMoreUsages(stage, mapping, ipgNode) > bitWidth(ipgNode);
+    }
+    return false;
   }
 
   // sum bit widths of inputs that have no more usages in the current stage

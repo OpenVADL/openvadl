@@ -16,19 +16,12 @@
 
 package vadl.rtl.ipg.nodes;
 
-import javax.annotation.Nullable;
-import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 
 /**
- * Interface for all RTL read nodes that have conditions. Used during IGP creation.
+ * Interface for all RTL read nodes that have conditions.
  */
-public interface RtlConditionalReadNode {
-
-  @Nullable
-  ExpressionNode condition();
-
-  void setCondition(ExpressionNode condition);
+public interface RtlConditionalReadNode extends RtlConditionalNode {
 
   ReadResourceNode asReadNode();
 

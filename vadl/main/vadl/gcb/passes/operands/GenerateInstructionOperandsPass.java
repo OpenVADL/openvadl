@@ -72,6 +72,7 @@ import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
@@ -738,5 +739,10 @@ class PseudoNodeOperandCollector {
     PseudoNodeOperandCollectorDispatcher.dispatch(this, node.condition());
     PseudoNodeOperandCollectorDispatcher.dispatch(this, node.trueCase());
     PseudoNodeOperandCollectorDispatcher.dispatch(this, node.falseCase());
+  }
+
+  @Handler
+  protected void handle(ReadSignalNode node) {
+    throw Diagnostic.error("not supported", node.location()).build();
   }
 }

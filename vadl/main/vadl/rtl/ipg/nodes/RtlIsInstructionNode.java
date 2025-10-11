@@ -16,13 +16,18 @@
 
 package vadl.rtl.ipg.nodes;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
+import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
@@ -40,14 +45,21 @@ public class RtlIsInstructionNode extends ExpressionNode {
   @DataValue
   private final Set<Instruction> instructions;
 
+  @Input
+  @Nullable
+  protected ExpressionNode instruction;
+
   /**
-   * Create a new is-instruction node for a set of instructions.
+   * Create a new is-instruction node for a collection of instructions it should match.
    *
-   * @param instructions set of instructions
+   * @param instructions collection of instructions
+   * @param instruction instruction word input
    */
-  public RtlIsInstructionNode(Set<Instruction> instructions) {
+  public RtlIsInstructionNode(Collection<Instruction> instructions,
+                              @Nullable ExpressionNode instruction) {
     super(Type.bool());
-    this.instructions = new HashSet<>(instructions);
+    this.instructions = new LinkedHashSet<>(instructions);
+    this.instruction = instruction;
   }
 
   /**
@@ -59,6 +71,35 @@ public class RtlIsInstructionNode extends ExpressionNode {
     return instructions;
   }
 
+  /**
+   * Instruction word input, set by {@link vadl.rtl.passes.InstructionProgressGraphLowerPass}.
+   *
+   * @return instruction word input
+   */
+  @Nullable
+  public ExpressionNode instruction() {
+    return instruction;
+  }
+
+  public void setInstruction(@Nullable ExpressionNode instruction) {
+    updateUsageOf(this.instruction, instruction);
+    this.instruction = instruction;
+  }
+
+  @Override
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnInputsUnsafe(visitor);
+    instruction = visitor.applyNullable(this, instruction, ExpressionNode.class);
+  }
+
+  @Override
+  protected void collectInputs(List<Node> collection) {
+    super.collectInputs(collection);
+    if (this.instruction != null) {
+      collection.add(instruction);
+    }
+  }
+
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
@@ -67,12 +108,13 @@ public class RtlIsInstructionNode extends ExpressionNode {
 
   @Override
   public ExpressionNode copy() {
-    return new RtlIsInstructionNode(instructions);
+    return new RtlIsInstructionNode(instructions,
+        (instruction != null) ? instruction.copy() : null);
   }
 
   @Override
   public Node shallowCopy() {
-    return new RtlIsInstructionNode(instructions);
+    return new RtlIsInstructionNode(instructions, instruction);
   }
 
   @Override

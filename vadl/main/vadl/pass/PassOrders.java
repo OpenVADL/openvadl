@@ -28,6 +28,7 @@ import vadl.configuration.GcbConfiguration;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.configuration.LcbConfiguration;
+import vadl.configuration.RtlConfiguration;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
@@ -103,6 +104,17 @@ import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
 import vadl.lcb.template.lld.ELF.Arch.EmitLldVadlBuiltinsHeaderFilePass;
+import vadl.rtl.passes.CleanupEmitDirectoryPass;
+import vadl.rtl.passes.ControlLogicPass;
+import vadl.rtl.passes.DebugOutputPass;
+import vadl.rtl.passes.EmitBuildSbtPass;
+import vadl.rtl.passes.EmitCoreEmitPass;
+import vadl.rtl.passes.EmitCoreTestPass;
+import vadl.rtl.passes.EmitModulesPass;
+import vadl.rtl.passes.EmitRtlMakefilePass;
+import vadl.rtl.passes.EmitScalafmtConfigPass;
+import vadl.rtl.passes.EmitVadlLibPass;
+import vadl.rtl.passes.ForwardingLogicPass;
 import vadl.rtl.passes.HazardAnalysisPass;
 import vadl.rtl.passes.InstructionProgressGraphCreationPass;
 import vadl.rtl.passes.InstructionProgressGraphLowerPass;
@@ -111,6 +123,7 @@ import vadl.rtl.passes.InstructionProgressGraphNamePass;
 import vadl.rtl.passes.MiaMappingCreationPass;
 import vadl.rtl.passes.MiaMappingInlinePass;
 import vadl.rtl.passes.MiaMappingOptimizePass;
+import vadl.rtl.passes.RtlConfigurationPass;
 import vadl.rtl.passes.StageOrderingPass;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.vdt.passes.VdtConstraintSynthesisPass;
@@ -599,12 +612,14 @@ public class PassOrders {
   /**
    * Constructs the pass order used to generate the RTL (Chisel) from a VADL specification.
    */
-  public static PassOrder rtl(GeneralConfiguration config) throws IOException {
+  public static PassOrder rtl(RtlConfiguration config) throws IOException {
     var order = viam(config);
 
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
     order.skip(RenamingConflictingRegistersPass.class);
     order.skip(OverwriteInputOperandsPass.class);
+
+    order.add(new RtlConfigurationPass(config));
 
     // TODO: Remove once frontend creates it
     order.add(new DummyMiaPass(config));
@@ -617,15 +632,33 @@ public class PassOrders {
         .add(new InstructionProgressGraphLowerPass(config))
         .add(new InstructionProgressGraphNamePass(config));
 
-    order.add(new HazardAnalysisPass(config));
+    order.add(new HazardAnalysisPass(config))
+        .add(new DebugOutputPass(config));
 
-    order.add(new MiaMappingInlinePass(config));
+    order.add(new MiaMappingInlinePass(config))
+        .add(new ForwardingLogicPass(config))
+        .add(new ControlLogicPass(config));
 
     addHtmlDump(order, config,
         "mia",
         "MiA after mapping and inlining instruction behavior");
 
+    if (!config.isDryRun()) {
+      addRtlEmitPasses(order, config);
+    }
+
     return order;
+  }
+
+  private static void addRtlEmitPasses(PassOrder order, RtlConfiguration config) {
+    order.add(new EmitBuildSbtPass(config))
+        .add(new EmitModulesPass(config))
+        .add(new EmitVadlLibPass(config))
+        .add(new EmitCoreTestPass(config))
+        .add(new EmitCoreEmitPass(config))
+        .add(new EmitScalafmtConfigPass(config))
+        .add(new EmitRtlMakefilePass(config))
+        .add(new CleanupEmitDirectoryPass(config));
   }
 
   /**

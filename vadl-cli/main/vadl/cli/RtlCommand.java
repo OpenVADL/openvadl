@@ -19,9 +19,11 @@ package vadl.cli;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import java.io.IOException;
+import javax.annotation.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.RtlConfiguration;
 import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
 
@@ -35,6 +37,53 @@ import vadl.pass.PassOrders;
 )
 public class RtlCommand extends BaseCommand {
 
+  @CommandLine.Option(names = {"--dummy-mia"},
+      scope = INHERIT,
+      description = "Select a dummy MiA: ${COMPLETION-CANDIDATES} (stages in pipeline)",
+      defaultValue = "five")
+  RtlConfiguration.DummyMia dummyMia = RtlConfiguration.DummyMia.five;
+
+  @CommandLine.Option(names = {"--memory"},
+      scope = INHERIT,
+      description = "Configure external memory interface: ${COMPLETION-CANDIDATES}",
+      defaultValue = "decoupled")
+  RtlConfiguration.Memory memory = RtlConfiguration.Memory.decoupled;
+
+  @CommandLine.Option(names = {"--scala-package"},
+      scope = INHERIT,
+      description = "Package to emit scala code in.",
+      defaultValue = "")
+  String scalaPackage = "";
+
+  @CommandLine.Option(names = {"--top-module"},
+      scope = INHERIT,
+      description = "Override the top module name. By default, this is the processor name from the "
+          + "specification.")
+  @Nullable
+  String topModule = null;
+
+  @CommandLine.Option(names = {"--project-name"},
+      scope = INHERIT,
+      description = "Override the project name. By default, this is the basename of the "
+          + "specification file.")
+  @Nullable
+  String projectName = null;
+
+  @CommandLine.Option(names = {"--reset-vector"},
+      scope = INHERIT,
+      description = "Read the reset vector from an external signal with this name. "
+          + "Useful for test benches. "
+          + "Overrides any reset value for the PC in the specification.")
+  @Nullable
+  String resetVector = null;
+
+  @CommandLine.Option(names = {"--keep-signals"},
+      scope = INHERIT,
+      description = "Marks signals in generated HDL to not be optimized or removed during "
+          + "synthesis and simulation.",
+      defaultValue = "false")
+  boolean keepSignals = false;
+
   @CommandLine.Option(names = {"--dry-run"},
       scope = INHERIT,
       description = "Don't emit generated files.")
@@ -42,7 +91,15 @@ public class RtlCommand extends BaseCommand {
 
   @Override
   PassOrder passOrder(GeneralConfiguration configuration) throws IOException {
-    configuration.setDryRun(dryRun);
-    return PassOrders.rtl(configuration);
+    var rtlConfig = new RtlConfiguration(configuration);
+    rtlConfig.setDummyMia(dummyMia);
+    rtlConfig.setMemory(memory);
+    rtlConfig.setResetVector(resetVector);
+    rtlConfig.setKeepSignals(keepSignals);
+    rtlConfig.setScalaPackageAndDirs(scalaPackage);
+    rtlConfig.setTopModule(topModule);
+    rtlConfig.setProjectName(projectName);
+    rtlConfig.setDryRun(dryRun);
+    return PassOrders.rtl(rtlConfig);
   }
 }

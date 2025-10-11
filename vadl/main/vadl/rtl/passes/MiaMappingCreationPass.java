@@ -16,13 +16,12 @@
 
 package vadl.rtl.passes;
 
-import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -76,11 +75,8 @@ public class MiaMappingCreationPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var optIsa = viam.isa();
-    if (optIsa.isEmpty()) {
-      return null;
-    }
     var optMia = viam.mia();
-    if (optMia.isEmpty()) {
+    if (optIsa.isEmpty() || optMia.isEmpty()) {
       return null;
     }
 
@@ -88,19 +84,19 @@ public class MiaMappingCreationPass extends Pass {
     var stages = optMia.get().stages();
 
     // done map: mia node -> set of ipg nodes already mapped at this position
-    final var done = new IdentityHashMap<Node, Set<Node>>();
-    final var writeContext = new IdentityHashMap<StageOutput, MiaMapping.NodeContext>();
-    final var ipgNodes = ipg.getNodes().collect(Collectors.toUnmodifiableSet());
+    final var done = new HashMap<Node, Set<Node>>();
+    final var writeContext = new HashMap<StageOutput, MiaMapping.NodeContext>();
+    final var ipgNodes = ipg.getNodes().collect(Collectors.toCollection(LinkedHashSet::new));
     final var mapping = new MiaMapping(optMia.get(), ipg);
 
     for (Stage stage : stages) {
       // sources, maps, sinks based on input/output types of the nodes
       var sources = stage.behavior().getNodes().filter(this::isSource)
-          .collect(Collectors.toCollection(Sets::newIdentityHashSet));
+          .collect(Collectors.toCollection(LinkedHashSet::new));
       var maps = stage.behavior().getNodes().filter(this::isMap)
-          .collect(Collectors.toCollection(Sets::newIdentityHashSet));
+          .collect(Collectors.toCollection(LinkedHashSet::new));
       var sinks = stage.behavior().getNodes().filter(this::isSink)
-          .collect(Collectors.toCollection(Sets::newIdentityHashSet));
+          .collect(Collectors.toCollection(LinkedHashSet::new));
       if (sources.isEmpty() && maps.isEmpty() && sinks.isEmpty()) {
         continue;
       }
@@ -118,7 +114,7 @@ public class MiaMappingCreationPass extends Pass {
         } else {
           // sources must be in the done map in any case, because traversal checks
           // if inputs already done
-          done.put(source, new HashSet<>());
+          done.put(source, new LinkedHashSet<>());
         }
       }
 
@@ -146,7 +142,7 @@ public class MiaMappingCreationPass extends Pass {
         var inputDone = inputDoneSets.stream().flatMap(Collection::stream)
             .collect(Collectors.toSet());
 
-        Set<Node> matched = Collections.emptySet();
+        Set<Node> matched;
         if (mapNode instanceof MiaBuiltInCall miaCall) {
           // use matcher
           matched = matcher.match(miaCall, ipgNodes, inputDone);
@@ -156,7 +152,7 @@ public class MiaMappingCreationPass extends Pass {
         }
 
         // grow matches up until nodes already done at inputs
-        var mapped = new HashSet<Node>();
+        var mapped = new LinkedHashSet<Node>();
         matched.forEach(match -> growInputs(match, mapped, inputDone));
 
         // mark nodes in ipg
@@ -172,7 +168,7 @@ public class MiaMappingCreationPass extends Pass {
             })
             .filter(Objects::nonNull).collect(Collectors.toList());
         var context = mapping.createContext(stage, mapNode, inputContexts);
-        var fixed = new HashSet<>(matched);
+        var fixed = new LinkedHashSet<>(matched);
         fixed.removeIf(inputDone::contains);
         context.fixedIpgNodes().addAll(fixed);
         context.ipgNodes().addAll(mapped);
@@ -220,7 +216,8 @@ public class MiaMappingCreationPass extends Pass {
   // expression node with instruction output
   private boolean instructionNode(Node node) {
     if (node instanceof ExpressionNode expr) {
-      return expr.type().isTrivialCastTo(MicroArchitectureType.instruction());
+      return expr.type().isTrivialCastTo(MicroArchitectureType.instruction())
+          || expr.type().isTrivialCastTo(MicroArchitectureType.fetchResult());
     }
     return false;
   }
@@ -235,7 +232,8 @@ public class MiaMappingCreationPass extends Pass {
 
   // expression node with instruction output _and_ instruction inputs
   private boolean isMap(Node node) {
-    if (node instanceof MiaBuiltInCall miaCall && miaCall.builtIn() == BuiltInTable.DECODE) {
+    if (node instanceof MiaBuiltInCall miaCall
+        && Set.of(BuiltInTable.DECODE, BuiltInTable.FETCH_NEXT).contains(miaCall.builtIn())) {
       return true;
     }
     if (node instanceof ExpressionNode expr) {

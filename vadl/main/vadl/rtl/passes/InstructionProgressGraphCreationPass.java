@@ -18,15 +18,14 @@ package vadl.rtl.passes;
 
 import com.google.common.collect.Streams;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -38,8 +37,10 @@ import vadl.rtl.ipg.nodes.RtlInstructionWordSliceNode;
 import vadl.rtl.ipg.nodes.RtlReadMemNode;
 import vadl.rtl.ipg.nodes.RtlReadRegTensorNode;
 import vadl.rtl.ipg.nodes.RtlWriteMemNode;
+import vadl.rtl.ipg.nodes.RtlWriteRegTensorNode;
 import vadl.rtl.utils.GraphMergeUtils;
 import vadl.rtl.utils.RtlSimplificationRules;
+import vadl.types.BitsType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.GraphUtils;
@@ -50,25 +51,21 @@ import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
-import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
-import vadl.viam.graph.control.ControlNode;
-import vadl.viam.graph.control.ControlSplitNode;
-import vadl.viam.graph.control.DirectionalNode;
-import vadl.viam.graph.control.MergeNode;
-import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
-import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplifier;
 import vadl.viam.passes.canonicalization.Canonicalizer;
@@ -114,6 +111,9 @@ public class InstructionProgressGraphCreationPass extends Pass {
     // if a constrained addresses is matched
     inlineRegisterFileConstraints(ipg);
 
+    // create instruction fetch and pc increment nodes
+    inlineInstructionFetch(ipg, optIsa.get());
+
     // optimize because some of the previous steps introduce
     // potentially unnecessary constant nodes
     Canonicalizer.canonicalize(ipg);
@@ -140,72 +140,17 @@ public class InstructionProgressGraphCreationPass extends Pass {
       fieldRefNode.replaceAndDelete(slice);
     });
 
+    // inline procedure calls (exceptions)
+    inlineProcCalls(behavior);
+
     // merge non-concurrent writes since we discard control flow nodes in the next step
-    mergeWritesOnBranch(GraphUtils.getSingleNode(behavior, StartNode.class), new HashSet<>());
+    GraphMergeUtils.mergeWritesOnBranches(behavior);
 
     // copy side effect nodes to IPG
     behavior.getNodes(SideEffectNode.class).forEach(sideEffect -> {
       var copy = sideEffect.copy();
       ipg.addWithInputs(copy, Collections.singleton(instruction));
     });
-  }
-
-  private @Nullable MergeNode mergeWritesOnBranch(AbstractBeginNode beginNode,
-                                                  Set<WriteResourceNode> writes) {
-    // traverse control flow
-    ControlNode current = beginNode;
-    while (true) {
-      if (current instanceof AbstractEndNode endNode) {
-        // collect write nodes on each branch
-        for (var sideEffect : endNode.sideEffects()) {
-          if (sideEffect instanceof WriteResourceNode writeNode) {
-            writes.add(writeNode);
-          }
-        }
-        return endNode.usages()
-            .filter(user -> user instanceof MergeNode)
-            .map(MergeNode.class::cast)
-            .findAny()
-            .orElse(null);
-      } else if (current instanceof ControlSplitNode splitNode) {
-        // merge writes on each branch separately
-        // collect (remaining) writes from each branch in set
-        var branchWrites = new ArrayList<Set<WriteResourceNode>>();
-        var mergeNodes = splitNode.branches().stream()
-            .map(branch -> {
-              var writeSet = new HashSet<WriteResourceNode>();
-              branchWrites.add(writeSet);
-              return mergeWritesOnBranch(branch, writeSet);
-            })
-            .collect(Collectors.toSet());
-        branchWrites.forEach(writes::addAll);
-
-        splitNode.ensure(mergeNodes.size() == 1,
-            "Branches of node don't result in the same merge node");
-        splitNode.ensure(!mergeNodes.contains(null),
-            "Couldn't find merge node for any branch");
-
-        // merge all (remaining) writes that are not in the same branch
-        var allWrites = branchWrites.stream().flatMap(Collection::stream)
-            .collect(Collectors.toSet());
-        var merged = GraphMergeUtils.merge(allWrites,
-            new GraphMergeUtils.SelectInputMergeStrategy<>(SideEffectNode::condition) {
-              @Override
-              public boolean filter(WriteResourceNode n1, WriteResourceNode n2) {
-                return super.filter(n1, n2) && branchWrites.stream()
-                    .noneMatch(b -> b.contains(n1) && b.contains(n2));
-              }
-            });
-        merged.forEach(writes::remove);
-
-        current = mergeNodes.iterator().next();
-      } else if (current instanceof DirectionalNode directionalNode) {
-        current = directionalNode.next();
-      } else {
-        //noinspection DataFlowIssue
-        current.ensure(false, "Not expected node in control flow.");
-      }
-    }
   }
 
   private void adaptReadWriteNodes(InstructionSetArchitecture isa, InstructionProgressGraph ipg) {
@@ -217,6 +162,15 @@ public class InstructionProgressGraphCreationPass extends Pass {
             ipg.replaceAndDelete(read, new RtlReadRegTensorNode(reg, read.indices(),
                 read.type().asDataType().toBitsType(), GraphUtils.bool(true).toNode(),
                 read.staticCounterAccess()));
+          });
+    });
+    // replace register tensor writes
+    isa.registerTensors().forEach(reg -> {
+      ipg.getNodes(WriteRegTensorNode.class)
+          .filter(write -> write.resourceDefinition().equals(reg))
+          .toList().forEach(write -> {
+            ipg.replaceAndDelete(write, new RtlWriteRegTensorNode(reg, write.indices(),
+                write.value(), write.staticCounterAccess(), write.condition()));
           });
     });
 
@@ -268,33 +222,40 @@ public class InstructionProgressGraphCreationPass extends Pass {
   }
 
   private void setReadConditions(InstructionProgressGraph ipg) {
-    var map = new HashMap<RtlConditionalReadNode, Set<ExpressionNode>>();
+    var map = new LinkedHashMap<RtlConditionalReadNode, Set<ExpressionNode>>();
     ipg.getNodes(SideEffectNode.class).forEach(sideEffect -> {
       collectSideEffects(sideEffect, sideEffect, map);
     });
     map.forEach((read, sideEffects) -> {
       var instructions = ipg.getContext(read.asReadNode()).instructions();
-      sideEffects.stream()
-          .reduce(GraphUtils::or).ifPresent(cond -> {
-            if (hasCycle(read.asReadNode(), cond)) {
-              // over-approximate with true
-              read.setCondition(
-                  ipg.addWithInputs(GraphUtils.bool(true).toNode(), instructions));
-            } else {
-              if (read.condition() != null) {
-                cond = GraphUtils.and(cond, read.condition());
+      if (sideEffects.contains(null) || sideEffects.stream()
+          .anyMatch(e -> e instanceof ConstantNode c && c.constant().asVal().bool())) {
+        // condition is true
+        read.setCondition(
+            ipg.addWithInputs(GraphUtils.bool(true).toNode(), instructions));
+      } else {
+        sideEffects.stream()
+            .reduce(GraphUtils::or).ifPresent(cond -> {
+              if (hasCycle(read.asReadNode(), cond)) {
+                // over-approximate with true
+                read.setCondition(
+                    ipg.addWithInputs(GraphUtils.bool(true).toNode(), instructions));
+              } else {
+                if (read.condition() != null) {
+                  cond = GraphUtils.and(cond, read.condition());
+                }
+                cond = ipg.addWithInputs(cond, instructions);
+                read.setCondition(cond);
               }
-              cond = ipg.addWithInputs(cond, instructions);
-              read.setCondition(cond);
-            }
-          });
+            });
+      }
     });
   }
 
   private void collectSideEffects(Node node, SideEffectNode sideEffect,
                                   Map<RtlConditionalReadNode, Set<ExpressionNode>> map) {
-    if (node instanceof RtlConditionalReadNode read && read.condition() != null) {
-      map.computeIfAbsent(read, k -> new HashSet<>())
+    if (node instanceof RtlConditionalReadNode read) {
+      map.computeIfAbsent(read, k -> new LinkedHashSet<>())
           .add(sideEffect.condition());
     }
     node.inputs().forEach(input -> collectSideEffects(input, sideEffect, map));
@@ -367,5 +328,102 @@ public class InstructionProgressGraphCreationPass extends Pass {
         )
         .reduce(GraphUtils::or).orElseThrow(() ->
             new ViamError("Malformed register file constraint without indices"));
+  }
+
+  private void inlineInstructionFetch(InstructionProgressGraph ipg,
+                                      InstructionSetArchitecture isa) {
+    var codeMem = isa.codeMemory();
+    var minInsWord = isa.ownFormats().stream().mapToInt(f -> f.type().bitWidth()).min();
+    var maxInsWord = isa.ownFormats().stream().mapToInt(f -> f.type().bitWidth()).max();
+    var pc = isa.pc();
+    if (pc == null || minInsWord.isEmpty() || maxInsWord.isEmpty()
+        || minInsWord.getAsInt() != maxInsWord.getAsInt()) {
+      throw new ViamError("Can only fetch instructions with a single instruction width");
+    }
+    if ((maxInsWord.getAsInt() % codeMem.resultType().bitWidth()) != 0) {
+      throw new ViamError("Instruction word length must be a multiple of code memory result width");
+    }
+    var insWord = maxInsWord.getAsInt();
+    var pcInc = maxInsWord.getAsInt() / codeMem.resultType().bitWidth();
+    var pcIncVal = Constant.Value
+        .of(pcInc, Type.bits(BitsType.minimalRequiredWidthFor(pcInc))).asVal();
+
+    // read pc address
+    var readPc = new ReadRegTensorNode(pc.registerTensor(), new NodeList<>(),
+        pc.resultType(), pc);
+    readPc = ipg.addWithInputs(readPc, ipg.instructions());
+    ipg.setPcRead(readPc);
+
+    // read instruction at pc
+    var readIns = new RtlReadMemNode(codeMem, pcInc, pcIncVal.toNode(), readPc,
+        Type.bits(insWord), Constant.Value.of(true).toNode());
+    readIns = ipg.addWithInputs(readIns, ipg.instructions());
+    ipg.setFetch(readIns);
+
+    // pc increment, TODO: replace with branch prediction value
+    var pcIncRes = GraphUtils.add(
+        readPc,
+        Constant.Value.of(pcInc, pc.resultType()).asVal().toNode()
+    );
+    var writePc = new RtlWriteRegTensorNode(pc.registerTensor(), new NodeList<>(),
+        pcIncRes, pc, Constant.Value.of(true).toNode());
+    writePc = ipg.addWithInputs(writePc, ipg.instructions());
+    ipg.setPcIncrement(writePc);
+
+    // disable other pc writes if they write the same value
+    // (rollback only considers write enable on other pc writes, would cause unnecessary rollback)
+    ipg.getNodes(WriteRegTensorNode.class).toList().forEach(write -> {
+      if (!write.equals(ipg.pcIncrement())
+          && write.resourceDefinition().equals(pc.registerTensor())) {
+        var cond = GraphUtils.and(write.condition(), GraphUtils.neq(pcIncRes, write.value()));
+        cond = ipg.addWithInputs(cond, ipg.instructions());
+        write.setCondition(cond);
+      }
+    });
+  }
+
+  private void inlineProcCalls(Graph behavior) {
+    List<ProcCallNode> procCalls;
+    while (true) {
+      procCalls = behavior.getNodes(ProcCallNode.class).toList();
+      if (procCalls.isEmpty()) {
+        break;
+      }
+
+      for (ProcCallNode procCall : procCalls) {
+        var procBehavior = procCall.procedure().behavior().copy();
+        var paramNodes = procBehavior.getNodes(FuncParamNode.class).toList();
+
+        Streams.forEachPair(
+            procCall.arguments().stream(),
+            Arrays.stream(procCall.procedure().parameters()),
+            (arg, param) -> {
+
+              // replace parameter nodes with arguments
+              for (var paramNode : paramNodes) {
+                if (paramNode.parameter() == param) {
+                  var argCopy = Objects.requireNonNull(arg).copy();
+                  paramNode.replaceAndDelete(argCopy);
+                }
+              }
+            });
+
+        // copy side effects to behavior and remove procedure call
+        // patch side effects with procedure call condition
+        procBehavior.getNodes(SideEffectNode.class).forEach(sideEffect -> {
+          sideEffect = behavior.addWithInputs(sideEffect.copy(SideEffectNode.class));
+          if (procCall.nullableCondition() != null) {
+            var cond = behavior.add(GraphUtils.and(sideEffect.condition(), procCall.condition()));
+            sideEffect.setCondition(cond);
+          }
+        });
+        for (Node usage : procCall.usages().toList()) {
+          if (usage instanceof AbstractEndNode end) {
+            end.removeSideEffect(procCall);
+          }
+        }
+        procCall.safeDelete();
+      }
+    }
   }
 }

@@ -94,6 +94,7 @@ import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.passes.CfgTraverser;
@@ -1138,6 +1139,11 @@ class InstructionFieldExpansionCodeGenerator implements CDefaultMixins.AllExpres
   protected void handle(CGenContext<Node> ctx, ReadStageOutputNode toHandle) {
     throwNotAllowed(toHandle, "read stage output node");
   }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, ReadSignalNode toHandle) {
+    throwNotAllowed(toHandle, "read  signal node");
+  }
 }
 
 /**
@@ -1262,6 +1268,11 @@ class InstructionFieldAccessExpansionCodeGeneratorForImmediateCase
   @Handler
   protected void handle(CGenContext<Node> ctx, ReadStageOutputNode toHandle) {
     throwNotAllowed(toHandle, "read stage output node");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, ReadSignalNode toHandle) {
+    throwNotAllowed(toHandle, "read signal node");
   }
 }
 
@@ -1391,6 +1402,11 @@ class InstructionFieldAccessExpansionCodeGeneratorForLabelCase
   @Handler
   protected void handle(CGenContext<Node> ctx, ReadStageOutputNode toHandle) {
     throwNotAllowed(toHandle, "read stage output node");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, ReadSignalNode toHandle) {
+    throwNotAllowed(toHandle, "read signal node");
   }
 }
 

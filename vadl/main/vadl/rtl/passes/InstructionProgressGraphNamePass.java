@@ -18,6 +18,7 @@ package vadl.rtl.passes;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -208,7 +209,7 @@ public class InstructionProgressGraphNamePass extends Pass {
       var read = reads.get(i);
       var prefix = "read" + read.asReadNode().resourceDefinition().simpleName() + i;
       name(ipg, read.asReadNode(), prefix + "_result");
-      name(ipg, read.condition(), prefix + "_enable");
+      name(ipg, read.nullableCondition(), prefix + "_enable");
       name(ipg, read.asReadNode().indices(), prefix + "_addr", prefix + "_idx");
       if (read instanceof RtlReadMemNode readMem) {
         name(ipg, readMem.words(), prefix + "_words");
@@ -237,7 +238,7 @@ public class InstructionProgressGraphNamePass extends Pass {
   private String nameInsSet(Set<Instruction> instructions, InstructionProgressGraph ipg) {
     if (instructions.size() > ipg.instructions().size() / 2) {
       // generate name for complement
-      var complement = new HashSet<>(ipg.instructions());
+      var complement = new LinkedHashSet<>(ipg.instructions());
       complement.removeAll(instructions);
       return "not_" + nameInsSet(complement, ipg);
     }

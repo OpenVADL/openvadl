@@ -69,9 +69,15 @@ public class RtlReadRegTensorNode extends ReadRegTensorNode implements RtlCondit
     condition = visitor.applyNullable(this, condition, ExpressionNode.class);
   }
 
-  @Nullable
   @Override
   public ExpressionNode condition() {
+    ensure(condition != null, "Condition was expected to be not null.");
+    return condition;
+  }
+
+  @Nullable
+  @Override
+  public ExpressionNode nullableCondition() {
     return condition;
   }
 
@@ -100,6 +106,11 @@ public class RtlReadRegTensorNode extends ReadRegTensorNode implements RtlCondit
 
   @Override
   public ReadResourceNode asReadNode() {
+    return this;
+  }
+
+  @Override
+  public Node asNode() {
     return this;
   }
 }

@@ -24,11 +24,12 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;
 import vadl.viam.Instruction;
+import vadl.viam.Procedure;
 import vadl.viam.Specification;
 
 /**
- * A pass that finds all instructions in the specification and adds conditions
- * to the {@link vadl.viam.graph.dependency.SideEffectNode}.
+ * A pass that finds all instructions and procedures in the specification and
+ * adds conditions to the {@link vadl.viam.graph.dependency.SideEffectNode}.
  * Those conditions define under what condition the corresponding side effect
  * is executed/takes affect.
  *
@@ -52,6 +53,12 @@ public class SideEffectConditionResolvingPass extends Pass {
         .findDefinitionsByFilter(viam, d -> d instanceof Instruction);
     for (var instruction : instructions) {
       SideEffectConditionResolver.run(((Instruction) instruction).behavior());
+    }
+
+    var procedures = ViamUtils
+        .findDefinitionsByFilter(viam, d -> d instanceof Procedure);
+    for (var procedure : procedures) {
+      SideEffectConditionResolver.run(((Procedure) procedure).behavior());
     }
 
     return null;

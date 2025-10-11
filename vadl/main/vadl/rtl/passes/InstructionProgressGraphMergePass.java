@@ -20,6 +20,7 @@ import com.google.common.collect.Multimaps;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -84,7 +85,7 @@ public class InstructionProgressGraphMergePass extends Pass {
             // only merge nodes with same set of side effects associated
             var ipgNodes = contextList.stream()
                 .map(MiaMapping.NodeContext::ipgNodes).flatMap(Collection::stream)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(LinkedHashSet::new));
             merge(ipg, mapping, ReadRegTensorNode.class, ipgNodes, deleted);
             merge(ipg, mapping, ReadMemNode.class, ipgNodes, deleted);
             merge(ipg, mapping, RtlReadMemNode.class, ipgNodes, deleted);
@@ -100,7 +101,7 @@ public class InstructionProgressGraphMergePass extends Pass {
   private <T extends Node> void merge(InstructionProgressGraph ipg, MiaMapping mapping,
                                       Class<T> nodeClass, Set<Node> ipgNodes, List<Node> deleted) {
     ipg.merge(ipgNodes.stream().filter(nodeClass::isInstance)
-        .map(nodeClass::cast).collect(Collectors.toSet()),
+        .map(nodeClass::cast).collect(Collectors.toCollection(LinkedHashSet::new)),
         removed -> {
           mapping.removeNode(removed);
           ipgNodes.remove(removed);

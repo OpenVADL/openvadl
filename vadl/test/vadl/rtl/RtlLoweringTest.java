@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.RtlConfiguration;
 import vadl.dump.HtmlDumpPass;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -48,8 +49,9 @@ public class RtlLoweringTest extends AbstractTest {
 
   @Test
   void instructionBehaviorCheck() throws IOException, DuplicatedPassKeyException {
-    var config =
+    var generalConfig =
         new GeneralConfiguration(Path.of("build/test-output"), false);
+    var config = new RtlConfiguration(generalConfig);
 
     var order = PassOrders.rtl(config);
     order.addAfterFirst(PassOrders.ViamCreationPass.class,
@@ -59,15 +61,21 @@ public class RtlLoweringTest extends AbstractTest {
     addDumpAndCheck(config, order, MiaMappingCreationPass.class);
     addDumpAndCheck(config, order, InstructionProgressGraphMergePass.class);
     addDumpAndCheck(config, order, MiaMappingOptimizePass.class);
-    order.addAfterFirst(InstructionProgressGraphLowerPass.class,
-        new InstructionBehaviorCheckPass(config, false));
+    addDumpAndCheck(config, order, InstructionProgressGraphLowerPass.class, false);
 
     setupPassManagerAndRunSpec("sys/risc-v/rv32i.vadl", order);
     setupPassManagerAndRunSpec("sys/risc-v/rv64im.vadl", order);
+    setupPassManagerAndRunSpec("sys/risc-v/rvcsr.vadl", order);
   }
 
   private void addDumpAndCheck(GeneralConfiguration config, PassOrder order, Class<?> selector) {
-    order.addAfterFirst(selector, new InstructionBehaviorCheckPass(config));
+    addDumpAndCheck(config, order, selector, true);
+  }
+
+  private void addDumpAndCheck(GeneralConfiguration config, PassOrder order, Class<?> selector,
+                               boolean useInstructionContext) {
+
+    order.addAfterFirst(selector, new InstructionBehaviorCheckPass(config, useInstructionContext));
     if (config.doDump()) {
       order.addAfterFirst(selector, new HtmlDumpPass(
           HtmlDumpPass.Config.from(config, "check" + selector.getSimpleName(), "")));

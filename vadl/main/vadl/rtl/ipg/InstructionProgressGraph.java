@@ -21,16 +21,26 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
+import vadl.error.Diagnostic;
+import vadl.rtl.ipg.nodes.RtlReadMemNode;
 import vadl.rtl.utils.GraphMergeUtils;
+import vadl.rtl.utils.SubgraphUtils;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.ViamGraphError;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * The instruction progress graph is used to combine the behavior of all instructions into
@@ -42,7 +52,19 @@ import vadl.viam.graph.Node;
 public class InstructionProgressGraph extends Graph {
 
   private final IdentityHashMap<Node, NodeContext> contexts = new IdentityHashMap<>();
-  private final Set<Instruction> instructions = new HashSet<>();
+  private final Set<Instruction> instructions = new LinkedHashSet<>();
+
+  @Nullable
+  private ReadRegTensorNode pcRead;
+
+  @Nullable
+  private RtlReadMemNode fetch;
+
+  @Nullable
+  private WriteRegTensorNode pcIncrement;
+
+  @Nullable
+  private ExpressionNode unknownInstruction;
 
   /**
    * Constructs a new instruction progress graph.
@@ -61,6 +83,62 @@ public class InstructionProgressGraph extends Graph {
    */
   public Set<Instruction> instructions() {
     return instructions;
+  }
+
+  /**
+   * Program counter read node.
+   *
+   * @return pc read node
+   */
+  @Nullable
+  public ReadRegTensorNode pcRead() {
+    return pcRead;
+  }
+
+  public void setPcRead(@Nullable ReadRegTensorNode pcRead) {
+    this.pcRead = pcRead;
+  }
+
+  /**
+   * Instruction fetch node.
+   *
+   * @return read memory node
+   */
+  @Nullable
+  public RtlReadMemNode fetch() {
+    return fetch;
+  }
+
+  public void setFetch(@Nullable RtlReadMemNode fetch) {
+    this.fetch = fetch;
+  }
+
+  /**
+   * PC increment node.
+   *
+   * @return write register node
+   */
+  @Nullable
+  public WriteRegTensorNode pcIncrement() {
+    return pcIncrement;
+  }
+
+  public void setPcIncrement(@Nullable WriteRegTensorNode pcIncrement) {
+    this.pcIncrement = pcIncrement;
+  }
+
+  /**
+   * Unknown instruction node.
+   *
+   * @return bool expression node in the decode stage, evaluates to true if instruction is unknown
+   */
+  @Nullable
+  public ExpressionNode unknownInstruction() {
+    return unknownInstruction;
+  }
+
+  public void setUnknownInstruction(@Nullable ExpressionNode unknownInstruction) {
+    this.unknownInstruction = unknownInstruction;
   }
 
   /**
@@ -151,6 +229,53 @@ public class InstructionProgressGraph extends Graph {
     contexts.remove(node);
   }
 
+  @Override
+  protected InstructionProgressGraph createEmptyInstance(String name, Definition parentDefinition) {
+    return new InstructionProgressGraph(name, parentDefinition);
+  }
+
+  @Override
+  public InstructionProgressGraph copy() {
+    return copy(name);
+  }
+
+  @Override
+  public InstructionProgressGraph copy(String name) {
+    // create new ipg
+    var newIpg = createEmptyInstance(name, this.parentDefinition());
+
+    // copy all nodes, get a map from old to new nodes
+    SubgraphUtils.MissingSupplier failOnMissing = (from, to, copyFrom) -> {
+      throw Diagnostic.error("Missing node during IPG copy", to).build();
+    };
+    var copyMap = SubgraphUtils.copy(newIpg, getNodes().collect(Collectors.toSet()),
+        failOnMissing, failOnMissing);
+
+    // update new ipg fields
+    if (pcRead != null) {
+      newIpg.setPcRead((ReadRegTensorNode) copyMap.get(pcRead));
+    }
+    if (fetch != null) {
+      newIpg.setFetch((RtlReadMemNode) copyMap.get(fetch));
+    }
+    if (pcIncrement != null) {
+      newIpg.setPcIncrement((WriteRegTensorNode) copyMap.get(pcIncrement));
+    }
+    if (unknownInstruction != null) {
+      newIpg.setUnknownInstruction((ExpressionNode) copyMap.get(unknownInstruction));
+    }
+
+    // copy contexts
+    for (NodeContext context : contexts.values()) {
+      var newNode = Objects.requireNonNull(copyMap.get(context.node()));
+      var newContext = newIpg.getContext(newNode);
+      newContext.instructions().addAll(context.instructions());
+      newContext.nameHints().addAll(context.nameHints());
+    }
+
+    return newIpg;
+  }
+
   /**
    * Get the context object for a given node. The node must be added to this instruction progress
    * graph instance.
@@ -209,6 +334,12 @@ public class InstructionProgressGraph extends Graph {
    */
   public <T extends Node> void merge(Set<T> nodes, @Nullable Consumer<T> removed,
                                      @Nullable Consumer<Node> added) {
+    if (fetch != null) {
+      nodes.remove(fetch);
+    }
+    if (pcIncrement != null) {
+      nodes.remove(pcIncrement);
+    }
     var merged = GraphMergeUtils.merge(nodes,
         new GraphMergeUtils.SelectByInstructionInputMergeStrategy<>(
             node -> getContext(node).instructions(),
@@ -286,6 +417,20 @@ public class InstructionProgressGraph extends Graph {
      */
     public Optional<String> shortestNameHint() {
       return nameHints.stream()
+          .min(Comparator.comparing(String::length));
+    }
+
+    /**
+     * Get the shortest name hint in terms of string length.
+     *
+     * @param existing existing names to not consider
+     * @return shortest name hint
+     */
+    public Optional<String> shortestNameHint(Set<String> existing, int maxLength) {
+      return nameHints.stream()
+          .map(name -> StringUtils.truncate(name, maxLength))
+          .map(name -> StringUtils.stripEnd(name, "_"))
+          .filter(name -> !existing.contains(name))
           .min(Comparator.comparing(String::length));
     }
 

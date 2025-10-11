@@ -19,20 +19,33 @@ package vadl.rtl.utils;
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.rtl.ipg.nodes.RtlSelectByInstructionNode;
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.utils.GraphUtils;
 import vadl.utils.Pair;
 import vadl.viam.Instruction;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.control.AbstractBeginNode;
+import vadl.viam.graph.control.AbstractEndNode;
+import vadl.viam.graph.control.ControlNode;
+import vadl.viam.graph.control.ControlSplitNode;
+import vadl.viam.graph.control.DirectionalNode;
+import vadl.viam.graph.control.MergeNode;
+import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
  * Utils for merging nodes in graphs by patching the inputs and replacing one node by the other.
@@ -101,6 +114,73 @@ public class GraphMergeUtils {
       }
     }
     return null;
+  }
+
+  /**
+   * Merge write nodes that are on different execution paths.
+   *
+   * @param behavior behavior graph with control flow
+   */
+  public static void mergeWritesOnBranches(Graph behavior) {
+    mergeWritesOnBranch(GraphUtils.getSingleNode(behavior, StartNode.class), new LinkedHashSet<>());
+  }
+
+  private static @Nullable MergeNode mergeWritesOnBranch(AbstractBeginNode beginNode,
+                                                         Set<WriteResourceNode> writes) {
+    // traverse control flow
+    ControlNode current = beginNode;
+    while (true) {
+      if (current instanceof AbstractEndNode endNode) {
+        // collect write nodes on each branch
+        for (var sideEffect : endNode.sideEffects()) {
+          if (sideEffect instanceof WriteResourceNode writeNode) {
+            writes.add(writeNode);
+          }
+        }
+        return endNode.usages()
+            .filter(user -> user instanceof MergeNode)
+            .map(MergeNode.class::cast)
+            .findAny()
+            .orElse(null);
+      } else if (current instanceof ControlSplitNode splitNode) {
+        // merge writes on each branch separately
+        // collect (remaining) writes from each branch in set
+        var branchWrites = new ArrayList<Set<WriteResourceNode>>();
+        var mergeNodes = splitNode.branches().stream()
+            .map(branch -> {
+              var writeSet = new LinkedHashSet<WriteResourceNode>();
+              branchWrites.add(writeSet);
+              return mergeWritesOnBranch(branch, writeSet);
+            })
+            .collect(Collectors.toSet());
+        branchWrites.forEach(writes::addAll);
+
+        splitNode.ensure(mergeNodes.size() == 1,
+            "Branches of node don't result in the same merge node");
+        splitNode.ensure(!mergeNodes.contains(null),
+            "Couldn't find merge node for any branch");
+
+        // merge all (remaining) writes that are not in the same branch
+        var allWrites = branchWrites.stream().flatMap(Collection::stream)
+            .collect(Collectors.toSet());
+        var merged = GraphMergeUtils.merge(allWrites,
+            new GraphMergeUtils.SelectInputMergeStrategy<>(SideEffectNode::condition) {
+              @Override
+              public boolean filter(WriteResourceNode n1, WriteResourceNode n2) {
+                return super.filter(n1, n2) && branchWrites.stream()
+                    .noneMatch(b -> b.contains(n1) && b.contains(n2));
+              }
+            });
+        merged.forEach(writes::remove);
+
+        current = mergeNodes.iterator().next();
+      } else if (current instanceof DirectionalNode directionalNode) {
+        current = directionalNode.next();
+      } else {
+        //noinspection DataFlowIssue
+        current.ensure(false, "Not expected node in control flow.");
+      }
+    }
   }
 
 

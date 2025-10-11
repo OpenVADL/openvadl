@@ -16,9 +16,10 @@
 
 package vadl.rtl.map;
 
-import java.util.HashSet;
-import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -46,9 +47,9 @@ public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
 
   private final InstructionProgressGraph ipg;
 
-  private final IdentityHashMap<Node, NodeContext> contexts = new IdentityHashMap<>();
+  private final Map<Node, NodeContext> contexts = new LinkedHashMap<>();
 
-  private final IdentityHashMap<Stage, Set<NodeContext>> stageContexts = new IdentityHashMap<>();
+  private final Map<Stage, Set<NodeContext>> stageContexts = new LinkedHashMap<>();
 
   public MiaMapping(MicroArchitecture mia, InstructionProgressGraph ipg) {
     this.mia = mia;
@@ -63,7 +64,7 @@ public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
     return ipg;
   }
 
-  public IdentityHashMap<Node, NodeContext> contexts() {
+  public Map<Node, NodeContext> contexts() {
     return contexts;
   }
 
@@ -93,7 +94,7 @@ public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
     var context = contexts.computeIfAbsent(miaNode, node -> new NodeContext(stage, node));
     context.pred().addAll(inputContexts);
     inputContexts.forEach(input -> input.succ().add(context));
-    stageContexts.computeIfAbsent(stage, s -> new HashSet<>()).add(context);
+    stageContexts.computeIfAbsent(stage, s -> new LinkedHashSet<>()).add(context);
     return context;
   }
 
@@ -243,11 +244,11 @@ public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
     NodeContext(Stage stage, Node node) {
       this.stage = stage;
       this.node = node;
-      this.pred = new HashSet<>();
-      this.succ = new HashSet<>();
-      this.sideEffects = new HashSet<>();
-      this.fixedIpgNodes = new HashSet<>();
-      this.ipgNodes = new HashSet<>();
+      this.pred = new LinkedHashSet<>();
+      this.succ = new LinkedHashSet<>();
+      this.sideEffects = new LinkedHashSet<>();
+      this.fixedIpgNodes = new LinkedHashSet<>();
+      this.ipgNodes = new LinkedHashSet<>();
     }
 
     /**

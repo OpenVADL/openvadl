@@ -18,14 +18,18 @@ package vadl.viam;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.graph.dependency.WriteSignalNode;
 import vadl.viam.graph.dependency.WriteStageOutputNode;
 
 /**
@@ -43,6 +47,12 @@ public class Stage extends Definition implements DefProp.WithBehavior {
 
   private final List<StageOutput> outputs;
 
+  private final List<Signal> signals;
+
+  private final List<RegisterTensor> registers;
+
+  private final Set<String> localNames;
+
   private @Nullable Stage prev;
 
   private @Nullable List<Stage> next;
@@ -58,6 +68,9 @@ public class Stage extends Definition implements DefProp.WithBehavior {
     super(identifier);
     this.behavior = behavior;
     this.outputs = new ArrayList<>(outputs);
+    this.signals = new ArrayList<>();
+    this.registers = new ArrayList<>();
+    this.localNames = new HashSet<>();
 
     this.behavior.setParentDefinition(this);
   }
@@ -117,10 +130,44 @@ public class Stage extends Definition implements DefProp.WithBehavior {
 
   public void addOutput(StageOutput output) {
     outputs.add(output);
+    localNames.add(output.simpleName());
   }
 
   public void removeOutput(StageOutput output) {
     outputs.remove(output);
+    localNames.remove(output.simpleName());
+  }
+
+  public List<Signal> signals() {
+    return signals;
+  }
+
+  public void addSignal(Signal signal) {
+    signals.add(signal);
+    localNames.add(signal.simpleName());
+  }
+
+  public void removeSignal(Signal signal) {
+    signals.remove(signal);
+    localNames.remove(signal.simpleName());
+  }
+
+  public List<RegisterTensor> registers() {
+    return registers;
+  }
+
+  public void addRegister(RegisterTensor register) {
+    registers.add(register);
+    localNames.add(register.simpleName());
+  }
+
+  public void removeRegister(RegisterTensor register) {
+    registers.remove(register);
+    localNames.remove(register.simpleName());
+  }
+
+  public Set<String> localNames() {
+    return localNames;
   }
 
   @Override
@@ -161,11 +208,25 @@ public class Stage extends Definition implements DefProp.WithBehavior {
     super.verify();
     behavior.verify();
 
-    var writes = behavior.getNodes(WriteStageOutputNode.class)
+    var outputWrites = behavior.getNodes(WriteStageOutputNode.class)
         .map(WriteStageOutputNode::stageOutput)
         .filter(Objects::nonNull)
         .collect(Collectors.toSet());
-    outputs.forEach(output -> ensure(writes.contains(output),
+    outputs.forEach(output -> ensure(outputWrites.contains(output),
         "Output %s is not written to", output.simpleName()));
+
+    var signalWrites = behavior.getNodes(WriteSignalNode.class)
+        .map(WriteSignalNode::signal)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    signals.forEach(signal -> ensure(signalWrites.contains(signal),
+        "Signal %s is not written to", signal.simpleName()));
+
+    var registerWrites = behavior.getNodes(WriteRegTensorNode.class)
+        .map(WriteRegTensorNode::registerTensor)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    registers.forEach(regTensor -> ensure(registerWrites.contains(regTensor),
+        "Register %s is not written to", regTensor.simpleName()));
   }
 }

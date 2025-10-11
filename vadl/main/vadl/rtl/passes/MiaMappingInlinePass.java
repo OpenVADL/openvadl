@@ -16,9 +16,12 @@
 
 package vadl.rtl.passes;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,19 +32,22 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
+import vadl.rtl.ipg.nodes.RtlWriteRegTensorNode;
 import vadl.rtl.map.MiaMapping;
 import vadl.rtl.utils.SubgraphUtils;
 import vadl.utils.GraphUtils;
 import vadl.utils.Pair;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
-import vadl.viam.StageOutput;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.ReadStageOutputNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteStageOutputNode;
 
 /**
@@ -49,6 +55,20 @@ import vadl.viam.graph.dependency.WriteStageOutputNode;
  * MiA mapping. This adds the instruction progress graph nodes in the stage behaviors.
  */
 public class MiaMappingInlinePass extends Pass {
+
+  /**
+   * Result of the {@link MiaMappingInlinePass}.
+   *
+   * @param stageRegisterMap Maps node values and stages to the stage registers they are saved in.
+   * @param inlineMap Maps all IPG nodes to nodes in stage behaviors.
+   */
+  public record Result(
+      MiaMapping mapping,
+      Map<Pair<Node, Stage>, RegisterTensor> stageRegisterMap,
+      BiMap<Node, Node> inlineMap
+  ) {
+
+  }
 
   public MiaMappingInlinePass(GeneralConfiguration configuration) {
     super(configuration);
@@ -77,21 +97,22 @@ public class MiaMappingInlinePass extends Pass {
       return null;
     }
 
-    var map = new HashMap<Pair<Node, Stage>, StageOutput>();
+    var stageRegisterMap = new HashMap<Pair<Node, Stage>, RegisterTensor>();
+    var inlineMap = new HashMap<Node, Node>();
 
     for (Stage stage : stages) {
       var stageContexts = mapping.stageContexts(stage).toList();
       var stageNodes = stageContexts.stream()
           .map(MiaMapping.NodeContext::ipgNodes).flatMap(Collection::stream)
-          .collect(Collectors.toSet());
+          .collect(Collectors.toCollection(LinkedHashSet::new));
 
       // copy subgraph to stage behavior
       // add stage outputs to pass data between stages
       var copyMap = SubgraphUtils.copy(stage.behavior(), stageNodes,
           (originalFrom, originalTo, copyFrom) -> {
             if (originalTo instanceof ExpressionNode originalExpr) {
-              var output = resolveStageOutput(originalExpr, stage.prev(), map);
-              return new ReadStageOutputNode(output);
+              var output = resolveStageOutput(originalExpr, stage.prev(), stageRegisterMap);
+              return new ReadRegTensorNode(output, new NodeList<>(), output.resultType(), null);
             }
             return null;
           },
@@ -101,8 +122,8 @@ public class MiaMappingInlinePass extends Pass {
             }
             if (originalFrom instanceof ExpressionNode originalExpr
                 && copyFrom instanceof ExpressionNode copyExpr) {
-              var output = outputFor(originalExpr, stage, map);
-              return new WriteStageOutputNode(output, copyExpr);
+              var output = outputFor(originalExpr, stage, stageRegisterMap);
+              return new RtlWriteRegTensorNode(output, new NodeList<>(), copyExpr, null, null);
             }
             return null;
           });
@@ -117,20 +138,38 @@ public class MiaMappingInlinePass extends Pass {
             node.setCondition(patchCondition(cond, context));
           }
           if (dest instanceof RtlConditionalReadNode read) {
-            var cond = read.condition();
+            var cond = read.nullableCondition();
             read.asReadNode().ensure(cond != null,
                 "Condition input must be set before we extend it");
             read.setCondition(patchCondition(cond, context));
           }
         }
       }
+
+      // delete stage outputs of mapping nodes
+      for (MiaMapping.NodeContext context : stageContexts) {
+        var node = context.node();
+        for (Node u : node.usages().toList()) {
+          if (u instanceof WriteStageOutputNode wr) {
+            wr.safeDelete(true);
+            if (wr.stageOutput() != null) {
+              context.stage().removeOutput(wr.stageOutput());
+            }
+          }
+        }
+      }
+
+      // verify stage
+      stage.verify();
+
+      inlineMap.putAll(copyMap);
     }
 
-    return null;
+    return new Result(mapping, stageRegisterMap, HashBiMap.create(inlineMap));
   }
 
-  private StageOutput resolveStageOutput(ExpressionNode node, @Nullable Stage stage,
-                                         Map<Pair<Node, Stage>, StageOutput> map) {
+  private RegisterTensor resolveStageOutput(ExpressionNode node, @Nullable Stage stage,
+                                            Map<Pair<Node, Stage>, RegisterTensor> map) {
     if (stage == null) {
       throw new ViamGraphError("Can not find output of previous stage for node")
           .addContext(node);
@@ -148,15 +187,15 @@ public class MiaMappingInlinePass extends Pass {
     // create new output and pass it through from previous stage
     // by introducing a read and write node
     var output = outputFor(node, stage, map);
-    var read = new ReadStageOutputNode(inPrev);
-    var write = new WriteStageOutputNode(output, read);
+    var read = new ReadRegTensorNode(inPrev, new NodeList<>(), inPrev.resultType(), null);
+    var write = new RtlWriteRegTensorNode(output, new NodeList<>(), read, null, null);
     stage.behavior().addWithInputs(write);
 
     return output;
   }
 
-  private StageOutput outputFor(ExpressionNode node, Stage stage,
-                                Map<Pair<Node, Stage>, StageOutput> map) {
+  private RegisterTensor outputFor(ExpressionNode node, Stage stage,
+                                   Map<Pair<Node, Stage>, RegisterTensor> map) {
     // get existing output
     var existing = map.get(Pair.of(node, stage));
     if (existing != null) {
@@ -164,20 +203,19 @@ public class MiaMappingInlinePass extends Pass {
     }
 
     // else create new output
-    var output = new StageOutput(
-        stage.identifier.append(nameFor(node)),
-        node.type()
+    var output = RegisterTensor.of(
+        stage.identifier.append(nameFor(stage, node)), node.type().asDataType().bitWidth()
     );
-    stage.addOutput(output);
+    stage.addRegister(output);
     map.put(Pair.of(node, stage), output);
 
     return output;
   }
 
-  private String nameFor(Node node) {
+  private String nameFor(Stage stage, Node node) {
     var fallback = "n" + node.id.numericId();
     if (node.ensureGraph() instanceof InstructionProgressGraph ipg) {
-      return ipg.getContext(node).shortestNameHint().orElse(fallback);
+      return ipg.getContext(node).shortestNameHint(stage.localNames(), 30).orElse(fallback);
     }
     return fallback;
   }

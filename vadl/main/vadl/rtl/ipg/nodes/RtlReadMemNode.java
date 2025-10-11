@@ -38,7 +38,8 @@ import vadl.viam.graph.dependency.ReadResourceNode;
  * the number of words read determined by this input
  * <li> Condition input
  */
-public class RtlReadMemNode extends ReadResourceNode implements RtlConditionalReadNode {
+public class RtlReadMemNode extends ReadResourceNode implements RtlConditionalReadNode,
+    RtlConditionalMemNode {
 
   @DataValue
   protected Memory memory;
@@ -104,13 +105,23 @@ public class RtlReadMemNode extends ReadResourceNode implements RtlConditionalRe
     return memory;
   }
 
+  public int maxWords() {
+    return maxWords;
+  }
+
   public ExpressionNode words() {
     return words;
   }
 
-  @Nullable
   @Override
   public ExpressionNode condition() {
+    ensure(condition != null, "Condition was expected to be not null.");
+    return condition;
+  }
+
+  @Nullable
+  @Override
+  public ExpressionNode nullableCondition() {
     return condition;
   }
 
@@ -144,5 +155,10 @@ public class RtlReadMemNode extends ReadResourceNode implements RtlConditionalRe
   @Override
   public ReadResourceNode asReadNode() {
     return this;
+  }
+
+  @Override
+  public Node asNode() {
+    return super.asNode();
   }
 }

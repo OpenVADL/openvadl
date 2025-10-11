@@ -16,15 +16,18 @@
 
 package vadl.rtl.ipg.nodes;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
+import vadl.javaannotations.viam.Input;
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
@@ -41,6 +44,10 @@ public class RtlInstructionWordSliceNode extends ExpressionNode {
   @DataValue
   protected Constant.BitSlice slice;
 
+  @Input
+  @Nullable
+  protected ExpressionNode instruction;
+
   private final Set<Format.Field> fields;
 
   /**
@@ -54,7 +61,7 @@ public class RtlInstructionWordSliceNode extends ExpressionNode {
     super(type);
     this.formatType = formatType;
     this.slice = slice;
-    this.fields = new HashSet<>();
+    this.fields = new LinkedHashSet<>();
   }
 
   /**
@@ -70,7 +77,26 @@ public class RtlInstructionWordSliceNode extends ExpressionNode {
     super(type);
     this.formatType = formatType;
     this.slice = slice;
-    this.fields = fields;
+    this.fields = new LinkedHashSet<>(fields);
+  }
+
+  /**
+   * Create a new instruction word slice node.
+   *
+   * @param formatType format type (type of the instruction word)
+   * @param slice bit slice
+   * @param fields set of format fields
+   * @param type data type of the slice result
+   * @param instruction instruction input
+   */
+  public RtlInstructionWordSliceNode(BitsType formatType, Constant.BitSlice slice,
+                                     Set<Format.Field> fields, DataType type,
+                                     @Nullable ExpressionNode instruction) {
+    super(type);
+    this.formatType = formatType;
+    this.slice = slice;
+    this.fields = new LinkedHashSet<>(fields);
+    this.instruction = instruction;
   }
 
   /**
@@ -114,6 +140,16 @@ public class RtlInstructionWordSliceNode extends ExpressionNode {
     fields.add(field);
   }
 
+  @Nullable
+  public ExpressionNode instruction() {
+    return instruction;
+  }
+
+  public void setInstruction(@Nullable ExpressionNode instruction) {
+    updateUsageOf(this.instruction, instruction);
+    this.instruction = instruction;
+  }
+
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
@@ -122,13 +158,29 @@ public class RtlInstructionWordSliceNode extends ExpressionNode {
   }
 
   @Override
+  protected void collectInputs(List<Node> collection) {
+    super.collectInputs(collection);
+    if (this.instruction != null) {
+      collection.add(instruction);
+    }
+  }
+
+  @Override
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnInputsUnsafe(visitor);
+    instruction = visitor.applyNullable(this, instruction, ExpressionNode.class);
+  }
+
+  @Override
   public ExpressionNode copy() {
-    return new RtlInstructionWordSliceNode(formatType, slice, fields, type().asDataType());
+    return new RtlInstructionWordSliceNode(formatType, slice, fields, type().asDataType(),
+        (instruction != null) ? instruction.copy() : null);
   }
 
   @Override
   public Node shallowCopy() {
-    return copy();
+    return new RtlInstructionWordSliceNode(formatType, slice, fields, type().asDataType(),
+        instruction);
   }
 
   @Override
