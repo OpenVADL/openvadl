@@ -24,6 +24,11 @@ pub struct Cli {
     /// assigned to each client with the same order as in the config-file.
     #[arg(short, long, value_name = "FILE")]
     pub test_exec: Option<Vec<String>>,
+
+    /// If set, writes the test-result to the given output-file.
+    /// Overrides the value that is set in the config file at testing.protocol.out.file
+    #[arg(short, long, value_name = "FILE")]
+    pub output_file: Option<String>
 }
 
 fn default_config_file() -> String {
@@ -58,6 +63,10 @@ fn main() -> Result<()> {
                 }
             }
         }
+    }
+
+    if cli.output_file.is_some() {
+        config.testing.protocol.out.file = cli.output_file;
     }
 
     if config.logging.enable {
