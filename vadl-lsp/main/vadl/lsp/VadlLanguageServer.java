@@ -19,6 +19,12 @@ package vadl.lsp;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import javax.annotation.Nullable;
+import org.eclipse.lsp4j.DidChangeConfigurationParams;
+import org.eclipse.lsp4j.DidChangeTextDocumentParams;
+import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
+import org.eclipse.lsp4j.DidCloseTextDocumentParams;
+import org.eclipse.lsp4j.DidOpenTextDocumentParams;
+import org.eclipse.lsp4j.DidSaveTextDocumentParams;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InitializedParams;
@@ -95,13 +101,37 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
   @Override
   public TextDocumentService getTextDocumentService() {
     // TODO Implement?
-    return null;
+    return new TextDocumentService() {
+      @Override
+      public void didSave(DidSaveTextDocumentParams params) {
+      }
+      
+      @Override
+      public void didOpen(DidOpenTextDocumentParams params) {
+      }
+      
+      @Override
+      public void didClose(DidCloseTextDocumentParams params) {
+      }
+      
+      @Override
+      public void didChange(DidChangeTextDocumentParams params) {
+      }
+    };
   }
 
   @Override
   public WorkspaceService getWorkspaceService() {
     // TODO Implement?
-    return null;
+    return new WorkspaceService() {
+      @Override
+      public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
+      }
+      
+      @Override
+      public void didChangeConfiguration(DidChangeConfigurationParams params) {
+      }
+    };
   }
 
   @Override
