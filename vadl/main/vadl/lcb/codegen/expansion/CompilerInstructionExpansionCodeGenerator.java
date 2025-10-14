@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 import vadl.cppCodeGen.FunctionCodeGenerator;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.context.CGenContext;
@@ -239,7 +240,8 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
             Pair::of).toList();
 
     var reorderParameters =
-        reorderParameters(instrCallNode.target(), fieldAccessesAndArgumentPair);
+        reorderParameters(compilerInstruction, instrCallNode.target(),
+            fieldAccessesAndArgumentPair);
 
     // Before we add the operands, we have to compute the fields
     // because field access functions might use multiple fields.
@@ -336,6 +338,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
    * create missing operands.
    */
   private List<Pair<Either<Format.Field, Format.FieldAccess>, ExpressionNode>> reorderParameters(
+      CompilerInstruction compilerInstruction,
       Instruction instruction,
       List<Pair<Either<Format.Field, Format.FieldAccess>, ExpressionNode>> pairs) {
     var result = new ArrayList<Pair<Either<Format.Field, Format.FieldAccess>, ExpressionNode>>();
@@ -359,32 +362,47 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
           var value = lookupFieldAccesses.get(fieldAccess);
           result.add(Pair.of(new Either<>(null, fieldAccess), value));
         } else {
-          fieldAccess.fieldRefs().forEach(field -> {
-            if (lookupFields.containsKey(field)) {
-              var value = lookupFields.get(field);
-              result.add(Pair.of(new Either<>(field, null), value));
-            } else {
-              throw Diagnostic.error("Cannot assign field. Aborting because operands mismatch",
-                  field.location()).build();
-            }
-          });
+          fieldAccess.fieldRefs()
+              .forEach(field -> result.add(
+                  lookupField(compilerInstruction, instruction, lookupFields, field, field)));
         }
       } else if (item instanceof ReferencesFormatField referencesFormatField) {
         for (var field : referencesFormatField.formatFields()) {
           var canonicalizedField = canonicalizeField(field);
-
-          if (lookupFields.containsKey(canonicalizedField)) {
-            var value = lookupFields.get(canonicalizedField);
-            result.add(Pair.of(new Either<>(field, null), value));
-          } else {
-            throw Diagnostic.error("Cannot assign field. Aborting because operands mismatch",
-                field.location()).build();
-          }
+          result.add(
+              lookupField(compilerInstruction,
+                  instruction,
+                  lookupFields,
+                  field,
+                  canonicalizedField));
         }
       }
     }
 
     return result;
+  }
+
+  /**
+   * Lookup field in {@code lookupFields} and return an {@code Either} when it is a format field
+   * for field access.
+   */
+  private Pair<Either<Format.Field, Format.FieldAccess>, ExpressionNode> lookupField(
+      CompilerInstruction compilerInstruction,
+      Instruction instruction,
+      Map<Format.Field, @NotNull ExpressionNode> lookupFields,
+      Format.Field field, Format.Field canonicalizedField) {
+    if (lookupFields.containsKey(canonicalizedField)) {
+      var value = lookupFields.get(canonicalizedField);
+      return Pair.of(new Either<>(field, null), value);
+    } else {
+      var msg = String.format(
+          "Cannot assign field. Aborting because operands mismatch for instruction '%s' when expanding from '%s'.",
+          instruction.identifier.simpleName(),
+          compilerInstruction.identifier.simpleName());
+      throw Diagnostic.error(msg,
+              field.location().join(instruction.location()))
+          .locationNote(compilerInstruction, "The expansion was done here.").build();
+    }
   }
 
   /**
