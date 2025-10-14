@@ -16,12 +16,80 @@
 
 package vadl.lsp;
 
-public class Main {
-  public static void main(String[] args) {
-    System.out.printf("Hello and welcome!");
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import org.eclipse.lsp4j.jsonrpc.Launcher;
+import org.eclipse.lsp4j.launch.LSPLauncher;
+import org.eclipse.lsp4j.services.LanguageClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    for (int i = 1; i <= 5; i++) {
-      System.out.println("i = " + i);
+/**
+ * Entrypoint to the OpenVADL language server.
+ */
+public class Main {
+  private static final Logger log = LoggerFactory.getLogger(Main.class);
+  
+  /**
+   * Runs a language server on a specific port.
+   *
+   * @param args (Optional) port on which to listen.
+   */
+  public static void main(String[] args) {
+    int port = 10999;
+    if (args.length >= 1) {
+      port = Integer.valueOf(args[0]);
+    }
+    
+    try (ServerSocket serverSocket = new ServerSocket(port)) {
+      log.info("Started openVADL language server on port " + serverSocket.getLocalPort());
+      
+      Socket socket = serverSocket.accept();
+      serveClient(socket);
+      
+    } catch (IOException | InterruptedException | ExecutionException e) {
+      log.error(e.toString());
+    }
+    
+    log.info("Server stopped.");
+    System.exit(0);
+  }
+  
+  /**
+   * Provides the actual language server functionality to a single client.
+   *
+   * @param socket the accepted socket
+   */
+  protected static void serveClient(Socket socket) throws
+      IOException,
+      InterruptedException,
+      ExecutionException {
+    log.info(
+        "Connection established with " + socket.getInetAddress().getHostAddress()
+        + ":" + socket.getPort()
+    );
+    
+    // According to https://github.com/eclipse-lsp4j/lsp4j/blob/main/documentation/README.md
+    VadlLanguageServer server = new VadlLanguageServer();
+    Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(
+        server,
+        socket.getInputStream(),
+        socket.getOutputStream()
+    );
+    server.connect(launcher.getRemoteProxy());
+    Future<Void> future = launcher.startListening();
+    
+    server.setListeningFuture(future);
+    try {
+      future.get(); // Wait for listener to complete
+      log.info("Client disconnected");
+    } catch (CancellationException e) {
+      // I.e. Future was cancelled by VadlLanguageServer
+      log.info("Server disconnected");
     }
   }
 }
