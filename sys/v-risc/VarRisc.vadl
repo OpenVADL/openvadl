@@ -112,7 +112,7 @@ instruction set architecture VarRISC32 = {
       let res = R(rd) as $ltype $op R(rs1imm) as $rtype in
           R(rd) := res as Regs
     encoding AsId ( $name, '_S' ) = { opcode = $code }
-    assembly AsId ( $name, '_S' ) = ( $Mnemonic ($name), ' ', register(rd), ',', register(rs1) )
+    assembly AsId ( $name, '_S' ) = ( $Mnemonic ($name), ' ', register(rd), ',', register(rs1imm) )
   }
 
   model ShortImmInstr (name : Id, op : BinOp, ltype: Id, rtype: Id, code : Val) : IsaDefs = {
@@ -157,7 +157,7 @@ instruction set architecture VarRISC32 = {
         let res = R(func5) as $ltype $op imm in
             R(rd) := res as Regs
     encoding AsId ( $name, 'I_L') = { opcode = ImmLOff + $code }
-    assembly AsId ( $name, 'I_L') = ( $Mnemonic ($name), ' ', register(rd), ',', register(rs1), ',', sdec(imm) )
+    assembly AsId ( $name, 'I_L') = ( $Mnemonic ($name), ' ', register(rd), ',', register(func5), ',', sdec(imm) )
     $ComputeInstruction ( $name; $op; $ltype; $rtype; $code )
   }
 
@@ -165,7 +165,7 @@ instruction set architecture VarRISC32 = {
     instruction $name : TYPE_S =
       R(rd) := R(rs1imm)
     encoding $name = { opcode = $code }
-    assembly $name = ( mnemonic, ' ', register(rd), ':=', register(rs1))
+    assembly $name = ( mnemonic, ' ', register(rd), ':=', register(rs1imm))
   }
 
   model BranchSInstruction ( name : Id, code : Val ) : IsaDefs = {
@@ -182,7 +182,7 @@ instruction set architecture VarRISC32 = {
         R(rs1imm) := retaddr
       }
     encoding $name = { opcode = $code }
-    assembly $name = ( mnemonic, ' ', register(rd), ',', register(rs1) )
+    assembly $name = ( mnemonic, ' ', register(rd), ',', register(rs1imm) )
   }
 
   model MemoryInstruction ( name : Id, memstmt : Stat, code : Val) : IsaDefs = {
@@ -194,14 +194,14 @@ instruction set architecture VarRISC32 = {
     instruction AsId ( $name, '_L') : TYPE_L =
       let a = R(func5) + immU in $memstmt
     encoding AsId ( $name, '_L') = { opcode = MemLOff + $code }
-    assembly AsId ( $name, '_L') = ( $Mnemonic ($name), ' ', register(rd), ',', sdec(imm), '(', register(rs1), ')' )
+    assembly AsId ( $name, '_L') = ( $Mnemonic ($name), ' ', register(rd), ',', sdec(imm), '(', register(func5), ')' )
   }
 
   model ShortMemInstruction ( name : Id, memstmt : Stat, code : Val ) : IsaDefs = {
     instruction AsId ( $name, '_S') : TYPE_S =
       let a = R(rs1imm) in $memstmt
     encoding AsId ( $name, '_S') = { opcode = MemSOff + $code }
-    assembly AsId ( $name, '_S') = ( $Mnemonic ($name), ' ', register(rd), ',(', register(rs1), ')' )
+    assembly AsId ( $name, '_S') = ( $Mnemonic ($name), ' ', register(rd), ',(', register(rs1imm), ')' )
     $MemoryInstruction ( $name; $memstmt; $code )
   }
 
@@ -217,7 +217,7 @@ instruction set architecture VarRISC32 = {
         PC := PC + offsetS
     }
     encoding AsId ( $name, '_L') = { opcode = BraLOff + $code }
-    assembly AsId ( $name, '_L') = ( $Mnemonic ($name), ' ', register(rd), ',', register(rs1), ',', sdec(imm) )
+    assembly AsId ( $name, '_L') = ( $Mnemonic ($name), ' ', register(rd), ',', register(func5), ',', sdec(imm) )
   }
 
   model CondImmInstruction ( name : Id, op : BinOp, reltype: Id, imm: Id, code : Val ) : IsaDefs = {
@@ -329,7 +329,7 @@ TYPE_R opcode 63 func9    16     17     18     19     20     21     22     23   
   $BranchInstruction  ( BULT ;  < ;  UInt ;         20 )          // branch unsigned less than
   $BranchInstruction  ( BULE ; <= ;  UInt ;         21 )          // branch unsigned less or equal
   $CallInstruction    ( BAL  ;                      31 )          // branch and link
-  $SysCallInstr       ( SYS  ;                      31 )          // system call
+  // $SysCallInstr       ( SYS  ;                      31 )          // system call
   $CondInstruction    ( SEQ  ;  = ;  SInt ;  immS ; 16 )          // set equal
   $CondInstruction    ( SNE  ; != ;  SInt ;  immS ; 17 )          // set not equal
   $CondInstruction    ( SLT  ;  < ;  SInt ;  immS ; 18 )          // set less than
