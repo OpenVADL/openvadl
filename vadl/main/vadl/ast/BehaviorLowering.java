@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
@@ -1300,6 +1301,19 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var fieldAccess = target.encoding().format().fieldAccesses().stream()
           .filter(access -> access.simpleName().equals(arg.name.name))
           .findFirst().orElse(null);
+
+      ensure(!(field == null && fieldAccess == null),
+          () -> Diagnostic.error(
+                  String.format("Cannot find a field or field access for this argument '%s'.",
+                      arg.name.name),
+                  target.location())
+              .locationNote(statement.location(), "Expanded from here."));
+      ensure(!(field != null && fieldAccess != null),
+          () -> Diagnostic.error("Both field and field access function cannot be set.",
+                  Objects.requireNonNull(field).location()
+                      .join(Objects.requireNonNull(fieldAccess).location()))
+              .locationNote(target.location(), "In the instruction here.")
+              .locationNote(statement.location(), "Expanded from here."));
 
       fieldsOrAccesses.add(new Either<>(field, fieldAccess));
       argExprs.add(fetch(arg.value));
