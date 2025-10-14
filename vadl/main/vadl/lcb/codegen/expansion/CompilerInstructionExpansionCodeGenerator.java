@@ -396,7 +396,8 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
       return Pair.of(new Either<>(field, null), value);
     } else {
       var msg = String.format(
-          "Cannot assign field. Aborting because operands mismatch for instruction '%s' when expanding from '%s'.",
+          "Cannot assign field. Aborting because operands mismatch for instruction '%s' when "
+              + "expanding from '%s'.",
           instruction.identifier.simpleName(),
           compilerInstruction.identifier.simpleName());
       throw Diagnostic.error(msg,
