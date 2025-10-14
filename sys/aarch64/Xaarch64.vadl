@@ -1515,7 +1515,7 @@ instruction set architecture AArch64Base = {
   $InstrWX             (CountBitsInstr        ; (CLZ    ; "clz"   ; 0b1'0110'1011'0000'0000'0100; clz  ))
   $InstrWX             (ReverseBitsInstr      ; (RBIT   ; "rbit"  ; 0b1'0110'1011'0000'0000'0000; rvb  ))
   $InstrWX             (RevBytesHInstr        ; (REV16  ; "rev16" ; 0b1'0110'1011'0000'0000'0001; half ))
-  //$RevBytesWInstr      (                        (REV32  ; "rev32" ; 0b1'0110'1011'0000'0000'0010; XSize))
+  $RevBytesWInstr      (                        (REV32  ; "rev32" ; 0b1'0110'1011'0000'0000'0010; XSize))
   //$RevBytesWInstr      (                        (REVW   ; "rev"   ; 0b1'0110'1011'0000'0000'0010; WSize))
   $RevBytesXInstr      (                        (REVX   ; "rev"   ; 0b1'0110'1011'0000'0000'0011; XSize))
 
