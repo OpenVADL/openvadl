@@ -54,4 +54,6 @@ public class ArchitectureTest {
 
     layeredArchitecture.check(jc);
   }
+
+
 }

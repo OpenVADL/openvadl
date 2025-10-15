@@ -38,6 +38,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 import vadl.cppCodeGen.FunctionCodeGenerator;
@@ -389,7 +390,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   private Pair<Either<Format.Field, Format.FieldAccess>, ExpressionNode> lookupField(
       CompilerInstruction compilerInstruction,
       Instruction instruction,
-      Map<Format.Field, @NotNull ExpressionNode> lookupFields,
+      Map<Format.Field, ExpressionNode> lookupFields,
       Format.Field field, Format.Field canonicalizedField) {
     if (lookupFields.containsKey(canonicalizedField)) {
       var value = lookupFields.get(canonicalizedField);
