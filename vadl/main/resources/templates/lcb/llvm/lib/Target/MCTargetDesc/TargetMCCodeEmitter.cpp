@@ -114,13 +114,13 @@ unsigned [(${namespace})]MCCodeEmitter::[(${imm.encodeWrapper})](const MCInst &M
     const MCOperand &[(${fieldAccess.fieldAccessName})] = MI.getOperand([(${fieldAccess.opIndex})]);
     [/]
 
-    int64_t imm;
+    int64_t vadl_internal_imm;
     [# th:each="enc : ${imm.encodings}" ]
     if([(${enc.checks})]) {
       result |= (project_range<0, [(${enc.fieldSize})]>(std::bitset<64>([(${enc.encodingFunction})]([(${enc.params})])))).to_ulong() << [(${enc.offset})];
       changed = true;
-    } else if([(${enc.checksExpr})] && AsmUtils::evaluateConstantImm([(${enc.fieldAccesses})], imm)) { // works only for one
-      result |= (project_range<0, [(${enc.fieldSize})]>(std::bitset<64>([(${enc.encodingFunction})](imm)))).to_ulong() << [(${enc.offset})];
+    } else if([(${enc.checksExpr})] && AsmUtils::evaluateConstantImm([(${enc.fieldAccesses})], vadl_internal_imm)) { // works only for one
+      result |= (project_range<0, [(${enc.fieldSize})]>(std::bitset<64>([(${enc.encodingFunction})](vadl_internal_imm)))).to_ulong() << [(${enc.offset})];
       changed = true;
     }
     [/]
