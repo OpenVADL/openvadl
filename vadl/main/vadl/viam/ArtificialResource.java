@@ -18,6 +18,7 @@ package vadl.viam;
 
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nonnull;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vadl.types.ConcreteRelationType;
@@ -153,7 +154,7 @@ public class ArtificialResource extends RegisterResource {
   }
 
   @Override
-  @NotNull
+  @Nonnull
   public DataType addressType() {
     ensure(hasAddress(), "Resource has no address");
     return readFunction.parameters()[0].type().asDataType();
