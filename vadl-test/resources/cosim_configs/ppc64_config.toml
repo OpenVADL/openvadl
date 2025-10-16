@@ -18,7 +18,7 @@
 [qemu]
 
 # The path to the compiled cosimulation qemu-plugin
-plugin="./qemu-setup/build/contrib/plugins/libcosimulation.so"
+plugin="/qemu/build/contrib/plugins/libcosimulation.so"
 
 # Whether to ignore registers that are not defined by a [qemu.gdb_reg_map] mapping
 # This option is useful to test the current implementation of a simulator which might not yet have all registers implemented against another (complete) implementation
@@ -27,7 +27,7 @@ ignore_unset_registers = true
 
 # Ignore specific registers
 # Filters in conjunction with `ignore_unset_registers`
-ignore_registers = []
+ignore_registers = [ "x3" ]
 
 
 # Defines a list of clients to test against
@@ -40,7 +40,7 @@ ignore_registers = []
 name = "VADL"
 
 # The executable of the ISS
-exec = "./qemu-setup/build/qemu-system-ppc64sfs"
+exec = "/qemu/build/qemu-system-ppc64sfs"
 
 # The path to the compiled file to use for testing
 test_exec="./test-execs/test_vadl"
@@ -51,7 +51,7 @@ pass_test_exec_to = "bios"
 # Applies additional arguments to the ISS-executable, e.g. `qemu-system-riscv64 -nographic -d plugin`
 additional_args = [
     "-plugin",
-    "./qemu-setup/build/contrib/plugins/libstoptrigger.so,addr=0xFC",
+    "/qemu/build/contrib/plugins/libstoptrigger.so,addr=0xFC",
     "-nographic",
     "-d", "plugin"
 ]
@@ -86,7 +86,7 @@ remote_target = "/tmp/gdb-cosim-VADL"
 [[qemu.clients]]
 name = "UPSTREAM"
 
-exec = "./qemu-setup/build/qemu-system-ppc64"
+exec = "/qemu/build/qemu-system-ppc64"
 
 test_exec="./test-execs/test_upstream"
 
@@ -94,7 +94,7 @@ pass_test_exec_to = "bios"
 
 additional_args = [
     "-plugin",
-    "./qemu-setup/build/contrib/plugins/libstoptrigger.so,addr=0xFC",
+    "/qemu/build/contrib/plugins/libstoptrigger.so,addr=0xFC",
     "-nographic",
     "-M", "pseries",
     "-cpu", "POWER10",
@@ -183,15 +183,15 @@ stop_after_n_instructions = 100
 # file = "./cosim-run/result/result.json"
 
 # "short" | "full"
-verbosity = "short"
+verbosity = "full"
 
 [logging]
-enable = true
+enable = false
 # tracing log-levels as defined here: https://docs.rs/tracing/latest/tracing/struct.Level.html#implementations
 level = "info"
 
 # The directory will also contain files for the stdout and stderr of each client
-dir = "./cosim-run/log"
+dir = "."
 file = "cosim.log"
 
 # Clears the logfile every time the program is run
@@ -216,7 +216,7 @@ clear_on_rerun = true
 [tracing]
 mode = "none"
 # NOTE: If no db-file is found at the given path then one will be automatically created.
-dir = "./cosim-run/trace"
+dir = "."
 file = "trace.sqlite3"
 clear_on_rerun = true
 

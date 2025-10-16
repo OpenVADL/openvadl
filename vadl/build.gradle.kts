@@ -59,6 +59,11 @@ sourceSets {
             srcDir("build/generated/sources/coco/java/main")
         }
     }
+    test {
+        resources {
+            srcDir(project(":vadl-test").layout.projectDirectory.dir("resources"))
+        }
+    }
 }
 
 tasks.withType<JavaCompile> {
