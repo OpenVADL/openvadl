@@ -97,7 +97,7 @@ fn run(config: Config) -> Result<()> {
     let passed = report_data.passed;
 
     let report = match &config.testing.protocol.out.verbosity {
-        cosim_lib::config::OutVerbosity::Full => serde_json::to_string_pretty(&report_data)?,
+        cosim_lib::config::OutVerbosity::Full => serde_yaml::to_string(&report_data)?,
         cosim_lib::config::OutVerbosity::Short => {
             let mut buf = String::new();
             if report_data.passed {
