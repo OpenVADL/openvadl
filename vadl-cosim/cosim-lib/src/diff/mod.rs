@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{collections::VecDeque, fmt::Debug};
 
 use anyhow::anyhow;
 use serde::Serialize;
@@ -149,7 +149,7 @@ impl DiffContextClient {
 pub fn get_all_clients_instructions(
     clients: &[Client],
     config: &Config,
-) -> Vec<DiffContextClientInstructions> {
+) -> VecDeque<DiffContextClientInstructions> {
     clients
         .iter()
         .map(|client| get_client_instructions(client, config))
@@ -190,7 +190,7 @@ impl From<&TBInsnInfo> for DiffContextClientInstruction {
 pub fn get_all_clients_contexts_before(
     clients: &[Client],
     config: &Config,
-) -> Vec<DiffContextClientState> {
+) -> VecDeque<DiffContextClientState> {
     clients
         .iter()
         .map(|client| get_client_context_before(client, config))
@@ -211,7 +211,7 @@ pub fn get_client_context_before(client: &Client, config: &Config) -> DiffContex
 pub fn get_all_clients_contexts_current(
     clients: &mut [Client],
     config: &Config,
-) -> anyhow::Result<Vec<DiffContextClientState>> {
+) -> anyhow::Result<VecDeque<DiffContextClientState>> {
     clients
         .iter_mut()
         .map(|client| get_client_context_current(client, config))

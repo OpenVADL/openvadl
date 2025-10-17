@@ -440,9 +440,9 @@ impl Broker {
         let mut diff_context = vec![];
 
         for client in &self.clients {
-            let before_state = before_states.pop().unwrap();
-            let error_instruction = error_instructions.pop().unwrap();
-            let after_state = after_states.pop().unwrap();
+            let before_state = before_states.pop_front().unwrap();
+            let error_instruction = error_instructions.pop_front().unwrap();
+            let after_state = after_states.pop_front().unwrap();
 
             let client_id = client.id;
             let client_name = client.name.clone();
