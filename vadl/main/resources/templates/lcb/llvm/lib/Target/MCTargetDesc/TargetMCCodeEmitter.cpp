@@ -187,6 +187,17 @@ void [(${namespace})]MCCodeEmitter::encodeNonPseudoInstruction(const MCInst &MI,
         support::endian::write<uint32_t>(CB, Bits, EndianEncoding);
         break;
     }
+    case 6:
+    {
+        uint64_t Bits = getBinaryCodeForInstr(MI, Fixups, STI) & 0xffff'ffff'ffffu;
+        SmallVector<char, 8> Encoding;
+        support::endian::write(Encoding, Bits, llvm::endianness::little);
+        assert(Encoding[6] == 0 && Encoding[7] == 0 &&
+               "Unexpected encoding for 48-bit instruction");
+        Encoding.truncate(6);
+        CB.append(Encoding);
+        break;
+    }
     case 8:
     {
         uint64_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
