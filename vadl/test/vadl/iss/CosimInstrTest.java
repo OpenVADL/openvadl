@@ -18,12 +18,14 @@ package vadl.iss;
 
 import static vadl.iss.CosimTestUtils.writeTestSuiteConfigYaml;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
@@ -89,17 +91,13 @@ public abstract class CosimInstrTest extends CosimTest {
         container -> copyPathFromContainer(container, "/work/results/", resultDirectory)
     );
 
-    Map<String, String> resultFiles = new HashMap<>();
+    Map<String, File> resultFiles = new HashMap<>();
     try (var walkStream = java.nio.file.Files.walk(resultDirectory)) {
       walkStream
           .filter(java.nio.file.Files::isRegularFile)
           .forEach(path -> {
-            try {
-              var content = java.nio.file.Files.readString(path);
-              resultFiles.put(path.getFileName().toString().split("-")[1], content);
-            } catch (IOException e) {
-              throw new RuntimeException(e);
-            }
+            var id = path.getFileName().toString().split("-")[1];
+            resultFiles.put(id, path.toFile());
           });
     } catch (Exception e) {
       Assertions.fail("Failed to load test results.", e);
@@ -108,12 +106,32 @@ public abstract class CosimInstrTest extends CosimTest {
     return testCases.stream()
         .map(e -> DynamicTest.dynamicTest(e.id(),
             () -> {
-              System.out.println(e.asmCore());
               if (!resultFiles.containsKey(e.id())) {
                 Assertions.fail("Result file is missing for test: " + e.id());
               }
-              var result = resultFiles.get(e.id());
-              if (!result.contains("\"passed\": true")) {
+              var file = resultFiles.get(e.id());
+              var parsed = CosimTestUtils.yamlToTestResult(file);
+              var client_map = parsed.diffContext().stream()
+                  .filter(ctx -> ctx.clientId() != null)
+                  .collect(Collectors.toMap(
+                      CosimTestUtils.TestResult.DiffContext::clientId,
+                      CosimTestUtils.TestResult.DiffContext::clientName,
+                      (left, right) -> left, HashMap::new));
+              System.out.println("Assembly core: \n" + e.asmCore());
+              if (!parsed.passed()) {
+                if (!parsed.diffs().isEmpty()) {
+                  System.out.println("Differences found:");
+                  for (var diff : parsed.diffs()) {
+                    System.out.println(diff.description() + ":");
+                    int maxNameLen = client_map.values().stream()
+                        .mapToInt(String::length).max().orElse(0);
+                    for (int i = 0; i < diff.values().size(); i++) {
+                      var name = client_map.get(i);
+                      var pad = " ".repeat(maxNameLen - name.length());
+                      System.out.println("-" + name + pad + " " + diff.values().get(i));
+                    }
+                  }
+                }
                 Assertions.fail("Test failed for test: " + e.id());
               }
             }

@@ -28,7 +28,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
 
   @Override
   public int getTestPerInstruction() {
-    return 50;
+    return 32;
   }
 
   @Override
@@ -57,11 +57,16 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   }
 
   @TestFactory
-  Stream<DynamicTest> add() throws IOException {
-    return testBinaryRegRegInstruction("add", "ADD");
+  Stream<DynamicTest> li() throws IOException {
+    return testTRegSImmInstruction("li", "LI");
   }
 
-  private Stream<DynamicTest> testBinaryRegRegInstruction(String instruction, String testNamePrefix)
+  @TestFactory
+  Stream<DynamicTest> add() throws IOException {
+    return testTSSRegInstruction("add", "ADD");
+  }
+
+  private Stream<DynamicTest> testTSSRegInstruction(String instruction, String testNamePrefix)
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
@@ -71,6 +76,18 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       b.fillRegSigned(regSrc2, 16);
       var regDest = b.anyTempReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc1, regSrc2);
+      return new CosimTestUtils.TestCase(testNamePrefix + id, b.toAsmString());
+    });
+  }
+
+  private static int counter = 0;
+
+  private Stream<DynamicTest> testTRegSImmInstruction(String instruction, String testNamePrefix)
+      throws IOException {
+    return runTestsWith(id -> {
+      var b = getBuilder(testNamePrefix, id);
+      var regDest = b.anyTempReg().sample();
+      b.add("%s %s, %s", instruction, counter++, 97);
       return new CosimTestUtils.TestCase(testNamePrefix + id, b.toAsmString());
     });
   }

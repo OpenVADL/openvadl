@@ -19,8 +19,12 @@ package vadl.iss;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
@@ -42,6 +46,25 @@ public class CosimTestUtils {
   ) {
   }
 
+  public record TestResult(
+      boolean passed,
+      List<Diff> diffs,
+      List<DiffContext> diffContext
+  ) {
+    public record Diff(
+        String key,
+        List<String> values,
+        String description
+    ) {
+    }
+
+    public record DiffContext(
+        Integer clientId,
+        String clientName
+    ) {
+    }
+  }
+
   public static void writeTestSuiteConfigYaml(TestConfig config,
                                               File dest)
       throws IOException {
@@ -60,6 +83,48 @@ public class CosimTestUtils {
     Yaml yaml = new Yaml();
     try (var writer = new FileWriter(dest)) {
       yaml.dump(rootYaml, writer);
+    }
+  }
+
+  public static TestResult yamlToTestResult(File yamlFile) {
+    try {
+      var yaml = new Yaml();
+      Map<String, Object> root = yaml.load(Files.readString(yamlFile.toPath()));
+
+      boolean passed = (boolean) root.get("passed");
+
+      List<TestResult.Diff> diffs = new ArrayList<>();
+      Object diffsObj = root.get("diffs");
+      if (diffsObj instanceof List<?> list) {
+        for (Object o : list) {
+          if (o instanceof Map<?, ?> m) {
+            String key = String.valueOf(m.get("key"));
+            List<String> values = new ArrayList<>();
+            Object vals = m.get("values");
+            if (vals instanceof List<?> lv) {
+              for (Object v : lv) values.add(String.valueOf(v));
+            }
+            String description = String.valueOf(m.get("description"));
+            diffs.add(new TestResult.Diff(key, values, description));
+          }
+        }
+      }
+
+      List<TestResult.DiffContext> diffContext = new ArrayList<>();
+      Object ctxObj = root.get("diff_context");
+      if (ctxObj instanceof List<?> ctxList) {
+        for (Object o : ctxList) {
+          if (o instanceof Map<?, ?> m) {
+            Integer clientId = m.get("client_id") instanceof Number n ? n.intValue() : null;
+            String clientName = m.get("client_name") == null ? null : String.valueOf(m.get("client_name"));
+            diffContext.add(new TestResult.DiffContext(clientId, clientName));
+          }
+        }
+      }
+
+      return new TestResult(passed, diffs, diffContext);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
