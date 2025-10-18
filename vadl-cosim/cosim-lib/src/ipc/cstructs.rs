@@ -6,7 +6,7 @@ use std::{
 
 use anyhow::bail;
 use serde::{Serialize, ser::SerializeStruct};
-use tracing::debug;
+use tracing::{debug, info, warn};
 
 use crate::{config::Config, ipc::sem::Semaphore};
 
@@ -500,10 +500,16 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
             let write_end_ref = &self.write_end;
             let cond =
                 || write_end_ref.load(Ordering::SeqCst) || count_ref.load(Ordering::SeqCst) > 0;
-            let res = self.notifier.timedwait(Duration::from_millis(1000), cond);
+            let res = self.notifier.timedwait(Duration::from_millis(100), cond);
             match res {
                 Ok(res) => match res {
                     crate::ipc::sem::TimedWaitState::Timeout => {
+                        if cond() {
+                            warn!("A timeout occurred while waiting for a qemu-client but the client did respond. This means a race-condition similar to https://stackoverflow.com/a/36130475 occurred. This scenario is handled such that the cosimulation still works correctly.");
+
+                            return self.start_read();
+                        }
+
                         bail!(
                             "Failed to wait for a response from a qemu client. Please refer to the logs for more information."
                         );
