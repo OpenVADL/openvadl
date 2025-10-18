@@ -17,7 +17,9 @@
 package vadl.iss.ppc64;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.stream.Stream;
+import net.jqwik.api.Arbitraries;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.iss.AsmTestBuilder;
@@ -28,7 +30,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
 
   @Override
   public int getTestPerInstruction() {
-    return 32;
+    return 100;
   }
 
   @Override
@@ -56,9 +58,10 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     return "ppc64-softmmu";
   }
 
+  // needed for all other tests
   @TestFactory
   Stream<DynamicTest> li() throws IOException {
-    return testTRegSImmInstruction("li", "LI");
+    return testTRegImmS16Instruction("li", "LI");
   }
 
   @TestFactory
@@ -80,16 +83,23 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     });
   }
 
-  private static int counter = 0;
-
-  private Stream<DynamicTest> testTRegSImmInstruction(String instruction, String testNamePrefix)
+  private Stream<DynamicTest> testTRegImmS16Instruction(String instruction, String testNamePrefix)
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
       var regDest = b.anyTempReg().sample();
-      b.add("%s %s, %s", instruction, counter++, 97);
+      b.add("%s %s, %s", instruction, regDest, arbitraryImmS(16));
       return new CosimTestUtils.TestCase(testNamePrefix + id, b.toAsmString());
     });
+  }
+
+  public static String arbitraryImmS(int bits) {
+    var b = BigInteger.ONE.shiftLeft(bits - 1);
+    return Arbitraries.bigIntegers()
+        .greaterOrEqual(b.negate())
+        .lessOrEqual(b.subtract(BigInteger.ONE))
+        .sample()
+        .toString();
   }
 
 }

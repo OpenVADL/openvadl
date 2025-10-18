@@ -12,12 +12,12 @@ def load_compiler(name: str):
     spec.loader.exec_module(compiler)
     return compiler
 
-def cosim(cfg: str, be: str, le: str, out: Path):
+def cosim(cfg: str, le: str, be: str, out: Path):
     subprocess.run([
         "vadl-cosim-broker",
         "--config", cfg,
-        "--test-exec", be,
         "--test-exec", le,
+        "--test-exec", be,
         "--output-file", str(out),
     ])
 
@@ -31,7 +31,7 @@ async def main(testsuite_path: Path):
     for t in config.get("tests", []):
         tid = str(t["id"])
         comp = await compiler.compile(tid, str(t["asm_core"]))
-        cosim(cosim_config, str(comp["elf_be"]), str(comp["elf_le"]), results / f"result-{tid}")
+        cosim(cosim_config, str(comp["elf_le"]), str(comp["elf_be"]), results / f"result-{tid}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
