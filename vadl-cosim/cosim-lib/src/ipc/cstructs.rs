@@ -500,7 +500,7 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
             let write_end_ref = &self.write_end;
             let cond =
                 || write_end_ref.load(Ordering::SeqCst) || count_ref.load(Ordering::SeqCst) > 0;
-            let res = self.notifier.timedwait(Duration::from_millis(100), cond);
+            let res = self.notifier.timedwait(Duration::from_millis(1000), cond);
             match res {
                 Ok(res) => match res {
                     crate::ipc::sem::TimedWaitState::Timeout => {

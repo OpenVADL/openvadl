@@ -290,7 +290,7 @@ static SHMCPU get_cpu_state(unsigned int cpu_index) {
 static void plugin_exit(qemu_plugin_id_t id, void *p) {
   PLUGIN_PRINTLN("plugin_exit");
   atomic_store(&shm_ring_buffer->write_end, true);
-  pthread_cond_signal(&shm_ring_buffer->notifier.cvar);
+  pthread_cond_broadcast(&shm_ring_buffer->notifier.cvar);
 }
 
 // Connects to the broker by accessing the assigned shared memory
