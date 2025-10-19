@@ -1254,7 +1254,8 @@ class ZeroConstraintAnnotation extends ExprAnnotation {
     //   we must loose this restriction, so that there can be multiple indices set.
     if (args.size() != 1) {
       throw error("Invalid zero annotation", callExpr)
-          .locationDescription(callExpr, "Exactly one register index was expected, but found %s.",
+          .locationDescription(callExpr,
+              "Exactly one register index was expected, but %s were provided.",
               args.size())
           .note("In the future it will be possible to have constraints on multiple dimensions.")
           .build();

@@ -2869,6 +2869,7 @@ public class TypeChecker
         currType = Type.bits(bitSlice.bitSize());
         slice.computedBitSlice = bitSlice;
         slice.type = currType;
+        expr.type = currType;
       }
       if (currType instanceof TensorType currTensoType) {
         if (slice.values.size() != 1) {

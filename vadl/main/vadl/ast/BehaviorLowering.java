@@ -1183,17 +1183,19 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var argExprs = AstUtils.flatArguments(argGroups).stream().map(this::fetch)
         .collect(Collectors.toCollection(NodeList::new));
-    var viamDef = viamLowering.fetch(targetDef).orElseThrow();
+    var viamTargetDef = viamLowering.fetch(targetDef).orElseThrow();
 
     // No need to call getViamType here as the viam definitions should already have that.
-    WriteResourceNode writeNode = switch (viamDef) {
+    WriteResourceNode writeNode = switch (viamTargetDef) {
       case RegisterTensor regDef -> new WriteRegTensorNode(regDef, argExprs,
           // slice the written value before writing it
           sliceWriteValue(value,
               new ReadRegTensorNode(regDef, argExprs, regDef.resultType(), null), slices),
           null, null);
 
-      case ArtificialResource aliasDef -> new WriteArtificialResNode(aliasDef, argExprs,
+      case ArtificialResource aliasDef -> new WriteArtificialResNode(
+          aliasDef,
+          argExprs,
           // slice the written value before writing it
           sliceWriteValue(value,
               new ReadArtificialResNode(aliasDef, argExprs, aliasDef.resultType()), slices)
@@ -1219,7 +1221,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
                   counterDef.registerTensor().resultType(), null), slices),
           null, null);
 
-      default -> throw new IllegalStateException("Unexpected target: " + viamDef);
+      default -> throw new IllegalStateException("Unexpected target: " + viamTargetDef);
     };
     writeNode.setSourceLocationIfNotSet(statement.target.location());
 

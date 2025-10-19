@@ -107,6 +107,14 @@ public class ArtificialResource extends RegisterResource {
     return Collections.emptyList();
   }
 
+  public int dimCount() {
+    return dimensions().size();
+  }
+
+  public int maxNumberOfAccessIndices() {
+    return dimCount() - 1;
+  }
+
   /**
    * The {@link ArtificialResource} is an alias for a register file.
    */
@@ -162,7 +170,8 @@ public class ArtificialResource extends RegisterResource {
 
   @Override
   public List<DataType> indexTypes() {
-    return List.of(addressType());
+    return dimensions().stream().limit(maxNumberOfAccessIndices())
+        .map(RegisterTensor.Dimension::indexType).toList();
   }
 
   @Override

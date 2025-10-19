@@ -1767,6 +1767,11 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
           && computedTarget() instanceof RegisterDefinition) {
         return new ArrayList<>(argsIndices.subList(0,
             Math.min(argsIndices.size(), tensorType.indexDims().size())));
+      } else if (type instanceof TensorType tensorType
+          && computedTarget() instanceof AliasDefinition aliasTarget
+          && aliasTarget.kind == AliasDefinition.AliasKind.REGISTER) {
+        return new ArrayList<>(argsIndices.subList(0,
+            Math.min(argsIndices.size(), tensorType.indexDims().size())));
       }
     }
     return List.of();
