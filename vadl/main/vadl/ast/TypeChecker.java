@@ -762,24 +762,56 @@ public class TypeChecker
   public Void visit(RegisterDefinition definition) {
     definition.typeLiteral.argTypes().forEach(this::check);
     check(definition.typeLiteral.resultType());
-    if (definition.typeLiteral.argTypes().isEmpty()) {
-      // relation without args is not a register file (normal single type)
-      var typeLit = definition.typeLiteral.resultType;
-      if (!(typeLit.type instanceof DataType regType)) {
-        var type = definition.type;
-        throw error("Invalid Type", definition)
-            .description("Expected register type to be one of Bits, SInt, UInt or Bool.")
-            .note("Type was %s.", type == null ? "unknown" : type)
-            .build();
-      }
-      definition.type = regType;
-    } else {
-      // is a register file
-      definition.type = Type.concreteRelation(
-          definition.typeLiteral.argTypes().stream().map(arg -> arg.type).toList(),
-          requireNonNull(definition.typeLiteral.resultType().type));
+
+    var type = definition.typeLiteral.resultType().type();
+    if (!(type instanceof DataType)) {
+      throw error("Invalid Type", definition)
+          .description("Expected register type to be one of Bits, SInt, UInt or Bool.")
+          .note("Type was %s.", type)
+          .build();
     }
 
+    // In case the user wrote the relational type syntax, let's remap it to tensor type which makes
+    // more sense for lowering and VIAM.
+    // Example:
+    //    Bits<n> -> Bit<m_1>...<m_k>     ==>     Bits<2^n><m_1>...<m_k>
+    //    ^^^^^^ Relation Type ^^^^^^   becomes   ^^^^^ Tensor Type ^^^^
+
+    // FIXME: Don't know what to do with multiple args, figure out later.
+    if (definition.typeLiteral.argTypes().size() > 1) {
+      throw new IllegalStateException("Multiple arguments for type in register not yet defined");
+    }
+
+    definition.typeLiteral.argTypes().forEach((argType) -> {
+      var argTypeType = argType.type();
+      if (!(argTypeType instanceof DataType)) {
+        throw error("Invalid Type", definition)
+            .description("Expected register type to be one of Bits, SInt, UInt or Bool.")
+            .note("Type was %s.", argTypeType)
+            .build();
+      }
+    });
+    if (!definition.typeLiteral.argTypes().isEmpty()) {
+      var argType = (DataType) definition.typeLiteral.argTypes().getFirst().type();
+      var newIndex = 1 << argType.bitWidth(); // A fancy 2 ^ bitwidth
+      if (type instanceof TensorType tensorType) {
+        type = new TensorType(List.of(newIndex), tensorType);
+      } else {
+        if (!(type instanceof BitsType bitsType)) {
+          throw error("Type Mismatch", definition.typeLiteral.resultType())
+              .description(
+                  "Expected result type to be either a tensor or a bits type, but received `%s`",
+                  type)
+              .note(
+                  "For type literals in the relation syntax (with the arrow syntax) the result type must be a bits type.")
+              .build();
+        }
+
+        type = new TensorType(List.of(newIndex), bitsType);
+      }
+    }
+
+    definition.type = type;
     return null;
   }
 
@@ -3171,7 +3203,8 @@ public class TypeChecker
       // set the arg group type (representing the call result)
       argGroups.getFirst().type = relType.resultType();
 
-    } else if (expr.computedTarget() instanceof RegisterDefinition
+    } else if ((expr.computedTarget() instanceof RegisterDefinition
+        || expr.computedTarget() instanceof AliasDefinition)
         && type instanceof TensorType tensorType
         && !argGroups.isEmpty()) {
       // FIXME: We don't do any typechecking here as the type rules would be a bit murky in my

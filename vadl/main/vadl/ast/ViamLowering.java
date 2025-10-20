@@ -24,6 +24,7 @@ import static vadl.error.Diagnostic.warning;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
+import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -411,12 +412,22 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       var innerResource =
           (RegisterTensor) fetch(requireNonNull(definition.computedTarget)).orElseThrow();
 
+      List<RegisterTensor.Dimension> dimensions = switch (definition.type()) {
+        case TensorType tensorType -> Streams.mapWithIndex(
+                tensorType.indexDims().stream(),
+                (dim, index) -> new RegisterTensor.Dimension((int) index,
+                    Type.bits(BitsType.minimalRequiredWidthFor((long) dim)), dim))
+            .toList();
+        default -> new ArrayList<>();
+      };
+
       return Optional.of(new ArtificialResource(
           identifier,
           ArtificialResource.Kind.REGISTER,
           innerResource,
           new BehaviorLowering(this).getRegisterAliasReadFunc(definition),
           new BehaviorLowering(this).getRegisterAliasWriteProc(definition),
+          dimensions,
           definition.slice
       ));
     }
