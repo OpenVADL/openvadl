@@ -135,25 +135,21 @@ public abstract class CosimTest extends DockerExecutionTest {
               // validate existence of generated qemu iss
               d.run(qemuBin + " --version");
 
-              //
-              //
-              //
-              //
-              //
-              d.run("apt-get update && apt-get install -y libsqlite3-dev pkg-config");
-
               d.workDir("/work");
+
+              // cosim dependency
+              d.run("apt-get update && apt-get install -y libsqlite3-dev");
 
               // get rust toolchain from rustup and build the cosim broker
               d.run("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y");
               d.env("PATH", "/root/.cargo/bin:$PATH");
               d.run("git clone --branch feature/ppc-cosim-test https://github.com/OpenVADL/openvadl.git");
-          //  d.run("git clone https://github.com/OpenVADL/openvadl.git");
+              //d.run("git clone https://github.com/OpenVADL/openvadl.git");
               d.workDir("/work/openvadl/vadl-cosim");
               d.run("cargo build --release -p vadl-cosim-broker");
+
               d.run("mkdir -p /opt/cosim && cp ./target/release/vadl-cosim-broker /opt/cosim/");
               d.env("PATH", "/opt/cosim:$PATH");
-              d.run("apt-get update && apt-get install -y libsqlite3-0");
 
               d.workDir("/work");
 

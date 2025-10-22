@@ -12,14 +12,20 @@ def load_compiler(name: str):
     spec.loader.exec_module(compiler)
     return compiler
 
-def cosim(cfg: str, le: str, be: str, out: Path):
-    subprocess.run([
+async def run_cosim(cfg: str, le: str, be: str, out: Path):
+    proc = await asyncio.create_subprocess_exec(
         "vadl-cosim-broker",
         "--config", cfg,
         "--test-exec", le,
         "--test-exec", be,
-        "--output-file", str(out),
-    ])
+        "--output-file", str(out)
+    )
+    await proc.wait()
+
+async def run_test(compiler, cosim_config: str, t: dict, results: Path):
+    tid = str(t["id"])
+    comp = await compiler.compile(tid, str(t["asm_core"]))
+    await run_cosim(cosim_config, str(comp["elf_le"]), str(comp["elf_be"]), results / f"result-{tid}")
 
 async def main(testsuite_path: Path):
     config = yaml.safe_load(testsuite_path.read_text())
@@ -28,10 +34,10 @@ async def main(testsuite_path: Path):
     results.mkdir(parents=True, exist_ok=True)
     cosim_config = str(Path("/cosim_configs") / config["cosim_config"])
 
-    for t in config.get("tests", []):
-        tid = str(t["id"])
-        comp = await compiler.compile(tid, str(t["asm_core"]))
-        cosim(cosim_config, str(comp["elf_le"]), str(comp["elf_be"]), results / f"result-{tid}")
+    # tasks = [run_test(compiler, cosim_config, t, results) for t in config.get("tests", [])]
+    tasks = []; [await run_test(compiler, cosim_config, t, results) for t in config.get("tests", [])]
+
+    await asyncio.gather(*tasks)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
