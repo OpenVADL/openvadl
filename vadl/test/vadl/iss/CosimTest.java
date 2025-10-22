@@ -146,17 +146,17 @@ public abstract class CosimTest extends DockerExecutionTest {
               d.run("git clone --branch feature/ppc-cosim-test https://github.com/OpenVADL/openvadl.git");
               //d.run("git clone https://github.com/OpenVADL/openvadl.git");
               d.workDir("/work/openvadl/vadl-cosim");
-              d.run("cargo build --release -p vadl-cosim-broker");
+              d.env("RUSTC_WRAPPER", "sccache");
+              d.run("sccache --start-server && cargo build --release -p vadl-cosim-broker && sccache -s");
 
+              // add cosim broker to path
               d.run("mkdir -p /opt/cosim && cp ./target/release/vadl-cosim-broker /opt/cosim/");
               d.env("PATH", "/opt/cosim:$PATH");
 
               d.workDir("/work");
 
               d.copy("/cosim_configs", "/cosim_configs");
-              d.run("ls /cosim_configs");
               d.copy("/cosim_scripts", "/cosim_scripts");
-              d.run("ls /cosim_scripts");
 
               d.cmd("python3 /cosim_scripts/main.py test-suite.yaml");
 
