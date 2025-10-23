@@ -237,7 +237,14 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
     @Override
     public void didChange(DidChangeTextDocumentParams params) {
       log.info(">> didChange: {}", params);
-      // TODO
+
+      var document = openDocuments.get(params.getTextDocument().getUri());
+      if (document == null) {
+        return;
+      }
+      document.setVersion(params.getTextDocument().getVersion());
+      // TODO Support Incremental changes as well (& switch on in capabilities)
+      document.setText(params.getContentChanges().getLast().getText());
     }
     
     @Override
