@@ -17,6 +17,8 @@
 package vadl.ast;
 
 import java.io.ByteArrayInputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +34,59 @@ public final class LspTokenizer {
   private final Map<String, Integer> tokenTypesMap;
   @SuppressWarnings("unused")
   private final Map<String, Integer> tokenModifiersMap;
+
+  /**
+   * Maps VADL Scanner Token Kinds to LSP token types.
+   */
+  private static String[] tokenKindsMap;
+
+  static {
+    // Generate tokenKindsMap
+    tokenKindsMap = new String[Parser.maxT + 1];
+
+    // Hardcoded mappings:
+    tokenKindsMap[Parser._hexLit] = SemanticTokenTypes.Number;
+    tokenKindsMap[Parser._binLit] = SemanticTokenTypes.Number;
+    tokenKindsMap[Parser._decLit] = SemanticTokenTypes.Number;
+    tokenKindsMap[Parser._identifierToken] = SemanticTokenTypes.Variable;
+    tokenKindsMap[Parser._string] = SemanticTokenTypes.String;
+
+    // Look through all known token kinds
+    for (Field field : Parser.class.getDeclaredFields()) {
+      var m = field.getModifiers();
+      if (!Modifier.isPublic(m) || !Modifier.isStatic(m) || !Modifier.isFinal(m)
+          || !int.class.isAssignableFrom(field.getType())) {
+        continue;
+      }
+      var name = field.getName();
+      if (!name.startsWith("_")) {
+        continue;
+      }
+      int kind;
+      try {
+        kind = field.getInt(null);
+      } catch (IllegalAccessException e) {
+        continue;
+      }
+
+      if (tokenKindsMap[kind] != null) {
+        // This mapping has already been set above
+        continue;
+      }
+      // Operators according to ParserUtils / Token name "SYM_*"
+      if (ParserUtils.BIN_OPS[kind] || ParserUtils.UN_OPS[kind] || name.startsWith("_SYM_")) {
+        tokenKindsMap[kind] = SemanticTokenTypes.Operator;
+        continue;
+      }
+      // Token name "T_*"
+      if (name.startsWith("_T_")) {
+        // Don't know what to map these to
+        continue;
+      }
+      // Everything else should be Keyword
+      tokenKindsMap[kind] = SemanticTokenTypes.Keyword;
+    }
+  }
 
 
   /**
@@ -69,18 +124,18 @@ public final class LspTokenizer {
     int previousLine = 1; // Token.line starts at 1
     int previousCol = 1; // Same for Token.col
     while ((t = scanner.Scan()).kind != Parser._EOF) {
-      var tokenType = getTokenTypeFromScannerKind(t.kind);
+      int tokenType = getTokenTypeFromScannerKind(t.kind);
       if (tokenType < 0) {
         continue;
       }
 
-      var deltaLine = t.line - previousLine;
+      int deltaLine = t.line - previousLine;
       previousLine = t.line;
 
       if (deltaLine != 0) {
         previousCol = 1;
       }
-      var deltaStart = t.col - previousCol;
+      int deltaStart = t.col - previousCol;
       previousCol = t.col;
 
       // deltaLine, deltaStart, length, tokenType, tokenModifiers
@@ -94,29 +149,6 @@ public final class LspTokenizer {
   }
 
   private int getTokenTypeFromScannerKind(int kind) {
-    String type = null;
-
-    // This is where every Scanner token should be mapped to SemanticTokenTypes
-    if (ParserUtils.BIN_OPS[kind] || ParserUtils.UN_OPS[kind]) {
-      type = SemanticTokenTypes.Operator;
-    } else {
-      type = switch (kind) {
-        case Parser._hexLit, Parser._binLit, Parser._decLit
-            -> SemanticTokenTypes.Number;
-        // Just a few of the keywords...
-        case Parser._ABSOLUTE, Parser._ADDRESS, Parser._ALIAS, Parser._ALIGN, Parser._APPEND,
-             Parser._APPLICATION, Parser._ARCHITECTURE, Parser._ASSEMBLY, Parser._BINARY,
-             Parser._REGISTER
-            -> SemanticTokenTypes.Keyword;
-        default -> null;
-      };
-    }
-    // TODO add more
-
-    if (type != null) {
-      // Filtering out type that the client doesn't support
-      return tokenTypesMap.getOrDefault(type, -1);
-    }
-    return -1;
+    return tokenTypesMap.getOrDefault(tokenKindsMap[kind], -1);
   }
 }
