@@ -20,12 +20,19 @@ import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import vadl.configuration.LcbConfiguration;
+import vadl.gcb.valuetypes.TargetName;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
 public abstract class AsmFileCheckTest extends LcbDockerInputFileExecutionTest {
   protected abstract String getSpecPath();
 
   protected abstract String getComponent();
+
+  @Override
+  protected LcbConfiguration getConfiguration() {
+    return new LcbConfiguration(getConfiguration(false), new TargetName(getTarget()), true);
+  }
 
   @TestFactory
   List<DynamicTest> testAsm() throws DuplicatedPassKeyException, IOException {

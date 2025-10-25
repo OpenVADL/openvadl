@@ -20,7 +20,6 @@ import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -300,7 +299,8 @@ public abstract class LlvmInstructionLoweringStrategy {
       Instruction instruction,
       Graph unmodifiedBehavior,
       Abi abi,
-      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses,
+      boolean generatePatterns) {
     var copy = unmodifiedBehavior.copy();
 
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {
@@ -321,34 +321,36 @@ public abstract class LlvmInstructionLoweringStrategy {
       var patterns = new ArrayList<TableGenPattern>();
       var alternatives = new ArrayList<TableGenPattern>();
 
-      // The first behavior is always the modified main behavior.
-      additionalBehaviors.add(Pair.of(copy, info.inputs()));
-      var derivedBehaviors = deriveDifferentBehaviors(instruction, copy, info.inputs());
-      additionalBehaviors.addAll(derivedBehaviors);
+      if (generatePatterns) {
+        // The first behavior is always the modified main behavior.
+        additionalBehaviors.add(Pair.of(copy, info.inputs()));
+        var derivedBehaviors = deriveDifferentBehaviors(instruction, copy, info.inputs());
+        additionalBehaviors.addAll(derivedBehaviors);
 
-      // Iterate over all the constructed behaviors.
-      for (var pair : additionalBehaviors) {
-        var optimisationResult = optimise(pair.left());
-        var behavior = optimisationResult.optimised;
-        var inputOperands = pair.right();
+        // Iterate over all the constructed behaviors.
+        for (var pair : additionalBehaviors) {
+          var optimisationResult = optimise(pair.left());
+          var behavior = optimisationResult.optimised;
+          var inputOperands = pair.right();
 
-        var localPatterns = generatePatterns(instruction,
-            behavior,
-            inputOperands,
-            behavior.getNodes(WriteResourceNode.class).toList());
-        var localAlternatives =
-            generatePatternVariations(
-                instruction,
-                labelledMachineInstructions,
-                behavior,
-                inputOperands,
-                info.outputs(),
-                localPatterns,
-                abi);
+          var localPatterns = generatePatterns(instruction,
+              behavior,
+              inputOperands,
+              behavior.getNodes(WriteResourceNode.class).toList());
+          var localAlternatives =
+              generatePatternVariations(
+                  instruction,
+                  labelledMachineInstructions,
+                  behavior,
+                  inputOperands,
+                  info.outputs(),
+                  localPatterns,
+                  abi);
 
-        patterns.addAll(localPatterns);
-        alternatives.addAll(localAlternatives);
-        additionalBehaviorsBookkeeping.add(optimisationResult);
+          patterns.addAll(localPatterns);
+          alternatives.addAll(localAlternatives);
+          additionalBehaviorsBookkeeping.add(optimisationResult);
+        }
       }
 
       return Optional.of(new LlvmLoweringRecord.Machine(

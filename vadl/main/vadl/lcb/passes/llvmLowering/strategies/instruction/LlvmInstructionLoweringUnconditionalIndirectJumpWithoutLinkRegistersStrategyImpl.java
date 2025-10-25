@@ -60,7 +60,8 @@ public class LlvmInstructionLoweringUnconditionalIndirectJumpWithoutLinkRegister
       Instruction instruction,
       Graph uninlinedBehavior,
       Abi abi,
-      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses,
+      boolean generatePatterns) {
     var copy = uninlinedBehavior.copy();
 
     var constraints = generateConstraints(copy);

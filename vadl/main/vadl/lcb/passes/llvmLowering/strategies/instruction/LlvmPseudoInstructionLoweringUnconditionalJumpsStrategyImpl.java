@@ -76,7 +76,8 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
       List<TableGenInstAlias> instAliases,
       PseudoInstruction pseudo,
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
-      DetermineRegisterUsesAndDefsPass.Info info) {
+      DetermineRegisterUsesAndDefsPass.Info info,
+      boolean generatePatterns) {
     for (var callNode : pseudo.behavior().getNodes(InstrCallNode.class).toList()) {
       var instructionBehavior = callNode.target().behavior().copy();
       var label = labelledMachineInstructions.reverse().get(callNode.target());
@@ -93,7 +94,8 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
             strategy.lowerInstruction(labelledMachineInstructions, callNode.target(),
                 instructionBehavior,
                 abi,
-                info);
+                info,
+                generatePatterns);
 
         if (tableGenRecord.isPresent()) {
           var record = tableGenRecord.get();

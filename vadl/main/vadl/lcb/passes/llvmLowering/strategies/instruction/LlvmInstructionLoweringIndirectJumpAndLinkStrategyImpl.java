@@ -19,7 +19,6 @@ package vadl.lcb.passes.llvmLowering.strategies.instruction;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -106,10 +105,10 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
       Instruction instruction,
       Graph unmodifiedBehavior,
       Abi abi,
-      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses,
+      boolean generatePatterns) {
     var copy = unmodifiedBehavior.copy();
 
-    var constraints = generateConstraints(copy);
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {
       replaceNode(instruction, node);
     }
@@ -119,13 +118,18 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     // Clear the flags for this strategy
     info = info.withFlags(LlvmLoweringPass.Flags.empty());
 
-    var patterns = generatePatternVariations(instruction,
-        labelledMachineInstructions,
-        copy,
-        info.inputs(),
-        info.outputs(),
-        Collections.emptyList(),
-        abi);
+    List<TableGenPattern> patterns = new ArrayList<>();
+    if (generatePatterns) {
+      patterns = generatePatternVariations(instruction,
+          labelledMachineInstructions,
+          copy,
+          info.inputs(),
+          info.outputs(),
+          Collections.emptyList(),
+          abi);
+    }
+
+    var constraints = generateConstraints(copy);
 
     return Optional.of(new LlvmLoweringRecord.Machine(
         instruction,

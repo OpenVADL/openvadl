@@ -77,6 +77,10 @@ public abstract class LcbDockerExecutionTest extends AbstractLcbTest {
     return map;
   }
 
+  protected LcbConfiguration getConfiguration() {
+    return new LcbConfiguration(getConfiguration(false), new TargetName(getTarget()));
+  }
+
   protected void run(String specPath, String cmd) throws DuplicatedPassKeyException, IOException {
     var environment = defaultEnvironment();
     run(specPath, cmd, environment);
@@ -85,8 +89,7 @@ public abstract class LcbDockerExecutionTest extends AbstractLcbTest {
   protected void run(String specPath, String cmd, Map<String, String> environments)
       throws DuplicatedPassKeyException, IOException {
     var doDebug = enableDebug();
-    var configuration = new LcbConfiguration(getConfiguration(false),
-        new TargetName(getTarget()));
+    var configuration = getConfiguration();
 
     runLcb(configuration, specPath);
     copyIntoDockerContext(configuration);

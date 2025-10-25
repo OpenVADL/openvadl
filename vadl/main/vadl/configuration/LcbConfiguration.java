@@ -24,14 +24,30 @@ import vadl.gcb.valuetypes.TargetName;
  */
 public class LcbConfiguration extends GcbConfiguration {
 
+  private boolean skipPatternGeneration = false;
 
   public LcbConfiguration(GeneralConfiguration gcbConfiguration, @Nullable TargetName targetName) {
     super(gcbConfiguration, targetName);
   }
 
+  public LcbConfiguration(GeneralConfiguration gcbConfiguration, @Nullable TargetName targetName,
+                          boolean skipPatternGeneration) {
+    super(gcbConfiguration, targetName);
+    this.skipPatternGeneration = skipPatternGeneration;
+  }
+
   public static LcbConfiguration from(GcbConfiguration gcbConfiguration,
                                       TargetName targetName) {
     return new LcbConfiguration(gcbConfiguration, targetName);
+  }
+
+  public static LcbConfiguration from(GcbConfiguration gcbConfiguration,
+                                      TargetName targetName, boolean skipPatternGeneration) {
+    return new LcbConfiguration(gcbConfiguration, targetName, skipPatternGeneration);
+  }
+
+  public boolean skipPatternGeneration() {
+    return skipPatternGeneration;
   }
 
 }

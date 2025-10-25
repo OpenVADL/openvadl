@@ -77,8 +77,12 @@ import vadl.viam.Specification;
  * This is a wrapper class which contains utility functions for the lowering.
  */
 public class LlvmLoweringPass extends Pass {
+
+  private boolean generatePatterns;
+
   public LlvmLoweringPass(LcbConfiguration configuration) {
     super(configuration);
+    this.generatePatterns = !((LcbConfiguration) configuration()).skipPatternGeneration();
   }
 
   /**
@@ -342,7 +346,8 @@ public class LlvmLoweringPass extends Pass {
                     instruction,
                     instruction.behavior(),
                     abi,
-                    usesDefs);
+                    usesDefs,
+                    generatePatterns);
 
             // Okay, we have to save record.
             record.ifPresent(llvmLoweringIntermediateResult -> {
@@ -386,7 +391,8 @@ public class LlvmLoweringPass extends Pass {
                     Collections.emptyList(),
                     pseudo,
                     labelledMachineInstructions,
-                    info);
+                    info,
+                    generatePatterns);
 
             record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(pseudo,
                 llvmLoweringIntermediateResult));

@@ -69,7 +69,8 @@ public abstract class LlvmPseudoInstructionLowerStrategy
       List<TableGenInstAlias> instAliases,
       PseudoInstruction pseudo,
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
-      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses,
+      boolean generatePatterns) {
     var compilerInstruction =
         super.lowerInstruction(pseudo, supportedInstructions, registerDefsUses);
 

@@ -18,6 +18,7 @@ package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
 import static vadl.gcb.passes.MachineInstructionLabel.J;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -66,7 +67,8 @@ public class LlvmInstructionLoweringUnconditionalJumpWithoutLinkRegistersStrateg
       Instruction instruction,
       Graph uninlinedBehavior,
       Abi abi,
-      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses,
+      boolean generatePatterns) {
     var copy = uninlinedBehavior.copy();
 
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {
@@ -74,23 +76,27 @@ public class LlvmInstructionLoweringUnconditionalJumpWithoutLinkRegistersStrateg
     }
 
     return Optional.of(
-        createIntermediateResult(instruction, copy, registerDefsUses));
+        createIntermediateResult(instruction, copy, registerDefsUses, generatePatterns));
   }
 
   private LlvmLoweringRecord.Machine createIntermediateResult(
       Instruction instruction,
       Graph uninlinedGraph,
-      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses,
+      boolean generatePatterns) {
     var info = lowerBaseInfo(instruction, uninlinedGraph, registerDefsUses);
     var unchangedFlags = getFlags(uninlinedGraph);
     var flags = LlvmLoweringPass.Flags.withTerminator(
         LlvmLoweringPass.Flags.withBranch(
             LlvmLoweringPass.Flags.withBarrier(unchangedFlags)));
 
-    var patterns = generatePatterns(instruction,
-        uninlinedGraph,
-        info.inputs(),
-        uninlinedGraph.getNodes(WriteResourceNode.class).toList());
+    List<TableGenPattern> patterns = new ArrayList<>();
+    if (generatePatterns) {
+      patterns = generatePatterns(instruction,
+          uninlinedGraph,
+          info.inputs(),
+          uninlinedGraph.getNodes(WriteResourceNode.class).toList());
+    }
 
     return new LlvmLoweringRecord.Machine(
         instruction,
