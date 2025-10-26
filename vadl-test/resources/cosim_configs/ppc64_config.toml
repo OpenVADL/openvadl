@@ -144,6 +144,14 @@ r29 = "x29"
 r30 = "x30"
 r31 = "x31"
 
+#xer = "xer"
+lr = "lr"
+ctr = "ctr"#
+#tb = "tb"
+tar = "tar"
+srr0 = "srr0"
+srr1 = "srr1"
+msr = "msr"
 
 # Defines the test-source and how to test
 [testing]
