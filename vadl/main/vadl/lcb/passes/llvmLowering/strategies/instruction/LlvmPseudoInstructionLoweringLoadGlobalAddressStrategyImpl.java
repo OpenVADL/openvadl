@@ -70,8 +70,10 @@ public class LlvmPseudoInstructionLoweringLoadGlobalAddressStrategyImpl
       List<TableGenInstAlias> instAliases,
       PseudoInstruction pseudo,
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
-      DetermineRegisterUsesAndDefsPass.Info info) {
-    var record = super.lowerInstruction(abi, instAliases, pseudo, supportedInstructions, info);
+      DetermineRegisterUsesAndDefsPass.Info info,
+      boolean generatePatterns) {
+    var record = super.lowerInstruction(abi, instAliases, pseudo, supportedInstructions, info,
+        generatePatterns);
 
     if (record.isPresent()) {
       // The pseudo instruction which loads the global address needs to have the

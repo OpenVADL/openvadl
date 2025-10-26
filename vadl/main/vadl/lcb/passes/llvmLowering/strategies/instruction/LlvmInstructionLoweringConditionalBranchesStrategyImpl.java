@@ -29,7 +29,6 @@ import static vadl.gcb.passes.MachineInstructionLabel.BULTH;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -93,7 +92,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Instruction instruction,
       Graph uninlinedBehavior,
       Abi abi,
-      DetermineRegisterUsesAndDefsPass.Info registerDefsUses) {
+      DetermineRegisterUsesAndDefsPass.Info registerDefsUses,
+      boolean generatePatterns) {
     var copy = uninlinedBehavior.copy();
 
     var constraints = generateConstraints(copy);
@@ -103,7 +103,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
 
     return Optional.of(
         createIntermediateResult(labelledMachineInstructions, instruction, copy, abi,
-            registerDefsUses, constraints));
+            registerDefsUses, constraints, generatePatterns));
   }
 
   @Override
@@ -118,7 +118,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Graph visitedGraph,
       Abi abi,
       DetermineRegisterUsesAndDefsPass.Info registerDefsUses,
-      List<TableGenInstructionConstraint> constraints) {
+      List<TableGenInstructionConstraint> constraints,
+      boolean generatePatterns) {
     var info = lowerBaseInfo(instruction, visitedGraph, registerDefsUses);
 
     if (hasRedFlags(instruction, visitedGraph)) {
@@ -130,15 +131,21 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     }
 
     var writes = visitedGraph.getNodes(WriteResourceNode.class).toList();
-    var patterns = generatePatterns(instruction, instruction.behavior(), info.inputs(), writes);
-    var alternatives =
-        generatePatternVariations(instruction,
-            supportedInstructions,
-            visitedGraph,
-            info.inputs(),
-            info.outputs(),
-            patterns,
-            abi);
+
+    List<TableGenPattern> patterns = new ArrayList<>();
+    List<TableGenPattern> alternatives = new ArrayList();
+
+    if (generatePatterns) {
+      patterns = generatePatterns(instruction, instruction.behavior(), info.inputs(), writes);
+      alternatives =
+          generatePatternVariations(instruction,
+              supportedInstructions,
+              visitedGraph,
+              info.inputs(),
+              info.outputs(),
+              patterns,
+              abi);
+    }
 
     var allPatterns = Stream.concat(patterns.stream(), alternatives.stream())
         .map(LoweringStrategyUtils::replaceBasicBlockByLabelImmediateInMachineInstruction)

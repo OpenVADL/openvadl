@@ -30,7 +30,7 @@ import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
 
 /**
- * The Command does provide the iss subcommand.
+ * The Command does provide the lcb subcommand.
  */
 @Command(
     name = "lcb",
@@ -44,9 +44,13 @@ public class LcbCommand extends BaseCommand {
       "--target"}, scope = INHERIT, description = "Target Name")
   String targetName;
 
+  @Option(names = {"--skip-pattern-generation"}, scope = INHERIT,
+      description = "Skip TableGen pattern generation")
+  boolean skipPatternGeneration = false;
+
   @Override
   PassOrder passOrder(GeneralConfiguration configuration) throws IOException {
-    var lcbConfig = new LcbConfiguration(configuration, targetName());
+    var lcbConfig = new LcbConfiguration(configuration, targetName(), skipPatternGeneration);
     return PassOrders.lcb(lcbConfig);
   }
 
