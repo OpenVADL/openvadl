@@ -26,7 +26,10 @@ import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.RenamedFieldRefNode;
 import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
@@ -131,7 +134,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
           var name = instruction.getName();
           var operands = createOperands(instruction);
           var targets = targets(instruction);
-          int numOperands = targets.size();
+          int numOperands = numberOfParsedOperands(instruction);
           return new ParseInstruction(name,
               operands,
               numOperands,
@@ -147,7 +150,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
           var name = instruction.getName();
           var operands = createOperands(instruction);
           var targets = targets(instruction);
-          int numOperands = targets.size();
+          int numOperands = numberOfParsedOperands(instruction);
           return new ParseInstruction(name,
               operands,
               numOperands,
@@ -175,6 +178,22 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     }
 
     return targets;
+  }
+
+  private int numberOfParsedOperands(TableGenInstruction instruction) {
+    var count = instruction.getOutOperands().size();
+
+    for (var input : instruction.getInOperands()) {
+      if (!isRenamedFieldOperand(input)) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  private boolean isRenamedFieldOperand(GcbInstructionOperand operand) {
+    return operand instanceof GcbInstructionRegisterFileOperand regOperand
+        && regOperand.formatField() instanceof RenamedFieldRefNode.RenamedField;
   }
 
   /**
@@ -269,6 +288,18 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
             formatFields.stream().map(x -> "opImm64").collect(Collectors.joining(", "))
         );
         result.add(fieldOperand);
+      } else if (input instanceof GcbInstructionRegisterFileOperand regOperand
+          && regOperand.formatField() instanceof RenamedFieldRefNode.RenamedField renamedField) {
+        var operand = new TableGenOperand(
+            renamedField.inner().simpleName(),
+            false,
+            "",
+            false,
+            casted.name(),
+            "",
+            ""
+        );
+        result.add(operand);
       } else {
         var operand = new TableGenOperand(casted.name(), false, "", false, casted.name(), "", "");
         result.add(operand);
