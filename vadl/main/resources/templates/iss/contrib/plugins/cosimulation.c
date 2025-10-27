@@ -143,9 +143,15 @@ typedef struct {
   TBInsnInfo insn_info;
 } BrokerSHMInsn;
 
+typedef struct {
+  qemu_plugin_mem_value data;
+  // the size of the memory load / store in ^2: 0 = 1 byte, 1 = 2 bytes, ..., 4 = 16 bytes
+} BrokerSHMMem;
+
 typedef union {
   BrokerSHMTB shm_tb;
   BrokerSHMInsn shm_insn;
+  BrokerSHMMem shm_mem;
 } BrokerSHMData;
 
 typedef struct {
