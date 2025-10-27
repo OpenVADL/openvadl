@@ -1,12 +1,16 @@
 use std::collections::HashSet;
 
 use anyhow::{Result, bail};
-use rusqlite::Connection;
 use tracing::debug;
 
+#[cfg(feature = "sqlite-tracing")]
+use crate::db::{CosimRunInfo, finish_cosimulation_run_trace, insert_new_cosimulation_run, DBConnection};
+
+#[cfg(feature = "sqlite-tracing")]
+use crate::trace::{TraceEntryData, TraceStore, connect, get_client_trace, store_trace, trace_collect};
+
 use crate::{
-    config::{Config, TracingMode},
-    db::{CosimRunInfo, finish_cosimulation_run_trace, insert_new_cosimulation_run},
+    config::Config,
     diff::{
         DiffContext, DiffContextClient, DiffEntry, Report,
         diff::{diff_cpus, diff_mem_access},
@@ -17,14 +21,16 @@ use crate::{
         cstructs::{self, TBInfo, TBInsnInfo},
         qemu::Client,
     },
-    trace::{TraceEntryData, TraceStore, connect, get_client_trace, store_trace, trace_collect},
 };
 
 pub struct Broker {
     clients: Vec<Client>,
+    #[cfg(feature = "sqlite-tracing")]
     run_info: Option<CosimRunInfo>,
+    #[cfg(feature = "sqlite-tracing")]
     trace_store: TraceStore,
-    trace_connection: Connection,
+    #[cfg(feature = "sqlite-tracing")]
+    trace_connection: DBConnection,
 }
 
 enum TBSyncResult {
@@ -32,9 +38,21 @@ enum TBSyncResult {
     Diverged(DiffEntry),
 }
 
-pub type DBConnection = Connection;
-
 impl Broker {
+    #[cfg(not(feature = "sqlite-tracing"))]
+    pub fn create(config: &Config) -> Result<Self> {
+        let clients = config
+            .qemu
+            .clients
+            .iter()
+            .enumerate()
+            .map(|(idx, _)| Client::create(config, idx))
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(Self { clients })
+    }
+
+    #[cfg(feature = "sqlite-tracing")]
     pub fn create(config: &Config) -> Result<Self> {
         let clients = config
             .qemu
@@ -72,19 +90,22 @@ impl Broker {
         }
     }
 
+    #[allow(unused_variables)]
     pub fn finish(mut self, passed: bool, config: &Config) -> Result<()> {
-        if config.tracing.mode == crate::config::TracingMode::Collect {
-            for entry in self.trace_store {
-                store_trace(entry, &mut self.trace_connection)?;
+        #[cfg(feature = "sqlite-tracing")] {
+            if config.tracing.mode.is_collect() {
+                for entry in self.trace_store {
+                    store_trace(entry, &mut self.trace_connection)?;
+                }
             }
-        }
 
-        if config.tracing.mode.enabled() {
-            finish_cosimulation_run_trace(
-                &mut self.trace_connection,
-                self.run_info.unwrap(),
-                passed,
-            )?;
+            if config.tracing.mode.enabled() {
+                finish_cosimulation_run_trace(
+                    &mut self.trace_connection,
+                    self.run_info.unwrap(),
+                    passed,
+                )?;
+            }
         }
 
         for client in &mut self.clients {
@@ -140,6 +161,7 @@ impl Broker {
                             let diffs =
                                 diff_cpus(cpus1, c1insn.init_mask, cpus2, c2insn.init_mask, config);
 
+                            #[cfg(feature = "sqlite-tracing")]
                             self.trace_clients(config)?;
 
                             if !config.testing.protocol.execute_all_remaining_instructions {
@@ -231,7 +253,8 @@ impl Broker {
                             c2insn.init_mask,
                             config,
                         );
-
+                        
+                        #[cfg(feature = "sqlite-tracing")]
                         self.trace_clients(config)?;
 
                         if !diffs.is_empty() {
@@ -412,7 +435,9 @@ impl Broker {
     ///
     /// NOTE: The copy of the shared memory is necessary since no lock is placed on it (which would
     /// basically transform the function into a blocking function).
+    #[cfg(feature = "sqlite-tracing")]
     fn trace_clients(&mut self, config: &Config) -> Result<()> {
+        use crate::config::TracingMode;
         match config.tracing.mode {
             TracingMode::None => Ok(()),
             TracingMode::Collect => trace_collect(

@@ -6,7 +6,7 @@ use std::{
 
 use anyhow::bail;
 use serde::{Serialize, ser::SerializeStruct};
-use tracing::{debug, info, warn};
+use tracing::{debug, warn};
 
 use crate::{config::Config, ipc::sem::Semaphore};
 

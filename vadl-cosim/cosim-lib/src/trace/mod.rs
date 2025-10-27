@@ -1,3 +1,5 @@
+#![cfg(feature = "sqlite-tracing")] 
+
 use std::path::Path;
 
 use anyhow::{Context, Result, anyhow};

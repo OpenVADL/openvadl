@@ -3,6 +3,9 @@ name = "vadl-cosim-broker"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+sqlite-tracing = ["cosim-lib/sqlite-tracing"]
+
 [dependencies]
 cosim-lib = { path = "../cosim-lib" }
 
