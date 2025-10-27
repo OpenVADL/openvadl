@@ -469,7 +469,7 @@ impl Broker {
             let error_instruction = error_instructions.pop_front().unwrap();
             let after_state = after_states.pop_front().unwrap();
 
-            let client_id = client.id;
+            let client_id = client.id.clone();
             let client_name = client.name.clone();
             let client_run_count = client.run_count;
 

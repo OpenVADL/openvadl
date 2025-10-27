@@ -58,7 +58,7 @@ pub type DiffContext = Vec<DiffContextClient>;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DiffContextClient {
-    pub client_id: usize,
+    pub client_id: String,
     pub client_name: Option<String>,
     pub client_run_count: u64,
     pub before_state: DiffContextClientState,
@@ -128,7 +128,7 @@ impl DiffEntry {
 
 impl DiffContextClient {
     pub fn new<T: Into<DiffContextClientState>>(
-        client_id: usize,
+        client_id: String,
         client_name: Option<String>,
         client_run_count: u64,
         before_state: T,
