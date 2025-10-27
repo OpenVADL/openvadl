@@ -137,9 +137,6 @@ public abstract class CosimTest extends DockerExecutionTest {
 
               d.workDir("/work");
 
-              // cosim dependency
-              d.run("apt-get update && apt-get install -y libsqlite3-dev");
-
               // get rust toolchain from rustup and build the cosim broker
               d.run("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y");
               d.env("PATH", "/root/.cargo/bin:$PATH");
