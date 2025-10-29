@@ -117,16 +117,17 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
     var outputRegisterClasses = new ArrayList<WrappedRegisterClass>();
     var outputAliasRegisterClasses = new ArrayList<WrappedRegisterClass>();
     for (var registerClass : registerClasses) {
-      HashSet<String> calleeAndCallerSaved = new HashSet<>();
+      List<String> calleeAndCallerSavedSequence = new ArrayList<>();
 
       if (registerClass.registerFileRef().equals(callerSavedRegisterFile)) {
-        calleeAndCallerSaved.addAll(callerSaved);
+        calleeAndCallerSavedSequence.addAll(callerSaved);
       }
 
       if (registerClass.registerFileRef().equals(calleeSavedRegisterFile)) {
-        calleeAndCallerSaved.addAll(calleeSaved);
+        calleeAndCallerSavedSequence.addAll(calleeSaved);
       }
 
+      HashSet<String> calleeAndCallerSaved = new HashSet<>(calleeAndCallerSavedSequence);
       var specials =
           registerClass.registers().stream()
               .map(register -> register.compilerRegister().name())
@@ -134,10 +135,8 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
               .toList();
 
       var allocationSeq =
-          Stream.concat(callerSaved.stream(),
-                  Stream.concat(calleeSaved.stream(), specials.stream()))
-              .collect(
-                  Collectors.joining(", "));
+          Stream.concat(calleeAndCallerSavedSequence.stream(), specials.stream())
+              .collect(Collectors.joining(", "));
 
       outputRegisterClasses.add(new WrappedRegisterClass(registerClass, allocationSeq));
     }
