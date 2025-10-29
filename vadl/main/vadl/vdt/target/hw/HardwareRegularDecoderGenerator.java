@@ -5,14 +5,14 @@ import static vadl.vdt.target.common.DecisionTreeStatsCalculator.statistics;
 import java.math.BigInteger;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
+import vadl.utils.codegen.CodeGeneratorAppendable;
+import vadl.utils.codegen.StringBuilderAppendable;
 import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.LeafNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
 import vadl.vdt.utils.PBit;
-import vadl.vdt.utils.codegen.CodeGeneratorAppendable;
-import vadl.vdt.utils.codegen.StringBuilderAppendable;
 
 /**
  * Generate a Chisel module for decoding fixed-length non-overlapping instructions to control

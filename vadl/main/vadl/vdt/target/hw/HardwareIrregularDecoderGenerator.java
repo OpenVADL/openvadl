@@ -7,16 +7,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
-import vadl.vdt.impl.theiling.InnerNodeImpl;
-import vadl.vdt.impl.theiling.LeafNodeImpl;
+import vadl.utils.codegen.CodeGeneratorAppendable;
+import vadl.utils.codegen.StringBuilderAppendable;
+import vadl.vdt.impl.regular.InnerNodeImpl;
 import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.LeafNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
+import vadl.vdt.model.impl.LeafNodeImpl;
 import vadl.vdt.utils.BitPattern;
+import vadl.vdt.utils.Instruction;
 import vadl.vdt.utils.PBit;
-import vadl.vdt.utils.codegen.CodeGeneratorAppendable;
-import vadl.vdt.utils.codegen.StringBuilderAppendable;
 
 /**
  * Generate a self-contained Chisel module for decoding instructions to control signals used for
@@ -155,11 +156,11 @@ public class HardwareIrregularDecoderGenerator implements Visitor<Void> {
   @Override
   public Void visit(LeafNode node) {
 
-    if (!(node instanceof LeafNodeImpl lf)) {
+    if (!(node instanceof LeafNodeImpl(Instruction instruction))) {
       throw new IllegalArgumentException("Leaf node type not supported: " + node.getClass());
     }
 
-    var key = lf.instruction().source().simpleName();
+    var key = instruction.source().simpleName();
     var idx = instructions.get(key);
 
     if (idx == null) {
