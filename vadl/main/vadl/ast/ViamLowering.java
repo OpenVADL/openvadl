@@ -1789,7 +1789,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var registerFile = pair.left();
     var index = pair.right();
 
-    return new Abi.RegisterRef(registerFile, index, Abi.Alignment.NO_ALIGNMENT);
+    return new Abi.RegisterRef(registerFile, index, Abi.Alignment.NO_ALIGNMENT, expr.location());
   }
 
   /**
