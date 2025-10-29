@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
@@ -111,22 +110,19 @@ public abstract class CosimInstrTest extends CosimTest {
               }
               var file = resultFiles.get(e.id());
               var parsed = CosimTestUtils.yamlToTestResult(file);
-              var client_map = parsed.diffContext().stream()
-                  .filter(ctx -> ctx.clientId() != null)
-                  .collect(Collectors.toMap(
-                      CosimTestUtils.TestResult.DiffContext::clientId,
-                      CosimTestUtils.TestResult.DiffContext::clientName,
-                      (left, right) -> left, HashMap::new));
+              var clients = parsed.diffContext();
               System.out.println("Assembly core: \n" + e.asmCore());
               if (!parsed.passed()) {
                 if (!parsed.diffs().isEmpty()) {
                   System.out.println("Differences found:");
                   for (var diff : parsed.diffs()) {
                     System.out.println(diff.description() + ":");
-                    int maxNameLen = client_map.values().stream()
-                        .mapToInt(String::length).max().orElse(0);
+                    int maxNameLen = clients.stream()
+                        .mapToInt(c -> c.clientName().length())
+                        .max()
+                        .orElse(0);
                     for (int i = 0; i < diff.values().size(); i++) {
-                      var name = client_map.get(i);
+                      var name = clients.get(i).clientName();
                       var pad = " ".repeat(maxNameLen - name.length());
                       System.out.println("-" + name + pad + " " + diff.values().get(i));
                     }
