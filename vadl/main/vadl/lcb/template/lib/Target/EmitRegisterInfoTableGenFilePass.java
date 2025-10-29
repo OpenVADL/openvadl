@@ -84,7 +84,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var output = ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
+    final var output = ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
         GenerateTableGenRegistersPass.class));
     var abi = specification.abi().orElseThrow();
 
