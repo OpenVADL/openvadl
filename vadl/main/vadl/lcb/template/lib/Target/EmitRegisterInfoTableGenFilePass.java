@@ -87,7 +87,6 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
     var output = ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
         GenerateTableGenRegistersPass.class));
     var abi = specification.abi().orElseThrow();
-    var registerClasses = output.registerClasses();
 
     // The order of registers represents the preferred allocation sequence.
     // Registers are listed in the order caller-save, callee-save, specials.
@@ -114,6 +113,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
     var calleeSavedRegisterFile = abi.calleeSaved().getFirst().registerFile();
     var callerSavedRegisterFile = abi.callerSaved().getFirst().registerFile();
 
+    var registerClasses = output.registerClasses();
     var outputRegisterClasses = new ArrayList<WrappedRegisterClass>();
     var outputAliasRegisterClasses = new ArrayList<WrappedRegisterClass>();
     for (var registerClass : registerClasses) {
