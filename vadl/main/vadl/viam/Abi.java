@@ -212,7 +212,8 @@ public class Abi extends Definition {
    */
   public record RegisterRef(RegisterResource registerFile,
                             int addr,
-                            Alignment alignment) {
+                            Alignment alignment,
+                            SourceLocation location) {
     public String render() {
       return registerFile.generateRegisterFileName(addr);
     }

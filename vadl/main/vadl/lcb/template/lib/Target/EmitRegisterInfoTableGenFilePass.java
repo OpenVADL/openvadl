@@ -26,16 +26,19 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.valuetypes.CompilerRegister;
+import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegister;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.DataLayoutProvider;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
+import vadl.utils.SourceLocation;
 import vadl.viam.Abi;
+import vadl.viam.ArtificialResource;
+import vadl.viam.RegisterResource;
+import vadl.viam.Resource;
 import vadl.viam.Specification;
 
 /**
@@ -81,14 +84,16 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var output = ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
+    final var output = ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
         GenerateTableGenRegistersPass.class));
     var abi = specification.abi().orElseThrow();
-    var registerClasses = output.registerClasses();
 
     // The order of registers represents the preferred allocation sequence.
     // Registers are listed in the order caller-save, callee-save, specials.
     var callerSaved = abi.callerSaved().stream().map(Abi.RegisterRef::render).toList();
+    verifyAllTheSameRegisterFile(abi.callerSaved());
+    verifyAllTheSameRegisterFile(abi.calleeSaved());
+    verifyBothTheSame(abi.calleeSaved(), abi.callerSaved());
 
     // Remove marked regs from callee to mark sure that they are allocated last.
     var exceptions = new HashSet<>(Stream.of(
@@ -104,21 +109,34 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .filter(render -> !exceptions.contains(render))
         .toList();
 
+    // Because of the checks, we can safely conclude...
+    var calleeSavedRegisterFile = abi.calleeSaved().getFirst().registerFile();
+    var callerSavedRegisterFile = abi.callerSaved().getFirst().registerFile();
+
+    var registerClasses = output.registerClasses();
     var outputRegisterClasses = new ArrayList<WrappedRegisterClass>();
     var outputAliasRegisterClasses = new ArrayList<WrappedRegisterClass>();
     for (var registerClass : registerClasses) {
-      HashSet<String> both = new HashSet<>();
-      both.addAll(callerSaved);
-      both.addAll(calleeSaved);
+      List<String> calleeAndCallerSavedSequence = new ArrayList<>();
+
+      if (registerClass.registerFileRef().equals(callerSavedRegisterFile)) {
+        calleeAndCallerSavedSequence.addAll(callerSaved);
+      }
+
+      if (registerClass.registerFileRef().equals(calleeSavedRegisterFile)) {
+        calleeAndCallerSavedSequence.addAll(calleeSaved);
+      }
+
+      HashSet<String> calleeAndCallerSaved = new HashSet<>(calleeAndCallerSavedSequence);
       var specials =
-          registerClass.registers().stream().map(
-                  register -> register.compilerRegister().name()).filter(x -> !both.contains(x))
+          registerClass.registers().stream()
+              .map(register -> register.compilerRegister().name())
+              .filter(x -> !calleeAndCallerSaved.contains(x))
               .toList();
+
       var allocationSeq =
-          Stream.concat(callerSaved.stream(),
-                  Stream.concat(calleeSaved.stream(), specials.stream()))
-              .collect(
-                  Collectors.joining(", "));
+          Stream.concat(calleeAndCallerSavedSequence.stream(), specials.stream())
+              .collect(Collectors.joining(", "));
 
       outputRegisterClasses.add(new WrappedRegisterClass(registerClass, allocationSeq));
     }
@@ -161,5 +179,42 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
         "registerFiles", outputRegisterClasses,
         "aliasRegisterFiles", outputAliasRegisterClasses
     );
+  }
+
+  private void verifyBothTheSame(List<Abi.RegisterRef> calleeSaved,
+                                 List<Abi.RegisterRef> callerSaved) {
+    if (!callerSaved.isEmpty() && !calleeSaved.isEmpty()) {
+      var callerRegFile = getRegisterFile(callerSaved.getFirst().registerFile());
+      var calleeRegFile = getRegisterFile(calleeSaved.getFirst().registerFile());
+
+      if (!calleeRegFile.equals(callerRegFile)) {
+        throw Diagnostic.error("Both register files must match",
+            calleeRegFile.location().join(callerRegFile.location())).build();
+      }
+    }
+  }
+
+  /**
+   * If the given parameter is an {@link ArtificialResource} then return the underlying
+   * register file.
+   */
+  private Resource getRegisterFile(RegisterResource registerResource) {
+    if (registerResource instanceof ArtificialResource artificialResource) {
+      return artificialResource.innerResourceRef();
+    }
+
+    return registerResource;
+  }
+
+  private void verifyAllTheSameRegisterFile(List<Abi.RegisterRef> registerRefs) {
+    var set = registerRefs.stream().map(ref -> getRegisterFile(ref.registerFile()))
+        .collect(Collectors.toSet());
+
+    if (set.size() > 1) {
+      throw Diagnostic.error("All register must have the same register file.",
+          registerRefs.stream().map(Abi.RegisterRef::location)
+              .reduce(registerRefs.get(0).location(),
+                  SourceLocation::join).location()).build();
+    }
   }
 }
