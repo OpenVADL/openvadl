@@ -66,7 +66,41 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
 
   @TestFactory
   Stream<DynamicTest> add() throws IOException {
-    return testTSSRegInstruction("add", "ADD");
+    return testTSSRegInstruction_OR("add", "ADD");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> addc() throws IOException {
+    return testTSSRegInstruction_OR("addc", "ADDC");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> adde() throws IOException {
+    return testTSSRegInstruction_OR("adde", "ADDE");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> subf() throws IOException {
+    return testTSSRegInstruction_OR("subf", "SUBF");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> subfc() throws IOException {
+    return testTSSRegInstruction_OR("subfc", "SUBFC");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> subfe() throws IOException {
+    return testTSSRegInstruction_OR("subfe", "SUBFE");
+  }
+
+  private Stream<DynamicTest> testTSSRegInstruction_OR(String instruction, String testNamePrefix)
+      throws IOException {
+    var s1 = testTSSRegInstruction(instruction, testNamePrefix);
+    var s2 = testTSSRegInstruction(instruction + ".", testNamePrefix + ".");
+    var s3 = testTSSRegInstruction(instruction + "o", testNamePrefix + "O");
+    var s4 = testTSSRegInstruction(instruction + "o.", testNamePrefix + "O.");
+    return Stream.concat(Stream.concat(s1, s2), Stream.concat(s3, s4));
   }
 
   private Stream<DynamicTest> testTSSRegInstruction(String instruction, String testNamePrefix)
