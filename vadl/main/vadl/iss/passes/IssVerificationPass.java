@@ -56,6 +56,10 @@ public class IssVerificationPass extends AbstractIssPass {
 
   private int foundTargetWidth = 0;
 
+  private static boolean isPowerOfTwo(int n) {
+    return n > 0 && ((n & (n - 1)) == 0);
+  }
+
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
@@ -151,6 +155,14 @@ public class IssVerificationPass extends AbstractIssPass {
           }
 
           var resWidth = f.resultType().bitWidth();
+
+          if (!isPowerOfTwo(resWidth)) {
+            return error("Invalid register size", f)
+                .locationDescription(f, "Register has a bit-width of %s.", resWidth)
+                .description("The ISS requires all registers to be of power of 2 bit-width.");
+          }
+
+          // TODO: This will probably be removed
           if (foundTargetWidth < resWidth) {
             return error("Invalid register size", f)
                 .locationDescription(f, "Program counter has a size of %s bits.", foundTargetWidth)

@@ -42,13 +42,30 @@ import vadl.viam.graph.dependency.TensorNode;
  * The code generator for the {@code target/gen-arch/translate.c}.
  * It produces translate functions for all instructions
  * in the {@link vadl.viam.InstructionSetArchitecture}.
+ *
+ * <p>Depending on the complexity of the instruction, the generated code will be
+ * either produced by the {@link DefaultGenerator} or the {@link HelperGenerator}.
+ * While the default generator will use only TCG operations, the helper generator
+ * will use a helper function that executes the instruction
  */
+public class IssTranslateCodeGenerator {
+
+  /**
+   * The static entry point to get the translation function for a given instruction.
+   */
+  public static String fetch(Instruction def,
+                             IssConfiguration configuration) {
+    var generator = new DefaultGenerator(def, configuration);
+    return generator.fetch();
+  }
+}
+
 @DispatchFor(
     value = Node.class,
     context = CNodeContext.class,
     include = {"vadl.viam", "vadl.iss"}
 )
-public class IssTranslateCodeGenerator implements
+class DefaultGenerator implements
     // default implementations
     CDefaultMixins.All, IssCMixins.Default,
     // invalid nodes
@@ -61,31 +78,21 @@ public class IssTranslateCodeGenerator implements
   private String targetName;
 
   /**
-   * Constructs IssTranslateCodeGenerator.
+   * Constructs DefaultGenerator.
    */
-  public IssTranslateCodeGenerator(Instruction instr,
-                                   IssConfiguration configuration) {
+  DefaultGenerator(Instruction instr,
+                   IssConfiguration configuration) {
     this.insn = instr;
     this.builder = new StringBuilder();
     this.targetName = configuration.targetName();
     this.ctx = new CNodeContext(
         builder::append,
         (ctx, node)
-            -> IssTranslateCodeGeneratorDispatcher.dispatch(this, ctx, node)
+            -> DefaultGeneratorDispatcher.dispatch(this, ctx, node)
     );
   }
 
-
-  /**
-   * The static entry point to get the translation function for a given instruction.
-   */
-  public static String fetch(Instruction def,
-                             IssConfiguration configuration) {
-    var generator = new IssTranslateCodeGenerator(def, configuration);
-    return generator.fetch();
-  }
-
-  private String fetch() {
+  String fetch() {
 
     var name = insn.identifier.simpleName().toLowerCase();
     // static bool trans_<name>(DisasContext *ctx, arg_<name> *a) {\n
@@ -152,5 +159,9 @@ public class IssTranslateCodeGenerator implements
   void handle(CGenContext<Node> ctx, TensorNode toHandle) {
     throwNotAllowed(toHandle, "forall tensor expressions");
   }
+
+}
+
+class HelperGenerator {
 
 }

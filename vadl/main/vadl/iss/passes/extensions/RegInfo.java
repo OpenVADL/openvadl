@@ -16,7 +16,6 @@
 
 package vadl.iss.passes.extensions;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +72,14 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     return reg().simpleName();
   }
 
+  /**
+   * A register will be handled as generic vector if it's inner type
+   * does not fit into the target size (max 64 bit).
+   */
+  private boolean isGVec() {
+    return reg().resultType().bitWidth() > config.targetSize().width;
+  }
+
   public int valueCTypeWidth() {
     return CppTypeMap.nextFittingBitSize(
         reg().resultType(reg().maxNumberOfAccessIndices()).bitWidth());
@@ -88,7 +95,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
    * TCG variables with the CPU state object.
    */
   public int cpuStateTypeWidth() {
-    return config.targetSize().width;
+    return isGVec() ? valueCTypeWidth() : config.targetSize().width;
   }
 
   @Override
@@ -120,10 +127,19 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
 
   private String renderCArrayDef() {
     var sb = new StringBuilder();
-    reg().dimensions().stream().limit(reg().maxNumberOfAccessIndices())
-        .forEach(dim -> {
-          sb.append("[" + dim.size() + "]");
-        });
+
+    if (isGVec()) {
+      // if the register is a gvec, we will use a single-dimensional array
+      // for simplicity when accessing it.
+      var elementSize = valueCTypeWidth();
+      var numElements = reg().totalWidth() / elementSize;
+      sb.append("[").append(numElements).append("]");
+    } else {
+      reg().dimensions().stream().limit(reg().maxNumberOfAccessIndices())
+          .forEach(dim -> {
+            sb.append("[").append(dim.size()).append("]");
+          });
+    }
     return sb.toString();
   }
 
