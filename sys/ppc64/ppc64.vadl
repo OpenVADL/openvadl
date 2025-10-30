@@ -111,9 +111,8 @@ instruction set architecture PPC64SFS = {
   , so [0]                                       // usually a copy of XER.so
   }
 
-  format XERFormat : Reg64 =
-  { rsv1   : Word
-  , so     : Bits<1>                             // summary overflow, is set whenever ov is set: so = so | ov
+  format XERFormat : Reg32 =
+  { so     : Bits<1>                             // summary overflow, is set whenever ov is set: so = so | ov
   , ov     : Bits<1>                             // overflow, is equal to ov32 in 32-bit mode
   , ca     : Bits<1>                             // carry, is equal to ca32 in 32-bit mode
   , rsv2   : Bits<9>
@@ -520,10 +519,10 @@ instruction set architecture PPC64SFS = {
     $COV($oe; $CCA($ce;
       match : Stat
       ( $oe = true  => match : Stat
-        ( $ce = true  => XER := (XER.rsv1, XER.so | mov, mov   , mca   , XER.rsv2, flags32.overflow, flags32.carry, XER.rsv3, XER.nbytes)
-        ; _           => XER := (XER.rsv1, XER.so | mov, mov   , XER.ca, XER.rsv2, flags32.overflow, XER.ca32     , XER.rsv3, XER.nbytes))
+        ( $ce = true  => XER := (XER.so | mov, mov   , mca   , XER.rsv2, flags32.overflow, flags32.carry, XER.rsv3, XER.nbytes)
+        ; _           => XER := (XER.so | mov, mov   , XER.ca, XER.rsv2, flags32.overflow, XER.ca32     , XER.rsv3, XER.nbytes))
       ; _ => match : Stat
-        ( $ce = true  => XER := (XER.rsv1, XER.so      , XER.ov, mca   , XER.rsv2, XER.ov32        , flags32.carry, XER.rsv3, XER.nbytes)
+        ( $ce = true  => XER := (XER.so      , XER.ov, mca   , XER.rsv2, XER.ov32        , flags32.carry, XER.rsv3, XER.nbytes)
         ; _           => {})
       )
     ))
@@ -533,7 +532,7 @@ instruction set architecture PPC64SFS = {
   model ReadSPR () : Stat = {
     let rspr = (spr(4..0), spr(9..5)) in
       match rspr with
-      { 0b00000'00001 => X(rs) := XER
+      { 0b00000'00001 => X(rs) := XER as UDWord
       , 0b00000'01000 => X(rs) := LR
       , 0b00000'01001 => X(rs) := CTR
       , 0b01000'01100 => X(rs) := TB
@@ -552,7 +551,7 @@ instruction set architecture PPC64SFS = {
   model WriteSPR () : Stat = {
     let rspr = (spr(4..0), spr(9..5)) in
       match rspr with
-      { 0b00000'00001 => XER := X(rs)
+      { 0b00000'00001 => XER := XW(rs)
       , 0b00000'01000 => LR  := X(rs)
       , 0b00000'01001 => CTR := X(rs)
       , 0b11001'01000 => {}
@@ -761,7 +760,7 @@ instruction set architecture PPC64SFS = {
         let result = r(63..32) as SDWord in
           let ca = if X(rs)(31) && r(31..0) != 0 then 0b1 as Bits<1> else 0b0 in {
             X(ra) := result
-            XER := (XER.rsv1, XER.so, XER.ov, ca, XER.rsv2, XER.ov32, ca, XER.rsv3, XER.nbytes)
+            XER := (XER.so, XER.ov, ca, XER.rsv2, XER.ov32, ca, XER.rsv3, XER.nbytes)
             $CS($rc; $SetCR0(result))
           }
     encoding $eid = {opcd = 0b011111, extopcd = $r.x.ext, rc = $rc}
@@ -1129,7 +1128,7 @@ instruction set architecture PPC64SFS = {
         X(rs) := (result(31..0) as UWord) as UDWord
         $CS($oe;
           let ov = if $r.extcond & XW(rb) != 0 then flags.overflow else 0b1 in
-            XER := (XER.rsv1, XER.so | ov, ov, XER.ca, XER.rsv2, ov, XER.ca32, XER.rsv3, XER.nbytes))
+            XER := (XER.so | ov, ov, XER.ca, XER.rsv2, ov, XER.ca32, XER.rsv3, XER.nbytes))
         $CS($rc; $SetCR0(result))
       }
     encoding $eid = {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc}
@@ -1154,7 +1153,7 @@ instruction set architecture PPC64SFS = {
           X(rs) := result
           $CS($oe;
             if (VADL::slth(result, minS32E) | VADL::sgth(result, maxS32E))
-            then XER := (XER.rsv1, 0b1 as Bits<1>, 0b1 as Bits<1>, XER.ca, XER.rsv2, 0b1 as Bits<1>, XER.ca32, XER.rsv3, XER.nbytes))
+            then XER := (0b1 as Bits<1>, 0b1 as Bits<1>, XER.ca, XER.rsv2, 0b1 as Bits<1>, XER.ca32, XER.rsv3, XER.nbytes))
           //$CS($rc; $SetCR0(result))
         }
     encoding $eid = {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc}
@@ -1173,7 +1172,7 @@ instruction set architecture PPC64SFS = {
         let mov = if MSR.sf = Mode::M32 then ov32 else X(ra) = minS64 in
           let result = ~X(ra) + 1 in {
             X(rs) := result
-            if $oe then XER := (XER.rsv1, XER.so | mov, mov, XER.ca, XER.rsv2, ov32, XER.ca32, XER.rsv3, XER.nbytes)
+            if $oe then XER := (XER.so | mov, mov, XER.ca, XER.rsv2, ov32, XER.ca32, XER.rsv3, XER.nbytes)
             $CS($rc; $SetCR0(result))
           }
     encoding $eid = {opcd = 0b011111, rb = 0b00000, oe = $oe, extopcd = 0b0011'01000, rc = $rc}
@@ -1195,7 +1194,7 @@ instruction set architecture PPC64SFS = {
         let result64, flags64 = VADL::addc(X(ra), X(rb), XER.ov) in {
           X(rs) := result64
           let mca = if MSR.sf = Mode::M32 then flags32.carry else flags64.carry in
-            XER := (XER.rsv1, XER.so, mca, XER.ca, XER.rsv2, flags32.carry, XER.ca32, XER.rsv3, XER.nbytes)
+            XER := (XER.so, mca, XER.ca, XER.rsv2, flags32.carry, XER.ca32, XER.rsv3, XER.nbytes)
         }
     encoding AsId($asm) = {opcd = 0b011111, cy = 0b00, extopcd = 0b101'01010, rsv = 0b0}
     assembly AsId($asm) = ($asm, " ", decimal(rs), ",", decimal(ra), ",", decimal(rb), ",", decimal(cy))
