@@ -34,8 +34,7 @@ async def main(testsuite_path: Path):
     results.mkdir(parents=True, exist_ok=True)
     cosim_config = str(Path("/cosim_configs") / config["cosim_config"])
 
-    # tasks = [run_test(compiler, cosim_config, t, results) for t in config.get("tests", [])]
-    tasks = []; [await run_test(compiler, cosim_config, t, results) for t in config.get("tests", [])]
+    tasks = [run_test(compiler, cosim_config, t, results) for t in config.get("tests", [])]
 
     await asyncio.gather(*tasks)
 
