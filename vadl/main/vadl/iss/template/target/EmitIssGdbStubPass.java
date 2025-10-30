@@ -114,7 +114,7 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
   private CodeGeneratorAppendable createIfChainOverN(List<IssGdbInfoExtractionPass.Result.Reg> regs,
                                                      TriConsumer<Integer, RegisterTensor,
                                                          CodeGeneratorAppendable> accessBuilder) {
-    var read = new StringBuilderAppendable("\s\s\s\s").indent();
+    var read = new StringBuilderAppendable("    ").indent();
 
     int i = 0;
     RegisterTensor prevReg = null;

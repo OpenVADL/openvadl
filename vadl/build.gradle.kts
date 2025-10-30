@@ -39,12 +39,13 @@ dependencies {
 
     implementation("io.github.rascmatt:z3-bootstrap:1.0.0")
 
-    testImplementation(platform("org.junit:junit-bom:5.9.1"))
+    testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.26.3")
     testImplementation("org.awaitility:awaitility:4.2.1")
     testImplementation("org.testcontainers:testcontainers:1.21.3")
-    testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
     testAnnotationProcessor(project(":java-annotations"))
     // Helps getting test files small and concise
     testImplementation("org.apache.velocity:velocity-engine-core:2.3")
@@ -138,6 +139,8 @@ for (gen in generators) {
         failFast = true
         val pkg = "vadl.$gen"
         description = "Runs tests for the $pkg package"
+        testClassesDirs = sourceSets["test"].output.classesDirs
+        classpath = sourceSets["test"].runtimeClasspath
         filter {
             includeTestsMatching("$pkg.*")
         }
@@ -149,6 +152,8 @@ tasks.register<Test>("test-others") {
     group = "verification"
     val exclPkgs = generators.joinToString(", ") { "vadl.$it" }
     description = "Runs tests for vadl.* packages excluding $exclPkgs"
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
 
     filter {
         includeTestsMatching("vadl.*")

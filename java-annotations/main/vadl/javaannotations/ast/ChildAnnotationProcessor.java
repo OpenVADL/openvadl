@@ -58,7 +58,7 @@ import javax.tools.JavaFileObject;
 @SupportedAnnotationTypes({
     "vadl.javaannotations.ast.Child",
 })
-@SupportedSourceVersion(SourceVersion.RELEASE_21)
+@SupportedSourceVersion(SourceVersion.RELEASE_25)
 @SuppressWarnings("processing")
 public class ChildAnnotationProcessor extends AbstractProcessor {
 

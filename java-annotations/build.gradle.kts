@@ -32,8 +32,8 @@ dependencies {
 }
 
 tasks.withType<JavaCompile> {
-    sourceCompatibility = "21"
-    targetCompatibility = "21"
+    sourceCompatibility = "25"
+    targetCompatibility = "25"
 
     options.compilerArgs.addAll(
         listOf(

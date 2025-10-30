@@ -1,7 +1,7 @@
 plugins {
     application
     id("io.github.rascmatt.z3") version "1.0.2"
-    id("org.graalvm.buildtools.native") version "0.10.2"
+    id("org.graalvm.buildtools.native") version "0.11.2"
 }
 
 group = "vadl"
@@ -17,8 +17,9 @@ dependencies {
     implementation("org.apache.commons:commons-compress:1.27.1")
     annotationProcessor("info.picocli:picocli-codegen:4.7.6")
 
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
+    testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 application {
@@ -33,7 +34,8 @@ graalvmNative {
             resources.autodetect()
             imageName.set("openvadl")
             mainClass.set(application.mainClass)
-            buildArgs.addAll("-O4", "--gc=epsilon") // Use -0b for faster dev builds, -O4 for production
+            // we use -O2 as currently compiling with -O3 doesn't terminate.
+            buildArgs.addAll("-O2", "--gc=epsilon")
             // some tools require network access to download source code (QEMU, LLVM)
             buildArgs.add("--enable-url-protocols=https")
 
