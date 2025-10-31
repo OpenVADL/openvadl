@@ -35,39 +35,39 @@ public class CppTypeMap {
   public static String getCppTypeNameByVadlType(Type type) {
     if (type instanceof BoolType) {
       return "bool";
-    } else if (type instanceof SIntType && ((SIntType) type).bitWidth() == 1) {
+    } else if (type instanceof SIntType sinttype && sinttype.bitWidth() == 1) {
       return "bool";
-    } else if (type instanceof SIntType && ((SIntType) type).bitWidth() == 8) {
+    } else if (type instanceof SIntType sinttype && sinttype.bitWidth() == 8) {
       return "int8_t";
-    } else if (type instanceof SIntType && ((SIntType) type).bitWidth() == 16) {
+    } else if (type instanceof SIntType sinttype && sinttype.bitWidth() == 16) {
       return "int16_t";
-    } else if (type instanceof SIntType && ((SIntType) type).bitWidth() == 32) {
+    } else if (type instanceof SIntType sinttype && sinttype.bitWidth() == 32) {
       return "int32_t";
-    } else if (type instanceof SIntType && ((SIntType) type).bitWidth() == 64) {
+    } else if (type instanceof SIntType sinttype && sinttype.bitWidth() == 64) {
       return "int64_t";
-    } else if (type instanceof SIntType && ((SIntType) type).bitWidth() == 128) {
+    } else if (type instanceof SIntType sinttype && sinttype.bitWidth() == 128) {
       return "int128_t";
-    } else if (type instanceof UIntType && ((UIntType) type).bitWidth() == 1) {
+    } else if (type instanceof UIntType uinttype && uinttype.bitWidth() == 1) {
       return "bool";
-    } else if (type instanceof UIntType && ((UIntType) type).bitWidth() == 8) {
+    } else if (type instanceof UIntType uinttype && uinttype.bitWidth() == 8) {
       return "uint8_t";
-    } else if (type instanceof UIntType && ((UIntType) type).bitWidth() == 16) {
+    } else if (type instanceof UIntType uinttype && uinttype.bitWidth() == 16) {
       return "uint16_t";
-    } else if (type instanceof UIntType && ((UIntType) type).bitWidth() == 32) {
+    } else if (type instanceof UIntType uinttype && uinttype.bitWidth() == 32) {
       return "uint32_t";
-    } else if (type instanceof UIntType && ((UIntType) type).bitWidth() == 64) {
+    } else if (type instanceof UIntType uinttype && uinttype.bitWidth() == 64) {
       return "uint64_t";
-    } else if (type instanceof UIntType && ((UIntType) type).bitWidth() == 128) {
+    } else if (type instanceof UIntType uinttype && uinttype.bitWidth() == 128) {
       return "uint128_t";
-    } else if (type instanceof BitsType && ((BitsType) type).bitWidth() == 8) {
+    } else if (type instanceof BitsType bitsType && bitsType.bitWidth() == 8) {
       return "uint8_t";
-    } else if (type instanceof BitsType && ((BitsType) type).bitWidth() == 16) {
+    } else if (type instanceof BitsType bitsType && bitsType.bitWidth() == 16) {
       return "uint16_t";
-    } else if (type instanceof BitsType && ((BitsType) type).bitWidth() == 32) {
+    } else if (type instanceof BitsType bitsType && bitsType.bitWidth() == 32) {
       return "uint32_t";
-    } else if (type instanceof BitsType && ((BitsType) type).bitWidth() == 64) {
+    } else if (type instanceof BitsType bitsType && bitsType.bitWidth() == 64) {
       return "uint64_t";
-    } else if (type instanceof BitsType && ((BitsType) type).bitWidth() == 128) {
+    } else if (type instanceof BitsType bitsType && bitsType.bitWidth() == 128) {
       return "uint128_t";
     } else if (type instanceof CppType cppType) {
       return cppType.lower();
@@ -86,20 +86,14 @@ public class CppTypeMap {
    * @throws RuntimeException if the bit width does not match a known C++ unsigned integer type
    */
   public static String cppUintType(int bitWidth) {
-    switch (bitWidth) {
-      case 1:
-        return "bool";
-      case 8:
-        return "uint8_t";
-      case 16:
-        return "uint16_t";
-      case 32:
-        return "uint32_t";
-      case 64:
-        return "uint64_t";
-      default:
-        throw new RuntimeException(String.format("not implemented: type %s", bitWidth));
-    }
+    return switch (bitWidth) {
+      case 1 -> "bool";
+      case 8 -> "uint8_t";
+      case 16 -> "uint16_t";
+      case 32 -> "uint32_t";
+      case 64 -> "uint64_t";
+      default -> throw new RuntimeException(String.format("not implemented: type %s", bitWidth));
+    };
 
   }
 
@@ -111,18 +105,13 @@ public class CppTypeMap {
    * @throws RuntimeException if the bit width does not match a known C++ signed integer type
    */
   public static String cppSintType(int bitWidth) {
-    switch (bitWidth) {
-      case 8:
-        return "int8_t";
-      case 16:
-        return "int16_t";
-      case 32:
-        return "int32_t";
-      case 64:
-        return "int64_t";
-      default:
-        throw new RuntimeException(String.format("not implemented: type %s", bitWidth));
-    }
+    return switch (bitWidth) {
+      case 8 -> "int8_t";
+      case 16 -> "int16_t";
+      case 32 -> "int32_t";
+      case 64 -> "int64_t";
+      default -> throw new RuntimeException(String.format("not implemented: type %s", bitWidth));
+    };
   }
 
   /**

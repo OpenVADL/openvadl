@@ -148,7 +148,7 @@ public class ViamEnricherCollection {
    */
   public static InfoEnricher BEHAVIOR_SUPPLIER_MODAL = (entity, passResult) -> {
     if (entity instanceof DefinitionEntity defEntity
-        && defEntity.origin() instanceof DefProp.WithBehavior withBehavior) {
+        && defEntity.origin() instanceof DefProp.WithBehavior) {
       var def = defEntity.origin();
 
       var dotResults = passResult.allResultsOf(

@@ -53,9 +53,9 @@ public record Bit(boolean value) implements BitWise<Bit> {
     if (this == obj) {
       return true;
     }
-    if (!(obj instanceof Bit)) {
+    if (!(obj instanceof Bit(boolean value1))) {
       return false;
     }
-    return this.value == ((Bit) obj).value;
+    return this.value == value1;
   }
 }

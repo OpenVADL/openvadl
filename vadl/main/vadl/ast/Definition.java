@@ -795,7 +795,7 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
         return null;
       }
       return rangeField.computedRanges.get(0);
-    } else if (field instanceof DerivedFormatField derivedField) {
+    } else if (field instanceof DerivedFormatField) {
       throw new IllegalStateException(
           "Cannot compute range of derived field: " + field.getClass().getSimpleName());
     } else {
@@ -3922,7 +3922,7 @@ class ProcessorDefinition extends Definition implements IdentifiableNode {
 
   Stream<CpuMemoryRegionDefinition> findMemoryRegionDefs() {
     return definitions.stream()
-        .filter(e -> e instanceof CpuMemoryRegionDefinition region)
+        .filter(e -> e instanceof CpuMemoryRegionDefinition)
         .map(e -> (CpuMemoryRegionDefinition) e);
   }
 

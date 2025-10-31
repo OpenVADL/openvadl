@@ -536,15 +536,9 @@ public class HandlerProcessor extends AbstractProcessor {
 
       // Handle the 'else' case
       writer.write("        else {\n");
-      if (isVoidReturnType) {
-        writer.write(
-            "            "
-                + "throw new IllegalArgumentException(\"Unhandled type: \" + obj.getClass());\n");
-      } else {
-        writer.write(
-            "            "
-                + "throw new IllegalArgumentException(\"Unhandled type: \" + obj.getClass());\n");
-      }
+      writer.write(
+          "            "
+              + "throw new IllegalArgumentException(\"Unhandled type: \" + obj.getClass());\n");
       writer.write("        }\n");
 
       // If returnType is not void, ensure all code paths return a value

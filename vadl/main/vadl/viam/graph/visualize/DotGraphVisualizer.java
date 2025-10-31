@@ -154,9 +154,9 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
   protected String label(Node node) {
     var label = new StringBuilder();
     label.append(node.toString());
-    if (node instanceof ExpressionNode) {
+    if (node instanceof ExpressionNode exprNode) {
       label.append(" -> ");
-      label.append(((ExpressionNode) node).type().name());
+      label.append(exprNode.type().name());
     }
     if (withSourceLocation && node.location().isValid()) {
       label

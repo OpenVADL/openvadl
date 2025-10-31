@@ -668,7 +668,7 @@ public class TypeChecker
 
   private void checkFieldAccessPredicate(FormatDefinition.AuxiliaryField auxiliaryField) {
     var field = auxiliaryField.field.target();
-    if (!(field instanceof DerivedFormatField fieldAccess)) {
+    if (!(field instanceof DerivedFormatField)) {
       throw error("Invalid format field predicate", auxiliaryField.field)
           .locationDescription(auxiliaryField.field,
               "The predicate must reference a field access function.")
@@ -1057,7 +1057,7 @@ public class TypeChecker
   @Override
   public Void visit(EnumerationDefinition definition) {
     var type = definition.enumType != null ? check(definition.enumType) : null;
-    if (type != null && !(type instanceof BitsType bitsType)) {
+    if (type != null && !(type instanceof BitsType)) {
       throw error("Type mismatch", definition)
           .locationDescription(requireNonNull(definition.enumType),
               "Expected bits type but got `%s`", type)

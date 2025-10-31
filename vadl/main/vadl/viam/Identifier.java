@@ -25,6 +25,7 @@ import vadl.utils.WithLocation;
 /**
  * Source level identifier class.
  */
+@SuppressWarnings("ArrayRecordComponent")
 public record Identifier(
     String[] parts,
     SourceLocation location

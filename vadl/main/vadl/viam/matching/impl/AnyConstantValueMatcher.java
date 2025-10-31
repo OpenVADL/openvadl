@@ -27,9 +27,8 @@ import vadl.viam.matching.Matcher;
 public class AnyConstantValueMatcher implements Matcher {
   @Override
   public boolean matches(Node node) {
-    if (node instanceof ConstantNode) {
-      var cast = (ConstantNode) node;
-      return cast.constant() instanceof Constant.Value;
+    if (node instanceof ConstantNode constNode) {
+      return constNode.constant() instanceof Constant.Value;
     }
     return false;
   }

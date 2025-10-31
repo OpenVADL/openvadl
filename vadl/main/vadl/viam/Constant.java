@@ -905,20 +905,12 @@ public abstract class Constant {
      * @param padding if true, the String is padded with 0
      */
     public String asString(String prefix, int radix, boolean padding) {
-      Integer padFactor = null;
-      switch (radix) {
-        case 2:
-          padFactor = 1;
-          break;
-        case 10:
-          padFactor = 0;
-          break;
-        case 16:
-          padFactor = 4;
-          break;
-        default:
-          return "Invalid radix %s".formatted(radix);
-      }
+      var padFactor = switch (radix) {
+        case 2 -> 1;
+        case 10 -> 0;
+        case 16 -> 4;
+        default -> throw new IllegalArgumentException("Invalid radix %s".formatted(radix));
+      };
 
       if (type() instanceof BoolType) {
         return prefix + this.value.toString(radix);

@@ -16,7 +16,6 @@
 
 package vadl.rtl.map;
 
-import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -128,7 +127,7 @@ public class MiaBuiltInCallMatcher {
    * don't include calculation, just truncate and sign/zero-extend nodes. Used for determine if
    * a result can be mapped for {@link BuiltInTable#INSTRUCTION_RESULTS} nodes.
    *
-   * @param node node to resolve chain of unary nodes for
+   * @param node      node to resolve chain of unary nodes for
    * @param doneNodes set of already mapped nodes
    * @return true, if done node is reachable through chain of unary nodes
    */
@@ -159,7 +158,7 @@ public class MiaBuiltInCallMatcher {
    * @return true, if node is part of compute
    */
   private static boolean resolveCompute(Node matchNode, Set<Node> doneNodes) {
-    if (matchNode instanceof BuiltInCall n) {
+    if (matchNode instanceof BuiltInCall) {
       if (isCompute(matchNode)) {
         return true;
       }
@@ -181,7 +180,7 @@ public class MiaBuiltInCallMatcher {
    * write builtin node we match all write nodes.
    *
    * @param mapNode MiA builtin call to filter by
-   * @param nodes set of nodes to filter
+   * @param nodes   set of nodes to filter
    * @return filtered set of nodes
    */
   public Set<Node> match(MiaBuiltInCall mapNode, Set<Node> nodes, Set<Node> doneNodes) {

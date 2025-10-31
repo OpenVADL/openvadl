@@ -123,8 +123,8 @@ subprojects {
             options.errorprone {
                 check("NullAway", CheckSeverity.ERROR)
                 option("NullAway:AnnotatedPackages", "vadl,java-annotations")
-                disable("EqualsGetClass", "StringCaseLocaleUsage")
-                excludedPaths.set(".*/generated/sources/coco/java/main/vadl/ast/*.*")
+                disable("EqualsGetClass", "StringCaseLocaleUsage", "EffectivelyPrivate", "ClassInitializationDeadlock")
+                excludedPaths.set(".*/generated/sources/.*/java/main/vadl/.*")
             }
         }
 

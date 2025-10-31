@@ -36,7 +36,7 @@ import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule
 public class OrWithTrueSimplificationRule implements AlgebraicSimplificationRule {
   @Override
   public Optional<Node> simplify(Node node) {
-    if (node instanceof ExpressionNode n) {
+    if (node instanceof ExpressionNode) {
       var matcher =
           new BuiltInMatcher(List.of(BuiltInTable.OR),
               List.of(new AnyNodeMatcher(), new ConstantValueMatcher(

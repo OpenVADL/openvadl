@@ -44,36 +44,20 @@ class StringLiteralParser {
           throw new IllegalArgumentException("Invalid escape sequence: \\ at end of string");
         }
         switch (token.charAt(++i)) {
-          case 'b':
-            str.append('\b');
-            break;
-          case 't':
-            str.append('\t');
-            break;
-          case 'n':
-            str.append('\n');
-            break;
-          case 'f':
-            str.append('\f');
-            break;
-          case 'r':
-            str.append('\r');
-            break;
-          case '"':
-            str.append('"');
-            break;
-          case '\'':
-            str.append('\'');
-            break;
-          case '\\':
-            str.append('\\');
-            break;
-          case 'u':
+          case 'b' -> str.append('\b');
+          case 't' -> str.append('\t');
+          case 'n' -> str.append('\n');
+          case 'f' -> str.append('\f');
+          case 'r' -> str.append('\r');
+          case '"' -> str.append('"');
+          case '\'' -> str.append('\'');
+          case '\\' -> str.append('\\');
+          case 'u' -> {
             str.append(parseUnicodeSequence(token, ++i));
             i += 3;
-            break;
-          default:
-            throw new IllegalArgumentException("Invalid escape sequence: \\" + token.charAt(i));
+          }
+          default ->
+              throw new IllegalArgumentException("Invalid escape sequence: \\" + token.charAt(i));
         }
       } else {
         str.append(c);
