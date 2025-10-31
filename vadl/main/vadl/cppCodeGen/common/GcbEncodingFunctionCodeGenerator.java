@@ -82,19 +82,11 @@ public class GcbEncodingFunctionCodeGenerator extends FunctionCodeGenerator {
 
       var part = parts.get(i);
       var bitWidth = ((BitsType) toHandle.value().type()).bitWidth();
-      if (part.isIndex()) {
-        ctx.wr(
-            String.format("project_range<%d, %d>(std::bitset<%d>(", part.lsb(), part.msb(),
-                bitWidth));
-        ctx.gen(toHandle.value()); // same expression
-        ctx.wr(String.format(")) << %d", acc));
-      } else {
-        ctx.wr(
-            String.format("project_range<%d, %d>(std::bitset<%d>(", part.lsb(), part.msb(),
-                bitWidth));
-        ctx.gen(toHandle.value()); // same expression
-        ctx.wr(String.format(")) << %d", acc));
-      }
+      ctx.wr(
+          String.format("project_range<%d, %d>(std::bitset<%d>(", part.lsb(), part.msb(),
+              bitWidth));
+      ctx.gen(toHandle.value()); // same expression
+      ctx.wr(String.format(")) << %d", acc));
 
       acc += part.msb() - part.lsb() + 1;
     }

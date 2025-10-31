@@ -23,14 +23,14 @@ buildscript {
         gradlePluginPortal()
     }
     dependencies {
-        classpath("net.ltgt.gradle:gradle-errorprone-plugin:2.0.1")
+        classpath("net.ltgt.gradle:gradle-errorprone-plugin:2.43.0")
     }
 }
 
 plugins {
     id("java")
     checkstyle
-    id("net.ltgt.errorprone") version "4.0.1" apply false
+    id("net.ltgt.errorprone") version "4.3.0" apply false
     id("me.qoomon.git-versioning") version "6.4.4"
 
 
@@ -67,11 +67,11 @@ subprojects {
     plugins.apply("checkstyle")
     plugins.apply("com.adarshr.test-logger")
 
-    val errorProneVersion by extra("2.26.1")
+    val errorProneVersion by extra("2.43.0")
 
     java {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(21))
+            languageVersion.set(JavaLanguageVersion.of(25))
         }
     }
 
@@ -123,8 +123,8 @@ subprojects {
             options.errorprone {
                 check("NullAway", CheckSeverity.ERROR)
                 option("NullAway:AnnotatedPackages", "vadl,java-annotations")
-                disable("EqualsGetClass", "StringCaseLocaleUsage")
-                excludedPaths.set(".*/generated/sources/coco/java/main/vadl/ast/*.*")
+                disable("EqualsGetClass", "StringCaseLocaleUsage", "EffectivelyPrivate", "ClassInitializationDeadlock")
+                excludedPaths.set(".*/generated/sources/.*/java/main/vadl/.*")
             }
         }
 
@@ -159,10 +159,7 @@ tasks.register<Test>("test-common") {
  *************/
 
 tasks.register("checkstyleAll") {
-    val checkstyleTasks =
-        subprojects
-            .map { setOf(it.tasks.checkstyleMain, it.tasks.checkstyleTest) }
-            .flatten()
+    val checkstyleTasks = subprojects.map { setOf(it.tasks.checkstyleMain, it.tasks.checkstyleTest) }.flatten()
 
     dependsOn(checkstyleTasks)
 }

@@ -48,9 +48,9 @@ public class PBit {
     if (this == obj) {
       return true;
     }
-    if (!(obj instanceof PBit)) {
+    if (!(obj instanceof PBit pbit)) {
       return false;
     }
-    return value == ((PBit) obj).value;
+    return value == pbit.value;
   }
 }

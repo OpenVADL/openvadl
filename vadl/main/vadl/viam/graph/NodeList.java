@@ -48,12 +48,12 @@ public class NodeList<T extends Node> extends ArrayList<T> {
    * @return a TypeList containing the types, or null if any of the nodes is not an ExpressionNode
    */
   public @Nullable TypeList<Type> toTypeList() {
-    var result = new TypeList<Type>(this.size());
+    var result = new TypeList<>(this.size());
     for (var node : this) {
-      if (!(node instanceof ExpressionNode)) {
+      if (!(node instanceof ExpressionNode exprNode)) {
         return null;
       }
-      result.add(((ExpressionNode) node).type());
+      result.add(exprNode.type());
     }
     return result;
   }

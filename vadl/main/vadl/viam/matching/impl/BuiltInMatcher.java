@@ -69,7 +69,7 @@ public class BuiltInMatcher implements Matcher {
 
   @Override
   public boolean matches(Node node) {
-    if (node instanceof BuiltInCall && builtIns.contains(((BuiltInCall) node).builtIn())) {
+    if (node instanceof BuiltInCall builtInCall && builtIns.contains(builtInCall.builtIn())) {
       if (this.matchers.isEmpty()) {
         // Edge case: when no matchers exist and the builtIn is matched then return true.
         return true;

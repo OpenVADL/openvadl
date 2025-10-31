@@ -35,7 +35,7 @@ public class FuncParamMatcher implements Matcher {
 
   @Override
   public boolean matches(Node node) {
-    return (node instanceof FuncParamNode
-        && ((FuncParamNode) node).parameter().type() == this.type);
+    return (node instanceof FuncParamNode funcParam
+        && funcParam.parameter().type() == this.type);
   }
 }

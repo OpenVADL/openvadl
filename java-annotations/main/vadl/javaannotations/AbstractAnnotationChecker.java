@@ -66,6 +66,7 @@ public abstract class AbstractAnnotationChecker extends BugChecker implements
                                                            List<VariableTree> fields);
 
   @Override
+  @SuppressWarnings("PreferInstanceofOverGetKind")
   public Description matchClass(ClassTree classTree, VisitorState state) {
     var annotatedFields = classTree.getMembers().stream()
         .filter(VariableTree.class::isInstance)

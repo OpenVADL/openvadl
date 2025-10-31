@@ -675,7 +675,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     var matched =
         TreeMatcher.matches(() -> behavior.getNodes(BuiltInCall.class).map(x -> x), matchers)
             .stream().map(x -> ((BuiltInCall) x).type())
-            .filter(ty -> ty instanceof BitsType && ((BitsType) ty).bitWidth() == bitWidth)
+            .filter(ty -> ty instanceof BitsType bitsType && bitsType.bitWidth() == bitWidth)
             .findFirst();
 
     // only one read is allowed

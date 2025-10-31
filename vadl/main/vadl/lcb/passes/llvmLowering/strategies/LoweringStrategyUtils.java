@@ -35,9 +35,9 @@ public class LoweringStrategyUtils {
   public static TableGenPattern replaceBasicBlockByLabelImmediateInMachineInstruction(
       TableGenPattern pattern) {
 
-    if (pattern instanceof TableGenSelectionWithOutputPattern) {
+    if (pattern instanceof TableGenSelectionWithOutputPattern selectionWithOutputPattern) {
       // We know that the `selector` already has LlvmBasicBlock nodes.
-      var candidates = ((TableGenSelectionWithOutputPattern) pattern).machine().getNodes(
+      var candidates = selectionWithOutputPattern.machine().getNodes(
           LcbMachineInstructionParameterNode.class).toList();
       for (var candidate : candidates) {
         if (candidate.instructionOperand().origin() instanceof LlvmBasicBlockSD basicBlockSD) {

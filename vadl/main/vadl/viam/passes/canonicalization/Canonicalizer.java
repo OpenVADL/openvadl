@@ -59,9 +59,9 @@ public class Canonicalizer extends GraphProcessor<Node> {
     // first visit all inputs to receive their canonical form
     toProcess.visitInputs(this);
 
-    if (toProcess instanceof Canonicalizable) {
+    if (toProcess instanceof Canonicalizable canonicalizable) {
       // retrieve the canonical form of node
-      var canonicalNode = ((Canonicalizable) toProcess).canonical();
+      var canonicalNode = canonicalizable.canonical();
 
       if (canonicalNode != toProcess) {
         // replace original one by new one

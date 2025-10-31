@@ -55,8 +55,8 @@ public class StringBuilderAppendable implements CodeGeneratorAppendable {
 
     indentCorrectly();
 
-    if (obj instanceof CharSequence) {
-      append((CharSequence) obj);
+    if (obj instanceof CharSequence charSeq) {
+      append(charSeq);
       return this;
     } else if (obj instanceof Character c) {
       if (isNewLine(c)) {

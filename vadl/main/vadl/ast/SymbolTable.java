@@ -253,8 +253,8 @@ class SymbolTable {
   @Nullable
   Macro getMacro(String name) {
     var origin = resolveMacroSymbol(name);
-    if (origin instanceof ModelDefinition) {
-      return ((ModelDefinition) origin).toMacro();
+    if (origin instanceof ModelDefinition macro) {
+      return macro.toMacro();
     }
 
     return null;
