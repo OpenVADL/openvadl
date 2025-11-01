@@ -310,12 +310,21 @@ impl BrokerSHMTB {
 }
 
 #[repr(C)]
+#[derive(Debug, Clone, Serialize)]
+pub enum BrokerSHMInsnDataType {
+    InsnExec = 0,
+    InsnMem = 1 << 0,
+}
+
+#[repr(C)]
 #[derive(Debug, Clone)]
 pub struct BrokerSHMInsn {
     /// A bit-mask indicating which cpu-indicies are set
     pub init_mask: i32,
-    pub cpus: [SHMCPU; MAX_CPU_COUNT],
+    pub insn_data_type: BrokerSHMInsnDataType,
+    cpus: [SHMCPU; MAX_CPU_COUNT],
     pub insn_info: TBInsnInfo,
+    mem_access_info: MemAccessInfo,
 }
 
 impl Serialize for BrokerSHMInsn {
@@ -323,30 +332,104 @@ impl Serialize for BrokerSHMInsn {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("shm-tb", 3)?;
+        let mut s = serializer.serialize_struct("shm-tb", 5)?;
         s.serialize_field("init_mask", &self.init_mask)?;
+        s.serialize_field("insn_data_type", &self.insn_data_type)?;
 
-        let mut cpus = vec![];
-        for idx in 0..MAX_CPU_COUNT {
-            let flag = self.init_mask & (1 << idx);
-            if flag == 1 {
-                cpus.push(&self.cpus[idx]);
+        if let Some(cpus) = self.cpus() {
+            let mut used_cpus = vec![];
+            for idx in 0..MAX_CPU_COUNT {
+                let flag = self.init_mask & (1 << idx);
+                if flag == 1 {
+                    used_cpus.push(&cpus[idx]);
+                }
             }
+            s.serialize_field("cpus", &Some(used_cpus))?;
+        } else {
+            s.serialize_field("cpus", &None::<Vec<&SHMCPU>>)?;
         }
 
-        s.serialize_field("cpus", &cpus)?;
         s.serialize_field("insn_info", &self.insn_info)?;
+        s.serialize_field("mem_access_info", &self.mem_access_info())?;
+
         s.end()
     }
 }
 
 impl BrokerSHMInsn {
-    pub fn new(init_mask: i32, cpus: [SHMCPU; MAX_CPU_COUNT], insn_info: TBInsnInfo) -> Self {
+    pub fn new(
+        init_mask: i32,
+        insn_data_type: BrokerSHMInsnDataType,
+        cpus: [SHMCPU; MAX_CPU_COUNT],
+        insn_info: TBInsnInfo,
+        mem_access_info: MemAccessInfo,
+    ) -> Self {
         Self {
             init_mask,
+            insn_data_type,
             cpus,
             insn_info,
+            mem_access_info,
         }
+    }
+
+    pub fn cpus(&self) -> Option<&[SHMCPU; MAX_CPU_COUNT]> {
+        match self.insn_data_type {
+            BrokerSHMInsnDataType::InsnExec => Some(&self.cpus),
+            BrokerSHMInsnDataType::InsnMem => None,
+        }
+    }
+
+    pub fn mem_access_info(&self) -> Option<&MemAccessInfo> {
+        match self.insn_data_type {
+            BrokerSHMInsnDataType::InsnExec => None,
+            BrokerSHMInsnDataType::InsnMem => Some(&self.mem_access_info),
+        }
+    }
+}
+
+#[repr(C)]
+#[derive(Debug, Clone)]
+pub struct MemAccessInfo {
+    pub vaddr: u64,
+    // the size of the memory load / store in ^2: 0 = 1 byte, 1 = 2 bytes, ..., 4
+    // = 16 bytes
+    pub size: u32,
+    // the amount written to the data-array depends on the size
+    data: [u8; 16],
+}
+
+impl Serialize for MemAccessInfo {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut s = serializer.serialize_struct("shm-mem", 4)?;
+        s.serialize_field("size", &self.size)?;
+        s.serialize_field("data", &self.data)?;
+        s.serialize_field("vaddr", &self.vaddr)?;
+        s.end()
+    }
+}
+
+impl MemAccessInfo {
+    pub fn new(size: u32, data: [u8; 16], vaddr: u64) -> Self {
+        Self { size, data, vaddr }
+    }
+
+    pub fn data_slice(&self) -> &[u8] {
+        let bytes: usize = 2 << self.size;
+        &self.data[..bytes]
+    }
+
+    pub fn data_slice_fmt(&self) -> String {
+        let s = self
+            .data_slice()
+            .iter()
+            .map(|b| format!("{b:02X?}"))
+            .collect::<String>();
+
+        format!("0x{s}")
     }
 }
 

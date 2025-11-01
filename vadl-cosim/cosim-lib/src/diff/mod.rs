@@ -6,7 +6,7 @@ use serde::Serialize;
 use crate::{
     config::Config,
     ipc::{
-        cstructs::{BrokerSHMInsn, BrokerSHMTB, SHMCPU, SHMRegister, TBInsnInfo},
+        cstructs::{BrokerSHMInsn, BrokerSHMTB, MemAccessInfo, SHMCPU, SHMRegister, TBInsnInfo},
         qemu::Client,
     },
 };
@@ -69,7 +69,20 @@ pub struct DiffContextClient {
 #[derive(Debug, Serialize, Clone)]
 pub struct DiffContextClientState {
     pub pc: u64,
-    pub cpus: Vec<DiffContextClientStateCPU>,
+    pub content: DiffContextClientStateContent,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub enum DiffContextClientStateContent {
+    CPUs(Vec<DiffContextClientStateCPU>),
+    Memory(DiffContextClientStateMemory),
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct DiffContextClientStateMemory {
+    pub vaddr: u64,
+    pub size: u32,
+    pub data: String,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -240,21 +253,46 @@ pub fn get_client_context_current(
 impl From<(&BrokerSHMTB, &Config)> for DiffContextClientState {
     fn from((value, config): (&BrokerSHMTB, &Config)) -> Self {
         let cpus = value.cpus.iter().map(|cpu| (cpu, config).into()).collect();
+        let content = DiffContextClientStateContent::CPUs(cpus);
 
         DiffContextClientState {
             pc: value.tb_info.pc,
-            cpus,
+            content,
         }
     }
 }
 
 impl From<(&BrokerSHMInsn, &Config)> for DiffContextClientState {
     fn from((value, config): (&BrokerSHMInsn, &Config)) -> Self {
-        let cpus = value.cpus.iter().map(|cpu| (cpu, config).into()).collect();
+        let content = match value.insn_data_type {
+            crate::ipc::cstructs::BrokerSHMInsnDataType::InsnExec => {
+                let cpus = value
+                    .cpus()
+                    .unwrap()
+                    .iter()
+                    .map(|cpu| (cpu, config).into())
+                    .collect();
+                DiffContextClientStateContent::CPUs(cpus)
+            }
+            crate::ipc::cstructs::BrokerSHMInsnDataType::InsnMem => {
+                let mem = value.mem_access_info().unwrap().into();
+                DiffContextClientStateContent::Memory(mem)
+            }
+        };
 
         DiffContextClientState {
             pc: value.insn_info.pc,
-            cpus,
+            content,
+        }
+    }
+}
+
+impl From<&MemAccessInfo> for DiffContextClientStateMemory {
+    fn from(value: &MemAccessInfo) -> Self {
+        DiffContextClientStateMemory {
+            vaddr: value.vaddr,
+            size: value.size,
+            data: value.data_slice_fmt(),
         }
     }
 }

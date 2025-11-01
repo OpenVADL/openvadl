@@ -47,8 +47,13 @@ pub fn connect(config: &Config) -> Result<Connection> {
 pub fn store_trace(trace: TraceEntryData, connection: &mut Connection) -> Result<()> {
     let broker_id = match trace.broker_data {
         TraceBrokerData::TB(broker_shmtb) => insert_broker_shm_tb(connection, &broker_shmtb),
-        TraceBrokerData::Insn(broker_shmexec) => {
-            insert_broker_shm_insn(connection, &broker_shmexec)
+        TraceBrokerData::Insn(broker_shminsn) => {
+            match broker_shminsn.insn_data_type {
+                crate::ipc::cstructs::BrokerSHMInsnDataType::InsnExec => {
+                    insert_broker_shm_insn(connection, &broker_shminsn)
+                },
+                crate::ipc::cstructs::BrokerSHMInsnDataType::InsnMem => todo!("tracing insn-mem not implemented"),
+            }
         }
     }?;
 

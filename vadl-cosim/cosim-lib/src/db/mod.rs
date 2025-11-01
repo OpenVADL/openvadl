@@ -158,7 +158,7 @@ pub fn insert_broker_shm_insn(
     )?;
 
     // Insert CPUs and registers
-    for (idx, cpu) in broker.cpus.iter().enumerate() {
+    for (idx, cpu) in broker.cpus().expect("insn-exec").iter().enumerate() {
         if (broker.init_mask & (1 << idx)) != 0 {
             let cpu_id = insert_shm_cpu(&tx, broker_id, cpu)?;
             insert_shm_registers(&tx, cpu_id, cpu.registers_slice())?;

@@ -6,17 +6,15 @@ use tracing::debug;
 
 use crate::{
     config::{Config, TracingMode},
-    db::{CosimRunInfo, finish_cosimulation_run_trace, insert_new_cosimulation_run},
+    db::{finish_cosimulation_run_trace, insert_new_cosimulation_run, CosimRunInfo},
     diff::{
-        DiffContext, DiffContextClient, DiffEntry, Report, diff::diff_cpus,
-        get_all_clients_contexts_before, get_all_clients_contexts_current,
-        get_all_clients_instructions,
+        diff::{diff_cpus, diff_mem_access}, get_all_clients_contexts_before, get_all_clients_contexts_current, get_all_clients_instructions, DiffContext, DiffContextClient, DiffEntry, Report
     },
     ipc::{
         cstructs::{self, TBInfo, TBInsnInfo},
         qemu::Client,
     },
-    trace::{TraceEntryData, TraceStore, connect, get_client_trace, store_trace, trace_collect},
+    trace::{connect, get_client_trace, store_trace, trace_collect, TraceEntryData, TraceStore},
 };
 
 pub struct Broker {
@@ -133,30 +131,35 @@ impl Broker {
                 match (c1insn, c2insn) {
                     // successfully read both clients -> compare
                     (Some(c1insn), Some(c2insn)) => {
-                        let diffs = diff_cpus(
-                            &c1insn.cpus,
-                            c1insn.init_mask,
-                            &c2insn.cpus,
-                            c2insn.init_mask,
-                            config,
-                        );
+                        let diffs = if let Some(cpus1) = c1insn.cpus()
+                            && let Some(cpus2) = c2insn.cpus()
+                        {
+                            let diffs =
+                                diff_cpus(cpus1, c1insn.init_mask, cpus2, c2insn.init_mask, config);
 
-                        self.trace_clients(config)?;
+                            self.trace_clients(config)?;
 
-                        if !diffs.is_empty() {
-                            let ctx = self.build_diff_context(config)?;
-                            return Ok(Report::failed(diffs, ctx));
-                        }
+                            if !config.testing.protocol.execute_all_remaining_instructions {
+                                stop_after -= 1;
+                                if stop_after == 0 {
+                                    break;
+                                }
+                            }
+
+                            diffs
+                        } else if let Some(mem_access_info1) = c1insn.mem_access_info() && let Some(mem_access_info2) = c2insn.mem_access_info() {
+                            diff_mem_access(mem_access_info1, mem_access_info2, config)
+                        } else {
+                            panic!("Invalid cosim-state. Both clients were running the Insn-Layer, however they didn't write the same type of data (e.g. one client return insn-exec data, while the other returned mem-access data). This is a bug in the cosimulator/plugin.");
+                        };
 
                         for client in &mut self.clients {
                             client.shm.end_read_buffer();
                         }
 
-                        if !config.testing.protocol.execute_all_remaining_instructions {
-                            stop_after -= 1;
-                            if stop_after == 0 {
-                                break;
-                            }
+                        if !diffs.is_empty() {
+                            let ctx = self.build_diff_context(config)?;
+                            return Ok(Report::failed(diffs, ctx));
                         }
                     }
 
