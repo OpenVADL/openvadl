@@ -27,8 +27,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
-import vadl.configuration.LcbConfiguration;
-import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.riscv.DockerRiscvImageProvider;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
@@ -66,8 +64,7 @@ public abstract class LcbDockerInputFileExecutionTest extends LcbDockerExecution
       throws DuplicatedPassKeyException,
       IOException {
     var doDebug = false;
-    var configuration = new LcbConfiguration(getConfiguration(false),
-        new TargetName(getTarget()));
+    var configuration = getConfiguration();
 
     runLcb(configuration, specPath);
     copyIntoDockerContext(configuration);
