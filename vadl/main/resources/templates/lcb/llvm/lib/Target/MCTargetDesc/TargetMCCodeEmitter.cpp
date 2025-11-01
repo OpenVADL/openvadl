@@ -114,13 +114,13 @@ unsigned [(${namespace})]MCCodeEmitter::[(${imm.encodeWrapper})](const MCInst &M
     const MCOperand &[(${fieldAccess.fieldAccessName})] = MI.getOperand([(${fieldAccess.opIndex})]);
     [/]
 
-    int64_t imm;
+    int64_t vadl_internal_imm;
     [# th:each="enc : ${imm.encodings}" ]
     if([(${enc.checks})]) {
       result |= (project_range<0, [(${enc.fieldSize})]>(std::bitset<64>([(${enc.encodingFunction})]([(${enc.params})])))).to_ulong() << [(${enc.offset})];
       changed = true;
-    } else if([(${enc.checksExpr})] && AsmUtils::evaluateConstantImm([(${enc.fieldAccesses})], imm)) { // works only for one
-      result |= (project_range<0, [(${enc.fieldSize})]>(std::bitset<64>([(${enc.encodingFunction})](imm)))).to_ulong() << [(${enc.offset})];
+    } else if([(${enc.checksExpr})] && AsmUtils::evaluateConstantImm([(${enc.fieldAccesses})], vadl_internal_imm)) { // works only for one
+      result |= (project_range<0, [(${enc.fieldSize})]>(std::bitset<64>([(${enc.encodingFunction})](vadl_internal_imm)))).to_ulong() << [(${enc.offset})];
       changed = true;
     }
     [/]
@@ -185,6 +185,17 @@ void [(${namespace})]MCCodeEmitter::encodeNonPseudoInstruction(const MCInst &MI,
     {
         uint32_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
         support::endian::write<uint32_t>(CB, Bits, EndianEncoding);
+        break;
+    }
+    case 6:
+    {
+        uint64_t Bits = getBinaryCodeForInstr(MI, Fixups, STI) & 0xffff'ffff'ffffu;
+        SmallVector<char, 8> Encoding;
+        support::endian::write(Encoding, Bits, llvm::endianness::little);
+        assert(Encoding[6] == 0 && Encoding[7] == 0 &&
+               "Unexpected encoding for 48-bit instruction");
+        Encoding.truncate(6);
+        CB.append(Encoding);
         break;
     }
     case 8:

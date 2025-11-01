@@ -1,0 +1,266 @@
+// SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: Apache-2.0
+
+import VarRisc::{VarRISC32} with ("Init=yes")
+
+instruction set architecture VarRISC extending VarRISC32 = {}
+
+application binary interface ABI for VarRISC32 = {
+   size_t type = unsigned int
+   pointer align = 32
+
+   //
+   // Register alias definitions
+   //
+
+   alias register zero = R(0)
+
+   alias register ra = R(1)
+
+   alias register sp = R(2)
+
+   alias register gp = R(3)
+   alias register tp = R(4)
+
+   alias register t0 = R(5)
+   alias register t1 = R(6)
+   alias register t2 = R(7)
+
+   // [ preferred alias ]
+   alias register fp = R(8)
+
+   alias register s0 = R(8)
+   alias register s1 = R(9)
+
+   alias register a0 = R(10)
+   alias register a1 = R(11)
+   alias register a2 = R(12)
+   alias register a3 = R(13)
+   alias register a4 = R(14)
+   alias register a5 = R(15)
+   alias register a6 = R(16)
+   alias register a7 = R(17)
+
+   alias register s2 = R(18)
+   alias register s3 = R(19)
+   alias register s4 = R(20)
+   alias register s5 = R(21)
+   alias register s6 = R(22)
+   alias register s7 = R(23)
+   alias register s8 = R(24)
+   alias register s9 = R(25)
+   alias register s10 = R(26)
+   alias register s11 = R(27)
+
+   alias register t3 = R(28)
+   alias register t4 = R(29)
+   alias register t5 = R(30)
+   alias register t6 = R(31)
+
+   // [ alignment : HalfWord ]
+   stack pointer = sp
+   return address = ra
+   global pointer = gp
+   frame pointer = fp
+   thread pointer = tp
+
+   special return instruction = RET
+   special call instruction = CALL
+   //special local address load instruction = LLA
+   //special global address load instruction = LGA_32
+   special absolute address load instruction = LA
+
+   return value = a{0..1}
+   function argument = a{0..7}
+
+   // ra is callee saved because it is used as normal register and has to be restored.
+   caller saved = [ a{0..7}, t{0..6} ]
+   callee saved = [ ra, gp, tp, fp, s{0..11} ]
+
+}
+
+assembly description AD for ABI = {
+    grammar = {
+
+        RSTypeIds: "ADD_S" | "SUB_S" | "MUL_S" | "DIV_S" | "REM_S" | "AND_S" | "OR_S" | "XOR_S"
+                    | "ASR_S" | "LSR_S" | "LSL_S";
+
+        RSTypeInstruction @instruction:
+            mnemonic = RSTypeIds @operand
+            rd = Register @operand ","
+            rs1imm = Register @operand
+        ;
+
+
+        ISTypeIds: "ADDI_S" | "SUBI_S" | "MULI_S" | "DIVI_S" | "REMI_S" | "ANDI_S" | "ORI_S" | "XORI_S"
+                    | "ASRI_S" | "LSRI_S" | "LSLI_S";
+
+        ISTypeInstruction @instruction:
+            mnemonic = ISTypeIds @operand
+            rd = Register @operand ","
+            imm = ImmediateOperand
+        ;
+
+
+        RTypeIds: "ADD" | "SUB" | "MUL" | "DIV" | "REM" | "AND" | "OR" | "XOR"
+                    | "ASR" | "LSR" | "LSL";
+
+        RTypeInstruction @instruction:
+            mnemonic = RTypeIds @operand
+            rd = Register @operand ","
+            rs1 = Register @operand ","
+            rs2 = Register @operand
+        ;
+    
+
+        ITypeIds: "ADDI" | "SUBI" | "MULI" | "DIVI" | "REMI" | "ANDI" | "ORI" | "XORI"
+                    | "ASRI" | "LSRI" | "LSLI";
+
+        ITypeInstruction @instruction:
+            mnemonic = ITypeIds @operand
+            rd = Register @operand ","
+            rs1 = Register @operand ","
+            imm = ImmediateOperand
+        ;
+
+
+        LTypeIds: "ADDI_L" | "SUBI_L" | "MULI_L" | "DIVI_L" | "REMI_L" | "ANDI_L" | "ORI_L" | "XORI_L";
+
+        LTypeInstruction @instruction:
+            mnemonic = LTypeIds @operand
+            rd = Register @operand ","
+            func5 = Register @operand ","
+            imm = ImmediateOperand
+        ;
+
+
+        MoveInstruction @instruction:
+            mnemonic = "MOV" @operand
+            rd = Register @operand ":""=" // ':=' is split because of separate terminal rules
+            rs1imm = Register @operand
+        ;
+
+        SBranchInstruction @instruction:
+            mnemonic = "BRA_S" @operand
+            offset = ImmediateOperand
+        ;
+
+        JalInstruction @instruction:
+            mnemonic = "JAL" @operand
+            rd = Register @operand ","
+            rs1imm = Register @operand
+        ;
+
+
+        BTypeIds: "BEQ" | "BNE" | "BLT" | "BLE" | "BULT" | "BULE";
+
+        BTypeInstruction @instruction:
+            mnemonic = BTypeIds @operand
+            rd = Register @operand ","
+            rs1 = Register @operand ","
+            imm = ImmediateOperand
+        ;
+
+
+        MemoryIds: "LDB" | "LDH" | "LDW" | "STB" | "STH" | "STW" | "LBU" | "LHU";
+
+        MemoryInstruction @instruction:
+            mnemonic = MemoryIds @operand
+            rd = Register @operand ","
+            imm = ImmediateOperand
+            "(" rs1 = Register @operand ")"
+        ;
+
+        SMemoryIds: "LDB_S" | "LDH_S" | "LDW_S" | "STB_S" | "STH_S" | "STW_S";
+
+        SMemoryInstruction @instruction:
+            mnemonic = SMemoryIds @operand
+            rd = Register @operand ","            
+            "(" rs1imm = Register @operand ")"
+        ;
+
+        LMemoryIds: "LDB_L" | "LDH_L" | "LDW_L" | "STB_L" | "STH_L" | "STW_L" | "LBU_L" | "LHU_L";
+
+        LMemoryInstruction @instruction:
+            mnemonic = LMemoryIds @operand
+            rd = Register @operand ","
+            imm = ImmediateOperand
+            "(" func5 = Register @operand ")"
+        ;
+
+
+        BalInstruction @instruction:
+            mnemonic = "BAL" @operand
+            rd = Register @operand ","
+            imm = ImmediateOperand
+        ;
+
+        CondIds: "SEQ" | "SNE" | "SLT" | "SLE" | "ULT" | "UGE";
+
+        CondInstruction @instruction:
+            mnemonic = CondIds @operand
+            rd = Register @operand ","
+            rs1 = Register @operand ","
+            rs2 = Register @operand
+        ;
+
+
+        CondImmIds: "SGTI" | "SGEI" | "UGTI" | "UGEI"
+                    | "SEQI" | "SNEI" | "SLTI" | "SLEI" | "ULTI";
+
+        CondImmInstruction @instruction:
+            mnemonic = CondImmIds @operand
+            rd = Register @operand ","
+            rs1 = Register @operand ","
+            imm = ImmediateOperand
+        ;
+
+        LCondImmIds: "SGTI_L" | "SGEI_L" | "UGTI_L" | "UGEI_L"
+                    | "SEQI_L" | "SNEI_L" | "SLTI_L" | "SLEI_L" | "ULTI_L";
+
+        LCondImmInstruction @instruction:
+            mnemonic = LCondImmIds @operand
+            rd = Register @operand ","
+            imm = ImmediateOperand
+        ;
+
+        BraPseudoInstruction @instruction:
+            mnemonic = "BRA" @operand
+            offset = ImmediateOperand
+        ;
+
+        BraLPseudoInstruction @instruction:
+            mnemonic = "BRA_L" @operand
+            offset = ImmediateOperand
+        ;
+
+        BranchPseudoIds: "BEQZ" | "BNEZ" | "BLTZ" | "BLEZ" | "BGEZ" | "BGTZ"
+                        | "BEQZ_L" | "BNEZ_L" | "BLTZ_L" | "BLEZ_L" | "BGEZ_L" | "BGTZ_L";
+
+        BranchPseudoInstruction @instruction:
+            mnemonic = BranchPseudoIds @operand
+            rd = Register @operand ","
+            offset = ImmediateOperand
+        ;
+
+        JmpPseudoInstruction @instruction:
+            mnemonic = "JMP" @operand
+            rd = Register @operand
+        ;
+
+        RetPseudoInstruction @instruction:
+            mnemonic = "RET" @operand
+        ;
+
+        CallPseudoInstruction @instruction:
+            mnemonic = "CALL" @operand
+            symbol = Label @operand
+        ;
+
+        LaPseudoInstruction @instruction:
+            mnemonic = "LA" @operand
+            rd = Register @operand ","
+            symbol = Label @operand
+        ;
+    }
+}

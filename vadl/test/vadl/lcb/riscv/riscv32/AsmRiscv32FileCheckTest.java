@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb;
+package vadl.lcb.riscv.riscv32;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,12 +22,37 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.TargetName;
+import vadl.lcb.LcbDockerInputFileExecutionTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
-public abstract class AsmFileCheckTest extends LcbDockerInputFileExecutionTest {
-  protected abstract String getSpecPath();
+public abstract class AsmRiscv32FileCheckTest extends LcbDockerInputFileExecutionTest {
 
   protected abstract String getComponent();
+
+  @Override
+  protected String getTarget() {
+    return "rv32im";
+  }
+
+  @Override
+  protected String getUpstreamBuildTarget() {
+    return "RISCV";
+  }
+
+  @Override
+  protected String getUpstreamClangTarget() {
+    return "riscv32";
+  }
+
+  @Override
+  protected String getSpikeTarget() {
+    return "rv32im";
+  }
+
+  @Override
+  protected String getAbi() {
+    return "ilp32";
+  }
 
   @Override
   protected LcbConfiguration getConfiguration() {
@@ -36,7 +61,7 @@ public abstract class AsmFileCheckTest extends LcbDockerInputFileExecutionTest {
 
   @TestFactory
   List<DynamicTest> testAsm() throws DuplicatedPassKeyException, IOException {
-    return runEach(getSpecPath(),
+    return runEach("sys/risc-v/rv32im.vadl",
         "test/resources/llvm/riscv/asm/rv32im/" + getComponent(),
         0,
         "sh /work/filecheck.sh");
