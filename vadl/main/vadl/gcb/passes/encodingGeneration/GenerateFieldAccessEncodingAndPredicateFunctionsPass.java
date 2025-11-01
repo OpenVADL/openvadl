@@ -24,9 +24,9 @@ import vadl.configuration.GcbConfiguration;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.encodingGeneration.strategies.EncodingPredicateGenerationStrategy;
-import vadl.gcb.passes.encodingGeneration.strategies.impl.ArithmeticImmediateStrategyPredicate;
-import vadl.gcb.passes.encodingGeneration.strategies.impl.ShiftedImmediateStrategyPredicate;
-import vadl.gcb.passes.encodingGeneration.strategies.impl.TrivialImmediateStrategyPredicate;
+import vadl.gcb.passes.encodingGeneration.strategies.impl.ArithmeticImmediateEncodingPredicateStrategy;
+import vadl.gcb.passes.encodingGeneration.strategies.impl.ShiftedImmediateEncodingPredicateStrategy;
+import vadl.gcb.passes.encodingGeneration.strategies.impl.TrivialImmediateEncodingPredicateStrategy;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -54,9 +54,9 @@ import vadl.viam.Specification;
 public class GenerateFieldAccessEncodingAndPredicateFunctionsPass extends Pass {
 
   public static final List<EncodingPredicateGenerationStrategy> strategies = List.of(
-      new TrivialImmediateStrategyPredicate(),
-      new ShiftedImmediateStrategyPredicate(),
-      new ArithmeticImmediateStrategyPredicate());
+      new TrivialImmediateEncodingPredicateStrategy(),
+      new ShiftedImmediateEncodingPredicateStrategy(),
+      new ArithmeticImmediateEncodingPredicateStrategy());
 
   public GenerateFieldAccessEncodingAndPredicateFunctionsPass(GcbConfiguration gcbConfiguration) {
     super(gcbConfiguration);

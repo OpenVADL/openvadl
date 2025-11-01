@@ -52,7 +52,8 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * }
  * }</pre>
  */
-public class ArithmeticImmediateStrategyPredicate implements EncodingPredicateGenerationStrategy {
+public class ArithmeticImmediateEncodingPredicateStrategy
+    implements EncodingPredicateGenerationStrategy {
   @Override
   public boolean checkIfApplicable(Format.FieldAccess fieldAccess) {
     // Check if only one field
