@@ -46,7 +46,7 @@ public class Main {
     }
     
     try (ServerSocket serverSocket = new ServerSocket(port)) {
-      log.info("Started openVADL language server on port " + serverSocket.getLocalPort());
+      log.info("Started openVADL language server on port {}", serverSocket.getLocalPort());
       
       Socket socket = serverSocket.accept();
       serveClient(socket);
@@ -69,8 +69,8 @@ public class Main {
       InterruptedException,
       ExecutionException {
     log.info(
-        "Connection established with " + socket.getInetAddress().getHostAddress()
-        + ":" + socket.getPort()
+        "Connection established with {}:{}", socket.getInetAddress().getHostAddress(),
+         socket.getPort()
     );
     
     // According to https://github.com/eclipse-lsp4j/lsp4j/blob/main/documentation/README.md
@@ -90,6 +90,8 @@ public class Main {
     } catch (CancellationException e) {
       // I.e. Future was cancelled by VadlLanguageServer
       log.info("Server disconnected");
+    } finally {
+      server.tearDown();
     }
   }
 }

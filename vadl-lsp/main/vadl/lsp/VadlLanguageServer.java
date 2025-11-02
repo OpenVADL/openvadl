@@ -16,13 +16,19 @@
 
 package vadl.lsp;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
@@ -34,7 +40,10 @@ import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InitializedParams;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PositionEncodingKind;
+import org.eclipse.lsp4j.PublishDiagnosticsParams;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SemanticTokenTypes;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.SemanticTokensLegend;
@@ -57,31 +66,41 @@ import org.eclipse.lsp4j.services.WorkspaceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.ast.LspTokenizer;
+import vadl.ast.VadlParser;
+import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
+import vadl.utils.SourceLocation;
 
 /**
  * The openVADL language server, based on lsp4j.
  */
 public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
+  /**
+   * The URI the Vadl Parser assigns to the String we give it for parsing. With this we can check
+   * if a location refers to this "file" or some other file that the Parser included along the way.
+   */
+  private static final URI primaryFile = URI.create("memory://internal");
+
   private static final Logger log = LoggerFactory.getLogger(VadlLanguageServer.class);
-  
+
   private @Nullable LanguageClient client;
   private @Nullable Future<Void> listeningFuture;
+  private ExecutorService executor = Executors.newCachedThreadPool();
   
   private final VadlTextDocumentService textService = new VadlTextDocumentService();
+  private @Nullable LspTokenizer tokenizer;
 
   private final Map<String, TextDocumentItem> openDocuments = new HashMap<>();
-  
-  //private InitializeParams params;
+
+  private @Nullable InitializeParams params;
   private @Nullable ServerCapabilities serverCapabilities;
 
-  private @Nullable LspTokenizer tokenizer;
-  
   @Override
   public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
     // TODO Use debug (same below)
     log.info(">> initialize: {}", params);
-    //this.params = params;
-    
+    this.params = params;
+
     createCapabilities();
     var result = new InitializeResult(
         serverCapabilities,
@@ -119,6 +138,14 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
       throw new RuntimeException("listeningFuture isn't set yet");
     }
     listeningFuture.cancel(true);
+  }
+
+  /**
+   * Should be called when the server process exits. This releases any resources this class owns,
+   * e.g. background threads, open files.
+   */
+  public void tearDown() {
+    executor.shutdownNow();
   }
 
   @Override
@@ -163,6 +190,13 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
       throw new RuntimeException("client isn't set yet");
     }
     return this.client;
+  }
+
+  private InitializeParams params() {
+    if (this.params == null) {
+      throw new RuntimeException("params aren't set yet");
+    }
+    return this.params;
   }
   
   
@@ -226,6 +260,7 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
     public void didOpen(DidOpenTextDocumentParams params) {
       log.info(">> didOpen: {}", params);
       openDocuments.put(params.getTextDocument().getUri(), params.getTextDocument());
+      publishDiagnostics(params.getTextDocument());
     }
     
     @Override
@@ -245,6 +280,7 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
       document.setVersion(params.getTextDocument().getVersion());
       // TODO Support Incremental changes as well (& switch on in capabilities)
       document.setText(params.getContentChanges().getLast().getText());
+      publishDiagnostics(document);
     }
     
     @Override
@@ -273,6 +309,73 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
         var result = new SemanticTokens(tokens);
         log.info("<<- semanticTokens/full: <omitted>({} tokens)", tokens.size() / 5);
         return result;
+      });
+    }
+
+    private void publishDiagnostics(TextDocumentItem document) {
+      var capabilities = params().getCapabilities().getTextDocument();
+      if (capabilities == null
+          || capabilities.getPublishDiagnostics() == null) {
+        // Don't push diagnostics if client doesn't support it
+        return;
+      }
+
+      // Unpacking document before going to background thread, to avoid race conditions
+      // - didChange() may change document at any point after this.
+      String text = document.getText();
+      String uriString = document.getUri();
+      URI uri = URI.create(uriString);
+      int version = document.getVersion();
+
+      var unused = executor.submit(() -> {
+        List<org.eclipse.lsp4j.Diagnostic> lspItems = new ArrayList<>();
+        try {
+          VadlParser.parse(text, uri);
+        } catch (DiagnosticList dl) {
+          log.info("Raw diagnostics: {}", dl.getMessage());
+          for (Diagnostic item : dl.items) {
+            // TODO Look into secondary locations too? Maybe as relatedInformation?
+            SourceLocation location = item.multiLocation.primaryLocation().location();
+            if (!location.uri().equals(primaryFile)) {
+              // Ignore errors for other files
+              // TODO this means that errors in included files are not reported unless that file is
+              //      opened in the client, even though the Parser gives us diagnostics for them
+              //      (BUT: They are based on the file-system contents of that file, so maybe only
+              //      provided these diagnostics if the file in question isn't currently owned by
+              //      the client?)
+              continue;
+            }
+
+            org.eclipse.lsp4j.Diagnostic lspItem = new org.eclipse.lsp4j.Diagnostic();
+            // TODO Handle: transform from utf-8 positions to utf-16
+            lspItem.setRange(new Range(
+                new Position(
+                    Math.max(location.begin().line() - 1, 0),
+                    Math.max(location.begin().column() - 1, 0)
+                ),
+                new Position(
+                    Math.max(location.end().line() - 1, 0),
+                    Math.max(location.end().column(), 0)
+                )
+            ));
+            lspItem.setSeverity(
+                switch (item.level) {
+                  case ERROR -> DiagnosticSeverity.Error;
+                  case WARNING -> DiagnosticSeverity.Warning;
+                }
+            );
+            // TODO there are messages attached to the Diagnostic itself - are they useful?
+            String labelsString = item.multiLocation.primaryLocation().labels().stream()
+                .map(Diagnostic.Message::content)
+                .collect(Collectors.joining(". "));
+            lspItem.setMessage(item.reason + (!labelsString.isBlank() ? ": " + labelsString : ""));
+            lspItems.add(lspItem);
+          }
+        }
+
+        var data = new PublishDiagnosticsParams(uriString, lspItems, version);
+        log.info("<< publishDiagnostics: {}", data);
+        client().publishDiagnostics(data);
       });
     }
   }
