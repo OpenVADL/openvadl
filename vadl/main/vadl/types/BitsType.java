@@ -152,6 +152,16 @@ public class BitsType extends DataType {
     return Long.SIZE - Long.numberOfLeadingZeros(value);
   }
 
+  /**
+   * Calculates the minimal required bit-width to index a collection of value elements.
+   *
+   * @param size of the collection that should be able to be indexed.
+   * @return the required size.
+   */
+  public static int indexWidthFor(long size) {
+    return minimalRequiredWidthFor(Math.max(size - 1, 0));
+  }
+
   @Override
   public int hashCode() {
     return super.hashCode();

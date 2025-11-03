@@ -36,7 +36,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
@@ -260,6 +259,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
    * @param definition of the alias definition for which the read function will be generated.
    * @return the mapping function.
    */
+  @SuppressWarnings("Indentation")
   Function getRegisterAliasReadFunc(AliasDefinition definition) {
     var graph = new Graph("%s Read Behavior".formatted(definition.viamId));
     graph.setSourceLocation(definition.location());
@@ -284,7 +284,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             viamLowering.generateIdentifier(
                 identifier.name() + "::index",
                 identifier.location()),
-            Type.bits(BitsType.minimalRequiredWidthFor(tensorType.indexDims().get(i))),
+            Type.bits(BitsType.indexWidthFor(tensorType.indexDims().get(i))),
             0);
         params.add(param);
         indices.add(new FuncParamNode(param));
@@ -336,6 +336,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     );
   }
 
+  @SuppressWarnings("Indentation")
   Procedure getRegisterAliasWriteProc(AliasDefinition definition) {
     final var graph = new Graph("%s Write Procedure".formatted(definition.viamId));
     graph.setSourceLocation(definition.location());
@@ -360,7 +361,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             viamLowering.generateIdentifier(
                 identifier.name() + "::index",
                 identifier.location()),
-            Type.bits(BitsType.minimalRequiredWidthFor(tensorType.indexDims().get(i))),
+            Type.bits(BitsType.indexWidthFor(tensorType.indexDims().get(i))),
             0);
         params.add(param);
         indices.add(new FuncParamNode(param));
@@ -1395,15 +1396,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           .findFirst().orElse(null);
 
       ensure(!(field == null && fieldAccess == null),
-          () -> Diagnostic.error(
-                  String.format("Cannot find a field or field access for this argument '%s'.",
-                      arg.name.name),
-                  target.location())
+          () -> error(
+              String.format("Cannot find a field or field access for this argument '%s'.",
+                  arg.name.name),
+              target.location())
               .locationNote(statement.location(), "Expanded from here."));
       ensure(!(field != null && fieldAccess != null),
-          () -> Diagnostic.error("Both field and field access function cannot be set.",
-                  Objects.requireNonNull(field).location()
-                      .join(Objects.requireNonNull(fieldAccess).location()))
+          () -> error("Both field and field access function cannot be set.",
+              requireNonNull(field).location()
+                  .join(requireNonNull(fieldAccess).location()))
               .locationNote(target.location(), "In the instruction here.")
               .locationNote(statement.location(), "Expanded from here."));
 

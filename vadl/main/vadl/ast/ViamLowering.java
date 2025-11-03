@@ -416,7 +416,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         case TensorType tensorType -> Streams.mapWithIndex(
                 tensorType.indexDims().stream(),
                 (dim, index) -> new RegisterTensor.Dimension((int) index,
-                    Type.bits(BitsType.minimalRequiredWidthFor((long) dim)), dim))
+                    Type.bits(BitsType.indexWidthFor((long) dim)), dim))
             .toList();
         default -> new ArrayList<>();
       };
@@ -1617,7 +1617,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   private RegisterTensor.Dimension dimFromType(int index, DataType dataType) {
     // e.g. for `register: Bits<5> -> Bits<32>` the inner type is Bits<32>.
     // the corresponding dimension is (index: 1, type: Bits<5>, 32)
-    var innerDimType = Type.bits(BitsType.minimalRequiredWidthFor(dataType.bitWidth()));
+    var innerDimType = Type.bits(BitsType.indexWidthFor(dataType.bitWidth()));
     return new RegisterTensor.Dimension(index, innerDimType, dataType.toBitsType().bitWidth());
   }
 
@@ -1630,7 +1630,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       // FIXME: There must be a better way to do this.
       for (int i = 0; i < tensorType.indexDims().size(); i++) {
         var size = tensorType.indexDims().get(i);
-        var indexType = Type.bits(BitsType.minimalRequiredWidthFor(size));
+        var indexType = Type.bits(BitsType.indexWidthFor(size));
         dimensions.add(new RegisterTensor.Dimension(i, indexType, size));
       }
       resultType = (DataType) getViamType(tensorType.innerType());

@@ -804,7 +804,8 @@ public class TypeChecker
                   "Expected result type to be either a tensor or a bits type, but received `%s`",
                   type)
               .note(
-                  "For type literals in the relation syntax (with the arrow syntax) the result type must be a bits type.")
+                  "For type literals in the relation syntax (with the arrow syntax) the result "
+                      + "type must be a bits type.")
               .build();
         }
 
@@ -977,8 +978,8 @@ public class TypeChecker
 
   /**
    * Checks whether or not the alias can be cast to the types provided.
-   * <p>
-   * There are two rules enforced on type casting:
+   *
+   * <p>There are two rules enforced on type casting:
    * 1) The bitwidth of both sides must be equal.
    * 2) Only the innermost index can be expaned or the most n innermost indices can be compressed.
    *
@@ -3266,7 +3267,7 @@ public class TypeChecker
         }
         var arg = argGroup.values.getFirst();
         check(arg);
-        var indexType = Type.bits(BitsType.minimalRequiredWidthFor(tensorType.indexDims().get(i)));
+        var indexType = Type.bits(BitsType.indexWidthFor(tensorType.indexDims().get(i)));
         argGroup.values.set(0, tryWrapExplicitCast(arg, indexType));
       }
 
@@ -3549,7 +3550,7 @@ public class TypeChecker
     });
 
     var bodyType = check(expr.body);
-    if (!(bodyType instanceof DataType)) {
+    if (!(bodyType instanceof DataType bodyDataType)) {
       throw typeMismatchError(expr.body, "Expected a datatype but got", bodyType);
     }
 
@@ -3560,7 +3561,7 @@ public class TypeChecker
 
     expr.type = switch (expr.operation) {
       case FOLD -> bodyType;
-      case TENSOR -> Type.bits(((DataType) bodyType).bitWidth() * totalIterationSpan);
+      case TENSOR -> Type.bits(bodyDataType.bitWidth() * totalIterationSpan);
     };
 
     return null;
