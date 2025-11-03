@@ -18,7 +18,6 @@ package vadl.viam;
 
 import java.util.List;
 import javax.annotation.Nonnull;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
@@ -111,7 +110,7 @@ public class ArtificialResource extends RegisterResource {
   }
 
   public int maxNumberOfAccessIndices() {
-    return Math.max(dimCount() - 1, 0);
+    return dimCount();
   }
 
   /**

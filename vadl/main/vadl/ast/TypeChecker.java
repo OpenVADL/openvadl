@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
@@ -974,6 +975,50 @@ public class TypeChecker
     return null;
   }
 
+  /**
+   * Checks whether or not the alias can be cast to the types provided.
+   * <p>
+   * There are two rules enforced on type casting:
+   * 1) The bitwidth of both sides must be equal.
+   * 2) Only the innermost index can be expaned or the most n innermost indices can be compressed.
+   *
+   * <pre>
+   *  register X<128><8><16>
+   *  alias    A<128><8><2><8> // valid: expanded
+   *  alias    A<128><128>     // valid: compressed
+   *  alias    A<16384>        // valid: compressed
+   *  alias    A<128><16><8>   // invalid: neither compressed nor expanded but switched.
+   * </pre>
+   */
+  private boolean canAliasCastType(DataType from, DataType to) {
+    if (from.bitWidth() != to.bitWidth()) {
+      return false;
+    }
+
+    var fromIndecies = switch (from) {
+      case TensorType t ->
+          Stream.concat(t.indexDims().stream(), List.of(t.innerType().bitWidth()).stream())
+              .toList();
+      default -> List.of(from.bitWidth());
+    };
+
+    var toIndecies = switch (to) {
+      case TensorType t ->
+          Stream.concat(t.indexDims().stream(), List.of(t.innerType().bitWidth()).stream())
+              .toList();
+      default -> List.of(to.bitWidth());
+    };
+
+    // Eliminate the equal indecies
+    while (fromIndecies.size() > 0 && toIndecies.size() > 0 && fromIndecies.getFirst()
+        .equals(toIndecies.getFirst())) {
+      fromIndecies.removeFirst();
+      toIndecies.removeFirst();
+    }
+
+    return fromIndecies.size() == 1 || toIndecies.size() == 1;
+  }
+
   @Override
   public Void visit(AliasDefinition definition) {
 
@@ -1097,7 +1142,8 @@ public class TypeChecker
           definition.value = tryWrapImplicitCast(definition.value, definition.type);
         } else if (aliasType instanceof DataType aliasDataType
             && valType instanceof DataType valDataType
-            && aliasDataType.bitWidth() == valDataType.bitWidth()) {
+            && canAliasCastType(valDataType, aliasDataType)
+        ) {
           definition.value = new CastExpr(definition.value, aliasType);
         } else {
           throw typeMismatchError(definition.value, aliasType, valType);

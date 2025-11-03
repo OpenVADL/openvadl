@@ -121,7 +121,7 @@ public class AnnotationTest {
     var typechecker = new TypeChecker();
     var diag = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     assertThat(diag)
-        .hasMessageContaining("Exactly one register index was expected, but found 2.");
+        .hasMessageContaining("Invalid zero annotation");
   }
 
   @Test

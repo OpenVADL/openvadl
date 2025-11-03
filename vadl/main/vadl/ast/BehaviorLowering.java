@@ -40,7 +40,6 @@ import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
-import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.Type;
@@ -278,25 +277,27 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // FIXME: Support pre-indexed registers, for example:
     //  register alias Z = X(1)(2)
-    if (definition.type() instanceof ConcreteRelationType relType) {
+    if (definition.type() instanceof TensorType tensorType) {
       // FIXME: Wrap input and output in casts
-      var param = new vadl.viam.Parameter(
-          viamLowering.generateIdentifier(
-              identifier.name() + "::index",
-              identifier.location()),
-          relType.argTypes().getFirst(),
-          0);
-      params.add(param);
-      indices.add(new FuncParamNode(param));
-      resultType = getViamType(relType.resultType()).asDataType();
+      for (int i = 0; i < tensorType.indexDims().size(); i++) {
+        var param = new vadl.viam.Parameter(
+            viamLowering.generateIdentifier(
+                identifier.name() + "::index",
+                identifier.location()),
+            Type.bits(BitsType.minimalRequiredWidthFor(tensorType.indexDims().get(i))),
+            0);
+        params.add(param);
+        indices.add(new FuncParamNode(param));
+      }
+      resultType = tensorType.innerType();
     } else {
       resultType = getViamType(definition.type()).asDataType();
     }
 
     final var regFileDef = (RegisterDefinition) requireNonNull(definition.computedTarget);
     var reg = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
-    var regReadType = regFileDef.type() instanceof ConcreteRelationType relType
-        ? relType.resultType().asDataType() : resultType;
+    var regReadType = regFileDef.type() instanceof TensorType tensorType
+        ? tensorType.innerType() : resultType;
     ExpressionNode regAccess = new ReadRegTensorNode(
         reg,
         indices,
@@ -351,21 +352,20 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var indices = requireNonNull(definition.computedFixedArgs).stream()
         .map(this::fetch).collect(Collectors.toCollection(NodeList::new));
     var params = new ArrayList<>();
-    // FIXME: Support pre-indexed registers, for example:
-    //  register X = Bits<3><4><32>
-    //  register alias Z = X(1, 2)
-    if (definition.type() instanceof ConcreteRelationType relType) {
+
+    if (definition.type() instanceof TensorType tensorType) {
       // FIXME: Wrap input and output in casts
-      // FIXME: Add conditions based on annotations
-      var param = new vadl.viam.Parameter(
-          viamLowering.generateIdentifier(
-              identifier.name() + "::index",
-              identifier.location()),
-          relType.argTypes().getFirst(),
-          0);
-      params.add(param);
-      indices.add(new FuncParamNode(param));
-      resultType = getViamType(relType.resultType()).asDataType();
+      for (int i = 0; i < tensorType.indexDims().size(); i++) {
+        var param = new vadl.viam.Parameter(
+            viamLowering.generateIdentifier(
+                identifier.name() + "::index",
+                identifier.location()),
+            Type.bits(BitsType.minimalRequiredWidthFor(tensorType.indexDims().get(i))),
+            0);
+        params.add(param);
+        indices.add(new FuncParamNode(param));
+      }
+      resultType = tensorType.innerType();
     } else {
       resultType = getViamType(definition.type()).asDataType();
     }
