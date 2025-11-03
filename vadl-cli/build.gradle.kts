@@ -25,6 +25,7 @@ dependencies {
 application {
     applicationName = "openvadl"
     mainClass.set("vadl.cli.Main")
+    applicationDefaultJvmArgs = listOf("--enable-native-access=ALL-UNNAMED")
 }
 
 graalvmNative {
@@ -38,13 +39,19 @@ graalvmNative {
             buildArgs.addAll("-O2", "--gc=epsilon")
             // some tools require network access to download source code (QEMU, LLVM)
             buildArgs.add("--enable-url-protocols=https")
+            // Z3 platform binaries are loaded via JNI
+            buildArgs.add("--enable-native-access=ALL-UNNAMED")
 
         }
     }
 }
 
 tasks.startScripts {
-    defaultJvmOpts = listOf("-XX:TieredStopAtLevel=1")
+    defaultJvmOpts = listOf(
+        "-XX:TieredStopAtLevel=1",
+        // Z3 platform binaries are loaded via JNI
+        "--enable-native-access=ALL-UNNAMED"
+    )
 }
 
 tasks.test {
