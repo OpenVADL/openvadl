@@ -19,16 +19,20 @@ package vadl.iss.codegen;
 import static vadl.error.DiagUtils.throwNotAllowed;
 import static vadl.utils.GraphUtils.getSingleNode;
 
+import java.util.stream.Stream;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.cppCodeGen.mixins.CInvalidMixins;
+import vadl.iss.passes.extensions.InstrInfo;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
+import vadl.utils.codegen.CodeGeneratorAppendable;
+import vadl.utils.codegen.StringBuilderAppendable;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.StartNode;
@@ -76,6 +80,7 @@ class DefaultGenerator implements
   private StringBuilder builder;
   private CNodeContext ctx;
   private String targetName;
+  private InstrInfo info = insn.expectExtension(InstrInfo.class);
 
   /**
    * Constructs DefaultGenerator.
@@ -94,12 +99,11 @@ class DefaultGenerator implements
 
   String fetch() {
 
-    var name = insn.identifier.simpleName().toLowerCase();
     // static bool trans_<name>(DisasContext *ctx, arg_<name> *a) {\n
     ctx.wr("static bool trans_");
-    ctx.wr(name);
+    ctx.wr(info.cIdentName());
     ctx.wr("(DisasContext *ctx, arg_");
-    ctx.wr(name);
+    ctx.wr(info.cIdentName());
     ctx.ln(" *a) {");
 
     ctx.spacedIn().ln("trace_" + this.targetName.toLowerCase() + "_instr_trans(__func__);");
@@ -163,5 +167,48 @@ class DefaultGenerator implements
 }
 
 class HelperGenerator {
+
+  private Instruction insn;
+  private CodeGeneratorAppendable builder;
+  private String targetName;
+  private InstrInfo info = insn.expectExtension(InstrInfo.class);
+
+  /**
+   * Constructs DefaultGenerator.
+   */
+  HelperGenerator(Instruction instr,
+                  IssConfiguration configuration) {
+    this.insn = instr;
+    this.builder = new StringBuilderAppendable();
+    this.targetName = configuration.targetName();
+  }
+
+  String fetch() {
+
+    // static bool trans_<name>(DisasContext *ctx, arg_<name> *a) {\n
+    builder.append("static bool trans_")
+        .append(info.cIdentName())
+        .append("(DisasContext *ctx, arg_")
+        .append(info.cIdentName())
+        .appendLn(" *a) {")
+        .indent();
+
+
+    builder.appendLn("return true;")
+        .unindent()
+        .appendLn("}");
+    return builder.toString();
+  }
+
+  private String genHelperCall() {
+      return "gen_helper_" + info.cIdentName()
+          + "(" 
+  }
+
+  private Stream<String> fieldArgs() {
+    return info.helperFormatParamOrder()
+        .map(p -> "a->" + p.definition().simpleName().toLowerCase());
+  }
+
 
 }

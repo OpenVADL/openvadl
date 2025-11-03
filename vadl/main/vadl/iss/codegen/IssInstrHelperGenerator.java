@@ -16,7 +16,13 @@
 
 package vadl.iss.codegen;
 
+import vadl.viam.Instruction;
+
 public class IssInstrHelperGenerator extends IssProcGen {
 
+
+  public static String functionName(Instruction instr) {
+    
+  }
 
 }
