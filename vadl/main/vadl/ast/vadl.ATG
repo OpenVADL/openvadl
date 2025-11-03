@@ -1555,9 +1555,13 @@ PRODUCTIONS
     SYM_PAREN_CLOSE                           (. args = new CallIndexExpr.Arguments(values, start.join(lastTokenLoc())); .)
   .
 
-  argument<out Expr arg, boolean allowWildcard> (. arg = null; .)
-  = IF (allowWildcard && la.kind == _SYM_MUL)
-      SYM_MUL                                 (. arg = new WildcardLiteral(lastTokenLoc()); .)
+   argument<out Expr arg, boolean allowWildcard>  (. arg = null; .)
+  = SYM_MUL                                       (.
+                                                      arg = new WildcardLiteral(lastTokenLoc());
+                                                      if (!allowWildcard) {
+                                                           SynErr(la.kind);
+                                                      }
+                                                  .)
     | expression<out arg, BIN_OPS>
     [ SYM_RANGE
       expression<out Expr rangeTo, BIN_OPS>   (. arg = new RangeExpr(arg, rangeTo); .)
@@ -2014,6 +2018,7 @@ PRODUCTIONS
                                                      var params = instanceParamTypes(macroOrPlaceholder);
                                                      var args = new ArrayList<Node>(); .)
       (
+        IF (la.kind == _SYM_PAREN_CLOSE)
         SYM_PAREN_CLOSE
       |                                           (.
                                                       // If too many arguments exist we cannot parse them because we
