@@ -352,7 +352,10 @@ class ParserUtils {
   static Node createMacroReference(Parser parser, Identifier id) {
     @Nullable Macro macro = parser.macroTable.getMacro(id.name);
     if (macro == null) {
-      reportError(parser, "Unknown model: " + id.name, id.location());
+      parser.diagnostics.add(
+          Diagnostic.error("Unknown Model `%s`".formatted(id.name), id)
+              .help("Make sure the macro is defined before (above) they are used.")
+              .build());
       return DUMMY_ID;
     } else {
       List<SyntaxType> params = new ArrayList<>(macro.params().size());
@@ -493,8 +496,11 @@ class ParserUtils {
   static boolean assertSyntaxType(Parser parser, @Nullable Node node, SyntaxType requiredType,
                                   String message) {
     if (node != null && !node.syntaxType().isSubTypeOf(requiredType)) {
-      parser.errors.SemErr(parser.t.line, parser.t.col,
-          message + ": Required %s, node is %s".formatted(requiredType, node.syntaxType()));
+      parser.diagnostics.add(
+          Diagnostic.error("SyntaxType Mismatch", node)
+              .description("%s: Required `%s`, but got `%s`", message, requiredType,
+                  node.syntaxType())
+              .build());
       return false;
     }
     return true;
@@ -502,7 +508,6 @@ class ParserUtils {
 
   static Diagnostic unknownSyntaxTypeError(String name, SymbolTable macroTable,
                                            SourceLocation location) {
-
     // Initially add the basic types and custom defined in scope.
     var available = Arrays.stream(BasicSyntaxType.values())
         .map(BasicSyntaxType::getName)
@@ -546,16 +551,24 @@ class ParserUtils {
 
     String message;
     if (isPlaceholder(n)) {
-      var sb = new StringBuilder("Macro ");
+      var sb = new StringBuilder("");
       n.prettyPrint(0, sb);
-      sb.append(" used but not yet defined");
-      message = sb.toString();
+      var name = sb.toString();
+
+      p.diagnostics.add(
+          Diagnostic.error("Unknown Model `%s`".formatted(name), n)
+              .help("Make sure the macro is defined before (above) they are used.")
+              .build());
+
     } else {
-      message = "Expected node of type " + expected + ", received "
-          + n.syntaxType().print() + " - " + n;
+      message =
+          "Expected node of type " + expected + ", received " + n.syntaxType().print() + " - " + n;
+      p.diagnostics.add(
+          Diagnostic.error("SyntaxType Mismatch", n)
+              .description("%s", message)
+              .build());
     }
 
-    p.errors.SemErr(n.location().begin().line(), n.location().begin().column(), message);
     return dummy;
   }
 
@@ -717,7 +730,9 @@ class ParserUtils {
     } else if (importPath instanceof IdentifierPath identifierPath) {
       return resolveUri(parser, ((Identifier) identifierPath.segments.get(0)).name);
     } else {
-      parser.errors.SemErr("Could not resolve module path: " + importPath);
+      parser.diagnostics.add(Diagnostic.error("Import Error", parser.lastTokenLoc())
+          .description("Could not resolve module path: \"%s\"", importPath)
+          .build());
       return null;
     }
   }
@@ -734,7 +749,9 @@ class ParserUtils {
     if (Files.isRegularFile(withAppendedExtension)) {
       return withAppendedExtension;
     }
-    parser.errors.SemErr("Could not resolve module path: " + name);
+    parser.diagnostics.add(Diagnostic.error("Import Error", parser.lastTokenLoc())
+        .description("Could not resolve module path: \"%s\"", name)
+        .build());
     return null;
   }
 
@@ -818,7 +835,7 @@ class ParserUtils {
           if (rangeExpr.to instanceof IntegerLiteral integerLiteral) {
             end = integerLiteral.number;
           } else {
-            reportError(parser, "Unknown start index type " + rangeExpr.to,
+            reportError(parser, "Unknown end index type " + rangeExpr.to,
                 rangeExpr.to.location());
           }
         } else if (seqExpr.range instanceof IntegerLiteral integerLiteral) {
@@ -869,6 +886,6 @@ class ParserUtils {
   }
 
   private static void reportError(Parser parser, String error, SourceLocation location) {
-    parser.errors.SemErr(location.begin().line(), location.begin().column(), error);
+    parser.diagnostics.add(Diagnostic.error(error, location).build());
   }
 }

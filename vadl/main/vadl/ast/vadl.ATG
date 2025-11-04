@@ -25,6 +25,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 import vadl.utils.SourceLocation;
+import vadl.error.Diagnostic;
 
 import static vadl.ast.CounterDefinition.CounterKind.GROUP;
 import static vadl.ast.CounterDefinition.CounterKind.PROGRAM;
@@ -37,6 +38,11 @@ COMPILER vadl
   Ast ast = new Ast();
   SymbolTable macroTable = new SymbolTable();
   Map<String, Identifier> macroOverrides = new HashMap<>();
+
+  /**
+  * This list is for our custom generated errors that are richer than the one COCO/R produces.
+  */
+  List<Diagnostic> diagnostics = new ArrayList<>();
 
   {
     ast.rootSymbolTable = new SymbolTable();
