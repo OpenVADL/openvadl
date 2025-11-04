@@ -16,9 +16,15 @@
 
 package vadl.viam.graph.control;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
+import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.dependency.SideEffectNode;
 
 /**
  * The end node to the corresponding {@link ForallNode}.
@@ -26,23 +32,50 @@ import vadl.viam.graph.Node;
  * but just a directional node.
  */
 public class ForallEndNode extends DirectionalNode {
+  @Input
+  private NodeList<SideEffectNode> sideEffects;
 
-  public ForallEndNode(@Nonnull ControlNode next) {
+  public ForallEndNode(@Nonnull ControlNode next, NodeList<SideEffectNode> sideEffects) {
     super(next);
+    this.sideEffects = sideEffects;
+  }
+
+  public ForallEndNode(NodeList<SideEffectNode> sideEffects) {
+    this.sideEffects = sideEffects;
+  }
+
+  public NodeList<SideEffectNode> sideEffects() {
+    return sideEffects;
   }
 
   @Override
   public Node copy() {
-    return new ForallEndNode(next().copy(ControlNode.class));
+    return new ForallEndNode(next().copy(ControlNode.class), sideEffects.copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new ForallEndNode(next());
+    return new ForallEndNode(next(), sideEffects);
   }
+
 
   @Override
   public <T extends GraphNodeVisitor> void accept(T visitor) {
 
   }
+
+  @Override
+  protected void collectInputs(List<Node> collection) {
+    super.collectInputs(collection);
+    collection.addAll(sideEffects);
+  }
+
+  @Override
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnInputsUnsafe(visitor);
+    sideEffects = sideEffects.stream()
+        .map(e -> visitor.apply(this, e, SideEffectNode.class))
+        .collect(Collectors.toCollection(NodeList::new));
+  }
+
 }

@@ -17,6 +17,7 @@
 package vadl.ast;
 
 
+import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
 import static vadl.utils.GraphUtils.ifElseSideEffect;
@@ -33,14 +34,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
-import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.Type;
@@ -65,6 +63,8 @@ import vadl.viam.graph.control.BeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
+import vadl.viam.graph.control.ForallEndNode;
+import vadl.viam.graph.control.ForallNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
@@ -78,6 +78,8 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FoldNode;
+import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
@@ -90,6 +92,7 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
@@ -147,7 +150,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     ControlNode startSuccessor = end;
     if (stmtCtx.hasControlBlock()) {
-      var controlBlock = Objects.requireNonNull(stmtCtx.controlBlock());
+      var controlBlock = requireNonNull(stmtCtx.controlBlock());
       controlBlock.lastNode().setNext(end);
       startSuccessor = controlBlock.firstNode();
     }
@@ -171,7 +174,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     ControlNode startSuccessor = end;
     if (stmtCtx.hasControlBlock()) {
-      var controlBlock = Objects.requireNonNull(stmtCtx.controlBlock());
+      var controlBlock = requireNonNull(stmtCtx.controlBlock());
       controlBlock.lastNode().setNext(end);
       startSuccessor = controlBlock.firstNode();
     }
@@ -192,7 +195,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     end.setSourceLocation(definition.location());
 
     var calls = definition.statements.stream()
-        .map(s -> (InstrCallNode) Objects.requireNonNull(s.accept(this).controlBlock()).firstNode())
+        .map(s -> (InstrCallNode) requireNonNull(s.accept(this).controlBlock()).firstNode())
         .toList();
 
     ControlNode curr = end;
@@ -256,6 +259,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
    * @param definition of the alias definition for which the read function will be generated.
    * @return the mapping function.
    */
+  @SuppressWarnings("Indentation")
   Function getRegisterAliasReadFunc(AliasDefinition definition) {
     var graph = new Graph("%s Read Behavior".formatted(definition.viamId));
     graph.setSourceLocation(definition.location());
@@ -267,32 +271,33 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     DataType resultType;
     // Initially the indices are all fixed arguments specified in the alias definition.
     // E.g. in `register alias Z = X(1)` is `1` a fixed argument.
-    var indices = Objects.requireNonNull(definition.computedFixedArgs).stream()
+    var indices = requireNonNull(definition.computedFixedArgs).stream()
         .map(this::fetch).collect(Collectors.toCollection(NodeList::new));
     var params = new ArrayList<>();
 
     // FIXME: Support pre-indexed registers, for example:
-    //  register X: Bits<3><4><32>
     //  register alias Z = X(1)(2)
-    if (definition.type() instanceof ConcreteRelationType relType) {
+    if (definition.type() instanceof TensorType tensorType) {
       // FIXME: Wrap input and output in casts
-      var param = new vadl.viam.Parameter(
-          viamLowering.generateIdentifier(
-              identifier.name() + "::index",
-              identifier.location()),
-          relType.argTypes().getFirst(),
-          0);
-      params.add(param);
-      indices.add(new FuncParamNode(param));
-      resultType = getViamType(relType.resultType()).asDataType();
+      for (int i = 0; i < tensorType.indexDims().size(); i++) {
+        var param = new vadl.viam.Parameter(
+            viamLowering.generateIdentifier(
+                identifier.name() + "::index",
+                identifier.location()),
+            Type.bits(BitsType.indexWidthFor(tensorType.indexDims().get(i))),
+            0);
+        params.add(param);
+        indices.add(new FuncParamNode(param));
+      }
+      resultType = tensorType.innerType();
     } else {
       resultType = getViamType(definition.type()).asDataType();
     }
 
-    final var regFileDef = (RegisterDefinition) Objects.requireNonNull(definition.computedTarget);
+    final var regFileDef = (RegisterDefinition) requireNonNull(definition.computedTarget);
     var reg = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
-    var regReadType = regFileDef.type() instanceof ConcreteRelationType relType
-        ? relType.resultType().asDataType() : resultType;
+    var regReadType = regFileDef.type() instanceof TensorType tensorType
+        ? tensorType.innerType() : resultType;
     ExpressionNode regAccess = new ReadRegTensorNode(
         reg,
         indices,
@@ -331,6 +336,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     );
   }
 
+  @SuppressWarnings("Indentation")
   Procedure getRegisterAliasWriteProc(AliasDefinition definition) {
     final var graph = new Graph("%s Write Procedure".formatted(definition.viamId));
     graph.setSourceLocation(definition.location());
@@ -338,30 +344,29 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     final var identifier =
         viamLowering.generateIdentifier(definition.viamId + "::write", definition.loc);
-    final var regFileDef = (RegisterDefinition) Objects.requireNonNull(definition.computedTarget);
+    final var regFileDef = (RegisterDefinition) requireNonNull(definition.computedTarget);
     final var zeroConst = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
 
     DataType resultType;
     // Initially the indices are all fixed arguments specified in the alias definition.
     // E.g. in `register alias Z = X(1)` is `1` a fixed argument.
-    var indices = Objects.requireNonNull(definition.computedFixedArgs).stream()
+    var indices = requireNonNull(definition.computedFixedArgs).stream()
         .map(this::fetch).collect(Collectors.toCollection(NodeList::new));
     var params = new ArrayList<>();
-    // FIXME: Support pre-indexed registers, for example:
-    //  register X = Bits<3><4><32>
-    //  register alias Z = X(1, 2)
-    if (definition.type() instanceof ConcreteRelationType relType) {
+
+    if (definition.type() instanceof TensorType tensorType) {
       // FIXME: Wrap input and output in casts
-      // FIXME: Add conditions based on annotations
-      var param = new vadl.viam.Parameter(
-          viamLowering.generateIdentifier(
-              identifier.name() + "::index",
-              identifier.location()),
-          relType.argTypes().getFirst(),
-          0);
-      params.add(param);
-      indices.add(new FuncParamNode(param));
-      resultType = getViamType(relType.resultType()).asDataType();
+      for (int i = 0; i < tensorType.indexDims().size(); i++) {
+        var param = new vadl.viam.Parameter(
+            viamLowering.generateIdentifier(
+                identifier.name() + "::index",
+                identifier.location()),
+            Type.bits(BitsType.indexWidthFor(tensorType.indexDims().get(i))),
+            0);
+        params.add(param);
+        indices.add(new FuncParamNode(param));
+      }
+      resultType = tensorType.innerType();
     } else {
       resultType = getViamType(definition.type()).asDataType();
     }
@@ -406,7 +411,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     //  register X = Bits<3><4><32>
     //  register alias Z = X(1, 2)
     // FIXME: Wrap input and output in casts
-    // FIXME: Add conditions based on annotations
     var regfileWrite = new WriteRegTensorNode(
         regFile,
         indices,
@@ -442,7 +446,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   private <T extends vadl.viam.graph.Node> T addToGraph(T node) {
     if (!node.isActive()) {
-      return Objects.requireNonNull(currentGraph).addWithInputs(node);
+      return requireNonNull(currentGraph).addWithInputs(node);
     }
     return node;
   }
@@ -533,7 +537,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Enum field
     if (computedTarget instanceof EnumerationDefinition.Entry enumField) {
       // Inline the value of the enum
-      return fetch(Objects.requireNonNull(enumField.value));
+      return fetch(requireNonNull(enumField.value));
     }
 
     // Format field
@@ -623,6 +627,32 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (computedTarget instanceof Parameter parameter) {
       var param = viamLowering.fetch(parameter).orElseThrow();
       return new FuncParamNode(param);
+    }
+
+    // Forall Statement
+    if (computedTarget instanceof ForallStatement forallStatement) {
+      var index = forallStatement.indices.stream()
+          .filter(idx -> idx.identifier().name.equals(innerName))
+          .findFirst()
+          .orElseThrow();
+
+      return new ForIdxNode(
+          getViamType(expr.type()),
+          requireNonNull(index.computedFrom),
+          requireNonNull(index.computedTo));
+    }
+
+    // Forall Expression
+    if (computedTarget instanceof ForallExpr forallExpr) {
+      var index = forallExpr.indices.stream()
+          .filter(idx -> idx.identifier().name.equals(innerName))
+          .findFirst()
+          .orElseThrow();
+
+      return new ForIdxNode(
+          getViamType(expr.type()),
+          requireNonNull(index.computedFrom),
+          requireNonNull(index.computedTo));
     }
 
     // Function call without arguments (and no parenthesis)
@@ -766,7 +796,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public ExpressionNode visit(UnaryExpr expr) {
     var value = fetch(expr.operand);
     return new BuiltInCall(
-        Objects.requireNonNull(expr.computedTarget),
+        requireNonNull(expr.computedTarget),
         new NodeList<>(value),
         getViamType(expr.type()));
   }
@@ -789,7 +819,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         var bitSlice = subCall.computedBitSlice;
         var slice =
             new SliceNode(resultExpr, bitSlice,
-                (DataType) getViamType(Objects.requireNonNull(subCall.formatFieldType)));
+                (DataType) getViamType(requireNonNull(subCall.formatFieldType)));
         resultExpr = visitSliceIndexCall(slice, subCall.argsIndices);
       } else if (subCall.computedStatusIndex != null) {
         var indexing =
@@ -839,7 +869,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var result = exprBeforeSlice;
     for (var slice : slices) {
-      var bitSlice = Objects.requireNonNull(slice.computedBitSlice);
+      var bitSlice = requireNonNull(slice.computedBitSlice);
       var type = Type.bits(bitSlice.bitSize());
       result = new SliceNode(exprBeforeSlice, slice.computedBitSlice, type);
     }
@@ -933,7 +963,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // check the different rules and apply them accordingly
     var source = fetch(expr.value);
-    var sourceType = getViamType(Objects.requireNonNull(expr.value.type));
+    var sourceType = getViamType(requireNonNull(expr.value.type));
     var targetType = getViamType(expr.type());
     if (sourceType.isTrivialCastTo(targetType)) {
       // match 1. rule: same bit representation
@@ -1044,16 +1074,59 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
-  @Override
-  public ExpressionNode visit(ForallThenExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
-  }
 
   @Override
   public ExpressionNode visit(ForallExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    if (expr.indices.size() != 1) {
+      throw new IllegalStateException("Can only lower single index right now");
+    }
+
+    var index = requireNonNull(expr.indices.getFirst());
+    var idx = new ForIdxNode(requireNonNull(index.typeLiteral).type(),
+        requireNonNull(index.computedFrom),
+        requireNonNull(index.computedTo));
+
+    var body = fetch(expr.body);
+    var type = getViamType(expr.type());
+
+    if (expr.operation == ForallExpr.Operation.TENSOR) {
+      return new TensorNode(type, idx, body);
+    }
+
+    if (expr.operation == ForallExpr.Operation.FOLD) {
+      var leftParam =
+          new vadl.viam.Parameter(new vadl.viam.Identifier("AnonymousLeftParam", expr.loc), type,
+              0);
+      var rightParam =
+          new vadl.viam.Parameter(new vadl.viam.Identifier("AnonymousRightParam", expr.loc), type,
+              1);
+      var params = new vadl.viam.Parameter[] {leftParam, rightParam};
+
+      // FIXME: Add all cases
+      @Nullable BuiltInTable.BuiltIn builtIn = null;
+      if (expr.foldOperator == Operator.Add) {
+        builtIn = BuiltInTable.ADD;
+      } else if (expr.foldOperator == Operator.Multiply) {
+        builtIn = BuiltInTable.MUL;
+      } else {
+        throw new IllegalStateException("Unknown fold operator: " + expr.foldOperator);
+      }
+
+      var operation = new BuiltInCall(builtIn,
+          new NodeList<>(new FuncParamNode(leftParam), new FuncParamNode(rightParam)), type);
+      var graph = new Graph("Combiner Graph");
+      var returnNode = graph.addWithInputs(new ReturnNode(operation));
+      graph.addWithInputs(new StartNode(returnNode));
+
+      var combiner =
+          new Function(new vadl.viam.Identifier("AnonymousCombinerFunc", expr.loc), params, type,
+              graph);
+
+      return new FoldNode(type, idx, body, combiner);
+    }
+
+    throw new IllegalStateException(
+        "Forall of kind %s isn't supported yet.".formatted(expr.operation));
   }
 
   @Override
@@ -1090,7 +1163,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       targetDef = (vadl.ast.Definition) callTarget.computedTarget();
       argGroups = callTarget.args();
       callTarget.slices().forEach(s -> {
-        slices.add(Objects.requireNonNull(s.computedBitSlice));
+        slices.add(requireNonNull(s.computedBitSlice));
       });
       // add all slices that come from format field accesses
       callTarget.subCalls.forEach(s -> {
@@ -1104,25 +1177,26 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           ? constantEvaluator.eval(sizeExpr).value().intValueExact()
           : null;
     } else if (statement.target instanceof Identifier identTarget) {
-      targetDef = (vadl.ast.Definition) Objects.requireNonNull(identTarget.target());
+      targetDef = (vadl.ast.Definition) requireNonNull(identTarget.target());
     } else {
       throw new IllegalStateException("Unexpected target: " + statement);
     }
 
     var argExprs = AstUtils.flatArguments(argGroups).stream().map(this::fetch)
         .collect(Collectors.toCollection(NodeList::new));
-    var viamDef = viamLowering.fetch(targetDef).orElseThrow();
+    var viamTargetDef = viamLowering.fetch(targetDef).orElseThrow();
 
-    WriteResourceNode writeNode = switch (viamDef) {
-
-      // No need to call getViamType here as the viam definitions should already have that.
+    // No need to call getViamType here as the viam definitions should already have that.
+    WriteResourceNode writeNode = switch (viamTargetDef) {
       case RegisterTensor regDef -> new WriteRegTensorNode(regDef, argExprs,
           // slice the written value before writing it
           sliceWriteValue(value,
               new ReadRegTensorNode(regDef, argExprs, regDef.resultType(), null), slices),
           null, null);
 
-      case ArtificialResource aliasDef -> new WriteArtificialResNode(aliasDef, argExprs,
+      case ArtificialResource aliasDef -> new WriteArtificialResNode(
+          aliasDef,
+          argExprs,
           // slice the written value before writing it
           sliceWriteValue(value,
               new ReadArtificialResNode(aliasDef, argExprs, aliasDef.resultType()), slices)
@@ -1148,8 +1222,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
                   counterDef.registerTensor().resultType(), null), slices),
           null, null);
 
-      default -> throw new IllegalStateException("Unexpected target: " + viamDef);
+      default -> throw new IllegalStateException("Unexpected target: " + viamTargetDef);
     };
+    writeNode.setSourceLocationIfNotSet(statement.target.location());
 
     return SubgraphContext.of(statement, writeNode);
   }
@@ -1207,7 +1282,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var mask = slice.mask().castTo(Type.bits(entireRead.type().bitWidth())).not().toNode();
     var clearedResource = BuiltInCall.of(BuiltInTable.AND, entireRead, mask);
-    return BuiltInCall.of(BuiltInTable.OR, clearedResource, Objects.requireNonNull(injected));
+    return BuiltInCall.of(BuiltInTable.OR, clearedResource, requireNonNull(injected));
   }
 
 
@@ -1222,14 +1297,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
       if (stmtCtx.hasControlBlock()) {
         if (firstNode == null) {
-          firstNode = Objects.requireNonNull(stmtCtx.controlBlock()).firstNode();
+          firstNode = requireNonNull(stmtCtx.controlBlock()).firstNode();
         }
 
         if (lastNode != null) {
           // link previous stmt with current stmt
-          lastNode.setNext(Objects.requireNonNull(stmtCtx.controlBlock()).firstNode());
+          lastNode.setNext(requireNonNull(stmtCtx.controlBlock()).firstNode());
         }
-        lastNode = Objects.requireNonNull(stmtCtx.controlBlock()).lastNode();
+        lastNode = requireNonNull(stmtCtx.controlBlock()).lastNode();
       }
       nodes.addAll(stmtCtx.sideEffectsOrEmptyList());
     }
@@ -1255,8 +1330,27 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(ForallStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    var bodyGraph = statement.body.accept(this);
+
+    var forallEndNode = addToGraph(new ForallEndNode(bodyGraph.sideEffectsOrEmptyList()));
+    ControlNode next = forallEndNode;
+    if (bodyGraph.hasControlBlock()) {
+      var controlBlock = requireNonNull(bodyGraph.controlBlock());
+      controlBlock.lastNode().setNext(next);
+      next = controlBlock.firstNode();
+    }
+
+    if (statement.indices.size() != 1) {
+      throw new IllegalStateException("Can only lower single index right now");
+    }
+
+    var index = requireNonNull(statement.indices.getFirst());
+    var idx =
+        new ForIdxNode(requireNonNull(index.typeLiteral).type(), requireNonNull(index.computedFrom),
+            requireNonNull(index.computedTo));
+    var forallNode = addToGraph(new ForallNode(idx, next));
+
+    return SubgraphContext.of(statement, forallNode, forallEndNode);
   }
 
   @Override
@@ -1288,8 +1382,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     var target =
-        (Instruction) viamLowering.fetch(Objects.requireNonNull(statement.instrDef))
-            .orElseThrow();
+        (Instruction) viamLowering.fetch(requireNonNull(statement.instrDef)).orElseThrow();
     var fieldMap = Arrays.stream(target.encoding().nonEncodedFormatFields())
         .collect(Collectors.toMap(Definition::simpleName, f -> f));
 
@@ -1303,15 +1396,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           .findFirst().orElse(null);
 
       ensure(!(field == null && fieldAccess == null),
-          () -> Diagnostic.error(
-                  String.format("Cannot find a field or field access for this argument '%s'.",
-                      arg.name.name),
-                  target.location())
+          () -> error(
+              String.format("Cannot find a field or field access for this argument '%s'.",
+                  arg.name.name),
+              target.location())
               .locationNote(statement.location(), "Expanded from here."));
       ensure(!(field != null && fieldAccess != null),
-          () -> Diagnostic.error("Both field and field access function cannot be set.",
-                  Objects.requireNonNull(field).location()
-                      .join(Objects.requireNonNull(fieldAccess).location()))
+          () -> error("Both field and field access function cannot be set.",
+              requireNonNull(field).location()
+                  .join(requireNonNull(fieldAccess).location()))
               .locationNote(target.location(), "In the instruction here.")
               .locationNote(statement.location(), "Expanded from here."));
 
@@ -1379,7 +1472,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         contradictionPair = defaultPair;
       } else {
         contradictionPair =
-            buildBranch(SubgraphContext.of(statement, start, Objects.requireNonNull(end)), kase);
+            buildBranch(SubgraphContext.of(statement, start, requireNonNull(end)), kase);
       }
 
       end = addToGraph(
@@ -1388,8 +1481,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
 
-    return SubgraphContext.of(statement, Objects.requireNonNull(start),
-        Objects.requireNonNull(end));
+    return SubgraphContext.of(statement, requireNonNull(start),
+        requireNonNull(end));
   }
 
   @Override

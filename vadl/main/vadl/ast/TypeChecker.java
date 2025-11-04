@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
@@ -130,7 +131,7 @@ public class TypeChecker
     currentlyVisiting.add(nodeId);
     expr.accept(this);
     currentlyVisiting.pop();
-    return requireNonNull(expr.type);
+    return expr.type();
   }
 
   /**
@@ -406,6 +407,31 @@ public class TypeChecker
   }
 
   /**
+   * Wraps the expr provided with an explicit cast if it is possible, and not useless.
+   *
+   * @param inner expression to wrap.
+   * @param to    which the expression should be casted.
+   * @return the original expression, possibly wrapped.
+   */
+  private static Expr wrapExplicitCast(Expr inner, Type to) {
+    var innerType = requireNonNull(inner.type);
+    if (innerType.equals(to)) {
+      return inner;
+    }
+
+    if (!canExplicitCast(innerType, to)) {
+      if (!(innerType instanceof ConstantType innerConstTyp) || to instanceof ConstantType) {
+        return inner;
+      }
+
+      // For constant types we cast to them anyway to the clostest type to improve the error message
+      return new CastExpr(inner, innerConstTyp.closestTo(to));
+    }
+
+    return new CastExpr(inner, to);
+  }
+
+  /**
    * Wraps the expr provided with an implicit cast if it is possible, and not useless.
    *
    * @param inner expression to wrap.
@@ -428,6 +454,28 @@ public class TypeChecker
     }
 
     return new CastExpr(inner, to);
+  }
+
+  /**
+   * Wraps the expr provided with an explicit cast if it is possible, and not useless.
+   * However, in comparison to {@link #wrapExplicitCast(Expr, Type)}, this will throw a
+   * type mismatch exception,
+   * if the inner expression could not implicitly cast to the given type.
+   *
+   * @param inner expression to wrap.
+   * @param to    which the expression should be cast.
+   * @return the original expression.
+   * @throws Diagnostic if the inner expression cannot be implicitly cast to type.
+   */
+  private static Expr tryWrapExplicitCast(Expr inner, Type to) {
+    if (inner.type == null) {
+      throw new IllegalStateException("The type of the inner expression must be known.");
+    }
+    var wrapped = wrapExplicitCast(inner, to);
+    if (!wrapped.type().equals(to)) {
+      throw typeMismatchError(inner, to, inner.type());
+    }
+    return wrapped;
   }
 
   /**
@@ -715,24 +763,57 @@ public class TypeChecker
   public Void visit(RegisterDefinition definition) {
     definition.typeLiteral.argTypes().forEach(this::check);
     check(definition.typeLiteral.resultType());
-    if (definition.typeLiteral.argTypes().isEmpty()) {
-      // relation without args is not a register file (normal single type)
-      var typeLit = definition.typeLiteral.resultType;
-      if (!(typeLit.type instanceof DataType regType)) {
-        var type = definition.type;
-        throw error("Invalid Type", definition)
-            .description("Expected register type to be one of Bits, SInt, UInt or Bool.")
-            .note("Type was %s.", type == null ? "unknown" : type)
-            .build();
-      }
-      definition.type = regType;
-    } else {
-      // is a register file
-      definition.type = Type.concreteRelation(
-          definition.typeLiteral.argTypes().stream().map(arg -> arg.type).toList(),
-          requireNonNull(definition.typeLiteral.resultType().type));
+
+    var type = definition.typeLiteral.resultType().type();
+    if (!(type instanceof DataType)) {
+      throw error("Invalid Type", definition)
+          .description("Expected register type to be one of Bits, SInt, UInt or Bool.")
+          .note("Type was %s.", type)
+          .build();
     }
 
+    // In case the user wrote the relational type syntax, let's remap it to tensor type which makes
+    // more sense for lowering and VIAM.
+    // Example:
+    //    Bits<n> -> Bit<m_1>...<m_k>     ==>     Bits<2^n><m_1>...<m_k>
+    //    ^^^^^^ Relation Type ^^^^^^   becomes   ^^^^^ Tensor Type ^^^^
+
+    // FIXME: Don't know what to do with multiple args, figure out later.
+    if (definition.typeLiteral.argTypes().size() > 1) {
+      throw new IllegalStateException("Multiple arguments for type in register not yet defined");
+    }
+
+    definition.typeLiteral.argTypes().forEach((argType) -> {
+      var argTypeType = argType.type();
+      if (!(argTypeType instanceof DataType)) {
+        throw error("Invalid Type", definition)
+            .description("Expected register type to be one of Bits, SInt, UInt or Bool.")
+            .note("Type was %s.", argTypeType)
+            .build();
+      }
+    });
+    if (!definition.typeLiteral.argTypes().isEmpty()) {
+      var argType = (DataType) definition.typeLiteral.argTypes().getFirst().type();
+      var newIndex = 1 << argType.bitWidth(); // A fancy 2 ^ bitwidth
+      if (type instanceof TensorType tensorType) {
+        type = new TensorType(List.of(newIndex), tensorType);
+      } else {
+        if (!(type instanceof BitsType bitsType)) {
+          throw error("Type Mismatch", definition.typeLiteral.resultType())
+              .description(
+                  "Expected result type to be either a tensor or a bits type, but received `%s`",
+                  type)
+              .note(
+                  "For type literals in the relation syntax (with the arrow syntax) the result "
+                      + "type must be a bits type.")
+              .build();
+        }
+
+        type = new TensorType(List.of(newIndex), bitsType);
+      }
+    }
+
+    definition.type = type;
     return null;
   }
 
@@ -895,6 +976,50 @@ public class TypeChecker
     return null;
   }
 
+  /**
+   * Checks whether or not the alias can be cast to the types provided.
+   *
+   * <p>There are two rules enforced on type casting:
+   * 1) The bitwidth of both sides must be equal.
+   * 2) Only the innermost index can be expaned or the most n innermost indices can be compressed.
+   *
+   * <pre>
+   *  register X<128><8><16>
+   *  alias    A<128><8><2><8> // valid: expanded
+   *  alias    A<128><128>     // valid: compressed
+   *  alias    A<16384>        // valid: compressed
+   *  alias    A<128><16><8>   // invalid: neither compressed nor expanded but switched.
+   * </pre>
+   */
+  private boolean canAliasCastType(DataType from, DataType to) {
+    if (from.bitWidth() != to.bitWidth()) {
+      return false;
+    }
+
+    var fromIndecies = switch (from) {
+      case TensorType t ->
+          Stream.concat(t.indexDims().stream(), List.of(t.innerType().bitWidth()).stream())
+              .toList();
+      default -> List.of(from.bitWidth());
+    };
+
+    var toIndecies = switch (to) {
+      case TensorType t ->
+          Stream.concat(t.indexDims().stream(), List.of(t.innerType().bitWidth()).stream())
+              .toList();
+      default -> List.of(to.bitWidth());
+    };
+
+    // Eliminate the equal indecies
+    while (fromIndecies.size() > 0 && toIndecies.size() > 0 && fromIndecies.getFirst()
+        .equals(toIndecies.getFirst())) {
+      fromIndecies.removeFirst();
+      toIndecies.removeFirst();
+    }
+
+    return fromIndecies.size() == 1 || toIndecies.size() == 1;
+  }
+
   @Override
   public Void visit(AliasDefinition definition) {
 
@@ -1018,7 +1143,8 @@ public class TypeChecker
           definition.value = tryWrapImplicitCast(definition.value, definition.type);
         } else if (aliasType instanceof DataType aliasDataType
             && valType instanceof DataType valDataType
-            && aliasDataType.bitWidth() == valDataType.bitWidth()) {
+            && canAliasCastType(valDataType, aliasDataType)
+        ) {
           definition.value = new CastExpr(definition.value, aliasType);
         } else {
           throw typeMismatchError(definition.value, aliasType, valType);
@@ -2082,6 +2208,28 @@ public class TypeChecker
       return;
     }
 
+    if (origin instanceof ForallStatement forallStatement) {
+      // No need to check because this can only be the case if we are inside the for statement.
+      expr.type =
+          forallStatement.indices.stream()
+              .filter(index -> index.identifier().name.equals(innerName))
+              .findFirst()
+              .orElseThrow()
+              .identifier().type();
+      return;
+    }
+
+    if (origin instanceof ForallExpr forallExpr) {
+      // No need to check because this can only be the case if we are inside the for statement.
+      expr.type =
+          forallExpr.indices.stream()
+              .filter(index -> index.identifier().name.equals(innerName))
+              .findFirst()
+              .orElseThrow()
+              .identifier().type();
+      return;
+    }
+
     if (origin instanceof FunctionDefinition functionDefinition) {
       // It's a call without arguments
       check(functionDefinition);
@@ -2751,7 +2899,7 @@ public class TypeChecker
    *
    * <p>Sets expr.type to the the type of the subcalls.
    *
-   * @param expr            to visit
+   * @param expr            to visit.
    * @param typeBeforeSlice is the type just before.
    * @param sliceGroups     the list or arguments which hold slices or indexes
    */
@@ -2786,7 +2934,7 @@ public class TypeChecker
 
         var bitSlice = new Constant.BitSlice(parts.toArray(new Constant.BitSlice.Part[0]));
         if (bitSlice.hasOverlappingParts()) {
-          // Currently, we don't allow overlapping slices for both slices on read values
+          // FIXME: Currently, we don't allow overlapping slices for both slices on read values
           // and write targets.
           // In the future we might want to allow overlapping slices on read values.
           // For written values (`X(1, 1) := 2`) this must not be allowed, as the same value
@@ -2800,6 +2948,7 @@ public class TypeChecker
         currType = Type.bits(bitSlice.bitSize());
         slice.computedBitSlice = bitSlice;
         slice.type = currType;
+        expr.type = currType;
       }
       if (currType instanceof TensorType currTensoType) {
         if (slice.values.size() != 1) {
@@ -2816,40 +2965,60 @@ public class TypeChecker
               .locationDescription(indexExpr, "Tensors cannot be sliced.")
               .build();
         }
+        check(indexExpr);
 
-        int index;
+        @Nullable Integer staticIndex = null;
         try {
-          index = constantEvaluator.eval(indexExpr).value().intValueExact();
+          staticIndex = constantEvaluator.eval(indexExpr).value().intValueExact();
         } catch (EvaluationError e) {
-          throw error("Invalid constant value", indexExpr)
-              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
-              .description("Tensor indexing must be a constant value.")
-              .build();
+          // This is a dynamic slice, that's also fine
         }
 
-        if (index < 0 || index >= currTensoType.outerMostDimension()) {
-          throw error("Tensor Index out of bounds", indexExpr)
-              .locationDescription(indexExpr,
-                  "Invalid index `%d` for tensor `%s`", index, currTensoType)
-              .build();
-        }
-
-        // Note: the computed bitslice here is already for the lowering where we assume all tensors
-        // are flattened
         currType = currTensoType.pop();
-        var bitWidth = switch (currType) {
-          case BitsType bt -> bt.bitWidth();
-          case TensorType tt -> tt.flattenBitsType().bitWidth();
-          default -> throw new IllegalStateException();
-        };
-        slice.computedBitSlice =
-            Constant.BitSlice.of(bitWidth * index + bitWidth - 1, bitWidth * index);
-        slice.type = currType;
+        expr.type = currType;
 
+        // If a static type is declared, verify it's within the bounds and
+        if (staticIndex != null) {
+          if (staticIndex < 0
+              || staticIndex >= currTensoType.outerMostDimension()) {
+            throw error("Tensor Index out of bounds", indexExpr)
+                .locationDescription(indexExpr,
+                    "Invalid index `%d` for tensor `%s`", staticIndex, currTensoType)
+                .build();
+          }
+
+          // Note: the computed bitslice here is already for the lowering where we assume all
+          // tensors are flattened
+          var bitWidth = switch (currType) {
+            case BitsType bt -> bt.bitWidth();
+            case TensorType tt -> tt.flattenBitsType().bitWidth();
+            default -> throw new IllegalStateException();
+          };
+          slice.computedBitSlice =
+              Constant.BitSlice.of(bitWidth * staticIndex + bitWidth - 1, bitWidth * staticIndex);
+          slice.type = currType;
+
+        } else {
+          /* For dynamic indexes we cannot really check anything.
+             Consider the following example:
+             X: Bits<8><64>
+             X(idx) -> Expr has the type Bits<64>
+               ^^^
+               With the type Bits<3> this would fit perfectly because 3^2 == 8
+
+             However for the following example there doesn't exist any type at all that would fit
+             X: Bits<7><64>, because there isn't any x such that x^2 == 7
+
+             Obviously we could add a lot of special cases but we will never be able to solve the
+             underlying problem because our typesystem isn't strong enough (and I would argue it
+             also shouldn't be that strong/complex).
+           */
+          if (!indexExpr.type().isDataType()) {
+            throw typeMismatchError(indexExpr, "numerical datatype", indexExpr.type());
+          }
+        }
       }
     }
-
-    expr.type = currType;
   }
 
   /**
@@ -3081,6 +3250,28 @@ public class TypeChecker
       // set the arg group type (representing the call result)
       argGroups.getFirst().type = relType.resultType();
 
+    } else if ((expr.computedTarget() instanceof RegisterDefinition
+        || expr.computedTarget() instanceof AliasDefinition)
+        && type instanceof TensorType tensorType
+        && !argGroups.isEmpty()) {
+      // FIXME: We don't do any typechecking here as the type rules would be a bit murky in my
+      // opinion and hard for users to understand.
+      // However, the VIAM does expect quite explicit types, so we cast it to that type.
+      for (int i = 0; i < argGroups.size(); i++) {
+        var argGroup = argGroups.get(i);
+        if (argGroup.values.size() != 1) {
+          throw error("Invalid tensor index", argGroup.location)
+              .locationDescription(argGroup.location,
+                  "Tensor indexing expects exactly one argument.")
+              .build();
+        }
+        var arg = argGroup.values.getFirst();
+        check(arg);
+        var indexType = Type.bits(BitsType.indexWidthFor(tensorType.indexDims().get(i)));
+        argGroup.values.set(0, tryWrapExplicitCast(arg, indexType));
+      }
+
+      expr.typeBeforeSlice = ((TensorType) type).pop(argGroups.size());
     } else {
       if (!argGroups.isEmpty()) {
         // if there are argument groups, there was some logic failure.
@@ -3315,15 +3506,64 @@ public class TypeChecker
     return null;
   }
 
-  @Override
-  public Void visit(ForallThenExpr expr) {
-    throwUnimplemented(expr);
-    return null;
-  }
 
   @Override
   public Void visit(ForallExpr expr) {
-    throwUnimplemented(expr);
+    // FIXME: multiple indexes are hard to lower so let's throw an temporary error
+    if (expr.indices.size() > 1) {
+      throw error("Not Supported", expr)
+          .locationDescription(expr, "Multiple indicies aren't yet supported.")
+          .build();
+    }
+
+    expr.indices.forEach(index -> {
+      // FIXME: Until we have bidirectional typechecking we need this explicit cast
+      if (index.typeLiteral == null) {
+        throw error("Type Mismatch", index)
+            .locationDescription(index, "A explicit type cast is required here.")
+            .locationNote(index, "In the future this won't be necessary.")
+            .build();
+      }
+
+      index.identifier().type = check(index.typeLiteral);
+
+      // Check as expression
+      if (index.domain instanceof RangeExpr rangeExpr) {
+        try {
+          index.computedFrom = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
+          index.computedTo = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
+        } catch (EvaluationError e) {
+          throw error("Constant value required", e.location)
+              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
+              .build();
+        }
+      } else {
+        try {
+          index.computedFrom = constantEvaluator.eval(index.domain).value().intValueExact();
+          index.computedTo = index.computedFrom;
+        } catch (EvaluationError e) {
+          throw error("Constant value required", e.location)
+              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
+              .build();
+        }
+      }
+    });
+
+    var bodyType = check(expr.body);
+    if (!(bodyType instanceof DataType bodyDataType)) {
+      throw typeMismatchError(expr.body, "Expected a datatype but got", bodyType);
+    }
+
+    var totalIterationSpan = expr.indices.stream()
+        .mapToInt(
+            index -> requireNonNull(index.computedTo) - requireNonNull(index.computedFrom) + 1)
+        .sum();
+
+    expr.type = switch (expr.operation) {
+      case FOLD -> bodyType;
+      case TENSOR -> Type.bits(bodyDataType.bitWidth() * totalIterationSpan);
+    };
+
     return null;
   }
 
@@ -3567,7 +3807,48 @@ public class TypeChecker
 
   @Override
   public Void visit(ForallStatement statement) {
-    throwUnimplemented(statement);
+    // FIXME: multiple indexes are hard to lower so let's throw an temporary error
+
+    if (statement.indices.size() > 1) {
+      throw error("Not Supported", statement)
+          .locationDescription(statement, "Multiple indicies aren't yet supported.")
+          .build();
+    }
+
+    statement.indices.forEach(index -> {
+      // FIXME: Until we have bidirectional typechecking we need this explicit cast
+      if (index.typeLiteral == null) {
+        throw error("Type Mismatch", index)
+            .locationDescription(index, "A explicit type cast is required here.")
+            .locationNote(index, "In the future this won't be necessary.")
+            .build();
+      }
+
+      index.identifier().type = check(index.typeLiteral);
+
+      // Check as expression
+      if (index.domain instanceof RangeExpr rangeExpr) {
+        try {
+          index.computedFrom = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
+          index.computedTo = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
+        } catch (EvaluationError e) {
+          throw error("Constant value required", e.location)
+              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
+              .build();
+        }
+      } else {
+        try {
+          index.computedFrom = constantEvaluator.eval(index.domain).value().intValueExact();
+          index.computedTo = index.computedFrom;
+        } catch (EvaluationError e) {
+          throw error("Constant value required", e.location)
+              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
+              .build();
+        }
+      }
+    });
+
+    check(statement.body);
     return null;
   }
 }

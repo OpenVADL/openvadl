@@ -763,14 +763,6 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   }
 
   @Override
-  public Void visit(ForallThenExpr expr) {
-    beforeTravel(expr);
-    expr.children().forEach(this::travel);
-    afterTravel(expr);
-    return null;
-  }
-
-  @Override
   public Void visit(ForallExpr expr) {
     beforeTravel(expr);
     expr.children().forEach(this::travel);

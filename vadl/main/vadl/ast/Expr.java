@@ -139,8 +139,6 @@ interface ExprVisitor<R> {
 
   R visit(ExistsInThenExpr expr);
 
-  R visit(ForallThenExpr expr);
-
   R visit(ForallExpr expr);
 
   R visit(SequenceCallExpr expr);
@@ -1765,10 +1763,16 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
           return List.of();
         }
         return argsIndices.isEmpty() ? List.of() : List.of(argsIndices.getFirst());
+      } else if (type instanceof TensorType tensorType
+          && computedTarget() instanceof RegisterDefinition) {
+        return new ArrayList<>(argsIndices.subList(0,
+            Math.min(argsIndices.size(), tensorType.indexDims().size())));
+      } else if (type instanceof TensorType tensorType
+          && computedTarget() instanceof AliasDefinition aliasTarget
+          && aliasTarget.kind == AliasDefinition.AliasKind.REGISTER) {
+        return new ArrayList<>(argsIndices.subList(0,
+            Math.min(argsIndices.size(), tensorType.indexDims().size())));
       }
-      // in the case of a register:
-      // arguments are all argument groups that don't start with a range expression and
-      // don't exceed the number of tensor indices.
     }
     return List.of();
   }
@@ -1887,6 +1891,11 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     @Nullable
     Type type;
 
+    /**
+     * The computed slices.
+     * Will be set by the typechecker and only if it slicing is staticly known at compiletime,
+     * and not dynamic.
+     */
     @Nullable
     Constant.BitSlice computedBitSlice;
 
@@ -2483,146 +2492,32 @@ class ExistsInThenExpr extends Expr {
   }
 }
 
-class ForallThenExpr extends Expr {
-  @Child
-  List<ForallThenExpr.Index> indices;
-  @Child
-  Expr thenExpr;
-  SourceLocation loc;
-
-  ForallThenExpr(List<ForallThenExpr.Index> indices, Expr thenExpr, SourceLocation loc) {
-    this.indices = indices;
-    this.thenExpr = thenExpr;
-    this.loc = loc;
-  }
-
-  @Override
-  public SourceLocation location() {
-    return loc;
-  }
-
-  @Override
-  SyntaxType syntaxType() {
-    return BasicSyntaxType.EX;
-  }
-
-  @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    builder.append("forall ");
-    var isFirst = true;
-    for (ForallThenExpr.Index index : indices) {
-      if (!isFirst) {
-        builder.append(", ");
-      }
-      isFirst = false;
-      index.prettyPrint(indent, builder);
-
-    }
-    if (isBlockLayout(thenExpr)) {
-      builder.append(" then\n");
-      thenExpr.prettyPrint(indent + 1, builder);
-    } else {
-      builder.append(" then ");
-      thenExpr.prettyPrint(0, builder);
-      builder.append("\n");
-    }
-  }
-
-  @Override
-  <R> R accept(ExprVisitor<R> visitor) {
-    return visitor.visit(this);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ForallThenExpr that = (ForallThenExpr) o;
-    return Objects.equals(indices, that.indices)
-        && Objects.equals(thenExpr, that.thenExpr);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(indices, thenExpr);
-  }
-
-  static final class Index extends Node implements IdentifiableNode {
-    IsId id;
-    List<IsId> operations;
-
-    public Index(IsId id, List<IsId> operations) {
-      this.id = id;
-      this.operations = operations;
-    }
-
-    @Override
-    public Identifier identifier() {
-      return (Identifier) id;
-    }
-
-    @Override
-    public SourceLocation location() {
-      var loc = id.location();
-      if (!operations.isEmpty()) {
-        loc = loc.join(operations.get(operations.size() - 1).location());
-      }
-      return loc;
-    }
-
-    @Override
-    SyntaxType syntaxType() {
-      return BasicSyntaxType.INVALID;
-    }
-
-    @Override
-    void prettyPrint(int indent, StringBuilder builder) {
-      id.prettyPrint(0, builder);
-      builder.append(" in {");
-      var isFirstOp = true;
-      for (IsId operation : operations) {
-        if (!isFirstOp) {
-          builder.append(", ");
-        }
-        isFirstOp = false;
-        operation.prettyPrint(0, builder);
-      }
-      builder.append("}");
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      Index index = (Index) o;
-      return id.equals(index.id) && operations.equals(index.operations);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = id.hashCode();
-      result = 31 * result + operations.hashCode();
-      return result;
-    }
-  }
-}
-
+/**
+ * A expression to express tensor operations.
+ * forall in tesnor
+ * forall in fold
+ */
 class ForallExpr extends Expr {
-  List<ForallExpr.Index> indices;
+  @Child
+  List<ForallIndex> indices;
+
+  /**
+   * The kind of forall expression (fold, tensor, etc).
+   */
   Operation operation;
+
+  /**
+   * Only if the node is a fold we need to know which operator is folded over.
+   */
   @Nullable
   Operator foldOperator;
+
   @Child
   Expr body;
+
   SourceLocation loc;
 
-  ForallExpr(List<ForallExpr.Index> indices, Operation operation, @Nullable Operator foldOperator,
+  ForallExpr(List<ForallIndex> indices, Operation operation, @Nullable Operator foldOperator,
              Expr body, SourceLocation loc) {
     this.indices = indices;
     this.operation = operation;
@@ -2645,7 +2540,7 @@ class ForallExpr extends Expr {
   void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("forall ");
     var isFirst = true;
-    for (ForallExpr.Index index : indices) {
+    for (ForallIndex index : indices) {
       if (!isFirst) {
         builder.append(", ");
       }
@@ -2695,57 +2590,9 @@ class ForallExpr extends Expr {
         type);
   }
 
-  static final class Index extends Node implements IdentifiableNode {
-    IsId id;
-    Expr domain;
-
-    public Index(IsId id, Expr domain) {
-      this.id = id;
-      this.domain = domain;
-    }
-
-    @Override
-    public Identifier identifier() {
-      return (Identifier) id;
-    }
-
-    @Override
-    public SourceLocation location() {
-      return id.location().join(domain.location());
-    }
-
-    @Override
-    SyntaxType syntaxType() {
-      return BasicSyntaxType.INVALID;
-    }
-
-    @Override
-    void prettyPrint(int indent, StringBuilder builder) {
-      id.prettyPrint(0, builder);
-      builder.append(" in ");
-      domain.prettyPrint(0, builder);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      Index index = (Index) o;
-      return id.equals(index.id) && domain.equals(index.domain);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = id.hashCode();
-      result = 31 * result + domain.hashCode();
-      return result;
-    }
-  }
 
   enum Operation {
-    APPEND("append"), TENSOR("tensor"), FOLD("fold");
+    TENSOR("tensor"), FOLD("fold");
 
     private final String keyword;
 

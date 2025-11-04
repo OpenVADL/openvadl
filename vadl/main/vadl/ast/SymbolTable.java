@@ -823,7 +823,11 @@ class SymbolTable {
       var childTable = currentSymbols().createChild();
       statement.symbolTable = childTable;
       statement.indices.forEach(index -> {
-        childTable.defineSymbol(index.name.name, statement);
+        index.identifier().symbolTable = childTable;
+        childTable.defineSymbol(index.identifier().name, statement);
+        if (index.typeLiteral != null) {
+          index.typeLiteral.accept(this);
+        }
         index.domain.accept(this);
       });
       withSymbols(childTable, () -> statement.body.accept(this));
@@ -865,6 +869,10 @@ class SymbolTable {
       expr.symbolTable = childTable;
       expr.indices.forEach(index -> {
         childTable.defineSymbol(index.identifier().name, expr);
+        index.identifier().symbolTable = childTable;
+        if (index.typeLiteral != null) {
+          index.typeLiteral.accept(this);
+        }
         index.domain.accept(this);
       });
       withSymbols(childTable, () -> expr.body.accept(this));
@@ -872,23 +880,8 @@ class SymbolTable {
       afterTravel(expr);
       return null;
     }
-
-    @Override
-    public Void visit(ForallThenExpr expr) {
-      beforeTravel(expr);
-
-      // The identifiers of the for must be visible in it's children
-      var childTable = currentSymbols().createChild();
-      expr.symbolTable = childTable;
-      expr.indices.forEach(index -> {
-        childTable.defineSymbol(index.identifier().name, expr);
-      });
-      withSymbols(childTable, () -> expr.thenExpr.accept(this));
-
-      afterTravel(expr);
-      return null;
-    }
   }
+
 
   /**
    * Resolves identifiers used in expressions, as well as types used in definitions,

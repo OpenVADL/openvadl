@@ -16,10 +16,8 @@
 
 package vadl.viam;
 
-import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
@@ -53,6 +51,8 @@ public class ArtificialResource extends RegisterResource {
   @Nullable
   private final Constant.BitSlice aliasSlice;
 
+  private final List<RegisterTensor.Dimension> dimensions;
+
   /**
    * Constructs the artificial resource.
    *
@@ -63,6 +63,7 @@ public class ArtificialResource extends RegisterResource {
                             Resource innerResourceRef,
                             Function readFunction,
                             Procedure writeProcedure,
+                            List<RegisterTensor.Dimension> dimensions,
                             @Nullable Constant.BitSlice aliasSlice
   ) {
     super(identifier);
@@ -70,6 +71,7 @@ public class ArtificialResource extends RegisterResource {
     this.innerResourceRef = innerResourceRef;
     this.readFunction = readFunction;
     this.writeProcedure = writeProcedure;
+    this.dimensions = dimensions;
     this.aliasSlice = aliasSlice;
   }
 
@@ -100,11 +102,15 @@ public class ArtificialResource extends RegisterResource {
 
   @Override
   public List<RegisterTensor.Dimension> dimensions() {
-    if (innerResourceRef instanceof RegisterTensor registerTensor) {
-      return registerTensor.dimensions();
-    }
+    return dimensions;
+  }
 
-    return Collections.emptyList();
+  public int dimCount() {
+    return dimensions().size();
+  }
+
+  public int maxNumberOfAccessIndices() {
+    return dimCount();
   }
 
   /**
@@ -162,7 +168,8 @@ public class ArtificialResource extends RegisterResource {
 
   @Override
   public List<DataType> indexTypes() {
-    return List.of(addressType());
+    return dimensions().stream().limit(maxNumberOfAccessIndices())
+        .map(RegisterTensor.Dimension::indexType).toList();
   }
 
   @Override

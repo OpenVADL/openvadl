@@ -27,45 +27,8 @@ import vadl.types.Type;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 
-abstract sealed class Statement extends Node
-    permits AssignmentStatement, BlockStatement, CallStatement, ForallStatement,
-    ForallStatement.Index, IfStatement, InstructionCallStatement, LetStatement, LockStatement,
-    MacroInstanceStatement, MacroMatchStatement, MatchStatement, PlaceholderStatement,
-    RaiseStatement, StatementList {
-  <T> T accept(StatementVisitor<T> visitor) {
-    // TODO Use exhaustive switch with patterns in future Java versions
-    if (this instanceof BlockStatement b) {
-      return visitor.visit(b);
-    } else if (this instanceof LetStatement l) {
-      return visitor.visit(l);
-    } else if (this instanceof IfStatement i) {
-      return visitor.visit(i);
-    } else if (this instanceof AssignmentStatement a) {
-      return visitor.visit(a);
-    } else if (this instanceof RaiseStatement r) {
-      return visitor.visit(r);
-    } else if (this instanceof CallStatement c) {
-      return visitor.visit(c);
-    } else if (this instanceof InstructionCallStatement ic) {
-      return visitor.visit(ic);
-    } else if (this instanceof PlaceholderStatement p) {
-      return visitor.visit(p);
-    } else if (this instanceof MacroInstanceStatement m) {
-      return visitor.visit(m);
-    } else if (this instanceof MacroMatchStatement m) {
-      return visitor.visit(m);
-    } else if (this instanceof MatchStatement m) {
-      return visitor.visit(m);
-    } else if (this instanceof StatementList s) {
-      return visitor.visit(s);
-    } else if (this instanceof LockStatement l) {
-      return visitor.visit(l);
-    } else if (this instanceof ForallStatement f) {
-      return visitor.visit(f);
-    } else {
-      throw new IllegalStateException("Unhandled statement type " + getClass().getSimpleName());
-    }
-  }
+abstract class Statement extends Node {
+  abstract <R> R accept(StatementVisitor<R> visitor);
 
   @Override
   SyntaxType syntaxType() {
@@ -153,6 +116,10 @@ final class BlockStatement extends Statement {
     return Objects.hash(statements);
   }
 
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 /**
@@ -177,7 +144,7 @@ final class LetStatement extends Statement {
   /**
    * Returns the index of one of the variables the statement defines.
    *
-   * @return the type of the name provided.
+   * @return the index/offset of the name provided.
    */
   int getIndexOf(String name) {
     return identifiers.stream().map(i -> i.name).toList().indexOf(name);
@@ -242,7 +209,11 @@ final class LetStatement extends Statement {
   public int hashCode() {
     return Objects.hash(identifiers, valueExpr, body);
   }
-  
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 final class IfStatement extends Statement {
@@ -303,7 +274,10 @@ final class IfStatement extends Statement {
     return Objects.hash(condition, thenStmt, elseStmt);
   }
 
-
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 final class AssignmentStatement extends Statement {
@@ -353,6 +327,10 @@ final class AssignmentStatement extends Statement {
     return Objects.hash(target, valueExpression);
   }
 
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 final class StatementList extends Statement {
@@ -379,6 +357,11 @@ final class StatementList extends Statement {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     items.forEach(item -> item.prettyPrint(indent, builder));
+  }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
   }
 }
 
@@ -423,6 +406,11 @@ final class RaiseStatement extends Statement {
   public int hashCode() {
     return Objects.hash(statement, location);
   }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 final class CallStatement extends Statement {
@@ -461,17 +449,22 @@ final class CallStatement extends Statement {
   public int hashCode() {
     return Objects.hashCode(expr);
   }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 final class PlaceholderStatement extends Statement {
 
   List<String> segments;
-  SyntaxType type;
+  SyntaxType syntaxType;
   SourceLocation loc;
 
   PlaceholderStatement(List<String> segments, SyntaxType type, SourceLocation loc) {
     this.segments = segments;
-    this.type = type;
+    this.syntaxType = type;
     this.loc = loc;
   }
 
@@ -487,7 +480,7 @@ final class PlaceholderStatement extends Statement {
 
   @Override
   SyntaxType syntaxType() {
-    return type;
+    return syntaxType;
   }
 
   @Override
@@ -548,6 +541,11 @@ final class MacroInstanceStatement extends Statement implements IsMacroInstance 
   public MacroOrPlaceholder macroOrPlaceholder() {
     return macro;
   }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 /**
@@ -592,6 +590,11 @@ final class MacroMatchStatement extends Statement implements IsMacroMatch {
   @Override
   public int hashCode() {
     return macroMatch.hashCode();
+  }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
   }
 }
 
@@ -731,6 +734,11 @@ final class MatchStatement extends Statement {
       return patterns.get(0).location().join(result.location());
     }
   }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 final class InstructionCallStatement extends Statement {
@@ -816,6 +824,11 @@ final class InstructionCallStatement extends Statement {
   @Override
   public int hashCode() {
     return Objects.hash(id, namedArguments, unnamedArguments);
+  }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
   }
 
   static final class NamedArgument extends Node {
@@ -916,16 +929,33 @@ final class LockStatement extends Statement {
   public int hashCode() {
     return Objects.hash(expr, statement);
   }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 
+/**
+ * A statement to do repeated work in a loop, mostly used for tensors.
+ *
+ * <p>{@code
+ * // initialize 4 consecutive X registers
+ * instruction Init4X : F = forall i: Bits<8> in 0 .. 3 do
+ * X(rd + i) := 0
+ * }}
+ */
 final class ForallStatement extends Statement {
-  List<Index> indices;
+  @Child
+  List<ForallIndex> indices;
+
   @Child
   Statement body;
+
   SourceLocation loc;
 
-  ForallStatement(List<Index> indices, Statement body, SourceLocation loc) {
+  ForallStatement(List<ForallIndex> indices, Statement body, SourceLocation loc) {
     this.indices = indices;
     this.body = body;
     this.loc = loc;
@@ -941,7 +971,7 @@ final class ForallStatement extends Statement {
     builder.append(prettyIndentString(indent));
     builder.append("forall ");
     var isFirst = true;
-    for (Index index : indices) {
+    for (var index : indices) {
       if (!isFirst) {
         builder.append(", ");
       }
@@ -969,48 +999,80 @@ final class ForallStatement extends Statement {
     return Objects.hash(indices, body);
   }
 
-  static final class Index extends Statement implements IdentifiableNode {
-    Identifier name;
-    Expr domain;
-
-    public Index(Identifier name, Expr domain) {
-      this.name = name;
-      this.domain = domain;
-    }
-
-    @Override
-    public Identifier identifier() {
-      return name;
-    }
-
-    @Override
-    public SourceLocation location() {
-      return name.location().join(domain.location());
-    }
-
-    @Override
-    void prettyPrint(int indent, StringBuilder builder) {
-      name.prettyPrint(0, builder);
-      builder.append(" in ");
-      domain.prettyPrint(0, builder);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      Index that = (Index) o;
-      return name.equals(that.name) && domain.equals(that.domain);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = name.hashCode();
-      result = 31 * result + domain.hashCode();
-      return result;
-    }
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
   }
+
 }
 
+final class ForallIndex extends Node implements IdentifiableNode {
+  @Child
+  IsId name;
+
+  @Child
+  @Nullable
+  TypeLiteral typeLiteral;
+
+  @Child
+  Expr domain;
+
+  /**
+   * Set by the typechecker.
+   */
+  @Nullable
+  Integer computedFrom;
+  @Nullable
+  Integer computedTo;
+
+  public ForallIndex(IsId name, @Nullable TypeLiteral typeLiteral, Expr domain) {
+    this.name = name;
+    this.typeLiteral = typeLiteral;
+    this.domain = domain;
+  }
+
+  @Override
+  public Identifier identifier() {
+    return (Identifier) name;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return name.location().join(domain.location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    name.prettyPrint(0, builder);
+    if (typeLiteral != null) {
+      builder.append(": ");
+      typeLiteral.prettyPrint(0, builder);
+    }
+    builder.append(" in ");
+    domain.prettyPrint(0, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ForallIndex index = (ForallIndex) o;
+    return name.equals(index.name) && Objects.equals(typeLiteral, index.typeLiteral)
+        && domain.equals(index.domain);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = name.hashCode();
+    result = 31 * result + Objects.hashCode(typeLiteral);
+    result = 31 * result + domain.hashCode();
+    return result;
+  }
+}

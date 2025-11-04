@@ -201,10 +201,6 @@ public class Ungrouper
     return expr;
   }
 
-  @Override
-  public Expr visit(ForallThenExpr expr) {
-    return expr;
-  }
 
   @Override
   public Expr visit(ForallExpr expr) {

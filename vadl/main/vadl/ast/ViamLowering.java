@@ -24,6 +24,7 @@ import static vadl.error.Diagnostic.warning;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
+import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,7 +67,6 @@ import vadl.viam.Encoding;
 import vadl.viam.ExceptionDef;
 import vadl.viam.Format;
 import vadl.viam.Function;
-import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Memory;
@@ -412,12 +412,22 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       var innerResource =
           (RegisterTensor) fetch(requireNonNull(definition.computedTarget)).orElseThrow();
 
+      List<RegisterTensor.Dimension> dimensions = switch (definition.type()) {
+        case TensorType tensorType -> Streams.mapWithIndex(
+                tensorType.indexDims().stream(),
+                (dim, index) -> new RegisterTensor.Dimension((int) index,
+                    Type.bits(BitsType.indexWidthFor((long) dim)), dim))
+            .toList();
+        default -> new ArrayList<>();
+      };
+
       return Optional.of(new ArtificialResource(
           identifier,
           ArtificialResource.Kind.REGISTER,
           innerResource,
           new BehaviorLowering(this).getRegisterAliasReadFunc(definition),
           new BehaviorLowering(this).getRegisterAliasWriteProc(definition),
+          dimensions,
           definition.slice
       ));
     }
@@ -1607,17 +1617,24 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   private RegisterTensor.Dimension dimFromType(int index, DataType dataType) {
     // e.g. for `register: Bits<5> -> Bits<32>` the inner type is Bits<32>.
     // the corresponding dimension is (index: 1, type: Bits<5>, 32)
-    var innerDimType = Type.bits(BitsType.minimalRequiredWidthFor(dataType.bitWidth()));
+    var innerDimType = Type.bits(BitsType.indexWidthFor(dataType.bitWidth()));
     return new RegisterTensor.Dimension(index, innerDimType, dataType.toBitsType().bitWidth());
   }
 
   @Override
   public Optional<vadl.viam.Definition> visit(RegisterDefinition definition) {
-    var type = getViamType(definition.type());
-
+    var type = definition.type();
     DataType resultType;
     var dimensions = new ArrayList<RegisterTensor.Dimension>();
-    if (type instanceof ConcreteRelationType relType) {
+    if (type instanceof TensorType tensorType) {
+      // FIXME: There must be a better way to do this.
+      for (int i = 0; i < tensorType.indexDims().size(); i++) {
+        var size = tensorType.indexDims().get(i);
+        var indexType = Type.bits(BitsType.indexWidthFor(size));
+        dimensions.add(new RegisterTensor.Dimension(i, indexType, size));
+      }
+      resultType = (DataType) getViamType(tensorType.innerType());
+    } else if (type instanceof ConcreteRelationType relType) {
       // if it is a relation type, it is a register file of the form x -> y, otherwise
       var argTypes = relType.argTypes();
       IntStream.range(0, argTypes.size()).forEach(i -> {
