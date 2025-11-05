@@ -55,7 +55,8 @@ import vadl.viam.graph.dependency.SliceNode;
  * }
  * }</pre>
  */
-public class ShiftedImmediateStrategyPredicate implements EncodingPredicateGenerationStrategy {
+public class ShiftedImmediateEncodingPredicateStrategy
+    implements EncodingPredicateGenerationStrategy {
   @Override
   public boolean checkIfApplicable(Format.FieldAccess fieldAccess) {
     // Check if only one field

@@ -26,6 +26,7 @@ import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -52,7 +53,8 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * }
  * }</pre>
  */
-public class ArithmeticImmediateStrategyPredicate implements EncodingPredicateGenerationStrategy {
+public class ArithmeticImmediateEncodingPredicateStrategy
+    implements EncodingPredicateGenerationStrategy {
   @Override
   public boolean checkIfApplicable(Format.FieldAccess fieldAccess) {
     // Check if only one field
@@ -65,8 +67,7 @@ public class ArithmeticImmediateStrategyPredicate implements EncodingPredicateGe
         .allMatch(x ->
             x.builtIn() == BuiltInTable.ADD
                 || x.builtIn() == BuiltInTable.SUB)
-        && behavior.getNodes(SliceNode.class).findAny()
-        .isEmpty();
+        && behavior.getNodes(SliceNode.class).findAny().isEmpty();
   }
 
   @Override
@@ -106,27 +107,43 @@ public class ArithmeticImmediateStrategyPredicate implements EncodingPredicateGe
     // y = x - 6
     // y + 6 = x
     // The heuristic just swaps the operators.
-    fieldRef.replaceAndDelete(new FieldAccessRefNode(fieldAccess, fieldAccess.type()));
 
-    returnNode.applyOnInputs(new GraphVisitor.Applier<>() {
-      @Nullable
-      @Override
-      public Node applyNullable(Node from, @Nullable Node to) {
-        if (to != null) {
-          to.applyOnInputs(this);
-        }
+    // If the encoded value is negated then we also need to apply the negation.
+    var isNegated = copy.getNodes(BuiltInCall.class)
+        .anyMatch(x -> x.builtIn() == BuiltInTable.NEG && x.arguments().getFirst() == fieldRef);
 
-        if (to instanceof BuiltInCall cast) {
-          if (cast.builtIn() == BuiltInTable.ADD) {
-            cast.setBuiltIn(BuiltInTable.SUB);
-          } else if (cast.builtIn() == BuiltInTable.SUB) {
-            cast.setBuiltIn(BuiltInTable.ADD);
+    if (isNegated) {
+      // f(x) = -x - 6
+      // Let y = f(x)
+      // y = -x - 6
+      // y + 6 = -x
+      // -y - 6 = x
+      fieldRef.replaceAndDelete(new BuiltInCall(BuiltInTable.NEG,
+          new NodeList<>(new FieldAccessRefNode(fieldAccess, fieldAccess.type())),
+          fieldAccess.type()));
+    } else {
+      fieldRef.replaceAndDelete(new FieldAccessRefNode(fieldAccess, fieldAccess.type()));
+
+      returnNode.applyOnInputs(new GraphVisitor.Applier<>() {
+        @Nullable
+        @Override
+        public Node applyNullable(Node from, @Nullable Node to) {
+          if (to != null) {
+            to.applyOnInputs(this);
           }
-        }
 
-        return to;
-      }
-    });
+          if (to instanceof BuiltInCall cast) {
+            if (cast.builtIn() == BuiltInTable.ADD) {
+              cast.setBuiltIn(BuiltInTable.SUB);
+            } else if (cast.builtIn() == BuiltInTable.SUB) {
+              cast.setBuiltIn(BuiltInTable.ADD);
+            }
+          }
+
+          return to;
+        }
+      });
+    }
 
     // At the end of the encoding function, the type must be exactly as the field type
     var sliceNode =
