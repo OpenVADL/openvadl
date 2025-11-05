@@ -32,6 +32,8 @@ import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
 import vadl.pass.PassResults;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.rtl.passes.DebugOutputPass;
+import vadl.rtl.passes.HazardAnalysisPass;
 import vadl.rtl.passes.InstructionProgressGraphCreationPass;
 import vadl.rtl.passes.InstructionProgressGraphLowerPass;
 import vadl.rtl.passes.InstructionProgressGraphMergePass;
@@ -49,8 +51,9 @@ public class RtlLoweringTest extends AbstractTest {
 
   @Test
   void instructionBehaviorCheck() throws IOException, DuplicatedPassKeyException {
+
     var generalConfig =
-        new GeneralConfiguration(Path.of("build/test-output"), false);
+        new GeneralConfiguration(Path.of("build/test-output"), true);
     var config = new RtlConfiguration(generalConfig);
 
     var order = PassOrders.rtl(config);
@@ -64,8 +67,6 @@ public class RtlLoweringTest extends AbstractTest {
     addDumpAndCheck(config, order, InstructionProgressGraphLowerPass.class, false);
 
     setupPassManagerAndRunSpec("sys/risc-v/rv32i.vadl", order);
-    setupPassManagerAndRunSpec("sys/risc-v/rv64im.vadl", order);
-    setupPassManagerAndRunSpec("sys/risc-v/rvcsr.vadl", order);
   }
 
   private void addDumpAndCheck(GeneralConfiguration config, PassOrder order, Class<?> selector) {

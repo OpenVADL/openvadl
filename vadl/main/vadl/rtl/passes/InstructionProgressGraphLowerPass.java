@@ -27,6 +27,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
+import vadl.rtl.ipg.nodes.RtlDecodeTreeNode;
 import vadl.rtl.ipg.nodes.RtlInstructionWordSliceNode;
 import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
 import vadl.rtl.ipg.nodes.RtlOneHotDecodeNode;
@@ -34,6 +35,7 @@ import vadl.rtl.ipg.nodes.RtlSelectByInstructionNode;
 import vadl.rtl.map.MiaMapping;
 import vadl.rtl.utils.RtlSimplificationRules;
 import vadl.rtl.utils.RtlSimplifier;
+import vadl.types.UIntType;
 import vadl.utils.GraphUtils;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
@@ -70,55 +72,80 @@ public class InstructionProgressGraphLowerPass extends Pass {
     if (mapping == null) {
       return null;
     }
+
+    var decodeContext = mapping.ensureDecode();
+
+    // TODO: Introduce a 'vdt' node, which considers the 'RtlIsInstructionNode'
+    //  and 'RtlOneHotDecodeNode' as 'signals' to output.
+    //  Add the instruction word as input to the 'vdt' node
+
+    var vdtDecodeNode = new RtlDecodeTreeNode();
+
+    // TODO: In reality the insn context of the decode node should be isa.ownInstruction(), however
+    // then the ipg.fetch() node doesn't depend on 'all' possible instructions anymore and receives
+    // an IsInstruction condition, which leads to a circular dependency...
+    ipg.add(vdtDecodeNode, ipg.instructions());
+    decodeContext.ipgNodes().add(vdtDecodeNode);
+
     var added = new ArrayList<Node>();
 
     // patch write and read conditions with is-instruction nodes
     ipg.getNodes(WriteResourceNode.class).forEach(write -> {
-      added.addAll(patchCondition(write, write.condition(), ipg, mapping));
+      added.addAll(patchCondition(write, write.condition(), vdtDecodeNode, ipg, mapping));
     });
     ipg.getNodes(RtlConditionalReadNode.class).forEach(read -> {
-      added.addAll(patchCondition(read.asReadNode(), read.nullableCondition(), ipg, mapping));
+      added.addAll(
+          patchCondition(read.asReadNode(), read.nullableCondition(), vdtDecodeNode, ipg, mapping));
     });
 
     // add select-by-instruction selection inputs
-    var decodeContext = mapping.ensureDecode();
     ipg.getNodes(RtlSelectByInstructionNode.class).forEach(select -> {
-      if (select.selection() == null) {
-        // generate expression that selects output based on sets of instructions
-        var oneHot = select.instructions().stream()
-            .map(ins -> ipg.add(new RtlIsInstructionNode(ins, null), ins))
-            .map(ExpressionNode.class::cast).toList();
-        added.addAll(oneHot);
-        var instructions = ipg.getContext(select).instructions();
-        var selection = ipg.add(new RtlOneHotDecodeNode(oneHot), instructions);
-        added.add(selection);
-        select.setSelection(selection);
 
-        // add MiA mapping to decode
-        decodeContext.ipgNodes().addAll(oneHot);
-        decodeContext.ipgNodes().add(selection);
+      if (select.selection() != null) {
+        // TODO: Is that even a viable path?
+        return;
       }
+
+      // Generate expression that selects output based on sets of instructions
+      var instructions = ipg.getContext(select).instructions();
+
+      var oneHotType = UIntType.minimalTypeFor(select.instructions().size() - 1);
+      // TODO: Maybe we wan't to attach the selection's instructions to the oneHot
+      var selection = ipg.add(new RtlOneHotDecodeNode(oneHotType, vdtDecodeNode), instructions);
+
+      vdtDecodeNode.addSignal(selection);
+
+      added.add(selection);
+      select.setSelection(selection);
+
+      // add MiA mapping to decode
+      decodeContext.ipgNodes().add(selection);
     });
 
     // handle undefined instructions
     // TODO undefined instruction behavior from specification
     var anyIns = ipg.add(
-        new RtlIsInstructionNode(isa.ownInstructions(), null),
+        new RtlIsInstructionNode(isa.ownInstructions(), vdtDecodeNode),
         isa.ownInstructions()
     );
-    var unknownIns = ipg.add(GraphUtils.not(anyIns), isa.ownInstructions());
     decodeContext.ipgNodes().add(anyIns);
-    decodeContext.ipgNodes().add(unknownIns);
-    ipg.setUnknownInstruction(unknownIns);
+
+    // TODO: Create a negated version of the IsInstructionNod (or even a dedicated node)
+    //var invalidInsn = ipg.add(GraphUtils.not(anyIns), isa.ownInstructions());
+    //decodeContext.ipgNodes().add(anyIns);
+
+    vdtDecodeNode.addSignal(anyIns);
+
+    // TODO: Do we still need this?
+    ipg.setUnknownInstruction(anyIns);
 
     // optimize
     new RtlSimplifier(RtlSimplificationRules.rules).run(ipg, mapping);
 
-    // add instruction input to is-instruction nodes and instruction word slices
-    var isInsList = ipg.getNodes(RtlIsInstructionNode.class).toList();
-    for (RtlIsInstructionNode isIns : isInsList) {
-      isIns.setInstruction(ipg.fetch());
-    }
+    // add instruction input to vdt decode node
+    vdtDecodeNode.setInstructionWord(ipg.fetch());
+
+    // add instruction input to instruction word slices
     var insSliceList = ipg.getNodes(RtlInstructionWordSliceNode.class).toList();
     for (RtlInstructionWordSliceNode insSlice : insSliceList) {
       insSlice.setInstruction(ipg.fetch());
@@ -131,24 +158,29 @@ public class InstructionProgressGraphLowerPass extends Pass {
   }
 
   private List<Node> patchCondition(Node node, @Nullable ExpressionNode cond,
+                                    RtlDecodeTreeNode decodeTree,
                                     InstructionProgressGraph ipg, MiaMapping mapping) {
     node.ensure(cond != null, "Condition input must be set before we extend it");
     var instructions = ipg.getContext(node).instructions();
-    if (!instructions.containsAll(ipg.instructions())) {
+    if (!instructions.containsAll(ipg.instructions())) { // TODO: What's this check for exactly; are we aware that we're processing the instruction word fetch here, too?
       // determine mapping context for existing condition
       var condContext = mapping.ensureContext(cond);
       if (cond.isConstant()) {
         condContext = mapping.ensureDecode();
       }
 
+      var isIns = ipg.add(new RtlIsInstructionNode(instructions, decodeTree), instructions);
+      decodeTree.addSignal(isIns);
+
       // if not active in all instructions, patch condition
-      var isIns = ipg.add(new RtlIsInstructionNode(instructions, ipg.fetch()), instructions);
       var newCond = ipg.add(GraphUtils.and(cond, isIns), instructions);
       node.replaceInput(cond, newCond);
 
       // add MiA mapping
       var decodeContext = mapping.ensureDecode();
       decodeContext.ipgNodes().add(isIns);
+      // TODO: What if condContext < decodeContext? Then the newCond is mapped to the e.g. FETCH
+      //       stage, while it's data dependency (isInsn) is only present in a later stage.
       condContext.ipgNodes().add(newCond);
 
       return List.of(isIns, newCond);

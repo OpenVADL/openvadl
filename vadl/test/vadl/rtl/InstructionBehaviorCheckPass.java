@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.Assertions;
@@ -29,7 +30,9 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.rtl.ipg.nodes.RtlDecodeTreeNode;
 import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
+import vadl.rtl.ipg.nodes.RtlOneHotDecodeNode;
 import vadl.rtl.ipg.nodes.RtlReadMemNode;
 import vadl.rtl.ipg.nodes.RtlReadRegTensorNode;
 import vadl.rtl.ipg.nodes.RtlSelectByInstructionNode;
@@ -110,7 +113,7 @@ public class InstructionBehaviorCheckPass extends Pass {
         ignore = implicit.stream().map(copyMap::get).filter(Objects::nonNull)
             .collect(Collectors.toSet());
       } else {
-        var ipgCopy = ipg.copy("IPG graph for " + curInstr.simpleName());
+          var ipgCopy = ipg.copy("IPG graph for " + curInstr.simpleName());
         graph = ipgCopy;
         ignore = Stream.of(ipgCopy.pcIncrement(), ipgCopy.fetch())
             .filter(Objects::nonNull).collect(Collectors.toSet());
@@ -129,16 +132,35 @@ public class InstructionBehaviorCheckPass extends Pass {
             .toNode();
         isIns.replaceAndDelete(constNode);
       }
+
       for (RtlSelectByInstructionNode sel : graph.getNodes(RtlSelectByInstructionNode.class).toList()) {
-        if (sel.selection() == null) { // selection inputs are handled during simplification
-          for (int i = 0; i < sel.instructions().size(); i++) {
-            if (sel.instructions().get(i).contains(curInstr)) {
-              sel.replaceAndDelete(sel.values().get(i));
-              break;
-            }
+
+        if (sel.selection() != null && sel.selection() instanceof RtlOneHotDecodeNode oneHot) {
+          // one-hot nodes are no longer removed during RTL simplification, as they don't
+          // depend on the is-instruction nodes anymore
+
+          var idx = IntStream.range(0, sel.instructions().size())
+              .filter(i -> sel.instructions().get(i).contains(curInstr))
+              .findFirst().orElse(0);
+          var constNode = Constant.Value.of(idx, oneHot.type().asDataType())
+              .toNode();
+
+          oneHot.replaceAndDelete(constNode);
+
+          // The selection should now be simplified during RTL simplification
+          continue;
+        }
+
+        for (int i = 0; i < sel.instructions().size(); i++) {
+          if (sel.instructions().get(i).contains(curInstr)) {
+            sel.replaceAndDelete(sel.values().get(i));
+            break;
           }
         }
       }
+
+      Assertions.assertFalse(graph.getNodes(RtlDecodeTreeNode.class).findAny().isPresent(),
+          "Expected the RtlDecodeTreeNode to be removed after select-by- and one-hot constant replacement");
 
       // simplify using rules and remove inactive writes
       new RtlSimplifier(RtlSimplificationRules.rules).run(graph);

@@ -25,6 +25,7 @@ import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
 import vadl.rtl.ipg.nodes.RtlDebugPrintNode;
+import vadl.rtl.ipg.nodes.RtlDecodeTreeNode;
 import vadl.rtl.ipg.nodes.RtlInstructionWordSliceNode;
 import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
 import vadl.rtl.ipg.nodes.RtlOneHotDecodeNode;
@@ -252,21 +253,29 @@ public class HdlBehavior {
     }
 
     @Handler
+    String handle(RtlDecodeTreeNode node) {
+      // TODO: Implement
+      return "decode_tree";
+    }
+
+    @Handler
     String handle(RtlIsInstructionNode node) {
-      var ins = node.instruction();
+      // TODO: Implement
+      return "is_insn";
+      /*var ins = node.instruction();
       if (ins == null) {
         throw new ViamGraphError("Missing instruction input").addContext(node);
       }
       return node.instructions().stream()
           .map(HdlUtils::getInstructionBitPattern)
           .map(pat -> "BitPat(\"b" + pat + "\").matches(" + dispatch(ins) + ")")
-          .collect(Collectors.joining(" | "));
+          .collect(Collectors.joining(" | "));*/
     }
 
     @Handler
     String handle(RtlOneHotDecodeNode node) {
-      return "OHToUInt(Cat(" + node.values().reversed().stream()
-          .map(this::dispatch).collect(Collectors.joining(", ")) + "))";
+      // TODO: Implement
+      return "one_hot";
     }
 
     @Handler

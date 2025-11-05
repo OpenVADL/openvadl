@@ -191,13 +191,16 @@ public class InstructionProgressGraphNamePass extends Pass {
 
   private void nameOneHot(InstructionProgressGraph ipg) {
     name(ipg, RtlOneHotDecodeNode.class, node -> {
-      var hints = node.values().stream()
-          .map(v -> ipg.getContext(v).shortestNameHint()).toList();
-      if (hints.stream().allMatch(Optional::isPresent)) {
-        return "bin_" + hints.stream().filter(Optional::isPresent)
-            .map(Optional::get).collect(Collectors.joining("_"));
+      var selectNode = node.usages()
+          .filter(RtlSelectByInstructionNode.class::isInstance)
+          .map(RtlSelectByInstructionNode.class::cast)
+          .findFirst().orElse(null);
+      if (selectNode == null) {
+        return null;
       }
-      return null;
+      return ipg.getContext(selectNode).shortestNameHint()
+          .map(h -> "bin_" + h)
+          .orElse(null);
     });
   }
 

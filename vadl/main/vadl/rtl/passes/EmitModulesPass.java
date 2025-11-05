@@ -186,7 +186,8 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
     // replace is-instruction nodes matching sets of instructions
     // with or-expressions of single instruction is-instruction nodes
     // this results in a cleaner hdl output
-    behavior.getNodes(RtlIsInstructionNode.class).toList()
+    // TODO: Implement HDL conversion
+    /*behavior.getNodes(RtlIsInstructionNode.class).toList()
         .forEach(node -> {
           if (node.instructions().size() > 1) {
             node.instructions().stream()
@@ -196,7 +197,8 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
                 .map(behavior::addWithInputs)
                 .ifPresent(node::replaceAndDelete);
           }
-        });
+        });*/
+
 
     return new HdlModule(context, stage, stage.simpleName(),
         resources, List.of(), behavior);

@@ -22,7 +22,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import vadl.rtl.ipg.nodes.RtlOneHotDecodeNode;
 import vadl.rtl.ipg.nodes.RtlSelectByInstructionNode;
 import vadl.types.BuiltInTable;
 import vadl.utils.BigIntUtils;
@@ -239,24 +238,9 @@ public class RtlSimplificationRules {
   public static class OneHotConstInSimplificationRule implements AlgebraicSimplificationRule {
     @Override
     public Optional<Node> simplify(Node node) {
-      if (node instanceof RtlOneHotDecodeNode n) {
-        Integer sel = null;
-        for (ExpressionNode value : n.values()) {
-          if (value instanceof ConstantNode c) {
-            if (c.constant().asVal().bool()) {
-              if (sel != null) {
-                return Optional.empty(); // ignore encoding error
-              }
-              sel = n.values().indexOf(value);
-            }
-          } else {
-            return Optional.empty();
-          }
-        }
-        if (sel != null) {
-          return Optional.of(Constant.Value.of(sel, n.type().asDataType()).toNode());
-        }
-      }
+      // TODO: For now there is no simplification, as all one-hot nodes are immediately decided
+      //       by the decode tree. In the future (once we have a general one-hot variant), replace
+      //       this with a simplification in case of constant inputs.
       return Optional.empty();
     }
   }

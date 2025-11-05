@@ -17,11 +17,9 @@
 package vadl.rtl.ipg.nodes;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
@@ -46,20 +44,19 @@ public class RtlIsInstructionNode extends ExpressionNode {
   private final Set<Instruction> instructions;
 
   @Input
-  @Nullable
-  protected ExpressionNode instruction;
+  protected RtlDecodeTreeNode decodeTree;
 
   /**
    * Create a new is-instruction node for a collection of instructions it should match.
    *
    * @param instructions collection of instructions
-   * @param instruction instruction word input
+   * @param decodeTree   decode tree input
    */
   public RtlIsInstructionNode(Collection<Instruction> instructions,
-                              @Nullable ExpressionNode instruction) {
+                              RtlDecodeTreeNode decodeTree) {
     super(Type.bool());
     this.instructions = new LinkedHashSet<>(instructions);
-    this.instruction = instruction;
+    this.decodeTree = decodeTree;
   }
 
   /**
@@ -72,32 +69,24 @@ public class RtlIsInstructionNode extends ExpressionNode {
   }
 
   /**
-   * Instruction word input, set by {@link vadl.rtl.passes.InstructionProgressGraphLowerPass}.
+   * Decode tree deciding this node
    *
-   * @return instruction word input
+   * @return the decoder deciding this node
    */
-  @Nullable
-  public ExpressionNode instruction() {
-    return instruction;
-  }
-
-  public void setInstruction(@Nullable ExpressionNode instruction) {
-    updateUsageOf(this.instruction, instruction);
-    this.instruction = instruction;
+  public RtlDecodeTreeNode decodeTree() {
+    return decodeTree;
   }
 
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    instruction = visitor.applyNullable(this, instruction, ExpressionNode.class);
+    decodeTree = visitor.apply(this, decodeTree, RtlDecodeTreeNode.class);
   }
 
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);
-    if (this.instruction != null) {
-      collection.add(instruction);
-    }
+    collection.add(decodeTree);
   }
 
   @Override
@@ -108,13 +97,12 @@ public class RtlIsInstructionNode extends ExpressionNode {
 
   @Override
   public ExpressionNode copy() {
-    return new RtlIsInstructionNode(instructions,
-        (instruction != null) ? instruction.copy() : null);
+    return new RtlIsInstructionNode(instructions, decodeTree.copy(RtlDecodeTreeNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new RtlIsInstructionNode(instructions, instruction);
+    return new RtlIsInstructionNode(instructions, decodeTree);
   }
 
   @Override
