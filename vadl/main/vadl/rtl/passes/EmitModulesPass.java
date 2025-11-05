@@ -66,7 +66,7 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "rtl/Module.scala";
+    return "rtl/scala/Module.scala";
   }
 
   @Override

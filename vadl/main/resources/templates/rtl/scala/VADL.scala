@@ -1,6 +1,7 @@
 [# th:if="${package != ''}"]package [(${package})]
 
 [/]import chisel3._
+import chisel3.util._
 
 object VADL {
 
@@ -46,10 +47,14 @@ object VADL {
   }
 
   class MemReadPort[T <: Data](tpe: T, n: Int, addrWidth: Int) extends RegFileReadPort(Vec(n, tpe), addrWidth) {
+    val words = Input(Bits(log2Ceil(n+1).W))
+
     [# th:if="${memoryValid}"]val valid = Output(Bool())[/]
   }
 
   class MemWritePort[T <: Data](tpe: T, n: Int, addrWidth: Int) extends RegFileWritePort(Vec(n, tpe), addrWidth) {
+    val words = Input(Bits(log2Ceil(n+1).W))
+
     [# th:if="${memoryValid}"]val valid = Output(Bool())[/]
   }
 

@@ -206,7 +206,6 @@ public class InstructionProgressGraphCreationPass extends Pass {
         ipg.getNodes(WriteMemNode.class)
             .filter(write -> write.resourceDefinition().equals(mem))
             .toList().forEach(write -> {
-              var words = new ConstantNode(Constant.Value.of(write.words(), wordType));
               ExpressionNode value = write.value();
               while (value instanceof TruncateNode truncate) {
                 value = truncate.value();
@@ -217,6 +216,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
               if (value.type().asDataType().bitWidth() > valType.bitWidth()) {
                 value = new TruncateNode(value, valType);
               }
+              var words = new ConstantNode(Constant.Value.of(write.words(), wordType));
               var rtlWrite = new RtlWriteMemNode(write.memory(), maxWrite.getAsInt(), words,
                   write.address(), value, write.nullableCondition());
               ipg.replaceAndDelete(write, rtlWrite);

@@ -405,6 +405,11 @@ public class HdlBehavior {
     }
 
     @Handler
+    String handle(RtlResetSignalNode node) {
+      return "reset.asBool";
+    }
+
+    @Handler
     String handle(RtlValidSignalNode node) {
       if (node.validNode() instanceof RtlReadMemNode read) {
         var expr = portOrResource(read, read.resourceDefinition());
@@ -448,6 +453,17 @@ public class HdlBehavior {
             addrEnd,
             false, null
         ));
+        if (node instanceof RtlReadMemNode read) {
+          var wordsEnd = new HdlConnection.ExpressionEndpoint(
+              read.words(),
+              dispatch(read.words())
+          );
+          module.connections().add(new HdlConnection(
+              new HdlConnection.ExpressionEndpoint(node, expr + ".words"),
+              wordsEnd,
+              false, null
+          ));
+        }
       }
       if (res.isPresent() || node instanceof ReadSignalNode) {
         return expr;
@@ -510,6 +526,17 @@ public class HdlBehavior {
           module.connections().add(new HdlConnection(
               new HdlConnection.ExpressionEndpoint(node, expr + ".address"),
               addrEnd,
+              false, null
+          ));
+        }
+        if (node instanceof RtlWriteMemNode write) {
+          var wordsEnd = new HdlConnection.ExpressionEndpoint(
+              write.words(),
+              dispatch(write.words())
+          );
+          module.connections().add(new HdlConnection(
+              new HdlConnection.ExpressionEndpoint(node, expr + ".words"),
+              wordsEnd,
               false, null
           ));
         }

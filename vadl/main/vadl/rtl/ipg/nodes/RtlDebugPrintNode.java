@@ -34,7 +34,7 @@ import vadl.viam.graph.dependency.SideEffectNode;
 /**
  * Node to print a debug message in RTL simulation.
  */
-public class RtlDebugPrintNode extends SideEffectNode {
+public class RtlDebugPrintNode extends SideEffectNode implements RtlConditionalNode {
 
   private static final String PLACEHOLDER = "%[a-z]";
 
@@ -119,5 +119,10 @@ public class RtlDebugPrintNode extends SideEffectNode {
   @Override
   public <T extends GraphNodeVisitor> void accept(T visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public Node asNode() {
+    return this;
   }
 }

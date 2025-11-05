@@ -42,7 +42,7 @@ public class EmitCoreTestPass extends RtlTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "rtl/CoreTest.scala";
+    return "rtl/scala/CoreTest.scala";
   }
 
   @Override

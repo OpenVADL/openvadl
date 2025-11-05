@@ -16,6 +16,7 @@
 
 package vadl.rtl.passes;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.RtlConfiguration;
@@ -25,30 +26,35 @@ import vadl.rtl.template.RtlTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
- * Emit a scala test that generates a System Verilog file from the chisel description.
+ * Emit a chisel test that builds a simulator that can run ELF files, then runs the riscv-tests on
+ * it.
  */
-public class EmitCoreEmitPass extends RtlTemplateRenderingPass {
+public class EmitElfSimPass extends RtlTemplateRenderingPass {
 
-  public EmitCoreEmitPass(RtlConfiguration configuration) {
+  public EmitElfSimPass(RtlConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   public PassName getName() {
-    return PassName.of("Emit CoreEmit.scala");
+    return PassName.of("Emit ElfSim.scala");
   }
 
   @Override
   protected String getTemplatePath() {
-    return "rtl/scala/CoreEmit.scala";
+    return "rtl/scala/ElfSim.scala";
   }
 
   @Override
   protected List<RenderInput> createRenderInputs(PassResults passResults,
                                                  Specification specification,
                                                  Map<String, Object> baseVariables) {
+    var vars = new HashMap<>(baseVariables);
+    if (configuration().getResetVector() != null) {
+      vars.put("resetVector", configuration().getResetVector());
+    }
     return List.of(
-        new RenderInput(getSourceTestFilePath("CoreEmit.scala"), baseVariables)
+        new RenderInput(getSourceTestFilePath("ElfSim.scala"), vars)
     );
   }
 }

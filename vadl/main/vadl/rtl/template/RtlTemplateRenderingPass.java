@@ -85,6 +85,10 @@ public abstract class RtlTemplateRenderingPass extends AbstractMultiTemplateRend
     return configuration.getScalaTestPackageDir() + "/" + filename;
   }
 
+  protected String getResourceTestFilePath(String filename) {
+    return configuration.getScalaTestResourcesDir() + "/" + filename;
+  }
+
   protected Map<String, Object> mergeVariables(Map<String, Object> baseVariables,
                                                Map<String, Object> variables) {
     var result = new HashMap<>(baseVariables);

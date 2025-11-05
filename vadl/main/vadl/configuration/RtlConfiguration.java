@@ -30,6 +30,8 @@ public class RtlConfiguration extends GeneralConfiguration {
 
   private String scalaTestPackageDir = "src/test/scala/";
 
+  private String scalaTestResourcesDir = "src/test/resources/";
+
   /**
    * Top module name. This is initialized in {@link vadl.rtl.passes.RtlConfigurationPass}.
    */
@@ -81,6 +83,7 @@ public class RtlConfiguration extends GeneralConfiguration {
     this.scalaPackage = scalaPackage;
     this.scalaPackageDir = "src/main/scala/" + scalaPackage.replace('.', '/');
     this.scalaTestPackageDir = "src/test/scala/" + scalaPackage.replace('.', '/');
+    this.scalaTestResourcesDir = "src/test/resources";
   }
 
   public String getScalaPackageDir() {
@@ -89,6 +92,10 @@ public class RtlConfiguration extends GeneralConfiguration {
 
   public String getScalaTestPackageDir() {
     return scalaTestPackageDir;
+  }
+
+  public String getScalaTestResourcesDir() {
+    return scalaTestResourcesDir;
   }
 
   public void setTopModule(@Nullable String topModule) {

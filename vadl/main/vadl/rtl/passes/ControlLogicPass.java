@@ -34,6 +34,7 @@ import vadl.rtl.analysis.HazardAnalysis;
 import vadl.rtl.ipg.nodes.RtlConditionalMemNode;
 import vadl.rtl.ipg.nodes.RtlConditionalNode;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
+import vadl.rtl.ipg.nodes.RtlResetSignalNode;
 import vadl.rtl.ipg.nodes.RtlValidSignalNode;
 import vadl.rtl.ipg.nodes.RtlWriteRegTensorNode;
 import vadl.rtl.utils.RtlSimplificationRules;
@@ -119,6 +120,8 @@ public class ControlLogicPass extends AbstractLogicPass {
           // always full otherwise
           fullRd = Constant.Value.of(true).toNode();
         }
+        // mask with reset
+        fullRd = GraphUtils.and(GraphUtils.not(new RtlResetSignalNode()), fullRd);
       } else {
         fullRd = new ReadRegTensorNode(full, new NodeList<>(), Type.bool(), null);
       }
@@ -196,7 +199,7 @@ public class ControlLogicPass extends AbstractLogicPass {
         ExpressionNode enCond;
         if (condNode instanceof RtlConditionalMemNode
             || condNode instanceof RtlConditionalReadNode) {
-          enCond = stage.behavior().add(fullRd.copy());
+          enCond = stage.behavior().addWithInputs(fullRd.copy());
         } else {
           enCond = stage.behavior().add(new ReadSignalNode(en));
         }

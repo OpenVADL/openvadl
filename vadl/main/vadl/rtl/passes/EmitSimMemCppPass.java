@@ -25,22 +25,22 @@ import vadl.rtl.template.RtlTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
- * Emit a scala test that generates a System Verilog file from the chisel description.
+ * Emit C++ source for a simulation model of the memory.
  */
-public class EmitCoreEmitPass extends RtlTemplateRenderingPass {
+public class EmitSimMemCppPass extends RtlTemplateRenderingPass {
 
-  public EmitCoreEmitPass(RtlConfiguration configuration) {
+  public EmitSimMemCppPass(RtlConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   public PassName getName() {
-    return PassName.of("Emit CoreEmit.scala");
+    return PassName.of("Emit SimMem.cpp");
   }
 
   @Override
   protected String getTemplatePath() {
-    return "rtl/scala/CoreEmit.scala";
+    return "rtl/cpp/SimMem.cpp";
   }
 
   @Override
@@ -48,7 +48,7 @@ public class EmitCoreEmitPass extends RtlTemplateRenderingPass {
                                                  Specification specification,
                                                  Map<String, Object> baseVariables) {
     return List.of(
-        new RenderInput(getSourceTestFilePath("CoreEmit.scala"), baseVariables)
+        new RenderInput(getResourceTestFilePath("SimMem.cpp"), baseVariables)
     );
   }
 }
