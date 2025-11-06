@@ -119,6 +119,8 @@ public class VadlParser {
       errors.addAll(e.items);
     }
 
+    errors.addAll(parser.diagnostics);
+
     if (parser.errors.count > 0) {
       var lines = outStream.toString(StandardCharsets.UTF_8).split("\n", -1);
       for (var line : lines) {
