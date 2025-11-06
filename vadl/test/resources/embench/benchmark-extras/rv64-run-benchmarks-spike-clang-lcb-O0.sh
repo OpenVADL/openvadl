@@ -4,7 +4,7 @@ set -e
 cd $(realpath $(dirname "$0"))
 
 # Spike
-rm -r ../src/cubic
+# rm -r ../src/cubic
 
 ../build_spike-clang-O0_rv64.sh
 ./run-benchmark.sh "rv64-spike" ./benchmark_spike_rv64gc.sh
