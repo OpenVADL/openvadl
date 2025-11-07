@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.IssInfoRetrievalPass;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.template.Renderable;
 import vadl.viam.Definition;

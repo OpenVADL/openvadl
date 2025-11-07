@@ -22,7 +22,7 @@ public class IssInstrHelperGenerator extends IssProcGen {
 
 
   public static String functionName(Instruction instr) {
-    
+    return "not_yet_implemented";
   }
 
 }

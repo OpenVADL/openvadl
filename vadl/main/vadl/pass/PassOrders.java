@@ -57,7 +57,6 @@ import vadl.iss.passes.IssPcAccessConversionPass;
 import vadl.iss.passes.IssSelectLoweringPass;
 import vadl.iss.passes.IssTcgSchedulingPass;
 import vadl.iss.passes.IssTcgVAllocationPass;
-import vadl.iss.passes.IssVerificationPass;
 import vadl.iss.passes.opDecomposition.IssOpDecompositionPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.tcgLowering.IssTcgContextPass;
@@ -470,10 +469,9 @@ public class PassOrders {
 
     // iss function passes
     order
-        .add(new IssVerificationPass(config))
+        .add(new IssInfoRetrievalPass(config))
         .add(new IssConfigurationPass(config))
         .add(new IssMemoryDetectionPass(config))
-        .add(new IssInfoRetrievalPass(config))
         .add(new IssOpDecompositionPass(config))
         .add(new IssNormalizationPass(config))
         .add(new IssExtractOptimizationPass(config))
@@ -498,7 +496,7 @@ public class PassOrders {
 
     addHtmlDump(order, config, "ISS Lowering Dump",
         "This dump is executed after the iss transformation passes were executed.",
-        IssVerificationPass.class,
+        IssInfoRetrievalPass.class,
         IssConfiguration.class);
 
     if (!config.isDryRun()) {

@@ -19,9 +19,12 @@ package vadl.utils;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.viam.DefProp;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
+import vadl.viam.graph.Graph;
 
 /**
  * A set of utility methods that helps when working with the VIAM.
@@ -83,5 +86,11 @@ public class ViamUtils {
         }
       }
     }.findAllIn(root);
+  }
+
+  public static Stream<Graph> findAllBehaviors(Definition root) {
+    return findDefinitionsByFilter(root, (d) -> d instanceof DefProp.WithBehavior)
+        .stream()
+        .flatMap(d -> ((DefProp.WithBehavior) d).behaviors().stream());
   }
 }

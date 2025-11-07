@@ -17,8 +17,10 @@
 package vadl.iss.codegen;
 
 import static vadl.error.DiagUtils.throwNotAllowed;
+import static vadl.iss.passes.TcgPassUtils.instrInfo;
 import static vadl.utils.GraphUtils.getSingleNode;
 
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.context.CGenContext;
@@ -40,6 +42,7 @@ import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
+import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.TensorNode;
 
 /**
@@ -59,8 +62,11 @@ public class IssTranslateCodeGenerator {
    */
   public static String fetch(Instruction def,
                              IssConfiguration configuration) {
-    var generator = new DefaultGenerator(def, configuration);
-    return generator.fetch();
+    if (instrInfo(def).asHelperCall()) {
+      return new HelperGenerator(def, configuration).fetch();
+    } else {
+      return new DefaultGenerator(def, configuration).fetch();
+    }
   }
 }
 
@@ -80,7 +86,7 @@ class DefaultGenerator implements
   private StringBuilder builder;
   private CNodeContext ctx;
   private String targetName;
-  private InstrInfo info = insn.expectExtension(InstrInfo.class);
+  private InstrInfo info;
 
   /**
    * Constructs DefaultGenerator.
@@ -88,6 +94,7 @@ class DefaultGenerator implements
   DefaultGenerator(Instruction instr,
                    IssConfiguration configuration) {
     this.insn = instr;
+    this.info = instr.expectExtension(InstrInfo.class);
     this.builder = new StringBuilder();
     this.targetName = configuration.targetName();
     this.ctx = new CNodeContext(
@@ -166,12 +173,13 @@ class DefaultGenerator implements
 
 }
 
+@SuppressWarnings("unused")
 class HelperGenerator {
 
   private Instruction insn;
   private CodeGeneratorAppendable builder;
   private String targetName;
-  private InstrInfo info = insn.expectExtension(InstrInfo.class);
+  private InstrInfo info;
 
   /**
    * Constructs DefaultGenerator.
@@ -179,6 +187,7 @@ class HelperGenerator {
   HelperGenerator(Instruction instr,
                   IssConfiguration configuration) {
     this.insn = instr;
+    this.info = instrInfo(instr);
     this.builder = new StringBuilderAppendable();
     this.targetName = configuration.targetName();
   }
@@ -193,6 +202,8 @@ class HelperGenerator {
         .appendLn(" *a) {")
         .indent();
 
+    genArgTcgVs();
+    genHelperCall();
 
     builder.appendLn("return true;")
         .unindent()
@@ -200,15 +211,32 @@ class HelperGenerator {
     return builder.toString();
   }
 
-  private String genHelperCall() {
-      return "gen_helper_" + info.cIdentName()
-          + "(" 
+  private void genArgTcgVs() {
+    info.helperFormatParamOrder()
+        .forEach(p -> {
+          var name = paramName(p);
+          var val = "a->" + name;
+          var stmt = "TCGv_i32 " + name + "_tmp = tcg_constant_i32(" + val + ");";
+          builder.appendLn(stmt);
+        });
+  }
+
+  private void genHelperCall() {
+    var args = Stream.concat(Stream.of("tcg_env"),
+        fieldArgs()).collect(Collectors.joining(", "));
+    var call = "gen_helper_"
+        + info.cIdentName()
+        + "(" + args + ")";
+    builder.appendLn(call);
   }
 
   private Stream<String> fieldArgs() {
     return info.helperFormatParamOrder()
-        .map(p -> "a->" + p.definition().simpleName().toLowerCase());
+        .map(p -> paramName(p) + "_tmp");
   }
 
+  private String paramName(ParamNode p) {
+    return p.definition().simpleName().toLowerCase();
+  }
 
 }

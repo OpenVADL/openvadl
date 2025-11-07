@@ -17,6 +17,8 @@
 package vadl.iss.passes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.error.Diagnostic.warning;
+import static vadl.iss.passes.TcgPassUtils.regInfo;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.error.DeferredDiagnosticStore;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
@@ -94,6 +97,18 @@ public class IssGdbInfoExtractionPass extends AbstractIssPass {
     AtomicInteger i = new AtomicInteger();
     var res = new ArrayList<Result.Reg>();
     for (var reg : isa.registerTensors()) {
+      // Skip gVec registers - they can't be accessed directly via GDB
+      if (regInfo(reg).isGVec()) {
+        DeferredDiagnosticStore.add(
+            warning("Vector register excluded from GDB", reg)
+                .description(
+                    "Register '%s' is a vector register and will not be included in GDB debug information.",
+                    reg.simpleName())
+                .note("Vector registers can currently not be accessed via GDB.")
+        );
+        continue;
+      }
+
       getRegTensor(reg, i.get(), pc).forEach(r -> {
         res.add(r);
         i.getAndIncrement();
