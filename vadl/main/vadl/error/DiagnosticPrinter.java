@@ -141,7 +141,7 @@ public class DiagnosticPrinter {
       }
 
       printExpandedSourcePreview(snippet,
-          snippet.equals(diagnostic.multiLocation.primaryLocation()), builder);
+          snippet.equals(diagnostic.multiLocation.primaryLocation()), diagnostic.level, builder);
     }
     builder.append("\n     %s│ %s\n".formatted(colors.cyan(), colors.reset()));
   }
@@ -174,9 +174,10 @@ public class DiagnosticPrinter {
    * @param builder   into which the preview will be printed.
    */
   private void printExpandedSourcePreview(Diagnostic.LabeledLocation location, boolean isPrimary,
+                                          Diagnostic.Level level,
                                           StringBuilder builder) {
     // Print the original preview
-    printSourcePreview(location, isPrimary, builder);
+    printSourcePreview(location, isPrimary, level, builder);
 
     // Print also the chain/stack of the location from which this error was expanded form
     var last = location.location();
@@ -189,7 +190,7 @@ public class DiagnosticPrinter {
               next,
               List.of(
                   new Diagnostic.Message(Diagnostic.MsgType.PLAIN, "from this model invocation"))),
-          false, builder);
+          false, level, builder);
       last = next;
       next = next.expandedFrom();
     }
@@ -203,6 +204,7 @@ public class DiagnosticPrinter {
    * @param builder   into which will be printed.
    */
   private void printSourcePreview(Diagnostic.LabeledLocation location, boolean isPrimary,
+                                  Diagnostic.Level level,
                                   StringBuilder builder) {
     List<String> lines;
     try {
@@ -247,7 +249,8 @@ public class DiagnosticPrinter {
     if (location.location().begin().line() != location.location().end().line()) {
       printMultiLinePreview(location, isPrimary, lines, builder);
     } else {
-      printSingleLinePreview(location, isPrimary, lines, builder);
+      var markerColor = level == Diagnostic.Level.WARNING ? colors.yellow() : colors.red();
+      printSingleLinePreview(location, isPrimary, lines, builder, markerColor);
     }
   }
 
@@ -312,7 +315,8 @@ public class DiagnosticPrinter {
    * @param builder   to be printed to.
    */
   private void printSingleLinePreview(Diagnostic.LabeledLocation location, boolean isPrimary,
-                                      List<String> lines, StringBuilder builder) {
+                                      List<String> lines, StringBuilder builder,
+                                      String markerColor) {
 
     // Print the line number, guard and actual line
     builder.append("%s%4d".formatted(colors.reset(), location.location().begin().line()));
@@ -324,7 +328,7 @@ public class DiagnosticPrinter {
     var highlightLength =
         location.location().end().column() - location.location().begin().column() + 1;
     var highlightPadding = isPrimary
-        ? colors.red() + "^".repeat(highlightLength) + colors.reset()
+        ? markerColor + "^".repeat(highlightLength) + colors.reset()
         : colors.lightblue() + "-".repeat(highlightLength) + colors.reset();
     var nonHighlightPadding = " ".repeat(highlightLength);
     var padding = "     %s│%s ".formatted(colors.cyan(), colors.reset())
