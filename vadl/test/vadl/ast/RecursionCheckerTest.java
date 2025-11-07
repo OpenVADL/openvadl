@@ -18,7 +18,7 @@ package vadl.ast;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 
 public class RecursionCheckerTest {
   @Test
@@ -29,7 +29,9 @@ public class RecursionCheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var diagnostic = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
     Assertions.assertEquals("Infinite Recursion", diagnostic.reason);
   }
 
@@ -43,7 +45,9 @@ public class RecursionCheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var diagnostic = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
     Assertions.assertEquals("Infinite Recursion", diagnostic.reason);
   }
 
@@ -54,7 +58,9 @@ public class RecursionCheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var diagnostic = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
     Assertions.assertEquals("Infinite Recursion", diagnostic.reason);
   }
 
@@ -66,7 +72,9 @@ public class RecursionCheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var diagnostic = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
     Assertions.assertEquals("Infinite Recursion", diagnostic.reason);
   }
 
@@ -80,8 +88,9 @@ public class RecursionCheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var diagnostic = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals("Infinite Recursion", diagnostic.reason);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    Assertions.assertEquals("Infinite Recursion", diagnostics.items.getFirst().reason);
   }
 
   @Test
@@ -92,7 +101,9 @@ public class RecursionCheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var diagnostic = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
     Assertions.assertEquals("Infinite Recursion", diagnostic.reason);
   }
 
@@ -104,7 +115,9 @@ public class RecursionCheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var diagnostic = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
     Assertions.assertEquals("Infinite Recursion", diagnostic.reason);
   }
 
@@ -116,7 +129,9 @@ public class RecursionCheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var diagnostic = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
     Assertions.assertEquals("Infinite Recursion", diagnostic.reason);
   }
 }

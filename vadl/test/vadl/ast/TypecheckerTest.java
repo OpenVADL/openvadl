@@ -20,7 +20,7 @@ import java.math.BigInteger;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.types.Type;
 
 public class TypecheckerTest {
@@ -55,8 +55,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
-        "Shouldn't accept the program");
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -78,8 +78,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
-        "Shouldn't accept the program");
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
 
@@ -90,8 +90,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
-        "Shouldn't accept the program");
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -101,8 +101,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
-        "Shouldn't accept the program");
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
 
@@ -139,8 +139,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
-        "Shouldn't accept the program");
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -177,8 +177,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
-        "Shouldn't accept the program");
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -246,8 +246,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
-        "Program isn't typesafe");
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -652,8 +652,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
-        "Program isn't typesafe");
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -718,8 +718,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
-        "Program isn't typesafe");
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -732,8 +732,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
-        "Program isn't typesafe");
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -746,8 +746,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
-        "Program isn't typesafe");
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -760,8 +760,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
-        "Program isn't typesafe");
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -777,8 +777,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
-        "Program isn't typesafe");
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
 
@@ -812,8 +812,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
-        "Program isn't typesafe");
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -913,7 +913,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -937,7 +938,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
 
@@ -970,7 +972,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -1003,7 +1006,8 @@ public class TypecheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diags.items.size());
   }
 
 
