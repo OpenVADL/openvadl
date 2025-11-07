@@ -34,9 +34,9 @@ import vadl.viam.graph.dependency.ExpressionNode;
  *
  * <p>Used to lower read/write conditions and select-by-instruction nodes. Conditions are extended
  * to include the output of an is-instruction node, select-by-instruction nodes are replaced with
- * selects that have is-instruction nodes as condition inputs. This moves the information present
- * in the IPG (i.e., which nodes are used for which instruction) to graph nodes before inlining the
- * IPG into the stages.
+ * selects that have one-hot nodes as condition inputs (decided by the decode-tree node). This moves
+ * the information present in the IPG (i.e., which nodes are used for which instruction) to graph
+ * nodes before inlining the IPG into the stages.
  */
 public class RtlIsInstructionNode extends ExpressionNode {
 
@@ -112,6 +112,6 @@ public class RtlIsInstructionNode extends ExpressionNode {
 
   @Override
   public String toString() {
-    return "(" + id + ") IsInstruction<Bool, " + instructions.size() + " instructions>";
+    return "(" + id + ") IsInstruction<" + instructions.size() + " instructions>";
   }
 }

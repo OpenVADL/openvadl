@@ -16,59 +16,39 @@
 
 package vadl.rtl.ipg.nodes;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
-import vadl.viam.Instruction;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
- * One-hot-decode node, representing a node packing a list of boolean inputs into an integer.
+ * Node that represents matching none of the instructions in the instruction set.
  */
-public class RtlOneHotDecodeNode extends ExpressionNode {
+public class RtlInvalidInstructionNode extends ExpressionNode {
 
   @Input
-  RtlDecodeTreeNode decodeTree;
-
-  @DataValue
-  List<Set<Instruction>> instructions;
+  protected RtlDecodeTreeNode decodeTree;
 
   /**
-   * Create a new one-hot-decode node.
+   * Create a new is-invalid-instruction node.
+   *
+   * @param decodeTree decode tree input
    */
-  public RtlOneHotDecodeNode(Type type, Collection<Set<Instruction>> instructions,
-                             RtlDecodeTreeNode decodeTree) {
-    super(type);
-    this.instructions = new ArrayList<>(instructions);
+  public RtlInvalidInstructionNode(RtlDecodeTreeNode decodeTree) {
+    super(Type.bool());
     this.decodeTree = decodeTree;
   }
 
   /**
-   * Get the list of instruction sets this one-hot-decode node matches.
+   * Decode tree deciding this node
    *
-   * @return list of instruction sets
+   * @return the decoder deciding this node
    */
-  public List<Set<Instruction>> instructions() {
-    return instructions;
-  }
-
-  @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.add(decodeTree);
-  }
-
-  @Override
-  protected void collectData(List<Object> collection) {
-    super.collectData(collection);
-    collection.add(instructions);
+  public RtlDecodeTreeNode decodeTree() {
+    return decodeTree;
   }
 
   @Override
@@ -78,13 +58,19 @@ public class RtlOneHotDecodeNode extends ExpressionNode {
   }
 
   @Override
+  protected void collectInputs(List<Node> collection) {
+    super.collectInputs(collection);
+    collection.add(decodeTree);
+  }
+
+  @Override
   public ExpressionNode copy() {
-    return new RtlOneHotDecodeNode(type(), instructions, decodeTree.copy(RtlDecodeTreeNode.class));
+    return new RtlInvalidInstructionNode(decodeTree.copy(RtlDecodeTreeNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new RtlOneHotDecodeNode(type(), instructions, decodeTree);
+    return new RtlInvalidInstructionNode(decodeTree);
   }
 
   @Override
@@ -94,8 +80,6 @@ public class RtlOneHotDecodeNode extends ExpressionNode {
 
   @Override
   public String toString() {
-    return "(" + id + ") OneHot<" + instructions.size() + " sets, " + instructions.stream()
-        .reduce(0, (a, b) -> a + b.size(), Integer::sum)
-        + " total instructions>";
+    return "(" + id + ") InvalidInstruction";
   }
 }

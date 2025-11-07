@@ -23,6 +23,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
+import vadl.configuration.DecoderOptions;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
 import vadl.dump.HtmlDumpPass;
@@ -55,6 +56,10 @@ public class RtlLoweringTest extends AbstractTest {
     var generalConfig =
         new GeneralConfiguration(Path.of("build/test-output"), true);
     var config = new RtlConfiguration(generalConfig);
+
+    var decoderOptions = new DecoderOptions();
+    decoderOptions.setGenerator(DecoderOptions.Generator.REGULAR);
+    config.setDecoderOptions(decoderOptions);
 
     var order = PassOrders.rtl(config);
     order.addAfterFirst(PassOrders.ViamCreationPass.class,

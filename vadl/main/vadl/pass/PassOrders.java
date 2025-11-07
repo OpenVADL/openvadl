@@ -630,8 +630,6 @@ public class PassOrders {
         .add(new InstructionProgressGraphMergePass(config))
         .add(new MiaMappingOptimizePass(config))
         .add(new InstructionProgressGraphLowerPass(config))
-        // TODO: Hook into this: The above pass instantiates 'is_instruction' and 'select_by_instruction' nodes.
-        // For groups of these nodes -> extract a 'signal' used for decoding
         .add(new InstructionProgressGraphNamePass(config));
 
     order.add(new HazardAnalysisPass(config))
@@ -644,6 +642,8 @@ public class PassOrders {
     addHtmlDump(order, config,
         "mia",
         "MiA after mapping and inlining instruction behavior");
+
+    addDecodePasses(order, config);
 
     if (!config.isDryRun()) {
       addRtlEmitPasses(order, config);

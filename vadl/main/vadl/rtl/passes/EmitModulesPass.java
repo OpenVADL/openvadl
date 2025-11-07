@@ -17,7 +17,6 @@
 package vadl.rtl.passes;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -25,7 +24,6 @@ import vadl.configuration.RtlConfiguration;
 import vadl.error.Diagnostic;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
 import vadl.rtl.ipg.nodes.RtlResetSignalNode;
 import vadl.rtl.ipg.nodes.RtlWriteRegTensorNode;
 import vadl.rtl.template.HdlBehavior;
@@ -36,7 +34,7 @@ import vadl.rtl.template.RtlTemplateRenderingPass;
 import vadl.rtl.utils.GraphMergeUtils;
 import vadl.rtl.utils.RtlSimplificationRules;
 import vadl.rtl.utils.RtlSimplifier;
-import vadl.utils.GraphUtils;
+import vadl.vdt.passes.VdtLoweringPass;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Logic;
@@ -46,11 +44,9 @@ import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
-import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
-import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
@@ -91,7 +87,9 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
           Objects.requireNonNull(isa.pc()).resultType());
     }
 
-    var context = new HdlEmitContext(viam, isa, mia, mip, inlineRes.inlineMap(), resetVector,
+    final var vdt = passResults.lastResultOf(VdtLoweringPass.class, vadl.vdt.model.Node.class);
+
+    var context = new HdlEmitContext(viam, isa, mia, mip, vdt, inlineRes.inlineMap(), resetVector,
         configuration().getKeepSignals());
 
     List<HdlModule> modules = new ArrayList<>();
@@ -135,7 +133,7 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
     coreResetBehavior(behavior, context, pc);
 
     var core = new HdlModule(context, context.mia(), configuration().getTopModule(),
-        resources,  new ArrayList<>(children), behavior);
+        resources, new ArrayList<>(children), behavior);
     children.forEach(child -> child.setParent(core));
     return core;
   }
@@ -181,24 +179,8 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
     var resources = new ArrayList<Resource>();
     resources.addAll(stage.signals());
     resources.addAll(stage.registers());
+
     var behavior = stage.behavior();
-
-    // replace is-instruction nodes matching sets of instructions
-    // with or-expressions of single instruction is-instruction nodes
-    // this results in a cleaner hdl output
-    // TODO: Implement HDL conversion
-    /*behavior.getNodes(RtlIsInstructionNode.class).toList()
-        .forEach(node -> {
-          if (node.instructions().size() > 1) {
-            node.instructions().stream()
-                .map(instr -> (ExpressionNode) new RtlIsInstructionNode(
-                    Collections.singleton(instr), node.instruction()))
-                .reduce(GraphUtils::or)
-                .map(behavior::addWithInputs)
-                .ifPresent(node::replaceAndDelete);
-          }
-        });*/
-
 
     return new HdlModule(context, stage, stage.simpleName(),
         resources, List.of(), behavior);

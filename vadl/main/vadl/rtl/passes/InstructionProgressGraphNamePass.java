@@ -17,7 +17,6 @@
 package vadl.rtl.passes;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +31,7 @@ import vadl.pass.PassResults;
 import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
 import vadl.rtl.ipg.nodes.RtlInstructionWordSliceNode;
+import vadl.rtl.ipg.nodes.RtlInvalidInstructionNode;
 import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
 import vadl.rtl.ipg.nodes.RtlOneHotDecodeNode;
 import vadl.rtl.ipg.nodes.RtlReadMemNode;
@@ -94,6 +94,7 @@ public class InstructionProgressGraphNamePass extends Pass {
     name(ipg, ConstantNode.class, this::constName);
     names(ipg, RtlInstructionWordSliceNode.class, this::nameInsWordSlice);
     name(ipg, RtlIsInstructionNode.class, node -> "is_" + nameInsSet(node.instructions(), ipg));
+    name(ipg, RtlInvalidInstructionNode.class, _ -> "invalid_insn");
     nameOneHot(ipg);
     names(ipg, SignExtendNode.class,
         node -> ipg.getContext(node.value()).nameHints().stream()

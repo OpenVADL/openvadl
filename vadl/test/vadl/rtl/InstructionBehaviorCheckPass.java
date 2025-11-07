@@ -31,6 +31,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.nodes.RtlDecodeTreeNode;
+import vadl.rtl.ipg.nodes.RtlInvalidInstructionNode;
 import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
 import vadl.rtl.ipg.nodes.RtlOneHotDecodeNode;
 import vadl.rtl.ipg.nodes.RtlReadMemNode;
@@ -113,7 +114,7 @@ public class InstructionBehaviorCheckPass extends Pass {
         ignore = implicit.stream().map(copyMap::get).filter(Objects::nonNull)
             .collect(Collectors.toSet());
       } else {
-          var ipgCopy = ipg.copy("IPG graph for " + curInstr.simpleName());
+        var ipgCopy = ipg.copy("IPG graph for " + curInstr.simpleName());
         graph = ipgCopy;
         ignore = Stream.of(ipgCopy.pcIncrement(), ipgCopy.fetch())
             .filter(Objects::nonNull).collect(Collectors.toSet());
@@ -126,14 +127,19 @@ public class InstructionBehaviorCheckPass extends Pass {
         }
       }
 
-      // replace is-instruction and select-by-instruction nodes with constants/constant selection
+      /* Replace is-instruction, invalid-instruction and select-by-instruction nodes with
+       * constants/constant selection */
       for (RtlIsInstructionNode isIns : graph.getNodes(RtlIsInstructionNode.class).toList()) {
         var constNode = Constant.Value.of(isIns.instructions().contains(curInstr))
             .toNode();
         isIns.replaceAndDelete(constNode);
       }
+      graph.getNodes(RtlInvalidInstructionNode.class).findAny().ifPresent(n -> {
+        n.replaceAndDelete(Constant.Value.of(false).toNode());
+      });
 
-      for (RtlSelectByInstructionNode sel : graph.getNodes(RtlSelectByInstructionNode.class).toList()) {
+      for (RtlSelectByInstructionNode sel : graph.getNodes(RtlSelectByInstructionNode.class)
+          .toList()) {
 
         if (sel.selection() != null && sel.selection() instanceof RtlOneHotDecodeNode oneHot) {
           // one-hot nodes are no longer removed during RTL simplification, as they don't

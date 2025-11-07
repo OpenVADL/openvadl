@@ -16,9 +16,17 @@
 
 package vadl.rtl.template;
 
+import static vadl.viam.Constant.Value.fromInteger;
+
 import com.google.common.collect.Streams;
+import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.DispatchFor;
@@ -27,6 +35,7 @@ import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
 import vadl.rtl.ipg.nodes.RtlDebugPrintNode;
 import vadl.rtl.ipg.nodes.RtlDecodeTreeNode;
 import vadl.rtl.ipg.nodes.RtlInstructionWordSliceNode;
+import vadl.rtl.ipg.nodes.RtlInvalidInstructionNode;
 import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
 import vadl.rtl.ipg.nodes.RtlOneHotDecodeNode;
 import vadl.rtl.ipg.nodes.RtlReadMemNode;
@@ -39,9 +48,12 @@ import vadl.types.BoolType;
 import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.UIntType;
+import vadl.vdt.target.rtl.RtlVdtDecoderGenerator;
+import vadl.viam.Constant;
 import vadl.viam.Definition;
 import vadl.viam.Resource;
 import vadl.viam.Signal;
+import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -89,6 +101,13 @@ public class HdlBehavior {
 
     // create signals and assignments (connections)
     var collector = new SignalCollector(module);
+
+    // Prepare & cache the signals for is-instruction and select-by-instruction nodes by lowering
+    // the decode tree node first (if present).
+    Optional.ofNullable(module.behavior())
+        .flatMap(g -> g.getNodes(RtlDecodeTreeNode.class).findAny())
+        .ifPresent(collector::dispatch);
+
     behavior.getNodes(WriteResourceNode.class).forEach(collector::handle);
     behavior.getNodes(RtlDebugPrintNode.class).forEach(collector::handle);
   }
@@ -96,7 +115,7 @@ public class HdlBehavior {
   @DispatchFor(
       value = ExpressionNode.class,
       returnType = String.class,
-      include = { "vadl.viam.asm", " vadl.rtl.ipg.node" }
+      include = {"vadl.viam.asm", " vadl.rtl.ipg.node"}
   )
   static class SignalCollector {
 
@@ -168,6 +187,9 @@ public class HdlBehavior {
       if (node instanceof RtlIsInstructionNode n) {
         return "is_" + n.instructions().stream()
             .map(Definition::simpleName).collect(Collectors.joining(""));
+      }
+      if (node instanceof RtlInvalidInstructionNode) {
+        return "invalid_insn";
       }
       return null;
     }
@@ -253,29 +275,108 @@ public class HdlBehavior {
     }
 
     @Handler
-    String handle(RtlDecodeTreeNode node) {
-      // TODO: Implement
-      return "decode_tree";
+    String handle(RtlDecodeTreeNode decodeTreeNode) {
+
+      final var def = Optional.ofNullable(module.definition())
+          .orElse(module.context().viam());
+
+      final Map<vadl.viam.Instruction, Map<Signal, ConstantNode>> decisionMap =
+          new LinkedHashMap<>();
+      final Set<Signal> signals = new LinkedHashSet<>();
+      Signal invalidInsn = null;
+
+      for (Node usage : decodeTreeNode.usages().toList()) {
+
+        // The name is prefixed with 'dec_' by now to indicate that the signal will be assigned
+        // by the decode tree.
+        var name = module.context().name(usage, module.localNames(), fallbackName(usage));
+        var id = def.identifier.append("dec_" + name);
+        var signal = new Signal(id, ((ExpressionNode) usage).type().asDataType());
+        signals.add(signal);
+
+        switch (usage) {
+          case RtlIsInstructionNode n -> {
+
+            final var value = new ConstantNode(Constant.Value.fromBoolean(true));
+            n.instructions()
+                .forEach(i -> decisionMap.computeIfAbsent(i, _ -> new HashMap<>())
+                    .put(signal, value));
+
+          }
+
+          case RtlInvalidInstructionNode _ -> invalidInsn = signal;
+
+          case RtlOneHotDecodeNode n -> {
+
+            for (int i = 0; i < n.instructions().size(); i++) {
+
+              final var value = new ConstantNode(
+                  fromInteger(BigInteger.valueOf(i), n.type().asDataType()));
+
+              n.instructions().get(i)
+                  .forEach(insn -> decisionMap
+                      .computeIfAbsent(insn, _ -> new HashMap<>())
+                      .put(signal, value));
+            }
+
+          }
+          default -> throw new ViamGraphError("Unsupported usage of decode tree: %s", usage);
+        }
+
+        module.addResource(signal);
+        cacheExprOrSig.put(usage, signal.simpleName());
+      }
+
+      ViamError.ensureNonNull(decodeTreeNode.instructionWord(),
+          "The instruction word of the RtlDecodeTreeNode must not be null.");
+
+      final String insnWord = dispatch(decodeTreeNode.instructionWord());
+
+      ViamError.ensureNonNull(invalidInsn,
+          "Expected an RtlInvalidInstruction node to exist.");
+
+      // TODO: Add possibility to select generator based on configuration
+      final var generator = new RtlVdtDecoderGenerator(insnWord, decisionMap, signals, invalidInsn);
+      final String result = generator.generate(module.context().vdt());
+      //final var generator = new RtlTableDecoderGenerator(insnWord, decisionMap, signals, invalidInsn);
+      //final String result = generator.generate();
+
+      // Create the HDL statement representing the decode tree
+      module.addConnection(new HdlConnection(
+          null,
+          new HdlConnection.ExpressionEndpoint(decodeTreeNode, result),
+          false, null
+      ));
+
+      // The return value isn't really used anywhere, but we have to return something.
+      return "";
     }
 
     @Handler
     String handle(RtlIsInstructionNode node) {
-      // TODO: Implement
-      return "is_insn";
-      /*var ins = node.instruction();
-      if (ins == null) {
-        throw new ViamGraphError("Missing instruction input").addContext(node);
+      var signalName = cacheExprOrSig.get(node);
+      if (signalName == null) {
+        throw new IllegalStateException("Expected signal for is-insn node to exist");
       }
-      return node.instructions().stream()
-          .map(HdlUtils::getInstructionBitPattern)
-          .map(pat -> "BitPat(\"b" + pat + "\").matches(" + dispatch(ins) + ")")
-          .collect(Collectors.joining(" | "));*/
+      return signalName;
+    }
+
+    @Handler
+    String handle(RtlInvalidInstructionNode node) {
+      var signalName = cacheExprOrSig.get(node);
+      if (signalName == null) {
+        throw new IllegalStateException("Expected signal for invalid-insn node to exist");
+      }
+      return signalName;
     }
 
     @Handler
     String handle(RtlOneHotDecodeNode node) {
-      // TODO: Implement
-      return "one_hot";
+      var signalName = cacheExprOrSig.get(node);
+      if (signalName == null) {
+        throw new IllegalStateException("Expected signal for is-insn node to exist");
+      }
+      return signalName;
     }
 
     @Handler
@@ -287,7 +388,7 @@ public class HdlBehavior {
       }
       return "MuxLookup[Bits](" + dispatch(sel) + ", 0.U)(Seq("
           + Streams.mapWithIndex(vals, (val, i) -> i + ".U -> " + dispatch(val))
-              .collect(Collectors.joining(", ")) + "))";
+          .collect(Collectors.joining(", ")) + "))";
     }
 
     @Handler
@@ -442,13 +543,15 @@ public class HdlBehavior {
         || node instanceof ConstantNode
         || node instanceof UnaryNode
         || node instanceof RtlValidSignalNode
-        || node instanceof ReadResourceNode) {
+        || node instanceof ReadResourceNode
+        || node instanceof RtlDecodeTreeNode) {
       return false;
     }
     return (node.usageCount() > 1
         || node instanceof LetNode
         || node instanceof SelectNode
-        || node instanceof RtlIsInstructionNode);
+        || node instanceof RtlIsInstructionNode
+        || node instanceof RtlInvalidInstructionNode);
   }
 
 }

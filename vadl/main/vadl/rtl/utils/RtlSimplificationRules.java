@@ -70,7 +70,6 @@ public class RtlSimplificationRules {
     rules.add(new SelectWithConstCondSimplificationRule());
     rules.add(new SelByInstrEqCasesSimplificationRule());
     rules.add(new SelByInstrConstSelSimplificationRule());
-    rules.add(new OneHotConstInSimplificationRule());
   }
 
   /**
@@ -228,19 +227,6 @@ public class RtlSimplificationRules {
           }
         }
       }
-      return Optional.empty();
-    }
-  }
-
-  /**
-   * Simplify one-hot-decode nodes with constant inputs.
-   */
-  public static class OneHotConstInSimplificationRule implements AlgebraicSimplificationRule {
-    @Override
-    public Optional<Node> simplify(Node node) {
-      // TODO: For now there is no simplification, as all one-hot nodes are immediately decided
-      //       by the decode tree. In the future (once we have a general one-hot variant), replace
-      //       this with a simplification in case of constant inputs.
       return Optional.empty();
     }
   }

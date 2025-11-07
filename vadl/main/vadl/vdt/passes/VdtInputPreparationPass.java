@@ -23,7 +23,9 @@ import static vadl.vdt.utils.PatternUtils.toFixedBitPattern;
 import java.io.IOException;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -33,6 +35,8 @@ import vadl.error.Diagnostic;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.rtl.ipg.nodes.RtlDecodeTreeNode;
+import vadl.rtl.passes.InstructionProgressGraphExtension;
 import vadl.types.BuiltInTable;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.impl.irregular.model.ExclusionCondition;
@@ -87,11 +91,21 @@ public class VdtInputPreparationPass extends Pass {
       return null;
     }
 
+    final Collection<Instruction> relevantInstructions;
+    if (isa.hasExtension(InstructionProgressGraphExtension.class)) {
+      // For RTL lowering, we might only want to consider a subset of instructions for the VDT.
+      final var ipg = isa.expectExtension(InstructionProgressGraphExtension.class).ipg();
+      relevantInstructions = ipg.getNodes(RtlDecodeTreeNode.class).findAny()
+          .map(d -> ipg.getContext(d).instructions())
+          .orElse(new LinkedHashSet<>(isa.ownInstructions()));
+    } else {
+      relevantInstructions = isa.ownInstructions();
+    }
+
     // TODO: get the byte order from the VADL specification -> Implement memory annotations
     final ByteOrder bo = ByteOrder.LITTLE_ENDIAN;
 
-    return isa.ownInstructions()
-        .stream()
+    return relevantInstructions.stream()
         .map(i -> {
 
           final var pattern = toFixedBitPattern(i, bo);
