@@ -51,7 +51,7 @@ import vadl.viam.graph.dependency.TensorNode;
  * in the {@link vadl.viam.InstructionSetArchitecture}.
  *
  * <p>Depending on the complexity of the instruction, the generated code will be
- * either produced by the {@link DefaultGenerator} or the {@link HelperGenerator}.
+ * either produced by the {@link DefaultGenerator} or the {@link HelperCallGenerator}.
  * While the default generator will use only TCG operations, the helper generator
  * will use a helper function that executes the instruction
  */
@@ -63,13 +63,67 @@ public class IssTranslateCodeGenerator {
   public static String fetch(Instruction def,
                              IssConfiguration configuration) {
     if (instrInfo(def).asHelperCall()) {
-      return new HelperGenerator(def, configuration).fetch();
+      return new HelperCallGenerator(def, configuration).fetch();
     } else {
       return new DefaultGenerator(def, configuration).fetch();
     }
   }
 }
 
+///
+/// ## DefaultGenerator
+///
+/// Generates translation code using TCG operations directly.
+///
+/// The `DefaultGenerator` traverses the instruction's behavior graph and
+/// emits TCG (Tiny Code Generator) operations that will be compiled into efficient
+/// target machine code. This approach provides better runtime performance as the
+/// instruction semantics are directly translated to the target architecture.
+///
+/// ### How it works
+///
+/// 1. Walks through the instruction's VIAM graph starting from the `StartNode`
+/// 2. Dispatches each node to appropriate handlers that emit corresponding C/TCG code
+/// 3. Generates TCG operations like `tcg_gen_add_i32`, `tcg_gen_mov_i32`, etc.
+///
+/// ### Key Difference from HelperCallGenerator
+///
+/// - **DefaultGenerator** directly emits TCG operations (e.g., `tcg_gen_add_i32`,
+///   `tcg_gen_mov_i32`) that are compiled ahead-of-time into efficient code.
+/// - **HelperCallGenerator** generates a simple call to a helper function,
+///   with the actual instruction logic executed at runtime through the helper.
+///
+/// ### When to use
+///
+/// Used for "simple" instructions where the behavior can be fully expressed using TCG operations:
+/// - Basic arithmetic operations (add, sub, mul, div)
+/// - Logical operations (and, or, xor)
+/// - Register moves and loads/stores
+///
+/// The decision is made based on `InstrInfo.asHelperCall()` returning `false`.
+///
+/// ### Generated Code Example
+///
+/// For a VADL instruction definition:
+/// ```vadl
+/// instruction ADD : Rtype = X(rd) := ((X(rs1) + X(rs2))) as Regs
+/// ```
+///
+/// The `DefaultGenerator` produces:
+/// ```c
+/// static bool trans_add(DisasContext *ctx, arg_add *a) {
+///     trace_riscv_instr_trans(__func__);
+///     TCGv_i64 regfile_x_rd_dest = dest_x(ctx, a->rd);
+///     TCGv_i64 regfile_x_rs2 = get_x(ctx, a->rs2);
+///     TCGv_i64 regfile_x_rs1 = get_x(ctx, a->rs1);
+///     tcg_gen_add_i64(regfile_x_rd_dest, regfile_x_rs1, regfile_x_rs2);
+///     return true;
+/// }
+/// ```
+///
+/// @see HelperCallGenerator
+/// @see InstrInfo#asHelperCall()
+///
 @DispatchFor(
     value = Node.class,
     context = CNodeContext.class,
@@ -88,9 +142,6 @@ class DefaultGenerator implements
   private String targetName;
   private InstrInfo info;
 
-  /**
-   * Constructs DefaultGenerator.
-   */
   DefaultGenerator(Instruction instr,
                    IssConfiguration configuration) {
     this.insn = instr;
@@ -173,19 +224,80 @@ class DefaultGenerator implements
 
 }
 
+///
+/// ## HelperCallGenerator
+///
+/// Generates translation code that delegates instruction execution to a helper function.
+///
+/// The `HelperCallGenerator` is used for instructions that are too complex
+/// to be efficiently translated into TCG operations. Instead of directly emitting
+/// TCG operations in the translate function, this generator produces code that:
+/// - Wraps instruction format arguments into TCG temporary variables
+/// - Calls a generated helper function (`gen_helper_<name>`) to execute
+///   the instruction's behavior
+///
+/// ### How it works
+///
+/// 1. Wraps instruction format arguments into TCG temporary variables
+/// 2. Calls a generated helper function (`gen_helper_<name>`) to execute the instruction's behavior
+/// 3. The helper function contains the full instruction semantics and is executed at runtime
+///
+/// ### Key Difference from DefaultGenerator
+///
+/// - **HelperCallGenerator** produces a simple wrapper that delegates to
+///   a helper function. The helper function contains the full instruction semantics
+///   and is executed at runtime.
+/// - **DefaultGenerator** directly emits TCG operations that are then
+///   compiled into the target architecture's code, resulting in more efficient
+///   execution but limited to TCG-representable operations.
+///
+/// The decision is made based on `InstrInfo.asHelperCall()`, which determines
+/// if an instruction's complexity necessitates helper delegation.
+///
+/// ### Trade-offs
+///
+/// **Advantages:**
+/// - Can handle any VADL instruction, no matter how complex
+/// - No limitations on supported operations
+///
+/// **Disadvantages:**
+/// - Lower runtime performance compared to direct TCG (runtime execution vs. compile-time)
+/// - Additional function call overhead
+///
+/// ### Generated Code Example
+///
+/// For a complex VADL instruction:
+/// ```vadl
+/// instruction COMPLEX : MyFormat = forall i in 0..31 : X(rd + i) := X(rs1 + i) + X(rs2 + i)
+/// ```
+///
+/// The `HelperCallGenerator` produces:
+/// ```c
+/// static bool trans_complex(DisasContext *ctx, arg_complex *a) {
+///     TCGv_i32 rd_tmp = tcg_constant_i32(a->rd);
+///     TCGv_i32 rs1_tmp = tcg_constant_i32(a->rs1);
+///     TCGv_i32 rs2_tmp = tcg_constant_i32(a->rs2);
+///     gen_helper_complex(tcg_env, rd_tmp, rs1_tmp, rs2_tmp);
+///     return true;
+/// }
+/// ```
+///
+/// And a corresponding helper function is generated in `helper.c` that implements
+/// the full instruction semantics.
+///
+/// @see DefaultGenerator
+/// @see InstrInfo#asHelperCall()
+///
 @SuppressWarnings("unused")
-class HelperGenerator {
+class HelperCallGenerator {
 
   private Instruction insn;
   private CodeGeneratorAppendable builder;
   private String targetName;
   private InstrInfo info;
 
-  /**
-   * Constructs DefaultGenerator.
-   */
-  HelperGenerator(Instruction instr,
-                  IssConfiguration configuration) {
+  HelperCallGenerator(Instruction instr,
+                      IssConfiguration configuration) {
     this.insn = instr;
     this.info = instrInfo(instr);
     this.builder = new StringBuilderAppendable();
