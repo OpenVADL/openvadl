@@ -26,21 +26,33 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * Node that represents the instruction decoder in the RTL behaviour.
+ */
 public class RtlDecodeTreeNode extends ExpressionNode {
 
   @Input
   @Nullable
   protected ExpressionNode instructionWord;
 
+  /**
+   * Initial constructor of RtlDecodeTreeNode. Initially the type is 'void' but will be extended
+   * by appending result 'signals' to it.
+   */
   public RtlDecodeTreeNode() {
     super(Type.void_()); // Type will be extended once signals are added
   }
 
-  public RtlDecodeTreeNode(Type type, @Nullable ExpressionNode instructionWord) {
+  private RtlDecodeTreeNode(Type type, @Nullable ExpressionNode instructionWord) {
     super(type);
     this.instructionWord = instructionWord;
   }
 
+  /**
+   * Add a new control signal decided by this decode tree node.
+   *
+   * @param signal The signal to add (either an is-instruction or one-hot node)
+   */
   public void addSignal(ExpressionNode signal) {
     final int existingWidth = type().isDataType() ? type().asDataType().bitWidth() : 0;
     final int newWidth = signal.type().asDataType().bitWidth();

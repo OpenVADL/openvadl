@@ -49,8 +49,8 @@ import vadl.vdt.model.Visitor;
 import vadl.vdt.model.impl.LeafNodeImpl;
 import vadl.vdt.target.common.dto.DecisionTreeStatistics;
 import vadl.vdt.utils.BitPattern;
+import vadl.vdt.utils.BitVectorUtils;
 import vadl.vdt.utils.Instruction;
-import vadl.vdt.utils.NumberUtils;
 import vadl.viam.Constant;
 import vadl.viam.Constant.BitSlice.Part;
 import vadl.viam.Format;
@@ -601,7 +601,7 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
    */
   private DataType getInsnWordType() {
     var maxWidth = stats.getMaxInstructionWidth();
-    var insnType = BitsType.bits(NumberUtils.fittingPowerOfTwo(maxWidth)).fittingCppType();
+    var insnType = BitsType.bits(BitVectorUtils.fittingPowerOfTwo(maxWidth)).fittingCppType();
     if (insnType == null) {
       throw new IllegalArgumentException(
           "Instruction word too wide: " + maxWidth + " bits");

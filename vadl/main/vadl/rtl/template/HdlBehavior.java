@@ -300,12 +300,12 @@ public class HdlBehavior {
 
             final var value = new ConstantNode(Constant.Value.fromBoolean(true));
             n.instructions()
-                .forEach(i -> decisionMap.computeIfAbsent(i, _ -> new HashMap<>())
+                .forEach(i -> decisionMap.computeIfAbsent(i, x -> new HashMap<>())
                     .put(signal, value));
 
           }
 
-          case RtlInvalidInstructionNode _ -> invalidInsn = signal;
+          case RtlInvalidInstructionNode x -> invalidInsn = signal;
 
           case RtlOneHotDecodeNode n -> {
 
@@ -316,7 +316,7 @@ public class HdlBehavior {
 
               n.instructions().get(i)
                   .forEach(insn -> decisionMap
-                      .computeIfAbsent(insn, _ -> new HashMap<>())
+                      .computeIfAbsent(insn, x -> new HashMap<>())
                       .put(signal, value));
             }
 

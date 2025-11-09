@@ -94,7 +94,7 @@ public class InstructionProgressGraphNamePass extends Pass {
     name(ipg, ConstantNode.class, this::constName);
     names(ipg, RtlInstructionWordSliceNode.class, this::nameInsWordSlice);
     name(ipg, RtlIsInstructionNode.class, node -> "is_" + nameInsSet(node.instructions(), ipg));
-    name(ipg, RtlInvalidInstructionNode.class, _ -> "invalid_insn");
+    name(ipg, RtlInvalidInstructionNode.class, i -> "invalid_insn");
     nameOneHot(ipg);
     names(ipg, SignExtendNode.class,
         node -> ipg.getContext(node.value()).nameHints().stream()

@@ -19,12 +19,22 @@ package vadl.vdt.target.rtl;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.PBit;
 
+/**
+ * Util methods used by the RTL decoder generators.
+ */
 public class ChiselUtils {
 
   private ChiselUtils() {
     // No instances
   }
 
+  /**
+   * Serialize the given bit-pattern to its Chisel representation, optionally with padding.
+   *
+   * @param pattern The pattern
+   * @param padding whether to serialize with left-padding
+   * @return The Chisel-style pattern
+   */
   public static CharSequence toChiselPattern(BitPattern pattern, boolean padding) {
     final var sb = new StringBuilder("b");
 

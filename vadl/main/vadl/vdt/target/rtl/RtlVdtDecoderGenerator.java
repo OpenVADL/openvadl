@@ -54,6 +54,14 @@ public class RtlVdtDecoderGenerator implements Visitor<Void> {
    */
   private final Signal invalidInsn;
 
+  /**
+   * Construct the RtlVdtDecoderGenerator.
+   *
+   * @param input       The name of the instruction word input variable.
+   * @param decisionMap The decisions by instruction.
+   * @param signals     The set of signals decided by the decoder.
+   * @param invalidInsn The signal to set in case of an invalid instruction.
+   */
   public RtlVdtDecoderGenerator(
       String input,
       Map<vadl.viam.Instruction, Map<Signal, ConstantNode>> decisionMap,
@@ -77,18 +85,6 @@ public class RtlVdtDecoderGenerator implements Visitor<Void> {
     tree.accept(this);
     appendable.unindent();
     return appendable.toString().stripLeading();
-  }
-
-  /**
-   * An inner node represents a decision point in the decision tree. Dispatch for the different
-   * types of decision nodes.
-   *
-   * @param node The inner node
-   */
-  @Override
-  public Void visit(InnerNode node) {
-    RtlVdtDecoderGeneratorDispatcher.dispatch(this, node);
-    return null;
   }
 
   /**
@@ -156,6 +152,11 @@ public class RtlVdtDecoderGenerator implements Visitor<Void> {
     return null;
   }
 
+  /**
+   * An inner node representing a switch-style decision.
+   *
+   * @param node The inner node
+   */
   @Handler
   public Void handle(MultiDecisionNode node) {
 
@@ -207,6 +208,11 @@ public class RtlVdtDecoderGenerator implements Visitor<Void> {
     return null;
   }
 
+  /**
+   * An inner node representing an either-or decision.
+   *
+   * @param node The inner node
+   */
   @Handler
   public Void handle(SingleDecisionNode node) {
 
@@ -255,6 +261,18 @@ public class RtlVdtDecoderGenerator implements Visitor<Void> {
   }
 
   /**
+   * An inner node represents a decision point in the decision tree. Dispatch for the different
+   * types of decision nodes.
+   *
+   * @param node The inner node
+   */
+  @Override
+  public Void visit(InnerNode node) {
+    RtlVdtDecoderGeneratorDispatcher.dispatch(this, node);
+    return null;
+  }
+
+  /**
    * A leaf node represents a successfully matched instruction.
    *
    * @param node The leaf node
@@ -295,7 +313,7 @@ public class RtlVdtDecoderGenerator implements Visitor<Void> {
     return signal.identifier.equals(invalidInsn.identifier);
   }
 
-  public static CharSequence toChiselValue(Constant constant) {
+  private static CharSequence toChiselValue(Constant constant) {
 
     if (constant.type().isTrivialCastTo(Type.bool())) {
       return constant.asVal().bool() + ".B";
@@ -308,7 +326,7 @@ public class RtlVdtDecoderGenerator implements Visitor<Void> {
     return constant.asVal().unsignedInteger() + ".U";
   }
 
-  public static CharSequence getDefaultValue(Signal signal) {
+  private static CharSequence getDefaultValue(Signal signal) {
     if (signal.type().isTrivialCastTo(Type.bool())) {
       return "false.B";
     }

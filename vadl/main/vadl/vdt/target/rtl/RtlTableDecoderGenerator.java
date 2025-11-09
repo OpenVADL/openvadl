@@ -42,6 +42,14 @@ public class RtlTableDecoderGenerator {
    */
   private final Signal invalidInsn;
 
+  /**
+   * Construct the RtlTableDecoderGenerator.
+   *
+   * @param input       The name of the instruction word input variable.
+   * @param decisionMap The decisions by instruction.
+   * @param signals     The set of signals decided by the decoder.
+   * @param invalidInsn The signal to set in case of an invalid instruction.
+   */
   public RtlTableDecoderGenerator(
       String input,
       Map<Instruction, Map<Signal, ConstantNode>> decisionMap,
@@ -159,7 +167,7 @@ public class RtlTableDecoderGenerator {
     return signal.identifier.equals(invalidInsn.identifier);
   }
 
-  public static CharSequence getDefaultValue(Signal signal) {
+  private static CharSequence getDefaultValue(Signal signal) {
 
     if (!signal.type().isDataType()) {
       throw new ViamError("Signal type not supported: %s", signal.type());

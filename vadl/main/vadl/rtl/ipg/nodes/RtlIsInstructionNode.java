@@ -69,7 +69,7 @@ public class RtlIsInstructionNode extends ExpressionNode {
   }
 
   /**
-   * Decode tree deciding this node
+   * Decode tree deciding this node.
    *
    * @return the decoder deciding this node
    */
