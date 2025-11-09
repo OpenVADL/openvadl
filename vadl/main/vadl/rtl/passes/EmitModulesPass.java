@@ -87,7 +87,12 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
           Objects.requireNonNull(isa.pc()).resultType());
     }
 
-    final var vdt = passResults.lastResultOf(VdtLoweringPass.class, vadl.vdt.model.Node.class);
+    final vadl.vdt.model.Node vdt;
+    if (passResults.hasRunPassOnce(VdtLoweringPass.class)) {
+      vdt = passResults.lastResultOf(VdtLoweringPass.class, vadl.vdt.model.Node.class);
+    } else {
+      vdt = null;
+    }
 
     var context = new HdlEmitContext(viam, isa, mia, mip, vdt, inlineRes.inlineMap(), resetVector,
         configuration().getKeepSignals());

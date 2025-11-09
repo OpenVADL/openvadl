@@ -5,9 +5,13 @@ import static vadl.vdt.target.rtl.ChiselUtils.toChiselPattern;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import vadl.javaannotations.DispatchFor;
+import vadl.javaannotations.Handler;
 import vadl.types.Type;
 import vadl.utils.codegen.CodeGeneratorAppendable;
 import vadl.utils.codegen.StringBuilderAppendable;
+import vadl.vdt.impl.irregular.tree.MultiDecisionNode;
+import vadl.vdt.impl.irregular.tree.SingleDecisionNode;
 import vadl.vdt.impl.regular.InnerNodeImpl;
 import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.LeafNode;
@@ -25,6 +29,7 @@ import vadl.viam.graph.dependency.ConstantNode;
  * Generate the decision tree for decoding control signals from the instruction word used within
  * the RTL description.
  */
+@DispatchFor(value = InnerNode.class, include = {"vadl.vdt"})
 public class RtlVdtDecoderGenerator implements Visitor<Void> {
 
   private final CodeGeneratorAppendable appendable = new StringBuilderAppendable();
@@ -66,26 +71,98 @@ public class RtlVdtDecoderGenerator implements Visitor<Void> {
    * @param tree The decode decision tree to generate code for
    */
   public String generate(Node tree) {
+    // The template engine only indents the first line, so to format everything nicely, add an extra
+    // indent level, and remove the initial indent at the end.
+    appendable.indent();
     tree.accept(this);
-    return appendable.toString();
+    appendable.unindent();
+    return appendable.toString().stripLeading();
   }
 
   /**
-   * An inner node represents a decision point in the decision tree. We generate a switch statement
-   * to select the correct child node based on relevant bits in the instruction word.
+   * An inner node represents a decision point in the decision tree. Dispatch for the different
+   * types of decision nodes.
    *
    * @param node The inner node
    */
   @Override
   public Void visit(InnerNode node) {
+    RtlVdtDecoderGeneratorDispatcher.dispatch(this, node);
+    return null;
+  }
 
-    if (!(node instanceof InnerNodeImpl n)) {
-      throw new IllegalArgumentException("Node type not supported: " + node.getClass());
-    }
+  /**
+   * An inner node represents a decision point in the decision tree.
+   *
+   * @param node The regular inner node
+   */
+  @Handler
+  public Void handle(InnerNodeImpl node) {
 
     /* The order is not particularly important, but might be dictated by the set in the decision
      * tree (e.g. linked hash set) */
-    final List<Map.Entry<BitPattern, Node>> children = n.getChildren().entrySet().stream().toList();
+    final List<Map.Entry<BitPattern, Node>> children =
+        node.getChildren().entrySet().stream().toList();
+
+    for (int i = 0; i < children.size(); i++) {
+      var entry = children.get(i);
+
+      // Construct the condition
+      appendable
+          .append(i == 0 ? "when" : ".elsewhen")
+          .append(" (")
+          .append(input)
+          .append(" === BitPat(\"").append(toChiselPattern(entry.getKey(), false)).append("\")")
+          .appendLn(") {")
+          .indent();
+
+      entry.getValue().accept(this);
+
+      appendable
+          .unindent()
+          .append("}");
+    }
+
+    appendable
+        .appendLn(".otherwise {")
+        .indent();
+
+    if (node.getFallback() != null) {
+
+      node.getFallback().accept(this);
+
+    } else {
+
+      appendable.appendLn("// Invalid");
+
+      for (Signal signal : signals) {
+
+        appendable
+            .append(signal.simpleName())
+            .append(" := ");
+
+        if (isInvalid(signal)) {
+          appendable.appendLn("true.B");
+        } else {
+          appendable.appendLn(getDefaultValue(signal));
+        }
+      }
+
+    }
+
+    appendable.unindent()
+        .appendLn("}");
+
+    return null;
+  }
+
+  @Handler
+  public Void handle(MultiDecisionNode node) {
+
+    /* The order is not particularly important, but might be dictated by the set in the decision
+     * tree (e.g. linked hash set) */
+    final List<Map.Entry<BitPattern, Node>> children =
+        node.getChildren().entrySet().stream().toList();
 
     for (int i = 0; i < children.size(); i++) {
       var entry = children.get(i);
@@ -130,6 +207,53 @@ public class RtlVdtDecoderGenerator implements Visitor<Void> {
     return null;
   }
 
+  @Handler
+  public Void handle(SingleDecisionNode node) {
+
+    // Emit the condition
+    appendable
+        .append("when (")
+        .append(input)
+        .append(node.isMatch() ? " === " : " !== ")
+        .append("BitPat(\"").append(toChiselPattern(node.getPattern(), false)).append("\")")
+        .appendLn(") {")
+        .indent();
+
+    node.getMatchingChild().accept(this);
+
+    appendable
+        .unindent()
+        .append("}");
+
+    // Emit the else branch
+
+    appendable
+        .appendLn(".otherwise {")
+        .indent();
+
+    if (node.getOtherChild() != null) {
+      node.getOtherChild().accept(this);
+    } else {
+      // If we don't have an 'other' option, fall back to 'invalid'
+      appendable.appendLn("// Invalid");
+      for (Signal signal : signals) {
+        appendable
+            .append(signal.simpleName())
+            .append(" := ");
+        if (isInvalid(signal)) {
+          appendable.appendLn("true.B");
+        } else {
+          appendable.appendLn(getDefaultValue(signal));
+        }
+      }
+    }
+
+    appendable.unindent()
+        .appendLn("}");
+
+    return null;
+  }
+
   /**
    * A leaf node represents a successfully matched instruction.
    *
@@ -146,7 +270,7 @@ public class RtlVdtDecoderGenerator implements Visitor<Void> {
     var decision = decisionMap.get(instruction.source());
 
     appendable
-        .append(" // ").appendLn(insnName);
+        .append("// ").appendLn(insnName);
 
     for (Signal signal : signals) {
 

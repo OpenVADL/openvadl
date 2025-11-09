@@ -48,6 +48,7 @@ import vadl.types.BoolType;
 import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.UIntType;
+import vadl.vdt.target.rtl.RtlTableDecoderGenerator;
 import vadl.vdt.target.rtl.RtlVdtDecoderGenerator;
 import vadl.viam.Constant;
 import vadl.viam.Definition;
@@ -335,11 +336,16 @@ public class HdlBehavior {
       ViamError.ensureNonNull(invalidInsn,
           "Expected an RtlInvalidInstruction node to exist.");
 
-      // TODO: Add possibility to select generator based on configuration
-      final var generator = new RtlVdtDecoderGenerator(insnWord, decisionMap, signals, invalidInsn);
-      final String result = generator.generate(module.context().vdt());
-      //final var generator = new RtlTableDecoderGenerator(insnWord, decisionMap, signals, invalidInsn);
-      //final String result = generator.generate();
+      final String result;
+
+      final var vdt = module.context().vdt();
+      if (vdt != null) {
+        result = new RtlVdtDecoderGenerator(insnWord, decisionMap, signals, invalidInsn)
+            .generate(vdt);
+      } else {
+        result = new RtlTableDecoderGenerator(insnWord, decisionMap, signals, invalidInsn)
+            .generate();
+      }
 
       // Create the HDL statement representing the decode tree
       module.addConnection(new HdlConnection(

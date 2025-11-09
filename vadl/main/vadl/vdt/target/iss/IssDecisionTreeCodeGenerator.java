@@ -16,11 +16,9 @@
 
 package vadl.vdt.target.iss;
 
-import static vadl.error.Diagnostic.error;
 import static vadl.utils.MemOrderUtils.reverseByteOrder;
 import static vadl.utils.StringBuilderUtils.join;
 import static vadl.vdt.target.common.DecisionTreeStatsCalculator.statistics;
-import static vadl.vdt.utils.BitVectorUtils.fittingPowerOfTwo;
 
 import java.math.BigInteger;
 import java.nio.ByteOrder;
@@ -35,9 +33,6 @@ import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.common.AccessFunctionCodeGenerator;
 import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
 import vadl.cppCodeGen.context.CGenContext;
-import vadl.error.Diagnostic;
-import vadl.error.DiagnosticBuilder;
-import vadl.error.DiagnosticList;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.types.BitsType;
@@ -55,9 +50,9 @@ import vadl.vdt.model.impl.LeafNodeImpl;
 import vadl.vdt.target.common.dto.DecisionTreeStatistics;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
+import vadl.vdt.utils.NumberUtils;
 import vadl.viam.Constant;
 import vadl.viam.Constant.BitSlice.Part;
-import vadl.vdt.utils.NumberUtils;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;

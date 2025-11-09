@@ -58,10 +58,17 @@ public class RtlTableDecoderGenerator {
    */
   public String generate() {
 
+    var outputWidth =
+        signals.stream().reduce(0, (a, b) -> a + b.type().asDataType().bitWidth(), Integer::sum);
+
     appendable.append("val dec_output = Wire(Bits(")
-        .append(invalidInsn.resultType())
+        .append(outputWidth)
         .appendLn(".W))")
         .newLine();
+
+    // The template engine only indents the first line, so to format everything nicely, add an extra
+    // indent level for everything else.
+    appendable.indent();
 
     // Construct Chisel's decoder table
     appendable
@@ -100,7 +107,7 @@ public class RtlTableDecoderGenerator {
 
     appendable
         .unindent()
-        .appendLn("),")
+        .append("), ")
         .append("BitPat(\"b");
 
     for (Signal signal : signals) {
@@ -116,16 +123,14 @@ public class RtlTableDecoderGenerator {
     }
 
     appendable
-        .appendLn("\"))")
+        .appendLn("\") // Invalid")
         .unindent()
+        .appendLn(")")
         .newLine();
 
     appendable
         .appendLn("dec_output := decoder(" + input + ", table)")
         .newLine();
-
-    var outputWidth =
-        signals.stream().reduce(0, (a, b) -> a + b.type().asDataType().bitWidth(), Integer::sum);
 
     int idx = outputWidth - 1;
     for (Signal signal : signals) {
