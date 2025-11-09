@@ -27,7 +27,7 @@ import org.eclipse.lsp4j.SemanticTokenTypes;
 
 /**
  * Tokenizer used by the language server. Provides LSP semantic tokens.
- * Must be in this package, otherwise it can't access {@code Token}.
+ * Must be in this package, otherwise it couldn't access {@code Token}.
  */
 public final class LspTokenizer {
 
