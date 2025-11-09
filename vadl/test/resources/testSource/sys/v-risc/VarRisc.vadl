@@ -32,6 +32,7 @@ instruction set architecture VarRISC32 = {
   model Suffix () : Id = {yes}           // if none, mnemonic has no suffix, otherwise it has suffices
   model InitScale () : Encs = {match : Encs ($Init() = none => none ; _ => scale = 0)}
   model Mnemonic (name: Id): Ex = {match : Ex ($Suffix() = none => AsStr($name) ; _ => mnemonic)}
+  model AsImmId (name: Id): Id = { AsId($name, 'I') }
 
   constant Size      = 32                // register size
   constant LinkIdx   = 31                // index of link register
@@ -116,11 +117,11 @@ instruction set architecture VarRISC32 = {
   }
 
   model ShortImmInstr (name : Id, op : BinOp, ltype: Id, rtype: Id, code : Val) : IsaDefs = {
-    instruction AsId ( $name, 'I_S') : TYPE_S =
+    instruction AsId ( $AsImmId($name), '_S') : TYPE_S =
       let res = R(rd) as $ltype $op imm as $rtype in
         R(rd) := res as Regs
-    encoding AsId ( $name, 'I_S') = { opcode = $code + CodeOff}
-    assembly AsId ( $name, 'I_S') = ( $Mnemonic ($name), ' ', register(rd), ',', sdec(imm) )
+    encoding AsId ( $AsImmId($name), '_S') = { opcode = $code + CodeOff}
+    assembly AsId ( $AsImmId($name), '_S') = ( $Mnemonic ($AsImmId($name)), ' ', register(rd), ',', sdec(imm) )
   }
 
   model RegInstr (name : Id, op : BinOp, ltype: Id, rtype: Id, code : Val) : IsaDefs = {
@@ -132,11 +133,11 @@ instruction set architecture VarRISC32 = {
   }
 
   model ImmInstr (name : Id, op : BinOp, ltype: Id, rtype: Id, code : Val) : IsaDefs = {
-    instruction AsId ( $name, 'I' ) : TYPE_I =
+    instruction $AsImmId($name) : TYPE_I =
       let res = R(rs1) as $ltype $op imm as $rtype in
         R(rd) := res as Regs
-    encoding AsId ( $name, 'I' ) = { opcode = ImmCode, func5 = $code }
-    assembly AsId ( $name, 'I' ) = ( $Mnemonic ($name), ' ', register(rd), ',', register(rs1), ',', sdec(imm) )
+    encoding $AsImmId($name) = { opcode = ImmCode, func5 = $code }
+    assembly $AsImmId($name) = ( $Mnemonic ($AsImmId($name)), ' ', register(rd), ',', register(rs1), ',', sdec(imm) )
   }
 
   model SysCallInstr (name : Id, code : Val) : IsaDefs = {
@@ -153,11 +154,11 @@ instruction set architecture VarRISC32 = {
   }
 
   model LongImmInstruction (name : Id, op : BinOp, ltype: Id, rtype: Id, code : Val) : IsaDefs = {
-    instruction AsId ( $name, 'I_L') : TYPE_L =
+    instruction AsId ( $AsImmId($name), '_L') : TYPE_L =
         let res = R(func5) as $ltype $op imm in
             R(rd) := res as Regs
-    encoding AsId ( $name, 'I_L') = { opcode = ImmLOff + $code }
-    assembly AsId ( $name, 'I_L') = ( $Mnemonic ($name), ' ', register(rd), ',', register(func5), ',', sdec(imm) )
+    encoding AsId ( $AsImmId($name), '_L') = { opcode = ImmLOff + $code }
+    assembly AsId ( $AsImmId($name), '_L') = ( $Mnemonic ($AsImmId($name)), ' ', register(rd), ',', register(func5), ',', sdec(imm) )
     $ComputeInstruction ( $name; $op; $ltype; $rtype; $code )
   }
 
@@ -221,15 +222,15 @@ instruction set architecture VarRISC32 = {
   }
 
   model CondImmInstruction ( name : Id, op : BinOp, reltype: Id, imm: Id, code : Val ) : IsaDefs = {
-    instruction AsId ( $name, 'I') : TYPE_I =
+    instruction $AsImmId($name) : TYPE_I =
       R(rd) :=  ( R(rs1) as $reltype $op $imm ) as Regs
-    encoding AsId ( $name, 'I') = { opcode = ImmCode, func5 = $code }
-    assembly AsId ( $name, 'I') = ( $Mnemonic ($name), ' ', register(rd), ',', register(rs1), ',', sdec(imm) )
+    encoding $AsImmId($name) = { opcode = ImmCode, func5 = $code }
+    assembly $AsImmId($name) = ( $Mnemonic ($AsImmId($name)), ' ', register(rd), ',', register(rs1), ',', sdec(imm) )
 
-    instruction AsId ( $name, 'I_L') : TYPE_L =
+    instruction AsId ( $AsImmId($name), '_L') : TYPE_L =
       R(rd) :=  ( R(rd) as $reltype $op $imm ) as Regs
-    encoding AsId ( $name, 'I_L') = { opcode = CodeI_L, func5 = $code }
-    assembly AsId ( $name, 'I_L') = ( $Mnemonic ($name), ' ', register(rd), ',', sdec(imm))
+    encoding AsId ( $AsImmId($name), '_L') = { opcode = CodeI_L, func5 = $code }
+    assembly AsId ( $AsImmId($name), '_L') = ( $Mnemonic ($AsImmId($name)), ' ', register(rd), ',', sdec(imm))
   }
 
   model CondInstruction ( name : Id, op : BinOp, reltype: Id, imm: Id, code : Val ) : IsaDefs = {
