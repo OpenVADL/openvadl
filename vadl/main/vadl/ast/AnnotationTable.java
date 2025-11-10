@@ -46,6 +46,7 @@ import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 import vadl.utils.functionInterfaces.TriConsumer;
+import vadl.viam.Abi;
 import vadl.viam.ArtificialResource;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Constant;
@@ -56,6 +57,7 @@ import vadl.viam.MemoryRegion;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
+import vadl.viam.annotations.AlignmentAnnotation;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
 import vadl.viam.annotations.DefineOperandAnnotation;
@@ -101,6 +103,17 @@ public class AnnotationTable {
           var indices = annotation.indices.stream().map(ConstantValue::toViamConstant).toList();
           var zero = Constant.Value.of(0, viamDef.resultType(indices.size()));
           viamDef.addConstraint(new RegisterResource.Constraint(indices, zero));
+        })
+        .build();
+
+    annotationOn(RegisterDefinition.class, "alignment", ConstantAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          var viamDef = (RegisterTensor) def;
+          var alignmentVal = annotation.constant.value().intValue();
+          var alignment = Abi.Alignment.fromBitAlignment(alignmentVal)
+              .orElseThrow(() -> Diagnostic.error("Cannot convert alignment into valid value.",
+                  annotation.location()).build());
+          viamDef.addAnnotation(new AlignmentAnnotation(alignment));
         })
         .build();
 

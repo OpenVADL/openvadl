@@ -79,6 +79,7 @@ import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.Specification;
+import vadl.viam.annotations.AlignmentAnnotation;
 import vadl.viam.asm.AsmDirectiveMapping;
 import vadl.viam.asm.AsmModifier;
 import vadl.viam.asm.AsmToken;
@@ -539,7 +540,15 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
             .filter(RegisterTensor::isRegisterFile)
             .collect(Collectors.toMap(
                 x -> x,
-                x -> Abi.Alignment.HALF_WORD
+                x -> {
+                  if (x.hasAnnotation(AlignmentAnnotation.class)) {
+                    var annotation = x.expectAnnotation(AlignmentAnnotation.class);
+                    return annotation.alignment();
+                  } else {
+                    // Default
+                    return Abi.Alignment.WORD;
+                  }
+                }
             ));
 
     var constantSequences = definition.definitions

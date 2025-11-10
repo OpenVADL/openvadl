@@ -32,9 +32,9 @@ public class Abi extends Definition {
    */
   public enum Alignment {
     NO_ALIGNMENT(-1),
-    HALF_WORD(4),
-    WORD(8),
-    DOUBLE_WORD(16);
+    HALF_WORD(2),
+    WORD(4),
+    DOUBLE_WORD(8);
 
     private final int byteAlignment;
 
@@ -52,6 +52,15 @@ public class Abi extends Definition {
 
     public int bitAlignment() {
       return byteAlignment() * 8;
+    }
+
+    public static Optional<Alignment> fromBitAlignment(int bitAlignment) {
+      return switch (bitAlignment) {
+        case 16 -> Optional.of(HALF_WORD);
+        case 32 -> Optional.of(WORD);
+        case 64 -> Optional.of(DOUBLE_WORD);
+        default -> Optional.empty();
+      };
     }
   }
 
