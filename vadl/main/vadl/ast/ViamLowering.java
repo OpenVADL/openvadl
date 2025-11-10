@@ -546,7 +546,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
                     return annotation.alignment();
                   } else {
                     // Default
-                    return Abi.Alignment.WORD;
+                    return Abi.Alignment.DEFAULT;
                   }
                 }
             ));
@@ -1819,7 +1819,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var registerFile = pair.left();
     var index = pair.right();
 
-    return new Abi.RegisterRef(registerFile, index, Abi.Alignment.NO_ALIGNMENT, expr.location());
+    return new Abi.RegisterRef(registerFile, index, new Abi.Alignment(-1), expr.location());
   }
 
   /**

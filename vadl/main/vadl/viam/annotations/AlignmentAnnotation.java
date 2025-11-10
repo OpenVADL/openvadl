@@ -21,6 +21,9 @@ import vadl.viam.Abi;
 import vadl.viam.Annotation;
 import vadl.viam.RegisterTensor;
 
+/**
+ * Annotation for register alignments.
+ */
 public class AlignmentAnnotation extends Annotation<RegisterTensor> {
   private final Abi.Alignment alignment;
 

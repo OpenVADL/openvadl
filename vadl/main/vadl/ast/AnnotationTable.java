@@ -25,7 +25,6 @@ import static vadl.viam.ViamError.ensurePresent;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -107,12 +106,11 @@ public class AnnotationTable {
         })
         .build();
 
-    annotationOn(RegisterDefinition.class, "alignment", () -> new EnumAnnotation(
-        Arrays.stream(Abi.Alignment.values()).map(x -> x.name().toLowerCase()).toList()))
+    annotationOn(RegisterDefinition.class, "alignment", ConstantAnnotation::new)
         .applyViam((def, annotation, lowering) -> {
           var viamDef = (RegisterTensor) def;
-          var alignment = Abi.Alignment.valueOf(annotation.value.toUpperCase());
-          viamDef.addAnnotation(new AlignmentAnnotation(alignment));
+          viamDef.addAnnotation(
+              new AlignmentAnnotation(new Abi.Alignment(annotation.constant.value().intValue())));
         })
         .build();
 
