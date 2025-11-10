@@ -19,7 +19,7 @@ package vadl.ast;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.types.asmTypes.ConstantAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.ModifierAsmType;
@@ -253,7 +253,8 @@ public class TypecheckerAsmTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
   }
 
   @Test
@@ -270,7 +271,8 @@ public class TypecheckerAsmTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
   }
 
   @Test
@@ -351,7 +353,8 @@ public class TypecheckerAsmTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
   }
 
   @Test
@@ -383,7 +386,8 @@ public class TypecheckerAsmTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
   }
 
   @Test
@@ -399,7 +403,8 @@ public class TypecheckerAsmTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
   }
 
   @Test
@@ -432,7 +437,8 @@ public class TypecheckerAsmTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
   }
 
   @Test
@@ -445,7 +451,8 @@ public class TypecheckerAsmTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
   }
 
   @Test
@@ -461,7 +468,8 @@ public class TypecheckerAsmTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
   }
 
   @Test
@@ -474,7 +482,8 @@ public class TypecheckerAsmTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
   }
 
   @Test
@@ -504,7 +513,8 @@ public class TypecheckerAsmTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
   }
 
   @Test
@@ -518,7 +528,8 @@ public class TypecheckerAsmTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
   }
 
   @Test
@@ -569,7 +580,8 @@ public class TypecheckerAsmTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
   }
 
   //region casts

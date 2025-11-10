@@ -313,8 +313,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * @return a type that is safe to be entered into the VIAM.
    */
   public static Type getViamType(Type astType) {
+    if (astType instanceof InternalErrorType) {
+      throw new IllegalStateException("No InternalErrorType type should ever reach the VIAM!");
+    }
+
     if (astType instanceof ConstantType) {
-      throw new IllegalStateException("No constant type should ever leave the VIAM!");
+      throw new IllegalStateException("No constant type should ever reach the VIAM!");
     }
 
     if (astType instanceof FormatType formatType) {

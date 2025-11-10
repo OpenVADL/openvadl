@@ -20,6 +20,7 @@ package vadl.ast;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 
 public class TypecheckerAbiTest {
 
@@ -123,9 +124,11 @@ public class TypecheckerAbiTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No RETURN was declared but one was expected", throwable.reason);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
+    Assertions.assertEquals("No RETURN was declared but one was expected", diagnostic.reason);
   }
 
   @Test
@@ -149,9 +152,11 @@ public class TypecheckerAbiTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No CALL was declared but one was expected", throwable.reason);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
+    Assertions.assertEquals("No CALL was declared but one was expected", diagnostic.reason);
   }
 
   @Test
@@ -175,10 +180,12 @@ public class TypecheckerAbiTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
     Assertions.assertEquals("No ABSOLUTE_ADDRESS_LOAD was declared but one was expected",
-        throwable.reason);
+        diagnostic.reason);
   }
 
   @Test
@@ -202,10 +209,12 @@ public class TypecheckerAbiTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
     Assertions.assertEquals("No STACK_POINTER registers were declared but one was expected",
-        throwable.reason);
+        diagnostic.reason);
   }
 
   @Test
@@ -229,10 +238,12 @@ public class TypecheckerAbiTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
     Assertions.assertEquals("Number of registers is incorrect. This definition expects only one",
-        throwable.reason);
+        diagnostic.reason);
   }
 
   @Test
@@ -256,10 +267,12 @@ public class TypecheckerAbiTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
     Assertions.assertEquals("Number of registers is incorrect. This definition expects only one",
-        throwable.reason);
+        diagnostic.reason);
   }
 
   @Test
@@ -283,10 +296,12 @@ public class TypecheckerAbiTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
     Assertions.assertEquals("Number of registers is incorrect. This definition expects only one",
-        throwable.reason);
+        diagnostic.reason);
   }
 
   @Test
@@ -310,10 +325,12 @@ public class TypecheckerAbiTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
     Assertions.assertEquals("Number of registers is incorrect. This definition expects only one",
-        throwable.reason);
+        diagnostic.reason);
   }
 
   @Test
@@ -337,10 +354,12 @@ public class TypecheckerAbiTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
     Assertions.assertEquals("Number of registers is incorrect. This definition expects only one",
-        throwable.reason);
+        diagnostic.reason);
   }
 
   @Test
@@ -364,10 +383,12 @@ public class TypecheckerAbiTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
     Assertions.assertEquals("No FRAME_POINTER registers were declared but one was expected",
-        throwable.reason);
+        diagnostic.reason);
   }
 
   @Test
@@ -391,11 +412,13 @@ public class TypecheckerAbiTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
     Assertions.assertEquals(
         "Zero RETURN_VALUE registers were declared but at least one was expected",
-        throwable.reason);
+        diagnostic.reason);
   }
 
   @Test
@@ -419,10 +442,12 @@ public class TypecheckerAbiTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
     Assertions.assertEquals("No FUNCTION_ARGUMENT registers were declared but one was expected",
-        throwable.reason);
+        diagnostic.reason);
   }
 
   @Test
@@ -446,10 +471,12 @@ public class TypecheckerAbiTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
     Assertions.assertEquals("No CALLER_SAVED registers were declared but one was expected",
-        throwable.reason);
+        diagnostic.reason);
   }
 
   @Test
@@ -473,10 +500,12 @@ public class TypecheckerAbiTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
     Assertions.assertEquals("No CALLEE_SAVED registers were declared but one was expected",
-        throwable.reason);
+        diagnostic.reason);
   }
 
   @Test
@@ -501,11 +530,13 @@ public class TypecheckerAbiTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
     Assertions.assertEquals(
         "Multiple FRAME_POINTER registers were declared but only one was expected",
-        throwable.reason);
+        diagnostic.reason);
   }
 
   @Test
@@ -530,11 +561,13 @@ public class TypecheckerAbiTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
     Assertions.assertEquals(
         "Multiple LOCAL_ADDRESS_LOAD were declared but one was expected",
-        throwable.reason);
+        diagnostic.reason);
   }
 
 }

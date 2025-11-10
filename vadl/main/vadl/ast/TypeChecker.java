@@ -17,7 +17,6 @@
 package vadl.ast;
 
 import static java.util.Objects.requireNonNull;
-import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
 import static vadl.error.Diagnostic.warning;
 
@@ -85,7 +84,21 @@ public class TypeChecker
     ONE,
   }
 
+  /**
+   * A custom exception to be thrown to partially stop evaluating to recover to a point where it
+   * makes sense to resume typechecking.
+   */
+  static class StopPartialCheckingSignal extends RuntimeException {
+  }
+
+  /**
+   * Recoverable errors are stored in this list.
+   */
   private final List<Diagnostic> errors = new ArrayList<>();
+
+  /**
+   * Often the typechecker needs to evaluate constants in type literals.
+   */
   final ConstantEvaluator constantEvaluator;
 
   /**
@@ -104,6 +117,16 @@ public class TypeChecker
   private final Set<Definition> checkedDefinitions =
       Collections.newSetFromMap(new IdentityHashMap<>());
 
+  /**
+   * If checking a statments that cannot be correctly checked will be added to these lists.
+   * Checking them again will throw a {@link StopPartialCheckingSignal}.
+   */
+  private final Set<Statement> erroredStatements =
+      Collections.newSetFromMap(new IdentityHashMap<>());
+  private final Set<Definition> erroredDefinitions =
+      Collections.newSetFromMap(new IdentityHashMap<>());
+
+
   public TypeChecker() {
     constantEvaluator = new ConstantEvaluator();
   }
@@ -118,6 +141,9 @@ public class TypeChecker
   Type check(Expr expr) {
     // Expressions store their type so we can look at them to see if they were already evaluated.
     if (expr.type != null) {
+      if (expr.type instanceof InternalErrorType) {
+        throw new StopPartialCheckingSignal();
+      }
       return requireNonNull(expr.type);
     }
 
@@ -129,8 +155,16 @@ public class TypeChecker
     }
 
     currentlyVisiting.add(nodeId);
-    expr.accept(this);
-    currentlyVisiting.pop();
+    try {
+      expr.accept(this);
+    } catch (StopPartialCheckingSignal signal) {
+      if (expr.type == null) {
+        expr.type = new InternalErrorType();
+      }
+      throw signal;
+    } finally {
+      currentlyVisiting.pop();
+    }
     return expr.type();
   }
 
@@ -140,6 +174,10 @@ public class TypeChecker
    * @param stmt to check.
    */
   void check(Statement stmt) {
+    if (erroredStatements.contains(stmt)) {
+      throw new StopPartialCheckingSignal();
+    }
+
     if (checkedStatements.contains(stmt)) {
       return;
     }
@@ -152,7 +190,13 @@ public class TypeChecker
     }
 
     currentlyVisiting.add(nodeId);
-    stmt.accept(this);
+    try {
+      stmt.accept(this);
+    } catch (StopPartialCheckingSignal signal) {
+      // Add the statement to remember that it wasn't sucessfully checked and continue with the next
+      // one on purpose.
+      erroredStatements.add(stmt);
+    }
     currentlyVisiting.pop();
     checkedStatements.add(stmt);
   }
@@ -163,9 +207,10 @@ public class TypeChecker
     Map<String, AnnotationDefinition> annotationNames = new HashMap<>();
     def.annotations.forEach(annotation -> {
       if (annotationNames.containsKey(annotation.name())) {
-        throw error("Duplicate Annotation", def)
+        errors.add(error("Duplicate Annotation", def)
             .locationNote(annotationNames.get(annotation.name()), "First used here")
-            .build();
+            .build()
+        );
       }
 
       // check annotation definition itself
@@ -187,6 +232,10 @@ public class TypeChecker
    * @param def to check.
    */
   private void check(Definition def) {
+    if (erroredDefinitions.contains(def)) {
+      throw new StopPartialCheckingSignal();
+    }
+
     if (checkedDefinitions.contains(def)) {
       return;
     }
@@ -206,7 +255,12 @@ public class TypeChecker
 
     // Visit the definitions
     currentlyVisiting.add(nodeId);
-    def.accept(this);
+    try {
+      def.accept(this);
+    } catch (StopPartialCheckingSignal signal) {
+      // Add the node to the list of errored nodes and continue with the next one.
+      erroredDefinitions.add(def);
+    }
     currentlyVisiting.pop();
     checkedDefinitions.add(def);
 
@@ -216,12 +270,21 @@ public class TypeChecker
   /**
    * Verify that the program is well-typed.
    *
+   * <p>This also modiefies the AST and adds types to all expressions and possibly attaches other
+   * data to AST nodes that might be usefull for lowering.
+   *
    * @param ast to verify
-   * @throws Diagnostic if the program isn't well typed
+   * @throws DiagnosticList if the program isn't well typed.
    */
   public void verify(Ast ast) {
     var startTime = System.nanoTime();
-    ast.definitions.forEach(this::check);
+    try {
+      ast.definitions.forEach(this::check);
+    } catch (Diagnostic error) {
+      errors.add(error);
+    } catch (StopPartialCheckingSignal signal) {
+      // do nothing on purpose.
+    }
     ast.passTimings.add(
         new Ast.PassTimings("Type Checking", (System.nanoTime() - startTime) / 1_000_000));
 
@@ -234,6 +297,19 @@ public class TypeChecker
     throw new RuntimeException(
         "The typechecker doesn't know how to handle `%s` yet, found in %s".formatted(
             node.getClass().getSimpleName(), node.location().toIDEString()));
+  }
+
+  /**
+   * Add a recoverable error to the internal list and throw a StopPartialCheckingSignal.
+   *
+   * @param error to be recorded.
+   * @return StopPartialCheckingSignal is never actually returned but thrown, however sometimes it
+   *     is used to trick the compiler.
+   * @throws StopPartialCheckingSignal always.
+   */
+  private StopPartialCheckingSignal addErrorAndStopChecking(Diagnostic error) {
+    errors.add(error);
+    throw new StopPartialCheckingSignal();
   }
 
   private static Diagnostic typeMismatchError(WithLocation locatable, Type expected, Type actual) {
@@ -255,9 +331,9 @@ public class TypeChecker
   }
 
   private void throwInvalidAsmCast(AsmType from, AsmType to, WithLocation location) {
-    throw error("Type Mismatch", location)
+    addErrorAndStopChecking(error("Type Mismatch", location)
         .description("Invalid cast from `%s` to `%s`.", from, to)
-        .build();
+        .build());
   }
 
   /**
@@ -465,15 +541,15 @@ public class TypeChecker
    * @param inner expression to wrap.
    * @param to    which the expression should be cast.
    * @return the original expression.
-   * @throws Diagnostic if the inner expression cannot be implicitly cast to type.
+   * @throws StopPartialCheckingSignal if the inner expression cannot be implicitly cast to type.
    */
-  private static Expr tryWrapExplicitCast(Expr inner, Type to) {
+  private Expr tryWrapExplicitCast(Expr inner, Type to) {
     if (inner.type == null) {
       throw new IllegalStateException("The type of the inner expression must be known.");
     }
     var wrapped = wrapExplicitCast(inner, to);
     if (!wrapped.type().equals(to)) {
-      throw typeMismatchError(inner, to, inner.type());
+      addErrorAndStopChecking(typeMismatchError(inner, to, inner.type()));
     }
     return wrapped;
   }
@@ -487,15 +563,15 @@ public class TypeChecker
    * @param inner expression to wrap.
    * @param to    which the expression should be cast.
    * @return the original expression.
-   * @throws Diagnostic if the inner expression cannot be implicitly cast to type.
+   * @throws StopPartialCheckingSignal if the inner expression cannot be implicitly cast to type.
    */
-  private static Expr tryWrapImplicitCast(Expr inner, Type to) {
+  private Expr tryWrapImplicitCast(Expr inner, Type to) {
     if (inner.type == null) {
       throw new IllegalStateException("The type of the inner expression must be known.");
     }
     var wrapped = wrapImplicitCast(inner, to);
     if (!wrapped.type().equals(to)) {
-      throw typeMismatchError(inner, to, inner.type());
+      addErrorAndStopChecking(typeMismatchError(inner, to, inner.type()));
     }
     return wrapped;
   }
@@ -526,7 +602,7 @@ public class TypeChecker
       Type litType = requireNonNull(definition.typeLiteral.type);
 
       if (!canImplicitCast(valType, litType)) {
-        throw typeMismatchError(definition.value, litType, valType);
+        addErrorAndStopChecking(typeMismatchError(definition.value, litType, valType));
       }
 
       // Insert a cast if needed
@@ -540,10 +616,10 @@ public class TypeChecker
     try {
       constantEvaluator.eval(definition.value);
     } catch (EvaluationError e) {
-      throw error("Invalid constant value", definition.value)
+      addErrorAndStopChecking(error("Invalid constant value", definition.value)
           .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
           .description("All constants must be able to be evaluated")
-          .build();
+          .build());
     }
 
     return null;
@@ -553,7 +629,8 @@ public class TypeChecker
   public Void visit(FormatDefinition definition) {
     var type = check(definition.typeLiteral);
     if (!(type instanceof BitsType bitsType)) {
-      throw typeMismatchError(definition.typeLiteral, "bits type", type);
+      // Not actually thrown here but used to signal that this if will never suceed.
+      throw addErrorAndStopChecking(typeMismatchError(definition.typeLiteral, "bits type", type));
     }
 
     var bitWidth = bitsType.bitWidth();
@@ -565,9 +642,9 @@ public class TypeChecker
         var fieldType = check(typedField.typeLiteral);
 
         if (!(fieldType instanceof BitsType fieldBitsType)) {
-          throw error("Bits Type expected", typedField.typeLiteral)
+          throw addErrorAndStopChecking(error("Bits Type expected", typedField.typeLiteral)
               .description("Format fields can only be assigned a bits type.")
-              .build();
+              .build());
         }
         typedField.range = new FormatDefinition.BitRange(nextOccupiedBit,
             nextOccupiedBit - (fieldBitsType.bitWidth() - 1));
@@ -598,21 +675,21 @@ public class TypeChecker
           // NOTE: From is always larger than to
           var rangeSize = (from - to) + 1;
           if (rangeSize < 1) {
-            throw error("Invalid Range", range)
+            addErrorAndStopChecking(error("Invalid Range", range)
                 .locationDescription(range, "Range must span more than one bit but was %s",
                     fieldBitWidth)
                 .locationNote(range,
                     "Ranges are specified as `from..to` where from is always larger than to.")
-                .build();
+                .build());
           }
 
           // Check range is not out of bounds.
           if (from < 0 || from >= bitWidth || to < 0 || to > bitWidth) {
-            throw error("Invalid Range", range)
+            addErrorAndStopChecking(error("Invalid Range", range)
                 .locationDescription(range,
                     "Provided range `%d..%d` out of bounds for available range `%d..0`",
                     from, to, bitWidth - 1)
-                .build();
+                .build());
           }
 
           fieldBitWidth += rangeSize;
@@ -621,9 +698,9 @@ public class TypeChecker
         }
 
         if (fieldBitWidth < 1) {
-          throw error("Invalid Field", rangeField)
+          addErrorAndStopChecking(error("Invalid Field", rangeField)
               .description("Field must be at least one bit but was %s", fieldBitWidth)
-              .build();
+              .build());
         }
 
         if (rangeField.type == null) {
@@ -633,10 +710,10 @@ public class TypeChecker
           // Verify the received type with the one provided in the literal.
           var rangeBitsType = Type.bits(fieldBitWidth);
           if (!canImplicitCast(rangeField.type, rangeBitsType)) {
-            throw error("Type Mismatch", rangeField)
+            addErrorAndStopChecking(error("Type Mismatch", rangeField)
                 .description("Type declared as `%s`, but the range is `%s`", rangeField.type,
                     rangeBitsType)
-                .build();
+                .build());
           }
         }
 
@@ -655,20 +732,20 @@ public class TypeChecker
       if (aux.kind == FormatDefinition.AuxiliaryField.AuxKind.PREDICATE) {
         var conflict = derivedFieldsWithPredicate.get(aux.fieldDef());
         if (conflict != null) {
-          throw error("Conflicting field access predicates", aux.field)
+          addErrorAndStopChecking(error("Conflicting field access predicates", aux.field)
               .locationDescription(aux.field,
                   "A predicate for the field access `%s` already exists.", aux.field.name)
               .locationHelp(conflict, "Predicate already defined here.")
-              .build();
+              .build());
         }
         derivedFieldsWithPredicate.put((DerivedFormatField) aux.fieldDef(), aux);
       }
     }
 
     if (bitsVerifier.hasViolations()) {
-      throw error("Invalid Format", definition)
+      addErrorAndStopChecking(error("Invalid Format", definition)
           .description("%s", requireNonNull(bitsVerifier.getViolationsMessage()))
-          .build();
+          .build());
     }
 
     return null;
@@ -707,9 +784,11 @@ public class TypeChecker
     var fieldType = switch (field) {
       case RangeFormatField r -> requireNonNull(r.type);
       case TypedFormatField f -> f.typeLiteral.type();
-      default -> throw error("Invalid format field encoding", auxiliaryField.field)
-          .locationDescription(auxiliaryField.field, "The encoding must reference a format field.")
-          .build();
+      default ->
+          throw addErrorAndStopChecking(error("Invalid format field encoding", auxiliaryField.field)
+              .locationDescription(auxiliaryField.field,
+                  "The encoding must reference a format field.")
+              .build());
     };
     auxiliaryField.expr = tryWrapImplicitCast(auxiliaryField.expr, fieldType);
   }
@@ -722,11 +801,12 @@ public class TypeChecker
               "The predicate must reference a field access function.")
           .build();
     }
-    ensure(auxiliaryField.expr.type() == Type.bool(),
-        () -> error("Invalid field access predicate", auxiliaryField.field)
-            .locationDescription(auxiliaryField.field,
-                "The predicate must be a `Bool` expression, but was `%s`.",
-                auxiliaryField.expr.type()));
+    if (auxiliaryField.expr.type() != Type.bool()) {
+      addErrorAndStopChecking(error("Invalid field access predicate", auxiliaryField.field)
+          .locationDescription(auxiliaryField.field,
+              "The predicate must be a `Bool` expression, but was `%s`.",
+              auxiliaryField.expr.type()).build());
+    }
   }
 
   @Override
@@ -1068,19 +1148,27 @@ public class TypeChecker
         var dummyArgs = new ArrayList<CallIndexExpr.Arguments>();
 
         for (var arg : expr.argsIndices) {
-          ensure(arg.values.size() == 1,
-              () -> error("All arguments must have exactly one value", definition.value));
-
+          if (arg.values.size() != 1) {
+            addErrorAndStopChecking(
+                error("All arguments must have exactly one value", definition.value)
+                    .build()
+            );
+          }
           var argVal = arg.values.getFirst();
           if (argVal instanceof WildcardLiteral) {
             wildcardIndices.add(i);
           } else if (argVal instanceof RangeExpr) {
-            ensure(i == expr.argsIndices.size() - 1, () ->
-                error("Slices can only be done on the innermost dimension.", argVal));
+            if (i != expr.argsIndices.size() - 1) {
+              addErrorAndStopChecking(
+                  error("Slices can only be done on the innermost dimension.", argVal).build());
+            }
             slice = arg;
           } else {
-            ensure(wildcardIndices.isEmpty(),
-                () -> error("Constant accesses cannot occure after param accesses.", argVal));
+            if (!wildcardIndices.isEmpty()) {
+              addErrorAndStopChecking(
+                  error("Constant accesses cannot occure after param accesses.",
+                      argVal).build());
+            }
             dummyArgs.add(arg);
           }
 
@@ -1107,18 +1195,21 @@ public class TypeChecker
         if (slice != null) {
           var typeBeforeSlice = switch (expr.type()) {
             case TensorType type -> {
-              ensure(type.numberOfIndexDims() >= wildcardIndices.size(),
-                  () -> error("Invalid number of parameters", expr));
+              if (type.numberOfIndexDims() < wildcardIndices.size()) {
+                addErrorAndStopChecking(error("Invalid number of parameters", expr).build());
+              }
               yield type.innerType();
             }
             case ConcreteRelationType type -> {
-              ensure(type.argTypes().size() == wildcardIndices.size(), () ->
-                  error("Invalid number of parameters", expr));
+              if (type.argTypes().size() != wildcardIndices.size()) {
+                addErrorAndStopChecking(error("Invalid number of parameters", expr).build());
+              }
               yield type.resultType();
             }
             default -> {
-              ensure(wildcardIndices.isEmpty(),
-                  () -> error("Params can only access tensor types", expr));
+              if (!wildcardIndices.isEmpty()) {
+                addErrorAndStopChecking(error("Params can only acess tensor types", expr).build());
+              }
               yield expr.type();
             }
           };
@@ -1323,28 +1414,28 @@ public class TypeChecker
       switch (entry.getValue()) {
         case ONE -> {
           if (registers.isEmpty()) {
-            throw error(
+            addErrorAndStopChecking(error(
                 "No " + purpose.name() + " registers were declared but one was expected",
-                definition.location()).build();
+                definition.location()).build());
           } else if (registers.size() != 1) {
-            throw error(
+            addErrorAndStopChecking(error(
                 "Multiple " + purpose.name() + " registers were declared but only one was expected",
-                SourceLocation.join(registers.stream().map(Node::location).toList())).build();
+                SourceLocation.join(registers.stream().map(Node::location).toList())).build());
           }
         }
         case OPTIONAL -> {
           if (!(registers.isEmpty() || registers.size() == 1)) {
-            throw error(
+            addErrorAndStopChecking(error(
                 "Multiple " + purpose.name()
                     + " registers were declared but zero or one was expected",
-                SourceLocation.join(registers.stream().map(Node::location).toList())).build();
+                SourceLocation.join(registers.stream().map(Node::location).toList())).build());
           }
         }
         case AT_LEAST_ONE -> {
           if (registers.isEmpty()) {
-            throw error(
+            addErrorAndStopChecking(error(
                 "Zero " + purpose.name() + " registers were declared but at least one was expected",
-                definition.location()).build();
+                definition.location()).build());
           }
         }
         default -> throw new RuntimeException("enum variant not handled");
@@ -1986,22 +2077,22 @@ public class TypeChecker
         SpecialPurposeRegisterDefinition.Purpose.numberOfExpectedArguments.get(definition.purpose);
 
     if (actual == null) {
-      throw error("Cannot determine number of expected registers",
-          definition.location()).build();
+      errors.add(error("Cannot determine number of expected registers",
+          definition.location()).build());
     }
 
     if (actual == Occurrence.ONE) {
       if (definition.exprs.size() != 1) {
-        throw error("Number of registers is incorrect. This definition expects only one",
-            definition.location()).build();
+        errors.add(error("Number of registers is incorrect. This definition expects only one",
+            definition.location()).build());
       }
     }
 
     if (actual == Occurrence.ONE) {
       if (definition.exprs.isEmpty()) {
-        throw error(
+        errors.add(error(
             "Number of registers is incorrect. This definition expects at least one.",
-            definition.location()).build();
+            definition.location()).build());
       }
     }
 
@@ -2235,10 +2326,13 @@ public class TypeChecker
       check(functionDefinition);
 
       if (!functionDefinition.params.isEmpty()) {
-        throw error("Invalid Function Call", expr)
+        // We can still continue after the error here, no need to stop checking. We simply assume
+        // it returns the type of the function. This is only possible because we don't have
+        // function overloading.
+        errors.add(error("Invalid Function Call", expr)
             .description("Expected `%s` arguments but got `%s`", functionDefinition.params.size(),
                 0)
-            .build();
+            .build());
       }
       expr.type = functionDefinition.retType.type;
       return;
@@ -2250,10 +2344,11 @@ public class TypeChecker
       check(exceptionDef);
 
       if (!exceptionDef.params.isEmpty()) {
-        throw error("Invalid Exception Raise", expr)
+        // No need to stop evaluation we can still continue.
+        errors.add(error("Invalid Exception Raise", expr)
             .description("Expected `%s` arguments but got `%s`", exceptionDef.params.size(),
                 0)
-            .build();
+            .build());
       }
 
       expr.type = Type.void_();
@@ -2280,11 +2375,11 @@ public class TypeChecker
       // We might be here from a call expr and it might be necessary to handle the call for another
       // definition.
 
-      throw error("Invalid Expression", expr)
+      throw addErrorAndStopChecking(error("Invalid Expression", expr)
           .locationDescription(expr,
               "The name '%s' points to a `%s` which cannot be used as an expression.", fullName,
               origin.getClass().getSimpleName())
-          .build();
+          .build());
     }
 
     // It's also possible to call functions without parenthesis if the function doesn't take any
@@ -2299,9 +2394,9 @@ public class TypeChecker
       return;
     }
 
-    // The symbol resolver should have caught that
     throw new IllegalStateException(
-        "Cannot find symbol `%s` found at: %s".formatted(fullName, expr.location().toIDEString()));
+        "Cannot find symbol `%s` found at: %s (The symbol resolver should already have caught that)"
+            .formatted(fullName, expr.location().toIDEString()));
   }
 
   @Override
@@ -2315,21 +2410,23 @@ public class TypeChecker
 
     // Both sides must be boolean
     if (!(leftTyp instanceof BoolType) && !canImplicitCast(leftTyp, Type.bool())) {
-      throw error("Type Mismatch", expr)
+      // We can still continue here, the expression still returns a boolean.
+      errors.add(error("Type Mismatch", expr)
           .locationDescription(expr, "Expected a `Bool` here but the left side was an `%s`",
               leftTyp)
           .description("The `%s` operator only works on booleans.", expr.operator())
-          .build();
+          .build());
     }
     expr.left = wrapImplicitCast(expr.left, Type.bool());
 
     var rightTyp = requireNonNull(expr.right.type);
     if (!(rightTyp instanceof BoolType) && !canImplicitCast(rightTyp, Type.bool())) {
-      throw error("Type Mismatch", expr)
+      // We can still continue here, the expression still returns a boolean.
+      errors.add(error("Type Mismatch", expr)
           .locationDescription(expr, "Expected a `Bool` here but the right side was an `%s`",
               rightTyp)
           .description("The `%s` operator only works on booleans.", expr.operator())
-          .build();
+          .build());
     }
     expr.right = wrapImplicitCast(expr.right, Type.bool());
 
@@ -2370,23 +2467,23 @@ public class TypeChecker
       }
 
       if (!(leftTyp instanceof BitsType) && !(leftTyp instanceof ConstantType)) {
-        throw error("Type Mismatch", expr)
+        addErrorAndStopChecking(error("Type Mismatch", expr)
             .locationDescription(expr, "Expected a number here but the left side was an `%s`",
                 leftTyp)
             .description("The `%s` operator only works on pairs of numbers or strings.",
                 expr.operator())
-            .build();
+            .build());
       }
       if (!(rightTyp instanceof BitsType) && !(rightTyp instanceof ConstantType)) {
-        throw error("Type Mismatch", expr)
+        addErrorAndStopChecking(error("Type Mismatch", expr)
             .locationDescription(expr, "Expected a number here but the right side was an `%s`",
                 rightTyp)
             .description("The `%s` operator only works on pairs of numbers or string.s",
                 expr.operator())
-            .build();
+            .build());
       }
     } else {
-      throw new RuntimeException("Don't handle operator " + expr.operator());
+      throw new RuntimeException("Don't know how to handle operator " + expr.operator());
     }
 
     // Shifts and rotates require that the right type is uint and the left can be anything.
@@ -2405,9 +2502,9 @@ public class TypeChecker
 
       if (!(rightTyp instanceof UIntType || rightTyp instanceof BitsType)
           && !canImplicitCast(rightTyp, closestUIntType)) {
-        throw error("Type Mismatch", expr)
+        addErrorAndStopChecking(error("Type Mismatch", expr)
             .locationNote(expr, "The right type must be unsigned but is %s", rightTyp)
-            .build();
+            .build());
       }
 
       if (!(rightTyp instanceof UIntType)) {
@@ -2419,10 +2516,10 @@ public class TypeChecker
       if (leftTyp instanceof ConstantType) {
 
         if (List.of(Operator.RotateLeft, Operator.RotateRight).contains(expr.operator())) {
-          throw error("Type Mismatch", expr)
+          addErrorAndStopChecking(error("Type Mismatch", expr)
               .locationNote(expr, "The left side must be a concrete type but was %s", rightTyp)
               .description("Rotate operations require a type with a fixed bit width.")
-              .build();
+              .build());
         }
 
         var result = constantEvaluator.eval(expr);
@@ -2457,10 +2554,10 @@ public class TypeChecker
       var leftBitWidth = ((BitsType) leftTyp).bitWidth();
       var rightBitWidth = ((BitsType) rightTyp).bitWidth();
       if (leftBitWidth != rightBitWidth) {
-        throw error("Type Mismatch", expr)
+        addErrorAndStopChecking(error("Type Mismatch", expr)
             .description("Both sides must have the same width but left is `%s` while right is `%s`",
                 leftTyp, rightTyp)
-            .build();
+            .build());
       }
 
       // Rules determining the return type (switched input operators omitted because of
@@ -2513,11 +2610,11 @@ public class TypeChecker
     rightTyp = expr.right.type();
 
     if (!leftTyp.equals(rightTyp)) {
-      throw error("Type Mismatch", expr)
+      addErrorAndStopChecking(error("Type Mismatch", expr)
           .locationNote(expr, "The left type is %s while right is %s", leftTyp, rightTyp)
           .description(
               "Both types on the left and right side of an binary operation should be equal.")
-          .build();
+          .build());
     }
 
     if (Operator.artihmeticComparisons.contains(expr.operator())) {
@@ -2558,13 +2655,13 @@ public class TypeChecker
       var concreteTypes =
           types.stream().filter(x -> !(x instanceof ConstantType)).distinct().toList();
       if (concreteTypes.isEmpty()) {
-        throw error("Type Mismatch", expr)
+        addErrorAndStopChecking(error("Type Mismatch", expr)
             .locationDescription(expr,
                 "At least one value has to have a concrete bitwidth for a concatination")
-            .build();
+            .build());
       }
       if (concreteTypes.size() > 1) {
-        throw error("Type Mismatch", expr)
+        addErrorAndStopChecking(error("Type Mismatch", expr)
             .locationDescription(expr,
                 "The concatination operation can only concat bits or strings.")
             .locationNote(expr, "Provided types: %s",
@@ -2572,7 +2669,7 @@ public class TypeChecker
             .locationHelp(expr,
                 "Constant types can be implicitly casted to a concrete type if only one such "
                     + "concrete type appears.")
-            .build();
+            .build());
       }
 
       expr.expressions.replaceAll(e -> wrapImplicitCast(e, concreteTypes.get(0)));
@@ -2585,12 +2682,12 @@ public class TypeChecker
       return null;
     }
 
-    throw error("Type Mismatch", expr)
+    throw addErrorAndStopChecking(error("Type Mismatch", expr)
         .locationNote(expr, "Provided types: %s",
             String.join(", ", types.stream().map(Type::toString).toList()))
         .description(
             "The concatenation operation can only be applied on a set of strings or a set of bits.")
-        .build();
+        .build());
   }
 
   @Override
@@ -2642,24 +2739,24 @@ public class TypeChecker
     var toType = check(expr.to);
 
     if (!(fromType instanceof BitsType) && !(fromType instanceof ConstantType)) {
-      throw error("Type Mismatch", expr.from)
+      addErrorAndStopChecking(error("Type Mismatch", expr.from)
           .description("The from part of a range must be a number but was `%s`", fromType)
-          .build();
+          .build());
     }
 
     if (!(toType instanceof BitsType) && !(toType instanceof ConstantType)) {
-      throw error("Type Mismatch", expr.to)
+      addErrorAndStopChecking(error("Type Mismatch", expr.to)
           .description("The to part of a range must be a number but was `%s`", fromType)
-          .build();
+          .build());
     }
 
     var fromVal = constantEvaluator.eval(expr.from).value();
     var toVal = constantEvaluator.eval(expr.to).value();
 
     if (toVal.compareTo(fromVal) > 0) {
-      throw error("Invalid range", expr)
+      addErrorAndStopChecking(error("Invalid range", expr)
           .description("From is %s but to is %s, but ranges must be decreasing", fromVal, toVal)
-          .build();
+          .build());
     }
 
     // FIXME: The type doesn't really make sense but we don't have a propper range type
@@ -2697,10 +2794,10 @@ public class TypeChecker
       var suggestions =
           Levenshtein.suggestions(expr.baseType.pathToString(), candidateTypes);
 
-      throw error("Unknown Type `%s`".formatted(base), expr)
+      addErrorAndStopChecking(error("Unknown Type `%s`".formatted(base), expr)
           .locationDescription(expr, "No type with that name exists.")
           .suggestions(suggestions)
-          .build();
+          .build());
     }
 
     // 2. Calculate the sizes
@@ -2709,10 +2806,10 @@ public class TypeChecker
       var size = constantEvaluator.eval(sizeExpr).value().intValueExact();
 
       if (size < 1) {
-        throw error("Invalid Type Notation", sizeExpr.location())
+        addErrorAndStopChecking(error("Invalid Type Notation", sizeExpr.location())
             .locationDescription(sizeExpr.location(),
                 "Width must of a %s must be greater or equal 1 but was %d", base, size)
-            .build();
+            .build());
       }
 
       return size;
@@ -2734,10 +2831,10 @@ public class TypeChecker
 
     if (unSizedBuiltins.containsKey(base)) {
       if (!sizes.isEmpty()) {
-        throw error("Invalid Type Notation", expr.location())
+        addErrorAndStopChecking(error("Invalid Type Notation", expr.location())
             .description("The %s type doesn't use the size notation.", base)
             .help("Try removing the size parameter here.")
-            .build();
+            .build());
       }
       return unSizedBuiltins.get(base).get();
     }
@@ -2750,13 +2847,13 @@ public class TypeChecker
 
     if (sizedBuiltins.containsKey(base)) {
       if (sizes.isEmpty()) {
-        throw error("Invalid Type Notation", expr.location())
+        addErrorAndStopChecking(error("Invalid Type Notation", expr.location())
             .description(
                 "Unsized `%s` can only be used in special places when it's obvious what the bit"
                     + " width should be.",
                 base)
             .help("Try adding a size parameter here.")
-            .build();
+            .build());
       }
 
       if (sizes.size() == 1) {
@@ -2790,9 +2887,9 @@ public class TypeChecker
       return new TensorType(sizes, customTensor);
     }
 
-    throw error("Invalid Tensor Type", expr)
+    throw addErrorAndStopChecking(error("Invalid Tensor Type", expr)
         .locationDescription(expr, "You can only create tensors from data types.")
-        .build();
+        .build());
   }
 
   @Override
@@ -2815,25 +2912,26 @@ public class TypeChecker
       case NEGATIVE -> {
         expr.computedTarget = BuiltInTable.NEG;
         if (!(innerType instanceof BitsType) && !(innerType instanceof ConstantType)) {
-          throw error("Type Mismatch", expr)
+          addErrorAndStopChecking(error("Type Mismatch", expr)
               .description("Expected a numerical type but got `%s`", innerType)
-              .build();
+              .build());
         }
       }
       case COMPLEMENT -> {
         expr.computedTarget = BuiltInTable.NOT;
         if (!(innerType instanceof BitsType)) {
-          throw error("Type Mismatch", expr)
+          addErrorAndStopChecking(error("Type Mismatch", expr)
               .description("Expected a numerical type with fixed bit-width but got `%s`", innerType)
-              .build();
+              .build());
         }
       }
       case LOG_NOT -> {
         expr.computedTarget = BuiltInTable.NOT;
         if (!innerType.equals(Type.bool())) {
-          throw error("Type Mismatch: expected `Bool`, got `%s`".formatted(innerType), expr)
-              .help("For numerical types you can negate them with a minus `-`")
-              .build();
+          addErrorAndStopChecking(
+              error("Type Mismatch: expected `Bool`, got `%s`".formatted(innerType), expr)
+                  .help("For numerical types you can negate them with a minus `-`")
+                  .build());
         }
       }
       default -> throwUnimplemented(expr);
@@ -2856,20 +2954,20 @@ public class TypeChecker
     // NOTE: From is always larger than to
     var rangeSize = (from - to) + 1;
     if (rangeSize < 1) {
-      throw error("Invalid Range", range)
+      addErrorAndStopChecking(error("Invalid Range", range)
           .description("Range must be >= 1 but was %s", rangeSize)
-          .build();
+          .build());
     }
 
     if (from >= valueType.bitWidth()) {
-      throw error("Invalid Range", range)
+      addErrorAndStopChecking(error("Invalid Range", range)
           .description("Range start %d out of bounds for `%s`", from, valueType)
-          .build();
+          .build());
     }
     if (to < 0) {
-      throw error("Invalid Range", range)
+      addErrorAndStopChecking(error("Invalid Range", range)
           .description("Range end must be at least zero but was %s", to)
-          .build();
+          .build());
     }
 
     return new Constant.BitSlice.Part(from, to);
@@ -2879,14 +2977,14 @@ public class TypeChecker
     check(indexExpr);
     int sliceIndex = constantEvaluator.eval(indexExpr).value().intValueExact();
     if (sliceIndex >= valueType.bitWidth()) {
-      throw error("Invalid Index", indexExpr)
+      addErrorAndStopChecking(error("Invalid Index", indexExpr)
           .description("Index %d out of bounds for `%s`", sliceIndex, valueType)
-          .build();
+          .build());
     }
     if (sliceIndex < 0) {
-      throw error("Invalid Index", indexExpr)
+      addErrorAndStopChecking(error("Invalid Index", indexExpr)
           .description("Index must be at least zero but was %s", sliceIndex)
-          .build();
+          .build());
     }
     return new Constant.BitSlice.Part(sliceIndex, sliceIndex);
   }
@@ -2914,9 +3012,9 @@ public class TypeChecker
 
     if (!(typeBeforeSlice instanceof BitsType) && !(typeBeforeSlice instanceof TensorType)) {
       var loc = expr.target.location().join(lastSlice.location);
-      throw error("Type Mismatch", loc)
+      addErrorAndStopChecking(error("Type Mismatch", loc)
           .description("Only bit types can be sliced but the target was a `%s`", typeBeforeSlice)
-          .build();
+          .build());
     }
 
     Type currType = typeBeforeSlice;
@@ -2939,10 +3037,10 @@ public class TypeChecker
           // In the future we might want to allow overlapping slices on read values.
           // For written values (`X(1, 1) := 2`) this must not be allowed, as the same value
           // position is written twice.
-          throw error("Overlapping slice parts", slice.location)
+          addErrorAndStopChecking(error("Overlapping slice parts", slice.location)
               .locationDescription(slice.location, "Some parts of the slice are overlapping.")
               .note("Slices must have distinct, non-overlapping parts.")
-              .build();
+              .build());
         }
 
         currType = Type.bits(bitSlice.bitSize());
@@ -2953,17 +3051,17 @@ public class TypeChecker
       if (currType instanceof TensorType currTensoType) {
         if (slice.values.size() != 1) {
           var loc = slice.values.getFirst().location().join(slice.values.getLast().location());
-          throw error("Invalid Tensor Indexing", loc)
+          addErrorAndStopChecking(error("Invalid Tensor Indexing", loc)
               .locationDescription(loc,
                   "Indexing tensors only allows one argument per parenthesis group.")
-              .build();
+              .build());
         }
 
         var indexExpr = slice.values.getFirst();
         if (indexExpr instanceof RangeExpr) {
-          throw error("Invalid Tensor Slice", indexExpr)
+          addErrorAndStopChecking(error("Invalid Tensor Slice", indexExpr)
               .locationDescription(indexExpr, "Tensors cannot be sliced.")
-              .build();
+              .build());
         }
         check(indexExpr);
 
@@ -2981,10 +3079,10 @@ public class TypeChecker
         if (staticIndex != null) {
           if (staticIndex < 0
               || staticIndex >= currTensoType.outerMostDimension()) {
-            throw error("Tensor Index out of bounds", indexExpr)
+            addErrorAndStopChecking(error("Tensor Index out of bounds", indexExpr)
                 .locationDescription(indexExpr,
                     "Invalid index `%d` for tensor `%s`", staticIndex, currTensoType)
-                .build();
+                .build());
           }
 
           // Note: the computed bitslice here is already for the lowering where we assume all
@@ -3014,7 +3112,8 @@ public class TypeChecker
              also shouldn't be that strong/complex).
            */
           if (!indexExpr.type().isDataType()) {
-            throw typeMismatchError(indexExpr, "numerical datatype", indexExpr.type());
+            addErrorAndStopChecking(
+                typeMismatchError(indexExpr, "numerical datatype", indexExpr.type()));
           }
         }
       }
@@ -3040,16 +3139,21 @@ public class TypeChecker
     // FIXME: Make this more generic
     switch (expr.target.path().target()) {
       case CounterDefinition counter -> {
-        ensure(expr.slices().isEmpty(), () -> error("Invalid counter sub-call", expr)
-            .locationDescription(expr, "Cannot do sub call and slice on counter."));
+        if (!expr.slices().isEmpty()) {
+          addErrorAndStopChecking(error("Invalid counter sub-call", expr)
+              .locationDescription(expr, "Cannot do sub call and slice on counter.").build());
+        }
         var validSubCalls = List.of("next");
-        ensure(expr.subCalls.size() == 1, () -> error("Invalid counter sub-call", expr)
-            .locationDescription(expr, "Only a single sub-call expected."));
+        if (expr.subCalls.size() != 1) {
+          addErrorAndStopChecking(error("Invalid counter sub-call", expr)
+              .locationDescription(expr, "Only a single sub-call expected.").build());
+        }
         var subCall = expr.subCalls.getFirst();
-        ensure(validSubCalls.contains(subCall.id.name),
-            () -> error("Invalid counter sub-call", subCall.id)
-                .locationDescription(subCall.id, "Counter has no sub-call named `%s`",
-                    subCall.id.name));
+        if (!validSubCalls.contains(subCall.id.name)) {
+          addErrorAndStopChecking(error("Invalid counter sub-call", subCall.id)
+              .locationDescription(expr, "Counter has no sub-call named `%s`", subCall.id.name)
+              .build());
+        }
         return;
       }
       case null, default -> {
@@ -3072,10 +3176,10 @@ public class TypeChecker
               formatType.format.fields.stream()
                   .map(f -> f.identifier().name).toList());
 
-          throw error("Unknown format field `%s`".formatted(fieldName), expr)
+          addErrorAndStopChecking(error("Unknown format field `%s`".formatted(fieldName), expr)
               .description("Format `%s` doesn't have any field with this name", formatName)
               .suggestions(suggestions)
-              .build();
+              .build());
         }
 
         // FIXME: @flofriday replace once computed field ranges are Constant.BitSlice
@@ -3089,20 +3193,20 @@ public class TypeChecker
         var allowedStatusfields = List.of("negative", "zero", "carry", "overflow");
         if (!allowedStatusfields.contains(fieldName)) {
           var suggestions = Levenshtein.sortAll(fieldName, allowedStatusfields);
-          throw error("Unknown status field `%s`".formatted(fieldName), expr)
+          addErrorAndStopChecking(error("Unknown status field `%s`".formatted(fieldName), expr)
               .note("Allowed fields are: %s", String.join(", ", allowedStatusfields))
               .help("Maybe you meant one of these: %s", String.join(", ", suggestions))
-              .build();
+              .build());
         }
         var fieldType = Type.bool();
         subCall.computedStatusIndex = allowedStatusfields.indexOf(fieldName);
         visitSliceIndexCall(expr, fieldType, subCall.argsIndices);
         type = expr.type;
       } else {
-        throw error("Cannot resolve `%s`".formatted(fieldName), expr)
+        addErrorAndStopChecking(error("Cannot resolve `%s`".formatted(fieldName), expr)
             .description("Because the type up until it is not a format but `%s`",
                 requireNonNull(type))
-            .build();
+            .build());
       }
     }
   }
@@ -3144,10 +3248,10 @@ public class TypeChecker
     var builtin = AstUtils.getBuiltIn(expr.target.path().pathToString(), argTypes);
 
     if (builtin == null) {
-      throw error("Invalid call target", expr.target)
+      throw addErrorAndStopChecking(error("Invalid call target", expr.target)
           .locationNote(expr.target, "Couldn't find builtin function `%s`",
               expr.target.path())
-          .build();
+          .build());
     }
 
     expr.computedBuiltIn = builtin;
@@ -3185,9 +3289,9 @@ public class TypeChecker
     argTypes = requireNonNull(expr.argsIndices.get(0).values.stream().map(v -> v.type)).toList();
     if (expr.typeBeforeSlice == null && !builtin.takes(argTypes)) {
       // FIXME: Better format that error
-      throw error("Type Mismatch", expr)
+      addErrorAndStopChecking(error("Type Mismatch", expr)
           .description("Expected %s but got `%s`", builtin.signature().argTypeClasses(), argTypes)
-          .build();
+          .build());
     }
 
     // Note: cannot set the computed type because builtins aren't a definition.
@@ -3217,8 +3321,11 @@ public class TypeChecker
     var argExprs = AstUtils.flatArguments(argGroups);
 
     for (var argExpr : argExprs) {
-      ensure(!(argExpr instanceof RangeExpr), () -> error("Invalid argument", argExpr)
-          .locationNote(argExpr, "Expected argument value but got a range expression."));
+      if (argExpr instanceof RangeExpr) {
+        addErrorAndStopChecking(error("Invalid argument", argExpr)
+            .locationNote(argExpr, "Expected argument value but got a range expression.")
+            .build());
+      }
     }
 
     var type = typedNode.type();
@@ -3226,10 +3333,11 @@ public class TypeChecker
       // if a relation type expects no arguments, no argument group is considered
       expr.typeBeforeSlice = relType.resultType();
     } else if (type instanceof ConcreteRelationType relType) {
-      ensure(relType.argTypes().size() == argExprs.size(),
-          () -> error("Invalid number of arguments", expr)
-              .locationNote(expr, "Expected %s arguments but got %s.", relType.argTypes().size(),
-                  argExprs.size()));
+      if (relType.argTypes().size() != argExprs.size()) {
+        addErrorAndStopChecking(error("Invalid number of arguments", expr)
+            .locationNote(expr, "Expected %s arguments but got %s.", relType.argTypes().size(),
+                argExprs.size()).build());
+      }
 
       if (argGroups.size() != 1) {
         // concrete relations have exactly one group
@@ -3260,10 +3368,10 @@ public class TypeChecker
       for (int i = 0; i < argGroups.size(); i++) {
         var argGroup = argGroups.get(i);
         if (argGroup.values.size() != 1) {
-          throw error("Invalid tensor index", argGroup.location)
+          addErrorAndStopChecking(error("Invalid tensor index", argGroup.location)
               .locationDescription(argGroup.location,
                   "Tensor indexing expects exactly one argument.")
-              .build();
+              .build());
         }
         var arg = argGroup.values.getFirst();
         check(arg);
@@ -3285,10 +3393,10 @@ public class TypeChecker
     var targetSizeExpr = expr.target.size();
     if (targetSizeExpr != null) {
       if (!(expr.typeBeforeSlice() instanceof BitsType exprType)) {
-        throw error("Invalid scaling type", targetSizeExpr)
+        throw addErrorAndStopChecking(error("Invalid scaling type", targetSizeExpr)
             .locationDescription(targetSizeExpr, "Result type `%s` cannot be scaled.",
                 expr.typeBeforeSlice())
-            .build();
+            .build());
       }
       // handle the targetSize expression if defined
       int multiplier = constantEvaluator.eval(targetSizeExpr).value().intValueExact();
@@ -3297,9 +3405,9 @@ public class TypeChecker
         // in case of a memory definition, scale the result type
         expr.typeBeforeSlice = exprType.scaleBy(multiplier);
       } else {
-        throw error("Invalid call size", expr)
+        addErrorAndStopChecking(error("Invalid call size", expr)
             .locationDescription(expr.target, "The call target doesn't support a size expression.")
-            .build();
+            .build());
       }
     }
 
@@ -3314,7 +3422,8 @@ public class TypeChecker
     expr.condition = wrapImplicitCast(expr.condition, Type.bool());
     var condType = expr.condition.type();
     if (condType != Type.bool()) {
-      throw typeMismatchError(expr, Type.bool(), condType);
+      // We can still proceed checking the rest of the program.
+      errors.add(typeMismatchError(expr, Type.bool(), condType));
     }
 
     var thenType = check(expr.thenExpr);
@@ -3332,11 +3441,11 @@ public class TypeChecker
     // FIXME: Fix this with bidirectional checking in the future
     if (thenType instanceof ConstantType && elseType instanceof ConstantType
         && !thenType.equals(elseType)) {
-      throw error("Type Mismatch", expr)
+      addErrorAndStopChecking(error("Type Mismatch", expr)
           .description("Both branches return different constant types.")
           .help("Add an explicit cast on one of the branches.")
           .note("In the future this will work without a cast.")
-          .build();
+          .build());
     }
 
     // Apply general implicit casting rules after specialised once.
@@ -3346,12 +3455,12 @@ public class TypeChecker
     elseType = expr.elseExpr.type();
 
     if (!thenType.equals(elseType)) {
-      throw error("Type Mismatch", expr)
+      addErrorAndStopChecking(error("Type Mismatch", expr)
           .description(
               "Both the than and else branch should have the same type "
                   + "but than is `%s` and else is `%s`.",
               thenType, elseType)
-          .build();
+          .build());
     }
 
     expr.type = thenType;
@@ -3365,17 +3474,17 @@ public class TypeChecker
     if (expr.identifiers.size() > 1) {
       if (!(valType instanceof TupleType valTupleType)) {
         var loc = expr.identifiers.get(0).loc.join(expr.valueExpr.location());
-        throw error("Type Mismatch", loc)
+        throw addErrorAndStopChecking(error("Type Mismatch", loc)
             .description("Tuple unpacking only works on tuples but the type was `%s`", valType)
-            .build();
+            .build());
       }
 
       if (expr.identifiers.size() != valTupleType.size()) {
         var loc = expr.identifiers.get(0).loc.join(expr.valueExpr.location());
-        throw error("Invalid Tuple Unpacking", loc)
+        addErrorAndStopChecking(error("Invalid Tuple Unpacking", loc)
             .description("Cannot unpack %d values form a `%s`.", expr.identifiers.size(),
                 valType)
-            .build();
+            .build());
       }
     }
 
@@ -3391,9 +3500,10 @@ public class TypeChecker
     var litType = expr.typeLiteral.type();
 
     if (!canExplicitCast(valType, litType)) {
-      throw error("Invalid cast", expr)
+      // No need to stop checking we can just assume it works and assign the declared type.
+      errors.add(error("Invalid cast", expr)
           .locationDescription(expr, "Cannot cast `%s` to `%s`.", valType, litType)
-          .build();
+          .build());
     }
 
     expr.type = litType;
@@ -3423,11 +3533,11 @@ public class TypeChecker
       for (var pattern : kase.patterns) {
         var patternType = pattern.type();
         if (!candidateType.equals(patternType)) {
-          throw error("Type Mismatch", pattern)
+          addErrorAndStopChecking(error("Type Mismatch", pattern)
               .locationDescription(pattern, "Expected `%s`, but got `%s`", candidateType,
                   patternType)
               .note("The type of the candidate and the pattern must be the same.")
-              .build();
+              .build());
         }
         check(kase.result);
       }
@@ -3458,23 +3568,23 @@ public class TypeChecker
       kase.result = wrapImplicitCast(kase.result, firstResultType);
       var resultType = kase.result.type();
       if (!resultType.equals(firstResultType)) {
-        throw error("Type Mismatch", kase.result)
+        addErrorAndStopChecking(error("Type Mismatch", kase.result)
             .locationNote(kase.result, "All previous branches were of type `%s`, but this is `%s`",
                 firstResultType, resultType)
             .description("All branches of a match must have the same type")
-            .build();
+            .build());
       }
     }
 
     expr.defaultResult = wrapImplicitCast(expr.defaultResult, firstResultType);
     var defaultResultType = expr.defaultResult.type();
     if (!defaultResultType.equals(firstResultType)) {
-      throw error("Type Mismatch", expr.defaultResult)
+      addErrorAndStopChecking(error("Type Mismatch", expr.defaultResult)
           .locationNote(expr.defaultResult,
               "All previous branches were of type `%s`, but this is `%s`",
               firstResultType, defaultResultType)
           .description("All branches of a match must have the same type")
-          .build();
+          .build());
 
     }
 
@@ -3511,18 +3621,18 @@ public class TypeChecker
   public Void visit(ForallExpr expr) {
     // FIXME: multiple indexes are hard to lower so let's throw an temporary error
     if (expr.indices.size() > 1) {
-      throw error("Not Supported", expr)
+      addErrorAndStopChecking(error("Not Supported", expr)
           .locationDescription(expr, "Multiple indicies aren't yet supported.")
-          .build();
+          .build());
     }
 
     expr.indices.forEach(index -> {
       // FIXME: Until we have bidirectional typechecking we need this explicit cast
       if (index.typeLiteral == null) {
-        throw error("Type Mismatch", index)
+        throw addErrorAndStopChecking(error("Type Mismatch", index)
             .locationDescription(index, "A explicit type cast is required here.")
             .locationNote(index, "In the future this won't be necessary.")
-            .build();
+            .build());
       }
 
       index.identifier().type = check(index.typeLiteral);
@@ -3533,25 +3643,26 @@ public class TypeChecker
           index.computedFrom = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
           index.computedTo = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
         } catch (EvaluationError e) {
-          throw error("Constant value required", e.location)
+          addErrorAndStopChecking(error("Constant value required", e.location)
               .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
-              .build();
+              .build());
         }
       } else {
         try {
           index.computedFrom = constantEvaluator.eval(index.domain).value().intValueExact();
           index.computedTo = index.computedFrom;
         } catch (EvaluationError e) {
-          throw error("Constant value required", e.location)
+          addErrorAndStopChecking(error("Constant value required", e.location)
               .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
-              .build();
+              .build());
         }
       }
     });
 
     var bodyType = check(expr.body);
     if (!(bodyType instanceof DataType bodyDataType)) {
-      throw typeMismatchError(expr.body, "Expected a datatype but got", bodyType);
+      throw addErrorAndStopChecking(
+          typeMismatchError(expr.body, "Expected a datatype but got", bodyType));
     }
 
     var totalIterationSpan = expr.indices.stream()
@@ -3598,17 +3709,17 @@ public class TypeChecker
     if (statement.identifiers.size() > 1) {
       if (!(valType instanceof TupleType valTupleType)) {
         var loc = statement.identifiers.get(0).loc.join(statement.valueExpr.location());
-        throw error("Type Mismatch", loc)
+        throw addErrorAndStopChecking(error("Type Mismatch", loc)
             .description("Tuple unpacking only works on tuples but the type was `%s`", valType)
-            .build();
+            .build());
       }
 
       if (statement.identifiers.size() != valTupleType.size()) {
         var loc = statement.identifiers.get(0).loc.join(statement.valueExpr.location());
-        throw error("Invalid Tuple Unpacking", loc)
+        addErrorAndStopChecking(error("Invalid Tuple Unpacking", loc)
             .description("Cannot unpack %d values form a `%s`.", statement.identifiers.size(),
                 valType)
-            .build();
+            .build());
       }
     }
 
@@ -3622,7 +3733,8 @@ public class TypeChecker
     statement.condition = wrapImplicitCast(statement.condition, Type.bool());
     var condType = statement.condition.type();
     if (condType != Type.bool()) {
-      throw typeMismatchError(statement.condition, Type.bool(), condType);
+      // We can continue typechecking with this error.
+      errors.add(typeMismatchError(statement.condition, Type.bool(), condType));
     }
 
     check(statement.thenStmt);
@@ -3647,7 +3759,8 @@ public class TypeChecker
     }
 
     if (!targetType.equals(valueType)) {
-      throw typeMismatchError(statement.valueExpression, targetType, valueType);
+      // We can continue after this.
+      errors.add(typeMismatchError(statement.valueExpression, targetType, valueType));
     }
 
     return null;
@@ -3663,7 +3776,9 @@ public class TypeChecker
   public Void visit(CallStatement statement) {
     check(statement.expr);
     if (statement.expr.type != Type.void_()) {
-      throw typeMismatchError(statement.expr, Type.void_(), requireNonNull(statement.expr.type));
+      errors.add(
+          // We can continue directly
+          typeMismatchError(statement.expr, Type.void_(), requireNonNull(statement.expr.type)));
     }
     return null;
   }
@@ -3695,11 +3810,11 @@ public class TypeChecker
       for (var pattern : kase.patterns) {
         var patternType = pattern.type();
         if (!candidateType.equals(patternType)) {
-          throw error("Type Mismatch", pattern)
+          addErrorAndStopChecking(error("Type Mismatch", pattern)
               .locationDescription(pattern, "Expected `%s`, but got `%s`", candidateType,
                   patternType)
               .note("The type of the candidate and the pattern must be the same.")
-              .build();
+              .build());
         }
         check(kase.result);
       }
@@ -3728,9 +3843,9 @@ public class TypeChecker
       if (!statement.unnamedArguments.isEmpty()) {
         var loc = statement.unnamedArguments.get(0).location()
             .join(statement.unnamedArguments.get(statement.unnamedArguments.size() - 1).location());
-        throw error("Invalid Arguments", loc)
+        addErrorAndStopChecking(error("Invalid Arguments", loc)
             .description("Calls to instructions only accept named arguments")
-            .build();
+            .build());
       }
 
       // Implicit cast and check the arguments
@@ -3751,7 +3866,7 @@ public class TypeChecker
         var actualType = arg.value.type();
 
         if (!targetType.equals(actualType)) {
-          throw typeMismatchError(arg, targetType, actualType);
+          addErrorAndStopChecking(typeMismatchError(arg, targetType, actualType));
         }
       }
 
@@ -3762,18 +3877,18 @@ public class TypeChecker
       if (!statement.namedArguments.isEmpty()) {
         var loc = statement.namedArguments.get(0).location()
             .join(statement.namedArguments.get(statement.namedArguments.size() - 1).location());
-        throw error("Invalid Arguments", loc)
+        addErrorAndStopChecking(error("Invalid Arguments", loc)
             .description("Calls to pseudo instructions only accept unnamed (positional) arguments")
-            .build();
+            .build());
       }
 
       // Check the argument and parameter count
       var paramCount = pseudoDef.params.size();
       var argCount = statement.unnamedArguments.size();
       if (paramCount != argCount) {
-        throw error("Arguments Mismatch", statement.location())
+        addErrorAndStopChecking(error("Arguments Mismatch", statement.location())
             .description("Expected %s arguments but got %s", paramCount, argCount)
-            .build();
+            .build());
       }
 
       // Implicit cast and check the arguments
@@ -3787,7 +3902,7 @@ public class TypeChecker
         var actualType = statement.unnamedArguments.get(i).type();
 
         if (!targetType.equals(actualType)) {
-          throw typeMismatchError(arg, targetType, actualType);
+          errors.add(typeMismatchError(arg, targetType, actualType));
         }
       }
 
@@ -3810,18 +3925,18 @@ public class TypeChecker
     // FIXME: multiple indexes are hard to lower so let's throw an temporary error
 
     if (statement.indices.size() > 1) {
-      throw error("Not Supported", statement)
+      addErrorAndStopChecking(error("Not Supported", statement)
           .locationDescription(statement, "Multiple indicies aren't yet supported.")
-          .build();
+          .build());
     }
 
     statement.indices.forEach(index -> {
       // FIXME: Until we have bidirectional typechecking we need this explicit cast
       if (index.typeLiteral == null) {
-        throw error("Type Mismatch", index)
+        throw addErrorAndStopChecking(error("Type Mismatch", index)
             .locationDescription(index, "A explicit type cast is required here.")
             .locationNote(index, "In the future this won't be necessary.")
-            .build();
+            .build());
       }
 
       index.identifier().type = check(index.typeLiteral);
@@ -3832,18 +3947,18 @@ public class TypeChecker
           index.computedFrom = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
           index.computedTo = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
         } catch (EvaluationError e) {
-          throw error("Constant value required", e.location)
+          addErrorAndStopChecking(error("Constant value required", e.location)
               .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
-              .build();
+              .build());
         }
       } else {
         try {
           index.computedFrom = constantEvaluator.eval(index.domain).value().intValueExact();
           index.computedTo = index.computedFrom;
         } catch (EvaluationError e) {
-          throw error("Constant value required", e.location)
+          addErrorAndStopChecking(error("Constant value required", e.location)
               .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
-              .build();
+              .build());
         }
       }
     });

@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.utils.ViamUtils;
 import vadl.viam.Function;
 import vadl.viam.passes.verification.ViamVerifier;
@@ -163,7 +163,9 @@ public class CallIndexExprTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(wrapProg(input)), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var diag = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    assertThat(diag).hasMessageContaining(error);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    assertThat(diagnostic).hasMessageContaining(error);
   }
 }

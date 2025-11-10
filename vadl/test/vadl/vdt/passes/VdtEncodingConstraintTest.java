@@ -25,6 +25,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.TestUtils;
 import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.vdt.passes.validate.EncodingConstraintValidator;
 import vadl.viam.Encoding;
 
@@ -108,7 +109,7 @@ public class VdtEncodingConstraintTest {
       var validator = new EncodingConstraintValidator(encoding);
       validator.check();
     })
-        .isExactlyInstanceOf(Diagnostic.class)
+        .isInstanceOfAny(Diagnostic.class, DiagnosticList.class)
         .hasMessageContaining(error);
   }
 

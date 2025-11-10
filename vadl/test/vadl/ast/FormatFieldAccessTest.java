@@ -24,6 +24,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 
 public class FormatFieldAccessTest {
 
@@ -98,7 +99,7 @@ public class FormatFieldAccessTest {
       var lowering = new ViamLowering();
       lowering.generate(ast);
     })
-        .isExactlyInstanceOf(Diagnostic.class)
+        .isInstanceOfAny(Diagnostic.class, DiagnosticList.class)
         .hasMessageContaining(expectedError);
   }
 

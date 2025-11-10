@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 
 public class ExceptionTest {
 
@@ -94,8 +94,9 @@ public class ExceptionTest {
     var spec = base.formatted(body);
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(spec), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    org.assertj.core.api.Assertions.assertThat(throwable.getMessage())
+    var diagnostics = assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    org.assertj.core.api.Assertions.assertThat(diagnostics.items.getFirst().getMessage())
         .contains("Only bit types can be sliced but the target was a `void`");
   }
 
@@ -107,8 +108,10 @@ public class ExceptionTest {
     var spec = base.formatted(body);
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(spec), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    org.assertj.core.api.Assertions.assertThat(throwable.getMessage())
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    org.assertj.core.api.Assertions.assertThat(diagnostic.getMessage())
         .contains("Expected `Bits<5>` but got `Const<200>`.");
   }
 
@@ -122,8 +125,10 @@ public class ExceptionTest {
     var spec = base.formatted(body);
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(spec), "Cannot parse input");
     var typechecker = new TypeChecker();
-    var throwable = assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    org.assertj.core.api.Assertions.assertThat(throwable.getMessage())
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+    var diagnostic = diagnostics.items.getFirst();
+    org.assertj.core.api.Assertions.assertThat(diagnostic.getMessage())
         .contains("Expected `void` but got `Bits<5>`.");
   }
 
