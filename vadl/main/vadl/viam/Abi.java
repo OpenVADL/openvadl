@@ -53,15 +53,6 @@ public class Abi extends Definition {
     public int bitAlignment() {
       return byteAlignment() * 8;
     }
-
-    public static Optional<Alignment> fromBitAlignment(int bitAlignment) {
-      return switch (bitAlignment) {
-        case 16 -> Optional.of(HALF_WORD);
-        case 32 -> Optional.of(WORD);
-        case 64 -> Optional.of(DOUBLE_WORD);
-        default -> Optional.empty();
-      };
-    }
   }
 
   /**
