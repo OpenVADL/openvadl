@@ -265,7 +265,7 @@ public class InstructionProgressGraphNamePass extends Pass {
     }
     // fallback to concatenation of all instruction names
     return instructions.stream()
-        .map(Definition::simpleName).collect(Collectors.joining(""));
+        .map(Definition::simpleName).sorted().collect(Collectors.joining(""));
   }
 
   private void nameSelect(InstructionProgressGraph ipg) {

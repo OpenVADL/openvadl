@@ -379,8 +379,8 @@ public class InstructionProgressGraph extends Graph {
      */
     NodeContext(Node node) {
       this.node = node;
-      this.instructions = new HashSet<>();
-      this.nameHints = new HashSet<>();
+      this.instructions = new LinkedHashSet<>();
+      this.nameHints = new LinkedHashSet<>();
     }
 
     /**

@@ -121,6 +121,7 @@ import vadl.rtl.passes.EmitCoreEmitPass;
 import vadl.rtl.passes.EmitCoreTestPass;
 import vadl.rtl.passes.EmitElfSimPass;
 import vadl.rtl.passes.EmitModulesPass;
+import vadl.rtl.passes.EmitRVFIOutputsPass;
 import vadl.rtl.passes.EmitRtlMakefilePass;
 import vadl.rtl.passes.EmitScalafmtConfigPass;
 import vadl.rtl.passes.EmitSimMemCppPass;
@@ -672,8 +673,13 @@ public class PassOrders {
       order.add(new DebugOutputPass(config));
     }
 
-    order.add(new MiaMappingInlinePass(config))
-        .add(new ForwardingLogicPass(config))
+    order.add(new MiaMappingInlinePass(config));
+
+    if (config.isEmitRVFI()) {
+      order.add(new EmitRVFIOutputsPass(config));
+    }
+
+    order.add(new ForwardingLogicPass(config))
         .add(new ControlLogicPass(config));
 
     addHtmlDump(order, config,

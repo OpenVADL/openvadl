@@ -26,8 +26,8 @@ import static vadl.vdt.utils.PatternUtils.invalidate;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -128,7 +128,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
       return makeConditionNode(decodeEntries);
     }
 
-    final Map<BitPattern, Node> children = new HashMap<>();
+    final Map<BitPattern, Node> children = new LinkedHashMap<>();
     for (BitPattern p : patterns.patterns()) {
       final List<DecodeEntry> matchingEntries = makeMatchingEntries(decodeEntries.entries(), p);
 

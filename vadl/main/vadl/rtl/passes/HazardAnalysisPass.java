@@ -42,6 +42,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -208,6 +209,9 @@ public class HazardAnalysisPass extends Pass {
         conditions.add(Pair.of(select.condition(), Constant.Value.of(true).toNode()));
         return res;
       }
+    }
+    if (value instanceof LetNode let) {
+      return resolveForward(mapping, stageFrom, let.expression(), conditions);
     }
     return null;
   }

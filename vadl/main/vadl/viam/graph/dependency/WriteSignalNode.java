@@ -17,11 +17,13 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.Resource;
 import vadl.viam.Signal;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 
 /**
  * Representing writing/driving the value of a signal. Any single signal can only have one driver.
@@ -32,7 +34,11 @@ public class WriteSignalNode extends WriteResourceNode {
   protected Signal signal;
 
   public WriteSignalNode(Signal signal, ExpressionNode value) {
-    super(null, value);
+    this(signal, value, null);
+  }
+
+  public WriteSignalNode(Signal signal, ExpressionNode value, @Nullable ExpressionNode condition) {
+    super(new NodeList<>(), value, condition);
     this.signal = signal;
   }
 
@@ -61,12 +67,12 @@ public class WriteSignalNode extends WriteResourceNode {
 
   @Override
   public Node copy() {
-    return new WriteSignalNode(signal, value.copy());
+    return new WriteSignalNode(signal, value.copy(), (condition != null) ? condition.copy() : null);
   }
 
   @Override
   public Node shallowCopy() {
-    return new WriteSignalNode(signal, value);
+    return new WriteSignalNode(signal, value, condition);
   }
 
   @Override

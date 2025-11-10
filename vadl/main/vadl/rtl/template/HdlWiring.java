@@ -19,6 +19,7 @@ package vadl.rtl.template;
 import java.util.ArrayList;
 import java.util.List;
 import vadl.viam.Resource;
+import vadl.viam.Signal;
 
 /**
  * Wires HDL module ports after they are created by {@link HdlBehavior} from module behavior.
@@ -91,11 +92,8 @@ public class HdlWiring {
         var otherPort = new HdlPort(name, end.port().resource(), end.port().read(),
             !end.port().output(), end.port().nodes());
         otherPort = addOrMergePort(otherChild.get(), otherPort);
-        module.addConnection(new HdlConnection(
-            end,
-            new HdlConnection.PortEndpoint(otherChild.get(), otherPort),
-            true, null
-        ));
+        module.addConnection(
+            HdlConnection.of(end, new HdlConnection.PortEndpoint(otherChild.get(), otherPort)));
       } else {
         // add port up in the hierarchy
         var name = module.context().name(end.port().nodes(), module.portNames(),
@@ -103,11 +101,8 @@ public class HdlWiring {
         var upPort = new HdlPort(name, end.port().resource(), end.port().read(),
             end.port().output(), end.port().nodes());
         upPort = addOrMergePort(module, upPort);
-        module.addConnection(new HdlConnection(
-            end,
-            new HdlConnection.PortEndpoint(null, upPort),
-            true, null
-        ));
+        module.addConnection(
+            HdlConnection.of(end, new HdlConnection.PortEndpoint(null, upPort)));
       }
     }
 

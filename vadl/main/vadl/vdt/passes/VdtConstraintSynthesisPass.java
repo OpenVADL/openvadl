@@ -22,8 +22,8 @@ import java.io.IOException;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -145,7 +145,7 @@ public class VdtConstraintSynthesisPass extends Pass {
   }
 
   private Map<Format, List<InstructionEncoding>> groupedInstructions(List<DecodeEntry> entries) {
-    final Map<Format, List<InstructionEncoding>> result = new HashMap<>();
+    final Map<Format, List<InstructionEncoding>> result = new LinkedHashMap<>();
 
     for (DecodeEntry e : entries) {
       var encoding = new InstructionEncoding(e, getFixedFields(e.source()));

@@ -61,6 +61,8 @@ public class RtlConfiguration extends GeneralConfiguration {
 
   private boolean emitDebugPrint = true;
 
+  private boolean emitRVFI = false;
+
   public RtlConfiguration(GeneralConfiguration generalConfig) {
     super(generalConfig);
   }
@@ -168,4 +170,13 @@ public class RtlConfiguration extends GeneralConfiguration {
   public void setEmitDebugPrint(boolean emitDebugPrint) {
     this.emitDebugPrint = emitDebugPrint;
   }
+
+  public boolean isEmitRVFI() {
+    return emitRVFI;
+  }
+
+  public void setEmitRVFI(boolean emitRVFI) {
+    this.emitRVFI = emitRVFI;
+  }
+
 }

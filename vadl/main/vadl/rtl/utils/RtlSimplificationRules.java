@@ -18,7 +18,7 @@ package vadl.rtl.utils;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -199,7 +199,7 @@ public class RtlSimplificationRules {
           return Optional.of(first);
         }
         // optimize values (merges equal values)
-        var values = new HashSet<>(n.values());
+        var values = new LinkedHashSet<>(n.values());
         if (values.size() < n.values().size()) {
           for (ExpressionNode value : values) {
             if (n.values().stream().filter(value::equals).count() > 1) {

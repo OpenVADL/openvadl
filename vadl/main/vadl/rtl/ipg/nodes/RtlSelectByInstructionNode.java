@@ -160,7 +160,7 @@ public class RtlSelectByInstructionNode extends ExpressionNode {
         return;
       }
     }
-    var set = new HashSet<Instruction>();
+    Set<Instruction> set = new LinkedHashSet<>();
     set.add(instruction);
     instructions.add(set);
     values.add(value);

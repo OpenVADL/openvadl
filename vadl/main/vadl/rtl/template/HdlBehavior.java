@@ -252,6 +252,11 @@ public class HdlBehavior {
     }
 
     @Handler
+    String handle(LetNode node) {
+      return dispatch(node.expression());
+    }
+
+    @Handler
     String handle(SliceNode node) {
       var slices = node.bitSlice().parts()
           .map(p -> dispatch(node.value()) + "(" + p.msb() + ", " + p.lsb() + ")").toList();
@@ -291,7 +296,7 @@ public class HdlBehavior {
         // The name is prefixed with 'dec_' by now to indicate that the signal will be assigned
         // by the decode tree.
         var name = module.context().name(usage, module.localNames(), fallbackName(usage));
-        var id = def.identifier.append("dec_" + name);
+        var id = def.identifier.append(name);
         var signal = new Signal(id, ((ExpressionNode) usage).type().asDataType());
         signals.add(signal);
 
@@ -584,11 +589,12 @@ public class HdlBehavior {
         || node instanceof UnaryNode
         || node instanceof RtlValidSignalNode
         || node instanceof ReadResourceNode
-        || node instanceof RtlDecodeTreeNode) {
+        || node instanceof RtlDecodeTreeNode
+        || node instanceof RtlResetSignalNode
+        || (node instanceof BuiltInCall builtIn && builtIn.arguments().size() < 2)) {
       return false;
     }
     return (node.usageCount() > 1
-        || node instanceof LetNode
         || node instanceof SelectNode
         || node instanceof RtlIsInstructionNode
         || node instanceof RtlInvalidInstructionNode);

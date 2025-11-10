@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.Type;
+import vadl.utils.Pair;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
@@ -154,6 +155,8 @@ public abstract class Logic extends Definition implements DefProp.WithBehavior {
 
     private final Map<ReadResourceNode, Signal> enable = new HashMap<>();
 
+    private final Map<Pair<ReadResourceNode, Stage>, Signal> enableFrom = new HashMap<>();
+
     public Forwarding(Identifier identifier) {
       super(identifier);
     }
@@ -182,6 +185,32 @@ public abstract class Logic extends Definition implements DefProp.WithBehavior {
       return enable.get(node);
     }
 
+    /**
+     * Add a forward enable signal for a read node and a source stage to the forwarding logic.
+     *
+     * @param node read node
+     * @param stage stage forwarding from
+     * @param signal forward enable signal for read node and source stage
+     */
+    public void putEnableFrom(ReadResourceNode node, Stage stage, Signal signal) {
+      enableFrom.put(Pair.of(node, stage), signal);
+      if (!signals().contains(signal)) {
+        signals().add(signal);
+      }
+    }
+
+    /**
+     * Get the forward enable signal for a read node and a source stage.
+     *
+     * @param node read node
+     * @param stage stage forwarding from
+     * @return forward enable signal for read node and source stage
+     */
+    @Nullable
+    public Signal getEnableFrom(ReadResourceNode node, Stage stage) {
+      return enableFrom.get(Pair.of(node, stage));
+    }
+
   }
 
   /**
@@ -191,6 +220,29 @@ public abstract class Logic extends Definition implements DefProp.WithBehavior {
 
     public BranchPrediction(Identifier identifier) {
       super(identifier);
+    }
+
+  }
+
+  /**
+   * Logic definition for RVFI logic for formal verification.
+   */
+  public static class RVFI extends Logic {
+
+    public RVFI(Identifier identifier) {
+      super(identifier);
+    }
+
+    /**
+     * Get signals the RVFI logic outputs.
+     *
+     * @return signals this logic writes to but not contains.
+     */
+    public List<Signal> outputSignals() {
+      return behavior().getNodes(WriteSignalNode.class)
+          .map(WriteSignalNode::signal)
+          .filter(signals()::contains)
+          .toList();
     }
 
   }

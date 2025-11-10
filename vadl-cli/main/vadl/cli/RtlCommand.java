@@ -78,6 +78,12 @@ public class RtlCommand extends BaseCommand {
       defaultValue = "false")
   boolean keepSignals = false;
 
+  @CommandLine.Option(names = {"--rvfi"},
+      scope = INHERIT,
+      description = "Emit outputs for the RISC-V Formal Interface.",
+      defaultValue = "false")
+  boolean emitRVFI = false;
+
   @CommandLine.Option(names = {"--dry-run"},
       scope = INHERIT,
       description = "Don't emit generated files.")
@@ -92,6 +98,7 @@ public class RtlCommand extends BaseCommand {
     rtlConfig.setScalaPackageAndDirs(scalaPackage);
     rtlConfig.setTopModule(topModule);
     rtlConfig.setProjectName(projectName);
+    rtlConfig.setEmitRVFI(emitRVFI);
     rtlConfig.setDryRun(dryRun);
     return PassOrders.rtl(rtlConfig);
   }

@@ -193,7 +193,7 @@ class ElfSim[T <: Module](module: => T, getIO: T => Bundle, getResetVector: T =>
           stop()
         }
       }
-    case _ =>
+    case elem => dontTouch(elem)
   }
 }
 

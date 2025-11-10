@@ -17,6 +17,7 @@
 package vadl.rtl.passes;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.configuration.RtlConfiguration;
@@ -28,6 +29,7 @@ import vadl.rtl.ipg.nodes.RtlReadMemNode;
 import vadl.rtl.ipg.nodes.RtlWriteMemNode;
 import vadl.rtl.map.MiaMapping;
 import vadl.viam.Constant;
+import vadl.viam.Logic;
 import vadl.viam.MicroArchitecture;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
@@ -66,6 +68,15 @@ public class DebugOutputPass extends AbstractRtlPass {
       return null;
     }
 
+    // ignored resources
+    var ignore = new HashSet<Resource>();
+    if (passResults.hasRunPassOnce(EmitRVFIOutputsPass.class)) {
+      var rvfi = passResults.lastResultOf(EmitRVFIOutputsPass.class, Logic.RVFI.class);
+      ignore.addAll(rvfi.outputSignals());
+      ignore.addAll(rvfi.registers());
+      ignore.addAll(rvfi.signals());
+    }
+
     // add unknown instruction debug output
     // to first stage that writes any resource but the pc
     var readPc = Objects.requireNonNull(ipg.pcRead());
@@ -90,7 +101,8 @@ public class DebugOutputPass extends AbstractRtlPass {
 
     // add read debug output
     for (RtlConditionalReadNode read : ipg.getNodes(RtlConditionalReadNode.class).toList()) {
-      if (read.asReadNode().resourceDefinition().equals(pc)) {
+      if (read.asReadNode().resourceDefinition().equals(pc)
+            || ignore.contains(read.asReadNode().resourceDefinition())) {
         continue;
       }
       var node = read.asReadNode();
@@ -105,6 +117,9 @@ public class DebugOutputPass extends AbstractRtlPass {
 
     // add write debug output
     for (WriteResourceNode write : ipg.getNodes(WriteResourceNode.class).toList()) {
+      if (ignore.contains(write.resourceDefinition())) {
+        continue;
+      }
       var context = mapping.ensureContext(write);
       var addr = write.hasAddress() ? write.address() : null;
       var print = readWriteOutput(readPc, "wr", write.resourceDefinition(), write.condition(),
