@@ -10,7 +10,7 @@ cd $(realpath $(dirname "$0"))
 # miscompile
 rm -r ../src/cubic
 # long jump problem
-rm -r ../src/statemate
+#rm -r ../src/statemate
 
 #rm -r ../src/aha-mont64
 #rm -r ../src/crc32
