@@ -18,6 +18,7 @@ package vadl.lcb.passes.llvmLowering;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -133,7 +134,9 @@ public class ISelLoweringOperationActionPass extends Pass {
       }
     }
 
-    return result;
+    return result.stream()
+        .sorted(Comparator.comparing(o -> o.llvmDagName))
+        .collect(Collectors.toList());
   }
 
   private List<Coverage> coverage(
@@ -144,6 +147,7 @@ public class ISelLoweringOperationActionPass extends Pass {
             tableGenMachineInstruction -> tableGenMachineInstruction.llvmLoweringRecord().patterns()
                 .stream().flatMap(
                     coverageCandidate(tableGenMachineInstruction)))
+        .sorted(Comparator.comparing(o -> o.instruction.simpleName()))
         .toList();
   }
 
