@@ -26,11 +26,13 @@ import static vadl.viam.ViamError.unwrap;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
@@ -540,7 +542,10 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
     machineInstructions(passResults, database, branchInstructions);
 
-    return branchInstructions;
+    return branchInstructions
+        .stream()
+        .sorted(Comparator.comparing(BranchInstruction::name))
+        .collect(Collectors.toList());
   }
 
   private List<PseudoBranchInstruction> pseudoBranchInstructions(
@@ -552,7 +557,9 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
     pseudoInstructions(fieldUsages, database, branchInstructions);
 
-    return branchInstructions;
+    return branchInstructions.stream()
+        .sorted(Comparator.comparing(PseudoBranchInstruction::name))
+        .collect(Collectors.toList());
   }
 
   private static void pseudoInstructions(
@@ -714,6 +721,6 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
           isCheckable));
     }
 
-    return aggregates;
+    return aggregates.stream().sorted(Comparator.comparing(o -> o.instructionName)).toList();
   }
 }

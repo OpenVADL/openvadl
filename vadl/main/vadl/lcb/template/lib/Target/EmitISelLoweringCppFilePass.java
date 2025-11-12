@@ -20,6 +20,7 @@ import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -365,15 +366,17 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     var queryResult = database.run(new Query.Builder().machineInstructionLabelGroup(
         MachineInstructionLabelGroup.MEMORY_INSTRUCTIONS).build());
     return queryResult.machineInstructions().stream().map(instruction -> {
-      Supplier<DiagnosticBuilder> error =
-          () -> Diagnostic.error("Memory instruction requires a value range",
-              instruction.location());
+          Supplier<DiagnosticBuilder> error =
+              () -> Diagnostic.error("Memory instruction requires a value range",
+                  instruction.location());
 
-      var ctx = ensureNonNull(instruction.extension(ValueRangeCtx.class), error);
-      var valueRange = ensurePresent(ctx.getFirst(), error);
+          var ctx = ensureNonNull(instruction.extension(ValueRangeCtx.class), error);
+          var valueRange = ensurePresent(ctx.getFirst(), error);
 
-      return new ISelInstruction(instruction.simpleName(), valueRange);
-    }).toList();
+          return new ISelInstruction(instruction.simpleName(), valueRange);
+        })
+        .sorted(Comparator.comparing(ISelInstruction::instructionName))
+        .toList();
   }
 
   private List<BranchInstruction> getBranchInstructions(Database database) {
@@ -381,17 +384,18 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         MachineInstructionLabelGroup.BRANCH_INSTRUCTIONS).build());
     var flipped = database.flipMachineInstructions();
 
-
     return queryResult.machineInstructions().stream().map(instruction -> {
-      var machineInstructionLabel = ensureNonNull(flipped.get(instruction),
-          () -> Diagnostic.error("Cannot find a label to the instruction",
-              instruction.location()));
-      var condCode =
-          ensureNonNull(LlvmMachineInstructionUtil.getLlvmCondCodeByLabel(machineInstructionLabel),
-              () -> Diagnostic.error("There is no cond code for the machine instruction label.",
+          var machineInstructionLabel = ensureNonNull(flipped.get(instruction),
+              () -> Diagnostic.error("Cannot find a label to the instruction",
                   instruction.location()));
-      return new BranchInstruction(instruction.simpleName(), condCode.name());
-    }).toList();
+          var condCode =
+              ensureNonNull(LlvmMachineInstructionUtil.getLlvmCondCodeByLabel(machineInstructionLabel),
+                  () -> Diagnostic.error("There is no cond code for the machine instruction label.",
+                      instruction.location()));
+          return new BranchInstruction(instruction.simpleName(), condCode.name());
+        })
+        .sorted(Comparator.comparing(BranchInstruction::instructionName))
+        .toList();
   }
 
   private Map<String, Object> mapLlvmRegisterClass(LlvmRegisterFile registerFile) {
