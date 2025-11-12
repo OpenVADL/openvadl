@@ -79,6 +79,7 @@ import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.Specification;
+import vadl.viam.annotations.AlignmentAnnotation;
 import vadl.viam.asm.AsmDirectiveMapping;
 import vadl.viam.asm.AsmModifier;
 import vadl.viam.asm.AsmToken;
@@ -536,10 +537,18 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
             .stream().filter(x -> x instanceof RegisterDefinition)
             .map(x -> (RegisterDefinition) x)
             .map(x -> (RegisterTensor) fetch(x).orElseThrow())
-            .filter(RegisterTensor::isRegisterFile)
+            .filter(x -> !x.isSingleRegister())
             .collect(Collectors.toMap(
                 x -> x,
-                x -> Abi.Alignment.HALF_WORD
+                x -> {
+                  if (x.hasAnnotation(AlignmentAnnotation.class)) {
+                    var annotation = x.expectAnnotation(AlignmentAnnotation.class);
+                    return annotation.alignment();
+                  } else {
+                    // Default
+                    return Abi.Alignment.DEFAULT;
+                  }
+                }
             ));
 
     var constantSequences = definition.definitions
@@ -578,8 +587,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         specialLocalAddressLoad,
         specialAbsoluteAddressLoad,
         specialGlobalAddressLoad,
-        Abi.Alignment.DOUBLE_WORD,
-        Abi.Alignment.DOUBLE_WORD,
+        Abi.Alignment.QUAD_WORD,
+        Abi.Alignment.QUAD_WORD,
         registerFileAlignment,
         constantSequences,
         registerAdjustmentSequences,
@@ -1810,7 +1819,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var registerFile = pair.left();
     var index = pair.right();
 
-    return new Abi.RegisterRef(registerFile, index, Abi.Alignment.NO_ALIGNMENT, expr.location());
+    return new Abi.RegisterRef(registerFile, index, new Abi.Alignment(-1), expr.location());
   }
 
   /**

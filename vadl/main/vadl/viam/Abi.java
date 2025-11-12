@@ -30,28 +30,15 @@ public class Abi extends Definition {
   /**
    * Register Spilling Alignments.
    */
-  public enum Alignment {
-    NO_ALIGNMENT(-1),
-    HALF_WORD(4),
-    WORD(8),
-    DOUBLE_WORD(16);
+  public record Alignment(int bitAlignment) {
 
-    private final int byteAlignment;
+    public static final Alignment DEFAULT = new Alignment(32);
+    public static final Alignment WORD = DEFAULT;
+    public static final Alignment DOUBLE_WORD = new Alignment(64);
+    public static final Alignment QUAD_WORD = new Alignment(128);
 
-    Alignment(int byteAlignment) {
-      this.byteAlignment = byteAlignment;
-    }
-
-    public String inBytes() {
-      return byteAlignment + "";
-    }
-
-    public int byteAlignment() {
-      return byteAlignment;
-    }
-
-    public int bitAlignment() {
-      return byteAlignment() * 8;
+    public int inBytes() {
+      return bitAlignment / 8;
     }
   }
 
