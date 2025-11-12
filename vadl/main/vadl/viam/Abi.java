@@ -37,7 +37,7 @@ public class Abi extends Definition {
     public static final Alignment DOUBLE_WORD = new Alignment(64);
 
     public int inBytes() {
-      return bitAlignment * 8;
+      return bitAlignment / 8;
     }
   }
 
