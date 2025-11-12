@@ -365,7 +365,8 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
   private List<ISelInstruction> getMemoryInstructions(Database database) {
     var queryResult = database.run(new Query.Builder().machineInstructionLabelGroup(
         MachineInstructionLabelGroup.MEMORY_INSTRUCTIONS).build());
-    return queryResult.machineInstructions().stream().map(instruction -> {
+    return queryResult.machineInstructions().stream()
+        .map(instruction -> {
           Supplier<DiagnosticBuilder> error =
               () -> Diagnostic.error("Memory instruction requires a value range",
                   instruction.location());
@@ -384,12 +385,14 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         MachineInstructionLabelGroup.BRANCH_INSTRUCTIONS).build());
     var flipped = database.flipMachineInstructions();
 
-    return queryResult.machineInstructions().stream().map(instruction -> {
+    return queryResult.machineInstructions().stream()
+        .map(instruction -> {
           var machineInstructionLabel = ensureNonNull(flipped.get(instruction),
               () -> Diagnostic.error("Cannot find a label to the instruction",
                   instruction.location()));
           var condCode =
-              ensureNonNull(LlvmMachineInstructionUtil.getLlvmCondCodeByLabel(machineInstructionLabel),
+              ensureNonNull(
+                  LlvmMachineInstructionUtil.getLlvmCondCodeByLabel(machineInstructionLabel),
                   () -> Diagnostic.error("There is no cond code for the machine instruction label.",
                       instruction.location()));
           return new BranchInstruction(instruction.simpleName(), condCode.name());
