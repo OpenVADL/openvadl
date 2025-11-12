@@ -537,7 +537,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
             .stream().filter(x -> x instanceof RegisterDefinition)
             .map(x -> (RegisterDefinition) x)
             .map(x -> (RegisterTensor) fetch(x).orElseThrow())
-            .filter(RegisterTensor::isRegisterFile)
+            .filter(x -> !x.isSingleRegister())
             .collect(Collectors.toMap(
                 x -> x,
                 x -> {
