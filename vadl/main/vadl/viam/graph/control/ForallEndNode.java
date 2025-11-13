@@ -21,8 +21,9 @@ import vadl.viam.graph.dependency.SideEffectNode;
 
 /**
  * The end node to the corresponding {@link ForallNode}.
- * As the {@link ForallNode} is not diverging control flow, this is not an end node,
- * but just a directional node.
+ * It has a single {@link BranchEndNode} as input.
+ *
+ * @see <a href="https://github.com/OpenVADL/openvadl/pull/566">Github PR #566</a>
  */
 public class ForallEndNode extends MergeNode {
 
