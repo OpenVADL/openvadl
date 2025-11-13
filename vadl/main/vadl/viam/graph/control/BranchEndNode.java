@@ -17,7 +17,6 @@
 package vadl.viam.graph.control;
 
 import vadl.viam.graph.GraphNodeVisitor;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.SideEffectNode;
 
@@ -31,13 +30,13 @@ public class BranchEndNode extends AbstractEndNode {
   }
 
   @Override
-  public Node copy() {
+  public BranchEndNode copy() {
     return new BranchEndNode(
         new NodeList<>(sideEffects().stream().map(x -> (SideEffectNode) x.copy()).toList()));
   }
 
   @Override
-  public Node shallowCopy() {
+  public BranchEndNode shallowCopy() {
     return new BranchEndNode(sideEffects());
   }
 

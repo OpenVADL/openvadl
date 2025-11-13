@@ -1332,8 +1332,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public SubgraphContext visit(ForallStatement statement) {
     var bodyGraph = statement.body.accept(this);
 
-    var forallEndNode = addToGraph(new ForallEndNode(bodyGraph.sideEffectsOrEmptyList()));
-    ControlNode next = forallEndNode;
+    var branchEnd = addToGraph(new BranchEndNode(bodyGraph.sideEffectsOrEmptyList()));
+    var forallEndNode = addToGraph(new ForallEndNode(branchEnd));
+    ControlNode next = branchEnd;
     if (bodyGraph.hasControlBlock()) {
       var controlBlock = requireNonNull(bodyGraph.controlBlock());
       controlBlock.lastNode().setNext(next);
@@ -1348,7 +1349,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var idx =
         new ForIdxNode(requireNonNull(index.typeLiteral).type(), requireNonNull(index.computedFrom),
             requireNonNull(index.computedTo));
-    var forallNode = addToGraph(new ForallNode(idx, next));
+    var branchBegin = addToGraph(new BranchBeginNode(next));
+    var forallNode = addToGraph(new ForallNode(idx, branchBegin));
 
     return SubgraphContext.of(statement, forallNode, forallEndNode);
   }

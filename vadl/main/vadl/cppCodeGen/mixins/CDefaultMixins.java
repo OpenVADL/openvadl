@@ -288,7 +288,7 @@ public interface CDefaultMixins {
       ctx.wr("for (int" + i + " = " + from + "; i " + cmp + " " + to + "; " + cnt)
           .spacedIn()
           .ln(") {")
-          .gen(node.next());
+          .gen(node.beginNode());
     }
 
     @Handler
