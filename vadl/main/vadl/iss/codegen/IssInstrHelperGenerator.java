@@ -16,10 +16,23 @@
 
 package vadl.iss.codegen;
 
+import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.extensions.InstrInfo;
 import vadl.viam.Instruction;
 
 public class IssInstrHelperGenerator extends IssProcGen {
 
+  private final IssConfiguration configuration;
+  private final InstrInfo instrInfo;
+
+  public IssInstrHelperGenerator(IssConfiguration configuration, InstrInfo instrInfo) {
+    this.configuration = configuration;
+    this.instrInfo = instrInfo;
+  }
+
+  public String fetch() {
+    return "not_yet_implemented";
+  }
 
   public static String functionName(Instruction instr) {
     return "not_yet_implemented";

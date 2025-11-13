@@ -1,0 +1,60 @@
+// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package vadl.iss.template.target;
+
+import java.util.List;
+import java.util.Map;
+import vadl.configuration.IssConfiguration;
+import vadl.iss.codegen.IssInstrHelperGenerator;
+import vadl.iss.passes.TcgPassUtils;
+import vadl.iss.passes.extensions.InstrInfo;
+import vadl.iss.template.IssTemplateRenderingPass;
+import vadl.pass.PassResults;
+import vadl.viam.Specification;
+
+
+public class EmitIssHelperCPass extends IssTemplateRenderingPass {
+  public EmitIssHelperCPass(IssConfiguration configuration) {
+    super(configuration);
+  }
+
+  @Override
+  protected String issTemplatePath() {
+    return "target/gen-arch/helper.c";
+  }
+
+  @Override
+  protected Map<String, Object> createVariables(PassResults passResults,
+                                                Specification specification) {
+    var vars = super.createVariables(passResults, specification);
+    vars.put("instr_helper_impls", helperImplementations(specification));
+    return vars;
+  }
+
+  private List<String> helperImplementations(Specification specification) {
+    return specification.isa().get().ownInstructions().stream()
+        .map(TcgPassUtils::instrInfo)
+        .filter(InstrInfo::asHelperCall)
+        .map(this::instrHelperImpl)
+        .toList();
+  }
+
+  private String instrHelperImpl(InstrInfo info) {
+    return new IssInstrHelperGenerator(configuration(), info).fetch();
+  }
+
+}

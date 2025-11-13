@@ -113,7 +113,7 @@ public class IssNormalizationPass extends AbstractIssPass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var issConfig = (IssConfiguration) configuration();
 
-    viam.isa().get().ownInstructions()
+    tcgInstrs(viam)
         .forEach(instruction -> new IssNormalizer(instruction.behavior(),
             issConfig.targetSize().width)
             .run());

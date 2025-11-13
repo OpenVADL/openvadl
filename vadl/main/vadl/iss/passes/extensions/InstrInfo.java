@@ -52,6 +52,10 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
     return instr().simpleName().toLowerCase();
   }
 
+  public String helperName() {
+    return cIdentName() + "_instr";
+  }
+
   public Instruction instr() {
     return extendingDef();
   }

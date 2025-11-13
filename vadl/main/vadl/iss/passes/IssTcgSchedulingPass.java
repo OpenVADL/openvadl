@@ -99,7 +99,7 @@ public class IssTcgSchedulingPass extends AbstractIssPass {
       var pc = requireNonNull(isa.pc());
       pc.ensure(pc.registerTensor().isSingleRegister(), "Only one-dimensional PC supported yet");
 
-      isa.ownInstructions()
+      tcgInstrs(viam)
           .forEach(instr ->
               IssTcgScheduler.runOn(instr.behavior(), pc));
     });

@@ -68,7 +68,7 @@ public class IssBuiltInArgTruncOptPass extends AbstractIssPass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    viam.isa().get().ownInstructions()
+    tcgInstrs(viam)
         .forEach(i -> new IssBuiltInArgTruncOptimizer(i.behavior()).run());
     return null;
   }

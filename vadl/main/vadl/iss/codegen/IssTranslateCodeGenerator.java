@@ -337,7 +337,7 @@ class HelperCallGenerator {
     var args = Stream.concat(Stream.of("tcg_env"),
         fieldArgs()).collect(Collectors.joining(", "));
     var call = "gen_helper_"
-        + info.cIdentName()
+        + info.helperName()
         + "(" + args + ")";
     builder.appendLn(call);
   }

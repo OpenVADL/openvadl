@@ -40,11 +40,6 @@ public class IssTcgContextPass extends AbstractIssPass {
   }
 
   @Override
-  public IssConfiguration configuration() {
-    return (IssConfiguration) super.configuration();
-  }
-
-  @Override
   @Nullable
   public Object execute(PassResults passResults, Specification viam)
       throws IOException {
@@ -52,10 +47,10 @@ public class IssTcgContextPass extends AbstractIssPass {
     var targetSize = configuration().targetSize();
 
     // Process each instruction in the ISA
-    viam.isa().ifPresent(isa -> isa.ownInstructions()
+    tcgInstrs(viam)
         // attach new TCG context to each instruction
         .forEach(instr -> instr.attachExtension(new TcgCtx(instr.behavior(), targetSize))
-        ));
+        );
 
     return null;
   }

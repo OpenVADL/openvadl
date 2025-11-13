@@ -26,4 +26,7 @@ void helper_unsupported(CPU[(${gen_arch_upper})]State *env) {
 [(${exc.helper_impl})]
 [/]
 
+[# th:each="instr : ${instr_helper_impls}"] // instr helper functions
+[(${instr})]
+[/]
 

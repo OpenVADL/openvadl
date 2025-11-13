@@ -86,13 +86,13 @@ public class TcgBranchLoweringPass extends AbstractIssPass {
 
     var optimizeCtrlFlow = !configuration().isSkip(IssConfiguration.IssOptsToSkip.OPT_CTRL_FLOW);
 
-    viam.isa().ifPresent(isa -> isa.ownInstructions()
+    tcgInstrs(viam)
         .forEach(instr ->
             new TcgBranchLoweringExecutor(
                 instr.behavior(),
                 instr.expectExtension(TcgCtx.class).assignment()
             ).run(optimizeCtrlFlow)
-        ));
+        );
 
     return null;
   }
