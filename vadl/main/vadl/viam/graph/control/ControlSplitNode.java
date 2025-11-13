@@ -32,16 +32,16 @@ import vadl.viam.passes.CfgTraverser;
 public abstract class ControlSplitNode extends ControlNode {
 
   @Successor
-  private NodeList<BeginNode> branches;
+  private NodeList<BranchBeginNode> branches;
 
   @LazyInit
   private MergeNode mergeNode;
 
-  ControlSplitNode(NodeList<BeginNode> branches) {
+  ControlSplitNode(NodeList<BranchBeginNode> branches) {
     this.branches = branches;
   }
 
-  public NodeList<BeginNode> branches() {
+  public NodeList<BranchBeginNode> branches() {
     return branches;
   }
 
@@ -65,7 +65,7 @@ public abstract class ControlSplitNode extends ControlNode {
   protected void applyOnSuccessorsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnSuccessorsUnsafe(visitor);
     branches = branches.stream().map(e ->
-            visitor.apply(this, e, BeginNode.class))
+            visitor.apply(this, e, BranchBeginNode.class))
         .collect(Collectors.toCollection(NodeList::new));
   }
 

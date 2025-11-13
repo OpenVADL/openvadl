@@ -36,7 +36,7 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
-import vadl.viam.graph.control.BeginNode;
+import vadl.viam.graph.control.BranchBeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.ControlSplitNode;
@@ -327,8 +327,8 @@ public class GraphUtils {
     var falseEnd = graph.addWithInputs(new BranchEndNode(new NodeList<>()));
     var trueBranch = createTrueBranch.apply(graph, trueEnd);
     var falseBranch = createFalseBranch.apply(graph, falseEnd);
-    var trueBegin = graph.addWithInputs(new BeginNode(trueBranch));
-    var falseBegin = graph.addWithInputs(new BeginNode(falseBranch));
+    var trueBegin = graph.addWithInputs(new BranchBeginNode(trueBranch));
+    var falseBegin = graph.addWithInputs(new BranchBeginNode(falseBranch));
     var ifNode = graph.addWithInputs(new IfNode(condition, trueBegin, falseBegin));
 
     var mergeNode = graph.addWithInputs(new MergeNode(new NodeList<>(trueEnd, falseEnd)));
@@ -555,9 +555,9 @@ public class GraphUtils {
                                         List<SideEffectNode> falseCaseEffects,
                                         ControlNode next) {
     var trueEnd = graph.addWithInputs(new BranchEndNode(new NodeList<>(trueCaseEffects)));
-    var trueBegin = graph.addWithInputs(new BeginNode(trueEnd));
+    var trueBegin = graph.addWithInputs(new BranchBeginNode(trueEnd));
     var falseEnd = graph.addWithInputs(new BranchEndNode(new NodeList<>(falseCaseEffects)));
-    var falseBegin = graph.addWithInputs(new BeginNode(falseEnd));
+    var falseBegin = graph.addWithInputs(new BranchBeginNode(falseEnd));
     var ifNode = graph.addWithInputs(new IfNode(condition, trueBegin, falseBegin));
     graph.addWithInputs(new MergeNode(new NodeList<>(trueEnd, falseEnd), next));
     return ifNode;

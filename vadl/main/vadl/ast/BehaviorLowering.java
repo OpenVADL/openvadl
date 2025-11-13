@@ -59,7 +59,7 @@ import vadl.viam.Procedure;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
-import vadl.viam.graph.control.BeginNode;
+import vadl.viam.graph.control.BranchBeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
@@ -452,16 +452,16 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
 
-  private Pair<BeginNode, BranchEndNode> buildBranch(SubgraphContext branchCtx,
-                                                     WithLocation locatable) {
+  private Pair<BranchBeginNode, BranchEndNode> buildBranch(SubgraphContext branchCtx,
+                                                           WithLocation locatable) {
     var endNode = addToGraph(new BranchEndNode(branchCtx.sideEffectsOrEmptyList()));
 
-    BeginNode beginNode;
+    BranchBeginNode beginNode;
     if (branchCtx.controlBlock() != null) {
-      beginNode = new BeginNode(branchCtx.controlBlock().firstNode());
+      beginNode = new BranchBeginNode(branchCtx.controlBlock().firstNode());
       branchCtx.controlBlock().lastNode().setNext(endNode);
     } else {
-      beginNode = new BeginNode(endNode);
+      beginNode = new BranchBeginNode(endNode);
     }
     beginNode = addToGraph(beginNode);
 
@@ -470,10 +470,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return new Pair<>(beginNode, endNode);
   }
 
-  private Pair<BeginNode, BranchEndNode> buildBranch(@Nullable Statement stmt) {
+  private Pair<BranchBeginNode, BranchEndNode> buildBranch(@Nullable Statement stmt) {
     if (stmt == null) {
       var endNode = addToGraph(new BranchEndNode(new NodeList<>()));
-      var beginNode = addToGraph(new BeginNode(endNode));
+      var beginNode = addToGraph(new BranchBeginNode(endNode));
       return new Pair<>(beginNode, endNode);
     }
 
@@ -1332,8 +1332,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public SubgraphContext visit(ForallStatement statement) {
     var bodyGraph = statement.body.accept(this);
 
-    var forallEndNode = addToGraph(new ForallEndNode(bodyGraph.sideEffectsOrEmptyList()));
-    ControlNode next = forallEndNode;
+    var branchEnd = addToGraph(new BranchEndNode(bodyGraph.sideEffectsOrEmptyList()));
+    var forallEndNode = addToGraph(new ForallEndNode(branchEnd));
+    ControlNode next = branchEnd;
     if (bodyGraph.hasControlBlock()) {
       var controlBlock = requireNonNull(bodyGraph.controlBlock());
       controlBlock.lastNode().setNext(next);
@@ -1348,7 +1349,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var idx =
         new ForIdxNode(requireNonNull(index.typeLiteral).type(), requireNonNull(index.computedFrom),
             requireNonNull(index.computedTo));
-    var forallNode = addToGraph(new ForallNode(idx, next));
+    var branchBegin = addToGraph(new BranchBeginNode(next));
+    var forallNode = addToGraph(new ForallNode(idx, branchBegin));
 
     return SubgraphContext.of(statement, forallNode, forallEndNode);
   }
@@ -1467,7 +1469,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
       var consequencePair = buildBranch(kase.result);
 
-      Pair<BeginNode, BranchEndNode> contradictionPair;
+      Pair<BranchBeginNode, BranchEndNode> contradictionPair;
       if (start == null) {
         contradictionPair = defaultPair;
       } else {

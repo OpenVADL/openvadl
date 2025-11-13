@@ -41,12 +41,22 @@ public class MergeNode extends AbstractBeginNode {
     this.branchEnds = branchEnds;
   }
 
+  /**
+   * Use this only if you know that the merge node corresponds to an {@link IfNode}.
+   */
   public BranchEndNode trueBranchEnd() {
-    return branchEnds.get(0);
+    ensure(branchEnds.size() == 2,
+        "The merge node does not correspond to an if node, as it has not exactly two branch ends.");
+    return branchEnds.getFirst();
   }
 
+  /**
+   * Use this only if you know that the merge node corresponds to an {@link IfNode}.
+   */
   public BranchEndNode falseBranchEnd() {
-    return branchEnds.get(branchEnds.size() - 1);
+    ensure(branchEnds.size() == 2,
+        "The merge node does not correspond to an if node, as it has not exactly two branch ends.");
+    return branchEnds.getLast();
   }
 
   /**

@@ -21,25 +21,35 @@ import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ForIdxNode;
 
 /**
- * Represents a {@code forall i in <range> do {...}} statement.
- * The body of the forall statement starts with the next node and ends with an
- * {@link ForallEndNode}.
- * Its index is represented as a dependency to a {@link ForIdxNode}.
+ * Represents a {@code forall i in <range> do{...}} statement.
+ * It is followed by a {@link BranchBeginNode} and ends with an {@link AbstractEndNode}
+ * which is consumed by a {@link ForallEndNode}.
+ *
+ * <p>Its index is represented as a dependency to a {@link ForIdxNode}.
+ *
+ * <p>The control flow looks like this:
+ * <pre>
+ * {@code
+ * ... -> ForallNode -> BranchBeginNode -> ... -> BranchEndNode(with side-effects) -> ForallEndNode
+ * }
+ * </pre>
  *
  * @see ForIdxNode
  * @see vadl.viam.graph.dependency.TensorNode
  * @see vadl.viam.graph.dependency.FoldNode
+ * @see <a href="https://github.com/OpenVADL/openvadl/pull/566">Github PR #566</a>
  */
-public class ForallNode extends DirectionalNode {
+public class ForallNode extends ControlSplitNode {
 
   @Input
   private ForIdxNode idx;
 
-  public ForallNode(ForIdxNode idx, ControlNode next) {
-    super(next);
+  public ForallNode(ForIdxNode idx, BranchBeginNode beginNode) {
+    super(new NodeList<>(beginNode));
     this.idx = idx;
   }
 
@@ -47,18 +57,22 @@ public class ForallNode extends DirectionalNode {
     return idx;
   }
 
+  public BranchBeginNode beginNode() {
+    return branches().getFirst();
+  }
+
   public boolean isEmpty() {
-    return next() instanceof ForallEndNode;
+    return beginNode().next() instanceof AbstractEndNode;
   }
 
   @Override
   public Node copy() {
-    return new ForallNode(idx.copy(), next());
+    return new ForallNode(idx.copy(), beginNode());
   }
 
   @Override
   public Node shallowCopy() {
-    return new ForallNode(idx, next());
+    return new ForallNode(idx, beginNode());
   }
 
   @Override
