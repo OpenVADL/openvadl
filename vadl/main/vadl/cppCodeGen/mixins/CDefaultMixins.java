@@ -285,9 +285,9 @@ public interface CDefaultMixins {
       var cmp = from < to ? "<=" : ">=";
       var cnt = from < to ? "++" : "--";
       var i = "i" + node.idx().id().numericId();
-      ctx.wr("for (int" + i + " = " + from + "; i " + cmp + " " + to + "; " + cnt)
+      ctx.wr("for (int " + i + " = " + from + "; " + i + " " + cmp + " " + to + "; " + i + cnt + ")")
+          .ln(" {")
           .spacedIn()
-          .ln(") {")
           .gen(node.beginNode());
     }
 

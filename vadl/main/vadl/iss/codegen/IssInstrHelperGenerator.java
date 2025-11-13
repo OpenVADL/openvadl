@@ -16,11 +16,38 @@
 
 package vadl.iss.codegen;
 
+import static vadl.iss.passes.TcgPassUtils.instrInfo;
+import static vadl.utils.GraphUtils.getSingleNode;
+
 import vadl.configuration.IssConfiguration;
+import vadl.cppCodeGen.context.CGenContext;
 import vadl.iss.passes.extensions.InstrInfo;
 import vadl.viam.Instruction;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.ParamNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
+import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
-public class IssInstrHelperGenerator extends IssProcGen {
+/**
+ * Generates helper function implementations for instructions in {@code target/gen-arch/helper.c}.
+ * These helper functions are called by the translate functions for instructions that are too
+ * complex to be directly translated into TCG operations (e.g., instructions using generic vector
+ * registers).
+ *
+ * <p>The generated helper functions have the signature:
+ * {@code void helper_<instr_name>_instr(CPU<ARCH>State *env, uint32_t param1, uint32_t param2, ...)}
+ * </p>
+ *
+ * <p>Register accesses are done directly using reads and writes to the CPU state ({@code env->reg}).
+ * Instruction format parameters are passed as function arguments.
+ * </p>
+ */
+public class IssInstrHelperGenerator extends IssProcGen
+    implements IssCMixins.CpuSourceWriteRegTensor {
 
   private final IssConfiguration configuration;
   private final InstrInfo instrInfo;
@@ -30,12 +57,80 @@ public class IssInstrHelperGenerator extends IssProcGen {
     this.instrInfo = instrInfo;
   }
 
+  /**
+   * Generates the helper function implementation for the instruction.
+   *
+   * @return the C code for the helper function
+   */
   public String fetch() {
-    return "not_yet_implemented";
+    var targetUpper = configuration.targetName().toUpperCase();
+    var params = instrInfo.helperFormatParamOrder()
+        .map(p -> "uint32_t " + paramName(p))
+        .reduce((a, b) -> a + ", " + b)
+        .map(s -> ", " + s)
+        .orElse("");
+
+    ctx().ln("void helper_%s(CPU%sState *env%s) {",
+            instrInfo.helperName(),
+            targetUpper,
+            params)
+        .spacedIn();
+
+    // init reads at start of function
+    initReadRegs(instrInfo.instr().behavior());
+
+    var start = getSingleNode(instrInfo.instr().behavior(), StartNode.class);
+    var current = start.next();
+    ctx().gen(current);
+
+    ctx().spaceOut().ln("}");
+    return builder().toString();
   }
 
+  /**
+   * Returns the helper function name for the given instruction.
+   *
+   * @param instr the instruction
+   * @return the helper function name
+   */
   public static String functionName(Instruction instr) {
-    return "not_yet_implemented";
+    return "helper_" + instrInfo(instr).helperName();
+  }
+
+  @Override
+  void handle(CGenContext<Node> ctx, FieldRefNode toHandle) {
+    ctx().wr(paramName(toHandle));
+  }
+
+  @Override
+  void handle(CGenContext<Node> ctx, FieldAccessRefNode toHandle) {
+    ctx().wr(paramName(toHandle));
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, WriteRegTensorNode toHandle) {
+    IssCMixins.CpuSourceWriteRegTensor.super.handle(ctx, toHandle);
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, ReadRegTensorNode node) {
+    // use register variables defined at start
+    ctx().wr(readRegVariable(node));
+  }
+
+  /**
+   * Directly call the cause and wrap it in a statement line.
+   * Then call the next control node.
+   */
+  @Override
+  public void handle(CGenContext<Node> ctx, InstrExitNode.PcChange node) {
+    ctx.gen(node.cause())
+        .ln(";")
+        .gen(node.next());
+  }
+
+  private String paramName(ParamNode def) {
+    return def.definition().simpleName().toLowerCase();
   }
 
 }

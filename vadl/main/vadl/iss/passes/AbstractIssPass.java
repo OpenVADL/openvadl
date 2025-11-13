@@ -40,13 +40,17 @@ public abstract class AbstractIssPass extends Pass {
     return (IssConfiguration) super.configuration();
   }
 
+  public Stream<Instruction> allInstrs(Specification spec) {
+    return spec.isa().get().ownInstructions().stream();
+  }
+
   public Stream<Instruction> tcgInstrs(Specification spec) {
-    return spec.isa().get().ownInstructions().stream()
+    return allInstrs(spec)
         .filter(i -> !instrInfo(i).asHelperCall());
   }
 
   public Stream<Instruction> helperInstrs(Specification spec) {
-    return spec.isa().get().ownInstructions().stream()
+    return allInstrs(spec)
         .filter(i -> instrInfo(i).asHelperCall());
   }
 
