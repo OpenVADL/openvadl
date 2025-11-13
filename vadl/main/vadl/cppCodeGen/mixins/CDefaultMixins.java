@@ -34,7 +34,7 @@ import vadl.utils.Pair;
 import vadl.viam.Function;
 import vadl.viam.Parameter;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.BeginNode;
+import vadl.viam.graph.control.BranchBeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ForallEndNode;
 import vadl.viam.graph.control.ForallNode;
@@ -214,7 +214,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface Begin {
     @Handler
-    default void handle(CGenContext<Node> ctx, BeginNode node) {
+    default void handle(CGenContext<Node> ctx, BranchBeginNode node) {
       ctx.gen(node.next());
     }
   }

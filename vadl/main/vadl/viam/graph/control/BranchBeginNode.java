@@ -23,18 +23,18 @@ import vadl.viam.graph.Node;
  * The BeginNode class represents the start of a control subflow.
  * An example for such a subflow is an if branch.
  */
-public class BeginNode extends AbstractBeginNode {
-  public BeginNode(ControlNode next) {
+public class BranchBeginNode extends AbstractBeginNode {
+  public BranchBeginNode(ControlNode next) {
     super(next);
   }
 
   @Override
   public Node copy() {
-    return new BeginNode((ControlNode) next().copy());
+    return new BranchBeginNode((ControlNode) next().copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new BeginNode((ControlNode) next());
+    return new BranchBeginNode((ControlNode) next());
   }
 }

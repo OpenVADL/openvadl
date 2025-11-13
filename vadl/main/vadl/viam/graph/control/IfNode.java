@@ -50,7 +50,7 @@ public class IfNode extends ControlSplitNode {
   /**
    * The constructor to instantiate a IfNode.
    */
-  public IfNode(ExpressionNode condition, BeginNode trueBranch, BeginNode falseBranch) {
+  public IfNode(ExpressionNode condition, BranchBeginNode trueBranch, BranchBeginNode falseBranch) {
     super(new NodeList<>(trueBranch, falseBranch));
     this.condition = condition;
   }
@@ -59,11 +59,11 @@ public class IfNode extends ControlSplitNode {
     return condition;
   }
 
-  public BeginNode trueBranch() {
+  public BranchBeginNode trueBranch() {
     return branches().get(0);
   }
 
-  public BeginNode falseBranch() {
+  public BranchBeginNode falseBranch() {
     return branches().get(1);
   }
 
@@ -83,8 +83,8 @@ public class IfNode extends ControlSplitNode {
 
   @Override
   public Node copy() {
-    return new IfNode((ExpressionNode) condition.copy(), (BeginNode) trueBranch().copy(),
-        (BeginNode) falseBranch().copy());
+    return new IfNode((ExpressionNode) condition.copy(), (BranchBeginNode) trueBranch().copy(),
+        (BranchBeginNode) falseBranch().copy());
   }
 
   @Override

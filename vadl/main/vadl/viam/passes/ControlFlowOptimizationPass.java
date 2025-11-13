@@ -32,7 +32,7 @@ import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
-import vadl.viam.graph.control.BeginNode;
+import vadl.viam.graph.control.BranchBeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.ControlSplitNode;
@@ -105,9 +105,9 @@ class ControlFlowOptimizer implements CfgTraverser {
     var condition = constantNode.constant().asVal();
     var mergeNode = ifNode.findCorrespondingMergeNode();
 
-    BeginNode branchStart;
+    BranchBeginNode branchStart;
     BranchEndNode branchEnd;
-    BeginNode removedBranch;
+    BranchBeginNode removedBranch;
     if (condition.bool()) {
       // extract true branch
       branchStart = ifNode.trueBranch();

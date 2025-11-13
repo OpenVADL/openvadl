@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 import vadl.gcb.AbstractGcbTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Instruction;
-import vadl.viam.graph.control.BeginNode;
+import vadl.viam.graph.control.BranchBeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.MergeNode;
@@ -194,7 +194,8 @@ class InstructionPatternPruningPassTest extends AbstractGcbTest {
 
     Assertions.assertThat(adddiv6).isPresent();
     Assertions.assertThat(adddiv6.get()
-            .getNodes(Set.of(IfNode.class, MergeNode.class, BeginNode.class, BranchEndNode.class)))
+            .getNodes(
+                Set.of(IfNode.class, MergeNode.class, BranchBeginNode.class, BranchEndNode.class)))
         .isEmpty();
   }
 
@@ -222,7 +223,8 @@ class InstructionPatternPruningPassTest extends AbstractGcbTest {
 
     Assertions.assertThat(adddiv6).isPresent();
     Assertions.assertThat(adddiv6.get()
-            .getNodes(Set.of(IfNode.class, MergeNode.class, BeginNode.class, BranchEndNode.class)))
+            .getNodes(
+                Set.of(IfNode.class, MergeNode.class, BranchBeginNode.class, BranchEndNode.class)))
         .isEmpty();
   }
 

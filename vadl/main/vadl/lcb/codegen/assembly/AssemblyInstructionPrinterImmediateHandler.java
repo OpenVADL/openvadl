@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
-import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.operands.ReferencesFormatField;
@@ -55,7 +54,7 @@ import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.BeginNode;
+import vadl.viam.graph.control.BranchBeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ForallEndNode;
 import vadl.viam.graph.control.ForallNode;
@@ -406,7 +405,7 @@ public class AssemblyInstructionPrinterImmediateHandler
 
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
-  public void handle(CGenContext<Node> ctx, BeginNode node) {
+  public void handle(CGenContext<Node> ctx, BranchBeginNode node) {
     throw Diagnostic.error("not supported", node.location()).build();
   }
 

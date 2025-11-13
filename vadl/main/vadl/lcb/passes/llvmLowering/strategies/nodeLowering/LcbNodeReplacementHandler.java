@@ -19,7 +19,6 @@ package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Objects;
@@ -66,7 +65,7 @@ import vadl.types.DataType;
 import vadl.viam.Constant;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.BeginNode;
+import vadl.viam.graph.control.BranchBeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ForallEndNode;
 import vadl.viam.graph.control.ForallNode;
@@ -250,7 +249,7 @@ public class LcbNodeReplacementHandler {
 
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
-  public void handle(BeginNode node) {
+  public void handle(BranchBeginNode node) {
     throw Diagnostic.error("not supported", node.location()).build();
   }
 
