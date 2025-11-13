@@ -42,7 +42,7 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
     if (asHelperCall == null) {
       asHelperCall = computeAsHelperCall();
     }
-    return true;
+    return asHelperCall;
   }
 
   /**

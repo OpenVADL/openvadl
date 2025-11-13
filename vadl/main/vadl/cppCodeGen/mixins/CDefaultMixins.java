@@ -285,10 +285,15 @@ public interface CDefaultMixins {
       var cmp = from < to ? "<=" : ">=";
       var cnt = from < to ? "++" : "--";
       var i = "i" + node.idx().id().numericId();
-      ctx.wr("for (int " + i + " = " + from + "; " + i + " " + cmp + " " + to + "; " + i + cnt + ")")
+      ctx.wr(
+              "for (int " + i + " = " + from + "; " + i + " " + cmp + " " + to + "; " + i + cnt + ")")
           .ln(" {")
           .spacedIn()
-          .gen(node.beginNode());
+          .gen(node.beginNode())
+          .spaceOut()
+          .ln("}");
+      var mergeNode = node.findCorrespondingMergeNode();
+      ctx.gen(mergeNode.next());
     }
 
     @Handler

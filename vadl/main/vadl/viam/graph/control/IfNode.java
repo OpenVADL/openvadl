@@ -23,7 +23,6 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.passes.CfgTraverser;
 
 
 /**
@@ -65,20 +64,6 @@ public class IfNode extends ControlSplitNode {
 
   public BranchBeginNode falseBranch() {
     return branches().get(1);
-  }
-
-  /**
-   * This finds the merge node that corresponds to this if.
-   * Only use it if necessary, as it has to traverse the control flow
-   * until it reaches the end of one branch.
-   */
-  public MergeNode findCorrespondingMergeNode() {
-    var endFalseBranch = new CfgTraverser() {
-    }.traverseBranch(falseBranch());
-    var mergeNode = endFalseBranch.usages().findFirst();
-    ensure(mergeNode.isPresent() && mergeNode.get() instanceof MergeNode,
-        "False branch end node is not a merge node... corrupted graph.");
-    return (MergeNode) mergeNode.get();
   }
 
   @Override
