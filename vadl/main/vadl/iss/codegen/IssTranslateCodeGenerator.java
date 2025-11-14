@@ -30,6 +30,7 @@ import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.extensions.InstrInfo;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
+import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
@@ -43,7 +44,9 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ParamNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.TensorNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * The code generator for the {@code target/gen-arch/translate.c}.
@@ -314,8 +317,12 @@ class HelperCallGenerator {
         .appendLn(" *a) {")
         .indent();
 
+    builder.appendLn("trace_" + this.targetName.toLowerCase() + "_instr_trans(__func__);");
+
     genArgTcgVs();
+    genPcUpdate();
     genHelperCall();
+    genTbLookupIfNecessary();
 
     builder.appendLn("return true;")
         .unindent()
@@ -328,7 +335,9 @@ class HelperCallGenerator {
         .forEach(p -> {
           var name = paramName(p);
           var val = "a->" + name;
-          var stmt = "TCGv_i32 " + name + "_tmp = tcg_constant_i32(" + val + ");";
+          var tcgSize = Tcg_32_64.nextFitting(p.type());
+          var stmt =
+              "TCGv_" + tcgSize + " " + name + "_tmp = tcg_constant_" + tcgSize + "(" + val + ");";
           builder.appendLn(stmt);
         });
   }
@@ -340,6 +349,36 @@ class HelperCallGenerator {
         + info.helperName()
         + "(" + args + ");";
     builder.appendLn(call);
+  }
+
+  /// If the instruction reads the PC, we must update the
+  /// PC TCG variable; otherwise the helper function won't have
+  /// the current PC in its environment.
+  private void genPcUpdate() {
+    if (doesPCRead()) {
+      builder.appendLn("gen_update_pc_diff(ctx, 0);");
+    }
+  }
+
+  /// If the instruction writes the PC, we must do a new TB lookup.
+  private void genTbLookupIfNecessary() {
+    if (doesPCUpdate()) {
+      var instrWidth = insn.format().type().bitWidth() / 8;
+      builder.appendLn("gen_update_pc_diff(ctx, " + instrWidth + ");");
+      // we don't have to update the PC, as the helper already does this.
+      builder.appendLn("tcg_gen_lookup_and_goto_ptr();")
+          .appendLn("ctx->base.is_jmp = DISAS_NORETURN;");
+    }
+  }
+
+  private boolean doesPCUpdate() {
+    return insn.behavior().getNodes(WriteRegTensorNode.class)
+        .anyMatch(WriteRegTensorNode::isPcAccess);
+  }
+
+  private boolean doesPCRead() {
+    return insn.behavior().getNodes(ReadRegTensorNode.class)
+        .anyMatch(ReadRegTensorNode::isPcAccess);
   }
 
   private Stream<String> fieldArgs() {

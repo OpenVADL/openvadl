@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.extensions.InstrInfo;
+import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -58,9 +59,10 @@ public class EmitIssHelperHPass extends IssTemplateRenderingPass {
     var params = instr.helperFormatParamOrder().toList();
     var argSize = params.size() + 1; // plus one because of the tcg env
     // all params are passed as i32 containers... i32, i32, ...
-    var paramTypes = argSize == 1 ? "" : ", " + params.stream().map(_ -> "i32")
-        .collect(Collectors.joining(","));
-    return "DEF_HELPER_%s(%s, noreturn, env%s)".formatted(
+    var paramTypes = argSize == 1 ? "" :
+        ", " + params.stream().map(i -> Tcg_32_64.nextFitting(i.type()).toString())
+            .collect(Collectors.joining(","));
+    return "DEF_HELPER_%s(%s, void, env%s)".formatted(
         argSize,
         instr.helperName(),
         paramTypes

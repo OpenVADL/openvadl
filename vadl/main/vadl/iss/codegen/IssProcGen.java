@@ -77,16 +77,18 @@ abstract class IssProcGen implements CDefaultMixins.All,
    */
   void initReadRegs(Graph graph) {
     graph.getNodes(ReadRegTensorNode.class)
-        .forEach(read -> {
-          var info = read.regTensor().expectExtension(RegInfo.class);
-          var name = readRegVariable(read);
-          ctx.wr(info.valueCType() + " " + name + " = ")
-              .wr("get_cpu_" + info.name().toLowerCase() + "(env");
-          for (var i : read.indices()) {
-            ctx.wr(", ").gen(i);
-          }
-          ctx.ln(");");
-        });
+        .forEach(this::initSingleReadReg);
+  }
+
+  void initSingleReadReg(ReadRegTensorNode read) {
+    var info = read.regTensor().expectExtension(RegInfo.class);
+    var name = readRegVariable(read);
+    ctx.wr(info.valueCType() + " " + name + " = ")
+        .wr("get_cpu_" + info.name().toLowerCase() + "(env");
+    for (var i : read.indices()) {
+      ctx.wr(", ").gen(i);
+    }
+    ctx.ln(");");
   }
 
   /**

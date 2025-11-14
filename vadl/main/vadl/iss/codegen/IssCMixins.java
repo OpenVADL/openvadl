@@ -155,24 +155,21 @@ public interface IssCMixins {
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx, WriteMemNode node) {
-      var bitWidth = node.writeBitWidth();
-      var suffix = switch (bitWidth) {
-        case 8 -> "b";
-        case 16 -> "w";
-        case 32 -> "l";
-        case 64 -> "q";
-        default -> throw new IllegalArgumentException(
-            "Unsupported memory write width: " + bitWidth);
-      };
-
-      ctx.wr("cpu_st" + suffix + "_data(env, ");
-      ctx.gen(node.address()).wr(", ");
-      ctx.gen(node.value()).wr(")");
+      handle(ctx, node, true);
     }
 
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx, ReadMemNode node) {
+      handle(ctx, node, true);
+    }
+
+
+    /// In helper functions IO operations require the return address for unwinding.
+    /// This can be obtained by calling GETPC().
+    /// However, this is only available in TCG helpers.
+    @SuppressWarnings("MissingJavadocMethod")
+    static void handle(CGenContext<Node> ctx, ReadMemNode node, boolean withGetPcRetAddr) {
       var bitWidth = node.readBitWidth();
       var suffix = switch (bitWidth) {
         case 8 -> "ub";
@@ -182,11 +179,30 @@ public interface IssCMixins {
         default -> throw new IllegalArgumentException(
             "Unsupported memory read width: " + bitWidth);
       };
-
-      ctx.wr("cpu_ld" + suffix + "_data(env, ");
-      ctx.gen(node.address()).wr(")");
+      var ra = withGetPcRetAddr ? "GETPC()" : "0";
+      ctx.wr("cpu_ld" + suffix + "_data_ra(env, ");
+      ctx.gen(node.address()).wr(", ").wr(ra).wr(")");
     }
 
+    /// In helper functions IO operations require the return address for unwinding.
+    /// This can be obtained by calling GETPC().
+    /// However, this is only available in TCG helpers.
+    @SuppressWarnings("MissingJavadocMethod")
+    static void handle(CGenContext<Node> ctx, WriteMemNode node, boolean withGetPcRetAddr) {
+      var bitWidth = node.writeBitWidth();
+      var suffix = switch (bitWidth) {
+        case 8 -> "b";
+        case 16 -> "w";
+        case 32 -> "l";
+        case 64 -> "q";
+        default -> throw new IllegalArgumentException(
+            "Unsupported memory write width: " + bitWidth);
+      };
+      var ra = withGetPcRetAddr ? "GETPC()" : "0";
+      ctx.wr("cpu_st" + suffix + "_data_ra(env, ");
+      ctx.gen(node.address()).wr(", ");
+      ctx.gen(node.value()).wr(",").wr(ra).wr(")");
+    }
   }
 
 }

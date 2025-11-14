@@ -22,6 +22,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.iss.passes.extensions.InstrInfo;
+import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.StartNode;
@@ -67,12 +68,15 @@ public class IssInstrHelperGenerator extends IssProcGen
   public String fetch() {
     var targetUpper = configuration.targetName().toUpperCase();
     var params = instrInfo.helperFormatParamOrder()
-        .map(p -> "uint32_t " + paramName(p))
+        .map(p -> {
+          var tcgSize = Tcg_32_64.nextFitting(p.type()).width;
+          return "uint" + tcgSize + "_t " + paramName(p);
+        })
         .reduce((a, b) -> a + ", " + b)
         .map(s -> ", " + s)
         .orElse("");
 
-    ctx().ln("void helper_%s(CPU%sState *env%s) {",
+    ctx().ln("void HELPER(%s)(CPU%sState *env%s) {",
             instrInfo.helperName(),
             targetUpper,
             params)
@@ -112,6 +116,9 @@ public class IssInstrHelperGenerator extends IssProcGen
   @Override
   public void handle(CGenContext<Node> ctx, WriteRegTensorNode toHandle) {
     IssCMixins.CpuSourceWriteRegTensor.super.handle(ctx, toHandle);
+    if (toHandle.isPcAccess()) {
+      ctx().ln(";").wr("cpu_loop_exit(env_cpu(env))");
+    }
   }
 
   @Override

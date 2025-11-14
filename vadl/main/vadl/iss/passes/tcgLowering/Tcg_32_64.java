@@ -16,6 +16,8 @@
 
 package vadl.iss.passes.tcgLowering;
 
+import vadl.types.Type;
+
 /**
  * TcgWidth is an enumeration representing different width sizes in the context of the TCG.
  *
@@ -59,5 +61,9 @@ public enum Tcg_32_64 {
     } else {
       throw new IllegalArgumentException("Width too big: " + width);
     }
+  }
+
+  public static Tcg_32_64 nextFitting(Type type) {
+    return nextFitting(type.asDataType().bitWidth());
   }
 }
