@@ -1099,7 +1099,7 @@ instruction set architecture PPC64SFS = {
     assembly $asm = ($asm, " ", decimal(rs), ",", decimal(ra), ",", decimal(rb))
   }
 
-  record XOFormAddSubInstrRec (x : AsmOpExt, a : TwoArgs, enc : Encs, carry : Ex, ce : Bool)
+  record XOFormAddSubInstrRec (x : AsmOpExt, a : TwoArgs, enc : Encs, carry : Ex, ce : Bool, rbasm : Ex)
 
   model XOFormAddSubInstrExt (eid : Id, r : XOFormAddSubInstrRec, oe : Bool, rc : Bool) : IsaDefs = {
     instruction $eid : XOForm =
@@ -1110,7 +1110,7 @@ instruction set architecture PPC64SFS = {
           $CS($rc; $SetCR0(result64))
         }
     encoding $eid = {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc, $r.enc}
-    assembly $eid = ($r.x.asm, $orStr($oe; $rc), " ", decimal(rs), ",", decimal(ra), ",", decimal(rb))
+    assembly $eid = ($r.x.asm, $orStr($oe; $rc), " ", decimal(rs), ",", decimal(ra), $r.rbasm)
   }
 
   // instructions: add[o][.], addc[o][.], adde[o][.], subf[o][.], subfc[o][.], subfe[o][.], addme[o][.], addze[o][.], subfme[o][.], subfze[o][.]
@@ -1204,16 +1204,16 @@ instruction set architecture PPC64SFS = {
   //------------------------Arithmetic-------------------------
   $DXFormAddInstr("ADDPCIS")
 
-  $XOFormAddSubInstr((("ADD"   ; addc; 0b1000'01010); (X(ra); X(rb)); none         ; false ; false))
-  $XOFormAddSubInstr((("ADDC"  ; addc; 0b0000'01010); (X(ra); X(rb)); none         ; false ; true ))
-  $XOFormAddSubInstr((("ADDE"  ; addc; 0b0100'01010); (X(ra); X(rb)); none         ; XER.ca; true ))
-  $XOFormAddSubInstr((("SUBF"  ; subc; 0b0001'01000); (X(rb); X(ra)); none         ; true  ; false))
-  $XOFormAddSubInstr((("SUBFC" ; subc; 0b0000'01000); (X(rb); X(ra)); none         ; true  ; true ))
-  $XOFormAddSubInstr((("SUBFE" ; subc; 0b0100'01000); (X(rb); X(ra)); none         ; XER.ca; true ))
-  $XOFormAddSubInstr((("ADDME" ; addc; 0b0111'01010); (X(ra); -1   ); rb = 0b00000 ; XER.ca; true ))
-  $XOFormAddSubInstr((("ADDZE" ; addc; 0b0110'01010); (X(ra);  0   ); rb = 0b00000 ; XER.ca; true ))
-  $XOFormAddSubInstr((("SUBFME"; subc; 0b0111'01000); (-1   ; X(ra)); rb = 0b00000 ; XER.ca; true ))
-  $XOFormAddSubInstr((("SUBFZE"; subc; 0b0110'01000); ( 0   ; X(ra)); rb = 0b00000 ; XER.ca; true ))
+  $XOFormAddSubInstr((("ADD"   ; addc; 0b1000'01010); (X(ra); X(rb)); none         ; false ; false; (",", decimal(rb))))
+  $XOFormAddSubInstr((("ADDC"  ; addc; 0b0000'01010); (X(ra); X(rb)); none         ; false ; true ; (",", decimal(rb))))
+  $XOFormAddSubInstr((("ADDE"  ; addc; 0b0100'01010); (X(ra); X(rb)); none         ; XER.ca; true ; (",", decimal(rb))))
+  $XOFormAddSubInstr((("SUBF"  ; subc; 0b0001'01000); (X(rb); X(ra)); none         ; true  ; false; (",", decimal(rb))))
+  $XOFormAddSubInstr((("SUBFC" ; subc; 0b0000'01000); (X(rb); X(ra)); none         ; true  ; true ; (",", decimal(rb))))
+  $XOFormAddSubInstr((("SUBFE" ; subc; 0b0100'01000); (X(rb); X(ra)); none         ; XER.ca; true ; (",", decimal(rb))))
+  $XOFormAddSubInstr((("ADDME" ; addc; 0b0111'01010); (X(ra); -1   ); rb = 0b00000 ; XER.ca; true ; ""                ))
+  $XOFormAddSubInstr((("ADDZE" ; addc; 0b0110'01010); (X(ra);  0   ); rb = 0b00000 ; XER.ca; true ; ""                ))
+  $XOFormAddSubInstr((("SUBFME"; subc; 0b0111'01000); (-1   ; X(ra)); rb = 0b00000 ; XER.ca; true ; ""                ))
+  $XOFormAddSubInstr((("SUBFZE"; subc; 0b0110'01000); ( 0   ; X(ra)); rb = 0b00000 ; XER.ca; true ; ""                ))
 
   $DFormAddSubInstr(("ADDI"  ; adds ; 0b001110; ADDI  ); (XZ(ra); immS    ); false; false)
   $DFormAddSubInstr(("ADDIC" ; adds ; 0b001100; ADDIC ); (X(ra) ; immS    ); false; true )
