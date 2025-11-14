@@ -64,6 +64,11 @@ public class ReadMemNode extends ReadResourceNode {
   public int words() {
     return words;
   }
+  
+  public int readBitWidth() {
+    return memory.wordSize() * words;
+  }
+
 
   @Override
   public ExpressionNode address() {

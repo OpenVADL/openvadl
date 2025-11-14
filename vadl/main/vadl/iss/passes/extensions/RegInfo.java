@@ -110,7 +110,9 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       var dims = renderIndexDims();
       var nameLower = name().toLowerCase();
       var renderParams = renderGetterArgs(dims);
+      var renderParamsComma = renderParams.isEmpty() ? "" : ", " + renderParams;
       var resultType = reg().resultType(reg().maxNumberOfAccessIndices());
+      var cpuStateName = "CPU" + config.targetName().toUpperCase() + "State";
       renderObj = new HashMap<>();
       renderObj.put("name", name());
       renderObj.put("name_lower", nameLower);
@@ -121,10 +123,13 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       renderObj.put("cpu_state_type_width", cpuStateTypeWidth());
       renderObj.put("names", names());
       renderObj.put("constraints", renderConstraints(dims));
-      renderObj.put("getter_params", renderParams.isEmpty() ? "" : ", " + renderParams);
-      // as getter_params but without leading comma
-      renderObj.put("getter_params_no_comma", renderParams);
-      renderObj.put("getter_params_post_comma", renderParams.isEmpty() ? "" : renderParams + ", ");
+      renderObj.put("getter_params", renderParamsComma);
+      renderObj.put("cpu_getter_signature",
+          valueCType() + " get_cpu_" + nameLower + "(" + cpuStateName + "* env"
+              + renderParamsComma + ")");
+      renderObj.put("cpu_setter_signature",
+          "void set_cpu_" + nameLower + "(" + cpuStateName + "* env"
+              + renderParamsComma + ", " + valueCType() + " val)");
       renderObj.put("c_array_def", renderCArrayDef());
     }
     return renderObj;

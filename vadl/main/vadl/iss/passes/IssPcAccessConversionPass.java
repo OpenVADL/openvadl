@@ -56,9 +56,7 @@ public class IssPcAccessConversionPass extends AbstractIssPass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    viam.isa().ifPresent(isa -> {
-      isa.ownInstructions().forEach(i -> new IssPcAccessConverter(i.behavior()).run());
-    });
+    tcgInstrs(viam).forEach(i -> new IssPcAccessConverter(i.behavior()).run());
     return null;
   }
 }

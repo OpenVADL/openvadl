@@ -81,14 +81,9 @@ abstract class IssProcGen implements CDefaultMixins.All,
           var info = read.regTensor().expectExtension(RegInfo.class);
           var name = readRegVariable(read);
           ctx.wr(info.valueCType() + " " + name + " = ")
-              .wr("get_" + info.name().toLowerCase() + "(");
-          var first = true;
+              .wr("get_cpu_" + info.name().toLowerCase() + "(env");
           for (var i : read.indices()) {
-            if (!first) {
-              ctx.wr(", ");
-            }
-            ctx.gen(i);
-            first = false;
+            ctx.wr(", ").gen(i);
           }
           ctx.ln(");");
         });

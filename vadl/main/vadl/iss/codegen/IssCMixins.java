@@ -29,6 +29,8 @@ import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.javaannotations.Handler;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ReadMemNode;
+import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
@@ -140,12 +142,51 @@ public interface IssCMixins {
     default void handle(CGenContext<Node> ctx,
                         WriteRegTensorNode node) {
       var reg = node.regTensor();
-      ctx.wr("set_" + reg.simpleName().toLowerCase() + "(");
+      ctx.wr("set_cpu_" + reg.simpleName().toLowerCase() + "(env");
       for (var i : node.indices()) {
-        ctx.gen(i).wr(",");
+        ctx.wr(", ").gen(i);
       }
+      ctx.wr(", ").gen(node.value()).wr(")");
+    }
+  }
+
+  interface CpuSourceReadWriteMemory {
+
+    @Handler
+    @SuppressWarnings("MissingJavadocMethod")
+    default void handle(CGenContext<Node> ctx, WriteMemNode node) {
+      var bitWidth = node.writeBitWidth();
+      var suffix = switch (bitWidth) {
+        case 8 -> "b";
+        case 16 -> "w";
+        case 32 -> "l";
+        case 64 -> "q";
+        default -> throw new IllegalArgumentException(
+            "Unsupported memory write width: " + bitWidth);
+      };
+
+      ctx.wr("cpu_st" + suffix + "_data(env, ");
+      ctx.gen(node.address()).wr(", ");
       ctx.gen(node.value()).wr(")");
     }
+
+    @Handler
+    @SuppressWarnings("MissingJavadocMethod")
+    default void handle(CGenContext<Node> ctx, ReadMemNode node) {
+      var bitWidth = node.readBitWidth();
+      var suffix = switch (bitWidth) {
+        case 8 -> "ub";
+        case 16 -> "uw";
+        case 32 -> "l";
+        case 64 -> "q";
+        default -> throw new IllegalArgumentException(
+            "Unsupported memory read width: " + bitWidth);
+      };
+
+      ctx.wr("cpu_ld" + suffix + "_data(env, ");
+      ctx.gen(node.address()).wr(")");
+    }
+
   }
 
 }

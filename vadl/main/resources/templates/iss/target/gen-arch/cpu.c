@@ -19,22 +19,22 @@ const char * const [(${gen_arch_lower})]_cpu_[(${reg.name_lower})]_names[(${reg.
 [/][/]
 
 [# th:each="reg : ${register_tensors}"]
-static [(${reg.value_c_type})] get_[(${reg.name_lower})]([(${reg.getter_params_no_comma})])
+[(${reg.cpu_getter_signature})]
 {   [# th:each="dim : ${reg.index_dims}"]
     assert( [(${dim.arg_name})] < [(${dim["size"]})]); [/]
     [# th:each="constraint : ${reg.constraints}"]
     if ([(${constraint.check})]) return [(${constraint.value})];
     [/]
-    return cpu_self->env.[(${reg.name_lower})][# th:each="dim : ${reg.index_dims}"][ [(${dim.arg_name})]][/];
+    return env->[(${reg.name_lower})][# th:each="dim : ${reg.index_dims}"][ [(${dim.arg_name})]][/];
 }
 
-static void set_[(${reg.name_lower})]([(${reg.getter_params_post_comma})] [(${reg.value_c_type})] val)
+[(${reg.cpu_setter_signature})]
 {   [# th:each="dim : ${reg.index_dims}"]
     assert( [(${dim.arg_name})] < [(${dim["size"]})]); [/]
     [# th:each="constraint : ${reg.constraints}"]
     if ([(${constraint.check})]) return;
     [/]
-    cpu_self->env.[(${reg.name_lower})][# th:each="dim : ${reg.index_dims}"][ [(${dim.arg_name})]][/] = val;
+    env->[(${reg.name_lower})][# th:each="dim : ${reg.index_dims}"][ [(${dim.arg_name})]][/] = val;
 }
 [/]
 

@@ -28,7 +28,9 @@ import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ParamNode;
+import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
@@ -47,7 +49,7 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * </p>
  */
 public class IssInstrHelperGenerator extends IssProcGen
-    implements IssCMixins.CpuSourceWriteRegTensor {
+    implements IssCMixins.CpuSourceWriteRegTensor, IssCMixins.CpuSourceReadWriteMemory {
 
   private final IssConfiguration configuration;
   private final InstrInfo instrInfo;
@@ -110,6 +112,16 @@ public class IssInstrHelperGenerator extends IssProcGen
   @Override
   public void handle(CGenContext<Node> ctx, WriteRegTensorNode toHandle) {
     IssCMixins.CpuSourceWriteRegTensor.super.handle(ctx, toHandle);
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, WriteMemNode toHandle) {
+    IssCMixins.CpuSourceReadWriteMemory.super.handle(ctx, toHandle);
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, ReadMemNode toHandle) {
+    IssCMixins.CpuSourceReadWriteMemory.super.handle(ctx, toHandle);
   }
 
   @Override

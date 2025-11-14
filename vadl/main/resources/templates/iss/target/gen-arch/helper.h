@@ -6,6 +6,7 @@ DEF_HELPER_1(unsupported, noreturn, env)
 [(${exc.helper_def})]
 [/]
 
-[# th:each="instr : ${instr_helper_defs}"]// helper definitions for instructions
+// helper definitions for instructions
+[# th:each="instr : ${instr_helper_defs}"]
 [(${instr})]
 [/]

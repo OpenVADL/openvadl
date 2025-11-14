@@ -338,7 +338,7 @@ class HelperCallGenerator {
         fieldArgs()).collect(Collectors.joining(", "));
     var call = "gen_helper_"
         + info.helperName()
-        + "(" + args + ")";
+        + "(" + args + ");";
     builder.appendLn(call);
   }
 
@@ -348,7 +348,7 @@ class HelperCallGenerator {
   }
 
   private String paramName(ParamNode p) {
-    return p.definition().simpleName().toLowerCase();
+    return p.definition().simpleName();
   }
 
 }

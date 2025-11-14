@@ -39,10 +39,12 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
    * a C implementation of this instruction.
    */
   public boolean asHelperCall() {
-    if (asHelperCall == null) {
-      asHelperCall = computeAsHelperCall();
-    }
-    return asHelperCall;
+    return true;
+    // TODO: Uncomment this line and remove the line above.
+//    if (asHelperCall == null) {
+//      asHelperCall = computeAsHelperCall();
+//    }
+//    return asHelperCall;
   }
 
   /**

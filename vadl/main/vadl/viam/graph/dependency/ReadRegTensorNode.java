@@ -21,6 +21,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
+import vadl.types.Type;
 import vadl.viam.Counter;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
@@ -59,8 +60,6 @@ public class ReadRegTensorNode extends ReadResourceNode implements ReadsRegister
   @Nullable
   private Counter staticCounterAccess;
 
-  // TODO: Add static counter access
-
   /**
    * Construct the {@link ReadRegTensorNode}.
    *
@@ -71,9 +70,16 @@ public class ReadRegTensorNode extends ReadResourceNode implements ReadsRegister
    */
   public ReadRegTensorNode(RegisterTensor regTensor, NodeList<ExpressionNode> indices,
                            DataType type, @Nullable Counter staticCounterAccess) {
-    super(indices, type);
+    super(indices, type.toBitsType());
     this.regTensor = regTensor;
     this.staticCounterAccess = staticCounterAccess;
+  }
+
+  @Override
+  public void setType(Type type) {
+    // types may cause double read from the same register without benefit.
+    // so we normalize the type to BitsType.
+    super.setType(type.asDataType().toBitsType());
   }
 
   @Override
