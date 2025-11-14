@@ -64,6 +64,13 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     return testTRegImmS16Instruction("li", "LI");
   }
 
+  /* not supported by compiler
+  @TestFactory
+  Stream<DynamicTest> addpcis() throws IOException {
+    return testTRegImmS16Instruction("addpcis", "ADDPCIS");
+  }
+  */
+
   @TestFactory
   Stream<DynamicTest> add() throws IOException {
     return testTSSRegInstruction_OR("add", "ADD");
@@ -94,12 +101,66 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     return testTSSRegInstruction_OR("subfe", "SUBFE");
   }
 
+  @TestFactory
+  Stream<DynamicTest> addme() throws IOException {
+    return testTSRegInstruction_OR("addme", "ADDME");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> addze() throws IOException {
+    return testTSRegInstruction_OR("addze", "ADDZE");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> subfme() throws IOException {
+    return testTSRegInstruction_OR("subfme", "SUBFME");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> subfze() throws IOException {
+    return testTSRegInstruction_OR("subfze", "SUBFZE");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> addi() throws IOException {
+    return testTSRegImmS16Instruction("addi", "ADDI");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> addic() throws IOException {
+    return testTSRegImmS16Instruction("addic", "ADDIC");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> addic_() throws IOException {
+    return testTSRegImmS16Instruction("addic.", "ADDIC.");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> addis() throws IOException {
+    return testTSRegImmS16Instruction("addis", "ADDIS");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> subfic() throws IOException {
+    return testTSRegImmS16Instruction("subfic", "SUBFIC");
+  }
+
   private Stream<DynamicTest> testTSSRegInstruction_OR(String instruction, String testNamePrefix)
       throws IOException {
     var s1 = testTSSRegInstruction(instruction, testNamePrefix);
     var s2 = testTSSRegInstruction(instruction + ".", testNamePrefix + ".");
     var s3 = testTSSRegInstruction(instruction + "o", testNamePrefix + "O");
     var s4 = testTSSRegInstruction(instruction + "o.", testNamePrefix + "O.");
+    return Stream.concat(Stream.concat(s1, s2), Stream.concat(s3, s4));
+  }
+
+  private Stream<DynamicTest> testTSRegInstruction_OR(String instruction, String testNamePrefix)
+      throws IOException {
+    var s1 = testTSRegInstruction(instruction, testNamePrefix);
+    var s2 = testTSRegInstruction(instruction + ".", testNamePrefix + ".");
+    var s3 = testTSRegInstruction(instruction + "o", testNamePrefix + "O");
+    var s4 = testTSRegInstruction(instruction + "o.", testNamePrefix + "O.");
     return Stream.concat(Stream.concat(s1, s2), Stream.concat(s3, s4));
   }
 
@@ -113,6 +174,30 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       b.fillRegSigned(regSrc2, 16);
       var regDest = b.anyTempReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc1, regSrc2);
+      return new CosimTestUtils.TestCase(testNamePrefix + id, b.toAsmString());
+    });
+  }
+
+  private Stream<DynamicTest> testTSRegImmS16Instruction(String instruction, String testNamePrefix)
+      throws IOException {
+    return runTestsWith(id -> {
+      var b = getBuilder(testNamePrefix, id);
+      var regSrc = b.anyTempReg().sample();
+      b.fillRegSigned(regSrc, 16);
+      var regDest = b.anyTempReg().sample();
+      b.add("%s %s, %s, %s", instruction, regDest, regSrc, arbitraryImmS(16));
+      return new CosimTestUtils.TestCase(testNamePrefix + id, b.toAsmString());
+    });
+  }
+
+  private Stream<DynamicTest> testTSRegInstruction(String instruction, String testNamePrefix)
+      throws IOException {
+    return runTestsWith(id -> {
+      var b = getBuilder(testNamePrefix, id);
+      var regSrc = b.anyTempReg().sample();
+      b.fillRegSigned(regSrc, 16);
+      var regDest = b.anyTempReg().sample();
+      b.add("%s %s, %s", instruction, regDest, regSrc);
       return new CosimTestUtils.TestCase(testNamePrefix + id, b.toAsmString());
     });
   }
