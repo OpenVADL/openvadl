@@ -829,12 +829,12 @@ instruction set architecture PPC64SFS = {
 
   model XFormLogicalInstrExt (eid : Id, r : XFormLogicalInstrRec, rc : Bool) : IsaDefs = {
     instruction $eid : XFormA =
-      let result = $r.x.op(X(ra), $r.arg2) in {
-        X(rs) := result
+      let result = $r.x.op(X(rs), $r.arg2) in {
+        X(ra) := result
         $CS($rc; $SetCR0(result))
       }
     encoding $eid = {opcd = 0b011111, extopcd = $r.x.ext, rc = $rc}
-    assembly $eid = ($r.x.asm, $rStr($rc), " ", decimal(rs), ",", decimal(ra), ",", decimal(rb))
+    assembly $eid = ($r.x.asm, $rStr($rc), " ", decimal(ra), ",", decimal(rs), ",", decimal(rb))
   }
 
   // instructions: and[.], andc[.], eqv[.], nand[.], nor[.], or[.], orc[.], xor[.]
