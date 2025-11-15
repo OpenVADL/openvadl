@@ -129,7 +129,7 @@ assembly description AD for ABI = {
         LTypeInstruction @instruction:
             mnemonic = LTypeIds @operand
             rd = Register @operand ","
-            func5 = Register @operand ","
+            rs1 = Register @operand ","
             imm = ImmediateOperand
         ;
 
@@ -185,7 +185,7 @@ assembly description AD for ABI = {
             mnemonic = LMemoryIds @operand
             rd = Register @operand ","
             imm = ImmediateOperand
-            "(" func5 = Register @operand ")"
+            "(" rs1 = Register @operand ")"
         ;
 
 

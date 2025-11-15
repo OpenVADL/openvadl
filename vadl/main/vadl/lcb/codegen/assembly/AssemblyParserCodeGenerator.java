@@ -239,8 +239,11 @@ public class AssemblyParserCodeGenerator {
 
   @Handler
   void handle(CAsmContext ctx, AsmAlternative element) {
-    var elementCount =
-        element.elements().stream().filter(e -> !(e instanceof AsmLocalVarDefinition)).count();
+
+    var elementsWithoutLocalVars = element.elements().stream()
+        .filter(e -> !(e instanceof AsmLocalVarDefinition)).toList();
+
+    var elementCount = elementsWithoutLocalVars.size();
 
     var oldAttributesValueNeeded = attributesValueNeeded;
 
@@ -261,7 +264,7 @@ public class AssemblyParserCodeGenerator {
       // if the alternative contains only one element
       // the type of the alternative is just the type of the single element
       ctx.ln("ParsedValue<%s> %s = %s;", element.asmType().toCppTypeString(namespace),
-          varName(element), varName(element.elements().get(0)));
+          varName(element), varName(elementsWithoutLocalVars.get(0)));
     } else if (element.asmType() instanceof GroupAsmType groupType) {
       writeAlternativeGroupStruct(ctx, groupType, varName(element));
     } else {
@@ -397,10 +400,16 @@ public class AssemblyParserCodeGenerator {
 
   @Handler
   void handle(CAsmContext ctx, AsmLocalVarUse element) {
+    // LocalVars are always of C++ type std:optional
+    // introduce tempVar to get value out of std::optional with .value()
+    var tempVar = symbolTable.getNextVariable();
+    writeToElementVar(ctx, element.invokedLocalVarType(), tempVar,
+        element.invokedLocalVar() + ".value()");
+
     var resultVar = writeCastIfNecessary(ctx, element.invokedLocalVarType(), element.asmType(),
-        element.invokedLocalVar(), false);
+        tempVar, false);
     writeAssignToIfNotNull(ctx, element.assignToElement(), resultVar);
-    writeToElementVar(ctx, element.asmType(), varName(element), resultVar + ".value()");
+    writeToElementVar(ctx, element.asmType(), varName(element), resultVar);
   }
 
   @Handler
