@@ -146,6 +146,123 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     return testTSRegImmS16Instruction("subfic", "SUBFIC");
   }
 
+  /* not yet implemented
+  @TestFactory
+  Stream<DynamicTest> addg6s() throws IOException {
+    return testTSSRegInstruction("addg6s", "ADDG6S");
+  }
+  */
+
+  /* not supported by compiler
+  @TestFactory
+  Stream<DynamicTest> addex() throws IOException {
+    return testTSSRegInstructionExt("addex", "ADDEX", "0");
+  }
+  */
+
+  @TestFactory
+  Stream<DynamicTest> mulli() throws IOException {
+    return testTSRegImmS16Instruction("mulli", "MULLI");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> mullw() throws IOException {
+    return testTSSRegInstruction_OR("mullw", "MULLW");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> mulhw() throws IOException {
+    return testTSSRegInstruction_R("mulhw", "MULHW");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> mulhwu() throws IOException {
+    return testTSSRegInstruction_R("mulhwu", "MULHWU");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> divw() throws IOException {
+    return testTSSRegInstruction_OR("divw", "DIVW");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> divwu() throws IOException {
+    return testTSSRegInstruction_OR("divwu", "DIVWU");
+  }
+
+  /* not supported by compiler
+  @TestFactory
+  Stream<DynamicTest> divwe() throws IOException {
+    return testTSSRegInstruction_OR("divwe", "DIVWE");
+  }
+  */
+
+  /* not supported by compiler
+  @TestFactory
+  Stream<DynamicTest> divweu() throws IOException {
+    return testTSSRegInstruction_OR("divweu", "DIVWEU");
+  }
+  */
+
+  @TestFactory
+  Stream<DynamicTest> neg() throws IOException {
+    return testTSRegInstruction_OR("neg", "NEG");
+  }
+
+  /* not supported by compiler
+  @TestFactory
+  Stream<DynamicTest> modsw() throws IOException {
+    return testTSSRegInstruction_OR("modsw", "MODSW");
+  }
+  */
+
+  /* not supported by compiler
+  @TestFactory
+  Stream<DynamicTest> moduw() throws IOException {
+    return testTSSRegInstruction_OR("moduw", "MODUW");
+  }
+  */
+
+  @TestFactory
+  Stream<DynamicTest> and() throws IOException {
+    return testTSSRegInstruction_R("and", "AND");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> andc() throws IOException {
+    return testTSSRegInstruction_R("andc", "ANDC");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> eqv() throws IOException {
+    return testTSSRegInstruction_R("eqv", "EQV");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> nand() throws IOException {
+    return testTSSRegInstruction_R("nand", "NAND");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> nor() throws IOException {
+    return testTSSRegInstruction_R("nor", "NOR");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> or() throws IOException {
+    return testTSSRegInstruction_R("or", "OR");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> orc() throws IOException {
+    return testTSSRegInstruction_R("orc", "ORC");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> xor() throws IOException {
+    return testTSSRegInstruction_R("xor", "XOR");
+  }
+
   private Stream<DynamicTest> testTSSRegInstruction_OR(String instruction, String testNamePrefix)
       throws IOException {
     var s1 = testTSSRegInstruction(instruction, testNamePrefix);
@@ -153,6 +270,13 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     var s3 = testTSSRegInstruction(instruction + "o", testNamePrefix + "O");
     var s4 = testTSSRegInstruction(instruction + "o.", testNamePrefix + "O.");
     return Stream.concat(Stream.concat(s1, s2), Stream.concat(s3, s4));
+  }
+
+  private Stream<DynamicTest> testTSSRegInstruction_R(String instruction, String testNamePrefix)
+      throws IOException {
+    var s1 = testTSSRegInstruction(instruction, testNamePrefix);
+    var s2 = testTSSRegInstruction(instruction + ".", testNamePrefix + ".");
+    return Stream.concat(s1, s2);
   }
 
   private Stream<DynamicTest> testTSRegInstruction_OR(String instruction, String testNamePrefix)
@@ -174,6 +298,20 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       b.fillRegSigned(regSrc2, 16);
       var regDest = b.anyTempReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc1, regSrc2);
+      return new CosimTestUtils.TestCase(testNamePrefix + id, b.toAsmString());
+    });
+  }
+
+  private Stream<DynamicTest> testTSSRegInstructionExt(String instruction, String testNamePrefix, String ext)
+      throws IOException {
+    return runTestsWith(id -> {
+      var b = getBuilder(testNamePrefix, id);
+      var regSrc1 = b.anyTempReg().sample();
+      var regSrc2 = b.anyTempReg().sample();
+      b.fillRegSigned(regSrc1, 16);
+      b.fillRegSigned(regSrc2, 16);
+      var regDest = b.anyTempReg().sample();
+      b.add("%s %s, %s, %s, %s", instruction, regDest, regSrc1, regSrc2, ext);
       return new CosimTestUtils.TestCase(testNamePrefix + id, b.toAsmString());
     });
   }
