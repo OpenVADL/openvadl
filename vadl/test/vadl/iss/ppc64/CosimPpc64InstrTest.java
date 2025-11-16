@@ -263,6 +263,76 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     return testTSSRegInstruction_R("xor", "XOR");
   }
 
+  @TestFactory
+  Stream<DynamicTest> crand() throws IOException {
+    return testTSSCRBitInstruction("crand", "CRAND");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> crandc() throws IOException {
+    return testTSSCRBitInstruction("crandc", "CRANDC");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> creqv() throws IOException {
+    return testTSSCRBitInstruction("creqv", "CREQV");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> crnand() throws IOException {
+    return testTSSCRBitInstruction("crnand", "CRNAND");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> crnor() throws IOException {
+    return testTSSCRBitInstruction("crnor", "CRNOR");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> cror() throws IOException {
+    return testTSSCRBitInstruction("cror", "CROR");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> crorc() throws IOException {
+    return testTSSCRBitInstruction("crorc", "CRORC");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> crxor() throws IOException {
+    return testTSSCRBitInstruction("crxor", "CRXOR");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> andi_() throws IOException {
+    return testTSRegImmU16Instruction("andi.", "ANDI.");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> andis_() throws IOException {
+    return testTSRegImmU16Instruction("andis.", "ANDIS.");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> ori() throws IOException {
+    return testTSRegImmU16Instruction("ori", "ORI");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> oris() throws IOException {
+    return testTSRegImmU16Instruction("oris", "ORIS");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> xori() throws IOException {
+    return testTSRegImmU16Instruction("xori", "XORI");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> xoris() throws IOException {
+    return testTSRegImmU16Instruction("xoris", "XORIS");
+  }
+
   private Stream<DynamicTest> testTSSRegInstruction_OR(String instruction, String testNamePrefix)
       throws IOException {
     var s1 = testTSSRegInstruction(instruction, testNamePrefix);
@@ -316,6 +386,19 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     });
   }
 
+  private Stream<DynamicTest> testTSSCRBitInstruction(String instruction, String testNamePrefix)
+      throws IOException {
+    return runTestsWith(id -> {
+      var b = getBuilder(testNamePrefix, id);
+      var bitSrc1 = arbitraryCRBit();
+      var bitSrc2 = arbitraryCRBit();
+      // TODO: fill CR with random values
+      var bitDest = b.anyTempReg().sample();
+      b.add("%s %s, %s, %s", instruction, bitDest, bitSrc1, bitSrc2);
+      return new CosimTestUtils.TestCase(testNamePrefix + id, b.toAsmString());
+    });
+  }
+
   private Stream<DynamicTest> testTSRegImmS16Instruction(String instruction, String testNamePrefix)
       throws IOException {
     return runTestsWith(id -> {
@@ -324,6 +407,18 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       b.fillRegSigned(regSrc, 16);
       var regDest = b.anyTempReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc, arbitraryImmS(16));
+      return new CosimTestUtils.TestCase(testNamePrefix + id, b.toAsmString());
+    });
+  }
+
+  private Stream<DynamicTest> testTSRegImmU16Instruction(String instruction, String testNamePrefix)
+      throws IOException {
+    return runTestsWith(id -> {
+      var b = getBuilder(testNamePrefix, id);
+      var regSrc = b.anyTempReg().sample();
+      b.fillRegSigned(regSrc, 16);
+      var regDest = b.anyTempReg().sample();
+      b.add("%s %s, %s, %s", instruction, regDest, regSrc, arbitraryImmU(16));
       return new CosimTestUtils.TestCase(testNamePrefix + id, b.toAsmString());
     });
   }
@@ -357,6 +452,21 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
         .lessOrEqual(b.subtract(BigInteger.ONE))
         .sample()
         .toString();
+  }
+
+  public static String arbitraryImmU(int bits) {
+    return Arbitraries.bigIntegers()
+        .greaterOrEqual(BigInteger.ZERO)
+        .lessOrEqual(BigInteger.ONE.shiftLeft(bits).subtract(BigInteger.ONE))
+        .sample()
+        .toString();
+  }
+
+  public static String arbitraryCRBit() {
+    return Arbitraries.integers()
+        .between(0, 31)
+        .map(String::valueOf)
+        .sample();
   }
 
 }
