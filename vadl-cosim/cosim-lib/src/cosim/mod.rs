@@ -6,15 +6,18 @@ use tracing::debug;
 
 use crate::{
     config::{Config, TracingMode},
-    db::{finish_cosimulation_run_trace, insert_new_cosimulation_run, CosimRunInfo},
+    db::{CosimRunInfo, finish_cosimulation_run_trace, insert_new_cosimulation_run},
     diff::{
-        diff::{diff_cpus, diff_mem_access}, get_all_clients_contexts_before, get_all_clients_contexts_current, get_all_clients_instructions, DiffContext, DiffContextClient, DiffEntry, Report
+        DiffContext, DiffContextClient, DiffEntry, Report,
+        diff::{diff_cpus, diff_mem_access},
+        get_all_clients_contexts_before, get_all_clients_contexts_current,
+        get_all_clients_instructions,
     },
     ipc::{
         cstructs::{self, TBInfo, TBInsnInfo},
         qemu::Client,
     },
-    trace::{connect, get_client_trace, store_trace, trace_collect, TraceEntryData, TraceStore},
+    trace::{TraceEntryData, TraceStore, connect, get_client_trace, store_trace, trace_collect},
 };
 
 pub struct Broker {
@@ -147,10 +150,14 @@ impl Broker {
                             }
 
                             diffs
-                        } else if let Some(mem_access_info1) = c1insn.mem_access_info() && let Some(mem_access_info2) = c2insn.mem_access_info() {
+                        } else if let Some(mem_access_info1) = c1insn.mem_access_info()
+                            && let Some(mem_access_info2) = c2insn.mem_access_info()
+                        {
                             diff_mem_access(mem_access_info1, mem_access_info2, config)
                         } else {
-                            panic!("Invalid cosim-state. Both clients were running the Insn-Layer, however they didn't write the same type of data (e.g. one client return insn-exec data, while the other returned mem-access data). This is a bug in the cosimulator/plugin.");
+                            panic!(
+                                "Invalid cosim-state. Both clients were running the Insn-Layer, however they didn't write the same type of data (e.g. one client return insn-exec data, while the other returned mem-access data). This is a bug in the cosimulator/plugin."
+                            );
                         };
 
                         for client in &mut self.clients {

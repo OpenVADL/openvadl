@@ -47,14 +47,14 @@ pub fn connect(config: &Config) -> Result<Connection> {
 pub fn store_trace(trace: TraceEntryData, connection: &mut Connection) -> Result<()> {
     let broker_id = match trace.broker_data {
         TraceBrokerData::TB(broker_shmtb) => insert_broker_shm_tb(connection, &broker_shmtb),
-        TraceBrokerData::Insn(broker_shminsn) => {
-            match broker_shminsn.insn_data_type {
-                crate::ipc::cstructs::BrokerSHMInsnDataType::InsnExec => {
-                    insert_broker_shm_insn(connection, &broker_shminsn)
-                },
-                crate::ipc::cstructs::BrokerSHMInsnDataType::InsnMem => todo!("tracing insn-mem not implemented"),
+        TraceBrokerData::Insn(broker_shminsn) => match broker_shminsn.insn_data_type {
+            crate::ipc::cstructs::BrokerSHMInsnDataType::InsnExec => {
+                insert_broker_shm_insn(connection, &broker_shminsn)
             }
-        }
+            crate::ipc::cstructs::BrokerSHMInsnDataType::InsnMem => {
+                todo!("tracing insn-mem not implemented")
+            }
+        },
     }?;
 
     insert_client_entry(connection, trace.client_db_id, broker_id, trace.run_count)?;

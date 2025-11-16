@@ -148,7 +148,7 @@ typedef struct {
 
 typedef enum {
   INSN_EXEC = 0,
-  INSN_MEM = 1 << 0, 
+  INSN_MEM = 1 << 0,
 } BrokerSHMInsnDataType;
 
 typedef struct {
@@ -403,8 +403,9 @@ static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
   // times when a tb gets reused g_free(tbinsn_info);
 }
 
-static void vcpu_mem_cb(unsigned int cpu_index, qemu_plugin_meminfo_t info, uint64_t vaddr, void *udata) {
-  TBInsnInfo *tbinsn_info = udata; 
+static void vcpu_mem_cb(unsigned int cpu_index, qemu_plugin_meminfo_t info,
+                        uint64_t vaddr, void *udata) {
+  TBInsnInfo *tbinsn_info = udata;
   BrokerSHMData shm;
 
   shm.shm_insn.insn_data_type = INSN_MEM;
@@ -414,7 +415,7 @@ static void vcpu_mem_cb(unsigned int cpu_index, qemu_plugin_meminfo_t info, uint
   shm.shm_insn.mem_access_info.size = data.type;
   memcpy(&shm.shm_insn.mem_access_info.data, &data.data, 2 << data.type);
   shm.shm_insn.insn_info = *tbinsn_info;
-  
+
   ringbuf_write(shm);
 }
 
