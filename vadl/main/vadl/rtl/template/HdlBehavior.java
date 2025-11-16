@@ -328,6 +328,13 @@ public class HdlBehavior {
         cacheExprOrSig.put(usage, signal.simpleName());
       }
 
+      final var isa = module.context().viam().isa().orElse(null);
+      ViamError.ensureNonNull(isa, "The ISA must not be null.");
+
+      // Include ISA instructions without signals so they're not decoded as 'invalid' insns.
+      isa.ownInstructions()
+          .forEach(i -> decisionMap.computeIfAbsent(i, x -> new HashMap<>()));
+
       ViamError.ensureNonNull(decodeTreeNode.instructionWord(),
           "The instruction word of the RtlDecodeTreeNode must not be null.");
 

@@ -150,7 +150,7 @@ class CoreTest extends AnyFunSpec with ChiselSim {
                     if (value.testBit(0)) {
                       val result = value >> 1
                       if (result == 0) {
-                        println("RVTEST_PASS")
+                        println(f"RVTEST_PASS: ${file.getName}")
                         passed += file.getName
                       } else {
                         println(f"RVTEST_FAIL $result")
@@ -186,6 +186,9 @@ class CoreTest extends AnyFunSpec with ChiselSim {
     val result = f"passed ${passed.mkString(" ")}\nfailed ${failed.mkString(" ")}\ntimeout ${timeout.mkString(" ")}\n"
     if (failed.nonEmpty || timeout.nonEmpty) {
       fail(result)
+    } else {
+      println(f"All Passed!")
+      println(f"Tests run: ${passed.mkString(" ")}")
     }
   }
 }

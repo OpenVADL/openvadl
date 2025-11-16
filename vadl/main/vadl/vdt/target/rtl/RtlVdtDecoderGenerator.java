@@ -82,6 +82,18 @@ public class RtlVdtDecoderGenerator implements Visitor<Void> {
     // The template engine only indents the first line, so to format everything nicely, add an extra
     // indent level, and remove the initial indent at the end.
     appendable.indent();
+
+    // Initialize signals with default values
+    for (Signal signal : signals) {
+
+      appendable
+          .append(signal.simpleName())
+          .append(" := ")
+          .appendLn(getDefaultValue(signal));
+    }
+
+    appendable.newLine();
+
     tree.accept(this);
     appendable.unindent();
     return appendable.toString().stripLeading();
@@ -131,18 +143,9 @@ public class RtlVdtDecoderGenerator implements Visitor<Void> {
 
       appendable.appendLn("// Invalid");
 
-      for (Signal signal : signals) {
-
-        appendable
-            .append(signal.simpleName())
-            .append(" := ");
-
-        if (isInvalid(signal)) {
-          appendable.appendLn("true.B");
-        } else {
-          appendable.appendLn(getDefaultValue(signal));
-        }
-      }
+      appendable
+          .append(invalidInsn.simpleName())
+          .appendLn(" := true.B");
 
     }
 
@@ -189,18 +192,9 @@ public class RtlVdtDecoderGenerator implements Visitor<Void> {
         .indent()
         .appendLn("// Invalid");
 
-    for (Signal signal : signals) {
-
-      appendable
-          .append(signal.simpleName())
-          .append(" := ");
-
-      if (isInvalid(signal)) {
-        appendable.appendLn("true.B");
-      } else {
-        appendable.appendLn(getDefaultValue(signal));
-      }
-    }
+    appendable
+        .append(invalidInsn.simpleName())
+        .appendLn(" := true.B");
 
     appendable.unindent()
         .appendLn("}");
@@ -241,17 +235,10 @@ public class RtlVdtDecoderGenerator implements Visitor<Void> {
       node.getOtherChild().accept(this);
     } else {
       // If we don't have an 'other' option, fall back to 'invalid'
-      appendable.appendLn("// Invalid");
-      for (Signal signal : signals) {
-        appendable
-            .append(signal.simpleName())
-            .append(" := ");
-        if (isInvalid(signal)) {
-          appendable.appendLn("true.B");
-        } else {
-          appendable.appendLn(getDefaultValue(signal));
-        }
-      }
+      appendable
+          .appendLn("// Invalid")
+          .append(invalidInsn.simpleName())
+          .appendLn(" := true.B");
     }
 
     appendable.unindent()
@@ -292,25 +279,19 @@ public class RtlVdtDecoderGenerator implements Visitor<Void> {
 
     for (Signal signal : signals) {
 
-      appendable
-          .append(signal.simpleName())
-          .append(" := ");
-
       var value = decision == null ? null : decision.get(signal);
 
       if (value == null) {
-        appendable.appendLn(getDefaultValue(signal));
         continue;
       }
 
-      appendable.appendLn(toChiselValue(value.constant()));
+      appendable
+          .append(signal.simpleName())
+          .append(" := ")
+          .appendLn(toChiselValue(value.constant()));
     }
 
     return null;
-  }
-
-  private boolean isInvalid(Signal signal) {
-    return signal.identifier.equals(invalidInsn.identifier);
   }
 
   private static CharSequence toChiselValue(Constant constant) {

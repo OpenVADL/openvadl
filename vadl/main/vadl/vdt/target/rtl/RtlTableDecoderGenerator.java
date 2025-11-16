@@ -88,7 +88,9 @@ public class RtlTableDecoderGenerator {
     for (Map.Entry<Instruction, Map<Signal, ConstantNode>> decision : decisionMap.entrySet()) {
 
       var insn = decision.getKey();
-      var pattern = toFixedBitPattern(insn, ByteOrder.LITTLE_ENDIAN);
+
+      // TODO: get the byte order from the VADL specification -> Implement memory annotations
+      var pattern = toFixedBitPattern(insn, ByteOrder.BIG_ENDIAN);
 
       appendable
           .append("BitPat(\"").append(toChiselPattern(pattern, true)).append("\")")
@@ -102,6 +104,8 @@ public class RtlTableDecoderGenerator {
         var value = decision.getValue().get(signal);
         if (value != null) {
           appendable.append(value.constant().asVal().asString("", 2, true));
+        } else if (isInvalid(signal)) {
+          appendable.append("0");
         } else {
           appendable.append(getDefaultValue(signal));
         }
@@ -173,6 +177,6 @@ public class RtlTableDecoderGenerator {
       throw new ViamError("Signal type not supported: %s", signal.type());
     }
 
-    return "0".repeat(signal.type().asDataType().bitWidth());
+    return "?".repeat(signal.type().asDataType().bitWidth());
   }
 }
