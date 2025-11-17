@@ -30,7 +30,6 @@ import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
-import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SemanticTokens;
@@ -89,21 +88,25 @@ class VadlTextDocumentService implements TextDocumentService {
   public void didOpen(DidOpenTextDocumentParams params) {
     log.info(">> didOpen: {}", params);
     var document = new Document(params.getTextDocument());
-    openDocuments.put(params.getTextDocument().getUri(), document);
+    synchronized (openDocuments) {
+      openDocuments.put(params.getTextDocument().getUri(), document);
+    }
     publishDiagnostics(document);
   }
 
   @Override
   public void didClose(DidCloseTextDocumentParams params) {
     log.info(">> didClose: {}", params);
-    openDocuments.remove(params.getTextDocument().getUri());
+    synchronized (openDocuments) {
+      openDocuments.remove(params.getTextDocument().getUri());
+    }
   }
 
   @Override
   public void didChange(DidChangeTextDocumentParams params) {
     log.info(">> didChange: {}", params);
 
-    var document = openDocuments.get(params.getTextDocument().getUri());
+    Document document = getDocument(params.getTextDocument().getUri());
     if (document == null) {
       return;
     }
@@ -122,7 +125,7 @@ class VadlTextDocumentService implements TextDocumentService {
     log.info(">> semanticTokens/full: {}", params);
 
     return CompletableFuture.supplyAsync(() -> {
-      var document = openDocuments.get(params.getTextDocument().getUri());
+      Document document = getDocument(params.getTextDocument().getUri());
       if (document == null) {
         throw new ResponseErrorException(new ResponseError(
             ResponseErrorCode.RequestFailed,
@@ -131,10 +134,14 @@ class VadlTextDocumentService implements TextDocumentService {
         ));
       }
 
-      var tokens = tokenizer != null
-          ? tokenizer.getTokens(document.getText())
-          : new ArrayList<Integer>();
-      var result = new SemanticTokens(tokens);
+      List<Integer> tokens;
+      SemanticTokens result;
+      synchronized (document) {
+        tokens = tokenizer != null
+            ? tokenizer.getTokens(document.getText())
+            : new ArrayList<Integer>();
+        result = new SemanticTokens(document.calculateUtf16Positions(tokens));
+      }
       log.info("<<- semanticTokens/full: <omitted>({} tokens)", tokens.size() / 5);
       return result;
     });
@@ -148,17 +155,14 @@ class VadlTextDocumentService implements TextDocumentService {
       return;
     }
 
-    // Unpacking document before going to background thread, to avoid race conditions
-    // - didChange() may change document at any point after this.
+    // Work with current state of document
     String text = document.getText();
-    String uriString = document.getUri();
-    URI uri = URI.create(uriString);
     int version = document.getVersion();
 
     var unused = server.executor().submit(() -> {
       List<Diagnostic> lspItems = new ArrayList<>();
       try {
-        Ast ast = VadlParser.parse(text, uri);
+        Ast ast = VadlParser.parse(text, URI.create(document.getUri()));
         new Ungrouper().ungroup(ast);
         new ModelRemover().removeModels(ast);
         new TypeChecker().verify(ast);
@@ -179,20 +183,14 @@ class VadlTextDocumentService implements TextDocumentService {
           }
 
           Diagnostic lspItem = new Diagnostic();
-          // TODO Handle: transform from utf-8 positions to utf-16
-          lspItem.setRange(new Range(
-              // VADL: line & column are 1-based
-              // LSP: both are 0-based...
-              new Position(
-                  Math.max(location.begin().line() - 1, 0),
-                  Math.max(location.begin().column() - 1, 0)
-              ),
-              new Position(
-                  Math.max(location.end().line() - 1, 0),
-                  // ... but end column is exclusive
-                  Math.max(location.end().column(), 0)
-              )
-          ));
+          try {
+            lspItem.setRange(new Range(
+                document.calculateUtf16Position(location.begin(), version, false),
+                document.calculateUtf16Position(location.end(), version, true)
+            ));
+          } catch (Document.ObsoleteDocumentVersionException e) {
+            return;
+          }
           lspItem.setSeverity(
               switch (item.level) {
                 case ERROR -> DiagnosticSeverity.Error;
@@ -208,9 +206,27 @@ class VadlTextDocumentService implements TextDocumentService {
         }
       }
 
-      var data = new PublishDiagnosticsParams(uriString, lspItems, version);
+      if (!documentVersionIsCurrent(document.getUri(), version)) {
+        log.info("ABORT publishDiagnostics: outdated version {} of document {}", version, document.getUri());
+        return;
+      }
+      var data = new PublishDiagnosticsParams(document.getUri(), lspItems, version);
       log.info("<< publishDiagnostics: {}", data);
       server.client().publishDiagnostics(data);
     });
+  }
+
+  private boolean documentVersionIsCurrent(String uri, int version) {
+    Document document = getDocument(uri);
+    if (document == null) {
+      return false;
+    }
+    return document.getVersion() == version;
+  }
+
+  private @Nullable Document getDocument(String uri) {
+    synchronized (openDocuments) {
+      return openDocuments.get(uri);
+    }
   }
 }

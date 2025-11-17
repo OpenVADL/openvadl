@@ -110,7 +110,8 @@ public final class LspTokenizer {
    * Returns LSP Tokens for the given source code.
    *
    * @param content of a VADL source code file
-   * @return Token list encoded for a semanticTokens response
+   * @return Token list encoded for a semanticTokens response. Note: deltaStart and length are
+   *         calculated for UTF-8 encoding.
    */
   public List<Integer> getTokens(String content) {
     Scanner scanner = new Scanner(
@@ -119,8 +120,7 @@ public final class LspTokenizer {
 
     Token t;
     List<Integer> lspTokens = new ArrayList<>();
-    // TODO Handle: transform from utf-8 positions to utf-16 (see LSP specs),
-    //              multilineTokenSupport (or lack thereof)
+    // TODO ensure that multiline tokens (if they exist) are split at line boundaries
     int previousLine = 1; // Token.line starts at 1
     int previousCol = 1; // Same for Token.col
     while ((t = scanner.Scan()).kind != Parser._EOF) {
