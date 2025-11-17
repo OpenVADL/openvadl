@@ -169,6 +169,7 @@ impl Broker {
                 let reads = self
                     .clients
                     .iter_mut()
+                    .rev()
                     .map(|client| {
                         let res = client
                             .shm
