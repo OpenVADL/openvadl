@@ -1,13 +1,19 @@
 use std::collections::HashSet;
+use std::fs;
+use std::path::Path;
 
 use anyhow::{Result, bail};
 use tracing::debug;
 
 #[cfg(feature = "sqlite-tracing")]
-use crate::db::{CosimRunInfo, finish_cosimulation_run_trace, insert_new_cosimulation_run, DBConnection};
+use crate::db::{
+    CosimRunInfo, DBConnection, finish_cosimulation_run_trace, insert_new_cosimulation_run,
+};
 
 #[cfg(feature = "sqlite-tracing")]
-use crate::trace::{TraceEntryData, TraceStore, connect, get_client_trace, store_trace, trace_collect};
+use crate::trace::{
+    TraceEntryData, TraceStore, connect, get_client_trace, store_trace, trace_collect,
+};
 
 use crate::{
     config::Config,
@@ -92,7 +98,8 @@ impl Broker {
 
     #[allow(unused_variables)]
     pub fn finish(mut self, passed: bool, config: &Config) -> Result<()> {
-        #[cfg(feature = "sqlite-tracing")] {
+        #[cfg(feature = "sqlite-tracing")]
+        {
             if config.tracing.mode.is_collect() {
                 for entry in self.trace_store {
                     store_trace(entry, &mut self.trace_connection)?;
@@ -119,6 +126,25 @@ impl Broker {
         &self.clients
     }
 
+    fn add_client_logs_to_error(
+        err: anyhow::Error,
+        client_id: &str,
+        config: &Config,
+    ) -> anyhow::Error {
+        let base_path = Path::new(&config.logging.dir);
+        let stdout_path = base_path.join(format!("client-{client_id}-stdout.txt"));
+        let stderr_path = base_path.join(format!("client-{client_id}-stderr.txt"));
+
+        let stdout_content =
+            fs::read_to_string(stdout_path).expect("client stdout-file should exist");
+        let stderr_content =
+            fs::read_to_string(stderr_path).expect("client stderr-file should exist");
+
+        err.context(format!(
+            "Client stdout:\n{stdout_content}\n\nClient stderr:\n{stderr_content}"
+        ))
+    }
+
     fn run_lockstep(&mut self, config: &Config) -> Result<Report> {
         // NOTE: maybe move "spawning" the clients into this method
         for (idx, client) in self.clients.iter_mut().enumerate() {
@@ -143,7 +169,11 @@ impl Broker {
                     .clients
                     .iter_mut()
                     .map(|client| {
-                        let res = client.shm.read_buffer().map(|opt| opt.map(|i| i.as_insn()));
+                        let res = client
+                            .shm
+                            .read_buffer()
+                            .map(|opt| opt.map(|i| i.as_insn()))
+                            .map_err(|e| Broker::add_client_logs_to_error(e, &client.id, &config));
                         client.run_count += 1;
                         res
                     })
@@ -253,7 +283,7 @@ impl Broker {
                             c2insn.init_mask,
                             config,
                         );
-                        
+
                         #[cfg(feature = "sqlite-tracing")]
                         self.trace_clients(config)?;
 
