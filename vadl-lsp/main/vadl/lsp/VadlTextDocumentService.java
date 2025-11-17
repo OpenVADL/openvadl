@@ -42,7 +42,11 @@ import org.eclipse.lsp4j.jsonrpc.validation.NonNull;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.ast.Ast;
 import vadl.ast.LspTokenizer;
+import vadl.ast.ModelRemover;
+import vadl.ast.TypeChecker;
+import vadl.ast.Ungrouper;
 import vadl.ast.VadlParser;
 import vadl.error.DiagnosticList;
 import vadl.utils.SourceLocation;
@@ -154,7 +158,11 @@ class VadlTextDocumentService implements TextDocumentService {
     var unused = server.executor().submit(() -> {
       List<Diagnostic> lspItems = new ArrayList<>();
       try {
-        VadlParser.parse(text, uri);
+        Ast ast = VadlParser.parse(text, uri);
+        new Ungrouper().ungroup(ast);
+        new ModelRemover().removeModels(ast);
+        new TypeChecker().verify(ast);
+
       } catch (DiagnosticList dl) {
         log.info("Raw diagnostics: {}", dl.getMessage());
         for (vadl.error.Diagnostic item : dl.items) {
@@ -165,7 +173,7 @@ class VadlTextDocumentService implements TextDocumentService {
             // TODO this means that errors in included files are not reported unless that file is
             //      opened in the client, even though the Parser gives us diagnostics for them
             //      (BUT: They are based on the file-system contents of that file, so maybe only
-            //      provided these diagnostics if the file in question isn't currently owned by
+            //      provide these diagnostics if the file in question isn't currently owned by
             //      the client?)
             continue;
           }
