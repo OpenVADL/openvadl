@@ -8,6 +8,7 @@ sqlite-tracing = ["dep:rusqlite"]
 
 [dependencies]
 anyhow = "1.0.100"
+beau_collector = "0.2.1"
 
 clap = { version = "4.5.51", features = ["derive"] }
 figment = { version = "0.10.19", features = ["toml"] }

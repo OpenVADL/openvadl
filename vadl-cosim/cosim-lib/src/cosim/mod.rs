@@ -3,6 +3,7 @@ use std::fs;
 use std::path::Path;
 
 use anyhow::{Result, bail};
+use beau_collector::BeauCollector;
 use tracing::debug;
 
 #[cfg(feature = "sqlite-tracing")]
@@ -177,7 +178,7 @@ impl Broker {
                         client.run_count += 1;
                         res
                     })
-                    .collect::<Result<Vec<_>>>()?;
+                    .bcollect::<Vec<_>>()?;
 
                 let c1insn = reads[0];
                 let c2insn = reads[1];
