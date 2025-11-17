@@ -148,9 +148,8 @@ pub fn diff_register(
 ) {
     let mut reg1val: [u8; 8] = [0; 8];
     let mut reg2val: [u8; 8] = [0; 8];
-
-    reg1.data_slice().read_exact(&mut reg1val).unwrap();
-    reg2.data_slice().read_exact(&mut reg2val).unwrap();
+    reg1val[0..reg1.size as usize].copy_from_slice(reg1.data_slice());
+    reg2val[0..reg2.size as usize].copy_from_slice(reg2.data_slice());
     
     let reg1val = match config.qemu.clients[0].endian {
         crate::config::Endian::Big => u64::from_be_bytes(reg1val),
