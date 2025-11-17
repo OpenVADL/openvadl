@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use crate::{
     config::Config,
     diff::DiffEntry,
-    ipc::cstructs::{MAX_CPU_COUNT, MAX_CPU_REGISTERS, SHMCPU, SHMRegister},
+    ipc::cstructs::{MAX_CPU_COUNT, MAX_CPU_REGISTERS, MemAccessInfo, SHMCPU, SHMRegister},
 };
 
 // NOTE: Technically it is more performant to pass in the memo-vec as an argument to not have
@@ -12,6 +12,49 @@ use crate::{
 // memoization can be managed via that.
 thread_local! {
     static REG_MAP_MEMO: RefCell<Vec<Option<usize>>> = RefCell::new(vec![None; MAX_CPU_REGISTERS]);
+}
+
+pub fn diff_mem_access(
+    mem_access_info1: &MemAccessInfo,
+    mem_access_info2: &MemAccessInfo,
+    config: &Config,
+) -> Vec<DiffEntry> {
+    let mut diffs = vec![];
+
+    if mem_access_info1.size != mem_access_info2.size {
+        diffs.push(DiffEntry::new(
+            "mem.size",
+            vec![
+                mem_access_info1.size.to_string(),
+                mem_access_info2.size.to_string(),
+            ],
+            "The size of a memory-access did not match",
+        ));
+    }
+
+    if mem_access_info1.vaddr != mem_access_info2.vaddr {
+        diffs.push(DiffEntry::new(
+            "mem.vaddr",
+            vec![
+                mem_access_info1.vaddr.to_string(),
+                mem_access_info2.vaddr.to_string(),
+            ],
+            "The (virtual-)address of a memory-access did not match",
+        ));
+    }
+
+    if mem_access_info1.data_slice() != mem_access_info2.data_slice() {
+        diffs.push(DiffEntry::new(
+            "mem.data",
+            vec![
+                mem_access_info1.data_slice_fmt(),
+                mem_access_info2.data_slice_fmt(),
+            ],
+            "Memory-Access data did not match",
+        ));
+    }
+
+    diffs
 }
 
 pub fn diff_cpus(

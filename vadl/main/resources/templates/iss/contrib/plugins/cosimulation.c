@@ -138,9 +138,25 @@ typedef struct {
 } BrokerSHMTB;
 
 typedef struct {
+  uint64_t vaddr;
+  // the size of the memory load / store in ^2: 0 = 1 byte, 1 = 2 bytes, ..., 4
+  // = 16 bytes
+  uint8_t size;
+  // the amount written to the data-array depends on the size
+  uint8_t data[16];
+} MemAccessInfo;
+
+typedef enum {
+  INSN_EXEC = 0,
+  INSN_MEM = 1 << 0,
+} BrokerSHMInsnDataType;
+
+typedef struct {
   int init_mask;
+  BrokerSHMInsnDataType insn_data_type;
   SHMCPU cpus[MAX_CPU_COUNT];
   TBInsnInfo insn_info;
+  MemAccessInfo mem_access_info;
 } BrokerSHMInsn;
 
 typedef union {
@@ -189,11 +205,13 @@ static BrokerSHMRingBuffer *shm_ring_buffer;
 static void ringbuf_write(BrokerSHMData data) {
   size_t count = atomic_load(&shm_ring_buffer->count);
 
-  // The buffer keeps the previous value in reserve in case a diff-context needs to be built.
+  // The buffer keeps the previous value in reserve in case a diff-context needs
+  // to be built.
   if (count == RING_BUFFER_SIZE - 1) {
     pthread_mutex_lock(&shm_ring_buffer->notifier.mutex);
-    while(atomic_load(&shm_ring_buffer->count) == RING_BUFFER_SIZE - 1) {
-      pthread_cond_wait(&shm_ring_buffer->notifier.cvar, &shm_ring_buffer->notifier.mutex) ;
+    while (atomic_load(&shm_ring_buffer->count) == RING_BUFFER_SIZE - 1) {
+      pthread_cond_wait(&shm_ring_buffer->notifier.cvar,
+                        &shm_ring_buffer->notifier.mutex);
     }
     pthread_mutex_unlock(&shm_ring_buffer->notifier.mutex);
   }
@@ -204,9 +222,6 @@ static void ringbuf_write(BrokerSHMData data) {
   atomic_fetch_add(&shm_ring_buffer->count, 1);
 
   pthread_cond_signal(&shm_ring_buffer->notifier.cvar);
-
-  return;
-  errno = EWOULDBLOCK;
 }
 
 static CPU *get_cpu(int vcpu_index) {
@@ -374,6 +389,7 @@ static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
   SHMCPU cpu = get_cpu_state(cpu_index);
 
   BrokerSHMData shm;
+  shm.shm_insn.insn_data_type = INSN_EXEC;
   shm.shm_insn.cpus[cpu_index] = cpu;
 
   // TODO: needs a global init_mask to keep track of current state
@@ -385,6 +401,22 @@ static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
 
   // TODO: we cannot free here because the same callback might be used multiple
   // times when a tb gets reused g_free(tbinsn_info);
+}
+
+static void vcpu_mem_cb(unsigned int cpu_index, qemu_plugin_meminfo_t info,
+                        uint64_t vaddr, void *udata) {
+  TBInsnInfo *tbinsn_info = udata;
+  BrokerSHMData shm;
+
+  shm.shm_insn.insn_data_type = INSN_MEM;
+  shm.shm_insn.mem_access_info.vaddr = vaddr;
+
+  qemu_plugin_mem_value data = qemu_plugin_mem_get_value(info);
+  shm.shm_insn.mem_access_info.size = data.type;
+  memcpy(&shm.shm_insn.mem_access_info.data, &data.data, 2 << data.type);
+  shm.shm_insn.insn_info = *tbinsn_info;
+
+  ringbuf_write(shm);
 }
 
 static TBInfo tb_info_collect = {0};
@@ -403,10 +435,11 @@ static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
     insns_sum_collect += tb_info->insns_info[i].size;
   }
 
-  memcpy(&tb_info_collect.insns_info + tb_info_collect.insns_info_size, tb_info->insns_info, sizeof(TBInsnInfo) * tb_info->insns_info_size);
+  memcpy(&tb_info_collect.insns_info + tb_info_collect.insns_info_size,
+         tb_info->insns_info, sizeof(TBInsnInfo) * tb_info->insns_info_size);
   tb_info_collect.insns_info_size += tb_info->insns_info_size;
 
-  // TB-Data is only returned (= written to the buffer) if a jump occurred, 
+  // TB-Data is only returned (= written to the buffer) if a jump occurred,
   // otherwise the data is simply collected on the qemu-client
   if (is_jump(tb_info)) {
     SHMCPU cpu = get_cpu_state(cpu_index);
@@ -422,7 +455,7 @@ static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
     tb_info_collect.insns_info_size = 0;
 
     ringbuf_write(shm);
-  } 
+  }
 
   // TODO: we cannot free here because the same callback might be used multiple
   // times when a tb gets reused g_free(tb_info);
@@ -442,6 +475,9 @@ static void vcpu_tb_trans(qemu_plugin_id_t id, struct qemu_plugin_tb *tb) {
       *tbinsn_info = get_tbinsn_info(insn);
       qemu_plugin_register_vcpu_insn_exec_cb(
           insn, vcpu_insn_exec, QEMU_PLUGIN_CB_R_REGS, tbinsn_info);
+      qemu_plugin_register_vcpu_mem_cb(insn, vcpu_mem_cb,
+                                       QEMU_PLUGIN_CB_NO_REGS,
+                                       QEMU_PLUGIN_MEM_RW, tbinsn_info);
     }
   }
 }
