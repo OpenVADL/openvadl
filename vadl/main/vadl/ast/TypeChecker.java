@@ -1076,19 +1076,21 @@ public class TypeChecker
       return false;
     }
 
-    var fromIndecies = switch (from) {
-      case TensorType t ->
-          Stream.concat(t.indexDims().stream(), List.of(t.innerType().bitWidth()).stream())
-              .toList();
-      default -> List.of(from.bitWidth());
-    };
+    var fromIndecies = new ArrayList<>(
+        switch (from) {
+          case TensorType t ->
+              Stream.concat(t.indexDims().stream(), List.of(t.innerType().bitWidth()).stream())
+                  .toList();
+          default -> List.of(from.bitWidth());
+        });
 
-    var toIndecies = switch (to) {
-      case TensorType t ->
-          Stream.concat(t.indexDims().stream(), List.of(t.innerType().bitWidth()).stream())
-              .toList();
-      default -> List.of(to.bitWidth());
-    };
+    var toIndecies = new ArrayList(
+        switch (to) {
+          case TensorType t ->
+              Stream.concat(t.indexDims().stream(), List.of(t.innerType().bitWidth()).stream())
+                  .toList();
+          default -> List.of(to.bitWidth());
+        });
 
     // Eliminate the equal indecies
     while (fromIndecies.size() > 0 && toIndecies.size() > 0 && fromIndecies.getFirst()

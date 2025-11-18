@@ -20,6 +20,7 @@ package vadl.ast;
 import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
+import static vadl.error.Diagnostic.warning;
 import static vadl.utils.GraphUtils.ifElseSideEffect;
 import static vadl.utils.GraphUtils.intU;
 import static vadl.utils.GraphUtils.neq;
@@ -30,12 +31,14 @@ import static vadl.utils.GraphUtils.zeroExtend;
 
 import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.concurrent.LazyInit;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import vadl.error.DeferredDiagnosticStore;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
@@ -75,6 +78,7 @@ import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
@@ -257,10 +261,12 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
    * to the value the alias read actually returns.
    *
    * @param definition of the alias definition for which the read function will be generated.
+   * @param dimensions of the alias definition.
    * @return the mapping function.
    */
   @SuppressWarnings("Indentation")
-  Function getRegisterAliasReadFunc(AliasDefinition definition) {
+  Function getRegisterAliasReadFunc(AliasDefinition definition,
+                                    List<RegisterTensor.Dimension> dimensions) {
     var graph = new Graph("%s Read Behavior".formatted(definition.viamId));
     graph.setSourceLocation(definition.location());
     currentGraph = graph;
@@ -298,13 +304,77 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var reg = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
     var regReadType = regFileDef.type() instanceof TensorType tensorType
         ? tensorType.innerType() : resultType;
-    ExpressionNode regAccess = new ReadRegTensorNode(
-        reg,
-        indices,
-        (DataType) getViamType(regReadType),
-        null
-    );
 
+    ExpressionNode regAccess;
+    if (dimensions.size() == reg.indexDimensions().size()) {
+      // Mapping of indexes of register and alias is the same.
+      regAccess = new ReadRegTensorNode(
+          reg,
+          indices,
+          (DataType) getViamType(regReadType),
+          null
+      );
+    } else if (dimensions.size() > reg.indexDimensions().size()) {
+      // Expansion Alias
+      // register R: Bits<4><4>
+      // alisas register A: Bits<4><2><2>
+      // First we read the closest index, in this case only the outer most and then slice the last
+      // one.
+      var regIndicies = indices.stream().limit(reg.indexDimensions().size())
+          .collect(Collectors.toCollection(NodeList::new));
+      regAccess = new ReadRegTensorNode(
+          reg,
+          regIndicies,
+          reg.resultType(),
+          null
+      );
+
+      // In the following
+      // in .. is the index provided
+      // l .. is the total length of the register in bits
+      // pn .. is the length (flattened) of the tensor parts
+      // We calculate msb with:
+      // R(i1)(i2)..(in) = (l-1) - i1*p1 - i2*p1 - .. - in*p1
+      // and lsb with:
+      // msb - (width -1)
+      var registerLength = regFileDef.type().asDataType().bitWidth();
+      var sliceType = Type.bits(BitsType.indexWidthFor(registerLength));
+      ExpressionNode msb =
+          Constant.Value.fromInteger(BigInteger.valueOf(registerLength - 1), sliceType).toNode();
+      for (int i = reg.indexDimensions().size(); i < indices.size(); i++) {
+        var indexExpr = indices.get(i);
+        // Zero extend so the index isn't too narrow.
+        indexExpr = new ZeroExtendNode(indexExpr, sliceType);
+        var p = resultType.bitWidth() * dimensions.subList(i, dimensions.size() - 1).stream()
+            .map(d -> d.size()).reduce(1, (a, b) -> a * b);
+        var multiplication = BuiltInTable.MUL.call(indexExpr,
+            Constant.Value.fromInteger(BigInteger.valueOf(p), sliceType).toNode());
+        msb = BuiltInTable.SUB.call(msb, multiplication);
+      }
+      ExpressionNode lsb = BuiltInTable.SUB.call(msb,
+          Constant.Value.fromInteger(BigInteger.ONE, sliceType).toNode());
+      regAccess = new DynSliceNode(regAccess, msb, lsb, (DataType) getViamType(resultType));
+    } else if (dimensions.size() < reg.indexDimensions().size()) {
+      // Compression Alias
+      // FIXME: Implement compression aliases
+      // We keep the wrong implementation here for some tests
+      DeferredDiagnosticStore.add(warning("Compression Alias Not Yet Implemented", definition)
+          .build()
+      );
+      regAccess = new ReadRegTensorNode(
+          reg,
+          indices,
+          (DataType) getViamType(regReadType),
+          null
+      );
+
+    } else {
+      // This is just to make the compiler happy, since otherwise regAccess wouldn't be defined on
+      // all branches.
+      throw new IllegalStateException();
+    }
+
+    // Handle Zero Annotation on the alias register
     final var zeroConst = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
     if (zeroConst != null) {
       // Wrap the register read in a conditional read, depending on the indices values.
@@ -337,7 +407,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
   @SuppressWarnings("Indentation")
-  Procedure getRegisterAliasWriteProc(AliasDefinition definition) {
+  Procedure getRegisterAliasWriteProc(AliasDefinition definition,
+                                      List<RegisterTensor.Dimension> dimensions) {
     final var graph = new Graph("%s Write Procedure".formatted(definition.viamId));
     graph.setSourceLocation(definition.location());
     currentGraph = graph;
@@ -381,7 +452,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     ExpressionNode writeValue = new FuncParamNode(valueParam);
 
-    var regFile = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
+    var reg = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
 
     var slice = definition.slice;
     if (slice != null) {
@@ -389,7 +460,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           () -> error("Unsupported alias slice", definition)
               .description("Currently, the alias slice MSB must be 0."));
 
-      var sourceRegType = regFile.resultType(indices.size());
+      var sourceRegType = reg.resultType(indices.size());
       var overwriteAnno = definition.findAnnotation("overwrite source", EnumAnnotation.class);
       var overwriteMode = overwriteAnno == null ? null : overwriteAnno.value;
 
@@ -399,7 +470,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // write value to overwrite the whole source register.
       writeValue = switch (overwriteMode) {
         case null -> sliceWriteValue(writeValue,
-            new ReadRegTensorNode(regFile, indices, sourceRegType, null), List.of(slice));
+            new ReadRegTensorNode(reg, indices, sourceRegType, null), List.of(slice));
         case "zero" -> zeroExtend(writeValue, sourceRegType);
         case "sign" -> signExtend(writeValue, sourceRegType);
         default -> throw new IllegalStateException(
@@ -407,13 +478,75 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       };
     }
 
-    // FIXME: Support pre-indexed registers, for example:
-    //  register X = Bits<3><4><32>
-    //  register alias Z = X(1, 2)
+    var regIndicies = indices.stream().limit(reg.indexDimensions().size())
+        .collect(Collectors.toCollection(NodeList::new));
+    if (dimensions.size() > reg.indexDimensions().size()) {
+      // Expansion Alias
+      // register R: Bits<4><4>
+      // alisas register A: Bits<4><2><2>
+
+      // We are building this with:
+      // R(1) := R(1) & ~mask | v << lsb
+      // where mask = ((1<<(msb-lsb+1))-1) << lsb
+      // and v the value we want to write
+
+      // 1) Calculate msb and lsb
+      var registerLength = reg.resultType().bitWidth();
+      var maskType = reg.resultType();
+      ExpressionNode msb = Constant.Value.fromInteger(
+          BigInteger.valueOf(registerLength - 1), maskType).toNode();
+      for (int i = reg.indexDimensions().size(); i < indices.size(); i++) {
+        var indexExpr = indices.get(i);
+        // Zero extend so the index isn't too narrow.
+        indexExpr = new ZeroExtendNode(indexExpr, maskType);
+        var p = resultType.bitWidth() * dimensions.subList(i, dimensions.size() - 1).stream()
+            .map(d -> d.size()).reduce(1, (a, b) -> a * b);
+        var multiplication = BuiltInTable.MUL.call(
+            indexExpr,
+            Constant.Value.fromInteger(BigInteger.valueOf(p), maskType).toNode()
+        );
+
+        msb = BuiltInTable.SUB.call(msb, multiplication);
+      }
+      var oneConstant = Constant.Value.fromInteger(BigInteger.ONE, maskType).toNode();
+      ExpressionNode lsb = BuiltInTable.SUB.call(msb, oneConstant);
+
+      // 2) Calculate the mask
+      var mask = BuiltInTable.SUB.call(msb, lsb);
+      mask = BuiltInTable.ADD.call(mask, oneConstant);
+      mask = BuiltInTable.LSL.call(oneConstant, mask);
+      mask = BuiltInTable.SUB.call(mask, oneConstant);
+      mask = BuiltInTable.LSL.call(mask, lsb);
+      var invertedMask = BuiltInTable.XOR.call(
+          mask,
+          Constant.Value.fromInteger(
+              BigInteger.valueOf(Math.powExact(1, registerLength + 1) - 1), maskType).toNode()
+      );
+
+      // 3) Read the original and clear the bits
+      ExpressionNode original = new ReadRegTensorNode(reg, regIndicies, reg.resultType(), null);
+      original = BuiltInTable.ADD.call(original, invertedMask);
+
+      // 4) ZeroExtend and shift the value
+      writeValue = new ZeroExtendNode(writeValue, reg.resultType());
+      writeValue = BuiltInTable.LSL.call(writeValue, lsb);
+
+      // 5) Merge the original and the new value
+      writeValue = BuiltInTable.OR.call(original, writeValue);
+    } else if (dimensions.size() < reg.indexDimensions().size()) {
+      // Compression Alias
+      // FIXME: Implement compression aliases
+      DeferredDiagnosticStore.add(warning("Compression Alias Not Yet Implemented", definition)
+          .build()
+      );
+      // We aren't stopping here to keep some tests working
+    }
+
+
     // FIXME: Wrap input and output in casts
     var regfileWrite = new WriteRegTensorNode(
-        regFile,
-        indices,
+        reg,
+        regIndicies,
         writeValue,
         null,
         null
