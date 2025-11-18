@@ -424,11 +424,11 @@ instruction set architecture PPC64SFS = {
   // generates a wrapping 64-bit mask
   // needs forall
   function mask (start : Bits<6>, end : Bits<6>) -> DWord =
-    maxS64
-    //if VADL::ulth(start, end) then
-    //  forall i in 0..63 tensor if VADL::ugeq(i, start) && VADL::uleq(i, end) then 0b1 else 0b0
-    //else
-    //  forall i in 0..63 tensor if VADL::ugeq(i, start) || VADL::uleq(i, end) then 0b1 else 0b0
+    let lo = -1 as SDWord << start in
+      let hi = -1 as SDWord >> (63 - end) in
+        if VADL::uleq(start, end)
+        then lo & hi
+        else lo | hi
 
   // triggered by the tw and twi instructions if at least one trap condition evaluates to true
   exception Trap () = {
@@ -789,7 +789,14 @@ instruction set architecture PPC64SFS = {
   // instructions: cmpb
   model XFormCmpBytesInstr (asm : Str) : IsaDefs = {
     instruction AsId($asm) : XFormA =
-      X(ra) := forall i in 7..0 tensor if X(rs)(i * 8 + 7..i * 8) = X(rb)(i * 8 + 7..i * 8) then 0xFF else 0x00
+      X(ra) := (if X(rs)(63..56) = X(rb)(63..56) then 0xFF as Byte else 0,
+                if X(rs)(55..48) = X(rb)(55..48) then 0xFF as Byte else 0,
+                if X(rs)(47..40) = X(rb)(47..40) then 0xFF as Byte else 0,
+                if X(rs)(39..32) = X(rb)(39..32) then 0xFF as Byte else 0,
+                if X(rs)(31..24) = X(rb)(31..24) then 0xFF as Byte else 0,
+                if X(rs)(23..16) = X(rb)(23..16) then 0xFF as Byte else 0,
+                if X(rs)(15.. 8) = X(rb)(15.. 8) then 0xFF as Byte else 0,
+                if X(rs)( 7.. 0) = X(rb)( 7.. 0) then 0xFF as Byte else 0)
     encoding AsId($asm) = {opcd = 0b011111, extopcd = 0b01111'11100, rc = 0b0}
     assembly AsId($asm) = ($asm, " ", decimal(ra), ",", decimal(rs), ",", decimal(rb))
   }
@@ -962,7 +969,10 @@ instruction set architecture PPC64SFS = {
   model XFormCmpEqBytesInstr (asm : Str) : IsaDefs = {
     instruction AsId($asm) : XFormE =
       let b = XB(ra) in
-        let m = forall i in 0..7 fold | with b = X(rb)(i * 8 + 7..i * 8) in
+        let m = (b = X(rb)(63..56)) | (b = X(rb)(55..48)) |
+                (b = X(rb)(47..40)) | (b = X(rb)(39..32)) |
+                (b = X(rb)(31..24)) | (b = X(rb)(23..16)) |
+                (b = X(rb)(15.. 8)) | (b = X(rb)( 7.. 0)) in
           $CRField(crt) := (0 as Bits<1>, m, 0 as Bits<2>)
     encoding AsId($asm) = {opcd = 0b011111, rsv1 = 0b00, extopcd = 0b00111'00000, rsv2 = 0b0}
     assembly AsId($asm) = ($asm, " ", decimal(crt), ",", decimal(ra), ",", decimal(rb))
@@ -1298,11 +1308,9 @@ instruction set architecture PPC64SFS = {
   $DFormCmpInstr(("CMPI" ; 0b001011); false)
   $DFormCmpInstr(("CMPLI"; 0b001010); true )
 
-  // TODO: needs forall
-  //$XFormCmpBytesInstr("CMPB")
+  $XFormCmpBytesInstr("CMPB")
 
-  // TODO: needs forall
-  //$XFormCmpEqBytesInstr("CMPEQB")
+  $XFormCmpEqBytesInstr("CMPEQB")
 
   $XFormCmpRangedBytesInstr("CMPRB")
 
