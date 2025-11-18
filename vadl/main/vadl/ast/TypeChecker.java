@@ -3630,7 +3630,8 @@ public class TypeChecker
       // FIXME: Until we have bidirectional typechecking we need this explicit cast
       if (index.typeLiteral == null) {
         throw addErrorAndStopChecking(error("Type Mismatch", index)
-            .locationDescription(index, "A explicit type cast is required here.")
+            .locationDescription(index,
+                "A explicit type cast is required here, like: `forall i: Bits<32> in ...`.")
             .locationNote(index, "In the future this won't be necessary.")
             .build());
       }
@@ -3934,7 +3935,8 @@ public class TypeChecker
       // FIXME: Until we have bidirectional typechecking we need this explicit cast
       if (index.typeLiteral == null) {
         throw addErrorAndStopChecking(error("Type Mismatch", index)
-            .locationDescription(index, "A explicit type cast is required here.")
+            .locationDescription(index,
+                "A explicit type cast is required here, like: `forall i: Bits<32> in ...`.")
             .locationNote(index, "In the future this won't be necessary.")
             .build());
       }
