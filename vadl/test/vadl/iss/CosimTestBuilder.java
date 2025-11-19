@@ -23,7 +23,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import net.jqwik.api.Arbitraries;
-import net.jqwik.api.Arbitrary;
 
 public abstract class CosimTestBuilder {
 
@@ -33,8 +32,6 @@ public abstract class CosimTestBuilder {
   public CosimTestBuilder(String testId) {
     this.testId = testId;
   }
-
-  public abstract Arbitrary<String> anyReg();
 
   public abstract BigInteger fillReg(String reg, BigInteger value);
   public abstract BigInteger fillMem(BigInteger mem, BigInteger value);
@@ -61,21 +58,19 @@ public abstract class CosimTestBuilder {
     );
   }
 
-  public String anyImmS(int bits) {
+  public BigInteger anyImmS(int bits) {
     var b = BigInteger.ONE.shiftLeft(bits - 1);
     return Arbitraries.bigIntegers()
         .greaterOrEqual(b.negate())
         .lessOrEqual(b.subtract(BigInteger.ONE))
-        .sample()
-        .toString();
+        .sample();
   }
 
-  public String anyImmU(int bits) {
+  public BigInteger anyImmU(int bits) {
     return Arbitraries.bigIntegers()
         .greaterOrEqual(BigInteger.ZERO)
         .lessOrEqual(BigInteger.ONE.shiftLeft(bits).subtract(BigInteger.ONE))
-        .sample()
-        .toString();
+        .sample();
   }
 
   @FormatMethod

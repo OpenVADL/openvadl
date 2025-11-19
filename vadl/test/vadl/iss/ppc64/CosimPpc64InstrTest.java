@@ -17,8 +17,10 @@
 package vadl.iss.ppc64;
 
 import java.io.IOException;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
+import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.iss.CosimInstrTest;
@@ -442,6 +444,76 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   }
   */
 
+  @TestFactory
+  Stream<DynamicTest> stb() throws IOException {
+    return testDFormStoreInstruction("stb", "STB");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> stbu() throws IOException {
+    return testDFormStoreInstruction("stbu", "STBU");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> sth() throws IOException {
+    return testDFormStoreInstruction("sth", "STH");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> sthu() throws IOException {
+    return testDFormStoreInstruction("sthu", "STHU");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> stw() throws IOException {
+    return testDFormStoreInstruction("stw", "STW");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> stwu() throws IOException {
+    return testDFormStoreInstruction("stwu", "STWU");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> stbx() throws IOException {
+    return testXFormStoreInstruction("stbx", "STBX");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> stbux() throws IOException {
+    return testXFormStoreInstruction("stbux", "STBUX");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> sthx() throws IOException {
+    return testXFormStoreInstruction("sthx", "STHX");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> sthux() throws IOException {
+    return testXFormStoreInstruction("sthux", "STHUX");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> sthbrx() throws IOException {
+    return testXFormStoreInstruction("sthbrx", "STHBRX");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> stwx() throws IOException {
+    return testXFormStoreInstruction("stwx", "STWX");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> stwux() throws IOException {
+    return testXFormStoreInstruction("stwux", "STWUX");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> stwbrx() throws IOException {
+    return testXFormStoreInstruction("stwbrx", "STWBRX");
+  }
+
   private Stream<DynamicTest> testTSSRegInstruction_OR(String instruction, String testNamePrefix)
       throws IOException {
     var s1 = testTSSRegInstruction(instruction, testNamePrefix);
@@ -471,11 +543,11 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
-      var regSrc1 = b.anyReg().sample();
-      var regSrc2 = b.anyReg().sample();
+      var regSrc1 = anyReg().sample();
+      var regSrc2 = anyReg().sample();
       b.fillRegSigned(regSrc1, 16);
       b.fillRegSigned(regSrc2, 16);
-      var regDest = b.anyReg().sample();
+      var regDest = anyReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc1, regSrc2);
       return b.toTestCase();
     });
@@ -485,11 +557,11 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
-      var regSrc1 = b.anyReg().sample();
-      var regSrc2 = b.anyReg().sample();
+      var regSrc1 = anyReg().sample();
+      var regSrc2 = anyReg().sample();
       b.fillRegSigned(regSrc1, 16);
       b.fillRegSigned(regSrc2, 16);
-      var regDest = b.anyReg().sample();
+      var regDest = anyReg().sample();
       b.add("%s %s, %s, %s, %s", instruction, regDest, regSrc1, regSrc2, ext);
       return b.toTestCase();
     });
@@ -499,11 +571,11 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
-      var regSrc1 = b.anyReg().sample();
-      var regSrc2 = b.anyReg().sample();
+      var regSrc1 = anyReg().sample();
+      var regSrc2 = anyReg().sample();
       b.fillRegSigned(regSrc1, 16);
       b.fillRegSigned(regSrc2, 16);
-      b.add("%s %s, %s, %s", instruction, arbitraryCRField(), regSrc1, regSrc2);
+      b.add("%s %s, %s, %s", instruction, anyCRField(), regSrc1, regSrc2);
       return b.toTestCase();
     });
   }
@@ -512,10 +584,10 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
-      var bitSrc1 = arbitraryCRBit();
-      var bitSrc2 = arbitraryCRBit();
+      var bitSrc1 = anyCRBit();
+      var bitSrc2 = anyCRBit();
       // TODO: fill CR with random values
-      var bitDest = b.anyReg().sample();
+      var bitDest = anyReg().sample();
       b.add("%s %s, %s, %s", instruction, bitDest, bitSrc1, bitSrc2);
       return b.toTestCase();
     });
@@ -525,9 +597,9 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
-      var regSrc = b.anyReg().sample();
+      var regSrc = anyReg().sample();
       b.fillRegSigned(regSrc, 16);
-      var regDest = b.anyReg().sample();
+      var regDest = anyReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc, b.anyImmS(16));
       return b.toTestCase();
     });
@@ -537,9 +609,9 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
-      var regSrc = b.anyReg().sample();
+      var regSrc = anyReg().sample();
       b.fillRegSigned(regSrc, 16);
-      var regDest = b.anyReg().sample();
+      var regDest = anyReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc, b.anyImmU(16));
       return b.toTestCase();
     });
@@ -549,9 +621,9 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
-      var regSrc = b.anyReg().sample();
+      var regSrc = anyReg().sample();
       b.fillRegSigned(regSrc, 16);
-      var regDest = b.anyReg().sample();
+      var regDest = anyReg().sample();
       b.add("%s %s, %s", instruction, regDest, regSrc);
       return b.toTestCase();
     });
@@ -561,9 +633,9 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
-      var fieldSrc = arbitraryCRField();
+      var fieldSrc = anyCRField();
       // TODO: fill CR with random values
-      var regDest = b.anyReg().sample();
+      var regDest = anyReg().sample();
       b.add("%s %s, %s", instruction, regDest, fieldSrc);
       return b.toTestCase();
     });
@@ -573,9 +645,9 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
-      var bitSrc = arbitraryCRBit();
+      var bitSrc = anyCRBit();
       // TODO: fill CR with random values
-      var regDest = b.anyReg().sample();
+      var regDest = anyReg().sample();
       b.add("%s %s, %s", instruction, regDest, bitSrc);
       return b.toTestCase();
     });
@@ -585,7 +657,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
-      var regDest = b.anyReg().sample();
+      var regDest = anyReg().sample();
       b.add("%s %s, %s", instruction, regDest, b.anyImmS(16));
       return b.toTestCase();
     });
@@ -595,9 +667,22 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
-      var regSrc = b.anyReg().sample();
+      var regSrc = anyReg().sample();
       b.fillRegSigned(regSrc, 16);
-      b.add("%s %s, %s, %s, %s", instruction, arbitraryCRField(), b.anyImmU(1), regSrc, b.anyImmS(16));
+      b.add("%s %s, %s, %s, %s", instruction, anyCRField(), b.anyImmU(1), regSrc, b.anyImmS(16));
+      return b.toTestCase();
+    });
+  }
+
+  private Stream<DynamicTest> testDFormStoreInstruction(String instruction, String testNamePrefix)
+      throws IOException {
+    return runTestsWith(id -> {
+      var b = getBuilder(testNamePrefix, id);
+      var regSrc1 = anyReg().sample();
+      var regSrc2 = anyRegExceptZero().sample();
+      b.fillRegSigned(regSrc1, 16);
+      b.fillRegSigned(regSrc2, 16);
+      b.add("%s %s, %s(%s)", instruction, regSrc1, b.anyImmS(16), regSrc2);
       return b.toTestCase();
     });
   }
@@ -613,11 +698,11 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
-      var regSrc = b.anyReg().sample();
-      var regSrcOrImm5 = b.anyReg().sample();
+      var regSrc = anyReg().sample();
+      var regSrcOrImm5 = anyReg().sample();
       b.fillRegSigned(regSrc, 16);
       b.fillRegSigned(regSrcOrImm5, 16);
-      var regDest = b.anyReg().sample();
+      var regDest = anyReg().sample();
       b.add("%s %s, %s, %s, %s, %s", instruction, regDest, regSrc, regSrcOrImm5, b.anyImmU(5), b.anyImmU(5));
       return b.toTestCase();
     });
@@ -634,12 +719,27 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
-      var regSrcOrImm5 = b.anyReg().sample();
-      var regSrc= b.anyReg().sample();
+      var regSrcOrImm5 = anyReg().sample();
+      var regSrc= anyReg().sample();
       b.fillRegSigned(regSrcOrImm5, 16);
       b.fillRegSigned(regSrc, 16);
-      var regDest = b.anyReg().sample();
+      var regDest = anyReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrcOrImm5, regSrc);
+      return b.toTestCase();
+    });
+  }
+
+  private Stream<DynamicTest> testXFormStoreInstruction(String instruction, String testNamePrefix)
+      throws IOException {
+    return runTestsWith(id -> {
+      var b = getBuilder(testNamePrefix, id);
+      var regSrc1 = anyReg().sample();
+      var regSrc2 = anyRegExceptZero().sample();
+      var regSrc3 = anyReg().sample();
+      b.fillRegSigned(regSrc1, 16);
+      b.fillRegSigned(regSrc2, 16);
+      b.fillRegSigned(regSrc3, 16);
+      b.add("%s %s, %s, %s", instruction, regSrc1, regSrc2, regSrc3);
       return b.toTestCase();
     });
   }
@@ -648,23 +748,31 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
-      var regSrc1 = b.anyReg().sample();
-      var regSrc2 = b.anyReg().sample();
+      var regSrc1 = anyReg().sample();
+      var regSrc2 = anyReg().sample();
       b.fillRegSigned(regSrc1, 16);
       b.fillRegSigned(regSrc2, 16);
-      b.add("%s %s, %s, %s, %s", instruction, arbitraryCRField(), b.anyImmU(1), regSrc1, regSrc2);
+      b.add("%s %s, %s, %s, %s", instruction, anyCRField(), b.anyImmU(1), regSrc1, regSrc2);
       return b.toTestCase();
     });
   }
 
-  public static String arbitraryCRField() {
+  public Arbitrary<String> anyReg() {
+    return Arbitraries.of(IntStream.range(0, 32).mapToObj(Integer::toString).toList());
+  }
+
+  public Arbitrary<String> anyRegExceptZero() {
+    return Arbitraries.of(IntStream.range(1, 32).mapToObj(Integer::toString).toList());
+  }
+
+  public static String anyCRField() {
     return Arbitraries.integers()
         .between(0, 7)
         .map(String::valueOf)
         .sample();
   }
 
-  public static String arbitraryCRBit() {
+  public static String anyCRBit() {
     return Arbitraries.integers()
         .between(0, 31)
         .map(String::valueOf)

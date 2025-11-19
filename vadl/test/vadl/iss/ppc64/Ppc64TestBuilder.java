@@ -17,20 +17,12 @@
 package vadl.iss.ppc64;
 
 import java.math.BigInteger;
-import java.util.stream.IntStream;
-import net.jqwik.api.Arbitraries;
-import net.jqwik.api.Arbitrary;
 import vadl.iss.CosimTestBuilder;
 
 public class Ppc64TestBuilder extends CosimTestBuilder {
 
   public Ppc64TestBuilder(String testId) {
     super(testId);
-  }
-
-  @Override
-  public Arbitrary<String> anyReg() {
-    return Arbitraries.of(IntStream.range(0, 32).mapToObj(Integer::toString).toList());
   }
 
   @Override
