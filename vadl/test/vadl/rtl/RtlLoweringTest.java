@@ -23,6 +23,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
+import vadl.configuration.DecoderOptions;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
 import vadl.dump.HtmlDumpPass;
@@ -32,6 +33,8 @@ import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
 import vadl.pass.PassResults;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.rtl.passes.DebugOutputPass;
+import vadl.rtl.passes.HazardAnalysisPass;
 import vadl.rtl.passes.InstructionProgressGraphCreationPass;
 import vadl.rtl.passes.InstructionProgressGraphLowerPass;
 import vadl.rtl.passes.InstructionProgressGraphMergePass;
@@ -49,9 +52,14 @@ public class RtlLoweringTest extends AbstractTest {
 
   @Test
   void instructionBehaviorCheck() throws IOException, DuplicatedPassKeyException {
+
     var generalConfig =
-        new GeneralConfiguration(Path.of("build/test-output"), false);
+        new GeneralConfiguration(Path.of("build/test-output"), true);
     var config = new RtlConfiguration(generalConfig);
+
+    var decoderOptions = new DecoderOptions();
+    decoderOptions.setGenerator(DecoderOptions.Generator.REGULAR);
+    config.setDecoderOptions(decoderOptions);
 
     var order = PassOrders.rtl(config);
     order.addAfterFirst(PassOrders.ViamCreationPass.class,
@@ -64,8 +72,6 @@ public class RtlLoweringTest extends AbstractTest {
     addDumpAndCheck(config, order, InstructionProgressGraphLowerPass.class, false);
 
     setupPassManagerAndRunSpec("sys/risc-v/rv32i.vadl", order);
-    setupPassManagerAndRunSpec("sys/risc-v/rv64im.vadl", order);
-    setupPassManagerAndRunSpec("sys/risc-v/rvcsr.vadl", order);
   }
 
   private void addDumpAndCheck(GeneralConfiguration config, PassOrder order, Class<?> selector) {

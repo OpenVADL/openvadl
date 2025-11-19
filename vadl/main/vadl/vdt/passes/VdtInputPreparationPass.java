@@ -33,6 +33,7 @@ import vadl.error.Diagnostic;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.rtl.passes.InstructionProgressGraphExtension;
 import vadl.types.BuiltInTable;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.impl.irregular.model.ExclusionCondition;
@@ -88,7 +89,13 @@ public class VdtInputPreparationPass extends Pass {
     }
 
     // TODO: get the byte order from the VADL specification -> Implement memory annotations
-    final ByteOrder bo = ByteOrder.LITTLE_ENDIAN;
+    final ByteOrder bo;
+    if (isa.hasExtension(InstructionProgressGraphExtension.class)) {
+      // For now, the HDL assumes big-endian representation of the instruction word
+      bo = ByteOrder.BIG_ENDIAN;
+    } else {
+      bo = ByteOrder.LITTLE_ENDIAN;
+    }
 
     return isa.ownInstructions()
         .stream()

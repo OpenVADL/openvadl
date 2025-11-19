@@ -16,56 +16,30 @@
 
 package vadl.rtl.ipg.nodes;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
-import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
-import vadl.viam.Instruction;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
- * Node that represents matching the current instruction against a set of instructions.
- *
- * <p>Used to lower read/write conditions and select-by-instruction nodes. Conditions are extended
- * to include the output of an is-instruction node, select-by-instruction nodes are replaced with
- * selects that have one-hot nodes as condition inputs (decided by the decode-tree node). This moves
- * the information present in the IPG (i.e., which nodes are used for which instruction) to graph
- * nodes before inlining the IPG into the stages.
+ * Node that represents matching none of the instructions in the instruction set.
  */
-public class RtlIsInstructionNode extends ExpressionNode {
-
-  @DataValue
-  private final Set<Instruction> instructions;
+public class RtlInvalidInstructionNode extends ExpressionNode {
 
   @Input
   protected RtlDecodeTreeNode decodeTree;
 
   /**
-   * Create a new is-instruction node for a collection of instructions it should match.
+   * Create a new is-invalid-instruction node.
    *
-   * @param instructions collection of instructions
-   * @param decodeTree   decode tree input
+   * @param decodeTree decode tree input
    */
-  public RtlIsInstructionNode(Collection<Instruction> instructions,
-                              RtlDecodeTreeNode decodeTree) {
+  public RtlInvalidInstructionNode(RtlDecodeTreeNode decodeTree) {
     super(Type.bool());
-    this.instructions = new LinkedHashSet<>(instructions);
     this.decodeTree = decodeTree;
-  }
-
-  /**
-   * Get the instructions this is-instruction node matches.
-   *
-   * @return set of instructions
-   */
-  public Set<Instruction> instructions() {
-    return instructions;
   }
 
   /**
@@ -90,19 +64,13 @@ public class RtlIsInstructionNode extends ExpressionNode {
   }
 
   @Override
-  protected void collectData(List<Object> collection) {
-    super.collectData(collection);
-    collection.add(instructions);
-  }
-
-  @Override
   public ExpressionNode copy() {
-    return new RtlIsInstructionNode(instructions, decodeTree.copy(RtlDecodeTreeNode.class));
+    return new RtlInvalidInstructionNode(decodeTree.copy(RtlDecodeTreeNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new RtlIsInstructionNode(instructions, decodeTree);
+    return new RtlInvalidInstructionNode(decodeTree);
   }
 
   @Override
@@ -112,6 +80,6 @@ public class RtlIsInstructionNode extends ExpressionNode {
 
   @Override
   public String toString() {
-    return "(" + id + ") IsInstruction<" + instructions.size() + " instructions>";
+    return "(" + id + ") InvalidInstruction";
   }
 }

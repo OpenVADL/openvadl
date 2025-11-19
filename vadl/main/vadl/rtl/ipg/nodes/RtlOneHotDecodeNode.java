@@ -16,15 +16,17 @@
 
 package vadl.rtl.ipg.nodes;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
+import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
-import vadl.types.UIntType;
+import vadl.viam.Instruction;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
@@ -33,51 +35,67 @@ import vadl.viam.graph.dependency.ExpressionNode;
 public class RtlOneHotDecodeNode extends ExpressionNode {
 
   @Input
-  NodeList<ExpressionNode> values;
+  RtlDecodeTreeNode decodeTree;
+
+  @DataValue
+  List<Set<Instruction>> instructions;
 
   /**
-   * Create a new one-hot-decode node for a list of value inputs. The node's type is calculated
-   * based on the input count ({@code UInt<n>} with {@code n} large enough to encode values).
-   *
-   * @param values value inputs (all bool)
+   * Create a new one-hot-decode node.
    */
-  public RtlOneHotDecodeNode(List<ExpressionNode> values) {
-    super(UIntType.minimalTypeFor(values.size() - 1));
-    ensure(values.stream().allMatch(value ->
-        value.type().isTrivialCastTo(Type.bool())), "One-hot inputs must all be bool");
-    this.values = new NodeList<>(values);
+  public RtlOneHotDecodeNode(Type type, Collection<Set<Instruction>> instructions,
+                             RtlDecodeTreeNode decodeTree) {
+    super(type);
+    this.instructions = new ArrayList<>(instructions);
+    this.decodeTree = decodeTree;
   }
 
-  public NodeList<ExpressionNode> values() {
-    return values;
+  /**
+   * Get the list of instruction sets this one-hot-decode node matches.
+   *
+   * @return list of instruction sets
+   */
+  public List<Set<Instruction>> instructions() {
+    return instructions;
   }
 
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);
-    collection.addAll(values);
+    collection.add(decodeTree);
+  }
+
+  @Override
+  protected void collectData(List<Object> collection) {
+    super.collectData(collection);
+    collection.add(instructions);
   }
 
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    values = values.stream()
-        .map((e) -> visitor.apply(this, e, ExpressionNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
+    decodeTree = visitor.apply(this, decodeTree, RtlDecodeTreeNode.class);
   }
 
   @Override
   public ExpressionNode copy() {
-    return new RtlOneHotDecodeNode(values.copy());
+    return new RtlOneHotDecodeNode(type(), instructions, decodeTree.copy(RtlDecodeTreeNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new RtlOneHotDecodeNode(values);
+    return new RtlOneHotDecodeNode(type(), instructions, decodeTree);
   }
 
   @Override
   public <T extends GraphNodeVisitor> void accept(T visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return "(" + id + ") OneHot<" + instructions.size() + " sets, " + instructions.stream()
+        .reduce(0, (a, b) -> a + b.size(), Integer::sum)
+        + " total instructions>";
   }
 }

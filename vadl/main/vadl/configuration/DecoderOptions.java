@@ -25,11 +25,12 @@ import javax.annotation.Nullable;
 public class DecoderOptions {
 
   /**
-   * The possible generator strategies to choose from.
+   * The possible VADL decode tree generator strategies to choose from.
    */
   public enum Generator {
     REGULAR("Regular decoder generator", "regular"),
-    IRREGULAR("Irregular decoder generator, default", "irregular");
+    IRREGULAR("Irregular decoder generator, default", "irregular"),
+    RTL_TABLE("RTL table based decoder", "rtl-table"),;
 
     private final String selector;
     private final String desc;

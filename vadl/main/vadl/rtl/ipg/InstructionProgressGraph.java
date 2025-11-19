@@ -248,7 +248,7 @@ public class InstructionProgressGraph extends Graph {
     SubgraphUtils.MissingSupplier failOnMissing = (from, to, copyFrom) -> {
       throw Diagnostic.error("Missing node during IPG copy", to).build();
     };
-    var copyMap = SubgraphUtils.copy(newIpg, getNodes().collect(Collectors.toSet()),
+    var copyMap = SubgraphUtils.copy(newIpg, new LinkedHashSet<>(getNodes().toList()),
         failOnMissing, failOnMissing);
 
     // update new ipg fields

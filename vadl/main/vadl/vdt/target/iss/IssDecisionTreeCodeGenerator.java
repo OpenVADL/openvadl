@@ -16,11 +16,9 @@
 
 package vadl.vdt.target.iss;
 
-import static vadl.error.Diagnostic.error;
 import static vadl.utils.MemOrderUtils.reverseByteOrder;
 import static vadl.utils.StringBuilderUtils.join;
 import static vadl.vdt.target.common.DecisionTreeStatsCalculator.statistics;
-import static vadl.vdt.utils.BitVectorUtils.fittingPowerOfTwo;
 
 import java.math.BigInteger;
 import java.nio.ByteOrder;
@@ -35,9 +33,6 @@ import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.common.AccessFunctionCodeGenerator;
 import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
 import vadl.cppCodeGen.context.CGenContext;
-import vadl.error.Diagnostic;
-import vadl.error.DiagnosticBuilder;
-import vadl.error.DiagnosticList;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.types.BitsType;
@@ -54,6 +49,7 @@ import vadl.vdt.model.Visitor;
 import vadl.vdt.model.impl.LeafNodeImpl;
 import vadl.vdt.target.common.dto.DecisionTreeStatistics;
 import vadl.vdt.utils.BitPattern;
+import vadl.vdt.utils.BitVectorUtils;
 import vadl.vdt.utils.Instruction;
 import vadl.viam.Constant;
 import vadl.viam.Constant.BitSlice.Part;
@@ -605,26 +601,11 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
    */
   private DataType getInsnWordType() {
     var maxWidth = stats.getMaxInstructionWidth();
-    int bitWidth = fittingPowerOfTwo(maxWidth);
-
-    var resultType = BitsType.bits(bitWidth).fittingCppType();
-
-    if (resultType == null) {
-      // For every instruction format > 128 bit, throw a diagnostic. In the future the ISS decoder
-      // may be adapted to handle arbitrary instruction widths.
-      final List<Diagnostic> diagnostics = getFormats(getInstructions(tree))
-          .stream()
-          .filter(f -> f.type().bitWidth() > 128)
-          .map(f ->
-              error("Instructions of more than 128 bit are currently not supported by the "
-                  + "decoder generator.", f)
-                  .help("Reduce the width of the instruction format."))
-          .map(DiagnosticBuilder::build)
-          .toList();
-      throw new DiagnosticList(diagnostics);
+    var insnType = BitsType.bits(BitVectorUtils.fittingPowerOfTwo(maxWidth)).fittingCppType();
+    if (insnType == null) {
+      throw new IllegalArgumentException(
+          "Instruction word too wide: " + maxWidth + " bits");
     }
-
-    return resultType;
+    return insnType;
   }
-
 }

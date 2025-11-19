@@ -49,6 +49,7 @@ public record HdlEmitContext(
     InstructionSetArchitecture isa,
     MicroArchitecture mia,
     Processor processor,
+    @Nullable vadl.vdt.model.Node vdt,
     BiMap<Node, Node> inlineMap,
     @Nullable Signal resetVector,
     boolean keepSignals

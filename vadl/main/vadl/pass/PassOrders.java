@@ -16,6 +16,7 @@
 
 package vadl.pass;
 
+import static vadl.configuration.DecoderOptions.Generator.RTL_TABLE;
 import static vadl.iss.template.IssDefaultRenderingPass.issDefault;
 
 import com.google.common.collect.Streams;
@@ -642,6 +643,11 @@ public class PassOrders {
     addHtmlDump(order, config,
         "mia",
         "MiA after mapping and inlining instruction behavior");
+
+    if (config.getDecoderOptions().getGenerator() != RTL_TABLE) {
+      // Prepares and constructs the VDT, which is not used by the rtl-table strategy
+      addDecodePasses(order, config);
+    }
 
     if (!config.isDryRun()) {
       addRtlEmitPasses(order, config);

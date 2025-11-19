@@ -2,6 +2,7 @@
 
 [/]import chisel3._
 import chisel3.util._
+import chisel3.util.experimental.decode._
 import VADL._
 
 class [(${name})] extends Module {
@@ -31,11 +32,11 @@ class [(${name})] extends Module {
 
   [# th:each="con : ${connections}" ][#
   th:if="${con.isConditional}" ]when (([(${con.condition})]).asBool) {
-  [/][(${con.output})][# th:if="${con.isStatement}" ][(${con.statement})][/][#
-  th:if="${!con.isStatement}" ][#
-  th:if="${con.biDir}"  ] :<>= [/][#
-  th:if="${!con.biDir}" ] := [/][(${con.input})][/][#
-  th:if="${con.isConditional}" ]
+    [/][(${con.output})][# th:if="${con.isStatement}" ][(${con.statement})][/][#
+    th:if="${!con.isStatement}" ][#
+    th:if="${con.biDir}"  ] :<>= [/][#
+    th:if="${!con.biDir}" ] := [/][(${con.input})][/][#
+    th:if="${con.isConditional}" ]
   }[/]
   [/]
   [# th:if="${syncReset}"]}[/]
