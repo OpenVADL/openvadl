@@ -38,7 +38,7 @@ public abstract class CosimInstrTest extends CosimTest {
 
   public abstract String getVadlSpec();
 
-  public abstract AsmTestBuilder getBuilder(String testNamePrefix, int id);
+  public abstract CosimTestBuilder getBuilder(String testNamePrefix, int id);
 
   public abstract String compiler();
 

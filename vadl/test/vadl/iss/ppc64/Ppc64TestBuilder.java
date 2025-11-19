@@ -20,17 +20,12 @@ import java.math.BigInteger;
 import java.util.stream.IntStream;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
-import vadl.iss.AsmTestBuilder;
+import vadl.iss.CosimTestBuilder;
 
-public class Ppc64TestBuilder extends AsmTestBuilder {
+public class Ppc64TestBuilder extends CosimTestBuilder {
 
   public Ppc64TestBuilder(String testId) {
     super(testId);
-  }
-
-  @Override
-  public Arbitrary<String> anyTempReg() {
-    return anyReg();
   }
 
   @Override
@@ -41,6 +36,14 @@ public class Ppc64TestBuilder extends AsmTestBuilder {
   @Override
   public BigInteger fillReg(String reg, BigInteger value) {
     add("li %s, %s", reg, value);
+    return value;
+  }
+
+  @Override
+  public BigInteger fillMem(BigInteger mem, BigInteger value) {
+    fillReg("0", mem);
+    fillReg("1", value);
+    add("stw 1, 0(0)");
     return value;
   }
 
