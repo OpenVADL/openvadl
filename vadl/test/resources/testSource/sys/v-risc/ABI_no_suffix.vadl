@@ -81,56 +81,45 @@ application binary interface ABI for VarRISC32 = {
 
 assembly description AD for ABI = {
     grammar = {
+
       Reg @register:
         reg = Register ","
       ;
 
-    //   AddiInstruction :
-    //     var mnemonicTmp = "ADDI" // TODO: alternatives over other instructions
-    //     var rdTmp = Reg @operand
-    //     inst = (
-    //       ?(LaIdEq(1 as Bits<1>,","))
-    //       a = (
-    //         var rs1Tmp = Reg @operand
-    //         var immTmp = Integer
-    //         mnemonic = suffix< mnemonicTmp, immTmp > @operand
-    //         rd = rdTmp
-    //         rs1 = rs1Tmp
-    //         imm = immTmp @operand
-    //       ) @instruction
-    //     | a = ( 
-    //         mnemonic = addi_s_string @operand
-    //         rd = rdTmp
-    //         imm = ImmediateOperand
-    //       ) @instruction
-    //     )
-    //   ;  
-      AddiInstruction :
-        var mnemonicTmp = "ADDI" // TODO: alternatives over other instructions
+      ImmediateInstructionsMnemonic : "ADDI" | "SUBI" | "MULI" | "DIVI" | "REMI" | "ANDI" | "ORI" | "XORI" ;
+
+      ImmediateInstruction :
+        var mnemonicTmp = ImmediateInstructionsMnemonic
         var rdTmp = Reg @operand
         inst = (
           ?(LaIdEq(1 as Bits<1>,","))
           (
             var rs1Tmp = Reg @operand
 
-            ( aa = (
+            // constant immediate operand with _L suffix for large operands
+            // e.g. ADDI r1, r2, 0x1 imm OR ADDI_L r1, r2, 0x100
+            ( aa = (  
               var immTmp = Integer
-              mnemonic = suffix< mnemonicTmp, immTmp > @operand // TODO: use advandced suffix function
+              mnemonic = l_suffix_if_large_val< mnemonicTmp, immTmp > @operand
               rd = rdTmp
               rs1 = rs1Tmp
               imm = immTmp @operand
               ) @instruction
+            // label operand gets _L suffix as default
+            // e.g. ADDI_L r1, r2, .label
             | ab = (
               var immTmp = Label
-              mnemonic = addi_l_string @operand // TODO: use  l_suffix function
+              mnemonic = l_suffix< mnemonicTmp > @operand
               rd = rdTmp
               rs1 = rs1Tmp
               imm = immTmp @operand
               ) @instruction
             )
           )
-        | b = ( 
-            mnemonic = addi_s_string @operand // TODO: use s_suffix function
+          // short version of instruction with _S suffix
+          // e.g. ADDI_S r1, 0x1
+        | b = (  
+            mnemonic = s_suffix< mnemonicTmp > @operand
             rd = rdTmp
             imm = ImmediateOperand
           ) @instruction
@@ -138,17 +127,10 @@ assembly description AD for ABI = {
       ;    
     }
 
-    function addi_s_string -> String = "ADDI_S"
-    function addi_l_string -> String = "ADDI_L"
+    function s_suffix(baseMnemonic: String) -> String = baseMnemonic + "_S"
+    function l_suffix(baseMnemonic: String) -> String = baseMnemonic + "_L"
 
-    // function s_suffix(baseMnemonic: String) -> String = baseMnemonic + "_S"
-    // function l_suffix(baseMnemonic: String) -> String = baseMnemonic + "_L"
-
-    function suffix(baseMnemonic: String, val: SInt<64>) -> String = if val > -1025 && val < 1024
-                                                                        then "ADDI" else "ADDI_L"
-    // function suffix(baseMnemonic: String, val: SInt<64>) -> String = if val > -1025 && val < 1024
-    //                                                                     then baseMnemonic else (baseMnemonic,"_L")
-
-
-
+    function l_suffix_if_large_val(baseMnemonic: String, val: SInt<64>) -> String = if val > -1025 && val < 1024
+                                                                                    then baseMnemonic
+                                                                                    else ( baseMnemonic, "_L" )
 }

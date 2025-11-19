@@ -989,7 +989,7 @@ public class BuiltInTable {
    * <p>{@code function concat(String<N>, String<M>) -> String<X>}
    */
   public static final BuiltIn CONCATENATE_STRINGS =
-      func("VADL::concat",
+      func("VADL::concat_str",
           Type.relation(StringType.class, StringType.class, StringType.class))
           .takesDefault()
           .returns(Type.string())
