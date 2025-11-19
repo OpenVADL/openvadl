@@ -27,6 +27,10 @@ import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
+/**
+ * Emits the target/gen-arch/helper.h file that contains all macro helper definitions for
+ * exceptions and instructions.
+ */
 public class EmitIssHelperHPass extends IssTemplateRenderingPass {
   public EmitIssHelperHPass(IssConfiguration configuration) {
     super(configuration);

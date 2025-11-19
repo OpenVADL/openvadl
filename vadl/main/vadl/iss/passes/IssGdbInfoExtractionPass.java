@@ -102,7 +102,8 @@ public class IssGdbInfoExtractionPass extends AbstractIssPass {
         DeferredDiagnosticStore.add(
             warning("Vector register excluded from GDB", reg)
                 .description(
-                    "Register '%s' is a vector register and will not be included in GDB debug information.",
+                    "Register '%s' is a vector register and will "
+                        + "not be included in GDB debug information.",
                     reg.simpleName())
                 .note("Vector registers can currently not be accessed via GDB.")
         );

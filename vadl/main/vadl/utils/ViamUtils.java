@@ -88,6 +88,13 @@ public class ViamUtils {
     }.findAllIn(root);
   }
 
+  /**
+   * Retrieves all behaviors from the given root definition
+   * and returns them as a stream of Graph objects.
+   *
+   * @param root The root definition from which behaviors will be collected.
+   * @return A stream of Graph objects representing all behaviors found in the root definition.
+   */
   public static Stream<Graph> findAllBehaviors(Definition root) {
     return findDefinitionsByFilter(root, (d) -> d instanceof DefProp.WithBehavior)
         .stream()

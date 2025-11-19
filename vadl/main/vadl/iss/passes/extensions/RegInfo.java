@@ -241,7 +241,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   /// @param reads  all read accesses to this register
   /// @param writes all write accesses to this register
   /// @return true if the register should be treated as a gvec, false for TCG variables
-  ///
+  @SuppressWarnings("OverloadMethodsDeclarationOrder")
   private static boolean isGVec(RegisterTensor reg,
                                 List<ReadRegTensorNode> reads,
                                 List<WriteRegTensorNode> writes) {

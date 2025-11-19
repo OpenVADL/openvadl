@@ -25,6 +25,7 @@ import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.extensions.RegInfo;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
+import vadl.utils.functionInterfaces.TriConsumer;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
@@ -50,13 +51,18 @@ abstract class IssProcGen implements CDefaultMixins.All,
     CInvalidMixins.ResourceReads, CInvalidMixins.SideEffect, CInvalidMixins.HardwareRelated {
 
   private final CNodeContext ctx;
-  private final StringBuilder builder = new StringBuilder();
+  private final StringBuilder builder;
 
   public IssProcGen() {
+    this(IssProcGenDispatcher::dispatch);
+  }
+
+  public <T extends IssProcGen> IssProcGen(TriConsumer<T, CNodeContext, Node> dispatcher) {
+    this.builder = new StringBuilder();
+    //noinspection unchecked
     this.ctx = new CNodeContext(
         builder::append,
-        (ctx, node)
-            -> IssProcGenDispatcher.dispatch(this, ctx, node)
+        (ctx, node) -> dispatcher.accept((T) this, ctx, node)
     );
   }
 

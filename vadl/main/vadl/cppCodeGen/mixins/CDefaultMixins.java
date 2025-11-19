@@ -27,7 +27,6 @@ import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.javaannotations.Handler;
-import vadl.types.DataType;
 import vadl.types.StringType;
 import vadl.types.Type;
 import vadl.utils.Pair;
@@ -286,7 +285,8 @@ public interface CDefaultMixins {
       var cnt = from < to ? "++" : "--";
       var i = "i" + node.idx().id().numericId();
       ctx.wr(
-              "for (int " + i + " = " + from + "; " + i + " " + cmp + " " + to + "; " + i + cnt + ")")
+              "for (int " + i + " = " + from + "; " + i + " " + cmp + " " + to + "; "
+                  + i + cnt + ")")
           .ln(" {")
           .spacedIn()
           .gen(node.beginNode())
@@ -358,10 +358,6 @@ public interface CDefaultMixins {
       // Use the built-in VADL library functions.
       // Generators must include the vadl-builtins.h header file.
 
-      // Datatype must not be boolean because when it should be already replaced by a
-      // check.
-      node.ensure(node.type() != DataType.bool(),
-          "Truncation to boolean is not allowed");
       var bitWidth = node.type().bitWidth();
       ctx.wr("VADL_uextract(")
           .gen(node.value())

@@ -9,6 +9,7 @@
 #include "tcg/debug-assert.h"
 #include "hw/qdev-properties.h"
 #include "vadl-builtins.h"
+#include "vadl-iss-builtins.h"
 
 static [(${gen_arch_upper})]CPU* cpu_self;
 

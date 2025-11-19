@@ -516,6 +516,7 @@ public class PassOrders {
 
         // includes
         .add(issDefault("/include/vadl-builtins.h", config))
+        .add(issDefault("/include/vadl-iss-builtins.h", config))
 
         // config rendering
         .add(issDefault("/configs/devices/gen-arch-softmmu/default.mak", config))

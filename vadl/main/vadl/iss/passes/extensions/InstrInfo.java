@@ -28,6 +28,10 @@ import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
+/**
+ * Provides extended information and capabilities for ISA instruction definitions.
+ * E.g. it defines whether an instruction is rendered as a helper call or not.
+ */
 public class InstrInfo extends DefinitionExtension<Instruction> {
 
 
@@ -39,17 +43,16 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
    * a C implementation of this instruction.
    */
   public boolean asHelperCall() {
-    return true;
-    // TODO: Uncomment this line and remove the line above.
-//    if (asHelperCall == null) {
-//      asHelperCall = computeAsHelperCall();
-//    }
-//    return asHelperCall;
+    if (asHelperCall == null) {
+      asHelperCall = computeAsHelperCall();
+    }
+    return asHelperCall;
   }
 
   /**
    * Generates a lowercase representation of the instruction's simple name.
    */
+  @SuppressWarnings("MethodName")
   public String cIdentName() {
     return instr().simpleName().toLowerCase();
   }

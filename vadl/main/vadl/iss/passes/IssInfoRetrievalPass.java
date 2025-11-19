@@ -45,15 +45,16 @@ import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
-
-/// A pass that verifies that all necessary information required to generate a QEMU ISS are present.
-/// It also checks if the provided specification uses features that are not yet supported.
-///
-/// Furthermore, it collects information about registers,
-/// exceptions that are raised by instructions in the ISA.
-/// It constructs a [ExceptionInfo] extension that is added to the ISA.
-/// Additionally, it constructs an [RegInfo] extension and
-/// adds it to every register.
+/**
+ * A pass that verifies that all necessary information required to generate a QEMU ISS are present.
+ * It also checks if the provided specification uses features that are not yet supported.
+ *
+ * <p>Furthermore, it collects information about registers,
+ * exceptions that are raised by instructions in the ISA.
+ * It constructs a {@link ExceptionInfo} extension that is added to the ISA.
+ * Additionally, it constructs an {@link RegInfo} extension and
+ * adds it to every register.
+ **/
 public class IssInfoRetrievalPass extends AbstractIssPass {
   public IssInfoRetrievalPass(IssConfiguration configuration) {
     super(configuration);

@@ -107,17 +107,15 @@ public class SideEffectConditionResolver {
           return handleEndNode(endNode, branchCondition);
         }
         case IfNode ifNode -> current = handleIf(ifNode, branchCondition);
-        case ForallNode forallNode ->
-          // forall as no special handling required, as it doesn't influence the condition
-            current = forallNode.beginNode();
-        case DirectionalNode directionalNode ->
-          // handle normal singled directed node by just skipping it and continue
-            current = directionalNode.next();
-        default ->
-          // there should not be an other control node that was not handled yet
-          //noinspection DataFlowIssue
+        // forall as no special handling required, as it doesn't influence the condition
+        case ForallNode forallNode -> current = forallNode.beginNode();
+        // handle normal singled directed node by just skipping it and continue
+        case DirectionalNode directionalNode -> current = directionalNode.next();
+        // there should not be an other control node that was not handled yet
+        default -> //noinspection DataFlowIssue
             current.ensure(false,
-                "Not an expected node in the SideEffectConditionResolver. You want to implement it.");
+                "Not an expected node in the SideEffectConditionResolver. "
+                    + "You want to implement it.");
       }
     }
   }

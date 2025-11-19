@@ -21,8 +21,12 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.context.CGenContext;
+import vadl.cppCodeGen.context.CNodeContext;
 import vadl.iss.passes.extensions.InstrInfo;
+import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
+import vadl.javaannotations.DispatchFor;
+import vadl.javaannotations.Handler;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.StartNode;
@@ -42,20 +46,35 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * registers).
  *
  * <p>The generated helper functions have the signature:
- * {@code void helper_<instr_name>_instr(CPU<ARCH>State *env, uint32_t param1, uint32_t param2, ...)}
+ * {@code void helper_<instr_name>_instr(CPU<ARCH>State *env, uint32_t param1, uint32_t param2, ...)
+ * }
  * </p>
  *
- * <p>Register accesses are done directly using reads and writes to the CPU state ({@code env->reg}).
+ * <p>Register accesses are done directly using reads and
+ * writes to the CPU state ({@code env->reg}).
  * Instruction format parameters are passed as function arguments.
  * </p>
  */
+@DispatchFor(
+    value = Node.class,
+    context = CNodeContext.class,
+    include = {"vadl.viam", "vadl.iss"}
+)
 public class IssInstrHelperGenerator extends IssProcGen
-    implements IssCMixins.CpuSourceWriteRegTensor, IssCMixins.CpuSourceReadWriteMemory {
+    implements IssCMixins.CpuSourceWriteRegTensor, IssCMixins.CpuSourceReadWriteMemory,
+    IssCMixins.Default, IssCMixins.InvalidTcgC {
 
   private final IssConfiguration configuration;
   private final InstrInfo instrInfo;
 
+  /**
+   * Constructs the helper function generator.
+   */
   public IssInstrHelperGenerator(IssConfiguration configuration, InstrInfo instrInfo) {
+    super((issProcGenThis, ctx, node)
+        -> IssInstrHelperGeneratorDispatcher.dispatch((IssInstrHelperGenerator) issProcGenThis, ctx,
+        node)
+    );
     this.configuration = configuration;
     this.instrInfo = instrInfo;
   }
@@ -135,6 +154,11 @@ public class IssInstrHelperGenerator extends IssProcGen
   public void handle(CGenContext<Node> ctx, ReadRegTensorNode node) {
     // use register variables defined at start
     ctx().wr(readRegVariable(node));
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, IssStaticPcRegNode toHandle) {
+    throw new UnsupportedOperationException("Type IssStaticPcRegNode not yet implemented");
   }
 
   /**

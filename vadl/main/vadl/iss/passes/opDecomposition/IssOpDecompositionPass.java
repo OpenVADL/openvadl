@@ -87,7 +87,7 @@ public class IssOpDecompositionPass extends AbstractIssPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var largeOperationErrors = new ArrayList<Diagnostic>();
-    tcgInstrs(viam).map(Instruction::behavior)
+    allInstrs(viam).map(Instruction::behavior)
         .forEach(behavior -> {
           new OpDecomposer(behavior, configuration().targetSize())
               .decompose();
