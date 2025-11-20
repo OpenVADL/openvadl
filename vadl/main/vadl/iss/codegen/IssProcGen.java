@@ -25,6 +25,7 @@ import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.extensions.RegInfo;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
+import vadl.utils.functionInterfaces.TriConsumer;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
@@ -50,13 +51,18 @@ abstract class IssProcGen implements CDefaultMixins.All,
     CInvalidMixins.ResourceReads, CInvalidMixins.SideEffect, CInvalidMixins.HardwareRelated {
 
   private final CNodeContext ctx;
-  private final StringBuilder builder = new StringBuilder();
+  private final StringBuilder builder;
 
   public IssProcGen() {
+    this(IssProcGenDispatcher::dispatch);
+  }
+
+  public <T extends IssProcGen> IssProcGen(TriConsumer<T, CNodeContext, Node> dispatcher) {
+    this.builder = new StringBuilder();
+    //noinspection unchecked
     this.ctx = new CNodeContext(
         builder::append,
-        (ctx, node)
-            -> IssProcGenDispatcher.dispatch(this, ctx, node)
+        (ctx, node) -> dispatcher.accept((T) this, ctx, node)
     );
   }
 
@@ -77,21 +83,18 @@ abstract class IssProcGen implements CDefaultMixins.All,
    */
   void initReadRegs(Graph graph) {
     graph.getNodes(ReadRegTensorNode.class)
-        .forEach(read -> {
-          var info = read.regTensor().expectExtension(RegInfo.class);
-          var name = readRegVariable(read);
-          ctx.wr(info.valueCType() + " " + name + " = ")
-              .wr("get_" + info.name().toLowerCase() + "(");
-          var first = true;
-          for (var i : read.indices()) {
-            if (!first) {
-              ctx.wr(", ");
-            }
-            ctx.gen(i);
-            first = false;
-          }
-          ctx.ln(");");
-        });
+        .forEach(this::initSingleReadReg);
+  }
+
+  void initSingleReadReg(ReadRegTensorNode read) {
+    var info = read.regTensor().expectExtension(RegInfo.class);
+    var name = readRegVariable(read);
+    ctx.wr(info.valueCType() + " " + name + " = ")
+        .wr("get_cpu_" + info.name().toLowerCase() + "(env");
+    for (var i : read.indices()) {
+      ctx.wr(", ").gen(i);
+    }
+    ctx.ln(");");
   }
 
   /**

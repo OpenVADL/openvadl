@@ -16,7 +16,6 @@
 
 package vadl.iss.passes.extensions;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +29,8 @@ import vadl.template.Renderable;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.RegisterTensor;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * A ISS class that contains additional information and helper methods for {@link RegisterTensor}s.
@@ -40,10 +41,15 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
 
   @Nullable
   private Map<String, Object> renderObj;
-  private IssConfiguration config;
+  private final IssConfiguration config;
+  private final boolean isGVecValue;
 
-  public RegInfo(IssConfiguration config) {
+  public RegInfo(IssConfiguration config,
+                 RegisterTensor reg,
+                 List<ReadRegTensorNode> reads,
+                 List<WriteRegTensorNode> writes) {
     this.config = config;
+    this.isGVecValue = isGVec(reg, reads, writes);
   }
 
   public RegisterTensor reg() {
@@ -73,6 +79,12 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     return reg().simpleName();
   }
 
+  /// A register will be handled as generic vector if it's inner type
+  /// does not fit into the target size (max 64 bit), or if it has vector-style accesses.
+  public boolean isGVec() {
+    return isGVecValue;
+  }
+
   public int valueCTypeWidth() {
     return CppTypeMap.nextFittingBitSize(
         reg().resultType(reg().maxNumberOfAccessIndices()).bitWidth());
@@ -88,7 +100,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
    * TCG variables with the CPU state object.
    */
   public int cpuStateTypeWidth() {
-    return config.targetSize().width;
+    return isGVec() ? valueCTypeWidth() : config.targetSize().width;
   }
 
   @Override
@@ -98,7 +110,9 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       var dims = renderIndexDims();
       var nameLower = name().toLowerCase();
       var renderParams = renderGetterArgs(dims);
+      var renderParamsComma = renderParams.isEmpty() ? "" : ", " + renderParams;
       var resultType = reg().resultType(reg().maxNumberOfAccessIndices());
+      var cpuStateName = "CPU" + config.targetName().toUpperCase() + "State";
       renderObj = new HashMap<>();
       renderObj.put("name", name());
       renderObj.put("name_lower", nameLower);
@@ -109,10 +123,13 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       renderObj.put("cpu_state_type_width", cpuStateTypeWidth());
       renderObj.put("names", names());
       renderObj.put("constraints", renderConstraints(dims));
-      renderObj.put("getter_params", renderParams.isEmpty() ? "" : ", " + renderParams);
-      // as getter_params but without leading comma
-      renderObj.put("getter_params_no_comma", renderParams);
-      renderObj.put("getter_params_post_comma", renderParams.isEmpty() ? "" : renderParams + ", ");
+      renderObj.put("getter_params", renderParamsComma);
+      renderObj.put("cpu_getter_signature",
+          valueCType() + " get_cpu_" + nameLower + "(" + cpuStateName + "* env"
+              + renderParamsComma + ")");
+      renderObj.put("cpu_setter_signature",
+          "void set_cpu_" + nameLower + "(" + cpuStateName + "* env"
+              + renderParamsComma + ", " + valueCType() + " val)");
       renderObj.put("c_array_def", renderCArrayDef());
     }
     return renderObj;
@@ -120,10 +137,19 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
 
   private String renderCArrayDef() {
     var sb = new StringBuilder();
-    reg().dimensions().stream().limit(reg().maxNumberOfAccessIndices())
-        .forEach(dim -> {
-          sb.append("[" + dim.size() + "]");
-        });
+
+    if (isGVec()) {
+      // if the register is a gvec, we will use a single-dimensional array
+      // for simplicity when accessing it.
+      var elementSize = valueCTypeWidth();
+      var numElements = reg().totalWidth() / elementSize;
+      sb.append("[").append(numElements).append("]");
+    } else {
+      // else we use a multi-dimensional array, where each innermost element
+      // represents a single register that is mapped to an TCG variable.
+      reg().dimensions().stream().limit(reg().maxNumberOfAccessIndices())
+          .forEach(dim -> sb.append("[").append(dim.size()).append("]"));
+    }
     return sb.toString();
   }
 
@@ -172,5 +198,76 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
               "tcg_name", tcgName.toString()
           );
         }).toList();
+  }
+
+  /// Checks if an access pattern is a vector access (operates on multiple elements).
+  ///
+  /// @param reg        the register tensor being accessed
+  /// @param numIndices number of indices used in the access
+  /// @return true if this is a vector access
+  ///
+  private static boolean isVectorAccess(RegisterTensor reg, int numIndices) {
+    int resultWidth = reg.resultType(numIndices).bitWidth();
+
+    // If this access operates on more than 64 bits, it's a vector access
+    if (resultWidth > 64) {
+      return true;
+    }
+
+    // If accessing with fewer indices than max, it's a vector access
+    return numIndices < reg.maxNumberOfAccessIndices();
+  }
+
+  /// Determines whether a register tensor should be treated as a generic vector (gvec)
+  /// or as individual TCG variables.
+  ///
+  /// A register is considered a gvec if:
+  /// - Any single element exceeds 64 bits (can't fit in TCG scalar types)
+  /// - It has vector-style accesses (accessing multiple elements at once)
+  /// - The total register width exceeds 64 bits AND it's not a register file with
+  ///   only fully-indexed accesses
+  ///
+  /// Examples:
+  /// - `register GPR: Bits<5><64>` with accesses `GPR(i)` → false
+  ///   (register file, fully indexed, 64-bit elements fit in TCG)
+  /// - `register VR: Bits<32><128>` with accesses `VR(i)` → true
+  ///   (128-bit elements don't fit in TCG)
+  /// - `register VR: Bits<32><128>` with accesses `VR` → true
+  ///   (vector access across all dimensions)
+  /// - `register SIMD: Bits<8><32><32>` with accesses `SIMD(i)` → true
+  ///   (accessing 32*32=1024 bits at once)
+  ///
+  /// @param reg    the register tensor to analyze
+  /// @param reads  all read accesses to this register
+  /// @param writes all write accesses to this register
+  /// @return true if the register should be treated as a gvec, false for TCG variables
+  @SuppressWarnings("OverloadMethodsDeclarationOrder")
+  private static boolean isGVec(RegisterTensor reg,
+                                List<ReadRegTensorNode> reads,
+                                List<WriteRegTensorNode> writes) {
+
+    // 1. Check if any individual element (fully indexed access) exceeds 64 bits
+    //    If so, even scalar accesses can't use TCG variables
+    int fullyIndexedWidth = reg.resultType(reg.maxNumberOfAccessIndices()).bitWidth();
+    if (fullyIndexedWidth > 64) {
+      return true;
+    }
+
+    // TODO: We should propably do proper analysis if the register is used
+    //       within loops only, instead of the 2 dimensions heuristic. But it's good enough for now.
+    // 2. Check if it is more than 2 dimensions.
+    //    If so, it is typically used as vector registers within loops.
+    if (reg.dimensions().size() > 2) {
+      return true;
+    }
+
+    // 3. If we have vector-style accesses, use gvec
+    //    Otherwise, all accesses are fully indexed (scalar accesses)
+    //    Even if total width > 64 bits, we can use separate TCG variables
+    //    for each element (like GPR[32] where each register is separate)
+    return reads.stream()
+        .anyMatch(read -> isVectorAccess(reg, read.indices().size()))
+        || writes.stream()
+        .anyMatch(write -> isVectorAccess(reg, write.indices().size()));
   }
 }

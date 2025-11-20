@@ -24,9 +24,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
+import vadl.iss.passes.extensions.InstrInfo;
+import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.passes.tcgLowering.TcgCondition;
 import vadl.types.BuiltInTable;
 import vadl.utils.GraphUtils;
+import vadl.viam.Instruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
@@ -85,6 +88,14 @@ public class TcgPassUtils {
     );
   }
 
+  public static RegInfo regInfo(RegisterTensor reg) {
+    return reg.expectExtension(RegInfo.class);
+  }
+
+  public static InstrInfo instrInfo(Instruction instr) {
+    return instr.expectExtension(InstrInfo.class);
+  }
+
 
   /**
    * Returns a {@link TcgCondition} for a given {@link vadl.types.BuiltInTable.BuiltIn}, if
@@ -139,7 +150,6 @@ public class TcgPassUtils {
       case TSTEQ -> throw new IllegalArgumentException("No built-in for TSTEQ");
     };
   }
-
 
   /**
    * Finds the latest possible insertion point for the given expression to be scheduled.

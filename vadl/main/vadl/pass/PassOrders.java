@@ -57,7 +57,6 @@ import vadl.iss.passes.IssPcAccessConversionPass;
 import vadl.iss.passes.IssSelectLoweringPass;
 import vadl.iss.passes.IssTcgSchedulingPass;
 import vadl.iss.passes.IssTcgVAllocationPass;
-import vadl.iss.passes.IssVerificationPass;
 import vadl.iss.passes.opDecomposition.IssOpDecompositionPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.tcgLowering.IssTcgContextPass;
@@ -72,6 +71,8 @@ import vadl.iss.template.target.EmitIssCpuSourcePass;
 import vadl.iss.template.target.EmitIssDecodeTreePass;
 import vadl.iss.template.target.EmitIssDoExcCIncPass;
 import vadl.iss.template.target.EmitIssGdbStubPass;
+import vadl.iss.template.target.EmitIssHelperCPass;
+import vadl.iss.template.target.EmitIssHelperHPass;
 import vadl.iss.template.target.EmitIssInsnTransCIncPass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslateCPass;
@@ -470,10 +471,9 @@ public class PassOrders {
 
     // iss function passes
     order
-        .add(new IssVerificationPass(config))
+        .add(new IssInfoRetrievalPass(config))
         .add(new IssConfigurationPass(config))
         .add(new IssMemoryDetectionPass(config))
-        .add(new IssInfoRetrievalPass(config))
         .add(new IssOpDecompositionPass(config))
         .add(new IssNormalizationPass(config))
         .add(new IssExtractOptimizationPass(config))
@@ -498,7 +498,7 @@ public class PassOrders {
 
     addHtmlDump(order, config, "ISS Lowering Dump",
         "This dump is executed after the iss transformation passes were executed.",
-        IssVerificationPass.class,
+        IssInfoRetrievalPass.class,
         IssConfiguration.class);
 
     if (!config.isDryRun()) {
@@ -516,6 +516,7 @@ public class PassOrders {
 
         // includes
         .add(issDefault("/include/vadl-builtins.h", config))
+        .add(issDefault("/include/vadl-iss-builtins.h", config))
 
         // config rendering
         .add(issDefault("/configs/devices/gen-arch-softmmu/default.mak", config))
@@ -553,9 +554,10 @@ public class PassOrders {
         .add(issDefault("/target/gen-arch/trace.h", config))
         .add(issDefault("/target/gen-arch/Kconfig", config))
         .add(issDefault("/target/gen-arch/meson.build", config))
-        .add(issDefault("/target/gen-arch/helper.c", config))
-        .add(issDefault("/target/gen-arch/helper.h", config))
         .add(issDefault("/target/gen-arch/cpu-bits.h", config))
+        .add(new EmitIssHelperCPass(config))
+        // target/gen-arch/helper.h
+        .add(new EmitIssHelperHPass(config))
         // target/gen-arch/do-exception.c.inc
         .add(new EmitIssDoExcCIncPass(config))
         // target/gen-arch/cpu-qom.h

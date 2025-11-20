@@ -57,7 +57,7 @@ public class IssExtractOptimizationPass extends AbstractIssPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var targetSize = configuration().targetSize().width;
-    viam.isa().get().ownInstructions().forEach(i -> {
+    tcgInstrs(viam).forEach(i -> {
       new IssExtractOptimizer(i.behavior(), targetSize).run();
     });
 

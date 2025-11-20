@@ -302,7 +302,7 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
     setRandomNZCV(builder);
 
     builder.add("# test body");
-    // fill the source registers with datat
+    // fill the source registers with data
     for (var reg : result.srcRegs()) {
       var regIndex = result.assignment().get(reg);
       if (regIndex.intValue() == 31) {

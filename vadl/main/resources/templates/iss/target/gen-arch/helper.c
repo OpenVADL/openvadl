@@ -6,6 +6,8 @@
 #include "qemu/log-for-trace.h"
 #include "qemu/qemu-print.h"
 #include "cpu-bits.h"
+#include "vadl-builtins.h"
+#include "vadl-iss-builtins.h"
 
 G_NORETURN void [(${gen_arch_lower})]_raise_exception(CPU[(${gen_arch_upper})]State *env, int32_t exception) {
     CPUState *cs = env_cpu(env);
@@ -26,4 +28,8 @@ void helper_unsupported(CPU[(${gen_arch_upper})]State *env) {
 [(${exc.helper_impl})]
 [/]
 
+// instr helper functions
+[# th:each="instr : ${instr_helper_impls}"]
+[(${instr})]
+[/]
 

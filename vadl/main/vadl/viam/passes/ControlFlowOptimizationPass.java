@@ -95,7 +95,8 @@ class ControlFlowOptimizer implements CfgTraverser {
     // note that we have to preserve the sideeffects attached to the taken branch end node.
 
     if (!(controlSplit instanceof IfNode ifNode)) {
-      throw controlSplit.error("This control split type is not yet implemented by the pass.");
+      // currently we don't support other control split nodes
+      return controlSplit;
     }
 
     if (!(ifNode.condition() instanceof ConstantNode constantNode)) {

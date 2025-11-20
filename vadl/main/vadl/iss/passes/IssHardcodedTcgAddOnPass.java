@@ -50,10 +50,9 @@ public class IssHardcodedTcgAddOnPass extends AbstractIssPass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    viam.isa().ifPresent(isa ->
-        isa.ownInstructions()
-            .forEach(i ->
-                instrAddOns.forEach(f -> f.accept(i))));
+    tcgInstrs(viam)
+        .forEach(i ->
+            instrAddOns.forEach(f -> f.accept(i)));
 
     return null;
   }

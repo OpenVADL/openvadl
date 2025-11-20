@@ -16,8 +16,13 @@
 
 package vadl.iss.passes;
 
+import static vadl.iss.passes.TcgPassUtils.instrInfo;
+
+import java.util.stream.Stream;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.Pass;
+import vadl.viam.Instruction;
+import vadl.viam.Specification;
 
 /**
  * The pass all ISS (QEMU) passes extend from.
@@ -34,4 +39,19 @@ public abstract class AbstractIssPass extends Pass {
   public IssConfiguration configuration() {
     return (IssConfiguration) super.configuration();
   }
+
+  public Stream<Instruction> allInstrs(Specification spec) {
+    return spec.isa().get().ownInstructions().stream();
+  }
+
+  public Stream<Instruction> tcgInstrs(Specification spec) {
+    return allInstrs(spec)
+        .filter(i -> !instrInfo(i).asHelperCall());
+  }
+
+  public Stream<Instruction> helperInstrs(Specification spec) {
+    return allInstrs(spec)
+        .filter(i -> instrInfo(i).asHelperCall());
+  }
+
 }

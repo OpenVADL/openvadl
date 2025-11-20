@@ -62,12 +62,11 @@ public class IssSelectLoweringPass extends AbstractIssPass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    viam.isa().ifPresent(isa ->
-        isa.ownInstructions().forEach(instr -> new IssSelectLowerer(
-            instr.behavior(),
-            requireNonNull(isa.pc()),
-            instr.expectExtension(TcgCtx.class).assignment()
-        ).run()));
+    tcgInstrs(viam).forEach(instr -> new IssSelectLowerer(
+        instr.behavior(),
+        requireNonNull(viam.isa().get().pc()),
+        instr.expectExtension(TcgCtx.class).assignment()
+    ).run());
     return null;
   }
 }

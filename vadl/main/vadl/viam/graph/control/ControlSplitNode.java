@@ -45,6 +45,20 @@ public abstract class ControlSplitNode extends ControlNode {
     return branches;
   }
 
+  /**
+   * This finds the merge node that corresponds to this if.
+   * Only use it if necessary, as it has to traverse the control flow
+   * until it reaches the end of one branch.
+   */
+  public MergeNode findCorrespondingMergeNode() {
+    var endFalseBranch = new CfgTraverser() {
+    }.traverseBranch(branches.getLast());
+    var mergeNode = endFalseBranch.usages().findFirst();
+    ensure(mergeNode.isPresent() && mergeNode.get() instanceof MergeNode,
+        "Last branch end node is not a merge node... corrupted graph.");
+    return (MergeNode) mergeNode.get();
+  }
+
   @Nullable
   @Override
   public DirectionalNode predecessor() {

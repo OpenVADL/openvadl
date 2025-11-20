@@ -25,8 +25,8 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
-import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
+import vadl.viam.graph.control.ForallNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.StartNode;
@@ -102,82 +102,82 @@ public class SideEffectConditionResolver {
     // loop is only terminated by return of AbstractEndNode
     while (true) {
 
-      if (current instanceof AbstractEndNode endNode) {
-        // handle the end of the current branch
-        var graph = endNode.graph();
-        endNode.ensure(graph != null,
-            "Node is not active, but control flow must be stable for SideEffectConditionResolver");
-
-        // add the condition to all side effects
-        for (var sideEffect : endNode.sideEffects()) {
-          // if not already active, add the condition to the graph
-          // it is important to override the branchCondition and not use a new variable
-          branchCondition = branchCondition.isActive() ? branchCondition :
-              graph.addWithInputs(branchCondition);
-
-          var cond = branchCondition;
-          var existingCondition = sideEffect.nullableCondition();
-          if (existingCondition != null) {
-            // if the side effect already has a condition, it is also available in another
-            // branch, so we have ot OR it with the current branch condition
-            cond = graph.addWithInputs(
-                BuiltInCall.of(BuiltInTable.OR, existingCondition, cond)
-            );
-          }
-
-          // set the condition
-          sideEffect.setCondition(cond);
+      switch (current) {
+        case AbstractEndNode endNode -> {
+          return handleEndNode(endNode, branchCondition);
         }
-
-        // find and return the merge node if available
-        // (only in case of an InstrEndNode the MergeNode is not available)
-        return endNode.usages()
-            .filter(user -> user instanceof MergeNode)
-            .map(MergeNode.class::cast)
-            .findAny()
-            .orElse(null);
-
-      } else if (current instanceof ControlSplitNode splitNode) {
-        // handle a control split
-
-        // currently only IfNodes are supported
-        splitNode.ensure(splitNode instanceof IfNode,
-            "SideEffectConditionResolver not implemented for ControlSplitNode %s",
-            splitNode.getClass());
-        var ifNode = (IfNode) current;
-
-        // the condition for the true branch is the given branch condition and the
-        // if condition
-        var trueCondition = BuiltInCall.of(BuiltInTable.AND, branchCondition, ifNode.condition());
-        var trueMergeNode = resolveBranch(ifNode.trueBranch(), trueCondition);
-        // the condition for the false branch is the given branch condition and the
-        // NOTing of the if condition
-        var falseCondition = BuiltInCall.of(BuiltInTable.AND,
-            branchCondition,
-            BuiltInCall.of(BuiltInTable.NOT, ifNode.condition())
-        );
-        var falseMergeNode = resolveBranch(ifNode.falseBranch(), falseCondition);
-
-        // MergeNode must be the same for all branches and not null
-        ifNode.ensure(trueMergeNode == falseMergeNode,
-            "Branches of node don't result in the same merge node");
-        ifNode.ensure(trueMergeNode != null,
-            "Couldn't find merge node for true branch");
-
-        // continue with the found mergeNode
-        current = trueMergeNode;
-
-      } else if (current instanceof DirectionalNode directionalNode) {
+        case IfNode ifNode -> current = handleIf(ifNode, branchCondition);
+        // forall as no special handling required, as it doesn't influence the condition
+        case ForallNode forallNode -> current = forallNode.beginNode();
         // handle normal singled directed node by just skipping it and continue
-        current = directionalNode.next();
-
-      } else {
+        case DirectionalNode directionalNode -> current = directionalNode.next();
         // there should not be an other control node that was not handled yet
-        //noinspection DataFlowIssue
-        current.ensure(false,
-            "Not an expected node in the SideEffectConditionResolver. You want to implement it.");
+        default -> //noinspection DataFlowIssue
+            current.ensure(false,
+                "Not an expected node in the SideEffectConditionResolver. "
+                    + "You want to implement it.");
       }
     }
+  }
+
+  @Nullable
+  private static MergeNode handleEndNode(AbstractEndNode endNode, ExpressionNode branchCondition) {
+    // handle the end of the current branch
+    var graph = endNode.graph();
+    endNode.ensure(graph != null,
+        "Node is not active, but control flow must be stable for SideEffectConditionResolver");
+
+    // add the condition to all side effects
+    for (var sideEffect : endNode.sideEffects()) {
+      // if not already active, add the condition to the graph
+      // it is important to override the branchCondition and not use a new variable
+      branchCondition = branchCondition.isActive() ? branchCondition :
+          graph.addWithInputs(branchCondition);
+
+      var cond = branchCondition;
+      var existingCondition = sideEffect.nullableCondition();
+      if (existingCondition != null) {
+        // if the side effect already has a condition, it is also available in another
+        // branch, so we have ot OR it with the current branch condition
+        cond = graph.addWithInputs(
+            BuiltInCall.of(BuiltInTable.OR, existingCondition, cond)
+        );
+      }
+
+      // set the condition
+      sideEffect.setCondition(cond);
+    }
+
+    // find and return the merge node if available
+    // (only in case of an InstrEndNode the MergeNode is not available)
+    return endNode.usages()
+        .filter(user -> user instanceof MergeNode)
+        .map(MergeNode.class::cast)
+        .findAny()
+        .orElse(null);
+  }
+
+  private MergeNode handleIf(IfNode ifNode, ExpressionNode branchCondition) {
+    // the condition for the true branch is the given branch condition and the
+    // if condition
+    var trueCondition = BuiltInCall.of(BuiltInTable.AND, branchCondition, ifNode.condition());
+    var trueMergeNode = resolveBranch(ifNode.trueBranch(), trueCondition);
+    // the condition for the false branch is the given branch condition and the
+    // NOTing of the if condition
+    var falseCondition = BuiltInCall.of(BuiltInTable.AND,
+        branchCondition,
+        BuiltInCall.of(BuiltInTable.NOT, ifNode.condition())
+    );
+    var falseMergeNode = resolveBranch(ifNode.falseBranch(), falseCondition);
+
+    // MergeNode must be the same for all branches and not null
+    ifNode.ensure(trueMergeNode == falseMergeNode,
+        "Branches of node don't result in the same merge node");
+    ifNode.ensure(trueMergeNode != null,
+        "Couldn't find merge node for true branch");
+
+    // continue with the found mergeNode
+    return trueMergeNode;
   }
 
 

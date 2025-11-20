@@ -78,7 +78,7 @@ public class RegisterTensor extends RegisterResource {
    * Create new register tensor without addressing (i.e., for a data type of give bit-width).
    *
    * @param identifier identifier
-   * @param bitWidth bit-width of the register
+   * @param bitWidth   bit-width of the register
    * @return register tensor with one dimension and result type of bit-width
    */
   public static RegisterTensor of(Identifier identifier, int bitWidth) {
@@ -192,6 +192,10 @@ public class RegisterTensor extends RegisterResource {
         .mapToInt(Dimension::size)
         .reduce(1, (a, b) -> a * b);
     return Type.bits(width);
+  }
+
+  public int totalWidth() {
+    return resultType(0).bitWidth();
   }
 
   @Override
