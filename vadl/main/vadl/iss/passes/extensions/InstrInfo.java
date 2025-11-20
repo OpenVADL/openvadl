@@ -50,6 +50,14 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
   }
 
   /**
+   * Determines if the instruction's loops should be unrolled.
+   */
+  public boolean unrollLoops() {
+    // TODO: decide this based on the instruction's behavior.
+    return true;
+  }
+
+  /**
    * Generates a lowercase representation of the instruction's simple name.
    */
   @SuppressWarnings("MethodName")
