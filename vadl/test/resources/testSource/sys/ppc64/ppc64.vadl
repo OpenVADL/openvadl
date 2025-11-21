@@ -817,7 +817,7 @@ instruction set architecture PPC64SFS = {
 
   // instructions: lbzx, lbzux, lhax, lhaux, lhzx, lhzux, lwzx, lwzux, lwbrx
   model XFormLoadInstr (x : AsmExt, unit : SymEx, type : Id, update : Bool, rev : Bool) : IsaDefs = {
-    [undefined when : $update && (ra = 0 || rb = rs)]
+    [undefined when : $update && (ra = 0 || ra = rs)]
     instruction AsId($x.asm) : XFormA =
       let ea = XZ(ra) + X(rb) in
         let mea = if MSR.sf = Mode::M32 then ea & mask32 else ea in {
