@@ -25,7 +25,9 @@ import static vadl.types.BuiltInTable.UMULL;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.error.Diagnostic;
@@ -48,9 +50,11 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
+import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -104,6 +108,7 @@ public class IssOpDecompositionPass extends AbstractIssPass {
 
   private Optional<Diagnostic> checkNoLargeOperations(Graph behavior) {
     return behavior.getNodes(ExpressionNode.class)
+        .filter(e -> !(e instanceof ReadRegTensorNode))
         .filter(n -> (n.type() instanceof DataType)
             && n.type().asDataType().bitWidth() > configuration().targetSize().width)
         .map(n -> Diagnostic.error("Too large operation type", n)
@@ -136,22 +141,44 @@ class OpDecomposer {
     // delete all dependency nodes that are not used anymore
     behavior.deleteUnusedDependencies();
 
-    // find all nodes that result has an ok width but has a too large input.
+    // decompose nodes until there any more nodes to decompose.
     var foundOne = true;
+    var processed = new HashSet<Node>();
     while (foundOne) {
-      foundOne = false;
-      var hit = behavior.getNodes(ExpressionNode.class)
-          .filter(node -> node.type() instanceof DataType)
-          .filter(node -> node.type().asDataType().bitWidth() <= targetSize.width)
-          .filter(node -> node.inputs().map(ExpressionNode.class::cast)
-              .anyMatch(i -> i.type().asDataType().bitWidth() > targetSize.width))
-          .findFirst();
-      if (hit.isPresent()) {
-        foundOne = true;
-        // replace the current hit with the decomposed version.
-        new Decomposer(targetSize.width).decompose(hit.get());
-      }
+      // first decompose side effects, then expressions.
+      foundOne = decomposeSideeffects() && decomposeExpressions(processed);
     }
+  }
+
+  private boolean decomposeSideeffects() {
+    // TODO: Handle WriteRegTensorNode
+    var hit = behavior.getNodes(WriteMemNode.class)
+        .filter(node -> node.writeBitWidth() >= targetSize.width)
+        .findFirst();
+    if (hit.isPresent()) {
+      // replace the current hit with the decomposed version.
+      new Decomposer(targetSize.width).decompose(hit.get());
+      return true;
+    }
+    return false;
+  }
+
+  private boolean decomposeExpressions(Set<Node> processed) {
+    var hit = behavior.getNodes(ExpressionNode.class)
+        .filter(node -> node.type() instanceof DataType)
+        // find any expression node that is within the target size while having a too large input.
+        .filter(node -> node.type().asDataType().bitWidth() <= targetSize.width)
+        .filter(node -> node.inputs().map(ExpressionNode.class::cast)
+            .anyMatch(i -> i.type().asDataType().bitWidth() > targetSize.width))
+        .filter(node -> !processed.contains(node))
+        .findFirst();
+    if (hit.isPresent()) {
+      // replace the current hit with the decomposed version.
+      new Decomposer(targetSize.width).decompose(hit.get());
+      processed.add(hit.get());
+      return true;
+    }
+    return false;
   }
 
   private void handle(BuiltInCall call) {

@@ -16,15 +16,19 @@
 
 package vadl.iss.passes.opDecomposition;
 
+import static vadl.utils.StreamUtils.only;
+
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import javax.annotation.Nullable;
 import vadl.iss.passes.opDecomposition.decomposer.ShiftDecomposer;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
+import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.utils.GraphUtils;
 import vadl.utils.VadlBuiltInEmptyNoStatusDispatcher;
 import vadl.viam.Constant;
+import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -45,11 +49,13 @@ import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
+import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -109,7 +115,18 @@ class Decomposer
     expr.ensure(exprW <= targetSize, "Can only decompose expr that fits in target size.");
     // start the request with the expressions' normal size
     var repl = internalRequest(expr, new Slice(exprW - 1, 0));
+    if (repl == expr) {
+      // if the replacement is the same as the original, we can skip the replace
+      return;
+    }
     expr.replaceAndDelete(repl);
+  }
+
+  void decompose(SideEffectNode sideEffect) {
+    switch (sideEffect) {
+      case WriteMemNode w -> handle(w);
+      default -> sideEffect.fail("Unexpected side effect to handle: %s", sideEffect.getClass());
+    }
   }
 
   @Override
@@ -143,6 +160,67 @@ class Decomposer
       throw new IllegalStateException("Not yet implemented: " + node);
     }
     return req.result;
+  }
+
+  void handle(WriteMemNode write) {
+    int writeWidth = write.writeBitWidth();
+    if (writeWidth <= targetSize) {
+      return; // fits in target size, no decomposition needed
+    }
+
+    var memory = write.memory();
+    var wordSize = memory.wordSize();
+    var address = write.address();
+    var value = write.value();
+    var condition = write.nullableCondition();
+    var graph = write.ensureGraph();
+
+    var ends = write.usages().gather(only(AbstractEndNode.class)).toList();
+
+    // Calculate how many target-sized chunks we need
+    int chunksNeeded = (writeWidth + targetSize - 1) / targetSize;
+
+    // Split the write into multiple smaller writes
+    for (int i = 0; i < chunksNeeded; i++) {
+      int lsb = i * targetSize;
+      int msb = Math.min(lsb + targetSize - 1, writeWidth - 1);
+      int chunkWidth = msb - lsb + 1;
+
+      // Extract slice of the value
+      var chunkValue = request(value, msb, lsb);
+
+      // Calculate address offset (in words)
+      int byteOffset = lsb / 8;
+      int wordOffset = byteOffset / (wordSize / 8);
+
+      // Create address with offset
+      var offsetConst = Constant.Value.of(
+          wordOffset,
+          address.type().asDataType()
+      ).toNode();
+      var adjustedAddress = wordOffset == 0 ? address :
+          graph.addWithInputs(BuiltInTable.ADD.call(address, offsetConst));
+
+      // Calculate words for this chunk
+      int chunkWords = (chunkWidth + wordSize - 1) / wordSize;
+
+      // Create new WriteMemNode for this chunk
+      var chunkWrite = graph.addWithInputs(
+          new WriteMemNode(memory, chunkWords, adjustedAddress, chunkValue, condition));
+
+      // Preserve source location
+      chunkWrite.setSourceLocation(write.location());
+
+      for (var end : ends) {
+        end.addSideEffect(chunkWrite);
+      }
+    }
+
+    // Delete the original large write
+    for (var end : ends) {
+      end.removeSideEffect(write);
+    }
+    write.safeDelete();
   }
 
   @Override
@@ -220,7 +298,53 @@ class Decomposer
 
   @Handler
   void handle(Request rq, ReadRegTensorNode toHandle) {
-    throw new UnsupportedOperationException("Type ReadRegTensorNode not yet implemented");
+    // ReadRegTensorNode reads from a register tensor.
+    // The requested slice must lie within the register's bit width.
+    // We create a new ReadRegTensorNode with the same indices and let the slice
+    // extract the requested bits from the full register read.
+
+    var regTensor = toHandle.regTensor();
+    var fullWidth = regTensor.resultType(toHandle.indices().size()).bitWidth();
+
+    // Ensure the requested slice is within bounds
+    toHandle.ensure(rq.slice.hi() < fullWidth,
+        "Requested slice [%d:%d] exceeds register width of %d bits",
+        rq.slice.hi(), rq.slice.lo(), fullWidth);
+
+    // If the slice is the full register and fits in target size, return as-is
+    if (rq.slice.lo() == 0 && rq.slice.hi() == fullWidth - 1 && fullWidth <= targetSize) {
+      rq.result = toHandle;
+      return;
+    }
+
+    // Create a read of the full register
+    var fullRead = new ReadRegTensorNode(
+        regTensor,
+        toHandle.indices(),
+        Type.bits(fullWidth).asDataType(),
+        toHandle.staticCounterAccess()
+    );
+    fullRead.setSourceLocation(toHandle.location());
+
+    // If the full width fits in target size, just slice it
+    if (fullWidth <= targetSize) {
+      rq.result = new SliceNode(fullRead,
+          Constant.BitSlice.of(rq.slice.hi(), rq.slice.lo()),
+          Type.bits(rq.slice.width()));
+    } else {
+      // Register is too wide - we need to decompose it
+      // For now, we still need to slice from the original read,
+      // but we request the decomposition of that slice
+      var sliced = new SliceNode(fullRead,
+          Constant.BitSlice.of(rq.slice.hi(), rq.slice.lo()),
+          Type.bits(rq.slice.width()));
+
+      // The sliced result should fit in target size now
+      sliced.ensure(sliced.type().asDataType().bitWidth() <= targetSize,
+          "Sliced register read still exceeds target size");
+
+      rq.result = sliced;
+    }
   }
 
   @Handler
@@ -300,6 +424,10 @@ class Decomposer
 
   @Handler
   void handle(Request rq, SliceNode toHandle) {
+    if (toHandle.value() instanceof ReadRegTensorNode) {
+      rq.result = toHandle;
+      return;
+    }
     throw new UnsupportedOperationException("Type SliceNode not yet implemented");
   }
 

@@ -84,7 +84,7 @@ public abstract class ReadResourceNode extends ExpressionNode {
     super.verifyState();
     var resource = resourceDefinition();
 
-    ensure(resource.indexTypes().size() == indices().size(),
+    ensure(resource.indexTypes().size() >= indices().size(),
         "The resource takes %d indices but write provided %d", resource.indexTypes().size(),
         indices().size());
 
