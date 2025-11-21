@@ -80,16 +80,45 @@ application binary interface ABI for VarRISC32 = {
 }
 
 assembly description AD for ABI = {
+
+    function s_suffix(baseMnemonic: String) -> String = baseMnemonic + "_S"
+    function l_suffix(baseMnemonic: String) -> String = baseMnemonic + "_L"
+
+    function l_suffix_if_large_val(baseMnemonic: String, val: SInt<64>) -> String = if val > -1025 && val < 1024
+                                                                                    then baseMnemonic
+                                                                                    else ( baseMnemonic, "_L" )
+
     grammar = {
 
       Reg @register:
         reg = Register ","
       ;
 
-      ImmediateInstructionsMnemonic : "ADDI" | "SUBI" | "MULI" | "DIVI" | "REMI" | "ANDI" | "ORI" | "XORI" ;
+      RTypeIds: "ADD" | "SUB" | "MUL" | "DIV" | "REM" | "AND" | "OR" | "XOR"
+                    | "ASR" | "LSR" | "LSL";
+
+      RTypeInstruction :
+        var mnemonicTmp = RTypeIds
+        ( ?(LaIdEq(3 as Bits<2>,","))
+          a = (
+            mnemonic = mnemonicTmp @operand
+            rd = Register @operand ","
+            rs1 = Register @operand ","
+            rs2 = Register @operand
+          ) @instruction
+        | b = (
+            mnemonic = s_suffix< mnemonicTmp > @operand
+            rd = Register @operand ","
+            rs1imm = Register @operand
+          ) @instruction
+        )
+      ;
+
+
+      ITypeIds : "ADDI" | "SUBI" | "MULI" | "DIVI" | "REMI" | "ANDI" | "ORI" | "XORI" ;
 
       ImmediateInstruction :
-        var mnemonicTmp = ImmediateInstructionsMnemonic
+        var mnemonicTmp = ITypeIds
         var rdTmp = Reg @operand
         inst = (
           ?(LaIdEq(1 as Bits<1>,","))
@@ -105,7 +134,7 @@ assembly description AD for ABI = {
               rs1 = rs1Tmp
               imm = immTmp @operand
               ) @instruction
-            // label operand gets _L suffix as default
+            // use _L instruction for label operand
             // e.g. ADDI_L r1, r2, .label
             | ab = (
               var immTmp = Label
@@ -124,13 +153,197 @@ assembly description AD for ABI = {
             imm = ImmediateOperand
           ) @instruction
         )
-      ;    
+      ;
+
+
+      ShiftImmediateIds: "ASRI" | "LSRI" | "LSLI";
+
+      ShiftImmediateInstruction :
+        var mnemonicTmp = ShiftImmediateIds
+        var rdTmp = Reg @operand
+        ( // normal version of instruction
+          // e.g. LSRI r1, r2, 0x1
+          ?(LaIdEq(1 as Bits<1>,","))
+          a = (  
+            mnemonic = mnemonicTmp @operand
+            rd = rdTmp
+            rs1 = Register @operand ","
+            imm = ImmediateOperand
+          ) @instruction
+        | // short version of instruction with _S suffix
+          // e.g. LSRI_S r1, 0x1
+          b = (
+            mnemonic = s_suffix< mnemonicTmp > @operand
+            rd = rdTmp
+            imm = ImmediateOperand
+          ) @instruction
+        )
+      ;
+
+
+      BTypeIds: "BEQ" | "BNE" | "BLT" | "BLE" | "BULT" | "BULE";
+
+      BranchInstruction @instruction:
+        var mnemonicTmp = BTypeIds
+        var rdTmp = Reg @operand
+        var rs1Tmp = Reg @operand
+        inst = (
+            var offsetTmp = Integer
+            mnemonic = l_suffix_if_large_val< mnemonicTmp, offsetTmp > @operand
+            rd = rdTmp
+            rs1 = rs1Tmp
+            imm = offsetTmp @operand
+          | 
+            mnemonic = l_suffix< mnemonicTmp > @operand
+            rd = rdTmp
+            rs1 = rs1Tmp
+            imm = Label @operand
+        ) @instruction
+      ;
+
+
+      MemoryIds: "LDB" | "LDH" | "LDW" | "STB" | "STH" | "STW" | "LBU" | "LHU";
+
+      MemoryInstruction @instruction:
+        var mnemonicTmp = MemoryIds
+        var rdTmp = Reg @operand
+        (
+          // constant immediate operand with _L suffix for large operands
+          // e.g. LDB r1, 0x1 (r2) OR LDB_L r1, 0x100 (r2)
+          ( aa = (  
+            var immTmp = Integer
+            mnemonic = l_suffix_if_large_val< mnemonicTmp, immTmp > @operand
+            rd = rdTmp
+            imm = immTmp @operand
+            "(" rs1 = Register @operand ")"
+            ) @instruction
+          // use _L instruction for label operand
+          // e.g. LDB_L r1, .label (r2)
+          | ab = (
+            var immTmp = Label
+            mnemonic = l_suffix< mnemonicTmp > @operand
+            rd = rdTmp
+            imm = immTmp @operand
+            "(" rs1 = Register @operand ")"
+            ) @instruction
+          )
+        | // short version of instruction with _S suffix
+          // e.g. LDB_S r1, (r2)
+          b = (
+            mnemonic = s_suffix< mnemonicTmp > @operand
+            rd = rdTmp
+            "(" rs1imm = Register @operand ")"
+          ) @instruction
+        )
+      ;
+
+
+      CondIds : "SEQ" | "SNE" | "SLT" | "SLE" | "ULT" | "UGE";
+
+      CondInstruction @instruction:
+        mnemonic = CondIds @operand
+        rd = Register @operand ","
+        rs1 = Register @operand ","
+        rs2 = Register @operand
+      ;
+
+      CondImmIds: "SGTI" | "SGEI" | "UGTI" | "UGEI"
+                    | "SEQI" | "SNEI" | "SLTI" | "SLEI" | "ULTI" ;
+
+      CondImmInstruction :
+        var mnemonicTmp = CondImmIds
+        var rdTmp = Reg @operand
+        ( // normal version of instruction
+          // e.g. SGTI r1, r2, 0x1
+          ?(LaIdEq(1 as Bits<1>,","))
+          a = (  
+            mnemonic = mnemonicTmp @operand
+            rd = rdTmp
+            rs1 = Register @operand ","
+            imm = ImmediateOperand
+          ) @instruction
+        | // _L version of instruction
+          // e.g. SGTI_L r1, 0x1000
+          b = (
+            mnemonic = l_suffix< mnemonicTmp > @operand
+            rd = rdTmp
+            imm = ImmediateOperand
+          ) @instruction
+        )
+      ;
+
+
+      MoveInstruction @instruction:
+        mnemonic = "MOV" @operand
+        rd = Register @operand ":""=" // ':=' is split because of separate terminal rules
+        rs1imm = Register @operand
+      ;
+
+      SBranchInstruction @instruction:
+          mnemonic = "BRA_S" @operand
+          offset = ImmediateOperand
+      ;
+
+      JalInstruction @instruction:
+        mnemonic = "JAL" @operand
+        rd = Register @operand ","
+        rs1imm = Register @operand
+      ;
+
+      BalInstruction @instruction:
+        mnemonic = "BAL" @operand
+        rd = Register @operand ","
+        imm = ImmediateOperand
+      ;
+
+
+      BranchPseudoIds: "BEQZ" | "BNEZ" | "BLTZ" | "BLEZ" | "BGEZ" | "BGTZ" ;
+
+      BranchPseudoInstruction @instruction:
+        var mnemonicTmp = BranchPseudoIds
+        var rdTmp = Reg @operand
+        inst = (
+            var offsetTmp = Integer
+            mnemonic = l_suffix_if_large_val< mnemonicTmp, offsetTmp > @operand
+            rd = rdTmp
+            offset = offsetTmp @operand
+          | 
+            mnemonic = l_suffix< mnemonicTmp > @operand
+            rd = rdTmp
+            offset = Label @operand
+        ) @instruction
+      ;
+
+      BraPseudoInstruction :
+        var mnemonicTmp = "BRA"
+        inst = (
+            var offsetTmp = Integer
+            mnemonic = l_suffix_if_large_val< mnemonicTmp, offsetTmp > @operand
+            offset = offsetTmp @operand
+          | 
+            mnemonic = l_suffix< mnemonicTmp > @operand
+            offset = Label @operand
+        ) @instruction
+      ;
+      
+      JmpPseudoInstruction @instruction:
+        mnemonic = "JMP" @operand
+        rd = Register @operand
+      ;
+
+      RetPseudoInstruction @instruction:
+        mnemonic = "RET" @operand
+      ;
+
+      CallPseudoInstruction @instruction:
+        mnemonic = "CALL" @operand
+        symbol = Label @operand
+      ;
+
+      LaPseudoInstruction @instruction:
+        mnemonic = "LA" @operand
+        rd = Register @operand ","
+        symbol = Label @operand
+      ;
     }
-
-    function s_suffix(baseMnemonic: String) -> String = baseMnemonic + "_S"
-    function l_suffix(baseMnemonic: String) -> String = baseMnemonic + "_L"
-
-    function l_suffix_if_large_val(baseMnemonic: String, val: SInt<64>) -> String = if val > -1025 && val < 1024
-                                                                                    then baseMnemonic
-                                                                                    else ( baseMnemonic, "_L" )
 }

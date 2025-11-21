@@ -152,7 +152,8 @@ assembly description AD for ABI = {
         ;
 
 
-        BTypeIds: "BEQ" | "BNE" | "BLT" | "BLE" | "BULT" | "BULE";
+        BTypeIds: "BEQ" | "BNE" | "BLT" | "BLE" | "BULT" | "BULE"
+                    | "BEQ_L" | "BNE_L" | "BLT_L" | "BLE_L" | "BULT_L" | "BULE_L";
 
         BTypeInstruction @instruction:
             mnemonic = BTypeIds @operand
