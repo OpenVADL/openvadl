@@ -37,7 +37,10 @@ public class VdtEntitySupplier implements DumpEntitySupplier<VdtEntity> {
       return List.of();
     }
 
-    var vdt = passResults.lastResultOf(VdtLoweringPass.class, Node.class);
-    return List.of(new VdtEntity(vdt));
+    var vdt = passResults.lastNullableResultOf(VdtLoweringPass.class);
+    if (vdt == null) {
+      return List.of();
+    }
+    return List.of(new VdtEntity((Node) vdt));
   }
 }

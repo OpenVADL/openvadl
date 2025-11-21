@@ -107,7 +107,7 @@ public class DynSliceNode extends ExpressionNode implements Canonicalizable {
 
   @Override
   public Node shallowCopy() {
-    return new DynSliceNode(value, msb.copy(), lsb.copy(), type());
+    return new DynSliceNode(value, msb, lsb, type());
   }
 
   @Override
