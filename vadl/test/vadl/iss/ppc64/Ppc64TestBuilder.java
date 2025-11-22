@@ -16,27 +16,100 @@
 
 package vadl.iss.ppc64;
 
+import com.google.errorprone.annotations.FormatMethod;
 import java.math.BigInteger;
-import vadl.iss.CosimTestBuilder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.IntStream;
+import net.jqwik.api.Arbitraries;
+import net.jqwik.api.Arbitrary;
+import vadl.iss.CosimTestUtils;
 
-public class Ppc64TestBuilder extends CosimTestBuilder {
+public class Ppc64TestBuilder {
+
+  private final String testId;
+  private final List<String> instructions = new ArrayList<>();
 
   public Ppc64TestBuilder(String testId) {
-    super(testId);
+    this.testId = testId;
   }
 
-  @Override
+  // TODO: expand to 64 bit
+  public BigInteger fillCR() {
+    return fillCR(anyImmS(16));
+  }
+
+  // TODO: expand to 64 bit
+  public BigInteger fillReg(String reg) {
+    return fillReg(reg, anyImmS(16));
+  }
+
+  // TODO: expand to 64 bit
+  public BigInteger fillMem(BigInteger mem) {
+    return fillMem(mem, anyImmS(16));
+  }
+
+  public BigInteger fillCR(BigInteger value) {
+    fillReg("0", value);
+    add("mtcrf 255, 0");
+    return value;
+  }
+
   public BigInteger fillReg(String reg, BigInteger value) {
     add("li %s, %s", reg, value);
     return value;
   }
 
-  @Override
   public BigInteger fillMem(BigInteger mem, BigInteger value) {
     fillReg("0", mem);
     fillReg("1", value);
     add("stw 1, 0(0)");
     return value;
+  }
+
+  public Arbitrary<String> anyReg() {
+    return Arbitraries.of(IntStream.range(0, 32).mapToObj(Integer::toString).toList());
+  }
+
+  public Arbitrary<String> anyRegExceptZero() {
+    return Arbitraries.of(IntStream.range(1, 32).mapToObj(Integer::toString).toList());
+  }
+
+  public Arbitrary<String> anyCRField() {
+    return Arbitraries.integers().between(0, 7).map(String::valueOf);
+  }
+
+  public Arbitrary<String> anyCRBit() {
+    return Arbitraries.integers().between(0, 31).map(String::valueOf);
+  }
+
+  public BigInteger anyImmS(int bits) {
+    var b = BigInteger.ONE.shiftLeft(bits - 1);
+    return Arbitraries.bigIntegers()
+        .greaterOrEqual(b.negate())
+        .lessOrEqual(b.subtract(BigInteger.ONE))
+        .sample();
+  }
+
+  public BigInteger anyImmU(int bits) {
+    return Arbitraries.bigIntegers()
+        .greaterOrEqual(BigInteger.ZERO)
+        .lessOrEqual(BigInteger.ONE.shiftLeft(bits).subtract(BigInteger.ONE))
+        .sample();
+  }
+
+  @FormatMethod
+  public Ppc64TestBuilder add(String instr, Object... args) {
+    instructions.add(String.format(instr, args));
+    return this;
+  }
+
+  public String toAsmString() {
+    return String.join("\n", instructions);
+  }
+
+  public CosimTestUtils.TestCase toTestCase() {
+    return new CosimTestUtils.TestCase(testId, toAsmString());
   }
 
 }
