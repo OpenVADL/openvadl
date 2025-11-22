@@ -333,26 +333,33 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // in .. is the index provided
       // l .. is the total length of the register in bits
       // pn .. is the length (flattened) of the tensor parts
-      // We calculate msb with:
-      // R(i1)(i2)..(in) = (l-1) - i1*p1 - i2*p1 - .. - in*p1
-      // and lsb with:
-      // msb - (width -1)
+      //
+      // Indexing in VADL happens from lsb to msb; e.g.
+      // a = [3,2,1] then a[0] == 1
+      // This means, we calculate the lsb also by approaching
+      // it from the right (lsb) side in each dimension:
+      // R(i1)(i2)..(in) = i1*p1 + i2*p1 + .. + in*p1
+      // and msb with:
+      // lsb + result_width - 1
       var registerLength = regFileDef.type().asDataType().bitWidth();
       var sliceType = Type.bits(BitsType.indexWidthFor(registerLength));
-      ExpressionNode msb =
-          Constant.Value.fromInteger(BigInteger.valueOf(registerLength - 1), sliceType).toNode();
-      for (int i = reg.indexDimensions().size(); i < indices.size(); i++) {
+      ExpressionNode lsb = Constant.Value.of(0, sliceType).toNode();
+      for (int i = 0; i < indices.size(); i++) {
         var indexExpr = indices.get(i);
         // Zero extend so the index isn't too narrow.
         indexExpr = new ZeroExtendNode(indexExpr, sliceType);
-        var p = resultType.bitWidth() * dimensions.subList(i, dimensions.size() - 1).stream()
-            .map(d -> d.size()).reduce(1, (a, b) -> a * b);
-        var multiplication = BuiltInTable.MUL.call(indexExpr,
-            Constant.Value.fromInteger(BigInteger.valueOf(p), sliceType).toNode());
-        msb = BuiltInTable.SUB.call(msb, multiplication);
+        var p = resultType.bitWidth() * dimensions.stream()
+            .skip(i + 1)
+            .mapToInt(RegisterTensor.Dimension::size)
+            .reduce(1, (a, b) -> a * b);
+        var multiplication = BuiltInTable.MUL.call(
+            indexExpr,
+            Constant.Value.of(p, sliceType).toNode()
+        );
+        lsb = BuiltInTable.ADD.call(lsb, multiplication);
       }
-      ExpressionNode lsb = BuiltInTable.SUB.call(msb,
-          Constant.Value.fromInteger(BigInteger.ONE, sliceType).toNode());
+      ExpressionNode msb = BuiltInTable.ADD.call(lsb,
+          Constant.Value.of(resultType.bitWidth() - 1, sliceType).toNode());
       regAccess = new DynSliceNode(regAccess, msb, lsb, (DataType) getViamType(resultType));
     } else if (dimensions.size() < reg.indexDimensions().size()) {
       // Compression Alias
