@@ -99,6 +99,8 @@
 \definecolor{vhdlkeyword}{rgb}{0.43,0.0,0.43}
 \definecolor{vhdllogic}{rgb}{1.0,0.0,0.0}
 \definecolor{vhdlchar}{rgb}{0.0,0.0,0.0}
+\definecolor{token}{rgb}{0.88,0.5,0.0}
+\definecolor{production}{rgb}{0.0,0.00,1}
 
 %---------- Commands used by doxygen LaTeX output generator ----------
 
@@ -219,9 +221,9 @@
 , keywords=[2]{address, compute, decode, immediate, operands, read, readOrForward, unknown, verify, write}
 , keywordstyle=[2]\color{violet}\bfseries
 , string=[b][\color{red}]"
-, comment=[l][\color{ForestGreen}]{//}
-, morecomment=[s][\color{ForestGreen}]{/*}{*/}
-, morecomment=[l][\color{ForestGreen}]{\#}
+, comment=[l][\color{green}]{//}
+, morecomment=[s][\color{green}]{/*}{*/}
+, morecomment=[l][\color{green}]{\#}
 , showspaces=false
 , showstringspaces=false
 , stringstyle=\color{red}
@@ -369,9 +371,9 @@
                @constant, @expression, @instruction, @instructions, @modifier, @operand, @operands, @register, @statements, @string, @symbol, @void}
 , keywordstyle=[2]\color{violet}\bfseries
 , string=[b][\color{red}]"
-, comment=[l][\color{ForestGreen}]{//}
-, morecomment=[s][\color{ForestGreen}]{/*}{*/}
-, morecomment=[l][\color{ForestGreen}]{\#}
+, comment=[l][\color{green}]{//}
+, morecomment=[s][\color{green}]{/*}{*/}
+, morecomment=[l][\color{green}]{\#}
 , showspaces=false
 , showstringspaces=false
 , stringstyle=\color{red}
@@ -417,11 +419,11 @@
   , decode
   , invalid
   }
-, string=[b][\color{ForestGreen}]"
+, string=[b][\color{green}]"
 , comment=[l][\color{red}]{;}
 , showspaces=false
 , showstringspaces=false
-, stringstyle=\color{ForestGreen}
+, stringstyle=\color{green}
 , tabsize=4
 }
 
@@ -448,11 +450,11 @@
 , keywords=
   {
   }
-, string=[b][\color{ForestGreen}]"
+, string=[b][\color{green}]"
 , comment=[l][\color{red}]{;}
 , showspaces=false
 , showstringspaces=false
-, stringstyle=\color{ForestGreen}
+, stringstyle=\color{green}
 , tabsize=4
 }
 
@@ -488,11 +490,11 @@
   , when
 	, class
   }
-, string=[b][\color{ForestGreen}]"
+, string=[b][\color{green}]"
 , comment=[l][\color{red}]{;}
 , showspaces=false
 , showstringspaces=false
-, stringstyle=\color{ForestGreen}
+, stringstyle=\color{green}
 , tabsize=4
 }
 
@@ -923,3 +925,14 @@
 \H@refstepcounter{figure}%
 \@dblarg{\@caption{figure}}}
 \makeatother
+
+% Cocor: Let links inherit the current color only inside DoxyCode
+% Since allcolor disables linkcolor/urlcolor/citecolor, we specifically add it to the
+% environment 
+\AtBeginEnvironment{DoxyCode}{%
+  \begingroup
+  \hypersetup{allcolors=.}% 
+}
+\AtEndEnvironment{DoxyCode}{%
+  \endgroup
+}
