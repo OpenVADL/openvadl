@@ -359,8 +359,8 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
             GraphUtils.getLeafNodes(node.lsb())
         ).gather(only(ReadResourceNode.class))
         .forEach(n -> internalError(n,
-            "DynSliceNode msb or lsb depends on a ResourceReadNode. This isn't handled by the ISS.")
-        );
+            "DynSliceNode msb or lsb depends on a ResourceReadNode. "
+                + "This isn't handled by the ISS."));
 
     var offset = node.lsb();
     var one = intUNode(1, offset.type().asDataType().bitWidth());
