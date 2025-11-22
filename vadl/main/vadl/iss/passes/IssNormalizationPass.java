@@ -17,10 +17,15 @@
 package vadl.iss.passes;
 
 import static vadl.error.DiagUtils.throwNotAllowed;
+import static vadl.iss.IssUtils.internalError;
+import static vadl.utils.GraphUtils.add;
 import static vadl.utils.GraphUtils.bits;
 import static vadl.utils.GraphUtils.intU;
+import static vadl.utils.GraphUtils.intUNode;
 import static vadl.utils.GraphUtils.sub;
+import static vadl.utils.StreamUtils.only;
 
+import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.FormatMethod;
 import java.io.IOException;
 import java.util.Collections;
@@ -70,6 +75,7 @@ import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
@@ -345,7 +351,29 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Handler
   void handle(DynSliceNode node) {
-    throw new UnsupportedOperationException("Type DynSliceNode not yet implemented");
+    // check that the msb and lsb don't depend on resource types.
+    // if this is the case, we can't create an TCG extract operation, as it's ofs and len
+    // arguments must be translation time constant.
+    Streams.concat(
+            GraphUtils.getLeafNodes(node.msb()),
+            GraphUtils.getLeafNodes(node.lsb())
+        ).gather(only(ReadResourceNode.class))
+        .forEach(n -> internalError(n,
+            "DynSliceNode msb or lsb depends on a ResourceReadNode. This isn't handled by the ISS.")
+        );
+
+    var offset = node.lsb();
+    var one = intUNode(1, offset.type().asDataType().bitWidth());
+    // length = msb - lsb + 1
+    var len = add(sub(node.msb(), offset), one);
+    node.replaceAndDelete(
+        new IssValExtractNode(TcgExtend.ZERO,
+            node.value(),
+            offset,
+            len,
+            node.type().toBitsType()
+        )
+    );
   }
 
 
