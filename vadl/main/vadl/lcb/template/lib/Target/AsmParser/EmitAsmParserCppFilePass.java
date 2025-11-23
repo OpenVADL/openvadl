@@ -225,6 +225,11 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
       var casted = (GcbDefaultInstructionOperand) output;
       var operand = new TableGenOperand(casted.name(), false, "", false, casted.name(), "", "");
       result.add(operand);
+
+      // field access register operands
+      if (output instanceof GcbInstructionRegisterFileOperand regOperand) {
+        createRegisterFieldAccessOperands(regOperand, casted, result);
+      }
     }
 
     // Inputs
@@ -288,18 +293,27 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
             formatFields.stream().map(x -> "opImm64").collect(Collectors.joining(", "))
         );
         result.add(fieldOperand);
-      } else if (input instanceof GcbInstructionRegisterFileOperand regOperand
-          && regOperand.formatField() instanceof RenamedFieldRefNode.RenamedField renamedField) {
-        var operand = new TableGenOperand(
-            renamedField.inner().simpleName(),
-            false,
-            "",
-            false,
-            casted.name(),
-            "",
-            ""
-        );
-        result.add(operand);
+      } else if (input instanceof GcbInstructionRegisterFileOperand regOperand) {
+        if (regOperand.formatField() instanceof RenamedFieldRefNode.RenamedField renamedField) {
+          var operand = new TableGenOperand(
+              renamedField.inner().simpleName(),
+              false,
+              "",
+              false,
+              casted.name(),
+              "",
+              ""
+          );
+          result.add(operand);
+        } else {
+          // normal register operand
+          var operand = new TableGenOperand(casted.name(), false, "", false, casted.name(), "", "");
+          result.add(operand);
+
+          // field access register operands
+          createRegisterFieldAccessOperands(regOperand, casted, result);
+        }
+
       } else {
         var operand = new TableGenOperand(casted.name(), false, "", false, casted.name(), "", "");
         result.add(operand);
@@ -342,6 +356,18 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
     return result;
 
+  }
+
+  private void createRegisterFieldAccessOperands(
+      GcbInstructionRegisterFileOperand regOperand,
+      GcbDefaultInstructionOperand casted,
+      List<TableGenOperand> result) {
+    var fieldAccesses = regOperand.formatField().format().fieldAccesses().stream().filter(
+        fa -> fa.fieldRefs().getFirst().simpleName().equals(casted.name())).toList();
+    fieldAccesses.forEach(
+        fa -> result.add(
+            new TableGenOperand(fa.simpleName(), false, "", false, casted.name(), "", ""))
+    );
   }
 
   private List<AliasDirective> directiveMappings(Optional<AssemblyDescription> asmDescription) {

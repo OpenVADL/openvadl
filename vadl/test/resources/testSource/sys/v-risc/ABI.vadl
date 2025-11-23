@@ -88,7 +88,7 @@ assembly description AD for ABI = {
         RSTypeInstruction @instruction:
             mnemonic = RSTypeIds @operand
             rd = Register @operand ","
-            rs1imm = Register @operand
+            rs1 = Register @operand
         ;
 
 
@@ -129,7 +129,7 @@ assembly description AD for ABI = {
         LTypeInstruction @instruction:
             mnemonic = LTypeIds @operand
             rd = Register @operand ","
-            func5 = Register @operand ","
+            rs1 = Register @operand ","
             imm = ImmediateOperand
         ;
 
@@ -137,7 +137,7 @@ assembly description AD for ABI = {
         MoveInstruction @instruction:
             mnemonic = "MOV" @operand
             rd = Register @operand ":""=" // ':=' is split because of separate terminal rules
-            rs1imm = Register @operand
+            rs1 = Register @operand
         ;
 
         SBranchInstruction @instruction:
@@ -148,11 +148,12 @@ assembly description AD for ABI = {
         JalInstruction @instruction:
             mnemonic = "JAL" @operand
             rd = Register @operand ","
-            rs1imm = Register @operand
+            rs1 = Register @operand
         ;
 
 
-        BTypeIds: "BEQ" | "BNE" | "BLT" | "BLE" | "BULT" | "BULE";
+        BTypeIds: "BEQ" | "BNE" | "BLT" | "BLE" | "BULT" | "BULE"
+                    | "BEQ_L" | "BNE_L" | "BLT_L" | "BLE_L" | "BULT_L" | "BULE_L";
 
         BTypeInstruction @instruction:
             mnemonic = BTypeIds @operand
@@ -176,7 +177,7 @@ assembly description AD for ABI = {
         SMemoryInstruction @instruction:
             mnemonic = SMemoryIds @operand
             rd = Register @operand ","            
-            "(" rs1imm = Register @operand ")"
+            "(" rs1 = Register @operand ")"
         ;
 
         LMemoryIds: "LDB_L" | "LDH_L" | "LDW_L" | "STB_L" | "STH_L" | "STW_L" | "LBU_L" | "LHU_L";
@@ -185,7 +186,7 @@ assembly description AD for ABI = {
             mnemonic = LMemoryIds @operand
             rd = Register @operand ","
             imm = ImmediateOperand
-            "(" func5 = Register @operand ")"
+            "(" rs1 = Register @operand ")"
         ;
 
 

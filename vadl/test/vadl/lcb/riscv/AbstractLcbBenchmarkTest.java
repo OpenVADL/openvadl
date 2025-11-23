@@ -44,6 +44,7 @@ public abstract class AbstractLcbBenchmarkTest extends LcbDockerExecutionTest {
         DockerRiscvImageProvider.image(redisCache,
             configuration.outputPath() + "/lcb/Dockerfile",
             getTarget(),
+            getImageName(),
             getUpstreamBuildTarget(),
             getUpstreamClangTarget(),
             getSpikeTarget(),

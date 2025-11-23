@@ -34,6 +34,7 @@ public class DockerRiscvImageProvider {
    *
    * @param redisCache          is the cache for building LLVM.
    * @param pathDockerFile      is the path to the dockerfile which should be built.
+   * @param imageName           is the name of the generated and cached docker image
    * @param target              is the name of the processor.
    * @param upstreamBuildTarget is the name of LLVM backend to compile an upstream compiler.
    * @param upstreamClangTarget is the name for the LLVM clang option to invoke the upstream
@@ -46,13 +47,14 @@ public class DockerRiscvImageProvider {
    */
   public static ImageFromDockerfile image(DockerExecutionTest.RedisCache redisCache,
                                           String pathDockerFile,
+                                          String imageName,
                                           String target,
                                           String upstreamBuildTarget,
                                           String upstreamClangTarget,
                                           String spikeTarget,
                                           String abi,
                                           boolean doDebug) {
-    var image = images.get(target);
+    var image = images.get(imageName);
     if (image == null) {
 
       var deleteOnExit = !doDebug;
@@ -62,14 +64,14 @@ public class DockerRiscvImageProvider {
       }
 
       var img = redisCache.setupEnv(new ImageFromDockerfile("tc_spike_riscv_"
-          + target, deleteOnExit)
+          + imageName, deleteOnExit)
           .withDockerfile(Paths.get(pathDockerFile))
           .withBuildArg("TARGET", target)
           .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget)
           .withBuildArg("UPSTREAM_CLANG_TARGET", upstreamClangTarget)
           .withBuildArg("ABI", abi)
           .withBuildArg("SPIKE_TARGET", spikeTarget));
-      images.put(target, img);
+      images.put(imageName, img);
       return img;
     } else {
       return image;
