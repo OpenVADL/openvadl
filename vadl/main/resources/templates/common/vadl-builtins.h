@@ -20,7 +20,6 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdarg.h>
-#include <string>
 
 typedef uint64_t Bits; // Generic 64-bit container of bit patterns
 typedef Bits UInt; // Interpreted as an unsigned 64-bit integer
@@ -725,13 +724,6 @@ static inline Bits VADL_cto(Bits a, Width w) {
 /************************
  * MISC
  ************************/
-
-/*-----------------------------------------------------------------------
- *    concat_str(a: String<N>, b: String<M>) -> String<X>
- *---------------------------------------------------------------------*/
-static inline std::string VADL_concat_str(std::string a, std::string b) {
-    return a + b;
-}
 
 /*-----------------------------------------------------------------------
  *    concat(a: Bits<N>, b: Bits<M>) -> Bits<N + M> (concatenate bits)

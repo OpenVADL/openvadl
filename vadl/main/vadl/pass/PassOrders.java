@@ -101,6 +101,7 @@ import vadl.lcb.template.include.llvm.BinaryFormat.ELFRelocs.EmitTargetElfRelocs
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.lcb.template.lib.Target.EmitVadlBuiltinHeaderFilePass;
+import vadl.lcb.template.lib.Target.EmitVadlBuiltinHeaderPPFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
@@ -315,6 +316,7 @@ public class PassOrders {
             + "nodes.");
 
     order.add(new EmitVadlBuiltinHeaderFilePass(configuration));
+    order.add(new EmitVadlBuiltinHeaderPPFilePass(configuration));
     order.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration));
     order.add(new EmitClangTargetHeaderFilePass(configuration));
     order.add(
