@@ -54,6 +54,11 @@ public class AsmParserVarRiscNoSuffixFileCheckTest extends LcbDockerInputFileExe
   }
 
   @Override
+  protected String getImageName() {
+    return "varrisc_no_suffix";
+  }
+
+  @Override
   protected LcbConfiguration getConfiguration() {
     return new LcbConfiguration(getConfiguration(false), new TargetName(getTarget()), true);
   }
