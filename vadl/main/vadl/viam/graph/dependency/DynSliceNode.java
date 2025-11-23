@@ -43,13 +43,14 @@ import vadl.viam.graph.Node;
 public class DynSliceNode extends ExpressionNode implements Canonicalizable {
 
   @Input
+  protected ExpressionNode value;
+
+  @Input
   protected ExpressionNode msb;
 
   @Input
   protected ExpressionNode lsb;
 
-  @Input
-  protected ExpressionNode value;
 
   /**
    * Constructs a new SliceNode.
@@ -87,17 +88,17 @@ public class DynSliceNode extends ExpressionNode implements Canonicalizable {
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);
+    collection.add(value);
     collection.add(msb);
     collection.add(lsb);
-    collection.add(value);
   }
 
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
+    value = visitor.apply(this, value, ExpressionNode.class);
     msb = visitor.apply(this, msb, ExpressionNode.class);
     lsb = visitor.apply(this, lsb, ExpressionNode.class);
-    value = visitor.apply(this, value, ExpressionNode.class);
   }
 
   @Override
