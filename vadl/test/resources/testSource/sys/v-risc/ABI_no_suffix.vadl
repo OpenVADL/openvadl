@@ -109,7 +109,7 @@ assembly description AD for ABI = {
         | b = (
             mnemonic = s_suffix< mnemonicTmp > @operand
             rd = Register @operand ","
-            rs1imm = Register @operand
+            rs1 = Register @operand
           ) @instruction
         )
       ;
@@ -232,7 +232,7 @@ assembly description AD for ABI = {
           b = (
             mnemonic = s_suffix< mnemonicTmp > @operand
             rd = rdTmp
-            "(" rs1imm = Register @operand ")"
+            "(" rs1 = Register @operand ")"
           ) @instruction
         )
       ;
@@ -276,7 +276,7 @@ assembly description AD for ABI = {
       MoveInstruction @instruction:
         mnemonic = "MOV" @operand
         rd = Register @operand ":""=" // ':=' is split because of separate terminal rules
-        rs1imm = Register @operand
+        rs1 = Register @operand
       ;
 
       SBranchInstruction @instruction:
@@ -287,7 +287,7 @@ assembly description AD for ABI = {
       JalInstruction @instruction:
         mnemonic = "JAL" @operand
         rd = Register @operand ","
-        rs1imm = Register @operand
+        rs1 = Register @operand
       ;
 
       BalInstruction @instruction:
