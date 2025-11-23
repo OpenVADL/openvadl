@@ -45,6 +45,7 @@ import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
+import vadl.utils.BigIntUtils;
 import vadl.utils.Either;
 import vadl.utils.Pair;
 import vadl.utils.WithLocation;
@@ -487,7 +488,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var regLength = reg.resultType().asDataType().bitWidth();
       var invertedMask = BuiltInTable.XOR.call(
           mask,
-          Constant.Value.of((1L << regLength) - 1, maskType).toNode()
+          Constant.Value.fromInteger(BigIntUtils.mask(regLength, 0), maskType).toNode()
       );
 
       // 3) Read the original and clear the bits
