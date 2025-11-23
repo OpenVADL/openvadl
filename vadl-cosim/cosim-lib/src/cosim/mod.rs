@@ -214,13 +214,14 @@ impl Broker {
                             );
                         };
 
-                        for client in &mut self.clients {
-                            client.shm.end_read_buffer();
-                        }
-
                         if !diffs.is_empty() {
+                            debug!("difference between two instructions found");
                             let ctx = self.build_diff_context(config)?;
                             return Ok(Report::failed(diffs, ctx));
+                        }
+
+                        for client in &mut self.clients {
+                            client.shm.end_read_buffer();
                         }
                     }
 
@@ -229,6 +230,7 @@ impl Broker {
 
                     // one client finished while the other still writes to the buffer, error state!
                     (Some(c1insn), None) => {
+                        debug!("one client executes more instructions than the other");
                         let diff = DiffEntry::new(
                             "invalid-execution",
                             vec![Broker::format_insn_for_diff(&c1insn.insn_info)],
@@ -241,6 +243,7 @@ impl Broker {
                         return Ok(Report::failed(vec![diff], ctx));
                     }
                     (None, Some(c2insn)) => {
+                        debug!("one client executes more instructions than the other");
                         let diff = DiffEntry::new(
                             "invalid-execution",
                             vec![Broker::format_insn_for_diff(&c2insn.insn_info)],
