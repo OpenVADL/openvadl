@@ -8,7 +8,7 @@ use anyhow::bail;
 use serde::{Serialize, ser::SerializeStruct};
 use tracing::{debug, warn};
 
-use crate::{config::Config, ipc::sem::Semaphore};
+use crate::{config::{Config, Endian}, ipc::sem::Semaphore};
 
 pub const SHMSTRING_MAX_LEN: usize = 256;
 pub const TBINSNINFO_ENTRIES: usize = 64;
@@ -87,6 +87,21 @@ impl SHMRegister {
             entry
         } else {
             s
+        }
+    }
+
+    pub fn to_u64(&self, endian: &Endian) -> u64 {
+        const BUF_LEN: usize = 8;
+        let mut buf: [u8; BUF_LEN] = [0; BUF_LEN];
+        match endian {
+            Endian::Little => {
+                buf[..self.size as usize].copy_from_slice(self.data_slice());
+                return u64::from_le_bytes(buf);
+            },
+            Endian::Big => {
+                buf[BUF_LEN - self.size as usize..].copy_from_slice(self.data_slice());
+                return u64::from_be_bytes(buf);
+            },
         }
     }
 }

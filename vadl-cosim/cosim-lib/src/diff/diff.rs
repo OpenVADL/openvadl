@@ -146,20 +146,8 @@ pub fn diff_register(
     config: &Config,
     diffs: &mut Vec<DiffEntry>,
 ) {
-    let mut reg1val: [u8; 8] = [0; 8];
-    let mut reg2val: [u8; 8] = [0; 8];
-    reg1val[0..reg1.size as usize].copy_from_slice(reg1.data_slice());
-    reg2val[0..reg2.size as usize].copy_from_slice(reg2.data_slice());
-    
-    let reg1val = match config.qemu.clients[0].endian {
-        crate::config::Endian::Big => u64::from_be_bytes(reg1val),
-        crate::config::Endian::Little => u64::from_le_bytes(reg1val),
-    };
-
-    let reg2val = match config.qemu.clients[1].endian {
-        crate::config::Endian::Big => u64::from_be_bytes(reg2val),
-        crate::config::Endian::Little => u64::from_le_bytes(reg2val),
-    };
+    let reg1val = reg1.to_u64(&config.qemu.clients[0].endian);
+    let reg2val = reg2.to_u64(&config.qemu.clients[1].endian);
 
     if reg1val != reg2val {
         let r1name = reg1.mapped_name(config);
