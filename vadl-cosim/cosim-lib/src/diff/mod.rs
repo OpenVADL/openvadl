@@ -73,6 +73,7 @@ pub struct DiffContextClientState {
 }
 
 #[derive(Debug, Serialize, Clone)]
+#[serde(tag = "type", content = "value")]
 pub enum DiffContextClientStateContent {
     CPUs(Vec<DiffContextClientStateCPU>),
     Memory(DiffContextClientStateMemory),
@@ -105,11 +106,6 @@ pub struct DiffContextClientInstruction {
     pub hwaddr: String,
     pub disas: String,
     pub insn_data: String,
-}
-
-pub enum DiffValue {
-    Int(i64),
-    Str(String),
 }
 
 impl DiffEntry {
