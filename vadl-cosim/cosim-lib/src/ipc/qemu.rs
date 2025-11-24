@@ -130,4 +130,10 @@ impl Client {
             .kill()
             .with_context(|| format!("failed to kill qemu-process: {}", self.id))
     }
+
+    pub fn name_or_id(&self) -> String {
+        self.name
+            .clone()
+            .unwrap_or(self.id.to_string())
+    }
 }

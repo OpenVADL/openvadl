@@ -11,6 +11,7 @@ use crate::db::{
     CosimRunInfo, DBConnection, finish_cosimulation_run_trace, insert_new_cosimulation_run,
 };
 
+use crate::ipc::cstructs::BrokerSHMInsn;
 #[cfg(feature = "sqlite-tracing")]
 use crate::trace::{
     TraceEntryData, TraceStore, connect, get_client_trace, store_trace, trace_collect,
@@ -166,6 +167,8 @@ impl Broker {
 
         match config.testing.protocol.layer {
             crate::config::ProtocolLayer::Insn => loop {
+                let c1name = self.clients[0].name_or_id();
+                let c2name = self.clients[1].name_or_id();
                 let reads = self
                     .clients
                     .iter_mut()
@@ -209,9 +212,20 @@ impl Broker {
                         {
                             diff_mem_access(mem_access_info1, mem_access_info2, config)
                         } else {
-                            panic!(
-                                "Invalid cosim-state. Both clients were running the Insn-Layer, however they didn't write the same type of data (e.g. one client return insn-exec data, while the other returned mem-access data). This is a bug in the cosimulator/plugin."
+                            let diff = DiffEntry::new(
+                                "missing-memory-access",
+                                vec![
+                                    Broker::format_insn_for_diff(&c1insn.insn_info),
+                                    Broker::format_insn_for_diff(&c2insn.insn_info),
+                                ],
+                                Broker::format_missing_memory_access_msg(
+                                    &c1insn,
+                                    &c2insn,
+                                    &c1name,
+                                    &c2name,
+                                )
                             );
+                            vec![diff]
                         };
 
                         if !diffs.is_empty() {
@@ -344,6 +358,17 @@ impl Broker {
         Ok(Report::passed())
     }
 
+    #[allow(unused_variables)]
+    fn format_missing_memory_access_msg(c1insn: &BrokerSHMInsn, c2insn: &BrokerSHMInsn, c1: &str, c2: &str) -> String {
+        let (mem_access_client, insn_exec_client) = if c1insn.mem_access_info().is_some() {
+            (c1, c2)
+        } else {
+            (c2, c1)
+        };
+
+        format!("When executing the instruction: {}\n\"{}\" wrote memory-access info to the buffer, while \"{}\" wrote an insn-execution to the buffer", Broker::format_insn_for_diff(&c1insn.insn_info), mem_access_client, insn_exec_client)
+    }
+
     fn format_insn_for_diff(insn: &TBInsnInfo) -> String {
         format!(
             "pc={}, size={}, symbol={}, hwaddr={}, disas={}, data={}",
@@ -372,14 +397,8 @@ impl Broker {
     ) -> String {
         format!(
             "client \"{}\" executed another instruction while client \"{}\" has already finished",
-            executing_client
-                .name
-                .as_deref()
-                .unwrap_or(&executing_client.id.to_string()),
-            halted_client
-                .name
-                .as_deref()
-                .unwrap_or(&halted_client.id.to_string())
+            executing_client.name_or_id(),
+            halted_client.name_or_id()
         )
     }
 
