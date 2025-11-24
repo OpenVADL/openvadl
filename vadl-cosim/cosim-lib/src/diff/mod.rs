@@ -82,7 +82,7 @@ pub enum DiffContextClientStateContent {
 #[derive(Debug, Serialize, Clone)]
 pub struct DiffContextClientStateMemory {
     pub vaddr: u64,
-    pub size: u32,
+    pub size: u8,
     pub data: String,
 }
 

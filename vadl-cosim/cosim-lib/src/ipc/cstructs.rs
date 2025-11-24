@@ -337,9 +337,9 @@ pub struct BrokerSHMInsn {
     /// A bit-mask indicating which cpu-indicies are set
     pub init_mask: i32,
     pub insn_data_type: BrokerSHMInsnDataType,
-    cpus: [SHMCPU; MAX_CPU_COUNT],
+    pub cpus: [SHMCPU; MAX_CPU_COUNT],
     pub insn_info: TBInsnInfo,
-    mem_access_info: MemAccessInfo,
+    pub mem_access_info: MemAccessInfo,
 }
 
 impl Serialize for BrokerSHMInsn {
@@ -409,7 +409,7 @@ pub struct MemAccessInfo {
     pub vaddr: u64,
     // the size of the memory load / store in ^2: 0 = 1 byte, 1 = 2 bytes, ..., 4
     // = 16 bytes
-    pub size: u32,
+    pub size: u8,
     // the amount written to the data-array depends on the size
     data: [u8; 16],
 }
@@ -428,12 +428,12 @@ impl Serialize for MemAccessInfo {
 }
 
 impl MemAccessInfo {
-    pub fn new(size: u32, data: [u8; 16], vaddr: u64) -> Self {
+    pub fn new(size: u8, data: [u8; 16], vaddr: u64) -> Self {
         Self { size, data, vaddr }
     }
 
     pub fn data_slice(&self) -> &[u8] {
-        let bytes: usize = 2 << self.size;
+        let bytes: usize = 1 << self.size;
         &self.data[..bytes]
     }
 
