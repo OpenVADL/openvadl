@@ -44,13 +44,8 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   }
 
   @Override
-  public String compiler() {
-    return "ppc64_compiler.py";
-  }
-
-  @Override
-  public String cosimConfig() {
-    return "ppc64_config.toml";
+  protected String getScript() {
+    return "/cosim_scripts/ppc64";
   }
 
   @Override

@@ -93,6 +93,8 @@ public abstract class CosimTest extends DockerExecutionTest {
     });
   }
 
+  protected abstract String getScript();
+
   protected abstract String withUpstreamTarget();
 
   /**
@@ -164,7 +166,7 @@ public abstract class CosimTest extends DockerExecutionTest {
         .withFileFromPath("iss", generatedIssSources)
         // make cosim scripts and configs available to image builder
         .withFileFromClasspath("/cosim_configs", "/cosim_configs")
-        .withFileFromClasspath("/cosim_scripts", "/cosim_scripts");
+        .withFileFromClasspath("/cosim_scripts", getScript());
 
     // as we have to use the same network as the redis cache, we have to build it there
     return redisCache.setupEnv(dockerImage);

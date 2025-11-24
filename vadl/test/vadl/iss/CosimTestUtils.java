@@ -40,8 +40,6 @@ public class CosimTestUtils {
   }
 
   public record TestConfig(
-      String cosimConfig,
-      String compiler,
       Collection<TestCase> tests
   ) {
   }
@@ -76,8 +74,6 @@ public class CosimTestUtils {
     }).toList();
 
     var rootYaml = new LinkedHashMap<String, Object>();
-    rootYaml.put("cosim_config", config.cosimConfig);
-    rootYaml.put("compiler", config.compiler);
     rootYaml.put("tests", testsYaml);
 
     Yaml yaml = new Yaml();
