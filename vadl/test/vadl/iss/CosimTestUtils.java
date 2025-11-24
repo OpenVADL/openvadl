@@ -98,7 +98,9 @@ public class CosimTestUtils {
             List<String> values = new ArrayList<>();
             Object vals = m.get("values");
             if (vals instanceof List<?> lv) {
-              for (Object v : lv) values.add(String.valueOf(v));
+              for (Object v : lv) {
+                values.add(String.valueOf(v));
+              }
             }
             String description = String.valueOf(m.get("description"));
             diffs.add(new TestResult.Diff(key, values, description));

@@ -39,25 +39,25 @@ public class Ppc64TestBuilder {
     return fillCR(anyImmS(16));
   }
 
-  // TODO: expand to 64 bit
-  public BigInteger fillReg(String reg) {
-    return fillReg(reg, anyImmS(16));
-  }
-
-  // TODO: expand to 64 bit
-  public BigInteger fillMem(BigInteger mem) {
-    return fillMem(mem, anyImmS(16));
-  }
-
   public BigInteger fillCR(BigInteger value) {
     fillReg("0", value);
     add("mtcrf 255, 0");
     return value;
   }
 
+  // TODO: expand to 64 bit
+  public BigInteger fillReg(String reg) {
+    return fillReg(reg, anyImmS(16));
+  }
+
   public BigInteger fillReg(String reg, BigInteger value) {
     add("li %s, %s", reg, value);
     return value;
+  }
+
+  // TODO: expand to 64 bit
+  public BigInteger fillMem(BigInteger mem) {
+    return fillMem(mem, anyImmS(16));
   }
 
   public BigInteger fillMem(BigInteger mem, BigInteger value) {
