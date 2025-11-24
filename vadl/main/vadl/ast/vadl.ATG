@@ -272,6 +272,17 @@ IGNORE '\t' + '\r' + '\n'
 
 
 PRODUCTIONS
+
+/**  \brief
+\lbl{refman_vadl}
+The #vadl production rule is the entry point of a VADL processor specification as
+well as of the OpenVADL parser.<br>
+
+A VADL specification consists of multiple #topLevelDefinitions like a type alias
+(#usingDefinition) or a function definition (#functionDefinition) and sections
+like the ISA section (#instructionsetDefinition). It is also possible to define
+macros (#macrodef).
+*/
   vadl =
   {
     SYNC
@@ -365,6 +376,12 @@ PRODUCTIONS
   }
   .
 
+/**  \brief
+Multiple annotations (#annotations) can by declared in front of many syntactic
+elements. A single annotation is described in the #annotation production rule.<br>
+
+#annotations is used by \refFrom.
+*/
   annotations<out List<AnnotationDefinition> annotations> (. var list = new ArrayList<AnnotationDefinition>(); .)
   = {
     annotation<out AnnotationDefinition annotation>       (. list.add(annotation); .)
