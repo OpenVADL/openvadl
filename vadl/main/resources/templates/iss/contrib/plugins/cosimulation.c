@@ -412,8 +412,9 @@ static void vcpu_mem_cb(unsigned int cpu_index, qemu_plugin_meminfo_t info,
   shm.shm_insn.mem_access_info.vaddr = vaddr;
 
   qemu_plugin_mem_value data = qemu_plugin_mem_get_value(info);
+  
   shm.shm_insn.mem_access_info.size = data.type;
-  memcpy(&shm.shm_insn.mem_access_info.data, &data.data, 2 << data.type);
+  memcpy(&shm.shm_insn.mem_access_info.data, &data.data, 1 << data.type);
   shm.shm_insn.insn_info = *tbinsn_info;
 
   ringbuf_write(shm);
