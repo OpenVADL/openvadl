@@ -2,22 +2,30 @@ import argparse
 from pathlib import Path
 import asyncio
 import yaml
+import os
+import sys
 import compiler
 
 async def run_cosim(le: str, be: str, out: Path):
+    e = os.environ.copy()
+    e["RUST_BACKTRACE"] = "1"
     proc = await asyncio.create_subprocess_exec(
         "vadl-cosim-broker",
         "--config", "/cosim_configs/ppc64_config.toml",
         "--test-exec", le,
         "--test-exec", be,
-        "--output-file", str(out)
+        "--output-file", str(out),
+        env=e
     )
     await proc.wait()
 
 async def run_test(t: dict, results: Path):
     tid = str(t["id"])
-    comp = await compiler.compile(tid, str(t["asm_core"]))
-    await run_cosim(str(comp["elf_le"]), str(comp["elf_be"]), results / f"result-{tid}")
+    try:
+        comp = await compiler.compile(tid, str(t["asm_core"]))
+        await run_cosim(str(comp["elf_le"]), str(comp["elf_be"]), results / f"result-{tid}")
+    except Exception as e:
+        print(f"error for test=\"{tid}\": ", e)
 
 async def main(testsuite_path: Path):
     config = yaml.safe_load(testsuite_path.read_text())

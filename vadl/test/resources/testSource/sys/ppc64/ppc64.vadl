@@ -487,7 +487,7 @@ instruction set architecture PPC64SFS = {
   }
 
   // sets the CR field 0 based on signed comparison of the result to zero
-  model SetCR0 (result : Id) : Stat = {
+  model SetCR0 (result : Ex) : Stat = {
     if MSR.sf = Mode::M32 then $SetCRType(0; ($result; 0); SWord )
                           else $SetCRType(0; ($result; 0); SDWord)
   }
@@ -1138,12 +1138,17 @@ instruction set architecture PPC64SFS = {
 
   model XOFormDivInstrExt (eid : Id, r : XOFormDivInstrRec, oe : Bool, rc : Bool) : IsaDefs = {
     instruction $eid : XOForm =
-      let result, flags = VADL::$r.x.op($r.a.arg1, $r.a.arg2) in {
-        X(rs) := (result(31..0) as UWord) as UDWord
-        $CS($oe;
-          let ov = if $r.extcond & XW(rb) != 0 then flags.overflow else 0b1 in
-            XER := (XER.so | ov, ov, XER.ca, XER.rsv1, ov, XER.ca32, XER.rsv2, XER.nbytes))
-        $CS($rc; $SetCR0(result))
+      if XW(rb) != 0 then
+        let result, flags = VADL::$r.x.op($r.a.arg1, $r.a.arg2) in {
+          X(rs) := (result(31..0) as UWord) as UDWord
+          $CS($oe;
+            let ov = if $r.extcond then flags.overflow else 0b1 in
+              XER := (XER.so | ov, ov, XER.ca, XER.rsv1, ov, XER.ca32, XER.rsv2, XER.nbytes))
+          $CS($rc; $SetCR0(result))
+        }
+      else {
+        //X(rs) := XW(ra) as UDWord
+        XER := (0b1 as Bits<1>, 0b1 as Bits<1>, XER.ca, XER.rsv1, 0b1 as Bits<1>, XER.ca32, XER.rsv2, XER.nbytes)
       }
     encoding $eid = {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc}
     assembly $eid = ($r.x.asm, $orStr($oe; $rc), " ", decimal(rs), ",", decimal(ra), ",", decimal(rb))
