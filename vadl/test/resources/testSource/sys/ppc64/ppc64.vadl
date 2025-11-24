@@ -1147,8 +1147,9 @@ instruction set architecture PPC64SFS = {
           $CS($rc; $SetCR0(result))
         }
       else {
-        //X(rs) := XW(ra) as UDWord
+        X(rs) := XW(ra) as UDWord
         XER := (0b1 as Bits<1>, 0b1 as Bits<1>, XER.ca, XER.rsv1, 0b1 as Bits<1>, XER.ca32, XER.rsv2, XER.nbytes)
+        $CS($rc; $SetCR0(0b0))
       }
     encoding $eid = {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc}
     assembly $eid = ($r.x.asm, $orStr($oe; $rc), " ", decimal(rs), ",", decimal(ra), ",", decimal(rb))
