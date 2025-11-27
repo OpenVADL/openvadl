@@ -78,7 +78,11 @@ public class AlgebraicSimplifier {
             // by deleting and adding all usages of the new node, after replacing the old node,
             // we can automatically optimize this.
             newNode.usages().filter(n -> n instanceof ExpressionNode).toList()
-                .forEach(u -> u.replaceAndDelete(u.shallowCopy()));
+                .forEach(u -> {
+                  if (!u.isDeleted()) {
+                    u.replaceAndDelete(u.shallowCopy());
+                  }
+                });
             hasChanged = true;
             changes++;
           }
