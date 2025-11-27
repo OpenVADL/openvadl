@@ -32,7 +32,8 @@ async def main(testsuite_path: Path):
     results = Path("/work/results")
     results.mkdir(parents=True, exist_ok=True)
 
-    tasks = [run_test(t, results) for t in config.get("tests", [])]
+    #tasks = [run_test(t, results) for t in config.get("tests", [])]
+    tasks = []; [await run_test(t, results) for t in config.get("tests", [])]
 
     await asyncio.gather(*tasks)
 

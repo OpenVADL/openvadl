@@ -85,7 +85,6 @@ public abstract class CosimInstrTest extends CosimTest {
       walkStream
           .filter(java.nio.file.Files::isRegularFile)
           .forEach(path -> {
-            System.out.println(path.getFileName());
             var id = path.getFileName().toString().substring(7);
             resultFiles.put(id, path.toFile());
           });
