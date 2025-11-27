@@ -65,6 +65,8 @@ async def build_assembly(id: str, core: str) -> Path:
   nop
   {core}
   ba 0xfc
+  .section .data
+  ba 0x104
   """
   with open(asm_out, "w") as f:
     f.write(content)
@@ -80,6 +82,8 @@ async def build_linker_script(id: str) -> Path:
   {
       . = 0x00000000000000FC;
       .text : { *(.text) }
+      . = 0x0000000000000700;
+      .data : { *(.data) }
   }
   """
   with open(linker_out, "w") as f:

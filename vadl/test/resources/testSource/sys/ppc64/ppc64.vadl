@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/* PPC64SFS is a 64-bit implementation of the scalar fixed-point subset defined in PowerISA 3.1b. 
- * It includes 132 instructions (excluding variants) which are sometimes referred to as the "base 
+/* PPC64SFS is a 64-bit implementation of the scalar fixed-point subset defined in PowerISA 3.1b.
+ * It includes 132 instructions (excluding variants) which are sometimes referred to as the "base
  * architecture." The Power ISA represents a unification of the earlier POWER and PowerPC ISAs.
  *
  * Most modern 64-bit Power ISA processors support a 32-bit compatibility mode.

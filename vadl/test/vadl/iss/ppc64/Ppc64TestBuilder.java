@@ -27,11 +27,12 @@ import vadl.iss.CosimTestUtils;
 
 public class Ppc64TestBuilder {
 
-  private final String testId;
+  private final String name;
   private final List<String> instructions = new ArrayList<>();
+  private boolean mode64 = false;
 
-  public Ppc64TestBuilder(String testId) {
-    this.testId = testId;
+  public Ppc64TestBuilder(String name) {
+    this.name = name;
   }
 
   // TODO: expand to 64 bit
@@ -104,12 +105,18 @@ public class Ppc64TestBuilder {
     return this;
   }
 
-  public String toAsmString() {
-    return String.join("\n", instructions);
+  public Ppc64TestBuilder setMode64(boolean m) {
+    this.mode64 = m;
+    return this;
   }
 
-  public CosimTestUtils.TestCase toTestCase() {
-    return new CosimTestUtils.TestCase(testId, toAsmString());
+  public String toAsmString() {
+    return (mode64 ? "trap\n" : "") + String.join("\n", instructions);
+  }
+
+  public CosimTestUtils.TestCase toTestCase(int id) {
+    String mode = mode64 ? "M64" : "M32";
+    return new CosimTestUtils.TestCase(name + "-" + mode + "-" + id, toAsmString());
   }
 
 }
