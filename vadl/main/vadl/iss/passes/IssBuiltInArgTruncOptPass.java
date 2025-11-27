@@ -17,6 +17,7 @@
 package vadl.iss.passes;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
@@ -27,6 +28,7 @@ import vadl.types.BuiltInTable;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * The {@link IssNormalizationPass} ensures that all expression results fit within the
@@ -118,10 +120,15 @@ class IssBuiltInArgTruncOptimizer {
 
   private void optAllArgs(BuiltInCall call) {
     var typeWidth = call.type().asDataType().bitWidth();
+    var replacedArgs = new HashSet<ExpressionNode>();
     for (var arg : call.arguments()) {
       if (arg instanceof IssConstExtractNode extractNode
           // we cannot remove the extract operation if it manipulates the original input value
           && extractNode.preservedWidth() >= typeWidth) {
+        if (replacedArgs.contains(extractNode)) {
+          continue;
+        }
+        replacedArgs.add(extractNode);
         extractNode.replaceByGhostCastForUser(call);
       }
     }

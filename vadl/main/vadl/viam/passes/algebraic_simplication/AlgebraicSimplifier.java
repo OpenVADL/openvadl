@@ -21,7 +21,9 @@ import java.util.Optional;
 import vadl.utils.Pair;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
+import vadl.viam.passes.canonicalization.Canonicalizer;
 
 /**
  * This class contains the main driver logic to simplify algebraic expressions.
@@ -42,6 +44,8 @@ public class AlgebraicSimplifier {
 
   /**
    * Apply algebraic simplification as long as something changes on the given {@link Graph}.
+   * If nothing changes, the {@link Canonicalizer} is applied ones.
+   * If this doesn't change anything, we stop.
    *
    * @param graph where the simplification should be applied on.
    * @return number of changes applied
@@ -49,6 +53,7 @@ public class AlgebraicSimplifier {
   public int run(Graph graph) {
     return rules.stream().mapToInt(rule -> {
       boolean hasChanged;
+      boolean canonicalizedLastIteration = false;
       int changes = 0;
 
       do {
@@ -68,9 +73,28 @@ public class AlgebraicSimplifier {
 
           if (oldNode.isActive() && !newNode.isDeleted()) { // skip if replace not possible anymore
             oldNode.replaceAndDelete(newNode);
+            // re-add all usages. if a node used the old node, and some other node
+            // of the same type used the new node, they might be merged.
+            // by deleting and adding all usages of the new node, after replacing the old node,
+            // we can automatically optimize this.
+            newNode.usages().filter(n -> n instanceof ExpressionNode).toList()
+                .forEach(u -> u.replaceAndDelete(u.shallowCopy()));
             hasChanged = true;
             changes++;
           }
+        }
+
+        if (hasChanged) {
+          canonicalizedLastIteration = false;
+        }
+
+        if (!hasChanged && !canonicalizedLastIteration) {
+          // run the canonicalizer if no more changes were applied.
+          // if after the canonicalization, no more changes were applied,
+          // we finally stop.
+          canonicalizedLastIteration = true;
+          hasChanged = true;
+          Canonicalizer.canonicalize(graph);
         }
       } while (hasChanged);
 
