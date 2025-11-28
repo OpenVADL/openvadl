@@ -106,7 +106,7 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
         if (node.arguments().size() == 1) {
           writer.write(operator.left().value() + "(");
           visit(node.arguments().get(0));
-          writer.write(operator.left().value() + ")");
+          writer.write(")");
         } else {
           writer.write(operator.left().value() + "(");
           for (int i = 0; i < node.arguments().size(); i++) {

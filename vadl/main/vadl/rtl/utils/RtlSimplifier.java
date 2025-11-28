@@ -57,7 +57,7 @@ public class RtlSimplifier extends AlgebraicSimplifier {
    * Run simplification rules on the instruction progress graph. Keep the MiA mapping updated
    * when nodes are removed/replaced.
    *
-   * @param ipg instruction progress graph
+   * @param ipg     instruction progress graph
    * @param mapping MiA mapping
    */
   public void run(InstructionProgressGraph ipg, MiaMapping mapping) {
