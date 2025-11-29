@@ -29,8 +29,8 @@ import vadl.iss.CosimInstrTest;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class CosimPpc64InstrTest extends CosimInstrTest {
 
-  public Ppc64TestBuilder getBuilder(String name) {
-    return new Ppc64TestBuilder(name);
+  public Ppc64TestBuilder getBuilder(String name, int id) {
+    return new Ppc64TestBuilder(name, id);
   }
 
   @Override
@@ -411,53 +411,41 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   }
   */
 
-  /* not working
   @TestFactory
   @Order(56)
   Stream<DynamicTest> rlwimi() throws IOException {
     return testMFormRotateInstruction_R("rlwimi", "RLWIMI");
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(57)
   Stream<DynamicTest> rlwinm() throws IOException {
     return testMFormRotateInstruction_R("rlwinm", "RLWINM");
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(58)
   Stream<DynamicTest> rlwnm() throws IOException {
     return testMFormRotateInstruction_R("rlwnm", "RLWNM");
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(59)
   Stream<DynamicTest> slw() throws IOException {
     return testXFormShiftInstruction_R("slw", "SLW");
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(60)
   Stream<DynamicTest> srw() throws IOException {
     return testXFormShiftInstruction_R("srw", "SRW");
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(61)
   Stream<DynamicTest> sraw() throws IOException {
     return testXFormShiftInstruction_R("sraw", "SRAW");
   }
-  */
 
   @TestFactory
   @Order(62)
@@ -829,13 +817,11 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     return testTSRegInstruction_R("extsh", "EXTSH");
   }
 
-  /* not working
   @TestFactory
   @Order(121)
   Stream<DynamicTest> cntlzw() throws IOException {
     return testTSRegInstruction_R("cntlzw", "CNTLZW");
   }
-  */
 
   /* not supported by compiler
   @TestFactory
@@ -901,196 +887,196 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testTSSRegInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = b.anyReg().sample();
       var regDest = b.anyReg().sample();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2);
       b.add("%s %s, %s, %s", instruction, regDest, regSrc1, regSrc2);
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTSSRegInstructionExt(String instruction, String name, String ext)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = b.anyReg().sample();
       var regDest = b.anyReg().sample();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2);
       b.add("%s %s, %s, %s, %s", instruction, regDest, regSrc1, regSrc2, ext);
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTCRFieldSSRegInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = b.anyReg().sample();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2);
       b.add("%s %s, %s, %s", instruction, b.anyCRField().sample(), regSrc1, regSrc2);
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTSSCRBitInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var bitSrc1 = b.anyCRBit().sample();
       var bitSrc2 = b.anyCRBit().sample();
       var bitDest = b.anyReg().sample();
       // TODO: fill CR with random values
       b.add("%s %s, %s, %s", instruction, bitDest, bitSrc1, bitSrc2);
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTSRegImmS16Instruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var regSrc = b.anyReg().sample();
       var regDest = b.anyReg().sample();
       b.fillReg(regSrc);
       b.add("%s %s, %s, %s", instruction, regDest, regSrc, b.anyImmS(16));
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTSRegImmU16Instruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var regSrc = b.anyReg().sample();
       var regDest = b.anyReg().sample();
       b.fillReg(regSrc);
       b.add("%s %s, %s, %s", instruction, regDest, regSrc, b.anyImmU(16));
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTSRegInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var regSrc = b.anyReg().sample();
       var regDest = b.anyReg().sample();
       b.fillReg(regSrc);
       b.add("%s %s, %s", instruction, regDest, regSrc);
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTRegSCRFieldInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var fieldSrc = b.anyCRField().sample();
       var regDest = b.anyReg().sample();
       // TODO: fill CR with random values
       b.add("%s %s, %s", instruction, regDest, fieldSrc);
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTRegSCRBitInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var bitSrc = b.anyCRBit().sample();
       var regDest = b.anyReg().sample();
       // TODO: fill CR with random values
       b.add("%s %s, %s", instruction, regDest, bitSrc);
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTRegImmS16Instruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var regDest = b.anyReg().sample();
       b.add("%s %s, %s", instruction, regDest, b.anyImmS(16));
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testDFormCompareInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var regSrc = b.anyReg().sample();
       b.fillReg(regSrc);
       b.add("%s %s, %s, %s, %s", instruction, b.anyCRField().sample(), b.anyImmU(1), regSrc, b.anyImmS(16));
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testDFormLoadInstruction(String instruction, String name, boolean update)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var regSrc = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc)).sample() : b.anyReg().sample();
       // TODO: fill mem
       b.fillReg(regSrc);
       b.add("%s %s, %s(%s)", instruction, regDest, b.anyImmS(16), regSrc);
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testDFormStoreInstruction(String instruction, String name, boolean update)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2);
       b.add("%s %s, %s(%s)", instruction, regSrc1, b.anyImmS(16), regSrc2);
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testMFormRotateInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var regSrc = b.anyReg().sample();
       var regSrcOrImm5 = b.anyReg().sample();
       var regDest = b.anyReg().sample();
       b.fillReg(regSrc);
       b.fillReg(regSrcOrImm5);
       b.add("%s %s, %s, %s, %s, %s", instruction, regDest, regSrc, regSrcOrImm5, b.anyImmU(5), b.anyImmU(5));
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testXFormShiftInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var regSrcOrImm5 = b.anyReg().sample();
       var regSrc = b.anyReg().sample();
       var regDest = b.anyReg().sample();
       b.fillReg(regSrcOrImm5);
       b.fillReg(regSrc);
       b.add("%s %s, %s, %s", instruction, regDest, regSrcOrImm5, regSrc);
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testXFormLoadInstruction(String instruction, String name, boolean update)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var regSrc1 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       var regSrc2 = b.anyReg().sample();
       var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc1)).sample() : b.anyReg().sample();
@@ -1098,14 +1084,14 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       b.fillReg(regSrc1);
       b.fillReg(regSrc2);
       b.add("%s %s, %s, %s", instruction, regDest, regSrc1, regSrc2);
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testXFormStoreInstruction(String instruction, String name, boolean update)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       var regSrc3 = b.anyReg().sample();
@@ -1113,20 +1099,20 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       b.fillReg(regSrc2);
       b.fillReg(regSrc3);
       b.add("%s %s, %s, %s", instruction, regSrc1, regSrc2, regSrc3);
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTCRFieldModeSSRegInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name);
+      var b = getBuilder(name,id);
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = b.anyReg().sample();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2);
       b.add("%s %s, %s, %s, %s", instruction, b.anyCRField().sample(), b.anyImmU(1), regSrc1, regSrc2);
-      return b.toTestCase(id);
+      return b.toTestCase();
     });
   }
 

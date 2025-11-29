@@ -420,8 +420,8 @@ instruction set architecture PPC64SFS = {
 
   // generates a wrapping 64-bit mask
   function mask (start : Bits<6>, end : Bits<6>) -> DWord =
-    let lo = -1 as SDWord << start in
-      let hi = -1 as SDWord >> (63 - end) in
+    let lo = VADL::lsl(-1 as SDWord, start) in
+      let hi = VADL::lsr(-1 as SDWord, 63 - end) in
         if VADL::uleq(start, end)
         then lo & hi
         else lo | hi
@@ -726,8 +726,8 @@ instruction set architecture PPC64SFS = {
 
   model MFormRotateInstrExt (eid : Id, r : MFormRotateInstrRec, rc : Bool) : IsaDefs = {
     instruction $eid : MForm =
-      let r = VADL::ror(XW(rs), $r.rotsrc) as UDWord in
-        let m = mask (mb6 + 32, me6 + 32) in
+      let r = VADL::rol((XW(rs),XW(rs)), $r.rotsrc) in
+        let m = mask (31 - me6, 31 - mb6) in
           let result = $r.res in {
             X(ra) := result
             $CS($rc; $SetCR0(result))
@@ -749,12 +749,12 @@ instruction set architecture PPC64SFS = {
     assembly AsId($x.asm) = ($x.asm, " ", decimal(lev))
   }
 
-  record XFormArithmeticShiftInstrRec (x : AsmExt, shiftsrc : Ex)
+  record XFormArithmeticShiftInstrRec (x : AsmExt, shiftsrc : Ex, res : Ex)
 
   model XFormArithmeticShiftInstrExt (eid : Id, r : XFormArithmeticShiftInstrRec, rc : Bool) : IsaDefs = {
     instruction $eid : XFormA =
       let r = VADL::asr((XW(rs), 0 as UWord), $r.shiftsrc) in
-        let result = r(63..32) as SDWord in
+        let result = $r.res in
           let ca = if X(rs)(31) && r(31..0) != 0 then 1 as Bits<1> else 0 in {
             X(ra) := result
             XER := (XER.so, XER.ov, ca, XER.rsv1, XER.ov32, ca, XER.rsv2, XER.nbytes)
@@ -848,7 +848,7 @@ instruction set architecture PPC64SFS = {
 
   model XFormLogicalShiftInstrExt (eid : Id, x : AsmOpExt, rc : Bool) : IsaDefs = {
     instruction $eid : XFormA =
-      let result = VADL::$x.op(XW(rs), X(rb)(5..0)) as UDWord in {
+      let result = if X(rb)(5) = 0b0 then VADL::$x.op(XW(rs), X(rb)(4..0)) as UDWord else 0 in {
         X(ra) := result
         $CS($rc; $SetCR0(result))
       }
@@ -936,8 +936,8 @@ instruction set architecture PPC64SFS = {
   model XFormCmpRangedBytesInstr (asm : Str) : IsaDefs = {
     instruction AsId($asm) : XFormB =
       let b = XB(ra) as UByte in
-        let m = if l then (X(rb)(7..0)   <= b) & (b <= X(rb)(15..8))
-                     else (X(rb)(7..0)   <= b) & (b <= X(rb)(15..8)) &
+        let m = if l then (X(rb)(7..0)   <= b) & (b <= X(rb)(15..8) )
+                     else (X(rb)(7..0)   <= b) & (b <= X(rb)(15..8) ) &
                           (X(rb)(23..16) <= b) & (b <= X(rb)(31..24)) in
           $CRField(crt) := (0 as Bits<1>, m, 0 as Bits<2>)
     encoding AsId($asm) = {opcd = 0b011111, rsv1 = 0b0, extopcd = 0b00110'00000, rsv2 = 0b0}
@@ -1300,15 +1300,17 @@ instruction set architecture PPC64SFS = {
   $XFormBoolCondInstr(("SETNBCR"; 0b01111'00000);  0 as SDWord; -1 as SDWord)
 
   //------------------------Rotate/Shift-----------------------
-  $MFormRotateInstr((("RLWIMI"; 0b010100); sh           ; (r & m) | (X(ra) & ~m)))
-  $MFormRotateInstr((("RLWINM"; 0b010101); sh           ; r & m                 ))
-  $MFormRotateInstr((("RLWNM" ; 0b010111); X(sh)(4..0); r & m                   ))
+  $MFormRotateInstr((("RLWIMI"; 0b010100); sh         ; (r & m) | (X(ra) & ~m)))
+  $MFormRotateInstr((("RLWINM"; 0b010101); sh         ; r & m                 ))
+  $MFormRotateInstr((("RLWNM" ; 0b010111); X(sh)(4..0); r & m                 ))
 
   $XFormLogicalShiftInstr(("SLW"; lsl; 0b00000'11000))
   $XFormLogicalShiftInstr(("SRW"; lsr; 0b10000'11000))
 
-  $XFormArithmeticShiftInstr((("SRAW" ; 0b11000'11000); X(rb)(4..0)))
-  $XFormArithmeticShiftInstr((("SRAWI"; 0b11001'11000); rb         ))
+  $XFormArithmeticShiftInstr((("SRAW" ; 0b11000'11000); X(rb)(4..0);
+                             if X(rb)(5) = 0b0 then r(63..32) as SDWord else r(63) as SDWord))
+  $XFormArithmeticShiftInstr((("SRAWI"; 0b11001'11000); rb         ;
+                             r(63..32) as SDWord))
 
   //------------------------Compare----------------------------
   $XFormCmpInstr(("CMP" ; 0b00000'00000); false)
@@ -1409,10 +1411,10 @@ instruction set architecture PPC64SFS = {
 
   $DFormTrapInstr("TWI")
 
-  $XFormExCRInstr((("EXTSB" ; 0b11101'11010); XB(rs)           ))
-  $XFormExCRInstr((("EXTSH" ; 0b11100'11010); XH(rs)           ))
-  $XFormExCRInstr((("CNTLZW"; 0b00000'11010); VADL::clz(XW(rs))))
-  $XFormExCRInstr((("CNTTZW"; 0b10000'11010); VADL::ctz(XW(rs))))
+  $XFormExCRInstr((("EXTSB" ; 0b11101'11010); XB(rs)                                      ))
+  $XFormExCRInstr((("EXTSH" ; 0b11100'11010); XH(rs)                                      ))
+  $XFormExCRInstr((("CNTLZW"; 0b00000'11010); if XW(rs) = 0 then 32 else VADL::clz(XW(rs))))
+  $XFormExCRInstr((("CNTTZW"; 0b10000'11010); VADL::ctz(XW(rs))                           ))
 
   $SCFormSysCallInstr(("SC" ; 0b10); SysCall(lev)   )
   $SCFormSysCallInstr(("SCV"; 0b01); SysCallVectored)
