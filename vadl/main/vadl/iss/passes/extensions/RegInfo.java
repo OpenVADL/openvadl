@@ -25,6 +25,7 @@ import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
+import vadl.iss.IssUtils;
 import vadl.template.Renderable;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
@@ -58,9 +59,9 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
 
   /**
    * Names of all registers in a multidimensional register tensor.
+   * In the case of multi dimensional tensors, we will only build names for the outermost dimension.
    */
   public List<String> names() {
-    // TODO: This is not generic (only true for register file .. 2 dimensions)
     return reg().isSingleRegister() ? List.of(reg().simpleName()) :
         IntStream.range(0, reg().outermostDim().size())
             .mapToObj(i -> reg().simpleName() + i)
@@ -122,6 +123,8 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       renderObj.put("value_c_type", valueCType());
       renderObj.put("cpu_state_type_width", cpuStateTypeWidth());
       renderObj.put("names", names());
+      renderObj.put("is_tcg", !isGVec());
+      renderObj.put("is_gvec", isGVec());
       renderObj.put("constraints", renderConstraints(dims));
       renderObj.put("getter_params", renderParamsComma);
       renderObj.put("cpu_getter_signature",
@@ -131,8 +134,31 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
           "void set_cpu_" + nameLower + "(" + cpuStateName + "* env"
               + renderParamsComma + ", " + valueCType() + " val)");
       renderObj.put("c_array_def", renderCArrayDef());
+      renderObj.put("c_array_index", cArrayIndex("d"));
+      renderObj.put("c_reg_name_array_def", renderCRegNameArrayDef());
     }
     return renderObj;
+  }
+
+  /**
+   * Returns the array access for registers in the cpu state.
+   * CPU registers are rendered as a single value or 1D array, where all dimensions
+   * are flattened to one.
+   */
+  public String cArrayIndex(String indexPrefix) {
+    if (reg().indexDimensions().isEmpty()) {
+      return "";
+    }
+    var indexVars = reg().indexDimensions().stream().map(d -> indexPrefix + d.index()).toList();
+    return "[" + IssUtils.cIndex(indexVars, reg()) + "]";
+  }
+
+  private String renderCRegNameArrayDef() {
+    if (reg().indexDimensions().isEmpty()) {
+      return "";
+    }
+    // we only have a name for the first dimension
+    return "[" + reg().dimensions().getFirst().size() + "]";
   }
 
   private String renderCArrayDef() {

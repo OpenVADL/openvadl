@@ -104,7 +104,7 @@ public abstract class WriteResourceNode extends SideEffectNode {
   /**
    * The number of bits that is getting written to the resource.
    */
-  protected int writeBitWidth() {
+  public int writeBitWidth() {
     return resourceDefinition().resultType(indices.size()).bitWidth();
   }
 

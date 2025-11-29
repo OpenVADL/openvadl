@@ -14,7 +14,7 @@
 static [(${gen_arch_upper})]CPU* cpu_self;
 
 [# th:each="reg : ${register_tensors}"][# th:if="${reg.index_dims.size} > 0"]
-const char * const [(${gen_arch_lower})]_cpu_[(${reg.name_lower})]_names[(${reg.c_array_def})] = {
+const char * const [(${gen_arch_lower})]_cpu_[(${reg.name_lower})]_names[(${reg.c_reg_name_array_def})] = {
   "[(${#strings.arrayJoin(reg.names, '", "')})]"
 };
 [/][/]
@@ -26,7 +26,7 @@ const char * const [(${gen_arch_lower})]_cpu_[(${reg.name_lower})]_names[(${reg.
     [# th:each="constraint : ${reg.constraints}"]
     if ([(${constraint.check})]) return [(${constraint.value})];
     [/]
-    return env->[(${reg.name_lower})][# th:each="dim : ${reg.index_dims}"][ [(${dim.arg_name})]][/];
+    return env->[(${reg.name_lower})][(${reg.c_array_index})];
 }
 
 [(${reg.cpu_setter_signature})]
@@ -35,7 +35,7 @@ const char * const [(${gen_arch_lower})]_cpu_[(${reg.name_lower})]_names[(${reg.
     [# th:each="constraint : ${reg.constraints}"]
     if ([(${constraint.check})]) return;
     [/]
-    env->[(${reg.name_lower})][# th:each="dim : ${reg.index_dims}"][ [(${dim.arg_name})]][/] = val;
+    env->[(${reg.name_lower})][(${reg.c_array_index})] = val;
 }
 [/]
 

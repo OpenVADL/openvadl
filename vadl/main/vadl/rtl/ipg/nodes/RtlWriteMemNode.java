@@ -51,10 +51,10 @@ public class RtlWriteMemNode extends WriteResourceNode implements RtlConditional
   /**
    * Construct new write memory node.
    *
-   * @param memory memory to write to
-   * @param maxWords maximum number of words to write
-   * @param words input with number of words to write
-   * @param address address to write to
+   * @param memory    memory to write to
+   * @param maxWords  maximum number of words to write
+   * @param words     input with number of words to write
+   * @param address   address to write to
    * @param condition write condition
    */
   public RtlWriteMemNode(Memory memory, int maxWords, ExpressionNode words, ExpressionNode address,
@@ -115,7 +115,7 @@ public class RtlWriteMemNode extends WriteResourceNode implements RtlConditional
    * input).
    */
   @Override
-  protected int writeBitWidth() {
+  public int writeBitWidth() {
     return memory.wordSize() * maxWords;
   }
 

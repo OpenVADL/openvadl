@@ -56,6 +56,7 @@ import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteMemNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -125,6 +126,7 @@ class Decomposer
   void decompose(SideEffectNode sideEffect) {
     switch (sideEffect) {
       case WriteMemNode w -> handle(w);
+      case WriteRegTensorNode w -> handle(w);
       default -> sideEffect.fail("Unexpected side effect to handle: %s", sideEffect.getClass());
     }
   }
@@ -137,6 +139,33 @@ class Decomposer
   @Override
   public ExpressionNode request(ExpressionNode node, int msb, int lsb) {
     return request(node, new Slice(msb, lsb));
+  }
+
+  /**
+   * Helper to extract a slice from a chunk and accumulate it into the result.
+   * Handles source location copying and concatenation logic.
+   */
+  private ExpressionNode accumulateChunk(
+      @Nullable
+      ExpressionNode result,
+      ExpressionNode chunkRead,
+      Slice requestedSlice,
+      int chunkLsb,
+      int chunkWidth,
+      ExpressionNode sourceNode
+  ) {
+    chunkRead.setSourceLocation(sourceNode.location());
+
+    // Extract the requested slice from this chunk
+    int sliceInChunk_lo = Math.max(0, requestedSlice.lo() - chunkLsb);
+    int sliceInChunk_hi = Math.min(chunkWidth - 1, requestedSlice.hi() - chunkLsb);
+
+    var chunkPart = new SliceNode(chunkRead,
+        Constant.BitSlice.of(sliceInChunk_hi, sliceInChunk_lo),
+        Type.bits(sliceInChunk_hi - sliceInChunk_lo + 1));
+
+    // Concatenate chunks (or use single chunk if that's all we need)
+    return result == null ? chunkPart : GraphUtils.concat(chunkPart, result);
   }
 
   private ExpressionNode request(ExpressionNode node, Slice slice) {
@@ -207,6 +236,76 @@ class Decomposer
       // Create new WriteMemNode for this chunk
       var chunkWrite = graph.addWithInputs(
           new WriteMemNode(memory, chunkWords, adjustedAddress, chunkValue, condition));
+
+      // Preserve source location
+      chunkWrite.setSourceLocation(write.location());
+
+      for (var end : ends) {
+        end.addSideEffect(chunkWrite);
+      }
+    }
+
+    // Delete the original large write
+    for (var end : ends) {
+      end.removeSideEffect(write);
+    }
+    write.safeDelete();
+  }
+
+  void handle(WriteRegTensorNode write) {
+    int writeWidth = write.writeBitWidth();
+    if (writeWidth <= targetSize) {
+      return; // fits in target size, no decomposition needed
+    }
+
+    var regTensor = write.regTensor();
+    var indices = write.indices();
+    var value = write.value();
+    var condition = write.nullableCondition();
+    var staticCounterAccess = write.staticCounterAccess();
+    var graph = write.ensureGraph();
+
+    var ends = write.usages().gather(only(AbstractEndNode.class)).toList();
+
+    // Always decompose to innermost dimension (individual registers)
+    int innermostSize = regTensor.innermostDim().size();
+    int maxIndices = regTensor.maxNumberOfAccessIndices();
+
+    // Calculate how many innermost registers we need to write
+    int registersNeeded = writeWidth / innermostSize;
+    write.ensure(writeWidth % innermostSize == 0,
+        "Write width %d is not a multiple of innermost dimension size %d",
+        writeWidth, innermostSize);
+
+    // Calculate dimension sizes for multi-dimensional indexing
+    var dims = regTensor.dimensions();
+    int[] dimSizes = new int[maxIndices];
+    for (int d = 0; d < maxIndices; d++) {
+      dimSizes[d] = dims.get(d).size();
+    }
+
+    // Split the write into multiple writes to individual innermost registers
+    for (int i = 0; i < registersNeeded; i++) {
+      int lsb = i * innermostSize;
+      int msb = lsb + innermostSize - 1;
+
+      // Extract slice of the value for this innermost register
+      var chunkValue = request(value, msb, lsb);
+
+      // Calculate multi-dimensional index from linear index i
+      var newIndices = indices.copy();
+      int remaining = i;
+      for (int d = indices.size(); d < maxIndices; d++) {
+        int dimIndex = remaining % dimSizes[d];
+        remaining /= dimSizes[d];
+        var indexConst = Constant.Value.of(dimIndex, dims.get(d).indexType()).toNode();
+        newIndices.add(indexConst);
+      }
+
+      // Create new WriteRegTensorNode for this innermost register
+      var chunkWrite = graph.addWithInputs(
+          new WriteRegTensorNode(regTensor, newIndices, chunkValue, staticCounterAccess,
+              condition));
 
       // Preserve source location
       chunkWrite.setSourceLocation(write.location());
@@ -298,53 +397,67 @@ class Decomposer
 
   @Handler
   void handle(Request rq, ReadRegTensorNode toHandle) {
-    // ReadRegTensorNode reads from a register tensor.
-    // The requested slice must lie within the register's bit width.
-    // We create a new ReadRegTensorNode with the same indices and let the slice
-    // extract the requested bits from the full register read.
-
     var regTensor = toHandle.regTensor();
-    var fullWidth = regTensor.resultType(toHandle.indices().size()).bitWidth();
+    var indices = toHandle.indices();
+    var staticCounterAccess = toHandle.staticCounterAccess();
+    var readWidth = regTensor.resultType(indices.size()).bitWidth();
 
     // Ensure the requested slice is within bounds
-    toHandle.ensure(rq.slice.hi() < fullWidth,
+    toHandle.ensure(rq.slice.hi() < readWidth,
         "Requested slice [%d:%d] exceeds register width of %d bits",
-        rq.slice.hi(), rq.slice.lo(), fullWidth);
+        rq.slice.hi(), rq.slice.lo(), readWidth);
 
-    // If the slice is the full register and fits in target size, return as-is
-    if (rq.slice.lo() == 0 && rq.slice.hi() == fullWidth - 1 && fullWidth <= targetSize) {
-      rq.result = toHandle;
+    // If read fits in target size, just slice it
+    if (readWidth <= targetSize) {
+      rq.result = new SliceNode(toHandle,
+          Constant.BitSlice.of(rq.slice.hi(), rq.slice.lo()),
+          Type.bits(rq.slice.width()));
       return;
     }
 
-    // Create a read of the full register
-    var fullRead = new ReadRegTensorNode(
-        regTensor,
-        toHandle.indices(),
-        Type.bits(fullWidth).asDataType(),
-        toHandle.staticCounterAccess()
-    );
-    fullRead.setSourceLocation(toHandle.location());
+    // Need to decompose: read one or more innermost registers
+    int innermostSize = regTensor.innermostDim().size();
+    int maxIndices = regTensor.maxNumberOfAccessIndices();
 
-    // If the full width fits in target size, just slice it
-    if (fullWidth <= targetSize) {
-      rq.result = new SliceNode(fullRead,
-          Constant.BitSlice.of(rq.slice.hi(), rq.slice.lo()),
-          Type.bits(rq.slice.width()));
-    } else {
-      // Register is too wide - we need to decompose it
-      // For now, we still need to slice from the original read,
-      // but we request the decomposition of that slice
-      var sliced = new SliceNode(fullRead,
-          Constant.BitSlice.of(rq.slice.hi(), rq.slice.lo()),
-          Type.bits(rq.slice.width()));
+    // Calculate which innermost registers contain our requested slice
+    int firstRegIdx = rq.slice.lo() / innermostSize;
+    int lastRegIdx = rq.slice.hi() / innermostSize;
 
-      // The sliced result should fit in target size now
-      sliced.ensure(sliced.type().asDataType().bitWidth() <= targetSize,
-          "Sliced register read still exceeds target size");
-
-      rq.result = sliced;
+    // Calculate dimension sizes for multi-dimensional indexing
+    var dims = regTensor.dimensions();
+    int[] dimSizes = new int[maxIndices];
+    for (int d = 0; d < maxIndices; d++) {
+      dimSizes[d] = dims.get(d).size();
     }
+
+    ExpressionNode result = null;
+
+    // Read each innermost register that contains part of the requested slice
+    for (int regIdx = firstRegIdx; regIdx <= lastRegIdx; regIdx++) {
+      int regLsb = regIdx * innermostSize;
+
+      // Calculate multi-dimensional index from linear index
+      var newIndices = indices.copy();
+      int remaining = regIdx;
+      for (int d = indices.size(); d < maxIndices; d++) {
+        int dimIndex = remaining % dimSizes[d];
+        remaining /= dimSizes[d];
+        var indexConst = Constant.Value.of(dimIndex, dims.get(d).indexType()).toNode();
+        newIndices.add(indexConst);
+      }
+
+      // Read this innermost register
+      var regRead = new ReadRegTensorNode(
+          regTensor,
+          newIndices,
+          Type.bits(innermostSize).asDataType(),
+          staticCounterAccess
+      );
+
+      result = accumulateChunk(result, regRead, rq.slice, regLsb, innermostSize, toHandle);
+    }
+
+    rq.result = result;
   }
 
   @Handler
@@ -389,7 +502,51 @@ class Decomposer
 
   @Handler
   void handle(Request rq, ReadMemNode toHandle) {
-    throw new UnsupportedOperationException("Type ReadMemNode not yet implemented");
+    int readWidth = toHandle.readBitWidth();
+    var memory = toHandle.memory();
+    var wordSize = memory.wordSize();
+    var address = toHandle.address();
+
+    // If the entire read fits in target size, just slice it
+    if (readWidth <= targetSize) {
+      rq.result = new SliceNode(toHandle,
+          Constant.BitSlice.of(rq.slice.hi(), rq.slice.lo()),
+          Type.bits(rq.slice.width()));
+      return;
+    }
+
+    // Determine which chunks contain our requested slice
+    int chunkSize = targetSize;
+    int chunkStartIdx = rq.slice.lo() / chunkSize;
+    int chunkEndIdx = rq.slice.hi() / chunkSize;
+
+    var graph = toHandle.ensureGraph();
+    ExpressionNode result = null;
+
+    // Process all chunks that contain parts of the requested slice
+    for (int chunkIdx = chunkStartIdx; chunkIdx <= chunkEndIdx; chunkIdx++) {
+      int chunkLsb = chunkIdx * chunkSize;
+      int chunkMsb = Math.min(chunkLsb + chunkSize - 1, readWidth - 1);
+      int chunkWidth = chunkMsb - chunkLsb + 1;
+
+      // Calculate address offset (in words)
+      int byteOffset = chunkLsb / 8;
+      int wordOffset = byteOffset / (wordSize / 8);
+      int chunkWords = (chunkWidth + wordSize - 1) / wordSize;
+
+      // Create address with offset
+      var offsetConst = Constant.Value.of(wordOffset, address.type().asDataType()).toNode();
+      var adjustedAddress = wordOffset == 0 ? address :
+          graph.addWithInputs(BuiltInTable.ADD.call(address, offsetConst));
+
+      // Create read for this chunk
+      var chunkRead = new ReadMemNode(memory, chunkWords, adjustedAddress,
+          Type.bits(chunkWidth).asDataType());
+
+      result = accumulateChunk(result, chunkRead, rq.slice, chunkLsb, chunkWidth, toHandle);
+    }
+
+    rq.result = result;
   }
 
   @Handler

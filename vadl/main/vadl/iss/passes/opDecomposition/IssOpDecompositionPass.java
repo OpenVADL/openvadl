@@ -54,7 +54,7 @@ import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
-import vadl.viam.graph.dependency.WriteMemNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -152,7 +152,7 @@ class OpDecomposer {
 
   private boolean decomposeSideeffects() {
     // TODO: Handle WriteRegTensorNode
-    var hit = behavior.getNodes(WriteMemNode.class)
+    var hit = behavior.getNodes(WriteResourceNode.class)
         .filter(node -> node.writeBitWidth() >= targetSize.width)
         .findFirst();
     if (hit.isPresent()) {

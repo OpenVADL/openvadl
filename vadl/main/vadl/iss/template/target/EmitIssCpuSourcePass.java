@@ -17,15 +17,12 @@
 package vadl.iss.template.target;
 
 import java.util.Map;
-import java.util.stream.Collectors;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.codegen.IssResetGen;
-import vadl.iss.template.IssRenderUtils;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.utils.Pair;
-import vadl.utils.codegen.CodeGeneratorAppendable;
-import vadl.utils.codegen.StringBuilderAppendable;
+import vadl.utils.codegen.CCodeBuilder;
+import vadl.utils.codegen.CStringBuilder;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
@@ -58,7 +55,7 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
   }
 
   private String dumpRegsCode(Specification specification) {
-    var sb = new StringBuilderAppendable();
+    var sb = new CStringBuilder();
     var isa = specification.processor().get().isa();
     sb.indent();
     isa.registerTensors().forEach(tensor -> {
@@ -68,29 +65,36 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
     return sb.toString();
   }
 
-  private void dumpRegsCode(CodeGeneratorAppendable sb, RegisterTensor reg) {
-    var layers = reg.indexDimensions().stream()
-        .map(d -> Pair.of("d" + d.index(), d.size()))
-        .toList();
-    var indexAccess = layers.stream().map(l -> "[" + l.left() + "]")
-        .collect(Collectors.joining());
+  private void dumpRegsCode(CCodeBuilder sb, RegisterTensor reg) {
+    var regLower = reg.simpleName().toLowerCase();
+    var target = configuration().targetName().toLowerCase();
+    var names = target + "_cpu_" + regLower + "_names";
 
-    var nameLower = reg.simpleName().toLowerCase();
+    var dims = reg.indexDimensions();
 
-    IssRenderUtils.generateNestedLoops(sb, layers, (b) -> {
-      if (layers.isEmpty()) {
-        b.append("qemu_fprintf(f, \" %s:    \" TARGET_FMT_lx \"\\n\", env->%s);"
-            .formatted(reg.simpleName(), nameLower));
-      } else {
-        var target = configuration().targetName().toLowerCase();
-        var names = target + "_cpu_" + nameLower + "_names";
-        var innerLayer = layers.getLast().left();
-        b.appendLn("qemu_fprintf(f, \" %-8s \" TARGET_FMT_lx, "
-            + names + indexAccess + ", env->"
-            + nameLower + indexAccess + ");");
-        b.append("if (" + innerLayer + " & 3 == 3) qemu_fprintf(f, \"\\n\");");
-      }
-    });
+    if (dims.isEmpty()) {
+      sb.callStmt("qemu_fprintf", "f",
+          "\" " + reg.simpleName() + ":    \" TARGET_FMT_lx \"\\n\"",
+          "env->" + regLower);
+      sb.append("qemu_fprintf(f, \" %s:    \" TARGET_FMT_lx \"\\n\", env->%s);"
+          .formatted(reg.simpleName(), regLower));
+    } else if (dims.size() == 1) {
+      sb.forLoop("i", dims.getFirst().size() - 1, (_) -> {
+        sb.callStmt("qemu_fprintf", "f", "\" %-8s \" TARGET_FMT_lx", names + "[i]",
+            "env->" + regLower + "[i]");
+        sb.ifStmt("i & 3 == 3", (_) ->
+            sb.callStmt("qemu_fprintf", "f", "\"\\n\"")
+        );
+      });
+    } else {
+      sb.forLoop("i", dims.getFirst().size() - 1, (_) -> {
+        sb.callStmt("qemu_fprintf", "f", "\" %-8s \"", names + "[i]");
+        sb.varDecl("uint8_t *", "p", "(uint8_t *) env->" + regLower);
+        var innerSizeBytes = reg.resultType(1).bitWidth() / 8;
+        sb.forLoop("int j = " + innerSizeBytes, "j >= 0", "j--", (_) -> {
+          sb.callStmt("qemu_fprintf", "f", "\"%02x\"", "*(p + i * " + innerSizeBytes + " + j)");
+        });
+      });
+    }
   }
-
 }

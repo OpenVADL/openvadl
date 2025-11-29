@@ -16,7 +16,7 @@
 #undef  HELPER_H
 
 // define the registers tcgs
-[# th:each="reg : ${register_tensors}"]
+[# th:each="reg : ${register_tensors}" th:if="${reg.is_tcg}"]
 static TCGv cpu_[(${reg.name_lower})][(${reg.c_array_def})];
 [/]
 
@@ -64,7 +64,7 @@ static target_ulong next_insn(DisasContext *ctx)
     return translator_ld[(${insn_width.short})]_swap(ctx->env, &ctx->base, pc_next, true);
 }
 
-[# th:each="reg : ${register_tensors}"]
+[# th:each="reg : ${register_tensors}" th:if="${reg.is_tcg}"]
 static TCGv get_[(${reg.name_lower})](DisasContext *ctx [(${reg.getter_params})])
 {   [# th:each="dim : ${reg.index_dims}"]
     assert( [(${dim.arg_name})] < [(${dim["size"]})]); [/]
