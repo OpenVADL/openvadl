@@ -3113,16 +3113,7 @@ public class TypeChecker
              underlying problem because our typesystem isn't strong enough (and I would argue it
              also shouldn't be that strong/complex).
            */
-//          currType = switch (currType) {
-//            case BitsType ignored -> Type.bits(1);
-//            case TensorType tensorType -> tensorType.pop();
-//            default -> throw addErrorAndStopChecking(
-//                error("Invalid Slice", slice.location)
-//                    .description("Only bit types can be sliced but the target was a `%s`", currType)
-//                    .build());
-//          };
           slice.type = currType;
-
         }
       }
     }

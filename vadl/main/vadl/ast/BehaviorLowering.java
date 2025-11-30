@@ -663,6 +663,191 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
 
+  /// This utility function can be used to fill in missing indexes of a tensor.
+  ///
+  /// It basically returns a permutation of all possible indices for the dimensions provided.
+  ///
+  /// Example:
+  /// ```
+  /// [2] -> [[0], [1]]
+  /// [2, 2] -> [[0, 0], [0, 1], [1, 0], [1, 1]]
+  /// ```
+  private List<List<Integer>> permutationOfTensorIndicies(List<Integer> dimensions) {
+    if (dimensions.isEmpty()) {
+      return List.of(List.of());
+    }
+
+    var tailResult = permutationOfTensorIndicies(dimensions.subList(1, dimensions.size()));
+
+    var result = new ArrayList<List<Integer>>();
+    for (int i = 0; i < dimensions.getFirst(); i++) {
+      for (var tail : tailResult) {
+        result.add(Stream.concat(Stream.of(i), tail.stream()).toList());
+      }
+    }
+
+    return result;
+  }
+
+
+  /// It is allowed to read from a TensorResource and not supply all indices. In that case all the
+  /// missing indices have to be filled, many reads are issued and
+  ///
+  /// @return the expression to read from a register.
+  private ExpressionNode readTensorResourceConcatinated(RegisterResource resource,
+                                                        List<ExpressionNode> indices,
+                                                        DataType type
+  ) {
+    // Matches exactly
+    if (resource.indexTypes().size() == indices.size()) {
+      return switch (resource) {
+        case RegisterTensor register ->
+            new ReadRegTensorNode(register, new NodeList<>(indices), type, null);
+        case ArtificialResource register ->
+            new ReadArtificialResNode(register, new NodeList<>(indices), type);
+        default -> throw new IllegalStateException("Unsupported resource type: " + resource);
+      };
+    }
+
+    // Concatination needed
+    // Here we take all provided indices and for the missing dimensions we fill out all possible
+    // values and concatenate them.
+
+    var requiredDimensions = switch (resource) {
+      case RegisterTensor register -> register.indexDimensions();
+      case ArtificialResource register -> register.dimensions();
+      default -> throw new IllegalStateException("Unsupported resource type: " + resource);
+    };
+
+
+    var missingDimensions = requiredDimensions.stream()
+        .skip(indices.size()).toList();
+
+    var missingTypes = missingDimensions.stream().map(d -> d.indexType()).toList();
+
+    var missingPermutations = permutationOfTensorIndicies(
+        missingDimensions.stream()
+            .map(d -> d.size()).toList());
+
+
+    var missingIndices =
+        missingPermutations.stream()
+            .map(
+                entry -> Streams.zip(entry.stream(), missingTypes.stream(),
+                        (a, b) -> (ExpressionNode) Constant.Value.of(a, b).toNode())
+                    .toList())
+            .toList();
+
+    var fullIndices = missingIndices.stream().map(item ->
+        Streams.concat(indices.stream(), item.stream()).toList()
+    ).toList();
+
+
+    ExpressionNode result = null;
+    int currentBitWidth = 0;
+    for (var indexList : fullIndices) {
+      var read = switch (resource) {
+        case RegisterTensor register ->
+            new ReadRegTensorNode(register, new NodeList<>(indexList), register.resultType(), null);
+        case ArtificialResource register ->
+            new ReadArtificialResNode(register, new NodeList<>(indexList), register.resultType());
+        default -> throw new IllegalStateException("Unsupported resource type: " + resource);
+      };
+
+      currentBitWidth += read.type().asDataType().bitWidth();
+      if (result == null) {
+        result = read;
+      } else {
+        result = new BuiltInCall(BuiltInTable.CONCATENATE_BITS, new NodeList<>(read, result),
+            Type.bits(currentBitWidth));
+      }
+    }
+
+    return requireNonNull(result);
+  }
+
+  /// Write to a resource even if not all indices are supplied.
+  ///
+  /// @return A list of sideeffects which write to the provided resource
+  private List<WriteResourceNode> writeTensorResourceSliced(RegisterResource resource,
+                                                            List<ExpressionNode> indices,
+                                                            ExpressionNode value,
+                                                            List<Constant.BitSlice> slices) {
+    // No multiple writes and slices needed
+    if (resource.indexTypes().size() <= indices.size()) {
+      switch (resource) {
+        case RegisterTensor register -> {
+          var slicedValue = sliceWriteValue(value,
+              new ReadRegTensorNode(register, new NodeList<>(indices), register.resultType(), null),
+              slices);
+          return List.of(
+              new WriteRegTensorNode(register, new NodeList<>(indices), slicedValue, null, null));
+        }
+        case ArtificialResource register -> {
+          var slicedValue = sliceWriteValue(value,
+              new ReadArtificialResNode(register, new NodeList<>(indices), register.resultType()),
+              slices);
+          return List.of(
+              new WriteArtificialResNode(register, new NodeList<>(indices), slicedValue));
+        }
+        default -> throw new IllegalStateException("Unsupported resource type: " + resource);
+      }
+    }
+
+    // Multiple writes needed and value must be sliced
+
+    var requiredDimensions = switch (resource) {
+      case RegisterTensor register -> register.indexDimensions();
+      case ArtificialResource register -> register.dimensions();
+      default -> throw new IllegalStateException("Unsupported resource type: " + resource);
+    };
+
+
+    var missingDimensions = requiredDimensions.stream()
+        .skip(indices.size()).toList();
+
+    var missingTypes = missingDimensions.stream().map(d -> d.indexType()).toList();
+
+    var missingPermutations = permutationOfTensorIndicies(
+        missingDimensions.stream()
+            .map(d -> d.size()).toList());
+
+
+    var missingIndices =
+        missingPermutations.stream()
+            .map(
+                entry -> Streams.zip(entry.stream(), missingTypes.stream(),
+                        (a, b) -> (ExpressionNode) Constant.Value.of(a, b).toNode())
+                    .toList())
+            .toList();
+
+    var fullIndices = missingIndices.stream().map(item ->
+        Streams.concat(indices.stream(), item.stream()).toList()
+    ).toList();
+
+
+    var result = new ArrayList<WriteResourceNode>();
+    var width = resource.resultType().bitWidth();
+    for (int i = 0; i < fullIndices.size(); i++) {
+      var lsb = i * width;
+      var msb = i * width + width - 1;
+      var slice = new SliceNode(value, Constant.BitSlice.of(msb, lsb), Type.bits(width));
+
+      result.add(
+          switch (resource) {
+            case RegisterTensor register ->
+                new WriteRegTensorNode(register, new NodeList<>(fullIndices.get(i)), slice, null,
+                    null);
+            case ArtificialResource register ->
+                new WriteArtificialResNode(register, new NodeList<>(fullIndices.get(i)), slice);
+            default -> throw new IllegalStateException("Unsupported resource type: " + resource);
+          }
+      );
+    }
+
+    return result;
+  }
+
   /**
    * Identifier and IdentifierPath are quite similar in what they do, so let's resolve both here.
    */
@@ -716,29 +901,16 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Register
     if (computedTarget instanceof RegisterDefinition registerDefinition) {
       var register = (RegisterTensor) viamLowering.fetch(registerDefinition).orElseThrow();
-      return new ReadRegTensorNode(
-          register,
-          new NodeList<>(),
-          (DataType) getViamType(expr.type()),
-          null);
+      return readTensorResourceConcatinated(register, List.of(),
+          (DataType) getViamType(expr.type()));
     }
 
     // Register Alias
     if (computedTarget instanceof AliasDefinition aliasDefinition
         && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER)) {
-      // FIXME: Currently there are no artificial ressources for registers so just inline it here
-      // but once there are uncomment the code below.
-      // https://github.com/OpenVADL/open-vadl/issues/104
-
-      // var alias = (ArtificialResource) viamLowering.fetch(aliasDefinition).orElseThrow();
-      // return new ReadArtificialResNode(alias, null, (DataType) expr.type());
-
-      // Don't call fetch on purpose cause the graph is the wrong one:
-      var x = fetch(aliasDefinition.value);
-      if (x.graph() != null && x.graph() != currentGraph) {
-        System.out.println();
-      }
-      return fetch(aliasDefinition.value);
+      var alias = (ArtificialResource) viamLowering.fetch(aliasDefinition).orElseThrow();
+      return readTensorResourceConcatinated(alias, List.of(),
+          (DataType) getViamType(expr.type()));
     }
 
     // Counters
@@ -957,101 +1129,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         getViamType(expr.type()));
   }
 
-  private List<List<Integer>> permutationOfTensorIndicies(List<Integer> indices) {
-    if (indices.isEmpty()) {
-      return List.of(List.of());
-    }
-
-    var tailResult = permutationOfTensorIndicies(indices.subList(1, indices.size()));
-
-    var result = new ArrayList<List<Integer>>();
-    for (int i = 0; i < indices.getFirst(); i++) {
-      for (var tail : tailResult) {
-        result.add(Stream.concat(Stream.of(i), tail.stream()).toList());
-      }
-    }
-
-    return result;
-  }
-
-  /**
-   * It is allowed to read from a TensorResource and not supply all indices. In that case all the
-   * missing indices have to be filled, many reads are issued and
-   *
-   * @return
-   */
-  private ExpressionNode readTensorResourceConcatinated(RegisterResource resource,
-                                                        List<ExpressionNode> indices,
-                                                        DataType type
-  ) {
-    // Matches exactly
-    if (resource.indexTypes().size() == indices.size()) {
-      return switch (resource) {
-        case RegisterTensor register ->
-            new ReadRegTensorNode(register, new NodeList<>(indices), type, null);
-        case ArtificialResource register ->
-            new ReadArtificialResNode(register, new NodeList<>(indices), type);
-        default -> throw new IllegalStateException("Unsupported resource type: " + resource);
-      };
-    }
-
-    // Concatination needed
-    // Here we take all provided indices and for the missing dimensions we fill out all possible
-    // values and concatenate them.
-
-    var requiredDimensions = switch (resource) {
-      case RegisterTensor register -> register.indexDimensions();
-      case ArtificialResource register -> register.dimensions();
-      default -> throw new IllegalStateException("Unsupported resource type: " + resource);
-    };
-
-
-    var missingDimensions = requiredDimensions.stream()
-        .skip(indices.size()).toList();
-
-    var missingTypes = missingDimensions.stream().map(d -> d.indexType()).toList();
-
-    var missingPermutations = permutationOfTensorIndicies(
-        missingDimensions.stream()
-            .map(d -> d.size()).toList());
-
-
-    var missingIndices =
-        missingPermutations.stream()
-            .map(
-                entry -> Streams.zip(entry.stream(), missingTypes.stream(),
-                        (a, b) -> (ExpressionNode) Constant.Value.of(a, b).toNode())
-                    .toList())
-            .toList();
-
-    var fullIndices = missingIndices.stream().map(item ->
-        Streams.concat(indices.stream(), item.stream()).toList()
-    ).toList();
-
-
-    ExpressionNode result = null;
-    int currentBitWidth = 0;
-    for (var indexList : fullIndices) {
-      var read = switch (resource) {
-        case RegisterTensor register ->
-            new ReadRegTensorNode(register, new NodeList<>(indexList), register.resultType(), null);
-        case ArtificialResource register ->
-            new ReadArtificialResNode(register, new NodeList<>(indexList), register.resultType());
-        default -> throw new IllegalStateException("Unsupported resource type: " + resource);
-      };
-
-      currentBitWidth += read.type().asDataType().bitWidth();
-      if (result == null) {
-        result = read;
-      } else {
-        result = new BuiltInCall(BuiltInTable.CONCATENATE_BITS, new NodeList<>(read, result),
-            Type.bits(currentBitWidth));
-      }
-    }
-
-    return requireNonNull(result);
-  }
-
   /**
    * Subcalls for format fields introduce slicing, which is handled here.
    *
@@ -1130,7 +1207,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         result = new SliceNode(result, slice.computedstaticBitSlice, type);
       } else {
         // Dynamic slice
-        ExpressionNode msb, lsb;
+        ExpressionNode lsb;
+        ExpressionNode msb;
         if (typeBefore instanceof TensorType tensorType) {
           var width = tensorType.pop().bitWidth();
           var indexExpr = fetch(slice.values.getFirst());
@@ -1469,19 +1547,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var viamTargetDef = viamLowering.fetch(targetDef).orElseThrow();
 
     // No need to call getViamType here as the viam definitions should already have that.
-    WriteResourceNode writeNode = switch (viamTargetDef) {
-      case RegisterTensor regDef -> new WriteRegTensorNode(regDef, argExprs,
-          // slice the written value before writing it
-          sliceWriteValue(value,
-              new ReadRegTensorNode(regDef, argExprs, regDef.resultType(), null), slices),
-          null, null);
+    var writeNodes = switch (viamTargetDef) {
+      case RegisterTensor regDef -> writeTensorResourceSliced(
+          regDef, argExprs, value, slices
+      );
 
-      case ArtificialResource aliasDef -> new WriteArtificialResNode(
-          aliasDef,
-          argExprs,
-          // slice the written value before writing it
-          sliceWriteValue(value,
-              new ReadArtificialResNode(aliasDef, argExprs, aliasDef.resultType()), slices)
+      case ArtificialResource aliasDef -> writeTensorResourceSliced(
+          aliasDef, argExprs, value, slices
       );
 
       case Memory memDef -> {
@@ -1490,25 +1562,31 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         var slicedValue = sliceWriteValue(value,
             new ReadMemNode(memDef, words, argExprs.getFirst(),
                 ((BitsType) memDef.resultType()).scaleBy(words)), slices);
-        yield new WriteMemNode(
+        yield List.of((vadl.viam.graph.Node) new WriteMemNode(
             memDef, callSize != null ? callSize : 1,
             argExprs.getFirst(), slicedValue
-        );
+        ));
       }
 
       // FIXME: Adjust value based on counter position
-      case Counter counterDef -> new WriteRegTensorNode(counterDef.registerTensor(), argExprs,
-          // slice the written value before writing it
-          sliceWriteValue(value,
-              new ReadRegTensorNode(counterDef.registerTensor(), argExprs,
-                  counterDef.registerTensor().resultType(), null), slices),
-          null, null);
+      case Counter counterDef ->
+          List.of(new WriteRegTensorNode(counterDef.registerTensor(), argExprs,
+              // slice the written value before writing it
+              sliceWriteValue(value,
+                  new ReadRegTensorNode(counterDef.registerTensor(), argExprs,
+                      counterDef.registerTensor().resultType(), null), slices),
+              null, null));
 
       default -> throw new IllegalStateException("Unexpected target: " + viamTargetDef);
     };
-    writeNode.setSourceLocationIfNotSet(statement.target.location());
 
-    return SubgraphContext.of(statement, writeNode);
+
+    for (var writeNode : writeNodes) {
+      writeNode.setSourceLocationIfNotSet(statement.target.location());
+    }
+
+    return SubgraphContext.of(statement,
+        writeNodes.stream().map(n -> (vadl.viam.graph.Node) n).toList());
   }
 
   /**
