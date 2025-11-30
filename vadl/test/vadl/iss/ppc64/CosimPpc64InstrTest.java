@@ -887,7 +887,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testTSSRegInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = b.anyReg().sample();
       var regDest = b.anyReg().sample();
@@ -901,7 +901,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testTSSRegInstructionExt(String instruction, String name, String ext)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = b.anyReg().sample();
       var regDest = b.anyReg().sample();
@@ -915,7 +915,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testTCRFieldSSRegInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = b.anyReg().sample();
       b.fillReg(regSrc1);
@@ -928,7 +928,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testTSSCRBitInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var bitSrc1 = b.anyCRBit().sample();
       var bitSrc2 = b.anyCRBit().sample();
       var bitDest = b.anyReg().sample();
@@ -941,7 +941,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testTSRegImmS16Instruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var regSrc = b.anyReg().sample();
       var regDest = b.anyReg().sample();
       b.fillReg(regSrc);
@@ -953,7 +953,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testTSRegImmU16Instruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var regSrc = b.anyReg().sample();
       var regDest = b.anyReg().sample();
       b.fillReg(regSrc);
@@ -965,7 +965,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testTSRegInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var regSrc = b.anyReg().sample();
       var regDest = b.anyReg().sample();
       b.fillReg(regSrc);
@@ -977,7 +977,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testTRegSCRFieldInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var fieldSrc = b.anyCRField().sample();
       var regDest = b.anyReg().sample();
       // TODO: fill CR with random values
@@ -989,7 +989,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testTRegSCRBitInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var bitSrc = b.anyCRBit().sample();
       var regDest = b.anyReg().sample();
       // TODO: fill CR with random values
@@ -1001,7 +1001,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testTRegImmS16Instruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var regDest = b.anyReg().sample();
       b.add("%s %s, %s", instruction, regDest, b.anyImmS(16));
       return b.toTestCase();
@@ -1011,7 +1011,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testDFormCompareInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var regSrc = b.anyReg().sample();
       b.fillReg(regSrc);
       b.add("%s %s, %s, %s, %s", instruction, b.anyCRField().sample(), b.anyImmU(1), regSrc, b.anyImmS(16));
@@ -1022,7 +1022,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testDFormLoadInstruction(String instruction, String name, boolean update)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var regSrc = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc)).sample() : b.anyReg().sample();
       // TODO: fill mem
@@ -1035,7 +1035,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testDFormStoreInstruction(String instruction, String name, boolean update)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       b.fillReg(regSrc1);
@@ -1048,7 +1048,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testMFormRotateInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var regSrc = b.anyReg().sample();
       var regSrcOrImm5 = b.anyReg().sample();
       var regDest = b.anyReg().sample();
@@ -1062,7 +1062,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testXFormShiftInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var regSrcOrImm5 = b.anyReg().sample();
       var regSrc = b.anyReg().sample();
       var regDest = b.anyReg().sample();
@@ -1076,7 +1076,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testXFormLoadInstruction(String instruction, String name, boolean update)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var regSrc1 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       var regSrc2 = b.anyReg().sample();
       var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc1)).sample() : b.anyReg().sample();
@@ -1091,7 +1091,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testXFormStoreInstruction(String instruction, String name, boolean update)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       var regSrc3 = b.anyReg().sample();
@@ -1106,7 +1106,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   private Stream<DynamicTest> testTCRFieldModeSSRegInstruction(String instruction, String name)
       throws IOException {
     return runTestsWith(id -> {
-      var b = getBuilder(name,id);
+      var b = getBuilder(name, id);
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = b.anyReg().sample();
       b.fillReg(regSrc1);
