@@ -128,7 +128,7 @@ TOKENS
   ENUMERATION  = "enumeration".
   EXCEPTION    = "exception".
   EXISTS       = "exists".
-  AS_ID    = "AsId".
+  AS_ID        = "AsId".
   EXTENDING    = "extending".
   FALSE        = "false".
   FETCH        = "fetch".
@@ -143,7 +143,7 @@ TOKENS
   GRAMMAR      = "grammar".
   GROUP        = "group".
   HIT          = "hit".
-  AS_STR    = "AsStr".
+  AS_STR       = "AsStr".
   IF_KW        = "if".
   INT          = "int".
   IMPLEMENTS   = "implements".
@@ -278,13 +278,12 @@ PRODUCTIONS
 The #vadl production rule is the entry point of a VADL processor specification as
 well as of the OpenVADL parser.<br>
 
-A VADL specification consists of multiple #topLevelDefinition like a type alias
-(#usingDefinition) or a function definition (#functionDefinition) and sections
-like the ISA section (#instructionsetDefinition). It is also possible to define
-macros (#macroDefinition).
+A VADL specification consists of multiple #topLevelDefinition elements like a type alias
+(#usingDefinition) or a function definition (#functionDefinition) and sections like the
+ISA section (#instructionsetDefinition). It is also possible to define macros (#macroDefinition).
 */
-  vadl =
-  {
+  vadl
+  = {
     SYNC
     topLevelDefinition<out Definition def>     (. addDef(ast.definitions, def);
                                                   // Only call the symbol resolver if there were no errors, because other
@@ -308,10 +307,6 @@ macros (#macroDefinition).
 The #topLevelDefinition production rule lists (beside macro definitions) all \ac{VADL}
 language elements allowed on the top level of a \ac{VADL} specification.<br>
 
-A VADL specification consists of multiple #topLevelDefinition like a type alias
-(#usingDefinition) or a function definition (#functionDefinition) and sections
-like the ISA section (#instructionsetDefinition). It is also possible to define
-macros (#macroDefinition).
 \listing{lst_top_level_definitions, Top level definitions with some common definitions}
 ~~~{.vadl}
 constant MLen = 64
@@ -328,6 +323,17 @@ micro architecture FiveStage implements RV64IM = {}
 processor CPU implements RV64IM with ABI = {}
 ~~~
 \endlisting
+
+Listing \r{lst_top_level_definitions} gives examples for top level language elements.
+Annotations (#annotations) can be added to most \ac{VADL} language elements.
+The `htif` annotation in line 11 is an annotation for the processor definition (#processorDefinition) in line 12.
+A constant definition (line 1), a using definition (line 2) or a function definition (line 3)
+are examples for common definitions (#commonDefinition).
+An instruction set architecture definition (#instructionsetDefinition) is shown in line 7.
+An application binary interface definition (#applicationBinaryInterfaceDefinition) is shown in line 8.
+An assembly description (#assemblyDescriptionDefinition) is shown in line 9.
+A micro architecture definition (#microArchitectureDefinition) is shown in line 10.
+
 
 #topLevelDefinition is referenced by \refFrom.
 */
