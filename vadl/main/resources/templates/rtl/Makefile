@@ -1,6 +1,8 @@
 # Makefile for [(${projectName})]
 
 test: riscv-tests
+	mkdir -p build
+	touch build/[(${topModule})]-riscv-tests.log
 	sbt test 2>&1 | tee build/[(${topModule})]-riscv-tests.log
 
 riscv-tests:
