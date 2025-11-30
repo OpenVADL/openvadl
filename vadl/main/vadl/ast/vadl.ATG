@@ -278,35 +278,61 @@ PRODUCTIONS
 The #vadl production rule is the entry point of a VADL processor specification as
 well as of the OpenVADL parser.<br>
 
-A VADL specification consists of multiple #topLevelDefinitions like a type alias
+A VADL specification consists of multiple #topLevelDefinition like a type alias
 (#usingDefinition) or a function definition (#functionDefinition) and sections
 like the ISA section (#instructionsetDefinition). It is also possible to define
-macros (#macrodef).
+macros (#macroDefinition).
 */
   vadl =
   {
     SYNC
-    topLevelDefinitions<out Definition def> (.
-                                                addDef(ast.definitions, def);
-                                                // Only call the symbol resolver if there were no errors, because other
-                                                // wise the AST might be invalid, causing a crash.
-                                                if (errors.count == 0) {
-                                                  new SymbolTable.SymbolCollector().collectSymbols(ast.rootSymbolTable(), def);
-                                                }
-                                            .)
-    | macroDef<out ModelDefinition def>     (.
-                                                addDef(ast.definitions, def);
-                                                // Only call the symbol resolver if there were no errors, because other
-                                                // wise the AST might be invalid, causing a crash.
-                                                if (errors.count == 0) {
-                                                new SymbolTable.SymbolCollector().collectSymbols(ast.rootSymbolTable(), def); macroTable.addModelDefinition(def);
-                                                }
+    topLevelDefinition<out Definition def>     (. addDef(ast.definitions, def);
+                                                  // Only call the symbol resolver if there were no errors, because other
+                                                  // wise the AST might be invalid, causing a crash.
+                                                  if (errors.count == 0) {
+                                                    new SymbolTable.SymbolCollector().collectSymbols(ast.rootSymbolTable(), def);
+                                                  }
+                                                .)
+    | macroDefinition<out ModelDefinition def> (. addDef(ast.definitions, def);
+                                                  // Only call the symbol resolver if there were no errors, because other
+                                                  // wise the AST might be invalid, causing a crash.
+                                                  if (errors.count == 0) {
+                                                    new SymbolTable.SymbolCollector().collectSymbols(ast.rootSymbolTable(), def); macroTable.addModelDefinition(def);
+                                                  }
                                             .)
   }SYNC.
 
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------
-  topLevelDefinitions<out Definition def> (. def = DUMMY_DEF; .)
-  = annotations<. out List<AnnotationDefinition> annotations.>
+
+/**  \brief
+The #topLevelDefinition production rule lists (beside macro definitions) all \ac{VADL}
+language elements allowed on the top level of a \ac{VADL} specification.<br>
+
+A VADL specification consists of multiple #topLevelDefinition like a type alias
+(#usingDefinition) or a function definition (#functionDefinition) and sections
+like the ISA section (#instructionsetDefinition). It is also possible to define
+macros (#macroDefinition).
+\listing{lst_top_level_definitions, Top level definitions with some common definitions}
+~~~{.vadl}
+constant MLen = 64
+using SIntM = SInt<MLen>
+function lessthan (a: SIntM, b: SIntM) -> Bool = a < b
+
+import rv3264im::RV3264Base with ("ArchSize=Arch64")
+
+instruction set architecture RV64IM extending RV3264Base = {}
+application binary interface ABI for RV64IM = {}
+assembly description Assemble for ABI = {}
+micro architecture FiveStage implements RV64IM = {}
+[ htif ]
+processor CPU implements RV64IM with ABI = {}
+~~~
+\endlisting
+
+#topLevelDefinition is referenced by \refFrom.
+*/
+  topLevelDefinition<out Definition def> (. def = DUMMY_DEF; .)
+  = annotations<.out List<AnnotationDefinition> annotations.>
   ( instructionsetDefinition<out def>
   | applicationBinaryInterfaceDefinition<out def>
   | processorDefinition<out def>
@@ -314,14 +340,14 @@ macros (#macrodef).
   | commonDefinition<out def>
   | importDefinition<out def>
   | assemblyDescriptionDefinition<out def>
-  )                                         (. def.withAnnotations(annotations); .)
+  )                                      (. def.withAnnotations(annotations); .)
   .
 
   commonDefinitionList<.out List<Definition> definitions.> (. definitions = new ArrayList<>(); .)
   = {
     annotations<.out List<AnnotationDefinition> annotations.>
     commonDefinition<out Definition def>                   (. def.withAnnotations(annotations); definitions.add(def); .)
-  | macroDef<out ModelDefinition def>                      (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
+  | macroDefinition<out ModelDefinition def>               (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
     macroReplacement<out Node n>                           (. var def = castCommonDef(this, n);
                                                               if (def instanceof DefinitionList list) {
@@ -366,7 +392,7 @@ macros (#macrodef).
   = {
     annotations<.out List<AnnotationDefinition> annotations.>
     isaDefinition<out Definition def>                   (. def.withAnnotations(annotations); definitions.add(def); .)
-  | macroDef<out ModelDefinition def>                   (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
+  | macroDefinition<out ModelDefinition def>            (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
     macroReplacement<out Node n>                        (. var def = castIsaDef(this, n);
                                                            if (def instanceof DefinitionList list) {
@@ -2103,7 +2129,7 @@ elements. A single annotation is described in the #annotation production rule.<b
                                                   .)
   .
 
-  macroDef<out ModelDefinition def>         (. var startLoc = nextTokenLoc(); .)
+  macroDefinition<out ModelDefinition def>  (. var startLoc = nextTokenLoc(); .)
   = MODEL
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_PAREN_OPEN                          (. var params = new ArrayList<MacroParam>(); .)
