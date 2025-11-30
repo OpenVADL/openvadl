@@ -37,7 +37,7 @@ public abstract class RtlDockerTest extends DockerExecutionTest {
                                                  RtlConfiguration configuration) {
 
     final var cacheKey = String.valueOf(Set.of(specPath, configuration).hashCode());
-    return RtlDockerTest.imageCache.computeIfAbsent(cacheKey, (_) -> {
+    return RtlDockerTest.imageCache.computeIfAbsent(cacheKey, (k) -> {
 
       try {
         // Generate RTL core
