@@ -1220,7 +1220,7 @@ public class TypeChecker
           visitSliceIndexCall(expr, typeBeforeSlice, List.of(slice));
           var innerMostType = (BitsType) expr.type();
           expr.type = setInnerMostType(oldType, innerMostType);
-          definition.slice = slice.computedBitSlice;
+          definition.slice = slice.computedstaticBitSlice;
         }
       }
 
@@ -3046,7 +3046,7 @@ public class TypeChecker
         }
 
         currType = Type.bits(bitSlice.bitSize());
-        slice.computedBitSlice = bitSlice;
+        slice.computedstaticBitSlice = bitSlice;
         slice.type = currType;
         expr.type = currType;
       }
@@ -3094,7 +3094,7 @@ public class TypeChecker
             case TensorType tt -> tt.flattenBitsType().bitWidth();
             default -> throw new IllegalStateException();
           };
-          slice.computedBitSlice =
+          slice.computedstaticBitSlice =
               Constant.BitSlice.of(bitWidth * staticIndex + bitWidth - 1, bitWidth * staticIndex);
           slice.type = currType;
 
@@ -3113,10 +3113,16 @@ public class TypeChecker
              underlying problem because our typesystem isn't strong enough (and I would argue it
              also shouldn't be that strong/complex).
            */
-          if (!indexExpr.type().isDataType()) {
-            addErrorAndStopChecking(
-                typeMismatchError(indexExpr, "numerical datatype", indexExpr.type()));
-          }
+//          currType = switch (currType) {
+//            case BitsType ignored -> Type.bits(1);
+//            case TensorType tensorType -> tensorType.pop();
+//            default -> throw addErrorAndStopChecking(
+//                error("Invalid Slice", slice.location)
+//                    .description("Only bit types can be sliced but the target was a `%s`", currType)
+//                    .build());
+//          };
+          slice.type = currType;
+
         }
       }
     }
@@ -3488,6 +3494,12 @@ public class TypeChecker
                 valType)
             .build());
       }
+
+      for (int i = 0; i < expr.identifiers.size(); i++) {
+        expr.identifiers.get(i).type = valTupleType.get(i);
+      }
+    } else {
+      expr.identifiers.getFirst().type = valType;
     }
 
     expr.type = check(expr.body);
@@ -3724,6 +3736,12 @@ public class TypeChecker
                 valType)
             .build());
       }
+
+      for (int i = 0; i < statement.identifiers.size(); i++) {
+        statement.identifiers.get(i).type = valTupleType.get(i);
+      }
+    } else {
+      statement.identifiers.getFirst().type = valType;
     }
 
     check(statement.body);

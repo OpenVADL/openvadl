@@ -30,12 +30,14 @@ import static vadl.utils.GraphUtils.signExtend;
 import static vadl.utils.GraphUtils.zeroExtend;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.types.BitsType;
@@ -59,6 +61,7 @@ import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
 import vadl.viam.Procedure;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
@@ -954,6 +957,101 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         getViamType(expr.type()));
   }
 
+  private List<List<Integer>> permutationOfTensorIndicies(List<Integer> indices) {
+    if (indices.isEmpty()) {
+      return List.of(List.of());
+    }
+
+    var tailResult = permutationOfTensorIndicies(indices.subList(1, indices.size()));
+
+    var result = new ArrayList<List<Integer>>();
+    for (int i = 0; i < indices.getFirst(); i++) {
+      for (var tail : tailResult) {
+        result.add(Stream.concat(Stream.of(i), tail.stream()).toList());
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * It is allowed to read from a TensorResource and not supply all indices. In that case all the
+   * missing indices have to be filled, many reads are issued and
+   *
+   * @return
+   */
+  private ExpressionNode readTensorResourceConcatinated(RegisterResource resource,
+                                                        List<ExpressionNode> indices,
+                                                        DataType type
+  ) {
+    // Matches exactly
+    if (resource.indexTypes().size() == indices.size()) {
+      return switch (resource) {
+        case RegisterTensor register ->
+            new ReadRegTensorNode(register, new NodeList<>(indices), type, null);
+        case ArtificialResource register ->
+            new ReadArtificialResNode(register, new NodeList<>(indices), type);
+        default -> throw new IllegalStateException("Unsupported resource type: " + resource);
+      };
+    }
+
+    // Concatination needed
+    // Here we take all provided indices and for the missing dimensions we fill out all possible
+    // values and concatenate them.
+
+    var requiredDimensions = switch (resource) {
+      case RegisterTensor register -> register.indexDimensions();
+      case ArtificialResource register -> register.dimensions();
+      default -> throw new IllegalStateException("Unsupported resource type: " + resource);
+    };
+
+
+    var missingDimensions = requiredDimensions.stream()
+        .skip(indices.size()).toList();
+
+    var missingTypes = missingDimensions.stream().map(d -> d.indexType()).toList();
+
+    var missingPermutations = permutationOfTensorIndicies(
+        missingDimensions.stream()
+            .map(d -> d.size()).toList());
+
+
+    var missingIndices =
+        missingPermutations.stream()
+            .map(
+                entry -> Streams.zip(entry.stream(), missingTypes.stream(),
+                        (a, b) -> (ExpressionNode) Constant.Value.of(a, b).toNode())
+                    .toList())
+            .toList();
+
+    var fullIndices = missingIndices.stream().map(item ->
+        Streams.concat(indices.stream(), item.stream()).toList()
+    ).toList();
+
+
+    ExpressionNode result = null;
+    int currentBitWidth = 0;
+    for (var indexList : fullIndices) {
+      var read = switch (resource) {
+        case RegisterTensor register ->
+            new ReadRegTensorNode(register, new NodeList<>(indexList), register.resultType(), null);
+        case ArtificialResource register ->
+            new ReadArtificialResNode(register, new NodeList<>(indexList), register.resultType());
+        default -> throw new IllegalStateException("Unsupported resource type: " + resource);
+      };
+
+      currentBitWidth += read.type().asDataType().bitWidth();
+      if (result == null) {
+        result = read;
+      } else {
+        result = new BuiltInCall(BuiltInTable.CONCATENATE_BITS, new NodeList<>(read, result),
+            Type.bits(currentBitWidth));
+      }
+    }
+
+    return requireNonNull(result);
+  }
+
   /**
    * Subcalls for format fields introduce slicing, which is handled here.
    *
@@ -973,11 +1071,12 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         var slice =
             new SliceNode(resultExpr, bitSlice,
                 (DataType) getViamType(requireNonNull(subCall.formatFieldType)));
-        resultExpr = visitSliceIndexCall(slice, subCall.argsIndices);
+        resultExpr =
+            visitSliceIndexCall(slice, subCall.formatFieldType, subCall.argsIndices);
       } else if (subCall.computedStatusIndex != null) {
         var indexing =
             new TupleGetFieldNode(subCall.computedStatusIndex, resultExpr, Type.bool());
-        resultExpr = visitSliceIndexCall(indexing, subCall.argsIndices);
+        resultExpr = visitSliceIndexCall(indexing, Type.bool(), subCall.argsIndices);
       } else if (exprBeforeSubcall instanceof ReadResourceNode resRead) {
         var computedTarget = expr.target.path().target();
         if (computedTarget instanceof CounterDefinition) {
@@ -1015,16 +1114,44 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
   private ExpressionNode visitSliceIndexCall(ExpressionNode exprBeforeSlice,
+                                             Type typeBeforeSlice,
                                              List<CallIndexExpr.Arguments> slices) {
     if (slices.isEmpty()) {
       return exprBeforeSlice;
     }
 
     var result = exprBeforeSlice;
+    var typeBefore = typeBeforeSlice;
     for (var slice : slices) {
-      var bitSlice = requireNonNull(slice.computedBitSlice);
-      var type = Type.bits(bitSlice.bitSize());
-      result = new SliceNode(exprBeforeSlice, slice.computedBitSlice, type);
+      if (slice.computedstaticBitSlice != null) {
+        // Constants slice
+        var bitSlice = requireNonNull(slice.computedstaticBitSlice);
+        var type = Type.bits(bitSlice.bitSize());
+        result = new SliceNode(result, slice.computedstaticBitSlice, type);
+      } else {
+        // Dynamic slice
+        ExpressionNode msb, lsb;
+        if (typeBefore instanceof TensorType tensorType) {
+          var width = tensorType.pop().bitWidth();
+          var indexExpr = fetch(slice.values.getFirst());
+          var indexType = Type.bits(
+              Math.max(BitsType.indexWidthFor(tensorType.bitWidth()),
+                  indexExpr.type().asDataType().bitWidth()));
+          var scaled =
+              BuiltInTable.MUL.call(
+                  Constant.Value.of(width, indexType).toNode(),
+                  new ZeroExtendNode(indexExpr, indexType)
+              );
+          lsb = scaled;
+          msb = BuiltInTable.ADD.call(Constant.Value.of(width, indexType).toNode(), lsb);
+        } else {
+          msb = fetch(slice.values.getFirst());
+          lsb = msb;
+        }
+
+        result = new DynSliceNode(exprBeforeSlice, msb, lsb, (DataType) getViamType(slice.type()));
+        typeBefore = (DataType) slice.type();
+      }
     }
 
     return result;
@@ -1058,13 +1185,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             (Function) viamLowering.fetch(funcDef).orElseThrow(),
             new NodeList<>(args), typeBeforeSlice);
 
-        case RegisterDefinition regDef -> new ReadRegTensorNode(
-            (RegisterTensor) viamLowering.fetch(regDef).orElseThrow(),
-            new NodeList<>(args), typeBeforeSlice.asDataType(), null);
+        case RegisterDefinition regDef -> readTensorResourceConcatinated(
+            (RegisterResource) viamLowering.fetch(regDef).orElseThrow(), args,
+            (DataType) typeBeforeSlice
+        );
 
-        case AliasDefinition aliasDef -> new ReadArtificialResNode(
+        case AliasDefinition aliasDef -> readTensorResourceConcatinated(
             (ArtificialResource) viamLowering.fetch(aliasDef).orElseThrow(),
-            new NodeList<>(args), typeBeforeSlice.asDataType());
+            args, (DataType) typeBeforeSlice);
 
         case MemoryDefinition memDef -> {
           var sizeExpr = expr.target.size();
@@ -1083,7 +1211,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       };
     }
 
-    var result = visitSliceIndexCall(exprBeforeSlice, expr.slices());
+    var result =
+        visitSliceIndexCall(exprBeforeSlice, requireNonNull(expr.typeBeforeSlice), expr.slices());
     result = visitSubCall(expr, result);
     return result;
   }
@@ -1316,7 +1445,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       targetDef = (vadl.ast.Definition) callTarget.computedTarget();
       argGroups = callTarget.args();
       callTarget.slices().forEach(s -> {
-        slices.add(requireNonNull(s.computedBitSlice));
+        slices.add(requireNonNull(s.computedstaticBitSlice));
       });
       // add all slices that come from format field accesses
       callTarget.subCalls.forEach(s -> {
