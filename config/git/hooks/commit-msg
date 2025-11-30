@@ -14,7 +14,7 @@ def validate_commit_message(message):
   header = parts[0]
 
   # Regular expression for header format: optional scope, capital letter, no period
-  header_pattern = r'^(?:(\w+): )?[A-Z][^\n]*[^.\n]$'
+  header_pattern = r'^([fixup|squash|amend]! )?(?:(\w+): )?[A-Z][^\n]*[^.\n]$'
 
   # Validate the header
   if not re.match(header_pattern, header):
