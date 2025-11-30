@@ -135,7 +135,7 @@ tasks.withType<Test> {
 }
 
 // generators to be tested separately
-val generators = listOf("iss", "lcb")
+val generators = listOf("iss", "lcb", "rtl")
 
 for (gen in generators) {
     tasks.register<Test>("test-$gen") {
