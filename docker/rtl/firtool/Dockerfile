@@ -1,4 +1,4 @@
-FROM ubuntu:22.04 AS firtool
+FROM ubuntu:22.04 AS build
 
 WORKDIR /build
 
@@ -29,3 +29,9 @@ RUN cmake -G Ninja llvm/llvm -B build \
 
 # Run the build
 RUN ninja -C build firtool
+
+# Final image is just the binaries without the OS
+FROM scratch AS firtool
+
+COPY --from=build /build/circt/build/bin /opt/circt
+
