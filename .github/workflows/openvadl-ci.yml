@@ -41,7 +41,7 @@ jobs:
     uses: ./.github/workflows/reusable-test.yml
     strategy:
       matrix:
-        task: [ test-lcb, test-common, test-iss ]
+        task: [ test-lcb, test-common, test-iss, test-rtl ]
         include:
           - runner: self-hosted
     with:
