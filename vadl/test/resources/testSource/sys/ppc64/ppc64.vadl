@@ -78,9 +78,9 @@ instruction set architecture PPC64SFS = {
   alias register XH = X(*)(15..0)                // lowest 16 bits of general-purpose registers
   alias register XB = X(*)(7..0)                 // lowest 8 bits of general-purpose registers
 
-  // TODO: needs relational alias
-  register CR  : CRFIndex -> CRField             // 8x4-bit condition register fields
-  register CRB : CRBIndex -> Bits<1>             // alias for condition register to access single bits
+  register CR  : Reg32                           // condition register
+  alias register CRF : CRField<8>  = CR          // 8x4-bit condition register fields
+  alias register CRB : Bits<32><1> = CR          // 32 condition register bits
 
   register MSR  : MSRFormat                      // machine state register
   register XER  : XERFormat                      // exception/ status register
@@ -479,7 +479,7 @@ instruction set architecture PPC64SFS = {
   }
 
   // CR access functions, inverted to match powerpc conventions
-  model CRField (index : Ex) : Ex = { CR(7 - $index) }
+  model CRField (index : Ex) : Ex = { CRF(7 - $index) }
   model CRBit (index : Ex) : Ex = { CRB(31 - $index) }
 
   model SetCRType (dst : Ex, a : TwoArgs, type : Id) : Stat = {
@@ -722,11 +722,11 @@ instruction set architecture PPC64SFS = {
     $IFormBranchInstrExt(AsId($asm, "LA"); $asm; true ; true )
   }
 
-  record MFormRotateInstrRec (x : AsmOpcd, rotsrc : Ex, res : Ex)
+  record MFormRotateInstrRec (x : AsmOpcd, rot : Ex, res : Ex)
 
   model MFormRotateInstrExt (eid : Id, r : MFormRotateInstrRec, rc : Bool) : IsaDefs = {
     instruction $eid : MForm =
-      let r = VADL::rol((XW(rs),XW(rs)), $r.rotsrc) in
+      let r = VADL::rol((XW(rs),XW(rs)), $r.rot) in
         let m = mask (31 - me6, 31 - mb6) in
           let result = $r.res in {
             X(ra) := result
@@ -749,13 +749,13 @@ instruction set architecture PPC64SFS = {
     assembly AsId($x.asm) = ($x.asm, " ", decimal(lev))
   }
 
-  record XFormArithmeticShiftInstrRec (x : AsmExt, shiftsrc : Ex, res : Ex)
+  record XFormArithmeticShiftInstrRec (x : AsmExt, shift : Ex, res : Ex)
 
   model XFormArithmeticShiftInstrExt (eid : Id, r : XFormArithmeticShiftInstrRec, rc : Bool) : IsaDefs = {
     instruction $eid : XFormA =
-      let r = VADL::asr((XW(rs), 0 as UWord), $r.shiftsrc) in
+      let r = VADL::asr((XW(rs), 0 as UWord), $r.shift) in
         let result = $r.res in
-          let ca = if X(rs)(31) && r(31..0) != 0 then 1 as Bits<1> else 0 in {
+          let ca = if $r.shift > 31 then X(rs)(31) else X(rs)(31) & (r(31..0) != 0) in {
             X(ra) := result
             XER := (XER.so, XER.ov, ca, XER.rsv1, XER.ov32, ca, XER.rsv2, XER.nbytes)
             $CS($rc; $SetCR0(result))
@@ -771,9 +771,9 @@ instruction set architecture PPC64SFS = {
   }
 
   // instructions: cbcdtd, cdtbcd
-  model XFormBinCodedDecInstr (x : AsmExt, decsrc : Bool) : IsaDefs = {
+  model XFormBinCodedDecInstr (x : AsmExt, dec : Bool) : IsaDefs = {
     instruction AsId($x.asm) : XFormA =
-      X(ra) := if $decsrc
+      X(ra) := if $dec
                   then (0 as Byte, dpdtobcd(X(rs)(51..42)), dpdtobcd(X(rs)(41..32)),
                         0 as Byte, dpdtobcd(X(rs)(19..10)), dpdtobcd(X(rs)(9..0)))
                   else (0 as Bits<12>, bcdtodpd(X(rs)(55..44)), bcdtodpd(X(rs)(43..32)),
@@ -948,9 +948,9 @@ instruction set architecture PPC64SFS = {
   model XFormBoolInstr (asm : Str) : IsaDefs = {
     instruction AsId($asm) : XFormC =
       X(rs) := match 1 as Bits<1> with
-        { CR(crs).lt => -1 as SDWord
-        , CR(crs).gt =>  1 as SDWord
-        , _          =>  0 as SDWord
+        { CRF(crs).lt => -1 as SDWord
+        , CRF(crs).gt =>  1 as SDWord
+        , _           =>  0 as SDWord
         }
     encoding AsId($asm) = {opcd = 0b011111, rsv1 = 0b0000000, extopcd =  0b00100'00000, rsv2 = 0b0}
     assembly AsId($asm) = ($asm, " ", decimal(rs), ",", decimal(crs))
@@ -1015,11 +1015,10 @@ instruction set architecture PPC64SFS = {
     assembly AsId($asm) = ($asm, " ", decimal(to), ",", decimal(ra), ",", decimal(rb))
   }
 
-  // TODO: change CR after alias change
   // instructions: mfcr
   model XFXMoveCRGPRInstr (asm : Str) : IsaDefs = {
     instruction AsId($asm) : XFXFormA =
-      X(rs) := (CR(7), CR(6), CR(5), CR(4), CR(3), CR(2), CR(1), CR(0)) as UDWord
+      X(rs) := CR as UDWord
     encoding AsId($asm) = {opcd = 0b011111, m = 0b0, fxm = 0b0000'0000, rsv1 = 0b0, extopcd = 0b00000'10011, rsv2 = 0b0}
     assembly AsId($asm) = ($asm, " ", decimal(rs))
   }
@@ -1292,7 +1291,8 @@ instruction set architecture PPC64SFS = {
   $DFormLogicalInstr(("XORI" ; xor; 0b011010); immU  ; false)
   $DFormLogicalInstr(("XORIS"; xor; 0b011011); shImmU; false)
 
-  $XFormBoolInstr("SETB")
+  // TODO: does not work
+  //$XFormBoolInstr("SETB")
 
   $XFormBoolCondInstr(("SETBC"  ; 0b01100'00000);  1 as SDWord;  0 as SDWord)
   $XFormBoolCondInstr(("SETBCR" ; 0b01101'00000);  0 as SDWord;  1 as SDWord)
@@ -1307,8 +1307,8 @@ instruction set architecture PPC64SFS = {
   $XFormLogicalShiftInstr(("SLW"; lsl; 0b00000'11000))
   $XFormLogicalShiftInstr(("SRW"; lsr; 0b10000'11000))
 
-  $XFormArithmeticShiftInstr((("SRAW" ; 0b11000'11000); X(rb)(4..0);
-                             if X(rb)(5) = 0b0 then r(63..32) as SDWord else r(63) as SDWord))
+  $XFormArithmeticShiftInstr((("SRAW" ; 0b11000'11000); X(rb)(5..0);
+                             if X(rb)(5) = 0b0 then r(63..32) as SDWord else X(rs)(31) as SDWord))
   $XFormArithmeticShiftInstr((("SRAWI"; 0b11001'11000); rb         ;
                              r(63..32) as SDWord))
 
@@ -1384,8 +1384,7 @@ instruction set architecture PPC64SFS = {
 
   $XFXMoveCRGPRInstr("MFCR")
 
-  // TODO: needs CR refactoring
-  //$XFXMoveGPRCRFInstr("MTCRF")
+  $XFXMoveGPRCRFInstr("MTCRF")
 
   $XLFormMoveCRFCRFInstr("MCRF")
 

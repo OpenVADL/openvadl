@@ -37,13 +37,8 @@ public class Ppc64TestBuilder {
     this.id = id;
   }
 
-  // TODO: expand to 64 bit
   public BigInteger fillCR() {
-    return fillCR(anyImmS(16));
-  }
-
-  public BigInteger fillCR(BigInteger value) {
-    fillReg("0", value);
+    BigInteger value = fillReg("0");
     add("mtcrf 255, 0");
     return value;
   }
@@ -58,14 +53,9 @@ public class Ppc64TestBuilder {
     return value;
   }
 
-  // TODO: expand to 64 bit
   public BigInteger fillMem(BigInteger mem) {
-    return fillMem(mem, anyImmS(16));
-  }
-
-  public BigInteger fillMem(BigInteger mem, BigInteger value) {
     fillReg("0", mem);
-    fillReg("1", value);
+    BigInteger value = fillReg("1");
     add("stw 1, 0(0)");
     return value;
   }
