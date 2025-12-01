@@ -76,3 +76,8 @@ MachineFunctionInfo *[(${namespace})]TargetMachine::createMachineFunctionInfo(
     return [(${namespace})]MachineFunctionInfo::create<[(${namespace})]MachineFunctionInfo>(Allocator,
                                                                                           F, STI);
 }
+
+TargetTransformInfo
+[(${namespace})]TargetMachine::getTargetTransformInfo(const Function &F) const {
+  return TargetTransformInfo([(${namespace})]TTIImpl(this, F));
+}
