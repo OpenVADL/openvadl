@@ -1134,38 +1134,59 @@ elements. A single annotation is described in the #annotation production rule.<b
   .
 
   /**  \brief
-The #topLevelDefinition production rule lists (beside macro definitions) all \ac{VADL}
-language elements allowed on the top level of a \ac{VADL} specification.<br>
+The #miaDefinition production rule lists all micro architecture language elements.<br>
 
-\listing{lst_top_level_definitions, Top level definitions with some common definitions}
+\listing{lst_mia_definitions, Example micro architecture definition}
 ~~~{.vadl}
-constant MLen = 64
-using SIntM = SInt<MLen>
-function lessthan (a: SIntM, b: SIntM) -> Bool = a < b
+micro architecture FiveStage implements RV32IM = {
+    
+  logic [forwarding] bypass
 
-import rv3264im::RV3264Base with ("ArchSize=Arch64")
+  stage FETCH -> ( fr : FetchResult ) = {
+    fr := fetchNext                             // fetch next packet from memory (or cache)
+  }
 
-instruction set architecture RV64IM extending RV3264Base = {}
-application binary interface ABI for RV64IM = {}
-assembly description Assemble for ABI = {}
-micro architecture FiveStage implements RV64IM = {}
-[ htif ]
-processor CPU implements RV64IM with ABI = {}
+  stage DECODE -> ( ir : Instruction ) = {
+    let instr = decode( FETCH.fr ) in {         // decode the fetch packet, gives an Instruction
+      if( instr.unknown ) then
+        raise invalidInstruction                // raise an invalid instruction exception
+      instr.address( @X )                       // output computed address (X + offset) to memory
+      instr.read( @X )                          // read from the X register file
+      instr.read( @PC )                         // read from the PC
+      ir := instr                               // stage output is the Instruction ir
+    }
+  }
+
+  stage EXECUTE -> ( ir : Instruction ) = {
+    let instr = DECODE.ir in {
+      instr.compute                             // evaluate all expressions
+      instr.verify                              // check and flush pipeline if branch misprediction
+      instr.write( @PC )                        // write PC
+      ir := instr
+    }
+  }
+
+  stage MEMORY -> ( ir : Instruction ) = {
+    let instr = EXECUTE.ir in {
+      instr.write( @MEM )                       // write to memory
+      instr.read( @MEM )                        // receive data from memory read
+      ir := instr
+    }
+  }
+
+  stage WRITE_BACK = {
+    let instr = MEMORY.ir in
+      instr.write( @X )                         // write back to register file X
+  }
+}
 ~~~
 \endlisting
 
-Listing \r{lst_top_level_definitions} gives examples for top level language elements.
-Annotations (#annotations) can be added to most \ac{VADL} language elements.
-The `htif` annotation in line 11 is an annotation for the processor definition (#processorDefinition) in line 12.
-A constant definition (line 1), a using definition (line 2) or a function definition (line 3)
-are examples for common definitions (#commonDefinition).
-An instruction set architecture definition (#instructionsetDefinition) is shown in line 7.
-An application binary interface definition (#applicationBinaryInterfaceDefinition) is shown in line 8.
-An assembly description (#assemblyDescriptionDefinition) is shown in line 9.
-A micro architecture definition (#microArchitectureDefinition) is shown in line 10.
+Listing \r{lst_mia_definitions} gives examples for top level language elements.
+A micro architecture definition (#microArchitectureDefinition) is shown in line 1.
 
 
-#topLevelDefinition is referenced by \refFrom.
+#miaDefinition is referenced by \refFrom.
 */
   miaDefinition<out Definition def> (. def = DUMMY_DEF; .)
   = annotations<.out List<AnnotationDefinition> annotations.>

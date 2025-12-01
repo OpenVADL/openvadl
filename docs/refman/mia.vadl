@@ -13,6 +13,8 @@ micro architecture FiveStage implements RV32IM = {
 
   stage DECODE -> ( ir : Instruction ) = {
     let instr = decode( FETCH.fr ) in {         // decode the fetch packet, gives an Instruction
+      if( instr.unknown ) then
+        raise invalidInstruction                // raise an invalid instruction exception
       instr.address( @X )                       // output computed address (X + offset) to memory
       instr.read( @X )                          // read from the X register file
       instr.read( @PC )                         // read from the PC
@@ -22,8 +24,6 @@ micro architecture FiveStage implements RV32IM = {
 
   stage EXECUTE -> ( ir : Instruction ) = {
     let instr = DECODE.ir in {
-      if( instr.unknown ) then
-        raise invalid                           // raise an invalid instruction exception
       instr.compute                             // evaluate all expressions
       instr.verify                              // check and flush pipeline if branch misprediction
       instr.write( @PC )                        // write PC
