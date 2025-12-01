@@ -46,6 +46,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
+import vadl.viam.ArtificialResource;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
@@ -120,7 +121,7 @@ public class GenerateInstructionOperandsPass extends Pass {
       var snapshot = ensureNonNull(snapshots.get(instruction),
           () -> Diagnostic.error("Cannot find snapshot for instruction", instruction.location()));
       var outputOperands = getTableGenOutputOperands(snapshot);
-      var inputOperands = getTableGenInputOperandsForMachineInstructions(outputOperands, snapshot);
+     var inputOperands = getTableGenInputOperandsForMachineInstructions(outputOperands, snapshot);
 
       var ctx = new InstructionOperandsCtx(inputOperands, outputOperands);
       instruction.attachExtension(ctx);
@@ -290,9 +291,18 @@ public class GenerateInstructionOperandsPass extends Pass {
             return !readRegTensorNode.hasConstantAddress();
           } else if (node instanceof ReadArtificialResNode artificialResNode
               && artificialResNode.resourceDefinition()
-              .innerResourceRef() instanceof RegisterTensor tensor
-              && tensor.isRegisterFile()) {
-            return !artificialResNode.hasConstantAddress();
+              .innerResourceRef() instanceof RegisterTensor tensor) {
+            if (tensor.isRegisterFile()) {
+              return !artificialResNode.indices().isEmpty()
+                  && !artificialResNode.hasConstantAddress();
+            } else {
+              // We are not interested in single registers.
+              return !tensor.isSingleRegister();
+            }
+          } else if (node instanceof ReadArtificialResNode artificialResNode
+              && artificialResNode.resourceDefinition()
+              instanceof ArtificialResource artificialResource) {
+            return artificialResource.isRegisterFile() && artificialResNode.hasConstantAddress();
           }
           return true;
         })

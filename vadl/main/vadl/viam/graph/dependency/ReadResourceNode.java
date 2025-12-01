@@ -113,7 +113,7 @@ public abstract class ReadResourceNode extends ExpressionNode {
   }
 
   /**
-   * Checks whether the {@code address} of the node is constant and therefore statically knonw.
+   * Checks whether the {@code address} of the node is constant and therefore statically known.
    */
   public boolean hasConstantAddress() {
     if (hasAddress()) {
