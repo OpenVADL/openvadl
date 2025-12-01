@@ -1,5 +1,5 @@
 FROM ghcr.io/openvadl/merged-toolchain@sha256:2ceaf5369996a5f3db0e0bb8e16ae5fe53003d6ac180bd9e60a9ced954f99a9a AS toolchains
-FROM ghcr.io/openvadl/firtool AS firtool
+FROM ghcr.io/openvadl/firtool@sha256:84c7b84322068a9b800c908a13656a6d756a507751230dad1c99c38b96bad335 AS firtool
 
 FROM ubuntu:22.04 AS build
 
