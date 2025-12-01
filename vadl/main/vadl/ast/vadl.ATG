@@ -1234,6 +1234,9 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 
   logicDefinition<out Definition def> (. var start = nextTokenLoc(); .)
   = LOGIC
+    SYM_BRACK_OPEN
+    identifier<out Identifier id1> [ identifier<out Identifier id2> ]
+    SYM_BRACK_CLOSE
     identifier<out Identifier id> (. def = new LogicDefinition(id, start.join(lastTokenLoc())); .)
   .
 
