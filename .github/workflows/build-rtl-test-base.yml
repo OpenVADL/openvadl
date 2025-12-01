@@ -1,4 +1,4 @@
-name: Build Chisel Toolchain Image
+name: Build RTL test base image
 
 on:
   workflow_dispatch: # Allows manual triggering
@@ -20,12 +20,10 @@ jobs:
     secrets:
       X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
     with:
-      image: ghcr.io/openvadl/firtool
-      context: docker/rtl/firtool
+      image: ghcr.io/openvadl/rtl-test-base
+      context: docker/rtl/test-base
       platform: ${{ matrix.target.platform }}
       runner: ${{ matrix.target.runner }}
-      tags: |
-        latest
 
   merge:
     needs: build
@@ -33,6 +31,4 @@ jobs:
     secrets:
       X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
     with:
-      image: ghcr.io/openvadl/firtool
-      tags: |
-        latest
+      image: ghcr.io/openvadl/rtl-test-base
