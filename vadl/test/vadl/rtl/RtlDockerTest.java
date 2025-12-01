@@ -28,8 +28,8 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 
 public abstract class RtlDockerTest extends DockerExecutionTest {
 
-  // TODO: Add version hash
-  private static final String RTL_BASE_IMAGE = "ghcr.io/openvadl/rtl-test-base";
+  private static final String RTL_BASE_IMAGE =
+      "ghcr.io/openvadl/rtl-test-base@sha256:c70a7fdf249dc7f81476a1cc5616e5b02af29dcadf7224a21987742256872f3c";
 
   private static final ConcurrentHashMap<String, ImageFromDockerfile> imageCache =
       new ConcurrentHashMap<>();

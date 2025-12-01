@@ -17,7 +17,6 @@
 package vadl.rtl.riscv;
 
 import java.nio.file.Path;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import vadl.configuration.DecoderOptions;
 import vadl.configuration.GeneralConfiguration;
@@ -27,7 +26,6 @@ import vadl.rtl.RtlDockerTest;
 public class RiscVInstructionTest extends RtlDockerTest {
 
   @Test
-  @Disabled("Wait for docker image to be available at ghcr.io")
   void rv32imTest() {
 
     /* GIVEN */
