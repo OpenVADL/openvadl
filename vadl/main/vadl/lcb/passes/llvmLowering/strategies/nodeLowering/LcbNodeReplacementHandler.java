@@ -175,10 +175,14 @@ public class LcbNodeReplacementHandler {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(ReadArtificialResNode node) {
-    node.replaceAndDelete(
-        new LlvmReadArtificialResourceNode(node.resourceDefinition(),
-            node.indices().getFirst(),
-            node.type()));
+    if (node.indices().isEmpty()) {
+      Objects.requireNonNull(node.graph()).add(new LlvmUnlowerableSD());
+    } else {
+      node.replaceAndDelete(
+          new LlvmReadArtificialResourceNode(node.resourceDefinition(),
+              node.indices().getFirst(),
+              node.type()));
+    }
   }
 
   @Handler

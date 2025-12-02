@@ -16,7 +16,6 @@
 
 package vadl.gcb.passes.operands.model;
 
-import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensurePresent;
 
 import vadl.error.Diagnostic;
@@ -37,8 +36,6 @@ public final class GcbConstantOperand extends GcbInstructionOperand {
    */
   public GcbConstantOperand(ConstantNode constantNode, Constant value) {
     super(constantNode);
-    ensure(constantNode.constant().equals(value),
-        "This is definitely wrong because index and constraint value are mismatched");
     this.constant = value;
   }
 
