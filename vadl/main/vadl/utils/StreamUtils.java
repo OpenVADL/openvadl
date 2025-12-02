@@ -16,12 +16,35 @@
 
 package vadl.utils;
 
+import java.util.stream.Gatherer;
 import java.util.stream.IntStream;
 
 /**
  * Utility class for creating and manipulating IntStreams.
  */
 public class StreamUtils {
+
+  /**
+   * Creates a `Gatherer` instance that filters elements based on their type, emitting only those
+   * that are instances of the provided class.
+   *
+   * <p>Example:
+   * <pre>{@code
+   *    graph.getNodes().gather(only(ExpressionNode.class)).forEach(...)
+   * }</pre></p>
+   *
+   * @param clazz the `Class` object representing the type of elements to be gathered
+   * @return a `Gatherer` that collects elements of the specified type
+   */
+  public static <S, T> Gatherer<S, ?, T> only(Class<T> clazz) {
+    return Gatherer.ofSequential((ignoredState, e, downstream) -> {
+      if (clazz.isInstance(e)) {
+        downstream.push(clazz.cast(e));
+      }
+      return true;
+    });
+  }
+
 
   /**
    * Creates an IntStream that goes from startInclusive to endExclusive, either in ascending or

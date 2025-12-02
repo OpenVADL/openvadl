@@ -1,0 +1,349 @@
+// SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: Apache-2.0
+
+import VarRisc::{VarRISC32} with ("Init=yes", "Suffix=none")
+
+instruction set architecture VarRISC extending VarRISC32 = {}
+
+application binary interface ABI for VarRISC32 = {
+   size_t type = unsigned int
+   pointer align = 32
+
+   //
+   // Register alias definitions
+   //
+
+   alias register zero = R(0)
+
+   alias register ra = R(1)
+
+   alias register sp = R(2)
+
+   alias register gp = R(3)
+   alias register tp = R(4)
+
+   alias register t0 = R(5)
+   alias register t1 = R(6)
+   alias register t2 = R(7)
+
+   // [ preferred alias ]
+   alias register fp = R(8)
+
+   alias register s0 = R(8)
+   alias register s1 = R(9)
+
+   alias register a0 = R(10)
+   alias register a1 = R(11)
+   alias register a2 = R(12)
+   alias register a3 = R(13)
+   alias register a4 = R(14)
+   alias register a5 = R(15)
+   alias register a6 = R(16)
+   alias register a7 = R(17)
+
+   alias register s2 = R(18)
+   alias register s3 = R(19)
+   alias register s4 = R(20)
+   alias register s5 = R(21)
+   alias register s6 = R(22)
+   alias register s7 = R(23)
+   alias register s8 = R(24)
+   alias register s9 = R(25)
+   alias register s10 = R(26)
+   alias register s11 = R(27)
+
+   alias register t3 = R(28)
+   alias register t4 = R(29)
+   alias register t5 = R(30)
+   alias register t6 = R(31)
+
+   // [ alignment : HalfWord ]
+   stack pointer = sp
+   return address = ra
+   global pointer = gp
+   frame pointer = fp
+   thread pointer = tp
+
+   special return instruction = RET
+   special call instruction = CALL
+   //special local address load instruction = LLA
+   //special global address load instruction = LGA_32
+   special absolute address load instruction = LA
+
+   return value = a{0..1}
+   function argument = a{0..7}
+
+   // ra is callee saved because it is used as normal register and has to be restored.
+   caller saved = [ a{0..7}, t{0..6} ]
+   callee saved = [ ra, gp, tp, fp, s{0..11} ]
+
+}
+
+assembly description AD for ABI = {
+
+    function s_suffix(baseMnemonic: String) -> String = baseMnemonic + "_S"
+    function l_suffix(baseMnemonic: String) -> String = baseMnemonic + "_L"
+
+    function l_suffix_if_large_val(baseMnemonic: String, val: SInt<64>) -> String = if val > -1025 && val < 1024
+                                                                                    then baseMnemonic
+                                                                                    else ( baseMnemonic, "_L" )
+
+    grammar = {
+
+      Reg @register:
+        reg = Register ","
+      ;
+
+      RTypeIds: "ADD" | "SUB" | "MUL" | "DIV" | "REM" | "AND" | "OR" | "XOR"
+                    | "ASR" | "LSR" | "LSL";
+
+      RTypeInstruction :
+        var mnemonicTmp = RTypeIds
+        ( ?(LaIdEq(3 as Bits<2>,","))
+          a = (
+            mnemonic = mnemonicTmp @operand
+            rd = Register @operand ","
+            rs1 = Register @operand ","
+            rs2 = Register @operand
+          ) @instruction
+        | b = (
+            mnemonic = s_suffix< mnemonicTmp > @operand
+            rd = Register @operand ","
+            rs1 = Register @operand
+          ) @instruction
+        )
+      ;
+
+
+      ITypeIds : "ADDI" | "SUBI" | "MULI" | "DIVI" | "REMI" | "ANDI" | "ORI" | "XORI" ;
+
+      ImmediateInstruction :
+        var mnemonicTmp = ITypeIds
+        var rdTmp = Reg @operand
+        inst = (
+          ?(LaIdEq(1 as Bits<1>,","))
+          (
+            var rs1Tmp = Reg @operand
+
+            // constant immediate operand with _L suffix for large operands
+            // e.g. ADDI r1, r2, 0x1 imm OR ADDI_L r1, r2, 0x100
+            ( aa = (  
+              var immTmp = Integer
+              mnemonic = l_suffix_if_large_val< mnemonicTmp, immTmp > @operand
+              rd = rdTmp
+              rs1 = rs1Tmp
+              imm = immTmp @operand
+              ) @instruction
+            // use _L instruction for label operand
+            // e.g. ADDI_L r1, r2, .label
+            | ab = (
+              var immTmp = Label
+              mnemonic = l_suffix< mnemonicTmp > @operand
+              rd = rdTmp
+              rs1 = rs1Tmp
+              imm = immTmp @operand
+              ) @instruction
+            )
+          )
+          // short version of instruction with _S suffix
+          // e.g. ADDI_S r1, 0x1
+        | b = (  
+            mnemonic = s_suffix< mnemonicTmp > @operand
+            rd = rdTmp
+            imm = ImmediateOperand
+          ) @instruction
+        )
+      ;
+
+
+      ShiftImmediateIds: "ASRI" | "LSRI" | "LSLI";
+
+      ShiftImmediateInstruction :
+        var mnemonicTmp = ShiftImmediateIds
+        var rdTmp = Reg @operand
+        ( // normal version of instruction
+          // e.g. LSRI r1, r2, 0x1
+          ?(LaIdEq(1 as Bits<1>,","))
+          a = (  
+            mnemonic = mnemonicTmp @operand
+            rd = rdTmp
+            rs1 = Register @operand ","
+            imm = ImmediateOperand
+          ) @instruction
+        | // short version of instruction with _S suffix
+          // e.g. LSRI_S r1, 0x1
+          b = (
+            mnemonic = s_suffix< mnemonicTmp > @operand
+            rd = rdTmp
+            imm = ImmediateOperand
+          ) @instruction
+        )
+      ;
+
+
+      BTypeIds: "BEQ" | "BNE" | "BLT" | "BLE" | "BULT" | "BULE";
+
+      BranchInstruction @instruction:
+        var mnemonicTmp = BTypeIds
+        var rdTmp = Reg @operand
+        var rs1Tmp = Reg @operand
+        inst = (
+            var offsetTmp = Integer
+            mnemonic = l_suffix_if_large_val< mnemonicTmp, offsetTmp > @operand
+            rd = rdTmp
+            rs1 = rs1Tmp
+            imm = offsetTmp @operand
+          | 
+            mnemonic = l_suffix< mnemonicTmp > @operand
+            rd = rdTmp
+            rs1 = rs1Tmp
+            imm = Label @operand
+        ) @instruction
+      ;
+
+
+      MemoryIds: "LDB" | "LDH" | "LDW" | "STB" | "STH" | "STW" | "LBU" | "LHU";
+
+      MemoryInstruction @instruction:
+        var mnemonicTmp = MemoryIds
+        var rdTmp = Reg @operand
+        (
+          // constant immediate operand with _L suffix for large operands
+          // e.g. LDB r1, 0x1 (r2) OR LDB_L r1, 0x100 (r2)
+          ( aa = (  
+            var immTmp = Integer
+            mnemonic = l_suffix_if_large_val< mnemonicTmp, immTmp > @operand
+            rd = rdTmp
+            imm = immTmp @operand
+            "(" rs1 = Register @operand ")"
+            ) @instruction
+          // use _L instruction for label operand
+          // e.g. LDB_L r1, .label (r2)
+          | ab = (
+            var immTmp = Label
+            mnemonic = l_suffix< mnemonicTmp > @operand
+            rd = rdTmp
+            imm = immTmp @operand
+            "(" rs1 = Register @operand ")"
+            ) @instruction
+          )
+        | // short version of instruction with _S suffix
+          // e.g. LDB_S r1, (r2)
+          b = (
+            mnemonic = s_suffix< mnemonicTmp > @operand
+            rd = rdTmp
+            "(" rs1 = Register @operand ")"
+          ) @instruction
+        )
+      ;
+
+
+      CondIds : "SEQ" | "SNE" | "SLT" | "SLE" | "ULT" | "UGE";
+
+      CondInstruction @instruction:
+        mnemonic = CondIds @operand
+        rd = Register @operand ","
+        rs1 = Register @operand ","
+        rs2 = Register @operand
+      ;
+
+      CondImmIds: "SGTI" | "SGEI" | "UGTI" | "UGEI"
+                    | "SEQI" | "SNEI" | "SLTI" | "SLEI" | "ULTI" ;
+
+      CondImmInstruction :
+        var mnemonicTmp = CondImmIds
+        var rdTmp = Reg @operand
+        ( // normal version of instruction
+          // e.g. SGTI r1, r2, 0x1
+          ?(LaIdEq(1 as Bits<1>,","))
+          a = (  
+            mnemonic = mnemonicTmp @operand
+            rd = rdTmp
+            rs1 = Register @operand ","
+            imm = ImmediateOperand
+          ) @instruction
+        | // _L version of instruction
+          // e.g. SGTI_L r1, 0x1000
+          b = (
+            mnemonic = l_suffix< mnemonicTmp > @operand
+            rd = rdTmp
+            imm = ImmediateOperand
+          ) @instruction
+        )
+      ;
+
+
+      MoveInstruction @instruction:
+        mnemonic = "MOV" @operand
+        rd = Register @operand ":""=" // ':=' is split because of separate terminal rules
+        rs1 = Register @operand
+      ;
+
+      SBranchInstruction @instruction:
+          mnemonic = "BRA_S" @operand
+          offset = ImmediateOperand
+      ;
+
+      JalInstruction @instruction:
+        mnemonic = "JAL" @operand
+        rd = Register @operand ","
+        rs1 = Register @operand
+      ;
+
+      BalInstruction @instruction:
+        mnemonic = "BAL" @operand
+        rd = Register @operand ","
+        imm = ImmediateOperand
+      ;
+
+
+      BranchPseudoIds: "BEQZ" | "BNEZ" | "BLTZ" | "BLEZ" | "BGEZ" | "BGTZ" ;
+
+      BranchPseudoInstruction @instruction:
+        var mnemonicTmp = BranchPseudoIds
+        var rdTmp = Reg @operand
+        inst = (
+            var offsetTmp = Integer
+            mnemonic = l_suffix_if_large_val< mnemonicTmp, offsetTmp > @operand
+            rd = rdTmp
+            offset = offsetTmp @operand
+          | 
+            mnemonic = l_suffix< mnemonicTmp > @operand
+            rd = rdTmp
+            offset = Label @operand
+        ) @instruction
+      ;
+
+      BraPseudoInstruction :
+        var mnemonicTmp = "BRA"
+        inst = (
+            var offsetTmp = Integer
+            mnemonic = l_suffix_if_large_val< mnemonicTmp, offsetTmp > @operand
+            offset = offsetTmp @operand
+          | 
+            mnemonic = l_suffix< mnemonicTmp > @operand
+            offset = Label @operand
+        ) @instruction
+      ;
+      
+      JmpPseudoInstruction @instruction:
+        mnemonic = "JMP" @operand
+        rd = Register @operand
+      ;
+
+      RetPseudoInstruction @instruction:
+        mnemonic = "RET" @operand
+      ;
+
+      CallPseudoInstruction @instruction:
+        mnemonic = "CALL" @operand
+        symbol = Label @operand
+      ;
+
+      LaPseudoInstruction @instruction:
+        mnemonic = "LA" @operand
+        rd = Register @operand ","
+        symbol = Label @operand
+      ;
+    }
+}

@@ -752,11 +752,6 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     replaceCurrent(ops.toArray(new TcgNode[0]));
   }
 
-  @Handler
-  void handle(DynSliceNode toHandle) {
-    throw new UnsupportedOperationException("Type DynSliceNode not yet implemented");
-  }
-
   /**
    * Handles the {@link TupleGetFieldNode}. Currently not implemented.
    *
@@ -815,6 +810,11 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(WriteMemNode toHandle) {
+    throw failShouldNotHappen(toHandle);
+  }
+
+  @Handler
+  void handle(DynSliceNode toHandle) {
     throw failShouldNotHappen(toHandle);
   }
 

@@ -29,6 +29,9 @@ import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * The expression node equivalent to {@link vadl.iss.passes.tcgLowering.nodes.TcgExtractNode}.
+ *
+ * <p>NOTE: {@code ofs} and {@code len} must be TCG translation time constants.
+ * So they must not be TCG variables.</p>
  */
 public class IssValExtractNode extends IssExprNode {
 

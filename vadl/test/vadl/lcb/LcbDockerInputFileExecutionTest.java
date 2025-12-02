@@ -73,6 +73,7 @@ public abstract class LcbDockerInputFileExecutionTest extends LcbDockerExecution
     var cachedImage =
         DockerRiscvImageProvider.image(redisCache,
             configuration.outputPath() + "/lcb/Dockerfile",
+            getImageName(),
             getTarget(),
             getUpstreamBuildTarget(),
             getUpstreamClangTarget(),

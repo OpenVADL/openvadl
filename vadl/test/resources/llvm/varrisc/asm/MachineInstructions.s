@@ -50,6 +50,12 @@ BEQ r14, r15, 20
 # CHECK-NEXT: <MCOperand Reg:17>
 # CHECK-NEXT: <MCOperand Imm:40>>
 
+BEQ_L r14, r15, 20
+# CHECK: <MCInst #{{[0-9]+}} BEQ
+# CHECK-NEXT: <MCOperand Reg:16>
+# CHECK-NEXT: <MCOperand Reg:17>
+# CHECK-NEXT: <MCOperand Imm:20>>
+
 LDB r16, 2(r17)
 # CHECK: <MCInst #{{[0-9]+}} LDB
 # CHECK-NEXT: <MCOperand Reg:18>

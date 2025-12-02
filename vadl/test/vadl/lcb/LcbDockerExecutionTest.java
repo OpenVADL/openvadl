@@ -81,6 +81,14 @@ public abstract class LcbDockerExecutionTest extends AbstractLcbTest {
     return new LcbConfiguration(getConfiguration(false), new TargetName(getTarget()));
   }
 
+  /**
+   * Get the name of the docker image name for this test, usually the image is the target name.
+   * But in some cases it is necessary to create multiple images for the same target.
+   */
+  protected String getImageName() {
+    return getTarget();
+  }
+
   protected void run(String specPath, String cmd) throws DuplicatedPassKeyException, IOException {
     var environment = defaultEnvironment();
     run(specPath, cmd, environment);
@@ -98,6 +106,7 @@ public abstract class LcbDockerExecutionTest extends AbstractLcbTest {
     var cachedImage =
         DockerRiscvImageProvider.image(redisCache,
             configuration.outputPath() + "/lcb/Dockerfile",
+            getImageName(),
             getTarget(),
             getUpstreamBuildTarget(),
             getUpstreamClangTarget(),
