@@ -17,7 +17,6 @@
 package vadl.lcb.template.utils;
 
 import java.util.List;
-import java.util.Objects;
 import vadl.error.Diagnostic;
 import vadl.viam.Abi;
 import vadl.viam.RegisterTensor;
@@ -43,8 +42,7 @@ public class DataLayoutProvider {
     return new DataLayout(false,
         generalPurposeRegisterFile.resultType().bitWidth(),
         pointerAlignment(abi),
-        List.of(
-            Objects.requireNonNull(abi.stackPointer().registerFile().addressType()).bitWidth()));
+        List.of(abi.stackPointer().registerFile().resultType(1).bitWidth()));
     // TODO jgisy parse from abi to allow multiple native register widths
   }
 
