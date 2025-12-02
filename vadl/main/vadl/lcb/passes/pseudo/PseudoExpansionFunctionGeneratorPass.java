@@ -38,7 +38,7 @@ import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 
 /**
- * The {@code PseudoExpansionCodeGenerator} requires a function to generate the expansion.
+ * The pseudo instruction expander requires a function to generate the expansion.
  * However, we only have a {@link Graph} as behavior. This pass wraps the graph to a
  * {@link GcbExpandPseudoInstructionCppFunction}.
  */
@@ -57,12 +57,13 @@ public class PseudoExpansionFunctionGeneratorPass extends Pass {
       Specification viam) {
     var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var specifiedSequences = Stream.of(abi.returnSequence(), abi.callSequence())
-        // we only expand them, when they are pseudo instructions.
+        // We only expand them, when they are pseudo instructions because machine instructions
+        // do not need to be expanded.
         .filter(x -> x instanceof PseudoInstruction)
         .map(x -> (PseudoInstruction) x);
 
-    var pseudoInstructions = Stream.concat(viam.isa()
-            .map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty),
+    var pseudoInstructions = Stream.concat(
+        viam.isa().stream().flatMap(isa -> isa.ownPseudoInstructions().stream()),
         specifiedSequences);
     return pseudoInstructions
         .map(pseudoInstruction -> Pair.of(pseudoInstruction, pseudoInstruction.behavior()));

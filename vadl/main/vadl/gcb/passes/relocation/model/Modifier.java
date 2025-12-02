@@ -16,13 +16,7 @@
 
 package vadl.gcb.passes.relocation.model;
 
-import static vadl.viam.ViamError.ensureNonNull;
-
 import java.util.Map;
-import java.util.Optional;
-import vadl.error.Diagnostic;
-import vadl.gcb.valuetypes.RelocationCtx;
-import vadl.gcb.valuetypes.RelocationFunctionLabel;
 import vadl.template.Renderable;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
@@ -30,10 +24,12 @@ import vadl.viam.Relocation;
 
 /**
  * Represents the transformation functions(?) in the assembler during fixups.
+ *
+ * @param value is the name of the modifier.
+ * @param kind  is the kind of the {@link Relocation} it is then mapped to.
  */
 public record Modifier(String value,
-                       CompilerRelocation.Kind kind,
-                       Optional<RelocationFunctionLabel> relocationFunctionLabel)
+                       CompilerRelocation.Kind kind)
     implements Renderable {
 
   /**
@@ -44,11 +40,7 @@ public record Modifier(String value,
     var kind = relocation.isAbsolute() ? CompilerRelocation.Kind.ABSOLUTE
         : CompilerRelocation.Kind.RELATIVE;
 
-    // Check the label for the relocation
-    var ctx = ensureNonNull(relocation.extension(RelocationCtx.class),
-        () -> Diagnostic.error("Expected a relocation label", relocation.location()));
-
-    return new Modifier("MO_" + name, kind, Optional.of(ctx.label()));
+    return new Modifier("MO_" + name, kind);
   }
 
   /**
@@ -57,8 +49,7 @@ public record Modifier(String value,
   public static Modifier absolute(Instruction instruction, Format.FieldAccess fieldAccess) {
     return new Modifier(
         "MO_ABS_" + instruction.identifier.lower() + "_" + fieldAccess.identifier.simpleName(),
-        CompilerRelocation.Kind.ABSOLUTE,
-        Optional.empty());
+        CompilerRelocation.Kind.ABSOLUTE);
   }
 
   /**
@@ -67,8 +58,7 @@ public record Modifier(String value,
   public static Modifier relative(Instruction instruction, Format.FieldAccess fieldAccess) {
     return new Modifier(
         "MO_REL_" + instruction.identifier.lower() + "_" + fieldAccess.identifier.simpleName(),
-        CompilerRelocation.Kind.RELATIVE,
-        Optional.empty());
+        CompilerRelocation.Kind.RELATIVE);
   }
 
   @Override

@@ -25,10 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.NotNull;
 import vadl.gcb.annotations.StatusRegisterAnnotation;
-import vadl.gcb.valuetypes.RelocationCtx;
-import vadl.gcb.valuetypes.RelocationFunctionLabel;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.types.BitsType;
@@ -37,7 +34,6 @@ import vadl.types.TupleType;
 import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
-import vadl.viam.Relocation;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.WritesRegisterTensor;
@@ -255,11 +251,11 @@ public interface IsaMatchingUtils {
     }
 
     if (!writesRegFiles.isEmpty()) {
-      return writesRegFiles.get(0).regTensor().resultType() == resultType;
+      return writesRegFiles.getFirst().regTensor().resultType() == resultType;
     }
 
     if (!writeArtificialRegFile.isEmpty()) {
-      return writeArtificialRegFile.get(0).resourceDefinition().resultType() == resultType;
+      return writeArtificialRegFile.getFirst().resourceDefinition().resultType() == resultType;
     }
 
     return false;
@@ -270,9 +266,7 @@ public interface IsaMatchingUtils {
    */
   default Map<MachineInstructionLabel, List<Instruction>> createLabelMap(
       Specification specification) {
-    return specification.isa()
-        .map(isa -> isa.ownInstructions().stream())
-        .orElse(Stream.empty())
+    return specification.isa().stream().flatMap(isa -> isa.ownInstructions().stream())
         .filter(instruction -> instruction.hasExtension(MachineInstructionCtx.class))
         .collect(Collectors.groupingBy(entry -> {
           var ext = ensureNonNull(entry.extension(MachineInstructionCtx.class), "must not be null");
@@ -285,27 +279,10 @@ public interface IsaMatchingUtils {
    */
   default Map<PseudoInstructionLabel, List<PseudoInstruction>> createPseudoLabelMap(
       Specification specification) {
-    return specification.isa()
-        .map(isa -> isa.ownPseudoInstructions().stream())
-        .orElse(Stream.empty())
+    return specification.isa().stream().flatMap(isa -> isa.ownPseudoInstructions().stream())
         .filter(instruction -> instruction.hasExtension(PseudoInstructionCtx.class))
         .collect(Collectors.groupingBy(entry -> {
           var ext = ensureNonNull(entry.extension(PseudoInstructionCtx.class), "must not be null");
-          return ext.label();
-        }));
-  }
-
-  /**
-   * Create a map from the specification with {@link RelocationFunctionLabel}.
-   */
-  default Map<RelocationFunctionLabel, List<Relocation>> createRelocationFunctionLabelMap(
-      Specification specification) {
-    return specification.isa()
-        .map(isa -> isa.ownRelocations().stream())
-        .orElse(Stream.empty())
-        .filter(relocation -> relocation.hasExtension(RelocationCtx.class))
-        .collect(Collectors.groupingBy(entry -> {
-          var ext = ensureNonNull(entry.extension(RelocationCtx.class), "must not be null");
           return ext.label();
         }));
   }
