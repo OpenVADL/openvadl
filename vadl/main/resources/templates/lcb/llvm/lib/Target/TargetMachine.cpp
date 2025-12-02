@@ -1,5 +1,6 @@
 #include "[(${namespace})]TargetObjectFile.h"
 #include "[(${namespace})]TargetMachine.h"
+#include "[(${namespace})]TargetTransformInfo.h"
 #include "TargetInfo/[(${namespace})]TargetInfo.h"
 #include "[(${namespace})]PassConfig.h"
 #include "llvm/MC/TargetRegistry.h"
