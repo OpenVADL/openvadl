@@ -456,7 +456,7 @@ instruction set architecture PPC64SFS = {
   exception SysCallVectored () = {
     LR  := PC.next
     CTR := (MSR(63..31), 0 as Bits<4>, MSR(26..22), 0 as Bits<6>, MSR(15..0))
-    PC   := 0x0000'0000'0001'0700
+    PC  := 0x0000'0000'0001'0700
   }
 
   // conditionally places a stat
@@ -465,64 +465,103 @@ instruction set architecture PPC64SFS = {
   }
 
   // asm string functions, convert boolean field values into their corresponding assembly representations
-  model rStr (r : Bool) : Str = { match : Str ($r = true => "."; _ => "") }
-  model lStr (l : Bool) : Str = { match : Str ($l = true => "L"; _ => "") }
+  model rStr (r : Bool) : Str = { match : Str ( $r = true => "."; _ => "" ) }
+  model lStr (l : Bool) : Str = { match : Str ( $l = true => "L"; _ => "" ) }
   model orStr (o : Bool, r : Bool) : Ex = {
     match : Str
-    ( $o = true => match : Str ($r = true => "O."; _ => "O")
-    ; _         => match : Str ($r = true => "." ; _ => "" ))
+    ( $o = true => match : Str ( $r = true => "O."; _ => "O" )
+    ; _         => match : Str ( $r = true => "." ; _ => ""  )
+    )
   }
   model laStr (l : Bool, a : Bool) : Ex = {
     match : Str
-    ( $l = true => match : Str ($a = true => "LA"; _ => "L")
-    ; _         => match : Str ($a = true => "A" ; _ => "" ))
+    ( $l = true => match : Str ( $a = true => "LA"; _ => "L" )
+    ; _         => match : Str ( $a = true => "A" ; _ => ""  )
+    )
   }
 
   // CR access functions, inverted to match powerpc conventions
-  model CRField (index : Ex) : Ex = { CRF(7 - $index) }
-  model CRBit (index : Ex) : Ex = { CRB(31 - $index) }
+  model CRField (index : Ex) : Ex = { CRF( 7 - $index) }
+  model CRBit   (index : Ex) : Ex = { CRB(31 - $index) }
 
-  model SetCRType (dst : Ex, a : TwoArgs, type : Id) : Stat = {
-    $CRField($dst) := ($a.arg1 as $type < $a.arg2 as $type, $a.arg1 as $type > $a.arg2 as $type, $a.arg1 as $type = $a.arg2 as $type, XER.so)
+  model SetCRBase (dst : Ex, a : TwoArgs, type : Id, ov : Ex) : Stat = {
+    $CRField($dst) := ($a.arg1 as $type < $a.arg2 as $type,
+                       $a.arg1 as $type > $a.arg2 as $type,
+                       $a.arg1 as $type = $a.arg2 as $type,
+                       XER.so | $ov)
   }
 
-  // sets the CR field 0 based on signed comparison of the result to zero
+  model SetCR0Base (result : Ex, ov : Ex) : Stat = {
+    if MSR.sf = Mode::M32 then $SetCRBase(0; ($result; 0); SWord ; $ov)
+                          else $SetCRBase(0; ($result; 0); SDWord; $ov)
+  }
+
+  // sets CR field 0 based on signed comparison of the result to zero
   model SetCR0 (result : Ex) : Stat = {
-    if MSR.sf = Mode::M32 then $SetCRType(0; ($result; 0); SWord )
-                          else $SetCRType(0; ($result; 0); SDWord)
+    $SetCR0Base($result; false)
   }
 
-  // sets the CR field 0 based on signed comparison between two arguments
+  // sets CR field 0 based on signed comparison of the result to zero, also updates summary overflow
+  model SetCR0ModeOV (result : Ex, oe : Bool) : Stat = {
+    match : Stat
+    ( $oe = true  => $SetCR0Base($result; mov)
+    ; _           => $SetCR0($result)
+    )
+  }
+
+  // sets CR field 0 based on signed comparison between two arguments
   model SetCRCmp (a : TwoArgs, logical : Bool) : Stat = {
     match : Stat
-    ( $logical = true => if l = Mode::M32 then $SetCRType(crt; $a; UWord) else $SetCRType(crt; $a; UDWord)
-    ;  _              => if l = Mode::M32 then $SetCRType(crt; $a; SWord) else $SetCRType(crt; $a; SDWord))
+    ( $logical = true => if l = Mode::M32 then $SetCRBase(crt; $a; UWord; false) else $SetCRBase(crt; $a; UDWord; false)
+    ;  _              => if l = Mode::M32 then $SetCRBase(crt; $a; SWord; false) else $SetCRBase(crt; $a; SDWord; false)
+    )
   }
 
   // conditionally computes the XER.ov field and passes it to a given stat as mov
   model COV (oe : Bool, stat : Stat) : Stat = {
     match : Stat
-    ( $oe = true => let mov = if MSR.sf = Mode::M32 then flags32.overflow else flags64.overflow in $stat; _ => $stat )
+    ( $oe = true => let mov = if MSR.sf = Mode::M32 then flags32.overflow else flags64.overflow in $stat
+    ; _          => $stat
+    )
   }
 
   // conditionally computes the XER.ca field and passes it to a given stat as mca
   model CCA (ce : Bool, stat : Stat) : Stat = {
     match : Stat
-    ( $ce = true => let mca = if MSR.sf = Mode::M32 then flags32.carry else flags64.carry in $stat; _ => $stat )
+    ( $ce = true => let mca = if MSR.sf = Mode::M32 then flags32.carry else flags64.carry in $stat
+    ; _          => $stat
+    )
+  }
+
+  model SetXERBase (oe : Bool, ce : Bool) : Stat = {
+    match : Stat
+    ( $oe = true  => match : Stat
+      ( $ce = true  => XER := (XER.so | mov, mov   , mca   , XER.rsv1, flags32.overflow, flags32.carry, XER.rsv2, XER.nbytes)
+      ; _           => XER := (XER.so | mov, mov   , XER.ca, XER.rsv1, flags32.overflow, XER.ca32     , XER.rsv2, XER.nbytes)
+      )
+    ; _           => match : Stat
+      ( $ce = true  => XER := (XER.so      , XER.ov, mca   , XER.rsv1, XER.ov32        , flags32.carry, XER.rsv2, XER.nbytes)
+      ; _           => {}
+      )
+    )
   }
 
   // sets fixed-point exception register
   model SetXER (oe : Bool, ce : Bool) : Stat = {
-    $COV($oe; $CCA($ce;
-      match : Stat
-      ( $oe = true  => match : Stat
-        ( $ce = true  => XER := (XER.so | mov, mov   , mca   , XER.rsv1, flags32.overflow, flags32.carry, XER.rsv2, XER.nbytes)
-        ; _           => XER := (XER.so | mov, mov   , XER.ca, XER.rsv1, flags32.overflow, XER.ca32     , XER.rsv2, XER.nbytes))
-      ; _ => match : Stat
-        ( $ce = true  => XER := (XER.so      , XER.ov, mca   , XER.rsv1, XER.ov32        , flags32.carry, XER.rsv2, XER.nbytes)
-        ; _           => {})
-      )
-    ))
+    $COV($oe; $CCA($ce; $SetXERBase($oe; $ce)))
+  }
+
+  model SetXERAndCRBase (oe : Bool, ce : Bool, rc : Bool) : Stats = {
+    $CCA($ce; $SetXERBase($oe; $ce))
+    match : Stat ( $rc = true => $SetCR0ModeOV(result64; $oe); _ => {} )
+  }
+
+  // sets fixed-point exception register and condition register
+  model SetXERAndCR (oe : Bool, ce : Bool, rc : Bool) : Stats = {
+    match : Stats
+    ( $oe = true => let mov = if MSR.sf = Mode::M32 then flags32.overflow else flags64.overflow in { $SetXERAndCRBase($oe; $ce; $rc) }
+    ; _          => $SetXERAndCRBase($oe; $ce; $rc)
+    )
   }
 
   // read value from special-purpose register to X(rs)
@@ -583,7 +622,7 @@ instruction set architecture PPC64SFS = {
     ; $unit = Unit::Half => if $rev
                             then MEM<2>($ea) := byterevh(XH($src))
                             else MEM<2>($ea) := XH($src)
-    ; _ => MEM($ea) := XB($src)
+    ; _                  => MEM($ea) := XB($src)
     )
   }
 
@@ -1118,8 +1157,7 @@ instruction set architecture PPC64SFS = {
       let result32, flags32 = VADL::$r.x.op($r.a.arg1 as SWord, $r.a.arg2 as SWord, $r.carry) in
         let result64, flags64 = VADL::$r.x.op($r.a.arg1 as SDWord, $r.a.arg2 as SDWord, $r.carry) in {
           X(rs) := result64
-          $SetXER($oe; $r.ce)
-          $CS($rc; $SetCR0(result64))
+          $SetXERAndCR($oe; $r.ce; $rc)
         }
     encoding $eid = {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc, $r.enc}
     assembly $eid = ($r.x.asm, $orStr($oe; $rc), " ", decimal(rs), ",", decimal(ra), $r.rbasm)
@@ -1192,7 +1230,7 @@ instruction set architecture PPC64SFS = {
           let result = ~X(ra) + 1 in {
             X(rs) := result
             if $oe then XER := (XER.so | mov, mov, XER.ca, XER.rsv1, ov32, XER.ca32, XER.rsv2, XER.nbytes)
-            $CS($rc; $SetCR0(result))
+            $CS($rc; $SetCR0ModeOV(result; $oe))
           }
     encoding $eid = {opcd = 0b011111, rb = 0b00000, oe = $oe, extopcd = 0b0011'01000, rc = $rc}
     assembly $eid = ($asm, $orStr($oe; $rc), " ", decimal(rs), ",", decimal(ra))

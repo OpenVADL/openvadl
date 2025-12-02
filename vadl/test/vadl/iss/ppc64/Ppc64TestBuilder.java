@@ -40,17 +40,21 @@ public class Ppc64TestBuilder {
   public BigInteger fillCR() {
     BigInteger value = fillReg("0");
     add("mtcrf 255, 0");
-    return value;
+    return BigInteger.valueOf(value.intValue());
   }
 
-  // TODO: expand to 64 bit
   public BigInteger fillReg(String reg) {
-    return fillReg(reg, anyImmS(16));
+    return fillReg(reg, anyImmS(32));
   }
 
+  // loads a 32-bit signed value, which is then sign extended to 64 bits
   public BigInteger fillReg(String reg, BigInteger value) {
-    add("li %s, %s", reg, value);
-    return value;
+    int lo16  = value.and(BigInteger.valueOf(0xFFFF)).intValue();
+    int hi16  = value.shiftRight(16).and(BigInteger.valueOf(0xFFFF)).intValue();
+    add("lis %s, %s", reg, (short) hi16); // lis needs hi16 as a signed value
+    add("ori %s, %s, %s", reg, reg, lo16);
+    int loadedVal = (hi16 << 16) | lo16;
+    return BigInteger.valueOf(loadedVal);
   }
 
   public BigInteger fillMem(BigInteger mem) {
