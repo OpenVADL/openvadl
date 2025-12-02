@@ -21,6 +21,8 @@ package vadl.viam.graph;
  */
 public interface IsInstructionOperand {
   /**
+   * Check whether the node can become an operand.
+   *
    * @return {@code true} when the node's has a non-constant address and is a register file.
    */
   boolean canBeInstructionOperand();
