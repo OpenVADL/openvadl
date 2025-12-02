@@ -299,9 +299,8 @@ public class GenerateInstructionOperandsPass extends Pass {
               // We are not interested in single registers.
               return !tensor.isSingleRegister();
             }
-          } else if (node instanceof ReadArtificialResNode artificialResNode
-              && artificialResNode.resourceDefinition()
-              instanceof ArtificialResource artificialResource) {
+          } else if (node instanceof ReadArtificialResNode artificialResNode) {
+            var artificialResource = artificialResNode.resourceDefinition();
             return artificialResource.isRegisterFile() && artificialResNode.hasConstantAddress();
           }
           return true;
