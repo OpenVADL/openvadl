@@ -26,6 +26,7 @@ import vadl.viam.Counter;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.IsInstructionOperand;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ReadsRegisterTensor;
 
@@ -45,7 +46,8 @@ import vadl.viam.graph.ReadsRegisterTensor;
  * (program) counter access. It is set by the
  * {@link vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass}</p>
  */
-public class ReadRegTensorNode extends ReadResourceNode implements ReadsRegisterTensor {
+public class ReadRegTensorNode extends ReadResourceNode implements ReadsRegisterTensor,
+    IsInstructionOperand {
 
   @DataValue
   protected RegisterTensor regTensor;
@@ -178,5 +180,10 @@ public class ReadRegTensorNode extends ReadResourceNode implements ReadsRegister
   @Override
   public boolean hasRegisterFile() {
     return regTensor.isRegisterFile();
+  }
+
+  @Override
+  public boolean canBeInstructionOperand() {
+    return hasRegisterFile() && !indices.isEmpty() && !hasConstantAddress();
   }
 }

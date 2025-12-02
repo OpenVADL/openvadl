@@ -25,8 +25,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.DeferredDiagnosticStore;
@@ -46,7 +48,6 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
-import vadl.viam.ArtificialResource;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
@@ -54,6 +55,7 @@ import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.HasRegisterTensor;
+import vadl.viam.graph.IsInstructionOperand;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
@@ -282,29 +284,7 @@ public class GenerateInstructionOperandsPass extends Pass {
 
     var inputOperands = getInputOperands(graph)
         .stream()
-        .filter(node -> {
-          // Why?
-          // Because LLVM cannot handle static registers in input or output operands.
-          // They belong to defs and uses instead.
-          if (node instanceof ReadRegTensorNode readRegTensorNode
-              && readRegTensorNode.regTensor().isRegisterFile()) {
-            return !readRegTensorNode.hasConstantAddress();
-          } else if (node instanceof ReadArtificialResNode artificialResNode
-              && artificialResNode.resourceDefinition()
-              .innerResourceRef() instanceof RegisterTensor tensor) {
-            if (tensor.isRegisterFile()) {
-              return !artificialResNode.indices().isEmpty()
-                  && !artificialResNode.hasConstantAddress();
-            } else {
-              // We are not interested in single registers.
-              return !tensor.isSingleRegister();
-            }
-          } else if (node instanceof ReadArtificialResNode artificialResNode) {
-            var artificialResource = artificialResNode.resourceDefinition();
-            return artificialResource.isRegisterFile() && artificialResNode.hasConstantAddress();
-          }
-          return true;
-        })
+        .filter(checkWhetherNodeCanBeOperand())
         .map(this::map)
         .toList();
 
@@ -326,26 +306,26 @@ public class GenerateInstructionOperandsPass extends Pass {
 
     var inputOperands = getInputOperandsForPseudoInstructions(instruction, graph)
         .stream()
-        .filter(node -> {
-          // Why?
-          // Because LLVM cannot handle static registers in input or output operands.
-          // They belong to defs and uses instead.
-          if (node instanceof ReadRegTensorNode readRegTensorNode
-              && readRegTensorNode.regTensor().isRegisterFile()) {
-            return !readRegTensorNode.hasConstantAddress();
-          } else if (node instanceof ReadArtificialResNode artificialResNode
-              && artificialResNode.resourceDefinition()
-              .innerResourceRef() instanceof RegisterTensor tensor
-              && tensor.isRegisterFile()) {
-            return !artificialResNode.hasConstantAddress();
-          }
-          return true;
-        })
+        .filter(checkWhetherNodeCanBeOperand())
         .map(this::map)
         .toList();
 
     return filterOutputs(outputOperands, inputOperands.stream())
         .toList();
+  }
+
+  @Nonnull
+  private static Predicate<Node> checkWhetherNodeCanBeOperand() {
+    return node -> {
+      // Why?
+      // Because LLVM cannot handle static registers in input or output operands.
+      // They belong to defs and uses instead.
+      if (node instanceof IsInstructionOperand operandCandidate) {
+        return operandCandidate.canBeInstructionOperand();
+      } else {
+        return node instanceof FuncParamNode || node instanceof FieldAccessRefNode;
+      }
+    };
   }
 
   private GcbInstructionOperand map(Node operand) {
@@ -422,11 +402,10 @@ public class GenerateInstructionOperandsPass extends Pass {
     } else if (node.address() instanceof FuncParamNode funcParamNode) {
       return new GcbInstructionIndexedRegisterFileOperand(node, funcParamNode);
     } else if (node.address() instanceof ConstantNode constantNode) {
-      var tensor = (RegisterTensor) node.resourceDefinition().innerResourceRef();
       // The register file has a constant as address.
       // This is ok as long as the value of the register file at the address is also constant.
       // For example, the X0 register in RISC-V which always has a constant value.
-      var constraints = tensor.constraints();
+      var constraints = node.getAllConstraintsRecursively();
       var constraintValue = constraints.stream()
           .filter(
               x -> x.indices().getFirst().intValue() == constantNode.constant().asVal().intValue())

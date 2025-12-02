@@ -16,6 +16,7 @@
 
 package vadl.viam.graph.dependency;
 
+import java.util.ArrayList;
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
@@ -23,6 +24,7 @@ import vadl.viam.ArtificialResource;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.IsInstructionOperand;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ReadsRegisterTensor;
@@ -30,7 +32,8 @@ import vadl.viam.graph.ReadsRegisterTensor;
 /**
  * A read of an {@link ArtificialResource}.
  */
-public class ReadArtificialResNode extends ReadResourceNode implements ReadsRegisterTensor {
+public class ReadArtificialResNode extends ReadResourceNode implements ReadsRegisterTensor,
+    IsInstructionOperand {
 
   @DataValue
   private final ArtificialResource resource;
@@ -83,5 +86,57 @@ public class ReadArtificialResNode extends ReadResourceNode implements ReadsRegi
     // If parameter's length is 1 then it is a register file.
     // If parameter's length is 0 then it is a register.
     return resource.isRegisterFile() && resource.readFunction().parameters().length == 1;
+  }
+
+  /**
+   * Theoretically, it is possible to have aliases to aliases. This method returns the
+   * underlying {@link RegisterTensor}.
+   */
+  public RegisterTensor getBaseTensor() {
+    ArtificialResource resource = resourceDefinition();
+
+    while (!(resource.innerResourceRef() instanceof RegisterTensor)) {
+      resource = (ArtificialResource) resource.innerResourceRef();
+    }
+
+    return (RegisterTensor) resource.innerResourceRef();
+  }
+
+  /**
+   * Get all the constraints recursively.
+   */
+  public List<RegisterResource.Constraint> getAllConstraintsRecursively() {
+    ArtificialResource resource = resourceDefinition();
+    ArrayList<RegisterResource.Constraint> constraints = new ArrayList<>(resource.constraints());
+
+    while (!(resource.innerResourceRef() instanceof RegisterTensor)) {
+      resource = (ArtificialResource) resource.innerResourceRef();
+      constraints.addAll(resource.constraints());
+    }
+
+    return constraints;
+  }
+
+  @Override
+  public boolean canBeInstructionOperand() {
+    var registerTensor = getBaseTensor();
+    var constraints = getAllConstraintsRecursively();
+
+    // We have three cases:
+    // (1): It's a register file and has no constant address -> ok
+    // (2): It's a register file and has a constant address with constraint -> ok
+    // (3): else -> not ok
+
+    // Case (2)
+    if (registerTensor.isRegisterFile() && hasAddress() && address().isConstant()) {
+      var cnst = ((ConstantNode) address()).constant.asVal().intValue();
+      // Case (1)
+      if (hasConstantAddress() && constraints.stream()
+          .flatMap(x -> x.indices().stream()).anyMatch(addr -> addr.intValue() == cnst)) {
+        return true;
+      } else {
+        return registerTensor.isRegisterFile() && hasAddress() && !address().isConstant();
+      }
+    } else return registerTensor.isRegisterFile() && hasAddress();
   }
 }
