@@ -25,10 +25,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.DeferredDiagnosticStore;
@@ -284,7 +282,7 @@ public class GenerateInstructionOperandsPass extends Pass {
 
     var inputOperands = getInputOperands(graph)
         .stream()
-        .filter(checkWhetherNodeCanBeOperand())
+        .filter(GenerateInstructionOperandsPass::checkWhetherNodeCanBeOperand)
         .map(this::map)
         .toList();
 
@@ -306,7 +304,7 @@ public class GenerateInstructionOperandsPass extends Pass {
 
     var inputOperands = getInputOperandsForPseudoInstructions(instruction, graph)
         .stream()
-        .filter(checkWhetherNodeCanBeOperand())
+        .filter(GenerateInstructionOperandsPass::checkWhetherNodeCanBeOperand)
         .map(this::map)
         .toList();
 
@@ -314,18 +312,15 @@ public class GenerateInstructionOperandsPass extends Pass {
         .toList();
   }
 
-  @Nonnull
-  private static Predicate<Node> checkWhetherNodeCanBeOperand() {
-    return node -> {
-      // Why?
-      // Because LLVM cannot handle static registers in input or output operands.
-      // They belong to defs and uses instead.
-      if (node instanceof IsInstructionOperand operandCandidate) {
-        return operandCandidate.canBeInstructionOperand();
-      } else {
-        return node instanceof FuncParamNode || node instanceof FieldAccessRefNode;
-      }
-    };
+  private static boolean checkWhetherNodeCanBeOperand(Node node) {
+    // Why?
+    // Because LLVM cannot handle static registers in input or output operands.
+    // They belong to defs and uses instead.
+    if (node instanceof IsInstructionOperand operandCandidate) {
+      return operandCandidate.canBeInstructionOperand();
+    } else {
+      return node instanceof FuncParamNode || node instanceof FieldAccessRefNode;
+    }
   }
 
   private GcbInstructionOperand map(Node operand) {
