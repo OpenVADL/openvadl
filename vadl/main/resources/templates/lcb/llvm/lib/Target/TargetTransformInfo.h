@@ -33,19 +33,6 @@ public:
     // TODO: figure out what this does, as it is only used in RISCV it seems (not using this function breaks
     // loop strength reduce functionality though).
   }
-  bool isLSRCostLess(const TargetTransformInfo::LSRCost &C1, const TargetTransformInfo::LSRCost &C2);
-
-/*
-  enum [(${namespace})]RegisterClass { GPRRC };
-  unsigned getNumberOfRegisters(unsigned ClassID) const {
-    return 31;
-  }
-
-  unsigned getRegisterClassForType(bool Vector, Type *Ty = nullptr) const {
-     return [(${namespace})]RegisterClass::GPRRC;
-  }
-  */
-
 };
 
 }
