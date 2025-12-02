@@ -121,7 +121,7 @@ public class GenerateInstructionOperandsPass extends Pass {
       var snapshot = ensureNonNull(snapshots.get(instruction),
           () -> Diagnostic.error("Cannot find snapshot for instruction", instruction.location()));
       var outputOperands = getTableGenOutputOperands(snapshot);
-     var inputOperands = getTableGenInputOperandsForMachineInstructions(outputOperands, snapshot);
+      var inputOperands = getTableGenInputOperandsForMachineInstructions(outputOperands, snapshot);
 
       var ctx = new InstructionOperandsCtx(inputOperands, outputOperands);
       instruction.attachExtension(ctx);
