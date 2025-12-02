@@ -137,6 +137,8 @@ public class ReadArtificialResNode extends ReadResourceNode implements ReadsRegi
       } else {
         return registerTensor.isRegisterFile() && hasAddress() && !address().isConstant();
       }
-    } else return registerTensor.isRegisterFile() && hasAddress();
+    } else {
+      return registerTensor.isRegisterFile() && hasAddress();
+    }
   }
 }
