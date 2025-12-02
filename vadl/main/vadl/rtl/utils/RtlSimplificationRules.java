@@ -44,6 +44,7 @@ import vadl.viam.passes.algebraic_simplication.rules.impl.MultiplicationWithZero
 import vadl.viam.passes.algebraic_simplication.rules.impl.OrWithFalseSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.OrWithTrueSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.RemainderWithOneSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.SubtractOnSameOperandSimplificationRule;
 
 /**
  * Simplification rules for optimizations during the RTL generation.
@@ -54,6 +55,7 @@ public class RtlSimplificationRules {
 
   static {
     rules.add(new AdditionWithZeroSimplificationRule());
+    rules.add(new SubtractOnSameOperandSimplificationRule());
     rules.add(new MultiplicationWithZeroSimplificationRule());
     rules.add(new MultiplicationWithOneSimplificationRule());
     rules.add(new DivisionWithOneSimplificationRule());

@@ -38,6 +38,7 @@ import vadl.viam.passes.algebraic_simplication.rules.impl.OrWithTrueSimplificati
 import vadl.viam.passes.algebraic_simplication.rules.impl.RemainderWithOneSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.RotateSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.ShiftSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.SubtractOnSameOperandSimplificationRule;
 
 /**
  * It looks at all the {@link BuiltInCall} nodes and tries to match a static set of rules.
@@ -50,6 +51,7 @@ public class AlgebraicSimplificationPass extends Pass {
 
   static {
     rules.add(new AdditionWithZeroSimplificationRule());
+    rules.add(new SubtractOnSameOperandSimplificationRule());
     rules.add(new MultiplicationWithZeroSimplificationRule());
     rules.add(new MultiplicationWithOneSimplificationRule());
     rules.add(new DivisionWithOneSimplificationRule());

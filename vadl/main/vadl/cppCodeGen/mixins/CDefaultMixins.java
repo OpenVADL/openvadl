@@ -502,11 +502,16 @@ public interface CDefaultMixins {
           ctx.wr(", ");
         }
 
-        var argWidth = arg.type()
-            .asDataType().bitWidth();
+        if (arg.type().isDataType()) {
+          var argWidth = arg.type()
+              .asDataType().bitWidth();
 
-        ctx.gen(arg)
-            .wr(", " + argWidth);
+          ctx.gen(arg)
+              .wr(", " + argWidth);
+        } else {
+          // String is not a DataType, but can be used as argument
+          ctx.gen(arg);
+        }
 
         first = false;
       }

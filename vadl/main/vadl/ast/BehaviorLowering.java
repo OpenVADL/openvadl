@@ -31,7 +31,6 @@ import static vadl.utils.GraphUtils.zeroExtend;
 
 import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.concurrent.LazyInit;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
@@ -46,6 +45,7 @@ import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
+import vadl.utils.BigIntUtils;
 import vadl.utils.Either;
 import vadl.utils.Pair;
 import vadl.utils.WithLocation;
@@ -329,30 +329,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           null
       );
 
-      // In the following
-      // in .. is the index provided
-      // l .. is the total length of the register in bits
-      // pn .. is the length (flattened) of the tensor parts
-      // We calculate msb with:
-      // R(i1)(i2)..(in) = (l-1) - i1*p1 - i2*p1 - .. - in*p1
-      // and lsb with:
-      // msb - (width -1)
-      var registerLength = regFileDef.type().asDataType().bitWidth();
-      var sliceType = Type.bits(BitsType.indexWidthFor(registerLength));
-      ExpressionNode msb =
-          Constant.Value.fromInteger(BigInteger.valueOf(registerLength - 1), sliceType).toNode();
-      for (int i = reg.indexDimensions().size(); i < indices.size(); i++) {
-        var indexExpr = indices.get(i);
-        // Zero extend so the index isn't too narrow.
-        indexExpr = new ZeroExtendNode(indexExpr, sliceType);
-        var p = resultType.bitWidth() * dimensions.subList(i, dimensions.size() - 1).stream()
-            .map(d -> d.size()).reduce(1, (a, b) -> a * b);
-        var multiplication = BuiltInTable.MUL.call(indexExpr,
-            Constant.Value.fromInteger(BigInteger.valueOf(p), sliceType).toNode());
-        msb = BuiltInTable.SUB.call(msb, multiplication);
-      }
-      ExpressionNode lsb = BuiltInTable.SUB.call(msb,
-          Constant.Value.fromInteger(BigInteger.ONE, sliceType).toNode());
+      var msbLsb = getMsbAndLsbOfIndexAccess(regFileDef.type().asDataType(), resultType, indices,
+          dimensions);
+      var msb = msbLsb.left();
+      var lsb = msbLsb.right();
       regAccess = new DynSliceNode(regAccess, msb, lsb, (DataType) getViamType(resultType));
     } else if (dimensions.size() < reg.indexDimensions().size()) {
       // Compression Alias
@@ -491,44 +471,32 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // and v the value we want to write
 
       // 1) Calculate msb and lsb
-      var registerLength = reg.resultType().bitWidth();
+      var msbLsb = getMsbAndLsbOfIndexAccess(regFileDef.type().asDataType(), resultType, indices,
+          dimensions);
       var maskType = reg.resultType();
-      ExpressionNode msb = Constant.Value.fromInteger(
-          BigInteger.valueOf(registerLength - 1), maskType).toNode();
-      for (int i = reg.indexDimensions().size(); i < indices.size(); i++) {
-        var indexExpr = indices.get(i);
-        // Zero extend so the index isn't too narrow.
-        indexExpr = new ZeroExtendNode(indexExpr, maskType);
-        var p = resultType.bitWidth() * dimensions.subList(i, dimensions.size() - 1).stream()
-            .map(d -> d.size()).reduce(1, (a, b) -> a * b);
-        var multiplication = BuiltInTable.MUL.call(
-            indexExpr,
-            Constant.Value.fromInteger(BigInteger.valueOf(p), maskType).toNode()
-        );
-
-        msb = BuiltInTable.SUB.call(msb, multiplication);
-      }
-      var oneConstant = Constant.Value.fromInteger(BigInteger.ONE, maskType).toNode();
-      ExpressionNode lsb = BuiltInTable.SUB.call(msb, oneConstant);
+      var msb = zeroExtend(msbLsb.left(), maskType);
+      var lsb = zeroExtend(msbLsb.right(), maskType);
 
       // 2) Calculate the mask
+      var oneConstant = Constant.Value.one(msb.type().asDataType()).toNode();
       var mask = BuiltInTable.SUB.call(msb, lsb);
       mask = BuiltInTable.ADD.call(mask, oneConstant);
       mask = BuiltInTable.LSL.call(oneConstant, mask);
       mask = BuiltInTable.SUB.call(mask, oneConstant);
       mask = BuiltInTable.LSL.call(mask, lsb);
+
+      var regLength = reg.resultType().asDataType().bitWidth();
       var invertedMask = BuiltInTable.XOR.call(
           mask,
-          Constant.Value.fromInteger(
-              BigInteger.valueOf(Math.powExact(1, registerLength + 1) - 1), maskType).toNode()
+          Constant.Value.fromInteger(BigIntUtils.mask(regLength, 0), maskType).toNode()
       );
 
       // 3) Read the original and clear the bits
-      ExpressionNode original = new ReadRegTensorNode(reg, regIndicies, reg.resultType(), null);
-      original = BuiltInTable.ADD.call(original, invertedMask);
+      ExpressionNode original = new ReadRegTensorNode(reg, regIndicies, maskType, null);
+      original = BuiltInTable.AND.call(original, invertedMask);
 
       // 4) ZeroExtend and shift the value
-      writeValue = new ZeroExtendNode(writeValue, reg.resultType());
+      writeValue = new ZeroExtendNode(writeValue, maskType);
       writeValue = BuiltInTable.LSL.call(writeValue, lsb);
 
       // 5) Merge the original and the new value
@@ -574,6 +542,58 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         params.toArray(vadl.viam.Parameter[]::new),
         graph
     );
+  }
+
+  /**
+   * Constructs the msb and lsb expressions for indices on virtual dimensions.
+   *
+   * <p>In the following
+   * in .. is the index provided
+   * l .. is the total length of the register in bits
+   * pn .. is the length (flattened) of the tensor parts
+   *
+   * <p>Indexing in VADL happens from lsb to msb; e.g.
+   * {@code a = [3,2,1] then a[0] == 1}
+   * This means, we calculate the lsb also by approaching
+   * it from the right (lsb) side in each dimension:
+   * {@code R(i1)(i2)..(in) = i1*p1 + i2*p1 + .. + in*p1 }
+   * and msb with:
+   * {@code lsb + result_width - 1}
+   *
+   * @param sourceValueType the type of the value that is indexed
+   * @param resultType      the type of result (on read) or the type of the value that is written
+   * @param indices         the expressions used to access the source value based on the
+   *                        virtual dimensions
+   * @param dimensions      the virtual dimensions that define the index dimensions used
+   *                        for accessing the source value
+   * @return a pair of (msb, lsb) expressions trees
+   */
+  @SuppressWarnings("LineLength")
+  private Pair<ExpressionNode, ExpressionNode> getMsbAndLsbOfIndexAccess(DataType sourceValueType,
+                                                                         DataType resultType,
+                                                                         List<ExpressionNode> indices,
+                                                                         List<RegisterTensor.Dimension> dimensions) {
+    var sourceSize = sourceValueType.bitWidth();
+    var sliceType = Type.bits(BitsType.indexWidthFor(sourceSize));
+    ExpressionNode lsb = Constant.Value.of(0, sliceType).toNode();
+    for (int i = 0; i < indices.size(); i++) {
+      var indexExpr = indices.get(i);
+      // Zero extend so the index isn't too narrow.
+      indexExpr = new ZeroExtendNode(indexExpr, sliceType);
+      var p = resultType.bitWidth() * dimensions.stream()
+          .skip(i + 1)
+          .mapToInt(RegisterTensor.Dimension::size)
+          .reduce(1, (a, b) -> a * b);
+      var multiplication = BuiltInTable.MUL.call(
+          indexExpr,
+          Constant.Value.of(p, sliceType).toNode()
+      );
+      lsb = BuiltInTable.ADD.call(lsb, multiplication);
+    }
+    ExpressionNode msb = BuiltInTable.ADD.call(lsb,
+        Constant.Value.of(resultType.bitWidth() - 1, sliceType).toNode());
+
+    return Pair.of(msb, lsb);
   }
 
 

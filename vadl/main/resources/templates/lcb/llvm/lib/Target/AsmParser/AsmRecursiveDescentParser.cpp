@@ -10,6 +10,7 @@
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "vadl-builtins.h"
+#include "vadl-builtins.hpp"
 #include <sstream>
 #include <set>
 #include <vector>

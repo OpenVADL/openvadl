@@ -16,34 +16,25 @@
 
 package vadl.viam.passes.algebraic_simplication.rules.impl;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 import vadl.types.BuiltInTable;
+import vadl.viam.Constant;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.matching.TreeMatcher;
-import vadl.viam.matching.impl.AnyNodeMatcher;
-import vadl.viam.matching.impl.BuiltInMatcher;
-import vadl.viam.matching.impl.IsZeroConstantValueMatcher;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
 
 /**
- * Simplification rule, when having a subtraction where both operands are the same node,
- * we can simply it to zero.
+ * Simplification rule when addition with zero then return the first operand of the addition.
  */
-public class AdditionWithZeroSimplificationRule implements AlgebraicSimplificationRule {
+public class SubtractOnSameOperandSimplificationRule implements AlgebraicSimplificationRule {
   @Override
   public Optional<Node> simplify(Node node) {
-    if (node instanceof ExpressionNode n) {
-      var matcher =
-          new BuiltInMatcher(List.of(BuiltInTable.ADD),
-              List.of(new AnyNodeMatcher(), new IsZeroConstantValueMatcher()));
-
-      var matchings = TreeMatcher.matches(Stream.of(node), matcher);
-      if (!matchings.isEmpty()) {
-        return Optional.ofNullable(n.inputs().toList().get(0));
-      }
+    if (node instanceof BuiltInCall call
+        && call.builtIn() == BuiltInTable.SUB
+        && call.arg(0) == call.arg(1)
+    ) {
+      var zero = Constant.Value.zero(call.type().asDataType()).toNode();
+      return Optional.of(zero);
     }
     return Optional.empty();
   }
