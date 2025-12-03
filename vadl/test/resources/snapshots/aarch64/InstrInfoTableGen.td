@@ -31061,7 +31061,7 @@ let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [ S31 ];
+let Uses = [  ];
 let Defs = [ SP_EL1,NZCV_N,NZCV_Z,NZCV_C,NZCV_V,CurrentEL,SP ];
 }
 
@@ -39369,7 +39369,7 @@ let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [ S31 ];
+let Uses = [  ];
 let Defs = [ SP_EL1 ];
 }
 

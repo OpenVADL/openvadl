@@ -1892,12 +1892,13 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     Type type;
 
     /**
-     * The computed slices.
+     * The computed static slices.
      * Will be set by the typechecker and only if it slicing is staticly known at compiletime,
      * and not dynamic.
+     * If the slice is dynamic this will be left null.
      */
     @Nullable
-    Constant.BitSlice computedBitSlice;
+    Constant.BitSlice computedstaticBitSlice;
 
     Arguments(List<Expr> values, SourceLocation location) {
       this.values = values;

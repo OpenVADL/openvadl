@@ -376,7 +376,8 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
     // Slicing/Indexing
     for (var sliceArg : expr.slices()) {
-      result = slice(result, requireNonNull(sliceArg.computedBitSlice), (DataType) sliceArg.type());
+      result = slice(result, requireNonNull(sliceArg.computedstaticBitSlice),
+          (DataType) sliceArg.type());
     }
 
     return result;
