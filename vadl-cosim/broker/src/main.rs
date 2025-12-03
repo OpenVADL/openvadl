@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Result, bail};
 use clap::Parser;
 use figment::{
     Figment,
@@ -8,7 +8,13 @@ use figment::{
 };
 use tracing::{Level, info};
 
-use cosim_lib::{config::Config, cosim::Broker, db::setup_database, diff::Report, trace::connect};
+use cosim_lib::{config::Config, cosim::Broker, diff::Report};
+
+#[cfg(feature = "sqlite-tracing")]
+use cosim_lib::db::setup_database;
+
+#[cfg(feature = "sqlite-tracing")]
+use cosim_lib::trace::connect;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -24,6 +30,11 @@ pub struct Cli {
     /// assigned to each client with the same order as in the config-file.
     #[arg(short, long, value_name = "FILE")]
     pub test_exec: Option<Vec<String>>,
+
+    /// If set, writes the test-result to the given output-file.
+    /// Overrides the value that is set in the config file at testing.protocol.out.file
+    #[arg(short, long, value_name = "FILE")]
+    pub output_file: Option<String>
 }
 
 fn default_config_file() -> String {
@@ -60,6 +71,10 @@ fn main() -> Result<()> {
         }
     }
 
+    if cli.output_file.is_some() {
+        config.testing.protocol.out.file = cli.output_file;
+    }
+
     if config.logging.enable {
         let level = Level::from_str(&config.logging.level)?;
         tracing_subscriber::fmt()
@@ -74,7 +89,9 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    if config.tracing.clear_on_rerun {
+    #[cfg(feature = "sqlite-tracing")]
+    if config.tracing.mode.enabled() && config.tracing.clear_on_rerun {
+        use anyhow::Context;
         let mut conn = connect(&config)?;
         setup_database(&mut conn).context("failed to setup database")?;
     }
@@ -88,7 +105,7 @@ fn run(config: Config) -> Result<()> {
     let passed = report_data.passed;
 
     let report = match &config.testing.protocol.out.verbosity {
-        cosim_lib::config::OutVerbosity::Full => serde_json::to_string_pretty(&report_data)?,
+        cosim_lib::config::OutVerbosity::Full => serde_yaml::to_string(&report_data)?,
         cosim_lib::config::OutVerbosity::Short => {
             let mut buf = String::new();
             if report_data.passed {

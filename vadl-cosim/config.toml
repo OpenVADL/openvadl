@@ -206,12 +206,12 @@ clear_on_rerun = true
 #				 (+): Cosimulation-result is available just as quickly as with the "none" option.
 #				 (-): Tracing data is only available at the end of the cosimulation-process.
 #				 => This mode is probably most useful when manually running a test where the test-result is not known beforehand. In most cases using a combination of "none" and "sync" is probably preferred.
-[tracing]
-mode = "none"
-# NOTE: If no db-file is found at the given path then one will be automatically created.
-dir = "./cosim-run/trace"
-file = "trace.sqlite3"
-clear_on_rerun = true
+# [tracing]
+# mode = "none"
+# # NOTE: If no db-file is found at the given path then one will be automatically created.
+# dir = "./cosim-run/trace"
+# file = "trace.sqlite3"
+# clear_on_rerun = true
 
 [dev]
 # Prints the loaded configuration if set to true and exits

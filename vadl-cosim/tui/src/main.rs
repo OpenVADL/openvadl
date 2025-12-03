@@ -1,3 +1,5 @@
+#![cfg(feature = "sqlite-tracing")]
+
 use std::{collections::HashMap, fmt::Debug};
 
 use clap::Parser;
@@ -460,9 +462,6 @@ fn view_register(reg: &Register, register_filter: &RegisterFilter, config: &Conf
         .visible(is_visible.is_some_and(|vis| *vis))
         .with_name(name)
 }
-
-// fn view_execution_step(data: &ClientEntry) -> impl View {
-// }
 
 fn view_instructions(data: &BrokerData) -> impl View {
     match data {

@@ -1,8 +1,9 @@
+#![cfg(feature = "sqlite-tracing")] 
 use anyhow::bail;
-use rusqlite::{Transaction, params};
+
+use rusqlite::{Transaction, params, Connection};
 
 use crate::{
-    cosim::DBConnection,
     db::dbstructs::{
         BrokerData, BrokerInsn, BrokerTB, CPU, Client, ClientEntry, Register, TBInfo, TBInsnInfo,
     },
@@ -10,6 +11,8 @@ use crate::{
 };
 
 pub mod dbstructs;
+
+pub type DBConnection = Connection;
 
 const CREATES_SQL: &str = include_str!("../../res/creates.sql");
 const DROPS_SQL: &str = include_str!("../../res/drops.sql");
@@ -496,3 +499,4 @@ pub fn select_cosim_run_clients(
 
     Ok(clients)
 }
+

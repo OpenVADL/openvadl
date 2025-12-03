@@ -18,7 +18,7 @@
 [qemu]
 
 # The path to the compiled cosimulation qemu-plugin
-plugin="./qemu-setup/build/contrib/plugins/libcosimulation.so"
+plugin="/qemu/build/contrib/plugins/libcosimulation.so"
 
 # Whether to ignore registers that are not defined by a [qemu.gdb_reg_map] mapping
 # This option is useful to test the current implementation of a simulator which might not yet have all registers implemented against another (complete) implementation
@@ -40,7 +40,7 @@ ignore_registers = [ "x3" ]
 name = "VADL"
 
 # The executable of the ISS
-exec = "./qemu-setup/build/qemu-system-ppc64sfs"
+exec = "/qemu/build/qemu-system-ppc64sfs"
 
 # The path to the compiled file to use for testing
 test_exec="./test-execs/test_vadl"
@@ -51,7 +51,7 @@ pass_test_exec_to = "bios"
 # Applies additional arguments to the ISS-executable, e.g. `qemu-system-riscv64 -nographic -d plugin`
 additional_args = [
     "-plugin",
-    "./qemu-setup/build/contrib/plugins/libstoptrigger.so,addr=0xFC",
+    "/qemu/build/contrib/plugins/libstoptrigger.so,addr=0xFC",
     "-nographic",
     "-d", "plugin"
 ]
@@ -86,7 +86,7 @@ remote_target = "/tmp/gdb-cosim-VADL"
 [[qemu.clients]]
 name = "UPSTREAM"
 
-exec = "./qemu-setup/build/qemu-system-ppc64"
+exec = "/qemu/build/qemu-system-ppc64"
 
 test_exec="./test-execs/test_upstream"
 
@@ -94,7 +94,7 @@ pass_test_exec_to = "bios"
 
 additional_args = [
     "-plugin",
-    "./qemu-setup/build/contrib/plugins/libstoptrigger.so,addr=0xFC",
+    "/qemu/build/contrib/plugins/libstoptrigger.so,addr=0xFC",
     "-nographic",
     "-M", "pseries",
     "-cpu", "POWER10",
@@ -143,8 +143,16 @@ r28 = "x28"
 r29 = "x29"
 r30 = "x30"
 r31 = "x31"
-rc = "pc"
 
+cr = "cr"
+msr = "msr"
+xer = "xer"
+lr = "lr"
+ctr = "ctr"
+#tb = "tb"
+tar = "tar"
+srr0 = "srr0"
+srr1 = "srr1"
 
 # Defines the test-source and how to test
 [testing]
@@ -184,41 +192,18 @@ stop_after_n_instructions = 100
 # file = "./cosim-run/result/result.json"
 
 # "short" | "full"
-verbosity = "short"
+verbosity = "full"
 
 [logging]
-enable = true
+enable = false
 # tracing log-levels as defined here: https://docs.rs/tracing/latest/tracing/struct.Level.html#implementations
 level = "info"
 
 # The directory will also contain files for the stdout and stderr of each client
-dir = "./cosim-run/log"
+dir = "."
 file = "cosim.log"
 
 # Clears the logfile every time the program is run
-clear_on_rerun = true
-
-# Tracing means collecting the data from the qemu clients at *every execution step*
-# This slows the cosimulation process by factor of ~16x. (500ms without tracing, 8s with tracing)
-# Therefore, three tracing modes are available:
-#	- "none" (default): Disables tracing - fastest option but no additional information for debugging.
-#						(+): Much faster cosimulation speed
-#						(-): No tracing data which could be useful for debugging
-#						=> Use this mode when running a large test-suite and only switch to tracing when a test-case is known to fail.
-#	- "sync": The tracing data is writting while the cosimulation process runs.
-#		      (+): Tracing data is available at every execution step, making a live-view possible.
-#			  (-): Much slower than without tracing.
-#			  => Use this mode when manually debugging.
-#	- "collect": Collects tracing-data but doesn't write it to disk until after cosimulation is done.
-#				 The benefit of this mode is that the cosimulation-result is immediately available.
-#				 (+): Cosimulation-result is available just as quickly as with the "none" option.
-#				 (-): Tracing data is only available at the end of the cosimulation-process.
-#				 => This mode is probably most useful when manually running a test where the test-result is not known beforehand. In most cases using a combination of "none" and "sync" is probably preferred.
-[tracing]
-mode = "none"
-# NOTE: If no db-file is found at the given path then one will be automatically created.
-dir = "./cosim-run/trace"
-file = "trace.sqlite3"
 clear_on_rerun = true
 
 [dev]
