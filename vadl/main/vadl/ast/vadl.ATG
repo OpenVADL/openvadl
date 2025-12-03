@@ -334,7 +334,6 @@ An application binary interface definition (#applicationBinaryInterfaceDefinitio
 An assembly description (#assemblyDescriptionDefinition) is shown in line 9.
 A micro architecture definition (#microArchitectureDefinition) is shown in line 10.
 
-
 #topLevelDefinition is referenced by \refFrom.
 */
   topLevelDefinition<out Definition def> (. def = DUMMY_DEF; .)
@@ -1120,6 +1119,11 @@ elements. A single annotation is described in the #annotation production rule.<b
 
   // -- MiA DEFINITIONS-----------------------------------------------------------------------------------------------
 
+/**  \brief
+The #microArchitectureDefinition production rule starts the micro architecture section.<br>
+
+#microArchitectureDefinition is referenced by \refFrom.
+*/
   microArchitectureDefinition<out Definition def> (. var start = nextTokenLoc(); .)
   = MICRO ARCHITECTURE
     identifier<out Identifier id>
@@ -1133,7 +1137,7 @@ elements. A single annotation is described in the #annotation production rule.<b
     SYM_BRACE_CLOSE                       (. def = new MicroArchitectureDefinition(id, processor, definitions, start.join(lastTokenLoc())); .)
   .
 
-  /**  \brief
+/**  \brief
 The #miaDefinition production rule lists all micro architecture language elements.<br>
 
 \listing{lst_mia_definitions, Example micro architecture definition}
@@ -1184,7 +1188,6 @@ micro architecture FiveStage implements RV32IM = {
 
 Listing \r{lst_mia_definitions} gives examples for top level language elements.
 A micro architecture definition (#microArchitectureDefinition) is shown in line 1.
-
 
 #miaDefinition is referenced by \refFrom.
 */

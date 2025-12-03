@@ -1451,9 +1451,8 @@ instruction set architecture ISA = {
 }
 
 micro architecture MIA = {
-  [ granularity 32 ]
-  [ reservation manager ]
-  logic reservedAddress
+  [ granularity : 32 ]
+  logic [ reservation manager ] reservedAddress
 }
 ~~~
 \endlisting
@@ -1823,12 +1822,17 @@ In this example, reading from and writing to memory is done in 32-bit blocks.
 ~~~{.vadlmia}
 [ dataBusWidth : 32 ]
 micro architecture FiveStage implements RV32IM = {
+    
+  logic [forwarding] bypass
+
   stage FETCH -> ( fr : FetchResult ) = {
     fr := fetchNext                             // fetch next packet from memory (or cache)
   }
 
   stage DECODE -> ( ir : Instruction ) = {
     let instr = decode( FETCH.fr ) in {         // decode the fetch packet, gives an Instruction
+      if( instr.unknown ) then
+        raise invalidInstruction                // raise an invalid instruction exception
       instr.address( @X )                       // output computed address (X + offset) to memory
       instr.read( @X )                          // read from the X register file
       instr.read( @PC )                         // read from the PC
@@ -1838,8 +1842,6 @@ micro architecture FiveStage implements RV32IM = {
 
   stage EXECUTE -> ( ir : Instruction ) = {
     let instr = DECODE.ir in {
-      if( instr.unknown ) then
-        raise invalid                           // raise an invalid instruction exception
       instr.compute                             // evaluate all expressions
       instr.verify                              // check and flush pipeline if branch misprediction
       instr.write( @PC )                        // write PC
@@ -1859,8 +1861,7 @@ micro architecture FiveStage implements RV32IM = {
     let instr = MEMORY.ir in
       instr.write( @X )                         // write back to register file X
   }
-}
-~~~
+}~~~
 \endlisting
 
 Listing \r{mia_definition} depicts the `FETCH` and `DECODE` stages of the pipeline.
@@ -1896,14 +1897,14 @@ The displayed definitions define a valid \ac{VADL} \ac{MiA} specification.
 
 \ac{VADL} uses the concept of a logic element to model microarchitectural concepts besides stages.
 The complexity of logic elements varies greatly depending on its semantics.
-An annotation determines a logic element's type and, thus, its semantics.
+The logic's type and thus its semantic is declared after the keyword `logic` surrounded by square brackets and followed by the name of the element.
+Annotations can be added to configure certain functionalities of a logic element.
 For example, Listing \r{forwarding} displays a logic element that allows users to define forwarding paths between stages.
 The generator must be aware of the logic element's semantics as it must derive the implementation in the microarchitecture synthesis.
 
 \listing{forwarding, Decode Stage with Forwarding Logic}
 ~~~{.vadlmia}
-[forwarding]
-logic bypass
+logic [forwarding] bypass
 
 stage DECODE -> (ir : Instruction) = {
   let instr = decode( FETCH.fr ) in {
