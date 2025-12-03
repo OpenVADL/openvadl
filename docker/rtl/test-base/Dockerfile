@@ -6,6 +6,7 @@ FROM ubuntu:22.04 AS build
 SHELL ["/bin/bash", "-c"]
 
 # Install some basic utilities
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update &&  \
     apt install -y \
     curl \
@@ -14,7 +15,8 @@ RUN apt update &&  \
     git \
     autoconf \
     build-essential \
-    python3
+    python3 \
+    opensta
 
 # Install SDKMAN, GraalVM & SBT
 RUN curl -s "https://get.sdkman.io" | bash
@@ -87,8 +89,3 @@ RUN make isa
 
 RUN mkdir /rtl
 WORKDIR /rtl
-
-# TODO:
-# Yosys
-# OpenSTA -> We can use the existing Docker image
-# Yosys + OpenSTA *.tcl Build scripts

@@ -70,7 +70,7 @@ public abstract class RtlDockerTest extends DockerExecutionTest {
               d.copy("/rtl", "/rtl");
               d.copy("/scripts", "/scripts");
 
-              d.run("chmod +x /scripts/*");
+              d.run("chmod -R +x /scripts/*");
 
               d.build();
             }

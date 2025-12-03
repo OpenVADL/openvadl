@@ -1,0 +1,26 @@
+# read design
+read_verilog -sv build/Spike.sv
+
+# elaborate design hierarchy
+hierarchy -check -top Spike
+
+# the high-level stuff
+proc; opt; fsm; opt; memory; opt
+
+# mapping to internal cell library
+techmap; opt
+
+# mapping flip-flops to sky130_fd_sc_hd__tt_025C_1v80.lib
+dfflibmap -liberty /scripts/bench/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+# mapping logic to sky130_fd_sc_hd__tt_025C_1v80.lib
+abc -liberty /scripts/bench/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+# print stats
+stat -liberty /scripts/bench/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+# cleanup
+clean
+
+# write synthesized design
+write_verilog build/Spike.v
