@@ -43,7 +43,6 @@ public class DataLayoutProvider {
         generalPurposeRegisterFile.resultType().bitWidth(),
         pointerAlignment(abi),
         List.of(abi.stackPointer().registerFile().resultType(1).bitWidth()));
-    // TODO jgisy parse from abi to allow multiple native register widths
   }
 
   /**
