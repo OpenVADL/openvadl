@@ -89,4 +89,40 @@ public class ViamLoweringTest {
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)));
     TestUtils.assertErrors(throwable, "Unknown Symbol: \"DOESNOTEXIST\"");
   }
+
+  @Test
+  public void dynamicTensorSlicingForAllDo() {
+    var prog = """
+          instruction set architecture Tensor = {
+            using Index = Bits<4>
+            register X : Bits<16><4><32>
+            format F : Bits<16> = {opcode : Bits<4>, rs2: Index, rs1: Index, rd: Index}
+            instruction ADD4V : F = forall i: Bits<4> in 0 .. 3 do X(rd)(i) := X(rs1)(i) + X(rs2)(i)
+            encoding ADD4V = {opcode = 0b1100}
+            assembly ADD4V = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+          }
+        """;
+    Assertions.assertDoesNotThrow(() -> TestUtils.compileToViam(prog), "Cannot lower VIAM");
+  }
+
+  @Test
+  public void dynamicTensorSlicingForAllTensor() {
+    var prog = """
+          instruction set architecture Tensor = {
+            using QInd = Bits<4>
+            register Q : UInt<16><4><32>
+            format F : Bits<16> = {opcode : Bits<4>, rs2: QInd, rs1: QInd, rd: QInd}
+            instruction QADD : F = {
+              let v = Q(rs1) in
+              let m = Q(rs2) in
+              let sum = forall i: Bits<4> in 0 .. 3 tensor v(i) + m(i) in
+              let p = sum as UInt<4><32> in
+              Q(rd) := p
+            }
+            encoding QADD = {opcode = 0b1100}
+            assembly QADD = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+          }
+        """;
+    Assertions.assertDoesNotThrow(() -> TestUtils.compileToViam(prog), "Cannot lower VIAM");
+  }
 }
