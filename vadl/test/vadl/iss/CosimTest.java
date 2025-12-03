@@ -142,8 +142,7 @@ public abstract class CosimTest extends DockerExecutionTest {
               // get rust toolchain from rustup and build the cosim broker
               d.run("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y");
               d.env("PATH", "/root/.cargo/bin:$PATH");
-              d.run("git clone --branch feature/ppc-cosim-test https://github.com/OpenVADL/openvadl.git");
-              //d.run("git clone https://github.com/OpenVADL/openvadl.git");
+              d.run("git clone https://github.com/OpenVADL/openvadl.git");
               d.workDir("/work/openvadl/vadl-cosim");
               d.env("RUSTC_WRAPPER", "sccache");
               d.run("sccache --start-server && cargo build --release -p vadl-cosim-broker && sccache -s");
