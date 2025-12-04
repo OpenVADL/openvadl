@@ -58,7 +58,7 @@ instruction set architecture AArch64Base = {
   program counter PC: Address         // program counter
 
   memory        MEM : Address -> Byte // byte addressed memory
- 
+
   register        S : Index -> BitsX  // general purpose register file with stack pointer
   [overwrite source: zero]            // S is overwritten on write by zero extending the written value
   alias register  R = S(*)(31..0)     // lower half of general purpose register file with stack pointer
@@ -78,6 +78,9 @@ instruction set architecture AArch64Base = {
   register NZCV_C : Bits1             // Carry
   [overflow status register]
   register NZCV_V : Bits1             // oVerflow
+
+  [syntax : ":{}:{}"]
+  relocation lo12( symbol : Bits<64> ) -> SInt<64> = (symbol as SInt<12>) as SInt<64>
 
   enumeration CondCode : Bits<4> =    // condition code encodings, do not change order
     { EQ                              // EQual                    Z == 1
@@ -197,7 +200,7 @@ instruction set architecture AArch64Base = {
   // register shift expression, encoding elements, assembly string expression
   record RegShift (ex: Ex, enc: Encs, asm: Ex)
 
-  // register size (WSize, XSize), access size (Byte, Half, Word, XWord), 
+  // register size (WSize, XSize), access size (Byte, Half, Word, XWord),
   // mnemonic extension ("b", "sb", "h", "sh", "sw"), opc, memory statement
   record Memory  (regsize: Id, accsize: Id, mext: Str, opc: Lit, stmt: Stat)
 
@@ -528,7 +531,7 @@ instruction set architecture AArch64Base = {
   // replicate replicates the size0 sized pattern in pat0 until 64 bit are
   // filled, size0 must be a power of 2 > 1, the bits above the pattern in
   // pat0 must be zero
- 
+
   function replicate (pat0: BitsX, size0: Bits6) -> BitsX =
     if size0 = 0 then pat0 else let pat1 = pat0 << size0 | pat0 in let size1 = size0 << 1 in
     if size1 = 0 then pat1 else let pat2 = pat1 << size1 | pat1 in let size2 = size1 << 1 in
@@ -753,8 +756,8 @@ instruction set architecture AArch64Base = {
 
   model MovKInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     match: IsaDefs ( $size = WSize
-         => $MovInstr ($i; $size; Pos00; let xrd = W(rd) in (xrd(31..16), imm16))
-            $MovInstr ($i; $size; Pos16; let xrd = W(rd) in (imm16, xrd(15..0 )))
+         => $MovInstr ($i; $size; Pos00; let xrd = W(rd) in (xrd(31..16), imm16) as BitsW)
+            $MovInstr ($i; $size; Pos16; let xrd = W(rd) in (imm16, xrd(15..0 )) as BitsW)
       ; _=> $MovInstr ($i; $size; Pos00; let xrd = X(rd) in (xrd(63..16), imm16            ))
             $MovInstr ($i; $size; Pos16; let xrd = X(rd) in (xrd(63..32), imm16, xrd(15..0)))
             $MovInstr ($i; $size; Pos32; let xrd = X(rd) in (xrd(63..48), imm16, xrd(31..0)))
@@ -773,40 +776,40 @@ instruction set architecture AArch64Base = {
       )
     }
 
-*/
+    */
 
 // begin wrong spec to work with TableGen
 
-  model MovInstr (i: InstrWithFunct, size: Id, pos: Id, posex: Ex): IsaDefs = {
-    // pos is set explicitely, therefore no undefined check for sf = 0 && pos(1) = 1 is required
-    instruction AsId ($i.id, $pos): MovFormat =
-      X(rd) := $posex as Bits<Size::$size> as BitsX
-    encoding AsId ($i.id, $pos) = { sf = SF::$size, op = $i.opcode, pos = Position::$pos }
-    assembly AsId ($i.id, $pos) = ($i.mnemo, ' ', $size(rd), ', #', udec(imm16),
-      match: Str ($pos = Pos00 => ""; $pos = Pos16 => ", LSL #16"; $pos = Pos32 => ", LSL #32"; _ => ", LSL #48"))
-    }
+model MovInstr (i: InstrWithFunct, size: Id, pos: Id, posex: Ex): IsaDefs = {
+  // pos is set explicitely, therefore no undefined check for sf = 0 && pos(1) = 1 is required
+  instruction AsId ($i.id, $pos): MovFormat =
+    X(rd) := $posex
+  encoding AsId ($i.id, $pos) = { sf = SF::$size, op = $i.opcode, pos = Position::$pos }
+  assembly AsId ($i.id, $pos) = ($i.mnemo, ' ', $size(rd), ', #', udec(imm16),
+    match: Str ($pos = Pos00 => ""; $pos = Pos16 => ", LSL #16"; $pos = Pos32 => ", LSL #32"; _ => ", LSL #48"))
+  }
 
-  model MovKInstr (i: InstrWithFunct, size: Id): IsaDefs = {
-    match: IsaDefs ( $size = WSize
-         => $MovInstr ($i; $size; Pos00; let xrd = X(rd) in (xrd(31..16), imm16) as BitsX)
-            $MovInstr ($i; $size; Pos16; let xrd = X(rd) in (imm16, xrd(15..0 )) as BitsX)
-      ; _=> $MovInstr ($i; $size; Pos00; let xrd = X(rd) in (xrd(63..16), imm16            ))
-            $MovInstr ($i; $size; Pos16; let xrd = X(rd) in (xrd(63..32), imm16, xrd(15..0)))
-            $MovInstr ($i; $size; Pos32; let xrd = X(rd) in (xrd(63..48), imm16, xrd(31..0)))
-            $MovInstr ($i; $size; Pos48; let xrd = X(rd) in (             imm16, xrd(47..0)))
-      )
-    }
+model MovKInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+  match: IsaDefs ( $size = WSize
+       => $MovInstr ($i; $size; Pos00; let xrd = X(rd) in (xrd(31..16), imm16) as BitsX)
+          $MovInstr ($i; $size; Pos16; let xrd = X(rd) in (imm16, xrd(15..0 )) as BitsX)
+    ; _=> $MovInstr ($i; $size; Pos00; let xrd = X(rd) in (xrd(63..16), imm16            ))
+          $MovInstr ($i; $size; Pos16; let xrd = X(rd) in (xrd(63..32), imm16, xrd(15..0)))
+          $MovInstr ($i; $size; Pos32; let xrd = X(rd) in (xrd(63..48), imm16, xrd(31..0)))
+          $MovInstr ($i; $size; Pos48; let xrd = X(rd) in (             imm16, xrd(47..0)))
+    )
+  }
 
-  model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
-    match: IsaDefs ( $size = WSize
-         => $MovInstr ($i; $size; Pos00; $notOrIdent($i.funct; imm16 as BitsX      ))
-            $MovInstr ($i; $size; Pos16; $notOrIdent($i.funct; imm16 as BitsX << 16))
-      ; _=> $MovInstr ($i; $size; Pos00; $notOrIdent($i.funct; imm16 as BitsX      ))
-            $MovInstr ($i; $size; Pos16; $notOrIdent($i.funct; imm16 as BitsX << 16))
-            $MovInstr ($i; $size; Pos32; $notOrIdent($i.funct; imm16 as BitsX << 32))
-            $MovInstr ($i; $size; Pos48; $notOrIdent($i.funct; imm16 as BitsX << 48))
-      )
-    }
+model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+  match: IsaDefs ( $size = WSize
+       => $MovInstr ($i; $size; Pos00; $notOrIdent($i.funct; imm16 as BitsX      ))
+          $MovInstr ($i; $size; Pos16; $notOrIdent($i.funct; imm16 as BitsX << 16))
+    ; _=> $MovInstr ($i; $size; Pos00; $notOrIdent($i.funct; imm16 as BitsX      ))
+          $MovInstr ($i; $size; Pos16; $notOrIdent($i.funct; imm16 as BitsX << 16))
+          $MovInstr ($i; $size; Pos32; $notOrIdent($i.funct; imm16 as BitsX << 32))
+          $MovInstr ($i; $size; Pos48; $notOrIdent($i.funct; imm16 as BitsX << 48))
+    )
+  }
 
 // begin wrong spec to work with TableGen
 
@@ -932,7 +935,7 @@ instruction set architecture AArch64Base = {
 
 // reverse bits / bytes model **************************************************
 
-  function revBitsWSize (bits: BitsW) -> BitsW = bits 
+  function revBitsWSize (bits: BitsW) -> BitsW = bits
     ( 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
      16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31)
 
@@ -1183,7 +1186,7 @@ instruction set architecture AArch64Base = {
   format MemoryImmFormat: Instr =     // unscaled immediate load / store format
     { size     [31..30]    : Bits2    // size of memory operation (enum AccSize)
     , op       [29..24,21,11..10]     // opcode
-    , opc      [23..22]    : Bits2    // function code for access kind 
+    , opc      [23..22]    : Bits2    // function code for access kind
     , imm9     [20..12]    : Bits9    // signed offset
     , rn       [9..5]      : Index    // base register (SP)
     , rt       [4..0]      : Index    // source or target register
@@ -1314,19 +1317,19 @@ instruction set architecture AArch64Base = {
     }
 
   model LoadInstr (memmodel: MemoryModel, i: InstrNoFunct): IsaDefs = {
-    $MemoryInstr ($memmodel; $i; "B"  ; (WSize; Byte ;  "b"; 0b01; W(rt) := MEM<1> (addr) as UIntW))
-    $MemoryInstr ($memmodel; $i; "H"  ; (WSize; Half ;  "h"; 0b01; W(rt) := MEM<2> (addr) as UIntW))
+    $MemoryInstr ($memmodel; $i; "B"  ; (WSize; Byte ;  "b"; 0b01; X(rt) := MEM<1> (addr) as UIntX))
+    $MemoryInstr ($memmodel; $i; "H"  ; (WSize; Half ;  "h"; 0b01; X(rt) := MEM<2> (addr) as UIntX))
     $MemoryInstr ($memmodel; $i; "W"  ; (WSize; Word ;   ""; 0b01; W(rt) := MEM<4> (addr) as UIntW))
     $MemoryInstr ($memmodel; $i; "X"  ; (XSize; XWord;   ""; 0b01; X(rt) := MEM<8> (addr)         ))
     $MemoryInstr ($memmodel; $i; "SBX"; (XSize; Byte ; "sb"; 0b10; X(rt) := MEM<1> (addr) as SIntX))
     $MemoryInstr ($memmodel; $i; "SHX"; (XSize; Half ; "sh"; 0b10; X(rt) := MEM<2> (addr) as SIntX))
     $MemoryInstr ($memmodel; $i; "SWX"; (XSize; Word ; "sw"; 0b10; X(rt) := MEM<4> (addr) as SIntX))
-    $MemoryInstr ($memmodel; $i; "SBW"; (WSize; Byte ; "sb"; 0b11; W(rt) := MEM<1> (addr) as SIntW))
-    $MemoryInstr ($memmodel; $i; "SHW"; (WSize; Half ; "sh"; 0b11; W(rt) := MEM<2> (addr) as SIntW))
+    $MemoryInstr ($memmodel; $i; "SBW"; (WSize; Byte ; "sb"; 0b11; X(rt) := MEM<1> (addr) as SIntW as BitsW as BitsX))
+    $MemoryInstr ($memmodel; $i; "SHW"; (WSize; Half ; "sh"; 0b11; X(rt) := MEM<2> (addr) as SIntW as BitsW as BitsX))
     }
 
   model LoadLitInstr (memmodel: MemoryModel, i: InstrNoFunct): IsaDefs = {
-    $MemoryInstr ($memmodel; $i; "W"  ; (WSize; Word ; ""  ; 0b00; W(rt) := MEM<4> (addr)         ))
+    $MemoryInstr ($memmodel; $i; "W"  ; (WSize; Word ; ""  ; 0b00; X(rt) := MEM<4> (addr) as UIntX))
     $MemoryInstr ($memmodel; $i; "X"  ; (XSize; XWord; ""  ; 0b01; X(rt) := MEM<8> (addr)         ))
     $MemoryInstr ($memmodel; $i; "SWX"; (XSize; Word ; "sw"; 0b10; X(rt) := MEM<4> (addr) as SIntX))
     }
@@ -1354,7 +1357,7 @@ instruction set architecture AArch64Base = {
     // TODO check SP alignment
     // TODO add BigEndian variant
     [undefined when : match: Ex ( $isLoad = true => rt2 = rt ; _=> false)]
-    instruction $i.id: MemoryPairFormat = 
+    instruction $i.id: MemoryPairFormat =
       let addr = S(rn) + AsId (off, $size) in { $memstmts }
     $MemoryRegPairEncAsm ($i; ""; $size; $isLoad; 0b101'010; ("[", XSizeSP(rn), Imm7decimal(AsId (off, $size)), "]"))
     // TODO check SP alignment
@@ -1386,7 +1389,7 @@ instruction set architecture AArch64Base = {
     }
 
   model StorePairInstrW (i: InstrWithFunct): IsaDefs = {
-    $MemoryRegPairInstr ($i; WSize; false; MEM<4> (addr) := W(rt)              MEM<4> (addr + 4) := W(rt2))
+    $MemoryRegPairInstr ($i; WSize; false; MEM<4> (addr) := X(rt) as BitsW     MEM<4> (addr + 4) := X(rt2) as BitsW)
     }
 
   model StorePairInstrX (i: InstrWithFunct): IsaDefs = {

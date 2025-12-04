@@ -113,6 +113,7 @@ val createProperties by tasks.registering {
 
 
 tasks.withType<Test> {
+    environment("PROJECT_ROOT", rootDir.absolutePath)
     useJUnitPlatform {
         val include = System.getProperty("tags.include")
         val exclude = System.getProperty("tags.exclude")

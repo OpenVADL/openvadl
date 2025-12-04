@@ -36,7 +36,9 @@ public class FrontendIntegrationTest {
       "../sys/v-risc/ABI.vadl"
   })
   public void testFrontendPassingOnSysSpecs(String filename) {
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(Path.of(filename)),
+    var path = Path.of(filename);
+    Assertions.assertTrue(path.toFile().exists());
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(path),
         "Cannot parse input");
     new Ungrouper().ungroup(ast);
     new ModelRemover().removeModels(ast);

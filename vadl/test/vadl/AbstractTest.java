@@ -40,6 +40,7 @@ import java.util.jar.JarFile;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import javax.annotation.Nullable;
+import org.apache.commons.io.FileUtils;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -94,14 +95,36 @@ public abstract class AbstractTest {
     frontendProvider = globalFrontendProvider;
 
     if (testSourceRootPath == null) {
-      // load all testsources in a temporary directory
-      var testSourceDir = AbstractTest.class.getResource("/" + TEST_SOURCE_DIR);
-      testSourceRootPath = VadlFileUtils.copyDirToTempDir(
-          Objects.requireNonNull(testSourceDir).toURI(),
-          "OpenVADL-testSource-",
-          null
-      );
+      // load the combined test sources (resource testSource/ and root sys/)
+      // into a temporary directory.
+      testSourceRootPath = combineTestSourcesInTempDir();
     }
+  }
+
+  /**
+   * Combines test source files into a temporary directory for testing purposes.
+   * This method loads all test sources from the {@code TEST_SOURCE_DIR} resource directory,
+   * creates a temporary directory for the test files, and copies the necessary
+   * project resources into the temporary directory.
+   * Additionally, it copies all {@code /sys/*} files into the temporary directory,
+   * so tests can access the VADL sys specifications with the test source API.
+   *
+   * @return the path to the temporary directory containing the combined test sources
+   * @throws URISyntaxException if an invalid URI is encountered
+   * @throws IOException        if an error occurs while copying files
+   */
+  private static Path combineTestSourcesInTempDir() throws URISyntaxException, IOException {
+    // load all testsources in a temporary directory
+    var testSourceDir = AbstractTest.class.getResource("/" + TEST_SOURCE_DIR);
+    var tempTestSourceDir = VadlFileUtils.copyDirToTempDir(
+        Objects.requireNonNull(testSourceDir).toURI(),
+        "OpenVADL-testSource-",
+        null
+    );
+    // copy <project-root>/sys into tmp test sources
+    var projectSys = Path.of(System.getenv("PROJECT_ROOT")).resolve("sys");
+    FileUtils.copyDirectory(projectSys.toFile(), tempTestSourceDir.resolve("sys").toFile());
+    return tempTestSourceDir;
   }
 
   /**
@@ -109,9 +132,7 @@ public abstract class AbstractTest {
    */
   public static Path getTestSourcePath(String path) {
     var prefixToRemove = "/" + TEST_SOURCE_DIR + "/";
-    var subPath = path.startsWith(prefixToRemove)
-        ? path.substring(prefixToRemove.length())
-        : path;
+    var subPath = path.startsWith(prefixToRemove) ? path.substring(prefixToRemove.length()) : path;
 
     return testSourceRootPath.resolve(subPath);
   }
@@ -123,27 +144,19 @@ public abstract class AbstractTest {
    * @param args         the arguments for the parameterized test
    * @return a stream of arguments for the parameterized test
    */
-  public static Stream<Arguments> getTestSourceArgsForParameterizedTest(
-      String sourcePrefix,
-      Arguments... args
-  ) {
+  public static Stream<Arguments> getTestSourceArgsForParameterizedTest(String sourcePrefix,
+                                                                        Arguments... args) {
     var testSources = findAllTestSources(sourcePrefix);
-    var preparedArgs = Stream.of(args)
-        .map(e -> {
-          assertEquals(2, e.get().length, "Wrong number of arguments for " + e);
-          return arguments(sourcePrefix + e.get()[0] + ".vadl", e.get()[1]);
-        })
-        .toList();
+    var preparedArgs = Stream.of(args).map(e -> {
+      assertEquals(2, e.get().length, "Wrong number of arguments for " + e);
+      return arguments(sourcePrefix + e.get()[0] + ".vadl", e.get()[1]);
+    }).toList();
 
-    List<String> expectedSubstrings = preparedArgs.stream()
-        .map(e -> (String) e.get()[0])
-        .toList();
+    List<String> expectedSubstrings = preparedArgs.stream().map(e -> (String) e.get()[0]).toList();
 
-    assertThat("Some test source not found", testSources,
-        hasItems(preparedArgs.stream()
-            .map(e -> containsString((String) e.get()[0]))
-            .toArray(Matcher[]::new)
-        ));
+    assertThat("Some test source not found", testSources, hasItems(
+        preparedArgs.stream().map(e -> containsString((String) e.get()[0]))
+            .toArray(Matcher[]::new)));
 
     return preparedArgs.stream();
   }
@@ -156,11 +169,9 @@ public abstract class AbstractTest {
    * @throws RuntimeException if an IO exception occurs
    */
   public static List<String> findAllTestSources(String prefix) {
-    var resourceUrl =
-        Objects.requireNonNull(
-            // just get some class for resource fetching
-            frontendProvider.getClass()
-                .getResource("/" + TEST_SOURCE_DIR + "/"));
+    var resourceUrl = Objects.requireNonNull(
+        // just get some class for resource fetching
+        frontendProvider.getClass().getResource("/" + TEST_SOURCE_DIR + "/"));
 
     List<String> fileNames;
     try {
@@ -176,9 +187,7 @@ public abstract class AbstractTest {
     }
 
     return fileNames.stream()
-        .map(e -> e.startsWith(TEST_SOURCE_DIR)
-            ? e.substring(TEST_SOURCE_DIR.length() + 1)
-            : e)
+        .map(e -> e.startsWith(TEST_SOURCE_DIR) ? e.substring(TEST_SOURCE_DIR.length() + 1) : e)
         .toList();
   }
 
@@ -190,9 +199,9 @@ public abstract class AbstractTest {
     try (Stream<Path> stream = Files.walk(startPath)) {
       var paths = stream.toList();
       paths.stream().filter(
-              file -> Files.isRegularFile(file)
-                  && startPath.relativize(file).toString().startsWith(prefix))
-          .forEach(file -> fileNames.add(file.toString()));
+          file -> Files.isRegularFile(file)
+              && startPath.relativize(file).toString()
+              .startsWith(prefix)).forEach(file -> fileNames.add(file.toString()));
     }
 
     return fileNames;
@@ -283,8 +292,7 @@ public abstract class AbstractTest {
    *
    * @param sourcePath The concrete resolved source path of the specification
    */
-  private static void tryToRunSpecificationWithFrontend(Path sourcePath,
-                                                        TestFrontend frontend) {
+  private static void tryToRunSpecificationWithFrontend(Path sourcePath, TestFrontend frontend) {
     var success = frontend.runSpecification(sourcePath.toUri());
     if (!success) {
       var logs = frontend.getLogAsString();
@@ -294,9 +302,8 @@ public abstract class AbstractTest {
         errorLogs = errorLogs.substring(errorIndex);
       }
 
-      System.out.println(
-          "Test source: ---------------\n" + testSourceToString(sourcePath.toUri())
-              + "\n---------------");
+      System.out.println("Test source: ---------------\n" + testSourceToString(sourcePath.toUri())
+          + "\n---------------");
       fail(errorLogs);
     }
   }
@@ -312,8 +319,7 @@ public abstract class AbstractTest {
       var sourceFile = new File(sourceUri);
       // Determine the total number of lines to calculate padding
       int totalLines = 0;
-      try (BufferedReader lineCounter = new BufferedReader(
-          new FileReader(sourceFile))) {
+      try (BufferedReader lineCounter = new BufferedReader(new FileReader(sourceFile))) {
         while (lineCounter.readLine() != null) {
           totalLines++;
         }
@@ -359,9 +365,7 @@ public abstract class AbstractTest {
    *     {@link PassOrder#untilFirst(Class)} method instead.
    */
   @Deprecated
-  public TestSetup setupPassManagerAndRunSpecUntil(String specPath,
-                                                   PassOrder passes,
-                                                   PassKey until)
+  public TestSetup setupPassManagerAndRunSpecUntil(String specPath, PassOrder passes, PassKey until)
       throws IOException, DuplicatedPassKeyException {
     var spec = runAndGetViamSpecification(specPath);
 
@@ -391,8 +395,7 @@ public abstract class AbstractTest {
     return new GeneralConfiguration(directory.toAbsolutePath(), doDump);
   }
 
-  public record TestSetup(PassManager passManager,
-                          Specification specification) {
+  public record TestSetup(PassManager passManager, Specification specification) {
 
   }
 
