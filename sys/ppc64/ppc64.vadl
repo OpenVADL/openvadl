@@ -214,7 +214,7 @@ instruction set architecture PPC64SFS = {
   , me   : Bits<5>                               // end index of bit mask
   , rc   : Bits<1>                               // if set the instruction modifies the CR
   , mb6  = mb as Bits<6>                         // start index zero extended to 6 bits
-  , me6  = me as Bits<6>                         // end index zero extended to 6 bits 
+  , me6  = me as Bits<6>                         // end index zero extended to 6 bits
   }
 
   format SCForm : Instruction =
@@ -382,30 +382,30 @@ instruction set architecture PPC64SFS = {
 
   // converts binary coded decimal to declet
   function bcdtodpd (n : Bits<12>) -> Bits<10> =
-    ((n(6) & n(11) & n(3) & ~n(7)) | (n(2) & n(11) & ~n(3)) | (n(10) & ~n(11)), 
-     (n(5) & n(11) & n(3) & ~n(7)) | (n(1) & n(11) & ~n(3)) | (n(9) & ~n(11)), 
+    ((n(6) & n(11) & n(3) & ~n(7)) | (n(2) & n(11) & ~n(3)) | (n(10) & ~n(11)),
+     (n(5) & n(11) & n(3) & ~n(7)) | (n(1) & n(11) & ~n(3)) | (n(9) & ~n(11)),
      n(8),
-     (n(2) & ~n(11) & n(7) & ~n(3)) | (n(6) & ~n(3) & ~n(7)) | (n(6) & ~n(11) & ~n(7)) | (n(7) & n(3)), 
-     (n(1) & ~n(11) & n(7) & ~n(3)) | (n(5) & ~n(3) & ~n(7)) | (n(5) & ~n(11) & ~n(7)) | (n(11) & n(3)), 
-     n(4), 
-     n(11) | n(7) | n(3), 
-     (~n(7) & n(2) & ~n(3)) | (n(7) & n(3)) | n(11), 
-     (~n(11) & n(1) & ~n(3)) | (n(11) & n(3)) | n(7), 
+     (n(2) & ~n(11) & n(7) & ~n(3)) | (n(6) & ~n(3) & ~n(7)) | (n(6) & ~n(11) & ~n(7)) | (n(7) & n(3)),
+     (n(1) & ~n(11) & n(7) & ~n(3)) | (n(5) & ~n(3) & ~n(7)) | (n(5) & ~n(11) & ~n(7)) | (n(11) & n(3)),
+     n(4),
+     n(11) | n(7) | n(3),
+     (~n(7) & n(2) & ~n(3)) | (n(7) & n(3)) | n(11),
+     (~n(11) & n(1) & ~n(3)) | (n(11) & n(3)) | n(7),
      n(0))
 
   // converts declet to binary coded decimal
   function dpdtobcd (n : Bits<10>) -> Bits<12> =
-    ((~n(6) & n(3) & n(2)) | (n(5) & n(3) & n(2) & n(6)) | (n(3) & n(2) & ~n(1)), 
-     (n(9) & n(6) & n(1) & ~n(5)) | (n(9) & ~n(2)) | (n(9) & ~n(3)), 
-     (n(8) & n(6) & n(1) & ~n(5)) | (n(8) & ~n(2)) | (n(8) & ~n(3)), 
-     n(7), 
-     (n(3) & ~n(2) & n(1)) | (n(6) & n(3) & n(2) & n(1)) | (~n(5) & n(3) & n(1) & n(2)), 
-     (n(9) & n(5) & n(3) & n(2) & n(1) & ~n(6)) | (n(6) & ~n(1) & n(3)) | (n(6) & ~n(3)), 
-     (n(8) & n(5) & n(2) & n(3) & n(1) & ~n(6)) | (n(5) & ~n(1) & n(3)) | (n(5) & ~n(3)), 
-     n(4), 
-     (n(5) & n(3) & n(2) & n(1)) | (n(6) & n(3) & n(2) & n(1)) | (n(3) & ~n(2) & ~n(1)), 
-     (n(9) & ~n(6) & ~n(5) & n(2) & n(3)) | (n(6) & n(3) & ~n(2) & n(1)) | (n(9) & n(2) & ~n(1) & n(3)) | (n(2) & ~n(3)), 
-     (n(8) & ~n(6) & ~n(5) & n(3) & n(2)) | (n(5) & n(3) & ~n(2) & n(1)) | (n(8) & n(3) & n(2) & ~n(1)) | (n(1) & ~n(3)), 
+    ((~n(6) & n(3) & n(2)) | (n(5) & n(3) & n(2) & n(6)) | (n(3) & n(2) & ~n(1)),
+     (n(9) & n(6) & n(1) & ~n(5)) | (n(9) & ~n(2)) | (n(9) & ~n(3)),
+     (n(8) & n(6) & n(1) & ~n(5)) | (n(8) & ~n(2)) | (n(8) & ~n(3)),
+     n(7),
+     (n(3) & ~n(2) & n(1)) | (n(6) & n(3) & n(2) & n(1)) | (~n(5) & n(3) & n(1) & n(2)),
+     (n(9) & n(5) & n(3) & n(2) & n(1) & ~n(6)) | (n(6) & ~n(1) & n(3)) | (n(6) & ~n(3)),
+     (n(8) & n(5) & n(2) & n(3) & n(1) & ~n(6)) | (n(5) & ~n(1) & n(3)) | (n(5) & ~n(3)),
+     n(4),
+     (n(5) & n(3) & n(2) & n(1)) | (n(6) & n(3) & n(2) & n(1)) | (n(3) & ~n(2) & ~n(1)),
+     (n(9) & ~n(6) & ~n(5) & n(2) & n(3)) | (n(6) & n(3) & ~n(2) & n(1)) | (n(9) & n(2) & ~n(1) & n(3)) | (n(2) & ~n(3)),
+     (n(8) & ~n(6) & ~n(5) & n(3) & n(2)) | (n(5) & n(3) & ~n(2) & n(1)) | (n(8) & n(3) & n(2) & ~n(1)) | (n(1) & ~n(3)),
      n(0))
 
   // reverses the byte order of each halfword in a word
@@ -757,7 +757,7 @@ instruction set architecture PPC64SFS = {
       let a = XW(rs) as SDWord in
         if ((VADL::slth(a, immS)) & to(4)) | ((VADL::sgth(a, immS)) & to(3)) |
            ((a = immS)            & to(2)) | ((VADL::ulth(a, immS)) & to(1)) |
-           ((VADL::ugth(a, immS)) & to(0)) 
+           ((VADL::ugth(a, immS)) & to(0))
         then raise Trap
     encoding AsId($asm) = {opcd = 0b000011}
     assembly AsId($asm) = ($asm, " ", decimal(to), ",", decimal(rs), ",", decimal(imm))
@@ -939,7 +939,7 @@ instruction set architecture PPC64SFS = {
   // instruction: mfmsr
   model XFormMSRGPRInstr (asm : Str) : IsaDefs = {
     instruction AsId($asm) : XFormA =
-      if MSR.pr = 0 then X(rs) := MSR 
+      if MSR.pr = 0 then X(rs) := MSR
                     else raise Privilege
     encoding AsId($asm) = {opcd = 0b011111, ra = 0b00000, rb = 0b00000, extopcd = 0b00010'10011, rc = 0b0}
     assembly AsId($asm) = ($asm, " ", decimal(rs))
@@ -1051,8 +1051,8 @@ instruction set architecture PPC64SFS = {
   // instructions: mtmsr
   model XFormMoveGPRMSRInstr (asm : Str) : IsaDefs = {
     instruction AsId($asm) : XFormF =
-      if MSR.pr = 0 
-      then MSR := if l = 0 
+      if MSR.pr = 0
+      then MSR := if l = 0
                   then (MSR(63..32), X(rs)(31..23), MSR(22), X(rs)(21..16),
                        X(rs)(15) | X(rs)(14), X(rs)(14..13), MSR(12), X(rs)(11..6),
                        (X(rs)(5) | X(rs)(14)) & ~(MSR(22) & MSR(60) & ~X(rs)(14)),
@@ -1071,7 +1071,7 @@ instruction set architecture PPC64SFS = {
         let b = XW(rb) as SDWord in
           if ((VADL::slth(a, b)) & to(4)) | ((VADL::sgth(a, b)) & to(3)) |
              ((a = b)            & to(2)) | ((VADL::ulth(a, b)) & to(1)) |
-             ((VADL::ugth(a, b)) & to(0)) 
+             ((VADL::ugth(a, b)) & to(0))
           then raise Trap
     encoding AsId($asm) = {opcd = 0b011111, extopcd = 0b00000'00100, rsv = 0b0}
     assembly AsId($asm) = ($asm, " ", decimal(to), ",", decimal(ra), ",", decimal(rb))
@@ -1097,7 +1097,7 @@ instruction set architecture PPC64SFS = {
   // instructions: mtocrf
   model XFXMoveGPROCRFInstr (asm : Str) : IsaDefs = {
     instruction AsId($asm) : XFXFormA =
-      CR := if VADL::cob(fxm) = 1 
+      CR := if VADL::cob(fxm) = 1
             then let mask = crmask(fxm) in (XW(rs) & mask) | (CR & ~mask)
             else 0
     encoding AsId($asm) = {opcd = 0b011111, m = 0b1, rsv1 = 0b0, extopcd = 0b00100'10000, rsv2 = 0b0}
@@ -1107,7 +1107,7 @@ instruction set architecture PPC64SFS = {
   // instructions: mfocrf
   model XFXMoveOCRFGPRInstr (asm : Str) : IsaDefs = {
     instruction AsId($asm) : XFXFormA =
-      X(rs) := if VADL::cob(fxm) = 1 
+      X(rs) := if VADL::cob(fxm) = 1
                then (CR & crmask(fxm)) as UDWord
                else 0
     encoding AsId($asm) = {opcd = 0b011111, m = 0b1, rsv1 = 0b0, extopcd = 0b00000'10011, rsv2 = 0b0}
