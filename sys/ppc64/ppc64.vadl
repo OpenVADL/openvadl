@@ -1185,7 +1185,7 @@ instruction set architecture PPC64SFS = {
         }
       else {
         X(rs) := XW(ra) as UDWord
-        XER := (0b1 as Bits<1>, 0b1 as Bits<1>, XER.ca, XER.rsv1, 0b1 as Bits<1>, XER.ca32, XER.rsv2, XER.nbytes)
+        $CS($oe; XER := (0b1 as Bits<1>, 0b1 as Bits<1>, XER.ca, XER.rsv1, 0b1 as Bits<1>, XER.ca32, XER.rsv2, XER.nbytes))
         $CS($rc; $SetCR0(0b0))
       }
     encoding $eid = {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc}
