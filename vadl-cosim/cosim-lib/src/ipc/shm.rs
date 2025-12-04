@@ -2,8 +2,7 @@ use std::{ffi::CString, marker::PhantomData, ptr};
 
 use anyhow::{Context, Result, bail};
 use libc::{
-    MAP_FAILED, MAP_SHARED, O_CREAT, O_RDWR, PROT_READ, PROT_WRITE, close, ftruncate, mmap, munmap,
-    shm_open, shm_unlink,
+    close, ftruncate, mmap, munmap, shm_open, shm_unlink, MAP_FAILED, MAP_SHARED, O_CREAT, O_EXCL, O_RDWR, PROT_READ, PROT_WRITE
 };
 
 use crate::{
@@ -55,7 +54,7 @@ impl<T: Sized> SharedMemory<T> {
 
         let fd = unsafe {
             bail_on_libc_err!(
-                shm_open(mmap_path_c.as_ptr(), O_CREAT | O_RDWR, PERMISSONS),
+                shm_open(mmap_path_c.as_ptr(), O_CREAT | O_EXCL | O_RDWR, PERMISSONS),
                 -1
             )
         };

@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{collections::VecDeque, fmt::Debug};
 
 use anyhow::anyhow;
 use serde::Serialize;
@@ -58,7 +58,7 @@ pub type DiffContext = Vec<DiffContextClient>;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DiffContextClient {
-    pub client_id: usize,
+    pub client_id: String,
     pub client_name: Option<String>,
     pub client_run_count: u64,
     pub before_state: DiffContextClientState,
@@ -73,6 +73,7 @@ pub struct DiffContextClientState {
 }
 
 #[derive(Debug, Serialize, Clone)]
+#[serde(tag = "type", content = "value")]
 pub enum DiffContextClientStateContent {
     CPUs(Vec<DiffContextClientStateCPU>),
     Memory(DiffContextClientStateMemory),
@@ -81,7 +82,7 @@ pub enum DiffContextClientStateContent {
 #[derive(Debug, Serialize, Clone)]
 pub struct DiffContextClientStateMemory {
     pub vaddr: u64,
-    pub size: u32,
+    pub size: u8,
     pub data: String,
 }
 
@@ -107,11 +108,6 @@ pub struct DiffContextClientInstruction {
     pub insn_data: String,
 }
 
-pub enum DiffValue {
-    Int(i64),
-    Str(String),
-}
-
 impl DiffEntry {
     pub fn new(
         key: impl Into<String>,
@@ -128,7 +124,7 @@ impl DiffEntry {
 
 impl DiffContextClient {
     pub fn new<T: Into<DiffContextClientState>>(
-        client_id: usize,
+        client_id: String,
         client_name: Option<String>,
         client_run_count: u64,
         before_state: T,
@@ -149,7 +145,7 @@ impl DiffContextClient {
 pub fn get_all_clients_instructions(
     clients: &[Client],
     config: &Config,
-) -> Vec<DiffContextClientInstructions> {
+) -> VecDeque<DiffContextClientInstructions> {
     clients
         .iter()
         .map(|client| get_client_instructions(client, config))
@@ -190,7 +186,7 @@ impl From<&TBInsnInfo> for DiffContextClientInstruction {
 pub fn get_all_clients_contexts_before(
     clients: &[Client],
     config: &Config,
-) -> Vec<DiffContextClientState> {
+) -> VecDeque<DiffContextClientState> {
     clients
         .iter()
         .map(|client| get_client_context_before(client, config))
@@ -211,7 +207,7 @@ pub fn get_client_context_before(client: &Client, config: &Config) -> DiffContex
 pub fn get_all_clients_contexts_current(
     clients: &mut [Client],
     config: &Config,
-) -> anyhow::Result<Vec<DiffContextClientState>> {
+) -> anyhow::Result<VecDeque<DiffContextClientState>> {
     clients
         .iter_mut()
         .map(|client| get_client_context_current(client, config))

@@ -6,9 +6,9 @@ use std::{
 
 use anyhow::bail;
 use serde::{Serialize, ser::SerializeStruct};
-use tracing::debug;
+use tracing::{debug, warn};
 
-use crate::{config::Config, ipc::sem::Semaphore};
+use crate::{config::{Config, Endian}, ipc::sem::Semaphore};
 
 pub const SHMSTRING_MAX_LEN: usize = 256;
 pub const TBINSNINFO_ENTRIES: usize = 64;
@@ -87,6 +87,21 @@ impl SHMRegister {
             entry
         } else {
             s
+        }
+    }
+
+    pub fn to_u64(&self, endian: &Endian) -> u64 {
+        const BUF_LEN: usize = 8;
+        let mut buf: [u8; BUF_LEN] = [0; BUF_LEN];
+        match endian {
+            Endian::Little => {
+                buf[..self.size as usize].copy_from_slice(self.data_slice());
+                return u64::from_le_bytes(buf);
+            },
+            Endian::Big => {
+                buf[BUF_LEN - self.size as usize..].copy_from_slice(self.data_slice());
+                return u64::from_be_bytes(buf);
+            },
         }
     }
 }
@@ -322,9 +337,9 @@ pub struct BrokerSHMInsn {
     /// A bit-mask indicating which cpu-indicies are set
     pub init_mask: i32,
     pub insn_data_type: BrokerSHMInsnDataType,
-    cpus: [SHMCPU; MAX_CPU_COUNT],
+    pub cpus: [SHMCPU; MAX_CPU_COUNT],
     pub insn_info: TBInsnInfo,
-    mem_access_info: MemAccessInfo,
+    pub mem_access_info: MemAccessInfo,
 }
 
 impl Serialize for BrokerSHMInsn {
@@ -394,7 +409,7 @@ pub struct MemAccessInfo {
     pub vaddr: u64,
     // the size of the memory load / store in ^2: 0 = 1 byte, 1 = 2 bytes, ..., 4
     // = 16 bytes
-    pub size: u32,
+    pub size: u8,
     // the amount written to the data-array depends on the size
     data: [u8; 16],
 }
@@ -413,12 +428,12 @@ impl Serialize for MemAccessInfo {
 }
 
 impl MemAccessInfo {
-    pub fn new(size: u32, data: [u8; 16], vaddr: u64) -> Self {
+    pub fn new(size: u8, data: [u8; 16], vaddr: u64) -> Self {
         Self { size, data, vaddr }
     }
 
     pub fn data_slice(&self) -> &[u8] {
-        let bytes: usize = 2 << self.size;
+        let bytes: usize = 1 << self.size;
         &self.data[..bytes]
     }
 
@@ -500,10 +515,16 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
             let write_end_ref = &self.write_end;
             let cond =
                 || write_end_ref.load(Ordering::SeqCst) || count_ref.load(Ordering::SeqCst) > 0;
-            let res = self.notifier.timedwait(Duration::from_millis(100), cond);
+            let res = self.notifier.timedwait(Duration::from_millis(1000), cond);
             match res {
                 Ok(res) => match res {
                     crate::ipc::sem::TimedWaitState::Timeout => {
+                        if cond() {
+                            warn!("A timeout occurred while waiting for a qemu-client but the client did respond. This means a race-condition similar to https://stackoverflow.com/a/36130475 occurred. This scenario is handled such that the cosimulation still works correctly.");
+
+                            return self.start_read();
+                        }
+
                         bail!(
                             "Failed to wait for a response from a qemu client. Please refer to the logs for more information."
                         );

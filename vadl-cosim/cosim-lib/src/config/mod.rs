@@ -8,6 +8,7 @@ pub struct Config {
     pub testing: Testing,
     pub logging: Logging,
     pub dev: Dev,
+    #[cfg(feature = "sqlite-tracing")] 
     pub tracing: Tracing,
 }
 
@@ -17,6 +18,7 @@ impl Config {
     }
 }
 
+#[cfg(feature = "sqlite-tracing")]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tracing {
     #[serde(default = "TracingMode::default")]
@@ -32,6 +34,7 @@ pub struct Tracing {
     pub clear_on_rerun: bool,
 }
 
+#[cfg(feature = "sqlite-tracing")]
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum TracingMode {
@@ -41,6 +44,7 @@ pub enum TracingMode {
     Sync,
 }
 
+#[cfg(feature = "sqlite-tracing")]
 impl TracingMode {
     pub fn enabled(&self) -> bool {
         *self != TracingMode::None
@@ -49,12 +53,18 @@ impl TracingMode {
     pub fn disabled(&self) -> bool {
         *self == TracingMode::None
     }
+
+    pub fn is_collect(&self) -> bool {
+        *self == TracingMode::Collect
+    }
 }
 
+#[cfg(feature = "sqlite-tracing")]
 fn default_tracing_file() -> String {
     "trace.sqlite3".into()
 }
 
+#[cfg(feature = "sqlite-tracing")]
 fn default_tracing_dir() -> String {
     "./trace".into()
 }

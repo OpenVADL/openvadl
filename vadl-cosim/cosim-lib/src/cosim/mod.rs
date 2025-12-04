@@ -1,12 +1,24 @@
 use std::collections::HashSet;
+use std::fs;
+use std::path::Path;
 
 use anyhow::{Result, bail};
-use rusqlite::Connection;
+use beau_collector::BeauCollector;
 use tracing::debug;
 
+#[cfg(feature = "sqlite-tracing")]
+use crate::db::{
+    CosimRunInfo, DBConnection, finish_cosimulation_run_trace, insert_new_cosimulation_run,
+};
+
+use crate::ipc::cstructs::BrokerSHMInsn;
+#[cfg(feature = "sqlite-tracing")]
+use crate::trace::{
+    TraceEntryData, TraceStore, connect, get_client_trace, store_trace, trace_collect,
+};
+
 use crate::{
-    config::{Config, TracingMode},
-    db::{CosimRunInfo, finish_cosimulation_run_trace, insert_new_cosimulation_run},
+    config::Config,
     diff::{
         DiffContext, DiffContextClient, DiffEntry, Report,
         diff::{diff_cpus, diff_mem_access},
@@ -17,14 +29,16 @@ use crate::{
         cstructs::{self, TBInfo, TBInsnInfo},
         qemu::Client,
     },
-    trace::{TraceEntryData, TraceStore, connect, get_client_trace, store_trace, trace_collect},
 };
 
 pub struct Broker {
     clients: Vec<Client>,
+    #[cfg(feature = "sqlite-tracing")]
     run_info: Option<CosimRunInfo>,
+    #[cfg(feature = "sqlite-tracing")]
     trace_store: TraceStore,
-    trace_connection: Connection,
+    #[cfg(feature = "sqlite-tracing")]
+    trace_connection: DBConnection,
 }
 
 enum TBSyncResult {
@@ -32,9 +46,21 @@ enum TBSyncResult {
     Diverged(DiffEntry),
 }
 
-pub type DBConnection = Connection;
-
 impl Broker {
+    #[cfg(not(feature = "sqlite-tracing"))]
+    pub fn create(config: &Config) -> Result<Self> {
+        let clients = config
+            .qemu
+            .clients
+            .iter()
+            .enumerate()
+            .map(|(idx, _)| Client::create(config, idx))
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(Self { clients })
+    }
+
+    #[cfg(feature = "sqlite-tracing")]
     pub fn create(config: &Config) -> Result<Self> {
         let clients = config
             .qemu
@@ -72,19 +98,23 @@ impl Broker {
         }
     }
 
+    #[allow(unused_variables)]
     pub fn finish(mut self, passed: bool, config: &Config) -> Result<()> {
-        if config.tracing.mode == crate::config::TracingMode::Collect {
-            for entry in self.trace_store {
-                store_trace(entry, &mut self.trace_connection)?;
+        #[cfg(feature = "sqlite-tracing")]
+        {
+            if config.tracing.mode.is_collect() {
+                for entry in self.trace_store {
+                    store_trace(entry, &mut self.trace_connection)?;
+                }
             }
-        }
 
-        if config.tracing.mode.enabled() {
-            finish_cosimulation_run_trace(
-                &mut self.trace_connection,
-                self.run_info.unwrap(),
-                passed,
-            )?;
+            if config.tracing.mode.enabled() {
+                finish_cosimulation_run_trace(
+                    &mut self.trace_connection,
+                    self.run_info.unwrap(),
+                    passed,
+                )?;
+            }
         }
 
         for client in &mut self.clients {
@@ -96,6 +126,25 @@ impl Broker {
 
     pub fn clients(&self) -> &Vec<Client> {
         &self.clients
+    }
+
+    fn add_client_logs_to_error(
+        err: anyhow::Error,
+        client_id: &str,
+        config: &Config,
+    ) -> anyhow::Error {
+        let base_path = Path::new(&config.logging.dir);
+        let stdout_path = base_path.join(format!("client-{client_id}-stdout.txt"));
+        let stderr_path = base_path.join(format!("client-{client_id}-stderr.txt"));
+
+        let stdout_content =
+            fs::read_to_string(stdout_path).expect("client stdout-file should exist");
+        let stderr_content =
+            fs::read_to_string(stderr_path).expect("client stderr-file should exist");
+
+        err.context(format!(
+            "Client stdout:\n{stdout_content}\n\nClient stderr:\n{stderr_content}"
+        ))
     }
 
     fn run_lockstep(&mut self, config: &Config) -> Result<Report> {
@@ -118,15 +167,22 @@ impl Broker {
 
         match config.testing.protocol.layer {
             crate::config::ProtocolLayer::Insn => loop {
+                let c1name = self.clients[0].name_or_id();
+                let c2name = self.clients[1].name_or_id();
                 let reads = self
                     .clients
                     .iter_mut()
+                    .rev()
                     .map(|client| {
-                        let res = client.shm.read_buffer().map(|opt| opt.map(|i| i.as_insn()));
+                        let res = client
+                            .shm
+                            .read_buffer()
+                            .map(|opt| opt.map(|i| i.as_insn()))
+                            .map_err(|e| Broker::add_client_logs_to_error(e, &client.id, &config));
                         client.run_count += 1;
                         res
                     })
-                    .collect::<Result<Vec<_>>>()?;
+                    .bcollect::<Vec<_>>()?;
 
                 let c1insn = reads[0];
                 let c2insn = reads[1];
@@ -140,6 +196,7 @@ impl Broker {
                             let diffs =
                                 diff_cpus(cpus1, c1insn.init_mask, cpus2, c2insn.init_mask, config);
 
+                            #[cfg(feature = "sqlite-tracing")]
                             self.trace_clients(config)?;
 
                             if !config.testing.protocol.execute_all_remaining_instructions {
@@ -155,18 +212,30 @@ impl Broker {
                         {
                             diff_mem_access(mem_access_info1, mem_access_info2, config)
                         } else {
-                            panic!(
-                                "Invalid cosim-state. Both clients were running the Insn-Layer, however they didn't write the same type of data (e.g. one client return insn-exec data, while the other returned mem-access data). This is a bug in the cosimulator/plugin."
+                            let diff = DiffEntry::new(
+                                "missing-memory-access",
+                                vec![
+                                    Broker::format_insn_for_diff(&c1insn.insn_info),
+                                    Broker::format_insn_for_diff(&c2insn.insn_info),
+                                ],
+                                Broker::format_missing_memory_access_msg(
+                                    &c1insn,
+                                    &c2insn,
+                                    &c1name,
+                                    &c2name,
+                                )
                             );
+                            vec![diff]
                         };
+
+                        if !diffs.is_empty() {
+                            debug!("difference between two instructions found");
+                            let ctx = self.build_diff_context(config)?;
+                            return Ok(Report::failed(diffs, ctx));
+                        }
 
                         for client in &mut self.clients {
                             client.shm.end_read_buffer();
-                        }
-
-                        if !diffs.is_empty() {
-                            let ctx = self.build_diff_context(config)?;
-                            return Ok(Report::failed(diffs, ctx));
                         }
                     }
 
@@ -175,6 +244,7 @@ impl Broker {
 
                     // one client finished while the other still writes to the buffer, error state!
                     (Some(c1insn), None) => {
+                        debug!("one client executes more instructions than the other");
                         let diff = DiffEntry::new(
                             "invalid-execution",
                             vec![Broker::format_insn_for_diff(&c1insn.insn_info)],
@@ -187,6 +257,7 @@ impl Broker {
                         return Ok(Report::failed(vec![diff], ctx));
                     }
                     (None, Some(c2insn)) => {
+                        debug!("one client executes more instructions than the other");
                         let diff = DiffEntry::new(
                             "invalid-execution",
                             vec![Broker::format_insn_for_diff(&c2insn.insn_info)],
@@ -232,6 +303,7 @@ impl Broker {
                             config,
                         );
 
+                        #[cfg(feature = "sqlite-tracing")]
                         self.trace_clients(config)?;
 
                         if !diffs.is_empty() {
@@ -286,6 +358,17 @@ impl Broker {
         Ok(Report::passed())
     }
 
+    #[allow(unused_variables)]
+    fn format_missing_memory_access_msg(c1insn: &BrokerSHMInsn, c2insn: &BrokerSHMInsn, c1: &str, c2: &str) -> String {
+        let (mem_access_client, insn_exec_client) = if c1insn.mem_access_info().is_some() {
+            (c1, c2)
+        } else {
+            (c2, c1)
+        };
+
+        format!("When executing the instruction: {}\n\"{}\" wrote memory-access info to the buffer, while \"{}\" wrote an insn-execution to the buffer", Broker::format_insn_for_diff(&c1insn.insn_info), mem_access_client, insn_exec_client)
+    }
+
     fn format_insn_for_diff(insn: &TBInsnInfo) -> String {
         format!(
             "pc={}, size={}, symbol={}, hwaddr={}, disas={}, data={}",
@@ -314,14 +397,8 @@ impl Broker {
     ) -> String {
         format!(
             "client \"{}\" executed another instruction while client \"{}\" has already finished",
-            executing_client
-                .name
-                .as_deref()
-                .unwrap_or(&executing_client.id.to_string()),
-            halted_client
-                .name
-                .as_deref()
-                .unwrap_or(&halted_client.id.to_string())
+            executing_client.name_or_id(),
+            halted_client.name_or_id()
         )
     }
 
@@ -412,7 +489,9 @@ impl Broker {
     ///
     /// NOTE: The copy of the shared memory is necessary since no lock is placed on it (which would
     /// basically transform the function into a blocking function).
+    #[cfg(feature = "sqlite-tracing")]
     fn trace_clients(&mut self, config: &Config) -> Result<()> {
+        use crate::config::TracingMode;
         match config.tracing.mode {
             TracingMode::None => Ok(()),
             TracingMode::Collect => trace_collect(
@@ -440,11 +519,11 @@ impl Broker {
         let mut diff_context = vec![];
 
         for client in &self.clients {
-            let before_state = before_states.pop().unwrap();
-            let error_instruction = error_instructions.pop().unwrap();
-            let after_state = after_states.pop().unwrap();
+            let before_state = before_states.pop_front().unwrap();
+            let error_instruction = error_instructions.pop_front().unwrap();
+            let after_state = after_states.pop_front().unwrap();
 
-            let client_id = client.id;
+            let client_id = client.id.clone();
             let client_name = client.name.clone();
             let client_run_count = client.run_count;
 

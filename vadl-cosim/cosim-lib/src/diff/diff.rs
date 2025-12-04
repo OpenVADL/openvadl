@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, io::Read};
 
 use crate::{
     config::Config,
@@ -146,42 +146,16 @@ pub fn diff_register(
     config: &Config,
     diffs: &mut Vec<DiffEntry>,
 ) {
-    let r1name = reg1.mapped_name(config);
-    let r2name = reg2.mapped_name(config);
+    let reg1val = reg1.to_u64(&config.qemu.clients[0].endian);
+    let reg2val = reg2.to_u64(&config.qemu.clients[1].endian);
 
-    if reg1.size != reg2.size {
+    if reg1val != reg2val {
+        let r1name = reg1.mapped_name(config);
         diffs.push(DiffEntry::new(
-            format!("cpu[{cpu_index}].registers[{reg_index}].size"),
-            vec![reg1.size.to_string(), reg2.size.to_string()],
-            format!("different register sizes for {r1name}"),
+            format!("cpu[{cpu_index}].registers[{reg_index}].data"),
+            vec![reg1.data_slice_fmt(), reg2.data_slice_fmt()],
+            format!("different register data for {r1name}"),
         ));
-    }
-
-    if r1name != r2name {
-        diffs.push(DiffEntry::new(
-            format!("cpu[{cpu_index}].registers[{reg_index}].name"),
-            vec![r1name.to_string(), r2name.to_string()],
-            "different register names",
-        ));
-    }
-
-    for idx in 0..(reg1.size as usize) {
-        let d1 = reg1.data_slice()[idx];
-        let d2 = if config.qemu.has_equal_endianess() {
-            reg2.data_slice()[idx]
-        } else {
-            reg2.data_slice()[(reg2.size as usize) - idx - 1]
-        };
-
-        if d1 != d2 {
-            diffs.push(DiffEntry::new(
-                format!("cpu[{cpu_index}].registers[{reg_index}].data"),
-                vec![reg1.data_slice_fmt(), reg2.data_slice_fmt()],
-                format!("different register data for {r1name}"),
-            ));
-
-            break;
-        }
     }
 }
 

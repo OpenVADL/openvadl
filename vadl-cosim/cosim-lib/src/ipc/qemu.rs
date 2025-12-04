@@ -15,7 +15,7 @@ use crate::{
 type BrokerSHMRingBufferImpl = BrokerSHMRingBuffer<4>;
 
 pub struct Client {
-    pub id: usize,
+    pub id: String,
     pub shm: SharedMemory<BrokerSHMRingBufferImpl>,
     pub is_open: bool,
     pub process: Child,
@@ -27,13 +27,18 @@ impl Client {
     pub fn create(config: &Config, client_idx: usize) -> Result<Self> {
         let client_cfg = config.for_client(client_idx);
 
+        // ensure the client id is unique across parallel cosim-executions by appending the pid of
+        // the cosimulator instance
+        let pid = std::process::id();
+        let client_id = format!("{pid}-{client_idx}");
+
         let mut shm: SharedMemory<BrokerSHMRingBufferImpl> =
-            SharedMemory::create(&format!("/cosimulation-shm-{client_idx}"))?;
+            SharedMemory::create(&format!("/cosimulation-shm-{client_id}"))?;
 
         shm.get_mut().init()?;
 
         info!(
-            client_id = client_idx,
+            client_id = client_id,
             "created shm and sems, spawning client"
         );
 
@@ -45,7 +50,7 @@ impl Client {
         };
 
         let mut plugin_args = vec![
-            format!("client-id={client_idx}"),
+            format!("client-id={client_id}"),
             format!("mode={client_mode}"),
         ];
         if let Some(client_name) = &client_cfg.name {
@@ -68,10 +73,10 @@ impl Client {
                     vec![
                         "-chardev".into(),
                         format!(
-                            "socket,path={remote_target},server=on,wait=off,id=gdb{client_idx}"
+                            "socket,path={remote_target},server=on,wait=off,id=gdb{client_id}"
                         ),
                         "-gdb".into(),
-                        format!("chardev:gdb{client_idx}"),
+                        format!("chardev:gdb{client_id}"),
                         "-S".into(),
                     ]
                 }
@@ -97,8 +102,8 @@ impl Client {
         info!(executable_path, ?args, "starting client");
 
         let base_path = Path::new(&config.logging.dir);
-        let stdout_path = base_path.join(format!("client-{client_idx}-stdout.txt"));
-        let stderr_path = base_path.join(format!("client-{client_idx}-stderr.txt"));
+        let stdout_path = base_path.join(format!("client-{client_id}-stdout.txt"));
+        let stderr_path = base_path.join(format!("client-{client_id}-stderr.txt"));
 
         let stdout_file = File::create(stdout_path)?;
         let stderr_file = File::create(stderr_path)?;
@@ -108,10 +113,10 @@ impl Client {
             .stdout(stdout_file)
             .stderr(stderr_file)
             .spawn()
-            .with_context(|| format!("Failed to create client with idx: {client_idx}"))?;
+            .with_context(|| format!("Failed to create client with idx: {client_id}"))?;
 
         Ok(Self {
-            id: client_idx,
+            id: client_id,
             shm,
             is_open: true,
             process: client_process,
@@ -124,5 +129,11 @@ impl Client {
         self.process
             .kill()
             .with_context(|| format!("failed to kill qemu-process: {}", self.id))
+    }
+
+    pub fn name_or_id(&self) -> String {
+        self.name
+            .clone()
+            .unwrap_or(self.id.to_string())
     }
 }
