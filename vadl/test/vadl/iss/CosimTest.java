@@ -139,12 +139,13 @@ public abstract class CosimTest extends DockerExecutionTest {
 
               d.workDir("/work");
 
-              // get rust toolchain from rustup and build the cosim broker
+              // get rust toolchain from rustup
               d.run("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y");
               d.env("PATH", "/root/.cargo/bin:$PATH");
-              d.run("git clone --branch feature/ppc-cosim-test https://github.com/OpenVADL/openvadl.git");
-              //d.run("git clone https://github.com/OpenVADL/openvadl.git");
-              d.workDir("/work/openvadl/vadl-cosim");
+
+              // build the cosim broker
+              d.copy("/vadl-cosim", "/work/vadl-cosim");
+              d.workDir("/work/vadl-cosim");
               d.env("RUSTC_WRAPPER", "sccache");
               d.run("sccache --start-server && cargo build --release -p vadl-cosim-broker && sccache -s");
 
@@ -166,7 +167,9 @@ public abstract class CosimTest extends DockerExecutionTest {
         .withFileFromPath("iss", generatedIssSources)
         // make cosim scripts and configs available to image builder
         .withFileFromClasspath("/cosim_configs", "/cosim_configs")
-        .withFileFromClasspath("/cosim_scripts", getScript());
+        .withFileFromClasspath("/cosim_scripts", getScript())
+        // add vadl-cosim to image builder
+        .withFileFromPath("/vadl-cosim", Path.of("..", "vadl-cosim"));
 
     // as we have to use the same network as the redis cache, we have to build it there
     return redisCache.setupEnv(dockerImage);
