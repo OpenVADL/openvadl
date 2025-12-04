@@ -1,5 +1,6 @@
 #include "[(${namespace})]TargetObjectFile.h"
 #include "[(${namespace})]TargetMachine.h"
+#include "[(${namespace})]TargetTransformInfo.h"
 #include "TargetInfo/[(${namespace})]TargetInfo.h"
 #include "[(${namespace})]PassConfig.h"
 #include "llvm/MC/TargetRegistry.h"
@@ -75,4 +76,9 @@ MachineFunctionInfo *[(${namespace})]TargetMachine::createMachineFunctionInfo(
 {
     return [(${namespace})]MachineFunctionInfo::create<[(${namespace})]MachineFunctionInfo>(Allocator,
                                                                                           F, STI);
+}
+
+TargetTransformInfo
+[(${namespace})]TargetMachine::getTargetTransformInfo(const Function &F) const {
+  return TargetTransformInfo([(${namespace})]TTIImpl(this, F));
 }

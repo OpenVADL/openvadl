@@ -23,6 +23,7 @@ namespace llvm
         {
             return &Subtarget; // Default (and only) Subtarget
         }
+        TargetTransformInfo getTargetTransformInfo(const Function &F) const;
 
         TargetPassConfig *createPassConfig(PassManagerBase & PassManager);
 
