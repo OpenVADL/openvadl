@@ -1,6 +1,11 @@
 # Makefile for [(${projectName})]
 
-test: riscv-tests
+SHELL=/bin/bash
+
+test:
+	mkdir -p build
+	touch build/[(${topModule})]-riscv-tests.log
+	set -o pipefail # Preserve test exit code when piping to tee
 	sbt test 2>&1 | tee build/[(${topModule})]-riscv-tests.log
 
 riscv-tests:

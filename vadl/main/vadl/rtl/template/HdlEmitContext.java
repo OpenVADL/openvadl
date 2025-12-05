@@ -102,6 +102,7 @@ public record HdlEmitContext(
                 nodeContext.shortestNameHint(existing, 30)
                     .or(() -> fallback(inlinedNode, existing))
                     .orElse("n_" + nodeContext.node().id().numericId()))
+            .filter(name -> !existing.contains(name))
             .orElseGet(() -> {
               if (fallback == null || existing.contains(fallback)) {
                 return fallback(inlinedNode, existing)
