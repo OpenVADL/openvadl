@@ -59,6 +59,7 @@ async def build_assembly(id: str, core: str) -> Path:
   asm_out = _tmp_file(id, f"asm-{id}.s")
 
   content = f"""
+  .machine power10
   .globl _start
   .section .text
   _start:
