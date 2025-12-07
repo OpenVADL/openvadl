@@ -143,7 +143,7 @@ public class DiagnosticPrinter {
       printExpandedSourcePreview(snippet,
           snippet.equals(diagnostic.multiLocation.primaryLocation()), diagnostic.level, builder);
     }
-    builder.append("\n     %s│ %s\n".formatted(colors.cyan(), colors.reset()));
+    builder.append("\n     %s│%s\n".formatted(colors.cyan(), colors.reset()));
   }
 
   /**
@@ -337,7 +337,7 @@ public class DiagnosticPrinter {
     // Generate the complete block, with highlighting and messages.
     var textBlock = messageBlock(location);
     var highlightedBlock =
-        indentFirstBy(textBlock, highlightPadding + " ", nonHighlightPadding + " ");
+        indentFirstBy(textBlock, highlightPadding, nonHighlightPadding);
     var completedBlock = indentBy(highlightedBlock, padding);
 
     builder.append(completedBlock);
