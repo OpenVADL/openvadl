@@ -34,6 +34,7 @@ import vadl.utils.SourceLocation;
  */
 public class DiagnosticPrinter {
 
+  public boolean forceRelativePaths = false;
   private final PrinterColors colors;
   private final Map<Path, List<String>> fileLineCache = new HashMap<>();
 
@@ -120,7 +121,9 @@ public class DiagnosticPrinter {
   private void printMultiSourcePreview(Diagnostic diagnostic, StringBuilder builder) {
     // Print preview header
     builder.append("     %s╭──[%s]\n".formatted(colors.cyan(),
-        diagnostic.multiLocation.primaryLocation().location().toIDEString()));
+        diagnostic.multiLocation.primaryLocation().location().toIDEString(
+            forceRelativePaths ? SourceLocation.IDEDetectionMode.RELATIVE :
+                SourceLocation.IDEDetectionMode.AUTO)));
     builder.append("     │\n");
 
     // TODO: Sort them accordig to their line number in the future
@@ -157,7 +160,9 @@ public class DiagnosticPrinter {
     if (!previous.uri().equals(next.uri())) {
       // This is so unusual that we print the location everytime
       var message = "     %s⋮\n".formatted(colors.cyan());
-      message += "     ╭─ %s\n".formatted(next.toIDEString());
+      message += "     ╭─ %s\n".formatted(
+          next.toIDEString(forceRelativePaths ? SourceLocation.IDEDetectionMode.RELATIVE :
+              SourceLocation.IDEDetectionMode.AUTO));
       return message;
     } else if (next.begin().line() == previous.end().line() + 1) {
       return "     %s│\n".formatted(colors.cyan());

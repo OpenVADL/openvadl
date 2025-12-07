@@ -162,6 +162,13 @@ public record SourceLocation(
   }
 
   /**
+   * Modes of how the IDE should be detected or one format be forced.
+   */
+  public enum IDEDetectionMode {
+    AUTO, RELATIVE, ABSOLUTE
+  }
+
+  /**
    * Produces version that is easily understandable for IDE's.
    *
    * <p>E.g.: {@code SourceLocation("relative/path/to/file.vadl", (1, 3), (2, 4))}
@@ -169,13 +176,25 @@ public record SourceLocation(
    * </p>
    */
   public String toIDEString() {
+    return toIDEString(IDEDetectionMode.AUTO);
+  }
+
+  /**
+   * Produces version that is easily understandable for IDE's.
+   *
+   * <p>E.g.: {@code SourceLocation("relative/path/to/file.vadl", (1, 3), (2, 4))}
+   * becomes  {@code "relative/path/to/file.vadl:1:3"}
+   * </p>
+   */
+  public String toIDEString(IDEDetectionMode mode) {
     if (!this.isValid()) {
       return "Source Location was lost";
     }
 
     String printablePath;
 
-    if (isIntelliJIDE() || this.uri.getScheme().equals("memory")) {
+    if (mode == IDEDetectionMode.ABSOLUTE || (mode == IDEDetectionMode.AUTO && (isIntelliJIDE()
+        || this.uri.getScheme().equals("memory")))) {
       // IntelliJ integrated terminal needs special treatment
       printablePath = this.uri.toString();
     } else {

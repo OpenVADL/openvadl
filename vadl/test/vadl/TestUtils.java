@@ -20,7 +20,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static vadl.utils.ViamUtils.findDefinitionsByFilter;
 
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -29,6 +33,8 @@ import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import net.jqwik.api.arbitraries.BigIntegerArbitrary;
 import org.junit.jupiter.api.Assertions;
+import org.opentest4j.AssertionFailedError;
+import org.opentest4j.FileInfo;
 import vadl.ast.TypeChecker;
 import vadl.ast.VadlParser;
 import vadl.ast.ViamLowering;
@@ -109,6 +115,29 @@ public class TestUtils {
     var spec = Assertions.assertDoesNotThrow(() -> lowering.generate(ast), "Cannot generate VIAM");
     ViamVerifier.verifyAllIn(spec);
     return spec;
+  }
+
+  /**
+   * Asserts that the File referenced with the provided Path contains equals the actual string.
+   * This test is optimized for IntelliJ and by throwing a custom AssertionFailedError the IDE will
+   * show a diff editor in which the user can accept the changes into the referenced filed.
+   *
+   * @param expectedPath the file to compare the actual string with
+   * @param actual       the actual string the test produced.
+   * @throws IOException if the file cannot be read.
+   */
+  public static void assertEqualsFileContent(Path expectedPath, String actual)
+      throws
+      IOException {
+    var expected = Files.readString(expectedPath);
+    if (!expected.equals(actual)) {
+      throw new AssertionFailedError(
+          "Actual data differs from file.",
+          new FileInfo(expectedPath.toAbsolutePath().toString(),
+              expected.getBytes(StandardCharsets.UTF_8)),
+          actual
+      );
+    }
   }
 
   /**
