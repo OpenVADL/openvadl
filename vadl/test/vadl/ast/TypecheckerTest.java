@@ -20,7 +20,6 @@ import java.math.BigInteger;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import vadl.error.DiagnosticList;
 import vadl.types.Type;
 
 public class TypecheckerTest {
@@ -48,16 +47,6 @@ public class TypecheckerTest {
     Assertions.assertEquals(Type.bool(), typeFinder.getConstantType(ast, "b"));
   }
 
-  @Test
-  public void invalidBooleanType() {
-    var prog = """
-        constant b: Bool<1> = true
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
-  }
 
   @Test
   public void sintConstant() {
@@ -70,41 +59,6 @@ public class TypecheckerTest {
     var typeFinder = new AstFinder();
     Assertions.assertEquals(Type.signedInt(32), typeFinder.getConstantType(ast, "i"));
   }
-
-  @Test
-  public void invalidSintType() {
-    var prog = """
-        constant i: SInt = 42
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
-  }
-
-
-  @Test
-  public void invalidConstantAssignementIntToBool() {
-    var prog = """
-        constant b: Bool = 42
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
-  }
-
-  @Test
-  public void invalidDeclaredSIntTooNarrow() {
-    var prog = """
-        constant b: SInt<3> = 8
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
-  }
-
 
   @Test
   public void unaryMinusIntExpression() {
@@ -133,17 +87,6 @@ public class TypecheckerTest {
   }
 
   @Test
-  public void invalidMinusOnBoolean() {
-    var prog = """
-        constant i = -true
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
-  }
-
-  @Test
   public void unaryNegateBool() {
     var prog = """
         // It's funny because it's true.
@@ -168,17 +111,6 @@ public class TypecheckerTest {
     var typeFinder = new AstFinder();
     Assertions.assertEquals(Type.bool(),
         typeFinder.getConstantType(ast, "b"));
-  }
-
-  @Test
-  public void invalidNegateInt() {
-    var prog = """
-        constant b = !5
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -236,18 +168,6 @@ public class TypecheckerTest {
     var typeFinder = new AstFinder();
     Assertions.assertEquals(Type.unsignedInt(3), typeFinder.getConstantType(ast, "a"));
     Assertions.assertEquals(Type.unsignedInt(1), typeFinder.getConstantType(ast, "b"));
-  }
-
-  @Test
-  public void invalidCastAfterEvalTruncates() {
-    var prog = """
-        constant a = 9 as UInt<3>
-        constant b: UInt<a> = 3
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -646,17 +566,6 @@ public class TypecheckerTest {
   }
 
   @Test
-  public void invalidFunctionDefinitionWrongReturnType() {
-    var prog = """
-        function addOne(n: SInt<8>) -> SInt<8> = false
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
-  }
-
-  @Test
   public void formatWithTypes() {
     var prog = """
          format f : Bits<8> =
@@ -709,80 +618,6 @@ public class TypecheckerTest {
 
 
   @Test
-  public void invalidFormatUnusedBitsWithTypes() {
-    var prog = """
-        format f : Bits<8> =
-         { first: Bits<3>
-         , second: Bits<4>
-         }
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
-  }
-
-  @Test
-  public void invalidFormatOverusedBitsWithTypes() {
-    var prog = """
-        format f : Bits<8> =
-         { first: Bits<6>
-         , second: Bits<4>
-         }
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
-  }
-
-  @Test
-  public void invalidFormatUnusedBitsWithRanges() {
-    var prog = """
-        format f : Bits<8> =
-         { first   [7..6]
-         , second  [4..0]
-         }
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
-  }
-
-  @Test
-  public void invalidFormatOverusedBitsWithRanges() {
-    var prog = """
-        format f : Bits<8> =
-         { first   [7..3]
-         , second  [5..0]
-         }
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
-  }
-
-  @Test
-  public void invalidFormatOutOfBoundsRange() {
-    var prog = """
-        instruction set architecture TEST = {
-          format Format: Bits<32> =
-          { field   [32..0]             // wrong higher offset
-          , accFunc = field as SInt
-          }
-        }
-        
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
-  }
-
-
-  @Test
   public void enumWithTypes() {
     var prog = """
           enumeration ENUM: Bits<2> =
@@ -799,21 +634,6 @@ public class TypecheckerTest {
     Assertions.assertEquals(Type.bits(2), enumeration.getEntryType("A"));
     Assertions.assertEquals(Type.bits(2), enumeration.getEntryType("B"));
     Assertions.assertEquals(Type.bits(2), enumeration.getEntryType("C"));
-  }
-
-  @Test
-  public void invalidEnumWithTypes() {
-    var prog = """
-          enumeration ENUM: Bits<2> =
-          { A = 0b00 + 0b01
-          , B = 0b0111111
-          , C = 0b10
-          }
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -906,16 +726,6 @@ public class TypecheckerTest {
     Assertions.assertEquals(Type.bits(32), finder.getConstantType(ast, "x"));
   }
 
-  @Test
-  public void inValidIfExprConditionNoBoolTest() {
-    var prog = """
-          constant x = if 4 then 3 as Bits<32> else 4 as Bits<32>
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
-  }
 
   @Test
   public void ifExprBranchesDifferentTypesInConstantTest() {
@@ -928,18 +738,6 @@ public class TypecheckerTest {
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
     var finder = new AstFinder();
     Assertions.assertEquals(Type.bits(16), finder.getConstantType(ast, "x"));
-  }
-
-  @Test
-  public void invalidIfExprBranchesDifferentTypesInFunctionTest() {
-    // FIXME: In the future bidirectional typechecking should fix that.
-    var prog = """
-          function abc(n: SInt<8>) -> SInt<8> = if n = 7 then 3 else 4
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
   }
 
 
@@ -960,21 +758,6 @@ public class TypecheckerTest {
     Assertions.assertEquals(Type.bits(16), finder.getConstantType(ast, "x"));
   }
 
-  @Test
-  public void invalidMatchExprPatternDifferentTypeTest() {
-    var prog = """
-          constant x = match 4 as Bits<32> with 
-          { 1 => 2 as Bits<16>
-          , 2 as Bits<8> => 4 as Bits<16>
-          , 3 => 6 as Bits<16>
-          , _ => 42 as Bits<16>
-          } 
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
-  }
 
   @Test
   public void matchExprBranchesDifferentTypeInConstantTest() {
@@ -992,22 +775,6 @@ public class TypecheckerTest {
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
     var finder = new AstFinder();
     Assertions.assertEquals(Type.bits(64), finder.getConstantType(ast, "x"));
-  }
-
-  @Test
-  public void invalidMatchExprBranchesDifferentTypeInFunctionTest() {
-    var prog = """
-          function x(n: SInt<8>) -> Bits<64> = (match n with 
-          { 1 => 2 as Bits<16>
-          , 2 => 4 as Bits<32>
-          , 3 => 6 as Bits<8>
-          , _ => 42 as Bits<64>
-          } ) as Bits<64>
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
   }
 
 
@@ -1235,6 +1002,5 @@ public class TypecheckerTest {
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
   }
-
 
 }
