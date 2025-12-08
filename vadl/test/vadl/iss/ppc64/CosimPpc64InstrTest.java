@@ -42,7 +42,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
 
   @Override
   public int getTestPerInstruction() {
-    return 50;
+    return 100;
   }
 
   @Override
