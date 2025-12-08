@@ -39,9 +39,8 @@ COMPILER vadl
   SymbolTable macroTable = new SymbolTable();
   Map<String, Identifier> macroOverrides = new HashMap<>();
 
-  /**
-  * This list is for our custom generated errors that are richer than the one COCO/R produces.
-  */
+  // This list is for our custom generated errors that are richer than the one COCO/R produces.
+ 
   List<Diagnostic> diagnostics = new ArrayList<>();
 
   {
@@ -73,8 +72,8 @@ CHARACTERS
   validSourceCharacters = ANY.
 
 TOKENS
-  hexLit = "0x" hexDigit {hexDigit | "'"}.
   binLit = "0b" binDigit {binDigit | "'"}.
+  hexLit = "0x" hexDigit {hexDigit | "'"}.
   decLit = digit {digit | "'"}.
   embeddedSource = "-<{" {validSourceCharacters} "}>-".
 
@@ -83,22 +82,72 @@ TOKENS
   ( '"' { "\\" (letter | '"' | "'" | "\\") | validDQStringCharacters } '"') |
   ( "'" { "\\" (letter | '"' | "'" | "\\") | validSQStringCharacters } "'").
 
+/// The #T_BIN token is used as the name of the syntax type for a binary or hexadecimal literal like '0b10101010' or '0x1234abcd' (#binLit or #hexLit, see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_BIN is referenced by \refFrom. */
   T_BIN         = "Bin".
+
+/// The #T_BIN_OP token is used as the name of the syntax type for binary operators like '+' or '*' (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_BIN_OP is referenced by \refFrom. */
   T_BIN_OP      = "BinOp".
+
+/// The #T_BOOL token is used as the name of the syntax type for the boolean literals 'true' and 'false' (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_BT_BOOLIN is referenced by \refFrom. */
   T_BOOL        = "Bool".
+
+/// The #T_CALL_EX token is used as the name of the syntax type for a call expression (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_CALL_EX is referenced by \refFrom. */
   T_CALL_EX     = "CallEx".
+
+/// The #T_COMMON_DEFS token is used as the name of the syntax type for one or more common definitions like constants, formations or functions (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_COMMON_DEFS is referenced by \refFrom. */
   T_COMMON_DEFS = "Defs".
+
+/// The #T_ENCS token is used as the name of the syntax type for oner or more instruction encodings (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_ENCS is referenced by \refFrom. */
   T_ENCS        = "Encs".
+
+/// The #T_EX token is used as the name of the syntax type for a general expression (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_EX is referenced by \refFrom. */
   T_EX          = "Ex".
+
+/// The #T_ID token is used as the name of the syntax type for an identifier (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_ID is referenced by \refFrom. */
   T_ID          = "Id".
+
+/// The #T_INT token is used as the name of the syntax type for a decimal integer literal like '123' (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_INT is referenced by \refFrom. */
   T_INT         = "Int".
+
+/// The #T_ISA_DEFS token is used as the name of the syntax type of one or more definitions inside the \ac{ISA} section (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_ISA_DEFS is referenced by \refFrom. */
   T_ISA_DEFS    = "IsaDefs".
+
+/// The #T_LIT token is used as the name of the syntax type for a literal of any type (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_LIT is referenced by \refFrom. */
   T_LIT         = "Lit".
+
+/// The #T_STAT token is used as the name of the syntax type for a single statement (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_STAT is referenced by \refFrom. */
   T_STAT        = "Stat".
+
+/// The #T_STATS token is used as the name of the syntax type for one or more statements (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_STATS is referenced by \refFrom. */
   T_STATS       = "Stats".
+
+/// The #T_STR token is used as the name of the syntax type for a string literal like 'abc' or "abc" (#string, see type hierarchy \r{#syntax_type_hierarchy}).<br>
+/**     #T_STR is referenced by \refFrom. */
   T_STR         = "Str".
+
+/// The #T_SYM_EX token is used as the name of the syntax type for a symbol expression (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_SYM_EX is referenced by \refFrom. */
   T_SYM_EX      = "SymEx".
+
+/// The #T_UN_OP token is used as the name of the syntax type for unary operators like '+' or '!' (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_UN_OP is referenced by \refFrom. */
   T_UN_OP       = "UnOp".
+
+/// The #T_VAL token is used as the name of the syntax type for a value literal (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**            #T_VAL is referenced by \refFrom. */
   T_VAL         = "Val".
 
   ABSOLUTE     = "absolute".
