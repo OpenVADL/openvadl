@@ -103,6 +103,8 @@ public class GenerateValueRangeImmediatePass extends Pass {
               () -> Diagnostic.error("Cannot find snapshot for instruction",
                   instruction.location()));
 
+          // Iterate over all the instruction's fields and calculate which values
+          // are possible for this field.
           fields.forEach(field -> {
             var isSigned = isSigned(instruction, snapshot, field);
             var lowest = lowestPossibleValue(field.type().toBitsType(), isSigned);

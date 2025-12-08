@@ -50,10 +50,13 @@ public class InstructionPatternPruningPass extends Pass {
     super(configuration);
   }
 
+  /**
+   * Structure to determine which branch is the default case.
+   */
   enum Likelihood {
-    TRUE_CASE,
-    FALSE_CASE,
-    BOTH
+    TRUE_CASE, // the true case is the default case.
+    FALSE_CASE, // the false case is the default case.
+    BOTH // both are equally likely.
   }
 
   @Override
@@ -239,7 +242,7 @@ public class InstructionPatternPruningPass extends Pass {
       collection.clear();
 
       if (ifNode.predecessor() != null) {
-        var dir = (DirectionalNode) ifNode.predecessor();
+        var dir = ifNode.predecessor();
         var mergeNext = mergeNode.next();
         mergeNode.replaceSuccessor(mergeNode.next(), null);
         dir.setNext(mergeNext);
@@ -254,6 +257,8 @@ public class InstructionPatternPruningPass extends Pass {
   /**
    * Determines which case of the {@code condition} is more likely and is therefore the default
    * flow.
+   *
+   * @return the {@link Likelihood} that determines which branch is the default case.
    */
   private Likelihood determineLikelihood(ExpressionNode condition) {
     if (condition instanceof BuiltInCall builtInCall) {
@@ -284,6 +289,15 @@ public class InstructionPatternPruningPass extends Pass {
     return Likelihood.BOTH;
   }
 
+  /**
+   * Calculates the common {@link Likelihood} of both input parameters.
+   *
+   * @param result    is the {@link Likelihood} that the branch is the default case based on the
+   *                  previous conditions.
+   * @param subResult is the {@link Likelihood} that the branch is the default case based on the
+   *                  current subcondition.
+   * @return the combined {@link Likelihood} based on the previous result and the new information.
+   */
   private Likelihood meet(@Nullable Likelihood result, Likelihood subResult) {
     // The result is not set because it is the first expression.
     if (result == null) {

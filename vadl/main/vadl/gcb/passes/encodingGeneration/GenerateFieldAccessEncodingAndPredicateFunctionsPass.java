@@ -86,7 +86,8 @@ public class GenerateFieldAccessEncodingAndPredicateFunctionsPass extends Pass {
       }
     }
 
-    // Check predicates
+    // Every field access function requires a predicate function. If there aren't any,
+    // or it couldn't be automatically generated then throw an error.
     for (var format : viam.isa().orElseThrow().ownFormats()) {
       var fieldAccesses = new HashSet<>(format.fieldAccesses());
       for (var fieldAccess : format.fieldAccesses()) {

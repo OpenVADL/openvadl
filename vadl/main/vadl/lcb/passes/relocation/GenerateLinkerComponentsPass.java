@@ -267,7 +267,7 @@ public class GenerateLinkerComponentsPass extends Pass {
       }
     }
 
-    var modifier = new Modifier("MO_PLT", CompilerRelocation.Kind.ABSOLUTE, Optional.empty());
+    var modifier = new Modifier("MO_PLT", CompilerRelocation.Kind.ABSOLUTE);
     modifiers.add(modifier);
 
     // Needs to be the last one.

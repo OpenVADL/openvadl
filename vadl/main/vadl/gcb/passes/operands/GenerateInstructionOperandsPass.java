@@ -170,12 +170,13 @@ public class GenerateInstructionOperandsPass extends Pass {
   private static void checkIfAllOperandsWereDetected(CompilerInstruction compilerInstruction,
                                                      List<GcbInstructionOperand> totalOutputs,
                                                      List<GcbInstructionOperand> totalInputs) {
-    // We have now all the operands for each machine instruction. However, we cannot use them
+    // Now, we have all the operands for each machine instruction. However, we cannot use them
     // directly as operands for the pseudo instruction. The pseudo instruction has itself a list of
-    // operands. We needed the operands from the machine instructions to determine whether they
-    // are inputs or outputs.
+    // operands that is defined in the specification. We needed the operands from the machine 
+    // instructions to determine whether they are inputs or outputs.
 
-    // All parameters must be either be an output or input operand.
+    // All parameters must be either be an output or input operand. We are matching the
+    // `pseudoInstructionParameter` with the `operand` that was detected.
     var unmatchedOperands = new HashSet<>(List.of(compilerInstruction.parameters()));
     for (var pseudoInstructionParameter : compilerInstruction.parameters()) {
       for (var operand : Stream.concat(totalOutputs.stream(), totalInputs.stream()).toList()) {
@@ -208,7 +209,6 @@ public class GenerateInstructionOperandsPass extends Pass {
         dest.add(element);
       }
     }
-
   }
 
   private List<GcbInstructionOperand> getTableGenOutputOperands(Graph behavior) {

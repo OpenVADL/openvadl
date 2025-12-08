@@ -68,7 +68,6 @@ public class IsaPseudoInstructionMatchingPass extends Pass implements IsaMatchin
 
   }
 
-
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam)

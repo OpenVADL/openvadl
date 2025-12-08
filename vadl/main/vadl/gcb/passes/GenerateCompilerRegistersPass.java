@@ -121,7 +121,6 @@ public class GenerateCompilerRegistersPass extends Pass {
     }
   }
 
-
   private List<CompilerRegister> generalRegisters(List<RegisterTensor> registers) {
     var compilerRegisters = new ArrayList<CompilerRegister>();
     int dwarfOffset = 0;

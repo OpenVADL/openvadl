@@ -32,7 +32,8 @@ import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 
 /**
- * Pass to create {@link GcbExpandPseudoInstructionCppFunction}.
+ * Pass to create a {@link GcbExpandPseudoInstructionCppFunction} for sequences that are defined
+ * in the {@link Abi} like constant sequences or register adjustment sequences.
  */
 public class AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass extends Pass {
 
@@ -46,6 +47,10 @@ public class AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass exten
     return new PassName("CompilerExpansionFunctionGeneratorPass");
   }
 
+  /**
+   * Get all the compiler instructions in the {@link Abi} that require a pseudo instruction
+   * expansion.
+   */
   protected Stream<Pair<CompilerInstruction, Graph>> getApplicable(
       Specification viam) {
     var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();

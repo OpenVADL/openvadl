@@ -80,7 +80,6 @@ import vadl.lcb.codegen.assembly.WrapInIntegralPass;
 import vadl.lcb.passes.OverwriteInputOperandsPass;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
-import vadl.lcb.passes.isaMatching.IsaRelocationMatchingPass;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenAbiSequenceInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
@@ -90,7 +89,6 @@ import vadl.lcb.passes.llvmLowering.ISelLoweringOperationActionPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.RemoveRegisterWritesPass;
 import vadl.lcb.passes.llvmLowering.RemoveTruncationAndAnyExtPass;
-import vadl.lcb.passes.llvmLowering.ReplaceStatusBuiltinsByNonStatusBuiltinsPass;
 import vadl.lcb.passes.llvmLowering.compensation.CompensationPatternPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.pseudo.AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass;
@@ -284,11 +282,9 @@ public class PassOrders {
 
     order.add(new RemoveTruncationAndAnyExtPass(configuration));
 
-    order.add(new IsaRelocationMatchingPass(configuration));
     order.add(new GenerateTableGenRegistersPass(configuration));
     order.add(new RemoveRegisterWritesPass(configuration));
     order.add(new RemoveUnusedStatusFlagsFromBuiltinsPass(configuration));
-    order.add(new ReplaceStatusBuiltinsByNonStatusBuiltinsPass(configuration));
 
     // Common optimizations after register elimination
     order.add(new CanonicalizationPass(configuration));

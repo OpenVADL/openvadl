@@ -184,6 +184,11 @@ public class GenerateTableGenRegistersPass extends Pass {
         constraints);
   }
 
+  /**
+   * This is a special problem for LLVM. We cannot reuse multiple register indices. We need for
+   * every sub register index a separate name in TableGen. That's why we rename the indices when
+   * the names "collide".
+   */
   private static void nameSubRegisterIndices(List<TableGenRegister> orderedRegisters) {
     for (var register : orderedRegisters) {
       var seen = new HashSet<String>();
