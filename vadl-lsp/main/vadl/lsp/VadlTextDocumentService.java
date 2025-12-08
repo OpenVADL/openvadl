@@ -55,10 +55,18 @@ import vadl.utils.SourceLocation;
  */
 class VadlTextDocumentService implements TextDocumentService {
   /**
+   * How many milliseconds to wait before providing diagnostics for the latest change. If a new
+   * document version is pushed by the client within this time, the now outdated version will not
+   * receive diagnostics. This is intended to avoid showing transitory diagnostics while the
+   * developer is typing.
+   */
+  private static final int DIAGNOSTICS_DELAY_MS = 500;
+
+  /**
    * The URI the Vadl Parser assigns to the String we give it for parsing. With this we can check
    * if a location refers to this "file" or some other file that the Parser included along the way.
    */
-  private static final URI primaryFile = URI.create("memory://internal");
+  private static final URI PRIMARY_FILE = URI.create("memory://internal");
 
   private static final Logger log = LoggerFactory.getLogger(VadlTextDocumentService.class);
 
@@ -79,7 +87,6 @@ class VadlTextDocumentService implements TextDocumentService {
    *
    * @param tokenizer A fully configured Tokenizer for VADL
    */
-  // TODO Consider setting this via Constructor instead
   void setTokenizer(@NonNull LspTokenizer tokenizer) {
     this.tokenizer = tokenizer;
   }
@@ -160,6 +167,18 @@ class VadlTextDocumentService implements TextDocumentService {
     int version = document.getVersion();
 
     var unused = server.executor().submit(() -> {
+      try {
+        // TODO Consider to instead delay for remaining time *after* generating diagnostics, to have
+        //  more accurate delay timing
+        Thread.sleep(DIAGNOSTICS_DELAY_MS);
+      } catch (InterruptedException e) {
+        return;
+      }
+      if (!documentVersionIsCurrent(document.getUri(), version)) {
+        log.info("ABORT publishDiagnostics (before): outdated version {} of document {}", version, document.getUri());
+        return;
+      }
+
       List<Diagnostic> lspItems = new ArrayList<>();
       try {
         Ast ast = VadlParser.parse(text, URI.create(document.getUri()));
@@ -172,7 +191,7 @@ class VadlTextDocumentService implements TextDocumentService {
         for (vadl.error.Diagnostic item : dl.items) {
           // TODO Look into secondary locations too? Maybe as relatedInformation?
           SourceLocation location = item.multiLocation.primaryLocation().location();
-          if (!location.uri().equals(primaryFile)) {
+          if (!location.uri().equals(PRIMARY_FILE)) {
             // Ignore errors for other files
             // TODO this means that errors in included files are not reported unless that file is
             //      opened in the client, even though the Parser gives us diagnostics for them
@@ -207,7 +226,7 @@ class VadlTextDocumentService implements TextDocumentService {
       }
 
       if (!documentVersionIsCurrent(document.getUri(), version)) {
-        log.info("ABORT publishDiagnostics: outdated version {} of document {}", version, document.getUri());
+        log.info("ABORT publishDiagnostics (after): outdated version {} of document {}", version, document.getUri());
         return;
       }
       var data = new PublishDiagnosticsParams(document.getUri(), lspItems, version);

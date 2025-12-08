@@ -28,8 +28,6 @@ import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InitializedParams;
-import org.eclipse.lsp4j.MessageParams;
-import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.PositionEncodingKind;
 import org.eclipse.lsp4j.SemanticTokenTypes;
 import org.eclipse.lsp4j.SemanticTokensLegend;
@@ -87,14 +85,6 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
   @Override
   public void initialized(InitializedParams params) {
     log.info(">> initialized: {}", params);
-    
-    // TODO Remove
-    var data = new MessageParams(
-        MessageType.Info,
-        "Hello vadl developer! I'm your language server today ❤️"
-    );
-    log.info("<< showMessage: {}", data);
-    client().showMessage(data);
   }
 
   @Override
@@ -128,14 +118,15 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
 
   @Override
   public WorkspaceService getWorkspaceService() {
-    // TODO Implement?
     return new WorkspaceService() {
       @Override
       public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
+        // Nothing
       }
       
       @Override
       public void didChangeConfiguration(DidChangeConfigurationParams params) {
+        // Nothing
       }
     };
   }
