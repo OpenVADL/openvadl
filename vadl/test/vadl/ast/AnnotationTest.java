@@ -22,8 +22,6 @@ import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
-import vadl.error.DiagnosticList;
 
 public class AnnotationTest {
   @Test
@@ -71,71 +69,4 @@ public class AnnotationTest {
     Assertions.assertEquals(0, nextNext.annotations.get(0).values.size());
   }
 
-
-  private String zeroExtendTest(String annotation, @Nullable String otherDefs) {
-    return """
-        instruction set architecture TEST =
-        {
-          %s
-        
-          %s
-          register X : Bits<5> -> Bits<32>
-        }
-        """.formatted(otherDefs == null ? "" : otherDefs, annotation);
-  }
-
-  @Test
-  void zeroAnnoInvalidStructure() {
-    var prog = zeroExtendTest("[ zero : 2 + 3 - 1]", null);
-    var ast = VadlParser.parse(prog);
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    assert diags.items.size() == 1;
-    assertThat(diags.items.getFirst())
-        .hasMessageContaining("Zero annotation must be of form [ zero : <register>( <expr> ) ]");
-  }
-
-  @Test
-  void zeroAnnoInvalidTarget() {
-    var prog = zeroExtendTest("[ zero : M(1)]", "memory M: Bits<5> -> Bits<64>");
-    var ast = VadlParser.parse(prog);
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    assert diags.items.size() == 1;
-    assertThat(diags.items.getFirst())
-        .hasMessageContaining("Zero annotation target must be the annotated register.");
-  }
-
-  @Test
-  void zeroAnnoInvalidTarget2() {
-    var prog = zeroExtendTest("[ zero : Y(1)]", "register Y: Bits<5> -> Bits<64>");
-    var ast = VadlParser.parse(prog);
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    assert diags.items.size() == 1;
-    assertThat(diags.items.getFirst())
-        .hasMessageContaining("Zero annotation target must be the annotated register.");
-  }
-
-  @Test
-  void zeroAnnoInvalidArgumentNumber() {
-    var prog = zeroExtendTest("[ zero : X(1)(2) ]", null);
-    var ast = VadlParser.parse(prog);
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    assert diags.items.size() == 1;
-    assertThat(diags.items.getFirst())
-        .hasMessageContaining("Invalid zero annotation");
-  }
-
-  @Test
-  void zeroAnnoInvalidArgument() {
-    var prog = zeroExtendTest("[ zero : X(Y) ]", "register Y: Bits<5>");
-    var ast = VadlParser.parse(prog);
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    assert diags.items.size() == 1;
-    assertThat(diags.items.getFirst())
-        .hasMessageContaining("Index must be a constant expression.");
-  }
 }

@@ -340,12 +340,13 @@ public class DiagnosticPrinter {
         + " ".repeat(location.location().begin().column() - 1);
 
     // Generate the complete block, with highlighting and messages.
-    var textBlock = messageBlock(location);
-    var highlightedBlock =
-        indentFirstBy(textBlock, highlightPadding, nonHighlightPadding);
-    var completedBlock = indentBy(highlightedBlock, padding);
-
-    builder.append(completedBlock);
+    var completeBlock = switch (location.labels().size()) {
+      case 0 -> highlightPadding;
+      default ->
+          indentFirstBy(messageBlock(location), highlightPadding + " ", nonHighlightPadding + " ");
+    };
+    completeBlock = indentBy(completeBlock, padding);
+    builder.append(completeBlock);
   }
 
   private String messageBlock(Diagnostic.LabeledLocation location) {
