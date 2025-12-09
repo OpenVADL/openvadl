@@ -4,7 +4,7 @@ constant i = -true
 // Reported Diagnostics:
 //
 //  error: Type Mismatch
-//       ╭──[test/resources/diagnostics/invalidMinusOnBoolean.vadl:1:15]
+//       ╭──[test/resources/diagnostics/typechecker/invalidMinusOnBoolean.vadl:1:15]
 //       │
 //     1 │ constant i = -true
 //       │               ^^^^

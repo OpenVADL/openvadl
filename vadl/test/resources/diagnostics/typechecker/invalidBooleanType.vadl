@@ -4,7 +4,7 @@ constant b: Bool<1> = true
 // Reported Diagnostics:
 //
 //  error: Invalid Type Notation
-//       ╭──[test/resources/diagnostics/invalidBooleanType.vadl:1:13]
+//       ╭──[test/resources/diagnostics/typechecker/invalidBooleanType.vadl:1:13]
 //       │
 //     1 │ constant b: Bool<1> = true
 //       │             ^^^^^^^
