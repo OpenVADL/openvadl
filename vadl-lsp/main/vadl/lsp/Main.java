@@ -42,7 +42,7 @@ public class Main {
   public static void main(String[] args) {
     int port = 10999;
     if (args.length >= 1) {
-      port = Integer.valueOf(args[0]);
+      port = Integer.parseInt(args[0]);
     }
     
     try (ServerSocket serverSocket = new ServerSocket(port)) {

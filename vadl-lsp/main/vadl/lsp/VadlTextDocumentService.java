@@ -93,7 +93,7 @@ class VadlTextDocumentService implements TextDocumentService {
 
   @Override
   public void didOpen(DidOpenTextDocumentParams params) {
-    log.info(">> didOpen: {}", params);
+    log.debug(">> didOpen: {}", params);
     var document = new Document(params.getTextDocument());
     synchronized (openDocuments) {
       openDocuments.put(params.getTextDocument().getUri(), document);
@@ -103,7 +103,7 @@ class VadlTextDocumentService implements TextDocumentService {
 
   @Override
   public void didClose(DidCloseTextDocumentParams params) {
-    log.info(">> didClose: {}", params);
+    log.debug(">> didClose: {}", params);
     synchronized (openDocuments) {
       openDocuments.remove(params.getTextDocument().getUri());
     }
@@ -111,7 +111,7 @@ class VadlTextDocumentService implements TextDocumentService {
 
   @Override
   public void didChange(DidChangeTextDocumentParams params) {
-    log.info(">> didChange: {}", params);
+    log.debug(">> didChange: {}", params);
 
     Document document = getDocument(params.getTextDocument().getUri());
     if (document == null) {
@@ -123,13 +123,13 @@ class VadlTextDocumentService implements TextDocumentService {
 
   @Override
   public void didSave(DidSaveTextDocumentParams params) {
-    log.info(">> didSave: {}", params);
+    log.debug(">> didSave: {}", params);
     // Nothing (server capabilities currently don't support this)
   }
 
   @Override
   public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
-    log.info(">> semanticTokens/full: {}", params);
+    log.debug(">> semanticTokens/full: {}", params);
 
     return CompletableFuture.supplyAsync(() -> {
       Document document = getDocument(params.getTextDocument().getUri());
@@ -146,10 +146,10 @@ class VadlTextDocumentService implements TextDocumentService {
       synchronized (document) {
         tokens = tokenizer != null
             ? tokenizer.getTokens(document.getText())
-            : new ArrayList<Integer>();
+            : new ArrayList<>();
         result = new SemanticTokens(document.calculateUtf16Positions(tokens));
       }
-      log.info("<<- semanticTokens/full: <omitted>({} tokens)", tokens.size() / 5);
+      log.debug("<<- semanticTokens/full: <omitted>({} tokens)", tokens.size() / 5);
       return result;
     });
   }
@@ -175,7 +175,7 @@ class VadlTextDocumentService implements TextDocumentService {
         return;
       }
       if (!documentVersionIsCurrent(document.getUri(), version)) {
-        log.info("ABORT publishDiagnostics (before): outdated version {} of document {}", version, document.getUri());
+        log.debug("ABORT publishDiagnostics (before): outdated version {} of document {}", version, document.getUri());
         return;
       }
 
@@ -187,7 +187,7 @@ class VadlTextDocumentService implements TextDocumentService {
         new TypeChecker().verify(ast);
 
       } catch (DiagnosticList dl) {
-        log.info("Raw diagnostics: {}", dl.getMessage());
+        log.debug("Raw diagnostics: {}", dl.getMessage());
         for (vadl.error.Diagnostic item : dl.items) {
           // TODO Look into secondary locations too? Maybe as relatedInformation?
           SourceLocation location = item.multiLocation.primaryLocation().location();
@@ -226,11 +226,11 @@ class VadlTextDocumentService implements TextDocumentService {
       }
 
       if (!documentVersionIsCurrent(document.getUri(), version)) {
-        log.info("ABORT publishDiagnostics (after): outdated version {} of document {}", version, document.getUri());
+        log.debug("ABORT publishDiagnostics (after): outdated version {} of document {}", version, document.getUri());
         return;
       }
       var data = new PublishDiagnosticsParams(document.getUri(), lspItems, version);
-      log.info("<< publishDiagnostics: {}", data);
+      log.debug("<< publishDiagnostics: {}", data);
       server.client().publishDiagnostics(data);
     });
   }

@@ -16,8 +16,10 @@
 
 package vadl.lsp;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -68,35 +70,34 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
 
   @Override
   public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
-    // TODO Use debug (same below)
-    log.info(">> initialize: {}", params);
+    log.debug(">> initialize: {}", params);
     this.params = params;
 
-    createCapabilities();
+    createCapabilities(params);
     var result = new InitializeResult(
         serverCapabilities,
         new ServerInfo("openVADL language server")
     );
-    log.info("<<- initialize: {}", result);
+    log.debug("<<- initialize: {}", result);
     
     return CompletableFuture.completedFuture(result);
   }
   
   @Override
   public void initialized(InitializedParams params) {
-    log.info(">> initialized: {}", params);
+    log.debug(">> initialized: {}", params);
   }
 
   @Override
   public CompletableFuture<Object> shutdown() {
-    log.info(">> shutdown");
+    log.debug(">> shutdown");
     // Nothing to do
     return CompletableFuture.completedFuture(new Object());
   }
 
   @Override
   public void exit() {
-    log.info(">> exit");
+    log.debug(">> exit");
     if (listeningFuture == null) {
       throw new RuntimeException("listeningFuture isn't set yet");
     }
@@ -172,8 +173,10 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
    * Creates the server capabilities that are returned to the client upon
    * initialized(). Sets {@code this.serverCapabilities}, {@code this.tokenTypesMap}, and
    * {@code this.tokenModifiersMap}.
+   *
+   * @param params for convenience
    */
-  private void createCapabilities() {
+  private void createCapabilities(InitializeParams params) {
     var c = new ServerCapabilities();
     
     c.setPositionEncoding(PositionEncodingKind.UTF16);
@@ -185,20 +188,29 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
     tdso.setWillSaveWaitUntil(false);
     tdso.setSave(false);
     c.setTextDocumentSync(tdso);
-    
+
+    // Semantic Tokens
+    String[] desiredTokenTypes = new String[] {
+        SemanticTokenTypes.Type,
+        SemanticTokenTypes.Variable,
+        SemanticTokenTypes.Keyword,
+        SemanticTokenTypes.String,
+        SemanticTokenTypes.Number,
+        SemanticTokenTypes.Operator
+    };
+    List<String> tokenTypes = new ArrayList<>(desiredTokenTypes.length);
+    // Limit token types to those supported by the client
+    List<String> clientSupportedTypes = params.getCapabilities().getTextDocument().getSemanticTokens().getTokenTypes();
+    for (String token : desiredTokenTypes) {
+      if (clientSupportedTypes.contains(token)) {
+        tokenTypes.add(token);
+      }
+    }
     c.setSemanticTokensProvider(new SemanticTokensWithRegistrationOptions(
-        // TODO Extend legend & take client capabilities into account
         new SemanticTokensLegend(
-            Arrays.asList(new String[]{
-                SemanticTokenTypes.Type,
-                SemanticTokenTypes.Variable,
-                SemanticTokenTypes.Keyword,
-                SemanticTokenTypes.String,
-                SemanticTokenTypes.Number,
-                SemanticTokenTypes.Operator
-            }),
+            tokenTypes,
             Arrays.asList(new String[] {
-                // None
+                // No modifiers
             })
         ),
         new SemanticTokensServerFull(false), // delta

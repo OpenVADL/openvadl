@@ -38,7 +38,7 @@ public final class LspTokenizer {
   /**
    * Maps VADL Scanner Token Kinds to LSP token types.
    */
-  private static String[] tokenKindsMap;
+  private static final String[] tokenKindsMap;
 
   static {
     // Generate tokenKindsMap
@@ -118,9 +118,12 @@ public final class LspTokenizer {
         new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8))
     );
 
+    // Note: We assume that all Tokens are single-line, i.e. no need to split them up at line
+    //       boundaries for LSP. So far, the only elements in OpenVADL that may span multiple lines
+    //       are comments, but the CocoR Scanner doesn't produce Tokens for those anyway.
+
     Token t;
     List<Integer> lspTokens = new ArrayList<>();
-    // TODO ensure that multiline tokens (if they exist) are split at line boundaries
     int previousLine = 1; // Token.line starts at 1
     int previousCol = 1; // Same for Token.col
     while ((t = scanner.Scan()).kind != Parser._EOF) {
