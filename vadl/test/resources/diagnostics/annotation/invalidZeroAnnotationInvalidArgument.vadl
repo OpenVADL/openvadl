@@ -13,10 +13,10 @@ instruction set architecture TEST =
 //       ╭──[test/resources/diagnostics/annotation/invalidZeroAnnotationInvalidArgument.vadl:5:14]
 //       │
 //     6 │   register X : Bits<5> -> Bits<32>
-//       │   --------------------------------note: Cannot evaluate identifier with origin of vadl.ast.RegisterDefinition
+//       │   -------------------------------- note: Cannot evaluate identifier with origin of vadl.ast.RegisterDefinition
 //       ⋮
 //     5 │   [ zero : X(Y) ]
-//       │              ^Index must be a constant expression.
+//       │              ^ Index must be a constant expression.
 //       │
 //
 //

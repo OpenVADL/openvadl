@@ -8,7 +8,7 @@ constant b: UInt<a> = 3
 //       ╭──[test/resources/diagnostics/typechecker/invalidCastAfterEvalTruncates.vadl:2:23]
 //       │
 //     2 │ constant b: UInt<a> = 3
-//       │                       ^Expected `UInt<1>` but got `Const<3>`.
+//       │                       ^ Expected `UInt<1>` but got `Const<3>`.
 //       │
 //
 //

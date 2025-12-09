@@ -12,7 +12,7 @@ instruction set architecture TEST =
 //       ╭──[test/resources/diagnostics/annotation/invalidZeroAnnotationInvalidArgumentNumber.vadl:4:12]
 //       │
 //     4 │   [ zero : X(1)(2) ]
-//       │            ^^^^^^^Exactly one register index was expected, but 2 were provided.
+//       │            ^^^^^^^ Exactly one register index was expected, but 2 were provided.
 //       │
 //       note: In the future it will be possible to have constraints on multiple dimensions.
 //

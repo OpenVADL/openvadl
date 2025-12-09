@@ -12,7 +12,7 @@ instruction set architecture TEST = {
 //       ╭──[test/resources/diagnostics/typechecker/invalidFormatOutOfBoundsRange.vadl:3:14]
 //       │
 //     3 │   { field   [32..0]             // wrong higher offset
-//       │              ^^^^^Provided range `32..0` out of bounds for available range `31..0`
+//       │              ^^^^^ Provided range `32..0` out of bounds for available range `31..0`
 //       │
 //
 //

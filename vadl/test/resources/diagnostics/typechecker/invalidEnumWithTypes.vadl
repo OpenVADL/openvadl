@@ -11,7 +11,7 @@ enumeration ENUM: Bits<2> =
 //       ╭──[test/resources/diagnostics/typechecker/invalidEnumWithTypes.vadl:3:7]
 //       │
 //     3 │ , B = 0b0111111
-//       │       ^^^^^^^^^Expected `Bits<2>` but got `Bits<6>`.
+//       │       ^^^^^^^^^ Expected `Bits<2>` but got `Bits<6>`.
 //       │
 //
 //

@@ -33,7 +33,7 @@ instruction set architecture ISA = {
 //       ╭──[test/resources/diagnostics/lowering/invalidPseudoCallInstructionMissing.vadl:13:30]
 //       │
 //    13 │   special call instruction = DOESNOTEXIST
-//       │                              ^^^^^^^^^^^^No symbol with this name exists.
+//       │                              ^^^^^^^^^^^^ No symbol with this name exists.
 //       │
 //
 //

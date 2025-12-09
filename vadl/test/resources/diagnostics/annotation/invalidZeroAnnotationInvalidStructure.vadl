@@ -13,7 +13,7 @@ instruction set architecture TEST =
 //       ╭──[test/resources/diagnostics/annotation/invalidZeroAnnotationInvalidStructure.vadl:5:3]
 //       │
 //     5 │   [ zero : 2 + 3 - 1]
-//       │   ^^^^^^^^^^^^^^^^^^^Zero annotation must be of form [ zero : <register>( <expr> ) ].
+//       │   ^^^^^^^^^^^^^^^^^^^ Zero annotation must be of form [ zero : <register>( <expr> ) ].
 //       │
 //
 //

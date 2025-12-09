@@ -12,7 +12,7 @@ constant x = match 4 as Bits<32> with
 //       ╭──[test/resources/diagnostics/typechecker/invalidMatchExprPatternDifferentType.vadl:3:3]
 //       │
 //     3 │ , 2 as Bits<8> => 4 as Bits<16>
-//       │   ^^^^^^^^^Expected `Bits<32>`, but got `Bits<8>`
+//       │   ^^^^^^^^^ Expected `Bits<32>`, but got `Bits<8>`
 //       │
 //       note: The type of the candidate and the pattern must be the same.
 //
