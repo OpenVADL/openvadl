@@ -17,6 +17,7 @@
 package vadl.ast;
 
 import static vadl.TestUtils.assertEqualsFileContent;
+import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -68,6 +69,9 @@ public class DiagnosticsTest {
       var lowering = new ViamLowering();
       var spec = lowering.generate(ast);
       ViamVerifier.verifyAllIn(spec);
+
+      // Some additional checks
+      verifyPrettifiedAst(ast);
     } catch (DiagnosticList d) {
       diagnostics = d.items;
     } catch (Diagnostic d) {
