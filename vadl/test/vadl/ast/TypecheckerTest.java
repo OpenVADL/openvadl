@@ -96,8 +96,7 @@ public class TypecheckerTest {
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
-    Assertions.assertEquals(Type.bool(),
-        typeFinder.getConstantType(ast, "b"));
+    Assertions.assertEquals(Type.bool(), typeFinder.getConstantType(ast, "b"));
   }
 
   @Test
@@ -109,8 +108,7 @@ public class TypecheckerTest {
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
-    Assertions.assertEquals(Type.bool(),
-        typeFinder.getConstantType(ast, "b"));
+    Assertions.assertEquals(Type.bool(), typeFinder.getConstantType(ast, "b"));
   }
 
   @Test
@@ -239,12 +237,10 @@ public class TypecheckerTest {
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
     var finder = new AstFinder();
-    Assertions.assertEquals(BigInteger.valueOf(-8),
-        finder.getConstantValue(ast, "a").value());
+    Assertions.assertEquals(BigInteger.valueOf(-8), finder.getConstantValue(ast, "a").value());
     Assertions.assertEquals(BigInteger.valueOf(0b01010101),
         finder.getConstantValue(ast, "b").value());
-    Assertions.assertEquals(BigInteger.valueOf(0),
-        finder.getConstantValue(ast, "c").value());
+    Assertions.assertEquals(BigInteger.valueOf(0), finder.getConstantValue(ast, "c").value());
   }
 
   @Test
@@ -505,53 +501,6 @@ public class TypecheckerTest {
 
 
   @Test
-  public void extendedLongMultiplyTest() {
-    var prog = """
-        instruction set architecture Test = {
-          register X : Bits<5> -> Bits<64>       // general purpose register file with stack pointer
-          format ThreeRegOpFormat: Bits<32> =    // three register operand format
-            { sf       [31]                      // size field, if (sf = 0) 32 bit operation else 64 bit
-            , op       [30..21,15..10]           // opcode
-            , rm       [20..16]                  // 2nd source register
-            , rn       [9..5]                    // 1st source register
-            , rd       [4..0]                    // destination register
-            }
-        
-          model ThreeRegOpEncAsm (i: Id, op: Lit): IsaDefs = {
-            encoding $i = { op = $op, sf = 1 }
-            assembly $i = (mnemonic, ' ', register(rd), ', ', register(rn), ', ', register(rm))
-            }
-        
-          model ThreeRegOp (i: Id, op: Lit): IsaDefs = {
-            instruction $i : ThreeRegOpFormat =
-              let result = VADL::$i (X(rn), X(rm)) in
-                X(rd) := result(127..64)
-            $ThreeRegOpEncAsm ($i; $op)
-            }
-        
-          model ThreeRegOpFlags (i: Id, op: Lit): IsaDefs = {
-            instruction $i : ThreeRegOpFormat =
-              let result, flags = VADL::$i (X(rn), X(rm)) in
-                X(rd) := result(127..64)
-            $ThreeRegOpEncAsm ($i; $op)
-            }
-        
-          $ThreeRegOp (smull;  0)
-          $ThreeRegOp (umull;  1)
-          $ThreeRegOp (sumull; 2)
-          $ThreeRegOpFlags (smulls;  10)
-          $ThreeRegOpFlags (umulls;  11)
-          $ThreeRegOpFlags (sumulls; 12)
-        } 
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    new ModelRemover().removeModels(ast);
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-  }
-
-
-  @Test
   public void functionDefinition() {
     var prog = """
         function addOne(n: SInt<8>) -> SInt<8> = n + 1 
@@ -560,8 +509,7 @@ public class TypecheckerTest {
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
     var finder = new AstFinder();
-    Assertions.assertEquals(
-        Type.concreteRelation(Type.signedInt(8), Type.signedInt(8)),
+    Assertions.assertEquals(Type.concreteRelation(Type.signedInt(8), Type.signedInt(8)),
         finder.getFunctionType(ast, "addOne"));
   }
 
@@ -779,97 +727,6 @@ public class TypecheckerTest {
 
 
   @Test
-  public void instructionEncodingAssembly() {
-    var prog = """
-        instruction set architecture Mini = {
-        
-          using Inst     = Bits<32>               // instruction word is 32 bit
-          using Regs     = Bits<32>               // untyped register word type
-        
-          register    X : Bits<5>   -> Regs  // integer register with 32 registers of 32 bits
-        
-          format Rtype : Inst =                   // Rtype register 3 operand instruction format
-            { funct7 : Bits<7>                    // [31..25] 7 bit function code
-            , rs2    : Bits<5>                    // [24..20] 2nd source register index / shamt
-            , rs1    : Bits<5>                    // [19..15] 1st source register index
-            , funct3 : Bits<3>                    // [14..12] 3 bit function code
-            , rd     : Bits<5>                    // [11..7]  destination register index
-            , opcode : Bits<7>                    // [6..0]   7 bit operation code
-            }
-        
-          instruction ADD : Rtype = X(rd) := (X(rs1) + X(rs2)) as Regs
-          encoding ADD = {opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0000}
-          assembly ADD = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
-        }
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-  }
-
-  @Test
-  public void tupleUnpackingLetExprTest() {
-    var prog = """
-            instruction set architecture Mini = {
-        
-              using Inst     = Bits<32>               // instruction word is 32 bit
-              using Regs     = Bits<32>               // untyped register word type
-        
-              register    X : Bits<5>   -> Regs  // integer register with 32 registers of 32 bits
-        
-              format Rtype : Inst =                   // Rtype register 3 operand instruction format
-                { funct7 : Bits<7>                    // [31..25] 7 bit function code
-                , rs2    : Bits<5>                    // [24..20] 2nd source register index / shamt
-                , rs1    : Bits<5>                    // [19..15] 1st source register index
-                , funct3 : Bits<3>                    // [14..12] 3 bit function code
-                , rd     : Bits<5>                    // [11..7]  destination register index
-                , opcode : Bits<7>                    // [6..0]   7 bit operation code
-                }
-        
-              instruction ADD : Rtype = X(rd) :=
-                let res, s = VADL::adds(X(rs1), X(rs2)) in
-                  res as Regs
-              encoding ADD = {opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0000}
-              assembly ADD = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
-            }
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-  }
-
-  @Test
-  public void tupleUnpackingLetStmtTest() {
-    var prog = """
-        instruction set architecture Mini = {
-        
-          using Inst     = Bits<32>               // instruction word is 32 bit
-          using Regs     = Bits<32>               // untyped register word type
-        
-          register    X : Bits<5>   -> Regs  // integer register with 32 registers of 32 bits
-        
-          format Rtype : Inst =                   // Rtype register 3 operand instruction format
-            { funct7 : Bits<7>                    // [31..25] 7 bit function code
-            , rs2    : Bits<5>                    // [24..20] 2nd source register index / shamt
-            , rs1    : Bits<5>                    // [19..15] 1st source register index
-            , funct3 : Bits<3>                    // [14..12] 3 bit function code
-            , rd     : Bits<5>                    // [11..7]  destination register index
-            , opcode : Bits<7>                    // [6..0]   7 bit operation code
-            }
-        
-          instruction ADD : Rtype =
-            let res, s = VADL::adds(X(rs1), X(rs2)) in
-              X(rd) := res as Regs
-          encoding ADD = {opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0000}
-          assembly ADD = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
-        }
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-  }
-
-  @Test
   public void tensorValuesTest() {
     var prog = """
         constant x = let a = 1 as Bits<6> in a + 2
@@ -917,10 +774,8 @@ public class TypecheckerTest {
 
     Assertions.assertEquals(new TensorType(List.of(4), Type.bits(16)),
         finder.getConstantType(ast, "c"));
-    Assertions.assertEquals(
-        new ConstantValue(BigInteger.valueOf(0x0003000200010000L),
-            new TensorType(List.of(4), Type.bits(16))),
-        finder.getConstantValue(ast, "c"));
+    Assertions.assertEquals(new ConstantValue(BigInteger.valueOf(0x0003000200010000L),
+        new TensorType(List.of(4), Type.bits(16))), finder.getConstantValue(ast, "c"));
 
     Assertions.assertEquals(Type.bits(16), finder.getConstantType(ast, "d"));
     Assertions.assertEquals(new ConstantValue(BigInteger.valueOf(3), Type.bits(16)),
@@ -949,8 +804,8 @@ public class TypecheckerTest {
 
     Assertions.assertEquals(new TensorType(List.of(4), Type.bits(16)),
         finder.getConstantType(ast, "j"));
-    Assertions.assertEquals(new ConstantValue(new BigInteger("fedcda9876543210", 16),
-            Type.bits(64)),
+    Assertions.assertEquals(
+        new ConstantValue(new BigInteger("fedcda9876543210", 16), Type.bits(64)),
         finder.getConstantValue(ast, "j"));
   }
 
@@ -983,24 +838,5 @@ public class TypecheckerTest {
         finder.getConstantValue(ast, "d"));
   }
 
-  @Test
-  public void dynamicTensorSlicingForAllDo() {
-    var prog = """
-          instruction set architecture Tensor = {
-            using Index = Bits<4>
-            register X : Bits<16><32>
-        
-            format F : Bits<16> = {opcode : Bits<4>, rs2: Index, rs1: Index, rd: Index}
-        
-            // initialize 4 consecutive X registers
-            instruction Init4X : F = forall i: Bits<4> in 0 .. 3 do X(i) := 0
-            encoding Init4X = {opcode = 0b1100, rs2 = 0b0000, rs1 = 0b0000, rd = 0b0000}
-            assembly Init4X = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
-          }
-        """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-  }
 
 }

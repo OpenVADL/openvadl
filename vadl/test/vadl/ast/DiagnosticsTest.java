@@ -59,6 +59,10 @@ public class DiagnosticsTest {
     List<Diagnostic> diagnostics = List.of();
     try {
       var ast = VadlParser.parse(path);
+      var remover = new ModelRemover();
+      remover.removeModels(ast);
+      var ungrouper = new Ungrouper();
+      ungrouper.ungroup(ast);
       var typechecker = new TypeChecker();
       typechecker.verify(ast);
       var lowering = new ViamLowering();
@@ -77,7 +81,8 @@ public class DiagnosticsTest {
     // will differ on different machines.
     DiagnosticPrinter printer = new DiagnosticPrinter(false);
     printer.forceRelativePaths = true;
-    var output = !diagnostics.isEmpty() ? printer.toString(diagnostics).stripTrailing() : "_none_";
+    var output = !diagnostics.isEmpty() ? printer.toString(diagnostics).stripTrailing() :
+        "No diagnostics were reported, the input was correctly parsed, typechecked and lowered.";
     output = "//  " + output.replaceAll("\n", "\n//  ") + "\n//\n//\n// Part of the %s".formatted(
         this.getClass());
 

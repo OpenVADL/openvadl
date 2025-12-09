@@ -14,7 +14,9 @@ instruction set architecture Mini = {
     , opcode : Bits<7>                    // [6..0]   7 bit operation code
     }
 
-  instruction ADD : Rtype = X(rd) := (X(rs1) + X(rs2)) as Regs
+  instruction ADD : Rtype =
+    let res, s = VADL::adds(X(rs1), X(rs2)) in
+      X(rd) := res as Regs
   encoding ADD = {opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0000}
   assembly ADD = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
 }
