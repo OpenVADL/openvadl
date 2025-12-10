@@ -1,24 +1,34 @@
 // SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: Apache-2.0
 
-// RISC-V 32 I instruction set
+// RISC-V 64 five stage pipeline with longer mul/div pipeline
 
 import rv64im::{RV64IM}
 
 micro architecture FiveStage implements RV64IM = {
+ 
+  operation AddOps = {ADD, SUB, AND, OR, XOR, SLT, SLTU, SLL, SRL, SRA}
+  operation ImmOps = {ADDI, ANDI, ORI, XORI, SLTI, SLTIU, AUIPC, LUI}
+  operation MemOps = {LB, LBU, LH, LHU, LW, SB, SH, SW}
+  operation BraOps = {BEQ, BNE, BGE, BGEU, BLT, BLTZ, JAL, JALR}
+  operation MulOps = {MUL, MULH, MULHSU, MULHU, MULW}
+  operation DivOps = {DIV, DIVU, REM, REMU, DIVW, DIVUW, REMW, REMUW}
+  operation AluOps = {AddOps, ImmOps, MemOps, BraOps}
+  operation MulDivOps = {MulOps, DivOps}
 
   stage FETCH -> ( fr : FetchResult ) = {
     fr := fetchNext                      // fetch next packet from memory (or cache)
   }
 
-  stage DECODE -> ( ir : Instruction ) = {
+  stage DECODE -> ( ir : Instruction, mulir : Instruction ) = {
     let instr = decode( FETCH. fr ) in { // decode the fetch packet, gives an Instruction
       if ( instr.unknown ) then
         raise invalidInstruction         // raise an invalid instruction exception
       instr.address( @X )                // output computed address (X + offset ) to memory
       instr.read( @X )                   // read from the X register file
       instr.read( @PC )                  // read from the PC
-      ir := instr                        // stage output is the Instruction ir
+      ir    := filter(instr, @AluOps)    // ir are common instructions
+      mulir := filter(instr, @MulDivOps) // mulir are multiplication / division instructions
     }
   }
 
@@ -27,6 +37,15 @@ micro architecture FiveStage implements RV64IM = {
       instr.compute                      // evaluate all expressions
       instr.verify                       // check and flush pipeline if branch misprediction
       instr.write( @PC )                 // write PC
+      ir := instr
+    }
+  }
+
+  [restart : 1]
+  [latency : 3]
+  stage MUL -> ( ir : Instruction ) = {
+    let instr = DECODE.mulir in {
+      instr.compute                      // evaluate mul expressions
       ir := instr
     }
   }
@@ -40,7 +59,7 @@ micro architecture FiveStage implements RV64IM = {
   }
 
   stage WRITE_BACK = {
-    let instr = MEMORY.ir in
+    let instr = MEMORY.ir | MUL.ir in    // combine memory and mul pipeline
       instr.write( @X )                  // write back to register file X
     }
 }
