@@ -4666,6 +4666,20 @@ class PipelineDefinition extends Definition implements IdentifiableNode {
   }
 }
 
+
+/// A definition that describes a stage in the micro architecture. Quite common are stages like
+/// fetch, execute, writeback. But obviously more or less can be defined.
+///
+/// ```
+/// stage ISS -> ( ir : Instruction ) =
+///   {
+///     let instr = decode ( fetchNext ) in
+///     {
+///       instr.write
+///       ir := instr
+///     }
+///   }
+/// ```
 class StageDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   @Child

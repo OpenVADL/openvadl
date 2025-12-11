@@ -220,6 +220,17 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
 
+  Graph getStageGraph(Statement stmt, String name) {
+    var graph = new Graph(name);
+    graph.setSourceLocation(stmt.location());
+
+    var stmtCtx = stmt.accept(this);
+    if (stmtCtx.hasSideEffects()) {
+      graph.addWithInputs(stmtCtx.sideEffectsOrEmptyList().getFirst());
+    }
+    return graph;
+  }
+
   private static Type getViamType(Type astType) {
     return ViamLowering.getViamType(astType);
   }
@@ -993,7 +1004,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Builtin Call
     var matchingBuiltins = BuiltInTable.builtIns()
         .filter(b -> b.signature().argTypeClasses().isEmpty())
-        .filter(b -> b.name().toLowerCase().equals(innerName))
+        .filter(b -> b.name().equals(innerName))
         .toList();
 
     if (matchingBuiltins.size() == 1) {

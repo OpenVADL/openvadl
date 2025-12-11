@@ -1737,8 +1737,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(StageDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    var identifier = generateIdentifier(definition.viamId, definition.identifier());
+    var behaivor = new BehaviorLowering(this).getStageGraph(definition.statement,
+        definition.viamId + "::behavior");
+    return Optional.of(new Stage(identifier, behaivor, List.of()));
   }
 
   @Override

@@ -46,6 +46,9 @@ import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
+import vadl.types.FetchResultType;
+import vadl.types.InstructionType;
+import vadl.types.MicroArchitectureType;
 import vadl.types.SIntType;
 import vadl.types.StatusType;
 import vadl.types.StringType;
@@ -2213,7 +2216,28 @@ public class TypeChecker
 
   @Override
   public Void visit(StageDefinition definition) {
-    throwUnimplemented(definition);
+    definition.outputs.forEach(this::check);
+    // FIXME: Reenable once I understand the semantics of that
+    // https://github.com/OpenVADL/openvadl/issues/599
+    if (definition.outputs.size() > 1) {
+      throw addErrorAndStopChecking(error("Not Implemented", definition)
+          .description("Multiple outputs are not yet supported.")
+          .build());
+    }
+
+    definition.outputs.forEach(output -> {
+      if (!(output.type() instanceof InstructionType)
+          && !(output.type() instanceof FetchResultType)) {
+        addErrorAndStopChecking(
+            error("Type Mismatch", output)
+                .description(
+                    "The type of a stage output must be an InstructionType or a FetchResultType.")
+                .build());
+      }
+    });
+
+    check(definition.statement);
+
     return null;
   }
 
@@ -2393,7 +2417,7 @@ public class TypeChecker
     // arguments.
     var matchingBuiltins = BuiltInTable.builtIns()
         .filter(b -> b.signature().argTypeClasses().isEmpty())
-        .filter(b -> b.name().toLowerCase().equals(innerName))
+        .filter(b -> b.name().equals(innerName))
         .toList();
 
     if (matchingBuiltins.size() == 1) {
@@ -2788,7 +2812,8 @@ public class TypeChecker
     var base = expr.baseType.pathToString();
 
     // 1. Check whether the base exists.
-    var builtinBases = List.of("Bool", "String", "Bits", "UInt", "SInt");
+    var builtinBases =
+        List.of("Bool", "String", "Bits", "UInt", "SInt", "Instruction", "FetchResult");
     var customTarget = expr.symbolTable().findAs(expr.baseType, Node.class);
     if (!(customTarget instanceof UsingDefinition) && !(customTarget instanceof FormatDefinition)) {
       customTarget = null;
@@ -2834,7 +2859,10 @@ public class TypeChecker
     // 3. Create the builtin types
     Map<String, Supplier<Type>> unSizedBuiltins = Map.of(
         "Bool", Type::bool,
-        "String", Type::string);
+        "String", Type::string,
+        "Instruction", MicroArchitectureType::instruction,
+        "FetchResult", MicroArchitectureType::fetchResult
+    );
 
     if (unSizedBuiltins.containsKey(base)) {
       if (!sizes.isEmpty()) {
