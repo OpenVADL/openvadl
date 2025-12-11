@@ -221,6 +221,8 @@ interface DefinitionVisitor<R> {
   R visit(AbiClangTypeDefinition abiClangTypeDefinition);
 
   R visit(AbiClangNumericTypeDefinition abiClangNumericTypeDefinition);
+
+  R visit(StageOutputDefinition stageOutputDefinition);
 }
 
 /**
@@ -268,14 +270,8 @@ class Parameter extends Definition implements IdentifiableNode, TypedNode {
     }
 
     builder.append("(");
-    for (int i = 0; i < parameters.size(); i++) {
-      if (i != 0) {
-        builder.append(", ");
-      }
-      parameters.get(i).prettyPrint(indent, builder);
-    }
+    prettyPrintJoin(", ", parameters, indent, builder);
     builder.append(")");
-
   }
 
   @Override
@@ -4666,6 +4662,66 @@ class PipelineDefinition extends Definition implements IdentifiableNode {
   }
 }
 
+class StageOutputDefinition extends Definition implements IdentifiableNode, TypedNode {
+  Identifier name;
+  @Child
+  TypeLiteral typeLiteral;
+
+  public StageOutputDefinition(Identifier name, TypeLiteral typeLiteral) {
+    this.name = name;
+    this.typeLiteral = typeLiteral;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public Identifier identifier() {
+    return name;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    name.prettyPrint(indent, builder);
+    builder.append(" : ");
+    typeLiteral.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return name.location().join(typeLiteral.location());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    StageOutputDefinition output = (StageOutputDefinition) o;
+    return name.equals(output.name)
+        && typeLiteral.equals(output.typeLiteral);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = name.hashCode();
+    result = 31 * result + typeLiteral.hashCode();
+    return result;
+  }
+
+  @Override
+  public Type type() {
+    return typeLiteral.type();
+  }
+}
 
 /// A definition that describes a stage in the micro architecture. Quite common are stages like
 /// fetch, execute, writeback. But obviously more or less can be defined.
@@ -4683,12 +4739,12 @@ class PipelineDefinition extends Definition implements IdentifiableNode {
 class StageDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   @Child
-  List<Parameter> outputs;
+  List<StageOutputDefinition> outputs;
   @Child
   Statement statement;
   SourceLocation loc;
 
-  StageDefinition(Identifier id, List<Parameter> outputs, Statement statement,
+  StageDefinition(Identifier id, List<StageOutputDefinition> outputs, Statement statement,
                   SourceLocation loc) {
     this.id = id;
     this.outputs = outputs;
@@ -4718,7 +4774,9 @@ class StageDefinition extends Definition implements IdentifiableNode {
     builder.append("stage ");
     id.prettyPrint(0, builder);
     if (!outputs.isEmpty()) {
-      Parameter.prettyPrintMultiple(indent, outputs, builder);
+      builder.append(" -> (");
+      prettyPrintJoin(", ", outputs, indent, builder);
+      builder.append(")");
     }
     builder.append(" =\n");
     statement.prettyPrint(indent + 1, builder);

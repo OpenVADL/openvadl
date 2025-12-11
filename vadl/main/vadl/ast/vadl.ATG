@@ -1139,10 +1139,28 @@ PRODUCTIONS
     statement<out Statement stmt> (. def = new PipelineDefinition(id, outputs, stmt, start.join(lastTokenLoc())); .)
   .
 
+  stageoutput<out StageOutputDefinition output>
+  = identifier<out Identifier name>
+    SYM_COLON
+    typeLiteral<out TypeLiteral type> (. output = new StageOutputDefinition(name, type); .)
+  .
+
+  stageoutputs<out List<StageOutputDefinition> outputs>   (. outputs = new ArrayList<>(); .)
+  =     SYM_PAREN_OPEN
+        [
+          stageoutput<out StageOutputDefinition output>   (. outputs.add(output); .)
+          {
+            SYM_COMMA
+            stageoutput<out StageOutputDefinition next>   (. outputs.add(next); .)
+          }
+        ]
+        SYM_PAREN_CLOSE
+  .
+
   stageDefinition<out Definition def> (. var start = nextTokenLoc(); .)
   = STAGE
-    identifier<out Identifier id> (. List<Parameter> outputs = List.of(); .)
-    [ SYM_ARROW parameters<out outputs> ]
+    identifier<out Identifier id> (. List<StageOutputDefinition> outputs = List.of(); .)
+    [ SYM_ARROW stageoutputs<out outputs> ]
     SYM_EQ
     statement<out Statement stmt> (. def = new StageDefinition(id, outputs, stmt, start.join(lastTokenLoc())); .)
   .

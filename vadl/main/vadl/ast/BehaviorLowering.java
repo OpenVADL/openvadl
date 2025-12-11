@@ -63,6 +63,7 @@ import vadl.viam.Memory;
 import vadl.viam.Procedure;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
+import vadl.viam.StageOutput;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.BranchBeginNode;
@@ -106,6 +107,7 @@ import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.graph.dependency.WriteStageOutputNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 
@@ -1587,6 +1589,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
                   new ReadRegTensorNode(counterDef.registerTensor(), argExprs,
                       counterDef.registerTensor().resultType(), null), slices),
               null, null));
+
+      case StageOutput output -> List.of(
+          new WriteStageOutputNode(output, value)
+      );
 
       default -> throw new IllegalStateException("Unexpected target: " + viamTargetDef);
     };

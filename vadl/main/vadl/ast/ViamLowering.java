@@ -83,6 +83,7 @@ import vadl.viam.Relocation;
 import vadl.viam.Signal;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
+import vadl.viam.StageOutput;
 import vadl.viam.annotations.AlignmentAnnotation;
 import vadl.viam.asm.AsmDirectiveMapping;
 import vadl.viam.asm.AsmModifier;
@@ -1766,6 +1767,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var value = constantEvaluator.eval(definition.size).toViamConstant().intValue();
     return Optional.of(
         new Abi.AbstractClangType.NumericClangType(typeName, value, definition.location()));
+  }
+
+  @Override
+  public Optional<vadl.viam.Definition> visit(StageOutputDefinition definition) {
+    var identifier = generateIdentifier(definition.viamId, definition.identifier());
+    var type = getViamType(definition.typeLiteral.type());
+    return Optional.of(
+        new StageOutput(identifier, type));
   }
 
   @Override

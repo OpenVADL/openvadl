@@ -215,6 +215,11 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
+  public Definition visit(StageOutputDefinition definition) {
+    return definition;
+  }
+
+  @Override
   public Definition visit(GroupDefinition groupDefinition) {
     return groupDefinition;
   }

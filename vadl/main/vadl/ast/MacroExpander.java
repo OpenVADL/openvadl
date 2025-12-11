@@ -660,6 +660,13 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(StageOutputDefinition definition) {
+    var name = (Identifier) expandId(definition.name);
+    var type = (TypeLiteral) expandExpr(definition.typeLiteral);
+    return new StageOutputDefinition(name, type);
+  }
+
+  @Override
   public Definition visit(AbiSpecialPurposeInstructionDefinition definition) {
     return new AbiSpecialPurposeInstructionDefinition(definition.kind,
         expandId(definition.target),
@@ -923,9 +930,16 @@ class MacroExpander
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
+  private List<StageOutputDefinition> expandStageOutputs(List<StageOutputDefinition> outputs) {
+    var expanded = new ArrayList<>(outputs);
+    expanded.replaceAll(param ->
+        new StageOutputDefinition(param.identifier(), (TypeLiteral) expandExpr(param.typeLiteral)));
+    return expanded;
+  }
+
   @Override
   public Definition visit(StageDefinition definition) {
-    return new StageDefinition(definition.id, expandParams(definition.outputs),
+    return new StageDefinition(definition.id, expandStageOutputs(definition.outputs),
         definition.statement.accept(this), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }

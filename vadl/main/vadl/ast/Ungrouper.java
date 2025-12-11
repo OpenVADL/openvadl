@@ -461,7 +461,11 @@ public class Ungrouper
 
   @Override
   public Void visit(Parameter definition) {
-    ungroupAnnotations(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(StageOutputDefinition definition) {
     return null;
   }
 

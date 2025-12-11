@@ -1031,6 +1031,12 @@ public class TypeChecker
   }
 
   @Override
+  public Void visit(StageOutputDefinition stageOutputDefinition) {
+    check(stageOutputDefinition.typeLiteral);
+    return null;
+  }
+
+  @Override
   public Void visit(AbiSpecialPurposeInstructionDefinition definition) {
     // Isn't type checked on purpose because there is nothing to type check.
     return null;
@@ -2398,6 +2404,12 @@ public class TypeChecker
     if (origin instanceof EnumerationDefinition.Entry enumEntry) {
       check(enumEntry.enumDef);
       expr.type = check(requireNonNull(enumEntry.value));
+      return;
+    }
+
+    if (origin instanceof StageOutputDefinition output) {
+      check(output);
+      expr.type = output.type();
       return;
     }
 
