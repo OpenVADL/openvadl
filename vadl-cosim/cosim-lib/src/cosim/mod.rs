@@ -196,7 +196,7 @@ impl Broker {
                         .shm
                         .read_buffer()
                         .map(|opt| opt.map(|i| i.as_insn()))
-                        .map_err(|e| Broker::add_client_logs_to_error(e, &client.id, &config));
+                        .map_err(|e| Broker::add_client_logs_to_error(e, &client.id, config));
                     client.run_count += 1;
                     res
                 });
@@ -237,8 +237,11 @@ impl Broker {
                                     Broker::format_insn_for_diff(&c2insn.insn_info),
                                 ],
                                 Broker::format_missing_memory_access_msg(
-                                    &c1insn, &c2insn, &c1name, &c2name,
-                                ),
+                                    c1insn,
+                                    c2insn,
+                                    &c1name,
+                                    &c2name,
+                                )
                             );
                             vec![diff]
                         };

@@ -364,14 +364,11 @@ pub struct SlicedRegEntry {
 pub struct SlicedRegMap(pub Vec<SlicedRegEntry>);
 
 impl SlicedRegMap {
-    pub fn get_slicing_info(&self, from_name: &str, to_name: &str) -> Option<&SlicedRegEntry> {
-        for entry in &self.0 {
-            if entry.from.name == from_name && entry.to.name == to_name {
-                return Some(entry);
-            }
-        }
-
-        None
+    pub fn get_mappings_for(&self, name: &str) -> Vec<&SlicedRegEntry> {
+        self.0
+            .iter()
+            .filter(|entry| entry.from.name == name || entry.to.name == name)
+            .collect()
     }
 }
 

@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 
 use crate::{
-    config::Config,
+    config::{Config, SlicedReg},
     diff::DiffEntry,
     ipc::cstructs::{MAX_CPU_COUNT, MAX_CPU_REGISTERS, MemAccessInfo, SHMCPU, SHMRegister},
 };
@@ -11,7 +11,7 @@ use crate::{
 // In the future it might be useful to wrap these functions in a struct in which case the
 // memoization can be managed via that.
 thread_local! {
-    static REG_MAP_MEMO: RefCell<Vec<Option<usize>>> = RefCell::new(vec![None; MAX_CPU_REGISTERS]);
+    static REG_MAP_MEMO: RefCell<Vec<Option<Option<usize>>>> = RefCell::new(vec![None; MAX_CPU_REGISTERS]);
 }
 
 pub fn diff_mem_access(
@@ -132,9 +132,31 @@ pub fn diff_cpu(
             config,
             reg_index,
         );
-        let csuper_reg = &super_cpu.registers_slice()[csuper_reg_idx];
 
-        diff_register(csub_reg, csuper_reg, cpu_index, reg_index, config, diffs);
+        match csuper_reg_idx {
+            Some(csuper_reg_idx) => {
+                let csuper_reg = &super_cpu.registers_slice()[csuper_reg_idx];
+                diff_register(csub_reg, csuper_reg, cpu_index, reg_index, config, diffs);
+            }
+            None => {
+                // there is no 1:1 mapping -> check 1:n slice-mappings
+                let mappings =
+                    sliced_register_mappings(super_cpu.registers_slice(), csub_reg, config);
+
+                for (reg1, slice_info1, reg2, slice_info2) in mappings {
+                    diff_sliced_register(
+                        reg1,
+                        slice_info1,
+                        reg2,
+                        slice_info2,
+                        cpu_index,
+                        reg_index,
+                        config,
+                        diffs,
+                    );
+                }
+            }
+        };
     }
 }
 
@@ -146,31 +168,43 @@ pub fn diff_register(
     config: &Config,
     diffs: &mut Vec<DiffEntry>,
 ) {
-    let mut reg1val = reg1.to_u64(&config.qemu.clients[0].endian);
-    let mut reg2val = reg2.to_u64(&config.qemu.clients[1].endian);
-
-    if let Some(slicing_info) = config
-        .qemu
-        .sliced_reg_map
-        .get_slicing_info(reg1.name.as_str(), reg2.name.as_str())
-    {
-        if reg1.name.as_str() == slicing_info.from.name {
-            slicing_info.from.apply(&mut reg1val);
-            slicing_info.to.apply(&mut reg2val);
-        } else {
-            // swapping reg1 and reg2
-            slicing_info.from.apply(&mut reg2val);
-            slicing_info.to.apply(&mut reg1val);
-        }
-    }
+    let reg1val = reg1.to_u64(&config.qemu.clients[0].endian);
+    let reg2val = reg2.to_u64(&config.qemu.clients[1].endian);
 
     if reg1val != reg2val {
-        let r1name_unmapped = reg1.name.as_str();
-        let r1name_mapped = reg1.mapped_name(config);
+        let r1name = reg1.mapped_name(config);
         diffs.push(DiffEntry::new(
             format!("cpu[{cpu_index}].registers[{reg_index}].data"),
             vec![reg1.data_slice_fmt(), reg2.data_slice_fmt()],
-            format!("different register data for {r1name_mapped} ({r1name_unmapped})"),
+            format!("different register data for {r1name}"),
+        ));
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn diff_sliced_register(
+    reg1: &SHMRegister,
+    slice_info1: &SlicedReg,
+    reg2: &SHMRegister,
+    slice_info2: &SlicedReg,
+    cpu_index: usize,
+    reg_index: usize,
+    config: &Config,
+    diffs: &mut Vec<DiffEntry>,
+) {
+    let mut reg1val = reg1.to_u64(&config.qemu.clients[0].endian);
+    slice_info1.apply(&mut reg1val);
+
+    let mut reg2val = reg2.to_u64(&config.qemu.clients[1].endian);
+    slice_info2.apply(&mut reg2val);
+
+    if reg1val != reg2val {
+        let r1name = reg1.mapped_name(config);
+        let r2name = reg2.mapped_name(config);
+        diffs.push(DiffEntry::new(
+            format!("cpu[{cpu_index}].registers[{reg_index}].data"),
+            vec![reg1.data_slice_fmt(), reg2.data_slice_fmt()],
+            format!("different (sliced) register data for {r1name} (sliced to {reg1val}) and {r2name} (sliced to {reg2val})"),
         ));
     }
 }
@@ -180,7 +214,7 @@ fn reg_idx_by_name_memoed(
     name: &str,
     config: &Config,
     reg_index: usize,
-) -> usize {
+) -> Option<usize> {
     REG_MAP_MEMO.with_borrow_mut(|memo| {
         assert!(reg_index < memo.len(), "invalid memo length");
         if let Some(memo_reg) = memo[reg_index] {
@@ -193,19 +227,60 @@ fn reg_idx_by_name_memoed(
     })
 }
 
-fn reg_idx_by_name(registers: &[SHMRegister], name: &str, config: &Config) -> usize {
+fn reg_idx_by_name(registers: &[SHMRegister], name: &str, config: &Config) -> Option<usize> {
     for (idx, reg) in registers.iter().enumerate() {
         let reg_name = reg.mapped_name(config);
         if reg_name == name {
-            return idx;
+            return Some(idx);
         }
 
         if let Some(mapped_name) = config.qemu.gdb_reg_map.get(name)
             && reg_name == *mapped_name
         {
-            return idx;
+            return Some(idx);
         }
     }
 
-    panic!("reg_by_name called but no register with that name found: {name}");
+    None
+}
+
+fn sliced_register_mappings<'a, 'b>(
+    super_registers: &'a [SHMRegister],
+    sub_reg: &'a SHMRegister,
+    config: &'b Config,
+) -> Vec<(
+    &'a SHMRegister,
+    &'b SlicedReg,
+    &'a SHMRegister,
+    &'b SlicedReg,
+)> {
+    let mappings = config
+        .qemu
+        .sliced_reg_map
+        .get_mappings_for(sub_reg.name.as_str());
+    let mut register_mappings = vec![];
+
+    if mappings.is_empty() {
+        return register_mappings;
+    }
+
+    if mappings[0].from.name == sub_reg.name.as_str() {
+        for reg in super_registers {
+            for mapping in &mappings {
+                if mapping.to.name == reg.name.as_str() {
+                    register_mappings.push((sub_reg, &mapping.from, reg, &mapping.to));
+                }
+            }
+        }
+    } else {
+        for reg in super_registers {
+            for mapping in &mappings {
+                if mapping.from.name == reg.name.as_str() {
+                    register_mappings.push((sub_reg, &mapping.to, reg, &mapping.from));
+                }
+            }
+        }
+    }
+
+    register_mappings
 }

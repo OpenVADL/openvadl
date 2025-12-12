@@ -96,11 +96,11 @@ impl SHMRegister {
         match endian {
             Endian::Little => {
                 buf[..self.size as usize].copy_from_slice(self.data_slice());
-                return u64::from_le_bytes(buf);
+                u64::from_le_bytes(buf)
             },
             Endian::Big => {
                 buf[BUF_LEN - self.size as usize..].copy_from_slice(self.data_slice());
-                return u64::from_be_bytes(buf);
+                u64::from_be_bytes(buf)
             },
         }
     }
@@ -353,6 +353,7 @@ impl Serialize for BrokerSHMInsn {
 
         if let Some(cpus) = self.cpus() {
             let mut used_cpus = vec![];
+            #[allow(clippy::needless_range_loop)]
             for idx in 0..MAX_CPU_COUNT {
                 let flag = self.init_mask & (1 << idx);
                 if flag == 1 {
