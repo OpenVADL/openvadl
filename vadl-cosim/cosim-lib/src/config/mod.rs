@@ -360,7 +360,7 @@ pub struct SlicedRegEntry {
     pub to: SlicedReg,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct SlicedRegMap(pub Vec<SlicedRegEntry>);
 
 impl SlicedRegMap {
@@ -377,6 +377,8 @@ pub struct Qemu {
     pub plugin: String,
     pub clients: Vec<Client>,
     pub gdb_reg_map: RegHashMap,
+
+    #[serde(default = "SlicedRegMap::default")]
     pub sliced_reg_map: SlicedRegMap,
 
     #[serde(default = "empty_hashset")]
