@@ -2223,14 +2223,6 @@ public class TypeChecker
   @Override
   public Void visit(StageDefinition definition) {
     definition.outputs.forEach(this::check);
-    // FIXME: Reenable once I understand the semantics of that
-    // https://github.com/OpenVADL/openvadl/issues/599
-    if (definition.outputs.size() > 1) {
-      throw addErrorAndStopChecking(error("Not Implemented", definition)
-          .description("Multiple outputs are not yet supported.")
-          .build());
-    }
-
     definition.outputs.forEach(output -> {
       if (!(output.type() instanceof InstructionType)
           && !(output.type() instanceof FetchResultType)) {
@@ -3238,7 +3230,6 @@ public class TypeChecker
         if (!allowedStatusfields.contains(fieldName)) {
           var suggestions = Levenshtein.sortAll(fieldName, allowedStatusfields);
           addErrorAndStopChecking(error("Unknown status field `%s`".formatted(fieldName), expr)
-              .note("Allowed fields are: %s", String.join(", ", allowedStatusfields))
               .help("Maybe you meant one of these: %s", String.join(", ", suggestions))
               .build());
         }
@@ -3246,9 +3237,60 @@ public class TypeChecker
         subCall.computedStatusIndex = allowedStatusfields.indexOf(fieldName);
         visitSliceIndexCall(expr, fieldType, subCall.argsIndices);
         type = expr.type;
+      } else if (type instanceof InstructionType) {
+        var allowedStatusfields =
+            List.of("address", "read", "unknown", "compute", "verify", "write");
+        if (!allowedStatusfields.contains(fieldName)) {
+          var suggestions = Levenshtein.sortAll(fieldName, allowedStatusfields);
+          addErrorAndStopChecking(error("Unknown status field `%s`".formatted(fieldName), expr)
+              .help("Maybe you meant one of these: %s", String.join(", ", suggestions))
+              .build());
+        }
+
+        expr.type = Type.void_();
+        var argumentfreeFields = List.of("unknown", "compute", "verify");
+        if (argumentfreeFields.contains(fieldName)) {
+          if (!subCall.argsIndices.isEmpty()) {
+            addErrorAndStopChecking(
+                error("Wrong Argument Number",
+                    SourceLocation.join(subCall.argsIndices.stream().map(a -> a.location).toList()))
+                    .description("This subcall doesn't take any arguments.")
+                    .build());
+          }
+          return;
+        } else {
+          if (subCall.argsIndices.size() != 1) {
+            addErrorAndStopChecking(
+                error("Wrong Argument Number",
+                    subCall.id)
+                    .description("This subcall expects exactly one argument.")
+                    .build());
+          }
+        }
+      } else if (expr.target instanceof Identifier id
+          && id.target() instanceof StageDefinition stageDef) {
+        var output =
+            stageDef.outputs.stream().filter(o -> o.name.equals(subCall.id.name)).findFirst();
+        if (output.isEmpty()) {
+          var availableOutputs = stageDef.outputs.stream().map(o -> o.name.name).toList();
+          addErrorAndStopChecking(error("Unknown stage output", subCall.id)
+              .suggestions(Levenshtein.sortAll(subCall.id.name, availableOutputs))
+              .build());
+        }
+
+        if (!subCall.argsIndices.isEmpty()) {
+          addErrorAndStopChecking(
+              error("Wrong Argument Number",
+                  SourceLocation.join(subCall.argsIndices.stream().map(a -> a.location).toList()))
+                  .description("This subcall doesn't take any arguments.")
+                  .build());
+        }
+
+        expr.type = output.get().type();
       } else {
         addErrorAndStopChecking(error("Cannot resolve `%s`".formatted(fieldName), expr)
-            .description("Because the type up until it is not a format but `%s`",
+            .description("No subcall `%s` exists for the type `%s`",
+                fieldName,
                 requireNonNull(type))
             .build());
       }
@@ -3744,6 +3786,15 @@ public class TypeChecker
   @Override
   public Void visit(ExpandedAliasDefSequenceCallExpr expr) {
     throwUnimplemented(expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(ResourceReferenceExression expr) {
+    // There isn't really any type that fits here because it basically just a reference to a
+    // resource but it cannot be used like a the resource itself so it's not the type of the
+    // target resource.
+    expr.type = Type.void_();
     return null;
   }
 

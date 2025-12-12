@@ -509,6 +509,12 @@ class MacroExpander
   }
 
   @Override
+  public Expr visit(ResourceReferenceExression expr) {
+    return new ResourceReferenceExression((Identifier) expandExpr(expr.resource),
+        copyLoc(expr.location));
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
     var id = expandId(definition.identifier);
     var value = expandExpr(definition.value);

@@ -1109,9 +1109,24 @@ class SymbolTable {
 
       var isa =
           definition.symbolTable()
-              .requireAs((Identifier) definition.isa, InstructionSetDefinition.class);
+              .requireAs(definition.isa, InstructionSetDefinition.class);
       if (isa != null) {
         definition.isaNode = isa;
+        definition.symbolTable().extendBy(isa.symbolTable());
+      }
+
+      definition.children().forEach(this::travel);
+      afterTravel(definition);
+      return null;
+    }
+
+    @Override
+    public Void visit(MicroArchitectureDefinition definition) {
+      beforeTravel(definition);
+
+      var isa = definition.symbolTable().requireAs(definition.isa, InstructionSetDefinition.class);
+      if (isa != null) {
+        //definition.isaNode = isa;
         definition.symbolTable().extendBy(isa.symbolTable());
       }
 

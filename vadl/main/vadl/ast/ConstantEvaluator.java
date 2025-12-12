@@ -494,6 +494,13 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     throw new RuntimeException(
         "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
   }
+
+  @Override
+  public ConstantValue visit(ResourceReferenceExression expr) {
+    // This will never be evaluated
+    throw new RuntimeException(
+        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+  }
 }
 
 /**

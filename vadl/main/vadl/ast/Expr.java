@@ -146,6 +146,8 @@ interface ExprVisitor<R> {
   R visit(ExpandedSequenceCallExpr expr);
 
   R visit(ExpandedAliasDefSequenceCallExpr expr);
+
+  R visit(ResourceReferenceExression expr);
 }
 
 final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
@@ -2600,6 +2602,53 @@ class ForallExpr extends Expr {
     Operation(String keyword) {
       this.keyword = keyword;
     }
+  }
+}
+
+class ResourceReferenceExression extends Expr {
+  @Child
+  Identifier resource;
+  SourceLocation location;
+
+  public ResourceReferenceExression(Identifier resource, SourceLocation location) {
+    this.resource = resource;
+    this.location = location;
+  }
+
+  @Override
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+    builder.append("@");
+    resource.prettyPrint(indent, builder);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.EX;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ResourceReferenceExression that = (ResourceReferenceExression) o;
+    return resource.equals(that.resource);
+  }
+
+  @Override
+  public int hashCode() {
+    return resource.hashCode();
   }
 }
 

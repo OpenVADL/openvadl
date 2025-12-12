@@ -44,6 +44,7 @@ import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
+import vadl.types.MicroArchitectureType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
@@ -91,6 +92,7 @@ import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -1167,6 +1169,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         var indexing =
             new TupleGetFieldNode(subCall.computedStatusIndex, resultExpr, Type.bool());
         resultExpr = visitSliceIndexCall(indexing, Type.bool(), subCall.argsIndices);
+      } else if (exprBeforeSubcall.type() == MicroArchitectureType.instruction()) {
+        // There is weired way to call functions on instructions
+        var builtin =
+            BuiltInTable.builtIns().filter(b -> b.name().equals(subCall.id.name)).findFirst().get();
+        var call = new MiaBuiltInCall(builtin, new NodeList<>(exprBeforeSubcall),
+            builtin.returns(List.of(MicroArchitectureType.instruction())));
+        resultExpr = call;
       } else if (exprBeforeSubcall instanceof ReadResourceNode resRead) {
         var computedTarget = expr.target.path().target();
         if (computedTarget instanceof CounterDefinition) {
@@ -1520,6 +1529,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
+  @Override
+  public ExpressionNode visit(ResourceReferenceExression expr) {
+    // I don't think this will ever be directly lowered.
+    throw new RuntimeException(
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+  }
+
 
   @Override
   public SubgraphContext visit(AssignmentStatement statement) {
@@ -1701,8 +1717,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(CallStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    var res = fetch(statement.expr);
+    //return SubgraphContext.of(statement, res);
+    return SubgraphContext.of(statement, List.of());
   }
 
   @Override
