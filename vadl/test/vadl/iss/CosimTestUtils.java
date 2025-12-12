@@ -35,11 +35,13 @@ public class CosimTestUtils {
 
   public record TestCase(
       String id,
+      boolean debug,
       String asmCore
   ) {
   }
 
   public record TestConfig(
+      String cosimConfig,
       Collection<TestCase> tests
   ) {
   }
@@ -69,11 +71,13 @@ public class CosimTestUtils {
     var testsYaml = config.tests.stream().map(spec -> {
       var specYaml = new LinkedHashMap<String, Object>();
       specYaml.put("id", spec.id);
+      specYaml.put("debug", spec.debug);
       specYaml.put("asm_core", spec.asmCore);
       return specYaml;
     }).toList();
 
     var rootYaml = new LinkedHashMap<String, Object>();
+    rootYaml.put("cosim_config", config.cosimConfig);
     rootYaml.put("tests", testsYaml);
 
     Yaml yaml = new Yaml();
@@ -114,7 +118,8 @@ public class CosimTestUtils {
         for (Object o : ctxList) {
           if (o instanceof Map<?, ?> m) {
             Integer clientId = m.get("client_id") instanceof Number n ? n.intValue() : null;
-            String clientName = m.get("client_name") == null ? null : String.valueOf(m.get("client_name"));
+            String clientName =
+                m.get("client_name") == null ? null : String.valueOf(m.get("client_name"));
             diffContext.add(new TestResult.DiffContext(clientId, clientName));
           }
         }
