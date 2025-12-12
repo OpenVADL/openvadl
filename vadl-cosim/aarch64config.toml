@@ -135,30 +135,27 @@ s29 = "x29"
 s30 = "x30"
 s31 = "sp"
 pc = "pc"
+nzcv_n = "cpsr"
+nzcv_z = "cpsr"
+nzcv_c = "cpsr"
+nzcv_v = "cpsr"
+cpsr = "cpsr"
 
 [[qemu.sliced_reg_map]]
-name1 = "nzcv_n"
-slice1 = [ [1, 5], 7, [9, 13] ]
-name2 = "cpsr"
-mask2 = 0x80000000
+from = { name = "nzcv_n", slice = [ 56 ] }
+to = { name = "cpsr", slice = [ 31 ] }
 
 [[qemu.sliced_reg_map]]
-name1 = "nzcv_z"
-mask1 = 0x2
-name2 = "cpsr"
-mask2 = 0x40000000
+from = { name = "nzcv_z", slice = [ 56 ] }
+to = { name = "cpsr", slice = [ 30 ] }
 
 [[qemu.sliced_reg_map]]
-name1 = "nzcv_c"
-mask1 = 0x2
-name2 = "cpsr"
-mask2 = 0x20000000
+from = { name = "nzcv_c", slice = [ 56 ] }
+to = { name = "cpsr", slice = [ 29 ] }
 
 [[qemu.sliced_reg_map]]
-name1 = "nzcv_v"
-mask1 = 0x2
-name2 = "cpsr"
-mask2 = 0x10000000
+from = { name = "nzcv_v", slice = [ 56 ] }
+to = { name = "cpsr", slice = [ 28 ] }
 
 # Defines the test-source and how to test
 [testing]
@@ -238,5 +235,5 @@ clear_on_rerun = true
 
 [dev]
 # Prints the loaded configuration if set to true and exits
-dry_run = true
+dry_run = false
 

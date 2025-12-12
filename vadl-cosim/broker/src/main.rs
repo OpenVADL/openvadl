@@ -60,7 +60,7 @@ fn main() -> Result<()> {
 
     let mut config: Config = Figment::new().merge(Toml::file(cli.config)).extract()?;
 
-    config.qemu.set_inverse_reg_map();
+    config.qemu.set_defined_registers_map();
 
     if let Some(test_exec) = cli.test_exec {
         match &test_exec[..] {

@@ -1,4 +1,4 @@
-use std::{cell::RefCell, io::Read};
+use std::cell::RefCell;
 
 use crate::{
     config::Config,
@@ -17,7 +17,7 @@ thread_local! {
 pub fn diff_mem_access(
     mem_access_info1: &MemAccessInfo,
     mem_access_info2: &MemAccessInfo,
-    config: &Config,
+    _config: &Config,
 ) -> Vec<DiffEntry> {
     let mut diffs = vec![];
 
@@ -78,7 +78,7 @@ pub fn diff_cpus(
 
     for idx in 0..MAX_CPU_COUNT {
         let flag = init_mask1 & (1 << idx);
-        if flag == 1 {
+        if flag != 0 {
             let cpu1 = &cpus1[idx];
             let cpu2 = &cpus2[idx];
             diff_cpu(cpu1, cpu2, idx, config, &mut diffs);
@@ -121,7 +121,7 @@ pub fn diff_cpu(
         }
 
         if config.qemu.ignore_unset_registers
-            && !config.qemu.gdb_reg_map_inverse.contains_key(rsub_name)
+            && !config.qemu.defined_registers_map.contains(rsub_name)
         {
             continue;
         }
@@ -146,15 +146,31 @@ pub fn diff_register(
     config: &Config,
     diffs: &mut Vec<DiffEntry>,
 ) {
-    let reg1val = reg1.to_u64(&config.qemu.clients[0].endian);
-    let reg2val = reg2.to_u64(&config.qemu.clients[1].endian);
+    let mut reg1val = reg1.to_u64(&config.qemu.clients[0].endian);
+    let mut reg2val = reg2.to_u64(&config.qemu.clients[1].endian);
+
+    if let Some(slicing_info) = config
+        .qemu
+        .sliced_reg_map
+        .get_slicing_info(reg1.name.as_str(), reg2.name.as_str())
+    {
+        if reg1.name.as_str() == slicing_info.from.name {
+            slicing_info.from.apply(&mut reg1val);
+            slicing_info.to.apply(&mut reg2val);
+        } else {
+            // swapping reg1 and reg2
+            slicing_info.from.apply(&mut reg2val);
+            slicing_info.to.apply(&mut reg1val);
+        }
+    }
 
     if reg1val != reg2val {
-        let r1name = reg1.mapped_name(config);
+        let r1name_unmapped = reg1.name.as_str();
+        let r1name_mapped = reg1.mapped_name(config);
         diffs.push(DiffEntry::new(
             format!("cpu[{cpu_index}].registers[{reg_index}].data"),
             vec![reg1.data_slice_fmt(), reg2.data_slice_fmt()],
-            format!("different register data for {r1name}"),
+            format!("different register data for {r1name_mapped} ({r1name_unmapped})"),
         ));
     }
 }
