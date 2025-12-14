@@ -6,7 +6,7 @@ micro architecture SingleStage implements ISA = {
     stage FETCH -> ( ir : Instruction ) = {
       let instr = decode ( fetchNext ) in
       {
-        //instr.write
+        instr.write ( @X )
         ir := instr
       }
     }

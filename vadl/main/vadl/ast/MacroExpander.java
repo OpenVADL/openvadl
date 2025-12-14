@@ -667,7 +667,7 @@ class MacroExpander
 
   @Override
   public Definition visit(StageOutputDefinition definition) {
-    var name = (Identifier) expandId(definition.name);
+    var name = (Identifier) expandId(definition.identifier);
     var type = (TypeLiteral) expandExpr(definition.typeLiteral);
     return new StageOutputDefinition(name, type);
   }

@@ -4663,12 +4663,12 @@ class PipelineDefinition extends Definition implements IdentifiableNode {
 }
 
 class StageOutputDefinition extends Definition implements IdentifiableNode, TypedNode {
-  Identifier name;
+  Identifier identifier;
   @Child
   TypeLiteral typeLiteral;
 
-  public StageOutputDefinition(Identifier name, TypeLiteral typeLiteral) {
-    this.name = name;
+  public StageOutputDefinition(Identifier identifier, TypeLiteral typeLiteral) {
+    this.identifier = identifier;
     this.typeLiteral = typeLiteral;
   }
 
@@ -4679,7 +4679,7 @@ class StageOutputDefinition extends Definition implements IdentifiableNode, Type
 
   @Override
   public Identifier identifier() {
-    return name;
+    return identifier;
   }
 
   @Override
@@ -4689,14 +4689,14 @@ class StageOutputDefinition extends Definition implements IdentifiableNode, Type
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    name.prettyPrint(indent, builder);
+    identifier.prettyPrint(indent, builder);
     builder.append(" : ");
     typeLiteral.prettyPrint(indent, builder);
   }
 
   @Override
   public SourceLocation location() {
-    return name.location().join(typeLiteral.location());
+    return identifier.location().join(typeLiteral.location());
   }
 
   @Override
@@ -4706,13 +4706,13 @@ class StageOutputDefinition extends Definition implements IdentifiableNode, Type
     }
 
     StageOutputDefinition output = (StageOutputDefinition) o;
-    return name.equals(output.name)
+    return identifier.equals(output.identifier)
         && typeLiteral.equals(output.typeLiteral);
   }
 
   @Override
   public int hashCode() {
-    int result = name.hashCode();
+    int result = identifier.hashCode();
     result = 31 * result + typeLiteral.hashCode();
     return result;
   }

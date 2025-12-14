@@ -102,6 +102,7 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.StageEffectNode;
 import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
@@ -223,16 +224,35 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return graph;
   }
 
+  private boolean isInsideMia = false;
 
   Graph getStageGraph(Statement stmt, String name) {
     var graph = new Graph(name);
     graph.setSourceLocation(stmt.location());
+    currentGraph = graph;
 
-    var stmtCtx = stmt.accept(this);
-    if (stmtCtx.hasSideEffects()) {
-      graph.addWithInputs(stmtCtx.sideEffectsOrEmptyList().getFirst());
+    isInsideMia = true;
+    try {
+      var stmtCtx = stmt.accept(this);
+      var sideEffects = stmtCtx.sideEffectsOrEmptyList();
+
+      var end = graph.addWithInputs(new InstrEndNode(sideEffects));
+      end.setSourceLocation(stmt.location());
+
+      ControlNode startSuccessor = end;
+      if (stmtCtx.hasControlBlock()) {
+        var controlBlock = requireNonNull(stmtCtx.controlBlock());
+        controlBlock.lastNode().setNext(end);
+        startSuccessor = controlBlock.firstNode();
+      }
+      var start = new StartNode(startSuccessor);
+      start.setSourceLocation(stmt.location());
+      graph.addWithInputs(start);
+
+      return graph;
+    } finally {
+      isInsideMia = false;
     }
-    return graph;
   }
 
   private static Type getViamType(Type astType) {
@@ -1718,8 +1738,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   @Override
   public SubgraphContext visit(CallStatement statement) {
     var res = fetch(statement.expr);
-    //return SubgraphContext.of(statement, res);
-    return SubgraphContext.of(statement, List.of());
+    if (isInsideMia && res instanceof MiaBuiltInCall miaCall) {
+      return SubgraphContext.of(statement, List.of(
+          new StageEffectNode(miaCall)
+      ));
+    } else {
+      // There is not a single
+      throw new IllegalStateException("Unexpected call statement: " + statement);
+    }
   }
 
   @Override

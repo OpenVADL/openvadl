@@ -44,6 +44,7 @@ import vadl.viam.graph.control.NewLabelNode;
 import vadl.viam.graph.control.ProcEndNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.ScheduledNode;
+import vadl.viam.graph.control.StageEndNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -167,7 +168,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface AllControl
       extends Scheduled, InstrExit, IfElse, Begin, Start, Merge, BranchEnd, Return, InstrEnd,
-      ProcEnd, NewLabel, Forall {
+      StageEnd, ProcEnd, NewLabel, Forall {
 
   }
 
@@ -262,6 +263,14 @@ public interface CDefaultMixins {
   interface ProcEnd {
     @Handler
     default void handle(CGenContext<Node> ctx, ProcEndNode node) {
+      // nothing
+    }
+  }
+
+  @SuppressWarnings("MissingJavadocType")
+  interface StageEnd {
+    @Handler
+    default void handle(CGenContext<Node> ctx, StageEndNode node) {
       // nothing
     }
   }

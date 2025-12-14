@@ -3270,9 +3270,10 @@ public class TypeChecker
       } else if (expr.target instanceof Identifier id
           && id.target() instanceof StageDefinition stageDef) {
         var output =
-            stageDef.outputs.stream().filter(o -> o.name.equals(subCall.id.name)).findFirst();
+            stageDef.outputs.stream().filter(o -> o.identifier.name.equals(subCall.id.name))
+                .findFirst();
         if (output.isEmpty()) {
-          var availableOutputs = stageDef.outputs.stream().map(o -> o.name.name).toList();
+          var availableOutputs = stageDef.outputs.stream().map(o -> o.identifier.name).toList();
           addErrorAndStopChecking(error("Unknown stage output", subCall.id)
               .suggestions(Levenshtein.sortAll(subCall.id.name, availableOutputs))
               .build());

@@ -77,6 +77,7 @@ import vadl.viam.graph.control.NewLabelNode;
 import vadl.viam.graph.control.ProcEndNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.ScheduledNode;
+import vadl.viam.graph.control.StageEndNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -467,6 +468,14 @@ public class LcbNodeReplacementHandler {
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(InstrEndNode instrEndNode) {
     for (var arg : instrEndNode.sideEffects()) {
+      LcbNodeReplacementHandlerDispatcher.dispatch(this, arg);
+    }
+  }
+
+  @Handler
+  @SuppressWarnings("MissingJavadocMethod")
+  public void handle(StageEndNode stageEndNode) {
+    for (var arg : stageEndNode.sideEffects()) {
       LcbNodeReplacementHandlerDispatcher.dispatch(this, arg);
     }
   }

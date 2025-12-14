@@ -66,6 +66,7 @@ import vadl.viam.graph.control.NewLabelNode;
 import vadl.viam.graph.control.ProcEndNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.ScheduledNode;
+import vadl.viam.graph.control.StageEndNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -82,6 +83,7 @@ import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.StageEffectNode;
 import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -310,6 +312,12 @@ public class AssemblyInstructionPrinterImmediateHandler
 
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
+  public void handle(CGenContext<Node> ctx, StageEffectNode node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
+  @Handler
+  @SuppressWarnings("MissingJavadocMethod")
   public void handle(CGenContext<Node> ctx, WriteStageOutputNode node) {
     throw Diagnostic.error("not supported", node.location()).build();
   }
@@ -400,6 +408,12 @@ public class AssemblyInstructionPrinterImmediateHandler
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(CGenContext<Node> ctx, InstrEndNode node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
+  @Handler
+  @SuppressWarnings("MissingJavadocMethod")
+  public void handle(CGenContext<Node> ctx, StageEndNode node) {
     throw Diagnostic.error("not supported", node.location()).build();
   }
 

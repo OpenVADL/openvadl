@@ -113,6 +113,7 @@ import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.StageEffectNode;
 import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
@@ -845,6 +846,11 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   @Handler
   void handle(WriteStageOutputNode toHandle) {
+    throw failShouldNotHappen(toHandle);
+  }
+
+  @Handler
+  void handle(StageEffectNode toHandle) {
     throw failShouldNotHappen(toHandle);
   }
 
