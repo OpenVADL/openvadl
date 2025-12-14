@@ -63,7 +63,7 @@ instruction set architecture PPC64SFS = {
   using Reg64       = DWord                      // 64-bit register
   using Reg32       = Word                       // 32-bit exception/ status register
   using Address     = DWord                      // 64-bit address, top 32-bits are always zero in 32-bit Mode
-  using Instruction = Word                       // 32-bit instruction, prefixed instructions are not supported
+  using Instr       = Word                       // 32-bit instruction, prefixed instructions are not supported
   using OpCode      = Bits<6>                    // opcode
   using Ext8        = Byte                       // 8-bit extended opcode
   using Ext9        = Bits<9>                    // 9-bit extended opcode
@@ -151,7 +151,7 @@ instruction set architecture PPC64SFS = {
   }
 
   // TODO?: zero hint bits in branch instr
-  format BForm : Instruction =
+  format BForm : Instr =
   { opcd : OpCode                                // opcode
   , bo   : Bits<5>                               // branch options and hints
   , crbs : CRBIndex                              // CR bit to test
@@ -161,7 +161,7 @@ instruction set architecture PPC64SFS = {
   , extBd = bd as SDWord << 2
   }
 
-  format DFormA : Instruction =
+  format DFormA : Instr =
   { opcd   : OpCode                              // opcode
   , rs     : XIndex                              // store: source register, other: target register
   , ra     : XIndex                              // source register
@@ -172,7 +172,7 @@ instruction set architecture PPC64SFS = {
   , shImmS = imm as SDWord << 16                 // immediate value sign extended to 64 bits and shifted
   }
 
-  format DFormB : Instruction =
+  format DFormB : Instr =
   { opcd : OpCode                                // opcode
   , crt  : CRFIndex                              // target CR field
   , rsv  : Bits<1>
@@ -181,7 +181,7 @@ instruction set architecture PPC64SFS = {
   , imm  : Half                                  // immediate value
   }
 
-  format DFormC : Instruction =
+  format DFormC : Instr =
   { opcd   : OpCode                              // opcode
   , to     : Bits<5>                             // selects trap condition(s)
   , rs     : XIndex                              // source register
@@ -189,7 +189,7 @@ instruction set architecture PPC64SFS = {
   , immS   = imm as SDWord                       // immediate value sign extended to 64 bits
   }
 
-  format DXForm : Instruction =
+  format DXForm : Instr =
   { opcd [31..26]           : OpCode             // opcode
   , rs   [25..21]           : XIndex             // target register
   , imm  [15..6, 20..16, 0] : Half               // immediate value
@@ -197,7 +197,7 @@ instruction set architecture PPC64SFS = {
   , shImmS = imm as SDWord << 16                 // immediate value sign extended to 64 bits and shifted
   }
 
-  format IForm : Instruction =
+  format IForm : Instr =
   { opcd : OpCode                                // opcode
   , li   : Bits<24>                              // part of the branch address
   , aa   : Bits<1>                               // if set the branch address is absolute
@@ -205,7 +205,7 @@ instruction set architecture PPC64SFS = {
   , extLi = li as SDWord << 2                    // branch target address base
   }
 
-  format MForm : Instruction =
+  format MForm : Instr =
   { opcd : OpCode                                // opcode
   , rs   : XIndex                                // source register
   , ra   : XIndex                                // target register
@@ -217,7 +217,7 @@ instruction set architecture PPC64SFS = {
   , me6  = me as Bits<6>                         // end index zero extended to 6 bits
   }
 
-  format SCForm : Instruction =
+  format SCForm : Instr =
   { opcd    : OpCode                             // opcode
   , rsv1    : Bits<14>
   , lev     : Bits<7>                            // defines change to privilege level
@@ -225,7 +225,7 @@ instruction set architecture PPC64SFS = {
   , extopcd : Bits<2>                            // extended opcode
   }
 
-  format XFormA : Instruction =
+  format XFormA : Instr =
   { opcd    : OpCode                             // opcode
   , rs      : XIndex                             // source/ target register
   , ra      : XIndex                             // source/ target register
@@ -234,7 +234,7 @@ instruction set architecture PPC64SFS = {
   , rc      : Bits<1>                            // if set the instruction modifies the CR
   }
 
-  format XFormB : Instruction =
+  format XFormB : Instr =
   { opcd    : OpCode                             // opcode
   , crt     : CRFIndex                           // target CR field
   , rsv1    : Bits<1>
@@ -245,7 +245,7 @@ instruction set architecture PPC64SFS = {
   , rsv2    : Bits<1>
   }
 
-  format XFormC : Instruction =
+  format XFormC : Instr =
   { opcd    : OpCode                             // opcode
   , rs      : XIndex                             // target register
   , crs     : CRFIndex                           // source CR field
@@ -254,7 +254,7 @@ instruction set architecture PPC64SFS = {
   , rsv2    : Bits<1>
   }
 
-  format XFormD : Instruction =
+  format XFormD : Instr =
   { opcd    : OpCode                             // opcode
   , rs      : XIndex                             // target register
   , crbs    : CRBIndex                           // source CR bit
@@ -263,7 +263,7 @@ instruction set architecture PPC64SFS = {
   , rsv2    : Bits<1>
   }
 
-  format XFormE : Instruction =
+  format XFormE : Instr =
   { opcd    : OpCode                             // opcode
   , crt     : CRFIndex                           // target CR field
   , rsv1    : Bits<2>
@@ -273,7 +273,7 @@ instruction set architecture PPC64SFS = {
   , rsv2    : Bits<1>
   }
 
-  format XFormF : Instruction =
+  format XFormF : Instr =
   { opcd    : OpCode                             // opcode
   , rs      : XIndex                             // source register
   , rsv1    : Nibble
@@ -283,7 +283,7 @@ instruction set architecture PPC64SFS = {
   , rsv3    : Bits<1>
   }
 
-  format XFormG : Instruction =
+  format XFormG : Instr =
   { opcd    : OpCode                             // opcode
   , to      : Bits<5>                            // selects trap condition(s)
   , ra      : XIndex                             // source register
@@ -292,7 +292,7 @@ instruction set architecture PPC64SFS = {
   , rsv     : Bits<1>
   }
 
-  format XFXFormA : Instruction =
+  format XFXFormA : Instr =
   { opcd    : OpCode                             // opcode
   , rs      : XIndex                             // source/ target register
   , m       : Bits<1>                            // if set the instruction only reads from/ writes to a single CR field
@@ -302,7 +302,7 @@ instruction set architecture PPC64SFS = {
   , rsv2    : Bits<1>
   }
 
-  format XFXFormB : Instruction =
+  format XFXFormB : Instr =
   { opcd    : OpCode                             // opcode
   , rs      : XIndex                             // source/ target register
   , spr     : SIndex                             // source/ target special-purpose register
@@ -310,7 +310,7 @@ instruction set architecture PPC64SFS = {
   , rsv     : Bits<1>
   }
 
-  format XLFormA : Instruction =
+  format XLFormA : Instr =
   { opcd    : OpCode                             // opcode
   , crbt    : CRBIndex                           // target CR bit
   , crbs1   : CRBIndex                           // source CR bit
@@ -319,7 +319,7 @@ instruction set architecture PPC64SFS = {
   , rsv     : Bits<1>
   }
 
-  format XLFormB : Instruction =
+  format XLFormB : Instr =
   { opcd    : OpCode                             // opcode
   , bo      : Bits<5>                            // branch options and hints
   , crbs    : CRBIndex                           // CR bit to test
@@ -329,7 +329,7 @@ instruction set architecture PPC64SFS = {
   , lk      : Bits<1>                            // if set the link register is set to PC.next
   }
 
-  format XLFormC : Instruction =
+  format XLFormC : Instr =
   { opcd : OpCode                                // opcode
   , crt  : CRFIndex                              // target CR field
   , rsv1 : Bits<2>
@@ -337,7 +337,7 @@ instruction set architecture PPC64SFS = {
   , rsv2 : Bits<18>
   }
 
-  format XOForm : Instruction =
+  format XOForm : Instr =
   { opcd    : OpCode                             // opcode
   , rs      : XIndex                             // target register
   , ra      : XIndex                             // source register
@@ -347,7 +347,7 @@ instruction set architecture PPC64SFS = {
   , rc      : Bits<1>                            // if set the instruction modifies the CR
   }
 
-  format Z23Form : Instruction =
+  format Z23Form : Instr =
   { opcd    : OpCode                             // opcode
   , rs      : XIndex                             // target register
   , ra      : XIndex                             // source register

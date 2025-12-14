@@ -1337,11 +1337,15 @@ public class BuiltInTable {
       LA_ID_EQ,
 
       // MICRO ARCHITECTURE
-      FETCH_NEXT,
       DECODE,
+      FETCH_NEXT,
+      INSTRUCTION_ADDRESS,
+      INSTRUCTION_COMPUTE,
       INSTRUCTION_READ,
-      INSTRUCTION_WRITE,
-      INSTRUCTION_COMPUTE
+      INSTRUCTION_READ_OR_FORWARD,
+      INSTRUCTION_RESULTS,
+      INSTRUCTION_VERIFY,
+      INSTRUCTION_WRITE
   );
 
   public static final HashSet<BuiltIn> COMMUTATIVE = new HashSet<>(List.of(

@@ -77,7 +77,6 @@ public class TypeChecker
 
   private BranchStrategy branchStrategy = BranchStrategy.ALL;
 
-
   /**
    * Describes whether all branches are checked and the result of all branches must be equal, or
    * if we must evaluate the condition and propagate the type from the chosen branch.
@@ -2816,15 +2815,13 @@ public class TypeChecker
     var base = expr.baseType.pathToString();
 
     // 1. Check whether the base exists.
-    var builtinBases =
-        List.of("Bool", "String", "Bits", "UInt", "SInt", "Instruction", "FetchResult");
     var customTarget = expr.symbolTable().findAs(expr.baseType, Node.class);
     if (!(customTarget instanceof UsingDefinition) && !(customTarget instanceof FormatDefinition)) {
       customTarget = null;
     }
 
-    if (!builtinBases.contains(base) && customTarget == null) {
-      var candidateTypes = new ArrayList<>(builtinBases);
+    if (!Type.builtinTypeBases.contains(base) && customTarget == null) {
+      var candidateTypes = new ArrayList<>(Type.builtinTypeBases);
       candidateTypes.addAll(
           expr.symbolTable().allSymbolNamesOf(FormatDefinition.class, UsingDefinition.class));
       var suggestions =

@@ -34,6 +34,7 @@ import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
 import vadl.types.BuiltInTable;
+import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.Levenshtein;
 import vadl.utils.SourceLocation;
@@ -471,6 +472,16 @@ class SymbolTable {
   }
 
   private void verifyAvailable(String name, Node origin) {
+    if (Type.builtinTypeBases.contains(name) && (origin instanceof UsingDefinition
+        || origin instanceof FormatDefinition)) {
+      var originLoc = getIdentifierLocation(origin);
+      var error = error("Symbol name already used: " + name, originLoc)
+          .locationDescription(originLoc, "This name is already claimed by a built-in type.")
+          .build();
+      errors.add(error);
+      return;
+    }
+
     if (!symbols.containsKey(name)) {
       return;
     }

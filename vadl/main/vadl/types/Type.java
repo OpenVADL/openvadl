@@ -348,5 +348,10 @@ public abstract class Type {
     }
   }
 
+  /// These are all the builtin types that exist in the language.
+  /// Some of them cannot be initialized like them since they require a size, like `SInt<16>`
+  /// which is why they are named bases.
+  public static final List<String> builtinTypeBases =
+      List.of("Bool", "String", "Bits", "UInt", "SInt", "Instruction", "FetchResult");
 
 }
