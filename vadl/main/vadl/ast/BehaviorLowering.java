@@ -60,10 +60,12 @@ import vadl.viam.ExceptionDef;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
+import vadl.viam.Logic;
 import vadl.viam.Memory;
 import vadl.viam.Procedure;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
+import vadl.viam.Resource;
 import vadl.viam.StageOutput;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
@@ -98,6 +100,7 @@ import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
@@ -1195,6 +1198,17 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             BuiltInTable.builtIns().filter(b -> b.name().equals(subCall.id.name)).findFirst().get();
         var call = new MiaBuiltInCall(builtin, new NodeList<>(exprBeforeSubcall),
             builtin.returns(List.of(MicroArchitectureType.instruction())));
+        for (var arg : subCall.argsIndices.getFirst().values) {
+          var viamArg = viamLowering.fetch(
+                  requireNonNull(
+                      (vadl.ast.Definition) ((ResourceReferenceExression) arg).resource.target()))
+              .get();
+          switch (viamArg) {
+            case Resource res -> call.add(res);
+            case Logic logic -> call.add(logic);
+            default -> throw new IllegalStateException();
+          }
+        }
         resultExpr = call;
       } else if (exprBeforeSubcall instanceof ReadResourceNode resRead) {
         var computedTarget = expr.target.path().target();
@@ -1277,8 +1291,22 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return result;
   }
 
+  public ExpressionNode visitStageCall(CallIndexExpr expr, StageDefinition stageDef) {
+    var subcall = expr.subCalls.get(0);
+    var output = (StageOutput) viamLowering.fetch(
+        stageDef.outputs.stream().filter(o -> o.identifier.name.equals(subcall.id.name)).findFirst()
+            .get()).get();
+    return new ReadStageOutputNode(output);
+  }
+
   @Override
   public ExpressionNode visit(CallIndexExpr expr) {
+
+    // Special handling for stage calls
+    if (expr.computedBuiltIn == null
+        && expr.computedTarget() instanceof StageDefinition stageDefinition) {
+      return visitStageCall(expr, stageDefinition);
+    }
 
     List<Expr> argExprs = AstUtils.flatArguments(expr.args());
     var args = argExprs.stream().map(this::fetch).toList();

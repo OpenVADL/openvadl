@@ -3313,6 +3313,14 @@ public class TypeChecker
           .suggestions(suggestions);
     });
 
+
+    // A hack for stage definitions since they don't fit into our typesystem
+    if (targetSymbol instanceof SymbolTable.AstSymbol astSymbol
+        && astSymbol.origin() instanceof StageDefinition stageDef) {
+      processStageCall(expr, stageDef);
+      return null;
+    }
+
     switch (targetSymbol) {
       case SymbolTable.AstSymbol astSymbol -> processCallOfTarget(expr, astSymbol.origin());
       case SymbolTable.BuiltInSymbol ignored -> processCallOfBuiltIn(expr);
@@ -3389,11 +3397,48 @@ public class TypeChecker
     }
   }
 
+  private void processStageCall(CallIndexExpr expr, StageDefinition callTarget) {
+    check(callTarget);
+
+    var availableOutputs = callTarget.outputs.stream().map(o -> o.identifier.name).toList();
+    if (expr.subCalls.isEmpty()) {
+      addErrorAndStopChecking(error("Missing stage output", expr)
+          .description(
+              "Stages describe outputs and you cannot just refer to a whole stage but to one of "
+                  + "the outputs.")
+          .suggestions(availableOutputs)
+          .build());
+    }
+
+    if (expr.subCalls.size() > 1) {
+      addErrorAndStopChecking(error("Too many stage outputs", expr)
+          .description(
+              "You can only refer to one stage output at a time.")
+          .build());
+    }
+
+    var subcall = expr.subCalls.getFirst();
+    var subcallName = subcall.id.name;
+
+    var output = callTarget.outputs.stream().filter(o -> o.identifier.name.equals(subcallName))
+        .findFirst();
+
+    if (output.isEmpty()) {
+      addErrorAndStopChecking(error("Unknown stage output", subcall.id)
+          .suggestions(Levenshtein.sortAll(subcallName, availableOutputs))
+          .build());
+    }
+
+    expr.type = output.get().type();
+  }
+
   private void processCallOfTarget(CallIndexExpr expr, Node callTarget) {
+
+
+    // if the target is not a typed node, we just assume that it is some expression
+    // that can be sliced.
+    // if it is a let expr, we must also only check the target
     if (!(callTarget instanceof TypedNode typedNode) || callTarget instanceof LetExpr) {
-      // if the target is not a typed node, we just assume that it is some expression
-      // that can be sliced.
-      // if it is a let expr, we must also only check the target
       expr.typeBeforeSlice = check((Expr) expr.target);
       return;
     }

@@ -936,12 +936,6 @@ class MacroExpander
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
-  private List<StageOutputDefinition> expandStageOutputs(List<StageOutputDefinition> outputs) {
-    var expanded = new ArrayList<>(outputs);
-    expanded.replaceAll(param ->
-        new StageOutputDefinition(param.identifier(), (TypeLiteral) expandExpr(param.typeLiteral)));
-    return expanded;
-  }
 
   @Override
   public Definition visit(StageDefinition definition) {
@@ -1337,6 +1331,13 @@ class MacroExpander
     expandedParams.replaceAll(param ->
         new Parameter(param.identifier(), (TypeLiteral) expandExpr(param.typeLiteral)));
     return expandedParams;
+  }
+
+  private List<StageOutputDefinition> expandStageOutputs(List<StageOutputDefinition> outputs) {
+    var expanded = new ArrayList<>(outputs);
+    expanded.replaceAll(param ->
+        new StageOutputDefinition(param.identifier(), (TypeLiteral) expandExpr(param.typeLiteral)));
+    return expanded;
   }
 
   private void reportError(String error, SourceLocation location) {

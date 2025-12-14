@@ -21,6 +21,9 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.SideEffectNode;
 
+/**
+ * The end of a stage.
+ */
 public class StageEndNode extends AbstractEndNode {
   public StageEndNode(
       NodeList<SideEffectNode> sideEffects) {

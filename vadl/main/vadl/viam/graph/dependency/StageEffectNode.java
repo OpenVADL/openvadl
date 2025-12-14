@@ -23,6 +23,9 @@ import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
+/**
+ * A sideeffect modifiying a stage, even if it is not directly returned by a stage.
+ */
 public class StageEffectNode extends SideEffectNode {
 
   @Input
