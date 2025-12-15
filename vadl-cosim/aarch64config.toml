@@ -137,20 +137,20 @@ s31 = "sp"
 pc = "pc"
 
 [[qemu.sliced_reg_map]]
-from = { name = "nzcv_n", slice = [ 56 ] }
-to = { name = "cpsr", slice = [ 31 ] }
+client1 = { name = "nzcv_n", slice = [ 56 ] }
+client2 = { name = "cpsr", slice = [ 31 ] }
 
 [[qemu.sliced_reg_map]]
-from = { name = "nzcv_z", slice = [ 56 ] }
-to = { name = "cpsr", slice = [ 30 ] }
+client1 = { name = "nzcv_z", slice = [ 56 ] }
+client2 = { name = "cpsr", slice = [ 30 ] }
 
 [[qemu.sliced_reg_map]]
-from = { name = "nzcv_c", slice = [ 56 ] }
-to = { name = "cpsr", slice = [ 29 ] }
+client1 = { name = "nzcv_c", slice = [ 56 ] }
+client2 = { name = "cpsr", slice = [ 29 ] }
 
 [[qemu.sliced_reg_map]]
-from = { name = "nzcv_v", slice = [ 56 ] }
-to = { name = "cpsr", slice = [ 28 ] }
+client1 = { name = "nzcv_v", slice = [ 56 ] }
+client2 = { name = "cpsr", slice = [ 28 ] }
 
 # Defines the test-source and how to test
 [testing]

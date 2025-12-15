@@ -264,19 +264,19 @@ fn sliced_register_mappings<'a, 'b>(
         return register_mappings;
     }
 
-    if mappings[0].from.name == sub_reg.name.as_str() {
+    if mappings[0].client1.name == sub_reg.name.as_str() {
         for reg in super_registers {
             for mapping in &mappings {
-                if mapping.to.name == reg.name.as_str() {
-                    register_mappings.push((sub_reg, &mapping.from, reg, &mapping.to));
+                if mapping.client2.name == reg.name.as_str() {
+                    register_mappings.push((sub_reg, &mapping.client1, reg, &mapping.client2));
                 }
             }
         }
     } else {
         for reg in super_registers {
             for mapping in &mappings {
-                if mapping.from.name == reg.name.as_str() {
-                    register_mappings.push((sub_reg, &mapping.to, reg, &mapping.from));
+                if mapping.client1.name == reg.name.as_str() {
+                    register_mappings.push((sub_reg, &mapping.client2, reg, &mapping.client1));
                 }
             }
         }

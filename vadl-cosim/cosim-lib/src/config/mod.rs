@@ -356,8 +356,8 @@ fn set_bit_at(val: &mut u64, idx: u64) {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SlicedRegEntry {
-    pub from: SlicedReg,
-    pub to: SlicedReg,
+    pub client1: SlicedReg,
+    pub client2: SlicedReg,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -367,7 +367,7 @@ impl SlicedRegMap {
     pub fn get_mappings_for(&self, name: &str) -> Vec<&SlicedRegEntry> {
         self.0
             .iter()
-            .filter(|entry| entry.from.name == name || entry.to.name == name)
+            .filter(|entry| entry.client1.name == name || entry.client2.name == name)
             .collect()
     }
 }
@@ -399,8 +399,8 @@ impl Qemu {
         }
 
         for entry in &self.sliced_reg_map.0 {
-            self.defined_registers_map.insert(entry.from.name.clone());
-            self.defined_registers_map.insert(entry.to.name.clone());
+            self.defined_registers_map.insert(entry.client1.name.clone());
+            self.defined_registers_map.insert(entry.client2.name.clone());
         }
     }
 
