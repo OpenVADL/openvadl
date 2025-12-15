@@ -200,7 +200,8 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
     };
     List<String> tokenTypes = new ArrayList<>(desiredTokenTypes.length);
     // Limit token types to those supported by the client
-    List<String> clientSupportedTypes = params.getCapabilities().getTextDocument().getSemanticTokens().getTokenTypes();
+    List<String> clientSupportedTypes = params.getCapabilities().getTextDocument()
+        .getSemanticTokens().getTokenTypes();
     for (String token : desiredTokenTypes) {
       if (clientSupportedTypes.contains(token)) {
         tokenTypes.add(token);

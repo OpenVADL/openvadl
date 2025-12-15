@@ -30,8 +30,7 @@ import vadl.utils.SourceLocation;
 /**
  * Represents one file currently owned by (i.e. opened in) the LSP Client.
  *
- * <p>
- * You can synchronize on this object to ensure it is not modified while performing an atomic
+ * <p>You can synchronize on this object to ensure it is not modified while performing an atomic
  * operation.
  *
  * @see org.eclipse.lsp4j.TextDocumentItem
@@ -65,6 +64,8 @@ public class Document {
   }
 
   /**
+   * Creates a new lsp document based on the data provided by the client.
+   *
    * @param tdi as provided by the LSP didOpen request
    */
   public Document(TextDocumentItem tdi) {
@@ -162,7 +163,8 @@ public class Document {
    *                                          document's current version
    */
   public synchronized @NonNull Position calculateUtf16Position(
-      @NonNull SourceLocation.Position utf8Position, int documentVersion, boolean endPosition) throws ObsoleteDocumentVersionException {
+      @NonNull SourceLocation.Position utf8Position, int documentVersion, boolean endPosition)
+      throws ObsoleteDocumentVersionException {
     if (this.version != documentVersion) {
       throw new ObsoleteDocumentVersionException(
           "Version " + documentVersion + " is obsolete, " + uri + " has version " + this.version
@@ -190,7 +192,8 @@ public class Document {
    *                       tokens do not span multiple lines.
    * @return {@code semanticTokens} but with correct UTF-16 positions
    */
-  public synchronized @NonNull List<Integer> calculateUtf16Positions(@NonNull List<Integer> semanticTokens) {
+  public synchronized @NonNull List<Integer> calculateUtf16Positions(
+      @NonNull List<Integer> semanticTokens) {
     if (semanticTokens.isEmpty()) {
       return semanticTokens;
     }
@@ -225,7 +228,8 @@ public class Document {
         targetPos -= utf8Utf16LengthDifference(lineText.charAt(linePos));
       }
       semanticTokens.set(i + 2, targetPos - previousTargetPos);
-      // No update of previousTargetPos - next token is calculated based on start pos of the current token
+      // No update of previousTargetPos - next token is calculated based on start pos of the current
+      // token
     }
 
     return semanticTokens;

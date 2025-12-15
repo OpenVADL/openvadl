@@ -47,6 +47,7 @@ import vadl.ast.ModelRemover;
 import vadl.ast.TypeChecker;
 import vadl.ast.Ungrouper;
 import vadl.ast.VadlParser;
+import vadl.error.Diagnostic.MsgType;
 import vadl.error.DiagnosticList;
 import vadl.utils.SourceLocation;
 
@@ -175,7 +176,11 @@ class VadlTextDocumentService implements TextDocumentService {
         return;
       }
       if (!documentVersionIsCurrent(document.getUri(), version)) {
-        log.debug("ABORT publishDiagnostics (before): outdated version {} of document {}", version, document.getUri());
+        log.debug(
+            "ABORT publishDiagnostics (before): outdated version {} of document {}",
+            version,
+            document.getUri()
+        );
         return;
       }
 
@@ -189,7 +194,8 @@ class VadlTextDocumentService implements TextDocumentService {
       } catch (DiagnosticList dl) {
         log.debug("Raw diagnostics: {}", dl.getMessage());
         for (vadl.error.Diagnostic item : dl.items) {
-          // TODO Look into secondary locations too? Maybe as relatedInformation?
+          // TODO Look into secondary locations too? Maybe as relatedInformation? Or to put a
+          //      diagnostic message there as well?
           SourceLocation location = item.multiLocation.primaryLocation().location();
           if (!location.uri().equals(PRIMARY_FILE)) {
             // Ignore errors for other files
@@ -216,17 +222,31 @@ class VadlTextDocumentService implements TextDocumentService {
                 case WARNING -> DiagnosticSeverity.Warning;
               }
           );
-          // TODO there are messages attached to the Diagnostic itself - are they useful?
+          // labels (aka messages) per location
           String labelsString = item.multiLocation.primaryLocation().labels().stream()
               .map(vadl.error.Diagnostic.Message::content)
               .collect(Collectors.joining(". "));
-          lspItem.setMessage(item.reason + (!labelsString.isBlank() ? ": " + labelsString : ""));
+          // messages per Diagnostic - they may offer help or give additional notes
+          String messagesString = item.messages.stream()
+              .filter(m -> m.type().equals(MsgType.HELP) || m.type().equals(MsgType.NOTE))
+              .map(vadl.error.Diagnostic.Message::content)
+              .collect(Collectors.joining(". "));
+
+          String fullMessage = item.reason + (!labelsString.isBlank() ? ": " + labelsString : "")
+              + (!messagesString.isBlank() ? "\n" + messagesString : "");
+          lspItem.setMessage(fullMessage);
           lspItems.add(lspItem);
         }
       }
+      // TODO There may be diagnostics in DeferredDiagnosticStore, but that is a static list and
+      //      has no clear() method (i.e. outdated diagnostics remain visible)
 
       if (!documentVersionIsCurrent(document.getUri(), version)) {
-        log.debug("ABORT publishDiagnostics (after): outdated version {} of document {}", version, document.getUri());
+        log.debug(
+            "ABORT publishDiagnostics (after): outdated version {} of document {}",
+            version,
+            document.getUri()
+        );
         return;
       }
       var data = new PublishDiagnosticsParams(document.getUri(), lspItems, version);

@@ -122,11 +122,10 @@ public final class LspTokenizer {
     //       boundaries for LSP. So far, the only elements in OpenVADL that may span multiple lines
     //       are comments, but the CocoR Scanner doesn't produce Tokens for those anyway.
 
-    Token t;
     List<Integer> lspTokens = new ArrayList<>();
     int previousLine = 1; // Token.line starts at 1
     int previousCol = 1; // Same for Token.col
-    while ((t = scanner.Scan()).kind != Parser._EOF) {
+    for (Token t = scanner.Scan(); t.kind != Parser._EOF; t = scanner.Scan()) {
       int tokenType = getTokenTypeFromScannerKind(t.kind);
       if (tokenType < 0) {
         continue;
