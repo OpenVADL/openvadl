@@ -27,16 +27,18 @@ import vadl.iss.CosimTestUtils;
 
 public class Ppc64TestBuilder {
 
+  private static final int commentCol = 40;
+
   private final String name;
   private final int id;
   private final List<String> instructions = new ArrayList<>();
-  private boolean mode64 = false;
 
   public Ppc64TestBuilder(String name, int id) {
     this.name = name;
     this.id = id;
   }
 
+  // loads a random 32-bit value into CR
   public BigInteger fillCR() {
     BigInteger value = fillReg("0");
     add("mtcrf 255, 0");
@@ -51,12 +53,18 @@ public class Ppc64TestBuilder {
   public BigInteger fillReg(String reg, BigInteger value) {
     int lo16  = value.and(BigInteger.valueOf(0xFFFF)).intValue();
     int hi16  = value.shiftRight(16).and(BigInteger.valueOf(0xFFFF)).intValue();
-    add("lis %s, %s", reg, (short) hi16); // lis needs hi16 as a signed value
-    add("ori %s, %s, %s", reg, reg, lo16);
+    String lis = String.format("lis %s, %s", reg, (short) hi16);
+    String ori = String.format("ori %s, %s, %s", reg, reg, lo16);
+    String preg = reg.length() == 1 ? " " + reg : reg;
+    String lisLine = lis + " ".repeat(Math.max(0, commentCol - lis.length())) + " # X(" + preg + ") := " + toLoadedHexString(value);
+    String oriLine = ori + " ".repeat(Math.max(0, commentCol - ori.length())) + " # ↑";
+    instructions.add(lisLine);
+    instructions.add(oriLine);
     int loadedVal = (hi16 << 16) | lo16;
     return BigInteger.valueOf(loadedVal);
   }
 
+  // loads a random 32-bit value into memory
   public BigInteger fillMem(BigInteger mem) {
     fillReg("0", mem);
     BigInteger value = fillReg("1");
@@ -95,24 +103,28 @@ public class Ppc64TestBuilder {
         .sample();
   }
 
+  public BigInteger anySelectImmU(int bits) {
+    int bitPosition = Arbitraries.integers().between(0, bits - 1).sample();
+    return BigInteger.ONE.shiftLeft(bitPosition);
+  }
+
   @FormatMethod
   public Ppc64TestBuilder add(String instr, Object... args) {
     instructions.add(String.format(instr, args));
     return this;
   }
 
-  public Ppc64TestBuilder setMode64(boolean m) {
-    this.mode64 = m;
-    return this;
-  }
-
   public String toAsmString() {
-    return (mode64 ? "trap\n" : "") + String.join("\n", instructions);
+    return String.join("\n", instructions);
   }
 
   public CosimTestUtils.TestCase toTestCase() {
-    String mode = mode64 ? "M64" : "M32";
-    return new CosimTestUtils.TestCase(name + "-" + mode + "-" + id, toAsmString());
+    return new CosimTestUtils.TestCase(name + "-" + id, toAsmString());
+  }
+
+  private static String toLoadedHexString(BigInteger value) {
+    long signed64 = value.intValue();
+    return "0x" + String.format("%016X", signed64) + " (" + signed64 + ")";
   }
 
 }

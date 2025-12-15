@@ -18,6 +18,7 @@ package vadl.iss.ppc64;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.MethodOrderer;
@@ -25,6 +26,12 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.TestMethodOrder;
 import vadl.iss.CosimInstrTest;
+import vadl.iss.CosimTestUtils;
+
+/* Tests ppc64.vadl instructions against the QEMU ppc64 simulator.
+ * Some instructions are defined in the VADL specification but are not covered by the tests.
+ * These are: mfmsr, mtmsr, mfspr, mtspr, mftb and all branch instructions
+ */
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class CosimPpc64InstrTest extends CosimInstrTest {
@@ -35,7 +42,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
 
   @Override
   public int getTestPerInstruction() {
-    return 100;
+    return 50;
   }
 
   @Override
@@ -44,8 +51,8 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   }
 
   @Override
-  protected String getScript() {
-    return "/cosim_scripts/ppc64";
+  protected String getScriptFolder() {
+    return "ppc64";
   }
 
   @Override
@@ -53,13 +60,11 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     return "ppc64-softmmu";
   }
 
-  /* not supported by compiler
   @TestFactory
   @Order(1)
   Stream<DynamicTest> addpcis() throws IOException {
     return testTRegImmS16Instruction("addpcis", "ADDPCIS");
   }
-  */
 
   @TestFactory
   @Order(2)
@@ -153,13 +158,11 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   }
   */
 
-  /* not supported by compiler
   @TestFactory
   @Order(17)
   Stream<DynamicTest> addex() throws IOException {
     return testTSSRegInstructionExt("addex", "ADDEX", "0");
   }
-  */
 
   @TestFactory
   @Order(18)
@@ -167,7 +170,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     return testTSRegImmS16Instruction("mulli", "MULLI");
   }
 
-  /* CR BUG
+  /* bugged
   @TestFactory
   @Order(19)
   Stream<DynamicTest> mullw() throws IOException {
@@ -187,31 +190,25 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   }
   */
 
-  /* not working
+  /* bugged
   @TestFactory
   @Order(22)
   Stream<DynamicTest> divw() throws IOException {
     return testTSSRegInstruction_OR("divw", "DIVW");
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(23)
   Stream<DynamicTest> divwu() throws IOException {
     return testTSSRegInstruction_OR("divwu", "DIVWU");
   }
-  */
 
-  /* not supported by compiler
   @TestFactory
   @Order(24)
   Stream<DynamicTest> divwe() throws IOException {
     return testTSSRegInstruction_OR("divwe", "DIVWE");
   }
-  */
 
-  /* not supported by compiler
   @TestFactory
   @Order(25)
   Stream<DynamicTest> divweu() throws IOException {
@@ -225,19 +222,17 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     return testTSRegInstruction_OR("neg", "NEG");
   }
 
-  /* not supported by compiler
+  /*
   @TestFactory
   @Order(27)
   Stream<DynamicTest> modsw() throws IOException {
-    return testTSSRegInstruction_OR("modsw", "MODSW");
+    return testTSSRegInstruction("modsw", "MODSW");
   }
-  */
 
-  /* not supported by compiler
   @TestFactory
   @Order(28)
   Stream<DynamicTest> moduw() throws IOException {
-    return testTSSRegInstruction_OR("moduw", "MODUW");
+    return testTSSRegInstruction("moduw", "MODUW");
   }
   */
 
@@ -373,45 +368,35 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     return testTSRegImmU16Instruction("xoris", "XORIS");
   }
 
-  /* not supported by compiler
   @TestFactory
   @Order(51)
   Stream<DynamicTest> setb() throws IOException {
     return testTRegSCRFieldInstruction("setb", "SETB");
   }
-  */
 
-  /* not supported by compiler
   @TestFactory
   @Order(52)
   Stream<DynamicTest> setbc() throws IOException {
     return testTRegSCRBitInstruction("setbc", "SETBC");
   }
-  */
 
-  /* not supported by compiler
   @TestFactory
   @Order(53)
   Stream<DynamicTest> setbcr() throws IOException {
     return testTRegSCRBitInstruction("setbcr", "SETBCR");
   }
-  */
 
-  /* not supported by compiler
   @TestFactory
   @Order(54)
   Stream<DynamicTest> setnbc() throws IOException {
     return testTRegSCRBitInstruction("setnbc", "SETNBC");
   }
-  */
 
-  /* not supported by compiler
   @TestFactory
   @Order(55)
   Stream<DynamicTest> setnbcr() throws IOException {
     return testTRegSCRBitInstruction("setnbcr", "SETNBCR");
   }
-  */
 
   @TestFactory
   @Order(56)
@@ -479,29 +464,23 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     return testDFormCompareInstruction("cmpli", "CMPLI");
   }
 
-  /* not supported by compiler
   @TestFactory
   @Order(67)
   Stream<DynamicTest> cmpb() throws IOException {
     return testTSSRegInstruction("cmpb", "CMPB");
   }
-  */
 
-  /* not supported by compiler
   @TestFactory
   @Order(68)
   Stream<DynamicTest> cmpeqb() throws IOException {
     return testTCRFieldSSRegInstruction("cmpeqb", "CMPEQB");
   }
-  */
 
-  /* not supported by compiler
   @TestFactory
   @Order(69)
   Stream<DynamicTest> cmprb() throws IOException {
     return testTCRFieldModeSSRegInstruction("cmprb", "CMPRB");
   }
-  */
 
   /* not working
   @TestFactory
@@ -751,87 +730,107 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   }
   */
 
-  /* not supported by compiler
   @TestFactory
-  @Order(112)
+  @Order(101)
+  Stream<DynamicTest> mtocrf() throws IOException {
+    return testOCRMask8SRegInstruction("mtocrf", "MTOCRF");
+  }
+
+  @TestFactory
+  @Order(102)
+  Stream<DynamicTest> mfocrf() throws IOException {
+    return testTRegOCRMask8Instruction("mfocrf", "MFOCRF");
+  }
+
+  @TestFactory
+  @Order(103)
+  Stream<DynamicTest> mfcr() throws IOException {
+    return testTRegCRSInstruction("mfcr", "MFCR");
+  }
+
+  @TestFactory
+  @Order(104)
+  Stream<DynamicTest> mtcrf() throws IOException {
+    return testCRMask8SRegInstruction("mtcrf", "MTCRF");
+  }
+
+  @TestFactory
+  @Order(105)
+  Stream<DynamicTest> mcrf() throws IOException {
+    return testTSCRFieldInstruction("mcrf", "MCRF");
+  }
+
+  @TestFactory
+  @Order(106)
+  Stream<DynamicTest> mcrxrx() throws IOException {
+    return testXFormMoveXERCRFieldInstruction("mcrxrx", "MCRXRX");
+  }
+
+  @TestFactory
+  @Order(107)
   Stream<DynamicTest> brh() throws IOException {
     return testTSRegInstruction("brh", "BRH");
   }
-  */
 
-  /* not supported by compiler
   @TestFactory
-  @Order(113)
+  @Order(108)
   Stream<DynamicTest> brw() throws IOException {
     return testTSRegInstruction("brw", "BRW");
   }
-  */
 
-  /* not supported by compiler
   @TestFactory
-  @Order(114)
+  @Order(109)
   Stream<DynamicTest> cbcdtd() throws IOException {
     return testTSRegInstruction("cbcdtd", "CBCDTD");
   }
-  */
 
-  /* not supported by compiler
   @TestFactory
-  @Order(115)
+  @Order(110)
   Stream<DynamicTest> cdtbcd() throws IOException {
     return testTSRegInstruction("cdtbcd", "CDTBCD");
   }
-  */
 
-  /* not supported by compiler
   @TestFactory
-  @Order(116)
+  @Order(111)
   Stream<DynamicTest> popcntb() throws IOException {
     return testTSRegInstruction("popcntb", "POPCNTB");
   }
-  */
 
-  /* not supported by compiler
   @TestFactory
-  @Order(117)
+  @Order(112)
   Stream<DynamicTest> popcntw() throws IOException {
     return testTSRegInstruction("popcntw", "POPCNTW");
   }
-  */
 
-  /* not supported by compiler
   @TestFactory
-  @Order(118)
+  @Order(113)
   Stream<DynamicTest> prtyw() throws IOException {
     return testTSRegInstruction("prtyw", "PRTYW");
   }
-  */
 
   @TestFactory
-  @Order(119)
+  @Order(114)
   Stream<DynamicTest> extsb() throws IOException {
     return testTSRegInstruction_R("extsb", "EXTSB");
   }
 
   @TestFactory
-  @Order(120)
+  @Order(115)
   Stream<DynamicTest> extsh() throws IOException {
     return testTSRegInstruction_R("extsh", "EXTSH");
   }
 
   @TestFactory
-  @Order(121)
+  @Order(116)
   Stream<DynamicTest> cntlzw() throws IOException {
     return testTSRegInstruction_R("cntlzw", "CNTLZW");
   }
 
-  /* not supported by compiler
   @TestFactory
-  @Order(122)
+  @Order(117)
   Stream<DynamicTest> cnttzw() throws IOException {
     return testTSRegInstruction_R("cnttzw", "CNTTZW");
   }
-  */
 
   private Stream<DynamicTest> testTSSRegInstruction_OR(String instruction, String name)
       throws IOException {
@@ -888,35 +887,33 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
 
   private Stream<DynamicTest> testTSSRegInstruction(String instruction, String name)
       throws IOException {
-    return runTestsWith(id -> {
+    return runTests3264With(id -> {
       var b = getBuilder(name, id);
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = b.anyReg().sample();
-      var regDest = b.anyReg().sample();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2);
-      b.add("%s %s, %s, %s", instruction, regDest, regSrc1, regSrc2);
+      b.add("%s %s, %s, %s", instruction, b.anyReg().sample(), regSrc1, regSrc2);
       return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTSSRegInstructionExt(String instruction, String name, String ext)
       throws IOException {
-    return runTestsWith(id -> {
+    return runTests3264With(id -> {
       var b = getBuilder(name, id);
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = b.anyReg().sample();
-      var regDest = b.anyReg().sample();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2);
-      b.add("%s %s, %s, %s, %s", instruction, regDest, regSrc1, regSrc2, ext);
+      b.add("%s %s, %s, %s, %s", instruction, b.anyReg().sample(), regSrc1, regSrc2, ext);
       return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTCRFieldSSRegInstruction(String instruction, String name)
       throws IOException {
-    return runTestsWith(id -> {
+    return runTests3264With(id -> {
       var b = getBuilder(name, id);
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = b.anyReg().sample();
@@ -927,92 +924,148 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     });
   }
 
+  private Stream<DynamicTest> testTSCRFieldInstruction(String instruction, String name)
+      throws IOException {
+    return runTests3264With(id -> {
+      var b = getBuilder(name, id);
+      b.fillCR();
+      b.add("%s %s, %s", instruction, b.anyCRField().sample(), b.anyCRField().sample());
+      return b.toTestCase();
+    });
+  }
+
   private Stream<DynamicTest> testTSSCRBitInstruction(String instruction, String name)
       throws IOException {
-    return runTestsWith(id -> {
+    return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var bitSrc1 = b.anyCRBit().sample();
-      var bitSrc2 = b.anyCRBit().sample();
-      var bitDest = b.anyReg().sample();
       b.fillCR();
-      b.add("%s %s, %s, %s", instruction, bitDest, bitSrc1, bitSrc2);
+      b.add("%s %s, %s, %s", instruction, b.anyCRBit().sample(), b.anyCRBit().sample(), b.anyCRBit().sample());
       return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTSRegImmS16Instruction(String instruction, String name)
       throws IOException {
-    return runTestsWith(id -> {
+    return runTests3264With(id -> {
       var b = getBuilder(name, id);
       var regSrc = b.anyReg().sample();
-      var regDest = b.anyReg().sample();
       b.fillReg(regSrc);
-      b.add("%s %s, %s, %s", instruction, regDest, regSrc, b.anyImmS(16));
+      b.add("%s %s, %s, %s", instruction, b.anyReg().sample(), regSrc, b.anyImmS(16));
       return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTSRegImmU16Instruction(String instruction, String name)
       throws IOException {
-    return runTestsWith(id -> {
+    return runTests3264With(id -> {
       var b = getBuilder(name, id);
       var regSrc = b.anyReg().sample();
-      var regDest = b.anyReg().sample();
       b.fillReg(regSrc);
-      b.add("%s %s, %s, %s", instruction, regDest, regSrc, b.anyImmU(16));
+      b.add("%s %s, %s, %s", instruction, b.anyReg().sample(), regSrc, b.anyImmU(16));
       return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTSRegInstruction(String instruction, String name)
       throws IOException {
-    return runTestsWith(id -> {
+    return runTests3264With(id -> {
       var b = getBuilder(name, id);
       var regSrc = b.anyReg().sample();
-      var regDest = b.anyReg().sample();
       b.fillReg(regSrc);
-      b.add("%s %s, %s", instruction, regDest, regSrc);
+      b.add("%s %s, %s", instruction, b.anyReg().sample(), regSrc);
       return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTRegSCRFieldInstruction(String instruction, String name)
       throws IOException {
-    return runTestsWith(id -> {
+    return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var fieldSrc = b.anyCRField().sample();
-      var regDest = b.anyReg().sample();
       b.fillCR();
-      b.add("%s %s, %s", instruction, regDest, fieldSrc);
+      b.add("%s %s, %s", instruction, b.anyReg().sample(), b.anyCRField().sample());
       return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTRegSCRBitInstruction(String instruction, String name)
       throws IOException {
-    return runTestsWith(id -> {
+    return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var bitSrc = b.anyCRBit().sample();
-      var regDest = b.anyReg().sample();
       b.fillCR();
-      b.add("%s %s, %s", instruction, regDest, bitSrc);
+      b.add("%s %s, %s", instruction, b.anyReg().sample(), b.anyCRBit().sample());
+      return b.toTestCase();
+    });
+  }
+
+  private Stream<DynamicTest> testTRegOCRMask8Instruction(String instruction, String name)
+      throws IOException {
+    return runTests3264With(id -> {
+      var b = getBuilder(name, id);
+      b.fillCR();
+      b.add("%s %s, %s", instruction, b.anyReg().sample(), b.anySelectImmU(8));
+      return b.toTestCase();
+    });
+  }
+
+  private Stream<DynamicTest> testCRMask8SRegInstruction(String instruction, String name)
+      throws IOException {
+    return runTests3264With(id -> {
+      var b = getBuilder(name, id);
+      var regSrc = b.anyReg().sample();
+      b.fillCR();
+      b.fillReg(regSrc);
+      b.add("%s %s, %s", instruction, b.anyImmU(8), regSrc);
+      return b.toTestCase();
+    });
+  }
+
+  private Stream<DynamicTest> testOCRMask8SRegInstruction(String instruction, String name)
+      throws IOException {
+    return runTests3264With(id -> {
+      var b = getBuilder(name, id);
+      var regSrc = b.anyReg().sample();
+      b.fillCR();
+      b.fillReg(regSrc);
+      b.add("%s %s, %s", instruction, b.anySelectImmU(8), regSrc);
       return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testTRegImmS16Instruction(String instruction, String name)
       throws IOException {
-    return runTestsWith(id -> {
+    return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regDest = b.anyReg().sample();
-      b.add("%s %s, %s", instruction, regDest, b.anyImmS(16));
+      b.add("%s %s, %s", instruction, b.anyReg().sample(), b.anyImmS(16));
+      return b.toTestCase();
+    });
+  }
+
+  private Stream<DynamicTest> testTRegCRSInstruction(String instruction, String name)
+      throws IOException {
+    return runTests3264With(id -> {
+      var b = getBuilder(name, id);
+      b.fillCR();
+      b.add("%s %s", instruction, b.anyReg().sample());
+      return b.toTestCase();
+    });
+  }
+
+  private Stream<DynamicTest> testTCRFieldModeSSRegInstruction(String instruction, String name)
+      throws IOException {
+    return runTests3264With(id -> {
+      var b = getBuilder(name, id);
+      var regSrc1 = b.anyReg().sample();
+      var regSrc2 = b.anyReg().sample();
+      b.fillReg(regSrc1);
+      b.fillReg(regSrc2);
+      b.add("%s %s, %s, %s, %s", instruction, b.anyCRField().sample(), b.anyImmU(1), regSrc1, regSrc2);
       return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testDFormCompareInstruction(String instruction, String name)
       throws IOException {
-    return runTestsWith(id -> {
+    return runTests3264With(id -> {
       var b = getBuilder(name, id);
       var regSrc = b.anyReg().sample();
       b.fillReg(regSrc);
@@ -1021,9 +1074,50 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     });
   }
 
+  private Stream<DynamicTest> testMFormRotateInstruction(String instruction, String name)
+      throws IOException {
+    return runTests3264With(id -> {
+      var b = getBuilder(name, id);
+      var regSrc = b.anyReg().sample();
+      var regSrcOrImm5 = b.anyReg().sample();
+      b.fillReg(regSrc);
+      b.fillReg(regSrcOrImm5);
+      b.add("%s %s, %s, %s, %s, %s", instruction, b.anyReg().sample(), regSrc, regSrcOrImm5, b.anyImmU(5), b.anyImmU(5));
+      return b.toTestCase();
+    });
+  }
+
+  private Stream<DynamicTest> testXFormShiftInstruction(String instruction, String name)
+      throws IOException {
+    return runTests3264With(id -> {
+      var b = getBuilder(name, id);
+      var regSrcOrImm5 = b.anyReg().sample();
+      var regSrc = b.anyReg().sample();
+      b.fillReg(regSrcOrImm5);
+      b.fillReg(regSrc);
+      b.add("%s %s, %s, %s", instruction, b.anyReg().sample(), regSrcOrImm5, regSrc);
+      return b.toTestCase();
+    });
+  }
+
+  private Stream<DynamicTest> testXFormMoveXERCRFieldInstruction(String instruction, String name)
+      throws IOException {
+    return runTests3264With(id -> {
+      var b = getBuilder(name, id);
+      var regSrc1 = b.anyReg().sample();
+      var regSrc2 = b.anyReg().sample();
+      b.fillCR();
+      b.fillReg(regSrc1);
+      b.fillReg(regSrc2);
+      b.add("addco %s, %s, %s", b.anyReg().sample(), regSrc1, regSrc2); // Sets XER
+      b.add("%s %s", instruction, b.anyCRField().sample());
+      return b.toTestCase();
+    });
+  }
+
   private Stream<DynamicTest> testDFormLoadInstruction(String instruction, String name, boolean update)
       throws IOException {
-    return runTestsWith(id -> {
+    return runTests3264With(id -> {
       var b = getBuilder(name, id);
       var regSrc = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc)).sample() : b.anyReg().sample();
@@ -1034,50 +1128,9 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     });
   }
 
-  private Stream<DynamicTest> testDFormStoreInstruction(String instruction, String name, boolean update)
-      throws IOException {
-    return runTestsWith(id -> {
-      var b = getBuilder(name, id);
-      var regSrc1 = b.anyReg().sample();
-      var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
-      b.fillReg(regSrc1);
-      b.fillReg(regSrc2);
-      b.add("%s %s, %s(%s)", instruction, regSrc1, b.anyImmS(16), regSrc2);
-      return b.toTestCase();
-    });
-  }
-
-  private Stream<DynamicTest> testMFormRotateInstruction(String instruction, String name)
-      throws IOException {
-    return runTestsWith(id -> {
-      var b = getBuilder(name, id);
-      var regSrc = b.anyReg().sample();
-      var regSrcOrImm5 = b.anyReg().sample();
-      var regDest = b.anyReg().sample();
-      b.fillReg(regSrc);
-      b.fillReg(regSrcOrImm5);
-      b.add("%s %s, %s, %s, %s, %s", instruction, regDest, regSrc, regSrcOrImm5, b.anyImmU(5), b.anyImmU(5));
-      return b.toTestCase();
-    });
-  }
-
-  private Stream<DynamicTest> testXFormShiftInstruction(String instruction, String name)
-      throws IOException {
-    return runTestsWith(id -> {
-      var b = getBuilder(name, id);
-      var regSrcOrImm5 = b.anyReg().sample();
-      var regSrc = b.anyReg().sample();
-      var regDest = b.anyReg().sample();
-      b.fillReg(regSrcOrImm5);
-      b.fillReg(regSrc);
-      b.add("%s %s, %s, %s", instruction, regDest, regSrcOrImm5, regSrc);
-      return b.toTestCase();
-    });
-  }
-
   private Stream<DynamicTest> testXFormLoadInstruction(String instruction, String name, boolean update)
       throws IOException {
-    return runTestsWith(id -> {
+    return runTests3264With(id -> {
       var b = getBuilder(name, id);
       var regSrc1 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       var regSrc2 = b.anyReg().sample();
@@ -1090,9 +1143,22 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     });
   }
 
+  private Stream<DynamicTest> testDFormStoreInstruction(String instruction, String name, boolean update)
+      throws IOException {
+    return runTests3264With(id -> {
+      var b = getBuilder(name, id);
+      var regSrc1 = b.anyReg().sample();
+      var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
+      b.fillReg(regSrc1);
+      b.fillReg(regSrc2);
+      b.add("%s %s, %s(%s)", instruction, regSrc1, b.anyImmS(16), regSrc2);
+      return b.toTestCase();
+    });
+  }
+
   private Stream<DynamicTest> testXFormStoreInstruction(String instruction, String name, boolean update)
       throws IOException {
-    return runTestsWith(id -> {
+    return runTests3264With(id -> {
       var b = getBuilder(name, id);
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
@@ -1105,17 +1171,20 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     });
   }
 
-  private Stream<DynamicTest> testTCRFieldModeSSRegInstruction(String instruction, String name)
+  // runs tests in 32- and 64-bit mode
+  private Stream<DynamicTest> runTests3264With(Function<Integer, CosimTestUtils.TestCase> generators)
       throws IOException {
-    return runTestsWith(id -> {
-      var b = getBuilder(name, id);
-      var regSrc1 = b.anyReg().sample();
-      var regSrc2 = b.anyReg().sample();
-      b.fillReg(regSrc1);
-      b.fillReg(regSrc2);
-      b.add("%s %s, %s, %s, %s", instruction, b.anyCRField().sample(), b.anyImmU(1), regSrc1, regSrc2);
-      return b.toTestCase();
-    });
+    Function<Integer, CosimTestUtils.TestCase> tests32 = id -> {
+      CosimTestUtils.TestCase test = generators.apply(id);
+      return new CosimTestUtils.TestCase(test.id() + " (32-bit)", test.asmCore());
+    };
+    Function<Integer, CosimTestUtils.TestCase> tests64 = id -> {
+      CosimTestUtils.TestCase test = generators.apply(id);
+      return new CosimTestUtils.TestCase(test.id() + " (64-bit)", "trap\n" + test.asmCore());
+    };
+    Stream<DynamicTest> dynamicTests32 = runTestsWith(tests32);
+    Stream<DynamicTest> dynamicTests64 = runTestsWith(tests64);
+    return Stream.concat(dynamicTests32, dynamicTests64);
   }
 
 }

@@ -95,13 +95,13 @@ public abstract class CosimInstrTest extends CosimTest {
     return testCases.stream()
         .map(e -> DynamicTest.dynamicTest(e.id(),
             () -> {
+              System.out.println("Assembly core: \n" + e.asmCore());
               if (!resultFiles.containsKey(e.id())) {
                 Assertions.fail("Result file is missing for test: " + e.id());
               }
               var file = resultFiles.get(e.id());
               var parsed = CosimTestUtils.yamlToTestResult(file);
               var clients = parsed.diffContext();
-              System.out.println("Assembly core: \n" + e.asmCore());
               if (!parsed.passed()) {
                 if (!parsed.diffs().isEmpty()) {
                   System.out.println("Differences found:");

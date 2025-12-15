@@ -93,7 +93,7 @@ public abstract class CosimTest extends DockerExecutionTest {
     });
   }
 
-  protected abstract String getScript();
+  protected abstract String getScriptFolder();
 
   protected abstract String withUpstreamTarget();
 
@@ -167,7 +167,7 @@ public abstract class CosimTest extends DockerExecutionTest {
         .withFileFromPath("iss", generatedIssSources)
         // make cosim scripts and configs available to image builder
         .withFileFromClasspath("/cosim_configs", "/cosim_configs")
-        .withFileFromClasspath("/cosim_scripts", getScript())
+        .withFileFromClasspath("/cosim_scripts", "/cosim_scripts/" + getScriptFolder())
         // add vadl-cosim to image builder
         .withFileFromPath("/vadl-cosim", Path.of("..", "vadl-cosim"));
 
