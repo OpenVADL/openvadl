@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fs, path::Path, str::FromStr};
 
 use anyhow::{Result, bail};
 use clap::Parser;
@@ -44,7 +44,16 @@ fn default_config_file() -> String {
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let mut config: Config = Figment::new().merge(Toml::file(cli.config)).extract()?;
+    let config_path = Path::new(&cli.config);
+    if !config_path.exists() {
+        bail!("The provided path \"{}\" does not exist", cli.config);
+    }
+
+    if !config_path.is_file() {
+        bail!("The provided path \"{}\" is not a file", cli.config);
+    }
+
+    let mut config: Config = Figment::new().merge(Toml::file(cli.config)).extract()?
 
     config.qemu.set_inverse_reg_map();
 
