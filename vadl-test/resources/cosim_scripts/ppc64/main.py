@@ -7,6 +7,16 @@ import sys
 import compiler
 import shutil
 
+def dump_debug_info(tid: str, results: Path, comp: dict):
+    debug_dir = results / f"{tid}_debug"
+    os.makedirs(debug_dir, exist_ok=True)
+    shutil.copy(comp["asm"], debug_dir)
+    shutil.copy(comp["lnscript"], debug_dir)
+    shutil.copy(comp["elf_le"], debug_dir)
+    shutil.copy(comp["elf_be"], debug_dir)
+    shutil.copy(comp["objdump_be"], debug_dir)
+    shutil.copy(comp["objdump_le"], debug_dir)
+
 async def run_cosim(le: str, be: str, out: Path, cosim_config: Path):
     e = os.environ.copy()
     e["RUST_BACKTRACE"] = "1"
@@ -23,16 +33,10 @@ async def run_cosim(le: str, be: str, out: Path, cosim_config: Path):
 async def run_test(t: dict, results: Path, cosim_config: Path):
     tid = str(t["id"])
     try:
-        comp = await compiler.compile(tid, str(t["asm_core"]))
-
-        if t["debug"]:
-            debug_dir = results / f"{tid}_debug"
-            os.makedirs(debug_dir, exist_ok=True)
-            shutil.copy(comp["asm"], debug_dir)
-            shutil.copy(comp["lnscript"], debug_dir)
-            shutil.copy(comp["elf_le"], debug_dir)
-            shutil.copy(comp["elf_be"], debug_dir)
-
+        debug = t["debug"]
+        comp = await compiler.compile(tid, str(t["asm_core"]), debug)
+        if debug:
+          dump_debug_info(tid, results, comp)
         await run_cosim(str(comp["elf_le"]), str(comp["elf_be"]), results / f"result-{tid}", cosim_config)
     except Exception as e:
         print(f"error for test=\"{tid}\": ", e)

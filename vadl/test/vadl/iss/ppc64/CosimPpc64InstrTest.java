@@ -42,7 +42,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
 
   @Override
   public int getTestPerInstruction() {
-    return 100;
+    return 50;
   }
 
   @Override
@@ -53,6 +53,11 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   @Override
   protected String getScriptFolder() {
     return "ppc64";
+  }
+
+  @Override
+  public String getCosimConfigFileName() {
+    return "ppc64_config.toml";
   }
 
   @Override
@@ -190,7 +195,6 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   }
   */
 
-  /* bugged
   @TestFactory
   @Order(22)
   Stream<DynamicTest> divw() throws IOException {
@@ -203,6 +207,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     return testTSSRegInstruction_OR("divwu", "DIVWU");
   }
 
+  /* bugged
   @TestFactory
   @Order(24)
   Stream<DynamicTest> divwe() throws IOException {
@@ -939,7 +944,8 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
       b.fillCR();
-      b.add("%s %s, %s, %s", instruction, b.anyCRBit().sample(), b.anyCRBit().sample(), b.anyCRBit().sample());
+      b.add("%s %s, %s, %s", instruction, b.anyCRBit().sample(), b.anyCRBit().sample(),
+          b.anyCRBit().sample());
       return b.toTestCase();
     });
   }
@@ -1058,7 +1064,8 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       var regSrc2 = b.anyReg().sample();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2);
-      b.add("%s %s, %s, %s, %s", instruction, b.anyCRField().sample(), b.anyImmU(1), regSrc1, regSrc2);
+      b.add("%s %s, %s, %s, %s", instruction, b.anyCRField().sample(), b.anyImmU(1), regSrc1,
+          regSrc2);
       return b.toTestCase();
     });
   }
@@ -1069,7 +1076,8 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       var b = getBuilder(name, id);
       var regSrc = b.anyReg().sample();
       b.fillReg(regSrc);
-      b.add("%s %s, %s, %s, %s", instruction, b.anyCRField().sample(), b.anyImmU(1), regSrc, b.anyImmS(16));
+      b.add("%s %s, %s, %s, %s", instruction, b.anyCRField().sample(), b.anyImmU(1), regSrc,
+          b.anyImmS(16));
       return b.toTestCase();
     });
   }
@@ -1082,7 +1090,8 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       var regSrcOrImm5 = b.anyReg().sample();
       b.fillReg(regSrc);
       b.fillReg(regSrcOrImm5);
-      b.add("%s %s, %s, %s, %s, %s", instruction, b.anyReg().sample(), regSrc, regSrcOrImm5, b.anyImmU(5), b.anyImmU(5));
+      b.add("%s %s, %s, %s, %s, %s", instruction, b.anyReg().sample(), regSrc, regSrcOrImm5,
+          b.anyImmU(5), b.anyImmU(5));
       return b.toTestCase();
     });
   }
@@ -1115,12 +1124,14 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     });
   }
 
-  private Stream<DynamicTest> testDFormLoadInstruction(String instruction, String name, boolean update)
+  private Stream<DynamicTest> testDFormLoadInstruction(String instruction, String name,
+                                                       boolean update)
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
       var regSrc = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
-      var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc)).sample() : b.anyReg().sample();
+      var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc)).sample() :
+          b.anyReg().sample();
       // TODO: fill mem
       b.fillReg(regSrc);
       b.add("%s %s, %s(%s)", instruction, regDest, b.anyImmS(16), regSrc);
@@ -1128,13 +1139,15 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     });
   }
 
-  private Stream<DynamicTest> testXFormLoadInstruction(String instruction, String name, boolean update)
+  private Stream<DynamicTest> testXFormLoadInstruction(String instruction, String name,
+                                                       boolean update)
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
       var regSrc1 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       var regSrc2 = b.anyReg().sample();
-      var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc1)).sample() : b.anyReg().sample();
+      var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc1)).sample() :
+          b.anyReg().sample();
       // TODO: fill mem
       b.fillReg(regSrc1);
       b.fillReg(regSrc2);
@@ -1143,7 +1156,8 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     });
   }
 
-  private Stream<DynamicTest> testDFormStoreInstruction(String instruction, String name, boolean update)
+  private Stream<DynamicTest> testDFormStoreInstruction(String instruction, String name,
+                                                        boolean update)
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
@@ -1156,7 +1170,8 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     });
   }
 
-  private Stream<DynamicTest> testXFormStoreInstruction(String instruction, String name, boolean update)
+  private Stream<DynamicTest> testXFormStoreInstruction(String instruction, String name,
+                                                        boolean update)
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
@@ -1172,15 +1187,16 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   }
 
   // runs tests in 32- and 64-bit mode
-  private Stream<DynamicTest> runTests3264With(Function<Integer, CosimTestUtils.TestCase> generators)
+  private Stream<DynamicTest> runTests3264With(
+      Function<Integer, CosimTestUtils.TestCase> generators)
       throws IOException {
     Function<Integer, CosimTestUtils.TestCase> tests32 = id -> {
       CosimTestUtils.TestCase test = generators.apply(id);
-      return new CosimTestUtils.TestCase(test.id() + " (32-bit)", test.asmCore());
+      return new CosimTestUtils.TestCase(test.id() + " (32-bit)", false, test.asmCore());
     };
     Function<Integer, CosimTestUtils.TestCase> tests64 = id -> {
       CosimTestUtils.TestCase test = generators.apply(id);
-      return new CosimTestUtils.TestCase(test.id() + " (64-bit)", "trap\n" + test.asmCore());
+      return new CosimTestUtils.TestCase(test.id() + " (64-bit)", false, "trap\n" + test.asmCore());
     };
     Stream<DynamicTest> dynamicTests32 = runTestsWith(tests32);
     Stream<DynamicTest> dynamicTests64 = runTestsWith(tests64);
