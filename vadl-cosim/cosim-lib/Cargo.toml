@@ -7,10 +7,9 @@ edition = "2024"
 sqlite-tracing = ["dep:rusqlite"]
 
 [dependencies]
-anyhow = "1.0.100"
-beau_collector = "0.2.1"
 
 clap = { version = "4.5.51", features = ["derive"] }
+color-eyre = "0.6.5"
 figment = { version = "0.10.19", features = ["toml"] }
 fnv = "1.0.7"
 

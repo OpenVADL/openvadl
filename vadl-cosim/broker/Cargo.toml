@@ -9,11 +9,10 @@ sqlite-tracing = ["cosim-lib/sqlite-tracing"]
 [dependencies]
 cosim-lib = { path = "../cosim-lib" }
 
-anyhow = "1.0.100"
-
 clap = { version = "4.5.51", features = ["derive"] }
 figment = { version = "0.10.19", features = ["toml"] }
 
 tracing = { version = "0.1.41", features = ["attributes"] }
 tracing-subscriber = "0.3.20"
 serde_yaml = "0.9.34"
+color-eyre = "0.6.5"

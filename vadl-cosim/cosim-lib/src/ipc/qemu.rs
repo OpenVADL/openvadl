@@ -4,7 +4,7 @@ use std::{
     process::{Child, Command},
 };
 
-use anyhow::{Context, Result};
+use color_eyre::{eyre::Context, Result};
 use tracing::info;
 
 use crate::{
@@ -113,7 +113,7 @@ impl Client {
             .stdout(stdout_file)
             .stderr(stderr_file)
             .spawn()
-            .with_context(|| format!("Failed to create client with idx: {client_id}"))?;
+            .wrap_err_with(|| format!("Failed to create client with idx: {client_id}"))?;
 
         Ok(Self {
             id: client_id,

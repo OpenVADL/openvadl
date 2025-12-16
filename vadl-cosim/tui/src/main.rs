@@ -2,6 +2,8 @@
 
 use std::{collections::HashMap, fmt::Debug};
 
+use color_eyre::Result;
+
 use clap::Parser;
 
 use cosim_lib::{
@@ -153,7 +155,9 @@ fn default_config_file() -> String {
     "./config.toml".into()
 }
 
-fn main() -> anyhow::Result<()> {
+fn main() -> Result<()> {
+    color_eyre::install()?;
+
     let cli = Cli::parse();
 
     let mut config: Config = Figment::new().merge(Toml::file(cli.config)).extract()?;

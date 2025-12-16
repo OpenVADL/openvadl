@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-use anyhow::bail;
+use color_eyre::{eyre::bail, Result};
 use serde::{Serialize, ser::SerializeStruct};
 use tracing::{debug, warn};
 
@@ -477,7 +477,7 @@ pub struct BrokerSHMRingBuffer<const SIZE: usize> {
 impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
     const MASK: usize = SIZE - 1;
 
-    pub fn init(&mut self) -> anyhow::Result<()> {
+    pub fn init(&mut self) -> Result<()> {
         debug!("init ringbuffer with size: {SIZE}");
 
         self.data = unsafe { mem::zeroed() };
@@ -509,7 +509,7 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
     ///
     /// NOTE: `end_read` has to be called once the reference is not needed anymore to free the
     /// index in the ringbuffer for new writes.
-    pub fn start_read(&mut self) -> anyhow::Result<Option<&BrokerSHMData>> {
+    pub fn start_read(&mut self) -> Result<Option<&BrokerSHMData>> {
         if self.count.load(Ordering::SeqCst) == 0 {
             let count_ref = &self.count;
             let write_end_ref = &self.write_end;
