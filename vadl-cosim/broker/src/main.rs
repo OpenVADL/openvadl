@@ -1,7 +1,10 @@
-use std::str::FromStr;
+use std::{path::Path, str::FromStr};
 
-use anyhow::{Result, bail};
 use clap::Parser;
+use color_eyre::{
+    Result,
+    eyre::bail,
+};
 use figment::{
     Figment,
     providers::{Format, Toml},
@@ -34,7 +37,7 @@ pub struct Cli {
     /// If set, writes the test-result to the given output-file.
     /// Overrides the value that is set in the config file at testing.protocol.out.file
     #[arg(short, long, value_name = "FILE")]
-    pub output_file: Option<String>
+    pub output_file: Option<String>,
 }
 
 fn default_config_file() -> String {
@@ -42,7 +45,18 @@ fn default_config_file() -> String {
 }
 
 fn main() -> Result<()> {
+    color_eyre::install()?;
+
     let cli = Cli::parse();
+
+    let config_path = Path::new(&cli.config);
+    if !config_path.exists() {
+        bail!("The provided path \"{}\" does not exist", cli.config);
+    }
+
+    if !config_path.is_file() {
+        bail!("The provided path \"{}\" is not a file", cli.config);
+    }
 
     let mut config: Config = Figment::new().merge(Toml::file(cli.config)).extract()?;
 
@@ -91,9 +105,9 @@ fn main() -> Result<()> {
 
     #[cfg(feature = "sqlite-tracing")]
     if config.tracing.mode.enabled() && config.tracing.clear_on_rerun {
-        use anyhow::Context;
+        use color_eyre::eyre::WrapErr;
         let mut conn = connect(&config)?;
-        setup_database(&mut conn).context("failed to setup database")?;
+        setup_database(&mut conn).wrap_err("failed to setup database")?;
     }
 
     run(config)

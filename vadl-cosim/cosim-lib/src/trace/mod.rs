@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use anyhow::{Context, Result, anyhow};
+use color_eyre::eyre::{Result, anyhow, Context};
 
 use crate::{
     config::Config,
@@ -43,7 +43,7 @@ pub fn connect(config: &Config) -> Result<Connection> {
         | OpenFlags::SQLITE_OPEN_NO_MUTEX;
     let path = Path::new(&config.tracing.dir).join(&config.tracing.file);
     Connection::open_with_flags(path, connect_flags)
-        .context("failed to open sqlite connection for tracing")
+        .wrap_err("failed to open sqlite connection for tracing")
 }
 
 pub fn store_trace(trace: TraceEntryData, connection: &mut Connection) -> Result<()> {
@@ -67,7 +67,7 @@ pub fn store_trace(trace: TraceEntryData, connection: &mut Connection) -> Result
 pub fn get_client_trace(
     client: &mut crate::ipc::qemu::Client,
     config: &Config,
-) -> anyhow::Result<TraceBrokerData> {
+) -> Result<TraceBrokerData> {
     let data = match config.testing.protocol.layer {
         crate::config::ProtocolLayer::Insn => {
             let insn = Box::new(
@@ -101,7 +101,7 @@ pub fn trace_collect(
     client_ids: &[i64],
     config: &crate::config::Config,
     store: &mut TraceStore,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     assert!(
         clients.len() == client_ids.len(),
         "illegal call to trace_collect with different client-lens: {} != {}",

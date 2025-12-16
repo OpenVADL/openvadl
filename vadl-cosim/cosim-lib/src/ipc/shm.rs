@@ -1,6 +1,6 @@
 use std::{ffi::CString, marker::PhantomData, ptr};
 
-use anyhow::{Context, Result, bail};
+use color_eyre::{eyre::{Context, bail}, Result};
 use libc::{
     close, ftruncate, mmap, munmap, shm_open, shm_unlink, MAP_FAILED, MAP_SHARED, O_CREAT, O_EXCL, O_RDWR, PROT_READ, PROT_WRITE
 };
@@ -23,7 +23,7 @@ pub struct SharedMemory<T: Sized> {
 }
 
 impl<const SIZE: usize> SharedMemory<BrokerSHMRingBuffer<SIZE>> {
-    pub fn read_buffer(&mut self) -> anyhow::Result<Option<&BrokerSHMData>> {
+    pub fn read_buffer(&mut self) -> Result<Option<&BrokerSHMData>> {
         self.get_mut().start_read()
     }
 

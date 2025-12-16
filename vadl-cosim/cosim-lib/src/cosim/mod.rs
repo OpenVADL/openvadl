@@ -1,9 +1,11 @@
 use std::collections::HashSet;
-use std::fs;
 use std::path::Path;
+use std::fs;
 
-use anyhow::{Result, bail};
-use beau_collector::BeauCollector;
+use color_eyre::{
+    Result, Section,
+    eyre::{Error, anyhow, bail},
+};
 use tracing::debug;
 
 #[cfg(feature = "sqlite-tracing")]
@@ -128,11 +130,7 @@ impl Broker {
         &self.clients
     }
 
-    fn add_client_logs_to_error(
-        err: anyhow::Error,
-        client_id: &str,
-        config: &Config,
-    ) -> anyhow::Error {
+    fn add_client_logs_to_error(err: Error, client_id: &str, config: &Config) -> Error {
         let base_path = Path::new(&config.logging.dir);
         let stdout_path = base_path.join(format!("client-{client_id}-stdout.txt"));
         let stderr_path = base_path.join(format!("client-{client_id}-stderr.txt"));
@@ -142,9 +140,33 @@ impl Broker {
         let stderr_content =
             fs::read_to_string(stderr_path).expect("client stderr-file should exist");
 
-        err.context(format!(
-            "Client stdout:\n{stdout_content}\n\nClient stderr:\n{stderr_content}"
+        err.note(format!(
+            "\nClient stdout:\n{stdout_content}\n\nClient stderr:\n{stderr_content}"
         ))
+    }
+
+    fn bcollect<T>(iter: &mut impl Iterator<Item = Result<T>>) -> Result<Vec<T>> {
+        let mut errs = vec![];
+        let mut res = vec![];
+
+        while let Some(elem) = iter.next() {
+            match elem {
+                Ok(elem) => res.push(elem),
+                Err(elem) => errs.push(elem),
+            }
+        }
+
+        if errs.is_empty() {
+            Ok(res)
+        } else if errs.len() == 1 {
+            Err(errs.pop().unwrap())
+        } else {
+            let mut report = anyhow!("Multiple errors occurred");
+            while let Some(err) = errs.pop() {
+                report = report.wrap_err(format!("{err:?}"));
+            }
+            Err(report)
+        }
     }
 
     fn run_lockstep(&mut self, config: &Config) -> Result<Report> {
@@ -169,20 +191,16 @@ impl Broker {
             crate::config::ProtocolLayer::Insn => loop {
                 let c1name = self.clients[0].name_or_id();
                 let c2name = self.clients[1].name_or_id();
-                let reads = self
-                    .clients
-                    .iter_mut()
-                    .rev()
-                    .map(|client| {
-                        let res = client
-                            .shm
-                            .read_buffer()
-                            .map(|opt| opt.map(|i| i.as_insn()))
-                            .map_err(|e| Broker::add_client_logs_to_error(e, &client.id, &config));
-                        client.run_count += 1;
-                        res
-                    })
-                    .bcollect::<Vec<_>>()?;
+                let mut reads = self.clients.iter_mut().rev().map(|client| {
+                    let res = client
+                        .shm
+                        .read_buffer()
+                        .map(|opt| opt.map(|i| i.as_insn()))
+                        .map_err(|e| Broker::add_client_logs_to_error(e, &client.id, &config));
+                    client.run_count += 1;
+                    res
+                });
+                let reads = Broker::bcollect(&mut reads)?;
 
                 let c1insn = reads[0];
                 let c2insn = reads[1];
@@ -219,11 +237,8 @@ impl Broker {
                                     Broker::format_insn_for_diff(&c2insn.insn_info),
                                 ],
                                 Broker::format_missing_memory_access_msg(
-                                    &c1insn,
-                                    &c2insn,
-                                    &c1name,
-                                    &c2name,
-                                )
+                                    &c1insn, &c2insn, &c1name, &c2name,
+                                ),
                             );
                             vec![diff]
                         };
@@ -359,14 +374,24 @@ impl Broker {
     }
 
     #[allow(unused_variables)]
-    fn format_missing_memory_access_msg(c1insn: &BrokerSHMInsn, c2insn: &BrokerSHMInsn, c1: &str, c2: &str) -> String {
+    fn format_missing_memory_access_msg(
+        c1insn: &BrokerSHMInsn,
+        c2insn: &BrokerSHMInsn,
+        c1: &str,
+        c2: &str,
+    ) -> String {
         let (mem_access_client, insn_exec_client) = if c1insn.mem_access_info().is_some() {
             (c1, c2)
         } else {
             (c2, c1)
         };
 
-        format!("When executing the instruction: {}\n\"{}\" wrote memory-access info to the buffer, while \"{}\" wrote an insn-execution to the buffer", Broker::format_insn_for_diff(&c1insn.insn_info), mem_access_client, insn_exec_client)
+        format!(
+            "When executing the instruction: {}\n\"{}\" wrote memory-access info to the buffer, while \"{}\" wrote an insn-execution to the buffer",
+            Broker::format_insn_for_diff(&c1insn.insn_info),
+            mem_access_client,
+            insn_exec_client
+        )
     }
 
     fn format_insn_for_diff(insn: &TBInsnInfo) -> String {
@@ -512,7 +537,7 @@ impl Broker {
         }
     }
 
-    fn build_diff_context(&mut self, config: &Config) -> anyhow::Result<DiffContext> {
+    fn build_diff_context(&mut self, config: &Config) -> Result<DiffContext> {
         let mut before_states = get_all_clients_contexts_before(&self.clients, config);
         let mut after_states = get_all_clients_contexts_current(&mut self.clients, config)?;
         let mut error_instructions = get_all_clients_instructions(&self.clients, config);

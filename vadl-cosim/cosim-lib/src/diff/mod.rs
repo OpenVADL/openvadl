@@ -1,6 +1,6 @@
 use std::{collections::VecDeque, fmt::Debug};
 
-use anyhow::anyhow;
+use color_eyre::{eyre::anyhow, Result};
 use serde::Serialize;
 
 use crate::{
@@ -207,7 +207,7 @@ pub fn get_client_context_before(client: &Client, config: &Config) -> DiffContex
 pub fn get_all_clients_contexts_current(
     clients: &mut [Client],
     config: &Config,
-) -> anyhow::Result<VecDeque<DiffContextClientState>> {
+) -> Result<VecDeque<DiffContextClientState>> {
     clients
         .iter_mut()
         .map(|client| get_client_context_current(client, config))
@@ -217,7 +217,7 @@ pub fn get_all_clients_contexts_current(
 pub fn get_client_context_current(
     client: &mut Client,
     config: &Config,
-) -> anyhow::Result<DiffContextClientState> {
+) -> Result<DiffContextClientState> {
     match config.testing.protocol.layer {
         crate::config::ProtocolLayer::Insn => {
             let ctx = (

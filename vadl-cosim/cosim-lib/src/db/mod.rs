@@ -1,5 +1,5 @@
 #![cfg(feature = "sqlite-tracing")] 
-use anyhow::bail;
+use color_eyre::eyre::{Result, bail, Error};
 
 use rusqlite::{Transaction, params, Connection};
 
@@ -35,7 +35,7 @@ pub struct CosimRunInfo {
 pub fn insert_new_cosimulation_run(
     pool: &mut DBConnection,
     clients: &Vec<qemu::Client>,
-) -> Result<CosimRunInfo, anyhow::Error> {
+) -> Result<CosimRunInfo> {
     let tx = pool.transaction()?;
 
     tx.execute(r#"INSERT INTO cosimulation_run DEFAULT VALUES"#, params![])?;
@@ -57,7 +57,7 @@ pub fn finish_cosimulation_run_trace(
     pool: &mut DBConnection,
     run: CosimRunInfo,
     passed: bool,
-) -> Result<(), anyhow::Error> {
+) -> Result<()> {
     pool.execute(
         r#"UPDATE cosimulation_run SET end = CURRENT_TIMESTAMP, passed = ? WHERE id = ?"#,
         params![passed, run.run_id],
@@ -76,7 +76,7 @@ pub fn insert_client_entry(
     client_id: i64,
     broker_id: i64,
     run_count: u64,
-) -> Result<(), anyhow::Error> {
+) -> Result<()> {
     pool.execute(
         r#"INSERT INTO client_entry(client_id, broker_id, run_count) VALUES (?, ?, ?)"#,
         params![client_id, broker_id, run_count],
@@ -88,7 +88,7 @@ pub fn insert_cosim_run_client(
     tx: &rusqlite::Transaction<'_>,
     run_id: i64,
     client_id: i64,
-) -> Result<(), anyhow::Error> {
+) -> Result<()> {
     tx.execute(
         r#"INSERT INTO cosimulation_run_clients(run_id, client_id) VALUES (?, ?)"#,
         params![run_id, client_id],
@@ -99,7 +99,7 @@ pub fn insert_cosim_run_client(
 pub fn insert_broker_shm_tb(
     pool: &mut DBConnection,
     broker: &cstructs::BrokerSHMTB,
-) -> Result<i64, anyhow::Error> {
+) -> Result<i64> {
     let tx = pool.transaction()?;
 
     let tb_info_id = insert_tb_info(&tx, &broker.tb_info)?;
@@ -137,7 +137,7 @@ pub fn insert_broker_shm_tb(
 pub fn insert_broker_shm_insn(
     pool: &mut DBConnection,
     broker: &cstructs::BrokerSHMInsn,
-) -> Result<i64, anyhow::Error> {
+) -> Result<i64> {
     let tx = pool.transaction()?;
 
     let insn_info_id = insert_tb_insn_info(&tx, None, &broker.insn_info)?;
@@ -175,7 +175,7 @@ pub fn insert_broker_shm_insn(
 fn insert_tb_info(
     tx: &rusqlite::Transaction<'_>,
     tb_info: &cstructs::TBInfo,
-) -> Result<i64, anyhow::Error> {
+) -> Result<i64> {
     let pc = tb_info.pc as i64;
     tx.execute("INSERT INTO tb_info (pc) VALUES (?)", params![pc])?;
 
@@ -192,7 +192,7 @@ fn insert_tb_insn_info(
     tx: &rusqlite::Transaction<'_>,
     tb_info_id: Option<i64>,
     insn: &cstructs::TBInsnInfo,
-) -> Result<i64, anyhow::Error> {
+) -> Result<i64> {
     let pc = insn.pc as i64;
     let size = insn.size as i64;
     let symbol = insn.symbol.as_str();
@@ -225,7 +225,7 @@ fn insert_shm_cpu(
     tx: &rusqlite::Transaction<'_>,
     broker_id: i64,
     cpu: &cstructs::SHMCPU,
-) -> Result<i64, anyhow::Error> {
+) -> Result<i64> {
     tx.execute(
         "INSERT INTO cpu (idx, broker_id) VALUES (?, ?)",
         params![cpu.idx, broker_id],
@@ -238,7 +238,7 @@ fn insert_shm_registers(
     tx: &rusqlite::Transaction<'_>,
     cpu_id: i64,
     registers: &[cstructs::SHMRegister],
-) -> Result<(), anyhow::Error> {
+) -> Result<()> {
     for reg in registers {
         tx.execute(
             "INSERT INTO register (cpu_id, size, data, name) VALUES (?, ?, ?, ?)",
@@ -251,7 +251,7 @@ fn insert_shm_registers(
 pub fn select_registers(
     tx: &rusqlite::Transaction<'_>,
     cpu_id: i64,
-) -> Result<Vec<Register>, anyhow::Error> {
+) -> Result<Vec<Register>> {
     let mut stmt = tx.prepare("SELECT name, size, data FROM register WHERE cpu_id = ?")?;
     stmt.query_map([cpu_id], |row| {
         let name = row.get(0)?;
@@ -260,10 +260,10 @@ pub fn select_registers(
         Ok(Register::new(size, data, name))
     })?
     .collect::<Result<_, _>>()
-    .map_err(anyhow::Error::from)
+    .map_err(Error::from)
 }
 
-pub fn select_cpu(tx: &rusqlite::Transaction<'_>, cpu_id: i64) -> Result<CPU, anyhow::Error> {
+pub fn select_cpu(tx: &rusqlite::Transaction<'_>, cpu_id: i64) -> Result<CPU> {
     let mut stmt = tx.prepare(r#"SELECT idx FROM cpu WHERE id = ?"#)?;
     let cpu_idx = stmt.query_one(params![cpu_id], |row| row.get(0))?;
 
@@ -273,7 +273,7 @@ pub fn select_cpu(tx: &rusqlite::Transaction<'_>, cpu_id: i64) -> Result<CPU, an
     Ok(cpu)
 }
 
-pub fn select_broker_cpus(tx: &Transaction<'_>, broker_id: i32) -> Result<Vec<CPU>, anyhow::Error> {
+pub fn select_broker_cpus(tx: &Transaction<'_>, broker_id: i32) -> Result<Vec<CPU>> {
     let mut cpus = vec![];
     let mut stmt = tx.prepare(r#"SELECT c.id FROM cpu c WHERE c.broker_id = ?"#)?;
     let cpu_ids = stmt
@@ -309,7 +309,7 @@ fn map_tb_insn_info_row(row: &rusqlite::Row<'_>) -> Result<TBInsnInfo, rusqlite:
 pub fn select_tb_insn_info_by_id(
     tx: &Transaction<'_>,
     tb_insn_info_id: i64,
-) -> Result<TBInsnInfo, anyhow::Error> {
+) -> Result<TBInsnInfo> {
     let mut stmt = tx.prepare(
         r#"
         SELECT
@@ -332,7 +332,7 @@ pub fn select_tb_insn_info_by_id(
 pub fn select_tb_info_by_id(
     tx: &Transaction<'_>,
     tb_info_id: i64,
-) -> Result<TBInfo, anyhow::Error> {
+) -> Result<TBInfo> {
     let mut tb_info_stmt = tx.prepare(r#"SELECT pc FROM tb_info WHERE id = ?"#)?;
     let tb_info_pc = tb_info_stmt.query_one(params![tb_info_id], |row| row.get(0))?;
 
@@ -359,7 +359,7 @@ pub fn select_tb_info_by_id(
     Ok(tb_info)
 }
 
-pub fn select_broker_tb(tx: &Transaction<'_>, broker_id: i32) -> Result<BrokerTB, anyhow::Error> {
+pub fn select_broker_tb(tx: &Transaction<'_>, broker_id: i32) -> Result<BrokerTB> {
     let (init_mask, tb_info_id) = tx.query_one(
         r#"
             SELECT init_mask, tb_info_id
@@ -380,7 +380,7 @@ pub fn select_broker_tb(tx: &Transaction<'_>, broker_id: i32) -> Result<BrokerTB
 pub fn select_broker_insn(
     tx: &Transaction<'_>,
     broker_id: i32,
-) -> Result<BrokerInsn, anyhow::Error> {
+) -> Result<BrokerInsn> {
     let (init_mask, insn_info_id) = tx.query_one(
         r#"
             SELECT init_mask, insn_info_id
@@ -398,7 +398,7 @@ pub fn select_broker_insn(
     Ok(BrokerInsn::new(init_mask, cpus, insn_info))
 }
 
-pub fn select_broker(tx: &Transaction<'_>, broker_id: i32) -> Result<BrokerData, anyhow::Error> {
+pub fn select_broker(tx: &Transaction<'_>, broker_id: i32) -> Result<BrokerData> {
     let broker_type = tx.query_one(
         r#"SELECT type FROM broker WHERE id = ?"#,
         params![broker_id],
@@ -418,7 +418,7 @@ pub fn select_client_entry_with_run_count(
     tx: &Transaction<'_>,
     client_id: i32,
     run_count: u64,
-) -> Result<ClientEntry, anyhow::Error> {
+) -> Result<ClientEntry> {
     let (broker_id, client_id, client_name) = tx.query_one(
         r#"
             SELECT ce.broker_id, c.id, c.name 
@@ -446,7 +446,7 @@ pub fn select_cosim_run_entries_at_run_count(
     pool: &mut DBConnection,
     client_ids: &[i32],
     run_count: u64,
-) -> Result<Vec<ClientEntry>, anyhow::Error> {
+) -> Result<Vec<ClientEntry>> {
     client_ids
         .iter()
         .map(|client_id| {
@@ -455,13 +455,13 @@ pub fn select_cosim_run_entries_at_run_count(
             tx.commit()?;
             Ok(entry)
         })
-        .collect::<Result<Vec<_>, anyhow::Error>>()
+        .collect::<Result<Vec<_>>>()
 }
 
 pub fn select_cosim_run_entries_length(
     pool: &mut DBConnection,
     run_id: i64,
-) -> Result<u64, anyhow::Error> {
+) -> Result<u64> {
     let mut stmt = pool.prepare(
         r#"
         SELECT MAX(run_count)
@@ -479,7 +479,7 @@ pub fn select_cosim_run_entries_length(
 pub fn select_cosim_run_clients(
     pool: &mut DBConnection,
     run_id: i64,
-) -> Result<Vec<Client>, anyhow::Error> {
+) -> Result<Vec<Client>> {
     let mut stmt = pool.prepare(
         r#"
         SELECT c.id, c.name 

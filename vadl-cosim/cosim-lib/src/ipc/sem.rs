@@ -1,5 +1,5 @@
 use crate::{bail_on_libc_err, eprintln_on_libc_err};
-use anyhow::{Result, bail};
+use color_eyre::{Result, eyre::bail};
 use libc::{
     CLOCK_REALTIME, ETIMEDOUT, PTHREAD_PROCESS_SHARED, clock_gettime, pthread_cond_broadcast,
     pthread_cond_destroy, pthread_cond_init, pthread_cond_t, pthread_cond_timedwait,
