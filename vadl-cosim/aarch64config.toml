@@ -27,7 +27,7 @@ ignore_unset_registers = true
 
 # Ignore specific registers
 # Filters in conjunction with `ignore_unset_registers`
-ignore_registers = [ "pc" ]
+ignore_registers = [ "pc", "x0" ]
 
 
 # Defines a list of clients to test against
@@ -40,7 +40,7 @@ ignore_registers = [ "pc" ]
 name = "VADL"
 
 # The executable of the ISS
-exec = "qemu-system-aarch64base"
+exec = "qemu-system-a64"
 
 # The path to the compiled file to use for testing
 # This file will be passed to all clients
@@ -59,7 +59,9 @@ additional_args = [
 # NOTE: Only applies to `layer = "insn" | "tb-strict"`
 # NOTE: This option is must be set per client to be able to account for different setup-codes per ISS
 # Skips the first n instructions 
-skip_n_instructions = 4
+skip_n_instructions = 0
+
+endian = "little"
 
 # Settings for running the qemu-clients with gdb-debugging enabled.
 # Use these settings when possible instead of configuring the flags in the additional_args array since otherwise the runner will mark the client as finished because it did not respond in time.
@@ -78,6 +80,8 @@ remote_target = "/tmp/gdb-cosim-VADL"
 [[qemu.clients]]
 name = "UPSTREAM"
 
+endian = "little"
+
 exec = "qemu-system-aarch64"
 
 test_exec="./test-execs/aarch64/test_upstream"
@@ -92,7 +96,7 @@ additional_args = [
 	"-d", "plugin",
 ]
 
-skip_n_instructions = 4
+skip_n_instructions = 0
 
 [qemu.clients.gdb]
 enable = false
@@ -137,19 +141,19 @@ s31 = "sp"
 pc = "pc"
 
 [[qemu.sliced_reg_map]]
-client1 = { name = "nzcv_n", slice = [ 56 ] }
+client1 = { name = "nzcv_n", slice = [ 0 ] }
 client2 = { name = "cpsr", slice = [ 31 ] }
 
 [[qemu.sliced_reg_map]]
-client1 = { name = "nzcv_z", slice = [ 56 ] }
+client1 = { name = "nzcv_z", slice = [ 0 ] }
 client2 = { name = "cpsr", slice = [ 30 ] }
 
 [[qemu.sliced_reg_map]]
-client1 = { name = "nzcv_c", slice = [ 56 ] }
+client1 = { name = "nzcv_c", slice = [ 0 ] }
 client2 = { name = "cpsr", slice = [ 29 ] }
 
 [[qemu.sliced_reg_map]]
-client1 = { name = "nzcv_v", slice = [ 56 ] }
+client1 = { name = "nzcv_v", slice = [ 0 ] }
 client2 = { name = "cpsr", slice = [ 28 ] }
 
 # Defines the test-source and how to test
@@ -183,7 +187,7 @@ mode = "lockstep"
 execute_all_remaining_instructions = false
 
 # Execute the next (after skipped) n instructions
-stop_after_n_instructions = 10
+stop_after_n_instructions = 2
 # stop_after_n_instructions = 1
 
 # Where the test result should be saved and in which format
