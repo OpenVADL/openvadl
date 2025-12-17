@@ -149,7 +149,7 @@ impl Broker {
         let mut errs = vec![];
         let mut res = vec![];
 
-        while let Some(elem) = iter.next() {
+        for elem in iter {
             match elem {
                 Ok(elem) => res.push(elem),
                 Err(elem) => errs.push(elem),
