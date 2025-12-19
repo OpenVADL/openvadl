@@ -46,6 +46,11 @@ public class MergeSMullAndTruncateToMulSimplificationRule
       for (var matching : matchings) {
         var casted = (TruncateNode) matching;
         var builtin = (BuiltInCall) casted.value();
+        if (builtin.usageCount() != 1) {
+          // if the built-in is also used by other (maybe non-truncate) nodes, we can't
+          // do this replacement
+          continue;
+        }
         builtin.setBuiltIn(BuiltInTable.MUL);
         builtin.setType(casted.type());
 
