@@ -1,6 +1,9 @@
-use std::fmt::Display;
+use std::{fmt::Display, marker::PhantomData};
 
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize, Deserializer, Serialize,
+    de::{Unexpected, Visitor, value::SeqAccessDeserializer},
+};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -8,7 +11,7 @@ pub struct Config {
     pub testing: Testing,
     pub logging: Logging,
     pub dev: Dev,
-    #[cfg(feature = "sqlite-tracing")] 
+    #[cfg(feature = "sqlite-tracing")]
     pub tracing: Tracing,
 }
 
@@ -223,6 +226,151 @@ impl Display for TestExecDestination {
 // time only a few characters long.
 // For reference see: https://cglab.ca/~abeinges/blah/hash-rs/
 type RegHashMap = fnv::FnvHashMap<String, String>;
+type RegHashSet = fnv::FnvHashSet<String>;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(from = "SlicedRegIntermediate")]
+pub struct SlicedReg {
+    pub name: String,
+    pub mask: u64,
+    pub shift_right: u64,
+}
+
+impl SlicedReg {
+    pub fn apply(&self, val: &mut u64) {
+        *val &= self.mask;
+        *val >>= self.shift_right;
+    }
+}
+
+impl From<SlicedRegIntermediate> for SlicedReg {
+    fn from(value: SlicedRegIntermediate) -> Self {
+        let shift_right = match value.shift_right {
+            Some(shift_right) => shift_right,
+            None => {
+                let mut idx = 0;
+                while value.mask & (1 << idx) == 0 {
+                    idx += 1;
+                }
+                idx
+            }
+        };
+
+        Self {
+            name: value.name,
+            mask: value.mask,
+            shift_right,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SlicedRegIntermediate {
+    pub name: String,
+    #[serde(
+        deserialize_with = "mask_array_of_u64_or_range",
+        default = "default_mask",
+        rename(deserialize = "slice")
+    )]
+    pub mask: u64,
+    pub shift_right: Option<u64>,
+}
+
+fn default_mask() -> u64 {
+    u64::MAX
+}
+
+fn mask_array_of_u64_or_range<'de, D>(deserializer: D) -> Result<u64, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct Data(PhantomData<fn() -> u64>);
+
+    impl<'de> Visitor<'de> for Data {
+        type Value = u64;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("wrong")
+        }
+
+        fn visit_seq<A>(self, seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: serde::de::SeqAccess<'de>,
+        {
+            #[derive(Deserialize)]
+            #[serde(untagged)]
+            enum SliceVariants {
+                Int(u64),
+                Array(Vec<u64>),
+            }
+
+            type SliceVariantsVec = Vec<SliceVariants>;
+            let variants = SliceVariantsVec::deserialize(SeqAccessDeserializer::new(seq))?;
+
+            let mut mask: u64 = 0;
+            let mut min_pos = u64::MAX;
+            for v in variants {
+                match v {
+                    SliceVariants::Int(idx) => {
+                        min_pos = u64::min(min_pos, idx);
+                        set_bit_at(&mut mask, idx)
+                    }
+                    SliceVariants::Array(range) => match &range[..] {
+                        [from, to] => {
+                            if to < from {
+                                let fixed_range = vec![to, from];
+                                let msg = format!(
+                                    "a list with exactly two elements, indicating the inclusive range (from..=to) of the bit-slice (in this case the order of the numbers needs to be swapped, e.g. {fixed_range:?})"
+                                );
+                                return Err(serde::de::Error::invalid_value(
+                                    Unexpected::Other(&format!("{range:?}")),
+                                    &msg.as_str(),
+                                ));
+                            }
+
+                            for idx in *from..=*to {
+                                min_pos = u64::min(min_pos, idx);
+                                set_bit_at(&mut mask, idx)
+                            }
+                        }
+                        _ => {
+                            return Err(serde::de::Error::invalid_value(
+                                Unexpected::Other(&format!("{range:?}")),
+                                &"a list with exactly two elements, indicating the inclusive range (from..=to) of the bit-slice",
+                            ));
+                        }
+                    },
+                }
+            }
+
+            Ok(mask)
+        }
+    }
+
+    deserializer.deserialize_any(Data(PhantomData))
+}
+
+fn set_bit_at(val: &mut u64, idx: u64) {
+    *val |= 1 << idx;
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SlicedRegEntry {
+    pub client1: SlicedReg,
+    pub client2: SlicedReg,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct SlicedRegMap(pub Vec<SlicedRegEntry>);
+
+impl SlicedRegMap {
+    pub fn get_mappings_for(&self, name: &str) -> Vec<&SlicedRegEntry> {
+        self.0
+            .iter()
+            .filter(|entry| entry.client1.name == name || entry.client2.name == name)
+            .collect()
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Qemu {
@@ -230,23 +378,30 @@ pub struct Qemu {
     pub clients: Vec<Client>,
     pub gdb_reg_map: RegHashMap,
 
-    #[serde(default = "empty_hashmap")]
-    pub gdb_reg_map_inverse: RegHashMap,
-    pub ignore_registers: fnv::FnvHashSet<String>,
+    #[serde(default = "SlicedRegMap::default")]
+    pub sliced_reg_map: SlicedRegMap,
+
+    #[serde(default = "empty_hashset")]
+    pub defined_registers_map: RegHashSet,
+    pub ignore_registers: RegHashSet,
     pub ignore_unset_registers: bool,
 }
 
-fn empty_hashmap() -> RegHashMap {
-    RegHashMap::default()
+fn empty_hashset() -> RegHashSet {
+    RegHashSet::default()
 }
 
 impl Qemu {
-    pub fn set_inverse_reg_map(&mut self) {
-        self.gdb_reg_map_inverse = self
-            .gdb_reg_map
-            .iter()
-            .map(|(k, v)| (v.clone(), k.clone()))
-            .collect();
+    pub fn set_defined_registers_map(&mut self) {
+        for (k, v) in &self.gdb_reg_map {
+            self.defined_registers_map.insert(k.clone());
+            self.defined_registers_map.insert(v.clone());
+        }
+
+        for entry in &self.sliced_reg_map.0 {
+            self.defined_registers_map.insert(entry.client1.name.clone());
+            self.defined_registers_map.insert(entry.client2.name.clone());
+        }
     }
 
     pub fn has_equal_endianess(&self) -> bool {
