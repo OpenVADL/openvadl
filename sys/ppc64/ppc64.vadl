@@ -1466,8 +1466,8 @@ instruction set architecture PPC64SFS = {
   $XFormExCRInstr((("EXTSB" ; 0b11101'11010); XB(rs) as SDWord                                            ))
   $XFormExCRInstr((("EXTSH" ; 0b11100'11010); XH(rs) as SDWord                                            ))
   $XFormExCRInstr((("CNTLZW"; 0b00000'11010); if XW(rs) = 0 then 32 else VADL::clz(XW(rs))       as UDWord))
-  $XFormExCRInstr((("CNTTZW"; 0b10000'11010); if XW(rs) = 0 then 32 else VADL::ctz(XW(rs))(4..0) as UDWord)) // TODO: why does ctz return negative number?
-  //$XFormExCRInstr((("CNTTZW"; 0b10000'11010); if XW(rs) = 0 then 32 else VADL::ctz(XW(rs))       as UDWord))
+//   $XFormExCRInstr((("CNTTZW"; 0b10000'11010); if XW(rs) = 0 then 32 else VADL::ctz(XW(rs))(4..0) as UDWord)) // TODO: why does ctz return negative number?
+  $XFormExCRInstr((("CNTTZW"; 0b10000'11010); if XW(rs) = 0 then 32 else VADL::ctz(XW(rs))       as UDWord))
 
   $SCFormSysCallInstr(("SC" ; 0b10); SysCall(lev)   )
   $SCFormSysCallInstr(("SCV"; 0b01); SysCallVectored)
