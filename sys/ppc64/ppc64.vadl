@@ -1230,7 +1230,7 @@ instruction set architecture PPC64SFS = {
       let prod = VADL::$r.x.op(XW(ra), XW(rb)) in
         let result = $r.res as UDWord in {
           X(rs) := result
-          //$SetXERAndCRWithOV($oe; false; $rc; true)
+          $SetXERAndCRWithOV($oe; false; $rc; true)
         }
     encoding $eid = {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc}
     assembly $eid = ($r.x.asm, $rStr($rc), " ", decimal(rs), ",", decimal(ra), ",", decimal(rb)) // oStr not necessary
