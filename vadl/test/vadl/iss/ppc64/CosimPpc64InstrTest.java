@@ -17,6 +17,7 @@
 package vadl.iss.ppc64;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -31,6 +32,7 @@ import vadl.iss.CosimTestUtils;
 /* Tests ppc64.vadl instructions against the QEMU ppc64 simulator.
  * Some instructions are defined in the VADL specification but are not covered by the tests.
  * These are: mfmsr, mtmsr, mfspr, mtspr, mftb and all branch instructions
+ * Load/Store instructions are tested with a reduced address space (0x0000'0000'0000'0200 - 0x0000'0000'0000'FFFF)
  */
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -207,7 +209,6 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     return testTSSRegInstruction_OR("divwu", "DIVWU");
   }
 
-  /* bugged
   @TestFactory
   @Order(24)
   Stream<DynamicTest> divwe() throws IOException {
@@ -219,7 +220,6 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   Stream<DynamicTest> divweu() throws IOException {
     return testTSSRegInstruction_OR("divweu", "DIVWEU");
   }
-  */
 
   @TestFactory
   @Order(26)
@@ -227,7 +227,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
     return testTSRegInstruction_OR("neg", "NEG");
   }
 
-  /*
+  /* bugged
   @TestFactory
   @Order(27)
   Stream<DynamicTest> modsw() throws IOException {
@@ -623,111 +623,85 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   }
   */
 
-  /* not working
+  /*
   @TestFactory
   @Order(87)
   Stream<DynamicTest> stb() throws IOException {
     return testDFormStoreInstruction("stb", "STB", false);
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(88)
   Stream<DynamicTest> stbu() throws IOException {
     return testDFormStoreInstruction("stbu", "STBU", true);
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(89)
   Stream<DynamicTest> sth() throws IOException {
     return testDFormStoreInstruction("sth", "STH", false);
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(90)
   Stream<DynamicTest> sthu() throws IOException {
     return testDFormStoreInstruction("sthu", "STHU", true);
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(91)
   Stream<DynamicTest> stw() throws IOException {
     return testDFormStoreInstruction("stw", "STW", false);
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(92)
   Stream<DynamicTest> stwu() throws IOException {
     return testDFormStoreInstruction("stwu", "STWU", true);
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(93)
   Stream<DynamicTest> stbx() throws IOException {
     return testXFormStoreInstruction("stbx", "STBX", false);
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(94)
   Stream<DynamicTest> stbux() throws IOException {
     return testXFormStoreInstruction("stbux", "STBUX", true);
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(95)
   Stream<DynamicTest> sthx() throws IOException {
     return testXFormStoreInstruction("sthx", "STHX", false);
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(96)
   Stream<DynamicTest> sthux() throws IOException {
     return testXFormStoreInstruction("sthux", "STHUX", true);
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(97)
   Stream<DynamicTest> sthbrx() throws IOException {
     return testXFormStoreInstruction("sthbrx", "STHBRX", false);
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(98)
   Stream<DynamicTest> stwx() throws IOException {
     return testXFormStoreInstruction("stwx", "STWX", false);
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(99)
   Stream<DynamicTest> stwux() throws IOException {
     return testXFormStoreInstruction("stwux", "STWUX", true);
   }
-  */
 
-  /* not working
   @TestFactory
   @Order(100)
   Stream<DynamicTest> stwbrx() throws IOException {
@@ -1164,8 +1138,8 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       b.fillReg(regSrc1);
-      b.fillReg(regSrc2);
-      b.add("%s %s, %s(%s)", instruction, regSrc1, b.anyImmS(16), regSrc2);
+      b.fillReg(regSrc2, b.anyImmU(15));
+      b.add("%s %s, %s(%s)", instruction, regSrc1, b.anyImmUFrom(15, BigInteger.valueOf(0x0200)), regSrc2);
       return b.toTestCase();
     });
   }
@@ -1179,8 +1153,8 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       var regSrc3 = b.anyReg().sample();
       b.fillReg(regSrc1);
-      b.fillReg(regSrc2);
-      b.fillReg(regSrc3);
+      b.fillReg(regSrc2, b.anyImmUFrom(15, BigInteger.valueOf(0x0200)));
+      b.fillReg(regSrc3, b.anyImmU(15));
       b.add("%s %s, %s, %s", instruction, regSrc1, regSrc2, regSrc3);
       return b.toTestCase();
     });

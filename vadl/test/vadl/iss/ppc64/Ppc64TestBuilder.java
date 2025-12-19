@@ -105,6 +105,13 @@ public class Ppc64TestBuilder {
         .sample();
   }
 
+  public BigInteger anyImmUFrom(int bits, BigInteger min) {
+    return Arbitraries.bigIntegers()
+        .greaterOrEqual(min)
+        .lessOrEqual(BigInteger.ONE.shiftLeft(bits).subtract(BigInteger.ONE))
+        .sample();
+  }
+
   public BigInteger anySelectImmU(int bits) {
     int bitPosition = Arbitraries.integers().between(0, bits - 1).sample();
     return BigInteger.ONE.shiftLeft(bitPosition);

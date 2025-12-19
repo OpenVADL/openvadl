@@ -627,28 +627,34 @@ instruction set architecture PPC64SFS = {
       }
   }
 
+  // TODO: rev is inverted, should be $rev = true, requires big endian support
   // reads Byte/ Halfword/ Word from memory into X(dst)
   model ReadMem (ea : Id, unit : SymEx, dst : Ex, rev : Bool, type : Id) : Stat = {
     match : Stat
-    ( $unit = Unit::Word => if $rev
-                            then X($dst) := byterevw(MEM<4>($ea)) as $type
-                            else X($dst) := MEM<4>($ea)           as $type
-    ; $unit = Unit::Half => if $rev
-                            then X($dst) := byterevh(MEM<2>($ea)) as $type
-                            else X($dst) := MEM<2>($ea)           as $type
+    ( $unit = Unit::Word => match : Stat
+                            ( $rev = false => X($dst) := byterevw(MEM<4>($ea)) as $type
+                            ; _            => X($dst) := MEM<4>($ea)           as $type
+                            )
+    ; $unit = Unit::Half => match : Stat
+                            ( $rev = false => X($dst) := byterevh(MEM<2>($ea)) as $type
+                            ; _            => X($dst) := MEM<2>($ea)           as $type
+                            )
     ; _ => X($dst) := MEM($ea) as $type
     )
   }
 
+  // TODO: rev is inverted, should be $rev = true, requires big endian support
   // writes Byte/ Halfword/ Word from X(src) into memory
   model WriteMem (ea : Id, unit : SymEx, src : Id, rev : Bool) : Stat = {
     match : Stat
-    ( $unit = Unit::Word => if $rev
-                            then MEM<4>($ea) := byterevw(XW($src))
-                            else MEM<4>($ea) := XW($src)
-    ; $unit = Unit::Half => if $rev
-                            then MEM<2>($ea) := byterevh(XH($src))
-                            else MEM<2>($ea) := XH($src)
+    ( $unit = Unit::Word => match : Stat
+                            ( $rev = false => MEM<4>($ea) := byterevw(XW($src))
+                            ; _            => MEM<4>($ea) := XW($src)
+                            )
+    ; $unit = Unit::Half => match : Stat
+                            ( $rev = false => MEM<2>($ea) := byterevh(XH($src))
+                            ; _            => MEM<2>($ea) := XH($src)
+                            )
     ; _                  => MEM($ea) := XB($src)
     )
   }
@@ -1189,7 +1195,7 @@ instruction set architecture PPC64SFS = {
     $XOFormAddSubInstrExt(AsId($r.x.asm, "O_"); $r; true ; true )
   }
 
-  record XOFormDivInstrRec (x : AsmOpExt, a : TwoArgs, type : Id, exc : Ex)
+  record XOFormDivInstrRec (x : AsmOpExt, a : TwoArgs, type : Id, exc : Ex, res0 : Ex)
 
   model XOFormDivInstrExt (eid : Id, r : XOFormDivInstrRec, oe : Bool, rc : Bool) : IsaDefs = {
     instruction $eid : XOForm =
@@ -1200,7 +1206,7 @@ instruction set architecture PPC64SFS = {
             X(rs) := result
             $SetXERAndCRWithOV($oe; false; $rc; exc | flags.overflow)
           }
-      else let result = $r.a.arg1 as $r.type in {
+      else let result = $r.res0 as UDWord in {
         X(rs) := result
         $SetXERAndCRWithOV($oe; false; $rc; true)
       }
@@ -1302,13 +1308,13 @@ instruction set architecture PPC64SFS = {
   $XOFormMulInstr((("MULHWU"; umull; 0b0000'01011); prod(63..32)); false)
 
   $XOFormDivInstr((("DIVW"  ; sdivs; 0b1111'01011); (XW(ra)                ; XW(rb)          ); UDWord;
-                  XW(ra) = 0x8000'0000 & XW(rb) = maxU32                                           ))
+                  XW(ra) = 0x8000'0000 & XW(rb) = maxU32                                           ; XW(ra)))
   $XOFormDivInstr((("DIVWU" ; udivs; 0b1110'01011); (XW(ra)                ; XW(rb)          ); UDWord;
-                  false                                                                            ))
+                  false                                                                            ; XW(ra)))
   $XOFormDivInstr((("DIVWE" ; sdivs; 0b1101'01011); (XW(ra) as SDWord << 32; XW(rb) as SDWord); SDWord;
-                  (XW(ra) = 0x8000'0000 & XW(rb) = 0xFFFF'FFFF) | (res != (res as SWord) as SDWord)))
+                  (XW(ra) = 0x8000'0000 & XW(rb) = 0xFFFF'FFFF) | (res != (res as SWord) as SDWord); 0     ))
   $XOFormDivInstr((("DIVWEU"; udivs; 0b1100'01011); (XW(ra) as UDWord << 32; XW(rb) as UDWord); UDWord;
-                  VADL::ugeq(res as UDWord, maxU32E)                                               ))
+                  VADL::ugeq(res as UDWord, maxU32E)                                               ; 0     ))
 
   $XOFormNegateInstr("NEG")
 
@@ -1359,7 +1365,7 @@ instruction set architecture PPC64SFS = {
   $XFormArithmeticShiftInstr((("SRAW" ; 0b11000'11000); X(rb)(5..0);
                              if X(rb)(5) = 0 then r(63..32) as SDWord else X(rs)(31) as SDWord))
   $XFormArithmeticShiftInstr((("SRAWI"; 0b11001'11000); rb         ;
-                             r(63..32) as SDWord))
+                             r(63..32) as SDWord                                              ))
 
   //------------------------Compare----------------------------
   $XFormCmpInstr(("CMP" ; 0b00000'00000); false)
