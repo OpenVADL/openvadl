@@ -39,8 +39,8 @@ import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.ViamGraphError;
-import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
+import vadl.viam.graph.control.BranchBeginNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
@@ -176,7 +176,7 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
       currentRootUser = schNode;
       // Process all inputs of the already scheduled node
       schNode.node().visitInputs(this);
-    } else if (dir instanceof AbstractBeginNode) {
+    } else if (dir instanceof BranchBeginNode || dir instanceof StartNode) {
       // We start a new branch, so we have to push a new empty set on our stack
       stackOfNestedBranches.push(new HashSet<>());
     }
@@ -215,7 +215,8 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
     // We reached the end of the current branch.
     // We delete all results of this branch as they are no longer valid
     // and pop it, so the current branch is now the previous parent branch
-    for (var node : stackOfNestedBranches.pop()) {
+    var branchNodes = stackOfNestedBranches.pop();
+    for (var node : branchNodes) {
       super.processedNodes.remove(node);
     }
     return endNode;

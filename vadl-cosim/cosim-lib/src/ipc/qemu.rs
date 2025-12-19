@@ -108,12 +108,12 @@ impl Client {
         let stdout_file = File::create(stdout_path)?;
         let stderr_file = File::create(stderr_path)?;
 
-        let client_process = Command::new(executable_path)
+        let client_process = Command::new(&executable_path)
             .args(args)
             .stdout(stdout_file)
             .stderr(stderr_file)
             .spawn()
-            .wrap_err_with(|| format!("Failed to create client with idx: {client_id}"))?;
+            .wrap_err_with(|| format!("Failed to create client with idx: {client_id} and path: {executable_path}"))?;
 
         Ok(Self {
             id: client_id,
@@ -128,7 +128,7 @@ impl Client {
     pub fn terminate(&mut self) -> Result<()> {
         self.process
             .kill()
-            .with_context(|| format!("failed to kill qemu-process: {}", self.id))
+            .with_context(|| format!("Failed to kill qemu-process: {}", self.id))
     }
 
     pub fn name_or_id(&self) -> String {

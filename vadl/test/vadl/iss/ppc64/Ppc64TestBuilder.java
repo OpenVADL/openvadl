@@ -51,12 +51,14 @@ public class Ppc64TestBuilder {
 
   // loads a 32-bit signed value, which is then sign extended to 64 bits
   public BigInteger fillReg(String reg, BigInteger value) {
-    int lo16  = value.and(BigInteger.valueOf(0xFFFF)).intValue();
-    int hi16  = value.shiftRight(16).and(BigInteger.valueOf(0xFFFF)).intValue();
+    int lo16 = value.and(BigInteger.valueOf(0xFFFF)).intValue();
+    int hi16 = value.shiftRight(16).and(BigInteger.valueOf(0xFFFF)).intValue();
     String lis = String.format("lis %s, %s", reg, (short) hi16);
     String ori = String.format("ori %s, %s, %s", reg, reg, lo16);
     String preg = reg.length() == 1 ? " " + reg : reg;
-    String lisLine = lis + " ".repeat(Math.max(0, commentCol - lis.length())) + " # X(" + preg + ") := " + toLoadedHexString(value);
+    String lisLine =
+        lis + " ".repeat(Math.max(0, commentCol - lis.length())) + " # X(" + preg + ") := "
+            + toLoadedHexString(value);
     String oriLine = ori + " ".repeat(Math.max(0, commentCol - ori.length())) + " # ↑";
     instructions.add(lisLine);
     instructions.add(oriLine);
@@ -103,6 +105,13 @@ public class Ppc64TestBuilder {
         .sample();
   }
 
+  public BigInteger anyImmUFrom(int bits, BigInteger min) {
+    return Arbitraries.bigIntegers()
+        .greaterOrEqual(min)
+        .lessOrEqual(BigInteger.ONE.shiftLeft(bits).subtract(BigInteger.ONE))
+        .sample();
+  }
+
   public BigInteger anySelectImmU(int bits) {
     int bitPosition = Arbitraries.integers().between(0, bits - 1).sample();
     return BigInteger.ONE.shiftLeft(bitPosition);
@@ -119,7 +128,7 @@ public class Ppc64TestBuilder {
   }
 
   public CosimTestUtils.TestCase toTestCase() {
-    return new CosimTestUtils.TestCase(name + "-" + id, toAsmString());
+    return new CosimTestUtils.TestCase(name + "-" + id, false, toAsmString());
   }
 
   private static String toLoadedHexString(BigInteger value) {

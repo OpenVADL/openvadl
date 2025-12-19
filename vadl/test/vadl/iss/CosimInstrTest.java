@@ -38,6 +38,8 @@ public abstract class CosimInstrTest extends CosimTest {
 
   public abstract String getVadlSpec();
 
+  public abstract String getCosimConfigFileName();
+
   @SafeVarargs
   protected final Stream<DynamicTest> runTestsWith(
       Function<Integer, CosimTestUtils.TestCase>... generators) throws IOException {
@@ -63,7 +65,8 @@ public abstract class CosimInstrTest extends CosimTest {
                                                   Collection<CosimTestUtils.TestCase> testCases)
       throws IOException {
 
-    var testConfig = new CosimTestUtils.TestConfig(testCases);
+    var testConfig =
+        new CosimTestUtils.TestConfig("/cosim_configs/" + getCosimConfigFileName(), testCases);
 
     // resolve file that contains all test specifications.
     // it is a yaml file that gets mapped to `/work/test-suite.yaml` of the container.

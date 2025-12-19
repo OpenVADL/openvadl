@@ -4,14 +4,14 @@ from pathlib import Path
 
 AS_BE = "powerpc64-unknown-elf-as"
 LD_BE = "powerpc64-unknown-elf-ld"
+OBJDUMP_BE = "powerpc64-unknown-elf-objdump"
 AS_LE = "powerpc64le-unknown-elf-as"
 LD_LE = "powerpc64le-unknown-elf-ld"
+OBJDUMP_LE = "powerpc64le-unknown-elf-objdump"
 
-async def compile(id: str, asm: str) -> dict:
+async def compile(id: str, asm: str, debug: bool = True) -> dict:
   asm_path = await build_assembly(id, asm)
   linker_path = await build_linker_script(id)
-
-  elf_out = _tmp_file(id, f"elf-{id}")
 
   # big-endian
   obj_be = _tmp_file(id, f"obj-{id}-be.o")
@@ -25,14 +25,26 @@ async def compile(id: str, asm: str) -> dict:
   await assemble(AS_LE, asm_path, obj_le)
   await link(LD_LE, linker_path, obj_le, elf_le)
 
-  return {
-      "asm": asm_path,
-      "lnscript": linker_path,
-      "obj_be": obj_be,
-      "elf_be": elf_be,
-      "obj_le": obj_le,
-      "elf_le": elf_le,
+  result = {
+    "asm": asm_path,
+    "lnscript": linker_path,
+    "obj_be": obj_be,
+    "elf_be": elf_be,
+    "obj_le": obj_le,
+    "elf_le": elf_le,
   }
+
+  if debug:
+    objdump_be = _tmp_file(id, f"elf-{id}-be.dump")
+    objdump_le = _tmp_file(id, f"elf-{id}-le.dump")
+    await objdump(OBJDUMP_BE, elf_be, objdump_be)
+    await objdump(OBJDUMP_BE, elf_le, objdump_le)
+    result.update({
+        "objdump_be": objdump_be,
+        "objdump_le": objdump_le,
+    })
+
+  return result
 
 
 async def assemble(as_cmd: str, asm_path: Path, obj_out: Path) -> None:
@@ -90,6 +102,18 @@ async def build_linker_script(id: str) -> Path:
   with open(linker_out, "w") as f:
     f.write(content)
   return linker_out
+
+async def objdump(objdump_bin: str, obj_file: Path, out_file: Path):
+    with out_file.open("wb") as f:
+      proc = await asyncio.create_subprocess_exec(
+        objdump_bin, "-D", str(obj_file),
+        stdout=f,
+      stderr=asyncio.subprocess.PIPE,
+      )
+      _, stderr = await proc.communicate()
+
+    if proc.returncode != 0:
+      raise RuntimeError(stderr.decode())
 
 def _tmp_file(id: str, name: str) -> Path:
   build_dir = f"/tmp/build-{id}/"
