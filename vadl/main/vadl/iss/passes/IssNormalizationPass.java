@@ -703,7 +703,7 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Override
   public void handleCLZ(BuiltInCall input) {
-    var val = input.arguments().get(0);
+    var val = input.arguments().getFirst();
     var valT = val.type().asDataType();
     if (valT.bitWidth() == targetSize) {
       return;
@@ -763,8 +763,10 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Override
   public void handleCTZ(BuiltInCall input) {
-    throw graphError(input, "Normalization not yet implemented for this built-in");
-
+    // do nothing, because a trailing zeros result is the same if it is done on a
+    // target size > input size.
+    // An exception is the input being 0, however, our QEMU's ctz is defined as
+    // input != 0 ? ctz(input) : input.size
   }
 
   @Override

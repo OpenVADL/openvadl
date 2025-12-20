@@ -110,9 +110,9 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
     } else if (builtIn == BuiltInTable.CLS) {
       handleCLS(input);
     } else if (builtIn == BuiltInTable.CTZ) {
-      handleCLZ(input);
+      handleCTZ(input);
     } else if (builtIn == BuiltInTable.CTO) {
-      handleCLO(input);
+      handleCTO(input);
     } else if (builtIn == BuiltInTable.CONCATENATE_BITS) {
       handleConcat(input);
     } else {
