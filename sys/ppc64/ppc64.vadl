@@ -40,6 +40,7 @@ instruction set architecture PPC64SFS = {
   constant maxU32  : Bits<32> = 0xFFFF'FFFF                // largest 32-bit unsigned value
   constant maxU32E : Bits<64> = 0x0000'0000'FFFF'FFFF      // largest 32-bit unsigned value zero extended to 64 bits
 
+  using Bit     = Bits<1>
   using Nibble  = Bits<4>
   using Byte    = Bits<8>
   using Half    = Bits<16>
@@ -72,14 +73,15 @@ instruction set architecture PPC64SFS = {
   program counter PC  : Address
   memory          MEM : Address -> Byte
 
-  register X : XIndex -> Reg64                   // 32 general-purpose 64-bit registers
+  register X        : XIndex -> Reg64            // 32 general-purpose 64-bit registers
+  alias register XP : Nibble<32><16> = X         // general-purpose registers, each represented as 16 4-bit nibbles
   [zero : XZ(0)]
-  alias register XZ = X                          // alias for general-purpose registers where X(0) is always zero
+  alias register XZ = X                          // alias for general-purpose registers where index zero is always the value zero
   alias register XW = X(*)(31..0)                // lowest 32 bits of general-purpose registers
   alias register XH = X(*)(15..0)                // lowest 16 bits of general-purpose registers
   alias register XB = X(*)(7..0)                 // lowest 8 bits of general-purpose registers
 
-  register CR  : Reg32                           // condition register
+  register       CR  : Reg32                     // condition register
   alias register CRF : CRField<8>  = CR          // 8x4-bit condition register fields
   alias register CRB : Bits<32><1> = CR          // 32 condition register bits
 
@@ -92,7 +94,7 @@ instruction set architecture PPC64SFS = {
   register SRR0 : Reg64                          // machine status save/ restore register 1
   register SRR1 : Reg64                          // machine status save/ restore register 2
 
-  enumeration Mode : Bits<1> =                   // computation modes, M32 = 32-bit mode
+  enumeration Mode : Bit =                       // computation modes, M32 = 32-bit mode
   { M32
   , M64
   }
@@ -111,53 +113,52 @@ instruction set architecture PPC64SFS = {
   }
 
   format XERFormat : Reg32 =
-  { so     : Bits<1>                             // summary overflow, is set whenever ov is set: so = so | ov
-  , ov     : Bits<1>                             // overflow, is equal to ov32 in 32-bit mode
-  , ca     : Bits<1>                             // carry, is equal to ca32 in 32-bit mode
+  { so     : Bit                                 // summary overflow, is set whenever ov is set: so = so | ov
+  , ov     : Bit                                 // overflow, is equal to ov32 in 32-bit mode
+  , ca     : Bit                                 // carry, is equal to ca32 in 32-bit mode
   , rsv1   : Bits<9>
-  , ov32   : Bits<1>                             // overflow32, overflow when using 32-bit operands
-  , ca32   : Bits<1>                             // carry32, carry when using 32-bit operands
+  , ov32   : Bit                                 // overflow32, overflow when using 32-bit operands
+  , ca32   : Bit                                 // carry32, carry when using 32-bit operands
   , rsv2   : Bits<11>
   , nbytes : Bits<7>                             // number of bytes to be transferred by string indexed instructions (not implemented)
   }
 
   // note: most of the functionality here is not implemented, because it is not a part of the subset
   format MSRFormat : Reg64 =
-  { sf   : Bits<1>                               // [s]ixty-[f]our bit, if set the processor is in 64-bit Mode
+  { sf   : Bit                                   // [s]ixty-[f]our bit, if set the processor is in 64-bit Mode
   , rsv1 : Bits<2>
-  , hv   : Bits<1>                               // together with pr defines the privilege state of the processor (not implemented)
-  , rsv2 : Bits<1>
-  , idk  : Bits<1>                               // this bit must be 0 or all instructions are boundedly undefined (not implemented)
+  , hv   : Bit                                   // together with pr defines the privilege state of the processor (not implemented)
+  , rsv2 : Bit
+  , idk  : Bit                                   // this bit must be 0 or all instructions are boundedly undefined (not implemented)
   , rsv3 : Word
-  , vec  : Bits<1>                               // if set the thread can execute vector instructions (not implemented)
-  , rsv4 : Bits<1>
-  , vsx  : Bits<1>                               // if set the thread can execute VSX instructions (not implemented)
-  , s    : Bits<1>                               // if set the thread is in secure state (not implemented)
+  , vec  : Bit                                   // if set the thread can execute vector instructions (not implemented)
+  , rsv4 : Bit
+  , vsx  : Bit                                   // if set the thread can execute VSX instructions (not implemented)
+  , s    : Bit                                   // if set the thread is in secure state (not implemented)
   , rsv5 : Bits<6>
-  , ee   : Bits<1>                               // if set additional interrupts are enabled (not implemented)
-  , pr   : Bits<1>                               // together with hv defines the privilege state of the processor
-  , fp   : Bits<1>  	                           // if set the thread can execute floating-point instructions (not implemented)
-  , me   : Bits<1>                               // if set machine check interrupts are enabled (not implemented)
-  , fe0  : Bits<1>                               // floating-point exception mode bit 1 (not implemented)
+  , ee   : Bit                                   // if set additional interrupts are enabled (not implemented)
+  , pr   : Bit                                   // together with hv defines the privilege state of the processor
+  , fp   : Bit      	                           // if set the thread can execute floating-point instructions (not implemented)
+  , me   : Bit                                   // if set machine check interrupts are enabled (not implemented)
+  , fe0  : Bit                                   // floating-point exception mode bit 1 (not implemented)
   , te   : Bits<2>                               // controls branch tracing (not implemented)
-  , fe1  : Bits<1>                               // floating-point exception mode bit 2 (not implemented)
+  , fe1  : Bit                                   // floating-point exception mode bit 2 (not implemented)
   , rsv6 : Bits<2>
-  , ir   : Bits<1>                               // if set instruction address translation is enabled (not implemented)
-  , dr   : Bits<1>                               // if set data address translation is enabled (not implemented)
-  , rsv7 : Bits<1>
-  , pmm  : Bits<1>                               // this bit is used by the performance monitoring facility (not implemented)
-  , ri   : Bits<1>                               // if set interrupt is recoverable (not implemented)
-  , le   : Bits<1>                               // if set the thread is in little endian mode (not implemented)
+  , ir   : Bit                                   // if set instruction address translation is enabled (not implemented)
+  , dr   : Bit                                   // if set data address translation is enabled (not implemented)
+  , rsv7 : Bit
+  , pmm  : Bit                                   // this bit is used by the performance monitoring facility (not implemented)
+  , ri   : Bit                                   // if set interrupt is recoverable (not implemented)
+  , le   : Bit                                   // if set the thread is in little endian mode (not implemented)
   }
 
-  // TODO?: zero hint bits in branch instr
   format BForm : Instr =
   { opcd : OpCode                                // opcode
   , bo   : Bits<5>                               // branch options and hints
   , crbs : CRBIndex                              // CR bit to test
   , bd   : Bits<14>                              // part of the branch address
-  , aa   : Bits<1>                               // if set the branch address is absolute
-  , lk   : Bits<1>                               // if set the link register is set to PC.next
+  , aa   : Bit                                   // if set the branch address is absolute
+  , lk   : Bit                                   // if set the link register is set to PC.next
   , extBd = bd as SDWord << 2
   }
 
@@ -175,8 +176,8 @@ instruction set architecture PPC64SFS = {
   format DFormB : Instr =
   { opcd : OpCode                                // opcode
   , crt  : CRFIndex                              // target CR field
-  , rsv  : Bits<1>
-  , l    : Bits<1>                               // if set the instruction uses 64-bit operands
+  , rsv  : Bit
+  , l    : Bit                                   // if set the instruction uses 64-bit operands
   , rs   : XIndex                                // source register
   , imm  : Half                                  // immediate value
   }
@@ -200,8 +201,8 @@ instruction set architecture PPC64SFS = {
   format IForm : Instr =
   { opcd : OpCode                                // opcode
   , li   : Bits<24>                              // part of the branch address
-  , aa   : Bits<1>                               // if set the branch address is absolute
-  , lk   : Bits<1>                               // if set the link register is set to PC.next
+  , aa   : Bit                                   // if set the branch address is absolute
+  , lk   : Bit                                   // if set the link register is set to PC.next
   , extLi = li as SDWord << 2                    // branch target address base
   }
 
@@ -212,7 +213,7 @@ instruction set architecture PPC64SFS = {
   , sh   : Bits<5>                               // source register/ immediate value
   , mb   : Bits<5>                               // start index of bit mask
   , me   : Bits<5>                               // end index of bit mask
-  , rc   : Bits<1>                               // if set the instruction modifies the CR
+  , rc   : Bit                                   // if set the instruction modifies the CR
   , mb6  = mb as Bits<6>                         // start index zero extended to 6 bits
   , me6  = me as Bits<6>                         // end index zero extended to 6 bits
   }
@@ -231,18 +232,18 @@ instruction set architecture PPC64SFS = {
   , ra      : XIndex                             // source/ target register
   , rb      : XIndex                             // source register/ immediate value
   , extopcd : Ext10                              // extended opcode
-  , rc      : Bits<1>                            // if set the instruction modifies the CR
+  , rc      : Bit                                // if set the instruction modifies the CR
   }
 
   format XFormB : Instr =
   { opcd    : OpCode                             // opcode
   , crt     : CRFIndex                           // target CR field
-  , rsv1    : Bits<1>
-  , l       : Bits<1>                            // if set the instruction uses 64-bit operands
+  , rsv1    : Bit
+  , l       : Bit                                // if set the instruction uses 64-bit operands
   , ra      : XIndex                             // source register
   , rb      : XIndex                             // source register
   , extopcd : Ext10                              // extended opcode
-  , rsv2    : Bits<1>
+  , rsv2    : Bit
   }
 
   format XFormC : Instr =
@@ -251,7 +252,7 @@ instruction set architecture PPC64SFS = {
   , crs     : CRFIndex                           // source CR field
   , rsv1    : Bits<7>
   , extopcd : Ext10                              // extended opcode
-  , rsv2    : Bits<1>
+  , rsv2    : Bit
   }
 
   format XFormD : Instr =
@@ -260,7 +261,7 @@ instruction set architecture PPC64SFS = {
   , crbs    : CRBIndex                           // source CR bit
   , rsv1    : Bits<5>
   , extopcd : Ext10                              // extended opcode
-  , rsv2    : Bits<1>
+  , rsv2    : Bit
   }
 
   format XFormE : Instr =
@@ -270,17 +271,17 @@ instruction set architecture PPC64SFS = {
   , ra      : XIndex                             // source register
   , rb      : XIndex                             // source register
   , extopcd : Ext10                              // extended opcode
-  , rsv2    : Bits<1>
+  , rsv2    : Bit
   }
 
   format XFormF : Instr =
   { opcd    : OpCode                             // opcode
   , rs      : XIndex                             // source register
   , rsv1    : Nibble
-  , l       : Bits<1>                            // changes which bits of MSR are set
+  , l       : Bit                                // changes which bits of MSR are set
   , rsv2    : Bits<5>
   , extopcd : Ext10                              // extended opcode
-  , rsv3    : Bits<1>
+  , rsv3    : Bit
   }
 
   format XFormG : Instr =
@@ -289,17 +290,17 @@ instruction set architecture PPC64SFS = {
   , ra      : XIndex                             // source register
   , rb      : XIndex                             // source register
   , extopcd : Ext10                              // extended opcode
-  , rsv     : Bits<1>
+  , rsv     : Bit
   }
 
   format XFXFormA : Instr =
   { opcd    : OpCode                             // opcode
   , rs      : XIndex                             // source/ target register
-  , m       : Bits<1>                            // if set the instruction only reads from/ writes to a single CR field
+  , m       : Bit                                // if set the instruction only reads from/ writes to a single CR field
   , fxm     : Bits<8>                            // CR field mask
-  , rsv1    : Bits<1>
+  , rsv1    : Bit
   , extopcd : Ext10                              // extended opcode
-  , rsv2    : Bits<1>
+  , rsv2    : Bit
   }
 
   format XFXFormB : Instr =
@@ -307,7 +308,7 @@ instruction set architecture PPC64SFS = {
   , rs      : XIndex                             // source/ target register
   , spr     : SIndex                             // source/ target special-purpose register
   , extopcd : Ext10                              // extended opcode
-  , rsv     : Bits<1>
+  , rsv     : Bit
   }
 
   format XLFormA : Instr =
@@ -316,7 +317,7 @@ instruction set architecture PPC64SFS = {
   , crbs1   : CRBIndex                           // source CR bit
   , crbs2   : CRBIndex                           // source CR bit
   , extopcd : Ext10                              // extended opcode
-  , rsv     : Bits<1>
+  , rsv     : Bit
   }
 
   format XLFormB : Instr =
@@ -326,7 +327,7 @@ instruction set architecture PPC64SFS = {
   , rsv     : Bits<3>
   , bh      : Bits<2>                            // branch return hints
   , extopcd : Ext10                              // extended opcode
-  , lk      : Bits<1>                            // if set the link register is set to PC.next
+  , lk      : Bit                                // if set the link register is set to PC.next
   }
 
   format XLFormC : Instr =
@@ -342,9 +343,9 @@ instruction set architecture PPC64SFS = {
   , rs      : XIndex                             // target register
   , ra      : XIndex                             // source register
   , rb      : XIndex                             // source register
-  , oe      : Bits<1>                            // if set the instruction modifies so, ov and ov32
+  , oe      : Bit                                // if set the instruction modifies so, ov and ov32
   , extopcd : Ext9                               // extended opcode
-  , rc      : Bits<1>                            // if set the instruction modifies the CR
+  , rc      : Bit                                // if set the instruction modifies the CR
   }
 
   format Z23Form : Instr =
@@ -354,7 +355,7 @@ instruction set architecture PPC64SFS = {
   , rb      : XIndex                             // source register
   , cy      : Bits<2>                            // all values other than 0b00 are reserved
   , extopcd : Ext8                               // extended opcode
-  , rsv     : Bits<1>
+  , rsv     : Bit
   }
 
   record AsmExt       (asm : Str, ext : Bin)
@@ -435,15 +436,15 @@ instruction set architecture PPC64SFS = {
   // triggered by the tw and twi instructions if at least one trap condition evaluates to true
   exception Trap () = {
     SRR0 := PC
-    SRR1 := (MSR(63..31), 0 as Nibble, MSR(26..22), 0 as Nibble, 1 as Bits<1>, 0 as Bits<1>, MSR(15..0))
+    SRR1 := (MSR(63..31), 0 as Nibble, MSR(26..22), 0 as Nibble, 1 as Bit, 0 as Bit, MSR(15..0))
     PC   := 0x0000'0000'0000'0700
-    MSR  := 0x8000000000001000
+    MSR  := 0x8000'0000'0000'1000
   }
 
   // triggered when a privileged instruction gets called in an unprivileged processor state
   exception Privilege () = {
     SRR0 := PC
-    SRR1 := (MSR(63..31), 0 as Nibble, MSR(26..22), 0 as Bits<3>, 1 as Bits<1>, 0 as Bits<2>, MSR(15..0))
+    SRR1 := (MSR(63..31), 0 as Nibble, MSR(26..22), 0 as Bits<3>, 1 as Bit, 0 as Bits<2>, MSR(15..0))
     PC   := 0x0000'0000'0000'0700
   }
 
@@ -568,7 +569,7 @@ instruction set architecture PPC64SFS = {
     )
   }
 
-  // sets fixed-point exception register and condition register using overflow expression
+  // sets fixed-point exception register and condition register using a single overflow expression
   model SetXERAndCRWithOV (oe : Bool, ce : Bool, rc : Bool, ov : Ex) : Stats = {
     match : Stats
     ( $oe = true => let mov = $ov in
@@ -579,6 +580,7 @@ instruction set architecture PPC64SFS = {
     )
   }
 
+  // sets fixed-point exception register and condition register using two overflow expressions
   model SetXERAndCRWithOV3264 (oe : Bool, ce : Bool, rc : Bool, ov32 : Ex, ov64 : Ex) : Stats = {
     match : Stats
       ( $oe = true => let mov = $ov64 in
@@ -659,8 +661,10 @@ instruction set architecture PPC64SFS = {
 
   // computes the target address for b and bc instructions
   model TargetAddrImm (imm : Id, aa : Bool) : Ex = {
-    let ta = if $aa then $imm else PC + $imm in
-      if MSR.sf = Mode::M32 then ta & maxU32E else ta
+    match : Ex
+    ( $aa = true => if MSR.sf = Mode::M32 then  $imm       & maxU32E else $imm
+    ; _          => if MSR.sf = Mode::M32 then ($imm + PC) & maxU32E else $imm + PC
+    )
   }
 
   // computes the target address for bclr, bcctr and bctar instructions
@@ -843,11 +847,12 @@ instruction set architecture PPC64SFS = {
   // instructions: cbcdtd, cdtbcd
   model XFormBinCodedDecInstr (x : AsmExt, dec : Bool) : IsaDefs = {
     instruction AsId($x.asm) : XFormA =
-      X(ra) := if $dec
-               then (0 as Byte    , dpdtobcd(X(rs)(51..42)), dpdtobcd(X(rs)(41..32)),
-                     0 as Byte    , dpdtobcd(X(rs)(19..10)), dpdtobcd(X(rs)( 9.. 0)))
-               else (0 as Bits<12>, bcdtodpd(X(rs)(55..44)), bcdtodpd(X(rs)(43..32)),
-                     0 as Bits<12>, bcdtodpd(X(rs)(23..12)), bcdtodpd(X(rs)(11.. 0)))
+      X(ra) := match : Ex
+               ( $dec = true => (0 as Byte    , dpdtobcd(X(rs)(51..42)), dpdtobcd(X(rs)(41..32)),
+                                 0 as Byte    , dpdtobcd(X(rs)(19..10)), dpdtobcd(X(rs)( 9.. 0)))
+               ; _           => (0 as Bits<12>, bcdtodpd(X(rs)(55..44)), bcdtodpd(X(rs)(43..32)),
+                                 0 as Bits<12>, bcdtodpd(X(rs)(23..12)), bcdtodpd(X(rs)(11.. 0)))
+               )
     encoding AsId($x.asm) = {opcd = 0b011111, rb = 0b00000, extopcd = $x.ext, rc = 0b0}
     assembly AsId($x.asm) = ($x.asm, " ", decimal(ra), ",", decimal(rs))
   }
@@ -961,12 +966,13 @@ instruction set architecture PPC64SFS = {
   // instructions: popcntb, popcntw
   model XFormPopCountInstr (x : AsmExt, unit : SymEx) : IsaDefs = {
     instruction AsId($x.asm) : XFormA =
-      if $unit = Unit::Byte
-      then X(ra) := (VADL::cob(X(rs)(63..56)), VADL::cob(X(rs)(55..48)),
-                     VADL::cob(X(rs)(47..40)), VADL::cob(X(rs)(39..32)),
-                     VADL::cob(X(rs)(31..24)), VADL::cob(X(rs)(23..16)),
-                     VADL::cob(X(rs)(15.. 8)), VADL::cob(X(rs)( 7.. 0)))
-      else X(ra) := (VADL::cob(X(rs)(63..32)), VADL::cob(X(rs)(31.. 0)))
+      X(ra) := match : Ex
+               ( $unit = Unit::Byte => (VADL::cob(X(rs)(63..56)), VADL::cob(X(rs)(55..48)),
+                                        VADL::cob(X(rs)(47..40)), VADL::cob(X(rs)(39..32)),
+                                        VADL::cob(X(rs)(31..24)), VADL::cob(X(rs)(23..16)),
+                                        VADL::cob(X(rs)(15.. 8)), VADL::cob(X(rs)( 7.. 0)))
+               ; _                  => (VADL::cob(X(rs)(63..32)), VADL::cob(X(rs)(31.. 0)))
+               )
     encoding AsId($x.asm) = {opcd = 0b011111, rb = 0b00000, extopcd = $x.ext, rc = 0b0}
     assembly AsId($x.asm) = ($x.asm, " ", decimal(ra), ",", decimal(rs))
   }
@@ -974,9 +980,10 @@ instruction set architecture PPC64SFS = {
   // instructions: brh, brw
   model XFormReverseInstr (x : AsmExt, unit : SymEx) : IsaDefs = {
     instruction AsId($x.asm) : XFormA =
-      X(ra) := if $unit = Unit::Half
-               then (byterevhinw(X(rs)(63..32)), byterevhinw(X(rs)(31..0)))
-               else (byterevw   (X(rs)(63..32)), byterevw   (X(rs)(31..0)))
+      X(ra) := match : Ex
+               ( $unit = Unit::Half => (byterevhinw(X(rs)(63..32)), byterevhinw(X(rs)(31..0)))
+               ; _                  => (byterevw   (X(rs)(63..32)), byterevw   (X(rs)(31..0)))
+               )
     encoding AsId($x.asm) = {opcd = 0b011111, rb = 0b00000, extopcd = $x.ext, rc = 0b0}
     assembly AsId($x.asm) = ($x.asm, " ", decimal(ra), ",", decimal(rs))
   }
@@ -1008,7 +1015,7 @@ instruction set architecture PPC64SFS = {
       let b = XB(ra) as UByte in
         let m = ((X(rb)( 7.. 0) <= b) & (b <= X(rb)(15.. 8))    ) |
                 ((X(rb)(23..16) <= b) & (b <= X(rb)(31..24)) & l) in
-          $CRField(crt) := (0 as Bits<1>, m, 0 as Bits<2>)
+          $CRField(crt) := (0 as Bit, m, 0 as Bits<2>)
     encoding AsId($asm) = {opcd = 0b011111, rsv1 = 0b0, extopcd = 0b00110'00000, rsv2 = 0b0}
     assembly AsId($asm) = ($asm, " ", decimal(crt), ",", decimal(l), ",", decimal(ra), ",", decimal(rb))
   }
@@ -1039,7 +1046,7 @@ instruction set architecture PPC64SFS = {
                 (b = X(rb)(47..40)) | (b = X(rb)(39..32)) |
                 (b = X(rb)(31..24)) | (b = X(rb)(23..16)) |
                 (b = X(rb)(15.. 8)) | (b = X(rb)( 7.. 0)) in
-          $CRField(crt) := (0 as Bits<1>, m, 0 as Bits<2>)
+          $CRField(crt) := (0 as Bit, m, 0 as Bits<2>)
     encoding AsId($asm) = {opcd = 0b011111, rsv1 = 0b00, extopcd = 0b00111'00000, rsv2 = 0b0}
     assembly AsId($asm) = ($asm, " ", decimal(crt), ",", decimal(ra), ",", decimal(rb))
   }
@@ -1120,9 +1127,11 @@ instruction set architecture PPC64SFS = {
 
   // instructions: mfspr, mtspr, mftb
   model XFXMoveSPRInstr (x : AsmExt, read : Bool) : IsaDefs = {
-    instruction AsId($x.asm) : XFXFormB = if $read then $ReadSPR() else $WriteSPR()
+    instruction AsId($x.asm) : XFXFormB =
+      match : Stat ( $read = true => $ReadSPR(); _ => $WriteSPR() )
     encoding AsId($x.asm) = {opcd = 0b011111, extopcd = $x.ext, rsv = 0b0}
-    assembly AsId($x.asm) = ($x.asm, " ", if $read then decimal(rs) else decimal(spr), ",", if $read then decimal(spr) else decimal(rs))
+    assembly AsId($x.asm) = ($x.asm, " ", match : Ex ( $read = true => decimal( rs); _ => decimal(spr) ),
+                                     ",", match : Ex ( $read = true => decimal(spr); _ => decimal( rs) ))
   }
 
   // instructions: crand, crandc, creqv, crnand, crnor, cror, crorc, crxor
@@ -1138,9 +1147,9 @@ instruction set architecture PPC64SFS = {
   model XLFormBranchInstrExt (eid : Id, r : XLFormBranchInstrRec, lk : Bool) : IsaDefs = {
     instruction $eid : XLFormB =
       let lrv = PC.next in {
-        if ($r.ctrcntr as Bits<1>) & ~bo(2) then CTR := CTR - 1
+        if ($r.ctrcntr as Bit) & ~bo(2) then CTR := CTR - 1
         let mctr = if MSR.sf = Mode::M32 then CTR & maxU32E else CTR in
-          if (~($r.ctrcntr as Bits<1>) | bo(2) | ((mctr != 0) ^ bo(1))) & (bo(4) | ($CRBit(crbs) = bo(3)))
+          if (~($r.ctrcntr as Bit) | bo(2) | ((mctr != 0) ^ bo(1))) & (bo(4) | ($CRBit(crbs) = bo(3)))
           then PC := $TargetAddrReg($r.breg)
         $CS($lk; LR := lrv)
       }
@@ -1164,12 +1173,12 @@ instruction set architecture PPC64SFS = {
 
   // instructions: addg6s
   model XOFormAddGen6Instr (asm : Str) : IsaDefs = {
-    instruction $asm : XOForm =
-      X(rs) := forall i in 15..0 tensor
-                 let result, flags = VADL::adds(X(ra)(i * 4 + 3..0), X(rb)(i * 4 + 3..0)) in
-                   if flags.carry then 0x0 else 0x6
-    encoding $asm = {opcd = 0b011111, oe = 0b0, extopcd = 0b0010'01010, rc = 0b0}
-    assembly $asm = ($asm, " ", decimal(rs), ",", decimal(ra), ",", decimal(rb))
+    instruction AsId($asm) : XOForm =
+      X(rs) := forall i : Bits<4> in 15..0 tensor
+                 let result, flags = VADL::adds(XP(ra)(i), XP(rb)(i)) in
+                   if flags.carry then 0 as Nibble else 0x6
+    encoding AsId($asm) = {opcd = 0b011111, oe = 0b0, extopcd = 0b0010'01010, rc = 0b0}
+    assembly AsId($asm) = ($asm, " ", decimal(rs), ",", decimal(ra), ",", decimal(rb))
   }
 
   record XOFormAddSubInstrRec (x : AsmOpExt, a : TwoArgs, enc : Encs, carry : Ex, ce : Bool, rbasm : Ex)
@@ -1222,13 +1231,12 @@ instruction set architecture PPC64SFS = {
 
   record XOFormMulInstrRec (x : AsmOpExt, res : Ex)
 
-  // TODO: $SetXERAndCRWithOV causes error
   model XOFormMulInstrExt (eid : Id, r : XOFormMulInstrRec, oe : Bool, rc : Bool) : IsaDefs = {
     instruction $eid : XOForm =
       let prod = VADL::$r.x.op(XW(ra), XW(rb)) in
         let result = $r.res as UDWord in {
           X(rs) := result
-          $SetXERAndCRWithOV($oe; false; $rc; true)
+          $SetXERAndCRWithOV($oe; false; $rc; prod  != (prod as SWord) as SDWord)
         }
     encoding $eid = {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc}
     assembly $eid = ($r.x.asm, $rStr($rc), " ", decimal(rs), ",", decimal(ra), ",", decimal(rb)) // oStr not necessary
@@ -1461,11 +1469,10 @@ instruction set architecture PPC64SFS = {
 
   $DFormTrapInstr("TWI")
 
-  $XFormExCRInstr((("EXTSB" ; 0b11101'11010); XB(rs) as SDWord                                            ))
-  $XFormExCRInstr((("EXTSH" ; 0b11100'11010); XH(rs) as SDWord                                            ))
-  $XFormExCRInstr((("CNTLZW"; 0b00000'11010); if XW(rs) = 0 then 32 else VADL::clz(XW(rs))       as UDWord))
-//   $XFormExCRInstr((("CNTTZW"; 0b10000'11010); if XW(rs) = 0 then 32 else VADL::ctz(XW(rs))(4..0) as UDWord)) // TODO: why does ctz return negative number?
-  $XFormExCRInstr((("CNTTZW"; 0b10000'11010); if XW(rs) = 0 then 32 else VADL::ctz(XW(rs))       as UDWord))
+  $XFormExCRInstr((("EXTSB" ; 0b11101'11010); XB(rs) as SDWord                                      ))
+  $XFormExCRInstr((("EXTSH" ; 0b11100'11010); XH(rs) as SDWord                                      ))
+  $XFormExCRInstr((("CNTLZW"; 0b00000'11010); if XW(rs) = 0 then 32 else VADL::clz(XW(rs)) as UDWord))
+  $XFormExCRInstr((("CNTTZW"; 0b10000'11010); if XW(rs) = 0 then 32 else VADL::ctz(XW(rs)) as UDWord))
 
   $SCFormSysCallInstr(("SC" ; 0b10); SysCall(lev)   )
   $SCFormSysCallInstr(("SCV"; 0b01); SysCallVectored)
