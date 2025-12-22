@@ -1388,10 +1388,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Shortcut for constant types
     var viamType = getViamType(expr.type());
     if (expr.value.type instanceof ConstantType constType) {
-      return new ConstantNode(
-          Constant.Value.of(constType.getValue().longValueExact(),
-                  (DataType) constType.closestTo(viamType))
-              .castTo((DataType) viamType));
+      return Constant.Value.fromInteger(constType.getValue(),
+              (DataType) constType.closestTo(viamType))
+          .castTo((DataType) viamType)
+          .toNode();
     }
 
     // check the different rules and apply them accordingly
