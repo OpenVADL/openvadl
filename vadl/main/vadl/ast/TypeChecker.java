@@ -627,10 +627,39 @@ public class TypeChecker
     return null;
   }
 
+  private void setFormatDefinitionEmptyFieldsToError(FormatDefinition definition) {
+    definition.fields.forEach(field -> {
+      switch (field) {
+        case TypedFormatField typedField -> {
+          if (typedField.typeLiteral.type == null) {
+            typedField.typeLiteral.type = new InternalErrorType();
+          }
+        }
+        case RangeFormatField rangeField -> {
+          if (rangeField.type == null) {
+            rangeField.type = new InternalErrorType();
+          }
+        }
+
+        case DerivedFormatField derivedField -> {
+          if (derivedField.expr.type == null) {
+            derivedField.expr.type = new InternalErrorType();
+          }
+        }
+
+        default -> throw new IllegalArgumentException(
+            "Unknown format field type: " + field.getClass().getSimpleName());
+      }
+
+    });
+  }
+
   @Override
   public Void visit(FormatDefinition definition) {
     var type = check(definition.typeLiteral);
     if (!(type instanceof BitsType bitsType)) {
+      definition.typeLiteral.type = new InternalErrorType();
+      setFormatDefinitionEmptyFieldsToError(definition);
       // Not actually thrown here but used to signal that this if will never suceed.
       throw addErrorAndStopChecking(typeMismatchError(definition.typeLiteral, "bits type", type));
     }
@@ -644,6 +673,7 @@ public class TypeChecker
         var fieldType = check(typedField.typeLiteral);
 
         if (!(fieldType instanceof BitsType fieldBitsType)) {
+          setFormatDefinitionEmptyFieldsToError(definition);
           throw addErrorAndStopChecking(error("Bits Type expected", typedField.typeLiteral)
               .description("Format fields can only be assigned a bits type.")
               .build());
@@ -677,6 +707,7 @@ public class TypeChecker
           // NOTE: From is always larger than to
           var rangeSize = (from - to) + 1;
           if (rangeSize < 1) {
+            setFormatDefinitionEmptyFieldsToError(definition);
             addErrorAndStopChecking(error("Invalid Range", range)
                 .locationDescription(range, "Range must span more than one bit but was %s",
                     fieldBitWidth)
@@ -687,6 +718,7 @@ public class TypeChecker
 
           // Check range is not out of bounds.
           if (from < 0 || from >= bitWidth || to < 0 || to > bitWidth) {
+            setFormatDefinitionEmptyFieldsToError(definition);
             addErrorAndStopChecking(error("Invalid Range", range)
                 .locationDescription(range,
                     "Provided range `%d..%d` out of bounds for available range `%d..0`",
@@ -700,6 +732,7 @@ public class TypeChecker
         }
 
         if (fieldBitWidth < 1) {
+          setFormatDefinitionEmptyFieldsToError(definition);
           addErrorAndStopChecking(error("Invalid Field", rangeField)
               .description("Field must be at least one bit but was %s", fieldBitWidth)
               .build());
@@ -712,6 +745,7 @@ public class TypeChecker
           // Verify the received type with the one provided in the literal.
           var rangeBitsType = Type.bits(fieldBitWidth);
           if (!canImplicitCast(rangeField.type, rangeBitsType)) {
+            setFormatDefinitionEmptyFieldsToError(definition);
             addErrorAndStopChecking(error("Type Mismatch", rangeField)
                 .description("Type declared as `%s`, but the range is `%s`", rangeField.type,
                     rangeBitsType)
