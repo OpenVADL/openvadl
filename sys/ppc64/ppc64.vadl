@@ -432,14 +432,12 @@ instruction set architecture PPC64SFS = {
      fxm(3) as SNibble, fxm(2) as SNibble,
      fxm(1) as SNibble, fxm(0) as SNibble)
 
-  // TODO: remove
-  constant msrtrap : Bits<64> = 0x8000000000001000
   // triggered by the tw and twi instructions if at least one trap condition evaluates to true
   exception Trap () = {
     SRR0 := PC
     SRR1 := (MSR(63..31), 0 as Nibble, MSR(26..22), 0 as Nibble, 1 as Bits<1>, 0 as Bits<1>, MSR(15..0))
     PC   := 0x0000'0000'0000'0700
-    MSR  := msrtrap
+    MSR  := 0x8000000000001000
   }
 
   // triggered when a privileged instruction gets called in an unprivileged processor state
