@@ -16,7 +16,6 @@
 
 package vadl.viam.graph.control;
 
-import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.SideEffectNode;
@@ -39,10 +38,5 @@ public class StageEndNode extends AbstractEndNode {
   @Override
   public Node shallowCopy() {
     return new StageEndNode(sideEffects());
-  }
-
-  @Override
-  public void accept(GraphNodeVisitor visitor) {
-    visitor.visit(this);
   }
 }

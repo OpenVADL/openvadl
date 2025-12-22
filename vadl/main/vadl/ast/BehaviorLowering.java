@@ -1198,6 +1198,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             BuiltInTable.builtIns().filter(b -> b.name().equals(subCall.id.name)).findFirst().get();
         var call = new MiaBuiltInCall(builtin, new NodeList<>(exprBeforeSubcall),
             builtin.returns(List.of(MicroArchitectureType.instruction())));
+        call.setSourceLocation(subCall.location());
         if (subCall.argsIndices.size() > 0) {
           for (var arg : subCall.argsIndices.getFirst().values) {
             var viamArg = viamLowering.fetch(

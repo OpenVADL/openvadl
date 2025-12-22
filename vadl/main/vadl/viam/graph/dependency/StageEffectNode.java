@@ -19,7 +19,6 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
-import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
@@ -69,8 +68,4 @@ public class StageEffectNode extends SideEffectNode {
     return new StageEffectNode(miaCall, condition);
   }
 
-  @Override
-  public <T extends GraphNodeVisitor> void accept(T visitor) {
-    visitor.visit(this);
-  }
 }

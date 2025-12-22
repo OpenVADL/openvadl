@@ -1932,7 +1932,7 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
 
   }
 
-  static final class SubCall {
+  static final class SubCall implements WithLocation {
     Identifier id;
     List<Arguments> argsIndices;
 
@@ -1980,6 +1980,14 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
       return Objects.hash(id, argsIndices);
     }
 
+    @Override
+    public SourceLocation location() {
+      var location = id.location();
+      if (!argsIndices.isEmpty()) {
+        location = location.join(argsIndices.getLast().location);
+      }
+      return location;
+    }
   }
 }
 

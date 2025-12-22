@@ -801,7 +801,9 @@ public abstract class Node implements WithLocation {
    *     Use {@link vadl.javaannotations.DispatchFor} instead.
    */
   @Deprecated
-  public abstract <T extends GraphNodeVisitor> void accept(T visitor);
+  public <T extends GraphNodeVisitor> void accept(T visitor) {
+    // deprecated and not used anymore (except for some LCB nodes)
+  }
 
   private void verifyAllEdges() {
     inputs().forEach(this::verifyInput);
