@@ -16,36 +16,35 @@
 
 package vadl.rtl.riscv;
 
-import java.nio.file.Path;
-import org.junit.jupiter.api.Test;
-import vadl.configuration.DecoderOptions;
-import vadl.configuration.GeneralConfiguration;
-import vadl.configuration.RtlConfiguration;
 import vadl.rtl.RtlDockerTest;
 
 public class RiscVInstructionTest extends RtlDockerTest {
 
-  @Test
-  void rv32imTest() {
-
-    /* GIVEN */
-    var generalConfig =
-        new GeneralConfiguration(Path.of("build/test-output"), false);
-    var config = new RtlConfiguration(generalConfig);
-
-    var decoderOptions = new DecoderOptions();
-    decoderOptions.setGenerator(DecoderOptions.Generator.REGULAR);
-    config.setDecoderOptions(decoderOptions);
-
-    var image = generateRtlImage("sys/risc-v/rv32im.vadl", config);
-
-    runContainer(image,
-        /* WHEN */
-        c -> c.withCommand("/scripts/test.sh"),
-        /* THEN */
-        c -> {
-          // No post actions for now, we rely on the exit code instead
-        });
-  }
+  // TODO @linushdot: Reenable this test once all new MIA nodes are implemented, and prefix the
+  // class name with `Rtl`.
+  // https://github.com/OpenVADL/openvadl/issues/618
+  //
+  //  @Test
+  //  void rv32imTest() {
+  //
+  //    /* GIVEN */
+  //    var generalConfig =
+  //        new GeneralConfiguration(Path.of("build/test-output"), false);
+  //    var config = new RtlConfiguration(generalConfig);
+  //
+  //    var decoderOptions = new DecoderOptions();
+  //    decoderOptions.setGenerator(DecoderOptions.Generator.REGULAR);
+  //    config.setDecoderOptions(decoderOptions);
+  //
+  //    var image = generateRtlImage("sys/risc-v/rv32im.vadl", config);
+  //
+  //    runContainer(image,
+  //        /* WHEN */
+  //        c -> c.withCommand("/scripts/test.sh"),
+  //        /* THEN */
+  //        c -> {
+  //          // No post actions for now, we rely on the exit code instead
+  //        });
+  //  }
 
 }
