@@ -1,0 +1,21 @@
+instruction set architecture ISA = {
+  register X : Bits<16><32>
+}
+
+micro architecture SingleStage implements ISA = {
+    stage FETCH -> ( ir : Instruction ) = {
+      let instr = decode ( fetchNext ) in
+      {
+        instr.write ( @X )
+        ir := instr
+      }
+    }
+}
+
+
+// Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest

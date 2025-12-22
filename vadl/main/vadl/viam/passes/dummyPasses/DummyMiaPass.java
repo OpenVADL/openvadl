@@ -51,9 +51,9 @@ public class DummyMiaPass extends Pass {
       return null;
     }
 
-    var mip = viam.processor().orElse(null);
+    var isa = viam.isa().orElse(null);
 
-    if (mip == null) {
+    if (isa == null) {
       // if there is no mip, we just do nothing
       return null;
     }
@@ -65,9 +65,9 @@ public class DummyMiaPass extends Pass {
 
     viam.add(
         switch (dummyMia) {
-          case single -> SingleStageDummyMia.mia(mip);
-          case three -> ThreeStageDummyMia.mia(viam, mip);
-          case five -> FiveStageDummyMia.mia(viam, mip);
+          case single -> SingleStageDummyMia.mia(isa);
+          case three -> ThreeStageDummyMia.mia(viam, isa);
+          case five -> FiveStageDummyMia.mia(viam, isa);
         }
     );
 

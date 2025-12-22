@@ -65,7 +65,7 @@ public class RtlEnricherCollection {
       forType(DefinitionEntity.class, (defEntity, passResults) -> {
         if (defEntity.origin() instanceof MicroArchitecture mia) {
           var mappingExt = mia.extension(MiaMapping.class);
-          var isaExt = mia.processor().isa().extension(InstructionProgressGraphExtension.class);
+          var isaExt = mia.isa().extension(InstructionProgressGraphExtension.class);
           if (mappingExt != null && isaExt != null) {
             var info = InfoUtils.createGraphModal(isaExt.ipg().name, isaExt.ipg().name,
                 viz(isaExt.ipg(), mappingExt));

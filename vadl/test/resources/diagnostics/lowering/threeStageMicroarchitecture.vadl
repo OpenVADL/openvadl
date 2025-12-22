@@ -1,0 +1,40 @@
+instruction set architecture ISA = {
+  register X : Bits<16><32>
+  memory Mem : Bits<32> -> Bits<8>
+}
+
+micro architecture SingleStage implements ISA = {
+   stage IF -> ( fr : FetchResult ) =
+   {
+     fr := fetchNext
+   }
+
+  stage ID -> ( ir : Instruction ) =
+  {
+    let instr = decode( IF.fr ) in
+    {
+      //instr.readOrForward( @X, @bypass )
+      instr.read( @X )
+      ir := instr
+    }
+  }
+
+  stage EX -> ( ir : Instruction ) =
+  {
+    let instr = ID.ir in
+    {
+      //instr.results( @X, @bypass )
+      instr.read( @Mem )
+      instr.write ( @X )
+      ir := instr
+    }
+  }
+}
+
+
+// Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest

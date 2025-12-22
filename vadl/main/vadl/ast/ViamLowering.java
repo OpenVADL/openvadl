@@ -69,8 +69,10 @@ import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.Logic;
 import vadl.viam.Memory;
 import vadl.viam.MemoryRegion;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.Procedure;
 import vadl.viam.Processor;
@@ -78,7 +80,10 @@ import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
+import vadl.viam.Signal;
 import vadl.viam.Specification;
+import vadl.viam.Stage;
+import vadl.viam.StageOutput;
 import vadl.viam.annotations.AlignmentAnnotation;
 import vadl.viam.asm.AsmDirectiveMapping;
 import vadl.viam.asm.AsmModifier;
@@ -1464,8 +1469,30 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(MicroArchitectureDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    var identifier = generateIdentifier(definition.viamId, definition.identifier());
+    var isa = visitIsa(
+        (InstructionSetDefinition) requireNonNull(definition.isa.target()));
+
+    var children = definition.definitions.stream().map(this::fetch).filter(Optional::isPresent)
+        .map(Optional::orElseThrow).toList();
+    var stages = filterAndCastToInstance(children, Stage.class);
+    var logic = filterAndCastToInstance(children, Logic.class);
+    var signals = filterAndCastToInstance(children, Signal.class);
+    var registers = filterAndCastToInstance(children, RegisterTensor.class);
+    var memories = filterAndCastToInstance(children, Memory.class);
+    var functions = filterAndCastToInstance(children, Function.class);
+
+    return Optional.of(new MicroArchitecture(
+            identifier,
+            isa,
+            stages,
+            logic,
+            signals,
+            registers,
+            memories,
+            functions
+        )
+    );
   }
 
   @Override
@@ -1711,8 +1738,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(StageDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    var identifier = generateIdentifier(definition.viamId, definition.identifier());
+    var behaivor = new BehaviorLowering(this).getStageGraph(definition.statement,
+        definition.viamId + "::behavior");
+    return Optional.of(new Stage(identifier, behaivor, List.of()));
   }
 
   @Override
@@ -1738,6 +1767,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var value = constantEvaluator.eval(definition.size).toViamConstant().intValue();
     return Optional.of(
         new Abi.AbstractClangType.NumericClangType(typeName, value, definition.location()));
+  }
+
+  @Override
+  public Optional<vadl.viam.Definition> visit(StageOutputDefinition definition) {
+    var identifier = generateIdentifier(definition.viamId, definition.identifier());
+    var type = getViamType(definition.typeLiteral.type());
+    return Optional.of(
+        new StageOutput(identifier, type));
   }
 
   @Override

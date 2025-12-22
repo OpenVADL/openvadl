@@ -1101,6 +1101,12 @@ PRODUCTIONS
                                        } .)
   .
 
+  resourceReference<out ResourceReferenceExression expr>   (. var start = nextTokenLoc(); .)
+  =
+  SYM_AT
+  identifier<out var id>                                  (. expr = new ResourceReferenceExression(id, start.join(lastTokenLoc())); .)
+  .
+
   macroInstructionDefinition<out Definition def> (. var start = nextTokenLoc(); .)
   =                                              (. MacroInstructionDefinition.MacroBehaviorKind kind = null; List<Parameter> inputs = List.of(); .)
   ( TRANSLATION                                  (. kind = MacroInstructionDefinition.MacroBehaviorKind.TRANSLATION; .)
@@ -1139,10 +1145,28 @@ PRODUCTIONS
     statement<out Statement stmt> (. def = new PipelineDefinition(id, outputs, stmt, start.join(lastTokenLoc())); .)
   .
 
+  stageoutput<out StageOutputDefinition output>
+  = identifier<out Identifier name>
+    SYM_COLON
+    typeLiteral<out TypeLiteral type> (. output = new StageOutputDefinition(name, type); .)
+  .
+
+  stageoutputs<out List<StageOutputDefinition> outputs>   (. outputs = new ArrayList<>(); .)
+  =     SYM_PAREN_OPEN
+        [
+          stageoutput<out StageOutputDefinition output>   (. outputs.add(output); .)
+          {
+            SYM_COMMA
+            stageoutput<out StageOutputDefinition next>   (. outputs.add(next); .)
+          }
+        ]
+        SYM_PAREN_CLOSE
+  .
+
   stageDefinition<out Definition def> (. var start = nextTokenLoc(); .)
   = STAGE
-    identifier<out Identifier id> (. List<Parameter> outputs = List.of(); .)
-    [ SYM_ARROW parameters<out outputs> ]
+    identifier<out Identifier id> (. List<StageOutputDefinition> outputs = List.of(); .)
+    [ SYM_ARROW stageoutputs<out outputs> ]
     SYM_EQ
     statement<out Statement stmt> (. def = new StageDefinition(id, outputs, stmt, start.join(lastTokenLoc())); .)
   .
@@ -1658,6 +1682,7 @@ PRODUCTIONS
   | groupedExpression<out expr>
   | IF(isUnaryOperator(la) || isMacroReplacementOfType(this, BasicSyntaxType.UN_OP))
     unary<out expr, allowedOps>
+  | resourceReference<out expr>
   | ifExpression<out expr, allowedOps>
   | letExpression<out expr, allowedOps>
   | existsExpression<out expr>

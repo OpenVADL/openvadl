@@ -226,6 +226,11 @@ public class Ungrouper
   }
 
   @Override
+  public Expr visit(ResourceReferenceExression expr) {
+    return expr;
+  }
+
+  @Override
   public Void visit(ConstantDefinition definition) {
     ungroupAnnotations(definition);
     definition.value = definition.value.accept(this);
@@ -461,7 +466,11 @@ public class Ungrouper
 
   @Override
   public Void visit(Parameter definition) {
-    ungroupAnnotations(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(StageOutputDefinition definition) {
     return null;
   }
 

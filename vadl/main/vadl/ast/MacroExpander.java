@@ -509,6 +509,12 @@ class MacroExpander
   }
 
   @Override
+  public Expr visit(ResourceReferenceExression expr) {
+    return new ResourceReferenceExression((Identifier) expandExpr(expr.resource),
+        copyLoc(expr.location));
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
     var id = expandId(definition.identifier);
     var value = expandExpr(definition.value);
@@ -657,6 +663,13 @@ class MacroExpander
         size,
         copyLoc(abiClangNumericTypeDefinition.loc)
     ).withAnnotations(expandAnnotations(abiClangNumericTypeDefinition.annotations));
+  }
+
+  @Override
+  public Definition visit(StageOutputDefinition definition) {
+    var name = (Identifier) expandId(definition.identifier);
+    var type = (TypeLiteral) expandExpr(definition.typeLiteral);
+    return new StageOutputDefinition(name, type);
   }
 
   @Override
@@ -895,7 +908,7 @@ class MacroExpander
 
   @Override
   public Definition visit(MicroArchitectureDefinition definition) {
-    return new MicroArchitectureDefinition(definition.id, definition.processor,
+    return new MicroArchitectureDefinition(definition.id, definition.isa,
         expandDefinitions(definition.definitions), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
@@ -923,9 +936,10 @@ class MacroExpander
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
+
   @Override
   public Definition visit(StageDefinition definition) {
-    return new StageDefinition(definition.id, expandParams(definition.outputs),
+    return new StageDefinition(definition.id, expandStageOutputs(definition.outputs),
         definition.statement.accept(this), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
@@ -1317,6 +1331,13 @@ class MacroExpander
     expandedParams.replaceAll(param ->
         new Parameter(param.identifier(), (TypeLiteral) expandExpr(param.typeLiteral)));
     return expandedParams;
+  }
+
+  private List<StageOutputDefinition> expandStageOutputs(List<StageOutputDefinition> outputs) {
+    var expanded = new ArrayList<>(outputs);
+    expanded.replaceAll(param ->
+        new StageOutputDefinition(param.identifier(), (TypeLiteral) expandExpr(param.typeLiteral)));
+    return expanded;
   }
 
   private void reportError(String error, SourceLocation location) {

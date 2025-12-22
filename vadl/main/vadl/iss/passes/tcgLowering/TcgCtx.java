@@ -40,6 +40,7 @@ import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.StageEffectNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
@@ -179,6 +180,11 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
     @Handler
     List<TcgVRefNode> handle(WriteStageOutputNode toHandle) {
       throw new IllegalStateException("WriteStageOutputNode should not exist here.");
+    }
+
+    @Handler
+    List<TcgVRefNode> handle(StageEffectNode toHandle) {
+      throw new IllegalStateException("StageEffectNode should not exist here.");
     }
 
     @Handler

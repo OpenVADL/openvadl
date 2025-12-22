@@ -221,6 +221,8 @@ interface DefinitionVisitor<R> {
   R visit(AbiClangTypeDefinition abiClangTypeDefinition);
 
   R visit(AbiClangNumericTypeDefinition abiClangNumericTypeDefinition);
+
+  R visit(StageOutputDefinition stageOutputDefinition);
 }
 
 /**
@@ -268,14 +270,8 @@ class Parameter extends Definition implements IdentifiableNode, TypedNode {
     }
 
     builder.append("(");
-    for (int i = 0; i < parameters.size(); i++) {
-      if (i != 0) {
-        builder.append(", ");
-      }
-      parameters.get(i).prettyPrint(indent, builder);
-    }
+    prettyPrintJoin(", ", parameters, indent, builder);
     builder.append(")");
-
   }
 
   @Override
@@ -4365,15 +4361,16 @@ class CpuProcessDefinition extends Definition {
 
 class MicroArchitectureDefinition extends Definition implements IdentifiableNode {
   Identifier id;
-  IsId processor;
+  @Child
+  IsId isa;
   @Child
   List<Definition> definitions;
   SourceLocation loc;
 
-  MicroArchitectureDefinition(Identifier id, IsId processor, List<Definition> definitions,
+  MicroArchitectureDefinition(Identifier id, IsId isa, List<Definition> definitions,
                               SourceLocation loc) {
     this.id = id;
-    this.processor = processor;
+    this.isa = isa;
     this.definitions = definitions;
     this.loc = loc;
   }
@@ -4404,7 +4401,7 @@ class MicroArchitectureDefinition extends Definition implements IdentifiableNode
     builder.append("micro architecture ");
     id.prettyPrint(0, builder);
     builder.append(" implements ");
-    processor.prettyPrint(0, builder);
+    isa.prettyPrint(0, builder);
     builder.append(" = {\n");
     prettyPrintDefinitions(indent + 1, builder, definitions);
     builder.append(prettyIndentString(indent)).append("}\n");
@@ -4420,13 +4417,13 @@ class MicroArchitectureDefinition extends Definition implements IdentifiableNode
     }
     MicroArchitectureDefinition that = (MicroArchitectureDefinition) o;
     return Objects.equals(id, that.id)
-        && Objects.equals(processor, that.processor)
+        && Objects.equals(isa, that.isa)
         && Objects.equals(definitions, that.definitions);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, processor, definitions);
+    return Objects.hash(id, isa, definitions);
   }
 
 }
@@ -4665,15 +4662,89 @@ class PipelineDefinition extends Definition implements IdentifiableNode {
   }
 }
 
+class StageOutputDefinition extends Definition implements IdentifiableNode, TypedNode {
+  Identifier identifier;
+  @Child
+  TypeLiteral typeLiteral;
+
+  public StageOutputDefinition(Identifier identifier, TypeLiteral typeLiteral) {
+    this.identifier = identifier;
+    this.typeLiteral = typeLiteral;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public Identifier identifier() {
+    return identifier;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    identifier.prettyPrint(indent, builder);
+    builder.append(" : ");
+    typeLiteral.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return identifier.location().join(typeLiteral.location());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    StageOutputDefinition output = (StageOutputDefinition) o;
+    return identifier.equals(output.identifier)
+        && typeLiteral.equals(output.typeLiteral);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = identifier.hashCode();
+    result = 31 * result + typeLiteral.hashCode();
+    return result;
+  }
+
+  @Override
+  public Type type() {
+    return typeLiteral.type();
+  }
+}
+
+/// A definition that describes a stage in the micro architecture. Quite common are stages like
+/// fetch, execute, writeback. But obviously more or less can be defined.
+///
+/// ```
+/// stage ISS -> ( ir : Instruction ) =
+///   {
+///     let instr = decode ( fetchNext ) in
+///     {
+///       instr.write
+///       ir := instr
+///     }
+///   }
+/// ```
 class StageDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   @Child
-  List<Parameter> outputs;
+  List<StageOutputDefinition> outputs;
   @Child
   Statement statement;
   SourceLocation loc;
 
-  StageDefinition(Identifier id, List<Parameter> outputs, Statement statement,
+  StageDefinition(Identifier id, List<StageOutputDefinition> outputs, Statement statement,
                   SourceLocation loc) {
     this.id = id;
     this.outputs = outputs;
@@ -4703,7 +4774,9 @@ class StageDefinition extends Definition implements IdentifiableNode {
     builder.append("stage ");
     id.prettyPrint(0, builder);
     if (!outputs.isEmpty()) {
-      Parameter.prettyPrintMultiple(indent, outputs, builder);
+      builder.append(" -> (");
+      prettyPrintJoin(", ", outputs, indent, builder);
+      builder.append(")");
     }
     builder.append(" =\n");
     statement.prettyPrint(indent + 1, builder);

@@ -46,6 +46,9 @@ import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
+import vadl.types.FetchResultType;
+import vadl.types.InstructionType;
+import vadl.types.MicroArchitectureType;
 import vadl.types.SIntType;
 import vadl.types.StatusType;
 import vadl.types.StringType;
@@ -73,7 +76,6 @@ public class TypeChecker
     implements DefinitionVisitor<Void>, StatementVisitor<Void>, ExprVisitor<Void> {
 
   private BranchStrategy branchStrategy = BranchStrategy.ALL;
-
 
   /**
    * Describes whether all branches are checked and the result of all branches must be equal, or
@@ -625,10 +627,39 @@ public class TypeChecker
     return null;
   }
 
+  private void setFormatDefinitionEmptyFieldsToError(FormatDefinition definition) {
+    definition.fields.forEach(field -> {
+      switch (field) {
+        case TypedFormatField typedField -> {
+          if (typedField.typeLiteral.type == null) {
+            typedField.typeLiteral.type = new InternalErrorType();
+          }
+        }
+        case RangeFormatField rangeField -> {
+          if (rangeField.type == null) {
+            rangeField.type = new InternalErrorType();
+          }
+        }
+
+        case DerivedFormatField derivedField -> {
+          if (derivedField.expr.type == null) {
+            derivedField.expr.type = new InternalErrorType();
+          }
+        }
+
+        default -> throw new IllegalArgumentException(
+            "Unknown format field type: " + field.getClass().getSimpleName());
+      }
+
+    });
+  }
+
   @Override
   public Void visit(FormatDefinition definition) {
     var type = check(definition.typeLiteral);
     if (!(type instanceof BitsType bitsType)) {
+      definition.typeLiteral.type = new InternalErrorType();
+      setFormatDefinitionEmptyFieldsToError(definition);
       // Not actually thrown here but used to signal that this if will never suceed.
       throw addErrorAndStopChecking(typeMismatchError(definition.typeLiteral, "bits type", type));
     }
@@ -642,6 +673,7 @@ public class TypeChecker
         var fieldType = check(typedField.typeLiteral);
 
         if (!(fieldType instanceof BitsType fieldBitsType)) {
+          setFormatDefinitionEmptyFieldsToError(definition);
           throw addErrorAndStopChecking(error("Bits Type expected", typedField.typeLiteral)
               .description("Format fields can only be assigned a bits type.")
               .build());
@@ -675,6 +707,7 @@ public class TypeChecker
           // NOTE: From is always larger than to
           var rangeSize = (from - to) + 1;
           if (rangeSize < 1) {
+            setFormatDefinitionEmptyFieldsToError(definition);
             addErrorAndStopChecking(error("Invalid Range", range)
                 .locationDescription(range, "Range must span more than one bit but was %s",
                     fieldBitWidth)
@@ -685,6 +718,7 @@ public class TypeChecker
 
           // Check range is not out of bounds.
           if (from < 0 || from >= bitWidth || to < 0 || to > bitWidth) {
+            setFormatDefinitionEmptyFieldsToError(definition);
             addErrorAndStopChecking(error("Invalid Range", range)
                 .locationDescription(range,
                     "Provided range `%d..%d` out of bounds for available range `%d..0`",
@@ -698,6 +732,7 @@ public class TypeChecker
         }
 
         if (fieldBitWidth < 1) {
+          setFormatDefinitionEmptyFieldsToError(definition);
           addErrorAndStopChecking(error("Invalid Field", rangeField)
               .description("Field must be at least one bit but was %s", fieldBitWidth)
               .build());
@@ -710,6 +745,7 @@ public class TypeChecker
           // Verify the received type with the one provided in the literal.
           var rangeBitsType = Type.bits(fieldBitWidth);
           if (!canImplicitCast(rangeField.type, rangeBitsType)) {
+            setFormatDefinitionEmptyFieldsToError(definition);
             addErrorAndStopChecking(error("Type Mismatch", rangeField)
                 .description("Type declared as `%s`, but the range is `%s`", rangeField.type,
                     rangeBitsType)
@@ -1024,6 +1060,12 @@ public class TypeChecker
           .build();
     }
 
+    return null;
+  }
+
+  @Override
+  public Void visit(StageOutputDefinition stageOutputDefinition) {
+    check(stageOutputDefinition.typeLiteral);
     return null;
   }
 
@@ -2184,7 +2226,12 @@ public class TypeChecker
 
   @Override
   public Void visit(MicroArchitectureDefinition definition) {
-    throwUnimplemented(definition);
+    if (!(definition.isa.target() instanceof InstructionSetDefinition)) {
+      throw error("ISA required", definition.isa)
+          .locationDescription(definition.isa, "A MIA implements an ISA but this points to a %s",
+              requireNonNull(definition.isa.target()).getClass().getSimpleName()).build();
+    }
+    definition.definitions.forEach(this::check);
     return null;
   }
 
@@ -2208,7 +2255,20 @@ public class TypeChecker
 
   @Override
   public Void visit(StageDefinition definition) {
-    throwUnimplemented(definition);
+    definition.outputs.forEach(this::check);
+    definition.outputs.forEach(output -> {
+      if (!(output.type() instanceof InstructionType)
+          && !(output.type() instanceof FetchResultType)) {
+        addErrorAndStopChecking(
+            error("Type Mismatch", output)
+                .description(
+                    "The type of a stage output must be an InstructionType or a FetchResultType.")
+                .build());
+      }
+    });
+
+    check(definition.statement);
+
     return null;
   }
 
@@ -2372,6 +2432,12 @@ public class TypeChecker
       return;
     }
 
+    if (origin instanceof StageOutputDefinition output) {
+      check(output);
+      expr.type = output.type();
+      return;
+    }
+
     if (origin != null) {
       // It's not a builtin but we don't handle it yet.
       // We might be here from a call expr and it might be necessary to handle the call for another
@@ -2388,7 +2454,7 @@ public class TypeChecker
     // arguments.
     var matchingBuiltins = BuiltInTable.builtIns()
         .filter(b -> b.signature().argTypeClasses().isEmpty())
-        .filter(b -> b.name().toLowerCase().equals(innerName))
+        .filter(b -> b.name().equals(innerName))
         .toList();
 
     if (matchingBuiltins.size() == 1) {
@@ -2783,14 +2849,13 @@ public class TypeChecker
     var base = expr.baseType.pathToString();
 
     // 1. Check whether the base exists.
-    var builtinBases = List.of("Bool", "String", "Bits", "UInt", "SInt");
     var customTarget = expr.symbolTable().findAs(expr.baseType, Node.class);
     if (!(customTarget instanceof UsingDefinition) && !(customTarget instanceof FormatDefinition)) {
       customTarget = null;
     }
 
-    if (!builtinBases.contains(base) && customTarget == null) {
-      var candidateTypes = new ArrayList<>(builtinBases);
+    if (!Type.builtinTypeBases.contains(base) && customTarget == null) {
+      var candidateTypes = new ArrayList<>(Type.builtinTypeBases);
       candidateTypes.addAll(
           expr.symbolTable().allSymbolNamesOf(FormatDefinition.class, UsingDefinition.class));
       var suggestions =
@@ -2829,7 +2894,10 @@ public class TypeChecker
     // 3. Create the builtin types
     Map<String, Supplier<Type>> unSizedBuiltins = Map.of(
         "Bool", Type::bool,
-        "String", Type::string);
+        "String", Type::string,
+        "Instruction", MicroArchitectureType::instruction,
+        "FetchResult", MicroArchitectureType::fetchResult
+    );
 
     if (unSizedBuiltins.containsKey(base)) {
       if (!sizes.isEmpty()) {
@@ -3193,7 +3261,6 @@ public class TypeChecker
         if (!allowedStatusfields.contains(fieldName)) {
           var suggestions = Levenshtein.sortAll(fieldName, allowedStatusfields);
           addErrorAndStopChecking(error("Unknown status field `%s`".formatted(fieldName), expr)
-              .note("Allowed fields are: %s", String.join(", ", allowedStatusfields))
               .help("Maybe you meant one of these: %s", String.join(", ", suggestions))
               .build());
         }
@@ -3201,9 +3268,61 @@ public class TypeChecker
         subCall.computedStatusIndex = allowedStatusfields.indexOf(fieldName);
         visitSliceIndexCall(expr, fieldType, subCall.argsIndices);
         type = expr.type;
+      } else if (type instanceof InstructionType) {
+        var allowedStatusfields =
+            List.of("address", "read", "unknown", "compute", "verify", "write");
+        if (!allowedStatusfields.contains(fieldName)) {
+          var suggestions = Levenshtein.sortAll(fieldName, allowedStatusfields);
+          addErrorAndStopChecking(error("Unknown status field `%s`".formatted(fieldName), expr)
+              .help("Maybe you meant one of these: %s", String.join(", ", suggestions))
+              .build());
+        }
+
+        expr.type = Type.void_();
+        var argumentfreeFields = List.of("unknown", "compute", "verify");
+        if (argumentfreeFields.contains(fieldName)) {
+          if (!subCall.argsIndices.isEmpty()) {
+            addErrorAndStopChecking(
+                error("Wrong Argument Number",
+                    SourceLocation.join(subCall.argsIndices.stream().map(a -> a.location).toList()))
+                    .description("This subcall doesn't take any arguments.")
+                    .build());
+          }
+          return;
+        } else {
+          if (subCall.argsIndices.size() != 1) {
+            addErrorAndStopChecking(
+                error("Wrong Argument Number",
+                    subCall.id)
+                    .description("This subcall expects exactly one argument.")
+                    .build());
+          }
+        }
+      } else if (expr.target instanceof Identifier id
+          && id.target() instanceof StageDefinition stageDef) {
+        var output =
+            stageDef.outputs.stream().filter(o -> o.identifier.name.equals(subCall.id.name))
+                .findFirst();
+        if (output.isEmpty()) {
+          var availableOutputs = stageDef.outputs.stream().map(o -> o.identifier.name).toList();
+          addErrorAndStopChecking(error("Unknown stage output", subCall.id)
+              .suggestions(Levenshtein.sortAll(subCall.id.name, availableOutputs))
+              .build());
+        }
+
+        if (!subCall.argsIndices.isEmpty()) {
+          addErrorAndStopChecking(
+              error("Wrong Argument Number",
+                  SourceLocation.join(subCall.argsIndices.stream().map(a -> a.location).toList()))
+                  .description("This subcall doesn't take any arguments.")
+                  .build());
+        }
+
+        expr.type = output.get().type();
       } else {
         addErrorAndStopChecking(error("Cannot resolve `%s`".formatted(fieldName), expr)
-            .description("Because the type up until it is not a format but `%s`",
+            .description("No subcall `%s` exists for the type `%s`",
+                fieldName,
                 requireNonNull(type))
             .build());
       }
@@ -3224,6 +3343,14 @@ public class TypeChecker
           .locationNote(expr.target, "Nothing found that can be called with this name.")
           .suggestions(suggestions);
     });
+
+
+    // A hack for stage definitions since they don't fit into our typesystem
+    if (targetSymbol instanceof SymbolTable.AstSymbol astSymbol
+        && astSymbol.origin() instanceof StageDefinition stageDef) {
+      processStageCall(expr, stageDef);
+      return null;
+    }
 
     switch (targetSymbol) {
       case SymbolTable.AstSymbol astSymbol -> processCallOfTarget(expr, astSymbol.origin());
@@ -3301,11 +3428,48 @@ public class TypeChecker
     }
   }
 
+  private void processStageCall(CallIndexExpr expr, StageDefinition callTarget) {
+    check(callTarget);
+
+    var availableOutputs = callTarget.outputs.stream().map(o -> o.identifier.name).toList();
+    if (expr.subCalls.isEmpty()) {
+      addErrorAndStopChecking(error("Missing stage output", expr)
+          .description(
+              "Stages describe outputs and you cannot just refer to a whole stage but to one of "
+                  + "the outputs.")
+          .suggestions(availableOutputs)
+          .build());
+    }
+
+    if (expr.subCalls.size() > 1) {
+      addErrorAndStopChecking(error("Too many stage outputs", expr)
+          .description(
+              "You can only refer to one stage output at a time.")
+          .build());
+    }
+
+    var subcall = expr.subCalls.getFirst();
+    var subcallName = subcall.id.name;
+
+    var output = callTarget.outputs.stream().filter(o -> o.identifier.name.equals(subcallName))
+        .findFirst();
+
+    if (output.isEmpty()) {
+      addErrorAndStopChecking(error("Unknown stage output", subcall.id)
+          .suggestions(Levenshtein.sortAll(subcallName, availableOutputs))
+          .build());
+    }
+
+    expr.type = output.get().type();
+  }
+
   private void processCallOfTarget(CallIndexExpr expr, Node callTarget) {
+
+
+    // if the target is not a typed node, we just assume that it is some expression
+    // that can be sliced.
+    // if it is a let expr, we must also only check the target
     if (!(callTarget instanceof TypedNode typedNode) || callTarget instanceof LetExpr) {
-      // if the target is not a typed node, we just assume that it is some expression
-      // that can be sliced.
-      // if it is a let expr, we must also only check the target
       expr.typeBeforeSlice = check((Expr) expr.target);
       return;
     }
@@ -3699,6 +3863,15 @@ public class TypeChecker
   @Override
   public Void visit(ExpandedAliasDefSequenceCallExpr expr) {
     throwUnimplemented(expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(ResourceReferenceExression expr) {
+    // There isn't really any type that fits here because it basically just a reference to a
+    // resource but it cannot be used like a the resource itself so it's not the type of the
+    // target resource.
+    expr.type = Type.void_();
     return null;
   }
 

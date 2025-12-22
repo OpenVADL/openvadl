@@ -22,10 +22,10 @@ import vadl.types.BuiltInTable;
 import vadl.types.MicroArchitectureType;
 import vadl.types.Type;
 import vadl.viam.Identifier;
+import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Logic;
 import vadl.viam.Memory;
 import vadl.viam.MicroArchitecture;
-import vadl.viam.Processor;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
@@ -47,7 +47,7 @@ import vadl.viam.graph.dependency.WriteStageOutputNode;
  */
 class ThreeStageDummyMia {
 
-  public static MicroArchitecture mia(Specification viam, Processor mip) {
+  public static MicroArchitecture mia(Specification viam, InstructionSetArchitecture isa) {
     var regFile = viam.isa().orElseThrow().registerTensors()
         .stream().filter(RegisterTensor::isRegisterFile).findFirst().get();
     var mem = viam.isa().orElseThrow().ownMemories().get(0);
@@ -62,7 +62,7 @@ class ThreeStageDummyMia {
 
     return new MicroArchitecture(
         ident,
-        mip,
+        isa,
         new ArrayList<>(List.of(ifStage, id, ex)),
         new ArrayList<>(List.of(bypass, predict))
     );

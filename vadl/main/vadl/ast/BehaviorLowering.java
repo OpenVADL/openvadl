@@ -44,6 +44,7 @@ import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
+import vadl.types.MicroArchitectureType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
@@ -59,10 +60,13 @@ import vadl.viam.ExceptionDef;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
+import vadl.viam.Logic;
 import vadl.viam.Memory;
 import vadl.viam.Procedure;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
+import vadl.viam.Resource;
+import vadl.viam.StageOutput;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.BranchBeginNode;
@@ -90,15 +94,18 @@ import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.StageEffectNode;
 import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
@@ -106,6 +113,7 @@ import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.graph.dependency.WriteStageOutputNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 
@@ -219,6 +227,36 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return graph;
   }
 
+  private boolean isInsideMia = false;
+
+  Graph getStageGraph(Statement stmt, String name) {
+    var graph = new Graph(name);
+    graph.setSourceLocation(stmt.location());
+    currentGraph = graph;
+
+    isInsideMia = true;
+    try {
+      var stmtCtx = stmt.accept(this);
+      var sideEffects = stmtCtx.sideEffectsOrEmptyList();
+
+      var end = graph.addWithInputs(new InstrEndNode(sideEffects));
+      end.setSourceLocation(stmt.location());
+
+      ControlNode startSuccessor = end;
+      if (stmtCtx.hasControlBlock()) {
+        var controlBlock = requireNonNull(stmtCtx.controlBlock());
+        controlBlock.lastNode().setNext(end);
+        startSuccessor = controlBlock.firstNode();
+      }
+      var start = new StartNode(startSuccessor);
+      start.setSourceLocation(stmt.location());
+      graph.addWithInputs(start);
+
+      return graph;
+    } finally {
+      isInsideMia = false;
+    }
+  }
 
   private static Type getViamType(Type astType) {
     return ViamLowering.getViamType(astType);
@@ -993,7 +1031,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Builtin Call
     var matchingBuiltins = BuiltInTable.builtIns()
         .filter(b -> b.signature().argTypeClasses().isEmpty())
-        .filter(b -> b.name().toLowerCase().equals(innerName))
+        .filter(b -> b.name().equals(innerName))
         .toList();
 
     if (matchingBuiltins.size() == 1) {
@@ -1154,6 +1192,27 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         var indexing =
             new TupleGetFieldNode(subCall.computedStatusIndex, resultExpr, Type.bool());
         resultExpr = visitSliceIndexCall(indexing, Type.bool(), subCall.argsIndices);
+      } else if (exprBeforeSubcall.type() == MicroArchitectureType.instruction()) {
+        // There is weired way to call functions on instructions
+        var builtin =
+            BuiltInTable.builtIns().filter(b -> b.name().equals(subCall.id.name)).findFirst().get();
+        var call = new MiaBuiltInCall(builtin, new NodeList<>(exprBeforeSubcall),
+            builtin.returns(List.of(MicroArchitectureType.instruction())));
+        call.setSourceLocation(subCall.location());
+        if (subCall.argsIndices.size() > 0) {
+          for (var arg : subCall.argsIndices.getFirst().values) {
+            var viamArg = viamLowering.fetch(
+                    requireNonNull(
+                        (vadl.ast.Definition) ((ResourceReferenceExression) arg).resource.target()))
+                .get();
+            switch (viamArg) {
+              case Resource res -> call.add(res);
+              case Logic logic -> call.add(logic);
+              default -> throw new IllegalStateException();
+            }
+          }
+        }
+        resultExpr = call;
       } else if (exprBeforeSubcall instanceof ReadResourceNode resRead) {
         var computedTarget = expr.target.path().target();
         if (computedTarget instanceof CounterDefinition) {
@@ -1235,8 +1294,22 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return result;
   }
 
+  public ExpressionNode visitStageCall(CallIndexExpr expr, StageDefinition stageDef) {
+    var subcall = expr.subCalls.get(0);
+    var output = (StageOutput) viamLowering.fetch(
+        stageDef.outputs.stream().filter(o -> o.identifier.name.equals(subcall.id.name)).findFirst()
+            .get()).get();
+    return new ReadStageOutputNode(output);
+  }
+
   @Override
   public ExpressionNode visit(CallIndexExpr expr) {
+
+    // Special handling for stage calls
+    if (expr.computedBuiltIn == null
+        && expr.computedTarget() instanceof StageDefinition stageDefinition) {
+      return visitStageCall(expr, stageDefinition);
+    }
 
     List<Expr> argExprs = AstUtils.flatArguments(expr.args());
     var args = argExprs.stream().map(this::fetch).toList();
@@ -1507,6 +1580,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
+  @Override
+  public ExpressionNode visit(ResourceReferenceExression expr) {
+    // I don't think this will ever be directly lowered.
+    throw new RuntimeException(
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+  }
+
 
   @Override
   public SubgraphContext visit(AssignmentStatement statement) {
@@ -1576,6 +1656,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
                   new ReadRegTensorNode(counterDef.registerTensor(), argExprs,
                       counterDef.registerTensor().resultType(), null), slices),
               null, null));
+
+      case StageOutput output -> List.of(
+          new WriteStageOutputNode(output, value)
+      );
 
       default -> throw new IllegalStateException("Unexpected target: " + viamTargetDef);
     };
@@ -1684,8 +1768,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(CallStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    var res = fetch(statement.expr);
+    if (isInsideMia && res instanceof MiaBuiltInCall miaCall) {
+      return SubgraphContext.of(statement, List.of(
+          new StageEffectNode(miaCall)
+      ));
+    } else {
+      // There is not a single
+      throw new IllegalStateException("Unexpected call statement: " + statement);
+    }
   }
 
   @Override

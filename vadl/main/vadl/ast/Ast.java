@@ -117,6 +117,7 @@ abstract class Node implements WithLocation {
     return " ".repeat(indentBy * indent);
   }
 
+  /// Print multiple nodes seperated by the seperator to the proivded builder
   static <T extends Node> void prettyPrintJoin(String separator, List<T> nodes, int indent,
                                                StringBuilder builder) {
     for (int i = 0; i < nodes.size(); i++) {

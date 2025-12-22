@@ -146,6 +146,8 @@ interface ExprVisitor<R> {
   R visit(ExpandedSequenceCallExpr expr);
 
   R visit(ExpandedAliasDefSequenceCallExpr expr);
+
+  R visit(ResourceReferenceExression expr);
 }
 
 final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
@@ -1930,7 +1932,7 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
 
   }
 
-  static final class SubCall {
+  static final class SubCall implements WithLocation {
     Identifier id;
     List<Arguments> argsIndices;
 
@@ -1978,6 +1980,14 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
       return Objects.hash(id, argsIndices);
     }
 
+    @Override
+    public SourceLocation location() {
+      var location = id.location();
+      if (!argsIndices.isEmpty()) {
+        location = location.join(argsIndices.getLast().location);
+      }
+      return location;
+    }
   }
 }
 
@@ -2600,6 +2610,53 @@ class ForallExpr extends Expr {
     Operation(String keyword) {
       this.keyword = keyword;
     }
+  }
+}
+
+class ResourceReferenceExression extends Expr {
+  @Child
+  Identifier resource;
+  SourceLocation location;
+
+  public ResourceReferenceExression(Identifier resource, SourceLocation location) {
+    this.resource = resource;
+    this.location = location;
+  }
+
+  @Override
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+    builder.append("@");
+    resource.prettyPrint(indent, builder);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.EX;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ResourceReferenceExression that = (ResourceReferenceExression) o;
+    return resource.equals(that.resource);
+  }
+
+  @Override
+  public int hashCode() {
+    return resource.hashCode();
   }
 }
 

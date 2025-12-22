@@ -351,3 +351,8 @@ processor Spike implements RV32IM with ABI = {
   memory region [RAM] DRAM in MEM
 
 }
+
+//[ dataBusWidth : 32 ]
+micro architecture FiveStage implements RV32IM = {
+
+}

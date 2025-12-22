@@ -26,7 +26,7 @@ import java.util.List;
  */
 public class MicroArchitecture extends Definition {
 
-  private final Processor processor;
+  private final InstructionSetArchitecture instructionSetArchitecture;
 
   // Stages and Logic elements
   private final List<Stage> stages;
@@ -42,34 +42,39 @@ public class MicroArchitecture extends Definition {
   /**
    * Create a micro architecture definition.
    *
-   * @param identifier identifier
-   * @param processor  processor definition
-   * @param stages     list of stages
-   * @param logic      list of logic elements
+   * @param identifier                 identifier
+   * @param instructionSetArchitecture processor definition
+   * @param stages                     list of stages
+   * @param logic                      list of logic elements
    */
-  public MicroArchitecture(Identifier identifier, Processor processor, List<Stage> stages,
+  public MicroArchitecture(Identifier identifier,
+                           InstructionSetArchitecture instructionSetArchitecture,
+                           List<Stage> stages,
                            List<Logic> logic) {
-    this(identifier, processor, stages, logic, new ArrayList<>(), new ArrayList<>(),
+    this(identifier, instructionSetArchitecture, stages, logic, new ArrayList<>(),
+        new ArrayList<>(),
         new ArrayList<>(), new ArrayList<>());
   }
 
   /**
    * Create a micro architecture definition.
    *
-   * @param identifier identifier
-   * @param processor  processor definition
-   * @param stages     list of stages
-   * @param logic      list of logic elements
-   * @param signals    list of signals
-   * @param registers  list of registers (tensors)
-   * @param memories   list of memories
-   * @param functions  list of functions
+   * @param identifier                 identifier
+   * @param instructionSetArchitecture processor definition
+   * @param stages                     list of stages
+   * @param logic                      list of logic elements
+   * @param signals                    list of signals
+   * @param registers                  list of registers (tensors)
+   * @param memories                   list of memories
+   * @param functions                  list of functions
    */
-  public MicroArchitecture(Identifier identifier, Processor processor, List<Stage> stages,
+  public MicroArchitecture(Identifier identifier,
+                           InstructionSetArchitecture instructionSetArchitecture,
+                           List<Stage> stages,
                            List<Logic> logic, List<Signal> signals, List<RegisterTensor> registers,
                            List<Memory> memories, List<Function> functions) {
     super(identifier);
-    this.processor = processor;
+    this.instructionSetArchitecture = instructionSetArchitecture;
     this.stages = stages;
     this.logic = logic;
     this.signals = signals;
@@ -85,8 +90,8 @@ public class MicroArchitecture extends Definition {
     }
   }
 
-  public Processor processor() {
-    return processor;
+  public InstructionSetArchitecture isa() {
+    return instructionSetArchitecture;
   }
 
   public List<Stage> stages() {

@@ -22,9 +22,8 @@ import vadl.types.BuiltInTable;
 import vadl.types.MicroArchitectureType;
 import vadl.types.Type;
 import vadl.viam.Identifier;
+import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.MicroArchitecture;
-import vadl.viam.Processor;
-import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.StageOutput;
 import vadl.viam.graph.Graph;
@@ -41,14 +40,14 @@ import vadl.viam.graph.dependency.WriteStageOutputNode;
  */
 class SingleStageDummyMia {
 
-  public static MicroArchitecture mia(Processor mip) {
+  public static MicroArchitecture mia(InstructionSetArchitecture isa) {
     var ident = Identifier.noLocation("MiA");
 
     var issStage = iss(ident.append("ISS"));
 
     return new MicroArchitecture(
         ident,
-        mip,
+        isa,
         new ArrayList<>(List.of(issStage)),
         new ArrayList<>()
     );

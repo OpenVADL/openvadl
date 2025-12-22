@@ -29,6 +29,7 @@ import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
+import vadl.viam.graph.dependency.StageEffectNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
@@ -46,7 +47,7 @@ public interface CInvalidMixins {
   @SuppressWarnings("MissingJavadocType")
   interface SideEffect
       extends WriteRegTensor, WriteMem, WriteArtificialRes, ProcCall,
-      WriteStageOutput, WriteSignal {
+      StageEffect, WriteStageOutput, WriteSignal {
 
   }
 
@@ -137,6 +138,13 @@ public interface CInvalidMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
+  interface StageEffect {
+    @Handler
+    default void handle(CGenContext<Node> ctx, StageEffectNode node) {
+      throwNotAllowed(node, "Stage effect");
+    }
+  }
 
   @SuppressWarnings("MissingJavadocType")
   interface WriteStageOutput {
