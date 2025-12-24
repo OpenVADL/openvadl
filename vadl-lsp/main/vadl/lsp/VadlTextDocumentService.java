@@ -225,14 +225,15 @@ class VadlTextDocumentService implements TextDocumentService {
           // labels (aka messages) per location
           String labelsString = item.multiLocation.primaryLocation().labels().stream()
               .map(vadl.error.Diagnostic.Message::content)
-              .collect(Collectors.joining(". "));
+              .collect(Collectors.joining("\n"));
           // messages per Diagnostic - they may offer help or give additional notes
           String messagesString = item.messages.stream()
-              .filter(m -> m.type().equals(MsgType.HELP) || m.type().equals(MsgType.NOTE))
+              .filter(m -> !m.type().equals(MsgType.PLAIN)
+                  || !m.content().contains("parser got confused at this point"))
               .map(vadl.error.Diagnostic.Message::content)
-              .collect(Collectors.joining(". "));
+              .collect(Collectors.joining("\n"));
 
-          String fullMessage = item.reason + (!labelsString.isBlank() ? ": " + labelsString : "")
+          String fullMessage = item.reason + (!labelsString.isBlank() ? "\n" + labelsString : "")
               + (!messagesString.isBlank() ? "\n" + messagesString : "");
           lspItem.setMessage(fullMessage);
           lspItems.add(lspItem);
