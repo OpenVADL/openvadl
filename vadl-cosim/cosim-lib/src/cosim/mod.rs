@@ -191,7 +191,7 @@ impl Broker {
             crate::config::ProtocolLayer::Insn => loop {
                 let c1name = self.clients[0].name_or_id();
                 let c2name = self.clients[1].name_or_id();
-                let mut reads = self.clients.iter_mut().rev().map(|client| {
+                let mut reads = self.clients.iter_mut().map(|client| {
                     let res = client
                         .shm
                         .read_buffer()
