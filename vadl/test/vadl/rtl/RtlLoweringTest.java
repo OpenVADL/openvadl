@@ -56,6 +56,7 @@ public class RtlLoweringTest extends AbstractTest {
     var generalConfig =
         new GeneralConfiguration(Path.of("build/test-output"), true);
     var config = new RtlConfiguration(generalConfig);
+    config.setDummyMia(RtlConfiguration.DummyMia.five);
 
     var decoderOptions = new DecoderOptions();
     decoderOptions.setGenerator(DecoderOptions.Generator.REGULAR);
