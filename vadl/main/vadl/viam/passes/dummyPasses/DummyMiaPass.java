@@ -47,27 +47,29 @@ public class DummyMiaPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    if (viam.mia().isPresent()) {
+    if (viam.mia().isPresent() && !viam.mia().get().stages().isEmpty()) {
+      // Mia is already defined
       return null;
     }
 
     var isa = viam.isa().orElse(null);
 
     if (isa == null) {
-      // if there is no mip, we just do nothing
+      // if there is no isa, we just do nothing
       return null;
     }
 
-    var dummyMia = RtlConfiguration.DummyMia.five;
-    if (configuration() instanceof RtlConfiguration rtlConfig) {
-      dummyMia = rtlConfig.getDummyMia();
+    if (!(configuration() instanceof RtlConfiguration rtlConfig)
+        || rtlConfig.getDummyMia() == null) {
+      // No dummy mia requested, skip this pass
+      return null;
     }
 
     viam.add(
-        switch (dummyMia) {
+        switch (rtlConfig.getDummyMia()) {
           case single -> SingleStageDummyMia.mia(isa);
           case three -> ThreeStageDummyMia.mia(viam, isa);
-          case five -> FiveStageDummyMia.mia(viam, isa);
+          case null, default -> FiveStageDummyMia.mia(viam, isa);
         }
     );
 

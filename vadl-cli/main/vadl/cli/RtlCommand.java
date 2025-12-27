@@ -37,11 +37,11 @@ import vadl.pass.PassOrders;
 )
 public class RtlCommand extends BaseCommand {
 
+  @Nullable
   @CommandLine.Option(names = {"--dummy-mia"},
       scope = INHERIT,
-      description = "Select a dummy MiA: ${COMPLETION-CANDIDATES} (stages in pipeline)",
-      defaultValue = "five")
-  RtlConfiguration.DummyMia dummyMia = RtlConfiguration.DummyMia.five;
+      description = "Select a dummy MiA: ${COMPLETION-CANDIDATES} (stages in pipeline)")
+  RtlConfiguration.DummyMia dummyMia;
 
   @CommandLine.Option(names = {"--memory"},
       scope = INHERIT,

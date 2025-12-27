@@ -93,7 +93,9 @@ public class Specification extends Definition {
    * Returns the micro architecture of the specification.
    */
   public Optional<MicroArchitecture> mia() {
-    return definitions()
+    // TODO: Once we don't need the dummy MIA anymore, read from the standard stream
+    return definitions
+        .reversed().stream()
         .filter(MicroArchitecture.class::isInstance)
         .map(MicroArchitecture.class::cast)
         .findFirst();

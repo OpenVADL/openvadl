@@ -47,7 +47,8 @@ public class RtlConfiguration extends GeneralConfiguration {
    */
   public enum DummyMia { single, three, five }
 
-  private DummyMia dummyMia = DummyMia.five;
+  @Nullable
+  private DummyMia dummyMia;
 
   /**
    * Enum to configure the external memory interface.
@@ -134,11 +135,12 @@ public class RtlConfiguration extends GeneralConfiguration {
     return Objects.requireNonNull(projectName);
   }
 
+  @Nullable
   public DummyMia getDummyMia() {
     return dummyMia;
   }
 
-  public void setDummyMia(DummyMia dummyMia) {
+  public void setDummyMia(@Nullable DummyMia dummyMia) {
     this.dummyMia = dummyMia;
   }
 
