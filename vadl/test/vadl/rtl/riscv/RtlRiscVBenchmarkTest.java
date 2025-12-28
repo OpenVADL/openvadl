@@ -34,12 +34,13 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import vadl.configuration.DecoderOptions;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
 import vadl.rtl.RtlDockerTest;
 import vadl.utils.Pair;
 
-public class RV32SynthesisBenchmarkTest extends RtlDockerTest {
+public class RtlRiscVBenchmarkTest extends RtlDockerTest {
 
   public static final String ENV_RESULT_CSV = "RTL_DEC_BENCHMARK_RESULT_HOST_PATH";
 
@@ -50,17 +51,17 @@ public class RV32SynthesisBenchmarkTest extends RtlDockerTest {
 
     // GIVEN
     var generalConfig =
-        new GeneralConfiguration(Path.of("build/test-output"), false);
+        new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
 
     var config = new RtlConfiguration(generalConfig);
-    config.setDummyMia(RtlConfiguration.DummyMia.five);
+    config.setResetVector("reset_vector");
 
     var decoderOptions = new DecoderOptions();
     decoderOptions.setGenerator(DecoderOptions.Generator.RTL_TABLE);
     config.setDecoderOptions(decoderOptions);
 
     // WHEN / THEN
-    runBenchmark("sys/risc-v/rv32im.vadl", "rv32im-rtl-table", config);
+    runBenchmark("sys/risc-v/mia/rv_5stage.vadl", "rv32im-rtl-table", config);
   }
 
   @Test
@@ -70,17 +71,17 @@ public class RV32SynthesisBenchmarkTest extends RtlDockerTest {
 
     // GIVEN
     var generalConfig =
-        new GeneralConfiguration(Path.of("build/test-output"), false);
+        new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
 
     var config = new RtlConfiguration(generalConfig);
-    config.setDummyMia(RtlConfiguration.DummyMia.five);
+    config.setResetVector("reset_vector");
 
     var decoderOptions = new DecoderOptions();
     decoderOptions.setGenerator(DecoderOptions.Generator.REGULAR);
     config.setDecoderOptions(decoderOptions);
 
     // WHEN / THEN
-    runBenchmark("sys/risc-v/rv32im.vadl", "rv32im-vdt-regular", config);
+    runBenchmark("sys/risc-v/mia/rv_5stage.vadl", "rv32im-vdt-regular", config);
   }
 
   @Test
@@ -90,17 +91,17 @@ public class RV32SynthesisBenchmarkTest extends RtlDockerTest {
 
     // GIVEN
     var generalConfig =
-        new GeneralConfiguration(Path.of("build/test-output"), false);
+        new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
 
     var config = new RtlConfiguration(generalConfig);
-    config.setDummyMia(RtlConfiguration.DummyMia.five);
+    config.setResetVector("reset_vector");
 
     var decoderOptions = new DecoderOptions();
     decoderOptions.setGenerator(DecoderOptions.Generator.IRREGULAR);
     config.setDecoderOptions(decoderOptions);
 
     // WHEN / THEN
-    runBenchmark("sys/risc-v/rv32im.vadl", "rv32im-vdt-irregular", config);
+    runBenchmark("sys/risc-v/mia/rv_5stage.vadl", "rv32im-vdt-irregular", config);
   }
 
   /**
@@ -122,7 +123,7 @@ public class RV32SynthesisBenchmarkTest extends RtlDockerTest {
     );
 
     // WHEN
-    runBenchmarkWithSpec("sys/risc-v/rv32im.vadl", config, resultMappings);
+    runBenchmarkWithSpec(spec, config, resultMappings);
 
     // THEN
 

@@ -1,19 +1,30 @@
+## Map the DECODE stage to the Sky130 cell library for ASIC area estimates
+
 # read design
 read_verilog -sv build/DECODE.sv
 
 # elaborate design hierarchy
 hierarchy -check -top DECODE
 
-# the high-level stuff
-proc; opt; fsm; opt; memory; opt
+## High level translations
 
-# mapping to internal cell library
+# Replace the processes in the design with multiplexers, flip-flops and latches.
+# opt: perform a series of trivial optimizations and cleanups
+proc; opt
+
+# Extract and optimize finite state machines
+fsm; opt
+
+# Translate memories to basic cells
+memory; opt
+
+## Mapping to internal gate library
 techmap; opt
 
-# mapping flip-flops to sky130_fd_sc_hd__tt_025C_1v80.lib
+# Map flip-flops to sky130_fd_sc_hd__tt_025C_1v80.lib cells
 dfflibmap -liberty /scripts/bench/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 
-# mapping logic to sky130_fd_sc_hd__tt_025C_1v80.lib
+# Map logic to sky130_fd_sc_hd__tt_025C_1v80.lib cells
 abc -liberty /scripts/bench/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 
 # print stats

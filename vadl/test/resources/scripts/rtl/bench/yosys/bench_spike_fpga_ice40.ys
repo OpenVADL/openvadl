@@ -1,0 +1,14 @@
+# read design
+read_verilog -sv build/Spike.sv
+
+# elaborate design hierarchy
+hierarchy -check -top Spike
+
+# fpga placement
+synth_ice40 -nobram
+
+# print stats
+stat
+
+# static timing analysis
+#sta

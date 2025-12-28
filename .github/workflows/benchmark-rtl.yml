@@ -33,9 +33,10 @@ jobs:
           cache: 'gradle'
       - name: Run test
         run: |
-          ./gradlew test -i --tests "vadl.rtl.riscv.RV32SynthesisBenchmarkTest" -Dtags.include=BenchmarkTest
+          ./gradlew test -i --tests "vadl.rtl.riscv.RtlRiscVBenchmarkTest" -Dtags.include=BenchmarkTest
         env:
           isCI: true
+          # TODO: make this spec-agnostic
           RTL_DEC_BENCHMARK_RESULT_HOST_PATH: ${{ github.workspace }}/rv32im_rtl_dec_benchmarks.csv
       - name: Read
         run: cat ${{ github.workspace }}/rv32im_rtl_dec_benchmarks.csv
