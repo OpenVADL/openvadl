@@ -32,11 +32,13 @@ import vadl.iss.CosimTestUtils;
 /* Tests ppc64.vadl instructions against the QEMU ppc64 simulator.
  * Some instructions are defined in the VADL specification but are not covered by the tests.
  * These are: mfmsr, mtmsr, mfspr, mtspr, mftb and all branch instructions
- * Load/Store instructions are tested with a reduced address space (0x0000'0000'0000'0200 - 0x0000'0000'0000'FFFF)
+ * Load/Store instructions are tested with a reduced address space (0x0000'0000'0000'1000 - 0x0000'0000'0000'FFFF)
  */
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class CosimPpc64InstrTest extends CosimInstrTest {
+
+  private static final long BASE_ADDRESS_LOAD_STORE = 0x1000L;
 
   public Ppc64TestBuilder getBuilder(String name, int id) {
     return new Ppc64TestBuilder(name, id);
@@ -1066,7 +1068,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       var regSrc = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc)).sample() :
           b.anyReg().sample();
-      BigInteger val1 = b.anyImmU(15);
+      BigInteger val1 = b.anyImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE));
       BigInteger val2 = b.anyImmU(15);
       b.fillMem(val1.add(val2));
       b.fillReg(regSrc, val1);
@@ -1084,7 +1086,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       var regSrc2 = b.anyReg().sample();
       var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc1)).sample() :
           b.anyReg().sample();
-      BigInteger val1 = b.anyImmU(15);
+      BigInteger val1 = b.anyImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE));
       BigInteger val2 = b.anyImmU(15);
       b.fillMem(val1.add(val2));
       b.fillReg(regSrc1, val1);
@@ -1103,7 +1105,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2, b.anyImmU(15));
-      b.add("%s %s, %s(%s)", instruction, regSrc1, b.anyImmUFrom(15, BigInteger.valueOf(0x0200)), regSrc2);
+      b.add("%s %s, %s(%s)", instruction, regSrc1, b.anyImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE)), regSrc2);
       return b.toTestCase();
     });
   }
@@ -1117,7 +1119,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       var regSrc3 = b.anyReg().sample();
       b.fillReg(regSrc1);
-      b.fillReg(regSrc2, b.anyImmUFrom(15, BigInteger.valueOf(0x0200)));
+      b.fillReg(regSrc2, b.anyImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE)));
       b.fillReg(regSrc3, b.anyImmU(15));
       b.add("%s %s, %s, %s", instruction, regSrc1, regSrc2, regSrc3);
       return b.toTestCase();
