@@ -1,7 +1,7 @@
 include "clang/Basic/BuiltinsBase.td"
 
 class CustomTargetBuiltin<string prototype> : TargetBuiltin {
-  let Spellings = ["__builtin_[(${namespace})]" # NAME];
+  let Spellings = ["[(${namespace})]_" # NAME];
   let Prototype = prototype;
   let Features = "";
 }
