@@ -57,6 +57,7 @@ async def build_assembly(id: str, core: str) -> Path:
   la x2, tohost
   sw x1, 0(x2)
   sw x0, 4(x2)
+  j .
 
   .section .tohost, "aw", @progbits
   .align 6;

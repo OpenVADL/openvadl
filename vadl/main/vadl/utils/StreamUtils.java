@@ -24,15 +24,6 @@ import java.util.stream.IntStream;
  */
 public class StreamUtils {
 
-  public static <S, T> Gatherer<S, ?, T> only(Class<T> clazz) {
-    return Gatherer.ofSequential((ignoredState, e, downstream) -> {
-      if (clazz.isInstance(e)) {
-        downstream.push(clazz.cast(e));
-      }
-      return true;
-    });
-  }
-
   /**
    * Creates a `Gatherer` instance that filters elements based on their type, emitting only those
    * that are instances of the provided class.

@@ -146,14 +146,14 @@ class OpDecomposer {
     var processed = new HashSet<Node>();
     while (foundOne) {
       // first decompose side effects, then expressions.
-      foundOne = decomposeSideeffects() && decomposeExpressions(processed);
+      foundOne = decomposeSideeffects() || decomposeExpressions(processed);
     }
   }
 
   private boolean decomposeSideeffects() {
     // TODO: Handle WriteRegTensorNode
     var hit = behavior.getNodes(WriteResourceNode.class)
-        .filter(node -> node.writeBitWidth() >= targetSize.width)
+        .filter(node -> node.writeBitWidth() > targetSize.width)
         .findFirst();
     if (hit.isPresent()) {
       // replace the current hit with the decomposed version.

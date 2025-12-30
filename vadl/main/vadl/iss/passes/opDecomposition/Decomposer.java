@@ -88,6 +88,10 @@ class Decomposer
 
   static class Request {
     Slice slice;
+    /**
+     * The result of the decomposition request.
+     * The passed result will be used to replace the original expression.
+     */
     @Nullable
     ExpressionNode result;
 
@@ -581,11 +585,19 @@ class Decomposer
 
   @Handler
   void handle(Request rq, SliceNode toHandle) {
-    if (toHandle.value() instanceof ReadRegTensorNode) {
-      rq.result = toHandle;
-      return;
-    }
-    throw new UnsupportedOperationException("Type SliceNode not yet implemented");
+    var bitSlice = toHandle.bitSlice();
+    toHandle.ensure(bitSlice.isContinuous(),
+        "Decomposing slices with multiple parts is not yet implemented");
+
+    var slice = bitSlice.parts().findFirst().get();
+    // the request slice defines indices on the slice node's result value type.
+    // we can normalize this to the slice node's value type by shifting the indices
+    // by the slice node's lsb value, such that the requested window stays the same
+    // while removing the intermediate slice node.
+    var newReqSlice = rq.slice.shift(slice.lsb());
+
+    // we request the adjusted request slice from the slice node's value.
+    rq.result = request(toHandle.value(), newReqSlice);
   }
 
   @Handler

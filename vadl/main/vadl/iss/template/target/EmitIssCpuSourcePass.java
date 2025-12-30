@@ -79,7 +79,7 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
       sb.append("qemu_fprintf(f, \" %s:    \" TARGET_FMT_lx \"\\n\", env->%s);"
           .formatted(reg.simpleName(), regLower));
     } else if (dims.size() == 1) {
-      sb.forLoop("i", dims.getFirst().size() - 1, (_) -> {
+      sb.forLoop("i", dims.getFirst().size(), (_) -> {
         sb.callStmt("qemu_fprintf", "f", "\" %-8s \" TARGET_FMT_lx", names + "[i]",
             "env->" + regLower + "[i]");
         sb.ifStmt("i & 3 == 3", (_) ->
@@ -87,7 +87,7 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
         );
       });
     } else {
-      sb.forLoop("i", dims.getFirst().size() - 1, (_) -> {
+      sb.forLoop("i", dims.getFirst().size(), (_) -> {
         sb.callStmt("qemu_fprintf", "f", "\" %-8s \"", names + "[i]");
         sb.varDecl("uint8_t *", "p", "(uint8_t *) env->" + regLower);
         var innerSizeBytes = reg.resultType(1).bitWidth() / 8;
