@@ -315,7 +315,8 @@ public class PassOrders {
     order.add(new EmitVadlBuiltinHeaderPPFilePass(configuration));
     order.add(new vadl.lcb.template.clang.include.Basic.EmitCMakeListsPass(configuration));
     order.add(new vadl.lcb.template.clang.include.Basic.EmitBuiltinsTableGenPass(configuration));
-    order.add(new vadl.lcb.template.clang.include.Basic.EmitTargetBuiltinsHeaderPass(configuration));
+    order.add(
+        new vadl.lcb.template.clang.include.Basic.EmitTargetBuiltinsHeaderPass(configuration));
     order.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration));
     order.add(
         new vadl.lcb.template.clang.lib.Driver.ToolChains.EmitClangCommonArgsToolChainFilePass(
