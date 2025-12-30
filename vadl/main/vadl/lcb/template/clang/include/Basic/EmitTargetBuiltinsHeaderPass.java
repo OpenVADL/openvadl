@@ -24,6 +24,9 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
+/**
+ * Defines builtins.
+ */
 public class EmitTargetBuiltinsHeaderPass extends LcbTemplateRenderingPass {
   public EmitTargetBuiltinsHeaderPass(LcbConfiguration configuration)
       throws IOException {

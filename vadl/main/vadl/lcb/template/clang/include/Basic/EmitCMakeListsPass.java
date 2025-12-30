@@ -24,6 +24,9 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
+/**
+ * CMakeFile to generate builtins.
+ */
 public class EmitCMakeListsPass extends LcbTemplateRenderingPass {
   public EmitCMakeListsPass(LcbConfiguration configuration)
       throws IOException {
