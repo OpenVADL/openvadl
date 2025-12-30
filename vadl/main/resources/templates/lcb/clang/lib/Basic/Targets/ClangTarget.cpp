@@ -1,5 +1,6 @@
 #include "[(${namespace})].h"
 #include "clang/Basic/MacroBuilder.h"
+#include "clang/Basic/TargetBuiltins.h"
 #include "llvm/ADT/StringSwitch.h"
 
 using namespace clang;
@@ -27,4 +28,17 @@ void [(${namespace})]TargetInfo::getTargetDefines(const LangOptions &Opts,
 	Builder.defineMacro("__ELF__");
 	Builder.defineMacro("__riscv");
 	Builder.defineMacro("__riscv_cmodel_medany");
+}
+
+static constexpr Builtin::Info BuiltinInfo[] = {
+#define BUILTIN(ID, TYPE, ATTRS)                                               \
+  {#ID, TYPE, ATTRS, nullptr, HeaderDesc::NO_HEADER, ALL_LANGUAGES},
+#define TARGET_BUILTIN(ID, TYPE, ATTRS, FEATURE)                               \
+  {#ID, TYPE, ATTRS, FEATURE, HeaderDesc::NO_HEADER, ALL_LANGUAGES},
+#include "clang/Basic/Builtins[(${namespace})].inc"
+};
+
+ArrayRef<Builtin::Info> [(${namespace})]TargetInfo::getTargetBuiltins() const {
+  return llvm::ArrayRef(BuiltinInfo,
+                        clang::[(${namespace})]::LastTSBuiltin - Builtin::FirstTSBuiltin);
 }
