@@ -475,7 +475,7 @@ instruction set architecture AArch64Base = {
 
   model MulAddSubLongInstr (i: InstrWithFunct, type: Id): IsaDefs = {
     instruction $i.id: MulAddSubFormat =
-      X(rd) := VADL::$i.funct (X(ra), $WXReg(WSize)(rn) *# $WXReg(WSize)(rm))
+      X(rd) := VADL::$i.funct (X(ra), $WXReg(WSize)(rn) as $type *# $WXReg(WSize)(rm) as $type)
     encoding $i.id = { op = $i.opcode, sf = SF::XSize }
     assembly $i.id = ($i.mnemo, ' ', XSize(rd), ', ', WSize(rn), ', ', WSize(rm), ', ', XSize(ra))
     }
