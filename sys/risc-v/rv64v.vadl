@@ -1,0 +1,154 @@
+import rv64csr::{RV64IMZicsr}
+
+// This RISC-V vector extension is kept simple.
+// We do not allow VMUL specification of the VTYPE, so there are 32 vector registered fixed.
+//
+// Glossary:
+// https://medium.com/@ulhaqhassan1/understanding-risc-v-vector-architecture-elen-vlen-sew-lmul-vlmax-vl-vstart-explained-680f0abf5b18
+// ELEN: ElementLEN .. Number of bits of a single vector element, >= 8, power of 2
+// VLEN: VectorLEN .. Number of bits of a vector register, >= ELEN, power of 2, <= 2^16
+// VLMAX = LMUL * VLEN / SEW ..
+
+
+// Simple example:
+//     # assume x10 = address of A
+//     #         x11 = address of B
+//     #         x12 = address of C
+//     li   x1, 32                   # AVL = 32
+//     li   x0,  /* placeholder vtype immediate for SEW=32, LMUL=1 */
+//     vsetvli x2, x1, /*vtypei*/    # configure vector unit: SEW=32, LMUL=1 → VL = 32
+// loop:
+//     vle32.v  v0, (x10)           # load 32 elements from A into v0
+//     vle32.v  v1, (x11)           # load 32 elements from B into v1
+//     vadd.vv  v2, v0, v1          # element-wise v2 = v0 + v1
+//     vse32.v  v2, (x12)           # store result into C
+//     add     x10, x10, 32*4       # advance A by 32 elements ×4 bytes
+//     add     x11, x11, 32*4       # advance B
+//     add     x12, x12, 32*4       # advance C
+//     # if more than 32 elements total, subtract and branch; here single chunk only
+//     # end
+
+// Our spec:
+// VLEN is 1024 (same as in QEMU)
+// ELEN is 64 bits (so most inner dimensions is Bits<64>)
+// No LMUL
+// Default VLMAX is therefore VLEN/ELEN ... 16
+instruction set architecture RV64IMV extending RV64IMZicsr = {
+
+  constant ECOUNT = 32
+  constant ESIZE = 32
+
+  using SElem = SInt<ESIZE>
+
+  register V: Bits<32><ECOUNT><ESIZE>
+
+  format VSetVLI: Inst =
+  { funct1:  Bits<1>
+  , vtypei:   Bits<11>
+  , rs1:    Index
+  , funct3:  Bits<3>
+  , rd:     Index
+  , opcode: Bits<7>
+  }
+
+// encoding VLE32V = { mew = 0, mop = 0b00, lumop = 0b0000, width = 0b010, opcode = 0b000'0111 }
+// fields: nf  mew  mop  vm  lumop  rs1    width  vd     opcode
+// value:  000 0    00   1   00000  01010  110    00000  0000111
+  format VLoad: Inst =
+  { nf:     Bits<3>
+  , mew:    Bits<1>
+  , mop:    Bits<2>
+  , vm:     Bits<1>
+  , lumop:    Bits<5>
+  , rs1:    Bits<5>
+  , width:  Bits<3>
+  , vd:     Bits<5>
+  , opcode: Bits<7>
+  }
+
+  format VStore: Inst =
+  { nf:     Bits<3>
+  , mew:    Bits<1>
+  , mop:    Bits<2>
+  , vm:     Bits<1>
+  , lumop: Bits<5>
+  , rs1:    Bits<5>
+  , width:  Bits<3>
+  , vs3:     Bits<5>
+  , opcode: Bits<7>
+  }
+
+  format OPIVV: Inst =
+  { funct6: Bits<6>
+  , vm:     Bits<1>
+  , vs2:    Bits<5>
+  , vs1:    Bits<5>
+  , funct3: Bits<3>
+  , vd:     Bits<5>
+  , opcode: Bits<7>
+  }
+
+  // currently we have a fixed vector size and vector elements.
+  // so we just set the destination to 32.
+  instruction VSETVLI : VSetVLI = {
+    X(rd) := 32
+  }
+  encoding VSETVLI = { funct1 = 0, funct3 = 0b111, opcode = 0b101'0111 }
+  assembly VSETVLI = ( mnemonic, " ", register(rd), ",", register(rs1), ", e32" )
+
+  // Vector Load Unit-Strided
+  instruction VLE32V : VLoad = {
+    let addr = X(rs1) in
+    V(vd) := MEM<128>(addr) as Bits<32><32> // load 128 bytes ... 1024 bits into the vector register
+  }
+  encoding VLE32V = { mew = 0, mop = 0b00, lumop = 0b0000, width = 0b110, opcode = 0b000'0111 }
+  assembly VLE32V = ( "vle32.v ", register(vd), ", (", register(rs1), ")" )
+
+  // Vector Store Unit-Strided
+  instruction VSE32V : VStore = {
+    let addr = X(rs1) in
+    MEM<128>(addr) := V(vs3) as Bits<1024>  // store 128 bytes ... 1024 bits from the vector register to memory
+  }
+  encoding VSE32V = { mew = 0, mop = 0b00, lumop = 0b0000, width = 0b100, opcode = 0b010'0111 }
+  assembly VSE32V = ( "vse32.v ", register(vs3), ", (", register(rs1), ")" )
+
+  instruction OPIVVADD: OPIVV = {
+    forall i: Bits<5> in 0..(ECOUNT - 1) do {
+      V(vd)(i) := V(vs1)(i) as SElem + V(vs2)(i) as SElem
+    }
+  }
+  encoding OPIVVADD = { funct6 = 0b00'0000, funct3 = 0b000, opcode = 0b101'0111 }
+  assembly OPIVVADD = ( "vadd.vv ", register(vd), ",", register(vs1), ",", register(vs2) )
+
+}
+
+[ htif ]
+processor Spike implements RV64IMV = {
+    constant reset_vec_addr = 0x1000
+
+    reset = {
+      PC := reset_vec_addr
+    }
+
+    [ firmware ]
+    [ base: 0x80000000 ]
+    memory region [RAM] DRAM in MEM
+
+    memory region [ROM] MROM in MEM = {
+      MEM<4>(0x1000) := 0x00000297  // auipc t0, 0x0
+      MEM<4>(0x1004) := 0x02828613  // addi a2, t0, 40
+      // this processor has no zicsr extension
+      MEM<4>(0x1008) := 0x00000013  // addi x0, x0, 0
+      MEM<4>(0x100c) := 0x0202b583  // ld   a1, 32(t0)
+      MEM<4>(0x1010) := 0x0182b283  // ld   t0, 24(t0)
+      MEM<4>(0x1014) := 0x00028067  // jr   t0
+      // store start_addr in memory (0x80000000)
+      MEM<4>(0x1018) := 0x80000000  // lo32(start_addr)
+      MEM<4>(0x101c) := 0x00000000  // hi32(start_addr)
+      // we do not yet support a fdt, but we set the address,
+      // to keep the registers consistent with upstream
+      MEM<4>(0x1020) := 0x87e00000  // lo32(fdt_addr)
+      MEM<4>(0x1024) := 0x00000000  // hi32(fdt_addr)
+    }
+}
+

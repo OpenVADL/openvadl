@@ -690,8 +690,6 @@ class ParserUtils {
     // as we don't have access to the macroTable of the referenced ISA, we must
     // do the traversal again.
     for (IsId extending : isa.extending) {
-      // TODO: Replace by extending.target() as soon as we merged
-      //    https://github.com/OpenVADL/openvadl/pull/212
       var extendingIsa = (InstructionSetDefinition) Objects.requireNonNull(extending.target());
       readMacroSymbols(macroTable, extendingIsa);
     }
