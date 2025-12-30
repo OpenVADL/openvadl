@@ -28,10 +28,15 @@ class QEMUExecuter:
 
     async def execute(self) -> bool:
         try:
+            tohost_addr = self.compinfo.tohost_addr
+            stateplugin = self.config.stateplugin
+            if tohost_addr:
+              stateplugin = f"{stateplugin},tohost={hex(tohost_addr)}"
+
             self.process = await asyncio.create_subprocess_exec(
                 self.qemu_exec.path,
                 "-nographic",
-                "-plugin", self.config.stateplugin,
+                "-plugin", stateplugin,
                 "-d", "plugin",
                 *self.qemu_exec.args.split(),
                 self.compinfo.elf,
