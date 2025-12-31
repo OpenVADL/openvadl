@@ -78,14 +78,18 @@ instruction set architecture RV64IMV extending RV64IMZicsr = {
   , opcode: Bits<7>
   }
 
-  format OPIVV: Inst =
+  format OPIV: Inst =
   { funct6: Bits<6>
   , vm:     Bits<1>
   , vs2:    Bits<5>
-  , vs1:    Bits<5>
+  , src1:    Bits<5>
   , funct3: Bits<3>
   , vd:     Bits<5>
   , opcode: Bits<7>
+  // alias names of src1 field
+  , vs1 = src1
+  , rs1 = src1
+  , imm = src1
   }
 
   // currently we have a fixed vector size and vector elements.
@@ -109,16 +113,29 @@ instruction set architecture RV64IMV extending RV64IMZicsr = {
     let addr = X(rs1) in
     MEM<128>(addr) := V(vs3) as Bits<1024>  // store 128 bytes ... 1024 bits from the vector register to memory
   }
-  encoding VSE32V = { mew = 0, mop = 0b00, lumop = 0b0000, width = 0b100, opcode = 0b010'0111 }
+  encoding VSE32V = { mew = 0, mop = 0b00, lumop = 0b0000, width = 0b110, opcode = 0b010'0111 }
   assembly VSE32V = ( "vse32.v ", register(vs3), ", (", register(rs1), ")" )
 
-  instruction OPIVVADD: OPIVV = {
-    forall i: Bits<5> in 0..(ECOUNT - 1) do {
-      V(vd)(i) := V(vs1)(i) as SElem + V(vs2)(i) as SElem
+
+
+
+  model OPIVInstr (name: Id, suffix: Str, relOp : BinOp, src1 : Ex, src1Asm : Ex, funct6: Bin, funct3 : Bin): IsaDefs = {
+    instruction AsId($name, "_", $suffix) : OPIV = {
+      forall i: Bits<5> in 0..(ECOUNT - 1) do {
+        V(vd)(i) := V(vs2)(i) as SElem $relOp $src1 as SElem
+      }
     }
+    encoding AsId($name, "_", $suffix) = { funct6 = $funct6, funct3 = $funct3, opcode = 0b101'0111 }
+    assembly AsId($name, "_", $suffix) = ( AsStr($name), ".", $suffix, register(vd), ", ", register(vs2), ", ", $src1Asm )
   }
-  encoding OPIVVADD = { funct6 = 0b00'0000, funct3 = 0b000, opcode = 0b101'0111 }
-  assembly OPIVVADD = ( "vadd.vv ", register(vd), ",", register(vs1), ",", register(vs2) )
+
+  model OPIVVXI (name : Id, relOp : BinOp, funct6 : Bin): IsaDefs = {
+    $OPIVInstr ($name; "VV"; $relOp; V(vs1)(i);           register(vs1);  $funct6; 0b000)
+    $OPIVInstr ($name; "VX"; $relOp; X(rs1);              register(rs1);  $funct6; 0b100)
+    $OPIVInstr ($name; "VI"; $relOp; imm as SInt<ESIZE>;  decimal(imm);   $funct6; 0b011)
+  }
+
+  $OPIVVXI( VADD ; + ; 0b00'0000 )
 
 }
 

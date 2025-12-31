@@ -244,9 +244,10 @@ public class TestUtils {
    */
   public static BigIntegerArbitrary arbitrarySignedInt(int bitWidth) {
     return Arbitraries.bigIntegers()
-        .greaterOrEqual(BigInteger.valueOf(-2)
-            .pow(bitWidth - 1))
-        .lessOrEqual(BigInteger.valueOf(2)
+        .greaterOrEqual(BigInteger.TWO
+            .pow(bitWidth - 1)
+            .negate())
+        .lessOrEqual(BigInteger.TWO
             .pow(bitWidth - 1)
             .subtract(BigInteger.ONE)
         );
