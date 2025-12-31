@@ -20,10 +20,14 @@ import static vadl.TestUtils.arbitrarySignedInt;
 import static vadl.TestUtils.arbitraryUnsignedInt;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import vadl.iss.IssTestUtils;
 
 /**
  * Tests the RV64V instructions set.
@@ -67,73 +71,103 @@ public class IssRV64VInstrTest extends AbstractIssRiscv64InstrTest {
     return new RV64IMVTestBuilder(testNamePrefix + "_" + id);
   }
 
-  private Stream<DynamicTest> testBinaryVecInstr(String instruction, String secondOperand,
-                                                 String testNamePrefix,
-                                                 Consumer<RV64IMVTestBuilder> fillSecondOperand)
-      throws IOException {
-    return runTestsWith(id -> {
-      var b = getBuilder(testNamePrefix, id);
+  private IssTestUtils.TestCase createBinaryVecInstrTest(RV64IMVTestBuilder b, String instruction,
+                                                         String secondOperand,
+                                                         Consumer<RV64IMVTestBuilder> fillSecondOperand) {
+    b.configureCpuForVecOps("x1");
 
-      b.configureCpuForVecOps("x1");
+    b.add("# fill first source vector");
+    b.fillVectorAddr("v1", VECTOR_SRC_1_ADDR, "x1", "x2");
 
-      b.add("# fill first source vector");
-      b.fillVectorAddr("v1", VECTOR_SRC_1_ADDR, "x1", "x2");
+    fillSecondOperand.accept(b);
 
-      fillSecondOperand.accept(b);
+    b.add("# binary vector instruction");
+    b.add("%s v0, v1, %s", instruction, secondOperand);
 
-      b.add("# binary vector instruction");
-      b.add("%s v0, v1, %s", instruction, secondOperand);
+    b.add("# store result in memory");
+    b.storeVectorToMemory("v0", VECTOR_DEST_ADDR, "x2");
 
-      b.add("# store result in memory");
-      b.storeVectorToMemory("v0", VECTOR_DEST_ADDR, "x2");
-
-      b.add("# load result into registers");
-      // we can't use x1 and x2 (as well as x0 of course).
-      // therefore, we just miss some values. this can be fixed when using the cosim.
-      b.loadArrayToRegs(VECTOR_DEST_ADDR, RESULT_REG_START, RESULT_REG_END, "x2");
-      return b.toTestCase();
-    });
+    b.add("# load result into registers");
+    // we can't use x1 and x2 (as well as x0 of course).
+    // therefore, we just miss some values. this can be fixed when using the cosim.
+    b.loadArrayToRegs(VECTOR_DEST_ADDR, RESULT_REG_START, RESULT_REG_END, "x2");
+    return b.toTestCase();
   }
 
-  private Stream<DynamicTest> testBinaryVecVecInstr(String instruction, String testNamePrefix)
-      throws IOException {
-    return testBinaryVecInstr(instruction, "v2", testNamePrefix, b -> {
+  private IssTestUtils.TestCase createBinaryVecVecInstrTest(RV64IMVTestBuilder builder,
+                                                            String instruction) {
+    return createBinaryVecInstrTest(builder, instruction, "v2", b -> {
       b.add("# fill second source vector");
       b.fillVectorAddr("v2", VECTOR_SRC_2_ADDR, "x1", "x2");
     });
   }
 
-  private Stream<DynamicTest> testBinaryVecGprInstr(String instruction, String testNamePrefix)
-      throws IOException {
-    return testBinaryVecInstr(instruction, "x2", testNamePrefix, b -> {
+  private IssTestUtils.TestCase createBinaryVecGprInstrTest(RV64IMVTestBuilder builder,
+                                                            String instruction) {
+    return createBinaryVecInstrTest(builder, instruction, "x2", b -> {
       b.add("# fill source register (second argument)");
       b.fillReg("x2", arbitraryUnsignedInt(64).sample());
     });
   }
 
-  private Stream<DynamicTest> testBinaryVecImmInstr(String instruction, String testNamePrefix)
-      throws IOException {
+  private IssTestUtils.TestCase createBinaryVecImmInstrTest(RV64IMVTestBuilder builder,
+                                                            String instruction) {
     var imm = arbitrarySignedInt(5).sample();
-    return testBinaryVecInstr(instruction, "" + imm, testNamePrefix, b -> {
-      b.add("# immediate value: %d", imm);
-    });
+    return createBinaryVecInstrTest(builder, instruction, "" + imm, b ->
+        b.add("# immediate value: %d", imm));
+  }
+
+  private Stream<DynamicTest> testBinaryVecInstr(String instruction, String testNamePrefix,
+                                                 boolean v, boolean x, boolean i)
+      throws IOException {
+    List<Function<Integer, IssTestUtils.TestCase>> generators = new ArrayList<>();
+    if (v) {
+      generators.add((id) -> {
+        var builder = getBuilder(testNamePrefix + ".VV", id);
+        return createBinaryVecVecInstrTest(builder, instruction + ".vv");
+      });
+    }
+    if (x) {
+      generators.add((id) -> {
+        var builder = getBuilder(testNamePrefix + ".VX", id);
+        return createBinaryVecGprInstrTest(builder, instruction + ".vx");
+      });
+    }
+    if (i) {
+      generators.add((id) -> {
+        var builder = getBuilder(testNamePrefix + ".VI", id);
+        return createBinaryVecImmInstrTest(builder, instruction + ".vi");
+      });
+    }
+    return runTestsWith(generators);
   }
 
 
 // Test methods using helper functions
 
   @TestFactory
-  Stream<DynamicTest> vaddvv() throws IOException {
-    return testBinaryVecVecInstr("vadd.vv", "VADD.VV");
+  Stream<DynamicTest> vadd() throws IOException {
+    return testBinaryVecInstr("vadd", "VADD", true, true, true);
   }
 
   @TestFactory
-  Stream<DynamicTest> vaddvx() throws IOException {
-    return testBinaryVecGprInstr("vadd.vx", "VADD.VX");
+  Stream<DynamicTest> vsub() throws IOException {
+    return testBinaryVecInstr("vsub", "VSUB", true, true, false);
   }
 
   @TestFactory
-  Stream<DynamicTest> vaddvi() throws IOException {
-    return testBinaryVecImmInstr("vadd.vi", "VADD.VI");
+  Stream<DynamicTest> vand() throws IOException {
+    return testBinaryVecInstr("vand", "VAND", true, true, true);
   }
+
+  @TestFactory
+  Stream<DynamicTest> vor() throws IOException {
+    return testBinaryVecInstr("vor", "VOR", true, true, true);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> vxor() throws IOException {
+    return testBinaryVecInstr("vxor", "VXOR", true, true, true);
+  }
+
 }

@@ -32,31 +32,19 @@ instruction set architecture RV64IMV extending RV64IMZicsr = {
   , opcode: Bits<7>
   }
 
-// encoding VLE32V = { mew = 0, mop = 0b00, lumop = 0b0000, width = 0b010, opcode = 0b000'0111 }
-// fields: nf  mew  mop  vm  lumop  rs1    width  vd     opcode
-// value:  000 0    00   1   00000  01010  110    00000  0000111
-  format VLoad: Inst =
-  { nf:     Bits<3>
-  , mew:    Bits<1>
-  , mop:    Bits<2>
-  , vm:     Bits<1>
-  , lumop:    Bits<5>
-  , rs1:    Bits<5>
-  , width:  Bits<3>
-  , vd:     Bits<5>
-  , opcode: Bits<7>
-  }
-
-  format VStore: Inst =
-  { nf:     Bits<3>
-  , mew:    Bits<1>
-  , mop:    Bits<2>
-  , vm:     Bits<1>
-  , lumop: Bits<5>
-  , rs1:    Bits<5>
-  , width:  Bits<3>
-  , vs3:     Bits<5>
-  , opcode: Bits<7>
+  format VMem: Inst =
+  { nf:      Bits<3>
+  , mew:     Bits<1>
+  , mop:     Bits<2>
+  , vm:      Bits<1>
+  , lumop:   Bits<5>
+  , rs1:     Bits<5>
+  , width:   Bits<3>
+  , operand: Bits<5>
+  , opcode:  Bits<7>
+  // alias names of the operand field
+  , vd  = operand
+  , vs3 = operand
   }
 
   format OPIV: Inst =
@@ -73,32 +61,23 @@ instruction set architecture RV64IMV extending RV64IMZicsr = {
   , imm = src1
   }
 
-  // currently we have a fixed vector size and vector elements.
-  // so we just set the destination to 32.
-  instruction VSETVLI : VSetVLI = {
-    X(rd) := 32
+  // variant models *******************************************************
+
+  // A macro type that takes XVI variants of an instruction and emits 1 to 3 of them.
+  model-type VXIType = (IsaDefs, IsaDefs, IsaDefs) -> IsaDefs
+  // The VXI variant model that emits all 3 variants
+  model VXI(v: IsaDefs, x: IsaDefs, i: IsaDefs): IsaDefs = {
+    $v
+    $x
+    $i
   }
-  encoding VSETVLI = { funct1 = 0, funct3 = 0b111, opcode = 0b101'0111 }
-  assembly VSETVLI = ( mnemonic, " ", register(rd), ",", register(rs1), ", e32" )
-
-  // Vector Load Unit-Strided
-  instruction VLE32V : VLoad = {
-    let addr = X(rs1) in
-    V(vd) := MEM<128>(addr) as Bits<32><32> // load 128 bytes ... 1024 bits into the vector register
+  // The VXI variant model that only emits the V and X variants
+  model VX(v: IsaDefs, x: IsaDefs, i: IsaDefs): IsaDefs = {
+    $v
+    $x
   }
-  encoding VLE32V = { mew = 0, mop = 0b00, lumop = 0b0000, width = 0b110, opcode = 0b000'0111 }
-  assembly VLE32V = ( "vle32.v ", register(vd), ", (", register(rs1), ")" )
 
-  // Vector Store Unit-Strided
-  instruction VSE32V : VStore = {
-    let addr = X(rs1) in
-    MEM<128>(addr) := V(vs3) as Bits<1024>  // store 128 bytes ... 1024 bits from the vector register to memory
-  }
-  encoding VSE32V = { mew = 0, mop = 0b00, lumop = 0b0000, width = 0b110, opcode = 0b010'0111 }
-  assembly VSE32V = ( "vse32.v ", register(vs3), ", (", register(rs1), ")" )
-
-
-
+  // instruction models ************************************************
 
   model OPIVInstr (name: Id, suffix: Str, relOp : BinOp, src1 : Ex, src1Asm : Ex, funct6: Bin, funct3 : Bin): IsaDefs = {
     instruction AsId($name, "_", $suffix) : OPIV = {
@@ -110,13 +89,46 @@ instruction set architecture RV64IMV extending RV64IMZicsr = {
     assembly AsId($name, "_", $suffix) = ( AsStr($name), ".", $suffix, register(vd), ", ", register(vs2), ", ", $src1Asm )
   }
 
-  model OPIVVXI (name : Id, relOp : BinOp, funct6 : Bin): IsaDefs = {
-    $OPIVInstr ($name; "VV"; $relOp; V(vs1)(i);           register(vs1);  $funct6; 0b000)
-    $OPIVInstr ($name; "VX"; $relOp; X(rs1);              register(rs1);  $funct6; 0b100)
-    $OPIVInstr ($name; "VI"; $relOp; imm as SInt<ESIZE>;  decimal(imm);   $funct6; 0b011)
+  model OPIV (name : Id, vxi: VXIType, relOp : BinOp, funct6 : Bin): IsaDefs = {
+    $vxi(
+      $OPIVInstr ($name; "VV"; $relOp; V(vs1)(i);           register(vs1);  $funct6; 0b000);
+      $OPIVInstr ($name; "VX"; $relOp; X(rs1);              register(rs1);  $funct6; 0b100);
+      $OPIVInstr ($name; "VI"; $relOp; imm as SInt<ESIZE>;  decimal(imm);   $funct6; 0b011)
+    )
   }
 
-  $OPIVVXI( VADD ; + ; 0b00'0000 )
+  // configuration instructions ****************************************************
+
+  // Currently we have a fixed vector size and vector elements, so we just set the destination to 32.
+  // The instruction is only required for cosimulation with QEMU's upstream RISC-V implementation.
+  instruction VSETVLI : VSetVLI = X(rd) := 32
+  encoding VSETVLI = { funct1 = 0, funct3 = 0b111, opcode = 0b101'0111 }
+  assembly VSETVLI = ( mnemonic, " ", register(rd), ",", register(rs1), ", e32" )
+
+  // vector load-store instructions ************************************************
+
+  // Vector Load Unit-Strided
+  instruction VLE32V : VMem = let addr = X(rs1) in
+    V(vd) := MEM<128>(addr) as Bits<32><32> // load 128 bytes ... 1024 bits into the vector register
+  encoding VLE32V = { mew = 0, mop = 0b00, lumop = 0b0000, width = 0b110, opcode = 0b000'0111 }
+  assembly VLE32V = ( "vle32.v ", register(vd), ", (", register(rs1), ")" )
+
+  // Vector Store Unit-Strided
+  instruction VSE32V : VMem = let addr = X(rs1) in
+    MEM<128>(addr) := V(vs3) as Bits<1024>  // store 128 bytes ... 1024 bits from the vector register to memory
+  encoding VSE32V = { mew = 0, mop = 0b00, lumop = 0b0000, width = 0b110, opcode = 0b010'0111 }
+  assembly VSE32V = ( "vse32.v ", register(vs3), ", (", register(rs1), ")" )
+
+  // arithmetic instructions *******************************************************
+
+  $OPIV( VADD ; VXI ; + ; 0b00'0000 )
+  $OPIV( VSUB ; VX  ; - ; 0b00'0010 )
+
+  // logical instructions **********************************************************
+
+  $OPIV( VAND ; VXI ; & ; 0b00'1001 )
+  $OPIV( VOR  ; VXI ; | ; 0b00'1010 )
+  $OPIV( VXOR ; VXI ; ^ ; 0b00'1011 )
 
 }
 
