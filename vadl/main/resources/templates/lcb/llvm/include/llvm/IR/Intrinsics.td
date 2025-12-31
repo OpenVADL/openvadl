@@ -1,0 +1,3 @@
+let TargetPrefix = "[(${namespace})]" in {
+
+}
