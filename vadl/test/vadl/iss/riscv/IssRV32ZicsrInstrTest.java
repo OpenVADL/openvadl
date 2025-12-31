@@ -39,7 +39,7 @@ public class IssRV32ZicsrInstrTest extends AbstractIssRiscv32InstrTest {
 
   @Override
   public AsmTestBuilder getBuilder(String testNamePrefix, int id) {
-    return new RV64IMTestBuilder(testNamePrefix + "_" + id);
+    return new RV64IMVTestBuilder(testNamePrefix + "_" + id);
   }
 
   @TestFactory

@@ -46,7 +46,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
   }
 
   public AsmTestBuilder getBuilder(String testNamePrefix, int id) {
-    return new RV64IMTestBuilder(testNamePrefix + "_" + id);
+    return new RV64IMVTestBuilder(testNamePrefix + "_" + id);
   }
 
   // Helper methods
@@ -139,7 +139,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
                                                             boolean branchWhenEqual)
       throws IOException {
     return runTestsWith(id -> {
-      var b = new RV64IMTestBuilder(testNamePrefix + "_" + id);
+      var b = new RV64IMVTestBuilder(testNamePrefix + "_" + id);
       var rs1 = b.anyTempReg().sample();
       var rs2 = b.anyTempReg().sample();
       Boolean equal = Arbitraries.of(true, false).sample();
@@ -169,7 +169,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
                                                               boolean unsignedComparison)
       throws IOException {
     return runTestsWith(id -> {
-      var b = new RV64IMTestBuilder(testNamePrefix + "_" + id);
+      var b = new RV64IMVTestBuilder(testNamePrefix + "_" + id);
       var rs1 = b.anyTempReg().sample();
       var rs2 = b.anyTempReg().sample();
       Boolean conditionMet = Arbitraries.of(true, false).sample();
@@ -436,7 +436,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
   @TestFactory
   Stream<DynamicTest> sllw() throws IOException {
     return runTestsWith(id -> {
-      var b = new RV64IMTestBuilder("SLLW_" + id);
+      var b = new RV64IMVTestBuilder("SLLW_" + id);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
       b.fillRegSigned(regSrc1, 64);
@@ -450,7 +450,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
   @TestFactory
   Stream<DynamicTest> srlw() throws IOException {
     return runTestsWith(id -> {
-      var b = new RV64IMTestBuilder("SRLW_" + id);
+      var b = new RV64IMVTestBuilder("SRLW_" + id);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
       b.fillRegSigned(regSrc1, 64);
@@ -464,7 +464,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
   @TestFactory
   Stream<DynamicTest> sraw() throws IOException {
     return runTestsWith(id -> {
-      var b = new RV64IMTestBuilder("SRAW_" + id);
+      var b = new RV64IMVTestBuilder("SRAW_" + id);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
       b.fillRegSigned(regSrc1, 64);
@@ -478,7 +478,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
   @TestFactory
   Stream<DynamicTest> slliw() throws IOException {
     return runTestsWith(id -> {
-      var b = new RV64IMTestBuilder("SLLIW_" + id);
+      var b = new RV64IMVTestBuilder("SLLIW_" + id);
       var regSrc = b.anyTempReg().sample();
       b.fillRegSigned(regSrc, 64);
       var shamt = arbitraryUnsignedInt(5).sample();
@@ -491,7 +491,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
   @TestFactory
   Stream<DynamicTest> srliw() throws IOException {
     return runTestsWith(id -> {
-      var b = new RV64IMTestBuilder("SRLIW_" + id);
+      var b = new RV64IMVTestBuilder("SRLIW_" + id);
       var regSrc = b.anyTempReg().sample();
       b.fillRegSigned(regSrc, 64);
       var shamt = arbitraryUnsignedInt(5).sample();
@@ -504,7 +504,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
   @TestFactory
   Stream<DynamicTest> sraiw() throws IOException {
     return runTestsWith(id -> {
-      var b = new RV64IMTestBuilder("SRAIW_" + id);
+      var b = new RV64IMVTestBuilder("SRAIW_" + id);
       var regSrc = b.anyTempReg().sample();
       b.fillRegSigned(regSrc, 64);
       var shamt = arbitraryUnsignedInt(5).sample();
@@ -520,7 +520,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
   @TestFactory
   Stream<DynamicTest> lui() throws IOException {
     return runTestsWith((id) -> {
-      var b = new RV64IMTestBuilder("LUI_" + id);
+      var b = new RV64IMVTestBuilder("LUI_" + id);
       var destReg = b.anyTempReg().sample();
       var value = arbitraryUnsignedInt(20).sample();
       b.add("lui %s, %s", destReg, value);
@@ -531,7 +531,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
   @TestFactory
   Stream<DynamicTest> auipc() throws IOException {
     return runTestsWith(id -> {
-      var b = new RV64IMTestBuilder("AUIPC_" + id);
+      var b = new RV64IMVTestBuilder("AUIPC_" + id);
       var rd = b.anyTempReg().sample();
       var imm = arbitraryUnsignedInt(20).sample();
       b.add("auipc %s, %s", rd, imm);
@@ -542,7 +542,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
   @TestFactory
   Stream<DynamicTest> jal() throws IOException {
     return runTestsWith(id -> {
-      var b = new RV64IMTestBuilder("JAL_" + id);
+      var b = new RV64IMVTestBuilder("JAL_" + id);
       var rd = b.anyTempReg().sample();
       String targetLabel = "target_" + id;
       String endLabel = "end_" + id;
@@ -559,7 +559,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
   @TestFactory
   Stream<DynamicTest> jalr() throws IOException {
     return runTestsWith(id -> {
-      var b = new RV64IMTestBuilder("JALR_" + id);
+      var b = new RV64IMVTestBuilder("JALR_" + id);
       var rd = b.anyTempReg().sample();
       var rs1 = b.anyTempReg().sample();
       String targetLabel = "target_" + id;

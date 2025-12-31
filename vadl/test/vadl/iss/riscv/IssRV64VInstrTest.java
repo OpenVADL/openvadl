@@ -20,13 +20,13 @@ import static vadl.TestUtils.arbitrarySignedInt;
 import static vadl.TestUtils.arbitraryUnsignedInt;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import vadl.iss.AsmTestBuilder;
 
 /**
- * Tests the RV64I instructions set.
+ * Tests the RV64V instructions set.
  */
 public class IssRV64VInstrTest extends AbstractIssRiscv64InstrTest {
 
@@ -35,6 +35,8 @@ public class IssRV64VInstrTest extends AbstractIssRiscv64InstrTest {
   private static final long VECTOR_SRC_1_ADDR = 0x80300000L;
   private static final long VECTOR_SRC_2_ADDR = 0x80400000L;
   private static final long VECTOR_DEST_ADDR = 0x80500000L;
+  private static final int RESULT_REG_START = 3;
+  private static final int RESULT_REG_END = 31;
 
   @Override
   public int getTestPerInstruction() {
@@ -61,125 +63,59 @@ public class IssRV64VInstrTest extends AbstractIssRiscv64InstrTest {
     return new Tool("/scripts/compilers/riscv_compiler.py", "-march=rv64imv -mabi=lp64");
   }
 
-  public AsmTestBuilder getBuilder(String testNamePrefix, int id) {
-    return new RV64IMTestBuilder(testNamePrefix + "_" + id);
+  public RV64IMVTestBuilder getBuilder(String testNamePrefix, int id) {
+    return new RV64IMVTestBuilder(testNamePrefix + "_" + id);
   }
 
-  // Helper methods
-
-  private static void fillVectorAddr(AsmTestBuilder builder, String vecReg, long addr) {
-    // load the destination addr into x2
-    builder.add("li x2, 0x%x", addr);
-    // write 32 32-bit elements to the respective address with random values
-    for (int i = 0; i < 32; i++) {
-      builder.fillReg("x1", arbitraryUnsignedInt(64).sample());
-      builder.add("sw x1, %d(x2)", i);
-    }
-    builder.add("vle32.v  %s, (x2)", vecReg);
-  }
-
-  private static void configureCpu(AsmTestBuilder builder) {
-    // the csrs mstatus register must set the VS field to 0b11, otherwise
-    // it will result in an illegal instruction exception.
-    // additionally, we must set the vl and vtype registers to configure the vector length and
-    // element size.
-    // while this isn't necessary for VADL's generated QEMU (because we only support fixed
-    // vl and vtype operations), this has to be done for UPSTREAM.
-    builder.add("# configure cpu");
-    builder.add("li t0, 0x600");
-    builder.add("csrs mstatus, t0");
-    builder.add("li t0, 32");
-    builder.add("vsetvli t0, t0, e32,m1");
-  }
-
-  private static void storeVectorToMemory(AsmTestBuilder builder, String vec, long addr,
-                                          String tmpReg) {
-    builder.add("li %s, 0x%x", tmpReg, addr);
-    builder.add("vse32.v  %s, (x2)", vec);
-  }
-
-  private static void loadArrayToRegs(AsmTestBuilder builder, long addr, int firstReg,
-                                      int lastReg, String tmpReg) {
-    builder.add("li %s, 0x%x", tmpReg, addr);
-    for (int i = firstReg; i <= lastReg; i++) {
-      builder.add("lw x%d, %d(%s)", i, i, tmpReg);
-    }
-  }
-
-  private Stream<DynamicTest> testBinaryVecVecInstr(String instruction, String testNamePrefix)
+  private Stream<DynamicTest> testBinaryVecInstr(String instruction, String secondOperand,
+                                                 String testNamePrefix,
+                                                 Consumer<RV64IMVTestBuilder> fillSecondOperand)
       throws IOException {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
 
-      configureCpu(b);
+      b.configureCpuForVecOps("x1");
 
-      b.add("# fill first source vector address");
-      fillVectorAddr(b, "v1", VECTOR_SRC_1_ADDR);
-      b.add("# fill second source vector address");
-      fillVectorAddr(b, "v2", VECTOR_SRC_2_ADDR);
+      b.add("# fill first source vector");
+      b.fillVectorAddr("v1", VECTOR_SRC_1_ADDR, "x1", "x2");
 
-      b.add("# binary vector vector instruction");
-      b.add("%s v0, v1, v2", instruction);
+      fillSecondOperand.accept(b);
+
+      b.add("# binary vector instruction");
+      b.add("%s v0, v1, %s", instruction, secondOperand);
 
       b.add("# store result in memory");
-      storeVectorToMemory(b, "v0", VECTOR_DEST_ADDR, "x2");
+      b.storeVectorToMemory("v0", VECTOR_DEST_ADDR, "x2");
 
       b.add("# load result into registers");
       // we can't use x1 and x2 (as well as x0 of course).
       // therefore, we just miss some values. this can be fixed when using the cosim.
-      loadArrayToRegs(b, VECTOR_DEST_ADDR, 3, 31, "x2");
+      b.loadArrayToRegs(VECTOR_DEST_ADDR, RESULT_REG_START, RESULT_REG_END, "x2");
       return b.toTestCase();
+    });
+  }
+
+  private Stream<DynamicTest> testBinaryVecVecInstr(String instruction, String testNamePrefix)
+      throws IOException {
+    return testBinaryVecInstr(instruction, "v2", testNamePrefix, b -> {
+      b.add("# fill second source vector");
+      b.fillVectorAddr("v2", VECTOR_SRC_2_ADDR, "x1", "x2");
     });
   }
 
   private Stream<DynamicTest> testBinaryVecGprInstr(String instruction, String testNamePrefix)
       throws IOException {
-    return runTestsWith(id -> {
-      var b = getBuilder(testNamePrefix, id);
-
-      configureCpu(b);
-
-      b.add("# fill source vector");
-      fillVectorAddr(b, "v1", VECTOR_SRC_1_ADDR);
-
+    return testBinaryVecInstr(instruction, "x2", testNamePrefix, b -> {
       b.add("# fill source register (second argument)");
       b.fillReg("x2", arbitraryUnsignedInt(64).sample());
-
-      b.add("# binary vector vector instruction");
-      b.add("%s v0, v1, x2", instruction);
-
-      b.add("# store result in memory");
-      storeVectorToMemory(b, "v0", VECTOR_DEST_ADDR, "x2");
-
-      b.add("# load result into registers");
-      // we can't use x1 and x2 (as well as x0 of course).
-      // therefore, we just miss some values. this can be fixed when using the cosim.
-      loadArrayToRegs(b, VECTOR_DEST_ADDR, 3, 31, "x2");
-      return b.toTestCase();
     });
   }
 
   private Stream<DynamicTest> testBinaryVecImmInstr(String instruction, String testNamePrefix)
       throws IOException {
-    return runTestsWith(id -> {
-      var b = getBuilder(testNamePrefix, id);
-
-      configureCpu(b);
-
-      b.add("# fill source vector");
-      fillVectorAddr(b, "v1", VECTOR_SRC_1_ADDR);
-
-      b.add("# binary vector vector instruction");
-      b.add("%s v0, v1, %d", instruction, arbitrarySignedInt(5).sample());
-
-      b.add("# store result in memory");
-      storeVectorToMemory(b, "v0", VECTOR_DEST_ADDR, "x2");
-
-      b.add("# load result into registers");
-      // we can't use x1 and x2 (as well as x0 of course).
-      // therefore, we just miss some values. this can be fixed when using the cosim.
-      loadArrayToRegs(b, VECTOR_DEST_ADDR, 3, 31, "x2");
-      return b.toTestCase();
+    var imm = arbitrarySignedInt(5).sample();
+    return testBinaryVecInstr(instruction, "" + imm, testNamePrefix, b -> {
+      b.add("# immediate value: %d", imm);
     });
   }
 

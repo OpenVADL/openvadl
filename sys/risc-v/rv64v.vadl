@@ -9,30 +9,11 @@ import rv64csr::{RV64IMZicsr}
 // VLEN: VectorLEN .. Number of bits of a vector register, >= ELEN, power of 2, <= 2^16
 // VLMAX = LMUL * VLEN / SEW ..
 
-
-// Simple example:
-//     # assume x10 = address of A
-//     #         x11 = address of B
-//     #         x12 = address of C
-//     li   x1, 32                   # AVL = 32
-//     li   x0,  /* placeholder vtype immediate for SEW=32, LMUL=1 */
-//     vsetvli x2, x1, /*vtypei*/    # configure vector unit: SEW=32, LMUL=1 → VL = 32
-// loop:
-//     vle32.v  v0, (x10)           # load 32 elements from A into v0
-//     vle32.v  v1, (x11)           # load 32 elements from B into v1
-//     vadd.vv  v2, v0, v1          # element-wise v2 = v0 + v1
-//     vse32.v  v2, (x12)           # store result into C
-//     add     x10, x10, 32*4       # advance A by 32 elements ×4 bytes
-//     add     x11, x11, 32*4       # advance B
-//     add     x12, x12, 32*4       # advance C
-//     # if more than 32 elements total, subtract and branch; here single chunk only
-//     # end
-
 // Our spec:
 // VLEN is 1024 (same as in QEMU)
-// ELEN is 64 bits (so most inner dimensions is Bits<64>)
+// ELEN is 32 bits (so most inner dimensions is Bits<32>)
 // No LMUL
-// Default VLMAX is therefore VLEN/ELEN ... 16
+// Default VLMAX is therefore VLEN/ELEN ... 32
 instruction set architecture RV64IMV extending RV64IMZicsr = {
 
   constant ECOUNT = 32
