@@ -34,7 +34,7 @@ namespace clang
                     resetDataLayout("[(${datalayout})]");
                 }
 
-                ArrayRef<Builtin::Info> getTargetBuiltins() const override { return ArrayRef<Builtin::Info>(); }
+                ArrayRef<Builtin::Info> getTargetBuiltins() const override;
 
                 BuiltinVaListKind getBuiltinVaListKind() const override
                 {
@@ -49,7 +49,7 @@ namespace clang
 
                 bool validateAsmConstraint(const char *&Name, TargetInfo::ConstraintInfo &Info) const override { return false; }
 
-                void getTargetDefines(const LangOptions &Opts,MacroBuilder &Builder) const;
+                void getTargetDefines(const LangOptions &Opts,MacroBuilder &Builder) const override;
         };
     }
 }

@@ -16,6 +16,7 @@
 
 package vadl.cppCodeGen;
 
+import javax.annotation.Nullable;
 import vadl.cppCodeGen.model.CppType;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
