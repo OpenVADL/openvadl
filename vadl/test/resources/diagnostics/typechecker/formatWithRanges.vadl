@@ -18,11 +18,11 @@
 //    . : Identifier name: "Bits" type: null
 //    . : IntegerLiteral literal: 8 (8) type: Const<8>
 //    . RangeFormatField name: "first"
-//    . : RangeExpr type: Bits<4>
+//    . : RangeExpr type: Bits<5>
 //    . : ' IntegerLiteral literal: 7 (7) type: Const<7>
 //    . : ' IntegerLiteral literal: 3 (3) type: Const<3>
 //    . RangeFormatField name: "second"
-//    . : RangeExpr type: Bits<2>
+//    . : RangeExpr type: Bits<3>
 //    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
 //    . : ' IntegerLiteral literal: 0 (0) type: Const<0>
 //

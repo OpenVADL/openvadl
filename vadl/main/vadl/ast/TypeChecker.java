@@ -2831,7 +2831,7 @@ public class TypeChecker
     }
 
     // FIXME: The type doesn't really make sense but we don't have a propper range type
-    expr.type = Type.bits(fromVal.intValueExact() - toVal.intValueExact());
+    expr.type = Type.bits(fromVal.intValueExact() - toVal.intValueExact() + 1);
     return null;
   }
 
