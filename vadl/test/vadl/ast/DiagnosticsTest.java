@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.error.Diagnostic;
@@ -33,14 +34,18 @@ import vadl.error.DiagnosticList;
 import vadl.error.DiagnosticPrinter;
 import vadl.viam.passes.verification.ViamVerifier;
 
-/**
- * Runs all files in the test/resources/diagnostics directory.
- * The files are fed into the compilation pipeline and the thrown diagnostics are stored.
- * Then the original file is read again and compared if it reported the same diagnostics.
- *
- * <p>To update the snapshots, set the environment variable UPDATE_SNAPSHOTS.
- * {@code UPDATE_SNAPSHOTS=true ./gradlew test --tests vadl.ast.DiagnosticsTest}
- */
+/// Runs all files in the test/resources/diagnostics directory.
+/// The files are fed into the compilation pipeline and the thrown diagnostics are stored.
+/// Then the original file is read again and compared if it reported the same diagnostics.
+///
+/// To update the snapshots, set the environment variable UPDATE_SNAPSHOTS.
+/// `UPDATE_SNAPSHOTS=true ./gradlew test --tests vadl.ast.DiagnosticsTest`
+///
+/// There are some configurations you can specify in the testfiles that change the output. These
+/// must be included in the file as a single line comment by itself. It can also not be part of the
+/// large block at the bottom and the convention is to include them at the top. Here are some
+/// examples:
+/// - `INCLUDE-AST-DUMP` will also insert the whole AST dump into the
 public class DiagnosticsTest {
   @TestFactory
   Stream<DynamicTest> snapshotTests() throws IOException {
@@ -53,13 +58,16 @@ public class DiagnosticsTest {
   }
 
   private Pattern commentPattern =
-      Pattern.compile("// Reported Diagnostics:.*$", Pattern.DOTALL);
+      Pattern.compile("//  Reported Diagnostics:.*$", Pattern.DOTALL);
+  private Pattern includeAstDumpPattern =
+      Pattern.compile("^// *INCLUDE-AST-DUMP *$", Pattern.MULTILINE);
 
   void runSnapshotTest(Path path) throws IOException {
 
+    @Nullable Ast ast = null;
     List<Diagnostic> diagnostics = List.of();
     try {
-      var ast = VadlParser.parse(path);
+      ast = VadlParser.parse(path);
       var remover = new ModelRemover();
       remover.removeModels(ast);
       var ungrouper = new Ungrouper();
@@ -85,14 +93,28 @@ public class DiagnosticsTest {
     // will differ on different machines.
     DiagnosticPrinter printer = new DiagnosticPrinter(false);
     printer.forceRelativePaths = true;
-    var output = !diagnostics.isEmpty() ? printer.toString(diagnostics).stripTrailing() :
+    var output = "Reported Diagnostics:\n\n";
+    output += !diagnostics.isEmpty() ? printer.toString(diagnostics).stripTrailing() :
         "No diagnostics were reported, the input was correctly parsed, typechecked and lowered.";
-    output = "//  " + output.replaceAll("\n", "\n//  ") + "\n//\n//\n// Part of the %s".formatted(
-        this.getClass());
+
 
     var input = Files.readString(path);
+    if (includeAstDumpPattern.matcher(input).find()) {
+      output += "\n\n\nDumped AST:\n\n";
+      if (ast != null) {
+        output += new AstDumper().dump(ast).indent(2);
+      } else {
+        output += "Unable to dump AST";
+      }
+    }
+
+    output = "//  " +
+        output.strip().replaceAll("\n", "\n//  ").replaceAll("// +\n", "//\n")
+        + "\n//\n//\n// Part of the %s".formatted(
+        this.getClass());
+
     var stripped = commentPattern.matcher(input).replaceAll("").strip();
-    var actual = stripped + "\n\n\n// Reported Diagnostics:\n//\n" + output;
+    var actual = stripped + "\n\n\n" + output;
 
 
     if (System.getenv("UPDATE_SNAPSHOTS") != null) {

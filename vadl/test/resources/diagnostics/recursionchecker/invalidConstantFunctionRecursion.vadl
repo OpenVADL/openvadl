@@ -2,7 +2,7 @@ constant a = b (1)
 function b (x : SInt<32>) -> SInt<32> = a
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Infinite Recursion
 //       ╭──[test/resources/diagnostics/recursionchecker/invalidConstantFunctionRecursion.vadl:2:41]

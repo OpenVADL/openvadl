@@ -6,7 +6,7 @@ constant x = match 4 as Bits<32> with
 }
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Type Mismatch
 //       ╭──[test/resources/diagnostics/typechecker/invalidMatchExprPatternDifferentType.vadl:3:3]

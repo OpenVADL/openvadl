@@ -1,7 +1,7 @@
 function abc(n: SInt<8>) -> SInt<8> = if n = 7 then 3 else 4
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Type Mismatch
 //       ╭──[test/resources/diagnostics/typechecker/invalidIfExprBranchesDifferentTypesInFunction.vadl:1:39]

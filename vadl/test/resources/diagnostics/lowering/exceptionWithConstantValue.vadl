@@ -10,7 +10,7 @@ instruction set architecture ISA = {
 }
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
 //

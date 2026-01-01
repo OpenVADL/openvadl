@@ -1,7 +1,7 @@
 format rec : Bits<16> = { a : rec }
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Infinite Recursion
 //       ╭──[test/resources/diagnostics/recursionchecker/invalidFormatRecursion.vadl:1:31]

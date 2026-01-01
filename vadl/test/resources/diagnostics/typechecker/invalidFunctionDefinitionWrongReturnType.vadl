@@ -1,7 +1,7 @@
 function addOne(n: SInt<8>) -> SInt<8> = false
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Type Mismatch
 //       ╭──[test/resources/diagnostics/typechecker/invalidFunctionDefinitionWrongReturnType.vadl:1:42]

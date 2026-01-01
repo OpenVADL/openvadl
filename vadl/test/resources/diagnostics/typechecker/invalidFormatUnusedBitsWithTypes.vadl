@@ -4,7 +4,7 @@ format f : Bits<8> =
 }
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Invalid Format
 //       ╭──[test/resources/diagnostics/typechecker/invalidFormatUnusedBitsWithTypes.vadl:1:1]

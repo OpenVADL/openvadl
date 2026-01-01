@@ -6,7 +6,7 @@ function x(n: SInt<8>) -> Bits<64> = (match n with
 } ) as Bits<64>
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Type Mismatch
 //       ╭──[test/resources/diagnostics/typechecker/invalidMatchExprBranchesDifferentTypeInFunction.vadl:3:8]

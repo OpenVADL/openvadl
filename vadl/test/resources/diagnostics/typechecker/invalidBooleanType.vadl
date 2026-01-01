@@ -1,7 +1,7 @@
 constant b: Bool<1> = true
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Invalid Type Notation
 //       ╭──[test/resources/diagnostics/typechecker/invalidBooleanType.vadl:1:13]

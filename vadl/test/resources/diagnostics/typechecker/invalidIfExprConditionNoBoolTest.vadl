@@ -1,7 +1,7 @@
 constant x = if 4 then 3 as Bits<32> else 4 as Bits<32>
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Type Mismatch
 //       ╭──[test/resources/diagnostics/typechecker/invalidIfExprConditionNoBoolTest.vadl:1:14]

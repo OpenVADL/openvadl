@@ -6,7 +6,7 @@ instruction set architecture TEST =
 }
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Invalid zero annotation
 //       ╭──[test/resources/diagnostics/annotation/invalidZeroAnnotationInvalidArgumentNumber.vadl:4:12]

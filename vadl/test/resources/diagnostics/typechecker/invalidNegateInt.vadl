@@ -1,7 +1,7 @@
 constant b = !5
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Type Mismatch: expected `Bool`, got `Const<5>`
 //       ╭──[test/resources/diagnostics/typechecker/invalidNegateInt.vadl:1:15]

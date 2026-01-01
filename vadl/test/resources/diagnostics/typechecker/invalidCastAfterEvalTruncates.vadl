@@ -2,7 +2,7 @@ constant a = 9 as UInt<3>
 constant b: UInt<a> = 3
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Type Mismatch
 //       ╭──[test/resources/diagnostics/typechecker/invalidCastAfterEvalTruncates.vadl:2:23]

@@ -2,7 +2,7 @@ using a = b
 using b = a
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Infinite Recursion
 //       ╭──[test/resources/diagnostics/recursionchecker/invalidUsingRecursion.vadl:1:11]

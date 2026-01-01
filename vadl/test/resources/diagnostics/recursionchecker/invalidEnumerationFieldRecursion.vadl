@@ -4,7 +4,7 @@ enumeration rec : SInt<32> =
   }
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Infinite Recursion
 //       ╭──[test/resources/diagnostics/recursionchecker/invalidEnumerationFieldRecursion.vadl:2:9]

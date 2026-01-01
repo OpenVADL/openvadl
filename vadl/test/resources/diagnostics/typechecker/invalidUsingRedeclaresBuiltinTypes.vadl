@@ -10,7 +10,7 @@ instruction set architecture TEST = {
 }
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Symbol name already used: Instruction
 //       ╭──[test/resources/diagnostics/typechecker/invalidUsingRedeclaresBuiltinTypes.vadl:2:7]
@@ -18,21 +18,21 @@ instruction set architecture TEST = {
 //     2 │ using Instruction = Bits<8>
 //       │       ^^^^^^^^^^^ This name is already claimed by a built-in type.
 //       │
-//       
+//
 //  error: Symbol name already used: SInt
 //       ╭──[test/resources/diagnostics/typechecker/invalidUsingRedeclaresBuiltinTypes.vadl:3:7]
 //       │
 //     3 │ using SInt = Bits<8>
 //       │       ^^^^ This name is already claimed by a built-in type.
 //       │
-//       
+//
 //  error: Symbol name already used: Bool
 //       ╭──[test/resources/diagnostics/typechecker/invalidUsingRedeclaresBuiltinTypes.vadl:4:7]
 //       │
 //     4 │ using Bool = Bits<1>
 //       │       ^^^^ This name is already claimed by a built-in type.
 //       │
-//       
+//
 //  error: Symbol name already used: FetchResult
 //       ╭──[test/resources/diagnostics/typechecker/invalidUsingRedeclaresBuiltinTypes.vadl:7:10]
 //       │

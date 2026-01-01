@@ -1,7 +1,7 @@
 constant i: SInt = 42
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Invalid Type Notation
 //       ╭──[test/resources/diagnostics/typechecker/invalidSintType.vadl:1:13]

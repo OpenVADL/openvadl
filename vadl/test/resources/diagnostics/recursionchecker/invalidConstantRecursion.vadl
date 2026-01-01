@@ -2,7 +2,7 @@ constant a = b
 constant b = a
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Infinite Recursion
 //       ╭──[test/resources/diagnostics/recursionchecker/invalidConstantRecursion.vadl:1:1]
