@@ -2179,6 +2179,7 @@ PRODUCTIONS
     ( identifier<out Identifier id>                         (. body = createMacroReference(this, id); .)
     | macroReplacement<out body>
     )
+  | IF (type == BasicSyntaxType.INVALID)                    (. System.out.println(); .)
   | unreachableRule
   )                                                         (. assertSyntaxType(this, body, type, "Mismatched node type"); .)
   .
