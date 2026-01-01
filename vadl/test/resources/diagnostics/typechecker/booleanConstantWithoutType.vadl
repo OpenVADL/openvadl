@@ -1,0 +1,17 @@
+// INCLUDE-AST-DUMP
+
+constant b = true
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    ConstantDefinition name: "b"
+//    . BoolLiteral literal: true type: Bool
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest

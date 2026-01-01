@@ -124,4 +124,34 @@ public class DiagnosticsTest {
 
     assertEqualsFileContent(path, actual);
   }
+
+  /// This is just a helper method that can be called in older tests to Diagnostic tests.
+  /// You just have to call it in the original test and it will create a matching diagnostic test.
+  static public void convertTest(String prog, String folder, Boolean isNegative,
+                                 Boolean includeAst) {
+    String name = Thread.currentThread().getStackTrace()[2].getMethodName();
+    String dir = "test/resources/diagnostics/" + folder;
+    String fileName = name.replaceAll("Text$", "") + ".vadl";
+    if (isNegative) {
+      fileName = "invalid" + fileName.substring(0, 1).toUpperCase() + fileName.substring(1);
+    }
+    Path path = Paths.get(dir, fileName);
+
+    String content = "";
+    if (includeAst) {
+      content += "// INCLUDE-AST-DUMP\n\n";
+    }
+    content += prog.stripIndent();
+
+    if (Files.exists(path)) {
+      throw new RuntimeException("File `%s` was already generated".formatted(path.toString()));
+    }
+
+    try {
+      Files.writeString(path, content);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+  }
 }
