@@ -5,7 +5,7 @@
 model XYZ() = { }
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Parsing Error
 //       ╭──[test/resources/diagnostics/parser/invalidModelMissingReturnType.vadl:5:13]

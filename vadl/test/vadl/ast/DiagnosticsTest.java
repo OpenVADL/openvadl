@@ -108,8 +108,8 @@ public class DiagnosticsTest {
       }
     }
 
-    output = "//  " +
-        output.strip().replaceAll("\n", "\n//  ").replaceAll("// +\n", "//\n")
+    output = "//  "
+        + output.strip().replaceAll("\n", "\n//  ").replaceAll("// +\n", "//\n")
         + "\n//\n//\n// Part of the %s".formatted(
         this.getClass());
 
@@ -125,11 +125,17 @@ public class DiagnosticsTest {
     assertEqualsFileContent(path, actual);
   }
 
+  // Similar to the full version but it infers the name from the method name of the test.
+  static void convertTest(String prog, String folder, Boolean isNegative,
+                          Boolean includeAst) {
+    String name = Thread.currentThread().getStackTrace()[2].getMethodName();
+    convertTest(prog, name, folder, isNegative, includeAst);
+  }
+
   /// This is just a helper method that can be called in older tests to Diagnostic tests.
   /// You just have to call it in the original test and it will create a matching diagnostic test.
-  static public void convertTest(String prog, String folder, Boolean isNegative,
-                                 Boolean includeAst) {
-    String name = Thread.currentThread().getStackTrace()[2].getMethodName();
+  static void convertTest(String prog, String name, String folder, Boolean isNegative,
+                          Boolean includeAst) {
     String dir = "test/resources/diagnostics/" + folder;
     String fileName = name.replaceAll("Text$", "") + ".vadl";
     if (isNegative) {
