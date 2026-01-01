@@ -668,7 +668,8 @@ public class TypeChecker
     var bitsVerifier = new FormatBitsVerifier(bitWidth);
     var nextOccupiedBit = bitWidth - 1;
 
-    for (var field : definition.fields) {
+    for (var field : definition.fields.stream()
+        .filter(field -> !(field instanceof DerivedFormatField)).toList()) {
       if (field instanceof TypedFormatField typedField) {
         var fieldType = check(typedField.typeLiteral);
 
@@ -752,13 +753,15 @@ public class TypeChecker
                 .build());
           }
         }
-
-      } else if (field instanceof DerivedFormatField dfField) {
-        check(dfField.expr);
       } else {
         throw new RuntimeException("Unknown FormatField Class ".concat(field.getClass().getName()));
       }
     }
+
+    definition.fields.stream()
+        .filter(field -> field instanceof DerivedFormatField)
+        .map(field -> (DerivedFormatField) field)
+        .forEach(dfField -> check(dfField.expr));
 
     // check that there are not multiple predicates for the same access field
     var derivedFieldsWithPredicate =
