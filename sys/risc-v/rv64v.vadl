@@ -121,10 +121,10 @@ instruction set architecture RV64IMV extending RV64IMZicsr = {
 
   // instruction models ************************************************
 
-  model OPVInstr (name: Id, suffix: Str, binFun : SymEx, src1 : Ex, src1Asm : Ex, funct6: Bin, funct3 : Bin): IsaDefs = {
+  model OPVInstr (name: Id, suffix: Str, expr: Ex, src1Asm : Ex, funct6: Bin, funct3 : Bin): IsaDefs = {
     instruction AsId($name, "_", $suffix) : OPV = {
       forall i: Bits<5> in 0..(ECOUNT - 1) do {
-        V(vd)(i) := $binFun(V(vs2)(i), $src1 as BElem)
+        V(vd)(i) := $expr
       }
     }
     encoding AsId($name, "_", $suffix) = { funct6 = $funct6, funct3 = $funct3, opcode = 0b101'0111 }
@@ -133,16 +133,23 @@ instruction set architecture RV64IMV extending RV64IMZicsr = {
 
   model OPIV (name : Id, vxi: VXIType, binFun : SymEx, funct6 : Bin): IsaDefs = {
     $vxi(
-      $OPVInstr ($name; "VV"; $binFun; V(vs1)(i);           register(vs1);  $funct6; 0b000);
-      $OPVInstr ($name; "VX"; $binFun; X(rs1);              register(rs1);  $funct6; 0b100);
-      $OPVInstr ($name; "VI"; $binFun; imm as SInt<ESIZE>;  decimal(imm);   $funct6; 0b011)
+      $OPVInstr ($name; "VV"; $binFun(V(vs2)(i), V(vs1)(i));          register(vs1);  $funct6; 0b000);
+      $OPVInstr ($name; "VX"; $binFun(V(vs2)(i), X(rs1) as BElem);    register(rs1);  $funct6; 0b100);
+      $OPVInstr ($name; "VI"; $binFun(V(vs2)(i), imm as SInt<ESIZE>); decimal(imm);   $funct6; 0b011)
     )
   }
 
   model OPMV (name : Id, vxi: VXIType, binFun : SymEx, funct6 : Bin): IsaDefs = {
     $vxi(
-      $OPVInstr ($name; "VV"; $binFun; V(vs1)(i); register(vs1);  $funct6; 0b010);
-      $OPVInstr ($name; "VX"; $binFun; X(rs1);    register(rs1);  $funct6; 0b110);
+      $OPVInstr ($name; "VV"; $binFun(V(vs2)(i), V(vs1)(i));        register(vs1);  $funct6; 0b010);
+      $OPVInstr ($name; "VX"; $binFun(V(vs2)(i), X(rs1) as BElem);  register(rs1);  $funct6; 0b110);
+    )
+  }
+
+  model OPMVAddSub (name : Id, vxi: VXIType, op : BinOp, mulReg : Id, acc : Id, funct6 : Bin): IsaDefs = {
+    $vxi(
+      $OPVInstr ($name; "VV"; V($acc)(i) $op (V(vs1)(i)       * V($mulReg)(i)); register(vs1);  $funct6; 0b010);
+      $OPVInstr ($name; "VX"; V($acc)(i) $op (X(rs1) as BElem * V($mulReg)(i)); register(rs1);  $funct6; 0b110);
     )
   }
 
@@ -195,6 +202,13 @@ instruction set architecture RV64IMV extending RV64IMZicsr = {
   $OPIV( VAND ; VXI ; VADL::and ; 0b00'1001 )
   $OPIV( VOR  ; VXI ; VADL::or  ; 0b00'1010 )
   $OPIV( VXOR ; VXI ; VADL::xor ; 0b00'1011 )
+
+  // multiply-add/sub **************************************************************
+
+  $OPMVAddSub( VMADD  ; VX ; + ; vd ; vs2 ; 0b10'1001 )
+  $OPMVAddSub( VNMSUB ; VX ; - ; vd ; vs2 ; 0b10'1011 )
+  $OPMVAddSub( VMACC  ; VX ; + ; vs2 ; vd ; 0b10'1101 )
+  $OPMVAddSub( VNMSAC ; VX ; - ; vs2 ; vd ; 0b10'1111 )
 
 }
 
