@@ -139,6 +139,20 @@ instruction set architecture RV64IMV extending RV64IMZicsr = {
     )
   }
 
+  model OPIVCmp (name : Id, vxi: VXIType, binCmp: BinOp, funct6 : Bin): IsaDefs = {
+    model Test(right: Ex): Ex = {
+      let a = V(vs2)(i) in
+      let b = right in
+      if a $binCmp b then 1 as Bits<1> else 0
+    }
+
+    $vxi(
+      $OPVInstr ($name; "VV"; Test( V(vs1)(i) )         ; register(vs1);  $funct6; 0b000);
+      $OPVInstr ($name; "VX"; Test( X(rs1) as BElem )   ; register(rs1);  $funct6; 0b100);
+      $OPVInstr ($name; "VI"; Test( imm as SInt<ESIZE> ); decimal(imm);   $funct6; 0b011)
+    )
+  }
+
   model OPMV (name : Id, vxi: VXIType, binFun : SymEx, funct6 : Bin): IsaDefs = {
     $vxi(
       $OPVInstr ($name; "VV"; $binFun(V(vs2)(i), V(vs1)(i));        register(vs1);  $funct6; 0b010);
@@ -202,6 +216,10 @@ instruction set architecture RV64IMV extending RV64IMZicsr = {
   $OPIV( VAND ; VXI ; VADL::and ; 0b00'1001 )
   $OPIV( VOR  ; VXI ; VADL::or  ; 0b00'1010 )
   $OPIV( VXOR ; VXI ; VADL::xor ; 0b00'1011 )
+
+  // comparison instructions *******************************************************
+
+  $OPIVCmp( VMSEQ ; VXI ; = ; 0b01'1000 )
 
   // multiply-add/sub **************************************************************
 
