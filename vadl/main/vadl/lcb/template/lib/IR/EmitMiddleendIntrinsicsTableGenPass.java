@@ -26,14 +26,20 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
+import vadl.error.Diagnostic;
 import vadl.gcb.passes.DetermineIntrinsicAttributesPass;
 import vadl.gcb.passes.InstructionIntrinsicAttributesCtx;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
+import vadl.types.DataType;
+import vadl.types.Type;
+import vadl.utils.SourceLocation;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
@@ -104,11 +110,19 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
       var attr = entry.getValue();
       var record = ensureNonNull(records.get(instruction), "must not be null");
 
+      if (!record.getOutOperands().stream()
+          .allMatch(o -> o instanceof GcbInstructionRegisterFileOperand)) {
+        continue;
+      }
+
       var intrinsic =
           new Intrinsic(
               "int_" + lcbConfiguration().targetName().value() + "_" + instruction.simpleName(),
-              record.getOutOperands().isEmpty() ? List.of("llvm_void_ty") : List.of("llvm_any_ty"),
-              record.getInOperands().stream().map(x -> "LLVMMatchType<0>")
+              record.getOutOperands().isEmpty() ? List.of("llvm_void_ty") :
+                  List.of(mapRet(record.getOutOperands().get(0))),
+              record.getInOperands().stream().map(this::mapParam)
+                  .filter(Optional::isPresent)
+                  .map(Optional::get)
                   .collect(Collectors.toList()),
               attr);
       result.add(intrinsic);
@@ -116,6 +130,39 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
 
     result.sort(Comparator.comparing(o -> o.name));
     return result;
+  }
+
+  private String mapRet(GcbInstructionOperand gcbInstructionOperand) {
+    if (gcbInstructionOperand instanceof GcbInstructionRegisterFileOperand op) {
+      return mapType(op.registerFile().resultType());
+    }
+
+    throw Diagnostic.error("Cannot map operand", gcbInstructionOperand.origin().location()).build();
+  }
+
+  private Optional<String> mapParam(GcbInstructionOperand gcbInstructionOperand) {
+    if (gcbInstructionOperand instanceof GcbInstructionRegisterFileOperand op) {
+      return Optional.of(mapType(op.registerFile().resultType()));
+    }
+
+    return Optional.empty();
+  }
+
+  private String mapType(DataType dataType) {
+    var upcasted = dataType.fittingCppType();
+
+    if (upcasted == DataType.signedInt(8) || upcasted == Type.bits(8)) {
+      return "llvm_i8_ty";
+    } else if (upcasted == DataType.signedInt(16) || upcasted == Type.bits(16)) {
+      return "llvm_i16_ty";
+    } else if (upcasted == DataType.signedInt(32) || upcasted == Type.bits(32)) {
+      return "llvm_i32_ty";
+    } else if (upcasted == DataType.signedInt(64) || upcasted == Type.bits(64)) {
+      return "llvm_i64_ty";
+    }
+
+    throw Diagnostic.error("Cannot map type: " + dataType, SourceLocation.INVALID_SOURCE_LOCATION)
+        .build();
   }
 
   @Override
