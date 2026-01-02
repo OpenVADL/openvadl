@@ -3948,6 +3948,30 @@ public class TypeChecker
       errors.add(typeMismatchError(statement.valueExpression, targetType, valueType));
     }
 
+    var targetSource = switch (statement.target) {
+      case Identifier id -> id.target;
+      case CallIndexExpr call -> call.computedTarget();
+      default -> null;
+    };
+    var assignableDefinitions =
+        List.of(RegisterDefinition.class, CounterDefinition.class, MemoryDefinition.class,
+            AliasDefinition.class, FormatField.class, StageOutputDefinition.class);
+    if (targetSource == null || !assignableDefinitions.stream()
+        .anyMatch(klass -> klass.isInstance(targetSource))) {
+      var message = "This is not writable";
+      if (targetSource != null) {
+        message += " (originates from a %s)".formatted(targetSource.getClass().getSimpleName());
+      }
+      message += ", but a static value.";
+      var diagnostic = error("Cannot Write To Static Target", statement.target)
+          .locationDescription(statement.target, "%s", message)
+          .locationNote(statement.target,
+              "Only registers, counters, alias and memory are writable.")
+          .build();
+      // We can continue after this.
+      errors.add(diagnostic);
+    }
+
     return null;
   }
 
