@@ -495,6 +495,12 @@ class ParserUtils {
 
   static boolean assertSyntaxType(Parser parser, @Nullable Node node, SyntaxType requiredType,
                                   String message) {
+    if (requiredType == BasicSyntaxType.INVALID) {
+      // This only happens because of a followup error that already got reported, no need to report
+      // another diagnostic.
+      return false;
+    }
+
     if (node != null && !node.syntaxType().isSubTypeOf(requiredType)) {
       parser.diagnostics.add(
           Diagnostic.error("SyntaxType Mismatch", node)
