@@ -61,8 +61,9 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
     var map =
-        (Map<Instruction, List<InstructionIntrinsicAttributesCtx.Attribute>>) passResults.lastResultOf(
-            DetermineIntrinsicAttributesPass.class);
+        (Map<Instruction, List<InstructionIntrinsicAttributesCtx.Attribute>>) passResults
+            .lastResultOf(
+                DetermineIntrinsicAttributesPass.class);
     var records = ((List<TableGenMachineInstruction>) passResults.lastResultOf(
         GenerateTableGenMachineInstructionRecordPass.class)).stream().collect(Collectors.toMap(
         TableGenMachineInstruction::instruction, x -> x));
