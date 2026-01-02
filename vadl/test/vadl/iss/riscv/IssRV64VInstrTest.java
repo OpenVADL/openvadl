@@ -263,6 +263,11 @@ public class IssRV64VInstrTest extends AbstractIssRiscv64InstrTest {
   }
 
   @TestFactory
+  Stream<DynamicTest> vm() throws IOException {
+    return testBinaryVecInstr("vmseq", true, true, true);
+  }
+
+  @TestFactory
   Stream<DynamicTest> vxor() throws IOException {
     return testBinaryVecInstr("vxor", true, true, true);
   }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -35,7 +35,7 @@ public class AnnotationRuleParametersTest {
   // We needed to extract this into a separate class because the rule was not executed with
   // ArchCondition.
   static final ArchCondition<JavaMethod> condition =
-      new ArchCondition<>("have parameters annotated with @NotNull") {
+      new ArchCondition<>("have parameters NOT annotated with @NotNull") {
         @Override
         public void check(JavaMethod method, ConditionEvents events) {
           for (int paramIndex = 0; paramIndex < method.getParameters().size();
@@ -60,6 +60,8 @@ public class AnnotationRuleParametersTest {
     JavaClasses importedClasses = new ClassFileImporter().importPackages("vadl");
 
     ArchRule rule = ArchRuleDefinition.methods()
+        // do not check for kotlin code
+        .that().areDeclaredInClassesThat().areNotAnnotatedWith("kotlin.Metadata")
         .should(condition);
 
     rule.check(importedClasses);

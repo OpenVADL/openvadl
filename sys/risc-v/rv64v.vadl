@@ -2,6 +2,7 @@ import rv64csr::{RV64IMZicsr}
 
 // This RISC-V vector extension is kept simple.
 // We do not allow VMUL specification of the VTYPE, so there are 32 vector registered fixed.
+// Quick Intro: https://blog.timhutt.co.uk/riscv-vector/
 //
 // Glossary:
 // ELEN: ElementLEN .. Number of bits of a single vector element, >= 8, power of 2
@@ -17,9 +18,12 @@ instruction set architecture RV64IMV extending RV64IMZicsr = {
 
   constant ECOUNT = 32
   constant ESIZE = 32
+  constant VLEN = ECOUNT * ESIZE
 
   using BElem = Bits<ESIZE>
   using SElem = SInt<ESIZE>
+
+  using VType = Bits<ECOUNT><ESIZE>
 
   register V: Bits<32><ECOUNT><ESIZE>
 
@@ -139,17 +143,20 @@ instruction set architecture RV64IMV extending RV64IMZicsr = {
     )
   }
 
-  model OPIVCmp (name : Id, vxi: VXIType, binCmp: BinOp, funct6 : Bin): IsaDefs = {
-    model Test(right: Ex): Ex = {
-      let a = V(vs2)(i) in
-      let b = right in
-      if a $binCmp b then 1 as Bits<1> else 0
+  model OPVCmpInstr (name: Id, suffix: Str, expr: Ex, src1Asm : Ex, funct6: Bin, funct3 : Bin): IsaDefs = {
+    instruction AsId($name, "_", $suffix) : OPV = {
+      let result = forall i: Bits<6> in 0..(ECOUNT - 1) tensor $expr in
+      V(vd) := result as Bits<VLEN> as VType
     }
+    encoding AsId($name, "_", $suffix) = { funct6 = $funct6, funct3 = $funct3, opcode = 0b101'0111 }
+    assembly AsId($name, "_", $suffix) = ( AsStr($name), ".", $suffix, register(vd), ", ", register(vs2), ", ", $src1Asm )
+  }
 
+  model OPIVCmp (name : Id, vxi: VXIType, binCmp: BinOp, funct6 : Bin): IsaDefs = {
     $vxi(
-      $OPVInstr ($name; "VV"; Test( V(vs1)(i) )         ; register(vs1);  $funct6; 0b000);
-      $OPVInstr ($name; "VX"; Test( X(rs1) as BElem )   ; register(rs1);  $funct6; 0b100);
-      $OPVInstr ($name; "VI"; Test( imm as SInt<ESIZE> ); decimal(imm);   $funct6; 0b011)
+      $OPVCmpInstr ($name; "VV"; (V(vs2)(i) $binCmp V(vs1)(i) )         ; register(vs1);  $funct6; 0b000);
+      $OPVCmpInstr ($name; "VX"; (V(vs2)(i) $binCmp X(rs1) as BElem)    ; register(rs1);  $funct6; 0b100);
+      $OPVCmpInstr ($name; "VI"; (V(vs2)(i) $binCmp imm as SInt<ESIZE>) ; decimal(imm);   $funct6; 0b011)
     )
   }
 
@@ -179,13 +186,13 @@ instruction set architecture RV64IMV extending RV64IMZicsr = {
 
   // Vector Load Unit-Strided
   instruction VLE32V : VMem = let addr = X(rs1) in
-    V(vd) := MEM<128>(addr) as Bits<32><32> // load 128 bytes ... 1024 bits into the vector register
+    V(vd) := MEM<128>(addr) as VType // load 128 bytes ... 1024 bits into the vector register
   encoding VLE32V = { mew = 0, mop = 0b00, lumop = 0b0000, width = 0b110, opcode = 0b000'0111 }
   assembly VLE32V = ( "vle32.v ", register(vd), ", (", register(rs1), ")" )
 
   // Vector Store Unit-Strided
   instruction VSE32V : VMem = let addr = X(rs1) in
-    MEM<128>(addr) := V(vs3) as Bits<1024>  // store 128 bytes ... 1024 bits from the vector register to memory
+    MEM<128>(addr) := V(vs3) as Bits<VLEN>  // store 128 bytes ... 1024 bits from the vector register to memory
   encoding VSE32V = { mew = 0, mop = 0b00, lumop = 0b0000, width = 0b110, opcode = 0b010'0111 }
   assembly VSE32V = ( "vse32.v ", register(vs3), ", (", register(rs1), ")" )
 

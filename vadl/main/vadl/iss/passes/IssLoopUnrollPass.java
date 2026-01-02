@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -24,6 +24,9 @@ import vadl.pass.PassResults;
 import vadl.viam.Specification;
 import vadl.viam.passes.loopUnrolling.LoopUnroller;
 
+/**
+ * Pass to unroll forall statements in the ISS.
+ */
 public class IssLoopUnrollPass extends AbstractIssPass {
 
   public IssLoopUnrollPass(IssConfiguration configuration) {
@@ -38,7 +41,7 @@ public class IssLoopUnrollPass extends AbstractIssPass {
   @CheckForNull
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-
+    // TODO: Run this only on instructions that can't be handled otherwise
     allInstrs(viam).forEach(i -> new LoopUnroller(i.behavior()).run());
 
     return null;

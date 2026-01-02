@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -39,6 +39,9 @@ import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.passes.CfgTraverser;
 
+/**
+ * Loop unroller pass for VIAM graphs. Unrolls forall statements in the control flow graph.
+ */
 public class LoopUnroller implements CfgTraverser {
 
   private Graph graph;
@@ -49,6 +52,9 @@ public class LoopUnroller implements CfgTraverser {
     this.graph = graph;
   }
 
+  /**
+   * Starts the loop unrolling on the given graph.
+   */
   public void run() {
     var start = GraphUtils.getSingleNode(graph, StartNode.class);
     var hasLoops = graph.getNodes(ForallNode.class).findAny().isPresent();

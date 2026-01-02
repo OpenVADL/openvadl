@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,5 +16,9 @@
 
 package vadl.utils.codegen;
 
+/**
+ * Non-Abstract class of the {@link StringBuilderAppendable} with C code generation API
+ * from the {@link CCodeBuilder} interface.
+ */
 public class CStringBuilder extends StringBuilderAppendable implements CCodeBuilder {
 }

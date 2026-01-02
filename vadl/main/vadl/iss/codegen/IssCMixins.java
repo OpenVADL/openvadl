@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -74,6 +74,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgXorNode;
 import vadl.javaannotations.Handler;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadMemNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
@@ -210,6 +211,18 @@ public interface IssCMixins {
         ctx.wr(", ").gen(i);
       }
       ctx.wr(", ").gen(node.value()).wr(")");
+    }
+
+    @Handler
+    @SuppressWarnings("MissingJavadocMethod")
+    default void handle(CGenContext<Node> ctx,
+                        ReadRegTensorNode node) {
+      var reg = node.regTensor();
+      ctx.wr("get_cpu_" + reg.simpleName().toLowerCase() + "(env");
+      for (var i : node.indices()) {
+        ctx.wr(", ").gen(i);
+      }
+      ctx.wr(")");
     }
   }
 

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -46,6 +46,7 @@ import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingAndPredicateFunctionsPass;
 import vadl.gcb.passes.operands.GenerateInstructionOperandsPass;
 import vadl.iss.passes.IssBuiltInArgTruncOptPass;
+import vadl.iss.passes.IssCFunctionExtractionPass;
 import vadl.iss.passes.IssConfigurationPass;
 import vadl.iss.passes.IssExtractOptimizationPass;
 import vadl.iss.passes.IssGdbInfoExtractionPass;
@@ -504,6 +505,9 @@ public class PassOrders {
 
         // Common passes
         .add(new IssGdbInfoExtractionPass(config))
+
+        // pre emit passes
+        .add(new IssCFunctionExtractionPass(config))
     ;
 
     addDecodePasses(order, config);

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,11 +18,14 @@ package vadl.iss.passes.extensions;
 
 import static vadl.iss.passes.TcgPassUtils.regInfo;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
+import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -37,6 +40,8 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
 
   @Nullable
   Boolean asHelperCall = null;
+
+  List<Function> extractedFunctions = new ArrayList<>();
 
   /**
    * Determines if the instruction is rendered as a helper call to
@@ -65,6 +70,11 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
     return instr().simpleName().toLowerCase();
   }
 
+  @SuppressWarnings("MethodName")
+  public String cCpuStateName() {
+    return "CPU" + instr().simpleName().toUpperCase() + "State";
+  }
+
   public String helperName() {
     return cIdentName() + "_instr";
   }
@@ -91,6 +101,14 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
         .anyMatch(n -> regInfo(n.regTensor()).isGVec())
         || instr().behavior().getNodes(WriteRegTensorNode.class)
         .anyMatch(n -> regInfo(n.regTensor()).isGVec());
+  }
+
+  public void addExtractedFunction(Function function) {
+    extractedFunctions.add(function);
+  }
+
+  public List<Function> extractedFunctions() {
+    return extractedFunctions;
   }
 
 }

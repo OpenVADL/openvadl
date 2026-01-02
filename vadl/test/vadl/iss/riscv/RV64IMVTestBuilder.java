@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -129,8 +129,9 @@ public class RV64IMVTestBuilder extends AsmTestBuilder {
   public void loadArrayToRegs(long addr, int firstReg,
                               int lastReg, String tmpReg) {
     add("li %s, 0x%x", tmpReg, addr);
-    for (int i = firstReg; i <= lastReg; i++) {
-      add("lw x%d, %d(%s)", i, i, tmpReg);
+    var regCount = lastReg - firstReg + 1;
+    for (int i = 0; i < regCount; i++) {
+      add("lw x%d, %d(%s)", i + firstReg, i * 4, tmpReg);
     }
   }
 

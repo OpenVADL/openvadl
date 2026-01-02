@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -45,7 +45,6 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
@@ -219,12 +218,6 @@ class DefaultGenerator implements
   void handle(CGenContext<Node> ctx, FoldNode toHandle) {
     throwNotAllowed(toHandle, "forall fold expressions");
   }
-
-  @Handler
-  void handle(CGenContext<Node> ctx, TensorNode toHandle) {
-    throwNotAllowed(toHandle, "forall tensor expressions");
-  }
-
 }
 
 ///

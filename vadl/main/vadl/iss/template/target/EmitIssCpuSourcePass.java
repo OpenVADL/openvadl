@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -65,6 +65,7 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
     return sb.toString();
   }
 
+  @SuppressWarnings("LambdaParameterName")
   private void dumpRegsCode(CCodeBuilder sb, RegisterTensor reg) {
     var regLower = reg.simpleName().toLowerCase();
     var target = configuration().targetName().toLowerCase();

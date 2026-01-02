@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -149,6 +149,7 @@ class Decomposer
    * Helper to extract a slice from a chunk and accumulate it into the result.
    * Handles source location copying and concatenation logic.
    */
+  @SuppressWarnings("LocalVariableName")
   private ExpressionNode accumulateChunk(
       @Nullable
       ExpressionNode result,
@@ -403,7 +404,6 @@ class Decomposer
   void handle(Request rq, ReadRegTensorNode toHandle) {
     var regTensor = toHandle.regTensor();
     var indices = toHandle.indices();
-    var staticCounterAccess = toHandle.staticCounterAccess();
     var readWidth = regTensor.resultType(indices.size()).bitWidth();
 
     // Ensure the requested slice is within bounds
@@ -455,7 +455,7 @@ class Decomposer
           regTensor,
           newIndices,
           Type.bits(innermostSize).asDataType(),
-          staticCounterAccess
+          toHandle.staticCounterAccess()
       );
 
       result = accumulateChunk(result, regRead, rq.slice, regLsb, innermostSize, toHandle);
@@ -575,7 +575,20 @@ class Decomposer
 
   @Handler
   void handle(Request rq, ZeroExtendNode toHandle) {
-    throw new UnsupportedOperationException("Type ZeroExtendNode not yet implemented");
+    var value = toHandle.value();
+    var valueWidth = value.type().asDataType().bitWidth();
+    if (rq.slice.hi() < valueWidth) {
+      // if the request is only interested in the original value, we just propagate
+      // the request to the original value.
+      rq.result = request(value, rq.slice);
+    } else if (rq.slice.lo() >= valueWidth) {
+      // if the request is only interested in the zero-extended part, the result is 0
+      rq.result = Constant.Value.zero(Type.bits(rq.slice.width())).toNode();
+    } else {
+      // else we request the value part and zero extend it to the requested width.
+      var valuePart = request(value, valueWidth - 1, rq.slice.lo());
+      rq.result = GraphUtils.zeroExtend(valuePart, Type.bits(rq.slice.width()));
+    }
   }
 
   @Handler

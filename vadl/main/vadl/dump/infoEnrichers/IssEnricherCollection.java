@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,6 +17,7 @@
 package vadl.dump.infoEnrichers;
 
 import static vadl.dump.InfoEnricher.forType;
+import static vadl.iss.passes.TcgPassUtils.instrInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
+import vadl.iss.passes.IssCFunctionExtractionPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.viam.Instruction;
 import vadl.viam.graph.dependency.ReadResourceNode;
@@ -73,10 +75,42 @@ public class IssEnricherCollection {
       });
 
   /**
+   * An {@link InfoEnricher} designed to add information about functions extracted
+   * from an {@link Instruction} during the ISS generation process.
+   *
+   * <p>This enricher operates on entities of type {@link DefinitionEntity}. It adds
+   * sub-entities and information derived from extracted functions to provide a
+   * detailed view of the behavior of these functions.
+   */
+  public static InfoEnricher EXTRACTED_INSTR_FUNCTION_EXPANDABLE =
+      forType(DefinitionEntity.class, (entity, passResults) -> {
+        if (!passResults.hasRunPassOnce(IssCFunctionExtractionPass.class)
+            || !(entity.origin() instanceof Instruction instr)) {
+          return;
+        }
+
+        var extractedFunctions = instrInfo(instr).extractedFunctions();
+        for (var function : extractedFunctions) {
+          var funcEntity = new DefinitionEntity(function);
+          funcEntity.setParent(entity);
+          entity.addSubEntity("Extracted Function", funcEntity);
+
+          var dotGraph = function.behavior().dotGraph();
+          var info = InfoUtils.createGraphModal(
+              "Behavior",
+              "Extracted Function Behavior of " + function.simpleName(),
+              dotGraph
+          );
+          funcEntity.addInfo(info);
+        }
+      });
+
+  /**
    * A list of all info enrichers that are ISS specific.
    */
   public static List<InfoEnricher> all = List.of(
-      READ_SPILL_LOCATION_EXPANDABLE
+      READ_SPILL_LOCATION_EXPANDABLE,
+      EXTRACTED_INSTR_FUNCTION_EXPANDABLE
   );
 
 }

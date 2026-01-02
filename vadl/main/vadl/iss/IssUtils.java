@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -70,6 +70,7 @@ public class IssUtils {
    * @param reg       the register tensor
    * @return the calculation based on the above method, e.g. {@code "i0 * 2 + i1"}
    */
+  @SuppressWarnings("MethodName")
   public static String cIndex(List<String> indexVars, RegisterTensor reg) {
     var dims = reg.indexDimensions();
     reg.ensure(dims.size() == indexVars.size(),
