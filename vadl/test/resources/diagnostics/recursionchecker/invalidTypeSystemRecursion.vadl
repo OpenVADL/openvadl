@@ -2,7 +2,7 @@ constant x: Bits<y> = 1
 constant y: Bits<x> = 1
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Infinite Recursion
 //       ╭──[test/resources/diagnostics/recursionchecker/invalidTypeSystemRecursion.vadl:1:18]

@@ -3,7 +3,7 @@ instruction set architecture ISA = {
 }
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Unknown Symbol: "XSize"
 //       ╭──[test/resources/diagnostics/nameresolution/invalidTypeNameInUsing.vadl:2:28]

@@ -4,7 +4,7 @@ instruction set architecture FLO = {
 }
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Symbol name already used: X
 //       ╭──[test/resources/diagnostics/nameresolution/invalidResolveTwoOverlappingRegisterFileDefinitions.vadl:3:12]

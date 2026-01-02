@@ -27,7 +27,7 @@ instruction set architecture ISA = {
   }
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Unknown Symbol: "DOESNOTEXIST"
 //       ╭──[test/resources/diagnostics/lowering/invalidPseudoReturnInstructionMissing.vadl:12:36]

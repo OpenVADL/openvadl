@@ -1,0 +1,28 @@
+// INCLUDE-AST-DUMP
+
+  enumeration ENUM =
+  { A = 1
+  , B = 2
+  , C = 3 + 4
+  }
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    EnumerationDefinition name: "ENUM"
+//    . Identifier name: "A" type: null
+//    . IntegerLiteral literal: 1 (1) type: Const<1>
+//    . Identifier name: "B" type: null
+//    . IntegerLiteral literal: 2 (2) type: Const<2>
+//    . Identifier name: "C" type: null
+//    . BinaryExpr operator: + type: Const<7>
+//    . : IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : IntegerLiteral literal: 4 (4) type: Const<4>
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest

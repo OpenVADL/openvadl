@@ -2,7 +2,7 @@ constant a = 13
 constant a = 13
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Symbol name already used: a
 //       ╭──[test/resources/diagnostics/nameresolution/invalidResolveTwoOverlappingConstant.vadl:2:10]

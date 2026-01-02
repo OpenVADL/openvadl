@@ -1,7 +1,7 @@
 constant a = b
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Unknown Symbol: "b"
 //       ╭──[test/resources/diagnostics/nameresolution/invalidResolveUndefinedVariable.vadl:1:14]

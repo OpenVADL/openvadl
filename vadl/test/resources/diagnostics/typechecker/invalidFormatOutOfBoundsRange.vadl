@@ -6,7 +6,7 @@ instruction set architecture TEST = {
 }
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Invalid Range
 //       ╭──[test/resources/diagnostics/typechecker/invalidFormatOutOfBoundsRange.vadl:3:14]

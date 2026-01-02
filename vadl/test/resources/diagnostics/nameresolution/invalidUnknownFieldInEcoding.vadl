@@ -9,7 +9,7 @@ instruction set architecture ISA = {
 }
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Unknown Field: "bit"
 //       ╭──[test/resources/diagnostics/nameresolution/invalidUnknownFieldInEcoding.vadl:8:20]

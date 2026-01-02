@@ -1,0 +1,35 @@
+// INCLUDE-AST-DUMP
+
+constant a = 3 as UInt<8>
+constant b = 3 as SInt<8>
+constant c = 3 as Bits<8>
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    ConstantDefinition name: "a"
+//    . CastExpr type: UInt<8>
+//    . : IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : TypeLiteral type: UInt<8>
+//    . : ' Identifier name: "UInt" type: null
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    ConstantDefinition name: "b"
+//    . CastExpr type: SInt<8>
+//    . : IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : TypeLiteral type: SInt<8>
+//    . : ' Identifier name: "SInt" type: null
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    ConstantDefinition name: "c"
+//    . CastExpr type: Bits<8>
+//    . : IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : TypeLiteral type: Bits<8>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest

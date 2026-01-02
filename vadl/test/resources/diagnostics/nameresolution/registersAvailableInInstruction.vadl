@@ -9,7 +9,7 @@ instruction set architecture ISA = {
 }
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Missing Assembly
 //       ╭──[test/resources/diagnostics/nameresolution/registersAvailableInInstruction.vadl:6:15]

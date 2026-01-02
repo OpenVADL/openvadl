@@ -24,7 +24,7 @@ instruction set architecture TEST = {
 }
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Cannot Write To Static Target
 //       ╭──[test/resources/diagnostics/typechecker/assignToLetValue.vadl:19:7]

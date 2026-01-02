@@ -4,7 +4,7 @@ instruction set architecture ISA = {
 }
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Infinite Recursion
 //       ╭──[test/resources/diagnostics/recursionchecker/invalidAliasRecursion.vadl:2:3]

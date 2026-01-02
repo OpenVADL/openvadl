@@ -2,7 +2,7 @@ constant a = b
 constant b: Bits<a> = 3
 
 
-// Reported Diagnostics:
+//  Reported Diagnostics:
 //
 //  error: Infinite Recursion
 //       ╭──[test/resources/diagnostics/recursionchecker/invalidTypeSystemConstantRecursion.vadl:1:14]

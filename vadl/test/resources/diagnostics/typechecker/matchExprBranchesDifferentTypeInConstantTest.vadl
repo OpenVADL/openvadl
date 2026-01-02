@@ -1,0 +1,63 @@
+// INCLUDE-AST-DUMP
+
+  // In the "context" of an constant the branches can have different types.
+  constant x = match 4 as Bits<32> with
+  { 1 => 2 as Bits<16>
+  , 2 => 4 as Bits<32>
+  , 3 => 6 as Bits<8>
+  , _ => 42 as Bits<64>
+  }
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    ConstantDefinition name: "x"
+//    . MatchExpr type: Bits<64>
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' TypeLiteral type: Bits<32>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : ' TypeLiteral type: Bits<32>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 32 (32) type: null
+//    . : CastExpr type: Bits<16>
+//    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
+//    . : ' TypeLiteral type: Bits<16>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 16 (16) type: Const<16>
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
+//    . : ' TypeLiteral type: Bits<32>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 32 (32) type: null
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' TypeLiteral type: Bits<32>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' TypeLiteral type: Bits<32>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 32 (32) type: null
+//    . : CastExpr type: Bits<8>
+//    . : ' IntegerLiteral literal: 6 (6) type: Const<6>
+//    . : ' TypeLiteral type: Bits<8>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : CastExpr type: Bits<64>
+//    . : ' IntegerLiteral literal: 42 (42) type: Const<42>
+//    . : ' TypeLiteral type: Bits<64>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 64 (64) type: Const<64>
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest
