@@ -90,6 +90,10 @@ For example, you can create the ISS (Instruction Set Simulator) for a minimal ri
 
 To get a description of the complete usage, you can run: `./gradlew run --args="--help"`
 
+### Running the LSP
+
+The LSP (Language Server Protocol) can be started with `./gradlew vadl-lsp:run`.
+
 ### Building
 
 You can build and run in two steps with

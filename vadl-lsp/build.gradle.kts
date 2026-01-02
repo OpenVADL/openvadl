@@ -24,6 +24,16 @@ application {
     mainClass.set("vadl.lsp.Main")
 }
 
+// Tasks that should only be executed if the concrete path was specified (using the vadl-lsp: prefix)
+var pathSpecificTasks = with(tasks) {
+    setOf(run, installDist)
+}.map { it.name }
+tasks.filter { it.name in pathSpecificTasks }.forEach { it ->
+    it.onlyIf {
+        gradle.startParameter.taskNames.any { it.contains("vadl-lsp:") }
+    }
+}
+
 tasks.test {
     useJUnitPlatform()
 }
