@@ -16,12 +16,25 @@
 
 package vadl.lcb.include.llvm.IR;
 
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.passes.DetermineIntrinsicAttributesPass;
+import vadl.gcb.passes.InstructionIntrinsicAttributesCtx;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
 /**
@@ -41,8 +54,68 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
   @Override
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
+    var map =
+        (Map<Instruction, List<InstructionIntrinsicAttributesCtx.Attribute>>) passResults.lastResultOf(
+            DetermineIntrinsicAttributesPass.class);
+    var records = ((List<TableGenMachineInstruction>) passResults.lastResultOf(
+        GenerateTableGenMachineInstructionRecordPass.class)).stream().collect(Collectors.toMap(
+        TableGenMachineInstruction::instruction, x -> x));
+
+    var intrinsics = genIntrinsics(map, records);
+
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().targetName().value().toLowerCase());
+        lcbConfiguration().targetName().value().toLowerCase(),
+        "intrinsics", intrinsics);
+  }
+
+  private record Intrinsic(String name, List<String> resultTy, List<String> paramTy,
+                           List<InstructionIntrinsicAttributesCtx.Attribute> attributes) implements
+      Renderable {
+
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "name", name,
+          "result", String.join(", ", resultTy),
+          "param", String.join(", ", paramTy),
+          "attr",
+          attributes.stream().map(this::getName).filter(Optional::isPresent).map(Optional::get)
+              .collect(Collectors.joining(", "))
+      );
+    }
+
+    private Optional<String> getName(InstructionIntrinsicAttributesCtx.Attribute x) {
+      return switch (x) {
+        case NoMem -> Optional.of("IntrNoMem");
+        case WillReturn -> Optional.empty();
+        case NoReturn -> Optional.empty();
+        case Speculatable -> Optional.of("IntrSpeculatable");
+      };
+    }
+  }
+
+  private List<Intrinsic> genIntrinsics(
+      Map<Instruction, List<InstructionIntrinsicAttributesCtx.Attribute>> attributes,
+      Map<Instruction, TableGenMachineInstruction> records) {
+    var result = new ArrayList<Intrinsic>();
+
+    for (var entry : attributes.entrySet()) {
+      var instruction = entry.getKey();
+      var attr = entry.getValue();
+      var record = ensureNonNull(records.get(instruction), "must not be null");
+
+      var intrinsic =
+          new Intrinsic(
+              "int_" + lcbConfiguration().targetName().value() + "_" + instruction.simpleName(),
+              record.getOutOperands().isEmpty() ? List.of("llvm_void_ty") : List.of("llvm_any_ty"),
+              record.getInOperands().stream().map(x -> "LLVMMatchType<0>")
+                  .collect(Collectors.toList()),
+              attr);
+      result.add(intrinsic);
+    }
+
+    result.sort(Comparator.comparing(o -> o.name));
+    return result;
   }
 
   @Override
