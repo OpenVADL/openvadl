@@ -670,6 +670,8 @@ class ParserUtils {
         readMacroSymbols(macroTable, list.items);
       } else if (definition instanceof ModelDefinition modelDefinition) {
         macroTable.defineSymbol(modelDefinition);
+      } else if (definition instanceof ModelTypeDefinition modelTypeDefinition) {
+        macroTable.defineSymbol(modelTypeDefinition);
       } else if (definition instanceof RecordTypeDefinition recordTypeDefinition) {
         macroTable.defineSymbol(recordTypeDefinition);
       }
