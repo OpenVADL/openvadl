@@ -1,0 +1,85 @@
+import aarch64::AArch64Base
+
+instruction set architecture AArch64SVEandSME extending AArch64Base = {
+
+  constant VL  = 128                    // vector length, number of bits in a vector register
+  constant ElementsB = VL >> 3          // number of byte   sized elements in a vector register
+  constant ElementsH = VL >> 4          // number of half   sized elements in a vector register
+  constant ElementsS = VL >> 5          // number of single sized elements in a vector register
+  constant ElementsD = VL >> 6          // number of double sized elements in a vector register
+
+  constant NumZ = 32                    // number of vector registers in register file
+
+  using IndexP = Bits4                  // index type for the 16 predicate registers
+  using BitsZ  = Bits<VL>               // Bits Z register type
+  using BitsZB = Bits<ElementsB>< 8>    // byte   vector register file
+  using BitsZH = Bits<ElementsH><16>    // half   vector register file
+  using BitsZS = Bits<ElementsS><32>    // single vector register file
+  using BitsZD = Bits<ElementsD><64>    // double vector register file
+
+  register   P : IndexP -> BitsZ        // predicate register file
+  register   Z : Index  -> BitsZ        // vector    register file
+  alias register ZB : BitsZB<NumZ> = Z  // byte   vector register file
+  alias register ZH : BitsZH<NumZ> = Z  // half   vector register file
+  alias register ZS : BitsZS<NumZ> = Z  // single vector register file
+  alias register ZD : BitsZD<NumZ> = Z  // double vector register file
+
+  enumeration ElSize =                  // element size encoding, do not reorder
+    { SizeB                             // byte   size
+    , SizeH                             // half   size
+    , SizeS                             // single size
+    , SizeD                             // double size
+    }
+
+  // higher order model enriched with operation size
+  model-type InstrWithFunctElemSizeType = (InstrWithFunct, Id, Id, Str) -> IsaDefs
+
+  model ExtInstrIdMnemo (i: InstrWithFunct, ext: Str): InstrWithFunct = {
+    (AsId ($i.id, $ext); AsStr($i.mnemo, ".", $ext); $i.opcode; $i.funct)
+    }
+
+  model BHSDReg (size: Id): Id = {
+    match: Id ($size = SizeB => ZB ; $size = SizeH => ZH ; $size = SizeS => ZS ; _ => ZD)
+  }
+
+  model BitsBHSD (size: Id): Id = {
+    match: Id ($size = SizeB => BitsZB ; $size = SizeH => BitsZH ; $size = SizeS => BitsZS ; _ => BitsZD)
+  }
+
+
+// arithmetic sve models *******************************************************
+
+  format ArithmeticSVEFormat: Instr =   // arithmetic unpredicated SVE format
+    { op       [31..24,21] : Bits9      // opcode
+    , size     [23..22]    : Bits2      // elements operation size
+    , zm       [20..16]    : Index      // 2nd source register
+    , opc      [15..10]    : Bits6      // opcode second part
+    , zn       [9..5]      : Index      // 1st source register
+    , zd       [4..0]      : Index      // destination register
+    }
+
+  model ArithmeticSVEInstr (i: InstrWithFunct, elements: Id, size: Id, extReg: Str): IsaDefs = {
+    instruction $i.id: ArithmeticSVEFormat =
+      let left  = Z(zn) as $BitsBHSD($size) in
+      let right = Z(zm) as $BitsBHSD($size) in 
+        Z(zd) := forall i : Index in 0..$elements-1
+                   tensor VADL::$i.funct (left(i), right(i))
+    encoding $i.id = { op = 0b0000'0100'1, opc = $i.opcode, size = ElSize::$size }
+    assembly $i.id = ( $i.mnemo, ' ', register(zd), $extReg, ', ', register(zn), $extReg, ', ', register(zm), $extReg )
+    }
+
+  model InstrBHSD (modelid: InstrWithFunctElemSizeType, i: InstrWithFunct): IsaDefs = {
+    $modelid ($ExtInstrStr ($i; "B"); ElementsB; SizeB; ".B")
+    $modelid ($ExtInstrStr ($i; "H"); ElementsH; SizeH; ".H")
+    $modelid ($ExtInstrStr ($i; "S"); ElementsS; SizeS; ".S")
+    $modelid ($ExtInstrStr ($i; "D"); ElementsD; SizeD; ".D")
+    }
+
+
+// sve instructions ************************************************************
+
+  $InstrBHSD           (ArithmeticSVEInstr    ; (ADDSVEunp   ; "add"   ; 0b000'000        ; add        ))
+  $InstrBHSD           (ArithmeticSVEInstr    ; (SUBSVEunp   ; "sub"   ; 0b000'001        ; sub        ))
+  $InstrBHSD           (ArithmeticSVEInstr    ; (MULSVEunp   ; "mul"   ; 0b011'000        ; mul        ))
+
+}
