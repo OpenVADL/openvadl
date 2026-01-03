@@ -1,0 +1,25 @@
+// In a previous version this example lead to a crash
+// This was only because the error code assumed that the invalidly called macro always exists but since we support
+// higher order macros like this, the assumption isn't correct.
+// https://github.com/OpenVADL/openvadl/issues/644
+
+record InstrWithFunct (id: Id, mnemo: Str, opcode: Ex, funct: Id)
+
+model-type InstrWithFunctElemSize = (InstrWithFunct, Id, Id) -> IsaDefs
+
+model InstrBHSD (modelid: InstrWithFunctElemSize, i: InstrWithFunct): IsaDefs = {
+  $modelid ($i; ElementsB; SizeB; ".B")
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Model Invocation
+//       ╭──[test/resources/diagnostics/parser/invalidHigherOrderMacroWithTooManyArguments.vadl:11:35]
+//       │
+//    11 │   $modelid ($i; ElementsB; SizeB; ".B")
+//       │                                   ^^^^ The model only expected 3 arguments but, you provided at least 4.
+//       │
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest

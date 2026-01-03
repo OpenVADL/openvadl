@@ -2062,7 +2062,7 @@ PRODUCTIONS
                                                       // If too many arguments exist we cannot parse them because we
                                                       // need the information from the model signature to know how to
                                                       // parse them so instead we must abort parsing and throw an error.
-                                                      if (!params.hasNext()) throw ParserUtils.tooManyMacroArgumentsError(macro, nextTokenLoc());
+                                                      if (!params.hasNext()) throw ParserUtils.tooManyMacroArgumentsError(macro, paramType, nextTokenLoc());
                                                   .)
         macroBody<out Node arg1, params.next()>   (. args.add(arg1); .)
         {
@@ -2070,7 +2070,7 @@ PRODUCTIONS
                                                       // If too many arguments exist we cannot parse them because we
                                                       // need the information from the model signature to know how to
                                                       // parse them so instead we must abort parsing and throw an error.
-                                                      if (!params.hasNext()) throw ParserUtils.tooManyMacroArgumentsError(macro, nextTokenLoc());
+                                                      if (!params.hasNext()) throw ParserUtils.tooManyMacroArgumentsError(macro, paramType,nextTokenLoc());
                                                   .)
           macroBody<out Node arg2, params.next()> (. args.add(arg2); .)
         }
