@@ -1,0 +1,12 @@
+constant MLen = 64
+using SIntM = SInt<MLen>
+function lessthan (a: SIntM, b: SIntM) -> Bool = a < b
+
+import rv3264im::RV3264Base with ("ArchSize=Arch64")
+
+instruction set architecture RV64IM extending RV3264Base = {}
+application binary interface ABI for RV64IM = {}
+assembly description Assemble for ABI = {}
+micro architecture FiveStage implements RV64IM = {}
+[ htif ]
+processor CPU implements RV64IM with ABI = {}

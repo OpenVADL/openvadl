@@ -15,6 +15,7 @@ OPEN_VADL_DOC_INPUT_REFMAN=\
 ./refman/introduction.md \
 ./refman/tutorial.md \
 ./refman/refmanual.md \
+../vadl/main/vadl/ast/vadl.ATG \
 ./refman/acronyms.md
 
 
@@ -49,7 +50,7 @@ open-vadl-latex: doxygen
 	PROJECT_LOGO="" \
 	OUTPUT_DIRECTORY="./obj/doc/open-vadl-refman" \
 	INPUT="$(OPEN_VADL_DOC_INPUT_REFMAN)" \
-	$(DOXYGEN) Doxyfile.latex.doxygen
+	$(DOXYGEN) latex.cfg
 	bash ./tools/sed-latex "obj/doc/open-vadl-refman/latex"
 	@(cd obj/doc/open-vadl-refman/latex; make)
 	@cp obj/doc/open-vadl-refman/latex/refman.pdf obj/doc/open-vadl-refman/open-vadl.pdf

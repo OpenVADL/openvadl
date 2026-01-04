@@ -39,9 +39,8 @@ COMPILER vadl
   SymbolTable macroTable = new SymbolTable();
   Map<String, Identifier> macroOverrides = new HashMap<>();
 
-  /**
-  * This list is for our custom generated errors that are richer than the one COCO/R produces.
-  */
+  // This list is for our custom generated errors that are richer than the one COCO/R produces.
+ 
   List<Diagnostic> diagnostics = new ArrayList<>();
 
   {
@@ -73,8 +72,8 @@ CHARACTERS
   validSourceCharacters = ANY.
 
 TOKENS
-  hexLit = "0x" hexDigit {hexDigit | "'"}.
   binLit = "0b" binDigit {binDigit | "'"}.
+  hexLit = "0x" hexDigit {hexDigit | "'"}.
   decLit = digit {digit | "'"}.
   embeddedSource = "-<{" {validSourceCharacters} "}>-".
 
@@ -83,22 +82,72 @@ TOKENS
   ( '"' { "\\" (letter | '"' | "'" | "\\") | validDQStringCharacters } '"') |
   ( "'" { "\\" (letter | '"' | "'" | "\\") | validSQStringCharacters } "'").
 
+/// The #T_BIN token is used as the name of the syntax type for a binary or hexadecimal literal like '0b10101010' or '0x1234abcd' (#binLit or #hexLit, see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_BIN is referenced by \refFrom. */
   T_BIN         = "Bin".
+
+/// The #T_BIN_OP token is used as the name of the syntax type for binary operators like '+' or '*' (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_BIN_OP is referenced by \refFrom. */
   T_BIN_OP      = "BinOp".
+
+/// The #T_BOOL token is used as the name of the syntax type for the boolean literals 'true' and 'false' (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_BT_BOOLIN is referenced by \refFrom. */
   T_BOOL        = "Bool".
+
+/// The #T_CALL_EX token is used as the name of the syntax type for a call expression (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_CALL_EX is referenced by \refFrom. */
   T_CALL_EX     = "CallEx".
+
+/// The #T_COMMON_DEFS token is used as the name of the syntax type for one or more common definitions like constants, formations or functions (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_COMMON_DEFS is referenced by \refFrom. */
   T_COMMON_DEFS = "Defs".
+
+/// The #T_ENCS token is used as the name of the syntax type for oner or more instruction encodings (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_ENCS is referenced by \refFrom. */
   T_ENCS        = "Encs".
+
+/// The #T_EX token is used as the name of the syntax type for a general expression (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_EX is referenced by \refFrom. */
   T_EX          = "Ex".
+
+/// The #T_ID token is used as the name of the syntax type for an identifier (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_ID is referenced by \refFrom. */
   T_ID          = "Id".
+
+/// The #T_INT token is used as the name of the syntax type for a decimal integer literal like '123' (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_INT is referenced by \refFrom. */
   T_INT         = "Int".
+
+/// The #T_ISA_DEFS token is used as the name of the syntax type of one or more definitions inside the \ac{ISA} section (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_ISA_DEFS is referenced by \refFrom. */
   T_ISA_DEFS    = "IsaDefs".
+
+/// The #T_LIT token is used as the name of the syntax type for a literal of any type (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_LIT is referenced by \refFrom. */
   T_LIT         = "Lit".
+
+/// The #T_STAT token is used as the name of the syntax type for a single statement (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_STAT is referenced by \refFrom. */
   T_STAT        = "Stat".
+
+/// The #T_STATS token is used as the name of the syntax type for one or more statements (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_STATS is referenced by \refFrom. */
   T_STATS       = "Stats".
+
+/// The #T_STR token is used as the name of the syntax type for a string literal like 'abc' or "abc" (#string, see type hierarchy \r{#syntax_type_hierarchy}).<br>
+/**     #T_STR is referenced by \refFrom. */
   T_STR         = "Str".
+
+/// The #T_SYM_EX token is used as the name of the syntax type for a symbol expression (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_SYM_EX is referenced by \refFrom. */
   T_SYM_EX      = "SymEx".
+
+/// The #T_UN_OP token is used as the name of the syntax type for unary operators like '+' or '!' (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**     #T_UN_OP is referenced by \refFrom. */
   T_UN_OP       = "UnOp".
+
+/// The #T_VAL token is used as the name of the syntax type for a value literal (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/**            #T_VAL is referenced by \refFrom. */
   T_VAL         = "Val".
 
   ABSOLUTE     = "absolute".
@@ -128,7 +177,7 @@ TOKENS
   ENUMERATION  = "enumeration".
   EXCEPTION    = "exception".
   EXISTS       = "exists".
-  AS_ID    = "AsId".
+  AS_ID        = "AsId".
   EXTENDING    = "extending".
   FALSE        = "false".
   FETCH        = "fetch".
@@ -143,7 +192,7 @@ TOKENS
   GRAMMAR      = "grammar".
   GROUP        = "group".
   HIT          = "hit".
-  AS_STR    = "AsStr".
+  AS_STR       = "AsStr".
   IF_KW        = "if".
   INT          = "int".
   IMPLEMENTS   = "implements".
@@ -272,30 +321,72 @@ IGNORE '\t' + '\r' + '\n'
 
 
 PRODUCTIONS
-  vadl =
-  {
+
+/**  \brief
+\lbl{refman_vadl}
+The #vadl production rule is the entry point of a VADL processor specification as
+well as of the OpenVADL parser.<br>
+
+A VADL specification consists of multiple #topLevelDefinition elements like a type alias
+(#usingDefinition) or a function definition (#functionDefinition) and sections like the
+ISA section (#instructionsetDefinition). It is also possible to define macros (#macroDefinition).
+*/
+  vadl
+  = {
     SYNC
-    topLevelDefinitions<out Definition def> (.
-                                                addDef(ast.definitions, def);
-                                                // Only call the symbol resolver if there were no errors, because other
-                                                // wise the AST might be invalid, causing a crash.
-                                                if (errors.count == 0) {
-                                                  new SymbolTable.SymbolCollector().collectSymbols(ast.rootSymbolTable(), def);
-                                                }
-                                            .)
-    | macroDef<out ModelDefinition def>     (.
-                                                addDef(ast.definitions, def);
-                                                // Only call the symbol resolver if there were no errors, because other
-                                                // wise the AST might be invalid, causing a crash.
-                                                if (errors.count == 0) {
-                                                new SymbolTable.SymbolCollector().collectSymbols(ast.rootSymbolTable(), def); macroTable.addModelDefinition(def);
-                                                }
+    topLevelDefinition<out Definition def>     (. addDef(ast.definitions, def);
+                                                  // Only call the symbol resolver if there were no errors, because other
+                                                  // wise the AST might be invalid, causing a crash.
+                                                  if (errors.count == 0) {
+                                                    new SymbolTable.SymbolCollector().collectSymbols(ast.rootSymbolTable(), def);
+                                                  }
+                                                .)
+    | macroDefinition<out ModelDefinition def> (. addDef(ast.definitions, def);
+                                                  // Only call the symbol resolver if there were no errors, because other
+                                                  // wise the AST might be invalid, causing a crash.
+                                                  if (errors.count == 0) {
+                                                    new SymbolTable.SymbolCollector().collectSymbols(ast.rootSymbolTable(), def); macroTable.addModelDefinition(def);
+                                                  }
                                             .)
   }SYNC.
 
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------
-  topLevelDefinitions<out Definition def> (. def = DUMMY_DEF; .)
-  = annotations<. out List<AnnotationDefinition> annotations.>
+
+/**  \brief
+The #topLevelDefinition production rule lists (beside macro definitions) all \ac{VADL}
+language elements allowed on the top level of a \ac{VADL} specification.<br>
+
+\listing{lst_top_level_definitions, Top level definitions with some common definitions}
+~~~{.vadl}
+constant MLen = 64
+using SIntM = SInt<MLen>
+function lessthan (a: SIntM, b: SIntM) -> Bool = a < b
+
+import rv3264im::RV3264Base with ("ArchSize=Arch64")
+
+instruction set architecture RV64IM extending RV3264Base = {}
+application binary interface ABI for RV64IM = {}
+assembly description Assemble for ABI = {}
+micro architecture FiveStage implements RV64IM = {}
+[ htif ]
+processor CPU implements RV64IM with ABI = {}
+~~~
+\endlisting
+
+Listing \r{lst_top_level_definitions} gives examples for top level language elements.
+Annotations (#annotations) can be added to most \ac{VADL} language elements.
+The `htif` annotation in line 11 is an annotation for the processor definition (#processorDefinition) in line 12.
+A constant definition (line 1), a using definition (line 2) or a function definition (line 3)
+are examples for common definitions (#commonDefinition).
+An instruction set architecture definition (#instructionsetDefinition) is shown in line 7.
+An application binary interface definition (#applicationBinaryInterfaceDefinition) is shown in line 8.
+An assembly description (#assemblyDescriptionDefinition) is shown in line 9.
+A micro architecture definition (#microArchitectureDefinition) is shown in line 10.
+
+#topLevelDefinition is referenced by \refFrom.
+*/
+  topLevelDefinition<out Definition def> (. def = DUMMY_DEF; .)
+  = annotations<.out List<AnnotationDefinition> annotations.>
   ( instructionsetDefinition<out def>
   | applicationBinaryInterfaceDefinition<out def>
   | processorDefinition<out def>
@@ -303,16 +394,21 @@ PRODUCTIONS
   | commonDefinition<out def>
   | importDefinition<out def>
   | assemblyDescriptionDefinition<out def>
-  )                                         (. def.withAnnotations(annotations); .)
+  )                                      (. def.withAnnotations(annotations); .)
   .
 
+/**  \brief
+The #commonDefinitionList production rule lists (beside macro definitions) all common definition with annotations.<br>
+
+#commonDefinitionList is referenced by \refFrom.
+*/
   commonDefinitionList<.out List<Definition> definitions.> (. definitions = new ArrayList<>(); .)
   = {
     annotations<.out List<AnnotationDefinition> annotations.>
     commonDefinition<out Definition def>                   (. def.withAnnotations(annotations); definitions.add(def); .)
-  | macroDef<out ModelDefinition def>                      (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
-  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
-    macroReplacement<out Node n>                           (. var def = castCommonDef(this, n);
+  | macroDefinition<out ModelDefinition def>               (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
+    // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
+  | macroReplacement<out Node n>                           (. var def = castCommonDef(this, n);
                                                               if (def instanceof DefinitionList list) {
                                                                 readMacroSymbols(macroTable, list.items);
                                                               }
@@ -355,9 +451,9 @@ PRODUCTIONS
   = {
     annotations<.out List<AnnotationDefinition> annotations.>
     isaDefinition<out Definition def>                   (. def.withAnnotations(annotations); definitions.add(def); .)
-  | macroDef<out ModelDefinition def>                   (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
-  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
-    macroReplacement<out Node n>                        (. var def = castIsaDef(this, n);
+  | macroDefinition<out ModelDefinition def>            (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
+    // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
+  | macroReplacement<out Node n>                        (. var def = castIsaDef(this, n);
                                                            if (def instanceof DefinitionList list) {
                                                              readMacroSymbols(macroTable, list.items);
                                                            }
@@ -365,6 +461,12 @@ PRODUCTIONS
   }
   .
 
+/**  \brief
+Multiple annotations (#annotations) can by declared in front of many syntactic
+elements. A single annotation is described in the #annotation production rule.<br>
+
+#annotations is used by \refFrom.
+*/
   annotations<out List<AnnotationDefinition> annotations> (. var list = new ArrayList<AnnotationDefinition>(); .)
   = {
     annotation<out AnnotationDefinition annotation>       (. list.add(annotation); .)
@@ -392,7 +494,7 @@ PRODUCTIONS
   = commonDefinition<out def>
   | IF (la.kind == _GROUP && scanner.Peek().kind != _COUNTER)
     groupDefinition<out def>
-  | counterDefinition<out def>
+  | counterDefinition<out def>                // counterDefinition must be ordered after groupDefinition
   | instructionDefinition<out def>
   | pseudoInstructionDefinition<out def>
   | relocationDefinition<out def>
@@ -866,7 +968,7 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                             (. def = new ApplicationBinaryInterfaceDefinition(id, isaPath, elements, start.join(lastTokenLoc())); .)
   .
 
-  abiElementDefinition<out Definition def>   (. def = DUMMY_DEF; .)
+  abiElementDefinition<out Definition def> (. def = DUMMY_DEF; .)
   = annotations<.out List<AnnotationDefinition> annotations.> (. var peek = scanner.Peek(); .)
     ( specialPurposeRegisterSingleDef<out def>
     | aliasDefinition<out def>
@@ -875,11 +977,11 @@ PRODUCTIONS
     | clangTypeDefinition<out def>
     | clangNumericTypeDefinition<out def>
   )                                        (. def.withAnnotations(annotations); .)
-  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
-    macroReplacement<out Node n>             (. def = castCommonDef(this, n);
-                                                if (def instanceof DefinitionList list) {
-                                                  readMacroSymbols(macroTable, list.items);
-                                                } .)
+    // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
+  | macroReplacement<out Node n>           (. def = castCommonDef(this, n);
+                                              if (def instanceof DefinitionList list) {
+                                                readMacroSymbols(macroTable, list.items);
+                                              } .)
   .
 
   clangTypeDefinition<out Definition def>                     (. def = DUMMY_DEF; var startLoc = nextTokenLoc(); .)
@@ -1066,6 +1168,11 @@ PRODUCTIONS
 
   // -- MiA DEFINITIONS-----------------------------------------------------------------------------------------------
 
+/**  \brief
+The #microArchitectureDefinition production rule starts the micro architecture section.<br>
+
+#microArchitectureDefinition is referenced by \refFrom.
+*/
   microArchitectureDefinition<out Definition def> (. var start = nextTokenLoc(); .)
   = MICRO ARCHITECTURE
     identifier<out Identifier id>
@@ -1079,62 +1186,80 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                       (. def = new MicroArchitectureDefinition(id, processor, definitions, start.join(lastTokenLoc())); .)
   .
 
+/**  \brief
+The #miaDefinition production rule lists all micro architecture language elements.<br>
+
+\listing{lst_mia_definitions, Example micro architecture definition}
+~~~{.vadl}
+micro architecture FiveStage implements RV32IM = {
+    
+  logic [forwarding] bypass
+
+  stage FETCH -> ( fr : FetchResult ) = {
+    fr := fetchNext                             // fetch next packet from memory (or cache)
+  }
+
+  stage DECODE -> ( ir : Instruction ) = {
+    let instr = decode( FETCH.fr ) in {         // decode the fetch packet, gives an Instruction
+      if( instr.unknown ) then
+        raise invalidInstruction                // raise an invalid instruction exception
+      instr.address( @X )                       // output computed address (X + offset) to memory
+      instr.read( @X )                          // read from the X register file
+      instr.read( @PC )                         // read from the PC
+      ir := instr                               // stage output is the Instruction ir
+    }
+  }
+
+  stage EXECUTE -> ( ir : Instruction ) = {
+    let instr = DECODE.ir in {
+      instr.compute                             // evaluate all expressions
+      instr.verify                              // check and flush pipeline if branch misprediction
+      instr.write( @PC )                        // write PC
+      ir := instr
+    }
+  }
+
+  stage MEMORY -> ( ir : Instruction ) = {
+    let instr = EXECUTE.ir in {
+      instr.write( @MEM )                       // write to memory
+      instr.read( @MEM )                        // receive data from memory read
+      ir := instr
+    }
+  }
+
+  stage WRITE_BACK = {
+    let instr = MEMORY.ir in
+      instr.write( @X )                         // write back to register file X
+  }
+}
+~~~
+\endlisting
+
+Listing \r{lst_mia_definitions} gives examples for top level language elements.
+A micro architecture definition (#microArchitectureDefinition) is shown in line 1.
+
+#miaDefinition is referenced by \refFrom.
+*/
   miaDefinition<out Definition def> (. def = DUMMY_DEF; .)
   = annotations<.out List<AnnotationDefinition> annotations.>
-    ( macroInstructionDefinition<out def>
-    | portBehaviorDefinition<out def>
-    | pipelineDefinition<out def>
+    ( pipelineDefinition<out def>
     | stageDefinition<out def>
     | cacheDefinition<out def>
     | logicDefinition<out def>
-    | signalDefinition<out def>
+//    | macroInstructionDefinition<out def>
+//    | portBehaviorDefinition<out def>
+//    | signalDefinition<out def>
     | memoryDefinition<out def>
     | registerDefinition<out def>     // TODO Pass type MIA_DEFS - currently only ISA_DEFS
     | processDefinition<out def>
     | operationDefinition<out def>
     | commonDefinition<out def>
-    )                               (. def.withAnnotations(annotations); .)
-  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
-    macroReplacement<out Node n>    (. def = castCommonDef(this, n);
-                                       if (def instanceof DefinitionList list) {
-                                         readMacroSymbols(macroTable, list.items);
-                                       } .)
-  .
-
-  resourceReference<out ResourceReferenceExression expr>   (. var start = nextTokenLoc(); .)
-  =
-  SYM_AT
-  identifier<out var id>                                  (. expr = new ResourceReferenceExression(id, start.join(lastTokenLoc())); .)
-  .
-
-  macroInstructionDefinition<out Definition def> (. var start = nextTokenLoc(); .)
-  =                                              (. MacroInstructionDefinition.MacroBehaviorKind kind = null; List<Parameter> inputs = List.of(); .)
-  ( TRANSLATION                                  (. kind = MacroInstructionDefinition.MacroBehaviorKind.TRANSLATION; .)
-  | PREDICTION                                   (. kind = MacroInstructionDefinition.MacroBehaviorKind.PREDICTION; .)
-  | FETCH                                        (. kind = MacroInstructionDefinition.MacroBehaviorKind.FETCH; .)
-  | DECODER                                      (. kind = MacroInstructionDefinition.MacroBehaviorKind.DECODER; .)
-  | STARTUP                                      (. kind = MacroInstructionDefinition.MacroBehaviorKind.STARTUP; .)
-  )
-    [ parameters<out inputs> ]
-    SYM_ARROW
-    parameters<.out List<Parameter> outputs.>
-    SYM_EQ
-    statement<out Statement stmt>                (. def = new MacroInstructionDefinition(kind, inputs, outputs, stmt, start.join(lastTokenLoc())); .)
-  .
-
-  portBehaviorDefinition<out Definition def> (. var start = nextTokenLoc(); .)
-  =                                          (. PortBehaviorDefinition.PortKind kind = null; .)
-  ( READ                                     (. kind = PortBehaviorDefinition.PortKind.READ; .)
-  | WRITE                                    (. kind = PortBehaviorDefinition.PortKind.WRITE; .)
-  | HIT                                      (. kind = PortBehaviorDefinition.PortKind.HIT; .)
-  | MISS                                     (. kind = PortBehaviorDefinition.PortKind.MISS; .)
-  )
-    identifier<out Identifier id>
-    parameters<.out List<Parameter> inputs.>
-    SYM_ARROW
-    parameters<.out List<Parameter> outputs.>
-    SYM_EQ
-    statement<out Statement stmt>            (. def = new PortBehaviorDefinition(id, kind, inputs, outputs, stmt, start.join(lastTokenLoc())); .)
+    )                             (. def.withAnnotations(annotations); .)
+    // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
+  | macroReplacement<out Node n>  (. def = castCommonDef(this, n);
+                                     if (def instanceof DefinitionList list) {
+                                       readMacroSymbols(macroTable, list.items);
+                                     } .)
   .
 
   pipelineDefinition<out Definition def>  (. var start = nextTokenLoc(); .)
@@ -1182,15 +1307,63 @@ PRODUCTIONS
 
   logicDefinition<out Definition def> (. var start = nextTokenLoc(); .)
   = LOGIC
+    SYM_BRACK_OPEN
+    identifier<out Identifier id1> [ identifier<out Identifier id2> ]
+    SYM_BRACK_CLOSE
     identifier<out Identifier id> (. def = new LogicDefinition(id, start.join(lastTokenLoc())); .)
   .
 
+  resourceReference<out ResourceReferenceExression expr>   (. var start = nextTokenLoc(); .)
+  =
+  SYM_AT
+  identifier<out var id>                                  (. expr = new ResourceReferenceExression(id, start.join(lastTokenLoc())); .)
+  .
+
+/*
+// planned syntax, to represent and describe basic processor behavior.
+  macroInstructionDefinition<out Definition def> (. var start = nextTokenLoc(); .)
+  =                                              (. MacroInstructionDefinition.MacroBehaviorKind kind = null; List<Parameter> inputs = List.of(); .)
+  ( TRANSLATION                                  (. kind = MacroInstructionDefinition.MacroBehaviorKind.TRANSLATION; .)
+  | PREDICTION                                   (. kind = MacroInstructionDefinition.MacroBehaviorKind.PREDICTION; .)
+  | FETCH                                        (. kind = MacroInstructionDefinition.MacroBehaviorKind.FETCH; .)
+  | DECODER                                      (. kind = MacroInstructionDefinition.MacroBehaviorKind.DECODER; .)
+  | STARTUP                                      (. kind = MacroInstructionDefinition.MacroBehaviorKind.STARTUP; .)
+  )
+    [ parameters<out inputs> ]
+    SYM_ARROW
+    parameters<.out List<Parameter> outputs.>
+    SYM_EQ
+    statement<out Statement stmt>                (. def = new MacroInstructionDefinition(kind, inputs, outputs, stmt, start.join(lastTokenLoc())); .)
+  .
+*/
+
+/*
+// planned extensions to describe the behavior of memory accesses including address translation.
+  portBehaviorDefinition<out Definition def> (. var start = nextTokenLoc(); .)
+  =                                          (. PortBehaviorDefinition.PortKind kind = null; .)
+  ( READ                                     (. kind = PortBehaviorDefinition.PortKind.READ; .)
+  | WRITE                                    (. kind = PortBehaviorDefinition.PortKind.WRITE; .)
+  | HIT                                      (. kind = PortBehaviorDefinition.PortKind.HIT; .)
+  | MISS                                     (. kind = PortBehaviorDefinition.PortKind.MISS; .)
+  )
+    identifier<out Identifier id>
+    parameters<.out List<Parameter> inputs.>
+    SYM_ARROW
+    parameters<.out List<Parameter> outputs.>
+    SYM_EQ
+    statement<out Statement stmt>            (. def = new PortBehaviorDefinition(id, kind, inputs, outputs, stmt, start.join(lastTokenLoc())); .)
+  .
+*/
+
+/*
+// planned extensions to describe single signal lines.
   signalDefinition<out Definition def>  (. var start = nextTokenLoc(); .)
   = SIGNAL
     identifier<out Identifier id>
     SYM_COLON
     typeLiteral<out TypeLiteral type>   (. def = new SignalDefinition(id, type, start.join(lastTokenLoc())); .)
   .
+*/
 
 
   // -- ASM DEFINITIONS-----------------------------------------------------------------------------------------------
@@ -1584,31 +1757,30 @@ PRODUCTIONS
   /// Multiple invocations (e.g. multi-dimensional access) will need multiple #arguments.
   /// If allowWildcard is `true`, a argument may be `*`, which will yield a WildcardLiteral expression.
   arguments<out CallIndexExpr.Arguments args, boolean allowWildcard>    (. var start = nextTokenLoc(); .)
-  = SYM_PAREN_OPEN                            (. var values = new ArrayList<Expr>(); .)
-    argument<out Expr arg, allowWildcard>     (. values.add(arg); .)
+  = SYM_PAREN_OPEN                              (. var values = new ArrayList<Expr>(); .)
+    argument<out Expr arg, allowWildcard>       (. values.add(arg); .)
     {
       SYM_COMMA
-      argument<out Expr nextArg, allowWildcard>   (. values.add(nextArg); .)
+      argument<out Expr nextArg, allowWildcard> (. values.add(nextArg); .)
     }
-    SYM_PAREN_CLOSE                           (. args = new CallIndexExpr.Arguments(values, start.join(lastTokenLoc())); .)
+    SYM_PAREN_CLOSE                             (. args = new CallIndexExpr.Arguments(values, start.join(lastTokenLoc())); .)
   .
 
-   argument<out Expr arg, boolean allowWildcard>  (. arg = null; .)
-  = SYM_MUL                                       (.
-                                                      arg = new WildcardLiteral(lastTokenLoc());
-                                                      if (!allowWildcard) {
-                                                           SynErr(la.kind);
-                                                      }
-                                                  .)
+  argument<out Expr arg, boolean allowWildcard> (. arg = null; .)
+  = SYM_MUL                                     (. arg = new WildcardLiteral(lastTokenLoc());
+                                                   if (!allowWildcard) {
+                                                        SynErr(la.kind);
+                                                   }
+                                                .)
     | expression<out arg, BIN_OPS>
     [ SYM_RANGE
       expression<out Expr rangeTo, BIN_OPS>   (. arg = new RangeExpr(arg, rangeTo); .)
     ]
   .
 
-  /// Symbol expressions of form "a::b<3>".
-  /// Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
-  /// Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
+  // Symbol expressions of form "a::b<3>".
+  // Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
+  // Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
   symbolOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = DUMMY_EXPR; .)
   = IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.ID))
     identifierPath<out IsId path>
@@ -1652,7 +1824,7 @@ PRODUCTIONS
   | SYM_SAT_SUB                   (. op = Operator.SaturatedSubtract; .)
   | SYM_SHL                       (. op = Operator.ShiftLeft; .)
   | SYM_SHR                       (. op = Operator.ShiftRight; .)
-  // When adding a new operator here, it must also be added to the "BIN_OPS" list in ParserUtils.java!
+  // When adding a new operator here, it must also be added to the "BIN_OPS" list in ParserUtils.java !!!
   .
 
   unary<out Expr expr, boolean[] allowedOps>
@@ -1669,7 +1841,7 @@ PRODUCTIONS
   = SYM_MINUS                    (. op = new UnOp(UnaryOperator.NEGATIVE, lastTokenLoc()); .)
   | SYM_EXCL                     (. op = new UnOp(UnaryOperator.LOG_NOT, lastTokenLoc()); .)
   | SYM_TILDE                    (. op = new UnOp(UnaryOperator.COMPLEMENT, lastTokenLoc()); .)
-  // When adding a new operator here, it must also be added to the "UN_OPS" list in ParserUtils.java!
+  // When adding a new operator here, it must also be added to the "UN_OPS" list in ParserUtils.java !!!
   | macroReplacement<out Node n> (. op = (IsUnOp) n; .)
   .
 
@@ -1687,8 +1859,8 @@ PRODUCTIONS
   | letExpression<out expr, allowedOps>
   | existsExpression<out expr>
   | forallExpression<out expr, allowedOps>
-  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.EX))
-    macroReplacement<out Node n> (. expr = castExpr(this, n); .)
+    // IF (isMacroReplacementOfType(this, BasicSyntaxType.EX))
+  | macroReplacement<out Node n> (. expr = castExpr(this, n); .)
   .
 
   groupedExpression<out GroupedExpr expr> (. expr = new GroupedExpr(new ArrayList<>(), nextTokenLoc()); .)
@@ -1873,7 +2045,7 @@ PRODUCTIONS
   = (identifierToken | allowedIdentifierKeywords) (. identifier = new Identifier(t.val, lastTokenLoc()); .)
   .
 
-  /// Must be kept in sync with ParserUtils.ID_TOKENS.
+  // Must be kept in sync with ParserUtils.ID_TOKENS !!!
   allowedIdentifierKeywords
   = ADDRESS
   | ALIAS
@@ -2086,7 +2258,7 @@ PRODUCTIONS
                                                   .)
   .
 
-  macroDef<out ModelDefinition def>         (. var startLoc = nextTokenLoc(); .)
+  macroDefinition<out ModelDefinition def>  (. var startLoc = nextTokenLoc(); .)
   = MODEL
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_PAREN_OPEN                          (. var params = new ArrayList<MacroParam>(); .)
@@ -2231,7 +2403,5 @@ PRODUCTIONS
                                                 throwException(ParserUtils.unknownSyntaxTypeError(t.val, macroTable, lastTokenLoc()));
                                             .)
   .
-
-
 
 END vadl.

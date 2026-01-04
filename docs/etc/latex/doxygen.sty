@@ -99,6 +99,8 @@
 \definecolor{vhdlkeyword}{rgb}{0.43,0.0,0.43}
 \definecolor{vhdllogic}{rgb}{1.0,0.0,0.0}
 \definecolor{vhdlchar}{rgb}{0.0,0.0,0.0}
+\definecolor{token}{rgb}{0.88,0.5,0.0}
+\definecolor{production}{rgb}{0.0,0.00,1}
 
 %---------- Commands used by doxygen LaTeX output generator ----------
 
@@ -923,3 +925,14 @@
 \H@refstepcounter{figure}%
 \@dblarg{\@caption{figure}}}
 \makeatother
+
+% Cocor: Let links inherit the current color only inside DoxyCode
+% Since allcolor disables linkcolor/urlcolor/citecolor, we specifically add it to the
+% environment 
+\AtBeginEnvironment{DoxyCode}{%
+  \begingroup
+  \hypersetup{allcolors=.}% 
+}
+\AtEndEnvironment{DoxyCode}{%
+  \endgroup
+}
