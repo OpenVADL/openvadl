@@ -2,22 +2,30 @@ import aarch64::AArch64Base
 
 instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
-  constant VL  = 128                    // vector length, number of bits in a vector register
+  constant VL        = 128              // vector length, number of bits in a vector register
+  constant PL        = VL >> 3          // predicate length, number of elements in a predicate register
   constant ElementsB = VL >> 3          // number of byte   sized elements in a vector register
   constant ElementsH = VL >> 4          // number of half   sized elements in a vector register
   constant ElementsS = VL >> 5          // number of single sized elements in a vector register
   constant ElementsD = VL >> 6          // number of double sized elements in a vector register
-
+  constant Log2ElemB = 11               // number of bits required for the biggest element index
   constant NumZ = 32                    // number of vector registers in register file
 
-  using IndexP = Bits4                  // index type for the 16 predicate registers
-  using BitsZ  = Bits<VL>               // Bits Z register type
+  using IndexP = Bits4                  // index type for the 16 predicate register file
+  using IndexE = Bits<Log2ElemB>        // the biggest index type for element indices
+  using BitsZ  = Bits<VL>               // Bits type for vector register file
+  using BitsP  = Bits<PL><1>            // Boolean type for predicate register file
   using BitsZB = Bits<ElementsB>< 8>    // byte   vector register file
   using BitsZH = Bits<ElementsH><16>    // half   vector register file
   using BitsZS = Bits<ElementsS><32>    // single vector register file
   using BitsZD = Bits<ElementsD><64>    // double vector register file
+  using BitsB  = Byte                   // 8 bit Byte
+  using BitsH  = Half                   // 16 bit half word type
+  using BitsD  = BitsX                  // 64 bit double word type
 
-  register   P : IndexP -> BitsZ        // predicate register file
+  register   P : IndexP -> BitsP        // predicate register file
+  register FFR :           BitsP        // first fault register, predicate register
+                                        // which is set for first memory access operation
   register   Z : Index  -> BitsZ        // vector    register file
   alias register ZB : BitsZB<NumZ> = Z  // byte   vector register file
   alias register ZH : BitsZH<NumZ> = Z  // half   vector register file
@@ -29,6 +37,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     , SizeH                             // half   size
     , SizeS                             // single size
     , SizeD                             // double size
+    , SizeW = 2                         // word   size
     }
 
   // higher order model enriched with operation size
@@ -47,25 +56,86 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   }
 
 
-// arithmetic sve models *******************************************************
+// SVE arithmetic predicated models ********************************************
 
-  format ArithmeticSVEFormat: Instr =   // arithmetic unpredicated SVE format
-    { op       [31..24,21] : Bits9      // opcode
-    , size     [23..22]    : Bits2      // elements operation size
-    , zm       [20..16]    : Index      // 2nd source register
-    , opc      [15..10]    : Bits6      // opcode second part
-    , zn       [9..5]      : Index      // 1st source register
-    , zd       [4..0]      : Index      // destination register
+  format SVEArithmeticPredFormat: Instr =  // arithmetic unpredicated SVE format
+    { op       [31..24,21] : Bits9         // opcode
+    , size     [23..22]    : Bits2         // elements operation size
+    , opc      [20..13]    : Bits8         // opcode second part
+    , pg       [12..10]    : Bits3         // predicate register
+    , zm       [9..5]      : Index         // 2st source register
+    , zdn      [4..0]      : Index         // 1st source and destination register
     }
 
-  model ArithmeticSVEInstr (i: InstrWithFunct, elements: Id, size: Id, extReg: Str): IsaDefs = {
-    instruction $i.id: ArithmeticSVEFormat =
+  model SVEArithmeticPredInstr (i: InstrWithFunct, elements: Id, size: Id, extReg: Str): IsaDefs = {
+    instruction $i.id: SVEArithmeticPredFormat =
+      let pred  = P(pg) in
+      let left  = Z(zdn) as $BitsBHSD($size) in
+      let right = Z(zm)  as $BitsBHSD($size) in 
+        Z(zdn) := forall i : IndexE in 0..$elements-1
+                    tensor if pred(i << ElSize::$size)
+                      then VADL::$i.funct (left(i), right(i))
+                      else left(i)
+    encoding $i.id = { op = 0b0000'0100'0, opc = $i.opcode, size = ElSize::$size }
+    assembly $i.id = ( $i.mnemo, ' ', register(zdn), $extReg, ', ', register(pg), '/M, ', register(zdn), $extReg, ', ', register(zm), $extReg )
+    }
+
+// SVE arithmetic unpredicated models ******************************************
+
+  format SVEArithmeticUnprFormat: Instr =  // arithmetic unpredicated SVE format
+    { op       [31..24,21] : Bits9         // opcode
+    , size     [23..22]    : Bits2         // elements operation size
+    , zm       [20..16]    : Index         // 2nd source register
+    , opc      [15..10]    : Bits6         // opcode second part
+    , zn       [9..5]      : Index         // 1st source register
+    , zd       [4..0]      : Index         // destination register
+    }
+
+  model SVEArithmeticUnprInstr (i: InstrWithFunct, elements: Id, size: Id, extReg: Str): IsaDefs = {
+    instruction $i.id: SVEArithmeticUnprFormat =
       let left  = Z(zn) as $BitsBHSD($size) in
       let right = Z(zm) as $BitsBHSD($size) in 
-        Z(zd) := forall i : Index in 0..$elements-1
+        Z(zd) := forall i : IndexE in 0..$elements-1
                    tensor VADL::$i.funct (left(i), right(i))
     encoding $i.id = { op = 0b0000'0100'1, opc = $i.opcode, size = ElSize::$size }
     assembly $i.id = ( $i.mnemo, ' ', register(zd), $extReg, ', ', register(zn), $extReg, ', ', register(zm), $extReg )
+    }
+
+// SVE load scalar immediate single register models ****************************
+
+  format SVEMemScalarImmOneFormat: Instr = // arithmetic unpredicated SVE format
+    { op       [31..25]        : Bits7     // opcode
+    , size     [24..23]        : Bits2     // elements operation size
+    , opc      [22..20,15..13] : Bits6     // opcode second part
+    , imm4     [19..16]        : Bits4     // signed scaled immediate offset
+    , pg       [12..10]        : Bits3     // predicate register
+    , rn       [9..5]          : Index     // base address X/SP register
+    , zt       [4..0]          : Index     // destination Z register
+    , offsetB = imm4 as SIntX * ElementsB
+    , offsetH = imm4 as SIntX * ElementsH << 1
+    , offsetW = imm4 as SIntX * ElementsS << 2
+    , offsetD = imm4 as SIntX * ElementsD << 3
+    }
+
+  model SVELoadScalarImmOneInstr (i: InstrWithFunct, elements: Id, size: Id, extStr: Str): IsaDefs = {
+    instruction $i.id: SVEMemScalarImmOneFormat =
+      let base = S(rn) + AsId (offset, $extStr) in
+      let pred  = P(pg) in
+        Z(zt) := forall i : IndexE in 0..$elements-1
+                    tensor if pred(i << ElSize::$size)
+                      then MEM<(1 << ElSize::$size)>(base)
+                      else 0 as AsId (Bits, $extStr)
+    encoding $i.id = { op = 0b101'0010, opc = $i.opcode, size = ElSize::$size }
+    assembly $i.id = ( AsStr($i.mnemo, $extStr), ' ', register(zt), '.D, ', register(pg), '/Z, ', XSizeSP(rn), ', #', sdec(imm4))
+    }
+
+// instruction enriching models ************************************************
+
+  model InstrMemLD (modelid: InstrWithFunctElemSizeType, i: InstrWithFunct): IsaDefs = {
+    $modelid ($ExtInstrStr ($i; "B"); ElementsB; SizeB; "B")
+    $modelid ($ExtInstrStr ($i; "H"); ElementsH; SizeH; "H")
+    $modelid ($ExtInstrStr ($i; "W"); ElementsS; SizeW; "W")
+    $modelid ($ExtInstrStr ($i; "D"); ElementsD; SizeD; "D")
     }
 
   model InstrBHSD (modelid: InstrWithFunctElemSizeType, i: InstrWithFunct): IsaDefs = {
@@ -75,11 +145,24 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     $modelid ($ExtInstrStr ($i; "D"); ElementsD; SizeD; ".D")
     }
 
+  model InstrSD (modelid: InstrWithFunctElemSizeType, i: InstrWithFunct): IsaDefs = {
+    $modelid ($ExtInstrStr ($i; "S"); ElementsS; SizeS; ".S")
+    $modelid ($ExtInstrStr ($i; "D"); ElementsD; SizeD; ".D")
+    }
+
 
 // sve instructions ************************************************************
 
-  $InstrBHSD           (ArithmeticSVEInstr    ; (ADDSVEunp   ; "add"   ; 0b000'000        ; add        ))
-  $InstrBHSD           (ArithmeticSVEInstr    ; (SUBSVEunp   ; "sub"   ; 0b000'001        ; sub        ))
-  $InstrBHSD           (ArithmeticSVEInstr    ; (MULSVEunp   ; "mul"   ; 0b011'000        ; mul        ))
+  $InstrBHSD         (SVEArithmeticPredInstr   ; (SVEpredADD    ; "add"   ; 0b0000'0000      ; add      ))
+  $InstrBHSD         (SVEArithmeticPredInstr   ; (SVEpredSUB    ; "sub"   ; 0b0000'1000      ; sub      ))
+  $InstrBHSD         (SVEArithmeticPredInstr   ; (SVEpredMUL    ; "mul"   ; 0b1000'0000      ; mul      ))
+  $InstrSD           (SVEArithmeticPredInstr   ; (SVEpredSDIV   ; "sdiv"  ; 0b1010'0000      ; sdiv     ))
+  $InstrSD           (SVEArithmeticPredInstr   ; (SVEpredUDIV   ; "udiv"  ; 0b1010'1000      ; udiv     ))
+
+  $InstrBHSD         (SVEArithmeticUnprInstr   ; (SVEunprADD    ; "add"   ; 0b000'000        ; add      ))
+  $InstrBHSD         (SVEArithmeticUnprInstr   ; (SVEunprSUB    ; "sub"   ; 0b000'001        ; sub      ))
+  $InstrBHSD         (SVEArithmeticUnprInstr   ; (SVEunprMUL    ; "mul"   ; 0b011'000        ; mul      ))
+
+  $InstrMemLD        (SVELoadScalarImmOneInstr ; (SVEimmOneLD1  ; "ld1"   ; 0b100'101        ; unused   ))
 
 }
