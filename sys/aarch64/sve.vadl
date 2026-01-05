@@ -7,6 +7,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   constant ElementsB = VL >> 3          // number of byte   sized elements in a vector register
   constant ElementsH = VL >> 4          // number of half   sized elements in a vector register
   constant ElementsS = VL >> 5          // number of single sized elements in a vector register
+  constant ElementsW = VL >> 5          // number of single sized elements in a vector register
   constant ElementsD = VL >> 6          // number of double sized elements in a vector register
   constant Log2ElemB = 11               // number of bits required for the biggest element index
   constant NumZ = 32                    // number of vector registers in register file
@@ -103,51 +104,81 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
 // SVE load scalar immediate single register models ****************************
 
+  enumeration LDDtype : Bits<4> =          // load data type, memory and element size and type
+    { DtUBB = 0b0000                       // unsigned load memory byte, element byte
+    , DtUBH = 0b0001                       // unsigned load memory byte, element half
+    , DtUBW = 0b0010                       // unsigned load memory byte, element word
+    , DtUBD = 0b0011                       // unsigned load memory byte, element double
+    , DtSWD = 0b0100                       //   signed load memory word, element double
+    , DtUHH = 0b0101                       // unsigned load memory half, element half
+    , DtUHW = 0b0110                       // unsigned load memory half, element word
+    , DtUHD = 0b0111                       // unsigned load memory half, element double
+    , DtSHD = 0b1000                       //   signed load memory half, element double
+    , DtSHW = 0b1001                       //   signed load memory half, element word
+    , DtUWW = 0b1010                       // unsigned load memory word, element word
+    , DtUWD = 0b1011                       // unsigned load memory word, element double
+    , DtSBD = 0b1100                       //   signed load memory byte, element double
+    , DtSBW = 0b1101                       //   signed load memory byte, element word
+    , DtSBH = 0b1110                       //   signed load memory byte, element half
+    , DtUDD = 0b1111                       // unsigned load memory double, element double
+    }
+
   format SVEMemScalarImmOneFormat: Instr = // arithmetic unpredicated SVE format
     { op       [31..25]        : Bits7     // opcode
-    , size     [24..23]        : Bits2     // elements operation size
-    , opc      [22..20,15..13] : Bits6     // opcode second part
+    , dtype    [24..21]        : Bits4     // memory and element size adn type (LDDtype)
+    , opc      [20,15..13]     : Bits4     // opcode second part
     , imm4     [19..16]        : Bits4     // signed scaled immediate offset
     , pg       [12..10]        : Bits3     // predicate register
     , rn       [9..5]          : Index     // base address X/SP register
     , zt       [4..0]          : Index     // destination Z register
-    , offsetB = imm4 as SIntX * ElementsB
-    , offsetH = imm4 as SIntX * ElementsH << 1
-    , offsetW = imm4 as SIntX * ElementsS << 2
-    , offsetD = imm4 as SIntX * ElementsD << 3
+    , offset = imm4 as SIntX
     }
 
-  model SVELoadScalarImmOneInstr (i: InstrWithFunct, elements: Id, size: Id, extStr: Str): IsaDefs = {
+  model SVELoadScalarImmOneInstr (i: InstrWithFunct, dtype: Id, elements: Id, memBytes: Int, elsize: Id, elStr: Str, eltype: Id, extStr: Str): IsaDefs = {
     instruction $i.id: SVEMemScalarImmOneFormat =
-      let base = S(rn) + AsId (offset, $extStr) in
+      let base = S(rn) + offset * $elements * $memBytes in
       let pred  = P(pg) in
-        Z(zt) := forall i : IndexE in 0..$elements-1
-                    tensor if pred(i << ElSize::$size)
-                      then MEM<(1 << ElSize::$size)>(base)
-                      else 0 as AsId (Bits, $extStr)
-    encoding $i.id = { op = 0b101'0010, opc = $i.opcode, size = ElSize::$size }
-    assembly $i.id = ( AsStr($i.mnemo, $extStr), ' ', register(zt), '.D, ', register(pg), '/Z, ', XSizeSP(rn), ', #', sdec(imm4))
+        Z(zt) := forall i : SIntX in 0..$elements-1 tensor
+          if pred(i << ElSize::$elsize)
+            then MEM<$memBytes>(base + i * $memBytes) as $eltype<(8 << ElSize::$elsize)>
+            else 0
+    encoding $i.id = { op = 0b101'0010, opc = $i.opcode, dtype = LDDtype::$dtype }
+    assembly $i.id = ( AsStr($i.mnemo, $extStr), ' ', register(zt), $elStr, ', ', register(pg), '/Z, ', XSizeSP(rn), ', #', sdec(imm4))
     }
 
 // instruction enriching models ************************************************
 
-  model InstrMemLD (modelid: InstrWithFunctElemSizeType, i: InstrWithFunct): IsaDefs = {
-    $modelid ($ExtInstrStr ($i; "B"); ElementsB; SizeB; "B")
-    $modelid ($ExtInstrStr ($i; "H"); ElementsH; SizeH; "H")
-    $modelid ($ExtInstrStr ($i; "W"); ElementsS; SizeW; "W")
-    $modelid ($ExtInstrStr ($i; "D"); ElementsD; SizeD; "D")
+  model-type InstrWithFunctLdType = (InstrWithFunct, Id, Id, Int, Id, Str, Id, Str) -> IsaDefs
+
+  model InstrMemLD16 (modelid: InstrWithFunctLdType, i: InstrWithFunct): IsaDefs = {
+    $modelid ($ExtInstrStr ($i; "UBB"); DtUBB; ElementsB; 1; SizeB; '.b'; Bits; "b" )
+    $modelid ($ExtInstrStr ($i; "UBH"); DtUBH; ElementsH; 1; SizeH; '.h'; Bits; "b" )
+    $modelid ($ExtInstrStr ($i; "UBW"); DtUBW; ElementsW; 1; SizeW; '.s'; Bits; "b" )
+    $modelid ($ExtInstrStr ($i; "UBD"); DtUBD; ElementsD; 1; SizeD; '.d'; Bits; "b" )
+    $modelid ($ExtInstrStr ($i; "SWD"); DtSWD; ElementsD; 4; SizeD; '.d'; SInt; "sw")
+    $modelid ($ExtInstrStr ($i; "UHH"); DtUHH; ElementsH; 2; SizeH; '.h'; Bits; "h" )
+    $modelid ($ExtInstrStr ($i; "UHW"); DtUHW; ElementsW; 2; SizeW; '.s'; Bits; "h" )
+    $modelid ($ExtInstrStr ($i; "UHD"); DtUHD; ElementsD; 2; SizeD; '.d'; Bits; "h" )
+    $modelid ($ExtInstrStr ($i; "SHD"); DtSHD; ElementsD; 2; SizeD; '.d'; SInt; "sh")
+    $modelid ($ExtInstrStr ($i; "SHW"); DtSHW; ElementsW; 2; SizeW; '.s'; SInt; "sh")
+    $modelid ($ExtInstrStr ($i; "UWW"); DtUWW; ElementsW; 4; SizeW; '.s'; Bits; "w" )
+    $modelid ($ExtInstrStr ($i; "UWD"); DtUWD; ElementsD; 4; SizeD; '.d'; Bits; "w" )
+    $modelid ($ExtInstrStr ($i; "SBD"); DtSBD; ElementsD; 1; SizeD; '.d'; SInt; "sb")
+    $modelid ($ExtInstrStr ($i; "SBW"); DtSBW; ElementsW; 1; SizeW; '.s'; SInt; "sb")
+    $modelid ($ExtInstrStr ($i; "SBH"); DtSBH; ElementsH; 1; SizeH; '.h'; SInt; "sb")
+    $modelid ($ExtInstrStr ($i; "UDD"); DtUDD; ElementsD; 8; SizeD; '.d'; Bits; "d" )
     }
 
   model InstrBHSD (modelid: InstrWithFunctElemSizeType, i: InstrWithFunct): IsaDefs = {
-    $modelid ($ExtInstrStr ($i; "B"); ElementsB; SizeB; ".B")
-    $modelid ($ExtInstrStr ($i; "H"); ElementsH; SizeH; ".H")
-    $modelid ($ExtInstrStr ($i; "S"); ElementsS; SizeS; ".S")
-    $modelid ($ExtInstrStr ($i; "D"); ElementsD; SizeD; ".D")
+    $modelid ($ExtInstrStr ($i; "B"); ElementsB; SizeB; ".b")
+    $modelid ($ExtInstrStr ($i; "H"); ElementsH; SizeH; ".h")
+    $modelid ($ExtInstrStr ($i; "S"); ElementsS; SizeS; ".s")
+    $modelid ($ExtInstrStr ($i; "D"); ElementsD; SizeD; ".d")
     }
 
   model InstrSD (modelid: InstrWithFunctElemSizeType, i: InstrWithFunct): IsaDefs = {
-    $modelid ($ExtInstrStr ($i; "S"); ElementsS; SizeS; ".S")
-    $modelid ($ExtInstrStr ($i; "D"); ElementsD; SizeD; ".D")
+    $modelid ($ExtInstrStr ($i; "S"); ElementsS; SizeS; ".s")
+    $modelid ($ExtInstrStr ($i; "D"); ElementsD; SizeD; ".d")
     }
 
 
@@ -163,6 +194,6 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   $InstrBHSD         (SVEArithmeticUnprInstr   ; (SVEunprSUB    ; "sub"   ; 0b000'001        ; sub      ))
   $InstrBHSD         (SVEArithmeticUnprInstr   ; (SVEunprMUL    ; "mul"   ; 0b011'000        ; mul      ))
 
-  $InstrMemLD        (SVELoadScalarImmOneInstr ; (SVEimmOneLD1  ; "ld1"   ; 0b100'101        ; unused   ))
+  $InstrMemLD16      (SVELoadScalarImmOneInstr ; (SVEimmOneLD1  ; "ld1"   ; 0b0'101          ; unused   ))
 
 }
