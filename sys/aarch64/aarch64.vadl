@@ -33,6 +33,7 @@ instruction set architecture AArch64Base = {
   using Bits7    = Bits< 7>           //  7 bit type
   using Bits8    = Bits< 8>           //  8 bit type
   using Bits9    = Bits< 9>           //  9 bit type
+  using Bits10   = Bits<10>           // 10 bit type
   using Bits11   = Bits<11>           // 11 bit type
   using Bits12   = Bits<12>           // 12 bit type
   using Bits13   = Bits<13>           // 13 bit type

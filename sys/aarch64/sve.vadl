@@ -49,7 +49,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     }
 
   model BHSDReg (size: Id): Id = {
-    match: Id ($size = SizeB => ZB ; $size = SizeH => ZH ; $size = SizeS => ZS ; _ => ZD)
+    match: Id ($size = SizeB => ZB ; $size = SizeH => ZH ; $size = SizeD => ZD ; _ => ZS)
   }
 
   model BitsBHSD (size: Id): Id = {
@@ -61,7 +61,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
   format SVEArithmeticPredFormat: Instr =  // arithmetic unpredicated SVE format
     { op       [31..24,21] : Bits9         // opcode
-    , size     [23..22]    : Bits2         // elements operation size
+    , size     [23..22]    : Bits2         // elements size (ElSize)
     , opc      [20..13]    : Bits8         // opcode second part
     , pg       [12..10]    : Bits3         // predicate register
     , zm       [9..5]      : Index         // 2st source register
@@ -78,14 +78,14 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
                       then VADL::$i.funct (left(i), right(i))
                       else left(i)
     encoding $i.id = { op = 0b0000'0100'0, opc = $i.opcode, size = ElSize::$size }
-    assembly $i.id = ( $i.mnemo, ' ', register(zdn), $extReg, ', ', register(pg), '/M, ', register(zdn), $extReg, ', ', register(zm), $extReg )
+    assembly $i.id = ( $i.mnemo, ' ', register(zdn), $extReg, ', ', register(pg), '/m, ', register(zdn), $extReg, ', ', register(zm), $extReg )
     }
 
 // SVE arithmetic unpredicated models ******************************************
 
   format SVEArithmeticUnprFormat: Instr =  // arithmetic unpredicated SVE format
     { op       [31..24,21] : Bits9         // opcode
-    , size     [23..22]    : Bits2         // elements operation size
+    , size     [23..22]    : Bits2         // elements size (ElSize)
     , zm       [20..16]    : Index         // 2nd source register
     , opc      [15..10]    : Bits6         // opcode second part
     , zn       [9..5]      : Index         // 1st source register
@@ -102,7 +102,62 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     assembly $i.id = ( $i.mnemo, ' ', register(zd), $extReg, ', ', register(zn), $extReg, ', ', register(zm), $extReg )
     }
 
-// SVE load scalar immediate single register models ****************************
+// SVE increment models ********************************************************
+
+  function DecodePredCount(pattern: Bits5, size: Bits2) -> BitsX =
+    let elements = VL as BitsX >> (3+size) in
+      match pattern with
+        { 0b00000 => elements // elements is always a power of 2
+        , 0b00001 => if elements >=   1 then   1 as BitsX else 0
+        , 0b00010 => if elements >=   2 then   2 as BitsX else 0
+        , 0b00011 => if elements >=   3 then   3 as BitsX else 0
+        , 0b00100 => if elements >=   4 then   4 as BitsX else 0
+        , 0b00101 => if elements >=   5 then   5 as BitsX else 0
+        , 0b00110 => if elements >=   6 then   6 as BitsX else 0
+        , 0b00111 => if elements >=   7 then   7 as BitsX else 0
+        , 0b01000 => if elements >=   8 then   8 as BitsX else 0
+        , 0b01001 => if elements >=  16 then  16 as BitsX else 0
+        , 0b01010 => if elements >=  32 then  32 as BitsX else 0
+        , 0b01011 => if elements >=  64 then  64 as BitsX else 0
+        , 0b01100 => if elements >= 128 then 128 as BitsX else 0
+        , 0b01101 => if elements >= 256 then 256 as BitsX else 0
+        , 0b11101 => elements - elements % 4
+        , 0b11110 => elements - elements % 3
+        , 0b11111 => elements
+        , _       => 0
+        }
+
+  format SVEIncrementFormat: Instr =       // SVE increment format
+    { op       [31..24,21..20] : Bits10    // opcode
+    , size     [23..22]        : Bits2     // elements size (ElSize)
+    , imm4     [19..16]        : Bits4     // unsigned multiplier
+    , opc      [15..10]        : Bits6     // opcode second part
+    , pattern  [9..5]          : Bits5     // pattern
+    , dn       [4..0]          : Index     // source and destination register
+    , imm      = imm4 as BitsX + 1
+    , countB   = DecodePredCount(pattern, ElSize::SizeB)
+    , countH   = DecodePredCount(pattern, ElSize::SizeH)
+    , countW   = DecodePredCount(pattern, ElSize::SizeW)
+    , countD   = DecodePredCount(pattern, ElSize::SizeD)
+    }
+
+  model SVEIncrementBase (id: Id, mnemo: Str, count: Id, size: Id): IsaDefs = {
+    instruction $id: SVEIncrementFormat =
+      X(dn) := X(dn) + $count * imm
+    encoding $id = { op = 0b0000'0100'1, opc = 0b111000, size = ElSize::$size }
+    assembly $id = ( $mnemo, ' ', register(dn), ', all, mul #', udec(imm) )
+    }
+
+  model SVEIncrInstr (i: InstrWithFunct): IsaDefs = {
+    $SVEIncrementBase (SVEINCB; "incb"; countB; SizeB)
+    $SVEIncrementBase (SVEINCH; "inch"; countH; SizeH)
+    $SVEIncrementBase (SVEINCW; "incw"; countW; SizeW)
+    $SVEIncrementBase (SVEINCD; "incd"; countD; SizeD)
+    }
+
+
+// SVE load / store common definitions *****************************************
+// SVE load common definitions *************************************************
 
   enumeration LDDtype : Bits<4> =          // load data type, memory and element size and type
     { DtUBB = 0b0000                       // unsigned load memory byte, element byte
@@ -123,9 +178,75 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     , DtUDD = 0b1111                       // unsigned load memory double, element double
     }
 
-  format SVEMemScalarImmOneFormat: Instr = // arithmetic unpredicated SVE format
+  enumeration STDtype : Bits<4> =          // store data type, memory and element size and type
+    { DtBB = 0b0000                        // store memory byte, element byte
+    , DtBH = 0b0001                        // store memory byte, element half
+    , DtBW = 0b0010                        // store memory byte, element word
+    , DtBD = 0b0011                        // store memory byte, element double
+    , DtHR = 0b0100                        // reserved
+    , DtHH = 0b0101                        // store memory half, element half
+    , DtHW = 0b0110                        // store memory half, element word
+    , DtHD = 0b0111                        // store memory half, element double
+    , DtWQ = 0b1000                        // store memory word, element quad
+    , DtWR = 0b1001                        // reserved
+    , DtWW = 0b1010                        // store memory word, element word
+    , DtWD = 0b1011                        // store memory word, element double
+    , DtR1 = 0b1100                        // reserved
+    , DtR2 = 0b1100                        // reserved
+    , DtDQ = 0b1110                        // store memory double, element quad
+    , DtDD = 0b1111                        // store memory double, element double
+    }
+
+  function Imm2lslU  (imm: Bits<2>)  -> String =
+    if imm = 0 then "" else (", lsl #", udec(imm))
+
+  record MemSVE  (dtype: Id, elements: Id, memBytes: Int, elSize: Id, elStr: Str, elType: Id, extStr: Str)
+
+// SVE load / store scalar scalar single register models ***********************
+
+  format SVEMemScalarScalarFormat: Instr = // SVE memory scalar scalar format
     { op       [31..25]        : Bits7     // opcode
-    , dtype    [24..21]        : Bits4     // memory and element size adn type (LDDtype)
+    , dtype    [24..21]        : Bits4     // memory and element size and type ((LD/ST)Dtype)
+    , rm       [20..16]        : Index     // scaled index register
+    , opc      [15..13]        : Bits3     // opcode second part
+    , pg       [12..10]        : Bits3     // predicate register
+    , rn       [9..5]          : Index     // base address X/SP register
+    , zt       [4..0]          : Index     // destination Z register
+    }
+
+  model SVELoadScalarScalarInstr (i: InstrWithFunct, d: MemSVE): IsaDefs = {
+    [undefined when : rm = 0b1'1111]
+    instruction $i.id: SVEMemScalarScalarFormat =
+      let offset = X(rm) in
+      let base = S(rn) + offset * $d.memBytes in
+      let pred  = P(pg) in
+        Z(zt) := forall i : SIntX in 0..$d.elements-1 tensor
+          if pred(i << ElSize::$d.elSize)
+            then MEM<$d.memBytes>(base + i * $d.memBytes) as $d.elType<(8 << ElSize::$d.elSize)>
+            else 0
+    encoding $i.id = { op = 0b101'0010, opc = $i.opcode, dtype = LDDtype::$d.dtype }
+    assembly $i.id = ( AsStr($i.mnemo, $d.extStr), ' ', register(zt), $d.elStr, ', ', register(pg), '/z, [', XSizeSP(rn), ',', XSize(rm), Imm2lslU(ElSize::$d.elSize), ']')
+    }
+
+  model SVEStoreScalarScalarInstr (i: InstrWithFunct, d: MemSVE): IsaDefs = {
+    [undefined when : rm = 0b1'1111]
+    instruction $i.id: SVEMemScalarScalarFormat =
+      let offset = X(rm) in
+      let base  = S(rn) + offset * $d.memBytes in
+      let pred  = P(pg) in
+      let elems = Z(zt) as $BitsBHSD($d.elSize) in
+        forall i : SIntX in 0..$d.elements-1 do
+          if pred(i << ElSize::$d.elSize)
+            then MEM<$d.memBytes>(base + i * $d.memBytes) := elems(i) as Bits<(8 * $d.memBytes)>
+    encoding $i.id = { op = 0b111'0010, opc = $i.opcode, dtype = STDtype::$d.dtype }
+    assembly $i.id = ( AsStr($i.mnemo, $d.extStr), ' ', register(zt), $d.elStr, ', ', register(pg), '/z, [', XSizeSP(rn), ',', XSize(rm), Imm2lslU(ElSize::$d.elSize), ']')
+    }
+
+// SVE load / store scalar immediate single register models ********************
+
+  format SVEMemScalarImmOneFormat: Instr = // SVE memory scalar immediate format
+    { op       [31..25]        : Bits7     // opcode
+    , dtype    [24..21]        : Bits4     // memory and element size and type ((LD/ST)Dtype)
     , opc      [20,15..13]     : Bits4     // opcode second part
     , imm4     [19..16]        : Bits4     // signed scaled immediate offset
     , pg       [12..10]        : Bits3     // predicate register
@@ -134,39 +255,64 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     , offset = imm4 as SIntX
     }
 
-  model SVELoadScalarImmOneInstr (i: InstrWithFunct, dtype: Id, elements: Id, memBytes: Int, elsize: Id, elStr: Str, eltype: Id, extStr: Str): IsaDefs = {
+  model SVELoadScalarImmInstr (i: InstrWithFunct, d: MemSVE): IsaDefs = {
     instruction $i.id: SVEMemScalarImmOneFormat =
-      let base = S(rn) + offset * $elements * $memBytes in
+      let base = S(rn) + offset * $d.elements * $d.memBytes in
       let pred  = P(pg) in
-        Z(zt) := forall i : SIntX in 0..$elements-1 tensor
-          if pred(i << ElSize::$elsize)
-            then MEM<$memBytes>(base + i * $memBytes) as $eltype<(8 << ElSize::$elsize)>
+        Z(zt) := forall i : SIntX in 0..$d.elements-1 tensor
+          if pred(i << ElSize::$d.elSize)
+            then MEM<$d.memBytes>(base + i * $d.memBytes) as $d.elType<(8 << ElSize::$d.elSize)>
             else 0
-    encoding $i.id = { op = 0b101'0010, opc = $i.opcode, dtype = LDDtype::$dtype }
-    assembly $i.id = ( AsStr($i.mnemo, $extStr), ' ', register(zt), $elStr, ', ', register(pg), '/Z, ', XSizeSP(rn), ', #', sdec(imm4))
+    encoding $i.id = { op = 0b101'0010, opc = $i.opcode, dtype = LDDtype::$d.dtype }
+    assembly $i.id = ( AsStr($i.mnemo, $d.extStr), ' ', register(zt), $d.elStr, ', ', register(pg), '/z, ', XSizeSP(rn), ', #', sdec(imm4))
+    }
+
+  model SVEStoreScalarImmInstr (i: InstrWithFunct, d: MemSVE): IsaDefs = {
+    instruction $i.id: SVEMemScalarImmOneFormat =
+      let base = S(rn) + offset * $d.elements * $d.memBytes in
+      let pred  = P(pg) in
+      let elems = Z(zt) as $BitsBHSD($d.elSize) in
+        forall i : SIntX in 0..$d.elements-1 do
+          if pred(i << ElSize::$d.elSize)
+            then MEM<$d.memBytes>(base + i * $d.memBytes) := elems(i) as Bits<(8 * $d.memBytes)>
+    encoding $i.id = { op = 0b111'0010, opc = $i.opcode, dtype = STDtype::$d.dtype }
+    assembly $i.id = ( AsStr($i.mnemo, $d.extStr), ' ', register(zt), $d.elStr, ', ', register(pg), '/z, ', XSizeSP(rn), ', #', sdec(imm4))
     }
 
 // instruction enriching models ************************************************
 
-  model-type InstrWithFunctLdType = (InstrWithFunct, Id, Id, Int, Id, Str, Id, Str) -> IsaDefs
+  model-type InstrWithFunctMemSVE = (InstrWithFunct, MemSVE) -> IsaDefs
 
-  model InstrMemLD16 (modelid: InstrWithFunctLdType, i: InstrWithFunct): IsaDefs = {
-    $modelid ($ExtInstrStr ($i; "UBB"); DtUBB; ElementsB; 1; SizeB; '.b'; Bits; "b" )
-    $modelid ($ExtInstrStr ($i; "UBH"); DtUBH; ElementsH; 1; SizeH; '.h'; Bits; "b" )
-    $modelid ($ExtInstrStr ($i; "UBW"); DtUBW; ElementsW; 1; SizeW; '.s'; Bits; "b" )
-    $modelid ($ExtInstrStr ($i; "UBD"); DtUBD; ElementsD; 1; SizeD; '.d'; Bits; "b" )
-    $modelid ($ExtInstrStr ($i; "SWD"); DtSWD; ElementsD; 4; SizeD; '.d'; SInt; "sw")
-    $modelid ($ExtInstrStr ($i; "UHH"); DtUHH; ElementsH; 2; SizeH; '.h'; Bits; "h" )
-    $modelid ($ExtInstrStr ($i; "UHW"); DtUHW; ElementsW; 2; SizeW; '.s'; Bits; "h" )
-    $modelid ($ExtInstrStr ($i; "UHD"); DtUHD; ElementsD; 2; SizeD; '.d'; Bits; "h" )
-    $modelid ($ExtInstrStr ($i; "SHD"); DtSHD; ElementsD; 2; SizeD; '.d'; SInt; "sh")
-    $modelid ($ExtInstrStr ($i; "SHW"); DtSHW; ElementsW; 2; SizeW; '.s'; SInt; "sh")
-    $modelid ($ExtInstrStr ($i; "UWW"); DtUWW; ElementsW; 4; SizeW; '.s'; Bits; "w" )
-    $modelid ($ExtInstrStr ($i; "UWD"); DtUWD; ElementsD; 4; SizeD; '.d'; Bits; "w" )
-    $modelid ($ExtInstrStr ($i; "SBD"); DtSBD; ElementsD; 1; SizeD; '.d'; SInt; "sb")
-    $modelid ($ExtInstrStr ($i; "SBW"); DtSBW; ElementsW; 1; SizeW; '.s'; SInt; "sb")
-    $modelid ($ExtInstrStr ($i; "SBH"); DtSBH; ElementsH; 1; SizeH; '.h'; SInt; "sb")
-    $modelid ($ExtInstrStr ($i; "UDD"); DtUDD; ElementsD; 8; SizeD; '.d'; Bits; "d" )
+  model InstrMemLD16 (modelid: InstrWithFunctMemSVE, i: InstrWithFunct): IsaDefs = {
+    $modelid ($ExtInstrStr ($i; "UBB"); (DtUBB; ElementsB; 1; SizeB; '.b'; Bits; "b" ))
+    $modelid ($ExtInstrStr ($i; "UBH"); (DtUBH; ElementsH; 1; SizeH; '.h'; Bits; "b" ))
+    $modelid ($ExtInstrStr ($i; "UBW"); (DtUBW; ElementsW; 1; SizeW; '.s'; Bits; "b" ))
+    $modelid ($ExtInstrStr ($i; "UBD"); (DtUBD; ElementsD; 1; SizeD; '.d'; Bits; "b" ))
+    $modelid ($ExtInstrStr ($i; "SWD"); (DtSWD; ElementsD; 4; SizeD; '.d'; SInt; "sw"))
+    $modelid ($ExtInstrStr ($i; "UHH"); (DtUHH; ElementsH; 2; SizeH; '.h'; Bits; "h" ))
+    $modelid ($ExtInstrStr ($i; "UHW"); (DtUHW; ElementsW; 2; SizeW; '.s'; Bits; "h" ))
+    $modelid ($ExtInstrStr ($i; "UHD"); (DtUHD; ElementsD; 2; SizeD; '.d'; Bits; "h" ))
+    $modelid ($ExtInstrStr ($i; "SHD"); (DtSHD; ElementsD; 2; SizeD; '.d'; SInt; "sh"))
+    $modelid ($ExtInstrStr ($i; "SHW"); (DtSHW; ElementsW; 2; SizeW; '.s'; SInt; "sh"))
+    $modelid ($ExtInstrStr ($i; "UWW"); (DtUWW; ElementsW; 4; SizeW; '.s'; Bits; "w" ))
+    $modelid ($ExtInstrStr ($i; "UWD"); (DtUWD; ElementsD; 4; SizeD; '.d'; Bits; "w" ))
+    $modelid ($ExtInstrStr ($i; "SBD"); (DtSBD; ElementsD; 1; SizeD; '.d'; SInt; "sb"))
+    $modelid ($ExtInstrStr ($i; "SBW"); (DtSBW; ElementsW; 1; SizeW; '.s'; SInt; "sb"))
+    $modelid ($ExtInstrStr ($i; "SBH"); (DtSBH; ElementsH; 1; SizeH; '.h'; SInt; "sb"))
+    $modelid ($ExtInstrStr ($i; "UDD"); (DtUDD; ElementsD; 8; SizeD; '.d'; Bits; "d" ))
+    }
+
+  model InstrMemST10 (modelid: InstrWithFunctMemSVE, i: InstrWithFunct): IsaDefs = {
+    $modelid ($ExtInstrStr ($i; "BB"); (DtBB; ElementsB; 1; SizeB; '.b'; Bits; "b" ))
+    $modelid ($ExtInstrStr ($i; "BH"); (DtBH; ElementsH; 1; SizeH; '.h'; Bits; "b" ))
+    $modelid ($ExtInstrStr ($i; "BW"); (DtBW; ElementsW; 1; SizeW; '.s'; Bits; "b" ))
+    $modelid ($ExtInstrStr ($i; "BD"); (DtBD; ElementsD; 1; SizeD; '.d'; Bits; "b" ))
+    $modelid ($ExtInstrStr ($i; "HH"); (DtHH; ElementsH; 2; SizeH; '.h'; Bits; "h" ))
+    $modelid ($ExtInstrStr ($i; "HW"); (DtHW; ElementsW; 2; SizeW; '.s'; Bits; "h" ))
+    $modelid ($ExtInstrStr ($i; "HD"); (DtHD; ElementsD; 2; SizeD; '.d'; Bits; "h" ))
+    $modelid ($ExtInstrStr ($i; "WW"); (DtWW; ElementsW; 4; SizeW; '.s'; Bits; "w" ))
+    $modelid ($ExtInstrStr ($i; "WD"); (DtWD; ElementsD; 4; SizeD; '.d'; Bits; "w" ))
+    $modelid ($ExtInstrStr ($i; "DD"); (DtDD; ElementsD; 8; SizeD; '.d'; Bits; "d" ))
     }
 
   model InstrBHSD (modelid: InstrWithFunctElemSizeType, i: InstrWithFunct): IsaDefs = {
@@ -182,18 +328,23 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     }
 
 
-// sve instructions ************************************************************
+// common sve and sme instructions *********************************************
 
-  $InstrBHSD         (SVEArithmeticPredInstr   ; (SVEpredADD    ; "add"   ; 0b0000'0000      ; add      ))
-  $InstrBHSD         (SVEArithmeticPredInstr   ; (SVEpredSUB    ; "sub"   ; 0b0000'1000      ; sub      ))
-  $InstrBHSD         (SVEArithmeticPredInstr   ; (SVEpredMUL    ; "mul"   ; 0b1000'0000      ; mul      ))
-  $InstrSD           (SVEArithmeticPredInstr   ; (SVEpredSDIV   ; "sdiv"  ; 0b1010'0000      ; sdiv     ))
-  $InstrSD           (SVEArithmeticPredInstr   ; (SVEpredUDIV   ; "udiv"  ; 0b1010'1000      ; udiv     ))
+  $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredADD    ; "add"   ; 0b0000'0000      ; add      ))
+  $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredSUB    ; "sub"   ; 0b0000'1000      ; sub      ))
+  $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredMUL    ; "mul"   ; 0b1000'0000      ; mul      ))
+  $InstrSD          (SVEArithmeticPredInstr    ; (SVEpredSDIV   ; "sdiv"  ; 0b1010'0000      ; sdiv     ))
+  $InstrSD          (SVEArithmeticPredInstr    ; (SVEpredUDIV   ; "udiv"  ; 0b1010'1000      ; udiv     ))
 
-  $InstrBHSD         (SVEArithmeticUnprInstr   ; (SVEunprADD    ; "add"   ; 0b000'000        ; add      ))
-  $InstrBHSD         (SVEArithmeticUnprInstr   ; (SVEunprSUB    ; "sub"   ; 0b000'001        ; sub      ))
-  $InstrBHSD         (SVEArithmeticUnprInstr   ; (SVEunprMUL    ; "mul"   ; 0b011'000        ; mul      ))
+  $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprADD    ; "add"   ; 0b000'000        ; add      ))
+  $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprSUB    ; "sub"   ; 0b000'001        ; sub      ))
+  $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprMUL    ; "mul"   ; 0b011'000        ; mul      ))
 
-  $InstrMemLD16      (SVELoadScalarImmOneInstr ; (SVEimmOneLD1  ; "ld1"   ; 0b0'101          ; unused   ))
+  $SVEIncrInstr     (                            (SVEINC        ; "inc"   ; 0b111'000        ; inc      ))
+
+  $InstrMemLD16     (SVELoadScalarScalarInstr  ; (SVEsclLD1     ; "ld1"   ;  0b010           ; unused   ))
+  $InstrMemST10     (SVEStoreScalarScalarInstr ; (SVEsclST1     ; "st1"   ;  0b010           ; unused   ))
+  $InstrMemLD16     (SVELoadScalarImmInstr     ; (SVEimmLD1     ; "ld1"   ; 0b0101           ; unused   ))
+  $InstrMemST10     (SVEStoreScalarImmInstr    ; (SVEimmST1     ; "st1"   ; 0b0111           ; unused   ))
 
 }
