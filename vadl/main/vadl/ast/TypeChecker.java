@@ -2593,9 +2593,21 @@ public class TypeChecker
               .build());
         }
 
-        var result = constantEvaluator.eval(expr);
-        expr.type = result.type();
-        return null;
+        if (constantEvaluator.isConstant(expr.right)) {
+          var result = constantEvaluator.eval(expr);
+          expr.type = result.type();
+          return null;
+        }
+
+        // The left side is constant but the right isn't
+        // lets throw an error because it doesn't make sense to cast the left side to the right
+        // side if the types are independent of each other.
+        throw addErrorAndStopChecking(error("Type Mismatch", expr)
+            .description(
+                "Cannot infer a type for the result of this operation, because the left side is constant but the right side is not: `%s`.",
+                rightTyp)
+            .help("You can cast the left argument to an explicit type.")
+            .build());
       }
 
       expr.type = leftTyp;
