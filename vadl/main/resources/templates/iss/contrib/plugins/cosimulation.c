@@ -383,7 +383,26 @@ static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
   return tbinfo;
 }
 
+static BrokerSHMData combined_mem_data = {0};
+
+inline static bool is_combined_mem_data_set(void) {
+  return combined_mem_data.shm_insn.insn_data_type == INSN_MEM;
+}
+
+inline static void clear_combined_mem_data(void) {
+  combined_mem_data = (const BrokerSHMData){0};
+}
+
+inline static void write_combined_mem_data(void) {
+  ringbuf_write(combined_mem_data);
+  clear_combined_mem_data();
+}
+
 static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
+  if (is_combined_mem_data_set()) {
+    write_combined_mem_data();
+  }
+
   TBInsnInfo *tbinsn_info = udata;
 
   SHMCPU cpu = get_cpu_state(cpu_index);
@@ -403,21 +422,52 @@ static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
   // times when a tb gets reused g_free(tbinsn_info);
 }
 
+inline static bool is_consecutive_memory_region(uint64_t addr1,
+                                                uint8_t addr1_size,
+                                                uint64_t addr2) {
+  return addr1 + (1 << addr1_size) == addr2;
+}
+
 static void vcpu_mem_cb(unsigned int cpu_index, qemu_plugin_meminfo_t info,
                         uint64_t vaddr, void *udata) {
-  TBInsnInfo *tbinsn_info = udata;
-  BrokerSHMData shm;
 
-  shm.shm_insn.insn_data_type = INSN_MEM;
-  shm.shm_insn.mem_access_info.vaddr = vaddr;
+  if (!is_combined_mem_data_set()) {
+    TBInsnInfo *tbinsn_info = udata;
+    BrokerSHMData shm;
 
-  qemu_plugin_mem_value data = qemu_plugin_mem_get_value(info);
-  
-  shm.shm_insn.mem_access_info.size = data.type;
-  memcpy(&shm.shm_insn.mem_access_info.data, &data.data, 1 << data.type);
-  shm.shm_insn.insn_info = *tbinsn_info;
+    shm.shm_insn.insn_data_type = INSN_MEM;
+    shm.shm_insn.mem_access_info.vaddr = vaddr;
 
-  ringbuf_write(shm);
+    qemu_plugin_mem_value data = qemu_plugin_mem_get_value(info);
+
+    shm.shm_insn.mem_access_info.size = data.type;
+    memcpy(&shm.shm_insn.mem_access_info.data, &data.data, 1 << data.type);
+    shm.shm_insn.insn_info = *tbinsn_info;
+
+    combined_mem_data = shm;
+  } else if (is_consecutive_memory_region(
+                 combined_mem_data.shm_insn.mem_access_info.vaddr,
+                 combined_mem_data.shm_insn.mem_access_info.size, vaddr)) {
+    qemu_plugin_mem_value data = qemu_plugin_mem_get_value(info);
+    
+    // NOTE: only consecutive memory access of the same size is supported
+    //       because the size has to be a power of two
+    //       This also means that e.g. 4 1byte accesses cannot currently be grouped by this analysis
+    if(data.type != combined_mem_data.shm_insn.mem_access_info.size){
+      write_combined_mem_data();
+      vcpu_mem_cb(cpu_index, info, vaddr, udata);
+      return;
+    }
+
+    uint8_t data_offset =
+        (1 << combined_mem_data.shm_insn.mem_access_info.size);
+    memcpy(combined_mem_data.shm_insn.mem_access_info.data + data_offset,
+           &data.data, 1 << data.type);
+    combined_mem_data.shm_insn.mem_access_info.size++;
+  } else {
+    write_combined_mem_data();
+    vcpu_mem_cb(cpu_index, info, vaddr, udata);
+  }
 }
 
 static TBInfo tb_info_collect = {0};
@@ -425,7 +475,7 @@ static int64_t insns_sum_collect = 0;
 
 // if the start-pc + the offset of the executed instructions does not equal
 // the new pc, then a jump has occurred
-static bool is_jump(TBInfo *tb_info) {
+inline static bool is_jump(TBInfo *tb_info) {
   return tb_info_collect.pc + insns_sum_collect != tb_info->pc;
 }
 
