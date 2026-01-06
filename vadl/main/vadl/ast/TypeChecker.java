@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -2604,8 +2604,10 @@ public class TypeChecker
         // side if the types are independent of each other.
         throw addErrorAndStopChecking(error("Type Mismatch", expr)
             .description(
-                "Cannot infer a type for the result of this operation, because the left side is constant but the right side is not: `%s`.",
-                rightTyp)
+                "%s",
+                "Cannot infer a type for the result of this operation, because the left side is "
+                    + "constant but the right side is not: `%s`.".formatted(rightTyp)
+            )
             .help("You can cast the left argument to an explicit type.")
             .build());
       }
