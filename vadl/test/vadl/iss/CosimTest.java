@@ -147,7 +147,8 @@ public abstract class CosimTest extends DockerExecutionTest {
               d.copy("/vadl-cosim", "/work/vadl-cosim");
               d.workDir("/work/vadl-cosim");
               d.env("RUSTC_WRAPPER", "sccache");
-              d.run("sccache --start-server && cargo build --release -p vadl-cosim-broker && sccache -s");
+              // use --frozen to ensure that cargo does not need to download any new dependencies
+              d.run("sccache --start-server && cargo build --release -p vadl-cosim-broker --frozen && sccache -s");
 
               // add cosim broker to path
               d.run("mkdir -p /opt/cosim && cp ./target/release/vadl-cosim-broker /opt/cosim/");

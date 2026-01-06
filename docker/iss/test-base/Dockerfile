@@ -32,6 +32,16 @@ RUN pip install pyyaml qemu.qmp tomli
 # download qemu into the current directory
 RUN curl -L $QEMU_RELEASE | tar -xvz --strip-components=1
 
+# download rust for cosim
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH=/root/.cargo/bin:$PATH
+
+# download cosim dependencies
+WORKDIR /work/vadl-cosim
+COPY /vadl-cosim/Cargo.lock ./
+RUN cargo fetch
+RUN rm Cargo.lock
+
 # just make build dir
 RUN mkdir build
 
