@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,7 @@ package vadl.utils;
 
 import static vadl.utils.EditorUtils.isIntelliJIDE;
 
+import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -78,6 +79,20 @@ public record SourceLocation(
   }
 
   /**
+   * Return the stack of all the expandedFrom locations.
+   * The stack is ordered from the most recent to outermost macro invocation.
+   *
+   * @return the stack of all the expandedFrom locations.
+   */
+  public List<SourceLocation> expandedFromStack() {
+    var stack = new ArrayList<SourceLocation>();
+    for (var loc = this; loc != null; loc = loc.expandedFrom) {
+      stack.add(loc);
+    }
+    return stack;
+  }
+
+  /**
    * Joins multiple source location together.
    *
    * @return The joined source location or the invalid one, if an original one is invalid
@@ -110,18 +125,34 @@ public record SourceLocation(
       return INVALID_SOURCE_LOCATION;
     }
 
-    if (!this.uri.equals(other.uri)) {
-      throw new IllegalArgumentException(
-          "Cannot join source locations that point to different files.");
+    if (this.equals(other)) {
+      return this;
     }
 
-    Position begin = this.begin.compareTo(other.begin) < 0 ? this.begin : other.begin;
-    Position end = this.end.compareTo(other.end) > 0 ? this.end : other.end;
-    SourceLocation expanedFrom =
-        Objects.equals(this.expandedFrom, other.expandedFrom)
-            ? this.expandedFrom : null;
+    var locationPair = Streams.zip(this.expandedFromStack().reversed().stream(),
+            other.expandedFromStack().reversed().stream(),
+            (a, b) -> new Pair<>(a, b))
+        .filter(x -> !x.left().equals(x.right()))
+        .findFirst()
+        .orElseThrow();
 
-    return new SourceLocation(this.uri, begin, end, expanedFrom);
+    var firstLocation = locationPair.left();
+    var secondLocation = locationPair.right();
+
+    if (!firstLocation.uri.equals(secondLocation.uri)) {
+      throw new IllegalArgumentException(
+          "Cannot join source locations from different files.");
+    }
+
+    Position begin = firstLocation.begin.compareTo(secondLocation.begin) < 0 ? firstLocation.begin :
+        secondLocation.begin;
+    Position end = firstLocation.end.compareTo(secondLocation.end) > 0 ? firstLocation.end :
+        secondLocation.end;
+    SourceLocation expanedFrom =
+        Objects.equals(firstLocation.expandedFrom, secondLocation.expandedFrom)
+            ? firstLocation.expandedFrom : null;
+
+    return new SourceLocation(firstLocation.uri, begin, end, expanedFrom);
   }
 
 
