@@ -38,8 +38,8 @@ ENV PATH=/root/.cargo/bin:$PATH
 
 # download cosim dependencies
 WORKDIR /work/vadl-cosim
-COPY /vadl-cosim/Cargo.lock ./
-RUN cargo fetch
+COPY vadl-cosim/Cargo.lock ./
+RUN cargo fetch --manifest-path /vadl-cosim/Cargo.toml
 RUN rm Cargo.lock
 
 # just make build dir
