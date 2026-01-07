@@ -23,7 +23,7 @@ jobs:
       X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
     with:
       image: ghcr.io/openvadl/iss-test-base
-      context: docker/iss/test-base
+      file: docker/iss/test-base/Dockerfile
       platform: ${{ matrix.target.platform }}
       runner: ${{ matrix.target.runner }}
 
