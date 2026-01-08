@@ -40,7 +40,7 @@ public abstract class CosimTest extends DockerExecutionTest {
 
   // config of qemu test image
   private static final String QEMU_TEST_IMAGE =
-      "ghcr.io/openvadl/iss-test-base@sha256:400e4be011ad1e9a5313e404bac0332a1d961e79eec380b859ee0647ca10a198";
+      "ghcr.io/openvadl/iss-test-base@sha256:e70f997ba639324b1e43ac08fee9460b10e321dfec3da1a6e710eae419acf2e1";
 
   // specification to image cache
   private static final ConcurrentHashMap<String, ImageFromDockerfile> issImageCache =
@@ -138,10 +138,6 @@ public abstract class CosimTest extends DockerExecutionTest {
               d.run(qemuBin + " --version");
 
               d.workDir("/work");
-
-              // get rust toolchain from rustup
-              d.run("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y");
-              d.env("PATH", "/root/.cargo/bin:$PATH");
 
               // build the cosim broker
               d.copy("/vadl-cosim", "/work/vadl-cosim");
