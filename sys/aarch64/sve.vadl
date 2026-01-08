@@ -21,7 +21,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   constant LastActiveS = ElementsB - 4
   constant LastActiveD = ElementsB - 8
 
-  constant Log2ElemB = 8                // number of bits required for the biggest element index
+  constant Log2ElemB =   8              // number of bits required for the biggest element index
   constant NumZ = 32                    // number of vector registers in register file
 
   using IndexP = Bits4                  // index type for the 16 predicate register file
@@ -34,6 +34,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   using BitsZD = Bits<ElementsD><64>    // double vector register file
   using BitsB  = Byte                   // 8 bit Byte
   using BitsH  = Half                   // 16 bit half word type
+  using BitsS  = BitsW                  // 32 bit word type
   using BitsD  = BitsX                  // 64 bit double word type
 
   register   P : IndexP -> BitsP        // predicate register file
@@ -68,6 +69,10 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     match: Id ($size = SizeB => BitsZB ; $size = SizeH => BitsZH ; $size = SizeD => BitsZD ; _ => BitsZS)
   }
 
+  model ElBitsBHSD (size: Id): Id = {
+    match: Id ($size = SizeB => BitsB ; $size = SizeH => BitsH ; $size = SizeD => BitsD ; _ => BitsS)
+  }
+
   model PtrueBHSD (size: Id): Id = {
     match: Id ($size = SizeB => PTrueB ; $size = SizeH => PTrueH ; $size = SizeD => PTrueD ; _ => PTrueS)
   }
@@ -75,6 +80,24 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   model LastActiveBHSD (size: Id): Id = {
     match: Id ($size = SizeB => LastActiveB ; $size = SizeH => LastActiveH ; $size = SizeD => LastActiveD ; _ => LastActiveS)
   }
+
+// SVE add vector length model *************************************************
+
+  format SVEAddVLFormat: Instr =           // add vector length format
+    { op       [31..21]  : Bits11          // opcode
+    , rn       [20..16]  : Index           // source register (SP)
+    , opc      [15..11]  : Bits5           // opcode second part
+    , imm6     [10..5]   : Bits6           // signed scaled immediate operand
+    , rd       [4..0]    : Index           // destination register (SP)
+    , offset = imm6 as SIntX * ElementsB   // sign extended and scaled immediate operand
+    }
+
+  model SVEAddVLInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: SVEAddVLFormat =
+      S(rd) := S(rn) + offset
+    encoding $i.id = { op = 0b0000'0100'001, opc = $i.opcode }
+    assembly $i.id = ($i.mnemo, ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', #', sdec(imm6))
+    }
 
 // SVE arithmetic predicated models ********************************************
 
@@ -87,7 +110,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     , zdn      [4..0]      : Index         // 1st source and destination register
     }
 
-  model SVEArithmeticPredInstr (i: InstrWithFunct, elements: Id, size: Id, extReg: Str): IsaDefs = {
+  model SVEArithmeticPredInstr (i: InstrWithFunct, elements: Id, size: Id, elStr: Str): IsaDefs = {
     instruction $i.id: SVEArithmeticPredFormat =
       let pred  = P(pg) in
       let left  = Z(zdn) as $BitsBHSD($size) in
@@ -97,7 +120,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
                       then VADL::$i.funct (left(i), right(i))
                       else left(i)
     encoding $i.id = { op = 0b0000'0100'0, opc = $i.opcode, size = ElSize::$size }
-    assembly $i.id = ( $i.mnemo, ' ', register(zdn), $extReg, ', ', register(pg), '/m, ', register(zdn), $extReg, ', ', register(zm), $extReg )
+    assembly $i.id = ( $i.mnemo, ' ', register(zdn), $elStr, ', ', register(pg), '/m, ', register(zdn), $elStr, ', ', register(zm), $elStr )
     }
 
 // SVE arithmetic unpredicated models ******************************************
@@ -111,14 +134,68 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     , zd       [4..0]      : Index         // destination register
     }
 
-  model SVEArithmeticUnprInstr (i: InstrWithFunct, elements: Id, size: Id, extReg: Str): IsaDefs = {
+  model SVEArithmeticUnprInstr (i: InstrWithFunct, elements: Id, size: Id, elStr: Str): IsaDefs = {
     instruction $i.id: SVEArithmeticUnprFormat =
       let left  = Z(zn) as $BitsBHSD($size) in
       let right = Z(zm) as $BitsBHSD($size) in 
         Z(zd) := forall i : IndexE in 0..$elements-1
                    tensor VADL::$i.funct (left(i), right(i))
     encoding $i.id = { op = 0b0000'0100'1, opc = $i.opcode, size = ElSize::$size }
-    assembly $i.id = ( $i.mnemo, ' ', register(zd), $extReg, ', ', register(zn), $extReg, ', ', register(zm), $extReg )
+    assembly $i.id = ( $i.mnemo, ' ', register(zd), $elStr, ', ', register(zn), $elStr, ', ', register(zm), $elStr )
+    }
+
+// SVE reduction models ********************************************************
+
+  format SVEReductionFormat: Instr =       // SVE format for reduction
+    { op       [31..24]        : Bits8     // opcode
+    , size     [23..22]        : Bits2     // elements size (ElSize)
+    , opc      [21..13]        : Bits9     // opcode second part
+    , pg       [12..10]        : Bits3     // predicate register
+    , zn       [9..5]          : Index     // source register (Z)
+    , vd       [4..0]          : Index     // destination register (V)
+    }
+
+  model FoldOp (op: Id): BinOp = {
+    match: BinOp ( $op = add => +
+                 ; $op = and => &
+                 ; $op = or  => |
+                 ; $op = xor => ^
+                 ; _         => ∉
+                 )
+    }
+
+  model NeutralFold (op: Id, elSize: Id): Ex = {
+        match: Ex ( $op = xor => ~(0 as $ElBitsBHSD($elSize))
+                  ; _         =>   0 as $ElBitsBHSD($elSize))
+  }
+
+  model SVEReductionInstr (i: InstrWithFunct, elements: Id, elSize: Id, elStr: Str): IsaDefs = {
+    instruction $i.id: SVEReductionFormat =
+      let pred  = P(pg) in
+      let elems = Z(zn) as $BitsBHSD($elSize) in
+        $BHSDReg($elSize)(vd)(0) :=
+          forall i : IndexE in 0..$elements-1
+            fold + with //$FoldOp($i.funct)
+              if pred(i << ElSize::$elSize)
+              then elems(i)
+              else $NeutralFold($i.funct; $elSize)
+    encoding $i.id = { op = 0b0000'0100, opc = $i.opcode, size = ElSize::$elSize }
+    assembly $i.id = ( $i.mnemo, ' ', register(vd), $elStr, ', ', register(pg), ', ', register(zn), $elStr )
+    }
+
+  model SVETypeReductionInstr (i: InstrWithFunct, elements: Id, elSize: Id, elStr: Str): IsaDefs = {
+    [undefined when : size = 0b11]
+    instruction $i.id: SVEReductionFormat =
+      let pred  = P(pg) in
+      let elems = Z(zn) as $BitsBHSD($elSize) in
+        ZD(vd)(0) :=
+          forall i : IndexE in 0..$elements-1
+            fold + with
+              if pred(i << ElSize::$elSize)
+              then elems(i) as $i.funct
+              else 0
+    encoding $i.id = { op = 0b0000'0100, opc = $i.opcode, size = ElSize::$elSize }
+    assembly $i.id = ( $i.mnemo, ' ', register(vd), ', ', register(pg), ', ', register(zn), $elStr )
     }
 
 // SVE increment models ********************************************************
@@ -236,6 +313,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
         NZCV_C := pred($lastActive) = 0
         NZCV_V := false
   }
+
   model WhileStatLSLE (w: WhileRec, regSize: Id): Stat = {
     let left  = $WXR($regSize)(rn) in
     let right = $WXR($regSize)(rm) in
@@ -515,6 +593,13 @@ model-type SVEWhileStatModel = (WhileRec, Id) -> Stat
   $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprSUB    ; "sub"   ; 0b000'001        ; sub      ))
   $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprMUL    ; "mul"   ; 0b011'000        ; mul      ))
 
+  $InstrBHSD        (SVETypeReductionInstr     ; (SVEfoldSADD   ; "saddv" ; 0b0'0000'0001    ; SIntX    ))
+  $InstrBHSD        (SVETypeReductionInstr     ; (SVEfoldUADD   ; "uaddv" ; 0b0'0000'1001    ; UIntX    ))
+  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldAND    ; "andv"  ; 0b0'1101'0001    ; and      ))
+  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldOR     ; "orv"   ; 0b0'1100'0001    ; or       ))
+  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldXOR    ; "eorv"  ; 0b0'1100'1001    ; xor      ))
+
+  $SVEAddVLInstr    (                            (SVEADDVL      ; "addvl" ; 0b0'1010                    ))
   $SVEIncrInstr     (                            (SVEINC        ; "inc"   ; 0b111'000        ; inc      ))
 
   $InstrBHSD        (SVEWhileXWInstr           ; (SVEWHILE      ; "while" ; 0b000            ; unused   ))
