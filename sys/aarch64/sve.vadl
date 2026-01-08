@@ -245,10 +245,10 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
         else
         if VADL::$w.notcmp(left, right)
         then PFalse
-        else let diff = (right - left) as IndexE in
+        else let diff = (right - left) + 1 in
           if diff >= $w.elements
           then $w.ptrue
-          else let shift = ($w.elements as IndexE - diff) * (1 + ElSize::$w.elSize) in
+          else let shift = ($w.elements - diff as IndexE) * (1 + ElSize::$w.elSize) in
             $w.ptrue as Bits<PL> << shift
       in { $SetFlagsSVE($LastActiveBHSD($w.elSize)) }
   }
@@ -262,10 +262,10 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
       //  else
         if VADL::$w.notcmp(left, right)
         then PFalse
-        else let diff = (right - left) as IndexE in
+        else let diff = (right - left) in
           if diff >= $w.elements
           then $w.ptrue
-          else let shift = ($w.elements as IndexE - diff) * (1 + ElSize::$w.elSize) in
+          else let shift = ($w.elements - diff as IndexE) * (1 + ElSize::$w.elSize) in
             $w.ptrue as Bits<PL> << shift
       in { $SetFlagsSVE($LastActiveBHSD($w.elSize)) }
   }
@@ -279,10 +279,10 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
         else
         if VADL::$w.notcmp(left, right)
         then PFalse
-        else let diff = (right - left) as IndexE in
+        else let diff = (left - right) + 1 in
           if diff >= $w.elements
           then $w.ptrue
-          else let shift = ($w.elements as IndexE - diff) * (1 + ElSize::$w.elSize) in
+          else let shift = ($w.elements - diff as IndexE) * (1 + ElSize::$w.elSize) in
             $w.ptrue as Bits<PL> >> shift
       in { $SetFlagsSVE($LastActiveBHSD($w.elSize)) }
   }
@@ -296,10 +296,10 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
       //  else
         if VADL::$w.notcmp(left, right)
         then PFalse
-        else let diff = (right - left) as IndexE in
+        else let diff = (left - right) in
           if diff >= $w.elements
           then $w.ptrue
-          else let shift = ($w.elements as IndexE - diff) * (1 + ElSize::$w.elSize) in
+          else let shift = ($w.elements - diff as IndexE) * (1 + ElSize::$w.elSize) in
             $w.ptrue as Bits<PL> >> shift
       in { $SetFlagsSVE($LastActiveBHSD($w.elSize)) }
   }
