@@ -30,6 +30,11 @@ on:
         required: false
         type: string
         default: latest
+      file:
+        description: 'Path to the Dockerfile'
+        required: false
+        type: string
+        default: ${{ inputs.context }}/Dockerfile
     secrets:
       X06_KEYCHAIN_PASSWORD:
         required: true
@@ -78,6 +83,7 @@ jobs:
           platforms: ${{ inputs.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ inputs.image }}
+          file: ${{ inputs.file }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
