@@ -44,7 +44,7 @@ exec = "qemu-system-a64"
 
 # The path to the compiled file to use for testing
 # This file will be passed to all clients
-test_exec="./test-execs/aarch64/test_vadl"
+test_exec="./test-execs/embench/edn"
 
 # "bios" | "kernel": Defines where the test-executable is passed to when starting the QEMU-client
 pass_test_exec_to = "bios"
@@ -59,7 +59,7 @@ additional_args = [
 # NOTE: Only applies to `layer = "insn" | "tb-strict"`
 # NOTE: This option is must be set per client to be able to account for different setup-codes per ISS
 # Skips the first n instructions 
-skip_n_instructions = 0
+skip_n_instructions = 3
 
 endian = "little"
 
@@ -84,7 +84,7 @@ endian = "little"
 
 exec = "qemu-system-aarch64"
 
-test_exec="./test-execs/aarch64/test_upstream"
+test_exec="./test-execs/embench/edn"
 
 pass_test_exec_to = "kernel"
 
@@ -96,7 +96,7 @@ additional_args = [
 	"-d", "plugin",
 ]
 
-skip_n_instructions = 0
+skip_n_instructions = 1
 
 [qemu.clients.gdb]
 enable = false
@@ -187,7 +187,7 @@ mode = "lockstep"
 execute_all_remaining_instructions = false
 
 # Execute the next (after skipped) n instructions
-stop_after_n_instructions = 2
+stop_after_n_instructions = 10000
 # stop_after_n_instructions = 1
 
 # Where the test result should be saved and in which format
