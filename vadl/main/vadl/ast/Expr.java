@@ -16,6 +16,8 @@
 
 package vadl.ast;
 
+import static java.util.Objects.requireNonNull;
+
 import com.google.common.base.Preconditions;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -45,7 +47,7 @@ public abstract class Expr extends Node implements TypedNode {
 
   @Override
   public Type type() {
-    return Objects.requireNonNull(type);
+    return requireNonNull(type);
   }
 
   Precedence precedence() {
@@ -1716,11 +1718,11 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
   }
 
   public Node computedTarget() {
-    return Objects.requireNonNull(target.path().target());
+    return requireNonNull(target.path().target());
   }
 
   public Type typeBeforeSlice() {
-    return Objects.requireNonNull(typeBeforeSlice);
+    return requireNonNull(typeBeforeSlice);
   }
 
   /**
@@ -1909,7 +1911,7 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
 
     @Override
     public Type type() {
-      return Objects.requireNonNull(type);
+      return requireNonNull(type);
     }
 
     @Override
@@ -2096,14 +2098,14 @@ class LetExpr extends Expr {
   Type getTypeOf(String name) {
     var valType = valueExpr.type;
     if (identifiers.size() == 1) {
-      return Objects.requireNonNull(valType);
+      return requireNonNull(valType);
     }
 
     if (!(valType instanceof TupleType valTuple)) {
       throw new IllegalStateException("Expected TupleType but got " + valType);
     }
 
-    return Objects.requireNonNull(valTuple.get(getIndexOf(name)));
+    return requireNonNull(valTuple.get(getIndexOf(name)));
   }
 
   @Override
@@ -2521,20 +2523,30 @@ class ForallExpr extends Expr {
    * Only if the node is a fold we need to know which operator is folded over.
    */
   @Nullable
-  Operator foldOperator;
+  IsBinOp foldOperator;
+
+  /// The function beeing called by the fold.
+  /// The function must be a built-in and satisfy the type contract `(T, T) -> T`
+  /// Set by the typechecker.
+  @Nullable
+  BuiltInTable.BuiltIn computedFoldBuiltin;
 
   @Child
   Expr body;
 
   SourceLocation loc;
 
-  ForallExpr(List<ForallIndex> indices, Operation operation, @Nullable Operator foldOperator,
+  ForallExpr(List<ForallIndex> indices, Operation operation, @Nullable IsBinOp foldOperator,
              Expr body, SourceLocation loc) {
     this.indices = indices;
     this.operation = operation;
     this.foldOperator = foldOperator;
     this.body = body;
     this.loc = loc;
+  }
+
+  public Operator getFoldOperator() {
+    return requireNonNull(((BinOp) foldOperator)).operator;
   }
 
   @Override
@@ -2560,7 +2572,7 @@ class ForallExpr extends Expr {
     }
     builder.append(" ").append(operation.keyword);
     if (foldOperator != null) {
-      builder.append(" ").append(foldOperator.symbol).append(" with");
+      builder.append(" ").append(getFoldOperator().symbol).append(" with");
     }
     if (isBlockLayout(body)) {
       builder.append("\n");

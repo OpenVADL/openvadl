@@ -3809,6 +3809,7 @@ public class TypeChecker
     if (expr.indices.size() > 1) {
       addErrorAndStopChecking(error("Not Supported", expr)
           .locationDescription(expr, "Multiple indicies aren't yet supported.")
+          .locationHelp(expr, "You can try a workaround with nested forall expressions.")
           .build());
     }
 
@@ -3856,6 +3857,21 @@ public class TypeChecker
         .mapToInt(
             index -> requireNonNull(index.computedTo) - requireNonNull(index.computedFrom) + 1)
         .sum();
+
+    if (expr.operation == ForallExpr.Operation.FOLD) {
+      var builtIn = AstUtils.getOperatorBuiltIn(expr.getFoldOperator(), bodyType, bodyType);
+      if (builtIn.argTypeClasses().size() != 2 || !builtIn.returns(List.of(bodyType, bodyType))
+          .equals(bodyType)) {
+        // We can continue with this error
+        var location = requireNonNull(((BinOp) expr.foldOperator)).location;
+        errors.add(
+            error("Invalid Fold Operator", location)
+                .locationDescription(location,
+                    "The operator `%s` isn't allowed for a forall fold. ", expr.getFoldOperator())
+                .locationNote(location, "Fold operators must fulfill the signature `(T, T) -> T`.")
+                .build());
+      }
+    }
 
     expr.type = switch (expr.operation) {
       case FOLD -> bodyType;
