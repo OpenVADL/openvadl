@@ -1,0 +1,17 @@
+// Code like that has been an issue before because
+// 1) Macros weren't supported for fold operators: https://github.com/OpenVADL/openvadl/issues/663
+// 2) The lowering only allowed add and mul for the operator: https://github.com/OpenVADL/openvadl/issues/662
+
+model TestOP (): BinOp = {&}
+
+model FoldStat (): Stat = {
+  Reg := forall i: Bits<4> in 0 .. 3 fold $TestOP() with Reg(i)
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest

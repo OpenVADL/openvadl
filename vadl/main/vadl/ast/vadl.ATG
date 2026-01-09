@@ -2018,10 +2018,12 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
         ]
         SYM_IN
         rangeExpression<out domain>                           (. indices.add(new ForallIndex(id, typeLiteral, domain)); .)
-      }                                                       (. ForallExpr.Operation operation = null; Operator foldAction = null; .)
+      }                                                       (. ForallExpr.Operation operation = null; IsBinOp foldAction = null; .)
       ( TENSOR                                                (. operation = ForallExpr.Operation.TENSOR; .)
       | FOLD                                                  (. operation = ForallExpr.Operation.FOLD; .)
-        binaryOperator<out foldAction>
+        ( binaryOperator<out Operator operator>               (. foldAction = new BinOp(operator, lastTokenLoc()); .)
+        | macroReplacement<out Node node>                     (. foldAction = castBinOp(this, node); .)
+        )
         WITH
       // Previously the append existed for protocols but at the time of writing protocols are on hold in open-vadl.
       // | APPEND                                               (. operation = ForallExpr.Operation.APPEND; .)

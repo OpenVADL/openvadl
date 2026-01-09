@@ -67,34 +67,38 @@ class AstUtils {
   }
 
   static BuiltInTable.BuiltIn getBinOpBuiltIn(BinaryExpr expr) {
+    return getOperatorBuiltIn(expr.operator(), expr.left.type(), expr.right.type());
+  }
 
-    var operator = expr.operator().symbol;
+  static BuiltInTable.BuiltIn getOperatorBuiltIn(Operator operator, Type leftType, Type rightType) {
+
+    var symbol = operator.symbol;
     var operatorRewrites = Map.of(
         "&&", "&",
         "||", "|"
     );
-    if (operatorRewrites.containsKey(operator)) {
-      operator = operatorRewrites.get(operator);
+    if (operatorRewrites.containsKey(symbol)) {
+      symbol = operatorRewrites.get(symbol);
     }
 
-    if (expr.operator().equals(Operator.Add) && expr.left.type().equals(Type.string())
-        && expr.right.type().equals(Type.string())) {
+    if (operator.equals(Operator.Add) && leftType.equals(Type.string())
+        && rightType.equals(Type.string())) {
       return BuiltInTable.CONCATENATE_STRINGS;
     }
 
-    String finalOperator = operator;
+    String finalOperatorSymbol = symbol;
     var builtIns = BuiltInTable.builtIns()
         .filter(b -> b.signature().argTypeClasses().size() == 2)
-        .filter(b -> Objects.equals(b.operator(), finalOperator))
+        .filter(b -> Objects.equals(b.operator(), finalOperatorSymbol))
         .toList();
 
     // Sometimes there are a singed and unsigned version of builtin operation
     return switch (builtIns.size()) {
       case 0 -> throw new IllegalStateException(
-          "Couldn't get any matching builtin for %s".formatted(expr.operator));
+          "Couldn't get any matching builtin for %s".formatted(operator));
       case 1 -> builtIns.get(0);
       case 2 -> {
-        var singed = Objects.requireNonNull(expr.left.type).getClass() == SIntType.class;
+        var singed = Objects.requireNonNull(leftType).getClass() == SIntType.class;
         builtIns = builtIns.stream()
             .filter(b -> (b.signature().argTypeClasses().get(0) == SIntType.class) == singed)
             .toList();
@@ -104,8 +108,8 @@ class AstUtils {
         yield builtIns.get(0);
       }
       case 3 -> {
-        int numSinged = Objects.requireNonNull(expr.left.type).getClass() == SIntType.class ? 1 : 0;
-        numSinged += Objects.requireNonNull(expr.right.type).getClass() == SIntType.class ? 1 : 0;
+        int numSinged = Objects.requireNonNull(leftType).getClass() == SIntType.class ? 1 : 0;
+        numSinged += Objects.requireNonNull(rightType).getClass() == SIntType.class ? 1 : 0;
 
         var targetArgs = switch (numSinged) {
           case 0 -> List.of(UIntType.class, UIntType.class);
@@ -126,7 +130,7 @@ class AstUtils {
       default -> throw new IllegalStateException(
           "Too many matching builtin (%d) for `%s` found: (%s)".formatted(
               builtIns.size(),
-              expr.operator,
+              operator,
               builtIns));
     };
   }

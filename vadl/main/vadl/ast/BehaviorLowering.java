@@ -1535,17 +1535,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
               1);
       var params = new vadl.viam.Parameter[] {leftParam, rightParam};
 
-      // FIXME: Add all cases
-      @Nullable BuiltInTable.BuiltIn builtIn = null;
-      if (expr.foldOperator == Operator.Add) {
-        builtIn = BuiltInTable.ADD;
-      } else if (expr.foldOperator == Operator.Multiply) {
-        builtIn = BuiltInTable.MUL;
-      } else {
-        throw new IllegalStateException("Unknown fold operator: " + expr.foldOperator);
-      }
 
-      var operation = new BuiltInCall(builtIn,
+      var operation = new BuiltInCall(requireNonNull(expr.computedFoldBuiltin),
           new NodeList<>(new FuncParamNode(leftParam), new FuncParamNode(rightParam)), type);
       var graph = new Graph("Combiner Graph");
       var returnNode = graph.addWithInputs(new ReturnNode(operation));
