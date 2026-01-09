@@ -1,9 +1,9 @@
 import argparse
 from pathlib import Path
-import asyncio
+import subprocess
+from concurrent.futures import ProcessPoolExecutor
 import yaml
 import os
-import sys
 import compiler
 import shutil
 
@@ -17,43 +17,53 @@ def dump_debug_info(tid: str, results: Path, comp: dict):
     shutil.copy(comp["objdump_be"], debug_dir)
     shutil.copy(comp["objdump_le"], debug_dir)
 
-async def run_cosim(le: str, be: str, out: Path, cosim_config: Path):
+def run_cosim(le: str, be: str, out: Path, cosim_config: Path):
     e = os.environ.copy()
     e["RUST_BACKTRACE"] = "1"
-    proc = await asyncio.create_subprocess_exec(
+    subprocess.run([
         "vadl-cosim-broker",
         "--config", cosim_config,
         "--test-exec", le,
         "--test-exec", be,
-        "--output-file", str(out),
-        env=e
+        "--output-file", str(out)
+        ],
+        env=e,
     )
-    await proc.wait()
 
-async def run_test(t: dict, results: Path, cosim_config: Path):
+def compile_test(t: dict, results: Path) -> dict:
     tid = str(t["id"])
-    try:
-        debug = t["debug"]
-        comp = await compiler.compile(tid, str(t["asm_core"]), debug)
-        if debug:
-          dump_debug_info(tid, results, comp)
-        await run_cosim(str(comp["elf_le"]), str(comp["elf_be"]), results / f"result-{tid}", cosim_config)
-    except Exception as e:
-        print(f"error for test=\"{tid}\": ", e)
+    debug = t["debug"]
+    comp = compiler.compile(tid, str(t["asm_core"]), debug)
+    if debug:
+        dump_debug_info(tid, results, comp)
+    return comp
 
-async def main(testsuite_path: Path):
+def run_test(t: dict, results: Path, cosim_config: Path):
+        tid = t["id"]
+        comp = compile_test(t, results)
+        try:
+            run_cosim(str(comp["elf_le"]), str(comp["elf_be"]), results / f"result-{tid}", cosim_config)
+        except Exception as e:
+            print(f"error for test=\"{tid}\": ", e)
+
+def main(testsuite_path: Path):
     config = yaml.safe_load(testsuite_path.read_text())
     results = Path(config.get("result_dir", "/work/results"))
     results.mkdir(parents=True, exist_ok=True)
 
-    cosim_config = config.get("cosim_config", "/cosim_config/ppc64_config.toml")
-    #tasks = [run_test(t, results) for t in config.get("tests", [])]
-    tasks = []; [await run_test(t, results, cosim_config) for t in config.get("tests", [])]
+    num_cores = os.cpu_count()
+    if num_cores is None:
+        num_cores = 1 # safe fallback
 
-    await asyncio.gather(*tasks)
+    cosim_config = config.get("cosim_config", "/cosim_config/ppc64_config.toml")
+
+    with ProcessPoolExecutor(num_cores) as executor:
+        for t in config.get("tests", []):
+            executor.submit(run_test, t, results, cosim_config)
+    executor.shutdown(wait=True)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("config")
     args = parser.parse_args()
-    asyncio.run(main(Path(args.config)))
+    main(Path(args.config))

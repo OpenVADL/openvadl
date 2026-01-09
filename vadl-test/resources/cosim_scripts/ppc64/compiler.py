@@ -1,5 +1,5 @@
-import asyncio
 import os
+import subprocess
 from pathlib import Path
 
 AS_BE = "powerpc64-unknown-elf-as"
@@ -9,21 +9,21 @@ AS_LE = "powerpc64le-unknown-elf-as"
 LD_LE = "powerpc64le-unknown-elf-ld"
 OBJDUMP_LE = "powerpc64le-unknown-elf-objdump"
 
-async def compile(id: str, asm: str, debug: bool = True) -> dict:
-  asm_path = await build_assembly(id, asm)
-  linker_path = await build_linker_script(id)
+def compile(id: str, asm: str, debug: bool = True) -> dict:
+  asm_path = build_assembly(id, asm)
+  linker_path = build_linker_script(id)
 
   # big-endian
   obj_be = _tmp_file(id, f"obj-{id}-be.o")
   elf_be = _tmp_file(id, f"elf-{id}-be")
-  await assemble(AS_BE, asm_path, obj_be)
-  await link(LD_BE, linker_path, obj_be, elf_be)
+  assemble(AS_BE, asm_path, obj_be)
+  link(LD_BE, linker_path, obj_be, elf_be)
 
   # little-endian
   obj_le = _tmp_file(id, f"obj-{id}-le.o")
   elf_le = _tmp_file(id, f"elf-{id}-le")
-  await assemble(AS_LE, asm_path, obj_le)
-  await link(LD_LE, linker_path, obj_le, elf_le)
+  assemble(AS_LE, asm_path, obj_le)
+  link(LD_LE, linker_path, obj_le, elf_le)
 
   result = {
     "asm": asm_path,
@@ -37,8 +37,8 @@ async def compile(id: str, asm: str, debug: bool = True) -> dict:
   if debug:
     objdump_be = _tmp_file(id, f"elf-{id}-be.dump")
     objdump_le = _tmp_file(id, f"elf-{id}-le.dump")
-    await objdump(OBJDUMP_BE, elf_be, objdump_be)
-    await objdump(OBJDUMP_BE, elf_le, objdump_le)
+    objdump(OBJDUMP_BE, elf_be, objdump_be)
+    objdump(OBJDUMP_BE, elf_le, objdump_le)
     result.update({
         "objdump_be": objdump_be,
         "objdump_le": objdump_le,
@@ -47,27 +47,21 @@ async def compile(id: str, asm: str, debug: bool = True) -> dict:
   return result
 
 
-async def assemble(as_cmd: str, asm_path: Path, obj_out: Path) -> None:
-    proc = await asyncio.create_subprocess_exec(
-        as_cmd, "-o", str(obj_out), str(asm_path),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
+def assemble(as_cmd: str, asm_path: Path, obj_out: Path) -> None:
+    proc = subprocess.run([
+        as_cmd, "-o", str(obj_out), str(asm_path)],
     )
-    _, stderr = await proc.communicate()
     if proc.returncode != 0:
-        raise RuntimeError(f"Assembly failed ({as_cmd}): {stderr.decode()}")
+        raise RuntimeError(f"Assembly failed ({as_cmd}): {proc.stderr.decode()}")
 
-async def link(ld_cmd: str, linker_script: Path, obj_in: Path, elf_out: Path) -> None:
-    proc = await asyncio.create_subprocess_exec(
-        ld_cmd, "-T", str(linker_script), "-o", str(elf_out), str(obj_in),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
+def link(ld_cmd: str, linker_script: Path, obj_in: Path, elf_out: Path) -> None:
+    proc = subprocess.run([
+        ld_cmd, "-T", str(linker_script), "-o", str(elf_out), str(obj_in)],
     )
-    _, stderr = await proc.communicate()
     if proc.returncode != 0:
-        raise RuntimeError(f"Linking failed ({ld_cmd}): {stderr.decode()}")
+        raise RuntimeError(f"Linking failed ({ld_cmd}): {proc.stderr.decode()}")
 
-async def build_assembly(id: str, core: str) -> Path:
+def build_assembly(id: str, core: str) -> Path:
   asm_out = _tmp_file(id, f"asm-{id}.s")
 
   content = f"""
@@ -86,7 +80,7 @@ async def build_assembly(id: str, core: str) -> Path:
   return asm_out
 
 
-async def build_linker_script(id: str) -> Path:
+def build_linker_script(id: str) -> Path:
   linker_out = _tmp_file(id, f"linker-{id}.ld")
 
   content = """
@@ -103,17 +97,14 @@ async def build_linker_script(id: str) -> Path:
     f.write(content)
   return linker_out
 
-async def objdump(objdump_bin: str, obj_file: Path, out_file: Path):
+def objdump(objdump_bin: str, obj_file: Path, out_file: Path):
     with out_file.open("wb") as f:
-      proc = await asyncio.create_subprocess_exec(
-        objdump_bin, "-D", str(obj_file),
+      proc = subprocess.run(
+        [objdump_bin, "-D", str(obj_file)],
         stdout=f,
-      stderr=asyncio.subprocess.PIPE,
       )
-      _, stderr = await proc.communicate()
-
     if proc.returncode != 0:
-      raise RuntimeError(stderr.decode())
+      raise RuntimeError(proc.stderr.decode())
 
 def _tmp_file(id: str, name: str) -> Path:
   build_dir = f"/tmp/build-{id}/"

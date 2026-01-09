@@ -2,7 +2,7 @@ use std::{ffi::CString, marker::PhantomData, ptr};
 
 use color_eyre::{eyre::{Context, bail}, Result};
 use libc::{
-    close, ftruncate, mmap, munmap, shm_open, shm_unlink, MAP_FAILED, MAP_SHARED, O_CREAT, O_EXCL, O_RDWR, PROT_READ, PROT_WRITE
+    MAP_FAILED, MAP_SHARED, O_CREAT, O_EXCL, O_RDWR, PROT_READ, PROT_WRITE, close, mmap, munmap, posix_fallocate, shm_open, shm_unlink
 };
 
 use crate::{
@@ -59,7 +59,7 @@ impl<T: Sized> SharedMemory<T> {
             )
         };
 
-        unsafe { bail_on_libc_err!(ftruncate(fd, size as i64)) };
+        unsafe { bail_on_libc_err!(posix_fallocate(fd, 0, size as i64)) };
 
         let addr = unsafe {
             bail_on_libc_err!(

@@ -39,7 +39,7 @@ macro_rules! bail_on_libc_err {
         let res = $expr;
         if res != 0 {
             let s = stringify!($expr);
-            bail!(get_last_error(&format!("{s} failed")))
+            bail!(get_last_error(&format!("{s} failed (with return: {res:?})")))
         }
         res
     }};
@@ -47,7 +47,7 @@ macro_rules! bail_on_libc_err {
         let res = $expr;
         if res == $errcode {
             let s = stringify!($expr);
-            bail!(get_last_error(&format!("{s} failed")))
+            bail!(get_last_error(&format!("{s} failed (with return: {res:?})")))
         }
         res
     }};
@@ -56,15 +56,17 @@ macro_rules! bail_on_libc_err {
 #[macro_export]
 macro_rules! eprintln_on_libc_err {
     ($expr:expr) => {
-        if $expr != 0 {
+        let res = $expr;
+        if res != 0 {
             let s = stringify!($expr);
-            eprintln!("{}", get_last_error(&format!("{s} failed")))
+            eprintln!("{}", get_last_error(&format!("{s} failed (with return: {res:?})")))
         }
     };
     ($expr:expr, $errcode:expr) => {
-        if $expr == $errcode {
+        let res = $expr;
+        if res == $errcode {
             let s = stringify!($expr);
-            eprintln!("{}", get_last_error(&format!("{s} failed")))
+            eprintln!("{}", get_last_error(&format!("{s} failed (with return: {res:?})")))
         }
     };
 }
