@@ -1239,7 +1239,7 @@ instruction set architecture Tensor = {
 
 In \ac{VADL} a `forall` expression with the keywords `tensor` or `fold` can be used to describe concise tensor expressions.
 The `forall` expression with the keywords `tensor` or `fold` has the same structure and variable binding behavior as the `forall` statement described above.
-Instead of the `do` keyword, the expression either has the `tensor` keyword followed by an arbitrary expression, or the `fold` keyword followed by one of the binary operators `+`, `-`, `*`, `&`, `|` and `^`, then the keyword `with` and an arbitrary expression.
+Instead of the `do` keyword, the expression either has the `tensor` keyword followed by an arbitrary expression, or the `fold` keyword followed by one of the commutative and assoziative binary operators `+`, `*`, `&`, `|` and `^`, then the keyword `with` and an arbitrary expression.
 The `fold` expression chains each expression together with the provided operator.
 Therefore, the result type is the same as the type of the expression after `with`.
 Listing \r{tensor_forall} shows both `forall` expressions.
