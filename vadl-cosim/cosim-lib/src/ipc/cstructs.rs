@@ -557,7 +557,7 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
     // Once end_read is called, the reference is no longer valid, therefore the value needs to
     // already be used or cloned once `end_read` is called.
     pub const fn read_previous(&self) -> &BrokerSHMData {
-        let idx = self.ring_idx(self.read_idx - 1);
+        let idx = self.ring_idx(self.read_idx.wrapping_sub(1));
         &self.data[idx]
     }
 
