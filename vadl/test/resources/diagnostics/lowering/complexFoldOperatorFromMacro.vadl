@@ -2,7 +2,7 @@
 // 1) Macros weren't supported for fold operators: https://github.com/OpenVADL/openvadl/issues/663
 // 2) The lowering only allowed add and mul for the operator: https://github.com/OpenVADL/openvadl/issues/662
 
-model TestOP (): BinOp = {-}
+model TestOP (): BinOp = {+}
 
 model FoldStat (): Stat = {
   X(0) := forall i: Bits<4> in 0 .. 3 fold $TestOP() with X(i)

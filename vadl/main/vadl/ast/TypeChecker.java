@@ -3846,6 +3846,7 @@ public class TypeChecker
         }
       }
     });
+
     var bodyType = check(expr.body);
     if (!(bodyType instanceof DataType bodyDataType)) {
       throw addErrorAndStopChecking(
@@ -3860,15 +3861,12 @@ public class TypeChecker
     if (expr.operation == ForallExpr.Operation.FOLD) {
       var builtIn = AstUtils.getOperatorBuiltIn(expr.getFoldOperator(), bodyType, bodyType);
 
-      // FIXME: In the future try a more sophisticated approach that determines the allowed functions
-      // based on the types, but this will require a larger rewrite of the builtin-typechecking to
-      // allow such uses.
+      // FIXME: In the future try a more sophisticated approach that determines the allowed
+      // functions based on the types, but this will require a larger rewrite of the
+      // builtin-typechecking to allow such uses.
       var allowedFoldBuiltins = Set.of(
           BuiltInTable.ADD,
-          BuiltInTable.SUB,
           BuiltInTable.MUL,
-          BuiltInTable.SDIV,
-          BuiltInTable.UDIV,
           BuiltInTable.AND,
           BuiltInTable.OR,
           BuiltInTable.XOR
@@ -3881,8 +3879,9 @@ public class TypeChecker
             error("Invalid Fold Operator", location)
                 .locationDescription(location,
                     "The operator `%s` isn't allowed for a forall fold. ", expr.getFoldOperator())
-                .locationNote(location,
-                    "Fold operators must fulfill the signature contract `(T, T) -> T`.")
+                .locationNote(location, "%s",
+                    "Fold operators must be commutative and associative binary operators which "
+                        + "have a neutral element.")
                 .build());
       }
       expr.computedFoldBuiltin = builtIn;
