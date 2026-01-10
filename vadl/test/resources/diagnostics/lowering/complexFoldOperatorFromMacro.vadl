@@ -2,10 +2,22 @@
 // 1) Macros weren't supported for fold operators: https://github.com/OpenVADL/openvadl/issues/663
 // 2) The lowering only allowed add and mul for the operator: https://github.com/OpenVADL/openvadl/issues/662
 
-model TestOP (): BinOp = {&}
+model TestOP (): BinOp = {-}
 
 model FoldStat (): Stat = {
-  Reg := forall i: Bits<4> in 0 .. 3 fold $TestOP() with Reg(i)
+  X(0) := forall i: Bits<4> in 0 .. 3 fold $TestOP() with X(i)
+}
+
+instruction set architecture ISA = {
+  register X : Bits<16><32>
+  memory MEM : Bits<32> -> Bits<8>
+  format F: Bits<32> = {
+    r: Bits<32>
+  }
+
+  instruction ADD: F = $FoldStat()
+  assembly ADD = ""
+  encoding ADD = { r = 0 }
 }
 
 
