@@ -1,5 +1,6 @@
 plugins {
     application
+    id("org.beryx.jlink") version "3.2.0"
 }
 
 group = "vadl"
@@ -7,6 +8,13 @@ version = "unspecified"
 
 repositories {
     mavenCentral()
+}
+
+configurations {
+    implementation {
+        exclude(group = "com.google.errorprone", module = "error_prone_core")
+        exclude(group = "com.google.errorprone", module = "error_prone_annotations")
+    }
 }
 
 dependencies {
@@ -36,4 +44,32 @@ tasks.filter { it.name in pathSpecificTasks }.forEach { it ->
 
 tasks.test {
     useJUnitPlatform()
+}
+
+jlink {
+    addOptions("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
+
+    launcher {
+        name = "openvadl-lsp"
+    }
+
+    // Merge everything into one module
+    forceMerge(".*")
+
+    moduleName.set("openvadl.lsp")
+    mergedModuleName.set("openvadl.lsp")
+    mainClass.set("vadl.lsp.Main")
+}
+
+// Remove the problematic service provider declaration from logback
+tasks.named("prepareMergedJarsDir") {
+    doLast {
+        delete("${layout.buildDirectory.get()}/jlinkbase/mergedjars/META-INF/services/jakarta.servlet.ServletContainerInitializer")
+
+        // Copy vadl-lsp classes into mergedjars so they get included in the merged module
+        copy {
+            from(zipTree(tasks.jar.get().archiveFile))
+            into("${layout.buildDirectory.get()}/jlinkbase/mergedjars")
+        }
+    }
 }

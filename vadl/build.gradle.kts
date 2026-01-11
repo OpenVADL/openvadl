@@ -31,7 +31,7 @@ repositories {
 
 dependencies {
     annotationProcessor(project(":java-annotations"))
-    implementation(project(":java-annotations"))
+    compileOnly(project(":java-annotations"))
     implementation("org.thymeleaf:thymeleaf:3.1.2.RELEASE")
     implementation("com.google.guava:guava:33.2.1-jre")
     implementation("ch.qos.logback:logback-classic:1.5.13")
