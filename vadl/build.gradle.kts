@@ -31,7 +31,7 @@ repositories {
 
 dependencies {
     annotationProcessor(project(":java-annotations"))
-    implementation(project(":java-annotations"))
+    compileOnly(project(":java-annotations"))
     implementation("org.thymeleaf:thymeleaf:3.1.2.RELEASE")
     implementation("com.google.guava:guava:33.2.1-jre")
     implementation("ch.qos.logback:logback-classic:1.5.13")
@@ -41,6 +41,7 @@ dependencies {
 
     implementation("io.github.rascmatt:z3-bootstrap:1.0.0")
 
+    testCompileOnly(project(":java-annotations"))
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

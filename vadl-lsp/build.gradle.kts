@@ -1,5 +1,6 @@
 plugins {
     application
+    id("org.beryx.jlink") version "3.2.0"
 }
 
 group = "vadl"
@@ -7,6 +8,13 @@ version = "unspecified"
 
 repositories {
     mavenCentral()
+}
+
+configurations {
+    implementation {
+        exclude(group = "com.google.errorprone", module = "error_prone_core")
+        exclude(group = "com.google.errorprone", module = "error_prone_annotations")
+    }
 }
 
 dependencies {
@@ -36,4 +44,36 @@ tasks.filter { it.name in pathSpecificTasks }.forEach { it ->
 
 tasks.test {
     useJUnitPlatform()
+}
+
+jlink {
+    addOptions("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
+    // Add logback modules for SLF4J logging and java.naming required by logback
+    addOptions("--add-modules", "ch.qos.logback.classic,ch.qos.logback.core,java.naming")
+
+    forceMerge(".*")
+
+    launcher {
+        name = "openvadl-lsp"
+        jvmArgs = listOf("-Dslf4j.internal.verbosity=WARN")
+    }
+
+    mergedModule {
+        excludeProvides(mapOf("service" to "jakarta.servlet.ServletContainerInitializer"))
+    }
+
+    moduleName.set("openvadl.lsp")
+    mergedModuleName.set("openvadl.lsp")
+    mainClass.set("vadl.lsp.Main")
+}
+
+// The plugin only merges dependency jars, not the main application jar.
+// Manually copy it into mergedjars to include it in the merged module.
+tasks.named("prepareMergedJarsDir") {
+    doLast {
+        copy {
+            from(zipTree(tasks.jar.get().archiveFile))
+            into("${layout.buildDirectory.get()}/jlinkbase/mergedjars")
+        }
+    }
 }
