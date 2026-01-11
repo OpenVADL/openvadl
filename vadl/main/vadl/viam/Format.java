@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -349,7 +349,7 @@ public class Format extends Definition implements DefProp.WithType {
    */
   public static class FieldAccess extends Definition implements DefProp.WithType {
 
-    private final Function accessFunction;
+    private Function accessFunction;
     @LazyInit
     private Function predicate;
     private final List<Field> fieldRefs;
@@ -379,6 +379,10 @@ public class Format extends Definition implements DefProp.WithType {
       if (predicate != null) {
         this.predicate = predicate;
       }
+    }
+
+    public void setAccessFunction(Function accessFunction) {
+      this.accessFunction = accessFunction;
     }
 
     public Function accessFunction() {
