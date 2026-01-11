@@ -48,25 +48,29 @@ tasks.test {
 
 jlink {
     addOptions("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
+    // Add logback modules for SLF4J logging and java.naming required by logback
+    addOptions("--add-modules", "ch.qos.logback.classic,ch.qos.logback.core,java.naming")
+
+    forceMerge(".*")
 
     launcher {
         name = "openvadl-lsp"
+        jvmArgs = listOf("-Dslf4j.internal.verbosity=WARN")
     }
 
-    // Merge everything into one module
-    forceMerge(".*")
+    mergedModule {
+        excludeProvides(mapOf("service" to "jakarta.servlet.ServletContainerInitializer"))
+    }
 
     moduleName.set("openvadl.lsp")
     mergedModuleName.set("openvadl.lsp")
     mainClass.set("vadl.lsp.Main")
 }
 
-// Remove the problematic service provider declaration from logback
+// The plugin only merges dependency jars, not the main application jar.
+// Manually copy it into mergedjars to include it in the merged module.
 tasks.named("prepareMergedJarsDir") {
     doLast {
-        delete("${layout.buildDirectory.get()}/jlinkbase/mergedjars/META-INF/services/jakarta.servlet.ServletContainerInitializer")
-
-        // Copy vadl-lsp classes into mergedjars so they get included in the merged module
         copy {
             from(zipTree(tasks.jar.get().archiveFile))
             into("${layout.buildDirectory.get()}/jlinkbase/mergedjars")
