@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
@@ -2283,7 +2284,20 @@ public class TypeChecker
 
   @Override
   public Void visit(LogicDefinition definition) {
-    throwUnimplemented(definition);
+    var logicTypeString = definition.logicTypeIdentifiers.stream().map(i -> i.name).collect(
+        Collectors.joining(" "));
+    var logicTypeMapping = Map.of(
+        "branch prediction", LogicDefinition.LogicType.BranchPrediction,
+        "control", LogicDefinition.LogicType.Control,
+        "forwarding", LogicDefinition.LogicType.Forwarding
+    );
+    if (!logicTypeMapping.containsKey(logicTypeString)) {
+      addErrorAndStopChecking(
+          error("Unknown logic type: `%s`".formatted(logicTypeString), definition)
+              .suggestions(Levenshtein.sortAll(logicTypeString, logicTypeMapping.keySet()))
+              .build());
+    }
+    definition.logicType = logicTypeMapping.get(logicTypeString);
     return null;
   }
 
@@ -3287,15 +3301,20 @@ public class TypeChecker
         type = expr.type;
       } else if (type instanceof InstructionType) {
         var allowedStatusfields =
-            List.of("address", "read", "unknown", "compute", "verify", "write");
+            List.of("address", "read", "unknown", "compute", "verify", "write", "readOrForward",
+                "results");
         if (!allowedStatusfields.contains(fieldName)) {
           var suggestions = Levenshtein.sortAll(fieldName, allowedStatusfields);
-          addErrorAndStopChecking(error("Unknown status field `%s`".formatted(fieldName), expr)
-              .help("Maybe you meant one of these: %s", String.join(", ", suggestions))
-              .build());
+          addErrorAndStopChecking(
+              error("Unknown status or subcall field `%s`".formatted(fieldName), expr)
+                  .help("Maybe you meant one of these: %s", String.join(", ", suggestions))
+                  .build());
         }
 
-        expr.type = Type.void_();
+        // FIXME: Research type rules here
+        // Is the order important? Are the types of the arguments important? What rulse do even
+        // aply. Are all the functions vararg?
+        expr.type = fieldName.equals("unknown") ? Type.bool() : Type.void_();
         var argumentfreeFields = List.of("unknown", "compute", "verify");
         if (argumentfreeFields.contains(fieldName)) {
           if (!subCall.argsIndices.isEmpty()) {
@@ -3307,11 +3326,11 @@ public class TypeChecker
           }
           return;
         } else {
-          if (subCall.argsIndices.size() != 1) {
+          if (subCall.argsIndices.size() == 0) {
             addErrorAndStopChecking(
                 error("Wrong Argument Number",
                     subCall.id)
-                    .description("This subcall expects exactly one argument.")
+                    .description("This subcall expects at least one argument.")
                     .build());
           }
         }

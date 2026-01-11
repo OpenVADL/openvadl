@@ -960,7 +960,8 @@ class MacroExpander
 
   @Override
   public Definition visit(LogicDefinition definition) {
-    return new LogicDefinition(definition.id, copyLoc(definition.loc))
+    return new LogicDefinition(definition.id, definition.logicTypeIdentifiers,
+        copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
 

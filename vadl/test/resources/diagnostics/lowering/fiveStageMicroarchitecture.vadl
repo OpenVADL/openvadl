@@ -1,9 +1,13 @@
 instruction set architecture ISA = {
   register X : Bits<16><32>
   memory MEM : Bits<32> -> Bits<8>
+  program counter PC: Bits<32>
+  register CSR : Bits<5> -> Bits<32>
 }
 
 micro architecture SingleStage implements ISA = {
+  logic [forwarding] bypass
+
   stage FETCH -> ( fr : FetchResult ) =
   {
     fr := fetchNext
@@ -14,7 +18,7 @@ micro architecture SingleStage implements ISA = {
     let instr = decode( FETCH.fr ) in
     {
       instr.address( @X )
-      //instr.readOrForward( @X, @bypass )
+      instr.readOrForward( @X, @bypass )
       ir := instr
     }
   }
@@ -23,11 +27,11 @@ micro architecture SingleStage implements ISA = {
   {
     let instr = DECODE.ir in
     {
-      //instr.read( @PC, @CSR )
+      instr.read( @PC, @CSR )
       instr.compute
       instr.verify
-      //instr.write( @PC, @CSR )
-      //instr.results( @X, @bypass )
+      instr.write( @PC, @CSR )
+      instr.results( @X, @bypass )
       ir := instr
     }
   }

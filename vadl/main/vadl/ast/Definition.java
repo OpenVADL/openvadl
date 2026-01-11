@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -4878,10 +4878,32 @@ class CacheDefinition extends Definition implements IdentifiableNode {
 class LogicDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   SourceLocation loc;
+  List<Identifier> logicTypeIdentifiers;
 
-  LogicDefinition(Identifier id, SourceLocation loc) {
+  /// Set by the typechecker and inferred from the logicType identifiers.
+  /// This cannot be directly set by the parser because of possible macro expansion.
+  @Nullable
+  LogicType logicType;
+
+  LogicDefinition(Identifier id, List<Identifier> logicTypeIdentifiers, SourceLocation loc) {
     this.id = id;
+    this.logicTypeIdentifiers = logicTypeIdentifiers;
     this.loc = loc;
+  }
+
+  enum LogicType {
+    Forwarding,
+    BranchPrediction,
+    Control;
+
+    @Override
+    public String toString() {
+      return switch (this) {
+        case Forwarding -> "forwarding";
+        case BranchPrediction -> "branch prediction";
+        case Control -> "control";
+      };
+    }
   }
 
   @Override
@@ -4903,7 +4925,11 @@ class LogicDefinition extends Definition implements IdentifiableNode {
   void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
-    builder.append("logic ");
+    builder.append("logic [ ");
+    for (Identifier logicTypeId : logicTypeIdentifiers) {
+      builder.append(logicTypeId.name).append(" ");
+    }
+    builder.append("] ");
     id.prettyPrint(0, builder);
     builder.append("\n");
   }
