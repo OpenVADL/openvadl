@@ -164,6 +164,13 @@ public class TypeChecker
         expr.type = new InternalErrorType();
       }
       throw signal;
+    } catch (EvaluationError e) {
+      if (expr.type == null) {
+        expr.type = new InternalErrorType();
+      }
+      throw addErrorAndStopChecking(error("Constant value required", e.location)
+          .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
+          .build());
     } finally {
       currentlyVisiting.pop();
     }
@@ -3107,6 +3114,15 @@ public class TypeChecker
     Type currType = typeBeforeSlice;
     for (var slice : sliceGroups) {
       if (currType instanceof BitsType currBitsType) {
+        // Special handling for dynamic indexing (only a single index allowed here)
+        if (slice.values.size() == 1 && !(slice.values.getFirst() instanceof RangeExpr)
+            && !constantEvaluator.isConstant(slice.values.getFirst())) {
+          check(slice.values.getFirst());
+          slice.type = Type.bits(1);
+          expr.type = Type.bits(1);
+          return;
+        }
+
         // construct BitSlice for each slice group
         var parts = new ArrayList<Constant.BitSlice.Part>();
         for (var partExpr : slice.values) {
@@ -3827,23 +3843,12 @@ public class TypeChecker
 
       // Check as expression
       if (index.domain instanceof RangeExpr rangeExpr) {
-        try {
-          index.computedFrom = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
-          index.computedTo = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
-        } catch (EvaluationError e) {
-          addErrorAndStopChecking(error("Constant value required", e.location)
-              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
-              .build());
-        }
+        index.computedFrom = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
+        index.computedTo = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
+
       } else {
-        try {
-          index.computedFrom = constantEvaluator.eval(index.domain).value().intValueExact();
-          index.computedTo = index.computedFrom;
-        } catch (EvaluationError e) {
-          addErrorAndStopChecking(error("Constant value required", e.location)
-              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
-              .build());
-        }
+        index.computedFrom = constantEvaluator.eval(index.domain).value().intValueExact();
+        index.computedTo = index.computedFrom;
       }
     });
 
