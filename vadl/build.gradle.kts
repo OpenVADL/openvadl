@@ -41,6 +41,7 @@ dependencies {
 
     implementation("io.github.rascmatt:z3-bootstrap:1.0.0")
 
+    testCompileOnly(project(":java-annotations"))
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
