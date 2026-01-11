@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -268,7 +268,10 @@ class MacroExpander
   @Override
   public Expr visit(PlaceholderExpr expr) {
     Node arg = resolveArg(expr.segments);
-    return Objects.requireNonNullElse((Expr) arg, expr);
+    if (!(arg instanceof Expr argExpr)) {
+      return expr;
+    }
+    return Objects.requireNonNullElse(argExpr, expr);
   }
 
   @Override
