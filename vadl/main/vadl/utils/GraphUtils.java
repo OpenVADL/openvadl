@@ -644,4 +644,46 @@ public class GraphUtils {
     return result;
   }
 
+  /**
+   * Deletes all control nodes between the specified `begin` and `end` nodes,
+   * including the `begin` node but excluding the `end` node.
+   * The method ensures safe deletion of complex node structures such as
+   * branching and merging nodes by recursively handling their internal connections.
+   *
+   * @param begin The starting control node of the deletion range. This
+   *              node will be deleted as part of the operation.
+   * @param end   The ending control node which marks the stopping point of the
+   *              deletion. This node will not be deleted.
+   */
+  public static void deleteAllBetween(ControlNode begin, ControlNode end) {
+    ControlNode curr = begin;
+    while (curr != end) {
+      curr.safeDelete();
+      switch (curr) {
+        case DirectionalNode directionalNode -> curr = directionalNode.next();
+        case ControlSplitNode splitNode -> {
+          var merge = splitNode.mergeNode();
+          // unset all inputs
+          merge.safeDelete();
+          for (var branch : splitNode.branches()) {
+            // merge won't be deleted, but will be deleted in this loop
+            deleteAllBetween(branch, merge);
+          }
+          if (end == merge) {
+            // we already reached the end, so no need to continue
+            return;
+          }
+          curr = merge.next();
+        }
+        case BranchEndNode endNode -> {
+          // reached the end of this scope.
+          return;
+        }
+        default -> curr.fail("Unexpected control node type: %s", curr.getClass());
+      }
+    }
+
+    curr.safeDelete();
+  }
+
 }

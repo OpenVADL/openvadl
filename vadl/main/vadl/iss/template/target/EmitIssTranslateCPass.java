@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.IssUtils;
+import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.template.IssRenderUtils;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -117,10 +119,12 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
     var sb = new StringBuilderAppendable();
     var isa = specification.processor().get().isa();
     sb.indent();
-    isa.registerTensors().forEach(tensor -> {
-      regInitCode(sb, tensor);
-      sb.append("\n");
-    });
+    isa.registerTensors().stream()
+        .filter(IssUtils::isTcgReg)
+        .forEach(tensor -> {
+          regInitCode(sb, tensor);
+          sb.append("\n");
+        });
     return sb.toString();
   }
 
@@ -128,7 +132,7 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
     var layers = reg.indexDimensions().stream()
         .map(d -> Pair.of("d" + d.index(), d.size()))
         .toList();
-    var indexAccess = layers.stream().map(l -> "[" + l.left() + "]")
+    var tcgIndexAccess = layers.stream().map(l -> "[" + l.left() + "]")
         .collect(Collectors.joining());
 
     var nameLower = reg.simpleName().toLowerCase();
@@ -148,12 +152,15 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
           b.appendLn("if (" + check + ") continue;");
         }
 
+        var regInfo = reg.expectExtension(RegInfo.class);
+        var cpuIndexAccess = regInfo.cArrayIndex("d");
+
         // cpu_x[i] = tcg_global_mem_new(tcg_env,
         //       offsetof(CPURV64IMState, x[i]),
         //       rv64im_cpu_x_names[i]);
-        b.append("cpu_" + nameLower + indexAccess + "= tcg_global_mem_new(tcg_env, ")
-            .append("offsetof(CPU" + targetUpper + "State, " + nameLower + indexAccess + "), ")
-            .append(names + indexAccess + ");");
+        b.append("cpu_" + nameLower + tcgIndexAccess + "= tcg_global_mem_new(tcg_env, ")
+            .append("offsetof(CPU" + targetUpper + "State, " + nameLower + cpuIndexAccess + "), ")
+            .append(names + tcgIndexAccess + ");");
       }
     });
   }

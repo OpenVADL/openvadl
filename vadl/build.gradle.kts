@@ -14,12 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import vadl.CocoR_gradle
 import java.util.*
 
 plugins {
     id("vadl.CocoR")
     id("io.github.rascmatt.z3") version "1.0.2"
+    kotlin("jvm")
 }
 
 
@@ -51,6 +53,11 @@ dependencies {
     testImplementation("org.apache.velocity:velocity-engine-core:2.3")
     testImplementation("net.jqwik:jqwik:1.9.0")
     testImplementation("org.yaml:snakeyaml:2.2")
+    implementation(kotlin("stdlib-jdk8"))
+}
+
+kotlin {
+    jvmToolchain(25)
 }
 
 sourceSets {
@@ -66,7 +73,7 @@ sourceSets {
     }
 }
 
-tasks.withType<JavaCompile> {
+tasks.matching { it is KotlinCompile || it is JavaCompile }.configureEach {
     dependsOn("generateCocoParser")
 }
 

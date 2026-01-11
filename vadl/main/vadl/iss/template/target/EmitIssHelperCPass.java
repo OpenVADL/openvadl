@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,9 @@ package vadl.iss.template.target;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.codegen.IssCpuFunctionGenerator;
 import vadl.iss.codegen.IssInstrHelperGenerator;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.extensions.InstrInfo;
@@ -52,12 +54,21 @@ public class EmitIssHelperCPass extends IssTemplateRenderingPass {
     return specification.isa().get().ownInstructions().stream()
         .map(TcgPassUtils::instrInfo)
         .filter(InstrInfo::asHelperCall)
-        .map(this::instrHelperImpl)
+        .flatMap(e -> Stream.concat(
+            instrExtractedFunctionImpl(e),
+            Stream.of(instrHelperImpl(e))
+        ))
         .toList();
   }
 
   private String instrHelperImpl(InstrInfo info) {
     return new IssInstrHelperGenerator(configuration(), info).fetch();
+  }
+
+  private Stream<String> instrExtractedFunctionImpl(InstrInfo info) {
+    var cpuStateName = "CPU" + configuration().targetName().toUpperCase() + "State";
+    return info.extractedFunctions().stream()
+        .map(f -> new IssCpuFunctionGenerator(f).fetch(cpuStateName));
   }
 
 }

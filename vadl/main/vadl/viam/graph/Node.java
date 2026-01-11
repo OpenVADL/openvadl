@@ -415,6 +415,9 @@ public abstract class Node implements WithLocation {
    *                        successor
    */
   public void safeDelete(boolean deleteChildren) {
+    if (isDeleted()) {
+      return;
+    }
     ensureDeleteIsPossible();
     clearInputsUsageOfThis();
     clearSuccessorsUsageOfThis();

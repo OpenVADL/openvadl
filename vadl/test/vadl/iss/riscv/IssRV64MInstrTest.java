@@ -41,7 +41,7 @@ public class IssRV64MInstrTest extends AbstractIssRiscv64InstrTest {
   }
 
   public AsmTestBuilder getBuilder(String testNamePrefix, int id) {
-    return new RV64IMTestBuilder(testNamePrefix + "_" + id);
+    return new RV64IMVTestBuilder(testNamePrefix + "_" + id);
   }
 
   @TestFactory

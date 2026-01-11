@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -32,6 +32,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -120,6 +121,17 @@ public class IssInstrHelperGenerator extends IssProcGen
    */
   public static String functionName(Instruction instr) {
     return "helper_" + instrInfo(instr).helperName();
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, FuncCallNode toHandle) {
+    // function calls from the helper functions have the env as first argument
+    ctx.wr(toHandle.function().simpleName())
+        .wr("(env");
+    for (var arg : toHandle.arguments()) {
+      ctx.wr(", ").gen(arg);
+    }
+    ctx.wr(")");
   }
 
   @Override

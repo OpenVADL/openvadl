@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -87,12 +87,12 @@ public abstract class FunctionCodeGenerator extends AbstractFunctionCodeGenerato
   protected abstract void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle);
 
   @Handler
-  void handle(CGenContext<Node> ctx, FoldNode toHandle) {
+  protected void handle(CGenContext<Node> ctx, FoldNode toHandle) {
     throwNotAllowed(toHandle, "forall fold expressions");
   }
 
   @Handler
-  void handle(CGenContext<Node> ctx, TensorNode toHandle) {
+  protected void handle(CGenContext<Node> ctx, TensorNode toHandle) {
     throwNotAllowed(toHandle, "forall tensor expressions");
   }
 

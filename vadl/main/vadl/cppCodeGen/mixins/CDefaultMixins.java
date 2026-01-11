@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -56,6 +56,7 @@ import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
@@ -308,6 +309,11 @@ public interface CDefaultMixins {
     @Handler
     default void handle(CGenContext<Node> ctx, ForallEndNode node) {
       ctx.spaceOut().ln("}").gen(node.next());
+    }
+
+    @Handler
+    default void handle(CGenContext<Node> ctx, TensorNode node) {
+      
     }
   }
 

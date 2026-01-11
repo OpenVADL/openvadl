@@ -104,8 +104,8 @@ public abstract class WriteResourceNode extends SideEffectNode {
   /**
    * The number of bits that is getting written to the resource.
    */
-  protected int writeBitWidth() {
-    return resourceDefinition().resultType().bitWidth();
+  public int writeBitWidth() {
+    return resourceDefinition().resultType(indices.size()).bitWidth();
   }
 
   @Override
@@ -113,13 +113,13 @@ public abstract class WriteResourceNode extends SideEffectNode {
     super.verifyState();
     var resource = resourceDefinition();
 
-    ensure(value.type() instanceof DataType
-            && ((DataType) value.type()).bitWidth() <= writeBitWidth(),
+    ensure(value.type() instanceof DataType valueType
+            && valueType.bitWidth() <= writeBitWidth(),
         "Mismatching resource type. Value expression's type (%s) has not the expected "
             + "width of %s.",
         value.type(), writeBitWidth());
 
-    ensure(resource.indexTypes().size() == indices().size(),
+    ensure(resource.indexTypes().size() >= indices().size(),
         "The resource takes %d indices but write provided %d", resource.indexTypes().size(),
         indices().size());
 

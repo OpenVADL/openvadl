@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -38,7 +37,6 @@ import vadl.utils.ViamUtils;
 import vadl.viam.DefProp;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
-import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -84,10 +82,6 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
 
     // behavior checks
     checkSlice(viam, diagnostics);
-
-    // check that all resources access provide every index and only
-    // access the innermost dimension
-    checkResourceAccesses(viam, diagnostics);
 
     withIsa(viam, isa -> {
       attachExceptionInfo(isa);
@@ -284,34 +278,6 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
               .description("Currently the ISS requires slices to be less or equal 64 bit.")
               .note("This is because the QEMU implementation only handles 64 bit.")
           );
-        });
-  }
-
-  // checks if all slices are not greater than 64 bit
-  private void checkResourceAccesses(Specification viam, List<DiagnosticBuilder> diagnostics) {
-    ViamUtils.findDefinitionsByFilter(viam, d -> d instanceof DefProp.WithBehavior)
-        .stream()
-        .map(DefProp.WithBehavior.class::cast)
-        .flatMap(b -> b.behaviors().stream())
-        .flatMap(b -> b.getNodes(Set.of(ReadRegTensorNode.class, WriteRegTensorNode.class)))
-        .forEach(n -> {
-          RegisterTensor tensor;
-          int accessIndicesCount;
-          if (n instanceof ReadRegTensorNode read) {
-            tensor = read.resourceDefinition();
-            accessIndicesCount = read.indices().size();
-          } else {
-            var write = (WriteRegTensorNode) n;
-            tensor = write.resourceDefinition();
-            accessIndicesCount = write.indices().size();
-          }
-
-          if (tensor.maxNumberOfAccessIndices() != accessIndicesCount) {
-            diagnostics.add(error("Invalid register access", n)
-                .description(
-                    "Currently the ISS only allows register accesses to the innermost dimension.")
-            );
-          }
         });
   }
 

@@ -163,4 +163,3 @@ tasks.register("checkstyleAll") {
 
     dependsOn(checkstyleTasks)
 }
-

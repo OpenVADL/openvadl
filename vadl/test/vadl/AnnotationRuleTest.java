@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -39,7 +39,8 @@ public class AnnotationRuleTest {
 
   @ArchTest
   static final ArchRule noNotNullAnnotationsForMethods = // Intellij shows not used, but it is
-      noMethods().should().beAnnotatedWith(ORG_JETBRAINS_ANNOTATIONS_NOT_NULL)
+      noMethods().that().areDeclaredInClassesThat().areNotAnnotatedWith("kotlin.Metadata")
+          .should().beAnnotatedWith(ORG_JETBRAINS_ANNOTATIONS_NOT_NULL)
           .orShould().beAnnotatedWith(JAVAX_VALIDATION_CONSTRAINTS_NOT_NULL)
           .orShould().beAnnotatedWith(JAKARTA_VALIDATION_CONSTRAINTS_NOT_NULL);
 
