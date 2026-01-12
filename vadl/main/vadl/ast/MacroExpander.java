@@ -489,7 +489,11 @@ class MacroExpander
         (IsId) expandExpr(index.identifier()),
         index.typeLiteral == null ? null : (TypeLiteral) expandExpr(index.typeLiteral),
         expandExpr(index.domain)));
-    return new ForallExpr(indices, expr.operation, expr.foldOperator, expandExpr(expr.body),
+    return new ForallExpr(
+        indices,
+        expr.operation,
+        expr.foldOperator != null ? (IsBinOp) expandNode((Node) expr.foldOperator) : null,
+        expandExpr(expr.body),
         copyLoc(expr.loc));
   }
 
