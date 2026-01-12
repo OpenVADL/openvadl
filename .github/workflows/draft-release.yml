@@ -27,6 +27,7 @@ jobs:
     steps:
       - uses: release-drafter/release-drafter@v6
         id: release-drafter
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: |
