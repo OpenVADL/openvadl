@@ -104,3 +104,54 @@ jobs:
           tag_name: v${{ needs.update-draft-release.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # This builds and uploads jlink bundles to the job as artifacts.
+  # Note that this doesn't upload it to the draft release.
+  build-and-upload-jlink:
+    needs: update-draft-release
+    runs-on: self-hosted
+    container:
+      image: ghcr.io/openvadl/java-runtime-builder
+      options: --user 998 # run as a github-runner user, otherwise it will create things as root
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Build jlink Images for All Platforms
+        run: |
+          ./gradlew vadl-lsp:jlink -PjlinkAllPlatforms
+
+      - name: Upload linux-arm64 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openvadl-lsp-linux-arm64
+          path: vadl-lsp/build/image/*-linux-arm64/
+          retention-days: 20
+
+      - name: Upload linux-x64 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openvadl-lsp-linux-x64
+          path: vadl-lsp/build/image/*-linux-x64/
+          retention-days: 20
+
+      - name: Upload macos-arm64 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openvadl-lsp-macos-arm64
+          path: vadl-lsp/build/image/*-macos-arm64/
+          retention-days: 20
+
+      - name: Upload win-x64 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openvadl-lsp-win-x64
+          path: vadl-lsp/build/image/*-win-x64/
+          retention-days: 20
+
+      - name: Upload win-arm64 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openvadl-lsp-win-arm64
+          path: vadl-lsp/build/image/*-win-arm64/
+          retention-days: 20
