@@ -34,7 +34,7 @@ on:
         description: 'Path to the Dockerfile'
         required: false
         type: string
-        default: ${{ inputs.context }}/Dockerfile
+        default: ''
     secrets:
       X06_KEYCHAIN_PASSWORD:
         required: true
@@ -83,7 +83,7 @@ jobs:
           platforms: ${{ inputs.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ inputs.image }}
-          file: ${{ inputs.file }}
+          file: ${{ inputs.file != '' && inputs.file || format('{0}/Dockerfile', inputs.context) }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
