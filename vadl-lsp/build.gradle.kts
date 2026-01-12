@@ -47,7 +47,12 @@ tasks.test {
 }
 
 jlink {
-    addOptions("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
+    // We use --strip-java-debug-attributes instead of --strip-debug, as --strip-debug also
+    // applies native debug symbol stripping, which is not possible for cross-builds.
+    // JDK-8219257 and JDK-8219207
+    // Further, we are using --compress 1 instead of 2, as the distributed package is already zip, while the
+    // zip compress flag (2) adds runtime overhead.
+    addOptions("--strip-java-debug-attributes", "--compress", "1", "--no-header-files", "--no-man-pages")
     // Add logback modules for SLF4J logging and java.naming required by logback
     addOptions("--add-modules", "ch.qos.logback.classic,ch.qos.logback.core,java.naming")
 
@@ -65,6 +70,19 @@ jlink {
     moduleName.set("openvadl.lsp")
     mergedModuleName.set("openvadl.lsp")
     mainClass.set("vadl.lsp.Main")
+
+    // Target platforms to build the language server for.
+    // If the gradle property `-PjlinkAllPlatforms` is passed, we run jlink for all
+    // target platforms. In this case we assume that this is executed
+    // within an ghcr.io/openvadl/java-runtime-builder docker container.
+    // Otherwise, only the host platform is build.
+    if (project.hasProperty("jlinkAllPlatforms")) {
+        targetPlatform("linux-x64", "/jdks/jdk-linux-x64")
+        targetPlatform("linux-arm64", "/jdks/jdk-linux-arm64")
+        targetPlatform("macos-arm64", "/jdks/jdk-macos-arm64")
+        targetPlatform("win-x64", "/jdks/jdk-win-x64")
+        targetPlatform("win-arm64", "/jdks/jdk-win-arm64")
+    }
 }
 
 // The plugin only merges dependency jars, not the main application jar.
