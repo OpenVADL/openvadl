@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -1437,8 +1437,13 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(LogicDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    var id = generateIdentifier(definition.viamId, definition.identifier());
+    var logic = switch (definition.logicType) {
+      case Forwarding -> new Logic.Forwarding(id);
+      case Control -> new Logic.Control(id);
+      case BranchPrediction -> new Logic.BranchPrediction(id);
+    };
+    return Optional.of(logic);
   }
 
   @Override
@@ -1476,7 +1481,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var children = definition.definitions.stream().map(this::fetch).filter(Optional::isPresent)
         .map(Optional::orElseThrow).toList();
     var stages = filterAndCastToInstance(children, Stage.class);
-    var logic = filterAndCastToInstance(children, Logic.class);
+    var logic = new ArrayList<Logic>();
+    for (var klass : List.of(Logic.BranchPrediction.class, Logic.Control.class,
+        Logic.Forwarding.class)) {
+      logic.addAll(filterAndCastToInstance(children, klass).stream()
+          .map(l -> (Logic) l).toList());
+    }
     var signals = filterAndCastToInstance(children, Signal.class);
     var registers = filterAndCastToInstance(children, RegisterTensor.class);
     var memories = filterAndCastToInstance(children, Memory.class);

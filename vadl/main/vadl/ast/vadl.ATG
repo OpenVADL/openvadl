@@ -1305,12 +1305,15 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     typeLiteral<out TypeLiteral targetType> (. def = new CacheDefinition(id, sourceType, targetType, start.join(lastTokenLoc())); .)
   .
 
-  logicDefinition<out Definition def> (. var start = nextTokenLoc(); .)
+  logicDefinition<out Definition def>   (. var start = nextTokenLoc(); var logicTypeIdentifiers = new ArrayList<Identifier>(); .)
   = LOGIC
     SYM_BRACK_OPEN
-    identifier<out Identifier id1> [ identifier<out Identifier id2> ]
+    identifier<out Identifier id>       (. logicTypeIdentifiers.add(id); .)
+    {
+      identifier<out id>                (. logicTypeIdentifiers.add(id); .)
+    }
     SYM_BRACK_CLOSE
-    identifier<out Identifier id> (. def = new LogicDefinition(id, start.join(lastTokenLoc())); .)
+    identifier<out id>                  (. def = new LogicDefinition(id, logicTypeIdentifiers, start.join(lastTokenLoc())); .)
   .
 
   resourceReference<out ResourceReferenceExression expr>   (. var start = nextTokenLoc(); .)

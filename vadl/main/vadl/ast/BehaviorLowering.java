@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -1205,6 +1205,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
                     requireNonNull(
                         (vadl.ast.Definition) ((ResourceReferenceExression) arg).resource.target()))
                 .get();
+
+            if (viamArg instanceof Counter counterArg) {
+              viamArg = counterArg.registerTensor();
+            }
+
             switch (viamArg) {
               case Resource res -> call.add(res);
               case Logic logic -> call.add(logic);
