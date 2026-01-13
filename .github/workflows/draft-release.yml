@@ -109,7 +109,7 @@ jobs:
   # Note that this doesn't upload it to the draft release.
   build-and-upload-jlink:
     needs: update-draft-release
-    runs-on: self-hosted
+    runs-on: self-hosted-x64 # container feature is not supported on self-hosted arm64
     container:
       image: ghcr.io/openvadl/java-runtime-builder
       options: --user 998 # run as a github-runner user, otherwise it will create things as root
