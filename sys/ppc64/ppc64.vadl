@@ -818,7 +818,8 @@ instruction set architecture PPC64SFS = {
 
   // instructions: sc, scv
   model SCFormSysCallInstr (x : AsmExt, ex : CallEx) : IsaDefs = {
-    instruction AsId($x.asm) : SCForm = raise $ex
+    instruction AsId($x.asm) : SCForm =
+      raise $ex
     encoding AsId($x.asm) = {opcd = 0b010001, rsv1 = 0b00000'00000'0000, rsv2 = 0b000, extopcd = $x.ext}
     assembly AsId($x.asm) = ($x.asm, " ", decimal(lev))
   }
@@ -845,13 +846,13 @@ instruction set architecture PPC64SFS = {
   }
 
   // instructions: cbcdtd, cdtbcd
-  model XFormBinCodedDecInstr (x : AsmExt, dec : Bool) : IsaDefs = {
+  model XFormBinCodedDecInstr (x : AsmExt, dpdsrc : Bool) : IsaDefs = {
     instruction AsId($x.asm) : XFormA =
       X(ra) := match : Ex
-               ( $dec = true => (0 as Byte    , dpdtobcd(X(rs)(51..42)), dpdtobcd(X(rs)(41..32)),
-                                 0 as Byte    , dpdtobcd(X(rs)(19..10)), dpdtobcd(X(rs)( 9.. 0)))
-               ; _           => (0 as Bits<12>, bcdtodpd(X(rs)(55..44)), bcdtodpd(X(rs)(43..32)),
-                                 0 as Bits<12>, bcdtodpd(X(rs)(23..12)), bcdtodpd(X(rs)(11.. 0)))
+               ( $dpdsrc = true => (0 as Byte    , dpdtobcd(X(rs)(51..42)), dpdtobcd(X(rs)(41..32)),
+                                    0 as Byte    , dpdtobcd(X(rs)(19..10)), dpdtobcd(X(rs)( 9.. 0)))
+               ; _              => (0 as Bits<12>, bcdtodpd(X(rs)(55..44)), bcdtodpd(X(rs)(43..32)),
+                                    0 as Bits<12>, bcdtodpd(X(rs)(23..12)), bcdtodpd(X(rs)(11.. 0)))
                )
     encoding AsId($x.asm) = {opcd = 0b011111, rb = 0b00000, extopcd = $x.ext, rc = 0b0}
     assembly AsId($x.asm) = ($x.asm, " ", decimal(ra), ",", decimal(rs))
@@ -1142,14 +1143,14 @@ instruction set architecture PPC64SFS = {
     assembly AsId($x.asm) = ($x.asm, " ", decimal(crbt), ",", decimal(crbs1), ",", decimal(crbs2))
   }
 
-  record XLFormBranchInstrRec (x : AsmExt, breg : Id, ctrcntr : Bool)
+  record XLFormBranchInstrRec (x : AsmExt, breg : Id, cntr : Bool)
 
   model XLFormBranchInstrExt (eid : Id, r : XLFormBranchInstrRec, lk : Bool) : IsaDefs = {
     instruction $eid : XLFormB =
       let lrv = PC.next in {
-        if ($r.ctrcntr as Bit) & ~bo(2) then CTR := CTR - 1
+        if ($r.cntr as Bit) & ~bo(2) then CTR := CTR - 1
         let mctr = if MSR.sf = Mode::M32 then CTR & maxU32E else CTR in
-          if (~($r.ctrcntr as Bit) | bo(2) | ((mctr != 0) ^ bo(1))) & (bo(4) | ($CRBit(crbs) = bo(3)))
+          if (~($r.cntr as Bit) | bo(2) | ((mctr != 0) ^ bo(1))) & (bo(4) | ($CRBit(crbs) = bo(3)))
           then PC := $TargetAddrReg($r.breg)
         $CS($lk; LR := lrv)
       }
@@ -1181,12 +1182,12 @@ instruction set architecture PPC64SFS = {
     assembly AsId($asm) = ($asm, " ", decimal(rs), ",", decimal(ra), ",", decimal(rb))
   }
 
-  record XOFormAddSubInstrRec (x : AsmOpExt, a : TwoArgs, enc : Encs, carry : Ex, ce : Bool, rbasm : Ex)
+  record XOFormAddSubInstrRec (x : AsmOpExt, a : TwoArgs, enc : Encs, ca : Ex, ce : Bool, rbasm : Ex)
 
   model XOFormAddSubInstrExt (eid : Id, r : XOFormAddSubInstrRec, oe : Bool, rc : Bool) : IsaDefs = {
     instruction $eid : XOForm =
-      let result32, flags32 = VADL::$r.x.op($r.a.arg1 as SWord, $r.a.arg2 as SWord, $r.carry) in
-        let result64, flags64 = VADL::$r.x.op($r.a.arg1 as SDWord, $r.a.arg2 as SDWord, $r.carry) in {
+      let result32, flags32 = VADL::$r.x.op($r.a.arg1 as SWord, $r.a.arg2 as SWord, $r.ca) in
+        let result64, flags64 = VADL::$r.x.op($r.a.arg1 as SDWord, $r.a.arg2 as SDWord, $r.ca) in {
           X(rs) := result64
           $SetXERAndCRWithFlags($oe; $r.ce; $rc)
         }
@@ -1202,18 +1203,18 @@ instruction set architecture PPC64SFS = {
     $XOFormAddSubInstrExt(AsId($r.x.asm, "O_"); $r; true ; true )
   }
 
-  record XOFormDivInstrRec (x : AsmOpExt, a : TwoArgs, type : Id, exc : Ex, res0 : Ex)
+  record XOFormDivInstrRec (x : AsmOpExt, a : TwoArgs, type : Id, udf : Ex, ures : Ex, zres : Ex)
 
   model XOFormDivInstrExt (eid : Id, r : XOFormDivInstrRec, oe : Bool, rc : Bool) : IsaDefs = {
     instruction $eid : XOForm =
       if XW(rb) != 0
       then let res, flags = VADL::$r.x.op($r.a.arg1, $r.a.arg2) in
-        let exc = $r.exc in
-          let result = if exc then 0 else (res as Word) as $r.type in {
+        let udf = $r.udf in
+          let result = if udf then $r.ures else res as Word as $r.type in {
             X(rs) := result
-            $SetXERAndCRWithOV($oe; false; $rc; exc | flags.overflow)
+            $SetXERAndCRWithOV($oe; false; $rc; udf | flags.overflow)
           }
-      else let result = $r.res0 as UDWord in {
+      else let result = $r.zres as UDWord in {
         X(rs) := result
         $SetXERAndCRWithOV($oe; false; $rc; true)
       }
@@ -1236,7 +1237,7 @@ instruction set architecture PPC64SFS = {
       let prod = VADL::$r.x.op(XW(ra), XW(rb)) in
         let result = $r.res as UDWord in {
           X(rs) := result
-          $SetXERAndCRWithOV($oe; false; $rc; prod  != (prod as SWord) as SDWord)
+          $SetXERAndCRWithOV($oe; false; $rc; prod != (prod as SWord) as SDWord)
         }
     encoding $eid = {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc}
     assembly $eid = ($r.x.asm, $rStr($rc), " ", decimal(rs), ",", decimal(ra), ",", decimal(rb)) // oStr not necessary
@@ -1314,13 +1315,17 @@ instruction set architecture PPC64SFS = {
   $XOFormMulInstr((("MULHWU"; umull; 0b0000'01011); prod(63..32)); false)
 
   $XOFormDivInstr((("DIVW"  ; sdivs; 0b1111'01011); (XW(ra)                ; XW(rb)          ); UDWord;
-                  XW(ra) = 0x8000'0000 & XW(rb) = maxU32                                           ; XW(ra)))
+                  XW(ra) = 0x8000'0000 & XW(rb) = maxU32                                           ;
+                  XW(ra) as UDWord; XW(ra)))
   $XOFormDivInstr((("DIVWU" ; udivs; 0b1110'01011); (XW(ra)                ; XW(rb)          ); UDWord;
-                  false                                                                            ; XW(ra)))
+                  false                                                                            ;
+                  XW(ra) as UDWord; XW(ra)))
   $XOFormDivInstr((("DIVWE" ; sdivs; 0b1101'01011); (XW(ra) as SDWord << 32; XW(rb) as SDWord); SDWord;
-                  (XW(ra) = 0x8000'0000 & XW(rb) = 0xFFFF'FFFF) | (res != (res as SWord) as SDWord); 0     ))
+                  (XW(ra) = 0x8000'0000 & XW(rb) = 0xFFFF'FFFF) | (res != (res as SWord) as SDWord);
+                  0               ; 0     ))
   $XOFormDivInstr((("DIVWEU"; udivs; 0b1100'01011); (XW(ra) as UDWord << 32; XW(rb) as UDWord); UDWord;
-                  VADL::ugeq(res as UDWord, maxU32E)                                               ; 0     ))
+                  VADL::ugeq(res as UDWord, maxU32E)                                               ;
+                  0               ; 0     ))
 
   $XOFormNegateInstr("NEG")
 
