@@ -10,11 +10,11 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   constant NumElementsW = VL >> 5         // number of single sized elements in a vector register
   constant NumElementsD = VL >> 6         // number of double sized elements in a vector register
 
-  constant PTrueB = 0b1111'1111'1111'1111 // predicate true and false values for different vector sizes
-  constant PTrueH = 0b0101'0101'0101'0101 // 
-  constant PTrueS = 0b0001'0001'0001'0001 // 
-  constant PTrueD = 0b0000'0001'0000'0001 // 
-  constant PFalse = 0b0000'0000'0000'0000 // 
+  constant PTrueB = 0b1111'1111'1111'1111 as BitsP // predicate true and false values for different vector sizes
+  constant PTrueH = 0b0101'0101'0101'0101 as BitsP // 
+  constant PTrueS = 0b0001'0001'0001'0001 as BitsP // 
+  constant PTrueD = 0b0000'0001'0000'0001 as BitsP // 
+  constant PFalse = 0b0000'0000'0000'0000 as BitsP // 
 
   constant LastActiveB = NumElementsB - 1 // predicate bit position of the last element 
   constant LastActiveH = NumElementsB - 2 // predicate bit position of the last element 
@@ -229,7 +229,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     , imm4     [19..16]        : Bits4     // unsigned multiplier
     , opc      [15..10]        : Bits6     // opcode second part
     , pattern  [9..5]          : Bits5     // pattern
-    , dn       [4..0]          : Index     // source and destination register
+    , dn       [4..0]          : Index     // source and destination predicate register
     , imm      = imm4 as BitsX + 1
     , countB   = DecodePredCount(pattern, ElSize::SizeB)
     , countH   = DecodePredCount(pattern, ElSize::SizeH)
@@ -249,6 +249,46 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     $SVEIncrementBase (SVEINCH; "inch"; countH; SizeH)
     $SVEIncrementBase (SVEINCW; "incw"; countW; SizeW)
     $SVEIncrementBase (SVEINCD; "incd"; countD; SizeD)
+    }
+
+// predicate true models *******************************************************
+
+  format SVEPTrueFormat: Instr =           // SVE predicate true format
+    { op       [31..24,21..17] : Bits13    // opcode
+    , size     [23..22]        : Bits2     // elements size (ElSize)
+    , setfl    [16]            : Bits1     // set flags if (setfl = 1)
+    , opc      [15..10,4]      : Bits7     // opcode second part
+    , pattern  [9..5]          : Bits5     // pattern
+    , pd       [3..0]          : IndexP    // destination predicate register
+    }
+
+  model SVEPTrueInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
+    instruction $i.id: SVEPTrueFormat =
+        P(pd) := $PtrueBHSD ($elSize)
+    encoding $i.id = { op = 0b0010'0101'0110'0, opc = $i.opcode, size = ElSize::$elSize, setfl = 0, pattern = 0b1'1111 }
+    assembly $i.id = ($i.mnemo, ' ', register(pd), $elStr)
+    }
+
+// count models ****************************************************************
+
+  format SVECountFormat: Instr =           // SVE count predicate format
+    { op       [31..24,21..19] : Bits11    // opcode
+    , size     [23..22]        : Bits2     // elements size (ElSize)
+    , opc      [18..14,9]      : Bits6     // opcode second part
+    , pg       [13..10]        : IndexP    // 2nd source predicate register
+    , pn       [8..5]          : IndexP    // 1st source predicate register
+    , rd       [4..0]          : Index     // destination X register
+    }
+
+  model SVECountInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
+    instruction $i.id: SVECountFormat =
+      let msk = $PtrueBHSD ($elSize) in
+      let op1 = P(pg) in
+      let op2 = P(pn) in
+      let and = msk & op1 & op2 in
+        S(rd) := VADL::cob(and)
+    encoding $i.id = { op = 0b0010'0101'100, opc = $i.opcode, size = ElSize::$elSize }
+    assembly $i.id = ($i.mnemo, ' ', XSizeSP(rd), ', ', register(pg), ', ', register(pn), $elStr)
     }
 
 // SVE while models ************************************************************
@@ -321,13 +361,13 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     let right = $WXR($regSize)(rm) in
     let pred  = 
       if right = $w.max
-        then $w.ptrue as Bits<PL>
+        then $w.ptrue
         else
         if VADL::$w.notcmp(left, right)
-        then PFalse as Bits<PL>
+        then PFalse
         else let diff = (right - left) + 1 in
           if diff >= $w.elCount
-          then $w.ptrue as Bits<PL>
+          then $w.ptrue
           else let shift = ($w.elCount - diff as IndexE) * (1 + ElSize::$w.elSize) in
             $w.ptrue as Bits<PL> << shift
       in { $SetFlagsSVE($LastActiveBHSD($w.elSize)) }
@@ -341,10 +381,10 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
       //  then $w.ptrue
       //  else
         if VADL::$w.notcmp(left, right)
-        then PFalse as Bits<PL>
+        then PFalse
         else let diff = (right - left) in
           if diff >= $w.elCount
-          then $w.ptrue as Bits<PL>
+          then $w.ptrue
           else let shift = ($w.elCount - diff as IndexE) * (1 + ElSize::$w.elSize) in
             $w.ptrue as Bits<PL> << shift
       in { $SetFlagsSVE($LastActiveBHSD($w.elSize)) }
@@ -355,13 +395,13 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     let right = $WXR($regSize)(rm) in
     let pred  = 
       if right = $w.max
-        then $w.ptrue as Bits<PL>
+        then $w.ptrue
         else
         if VADL::$w.notcmp(left, right)
-        then PFalse as Bits<PL>
+        then PFalse
         else let diff = (left - right) + 1 in
           if diff >= $w.elCount
-          then $w.ptrue as Bits<PL>
+          then $w.ptrue
           else let shift = ($w.elCount - diff as IndexE) * (1 + ElSize::$w.elSize) in
             $w.ptrue as Bits<PL> >> shift
       in { $SetFlagsSVE($LastActiveBHSD($w.elSize)) }
@@ -375,10 +415,10 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
       //  then $w.ptrue
       //  else
         if VADL::$w.notcmp(left, right)
-        then PFalse as Bits<PL>
+        then PFalse
         else let diff = (left - right) in
           if diff >= $w.elCount
-          then $w.ptrue as Bits<PL>
+          then $w.ptrue
           else let shift = ($w.elCount - diff as IndexE) * (1 + ElSize::$w.elSize) in
             $w.ptrue as Bits<PL> >> shift
       in { $SetFlagsSVE($LastActiveBHSD($w.elSize)) }
@@ -602,6 +642,8 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   $SVEAddVLInstr    (                            (SVEADDVL      ; "addvl" ; 0b0'1010                    ))
   $SVEIncrInstr     (                            (SVEINC        ; "inc"   ; 0b111'000        ; inc      ))
 
+  $InstrBHSD        (SVEPTrueInstr             ; (SVEPTRUE      ; "ptrue" ; 0b1110'000       ; unused   ))
+  $InstrBHSD        (SVECountInstr             ; (SVECOUNTP     ; "cntp"  ; 0b0001'00        ; unused   ))
   $InstrBHSD        (SVEWhileXWInstr           ; (SVEWHILE      ; "while" ; 0b000            ; unused   ))
 //
 //  $InstrMemLD16     (SVELoadScalarScalarInstr  ; (SVEsclLD1     ; "ld1"   ;  0b010           ; unused   ))
