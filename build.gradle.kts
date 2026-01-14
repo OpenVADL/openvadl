@@ -69,6 +69,10 @@ subprojects {
 
     val errorProneVersion by extra("2.43.0")
 
+    repositories {
+        mavenCentral()
+    }
+
     java {
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(25))
@@ -93,6 +97,7 @@ subprojects {
         add("errorprone", "com.google.errorprone:error_prone_core:$errorProneVersion")
         add("compileOnly", "com.google.errorprone:error_prone_annotations:$errorProneVersion")
         add("compileOnly", "org.jetbrains:annotations:24.0.1")
+        add("implementation", "ch.qos.logback:logback-classic:1.5.24")
     }
 
 

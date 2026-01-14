@@ -2,6 +2,7 @@ plugins {
     application
     id("io.github.rascmatt.z3") version "1.0.2"
     id("org.graalvm.buildtools.native") version "0.11.2"
+    id("org.beryx.jlink") version "3.2.0"
 }
 
 group = "vadl"
@@ -13,6 +14,7 @@ repositories {
 
 dependencies {
     implementation(project(":vadl"))
+    implementation(project(":vadl-lsp"))
     implementation("info.picocli:picocli:4.7.6")
     implementation("org.apache.commons:commons-compress:1.27.1")
     annotationProcessor("info.picocli:picocli-codegen:4.7.6")
@@ -56,4 +58,58 @@ tasks.startScripts {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+jlink {
+    // We use --strip-java-debug-attributes instead of --strip-debug, as --strip-debug also
+    // applies native debug symbol stripping, which is not possible for cross-builds.
+    // JDK-8219257 and JDK-8219207
+    // Further, we are using --compress 1 instead of 2, as the distributed package is already zip, while the
+    // zip compress flag (2) adds runtime overhead.
+    addOptions("--strip-java-debug-attributes", "--compress", "1", "--no-header-files", "--no-man-pages")
+    // Add logback modules for SLF4J logging, java.naming required by logback, and java.sql required by Thymeleaf
+    addOptions("--add-modules", "ch.qos.logback.classic,ch.qos.logback.core,java.naming,java.sql")
+
+    // Ensure picocli and commons-compress modular JARs are available during module-info compilation
+    addExtraDependencies("picocli", "commons-compress")
+
+    forceMerge(".*")
+
+    launcher {
+        name = "openvadl"
+        jvmArgs = listOf("-Dslf4j.internal.verbosity=WARN")
+    }
+
+    mergedModule {
+        excludeProvides(mapOf("service" to "jakarta.servlet.ServletContainerInitializer"))
+        requires("java.sql")
+    }
+
+    moduleName.set("openvadl")
+    mergedModuleName.set("openvadl")
+    mainClass.set("vadl.cli.Main")
+
+    // Target platforms to build the language server for.
+    // If the gradle property `-PjlinkAllPlatforms` is passed, we run jlink for all
+    // target platforms. In this case we assume that this is executed
+    // within an ghcr.io/openvadl/java-runtime-builder docker container.
+    // Otherwise, only the host platform is build.
+    if (project.hasProperty("jlinkAllPlatforms")) {
+        targetPlatform("linux-x64", "/jdks/jdk-linux-x64")
+        targetPlatform("linux-arm64", "/jdks/jdk-linux-arm64")
+        targetPlatform("macos-arm64", "/jdks/jdk-macos-arm64")
+        targetPlatform("win-x64", "/jdks/jdk-win-x64")
+        targetPlatform("win-arm64", "/jdks/jdk-win-arm64")
+    }
+}
+
+// The plugin only merges dependency jars, not the main application jar.
+// Manually copy it into mergedjars to include it in the merged module.
+tasks.named("prepareMergedJarsDir") {
+    doLast {
+        copy {
+            from(zipTree(tasks.jar.get().archiveFile))
+            into("${layout.buildDirectory.get()}/jlinkbase/mergedjars")
+        }
+    }
 }

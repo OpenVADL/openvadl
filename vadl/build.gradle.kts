@@ -34,7 +34,6 @@ dependencies {
     compileOnly(project(":java-annotations"))
     implementation("org.thymeleaf:thymeleaf:3.1.2.RELEASE")
     implementation("com.google.guava:guava:33.2.1-jre")
-    implementation("ch.qos.logback:logback-classic:1.5.13")
     implementation("commons-io:commons-io:2.16.1")
     implementation("org.apache.commons:commons-lang3:3.18.0")
     implementation("org.apache.commons:commons-text:1.10.0")

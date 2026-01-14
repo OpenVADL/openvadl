@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -31,34 +31,33 @@ import org.slf4j.LoggerFactory;
 /**
  * Entrypoint to the OpenVADL language server.
  */
-public class Main {
-  private static final Logger log = LoggerFactory.getLogger(Main.class);
-  
+public class LspEntryPoint {
+  private static final Logger log = LoggerFactory.getLogger(LspEntryPoint.class);
+
   /**
    * Runs a language server on a specific port.
    *
-   * @param args (Optional) port on which to listen.
+   * @param port Port on which to listen to.
    */
-  public static void main(String[] args) {
-    int port = 10999;
-    if (args.length >= 1) {
-      port = Integer.parseInt(args[0]);
-    }
-    
+  public static int start(
+      int port
+  ) {
+    var exitCode = 0;
     try (ServerSocket serverSocket = new ServerSocket(port)) {
-      log.info("Started openVADL language server on port {}", serverSocket.getLocalPort());
-      
+      log.info("Started OpenVADL language server on port {}", serverSocket.getLocalPort());
+
       Socket socket = serverSocket.accept();
       serveClient(socket);
-      
+
     } catch (IOException | InterruptedException | ExecutionException e) {
       log.error(e.toString());
+      exitCode = 1;
     }
-    
+
     log.info("Server stopped.");
-    System.exit(0);
+    return exitCode;
   }
-  
+
   /**
    * Provides the actual language server functionality to a single client.
    *
@@ -70,9 +69,9 @@ public class Main {
       ExecutionException {
     log.info(
         "Connection established with {}:{}", socket.getInetAddress().getHostAddress(),
-         socket.getPort()
+        socket.getPort()
     );
-    
+
     // According to https://github.com/eclipse-lsp4j/lsp4j/blob/main/documentation/README.md
     VadlLanguageServer server = new VadlLanguageServer();
     Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(
@@ -82,7 +81,7 @@ public class Main {
     );
     server.connect(launcher.getRemoteProxy());
     Future<Void> future = launcher.startListening();
-    
+
     server.setListeningFuture(future);
     try {
       future.get(); // Wait for listener to complete

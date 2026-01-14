@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,8 @@ import picocli.CommandLine.Command;
     name = "OpenVADL",
     description = "The OpenVadl CLI tool.",
     versionProvider = VersionProvider.class,
-    subcommands = {CheckCommand.class, IssCommand.class, LcbCommand.class, RtlCommand.class})
+    subcommands = {CheckCommand.class, IssCommand.class, LcbCommand.class, RtlCommand.class,
+        LspCommand.class})
 public class Main implements Runnable {
   @Override
   public void run() {
