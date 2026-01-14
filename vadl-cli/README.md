@@ -8,6 +8,27 @@ With `./gradlew run --args="--help"` you can directly run the CLI without an add
 
 An execution-ready build of the CLI can be obtained via `./gradlew installDist`.
 The distribution will be available at `vadl-cli/build/install/openvadl/bin/openvadl`.
+To run this distribution, the user must have Java 25 installed with the Java Virtual Machine (JVM).
+
+## Creating a JVM Runtime Image
+
+With `./gradlew jlink`, a runtime image can be created, that allows users to run the CLI without a JVM installation.
+This creates a platform-specific runtime in `vadl-cli/build/image/`.
+
+### Multi-Platform Build
+
+To build distributable images for all supported platforms (Linux x64/ARM64, macOS x64/ARM64, Windows x64/ARM64), use the
+`ghcr.io/openvadl/java-runtime-builder` Docker container:
+
+```bash
+docker run --rm -v $(pwd):/src/open-vadl ghcr.io/openvadl/java-runtime-builder \
+  ./gradlew :vadl-cli:jlink -PbuildAllPlatforms
+```
+
+The `-PbuildAllPlatforms` property enables cross-platform compilation. Platform-specific images will be generated in
+`vadl-cli/build/image/` with subdirectories for each platform.
+
+See [docker/dist/jlink/README.md](../docker/dist/jlink/README.md) for more details on the build container.
 
 ## Creating a GraalVM native image
 
