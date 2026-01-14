@@ -43,13 +43,6 @@ public class RtlConfiguration extends GeneralConfiguration {
   private String projectName = null;
 
   /**
-   * Enum to select the dummy MiA to instantiate.
-   */
-  public enum DummyMia { single, three, five }
-
-  private DummyMia dummyMia = DummyMia.five;
-
-  /**
    * Enum to configure the external memory interface.
    *
    * <p>Async memory ignores the valid input and assumes reads/writes to always complete in
@@ -132,14 +125,6 @@ public class RtlConfiguration extends GeneralConfiguration {
 
   public String getProjectName() {
     return Objects.requireNonNull(projectName);
-  }
-
-  public DummyMia getDummyMia() {
-    return dummyMia;
-  }
-
-  public void setDummyMia(DummyMia dummyMia) {
-    this.dummyMia = dummyMia;
   }
 
   public Memory getMemory() {

@@ -40,6 +40,10 @@ public class StageEffectNode extends SideEffectNode {
     this.miaCall = miaCall;
   }
 
+  public MiaBuiltInCall miaCall() {
+    return miaCall;
+  }
+
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);

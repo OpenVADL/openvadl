@@ -35,6 +35,7 @@ import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
 import vadl.rtl.ipg.nodes.RtlWriteRegTensorNode;
 import vadl.rtl.map.MiaMapping;
 import vadl.rtl.utils.SubgraphUtils;
+import vadl.types.MicroArchitectureType;
 import vadl.utils.GraphUtils;
 import vadl.utils.Pair;
 import vadl.viam.RegisterTensor;
@@ -43,12 +44,11 @@ import vadl.viam.Stage;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
+import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SideEffectNode;
-import vadl.viam.graph.dependency.WriteRegTensorNode;
-import vadl.viam.graph.dependency.WriteStageOutputNode;
 
 /**
  * Inline nodes from the instruction progress graph into the MiA description based on the
@@ -107,7 +107,7 @@ public class MiaMappingInlinePass extends Pass {
           .collect(Collectors.toCollection(LinkedHashSet::new));
 
       // copy subgraph to stage behavior
-      // add stage outputs to pass data between stages
+      // add stage output registers to pass data between stages
       var copyMap = SubgraphUtils.copy(stage.behavior(), stageNodes,
           (originalFrom, originalTo, copyFrom) -> {
             if (originalTo instanceof ExpressionNode originalExpr) {
@@ -146,18 +146,11 @@ public class MiaMappingInlinePass extends Pass {
         }
       }
 
-      // delete stage outputs of mapping nodes
-      for (MiaMapping.NodeContext context : stageContexts) {
-        var node = context.node();
-        for (Node u : node.usages().toList()) {
-          if (u instanceof WriteStageOutputNode wr) {
-            wr.safeDelete(true);
-            if (wr.stageOutput() != null) {
-              context.stage().removeOutput(wr.stageOutput());
-            }
-          }
-        }
-      }
+      // delete control flow and mia stage outputs
+      // the mia stage outputs were replaced by stage registers
+      // this also removes all mapping nodes that were replaced by the inlined nodes
+      stage.behavior().getNodes(StartNode.class).forEach(Node::safeDelete);
+      stage.outputs().removeIf(out -> out.type() instanceof MicroArchitectureType);
 
       // verify stage
       stage.verify();

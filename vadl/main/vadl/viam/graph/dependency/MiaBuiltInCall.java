@@ -23,6 +23,7 @@ import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Logic;
 import vadl.viam.Resource;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 
 /**
@@ -53,6 +54,35 @@ public class MiaBuiltInCall extends BuiltInCall {
     this.resources = new ArrayList<>();
     this.logic = new ArrayList<>();
     ensure(BuiltInTable.MIA_BUILTINS.contains(builtIn), "Not a micro architecture builtin");
+  }
+
+  /**
+   * Create MiA builtin call.
+   *
+   * @param builtIn builtin type, must be in {@link BuiltInTable#MIA_BUILTINS}
+   * @param args arguments
+   * @param type result type
+   * @param resources resources referenced
+   * @param logic logic elements referenced
+   */
+  public MiaBuiltInCall(BuiltInTable.BuiltIn builtIn, NodeList<ExpressionNode> args, Type type,
+                        List<Resource> resources, List<Logic> logic) {
+    super(builtIn, args, type);
+    this.resources = new ArrayList<>(resources);
+    this.logic = new ArrayList<>(logic);
+    ensure(BuiltInTable.MIA_BUILTINS.contains(builtIn), "Not a micro architecture builtin");
+  }
+
+  @Override
+  public MiaBuiltInCall copy() {
+    return new MiaBuiltInCall(builtIn,
+        new NodeList<>(this.arguments().stream().map(ExpressionNode::copy).toList()),
+        this.type(), resources, logic);
+  }
+
+  @Override
+  public MiaBuiltInCall shallowCopy() {
+    return new MiaBuiltInCall(builtIn, args, type(), resources, logic);
   }
 
   @Override

@@ -151,7 +151,6 @@ import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
-import vadl.viam.passes.dummyPasses.DummyMiaPass;
 import vadl.viam.passes.functionInliner.ArtificialResInlinerPass;
 import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
@@ -651,8 +650,6 @@ public class PassOrders {
 
     order.add(new RtlConfigurationPass(config));
 
-    // TODO: Remove once frontend creates it
-    order.add(new DummyMiaPass(config));
     order.add(new StageOrderingPass(config));
 
     order.add(new InstructionProgressGraphCreationPass(config))
@@ -662,6 +659,10 @@ public class PassOrders {
         .add(new InstructionProgressGraphLowerPass(config))
         .add(new InstructionProgressGraphNamePass(config));
 
+    addHtmlDump(order, config,
+        "mia-map",
+        "MiA after mapping instruction behavior");
+
     order.add(new HazardAnalysisPass(config))
         .add(new DebugOutputPass(config));
 
@@ -670,8 +671,8 @@ public class PassOrders {
         .add(new ControlLogicPass(config));
 
     addHtmlDump(order, config,
-        "mia",
-        "MiA after mapping and inlining instruction behavior");
+        "mia-inline",
+        "MiA after inlining instruction behavior");
 
     if (config.getDecoderOptions().getGenerator() != RTL_TABLE) {
       // Prepares and constructs the VDT, which is not used by the rtl-table strategy
