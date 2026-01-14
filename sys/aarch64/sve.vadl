@@ -2,7 +2,7 @@ import aarch64::AArch64Base
 
 instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
-  constant VL           = 128             // vector length, number of bits in a vector register
+  constant VL           =  64             // vector length, number of bits in a vector register
   constant PL           = VL >> 3         // predicate length, number of elements in a predicate register
   constant NumElementsB = VL >> 3         // number of byte   sized elements in a vector register
   constant NumElementsH = VL >> 4         // number of half   sized elements in a vector register
@@ -40,7 +40,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   register   P : IndexP -> BitsP          // predicate register file
   register FFR :           BitsP          // first fault register, predicate register
                                           // which is set for first memory access operation
-  register   Z : Index  -> BitsZ          // vector    register file
+  register   Z : Index  -> BitsZ          //        vector register file
   alias register ZB : BitsZB<NumZ> = Z    // byte   vector register file
   alias register ZH : BitsZH<NumZ> = Z    // half   vector register file
   alias register ZS : BitsZS<NumZ> = Z    // single vector register file
@@ -321,13 +321,13 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     let right = $WXR($regSize)(rm) in
     let pred  = 
       if right = $w.max
-        then $w.ptrue
+        then $w.ptrue as Bits<PL>
         else
         if VADL::$w.notcmp(left, right)
-        then PFalse
+        then PFalse as Bits<PL>
         else let diff = (right - left) + 1 in
           if diff >= $w.elCount
-          then $w.ptrue
+          then $w.ptrue as Bits<PL>
           else let shift = ($w.elCount - diff as IndexE) * (1 + ElSize::$w.elSize) in
             $w.ptrue as Bits<PL> << shift
       in { $SetFlagsSVE($LastActiveBHSD($w.elSize)) }
@@ -341,10 +341,10 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
       //  then $w.ptrue
       //  else
         if VADL::$w.notcmp(left, right)
-        then PFalse
+        then PFalse as Bits<PL>
         else let diff = (right - left) in
           if diff >= $w.elCount
-          then $w.ptrue
+          then $w.ptrue as Bits<PL>
           else let shift = ($w.elCount - diff as IndexE) * (1 + ElSize::$w.elSize) in
             $w.ptrue as Bits<PL> << shift
       in { $SetFlagsSVE($LastActiveBHSD($w.elSize)) }
@@ -355,13 +355,13 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     let right = $WXR($regSize)(rm) in
     let pred  = 
       if right = $w.max
-        then $w.ptrue
+        then $w.ptrue as Bits<PL>
         else
         if VADL::$w.notcmp(left, right)
-        then PFalse
+        then PFalse as Bits<PL>
         else let diff = (left - right) + 1 in
           if diff >= $w.elCount
-          then $w.ptrue
+          then $w.ptrue as Bits<PL>
           else let shift = ($w.elCount - diff as IndexE) * (1 + ElSize::$w.elSize) in
             $w.ptrue as Bits<PL> >> shift
       in { $SetFlagsSVE($LastActiveBHSD($w.elSize)) }
@@ -375,10 +375,10 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
       //  then $w.ptrue
       //  else
         if VADL::$w.notcmp(left, right)
-        then PFalse
+        then PFalse as Bits<PL>
         else let diff = (left - right) in
           if diff >= $w.elCount
-          then $w.ptrue
+          then $w.ptrue as Bits<PL>
           else let shift = ($w.elCount - diff as IndexE) * (1 + ElSize::$w.elSize) in
             $w.ptrue as Bits<PL> >> shift
       in { $SetFlagsSVE($LastActiveBHSD($w.elSize)) }
@@ -583,30 +583,30 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
 // common sve and sme instructions *********************************************
 
-  $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredADD    ; "add"   ; 0b0000'0000      ; add      ))
-  $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredSUB    ; "sub"   ; 0b0000'1000      ; sub      ))
-  $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredMUL    ; "mul"   ; 0b1000'0000      ; mul      ))
-  $InstrSD          (SVEArithmeticPredInstr    ; (SVEpredSDIV   ; "sdiv"  ; 0b1010'0000      ; sdiv     ))
-  $InstrSD          (SVEArithmeticPredInstr    ; (SVEpredUDIV   ; "udiv"  ; 0b1010'1000      ; udiv     ))
-
-  $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprADD    ; "add"   ; 0b000'000        ; add      ))
-  $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprSUB    ; "sub"   ; 0b000'001        ; sub      ))
-  $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprMUL    ; "mul"   ; 0b011'000        ; mul      ))
-
-  $InstrBHSD        (SVEAddExtReductionInstr   ; (SVEfoldSADD   ; "saddv" ; 0b0'0000'0001    ; SIntX    ))
-  $InstrBHSD        (SVEAddExtReductionInstr   ; (SVEfoldUADD   ; "uaddv" ; 0b0'0000'1001    ; UIntX    ))
-  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldAND    ; "andv"  ; 0b0'1101'0001    ; and      ))
-  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldOR     ; "orv"   ; 0b0'1100'0001    ; or       ))
-  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldXOR    ; "eorv"  ; 0b0'1100'1001    ; xor      ))
-
+//  $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredADD    ; "add"   ; 0b0000'0000      ; add      ))
+//  $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredSUB    ; "sub"   ; 0b0000'1000      ; sub      ))
+//  $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredMUL    ; "mul"   ; 0b1000'0000      ; mul      ))
+//  $InstrSD          (SVEArithmeticPredInstr    ; (SVEpredSDIV   ; "sdiv"  ; 0b1010'0000      ; sdiv     ))
+//  $InstrSD          (SVEArithmeticPredInstr    ; (SVEpredUDIV   ; "udiv"  ; 0b1010'1000      ; udiv     ))
+//
+//  $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprADD    ; "add"   ; 0b000'000        ; add      ))
+//  $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprSUB    ; "sub"   ; 0b000'001        ; sub      ))
+//  $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprMUL    ; "mul"   ; 0b011'000        ; mul      ))
+//
+//  $InstrBHSD        (SVEAddExtReductionInstr   ; (SVEfoldSADD   ; "saddv" ; 0b0'0000'0001    ; SIntX    ))
+//  $InstrBHSD        (SVEAddExtReductionInstr   ; (SVEfoldUADD   ; "uaddv" ; 0b0'0000'1001    ; UIntX    ))
+//  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldAND    ; "andv"  ; 0b0'1101'0001    ; and      ))
+//  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldOR     ; "orv"   ; 0b0'1100'0001    ; or       ))
+//  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldXOR    ; "eorv"  ; 0b0'1100'1001    ; xor      ))
+//
   $SVEAddVLInstr    (                            (SVEADDVL      ; "addvl" ; 0b0'1010                    ))
   $SVEIncrInstr     (                            (SVEINC        ; "inc"   ; 0b111'000        ; inc      ))
 
   $InstrBHSD        (SVEWhileXWInstr           ; (SVEWHILE      ; "while" ; 0b000            ; unused   ))
-
-  $InstrMemLD16     (SVELoadScalarScalarInstr  ; (SVEsclLD1     ; "ld1"   ;  0b010           ; unused   ))
-  $InstrMemST10     (SVEStoreScalarScalarInstr ; (SVEsclST1     ; "st1"   ;  0b010           ; unused   ))
-  $InstrMemLD16     (SVELoadScalarImmInstr     ; (SVEimmLD1     ; "ld1"   ; 0b0101           ; unused   ))
-  $InstrMemST10     (SVEStoreScalarImmInstr    ; (SVEimmST1     ; "st1"   ; 0b0111           ; unused   ))
+//
+//  $InstrMemLD16     (SVELoadScalarScalarInstr  ; (SVEsclLD1     ; "ld1"   ;  0b010           ; unused   ))
+//  $InstrMemST10     (SVEStoreScalarScalarInstr ; (SVEsclST1     ; "st1"   ;  0b010           ; unused   ))
+//  $InstrMemLD16     (SVELoadScalarImmInstr     ; (SVEimmLD1     ; "ld1"   ; 0b0101           ; unused   ))
+//  $InstrMemST10     (SVEStoreScalarImmInstr    ; (SVEimmST1     ; "st1"   ; 0b0111           ; unused   ))
 
 }
