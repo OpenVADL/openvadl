@@ -77,7 +77,6 @@ jlink {
 
     launcher {
         name = "openvadl"
-        jvmArgs = listOf("-Dslf4j.internal.verbosity=WARN")
     }
 
     mergedModule {
