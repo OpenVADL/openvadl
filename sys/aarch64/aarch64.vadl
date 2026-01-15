@@ -1637,9 +1637,16 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     , M       [3..0]                         // exception level and selected stack pointer
     }
 
+  format CPACRFormat: BitsX =                // CPACR (Architectural Feature Access Control Register) format
+    { Res0    [63..29,27..22,19..18,15..0]   // reserved
+    , tta     [28]                           // trap access to trace registers, not trapped = 0, trapped = 1
+    , fpen    [21..20]                       // floating point enable, no instruction trapped when 0b11
+    , zen     [17..16]                       // Z (SVE) enable, no instruction trapped when 0b11
+    }
+  
   enumeration SysRegEncode: Bits16 =         // system register encoding
     { NZCV      = 0b11'011'0100'0010'000     // condition flag register
-    , CurrentEL = 0b11'000'0100'0010'010     // Current Exception Level register
+    , CurrentEL = 0b11'000'0100'0010'010     // current exception level register
     , SPSel     = 0b11'000'0100'0010'000     // stack pointer select register
     , SP_EL0    = 0b11'000'0100'0001'000     // stack pointer register exception level 0
     , SP_EL1    = 0b11'100'0100'0001'000     // stack pointer register exception level 1
@@ -1647,6 +1654,7 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     , VBAR_EL1  = 0b11'000'1100'0000'000     // vector base address register exception level 1
     , ESR_EL1   = 0b11'000'0101'0010'000     // exception syndrome register exception level 1
     , SPSR_EL1  = 0b11'000'0100'0000'000     // saved program state register exception level 1
+    , CPACR_EL1 = 0b11'000'0001'0000'010     // architectural feature access control register exception level 1
     }
 
   register CurrentEL:Bits2                   // exception level register
@@ -1657,6 +1665,7 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
   register VBAR_EL1: Address                 // vector base address register exception level 1
   register ESR_EL1:  ExceptionSyndromeFormat // exception syndrome register exception level level 1
   register SPSR_EL1: SavedProgramStateFormat // saved program state register exception level level 1
+  register CPACR_EL1:CPACRFormat             // architectural feature access control register exception level 1
 
   model SaveProgramState (): Stats = {
     SPSR_EL1 := (SPSR_EL1(63..32), NZCV_N, NZCV_Z, NZCV_C, NZCV_V, SPSR_EL1(27..4), SPSel as Bits4 | 0b0100)
@@ -1739,6 +1748,7 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
       , SysRegEncode::ESR_EL1   => "esr_el1"
       , SysRegEncode::SPSR_EL1  => "spsr_el1"
       , SysRegEncode::VBAR_EL1  => "vbar_el1"
+      , SysRegEncode::CPACR_EL1 => "cpacr_el1"
       , _ => ("S", udec(sysreg(15..14)), "_",
                    udec(sysreg(13..11)), "_",
                    udec(sysreg(10.. 7)), "_",
@@ -1794,14 +1804,15 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
           , SysRegEncode::SPSel     => SPSel := X(rt)(0)
           , SysRegEncode::SP_EL0    => SP_EL0 := X(rt)
           , SysRegEncode::SP_EL1    => if SPSel = 0
-                                     then raise $UndefinedException ()
-                                     else let sp = X(rt) in {
-                                       SP_EL1 := sp
-                                       SP := sp
-                                       }
+                                       then raise $UndefinedException ()
+                                       else let sp = X(rt) in {
+                                         SP_EL1 := sp
+                                         SP := sp
+                                         }
           , SysRegEncode::ELR_EL1   => ELR_EL1 := X(rt)
           , SysRegEncode::VBAR_EL1  => VBAR_EL1 := X(rt)
-          , _                     => raise $UndefinedException ()
+          , SysRegEncode::CPACR_EL1 => CPACR_EL1 := X(rt)
+          , _                       => raise $UndefinedException ()
           }
     encoding $i.id = {op = $i.opcode}
     assembly $i.id = ($i.mnemo, ' ', SysRegName(sysreg), ', ', XSize(rt))

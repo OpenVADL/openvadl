@@ -6,6 +6,7 @@ instruction set architecture A64 extending AArch64SVEandSME = { }
 processor Virt implements A64 = {
 
   reset = {
+    CurrentEL := 1
     PC := 0x0
     // in upstream QEMU the ZF is set to 1 by default
     NZCV_Z := 1
