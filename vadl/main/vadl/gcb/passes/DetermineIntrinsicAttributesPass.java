@@ -42,13 +42,38 @@ import vadl.viam.passes.SnapshotInstructionBehaviorPass;
  * Compute the intrinsic attributes for an {@link Instruction}.
  */
 public class DetermineIntrinsicAttributesPass extends Pass {
+  public static String BUILTIN_PREFIX = "builtin_";
+  private final GcbConfiguration gcbConfiguration;
+
   public DetermineIntrinsicAttributesPass(GcbConfiguration gcbConfiguration) {
     super(gcbConfiguration);
+    this.gcbConfiguration = gcbConfiguration;
   }
 
   @Override
   public PassName getName() {
     return new PassName("DetermineIntrinsicAttributesPass");
+  }
+
+  /**
+   * Value type for an intrinsic.
+   */
+  public record GcbIntrinsic(String builtinName,
+                             String intrinsicName,
+                             Instruction instruction,
+                             List<InstructionBuiltinAttributesCtx.Attribute> builtinAttributes,
+                             List<InstructionIntrinsicAttributesCtx.Attribute> intrinsicAttributes
+  ) {
+
+  }
+
+  /**
+   * Output container of the pass.
+   */
+  public record Output(
+      IdentityHashMap<Instruction, List<InstructionIntrinsicAttributesCtx.Attribute>> lookup,
+      List<GcbIntrinsic> intrinsics) {
+
   }
 
   @Nullable
@@ -59,6 +84,7 @@ public class DetermineIntrinsicAttributesPass extends Pass {
     var builtins =
         (IdentityHashMap<Instruction, List<InstructionBuiltinAttributesCtx.Attribute>>)
             passResults.lastResultOf(DetermineBuiltinAttributesPass.class);
+    var intrinsics = new ArrayList<GcbIntrinsic>();
 
     IdentityHashMap<Instruction, List<InstructionIntrinsicAttributesCtx.Attribute>> map =
         new IdentityHashMap<>();
@@ -81,11 +107,21 @@ public class DetermineIntrinsicAttributesPass extends Pass {
         attributes.add(InstructionIntrinsicAttributesCtx.Attribute.Speculatable);
       }
 
+      var builtinName = BUILTIN_PREFIX + instruction.simpleName();
+      var intrinsicName =
+          "int_" + gcbConfiguration.targetName().value() + "_" + instruction.simpleName();
+
       map.put(instruction, attributes);
       instruction.attachExtension(new InstructionIntrinsicAttributesCtx(attributes));
+      intrinsics.add(
+          new GcbIntrinsic(builtinName,
+              intrinsicName,
+              instruction,
+              builtins.get(instruction),
+              attributes));
     }
 
-    return map;
+    return new Output(map, intrinsics);
   }
 
   private boolean isRedFlag(Specification viam, Graph snapshot) {
