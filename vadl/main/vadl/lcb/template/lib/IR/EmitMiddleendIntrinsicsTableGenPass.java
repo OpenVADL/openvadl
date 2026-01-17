@@ -108,11 +108,6 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
       var attrs = intrinsic.intrinsicAttributes();
       var record = ensureNonNull(records.get(instruction), "must not be null");
 
-      if (!record.getOutOperands().stream()
-          .allMatch(o -> o instanceof GcbInstructionRegisterFileOperand)) {
-        continue;
-      }
-
       var lcbIntrinsic =
           new Intrinsic(
               intrinsic.intrinsicName(),
