@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.DetermineIntrinsicAttributesPass;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
@@ -38,7 +39,6 @@ import vadl.viam.Specification;
  * This file contains the tablegen setup for builtins.
  */
 public class EmitBuiltinsTableGenPass extends LcbTemplateRenderingPass {
-  public static String BUILTIN_PREFIX = "builtin_";
 
   public EmitBuiltinsTableGenPass(LcbConfiguration configuration)
       throws IOException {
@@ -71,12 +71,27 @@ public class EmitBuiltinsTableGenPass extends LcbTemplateRenderingPass {
     var machineRecords =
         (List<TableGenMachineInstruction>) passResults.lastResultOf(
             GenerateTableGenMachineInstructionRecordPass.class);
+    var output = (DetermineIntrinsicAttributesPass.Output) passResults.lastResultOf(
+        DetermineIntrinsicAttributesPass.class);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
-        "builtins", createBuiltins(machineRecords));
+        "builtins", createBuiltins(output, machineRecords));
   }
 
-  private List<Builtin> createBuiltins(List<TableGenMachineInstruction> instructions) {
+  private List<Builtin> createBuiltins(DetermineIntrinsicAttributesPass.Output output,
+                                       List<TableGenMachineInstruction> records) {
+    var lookup = records.stream().collect(Collectors.toMap(
+        TableGenMachineInstruction::instruction, x -> x));
+    return output.intrinsics().stream()
+        .map(intrinsic -> {
+          var record = lookup.get(intrinsic.instruction());
+          var returnTy = mapTy(record.getOutOperands().stream().findFirst());
+          var paramsTy = record.getInOperands().stream().map(this::mapTy).toList();
+          var prototype = new Prototype(returnTy, paramsTy);
+          return new Builtin(intrinsic.builtinName(), prototype);
+        })
+        .toList();
+    /*
     return instructions.stream()
         .filter(instruction -> instruction.getOutOperands().size() <= 1)
         .filter(instruction -> hasValidOperands(instruction.getInOperands()))
@@ -87,6 +102,7 @@ public class EmitBuiltinsTableGenPass extends LcbTemplateRenderingPass {
           return new Builtin(BUILTIN_PREFIX + instruction.getName(), prototype);
         })
         .collect(Collectors.toList());
+     */
   }
 
   private boolean hasValidOperands(List<GcbInstructionOperand> operands) {
