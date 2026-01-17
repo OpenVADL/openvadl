@@ -91,23 +91,6 @@ public class EmitBuiltinsTableGenPass extends LcbTemplateRenderingPass {
           return new Builtin(intrinsic.builtinName(), prototype);
         })
         .toList();
-    /*
-    return instructions.stream()
-        .filter(instruction -> instruction.getOutOperands().size() <= 1)
-        .filter(instruction -> hasValidOperands(instruction.getInOperands()))
-        .map(instruction -> {
-          var returnTy = mapTy(instruction.getOutOperands().stream().findFirst());
-          var paramsTy = instruction.getInOperands().stream().map(this::mapTy).toList();
-          var prototype = new Prototype(returnTy, paramsTy);
-          return new Builtin(BUILTIN_PREFIX + instruction.getName(), prototype);
-        })
-        .collect(Collectors.toList());
-     */
-  }
-
-  private boolean hasValidOperands(List<GcbInstructionOperand> operands) {
-    return operands.stream()
-        .allMatch(operand -> operand instanceof GcbInstructionRegisterFileOperand);
   }
 
   private String mapTy(GcbInstructionOperand operand) {

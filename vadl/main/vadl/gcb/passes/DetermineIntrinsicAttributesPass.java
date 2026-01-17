@@ -26,6 +26,9 @@ import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
+import vadl.gcb.passes.operands.InstructionOperandsCtx;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -91,8 +94,10 @@ public class DetermineIntrinsicAttributesPass extends Pass {
 
     for (var instruction : viam.isa().orElseThrow().ownInstructions()) {
       var snapshot = Objects.requireNonNull(snapshots.get(instruction));
+      var operands = instruction.expectExtension(InstructionOperandsCtx.class);
 
-      if (!builtins.containsKey(instruction) || isRedFlag(viam, snapshot)) {
+      if (!builtins.containsKey(instruction) || isRedFlag(viam, snapshot) || !hasValidOperands(
+          operands.outputs())) {
         continue;
       }
 
@@ -153,5 +158,11 @@ public class DetermineIntrinsicAttributesPass extends Pass {
    */
   private boolean speculatable(Graph snapshot) {
     return isNoMem(snapshot) && snapshot.getNodes(ProcCallNode.class).toList().isEmpty();
+  }
+
+  private boolean hasValidOperands(List<GcbInstructionOperand> operands) {
+    return operands.size() <= 1
+        && operands.stream()
+        .allMatch(operand -> operand instanceof GcbInstructionRegisterFileOperand);
   }
 }
