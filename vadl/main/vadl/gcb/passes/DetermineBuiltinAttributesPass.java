@@ -40,16 +40,16 @@ import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 
 /**
- * Compute the intrinsic attributes for an {@link Instruction}.
+ * Compute the builtin attributes for an {@link Instruction}.
  */
-public class DetermineIntrinsicAttributesPass extends Pass {
-  public DetermineIntrinsicAttributesPass(GcbConfiguration gcbConfiguration) {
+public class DetermineBuiltinAttributesPass extends Pass {
+  public DetermineBuiltinAttributesPass(GcbConfiguration gcbConfiguration) {
     super(gcbConfiguration);
   }
 
   @Override
   public PassName getName() {
-    return new PassName("DetermineIntrinsicAttributesPass");
+    return new PassName("DetermineBuiltinAttributesPass");
   }
 
   @Nullable
@@ -57,7 +57,7 @@ public class DetermineIntrinsicAttributesPass extends Pass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var snapshots =
         (Map<Instruction, Graph>) passResults.lastResultOf(SnapshotInstructionBehaviorPass.class);
-    IdentityHashMap<Instruction, List<InstructionIntrinsicAttributesCtx.Attribute>> map =
+    IdentityHashMap<Instruction, List<InstructionBuiltinAttributesCtx.Attribute>> map =
         new IdentityHashMap<>();
 
     for (var instruction : viam.isa().orElseThrow().ownInstructions()) {
@@ -68,18 +68,24 @@ public class DetermineIntrinsicAttributesPass extends Pass {
       }
 
       var isNoMem = isNoMem(snapshot);
+      var willReturn = willReturn(snapshot);
       var speculatable = speculatable(snapshot);
 
-      var attributes = new ArrayList<InstructionIntrinsicAttributesCtx.Attribute>();
+      var attributes = new ArrayList<InstructionBuiltinAttributesCtx.Attribute>();
       if (isNoMem) {
-        attributes.add(InstructionIntrinsicAttributesCtx.Attribute.NoMem);
+        attributes.add(InstructionBuiltinAttributesCtx.Attribute.NoMem);
+      }
+      if (willReturn) {
+        attributes.add(InstructionBuiltinAttributesCtx.Attribute.WillReturn);
+      } else {
+        attributes.add(InstructionBuiltinAttributesCtx.Attribute.NoReturn);
       }
       if (speculatable) {
-        attributes.add(InstructionIntrinsicAttributesCtx.Attribute.Speculatable);
+        attributes.add(InstructionBuiltinAttributesCtx.Attribute.Speculatable);
       }
 
       map.put(instruction, attributes);
-      instruction.attachExtension(new InstructionIntrinsicAttributesCtx(attributes));
+      instruction.attachExtension(new InstructionBuiltinAttributesCtx(attributes));
     }
 
     return map;
@@ -100,6 +106,10 @@ public class DetermineIntrinsicAttributesPass extends Pass {
 
   private boolean isNoMem(Graph snapshot) {
     return !isMem(snapshot);
+  }
+
+  private boolean willReturn(Graph snapshot) {
+    return !snapshot.getNodes(WritesRegisterTensor.class).toList().isEmpty();
   }
 
   /**

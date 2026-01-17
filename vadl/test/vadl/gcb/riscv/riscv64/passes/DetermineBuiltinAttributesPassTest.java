@@ -16,8 +16,9 @@
 
 package vadl.gcb.riscv.riscv64.passes;
 
-import static vadl.gcb.passes.InstructionIntrinsicAttributesCtx.Attribute.NoMem;
-import static vadl.gcb.passes.InstructionIntrinsicAttributesCtx.Attribute.Speculatable;
+import static vadl.gcb.passes.InstructionBuiltinAttributesCtx.Attribute.NoMem;
+import static vadl.gcb.passes.InstructionBuiltinAttributesCtx.Attribute.Speculatable;
+import static vadl.gcb.passes.InstructionBuiltinAttributesCtx.Attribute.WillReturn;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,35 +30,35 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.gcb.AbstractGcbTest;
-import vadl.gcb.passes.DetermineIntrinsicAttributesPass;
-import vadl.gcb.passes.InstructionIntrinsicAttributesCtx;
+import vadl.gcb.passes.DetermineBuiltinAttributesPass;
+import vadl.gcb.passes.InstructionBuiltinAttributesCtx;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Instruction;
 
-public class DetermineIntrinsicAttributesPassTest extends AbstractGcbTest {
+public class DetermineBuiltinAttributesPassTest extends AbstractGcbTest {
   public static Stream<Arguments> expected() {
     return Stream.of(
-        Arguments.of("ADD", List.of(NoMem, Speculatable)),
-        Arguments.of("SUB", List.of(NoMem, Speculatable)),
-        Arguments.of("MUL", List.of(NoMem, Speculatable))
+        Arguments.of("ADD", List.of(NoMem, WillReturn, Speculatable)),
+        Arguments.of("SUB", List.of(NoMem, WillReturn, Speculatable)),
+        Arguments.of("MUL", List.of(NoMem, WillReturn, Speculatable))
     );
   }
 
   @MethodSource(value = "expected")
   @ParameterizedTest
   void shouldDetect(String instructionName,
-                    List<InstructionIntrinsicAttributesCtx.Attribute> attrs)
+                    List<InstructionBuiltinAttributesCtx.Attribute> attrs)
       throws DuplicatedPassKeyException, IOException {
     // Given
     var setup = runGcb(getConfiguration(false), "sys/risc-v/rv64im.vadl",
-        new PassKey(DetermineIntrinsicAttributesPassTest.class.getName()));
+        new PassKey(DetermineBuiltinAttributesPassTest.class.getName()));
     var passManager = setup.passManager();
 
     // When
     var result =
-        ((Map<Instruction, List<InstructionIntrinsicAttributesCtx.Attribute>>) passManager.getPassResults()
-            .lastResultOf(DetermineIntrinsicAttributesPass.class)).entrySet().stream().collect(
+        ((Map<Instruction, List<InstructionBuiltinAttributesCtx.Attribute>>) passManager.getPassResults()
+            .lastResultOf(DetermineBuiltinAttributesPass.class)).entrySet().stream().collect(
             Collectors.toMap(x -> x.getKey().simpleName(), Map.Entry::getValue));
 
     // Then

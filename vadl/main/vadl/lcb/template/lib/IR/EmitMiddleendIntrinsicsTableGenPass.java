@@ -86,17 +86,14 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
           "result", String.join(", ", resultTy),
           "param", String.join(", ", paramTy),
           "attr",
-          attributes.stream().map(this::getName).filter(Optional::isPresent).map(Optional::get)
-              .collect(Collectors.joining(", "))
+          attributes.stream().map(this::getName).collect(Collectors.joining(", "))
       );
     }
 
-    private Optional<String> getName(InstructionIntrinsicAttributesCtx.Attribute x) {
+    private String getName(InstructionIntrinsicAttributesCtx.Attribute x) {
       return switch (x) {
-        case NoMem -> Optional.of("IntrNoMem");
-        case WillReturn -> Optional.empty();
-        case NoReturn -> Optional.empty();
-        case Speculatable -> Optional.of("IntrSpeculatable");
+        case NoMem -> "IntrNoMem";
+        case Speculatable -> "IntrSpeculatable";
       };
     }
   }
