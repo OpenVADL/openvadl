@@ -33,10 +33,10 @@ import vadl.configuration.RtlConfiguration;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.DetermineBuiltinAttributesPass;
-import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.DetermineRelocationTypeForFieldPass;
 import vadl.gcb.passes.GenerateCompilerRegistersPass;
+import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.InstructionPatternPruningPass;
@@ -702,7 +702,7 @@ public class PassOrders {
    * @param phase       is the name of the dump.
    * @param description for the dump.
    * @param exclusions  for which no behavior graph should be collected.
-   * @return the modified passorder.
+   * @return the modified {@link PassOrder}.
    */
   private static PassOrder addHtmlDump(PassOrder order, GeneralConfiguration config,
                                        String phase, String description, Class<?>... exclusions) {
