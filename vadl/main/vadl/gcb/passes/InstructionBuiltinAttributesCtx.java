@@ -23,20 +23,22 @@ import vadl.viam.Instruction;
 
 /**
  * An extension for the {@link Instruction}. It will be used to indicate what the attributes for the
- * intrinsic's attributes of the {@link Instruction} are.
+ * builtin's attributes of the {@link Instruction} are.
  */
-public class InstructionIntrinsicAttributesCtx extends DefinitionExtension<Instruction> {
+public class InstructionBuiltinAttributesCtx extends DefinitionExtension<Instruction> {
   /**
    * Attributes for the intrinsic.
    */
   public enum Attribute {
     NoMem,
+    WillReturn,
+    NoReturn,
     Speculatable
   }
 
   private final List<Attribute> attributes;
 
-  public InstructionIntrinsicAttributesCtx(List<Attribute> attributes) {
+  public InstructionBuiltinAttributesCtx(List<Attribute> attributes) {
     this.attributes = attributes;
   }
 
