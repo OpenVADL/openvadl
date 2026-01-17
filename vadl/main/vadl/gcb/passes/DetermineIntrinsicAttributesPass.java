@@ -16,6 +16,8 @@
 
 package vadl.gcb.passes;
 
+import static vadl.viam.ViamError.ensurePresent;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -30,6 +32,7 @@ import vadl.pass.PassResults;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.ReadsRegisterTensor;
 import vadl.viam.graph.WritesRegisterTensor;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -59,6 +62,11 @@ public class DetermineIntrinsicAttributesPass extends Pass {
 
     for (var instruction : viam.isa().orElseThrow().ownInstructions()) {
       var snapshot = Objects.requireNonNull(snapshots.get(instruction));
+
+      if (isRedFlag(viam, snapshot)) {
+        continue;
+      }
+
       var isNoMem = isNoMem(snapshot);
       var willReturn = willReturn(snapshot);
       var speculatable = speculatable(snapshot);
@@ -81,6 +89,14 @@ public class DetermineIntrinsicAttributesPass extends Pass {
     }
 
     return map;
+  }
+
+  private boolean isRedFlag(Specification viam, Graph snapshot) {
+    var pc =
+        Objects.requireNonNull(ensurePresent(viam.isa(), "must be present").pc()).registerTensor();
+    var hasPc = snapshot.getNodes(ReadsRegisterTensor.class).filter(
+        x -> x.registerTensor().isSingleRegister() && x.registerTensor() == pc).findAny().isEmpty();
+    return !hasPc;
   }
 
   private boolean isMem(Graph snapshot) {
