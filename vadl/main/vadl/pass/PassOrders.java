@@ -33,7 +33,7 @@ import vadl.configuration.RtlConfiguration;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.DetermineBuiltinAttributesPass;
-import vadl.gcb.passes.DetermineIntrinsicAttributesPass;
+import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
 import vadl.gcb.passes.DetermineRelocationTypeForFieldPass;
 import vadl.gcb.passes.GenerateCompilerRegistersPass;
@@ -267,7 +267,7 @@ public class PassOrders {
     order.add(new GenerateInstructionOperandsPass(gcbConfiguration));
     order.add(new InstructionPatternPruningPass(gcbConfiguration));
     order.add(new DetermineBuiltinAttributesPass(gcbConfiguration));
-    order.add(new DetermineIntrinsicAttributesPass(gcbConfiguration));
+    order.add(new GenerateGcbIntrinsicsPass(gcbConfiguration));
 
     addHtmlDump(order, gcbConfiguration, "gcbProcessing",
         "Now the gcb produced all necessary encoding function for field accesses "

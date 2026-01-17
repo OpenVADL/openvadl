@@ -19,12 +19,13 @@ package vadl.lcb.template.clang.include.Basic;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.DetermineIntrinsicAttributesPass;
+import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
@@ -71,20 +72,20 @@ public class EmitBuiltinsTableGenPass extends LcbTemplateRenderingPass {
     var machineRecords =
         (List<TableGenMachineInstruction>) passResults.lastResultOf(
             GenerateTableGenMachineInstructionRecordPass.class);
-    var output = (DetermineIntrinsicAttributesPass.Output) passResults.lastResultOf(
-        DetermineIntrinsicAttributesPass.class);
+    var output = (GenerateGcbIntrinsicsPass.Output) passResults.lastResultOf(
+        GenerateGcbIntrinsicsPass.class);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "builtins", createBuiltins(output, machineRecords));
   }
 
-  private List<Builtin> createBuiltins(DetermineIntrinsicAttributesPass.Output output,
+  private List<Builtin> createBuiltins(GenerateGcbIntrinsicsPass.Output output,
                                        List<TableGenMachineInstruction> records) {
     var lookup = records.stream().collect(Collectors.toMap(
         TableGenMachineInstruction::instruction, x -> x));
     return output.intrinsics().stream()
         .map(intrinsic -> {
-          var record = lookup.get(intrinsic.instruction());
+          var record = Objects.requireNonNull(lookup.get(intrinsic.instruction()));
           var returnTy = mapTy(record.getOutOperands().stream().findFirst());
           var paramsTy = record.getInOperands().stream().map(this::mapTy).toList();
           var prototype = new Prototype(returnTy, paramsTy);

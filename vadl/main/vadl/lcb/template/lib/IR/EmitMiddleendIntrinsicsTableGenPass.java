@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.DetermineIntrinsicAttributesPass;
+import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
 import vadl.gcb.passes.InstructionIntrinsicAttributesCtx;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
@@ -61,9 +61,9 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
     var output =
-        (DetermineIntrinsicAttributesPass.Output) passResults
+        (GenerateGcbIntrinsicsPass.Output) passResults
             .lastResultOf(
-                DetermineIntrinsicAttributesPass.class);
+                GenerateGcbIntrinsicsPass.class);
     var records = ((List<TableGenMachineInstruction>) passResults.lastResultOf(
         GenerateTableGenMachineInstructionRecordPass.class)).stream().collect(Collectors.toMap(
         TableGenMachineInstruction::instruction, x -> x));
@@ -99,7 +99,7 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
   }
 
   private List<Intrinsic> genIntrinsics(
-      DetermineIntrinsicAttributesPass.Output output,
+      GenerateGcbIntrinsicsPass.Output output,
       Map<Instruction, TableGenMachineInstruction> records) {
     var result = new ArrayList<Intrinsic>();
 

@@ -42,13 +42,13 @@ import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 
 /**
- * Compute the intrinsic attributes for an {@link Instruction}.
+ * Compute the intrinsics for an {@link Instruction}.
  */
-public class DetermineIntrinsicAttributesPass extends Pass {
+public class GenerateGcbIntrinsicsPass extends Pass {
   public static String BUILTIN_PREFIX = "builtin_";
   private final GcbConfiguration gcbConfiguration;
 
-  public DetermineIntrinsicAttributesPass(GcbConfiguration gcbConfiguration) {
+  public GenerateGcbIntrinsicsPass(GcbConfiguration gcbConfiguration) {
     super(gcbConfiguration);
     this.gcbConfiguration = gcbConfiguration;
   }
