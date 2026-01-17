@@ -33,7 +33,6 @@ import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.ReadsRegisterTensor;
-import vadl.viam.graph.WritesRegisterTensor;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -57,13 +56,17 @@ public class DetermineIntrinsicAttributesPass extends Pass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var snapshots =
         (Map<Instruction, Graph>) passResults.lastResultOf(SnapshotInstructionBehaviorPass.class);
+    var builtins =
+        (IdentityHashMap<Instruction, List<InstructionBuiltinAttributesCtx.Attribute>>)
+            passResults.lastResultOf(DetermineBuiltinAttributesPass.class);
+
     IdentityHashMap<Instruction, List<InstructionIntrinsicAttributesCtx.Attribute>> map =
         new IdentityHashMap<>();
 
     for (var instruction : viam.isa().orElseThrow().ownInstructions()) {
       var snapshot = Objects.requireNonNull(snapshots.get(instruction));
 
-      if (isRedFlag(viam, snapshot)) {
+      if (!builtins.containsKey(instruction) || isRedFlag(viam, snapshot)) {
         continue;
       }
 
