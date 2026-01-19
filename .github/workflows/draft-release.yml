@@ -119,39 +119,39 @@ jobs:
 
       - name: Build jlink Images for All Platforms
         run: |
-          ./gradlew vadl-lsp:jlink -PjlinkAllPlatforms
+          ./gradlew vadl-cli:jlink -PjlinkAllPlatforms
 
       - name: Upload linux-arm64 Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: openvadl-lsp-linux-arm64
-          path: vadl-lsp/build/image/*-linux-arm64/
+          name: openvadl-linux-arm64
+          path: vadl-cli/build/image/*-linux-arm64/
           retention-days: 20
 
       - name: Upload linux-x64 Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: openvadl-lsp-linux-x64
-          path: vadl-lsp/build/image/*-linux-x64/
+          name: openvadl-linux-x64
+          path: vadl-cli/build/image/*-linux-x64/
           retention-days: 20
 
       - name: Upload macos-arm64 Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: openvadl-lsp-macos-arm64
-          path: vadl-lsp/build/image/*-macos-arm64/
+          name: openvadl-macos-arm64
+          path: vadl-cli/build/image/*-macos-arm64/
           retention-days: 20
 
       - name: Upload win-x64 Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: openvadl-lsp-win-x64
-          path: vadl-lsp/build/image/*-win-x64/
+          name: openvadl-win-x64
+          path: vadl-cli/build/image/*-win-x64/
           retention-days: 20
 
       - name: Upload win-arm64 Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: openvadl-lsp-win-arm64
-          path: vadl-lsp/build/image/*-win-arm64/
+          name: openvadl-win-arm64
+          path: vadl-cli/build/image/*-win-arm64/
           retention-days: 20

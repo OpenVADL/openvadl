@@ -92,7 +92,7 @@ To get a description of the complete usage, you can run: `./gradlew run --args="
 
 ### Running the LSP
 
-The LSP (Language Server Protocol) can be started with `./gradlew vadl-lsp:run`.
+The LSP (Language Server Protocol) can be started with `./gradlew run --args="lsp --help"`.
 
 ### Building
 

@@ -28,7 +28,7 @@ run the Gradle build with the `-PbuildAllPlatforms` property:
 
 ```bash
 docker run --rm -v $(pwd):/src/open-vadl openvadl/java-runtime-builder \
-  ./gradlew :vadl-lsp:jlink -PbuildAllPlatforms
+  ./gradlew :vadl-cli:jlink -PbuildAllPlatforms
 ```
 
 The `-PbuildAllPlatforms` property instructs the build script to generate jlink images for all supported platforms using
