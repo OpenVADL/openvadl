@@ -31,8 +31,10 @@ jobs:
         env:
           isCI: true
       - name: Test Report
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v2
         if: success() || failure()
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
         with:
           name: report ${{ inputs.test-task }}
           path: '**/build/test-results/**/TEST-*.xml'
