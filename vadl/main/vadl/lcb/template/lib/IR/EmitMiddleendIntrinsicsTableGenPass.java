@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.DetermineIntrinsicAttributesPass;
+import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
 import vadl.gcb.passes.InstructionIntrinsicAttributesCtx;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
@@ -60,15 +60,15 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
   @Override
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
-    var map =
-        (Map<Instruction, List<InstructionIntrinsicAttributesCtx.Attribute>>) passResults
+    var output =
+        (GenerateGcbIntrinsicsPass.Output) passResults
             .lastResultOf(
-                DetermineIntrinsicAttributesPass.class);
+                GenerateGcbIntrinsicsPass.class);
     var records = ((List<TableGenMachineInstruction>) passResults.lastResultOf(
         GenerateTableGenMachineInstructionRecordPass.class)).stream().collect(Collectors.toMap(
         TableGenMachineInstruction::instruction, x -> x));
 
-    var intrinsics = genIntrinsics(map, records);
+    var intrinsics = genIntrinsics(output, records);
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
@@ -86,47 +86,39 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
           "result", String.join(", ", resultTy),
           "param", String.join(", ", paramTy),
           "attr",
-          attributes.stream().map(this::getName).filter(Optional::isPresent).map(Optional::get)
-              .collect(Collectors.joining(", "))
+          attributes.stream().map(this::getName).collect(Collectors.joining(", "))
       );
     }
 
-    private Optional<String> getName(InstructionIntrinsicAttributesCtx.Attribute x) {
+    private String getName(InstructionIntrinsicAttributesCtx.Attribute x) {
       return switch (x) {
-        case NoMem -> Optional.of("IntrNoMem");
-        case WillReturn -> Optional.empty();
-        case NoReturn -> Optional.empty();
-        case Speculatable -> Optional.of("IntrSpeculatable");
+        case NoMem -> "IntrNoMem";
+        case Speculatable -> "IntrSpeculatable";
       };
     }
   }
 
   private List<Intrinsic> genIntrinsics(
-      Map<Instruction, List<InstructionIntrinsicAttributesCtx.Attribute>> attributes,
+      GenerateGcbIntrinsicsPass.Output output,
       Map<Instruction, TableGenMachineInstruction> records) {
     var result = new ArrayList<Intrinsic>();
 
-    for (var entry : attributes.entrySet()) {
-      var instruction = entry.getKey();
-      var attr = entry.getValue();
+    for (var intrinsic : output.intrinsics()) {
+      var instruction = intrinsic.instruction();
+      var attrs = intrinsic.intrinsicAttributes();
       var record = ensureNonNull(records.get(instruction), "must not be null");
 
-      if (!record.getOutOperands().stream()
-          .allMatch(o -> o instanceof GcbInstructionRegisterFileOperand)) {
-        continue;
-      }
-
-      var intrinsic =
+      var lcbIntrinsic =
           new Intrinsic(
-              "int_" + lcbConfiguration().targetName().value() + "_" + instruction.simpleName(),
+              intrinsic.intrinsicName(),
               record.getOutOperands().isEmpty() ? List.of("llvm_void_ty") :
                   List.of(mapRet(record.getOutOperands().get(0))),
               record.getInOperands().stream().map(this::mapParam)
                   .filter(Optional::isPresent)
                   .map(Optional::get)
                   .collect(Collectors.toList()),
-              attr);
-      result.add(intrinsic);
+              attrs);
+      result.add(lcbIntrinsic);
     }
 
     result.sort(Comparator.comparing(o -> o.name));
