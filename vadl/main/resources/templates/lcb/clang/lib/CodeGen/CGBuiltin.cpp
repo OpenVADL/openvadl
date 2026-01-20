@@ -3134,7 +3134,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
         Result = EmitAbs(*this, EmitScalarExpr(E->getArg(0)), true);
         break;
       }
-      [[fallthrough]];
+      [ [ fallthrough ] ];
     case LangOptions::SOB_Trapping:
       // TODO: Somehow handle the corner case when the address of abs is taken.
       Result = EmitOverflowCheckedAbs(*this, E, SanitizeOverflow);
@@ -3643,7 +3643,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     // frexpl instead of legalizing this type in the BE.
     if (&getTarget().getLongDoubleFormat() == &llvm::APFloat::PPCDoubleDouble())
       break;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   }
   case Builtin::BI__builtin_frexp:
   case Builtin::BI__builtin_frexpf:
@@ -5413,7 +5413,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_ptrauth_auth_and_resign:
       if (Args[4]->getType()->isPointerTy())
         Args[4] = Builder.CreatePtrToInt(Args[4], IntPtrTy);
-      [[fallthrough]];
+      [ [ fallthrough ] ];
 
     case Builtin::BI__builtin_ptrauth_auth:
     case Builtin::BI__builtin_ptrauth_sign_unauthenticated:
@@ -7747,7 +7747,7 @@ Value *CodeGenFunction::EmitCommonNeonBuiltinExpr(
   case NEON::BI__builtin_neon_vcalt_v:
   case NEON::BI__builtin_neon_vcaltq_v:
     std::swap(Ops[0], Ops[1]);
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case NEON::BI__builtin_neon_vcage_v:
   case NEON::BI__builtin_neon_vcageq_v:
   case NEON::BI__builtin_neon_vcagt_v:
@@ -9175,7 +9175,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
       int Indices[] = {1 - Lane, Lane};
       return Builder.CreateShuffleVector(Ops[1], Ld, Indices, "vld1q_lane");
     }
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case NEON::BI__builtin_neon_vld1_lane_v: {
     Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
     PtrOp0 = PtrOp0.withElementType(VTy->getElementType());
@@ -9215,7 +9215,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case NEON::BI__builtin_neon_vsri_n_v:
   case NEON::BI__builtin_neon_vsriq_n_v:
     rightShift = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case NEON::BI__builtin_neon_vsli_n_v:
   case NEON::BI__builtin_neon_vsliq_n_v:
     Ops[2] = EmitNeonShiftVector(Ops[2], Ty, rightShift);
@@ -9238,7 +9238,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
       return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst1,
                                                  Tys), Ops);
     }
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case NEON::BI__builtin_neon_vst1_lane_v: {
     Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
     Ops[1] = Builder.CreateExtractElement(Ops[1], Ops[2]);
@@ -11702,7 +11702,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   case NEON::BI__builtin_neon_vcvts_f32_u32:
   case NEON::BI__builtin_neon_vcvtd_f64_u64:
     usgn = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case NEON::BI__builtin_neon_vcvts_f32_s32:
   case NEON::BI__builtin_neon_vcvtd_f64_s64: {
     Ops.push_back(EmitScalarExpr(E->getArg(0)));
@@ -11718,7 +11718,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   case NEON::BI__builtin_neon_vcvth_f16_u32:
   case NEON::BI__builtin_neon_vcvth_f16_u64:
     usgn = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case NEON::BI__builtin_neon_vcvth_f16_s16:
   case NEON::BI__builtin_neon_vcvth_f16_s32:
   case NEON::BI__builtin_neon_vcvth_f16_s64: {
@@ -12858,7 +12858,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   case NEON::BI__builtin_neon_vaddv_u8:
     // FIXME: These are handled by the AArch64 scalar code.
     usgn = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case NEON::BI__builtin_neon_vaddv_s8: {
     Int = usgn ? Intrinsic::aarch64_neon_uaddv : Intrinsic::aarch64_neon_saddv;
     Ty = Int32Ty;
@@ -12870,7 +12870,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   }
   case NEON::BI__builtin_neon_vaddv_u16:
     usgn = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case NEON::BI__builtin_neon_vaddv_s16: {
     Int = usgn ? Intrinsic::aarch64_neon_uaddv : Intrinsic::aarch64_neon_saddv;
     Ty = Int32Ty;
@@ -12882,7 +12882,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   }
   case NEON::BI__builtin_neon_vaddvq_u8:
     usgn = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case NEON::BI__builtin_neon_vaddvq_s8: {
     Int = usgn ? Intrinsic::aarch64_neon_uaddv : Intrinsic::aarch64_neon_saddv;
     Ty = Int32Ty;
@@ -12894,7 +12894,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   }
   case NEON::BI__builtin_neon_vaddvq_u16:
     usgn = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case NEON::BI__builtin_neon_vaddvq_s16: {
     Int = usgn ? Intrinsic::aarch64_neon_uaddv : Intrinsic::aarch64_neon_saddv;
     Ty = Int32Ty;
@@ -13898,7 +13898,7 @@ static Value *EmitX86FMAExpr(CodeGenFunction &CGF, const CallExpr *E,
   default: break;
   case clang::X86::BI__builtin_ia32_vfmsubph512_mask3:
     Subtract = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case clang::X86::BI__builtin_ia32_vfmaddph512_mask:
   case clang::X86::BI__builtin_ia32_vfmaddph512_maskz:
   case clang::X86::BI__builtin_ia32_vfmaddph512_mask3:
@@ -13906,7 +13906,7 @@ static Value *EmitX86FMAExpr(CodeGenFunction &CGF, const CallExpr *E,
     break;
   case clang::X86::BI__builtin_ia32_vfmsubaddph512_mask3:
     Subtract = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case clang::X86::BI__builtin_ia32_vfmaddsubph512_mask:
   case clang::X86::BI__builtin_ia32_vfmaddsubph512_maskz:
   case clang::X86::BI__builtin_ia32_vfmaddsubph512_mask3:
@@ -13914,21 +13914,21 @@ static Value *EmitX86FMAExpr(CodeGenFunction &CGF, const CallExpr *E,
     break;
   case clang::X86::BI__builtin_ia32_vfmsubps512_mask3:
     Subtract = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case clang::X86::BI__builtin_ia32_vfmaddps512_mask:
   case clang::X86::BI__builtin_ia32_vfmaddps512_maskz:
   case clang::X86::BI__builtin_ia32_vfmaddps512_mask3:
     IID = llvm::Intrinsic::x86_avx512_vfmadd_ps_512; break;
   case clang::X86::BI__builtin_ia32_vfmsubpd512_mask3:
     Subtract = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case clang::X86::BI__builtin_ia32_vfmaddpd512_mask:
   case clang::X86::BI__builtin_ia32_vfmaddpd512_maskz:
   case clang::X86::BI__builtin_ia32_vfmaddpd512_mask3:
     IID = llvm::Intrinsic::x86_avx512_vfmadd_pd_512; break;
   case clang::X86::BI__builtin_ia32_vfmsubaddps512_mask3:
     Subtract = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case clang::X86::BI__builtin_ia32_vfmaddsubps512_mask:
   case clang::X86::BI__builtin_ia32_vfmaddsubps512_maskz:
   case clang::X86::BI__builtin_ia32_vfmaddsubps512_mask3:
@@ -13936,7 +13936,7 @@ static Value *EmitX86FMAExpr(CodeGenFunction &CGF, const CallExpr *E,
     break;
   case clang::X86::BI__builtin_ia32_vfmsubaddpd512_mask3:
     Subtract = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case clang::X86::BI__builtin_ia32_vfmaddsubpd512_mask:
   case clang::X86::BI__builtin_ia32_vfmaddsubpd512_maskz:
   case clang::X86::BI__builtin_ia32_vfmaddsubpd512_mask3:
@@ -16292,7 +16292,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_cmppd256_mask:
   case X86::BI__builtin_ia32_cmppd512_mask:
     IsMaskFCmp = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case X86::BI__builtin_ia32_cmpps:
   case X86::BI__builtin_ia32_cmpps256:
   case X86::BI__builtin_ia32_cmppd:
@@ -16786,7 +16786,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   }
   case X86::BI__builtin_ia32_vfcmaddcph512_mask:
     IsConjFMA = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case X86::BI__builtin_ia32_vfmaddcph512_mask: {
     Intrinsic::ID IID = IsConjFMA
                             ? Intrinsic::x86_avx512fp16_mask_vfcmadd_cph_512
@@ -16796,7 +16796,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   }
   case X86::BI__builtin_ia32_vfcmaddcsh_round_mask:
     IsConjFMA = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case X86::BI__builtin_ia32_vfmaddcsh_round_mask: {
     Intrinsic::ID IID = IsConjFMA ? Intrinsic::x86_avx512fp16_mask_vfcmadd_csh
                                   : Intrinsic::x86_avx512fp16_mask_vfmadd_csh;
@@ -16806,7 +16806,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   }
   case X86::BI__builtin_ia32_vfcmaddcsh_round_mask3:
     IsConjFMA = true;
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   case X86::BI__builtin_ia32_vfmaddcsh_round_mask3: {
     Intrinsic::ID IID = IsConjFMA ? Intrinsic::x86_avx512fp16_mask_vfcmadd_csh
                                   : Intrinsic::x86_avx512fp16_mask_vfmadd_csh;
@@ -18990,7 +18990,7 @@ Value *CodeGenFunction::EmitAMDGPUBuiltinExpr(unsigned BuiltinID,
     case AMDGPU::BI__builtin_amdgcn_wmma_f16_16x16x16_f16_w32_gfx12:
     case AMDGPU::BI__builtin_amdgcn_wmma_f16_16x16x16_f16_w64_gfx12:
       AppendFalseForOpselArg = true;
-      [[fallthrough]];
+      [ [ fallthrough ] ];
     case AMDGPU::BI__builtin_amdgcn_wmma_f16_16x16x16_f16_w32:
     case AMDGPU::BI__builtin_amdgcn_wmma_f16_16x16x16_f16_w64:
       ArgsForMatchingMatrixTypes = {2, 0}; // CD, AB
@@ -18999,7 +18999,7 @@ Value *CodeGenFunction::EmitAMDGPUBuiltinExpr(unsigned BuiltinID,
     case AMDGPU::BI__builtin_amdgcn_wmma_bf16_16x16x16_bf16_w32_gfx12:
     case AMDGPU::BI__builtin_amdgcn_wmma_bf16_16x16x16_bf16_w64_gfx12:
       AppendFalseForOpselArg = true;
-      [[fallthrough]];
+      [ [ fallthrough ] ];
     case AMDGPU::BI__builtin_amdgcn_wmma_bf16_16x16x16_bf16_w32:
     case AMDGPU::BI__builtin_amdgcn_wmma_bf16_16x16x16_bf16_w64:
       ArgsForMatchingMatrixTypes = {2, 0}; // CD, AB
