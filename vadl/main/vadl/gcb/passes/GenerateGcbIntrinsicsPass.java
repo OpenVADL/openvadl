@@ -95,7 +95,8 @@ public class GenerateGcbIntrinsicsPass extends Pass {
       var snapshot = Objects.requireNonNull(snapshots.get(instruction));
       var operands = instruction.expectExtension(InstructionOperandsCtx.class);
 
-      if (!builtins.containsKey(instruction) || isRedFlag(viam, snapshot)
+      if (!builtins.containsKey(instruction)
+          || isRedFlag(viam, snapshot)
           || !hasValidInputOperands(operands.inputs())
           || !hasValidOutputOperands(operands.outputs())) {
         continue;
@@ -165,7 +166,7 @@ public class GenerateGcbIntrinsicsPass extends Pass {
   }
 
   private boolean hasValidOutputOperands(List<GcbInstructionOperand> operands) {
-    return operands.size() <= 1
+    return operands.size() == 1 /* requires exactly one output */
         && operands.stream()
         .allMatch(operand -> operand instanceof GcbInstructionRegisterFileOperand);
   }
