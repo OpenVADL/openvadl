@@ -246,3 +246,9 @@ def : Pat<(iPTR (vadl_lga tglobaladdr:$in)), ([(${lga})] tglobaladdr:$in)>;
 /* Match the call sequence for global and external symbols */
 def : Pat<(target_call tglobaladdr:$func), ([(${callInstruction})] tglobaladdr:$func)>;
 def : Pat<(target_call texternalsym:$func), ([(${callInstruction})] texternalsym:$func)>;
+
+/* Intrinsics */
+
+[# th:each="intrinsicPat : ${intrinsics}" ]
+[(${intrinsicPat})]
+[/]
