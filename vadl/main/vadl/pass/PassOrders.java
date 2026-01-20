@@ -101,6 +101,7 @@ import vadl.lcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass;
 import vadl.lcb.template.clang.lib.CodeGen.EmitCGBuiltinFilePass;
+import vadl.lcb.template.clang.lib.CodeGen.EmitCodeGenFunctionHeaderFilePass;
 import vadl.lcb.template.include.llvm.BinaryFormat.ELFRelocs.EmitTargetElfRelocsDefFilePass;
 import vadl.lcb.template.lib.IR.EmitMiddleendMainIntrinsicsTableGenPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
@@ -361,6 +362,7 @@ public class PassOrders {
     order.add(new EmitMiddleendMainIntrinsicsTableGenPass(configuration));
     order.add(new EmitMiddleendIntrinsicsTableGenPass(configuration));
     order.add(new EmitCGBuiltinFilePass(configuration));
+    order.add(new EmitCodeGenFunctionHeaderFilePass(configuration));
     order.add(new vadl.lcb.include.llvm.BinaryFormat.EmitElfHeaderFilePass(configuration));
     order.add(new vadl.lcb.include.llvm.Object.EmitELFObjectHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Misc.EmitBenchmarkRegisterHeaderFilePass(configuration));

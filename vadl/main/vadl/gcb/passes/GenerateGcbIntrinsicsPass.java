@@ -45,7 +45,7 @@ import vadl.viam.passes.SnapshotInstructionBehaviorPass;
  * Compute the intrinsics for an {@link Instruction}.
  */
 public class GenerateGcbIntrinsicsPass extends Pass {
-  public static String BUILTIN_PREFIX = "builtin_";
+  public static String BUILTIN_PREFIX = "";
   private final GcbConfiguration gcbConfiguration;
 
   public GenerateGcbIntrinsicsPass(GcbConfiguration gcbConfiguration) {
@@ -114,8 +114,7 @@ public class GenerateGcbIntrinsicsPass extends Pass {
       }
 
       var builtinName = BUILTIN_PREFIX + instruction.simpleName();
-      var intrinsicName =
-          "int_" + gcbConfiguration.targetName().value() + "_" + instruction.simpleName();
+      var intrinsicName = gcbConfiguration.targetName().value() + "_" + instruction.simpleName();
 
       map.put(instruction, attributes);
       instruction.attachExtension(new InstructionIntrinsicAttributesCtx(attributes));
