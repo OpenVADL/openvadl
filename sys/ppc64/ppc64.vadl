@@ -1127,7 +1127,7 @@ instruction set architecture PPC64SFS = {
     assembly AsId($asm) = ($asm, " ", decimal(rs), ",", decimal(fxm))
   }
 
-  // instructions: mfspr, mtspr, mftb
+  // instructions: mfspr, mtspr
   model XFXMoveSPRInstr (x : AsmExt, read : Bool) : IsaDefs = {
     instruction AsId($x.asm) : XFXFormB =
       match : Stat ( $read = true => $ReadSPR(); _ => $WriteSPR() )
@@ -1461,7 +1461,6 @@ instruction set architecture PPC64SFS = {
 
   $XFXMoveSPRInstr(("MFSPR"; 0b01010'10011); true )
   $XFXMoveSPRInstr(("MTSPR"; 0b01110'10011); false)
-  $XFXMoveSPRInstr(("MFTB" ; 0b01011'10011); true ) // marked as phased-out
 
   //------------------------Other------------------------------
   $XFormReverseInstr(("BRH"; 0b00110'11011); Unit::Half)

@@ -28,7 +28,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 
 /* Tests ppc64.vadl instructions against the QEMU ppc64 simulator.
  * Some instructions are defined in the VADL specification but are not covered by these tests:
- *   mfmsr, mtmsr, mfspr, mtspr, mftb and all branch instructions.
+ *   mfmsr, mtmsr, mfspr, mtspr and all branch instructions.
  * Load/Store instructions are tested with a reduced address space:
  *   0x0000'0000'0000'1000 - 0x0000'0000'0000'FFFF
  */
