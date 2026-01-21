@@ -5172,3 +5172,90 @@ def : Pat<(iPTR (vadl_lga tglobaladdr:$in)), (LGA_64 tglobaladdr:$in)>;
 /* Match the call sequence for global and external symbols */
 def : Pat<(target_call tglobaladdr:$func), (CALL tglobaladdr:$func)>;
 def : Pat<(target_call texternalsym:$func), (CALL texternalsym:$func)>;
+
+/* Intrinsics */
+
+
+def : Pat<(int_processorNameValue_ADD X:$rs1, X:$rs2),
+        (ADD X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_ADDW X:$rs1, X:$rs2),
+        (ADDW X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_AND X:$rs1, X:$rs2),
+        (AND X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_DIV X:$rs2, X:$rs1),
+        (DIV X:$rs2, X:$rs1)>;
+
+def : Pat<(int_processorNameValue_DIVU X:$rs2, X:$rs1),
+        (DIVU X:$rs2, X:$rs1)>;
+
+def : Pat<(int_processorNameValue_DIVUW X:$rs2, X:$rs1),
+        (DIVUW X:$rs2, X:$rs1)>;
+
+def : Pat<(int_processorNameValue_DIVW X:$rs2, X:$rs1),
+        (DIVW X:$rs2, X:$rs1)>;
+
+def : Pat<(int_processorNameValue_MUL X:$rs1, X:$rs2),
+        (MUL X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_MULH X:$rs1, X:$rs2),
+        (MULH X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_MULHSU X:$rs1, X:$rs2),
+        (MULHSU X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_MULHU X:$rs1, X:$rs2),
+        (MULHU X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_MULW X:$rs1, X:$rs2),
+        (MULW X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_OR X:$rs1, X:$rs2),
+        (OR X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_REM X:$rs2, X:$rs1),
+        (REM X:$rs2, X:$rs1)>;
+
+def : Pat<(int_processorNameValue_REMU X:$rs2, X:$rs1),
+        (REMU X:$rs2, X:$rs1)>;
+
+def : Pat<(int_processorNameValue_REMUW X:$rs2, X:$rs1),
+        (REMUW X:$rs2, X:$rs1)>;
+
+def : Pat<(int_processorNameValue_REMW X:$rs2, X:$rs1),
+        (REMW X:$rs2, X:$rs1)>;
+
+def : Pat<(int_processorNameValue_SLL X:$rs1, X:$rs2),
+        (SLL X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_SLLW X:$rs1, X:$rs2),
+        (SLLW X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_SLT X:$rs1, X:$rs2),
+        (SLT X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_SLTU X:$rs1, X:$rs2),
+        (SLTU X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_SRA X:$rs1, X:$rs2),
+        (SRA X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_SRAW X:$rs1, X:$rs2),
+        (SRAW X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_SRL X:$rs1, X:$rs2),
+        (SRL X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_SRLW X:$rs1, X:$rs2),
+        (SRLW X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_SUB X:$rs1, X:$rs2),
+        (SUB X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_SUBW X:$rs1, X:$rs2),
+        (SUBW X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_XOR X:$rs1, X:$rs2),
+        (XOR X:$rs1, X:$rs2)>;
