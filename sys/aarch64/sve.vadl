@@ -508,16 +508,13 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     let left  = $WXR($regSize)(rn) in
     let right = $WXR($regSize)(rm) in
     let pred  = 
-      //if right = $w.max
-      //  then $PtrueBHSD($w.elSize)
-      //  else
-        if VADL::$w.notcmp(left, right)
-        then PFalse
-        else let diff = (right - left) in
-          if diff >= $w.elCount
-          then $PtrueBHSD($w.elSize)
-          else let shift = ($w.elCount - diff as IndexE) << ElSize::$w.elSize in
-            $PtrueBHSD($w.elSize) as Bits<PL> >> shift
+      if VADL::$w.notcmp(left, right)
+      then PFalse
+      else let diff = (right - left) in
+        if diff >= $w.elCount
+        then $PtrueBHSD($w.elSize)
+        else let shift = ($w.elCount - diff as IndexE) << ElSize::$w.elSize in
+          $PtrueBHSD($w.elSize) as Bits<PL> >> shift
       in { $SetResultFlagsOnesSVE($w.elSize) }
   }
 
@@ -542,16 +539,13 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     let left  = $WXR($regSize)(rn) in
     let right = $WXR($regSize)(rm) in
     let pred  = 
-      //if right = $w.max
-      //  then $PtrueBHSD($w.elSize)
-      //  else
-        if VADL::$w.notcmp(left, right)
-        then PFalse
-        else let diff = (left - right) in
-          if diff >= $w.elCount
-          then $PtrueBHSD($w.elSize)
-          else let shift = ($w.elCount - diff as IndexE) << ElSize::$w.elSize in
-            $PtrueBHSD($w.elSize) as Bits<PL> << shift
+      if VADL::$w.notcmp(left, right)
+      then PFalse
+      else let diff = (left - right) in
+        if diff >= $w.elCount
+        then $PtrueBHSD($w.elSize)
+        else let shift = ($w.elCount - diff as IndexE) << ElSize::$w.elSize in
+          $PtrueBHSD($w.elSize) as Bits<PL> << shift
       in { $SetResultFlagsOnesSVE($w.elSize) }
   }
 
