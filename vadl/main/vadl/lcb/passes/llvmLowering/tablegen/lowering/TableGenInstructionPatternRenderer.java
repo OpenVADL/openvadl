@@ -96,6 +96,22 @@ public final class TableGenInstructionPatternRenderer {
   }
 
   /**
+   * Render the mapping between intrinsic and instruction.
+   */
+  public static String lower(List<TableGenMachineInstruction> tableGenMachineRecords,
+                             GenerateGcbIntrinsicsPass.GcbIntrinsic intrinsic) {
+    var records =
+        tableGenMachineRecords.stream().collect(Collectors.toMap(
+            TableGenMachineInstruction::instruction, x -> x));
+    var record = Objects.requireNonNull(records.get(intrinsic.instruction()));
+
+    return String.format("""
+        def : Pat<%s,
+                %s>;
+        """, lowerSelector(record, intrinsic), lowerMachine(record));
+  }
+
+  /**
    * Render the selector pattern.
    */
   public static String lowerSelector(Graph graph) {
@@ -140,21 +156,5 @@ public final class TableGenInstructionPatternRenderer {
     return "(" + record.getName() + " " + record.getInOperands().stream().map(
         InstructionOperandPrintable::render).collect(
         Collectors.joining(", ")) + ")";
-  }
-
-  /**
-   * Render the mapping between intrinsic and instruction.
-   */
-  public static String lower(List<TableGenMachineInstruction> tableGenMachineRecords,
-                             GenerateGcbIntrinsicsPass.GcbIntrinsic intrinsic) {
-    var records =
-        tableGenMachineRecords.stream().collect(Collectors.toMap(
-            TableGenMachineInstruction::instruction, x -> x));
-    var record = Objects.requireNonNull(records.get(intrinsic.instruction()));
-
-    return String.format("""
-        def : Pat<%s,
-                %s>;
-        """, lowerSelector(record, intrinsic), lowerMachine(record));
   }
 }
