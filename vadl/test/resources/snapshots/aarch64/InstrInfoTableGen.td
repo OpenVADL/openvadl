@@ -52057,3 +52057,987 @@ def : Pat<(mulhu X:$rn, X:$rm),
 /* Match the call sequence for global and external symbols */
 def : Pat<(target_call tglobaladdr:$func), (BL tglobaladdr:$func)>;
 def : Pat<(target_call texternalsym:$func), (BL texternalsym:$func)>;
+
+/* Intrinsics */
+
+
+def : Pat<(int_processorNameValue_ADCSW W:$rn, W:$rm),
+        (ADCSW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_ADCSX X:$rn, X:$rm),
+        (ADCSX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADCW W:$rn, W:$rm),
+        (ADCW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_ADCX X:$rn, X:$rm),
+        (ADCX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDW W:$rn, W:$rm),
+        (ADDW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWS W:$rn, W:$rm),
+        (ADDWS W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWSSXTB R:$rn, X:$rm),
+        (ADDWSSXTB R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWSSXTH R:$rn, X:$rm),
+        (ADDWSSXTH R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWSSXTW R:$rn, X:$rm),
+        (ADDWSSXTW R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWSSXTX R:$rn, X:$rm),
+        (ADDWSSXTX R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWSUXTB R:$rn, X:$rm),
+        (ADDWSUXTB R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWSUXTH R:$rn, X:$rm),
+        (ADDWSUXTH R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWSUXTW R:$rn, X:$rm),
+        (ADDWSUXTW R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWSUXTX R:$rn, X:$rm),
+        (ADDWSUXTX R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWSXTB R:$rn, X:$rm),
+        (ADDWSXTB R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWSXTH R:$rn, X:$rm),
+        (ADDWSXTH R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWSXTW R:$rn, X:$rm),
+        (ADDWSXTW R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWSXTX R:$rn, X:$rm),
+        (ADDWSXTX R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWUXTB R:$rn, X:$rm),
+        (ADDWUXTB R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWUXTH R:$rn, X:$rm),
+        (ADDWUXTH R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWUXTW R:$rn, X:$rm),
+        (ADDWUXTW R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDWUXTX R:$rn, X:$rm),
+        (ADDWUXTX R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDX X:$rn, X:$rm),
+        (ADDX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXS X:$rn, X:$rm),
+        (ADDXS X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXSSXTB S:$rn, X:$rm),
+        (ADDXSSXTB S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXSSXTH S:$rn, X:$rm),
+        (ADDXSSXTH S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXSSXTW S:$rn, X:$rm),
+        (ADDXSSXTW S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXSSXTX S:$rn, X:$rm),
+        (ADDXSSXTX S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXSUXTB S:$rn, X:$rm),
+        (ADDXSUXTB S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXSUXTH S:$rn, X:$rm),
+        (ADDXSUXTH S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXSUXTW S:$rn, X:$rm),
+        (ADDXSUXTW S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXSUXTX S:$rn, X:$rm),
+        (ADDXSUXTX S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXSXTB S:$rn, X:$rm),
+        (ADDXSXTB S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXSXTH S:$rn, X:$rm),
+        (ADDXSXTH S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXSXTW S:$rn, X:$rm),
+        (ADDXSXTW S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXSXTX S:$rn, X:$rm),
+        (ADDXSXTX S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXUXTB S:$rn, X:$rm),
+        (ADDXUXTB S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXUXTH S:$rn, X:$rm),
+        (ADDXUXTH S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXUXTW S:$rn, X:$rm),
+        (ADDXUXTW S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ADDXUXTX S:$rn, X:$rm),
+        (ADDXUXTX S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ANDSW W:$rn, W:$rm),
+        (ANDSW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_ANDSX X:$rn, X:$rm),
+        (ANDSX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ANDW W:$rn, W:$rm),
+        (ANDW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_ANDX X:$rn, X:$rm),
+        (ANDX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ASRW W:$rn, W:$rm),
+        (ASRW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_ASRX X:$rn, X:$rm),
+        (ASRX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_BICSW W:$rn, W:$rm),
+        (BICSW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_BICSX X:$rn, X:$rm),
+        (BICSX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_BICW W:$rn, W:$rm),
+        (BICW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_BICX X:$rn, X:$rm),
+        (BICX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CLSW W:$rn),
+        (CLSW W:$rn)>;
+
+def : Pat<(int_processorNameValue_CLSX X:$rn),
+        (CLSX X:$rn)>;
+
+def : Pat<(int_processorNameValue_CLZW W:$rn),
+        (CLZW W:$rn)>;
+
+def : Pat<(int_processorNameValue_CLZX X:$rn),
+        (CLZX X:$rn)>;
+
+def : Pat<(int_processorNameValue_CSELALW X:$rn, X:$rm),
+        (CSELALW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELALX X:$rn, X:$rm),
+        (CSELALX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELCCW X:$rn, X:$rm),
+        (CSELCCW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELCCX X:$rn, X:$rm),
+        (CSELCCX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELCSW X:$rn, X:$rm),
+        (CSELCSW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELCSX X:$rn, X:$rm),
+        (CSELCSX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELEQW X:$rn, X:$rm),
+        (CSELEQW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELEQX X:$rn, X:$rm),
+        (CSELEQX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELGEW X:$rn, X:$rm),
+        (CSELGEW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELGEX X:$rn, X:$rm),
+        (CSELGEX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELGTW X:$rn, X:$rm),
+        (CSELGTW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELGTX X:$rn, X:$rm),
+        (CSELGTX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELHIW X:$rn, X:$rm),
+        (CSELHIW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELHIX X:$rn, X:$rm),
+        (CSELHIX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELLEW X:$rn, X:$rm),
+        (CSELLEW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELLEX X:$rn, X:$rm),
+        (CSELLEX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELLSW X:$rn, X:$rm),
+        (CSELLSW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELLSX X:$rn, X:$rm),
+        (CSELLSX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELLTW X:$rn, X:$rm),
+        (CSELLTW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELLTX X:$rn, X:$rm),
+        (CSELLTX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELMIW X:$rn, X:$rm),
+        (CSELMIW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELMIX X:$rn, X:$rm),
+        (CSELMIX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELNEW X:$rn, X:$rm),
+        (CSELNEW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELNEX X:$rn, X:$rm),
+        (CSELNEX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELNVW X:$rn, X:$rm),
+        (CSELNVW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELNVX X:$rn, X:$rm),
+        (CSELNVX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELPLW X:$rn, X:$rm),
+        (CSELPLW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELPLX X:$rn, X:$rm),
+        (CSELPLX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELVCW X:$rn, X:$rm),
+        (CSELVCW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELVCX X:$rn, X:$rm),
+        (CSELVCX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELVSW X:$rn, X:$rm),
+        (CSELVSW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSELVSX X:$rn, X:$rm),
+        (CSELVSX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCALW X:$rn, X:$rm),
+        (CSINCALW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCALX X:$rn, X:$rm),
+        (CSINCALX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCCCW X:$rn, X:$rm),
+        (CSINCCCW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCCCX X:$rn, X:$rm),
+        (CSINCCCX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCCSW X:$rn, X:$rm),
+        (CSINCCSW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCCSX X:$rn, X:$rm),
+        (CSINCCSX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCEQW X:$rn, X:$rm),
+        (CSINCEQW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCEQX X:$rn, X:$rm),
+        (CSINCEQX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCGEW X:$rn, X:$rm),
+        (CSINCGEW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCGEX X:$rn, X:$rm),
+        (CSINCGEX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCGTW X:$rn, X:$rm),
+        (CSINCGTW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCGTX X:$rn, X:$rm),
+        (CSINCGTX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCHIW X:$rn, X:$rm),
+        (CSINCHIW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCHIX X:$rn, X:$rm),
+        (CSINCHIX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCLEW X:$rn, X:$rm),
+        (CSINCLEW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCLEX X:$rn, X:$rm),
+        (CSINCLEX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCLSW X:$rn, X:$rm),
+        (CSINCLSW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCLSX X:$rn, X:$rm),
+        (CSINCLSX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCLTW X:$rn, X:$rm),
+        (CSINCLTW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCLTX X:$rn, X:$rm),
+        (CSINCLTX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCMIW X:$rn, X:$rm),
+        (CSINCMIW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCMIX X:$rn, X:$rm),
+        (CSINCMIX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCNEW X:$rn, X:$rm),
+        (CSINCNEW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCNEX X:$rn, X:$rm),
+        (CSINCNEX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCNVW X:$rn, X:$rm),
+        (CSINCNVW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCNVX X:$rn, X:$rm),
+        (CSINCNVX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCPLW X:$rn, X:$rm),
+        (CSINCPLW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCPLX X:$rn, X:$rm),
+        (CSINCPLX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCVCW X:$rn, X:$rm),
+        (CSINCVCW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCVCX X:$rn, X:$rm),
+        (CSINCVCX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCVSW X:$rn, X:$rm),
+        (CSINCVSW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINCVSX X:$rn, X:$rm),
+        (CSINCVSX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVALW X:$rn, X:$rm),
+        (CSINVALW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVALX X:$rn, X:$rm),
+        (CSINVALX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVCCW X:$rn, X:$rm),
+        (CSINVCCW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVCCX X:$rn, X:$rm),
+        (CSINVCCX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVCSW X:$rn, X:$rm),
+        (CSINVCSW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVCSX X:$rn, X:$rm),
+        (CSINVCSX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVEQW X:$rn, X:$rm),
+        (CSINVEQW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVEQX X:$rn, X:$rm),
+        (CSINVEQX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVGEW X:$rn, X:$rm),
+        (CSINVGEW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVGEX X:$rn, X:$rm),
+        (CSINVGEX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVGTW X:$rn, X:$rm),
+        (CSINVGTW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVGTX X:$rn, X:$rm),
+        (CSINVGTX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVHIW X:$rn, X:$rm),
+        (CSINVHIW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVHIX X:$rn, X:$rm),
+        (CSINVHIX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVLEW X:$rn, X:$rm),
+        (CSINVLEW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVLEX X:$rn, X:$rm),
+        (CSINVLEX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVLSW X:$rn, X:$rm),
+        (CSINVLSW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVLSX X:$rn, X:$rm),
+        (CSINVLSX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVLTW X:$rn, X:$rm),
+        (CSINVLTW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVLTX X:$rn, X:$rm),
+        (CSINVLTX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVMIW X:$rn, X:$rm),
+        (CSINVMIW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVMIX X:$rn, X:$rm),
+        (CSINVMIX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVNEW X:$rn, X:$rm),
+        (CSINVNEW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVNEX X:$rn, X:$rm),
+        (CSINVNEX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVNVW X:$rn, X:$rm),
+        (CSINVNVW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVNVX X:$rn, X:$rm),
+        (CSINVNVX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVPLW X:$rn, X:$rm),
+        (CSINVPLW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVPLX X:$rn, X:$rm),
+        (CSINVPLX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVVCW X:$rn, X:$rm),
+        (CSINVVCW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVVCX X:$rn, X:$rm),
+        (CSINVVCX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVVSW X:$rn, X:$rm),
+        (CSINVVSW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSINVVSX X:$rn, X:$rm),
+        (CSINVVSX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGALW X:$rn, X:$rm),
+        (CSNEGALW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGALX X:$rn, X:$rm),
+        (CSNEGALX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGCCW X:$rn, X:$rm),
+        (CSNEGCCW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGCCX X:$rn, X:$rm),
+        (CSNEGCCX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGCSW X:$rn, X:$rm),
+        (CSNEGCSW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGCSX X:$rn, X:$rm),
+        (CSNEGCSX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGEQW X:$rn, X:$rm),
+        (CSNEGEQW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGEQX X:$rn, X:$rm),
+        (CSNEGEQX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGGEW X:$rn, X:$rm),
+        (CSNEGGEW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGGEX X:$rn, X:$rm),
+        (CSNEGGEX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGGTW X:$rn, X:$rm),
+        (CSNEGGTW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGGTX X:$rn, X:$rm),
+        (CSNEGGTX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGHIW X:$rn, X:$rm),
+        (CSNEGHIW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGHIX X:$rn, X:$rm),
+        (CSNEGHIX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGLEW X:$rn, X:$rm),
+        (CSNEGLEW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGLEX X:$rn, X:$rm),
+        (CSNEGLEX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGLSW X:$rn, X:$rm),
+        (CSNEGLSW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGLSX X:$rn, X:$rm),
+        (CSNEGLSX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGLTW X:$rn, X:$rm),
+        (CSNEGLTW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGLTX X:$rn, X:$rm),
+        (CSNEGLTX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGMIW X:$rn, X:$rm),
+        (CSNEGMIW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGMIX X:$rn, X:$rm),
+        (CSNEGMIX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGNEW X:$rn, X:$rm),
+        (CSNEGNEW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGNEX X:$rn, X:$rm),
+        (CSNEGNEX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGNVW X:$rn, X:$rm),
+        (CSNEGNVW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGNVX X:$rn, X:$rm),
+        (CSNEGNVX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGPLW X:$rn, X:$rm),
+        (CSNEGPLW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGPLX X:$rn, X:$rm),
+        (CSNEGPLX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGVCW X:$rn, X:$rm),
+        (CSNEGVCW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGVCX X:$rn, X:$rm),
+        (CSNEGVCX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGVSW X:$rn, X:$rm),
+        (CSNEGVSW X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_CSNEGVSX X:$rn, X:$rm),
+        (CSNEGVSX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_EONW W:$rn, W:$rm),
+        (EONW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_EONX X:$rn, X:$rm),
+        (EONX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_EORW W:$rn, W:$rm),
+        (EORW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_EORX X:$rn, X:$rm),
+        (EORX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegBSXTWIs S:$rn, X:$rm),
+        (LDRRegBSXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegBSXTWUn S:$rn, X:$rm),
+        (LDRRegBSXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegBSXTXIs S:$rn, X:$rm),
+        (LDRRegBSXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegBSXTXUn S:$rn, X:$rm),
+        (LDRRegBSXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegBUXTWIs S:$rn, X:$rm),
+        (LDRRegBUXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegBUXTWUn S:$rn, X:$rm),
+        (LDRRegBUXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegBUXTXIs S:$rn, X:$rm),
+        (LDRRegBUXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegBUXTXUn S:$rn, X:$rm),
+        (LDRRegBUXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegHSXTWIs S:$rn, X:$rm),
+        (LDRRegHSXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegHSXTWUn S:$rn, X:$rm),
+        (LDRRegHSXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegHSXTXIs S:$rn, X:$rm),
+        (LDRRegHSXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegHSXTXUn S:$rn, X:$rm),
+        (LDRRegHSXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegHUXTWIs S:$rn, X:$rm),
+        (LDRRegHUXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegHUXTWUn S:$rn, X:$rm),
+        (LDRRegHUXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegHUXTXIs S:$rn, X:$rm),
+        (LDRRegHUXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegHUXTXUn S:$rn, X:$rm),
+        (LDRRegHUXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSBWSXTWIs S:$rn, X:$rm),
+        (LDRRegSBWSXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSBWSXTWUn S:$rn, X:$rm),
+        (LDRRegSBWSXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSBWSXTXIs S:$rn, X:$rm),
+        (LDRRegSBWSXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSBWSXTXUn S:$rn, X:$rm),
+        (LDRRegSBWSXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSBWUXTWIs S:$rn, X:$rm),
+        (LDRRegSBWUXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSBWUXTWUn S:$rn, X:$rm),
+        (LDRRegSBWUXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSBWUXTXIs S:$rn, X:$rm),
+        (LDRRegSBWUXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSBWUXTXUn S:$rn, X:$rm),
+        (LDRRegSBWUXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSBXSXTWIs S:$rn, X:$rm),
+        (LDRRegSBXSXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSBXSXTWUn S:$rn, X:$rm),
+        (LDRRegSBXSXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSBXSXTXIs S:$rn, X:$rm),
+        (LDRRegSBXSXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSBXSXTXUn S:$rn, X:$rm),
+        (LDRRegSBXSXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSBXUXTWIs S:$rn, X:$rm),
+        (LDRRegSBXUXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSBXUXTWUn S:$rn, X:$rm),
+        (LDRRegSBXUXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSBXUXTXIs S:$rn, X:$rm),
+        (LDRRegSBXUXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSBXUXTXUn S:$rn, X:$rm),
+        (LDRRegSBXUXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSHWSXTWIs S:$rn, X:$rm),
+        (LDRRegSHWSXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSHWSXTWUn S:$rn, X:$rm),
+        (LDRRegSHWSXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSHWSXTXIs S:$rn, X:$rm),
+        (LDRRegSHWSXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSHWSXTXUn S:$rn, X:$rm),
+        (LDRRegSHWSXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSHWUXTWIs S:$rn, X:$rm),
+        (LDRRegSHWUXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSHWUXTWUn S:$rn, X:$rm),
+        (LDRRegSHWUXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSHWUXTXIs S:$rn, X:$rm),
+        (LDRRegSHWUXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSHWUXTXUn S:$rn, X:$rm),
+        (LDRRegSHWUXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSHXSXTWIs S:$rn, X:$rm),
+        (LDRRegSHXSXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSHXSXTWUn S:$rn, X:$rm),
+        (LDRRegSHXSXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSHXSXTXIs S:$rn, X:$rm),
+        (LDRRegSHXSXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSHXSXTXUn S:$rn, X:$rm),
+        (LDRRegSHXSXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSHXUXTWIs S:$rn, X:$rm),
+        (LDRRegSHXUXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSHXUXTWUn S:$rn, X:$rm),
+        (LDRRegSHXUXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSHXUXTXIs S:$rn, X:$rm),
+        (LDRRegSHXUXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSHXUXTXUn S:$rn, X:$rm),
+        (LDRRegSHXUXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSWXSXTWIs S:$rn, X:$rm),
+        (LDRRegSWXSXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSWXSXTWUn S:$rn, X:$rm),
+        (LDRRegSWXSXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSWXSXTXIs S:$rn, X:$rm),
+        (LDRRegSWXSXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSWXSXTXUn S:$rn, X:$rm),
+        (LDRRegSWXSXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSWXUXTWIs S:$rn, X:$rm),
+        (LDRRegSWXUXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSWXUXTWUn S:$rn, X:$rm),
+        (LDRRegSWXUXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSWXUXTXIs S:$rn, X:$rm),
+        (LDRRegSWXUXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegSWXUXTXUn S:$rn, X:$rm),
+        (LDRRegSWXUXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegWSXTWIs S:$rn, X:$rm),
+        (LDRRegWSXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegWSXTWUn S:$rn, X:$rm),
+        (LDRRegWSXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegWSXTXIs S:$rn, X:$rm),
+        (LDRRegWSXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegWSXTXUn S:$rn, X:$rm),
+        (LDRRegWSXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegWUXTWIs S:$rn, X:$rm),
+        (LDRRegWUXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegWUXTWUn S:$rn, X:$rm),
+        (LDRRegWUXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegWUXTXIs S:$rn, X:$rm),
+        (LDRRegWUXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegWUXTXUn S:$rn, X:$rm),
+        (LDRRegWUXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegXSXTWIs S:$rn, X:$rm),
+        (LDRRegXSXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegXSXTWUn S:$rn, X:$rm),
+        (LDRRegXSXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegXSXTXIs S:$rn, X:$rm),
+        (LDRRegXSXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegXSXTXUn S:$rn, X:$rm),
+        (LDRRegXSXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegXUXTWIs S:$rn, X:$rm),
+        (LDRRegXUXTWIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegXUXTWUn S:$rn, X:$rm),
+        (LDRRegXUXTWUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegXUXTXIs S:$rn, X:$rm),
+        (LDRRegXUXTXIs S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LDRRegXUXTXUn S:$rn, X:$rm),
+        (LDRRegXUXTXUn S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LSLW W:$rn, W:$rm),
+        (LSLW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_LSLX X:$rn, X:$rm),
+        (LSLX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_LSRW W:$rn, W:$rm),
+        (LSRW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_LSRX X:$rn, X:$rm),
+        (LSRX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_MADDW W:$ra, W:$rn, W:$rm),
+        (MADDW W:$ra, W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_MADDX X:$ra, X:$rn, X:$rm),
+        (MADDX X:$ra, X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_MSUBW W:$ra, W:$rn, W:$rm),
+        (MSUBW W:$ra, W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_MSUBX X:$ra, X:$rn, X:$rm),
+        (MSUBX X:$ra, X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ORNW W:$rn, W:$rm),
+        (ORNW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_ORNX X:$rn, X:$rm),
+        (ORNX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_ORRW W:$rn, W:$rm),
+        (ORRW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_ORRX X:$rn, X:$rm),
+        (ORRX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_REV16W X:$rn),
+        (REV16W X:$rn)>;
+
+def : Pat<(int_processorNameValue_REV16X X:$rn),
+        (REV16X X:$rn)>;
+
+def : Pat<(int_processorNameValue_REV32 X:$rn),
+        (REV32 X:$rn)>;
+
+def : Pat<(int_processorNameValue_REVW X:$rn),
+        (REVW X:$rn)>;
+
+def : Pat<(int_processorNameValue_REVX X:$rn),
+        (REVX X:$rn)>;
+
+def : Pat<(int_processorNameValue_RORW W:$rn, W:$rm),
+        (RORW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_RORX X:$rn, X:$rm),
+        (RORX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SBCSW W:$rn, W:$rm),
+        (SBCSW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_SBCSX X:$rn, X:$rm),
+        (SBCSX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SBCW W:$rn, W:$rm),
+        (SBCW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_SBCX X:$rn, X:$rm),
+        (SBCX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SDIVW W:$rm, W:$rn),
+        (SDIVW W:$rm, W:$rn)>;
+
+def : Pat<(int_processorNameValue_SDIVX X:$rm, X:$rn),
+        (SDIVX X:$rm, X:$rn)>;
+
+def : Pat<(int_processorNameValue_SMADDL X:$ra, W:$rn, W:$rm),
+        (SMADDL X:$ra, W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_SMSUBL X:$ra, W:$rn, W:$rm),
+        (SMSUBL X:$ra, W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_SMULH X:$rn, X:$rm),
+        (SMULH X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBW W:$rn, W:$rm),
+        (SUBW W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWS W:$rn, W:$rm),
+        (SUBWS W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWSSXTB R:$rn, X:$rm),
+        (SUBWSSXTB R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWSSXTH R:$rn, X:$rm),
+        (SUBWSSXTH R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWSSXTW R:$rn, X:$rm),
+        (SUBWSSXTW R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWSSXTX R:$rn, X:$rm),
+        (SUBWSSXTX R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWSUXTB R:$rn, X:$rm),
+        (SUBWSUXTB R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWSUXTH R:$rn, X:$rm),
+        (SUBWSUXTH R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWSUXTW R:$rn, X:$rm),
+        (SUBWSUXTW R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWSUXTX R:$rn, X:$rm),
+        (SUBWSUXTX R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWSXTB R:$rn, X:$rm),
+        (SUBWSXTB R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWSXTH R:$rn, X:$rm),
+        (SUBWSXTH R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWSXTW R:$rn, X:$rm),
+        (SUBWSXTW R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWSXTX R:$rn, X:$rm),
+        (SUBWSXTX R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWUXTB R:$rn, X:$rm),
+        (SUBWUXTB R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWUXTH R:$rn, X:$rm),
+        (SUBWUXTH R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWUXTW R:$rn, X:$rm),
+        (SUBWUXTW R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBWUXTX R:$rn, X:$rm),
+        (SUBWUXTX R:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBX X:$rn, X:$rm),
+        (SUBX X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXS X:$rn, X:$rm),
+        (SUBXS X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXSSXTB S:$rn, X:$rm),
+        (SUBXSSXTB S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXSSXTH S:$rn, X:$rm),
+        (SUBXSSXTH S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXSSXTW S:$rn, X:$rm),
+        (SUBXSSXTW S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXSSXTX S:$rn, X:$rm),
+        (SUBXSSXTX S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXSUXTB S:$rn, X:$rm),
+        (SUBXSUXTB S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXSUXTH S:$rn, X:$rm),
+        (SUBXSUXTH S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXSUXTW S:$rn, X:$rm),
+        (SUBXSUXTW S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXSUXTX S:$rn, X:$rm),
+        (SUBXSUXTX S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXSXTB S:$rn, X:$rm),
+        (SUBXSXTB S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXSXTH S:$rn, X:$rm),
+        (SUBXSXTH S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXSXTW S:$rn, X:$rm),
+        (SUBXSXTW S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXSXTX S:$rn, X:$rm),
+        (SUBXSXTX S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXUXTB S:$rn, X:$rm),
+        (SUBXUXTB S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXUXTH S:$rn, X:$rm),
+        (SUBXUXTH S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXUXTW S:$rn, X:$rm),
+        (SUBXUXTW S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_SUBXUXTX S:$rn, X:$rm),
+        (SUBXUXTX S:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_UDIVW W:$rm, W:$rn),
+        (UDIVW W:$rm, W:$rn)>;
+
+def : Pat<(int_processorNameValue_UDIVX X:$rm, X:$rn),
+        (UDIVX X:$rm, X:$rn)>;
+
+def : Pat<(int_processorNameValue_UMADDL X:$ra, W:$rn, W:$rm),
+        (UMADDL X:$ra, W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_UMSUBL X:$ra, W:$rn, W:$rm),
+        (UMSUBL X:$ra, W:$rn, W:$rm)>;
+
+def : Pat<(int_processorNameValue_UMULH X:$rn, X:$rm),
+        (UMULH X:$rn, X:$rm)>;
