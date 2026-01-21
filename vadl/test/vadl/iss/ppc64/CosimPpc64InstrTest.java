@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -484,7 +484,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   Stream<DynamicTest> cmprb() throws IOException {
     return testTCRFieldModeSSRegInstruction("cmprb", "CMPRB");
   }
-  /*
+
   @TestFactory
   @Order(70)
   Stream<DynamicTest> lbz() throws IOException {
@@ -586,7 +586,7 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
   Stream<DynamicTest> lwbrx() throws IOException {
     return testXFormLoadInstruction("lwbrx", "LWBRX", false);
   }
-  */
+
   @TestFactory
   @Order(87)
   Stream<DynamicTest> stb() throws IOException {
@@ -1068,9 +1068,9 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       var regSrc = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc)).sample() :
           b.anyReg().sample();
-      BigInteger val1 = b.anyImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE));
-      BigInteger val2 = b.anyImmU(15);
-      b.fillMem(val1.add(val2));
+      BigInteger val1 = b.anyImmU(15);
+      BigInteger val2 = b.anyImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE));
+      b.fillMem(Objects.equals(regSrc, "0") ? val2 : val1.add(val2));
       b.fillReg(regSrc, val1);
       b.add("%s %s, %s(%s)", instruction, regDest, val2, regSrc);
       return b.toTestCase();
@@ -1085,10 +1085,10 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       var regSrc1 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       var regSrc2 = b.anyReg().sample();
       var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc1)).sample() :
-          b.anyReg().sample();
-      BigInteger val1 = b.anyImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE));
-      BigInteger val2 = b.anyImmU(15);
-      b.fillMem(val1.add(val2));
+          b.anyReg().filter(r -> !Objects.equals(r, regSrc1)).sample();
+      BigInteger val1 = b.anyImmU(15);
+      BigInteger val2 = b.anyImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE));
+      b.fillMem(Objects.equals(regSrc1, "0") ? val2 : val1.add(val2));
       b.fillReg(regSrc1, val1);
       b.fillReg(regSrc2, val2);
       b.add("%s %s, %s, %s", instruction, regDest, regSrc1, regSrc2);

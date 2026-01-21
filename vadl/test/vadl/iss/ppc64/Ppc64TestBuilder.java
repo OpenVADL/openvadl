@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -68,9 +68,9 @@ public class Ppc64TestBuilder {
 
   // loads a random 32-bit value into memory
   public BigInteger fillMem(BigInteger mem) {
-    fillReg("0", mem);
-    BigInteger value = fillReg("1");
-    add("stw 1, 0(0)");
+    fillReg("1", mem);
+    BigInteger value = fillReg("2");
+    add("stw 2, 0(1)");
     return value;
   }
 
