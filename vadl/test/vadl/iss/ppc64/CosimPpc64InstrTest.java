@@ -19,55 +19,24 @@ package vadl.iss.ppc64;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.TestMethodOrder;
-import vadl.iss.CosimInstrTest;
-import vadl.iss.CosimTestUtils;
 
 /* Tests ppc64.vadl instructions against the QEMU ppc64 simulator.
- * Some instructions are defined in the VADL specification but are not covered by the tests.
- * These are: mfmsr, mtmsr, mfspr, mtspr, mftb and all branch instructions
- * Load/Store instructions are tested with a reduced address space (0x0000'0000'0000'1000 - 0x0000'0000'0000'FFFF)
+ * Some instructions are defined in the VADL specification but are not covered by these tests:
+ *   mfmsr, mtmsr, mfspr, mtspr, mftb and all branch instructions.
+ * Load/Store instructions are tested with a reduced address space:
+ *   0x0000'0000'0000'1000 - 0x0000'0000'0000'FFFF
  */
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class CosimPpc64InstrTest extends CosimInstrTest {
+public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
 
   private static final long BASE_ADDRESS_LOAD_STORE = 0x1000L;
-
-  public Ppc64TestBuilder getBuilder(String name, int id) {
-    return new Ppc64TestBuilder(name, id);
-  }
-
-  @Override
-  public int getTestPerInstruction() {
-    return 50;
-  }
-
-  @Override
-  public String getVadlSpec() {
-    return "sys/ppc64/ppc64.vadl";
-  }
-
-  @Override
-  protected String getScriptFolder() {
-    return "ppc64";
-  }
-
-  @Override
-  public String getCosimConfigFileName() {
-    return "ppc64_config.toml";
-  }
-
-  @Override
-  public String withUpstreamTarget() {
-    return "ppc64-softmmu";
-  }
 
   @TestFactory
   @Order(1)
@@ -1124,23 +1093,6 @@ public class CosimPpc64InstrTest extends CosimInstrTest {
       b.add("%s %s, %s, %s", instruction, regSrc1, regSrc2, regSrc3);
       return b.toTestCase();
     });
-  }
-
-  // runs tests in 32- and 64-bit mode
-  private Stream<DynamicTest> runTests3264With(
-      Function<Integer, CosimTestUtils.TestCase> generators)
-      throws IOException {
-    Function<Integer, CosimTestUtils.TestCase> tests32 = id -> {
-      CosimTestUtils.TestCase test = generators.apply(id);
-      return new CosimTestUtils.TestCase(test.id() + " (32-bit)", false, test.asmCore());
-    };
-    Function<Integer, CosimTestUtils.TestCase> tests64 = id -> {
-      CosimTestUtils.TestCase test = generators.apply(id);
-      return new CosimTestUtils.TestCase(test.id() + " (64-bit)", false, "trap\n" + test.asmCore());
-    };
-    Stream<DynamicTest> dynamicTests32 = runTestsWith(tests32);
-    Stream<DynamicTest> dynamicTests64 = runTestsWith(tests64);
-    return Stream.concat(dynamicTests32, dynamicTests64);
   }
 
 }

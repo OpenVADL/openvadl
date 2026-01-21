@@ -86,13 +86,14 @@ instruction set architecture PPC64SFS = {
   alias register CRB : Bits<32><1> = CR          // 32 condition register bits
 
   register MSR  : MSRFormat                      // machine state register
+  register SRR0 : Reg64                          // machine status save/ restore register 1
+  register SRR1 : Reg64                          // machine status save/ restore register 2
+
   register XER  : XERFormat                      // exception/ status register
   register LR   : Reg64                          // link register
   register CTR  : Reg64                          // count register
   register TB   : Reg64                          // time base register
   register TAR  : Reg64                          // target address register
-  register SRR0 : Reg64                          // machine status save/ restore register 1
-  register SRR1 : Reg64                          // machine status save/ restore register 2
 
   enumeration Mode : Bit =                       // computation modes, M32 = 32-bit mode
   { M32
@@ -1131,8 +1132,12 @@ instruction set architecture PPC64SFS = {
     instruction AsId($x.asm) : XFXFormB =
       match : Stat ( $read = true => $ReadSPR(); _ => $WriteSPR() )
     encoding AsId($x.asm) = {opcd = 0b011111, extopcd = $x.ext, rsv = 0b0}
-    assembly AsId($x.asm) = ($x.asm, " ", match : Ex ( $read = true => decimal( rs); _ => decimal(spr) ),
-                                     ",", match : Ex ( $read = true => decimal(spr); _ => decimal( rs) ))
+    assembly AsId($x.asm) = ($x.asm, " ", match : Ex ( $read = true => decimal(rs)
+                                                     ; _            => decimal((spr(4..0), spr(9..5)))
+                                                     ), ",",
+                                          match : Ex ( $read = true => decimal((spr(4..0), spr(9..5)))
+                                                     ; _            => decimal(rs)
+                                                     ))
   }
 
   // instructions: crand, crandc, creqv, crnand, crnor, cror, crorc, crxor

@@ -19,6 +19,7 @@ package vadl.iss.ppc64;
 import com.google.errorprone.annotations.FormatMethod;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 import net.jqwik.api.Arbitraries;
@@ -26,6 +27,13 @@ import net.jqwik.api.Arbitrary;
 import vadl.iss.CosimTestUtils;
 
 public class Ppc64TestBuilder {
+
+  private static final int[] implementedSPRs = {
+      0b00000_00001, // XER
+      0b00000_01000, // LR
+      0b00000_01001, // CTR
+      0b11001_01111  // TAR
+  };
 
   private static final int commentCol = 40;
 
@@ -80,6 +88,11 @@ public class Ppc64TestBuilder {
 
   public Arbitrary<String> anyRegExceptZero() {
     return Arbitraries.of(IntStream.range(1, 32).mapToObj(Integer::toString).toList());
+  }
+
+  public Arbitrary<String> anySpecialReg() {
+    return Arbitraries.of(Arrays.stream(implementedSPRs)
+        .mapToObj(String::valueOf).toArray(String[]::new));
   }
 
   public Arbitrary<String> anyCRField() {
