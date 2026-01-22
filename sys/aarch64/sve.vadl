@@ -383,34 +383,45 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
       let mask = P(pg) as BitsP in
       let pred = P(pn) as BitsP in
         $SetFlagsMaskedSVE (SizeB)
-    encoding $i.id = { op = 0b0010'0101'01, opc = $i.opcode, setfl = FF::OffFlags, pm = 0, pd = 0 }
+    encoding $i.id = { op = 0b0010'0101'01, opc = $i.opcode, setfl = FF::SetFlags, pm = 0, pd = 0 }
     assembly $i.id = ($i.mnemo, ' ', register(pg), ', ', register(pn), '.b')
     }
 
-// predicate next models *******************************************************
+// predicate first / next models ***********************************************
 
-  format SVEPredNextFormat: Instr =        // SVE predicate next format
+  format SVEPredFirstNextFormat: Instr =   // SVE predicate first / next format
     { op       [31..24,21..20] : Bits10    // opcode
     , size     [23..22]        : Bits2     // elements size (ElSize)
     , opc      [19..9,4]       : Bits12    // opcode second part
-    , pv       [8..5]          : IndexP    // 1st source predicate register
+    , pg       [8..5]          : IndexP    // 1st source predicate register
     , pd       [3..0]          : IndexP    // 2nd source / destination predicate register
     }
 
+  model SVEPredFirstInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
+    instruction $i.id: SVEPredFirstNextFormat =
+      let mask = P(pg) as BitsP in
+      let src  = P(pd) as BitsP in
+      let orMask = if mask = 0 then 0 else let trail = VADL::ctz(mask) in 1 as BitsP << trail in
+      let pred = src | orMask in
+        $SetFlagsMaskedSVE ($elSize)
+    encoding $i.id = { op = 0b0010'0101'01, opc = $i.opcode, size = 0b01 }
+    assembly $i.id = ($i.mnemo, ' ', register(pd), $elStr, ', ', register(pg),', ', register(pd), $elStr)
+    }
+
   model SVEPredNextInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
-    instruction $i.id: SVEPredNextFormat =
-      let mask = P(pv) as BitsP & $PtrueBHSD ($elSize) in
+    instruction $i.id: SVEPredFirstNextFormat =
+      let mask = P(pg) as BitsP & $PtrueBHSD ($elSize) in
       let src  = P(pd) as BitsP & $PtrueBHSD ($elSize) in
       let clrMsk = if src = 0 then mask else let lead = VADL::clz(src) + 1 in mask << lead >> lead in
       let pred = if clrMsk = 0 then 0 else let trail = PL - 1 - VADL::clz(clrMsk) in clrMsk >> trail << trail in
         $SetFlagsMaskedSVE ($elSize)
     encoding $i.id = { op = 0b0010'0101'01, opc = $i.opcode, size = ElSize::$elSize }
-    assembly $i.id = ($i.mnemo, ' ', register(pd), $elStr, ', ', register(pv),', ', register(pd), $elStr)
+    assembly $i.id = ($i.mnemo, ' ', register(pd), $elStr, ', ', register(pg),', ', register(pd), $elStr)
     }
 
-// count models ****************************************************************
+// predicate count models ******************************************************
 
-  format SVECountFormat: Instr =           // SVE count predicate format
+  format SVEPredCountFormat: Instr =       // SVE predicate count format
     { op       [31..24,21..19] : Bits11    // opcode
     , size     [23..22]        : Bits2     // elements size (ElSize)
     , opc      [18..14,9]      : Bits6     // opcode second part
@@ -419,8 +430,8 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     , rd       [4..0]          : Index     // destination X register
     }
 
-  model SVECountInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
-    instruction $i.id: SVECountFormat =
+  model SVEPredCountInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
+    instruction $i.id: SVEPredCountFormat =
       let elMsk = $PtrueBHSD ($elSize) in
       let msk   = P(pg) in
       let src   = P(pn) in
@@ -432,31 +443,19 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
 // SVE while models ************************************************************
 
-  constant MaxUIntX : UIntX = 0xffff'ffff'ffff'ffff
-  constant MaxSIntX : SIntX = 0x7fff'ffff'ffff'ffff
-  constant MaxUIntW : UIntW = 0xffff'ffff
-  constant MaxSIntW : SIntW = 0x7fff'ffff
-  constant MinUIntX : UIntX = 0x0000'0000'0000'0000
-  constant MinSIntX : SIntX = 0x8000'0000'0000'0000
-  constant MinUIntW : UIntW = 0x0000'0000
-//  constant MinSIntW : SIntW = 0x8000'0000
-  constant MinSIntW : UIntW = 0x8000'0000                // temporary workaround for a type checker bug
+  constant MaxUIntX : BitsX = 0xffff'ffff'ffff'ffff
+  constant MaxSIntX : BitsX = 0x7fff'ffff'ffff'ffff
+  constant MaxUIntW : BitsW = 0xffff'ffff
+  constant MaxSIntW : BitsW = 0x7fff'ffff
+  constant MinUIntX : BitsX = 0x0000'0000'0000'0000
+  constant MinSIntX : BitsX = 0x8000'0000'0000'0000
+  constant MinUIntW : BitsW = 0x0000'0000
+  constant MinSIntW : BitsW = 0x8000'0000
 
-  model UMax (size: Id): Id = {
-    match: Id ($size = WSize => MaxUIntW ; _ => MaxUIntX)
-  }
-
-  model SMax (size: Id): Id = {
-    match: Id ($size = WSize => MaxSIntW ; _ => MaxSIntX)
-  }
-
-  model UMin (size: Id): Id = {
-    match: Id ($size = WSize => MinUIntW ; _ => MinUIntX)
-  }
-
-  model SMin (size: Id): Id = {
-    match: Id ($size = WSize => MinSIntW ; _ => MinSIntX)
-  }
+  model UMax (size: Id): Id = { match: Id ($size = WSize => MaxUIntW ; _ => MaxUIntX) }
+  model SMax (size: Id): Id = { match: Id ($size = WSize => MaxSIntW ; _ => MaxSIntX) }
+  model UMin (size: Id): Id = { match: Id ($size = WSize => MinUIntW ; _ => MinUIntX) }
+  model SMin (size: Id): Id = { match: Id ($size = WSize => MinSIntW ; _ => MinSIntX) }
 
   enumeration CondSVE : Bits<3> =          // SVE condition code encodings
     { GE = 0b000                           // Greater or Equal signed   U == 0   LT == 0   EQ == 0
@@ -480,7 +479,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     , pd       [3..0]          : IndexP    // destination predicate register
     }
 
-  record WhileRec  (cond: Id, max: Id, notcmp: Id, elCount: Id, elSize: Id, elStr: Str)
+  record WhileRec  (cond: Id, minmax: Id, notcmp: Id, elCount: Id, elSize: Id, elStr: Str)
 
   model WXR (size: Id): Id = {
     match: Id ($size = WSize => W ; _ => X)
@@ -492,7 +491,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     let left  = $WXR($regSize)(rn) in
     let right = $WXR($regSize)(rm) in
     let pred  = 
-      if right = $w.max
+      if right = $w.minmax
         then $PtrueBHSD($w.elSize)
         else
         if VADL::$w.notcmp(left, right)
@@ -519,11 +518,11 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
       in { $SetResultFlagsOnesSVE($w.elSize) }
   }
 
-    model SVEWhileStatHSGE (w: WhileRec, regSize: Id): Stat = {
+  model SVEWhileStatHSGE (w: WhileRec, regSize: Id): Stat = {
     let left  = $WXR($regSize)(rn) in
     let right = $WXR($regSize)(rm) in
     let pred  = 
-      if right = $w.max
+      if right = $w.minmax
         then $PtrueBHSD($w.elSize)
         else
         if VADL::$w.notcmp(left, right)
@@ -536,7 +535,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
       in { $SetResultFlagsOnesSVE($w.elSize) }
   }
 
-    model SVEWhileStatHIGT (w: WhileRec, regSize: Id): Stat = {
+  model SVEWhileStatHIGT (w: WhileRec, regSize: Id): Stat = {
     let left  = $WXR($regSize)(rn) in
     let right = $WXR($regSize)(rm) in
     let pred  = 
@@ -737,6 +736,10 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     $modelid ($ExtInstrStr ($i; "D"); NumElementsD; SizeD; ".d")
     }
 
+  model InstrB (modelid: InstrWithFunctElemSizeType, i: InstrWithFunct): IsaDefs = {
+    $modelid ($ExtInstrStr ($i; "B"); NumElementsB; SizeB; ".b")
+  }
+
   model InstrSD (modelid: InstrWithFunctElemSizeType, i: InstrWithFunct): IsaDefs = {
     $modelid ($ExtInstrStr ($i; "S"); NumElementsS; SizeS; ".s")
     $modelid ($ExtInstrStr ($i; "D"); NumElementsD; SizeD; ".d")
@@ -776,9 +779,11 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   $SVEPredLogicInstr(                            (SVEPORN       ; "orn"   ; 0b1'0101         ; predOrn  ))
   $SVEPredLogicInstr(                            (SVEPOR        ; "orr"   ; 0b1'0100         ; predOr   ))
   $SVEPredLogicOffFl(                            (SVEPSEL       ; "sel"   ; 0b0'0111         ; predSel  ))
+  $SVEPredTestInstr (                            (SVEPTEST      ; "ptest" ; 0b0'1100         ; unused   ))
 
+  $InstrB           (SVEPredFirstInstr         ; (SVEPFIRST     ; "pfirst"; 0b1000'1100'0000 ; unused   ))
   $InstrBHSD        (SVEPredNextInstr          ; (SVEPNEXT      ; "pnext" ; 0b1001'1100'0100 ; unused   ))
-  $InstrBHSD        (SVECountInstr             ; (SVECOUNTP     ; "cntp"  ; 0b0001'00        ; unused   ))
+  $InstrBHSD        (SVEPredCountInstr         ; (SVECOUNTP     ; "cntp"  ; 0b0001'00        ; unused   ))
   $InstrBHSD        (SVEWhileXWInstr           ; (SVEWHILE      ; "while" ; 0b000            ; unused   ))
 //
 //  $InstrMemLD16     (SVELoadScalarScalarInstr  ; (SVEsclLD1     ; "ld1"   ;  0b010           ; unused   ))
