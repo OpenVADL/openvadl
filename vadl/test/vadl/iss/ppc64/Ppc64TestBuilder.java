@@ -29,10 +29,10 @@ import vadl.iss.CosimTestUtils;
 public class Ppc64TestBuilder {
 
   private static final int[] implementedSPRs = {
-      0b00000_00001, // XER
-      0b00000_01000, // LR
-      0b00000_01001, // CTR
-      0b11001_01111  // TAR
+      0b00000_00001, // XER [  1]
+      0b00000_01000, // LR  [  8]
+      0b00000_01001, // CTR [  9]
+      0b11001_01111  // TAR [815]
   };
 
   private static final int commentCol = 40;
@@ -140,6 +140,15 @@ public class Ppc64TestBuilder {
         "12", "14", "15", // 011at
         "16", "24", "25", // 1a00t
         "18", "26", "27", // 1a01t
+        "20"              // 1z1zz
+    };
+    return Arbitraries.of(validPatterns).sample();
+  }
+
+  public String getLimitedBOField() {
+    String[] validPatterns = {
+        "4",  "6",  "7",  // 001at
+        "12", "14", "15", // 011at
         "20"              // 1z1zz
     };
     return Arbitraries.of(validPatterns).sample();

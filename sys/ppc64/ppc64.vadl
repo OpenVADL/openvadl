@@ -677,10 +677,12 @@ instruction set architecture PPC64SFS = {
   model BFormBranchInstrExt (eid : Id, asm : Str, lk : Bool, aa : Bool) : IsaDefs = {
     instruction $eid : BForm = {
       $CS($lk; LR := PC.next)
-      if ~bo(2) then CTR := CTR - 1
-      let mctr = if MSR.sf = Mode::M32 then CTR & maxU32E else CTR in
-        if (bo(2) | ((mctr != 0) ^ bo(1))) & (bo(4) | ($CRBit(crbs) = bo(3)))
-        then PC := $TargetAddrImm(extBd; $aa)
+      let nctr = if bo(2) then CTR else CTR - 1 in
+        let mctr = if MSR.sf = Mode::M32 then nctr & maxU32E else nctr in {
+          if (bo(2) | ((mctr != 0) ^ bo(1))) & (bo(4) | ($CRBit(crbs) = bo(3)))
+          then PC := $TargetAddrImm(extBd; $aa)
+          CTR := nctr
+        }
     }
     encoding $eid = {opcd = 0b010000, aa = $aa, lk = $lk}
     assembly $eid = ($asm, $laStr($lk; $aa), " ", decimal(bo), ",", decimal(crbs), ",", decimal($TargetAddrImm(extBd; $aa)))
@@ -1152,13 +1154,14 @@ instruction set architecture PPC64SFS = {
 
   model XLFormBranchInstrExt (eid : Id, r : XLFormBranchInstrRec, lk : Bool) : IsaDefs = {
     instruction $eid : XLFormB =
-      let lrv = PC.next in {
-        if ($r.cntr as Bit) & ~bo(2) then CTR := CTR - 1
-        let mctr = if MSR.sf = Mode::M32 then CTR & maxU32E else CTR in
-          if (~($r.cntr as Bit) | bo(2) | ((mctr != 0) ^ bo(1))) & (bo(4) | ($CRBit(crbs) = bo(3)))
-          then PC := $TargetAddrReg($r.breg)
-        $CS($lk; LR := lrv)
-      }
+      let lrv = PC.next in
+        let nctr = if ~($r.cntr as Bit) | bo(2) then CTR else CTR - 1 in
+          let mctr = if MSR.sf = Mode::M32 then nctr & maxU32E else nctr in {
+            if (~($r.cntr as Bit) | bo(2) | ((mctr != 0) ^ bo(1))) & (bo(4) | ($CRBit(crbs) = bo(3)))
+            then PC := $TargetAddrReg($r.breg)
+            $CS($lk    ; LR  := lrv )
+            $CS($r.cntr; CTR := nctr)
+          }
     encoding $eid = {opcd = 0b010011, rsv = 0b000, bh = 0b00, extopcd = $r.x.ext, lk = $lk}
     assembly $eid = ($r.x.asm, $lStr($lk), " ", decimal(bo), ",", decimal(crbs), ",", decimal(bh))
   }
@@ -1438,9 +1441,9 @@ instruction set architecture PPC64SFS = {
 
   $BFormBranchInstr("BC")
 
-  $XLFormBranchInstr((("BCCTR"; 0b10000'10000); CTR; false))
-  $XLFormBranchInstr((("BCLR" ; 0b00000'10000); LR ; true ))
-  $XLFormBranchInstr((("BCTAR"; 0b10001'10000); TAR; true ))
+  $XLFormBranchInstr((("BCCTR"; 0b10000'10000); nctr; false))
+  $XLFormBranchInstr((("BCLR" ; 0b00000'10000); LR  ; true ))
+  $XLFormBranchInstr((("BCTAR"; 0b10001'10000); TAR ; true ))
 
   //------------------------Move-------------------------------
   $XFormMSRGPRInstr("MFMSR")

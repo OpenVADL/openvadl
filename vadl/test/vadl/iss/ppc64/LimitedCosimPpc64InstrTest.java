@@ -17,6 +17,7 @@
 package vadl.iss.ppc64;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.MethodOrderer;
@@ -89,53 +90,135 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
   @TestFactory
   @Order(5)
   Stream<DynamicTest> b() throws IOException {
-    return testIFormBranchInstruction_LA("b", "B");
+    return testBranchInstruction_LA("b", "B");
   }
 
   @TestFactory
   @Order(6)
   Stream<DynamicTest> bc() throws IOException {
-    return testBFormBranchInstruction_LA("bc", "BC");
+    return testBranchConditionalInstruction_LA("bc", "BC");
   }
 
-  private Stream<DynamicTest> testIFormBranchInstruction_LA(String instruction, String name)
+  @TestFactory
+  @Order(7)
+  Stream<DynamicTest> bcctr() throws IOException {
+    return testBranchConditionalToCTRInstruction_L("bcctr", "BCCTR");
+  }
+
+  @TestFactory
+  @Order(8)
+  Stream<DynamicTest> bclr() throws IOException {
+    return testBranchConditionalToLRInstruction_L("bclr", "BCLR");
+  }
+
+  @TestFactory
+  @Order(9)
+  Stream<DynamicTest> bctar() throws IOException {
+    return testBranchConditionalToTARInstruction_L("bctar", "BCTAR");
+  }
+
+  private Stream<DynamicTest> testBranchInstruction_LA(String instruction, String name)
       throws IOException {
-    var s1 = testIFormBranchInstruction(instruction, name);
-    var s2 = testIFormBranchInstruction(instruction + "a", name + "A");
-    var s3 = testIFormBranchInstruction(instruction + "l", name + "L");
-    var s4 = testIFormBranchInstruction(instruction + "la", name + "LA");
+    var s1 = testBranchInstruction(instruction, name);
+    var s2 = testBranchInstruction(instruction + "a", name + "A");
+    var s3 = testBranchInstruction(instruction + "l", name + "L");
+    var s4 = testBranchInstruction(instruction + "la", name + "LA");
     return Stream.concat(Stream.concat(s1, s2), Stream.concat(s3, s4));
   }
 
-  private Stream<DynamicTest> testBFormBranchInstruction_LA(String instruction, String name)
+  private Stream<DynamicTest> testBranchConditionalInstruction_LA(String instruction, String name)
       throws IOException {
-    var s1 = testBFormBranchInstruction(instruction, name);
-    var s2 = testBFormBranchInstruction(instruction + "a", name + "A");
-    var s3 = testBFormBranchInstruction(instruction + "l", name + "L");
-    var s4 = testBFormBranchInstruction(instruction + "la", name + "LA");
+    var s1 = testBranchConditionalInstruction(instruction, name);
+    var s2 = testBranchConditionalInstruction(instruction + "a", name + "A");
+    var s3 = testBranchConditionalInstruction(instruction + "l", name + "L");
+    var s4 = testBranchConditionalInstruction(instruction + "la", name + "LA");
     return Stream.concat(Stream.concat(s1, s2), Stream.concat(s3, s4));
   }
 
-  private Stream<DynamicTest> testIFormBranchInstruction(String instruction, String name)
+  private Stream<DynamicTest> testBranchConditionalToCTRInstruction_L(String instruction, String name)
+      throws IOException {
+    var s1 = testBranchConditionalToCTRInstruction(instruction, name);
+    var s2 = testBranchConditionalToCTRInstruction(instruction + "l", name + "L");
+    return Stream.concat(s1, s2);
+  }
+
+  private Stream<DynamicTest> testBranchConditionalToLRInstruction_L(String instruction, String name)
+      throws IOException {
+    var s1 = testBranchConditionalToLRInstruction(instruction, name);
+    var s2 = testBranchConditionalToLRInstruction(instruction + "l", name + "L");
+    return Stream.concat(s1, s2);
+  }
+
+  private Stream<DynamicTest> testBranchConditionalToTARInstruction_L(String instruction, String name)
+      throws IOException {
+    var s1 = testBranchConditionalToTARInstruction(instruction, name);
+    var s2 = testBranchConditionalToTARInstruction(instruction + "l", name + "L");
+    return Stream.concat(s1, s2);
+  }
+
+  private Stream<DynamicTest> testBranchInstruction(String instruction, String name)
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var target = instruction.contains("a") ? "0xFC" : "-4";
+      var target = instruction.contains("a") ? "252" : "-4";
       b.add("%s %s", instruction, target);
       b.add("li 0, 1"); // shouldn't be reached
       return b.toTestCase();
     });
   }
 
-  private Stream<DynamicTest> testBFormBranchInstruction(String instruction, String name)
+  private Stream<DynamicTest> testBranchConditionalInstruction(String instruction, String name)
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var target = instruction.contains("a") ? "0xFC" : "-28";
+      var target = instruction.contains("a") ? "252" : "-28";
       b.fillCR();
       b.fillReg("0");
       b.add("mtspr 9, 0");
       b.add("%s %s, %s, %s", instruction, b.getBOField(), b.anyCRBit().sample(), target);
+      b.add("li 0, 1");
+      return b.toTestCase();
+    });
+  }
+
+  private Stream<DynamicTest> testBranchConditionalToCTRInstruction(String instruction, String name)
+      throws IOException {
+    return runTests3264With(id -> {
+      var b = getBuilder(name, id);
+      b.fillCR();
+      b.fillReg("0", BigInteger.valueOf(252));
+      b.add("mtspr 9, 0");
+      b.add("%s %s, %s, 0", instruction, b.getLimitedBOField(), b.anyCRBit().sample());
+      b.add("li 0, 1");
+      return b.toTestCase();
+    });
+  }
+
+  private Stream<DynamicTest> testBranchConditionalToLRInstruction(String instruction, String name)
+      throws IOException {
+    return runTests3264With(id -> {
+      var b = getBuilder(name, id);
+      b.fillCR();
+      b.fillReg("0", BigInteger.valueOf(252));
+      b.add("mtspr 8, 0");
+      b.fillReg("0");
+      b.add("mtspr 9, 0");
+      b.add("%s %s, %s, 0", instruction, b.getBOField(), b.anyCRBit().sample());
+      b.add("li 0, 1");
+      return b.toTestCase();
+    });
+  }
+
+  private Stream<DynamicTest> testBranchConditionalToTARInstruction(String instruction, String name)
+      throws IOException {
+    return runTests3264With(id -> {
+      var b = getBuilder(name, id);
+      b.fillCR();
+      b.fillReg("0", BigInteger.valueOf(252));
+      b.add("mtspr 815, 0");
+      b.fillReg("0");
+      b.add("mtspr 9, 0");
+      b.add("%s %s, %s, 0", instruction, b.getBOField(), b.anyCRBit().sample());
       b.add("li 0, 1");
       return b.toTestCase();
     });
