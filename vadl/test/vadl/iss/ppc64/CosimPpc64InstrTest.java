@@ -861,7 +861,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       var b = getBuilder(name, id);
       var regSrc = b.anyReg().sample();
       b.fillReg(regSrc);
-      b.add("%s %s, %s, %s", instruction, b.anyReg().sample(), regSrc, b.anyImmS(16));
+      b.add("%s %s, %s, %s", instruction, b.anyReg().sample(), regSrc, b.getImmS(16));
       return b.toTestCase();
     });
   }
@@ -872,7 +872,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       var b = getBuilder(name, id);
       var regSrc = b.anyReg().sample();
       b.fillReg(regSrc);
-      b.add("%s %s, %s, %s", instruction, b.anyReg().sample(), regSrc, b.anyImmU(16));
+      b.add("%s %s, %s, %s", instruction, b.anyReg().sample(), regSrc, b.getImmU(16));
       return b.toTestCase();
     });
   }
@@ -913,7 +913,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
       b.fillCR();
-      b.add("%s %s, %s", instruction, b.anyReg().sample(), b.anySelectImmU(8));
+      b.add("%s %s, %s", instruction, b.anyReg().sample(), b.getSelectImmU(8));
       return b.toTestCase();
     });
   }
@@ -925,7 +925,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       var regSrc = b.anyReg().sample();
       b.fillCR();
       b.fillReg(regSrc);
-      b.add("%s %s, %s", instruction, b.anyImmU(8), regSrc);
+      b.add("%s %s, %s", instruction, b.getImmU(8), regSrc);
       return b.toTestCase();
     });
   }
@@ -937,7 +937,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       var regSrc = b.anyReg().sample();
       b.fillCR();
       b.fillReg(regSrc);
-      b.add("%s %s, %s", instruction, b.anySelectImmU(8), regSrc);
+      b.add("%s %s, %s", instruction, b.getSelectImmU(8), regSrc);
       return b.toTestCase();
     });
   }
@@ -946,7 +946,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      b.add("%s %s, %s", instruction, b.anyReg().sample(), b.anyImmS(16));
+      b.add("%s %s, %s", instruction, b.anyReg().sample(), b.getImmS(16));
       return b.toTestCase();
     });
   }
@@ -969,7 +969,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       var regSrc2 = b.anyReg().sample();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2);
-      b.add("%s %s, %s, %s, %s", instruction, b.anyCRField().sample(), b.anyImmU(1), regSrc1,
+      b.add("%s %s, %s, %s, %s", instruction, b.anyCRField().sample(), b.getImmU(1), regSrc1,
           regSrc2);
       return b.toTestCase();
     });
@@ -981,8 +981,8 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       var b = getBuilder(name, id);
       var regSrc = b.anyReg().sample();
       b.fillReg(regSrc);
-      b.add("%s %s, %s, %s, %s", instruction, b.anyCRField().sample(), b.anyImmU(1), regSrc,
-          b.anyImmS(16));
+      b.add("%s %s, %s, %s, %s", instruction, b.anyCRField().sample(), b.getImmU(1), regSrc,
+          b.getImmS(16));
       return b.toTestCase();
     });
   }
@@ -996,7 +996,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       b.fillReg(regSrc);
       b.fillReg(regSrcOrImm5);
       b.add("%s %s, %s, %s, %s, %s", instruction, b.anyReg().sample(), regSrc, regSrcOrImm5,
-          b.anyImmU(5), b.anyImmU(5));
+          b.getImmU(5), b.getImmU(5));
       return b.toTestCase();
     });
   }
@@ -1037,8 +1037,8 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       var regSrc = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc)).sample() :
           b.anyReg().sample();
-      BigInteger val1 = b.anyImmU(15);
-      BigInteger val2 = b.anyImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE));
+      BigInteger val1 = b.getImmU(15);
+      BigInteger val2 = b.getImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE));
       b.fillMem(Objects.equals(regSrc, "0") ? val2 : val1.add(val2));
       b.fillReg(regSrc, val1);
       b.add("%s %s, %s(%s)", instruction, regDest, val2, regSrc);
@@ -1055,8 +1055,8 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       var regSrc2 = b.anyReg().sample();
       var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc1)).sample() :
           b.anyReg().filter(r -> !Objects.equals(r, regSrc1)).sample();
-      BigInteger val1 = b.anyImmU(15);
-      BigInteger val2 = b.anyImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE));
+      BigInteger val1 = b.getImmU(15);
+      BigInteger val2 = b.getImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE));
       b.fillMem(Objects.equals(regSrc1, "0") ? val2 : val1.add(val2));
       b.fillReg(regSrc1, val1);
       b.fillReg(regSrc2, val2);
@@ -1073,8 +1073,8 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       var regSrc1 = b.anyReg().sample();
       var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       b.fillReg(regSrc1);
-      b.fillReg(regSrc2, b.anyImmU(15));
-      b.add("%s %s, %s(%s)", instruction, regSrc1, b.anyImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE)), regSrc2);
+      b.fillReg(regSrc2, b.getImmU(15));
+      b.add("%s %s, %s(%s)", instruction, regSrc1, b.getImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE)), regSrc2);
       return b.toTestCase();
     });
   }
@@ -1088,8 +1088,8 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       var regSrc3 = b.anyReg().sample();
       b.fillReg(regSrc1);
-      b.fillReg(regSrc2, b.anyImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE)));
-      b.fillReg(regSrc3, b.anyImmU(15));
+      b.fillReg(regSrc2, b.getImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE)));
+      b.fillReg(regSrc3, b.getImmU(15));
       b.add("%s %s, %s, %s", instruction, regSrc1, regSrc2, regSrc3);
       return b.toTestCase();
     });

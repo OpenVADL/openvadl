@@ -50,11 +50,11 @@ public class Ppc64TestBuilder {
   public BigInteger fillCR() {
     BigInteger value = fillReg("0");
     add("mtcrf 255, 0");
-    return BigInteger.valueOf(value.intValue());
+    return value;
   }
 
   public BigInteger fillReg(String reg) {
-    return fillReg(reg, anyImmS(32));
+    return fillReg(reg, getImmS(32));
   }
 
   // loads a 32-bit signed value, which is then sign extended to 64 bits
@@ -66,7 +66,7 @@ public class Ppc64TestBuilder {
     String preg = reg.length() == 1 ? " " + reg : reg;
     String lisLine =
         lis + " ".repeat(Math.max(0, commentCol - lis.length())) + " # X(" + preg + ") := "
-            + toLoadedHexString(value);
+            + getLoadedValueString(value);
     String oriLine = ori + " ".repeat(Math.max(0, commentCol - ori.length())) + " # ↑";
     instructions.add(lisLine);
     instructions.add(oriLine);
@@ -103,7 +103,7 @@ public class Ppc64TestBuilder {
     return Arbitraries.integers().between(0, 31).map(String::valueOf);
   }
 
-  public BigInteger anyImmS(int bits) {
+  public BigInteger getImmS(int bits) {
     var b = BigInteger.ONE.shiftLeft(bits - 1);
     return Arbitraries.bigIntegers()
         .greaterOrEqual(b.negate())
@@ -111,23 +111,38 @@ public class Ppc64TestBuilder {
         .sample();
   }
 
-  public BigInteger anyImmU(int bits) {
+  public BigInteger getImmU(int bits) {
     return Arbitraries.bigIntegers()
         .greaterOrEqual(BigInteger.ZERO)
         .lessOrEqual(BigInteger.ONE.shiftLeft(bits).subtract(BigInteger.ONE))
         .sample();
   }
 
-  public BigInteger anyImmUFrom(int bits, BigInteger min) {
+  public BigInteger getImmUFrom(int bits, BigInteger min) {
     return Arbitraries.bigIntegers()
         .greaterOrEqual(min)
         .lessOrEqual(BigInteger.ONE.shiftLeft(bits).subtract(BigInteger.ONE))
         .sample();
   }
 
-  public BigInteger anySelectImmU(int bits) {
+  public BigInteger getSelectImmU(int bits) {
     int bitPosition = Arbitraries.integers().between(0, bits - 1).sample();
     return BigInteger.ONE.shiftLeft(bitPosition);
+  }
+
+  public String getBOField() {
+    String[] validPatterns = {
+        "0",              // 0000z
+        "2",              // 0001z
+        "4",  "6",  "7",  // 001at
+        "8",              // 0100z
+        "10",             // 0101z
+        "12", "14", "15", // 011at
+        "16", "24", "25", // 1a00t
+        "18", "26", "27", // 1a01t
+        "20"              // 1z1zz
+    };
+    return Arbitraries.of(validPatterns).sample();
   }
 
   @FormatMethod
@@ -144,7 +159,7 @@ public class Ppc64TestBuilder {
     return new CosimTestUtils.TestCase(name + "-" + id, false, toAsmString());
   }
 
-  private static String toLoadedHexString(BigInteger value) {
+  private static String getLoadedValueString(BigInteger value) {
     long signed64 = value.intValue();
     return "0x" + String.format("%016X", signed64) + " (" + signed64 + ")";
   }

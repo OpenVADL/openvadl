@@ -60,7 +60,7 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
 
   /* L = 0 doesn't work
   @TestFactory
-  @Order(4)
+  @Order(3)
   Stream<DynamicTest> mtmsr() throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder("MTMSR", id);
@@ -72,7 +72,7 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
   }
 
   @TestFactory
-  @Order(5)
+  @Order(4)
   Stream<DynamicTest> mfmsr() throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder("MFMSR", id);
@@ -84,5 +84,61 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     });
   }
   */
+
+  @SuppressWarnings("MethodName")
+  @TestFactory
+  @Order(5)
+  Stream<DynamicTest> b() throws IOException {
+    return testIFormBranchInstruction_LA("b", "B");
+  }
+
+  @TestFactory
+  @Order(6)
+  Stream<DynamicTest> bc() throws IOException {
+    return testBFormBranchInstruction_LA("bc", "BC");
+  }
+
+  private Stream<DynamicTest> testIFormBranchInstruction_LA(String instruction, String name)
+      throws IOException {
+    var s1 = testIFormBranchInstruction(instruction, name);
+    var s2 = testIFormBranchInstruction(instruction + "a", name + "A");
+    var s3 = testIFormBranchInstruction(instruction + "l", name + "L");
+    var s4 = testIFormBranchInstruction(instruction + "la", name + "LA");
+    return Stream.concat(Stream.concat(s1, s2), Stream.concat(s3, s4));
+  }
+
+  private Stream<DynamicTest> testBFormBranchInstruction_LA(String instruction, String name)
+      throws IOException {
+    var s1 = testBFormBranchInstruction(instruction, name);
+    var s2 = testBFormBranchInstruction(instruction + "a", name + "A");
+    var s3 = testBFormBranchInstruction(instruction + "l", name + "L");
+    var s4 = testBFormBranchInstruction(instruction + "la", name + "LA");
+    return Stream.concat(Stream.concat(s1, s2), Stream.concat(s3, s4));
+  }
+
+  private Stream<DynamicTest> testIFormBranchInstruction(String instruction, String name)
+      throws IOException {
+    return runTests3264With(id -> {
+      var b = getBuilder(name, id);
+      var target = instruction.contains("a") ? "0xFC" : "-4";
+      b.add("%s %s", instruction, target);
+      b.add("li 0, 1"); // shouldn't be reached
+      return b.toTestCase();
+    });
+  }
+
+  private Stream<DynamicTest> testBFormBranchInstruction(String instruction, String name)
+      throws IOException {
+    return runTests3264With(id -> {
+      var b = getBuilder(name, id);
+      var target = instruction.contains("a") ? "0xFC" : "-28";
+      b.fillCR();
+      b.fillReg("0");
+      b.add("mtspr 9, 0");
+      b.add("%s %s, %s, %s", instruction, b.getBOField(), b.anyCRBit().sample(), target);
+      b.add("li 0, 1");
+      return b.toTestCase();
+    });
+  }
 
 }
