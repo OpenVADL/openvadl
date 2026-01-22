@@ -439,7 +439,8 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   constant MinUIntX : UIntX = 0x0000'0000'0000'0000
   constant MinSIntX : SIntX = 0x8000'0000'0000'0000
   constant MinUIntW : UIntW = 0x0000'0000
-  constant MinSIntW : SIntW = 0x8000'0000
+//  constant MinSIntW : SIntW = 0x8000'0000
+  constant MinSIntW : UIntW = 0x8000'0000                // temporary workaround for a type checker bug
 
   model UMax (size: Id): Id = {
     match: Id ($size = WSize => MaxUIntW ; _ => MaxUIntX)
