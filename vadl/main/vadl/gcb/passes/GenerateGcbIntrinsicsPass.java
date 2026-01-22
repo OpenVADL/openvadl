@@ -26,6 +26,9 @@ import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
+import vadl.gcb.passes.operands.InstructionOperandsCtx;
+import vadl.gcb.passes.operands.model.GcbInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -33,18 +36,21 @@ import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.ReadsRegisterTensor;
-import vadl.viam.graph.WritesRegisterTensor;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 
 /**
- * Compute the intrinsic attributes for a {@link Instruction}.
+ * Compute the intrinsics for an {@link Instruction}.
  */
-public class DetermineIntrinsicAttributesPass extends Pass {
-  public DetermineIntrinsicAttributesPass(GcbConfiguration gcbConfiguration) {
+public class GenerateGcbIntrinsicsPass extends Pass {
+  public static String BUILTIN_PREFIX = "builtin_";
+  private final GcbConfiguration gcbConfiguration;
+
+  public GenerateGcbIntrinsicsPass(GcbConfiguration gcbConfiguration) {
     super(gcbConfiguration);
+    this.gcbConfiguration = gcbConfiguration;
   }
 
   @Override
@@ -52,43 +58,76 @@ public class DetermineIntrinsicAttributesPass extends Pass {
     return new PassName("DetermineIntrinsicAttributesPass");
   }
 
+  /**
+   * Value type for an intrinsic.
+   */
+  public record GcbIntrinsic(String builtinName,
+                             String intrinsicName,
+                             Instruction instruction,
+                             List<InstructionBuiltinAttributesCtx.Attribute> builtinAttributes,
+                             List<InstructionIntrinsicAttributesCtx.Attribute> intrinsicAttributes
+  ) {
+
+  }
+
+  /**
+   * Output container of the pass.
+   */
+  public record Output(
+      IdentityHashMap<Instruction, List<InstructionIntrinsicAttributesCtx.Attribute>> lookup,
+      List<GcbIntrinsic> intrinsics) {
+
+  }
+
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var snapshots =
         (Map<Instruction, Graph>) passResults.lastResultOf(SnapshotInstructionBehaviorPass.class);
+    var builtins =
+        (IdentityHashMap<Instruction, List<InstructionBuiltinAttributesCtx.Attribute>>)
+            passResults.lastResultOf(DetermineBuiltinAttributesPass.class);
+    var intrinsics = new ArrayList<GcbIntrinsic>();
+
     IdentityHashMap<Instruction, List<InstructionIntrinsicAttributesCtx.Attribute>> map =
         new IdentityHashMap<>();
 
     for (var instruction : viam.isa().orElseThrow().ownInstructions()) {
       var snapshot = Objects.requireNonNull(snapshots.get(instruction));
+      var operands = instruction.expectExtension(InstructionOperandsCtx.class);
 
-      if (isRedFlag(viam, snapshot)) {
+      if (!builtins.containsKey(instruction) || isRedFlag(viam, snapshot)
+          || !hasValidInputOperands(operands.inputs())
+          || !hasValidOutputOperands(operands.outputs())) {
         continue;
       }
 
       var isNoMem = isNoMem(snapshot);
-      var willReturn = willReturn(snapshot);
       var speculatable = speculatable(snapshot);
 
       var attributes = new ArrayList<InstructionIntrinsicAttributesCtx.Attribute>();
       if (isNoMem) {
         attributes.add(InstructionIntrinsicAttributesCtx.Attribute.NoMem);
       }
-      if (willReturn) {
-        attributes.add(InstructionIntrinsicAttributesCtx.Attribute.WillReturn);
-      } else {
-        attributes.add(InstructionIntrinsicAttributesCtx.Attribute.NoReturn);
-      }
       if (speculatable) {
         attributes.add(InstructionIntrinsicAttributesCtx.Attribute.Speculatable);
       }
 
+      var builtinName = BUILTIN_PREFIX + instruction.simpleName();
+      var intrinsicName =
+          "int_" + gcbConfiguration.targetName().value() + "_" + instruction.simpleName();
+
       map.put(instruction, attributes);
       instruction.attachExtension(new InstructionIntrinsicAttributesCtx(attributes));
+      intrinsics.add(
+          new GcbIntrinsic(builtinName,
+              intrinsicName,
+              instruction,
+              builtins.get(instruction),
+              attributes));
     }
 
-    return map;
+    return new Output(map, intrinsics);
   }
 
   private boolean isRedFlag(Specification viam, Graph snapshot) {
@@ -108,10 +147,6 @@ public class DetermineIntrinsicAttributesPass extends Pass {
     return !isMem(snapshot);
   }
 
-  private boolean willReturn(Graph snapshot) {
-    return !snapshot.getNodes(WritesRegisterTensor.class).toList().isEmpty();
-  }
-
   /**
    * Compute a special attribute for LLVM.
    * The following conditions must hold:
@@ -124,5 +159,16 @@ public class DetermineIntrinsicAttributesPass extends Pass {
    */
   private boolean speculatable(Graph snapshot) {
     return isNoMem(snapshot) && snapshot.getNodes(ProcCallNode.class).toList().isEmpty();
+  }
+
+  private boolean hasValidInputOperands(List<GcbInstructionOperand> operands) {
+    return operands.stream()
+        .allMatch(operand -> operand instanceof GcbInstructionRegisterFileOperand);
+  }
+
+  private boolean hasValidOutputOperands(List<GcbInstructionOperand> operands) {
+    return operands.size() <= 1
+        && operands.stream()
+        .allMatch(operand -> operand instanceof GcbInstructionRegisterFileOperand);
   }
 }
