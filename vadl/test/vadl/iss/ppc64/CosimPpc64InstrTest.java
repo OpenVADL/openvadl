@@ -128,13 +128,11 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     return testTSRegImmS16Instruction("subfic", "SUBFIC");
   }
 
-  /* not yet implemented
   @TestFactory
   @Order(16)
   Stream<DynamicTest> addg6s() throws IOException {
     return testTSSRegInstruction("addg6s", "ADDG6S");
   }
-  */
 
   @TestFactory
   @Order(17)
@@ -1052,9 +1050,9 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
       var regSrc1 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
-      var regSrc2 = b.anyReg().sample();
+      var regSrc2 = b.anyReg().filter(r -> !Objects.equals(r, regSrc1)).sample();
       var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc1)).sample() :
-          b.anyReg().filter(r -> !Objects.equals(r, regSrc1)).sample();
+          b.anyReg().sample();
       BigInteger val1 = b.getImmU(15);
       BigInteger val2 = b.getImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE));
       b.fillMem(Objects.equals(regSrc1, "0") ? val2 : val1.add(val2));

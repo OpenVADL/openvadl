@@ -74,7 +74,6 @@ instruction set architecture PPC64SFS = {
   memory          MEM : Address -> Byte
 
   register X        : XIndex -> Reg64            // 32 general-purpose 64-bit registers
-  alias register XP : Nibble<32><16> = X         // general-purpose registers, each represented as 16 4-bit nibbles
   [zero : XZ(0)]
   alias register XZ = X                          // alias for general-purpose registers where index zero is always the value zero
   alias register XW = X(*)(31..0)                // lowest 32 bits of general-purpose registers
@@ -1183,9 +1182,9 @@ instruction set architecture PPC64SFS = {
   // instructions: addg6s
   model XOFormAddGen6Instr (asm : Str) : IsaDefs = {
     instruction AsId($asm) : XOForm =
-      X(rs) := forall i : Bits<4> in 15..0 tensor
-                 let result, flags = VADL::adds(XP(ra)(i), XP(rb)(i)) in
-                   if flags.carry then 0 as Nibble else 0x6
+      let sum = X(ra) + X(rb) in
+        let carry = (((X(ra) & X(rb)) | ((X(ra) ^ X(rb)) & ~sum)) >> 3) & 0x1111'1111'1111'1111 in
+          X(rs) := ~(carry * 0xF) & 0x6666'6666'6666'6666
     encoding AsId($asm) = {opcd = 0b011111, oe = 0b0, extopcd = 0b0010'01010, rc = 0b0}
     assembly AsId($asm) = ($asm, " ", decimal(rs), ",", decimal(ra), ",", decimal(rb))
   }
@@ -1310,8 +1309,7 @@ instruction set architecture PPC64SFS = {
   $DFormAddSubInstr(("ADDIS" ; adds ; 0b001111; ADDIS ); (XZ(ra); shImmS); false; false)
   $DFormAddSubInstr(("SUBFIC"; subsc; 0b001000; SUBFIC); (immS  ; X(ra) ); false; true )
 
-  // TODO: needs forall
-  //$XOFormAddGen6Instr("ADDG6S")
+  $XOFormAddGen6Instr("ADDG6S")
 
   $Z23FormAddInstr("ADDEX")
 
