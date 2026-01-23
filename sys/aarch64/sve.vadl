@@ -100,9 +100,9 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
   model SetFlagsMaskedSVE (elSize: Id) : Stat = {
     let elMask = mask & $PtrueBHSD($elSize) in {
-      NZCV_N := if elMask = 0 then false else (pred >> (VADL::ctz(elMask) + ElSize::$elSize)) as Bool
+      NZCV_N := if elMask = 0 then false else (pred >> VADL::ctz(elMask)) as Bits<1> as Bool
       NZCV_Z := (elMask & pred) = 0
-      NZCV_C := if elMask = 0 then true else !((pred >> (PL - 1 - VADL::clz(elMask) + ElSize::$elSize)) as Bool)
+      NZCV_C := if elMask = 0 then true else !((pred >> (PL - 1 - VADL::clz(elMask))) as Bits<1> as Bool)
       NZCV_V := false
     }
   }
@@ -401,9 +401,11 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     instruction $i.id: SVEPredFirstNextFormat =
       let mask = P(pg) as BitsP in
       let src  = P(pd) as BitsP in
-      let orMask = if mask = 0 then 0 else let trail = VADL::ctz(mask) in 1 as BitsP << trail in
+      let orMask = if mask = 0
+        then 0
+        else let pos = VADL::ctz(mask) in 1 as BitsP << pos in
       let pred = src | orMask in
-        $SetFlagsMaskedSVE ($elSize)
+        {$SetResultFlagsMaskedSVE ($elSize)}
     encoding $i.id = { op = 0b0010'0101'01, opc = $i.opcode, size = 0b01 }
     assembly $i.id = ($i.mnemo, ' ', register(pd), $elStr, ', ', register(pg),', ', register(pd), $elStr)
     }
@@ -412,9 +414,13 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     instruction $i.id: SVEPredFirstNextFormat =
       let mask = P(pg) as BitsP & $PtrueBHSD ($elSize) in
       let src  = P(pd) as BitsP & $PtrueBHSD ($elSize) in
-      let clrMsk = if src = 0 then mask else let lead = VADL::clz(src) + 1 in mask << lead >> lead in
-      let pred = if clrMsk = 0 then 0 else let trail = PL - 1 - VADL::clz(clrMsk) in clrMsk >> trail << trail in
-        $SetFlagsMaskedSVE ($elSize)
+      let clrMsk = if src = 0 
+        then mask
+        else let clr = PL - VADL::clz(src) in mask >> clr << clr in
+      let pred = if clrMsk = 0
+        then 0
+        else let pos = VADL::ctz(clrMsk) in 1 as BitsP << pos in
+        {$SetResultFlagsMaskedSVE ($elSize)}
     encoding $i.id = { op = 0b0010'0101'01, opc = $i.opcode, size = ElSize::$elSize }
     assembly $i.id = ($i.mnemo, ' ', register(pd), $elStr, ', ', register(pg),', ', register(pd), $elStr)
     }
