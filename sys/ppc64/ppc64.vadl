@@ -1071,7 +1071,7 @@ instruction set architecture PPC64SFS = {
                        X(rs)(15) | X(rs)(14), X(rs)(14..13), MSR(12), X(rs)(11..6),
                        (X(rs)(5) | X(rs)(14)) & ~(MSR(22) & MSR(60) & ~X(rs)(14)),
                        (X(rs)(4) | X(rs)(14)) & ~(MSR(22) & MSR(60) & ~X(rs)(14)),
-                       X(rs)(3..1), MSR(0))
+                       X(rs)(3..1), MSR(0)) & 0x9400'0000'02C0'FF37
                   else (MSR(63..16), X(rs)(15), MSR(14..2), X(rs)(1), MSR(0))
       else raise Privilege
     encoding AsId($asm) = {opcd = 0b011111, rsv1 = 0b0000, rsv2 = 0b00000, extopcd = 0b00100'10010, rsv3 = 0b0}
