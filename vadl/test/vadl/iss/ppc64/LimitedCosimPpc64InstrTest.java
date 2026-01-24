@@ -26,6 +26,7 @@ import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.TestMethodOrder;
 
 /* Tests ppc64.vadl instructions against the QEMU ppc64 simulator.
+ * Covers all instructions not tested in CosimPpc64InstrTest.java.
  * Instructions in this class are tested using only a subset of possible values and/or are
  * not tested in all available modes.
  */
@@ -40,7 +41,7 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       var b = getBuilder("MTSPR", id);
       var regSrc = b.anyReg().sample();
       b.fillReg(regSrc);
-      b.add("mtspr %s, %s", b.anySpecialReg().sample(), regSrc);
+      b.add("mtspr %s, %s", b.anyImplementedSpecialReg().sample(), regSrc);
       return b.toTestCase();
     });
   }
@@ -51,23 +52,27 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     return runTests3264With(id -> {
       var b = getBuilder("MFSPR", id);
       var regSrc = b.anyReg().sample();
-      var spr = b.anySpecialReg().sample();
+      var spr = b.anyImplementedSpecialReg().sample();
       b.fillReg(regSrc);
       b.add("mtspr %s, %s", spr, regSrc);
-      b.add("mfspr %s, %s", regSrc, spr);
+      b.add("mfspr %s, %s", b.anyReg().sample(), spr);
       return b.toTestCase();
     });
   }
 
-  /* L = 0 doesn't work
   @TestFactory
   @Order(3)
   Stream<DynamicTest> mtmsr() throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder("MTMSR", id);
       var regSrc = b.anyReg().sample();
-      b.fillReg(regSrc);
-      b.add("mtmsr %s, %s", regSrc, b.anyImmU(1));
+      var val = b.getImmS(32)
+          .clearBit(5)                 // disable IR
+          .clearBit(9).clearBit(10) // set TE to 0b00
+          .clearBit(14)                // disable PR
+          .clearBit(15);               // disable EE
+      b.fillReg(regSrc, val);
+      b.add("mtmsr %s, %s", regSrc, b.getImmU(1));
       return b.toTestCase();
     });
   }
@@ -78,13 +83,17 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     return runTests3264With(id -> {
       var b = getBuilder("MFMSR", id);
       var regSrc = b.anyReg().sample();
-      b.fillReg(regSrc);
-      b.add("mtmsr %s, %s", regSrc, b.anyImmU(1));
+      var val = b.getImmS(32)
+          .clearBit(5)                 // disable IR
+          .clearBit(9).clearBit(10) // set TE to 0b00
+          .clearBit(14)                // disable PR
+          .clearBit(15);               // disable EE
+      b.fillReg(regSrc, val);
+      b.add("mtmsr %s, %s", regSrc, 0);
       b.add("mfmsr %s", b.anyReg().sample());
       return b.toTestCase();
     });
   }
-  */
 
   @SuppressWarnings("MethodName")
   @TestFactory

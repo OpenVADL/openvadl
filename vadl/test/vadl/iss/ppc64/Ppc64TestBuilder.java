@@ -90,7 +90,7 @@ public class Ppc64TestBuilder {
     return Arbitraries.of(IntStream.range(1, 32).mapToObj(Integer::toString).toList());
   }
 
-  public Arbitrary<String> anySpecialReg() {
+  public Arbitrary<String> anyImplementedSpecialReg() {
     return Arbitraries.of(Arrays.stream(implementedSPRs)
         .mapToObj(String::valueOf).toArray(String[]::new));
   }
