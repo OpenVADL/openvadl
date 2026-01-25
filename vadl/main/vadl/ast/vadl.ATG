@@ -82,71 +82,71 @@ TOKENS
   ( '"' { "\\" (letter | '"' | "'" | "\\") | validDQStringCharacters } '"') |
   ( "'" { "\\" (letter | '"' | "'" | "\\") | validSQStringCharacters } "'").
 
-/// The #T_BIN token is used as the name of the syntax type for a binary or hexadecimal literal like '0b10101010' or '0x1234abcd' (#binLit or #hexLit, see type hierarchy \r{syntax_type_hierarchy}).<br>
+/// The #T_BIN token is used as the name of the syntax type for a binary or hexadecimal literal like '0b10101010' or '0x1234abcd' (#binLit or #hexLit, see type hierarchy \r{syntax_type_hierarchy}).
 /**     #T_BIN is referenced by \refFrom. */
   T_BIN         = "Bin".
 
-/// The #T_BIN_OP token is used as the name of the syntax type for binary operators like '+' or '*' (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/// The #T_BIN_OP token is used as the name of the syntax type for binary operators like '+' or '*' (see type hierarchy \r{syntax_type_hierarchy}).
 /**     #T_BIN_OP is referenced by \refFrom. */
   T_BIN_OP      = "BinOp".
 
-/// The #T_BOOL token is used as the name of the syntax type for the boolean literals 'true' and 'false' (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/// The #T_BOOL token is used as the name of the syntax type for the boolean literals 'true' and 'false' (see type hierarchy \r{syntax_type_hierarchy}).
 /**     #T_BT_BOOLIN is referenced by \refFrom. */
   T_BOOL        = "Bool".
 
-/// The #T_CALL_EX token is used as the name of the syntax type for a call expression (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/// The #T_CALL_EX token is used as the name of the syntax type for a call expression (see type hierarchy \r{syntax_type_hierarchy}).
 /**     #T_CALL_EX is referenced by \refFrom. */
   T_CALL_EX     = "CallEx".
 
-/// The #T_COMMON_DEFS token is used as the name of the syntax type for one or more common definitions like constants, formations or functions (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/// The #T_COMMON_DEFS token is used as the name of the syntax type for one or more common definitions like constants, formations or functions (see type hierarchy \r{syntax_type_hierarchy}).
 /**     #T_COMMON_DEFS is referenced by \refFrom. */
   T_COMMON_DEFS = "Defs".
 
-/// The #T_ENCS token is used as the name of the syntax type for oner or more instruction encodings (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/// The #T_ENCS token is used as the name of the syntax type for oner or more instruction encodings (see type hierarchy \r{syntax_type_hierarchy}).
 /**     #T_ENCS is referenced by \refFrom. */
   T_ENCS        = "Encs".
 
-/// The #T_EX token is used as the name of the syntax type for a general expression (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/// The #T_EX token is used as the name of the syntax type for a general expression (see type hierarchy \r{syntax_type_hierarchy}).
 /**     #T_EX is referenced by \refFrom. */
   T_EX          = "Ex".
 
-/// The #T_ID token is used as the name of the syntax type for an identifier (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/// The #T_ID token is used as the name of the syntax type for an identifier (see type hierarchy \r{syntax_type_hierarchy}).
 /**     #T_ID is referenced by \refFrom. */
   T_ID          = "Id".
 
-/// The #T_INT token is used as the name of the syntax type for a decimal integer literal like '123' (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/// The #T_INT token is used as the name of the syntax type for a decimal integer literal like '123' (see type hierarchy \r{syntax_type_hierarchy}).
 /**     #T_INT is referenced by \refFrom. */
   T_INT         = "Int".
 
-/// The #T_ISA_DEFS token is used as the name of the syntax type of one or more definitions inside the \ac{ISA} section (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/// The #T_ISA_DEFS token is used as the name of the syntax type of one or more definitions inside the \ac{ISA} section (see type hierarchy \r{syntax_type_hierarchy}).
 /**     #T_ISA_DEFS is referenced by \refFrom. */
   T_ISA_DEFS    = "IsaDefs".
 
-/// The #T_LIT token is used as the name of the syntax type for a literal of any type (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/// The #T_LIT token is used as the name of the syntax type for a literal of any type (see type hierarchy \r{syntax_type_hierarchy}).
 /**     #T_LIT is referenced by \refFrom. */
   T_LIT         = "Lit".
 
-/// The #T_STAT token is used as the name of the syntax type for a single statement (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/// The #T_STAT token is used as the name of the syntax type for a single statement (see type hierarchy \r{syntax_type_hierarchy}).
 /**     #T_STAT is referenced by \refFrom. */
   T_STAT        = "Stat".
 
-/// The #T_STATS token is used as the name of the syntax type for one or more statements (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/// The #T_STATS token is used as the name of the syntax type for one or more statements (see type hierarchy \r{syntax_type_hierarchy}).
 /**     #T_STATS is referenced by \refFrom. */
   T_STATS       = "Stats".
 
-/// The #T_STR token is used as the name of the syntax type for a string literal like 'abc' or "abc" (#string, see type hierarchy \r{#syntax_type_hierarchy}).<br>
+/// The #T_STR token is used as the name of the syntax type for a string literal like 'abc' or "abc" (#string, see type hierarchy \r{#syntax_type_hierarchy}).
 /**     #T_STR is referenced by \refFrom. */
   T_STR         = "Str".
 
-/// The #T_SYM_EX token is used as the name of the syntax type for a symbol expression (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/// The #T_SYM_EX token is used as the name of the syntax type for a symbol expression (see type hierarchy \r{syntax_type_hierarchy}).
 /**     #T_SYM_EX is referenced by \refFrom. */
   T_SYM_EX      = "SymEx".
 
-/// The #T_UN_OP token is used as the name of the syntax type for unary operators like '+' or '!' (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/// The #T_UN_OP token is used as the name of the syntax type for unary operators like '+' or '!' (see type hierarchy \r{syntax_type_hierarchy}).
 /**     #T_UN_OP is referenced by \refFrom. */
   T_UN_OP       = "UnOp".
 
-/// The #T_VAL token is used as the name of the syntax type for a value literal (see type hierarchy \r{syntax_type_hierarchy}).<br>
+/// The #T_VAL token is used as the name of the syntax type for a value literal (see type hierarchy \r{syntax_type_hierarchy}).
 /**            #T_VAL is referenced by \refFrom. */
   T_VAL         = "Val".
 
@@ -325,7 +325,7 @@ PRODUCTIONS
 /**  \brief
 \lbl{refman_vadl}
 The #vadl production rule is the entry point of a VADL processor specification as
-well as of the OpenVADL parser.<br>
+well as of the OpenVADL parser.
 
 A VADL specification consists of multiple #topLevelDefinition elements like a type alias
 (#usingDefinition) or a function definition (#functionDefinition) and sections like the
@@ -354,7 +354,7 @@ ISA section (#instructionsetDefinition). It is also possible to define macros (#
 
 /**  \brief
 The #topLevelDefinition production rule lists (beside macro definitions) all \ac{VADL}
-language elements allowed on the top level of a \ac{VADL} specification.<br>
+language elements allowed on the top level of a \ac{VADL} specification.
 
 \listing{lst_top_level_definitions, Top level definitions with some common definitions}
 ~~~{.vadl}
@@ -398,7 +398,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   .
 
 /**  \brief
-The #commonDefinitionList production rule lists (beside macro definitions) all common definition with annotations.<br>
+The #commonDefinitionList production rule lists (beside macro definitions) all common definition with annotations.
 
 #commonDefinitionList is referenced by \refFrom.
 */
@@ -463,7 +463,7 @@ The #commonDefinitionList production rule lists (beside macro definitions) all c
 
 /**  \brief
 Multiple annotations (#annotations) can by declared in front of many syntactic
-elements. A single annotation is described in the #annotation production rule.<br>
+elements. A single annotation is described in the #annotation production rule.
 
 #annotations is used by \refFrom.
 */
@@ -1169,7 +1169,7 @@ elements. A single annotation is described in the #annotation production rule.<b
   // -- MiA DEFINITIONS-----------------------------------------------------------------------------------------------
 
 /**  \brief
-The #microArchitectureDefinition production rule starts the micro architecture section.<br>
+The #microArchitectureDefinition production rule starts the micro architecture section.
 
 #microArchitectureDefinition is referenced by \refFrom.
 */
@@ -1187,7 +1187,7 @@ The #microArchitectureDefinition production rule starts the micro architecture s
   .
 
 /**  \brief
-The #miaDefinition production rule lists all micro architecture language elements.<br>
+The #miaDefinition production rule lists all micro architecture language elements.
 
 \listing{lst_mia_definitions, Example micro architecture definition}
 ~~~{.vadl}
