@@ -283,6 +283,28 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
         , _       => 0
         }
 
+  function patternStr(pattern: Bits5) -> String =
+      match pattern with
+        { 0b00000 => "pow2"     // elCount is always a power of 2
+        , 0b00001 => "vl1"
+        , 0b00010 => "vl2"
+        , 0b00011 => "vl3"
+        , 0b00100 => "vl4"
+        , 0b00101 => "vl5"
+        , 0b00110 => "vl6"
+        , 0b00111 => "vl7"
+        , 0b01000 => "vl8"
+        , 0b01001 => "vl16"
+        , 0b01010 => "vl32"
+        , 0b01011 => "vl64"
+        , 0b01100 => "vl128"
+        , 0b01101 => "vl256"
+        , 0b11101 => "mul4"
+        , 0b11110 => "mul3"
+        , 0b11111 => "all"
+        , _       => ("#", udec(pattern))
+        }
+
   format SVEIncrementFormat: Instr =       // SVE increment format
     { op       [31..24,21..20] : Bits10    // opcode
     , size     [23..22]        : Bits2     // elements size (ElSize)
@@ -297,11 +319,24 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     , countD   = DecodePredCount(pattern, ElSize::SizeD)
     }
 
-  model SVEIncrementBase (id: Id, mnemo: Str, count: Id, elSize: Id): IsaDefs = {
+  model SVEIncrementAll (id: Id, mnemo: Str, count: Id, elSize: Id): IsaDefs = {
+    instruction $id: SVEIncrementFormat =
+      X(dn) := X(dn) + (VL as BitsX >> (3+ElSize::$elSize)) * imm
+    encoding $id = { op = 0b0000'0100'1, opc = 0b111000, size = ElSize::$elSize, pattern = 0b1'1111 }
+    assembly $id = ( $mnemo, ' ', register(dn), ', all, mul #', udec(imm) )
+    }
+
+  model SVEIncrementPat (id: Id, mnemo: Str, count: Id, elSize: Id): IsaDefs = {
     instruction $id: SVEIncrementFormat =
       X(dn) := X(dn) + $count * imm
+    [select when : pattern != 0b1'1111]
     encoding $id = { op = 0b0000'0100'1, opc = 0b111000, size = ElSize::$elSize }
-    assembly $id = ( $mnemo, ' ', register(dn), ', all, mul #', udec(imm) )
+    assembly $id = ( $mnemo, ' ', register(dn), ', ', patternStr(pattern), ', mul #', udec(imm) )
+    }
+
+  model SVEIncrementBase (id: Id, mnemo: Str, count: Id, elSize: Id): IsaDefs = {
+    $SVEIncrementAll (     $id;       $mnemo; $count; $elSize)
+    $SVEIncrementPat (AsId($id, Pat); $mnemo; $count; $elSize)
     }
 
   model SVEIncrInstr (i: InstrWithFunct): IsaDefs = {
@@ -445,6 +480,14 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
         S(rd) := VADL::cob(and)
     encoding $i.id = { op = 0b0010'0101'100, opc = $i.opcode, size = ElSize::$elSize }
     assembly $i.id = ($i.mnemo, ' ', XSizeSP(rd), ', ', register(pg), ', ', register(pn), $elStr)
+    }
+
+  model SVEPredIncCountInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
+    instruction $i.id: SVEPredCountFormat =
+      let src  = P(pn) & $PtrueBHSD ($elSize) in
+        S(rd) := S(rd) + VADL::cob(src)
+    encoding $i.id = { op = 0b0010'0101'101, opc = $i.opcode, size = ElSize::$elSize, pg = 0b0010 }
+    assembly $i.id = ($i.mnemo, ' ', XSizeSP(rd), ', ', register(pn), $elStr)
     }
 
 // SVE while models ************************************************************
@@ -790,6 +833,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   $InstrB           (SVEPredFirstInstr         ; (SVEPFIRST     ; "pfirst"; 0b1000'1100'0000 ; unused   ))
   $InstrBHSD        (SVEPredNextInstr          ; (SVEPNEXT      ; "pnext" ; 0b1001'1100'0100 ; unused   ))
   $InstrBHSD        (SVEPredCountInstr         ; (SVECOUNTP     ; "cntp"  ; 0b0001'00        ; unused   ))
+  $InstrBHSD        (SVEPredIncCountInstr      ; (SVEINCTP      ; "incp"  ; 0b1001'00        ; unused   ))
   $InstrBHSD        (SVEWhileXWInstr           ; (SVEWHILE      ; "while" ; 0b000            ; unused   ))
 //
 //  $InstrMemLD16     (SVELoadScalarScalarInstr  ; (SVEsclLD1     ; "ld1"   ;  0b010           ; unused   ))
