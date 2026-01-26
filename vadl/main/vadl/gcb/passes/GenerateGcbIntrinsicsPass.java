@@ -132,9 +132,12 @@ public class GenerateGcbIntrinsicsPass extends Pass {
   private boolean isRedFlag(Specification viam, Graph snapshot) {
     var pc =
         Objects.requireNonNull(ensurePresent(viam.isa(), "must be present").pc()).registerTensor();
-    var hasPc = snapshot.getNodes(ReadsRegisterTensor.class).filter(
-        x -> x.registerTensor().isSingleRegister() && x.registerTensor() == pc).findAny().isEmpty();
-    return !hasPc;
+    var hasPc = snapshot.getNodes(ReadsRegisterTensor.class).anyMatch(
+        x -> x.registerTensor().isSingleRegister() && x.registerTensor() == pc);
+    var hasMemory =
+        snapshot.getNodes(ReadMemNode.class).findFirst().isPresent() || snapshot.getNodes(
+            WriteMemNode.class).findFirst().isPresent();
+    return hasPc || hasMemory;
   }
 
   private boolean isMem(Graph snapshot) {
