@@ -19,53 +19,35 @@ package vadl.lcb.template.clang.lib.CodeGen;
 import java.io.IOException;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.Renderable;
 import vadl.viam.Specification;
 
 /**
- * This file contains the mapping between builtin and intrinsics.
+ * This file contains header definitions for codegen.
  */
-public class EmitCGBuiltinFilePass extends LcbTemplateRenderingPass {
+public class EmitCodeGenFunctionHeaderFilePass extends LcbTemplateRenderingPass {
 
-  public EmitCGBuiltinFilePass(LcbConfiguration lcbConfiguration)
+  public EmitCodeGenFunctionHeaderFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
     super(lcbConfiguration);
   }
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/clang/lib/CodeGen/CGBuiltin.cpp";
+    return "lcb/clang/lib/CodeGen/CodeGenFunction.h";
   }
 
   @Override
   protected String getOutputPath() {
-    return "clang/lib/CodeGen/CGBuiltin.cpp";
-  }
-
-  private record Intrinsic(String builtin, String intrinsic) implements Renderable {
-
-    @Override
-    public Map<String, Object> renderObj() {
-      return Map.of("builtin", builtin, "intrinsic", intrinsic);
-    }
+    return "clang/lib/CodeGen/CodeGenFunction.h";
   }
 
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var output = (GenerateGcbIntrinsicsPass.Output) passResults.lastResultOf(
-        GenerateGcbIntrinsicsPass.class);
-    var namespace = lcbConfiguration().targetName().value().toLowerCase();
-    return Map.of(CommonVarNames.NAMESPACE, namespace,
-        "builtins",
-        output.intrinsics()
-            .stream()
-            .map(x -> new Intrinsic("BI" + namespace + "_" + x.builtinName(),
-                x.intrinsicName()))
-            .toList());
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().targetName().value().toLowerCase());
   }
 }

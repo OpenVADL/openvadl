@@ -55,6 +55,7 @@
 #include "llvm/IR/IntrinsicsVE.h"
 #include "llvm/IR/IntrinsicsWebAssembly.h"
 #include "llvm/IR/IntrinsicsX86.h"
+#include "llvm/IR/Intrinsics[(${namespace})].h"
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/MatrixBuilder.h"
 #include "llvm/IR/MemoryModelRelaxationAnnotations.h"
@@ -6313,9 +6314,36 @@ static Value *EmitTargetArchBuiltinExpr(CodeGenFunction *CGF,
     if (CGF->getTarget().getTriple().getOS() != llvm::Triple::OSType::AMDHSA)
       return nullptr;
     return CGF->EmitAMDGPUBuiltinExpr(BuiltinID, E);
+  case llvm::Triple::[(${namespace})]:
+    return CGF->Emit[(${namespace})]BuiltinExpr(BuiltinID, E);
   default:
     return nullptr;
   }
+}
+
+Value *CodeGenFunction::Emit[(${namespace})]BuiltinExpr(unsigned BuiltinID,
+                                             const CallExpr *E) {
+  SmallVector<Value *, 4> Ops;
+  llvm::Type *ResultType = ConvertType(E->getType());
+
+  Intrinsic::ID ID = Intrinsic::not_intrinsic;
+
+  // Required for overloaded intrinsics.
+  llvm::SmallVector<llvm::Type *, 2> IntrinsicTypes;
+  switch (BuiltinID) {
+  default: llvm_unreachable("unexpected builtin ID");
+  [#th:block th:each="builtin : ${builtins}" ]
+  case [(${namespace})]::[(${builtin.builtin})]:
+    ID = Intrinsic::[(${builtin.intrinsic})];
+    break;
+  [/th:block]
+  }
+
+  IntrinsicTypes = {ResultType};
+  assert(ID != Intrinsic::not_intrinsic);
+
+  llvm::Function *F = CGM.getIntrinsic(ID, IntrinsicTypes);
+  return Builder.CreateCall(F, Ops, "");
 }
 
 Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
