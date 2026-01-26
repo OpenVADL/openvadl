@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -260,7 +260,9 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(WildcardLiteral expr) {
-    throw new UnsupportedOperationException("Not yet implemented");
+    throw new EvaluationError(
+        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        expr);
   }
 
   @Override
@@ -292,8 +294,9 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(RangeExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    throw new EvaluationError(
+        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        expr);
   }
 
   @Override
@@ -358,9 +361,9 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
         var fakeBinExpr = AstUtils.getBuiltinBinOp(expr, builtin);
         result = eval(fakeBinExpr);
       } else {
-        throw new RuntimeException(
+        throw new EvaluationError(
             "At the moment the constant evaluator can only evaluate builtins that are also binary "
-                + "or unary operators.");
+                + "or unary operators.", expr);
       }
     }
 
@@ -415,8 +418,9 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(SymbolExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    throw new EvaluationError(
+        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        expr);
 
   }
 
@@ -456,43 +460,49 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(ExistsInExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    throw new EvaluationError(
+        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        expr);
 
   }
 
   @Override
   public ConstantValue visit(ExistsInThenExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    throw new EvaluationError(
+        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        expr);
 
   }
 
 
   @Override
   public ConstantValue visit(ForallExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    throw new EvaluationError(
+        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        expr);
 
   }
 
   @Override
   public ConstantValue visit(SequenceCallExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    throw new EvaluationError(
+        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        expr);
 
   }
 
   @Override
   public ConstantValue visit(ExpandedSequenceCallExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    throw new EvaluationError(
+        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        expr);
   }
 
   @Override
   public ConstantValue visit(ExpandedAliasDefSequenceCallExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    throw new EvaluationError(
+        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        expr);
   }
 
   @Override
