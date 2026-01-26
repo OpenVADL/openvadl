@@ -165,6 +165,16 @@ public class TypeChecker
         expr.type = new InternalErrorType();
       }
       throw signal;
+    } catch (EvaluationError error) {
+      errors.add(
+          error("Constant value required", error.location)
+              .locationDescription(error.location, "%s", requireNonNull(error.getMessage()))
+              .build()
+      );
+      if (expr.type == null) {
+        expr.type = new InternalErrorType();
+      }
+      throw new StopPartialCheckingSignal();
     } finally {
       currentlyVisiting.pop();
     }
@@ -3167,10 +3177,8 @@ public class TypeChecker
         check(indexExpr);
 
         @Nullable Integer staticIndex = null;
-        try {
+        if (constantEvaluator.isConstant(indexExpr)) {
           staticIndex = constantEvaluator.eval(indexExpr).value().intValueExact();
-        } catch (EvaluationError e) {
-          // This is a dynamic slice, that's also fine
         }
 
         currType = currTensoType.pop();
@@ -3846,23 +3854,12 @@ public class TypeChecker
 
       // Check as expression
       if (index.domain instanceof RangeExpr rangeExpr) {
-        try {
-          index.computedFrom = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
-          index.computedTo = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
-        } catch (EvaluationError e) {
-          addErrorAndStopChecking(error("Constant value required", e.location)
-              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
-              .build());
-        }
+        index.computedFrom = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
+        index.computedTo = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
+
       } else {
-        try {
-          index.computedFrom = constantEvaluator.eval(index.domain).value().intValueExact();
-          index.computedTo = index.computedFrom;
-        } catch (EvaluationError e) {
-          addErrorAndStopChecking(error("Constant value required", e.location)
-              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
-              .build());
-        }
+        index.computedFrom = constantEvaluator.eval(index.domain).value().intValueExact();
+        index.computedTo = index.computedFrom;
       }
     });
 
@@ -4219,23 +4216,11 @@ public class TypeChecker
 
       // Check as expression
       if (index.domain instanceof RangeExpr rangeExpr) {
-        try {
-          index.computedFrom = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
-          index.computedTo = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
-        } catch (EvaluationError e) {
-          addErrorAndStopChecking(error("Constant value required", e.location)
-              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
-              .build());
-        }
+        index.computedFrom = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
+        index.computedTo = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
       } else {
-        try {
-          index.computedFrom = constantEvaluator.eval(index.domain).value().intValueExact();
-          index.computedTo = index.computedFrom;
-        } catch (EvaluationError e) {
-          addErrorAndStopChecking(error("Constant value required", e.location)
-              .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
-              .build());
-        }
+        index.computedFrom = constantEvaluator.eval(index.domain).value().intValueExact();
+        index.computedTo = index.computedFrom;
       }
     });
 
