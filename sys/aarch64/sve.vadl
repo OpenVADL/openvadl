@@ -357,12 +357,27 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     , pd       [3..0]          : IndexP    // destination predicate register
     }
 
-  model SVEPTrueInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
+  model SVEPTrueAllInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
     instruction $i.id: SVEPTrueFormat =
       let pred = $PtrueBHSD ($elSize) in
         $SetResultFlagsIdentCondSVE ($i.funct; $elSize)
     encoding $i.id = { op = 0b0010'0101'0110'0, opc = $i.opcode, size = ElSize::$elSize, setfl = FF::$i.funct, pattern = 0b1'1111 }
     assembly $i.id = ($i.mnemo, ' ', register(pd), $elStr)
+    }
+
+  model SVEPTruePatInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
+    instruction $i.id: SVEPTrueFormat =
+      let count = DecodePredCount(pattern, ElSize::$elSize) in
+      let pred  = $PtrueBHSD ($elSize) >> (($elCount - count) << ElSize::$elSize) in
+        $SetResultFlagsIdentCondSVE ($i.funct; $elSize)
+    [select when : pattern != 0b1'1111]
+    encoding $i.id = { op = 0b0010'0101'0110'0, opc = $i.opcode, size = ElSize::$elSize, setfl = FF::$i.funct }
+    assembly $i.id = ($i.mnemo, ' ', register(pd), $elStr, ', ', patternStr(pattern))
+    }
+
+  model SVEPTrueInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
+    $SVEPTrueAllInstr (              $i;         $elCount; $elSize; $elStr)
+    $SVEPTruePatInstr ($ExtInstrStr ($i; "Pat"); $elCount; $elSize; $elStr)
     }
 
   model SVEPFalseInstr (i: InstrWithFunct): IsaDefs = {
