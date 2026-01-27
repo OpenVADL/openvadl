@@ -18,7 +18,11 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import static vadl.viam.ViamError.ensure;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
+import vadl.gcb.passes.operands.model.InstructionOperandPrintable;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
@@ -92,6 +96,22 @@ public final class TableGenInstructionPatternRenderer {
   }
 
   /**
+   * Render the mapping between intrinsic and instruction.
+   */
+  public static String lower(List<TableGenMachineInstruction> tableGenMachineRecords,
+                             GenerateGcbIntrinsicsPass.GcbIntrinsic intrinsic) {
+    var records =
+        tableGenMachineRecords.stream().collect(Collectors.toMap(
+            TableGenMachineInstruction::instruction, x -> x));
+    var record = Objects.requireNonNull(records.get(intrinsic.instruction()));
+
+    return String.format("""
+        def : Pat<%s,
+                %s>;
+        """, lowerSelector(record, intrinsic), lowerMachine(record));
+  }
+
+  /**
    * Render the selector pattern.
    */
   public static String lowerSelector(Graph graph) {
@@ -102,6 +122,13 @@ public final class TableGenInstructionPatternRenderer {
     }
 
     return visitor.getResult();
+  }
+
+  private static String lowerSelector(TableGenMachineInstruction record,
+                                      GenerateGcbIntrinsicsPass.GcbIntrinsic intrinsic) {
+    return "(int_" + intrinsic.intrinsicName() + " " + record.getInOperands().stream().map(
+        InstructionOperandPrintable::render).collect(
+        Collectors.joining(", ")) + ")";
   }
 
   /**
@@ -123,5 +150,11 @@ public final class TableGenInstructionPatternRenderer {
     }
 
     return machineVisitor.getResult();
+  }
+
+  private static String lowerMachine(TableGenMachineInstruction record) {
+    return "(" + record.getName() + " " + record.getInOperands().stream().map(
+        InstructionOperandPrintable::render).collect(
+        Collectors.joining(", ")) + ")";
   }
 }

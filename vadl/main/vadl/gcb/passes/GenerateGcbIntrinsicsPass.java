@@ -45,7 +45,6 @@ import vadl.viam.passes.SnapshotInstructionBehaviorPass;
  * Compute the intrinsics for an {@link Instruction}.
  */
 public class GenerateGcbIntrinsicsPass extends Pass {
-  public static String BUILTIN_PREFIX = "";
   private final GcbConfiguration gcbConfiguration;
 
   public GenerateGcbIntrinsicsPass(GcbConfiguration gcbConfiguration) {
@@ -96,7 +95,8 @@ public class GenerateGcbIntrinsicsPass extends Pass {
       var snapshot = Objects.requireNonNull(snapshots.get(instruction));
       var operands = instruction.expectExtension(InstructionOperandsCtx.class);
 
-      if (!builtins.containsKey(instruction) || isRedFlag(viam, snapshot)
+      if (!builtins.containsKey(instruction)
+          || isRedFlag(viam, snapshot)
           || !hasValidInputOperands(operands.inputs())
           || !hasValidOutputOperands(operands.outputs())) {
         continue;
@@ -113,7 +113,7 @@ public class GenerateGcbIntrinsicsPass extends Pass {
         attributes.add(InstructionIntrinsicAttributesCtx.Attribute.Speculatable);
       }
 
-      var builtinName = BUILTIN_PREFIX + instruction.simpleName();
+      var builtinName = instruction.simpleName();
       var intrinsicName = gcbConfiguration.targetName().value() + "_" + instruction.simpleName();
 
       map.put(instruction, attributes);
@@ -132,9 +132,12 @@ public class GenerateGcbIntrinsicsPass extends Pass {
   private boolean isRedFlag(Specification viam, Graph snapshot) {
     var pc =
         Objects.requireNonNull(ensurePresent(viam.isa(), "must be present").pc()).registerTensor();
-    var hasPc = snapshot.getNodes(ReadsRegisterTensor.class).filter(
-        x -> x.registerTensor().isSingleRegister() && x.registerTensor() == pc).findAny().isEmpty();
-    return !hasPc;
+    var hasPc = snapshot.getNodes(ReadsRegisterTensor.class).anyMatch(
+        x -> x.registerTensor().isSingleRegister() && x.registerTensor() == pc);
+    var hasMemory =
+        snapshot.getNodes(ReadMemNode.class).findFirst().isPresent() || snapshot.getNodes(
+            WriteMemNode.class).findFirst().isPresent();
+    return hasPc || hasMemory;
   }
 
   private boolean isMem(Graph snapshot) {
@@ -166,7 +169,7 @@ public class GenerateGcbIntrinsicsPass extends Pass {
   }
 
   private boolean hasValidOutputOperands(List<GcbInstructionOperand> operands) {
-    return operands.size() <= 1
+    return operands.size() == 1 /* requires exactly one output */
         && operands.stream()
         .allMatch(operand -> operand instanceof GcbInstructionRegisterFileOperand);
   }

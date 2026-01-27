@@ -19,7 +19,6 @@ package vadl.lcb.template.lib.Target;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +26,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
@@ -93,6 +93,8 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         GenerateTableGenPseudoInstructionRecordPass.class);
     var tableGenConstMatRecords = (List<TableGenCompilerInstruction>) passResults.lastResultOf(
         GenerateTableGenAbiSequenceInstructionRecordPass.class);
+    var intrinsics = ((GenerateGcbIntrinsicsPass.Output) passResults.lastResultOf(
+        GenerateGcbIntrinsicsPass.class)).intrinsics();
 
     var addi32 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_32);
     var addi64 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_64);
@@ -142,6 +144,12 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .map(x -> (TableGenPseudoInstExpansionPattern) x)
         .toList();
 
+    var renderedIntrinsics = intrinsics
+        .stream()
+        .map(x -> TableGenInstructionPatternRenderer.lower(tableGenMachineRecords, x))
+        .sorted()
+        .toList();
+
     var compensationPatterns =
         (List<TableGenSelectionWithOutputPattern>) passResults.lastResultOf(
             CompensationPatternPass.class);
@@ -189,6 +197,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     map.put("isCallInstructionPseudo", abi.callSequence() instanceof PseudoInstruction ? 1 : 0);
     map.put("isReturnInstructionPseudo", abi.returnSequence() instanceof PseudoInstruction ? 1 : 0);
     map.put("lga", abi.globalAddressLoad().map(x -> x.identifier().simpleName()).orElse(""));
+    map.put("intrinsics", renderedIntrinsics);
     return map;
   }
 
