@@ -125,14 +125,6 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
     return result;
   }
 
-  private String mapRet(GcbInstructionOperand gcbInstructionOperand) {
-    if (gcbInstructionOperand instanceof GcbInstructionRegisterFileOperand op) {
-      return mapType(op.registerFile().resultType());
-    }
-
-    throw Diagnostic.error("Cannot map operand", gcbInstructionOperand.origin().location()).build();
-  }
-
   private Optional<String> mapParam(GcbInstructionOperand gcbInstructionOperand) {
     if (gcbInstructionOperand instanceof GcbInstructionRegisterFileOperand op) {
       return Optional.of(mapType(op.registerFile().resultType()));
