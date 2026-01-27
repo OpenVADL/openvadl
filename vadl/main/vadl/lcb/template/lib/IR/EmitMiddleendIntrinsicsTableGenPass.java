@@ -112,7 +112,7 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
           new Intrinsic(
               intrinsic.intrinsicName(),
               record.getOutOperands().isEmpty() ? List.of("llvm_void_ty") :
-                  List.of(mapRet(record.getOutOperands().get(0))),
+                  List.of("llvm_any_ty"),
               record.getInOperands().stream().map(this::mapParam)
                   .filter(Optional::isPresent)
                   .map(Optional::get)

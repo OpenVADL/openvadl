@@ -6328,6 +6328,18 @@ Value *CodeGenFunction::Emit[(${namespace})]BuiltinExpr(unsigned BuiltinID,
 
   Intrinsic::ID ID = Intrinsic::not_intrinsic;
 
+  auto ICEArguments = 0;
+  for (unsigned i = 0, e = E->getNumArgs(); i != e; i++) {
+    // Handle aggregate argument, namely RVV tuple types in segment load/store
+    if (hasAggregateEvaluationKind(E->getArg(i)->getType())) {
+      LValue L = EmitAggExprToLValue(E->getArg(i));
+      llvm::Value *AggValue = Builder.CreateLoad(L.getAddress());
+      Ops.push_back(AggValue);
+      continue;
+    }
+    Ops.push_back(EmitScalarOrConstFoldImmArg(ICEArguments, i, E));
+  }
+
   // Required for overloaded intrinsics.
   llvm::SmallVector<llvm::Type *, 2> IntrinsicTypes;
   switch (BuiltinID) {
