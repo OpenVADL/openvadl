@@ -260,28 +260,42 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
 // SVE increment models ********************************************************
 
-  function DecodePredCount(pattern: Bits5, size: Bits2) -> BitsX =
-    let elCount = VL as BitsX >> (3+size) in
-      match pattern with
-        { 0b00000 => elCount // elCount is always a power of 2
-        , 0b00001 => if elCount >=   1 then   1 as BitsX else 0
-        , 0b00010 => if elCount >=   2 then   2 as BitsX else 0
-        , 0b00011 => if elCount >=   3 then   3 as BitsX else 0
-        , 0b00100 => if elCount >=   4 then   4 as BitsX else 0
-        , 0b00101 => if elCount >=   5 then   5 as BitsX else 0
-        , 0b00110 => if elCount >=   6 then   6 as BitsX else 0
-        , 0b00111 => if elCount >=   7 then   7 as BitsX else 0
-        , 0b01000 => if elCount >=   8 then   8 as BitsX else 0
-        , 0b01001 => if elCount >=  16 then  16 as BitsX else 0
-        , 0b01010 => if elCount >=  32 then  32 as BitsX else 0
-        , 0b01011 => if elCount >=  64 then  64 as BitsX else 0
-        , 0b01100 => if elCount >= 128 then 128 as BitsX else 0
-        , 0b01101 => if elCount >= 256 then 256 as BitsX else 0
-        , 0b11101 => elCount - elCount % 4
-        , 0b11110 => elCount - elCount % 3
-        , 0b11111 => elCount
-        , _       => 0
-        }
+  model BHSDDecodePredCount (size: Id): Id = {
+    match: Id ( $size = SizeB => DecodePredCountB
+              ; $size = SizeH => DecodePredCountH
+              ; $size = SizeD => DecodePredCountD
+              ; _             => DecodePredCountW)
+  }
+
+  model GenDecodePredCount (elSize: Id): IsaDefs = { 
+    function $BHSDDecodePredCount ($elSize)(pattern: Bits5) -> BitsX =
+      let elCount = VL as BitsX >> (3 + ElSize::$elSize) in
+        match pattern with
+          { 0b00000 => elCount // elCount is always a power of 2
+          , 0b00001 => if elCount >=   1 then   1 as BitsX else 0
+          , 0b00010 => if elCount >=   2 then   2 as BitsX else 0
+          , 0b00011 => if elCount >=   3 then   3 as BitsX else 0
+          , 0b00100 => if elCount >=   4 then   4 as BitsX else 0
+          , 0b00101 => if elCount >=   5 then   5 as BitsX else 0
+          , 0b00110 => if elCount >=   6 then   6 as BitsX else 0
+          , 0b00111 => if elCount >=   7 then   7 as BitsX else 0
+          , 0b01000 => if elCount >=   8 then   8 as BitsX else 0
+          , 0b01001 => if elCount >=  16 then  16 as BitsX else 0
+          , 0b01010 => if elCount >=  32 then  32 as BitsX else 0
+          , 0b01011 => if elCount >=  64 then  64 as BitsX else 0
+          , 0b01100 => if elCount >= 128 then 128 as BitsX else 0
+          , 0b01101 => if elCount >= 256 then 256 as BitsX else 0
+          , 0b11101 => elCount - elCount % 4
+          , 0b11110 => elCount - elCount % 3
+          , 0b11111 => elCount
+          , _       => 0
+          }
+    }
+
+  $GenDecodePredCount(SizeB)
+  $GenDecodePredCount(SizeH)
+  $GenDecodePredCount(SizeW)
+  $GenDecodePredCount(SizeD)
 
   function patternStr(pattern: Bits5) -> String =
       match pattern with
@@ -313,10 +327,10 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     , pattern  [9..5]          : Bits5     // pattern
     , dn       [4..0]          : Index     // source and destination predicate register
     , imm      = imm4 as BitsX + 1
-    , countB   = DecodePredCount(pattern, ElSize::SizeB)
-    , countH   = DecodePredCount(pattern, ElSize::SizeH)
-    , countW   = DecodePredCount(pattern, ElSize::SizeW)
-    , countD   = DecodePredCount(pattern, ElSize::SizeD)
+    , countB   = DecodePredCountB(pattern)
+    , countH   = DecodePredCountH(pattern)
+    , countW   = DecodePredCountW(pattern)
+    , countD   = DecodePredCountD(pattern)
     }
 
   model SVEIncrementAll (id: Id, mnemo: Str, count: Id, elSize: Id): IsaDefs = {
@@ -367,8 +381,11 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
   model SVEPTruePatInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
     instruction $i.id: SVEPTrueFormat =
-      let count = DecodePredCount(pattern, ElSize::$elSize) in
-      let pred  = $PtrueBHSD ($elSize) >> (($elCount - count) << ElSize::$elSize) in
+      let count = $BHSDDecodePredCount($elSize)(pattern) in
+      let pred  =
+        if count = 0
+          then 0
+          else $PtrueBHSD ($elSize) >> (($elCount - count) << ElSize::$elSize) in
         $SetResultFlagsIdentCondSVE ($i.funct; $elSize)
     [select when : pattern != 0b1'1111]
     encoding $i.id = { op = 0b0010'0101'0110'0, opc = $i.opcode, size = ElSize::$elSize, setfl = FF::$i.funct }
