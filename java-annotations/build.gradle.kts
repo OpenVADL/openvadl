@@ -15,14 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 plugins {
-    id("java")
-}
-
-group = "vadl"
-version = "1.0-SNAPSHOT"
-
-repositories {
-    mavenCentral()
+    id("conventions-java")
 }
 
 dependencies {

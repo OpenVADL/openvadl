@@ -1,19 +1,5 @@
 plugins {
-    id("java")
-}
-
-
-group = "vadl"
-version = "unspecified"
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
-    testRuntimeOnly(libs.junit.platform.launcher)
+    alias(libs.plugins.conventions.java)
 }
 
 sourceSets {
@@ -22,6 +8,3 @@ sourceSets {
     }
 }
 
-tasks.test {
-    useJUnitPlatform()
-}

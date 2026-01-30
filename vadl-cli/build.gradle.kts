@@ -1,4 +1,5 @@
 plugins {
+    alias(libs.plugins.conventions.java)
     application
     id("io.github.rascmatt.z3") version "1.0.2"
     id("org.graalvm.buildtools.native") version "0.11.2"
