@@ -21,40 +21,35 @@ import java.util.*
 plugins {
     id("vadl.CocoR")
     id("io.github.rascmatt.z3") version "1.0.2"
-    kotlin("jvm")
+    kotlin("jvm") version "2.3.0"
 }
 
-
-repositories {
-    mavenCentral()
-}
 
 dependencies {
-    implementation(project(":vadl-common"))
-    annotationProcessor(project(":java-annotations"))
-    compileOnly(project(":java-annotations"))
-    implementation("org.thymeleaf:thymeleaf:3.1.2.RELEASE")
-    implementation("com.google.guava:guava:33.2.1-jre")
-    implementation("commons-io:commons-io:2.16.1")
-    implementation("org.apache.commons:commons-lang3:3.18.0")
-    implementation("org.apache.commons:commons-text:1.10.0")
-
-    implementation("io.github.rascmatt:z3-bootstrap:1.0.0")
-
-    testCompileOnly(project(":java-annotations"))
-    testImplementation(platform("org.junit:junit-bom:5.11.4"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.assertj:assertj-core:3.26.3")
-    testImplementation("org.awaitility:awaitility:4.2.1")
-    testImplementation("org.testcontainers:testcontainers:1.21.4")
-    testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
-    testAnnotationProcessor(project(":java-annotations"))
-    // Helps getting test files small and concise
-    testImplementation("org.apache.velocity:velocity-engine-core:2.3")
-    testImplementation("net.jqwik:jqwik:1.9.0")
-    testImplementation("org.yaml:snakeyaml:2.2")
+    implementation(projects.vadlCommon)
+    annotationProcessor(projects.javaAnnotations)
+    compileOnly(projects.javaAnnotations)
+    implementation(libs.thymeleaf)
+    implementation(libs.guava)
+    implementation(libs.commons.io)
+    implementation(libs.commons.lang3)
+    implementation(libs.commons.text)
+    implementation(libs.z3.bootstrap)
     implementation(kotlin("stdlib-jdk8"))
+
+    testCompileOnly(projects.javaAnnotations)
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
+    testImplementation(libs.assertj)
+    testImplementation(libs.awaitility)
+    testImplementation(libs.testcontainers)
+    testImplementation(libs.archunit)
+    testAnnotationProcessor(projects.javaAnnotations)
+    // Helps getting test files small and concise
+    testImplementation(libs.velocity)
+    testImplementation(libs.jqwik)
+    testImplementation(libs.snakeyaml)
 }
 
 kotlin {
