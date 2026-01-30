@@ -26,9 +26,9 @@ repositories {
 }
 
 dependencies {
-    compileOnly("com.google.auto.service:auto-service-annotations:1.1.1")
-    annotationProcessor("com.google.auto.service:auto-service:1.1.1")
-    compileOnly("com.google.errorprone:error_prone_check_api:2.26.1")
+    compileOnly(libs.auto.service.annotations)
+    annotationProcessor(libs.auto.service)
+    compileOnly(libs.errorprone.api)
 }
 
 tasks.withType<JavaCompile> {
@@ -51,5 +51,3 @@ tasks.withType<JavaCompile> {
         )
     )
 }
-
-
