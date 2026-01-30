@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,16 +16,15 @@
 
 package vadl.utils;
 
+import javax.annotation.Nullable;
+
 /**
- * Interface representing an entity with a {@link SourceLocation}.
- *
- * <p>Provides a method to retrieve the source location associated with the implementing entity.
+ * A pair that may contain nullable values.
  */
-public interface WithLocation {
-  /**
-   * Retrieves the source location associated with the entity.
-   *
-   * @return the {@link SourceLocation} object that represents the location in the source code.
-   */
-  SourceLocation location();
+public record NPair<T, X>(@Nullable T left, @Nullable X right) {
+
+  public static <T, X> NPair<T, X> of(@Nullable T left, @Nullable X right) {
+    return new NPair<T, X>(left, right);
+  }
+
 }

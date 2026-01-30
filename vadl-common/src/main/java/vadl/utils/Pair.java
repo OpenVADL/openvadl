@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,15 +16,13 @@
 
 package vadl.utils;
 
-import javax.annotation.Nullable;
-
 /**
- * A pair that may contain nullable values.
+ * A helper construct to define a tuple.
  */
-public record NPair<T, X>(@Nullable T left, @Nullable X right) {
+public record Pair<T, X>(T left, X right) {
 
-  public static <T, X> NPair<T, X> of(@Nullable T left, @Nullable X right) {
-    return new NPair<T, X>(left, right);
+  public static <T, X> Pair<T, X> of(T left, X right) {
+    return new Pair<T, X>(left, right);
   }
 
 }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,26 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.utils.codegen;
+package vadl.utils;
 
 /**
- * An interface for appending code to a buffer, handling indentation and new lines gracefully.
+ * Interface representing an entity with a {@link SourceLocation}.
+ *
+ * <p>Provides a method to retrieve the source location associated with the implementing entity.
  */
-public interface CodeGeneratorAppendable {
-
-  CodeGeneratorAppendable append(CharSequence csq);
-
-  CodeGeneratorAppendable append(Object obj);
-
-  CodeGeneratorAppendable appendLn(CharSequence csq);
-
-  CodeGeneratorAppendable appendLn(Object obj);
-
-  CodeGeneratorAppendable newLine();
-
-  CodeGeneratorAppendable indent();
-
-  CodeGeneratorAppendable unindent();
-
-  CharSequence toCharSequence();
+public interface WithLocation {
+  /**
+   * Retrieves the source location associated with the entity.
+   *
+   * @return the {@link SourceLocation} object that represents the location in the source code.
+   */
+  SourceLocation location();
 }

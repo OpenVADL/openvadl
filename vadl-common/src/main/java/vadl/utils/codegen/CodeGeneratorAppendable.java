@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,3 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+package vadl.utils.codegen;
+
+/**
+ * An interface for appending code to a buffer, handling indentation and new lines gracefully.
+ */
+public interface CodeGeneratorAppendable {
+
+  CodeGeneratorAppendable append(CharSequence csq);
+
+  CodeGeneratorAppendable append(Object obj);
+
+  CodeGeneratorAppendable appendLn(CharSequence csq);
+
+  CodeGeneratorAppendable appendLn(Object obj);
+
+  CodeGeneratorAppendable newLine();
+
+  CodeGeneratorAppendable indent();
+
+  CodeGeneratorAppendable unindent();
+
+  CharSequence toCharSequence();
+}
