@@ -16,20 +16,31 @@
 
 package vadl.iss.passes.extensions;
 
+import static java.util.stream.Collectors.joining;
+import static vadl.iss.passes.TcgPassUtils.regInfo;
+import static vadl.iss.passes.extensions.RegInfo.AccessType.READ;
+
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Set;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.iss.IssUtils;
 import vadl.template.Renderable;
+import vadl.utils.WithLocation;
+import vadl.utils.codegen.CStringBuilder;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
@@ -45,6 +56,16 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   private final IssConfiguration config;
   private final boolean isGVecValue;
 
+  public final Set<AccessPattern> accessPatterns = new HashSet<>();
+
+  /**
+   * Constructs a RegInfo for the given register tensor.
+   *
+   * @param config the ISS configuration
+   * @param reg    the register tensor to analyze
+   * @param reads  all read accesses to this register
+   * @param writes all write accesses to this register
+   */
   public RegInfo(IssConfiguration config,
                  RegisterTensor reg,
                  List<ReadRegTensorNode> reads,
@@ -53,6 +74,11 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     this.isGVecValue = isGVec(reg, reads, writes);
   }
 
+  /**
+   * Returns the register tensor this info object extends.
+   *
+   * @return the register tensor
+   */
   public RegisterTensor reg() {
     return extendingDef();
   }
@@ -60,6 +86,8 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   /**
    * Names of all registers in a multidimensional register tensor.
    * In the case of multi dimensional tensors, we will only build names for the outermost dimension.
+   *
+   * @return list of register names
    */
   public List<String> names() {
     return reg().isSingleRegister() ? List.of(reg().simpleName()) :
@@ -68,6 +96,11 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
             .toList();
   }
 
+  /**
+   * Returns the definition class this extension extends.
+   *
+   * @return the RegisterTensor class
+   */
   @Override
   public Class<? extends Definition> extendsDefClass() {
     return RegisterTensor.class;
@@ -80,12 +113,26 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     return reg().simpleName();
   }
 
-  /// A register will be handled as generic vector if it's inner type
-  /// does not fit into the target size (max 64 bit), or if it has vector-style accesses.
+  protected String nameLower() {
+    return name().toLowerCase();
+  }
+
+  /**
+   * Checks if this register is handled as a generic vector.
+   * A register will be handled as generic vector if its inner type
+   * does not fit into the target size (max 64 bit), or if it has vector-style accesses.
+   *
+   * @return true if register is a generic vector
+   */
   public boolean isGVec() {
     return isGVecValue;
   }
 
+  /**
+   * Returns the C type width for register values.
+   *
+   * @return the bit width of the C type
+   */
   public int valueCTypeWidth() {
     return CppTypeMap.nextFittingBitSize(
         reg().resultType(reg().maxNumberOfAccessIndices()).bitWidth());
@@ -99,24 +146,40 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
    * The type of the CPU state register field must be the same size as the corresponding
    * TCG variable, otherwise there would be an overflow when QEMU synchronizes the
    * TCG variables with the CPU state object.
+   *
+   * <p>However, if the register is a generic vector, there is no corresponding TCG variable
+   * and so is not synchronization involved, which means the above constraint does not apply
+   * to them.
+   *
+   * <p>Furthermore, generic vector registers are always rendered as byte arrays (uint8_t)
+   * in the CPU state object.
+   *
+   * @return the CPU state type width in bits
    */
   public int cpuStateTypeWidth() {
-    return isGVec() ? valueCTypeWidth() : config.targetSize().width;
+    return isGVec() ? 8 : config.targetSize().width;
   }
 
+  protected String cpuStateName() {
+    return "CPU" + config.targetName().toUpperCase() + "State";
+  }
+
+  /**
+   * Creates a map of all renderable properties for template rendering.
+   *
+   * @return map containing all template variables
+   */
   @Override
   @SuppressWarnings("VariableDeclarationUsageDistance")
   public Map<String, Object> renderObj() {
     if (renderObj == null) {
       var dims = renderIndexDims();
-      var nameLower = name().toLowerCase();
       var renderParams = renderGetterArgs(dims);
       var renderParamsComma = renderParams.isEmpty() ? "" : ", " + renderParams;
       var resultType = reg().resultType(reg().maxNumberOfAccessIndices());
-      var cpuStateName = "CPU" + config.targetName().toUpperCase() + "State";
       renderObj = new HashMap<>();
       renderObj.put("name", name());
-      renderObj.put("name_lower", nameLower);
+      renderObj.put("name_lower", nameLower());
       renderObj.put("name_upper", name().toUpperCase());
       renderObj.put("index_dims", dims);
       renderObj.put("value_width", resultType.bitWidth());
@@ -127,11 +190,13 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       renderObj.put("is_gvec", isGVec());
       renderObj.put("constraints", renderConstraints(dims));
       renderObj.put("getter_params", renderParamsComma);
+      renderObj.put("access_patterns", accessPatterns.stream()
+          .sorted(Comparator.comparing(a -> a.type)).toList());
       renderObj.put("cpu_getter_signature",
-          valueCType() + " get_cpu_" + nameLower + "(" + cpuStateName + "* env"
+          valueCType() + " get_cpu_" + nameLower() + "(" + cpuStateName() + "* env"
               + renderParamsComma + ")");
       renderObj.put("cpu_setter_signature",
-          "void set_cpu_" + nameLower + "(" + cpuStateName + "* env"
+          "void set_cpu_" + nameLower() + "(" + cpuStateName() + "* env"
               + renderParamsComma + ", " + valueCType() + " val)");
       renderObj.put("c_array_def", renderCArrayDef());
       renderObj.put("c_array_index", cArrayIndex("d"));
@@ -144,6 +209,9 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
    * Returns the array access for registers in the cpu state.
    * CPU registers are rendered as a single value or 1D array, where all dimensions
    * are flattened to one.
+   *
+   * @param indexPrefix prefix for index variable names
+   * @return C array index expression or empty string if no dimensions
    */
   @SuppressWarnings("MethodName")
   public String cArrayIndex(String indexPrefix) {
@@ -162,13 +230,19 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     return "[" + reg().dimensions().getFirst().size() + "]";
   }
 
+  /**
+   * Renders C array dimension definitions for register storage.
+   *
+   * @return C array dimension string
+   */
   private String renderCArrayDef() {
     var sb = new StringBuilder();
 
     if (isGVec()) {
       // if the register is a gvec, we will use a single-dimensional array
-      // for simplicity when accessing it.
-      var elementSize = valueCTypeWidth();
+      // for simplicity when accessing it. The array is a byte array (uint8_t),
+      // so we must adjust the element number accordingly.
+      var elementSize = 8;
       var numElements = reg().totalWidth() / elementSize;
       sb.append("[").append(numElements).append("]");
     } else {
@@ -180,6 +254,11 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     return sb.toString();
   }
 
+  /**
+   * Renders index dimension metadata for template rendering.
+   *
+   * @return list of dimension metadata maps
+   */
   private List<?> renderIndexDims() {
     var dims = reg().dimensions();
     return IntStream.range(0, dims.size() - 1).mapToObj(i ->
@@ -192,16 +271,28 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     ).toList();
   }
 
+  /**
+   * Renders getter function arguments from dimension metadata.
+   *
+   * @param dims dimension metadata
+   * @return comma-separated argument list
+   */
   private String renderGetterArgs(List<?> dims) {
     var args = dims.stream()
         .map(d -> {
           var dim = ((Map<?, ?>) d);
           return dim.get("index_ctype") + " " + dim.get("arg_name");
         })
-        .collect(Collectors.joining(", "));
+        .collect(joining(", "));
     return args;
   }
 
+  /**
+   * Renders register constraints for template rendering.
+   *
+   * @param dims dimension metadata
+   * @return list of constraint metadata maps
+   */
   private List<?> renderConstraints(List<?> dims) {
     // TODO: This is not generic and only works for 2-dimensional registers
     return reg().constraints().stream()
@@ -227,12 +318,13 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
         }).toList();
   }
 
-  /// Checks if an access pattern is a vector access (operates on multiple elements).
-  ///
-  /// @param reg        the register tensor being accessed
-  /// @param numIndices number of indices used in the access
-  /// @return true if this is a vector access
-  ///
+  /**
+   * Checks if an access pattern is a vector access (operates on multiple elements).
+   *
+   * @param reg        the register tensor being accessed
+   * @param numIndices number of indices used in the access
+   * @return true if this is a vector access
+   */
   private static boolean isVectorAccess(RegisterTensor reg, int numIndices) {
     int resultWidth = reg.resultType(numIndices).bitWidth();
 
@@ -296,5 +388,317 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
         .anyMatch(read -> isVectorAccess(reg, read.indices().size()))
         || writes.stream()
         .anyMatch(write -> isVectorAccess(reg, write.indices().size()));
+  }
+
+  /**
+   * Type of register access operation.
+   */
+  public enum AccessType {
+    /**
+     * Read operation.
+     */
+    READ,
+    /**
+     * Write operation.
+     */
+    WRITE
+  }
+
+  /**
+   * Dimension metadata for register access.
+   *
+   * @param typeWidth bit width of the index type
+   * @param size      number of elements in this dimension
+   */
+  public record AccessDim(
+      int typeWidth,
+      int size
+  ) {
+  }
+
+  /**
+   * Represents a specific access pattern for a register.
+   * Contains information about how a register is accessed and generates corresponding C code.
+   */
+  public static final class AccessPattern implements Renderable {
+    private final RegInfo owner;
+    private final AccessType type;
+    private final List<AccessDim> dims;
+    private final int elementWidth;
+    private final WithLocation origin;
+
+    /**
+     * Constructs an access pattern.
+     *
+     * @param owner        the register info this pattern belongs to
+     * @param type         the access type (read or write)
+     * @param dims         dimension metadata for the access
+     * @param elementWidth bit width of accessed elements
+     * @param origin       source location of this access
+     */
+    public AccessPattern(
+        RegInfo owner,
+        AccessType type,
+        List<AccessDim> dims,
+        int elementWidth,
+        WithLocation origin
+    ) {
+      this.owner = owner;
+      this.type = type;
+      this.dims = dims;
+      this.elementWidth = elementWidth;
+      this.origin = origin;
+    }
+
+    /**
+     * Generates the function name for this access pattern.
+     *
+     * @return the C function name
+     */
+    public String name() {
+      String dimSuffix = dims.isEmpty()
+          ? ""
+          : dims.stream()
+          .map(w -> "i" + w.size)
+          .collect(joining("_", "_", ""));
+
+      return (type == READ ? "get" : "set")
+          + "_" + owner.nameLower()
+          + dimSuffix
+          + "_u" + elementWidth;
+    }
+
+    /**
+     * Generates the C function signature for this access pattern.
+     *
+     * @return the complete function signature
+     */
+    String signature() {
+
+      var args = new java.util.ArrayList<String>();
+      args.add(owner.cpuStateName() + " *env");
+      IntStream.range(0, dims.size())
+          .mapToObj(i -> "uint32_t i" + i)
+          .forEach(args::add);
+      if (type == AccessType.WRITE) {
+        args.add(CppTypeMap.cppUintType(CppTypeMap.nextFittingBitSize(elementWidth)) + " value");
+      }
+
+      String ret = (type == AccessType.READ)
+          ? CppTypeMap.cppUintType(CppTypeMap.nextFittingBitSize(elementWidth))
+          : "void";
+
+      return ret + " " + name() + "(" + String.join(", ", args) + ")";
+    }
+
+    /**
+     * Generates the C function body for this access pattern.
+     *
+     * @return the function body code
+     */
+    private String body() {
+      if (owner.isGVec()) {
+        return gVecBody();
+      } else {
+        return normalBody();
+      }
+    }
+
+    /**
+     * Generates function body for normal (non-gvec) register access.
+     *
+     * @return the function body code
+     */
+    private String normalBody() {
+      var cb = new CStringBuilder();
+
+      // check that index dimensions correspond to the index dimensions of the register tensor
+      var regDims = owner.reg().indexDimensions();
+      origin.ensure(regDims.size() == dims.size(),
+          "Number of register dimensions (%d) does not match access dimensions (%d)",
+          regDims.size(), dims.size());
+      for (int i = 0; i < dims.size(); i++) {
+        var regDim = regDims.get(i);
+        var accessDim = dims.get(i);
+        var argName = "i" + i;
+        origin.ensure(regDim.size() == accessDim.size(),
+            "Register dimension size does not match access dimension size");
+
+        cb.callStmt("assert", argName + " < " + regDim.size());
+
+        // emit constraint validation
+        for (var constraint : owner.reg().constraints()) {
+          var check = constraintCheck(constraint);
+          cb.ifStmt(check, () -> {
+            switch (type) {
+              case READ -> cb.returnStmt(constraint.value().hexadecimal());
+              case WRITE -> cb.returnStmt();
+            }
+          });
+        }
+      }
+
+      // emit index access
+      var access = "env->" + owner.nameLower() + owner.cArrayIndex("i");
+      switch (type) {
+        case READ -> cb.returnStmt(access);
+        case WRITE -> cb.stmt(access + " = value");
+      }
+      return cb.toString();
+    }
+
+    /**
+     * Generates function body for generic vector register access.
+     *
+     * @return the function body code
+     */
+    @SuppressWarnings("MethodName")
+    private String gVecBody() {
+
+      // precompute strides (row-major)
+      int ndims = dims.size();
+      int[] strides = new int[ndims];
+      int acc = 1;
+      for (int i = ndims - 1; i >= 0; i--) {
+        strides[i] = acc;
+        acc *= dims.get(i).size();
+      }
+
+      StringBuilder off = new StringBuilder();
+      off.append("size_t off = (");
+
+      for (int i = 0; i < ndims; i++) {
+        if (i > 0) {
+          off.append(" + ");
+        }
+        off.append("((")
+            .append("size_t)i").append(i)
+            .append(" * ").append(strides[i])
+            .append(")");
+      }
+
+      int elemBytes = elementWidth / 8;
+      off.append(") * ").append(elemBytes).append(";");
+
+      StringBuilder b = new StringBuilder();
+
+      // emit offset computation before the actual load/store
+      b.append(off).append('\n');
+
+      if (type == AccessType.READ) {
+        b.append("""
+              uint64_t v = 0;
+              memcpy(&v, env->%s + off, %d);
+              return v;
+            """.formatted(owner.nameLower(), elemBytes));
+      } else {
+        b.append("""
+              memcpy(env->%s + off, &value, %d);
+            """.formatted(owner.nameLower(), elemBytes));
+      }
+
+      return b.toString();
+    }
+
+    /**
+     * Generates constraint check condition for register constraints.
+     *
+     * @param constraint the constraint to check
+     * @return C condition string
+     */
+    private String constraintCheck(RegisterResource.Constraint constraint) {
+      var check = new StringBuilder();
+      for (int i = 0; i < constraint.indices().size(); i++) {
+        if (i != 0) {
+          check.append(" && ");
+        }
+        check.append("i").append(i).append(" == ")
+            .append(constraint.indices().get(i).hexadecimal());
+      }
+      return check.toString();
+    }
+
+    /**
+     * Creates a map of renderable properties for template rendering.
+     *
+     * @return map containing template variables
+     */
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "signature", signature(),
+          "body", body()
+      );
+    }
+
+    @Override
+    public String toString() {
+      return "AccessPattern["
+          + "owner=" + owner + ", "
+          + "type=" + type + ", "
+          + "dims=" + dims + ", "
+          + "elementWidth=" + elementWidth + ", "
+          + "origin=" + origin + ']';
+    }
+
+    /**
+     * Checks if this access pattern equals another object.
+     *
+     * @param o the object to compare with
+     * @return true if objects are equal
+     */
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      AccessPattern that = (AccessPattern) o;
+      return elementWidth == that.elementWidth && Objects.equals(owner, that.owner)
+          && type == that.type && Objects.equals(dims, that.dims);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(owner, type, dims, elementWidth);
+    }
+
+    /**
+     * Creates an access pattern from a read node.
+     *
+     * @param read the read node
+     * @return the access pattern
+     */
+    public static AccessPattern of(ReadRegTensorNode read) {
+      return of(read, AccessType.READ, read.regTensor(), read.indices());
+    }
+
+    /**
+     * Creates an access pattern from a write node.
+     *
+     * @param write the write node
+     * @return the access pattern
+     */
+    public static AccessPattern of(WriteRegTensorNode write) {
+      return of(write, AccessType.WRITE, write.regTensor(), write.indices());
+    }
+
+    /**
+     * Creates an access pattern from node components.
+     *
+     * @param origin  the originating node
+     * @param type    the access type
+     * @param reg     the register tensor
+     * @param indices the access indices
+     * @return the access pattern
+     */
+    public static AccessPattern of(Node origin, AccessType type, RegisterTensor reg,
+                                   List<ExpressionNode> indices) {
+      var info = regInfo(reg);
+      var indexDims = reg.indexDimensions().stream()
+          .limit(indices.size())
+          .map(d -> new RegInfo.AccessDim(d.indexType().bitWidth(), d.size()))
+          .toList();
+      return new RegInfo.AccessPattern(info, type, indexDims, reg.resultType().bitWidth(), origin);
+    }
   }
 }

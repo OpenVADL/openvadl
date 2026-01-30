@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,6 +16,9 @@
 
 package vadl.utils;
 
+import com.google.errorprone.annotations.FormatMethod;
+import org.jetbrains.annotations.Contract;
+
 /**
  * Interface representing an entity with a {@link SourceLocation}.
  *
@@ -28,4 +31,15 @@ public interface WithLocation {
    * @return the {@link SourceLocation} object that represents the location in the source code.
    */
   SourceLocation location();
+
+  /**
+   * Throw an exception if the condition is false.
+   */
+  @FormatMethod
+  @Contract("_, _, _ -> fail")
+  default void ensure(boolean condition, String message, Object... args) {
+    if (!condition) {
+      throw new IllegalStateException(message.formatted(args) + " at " + location());
+    }
+  }
 }

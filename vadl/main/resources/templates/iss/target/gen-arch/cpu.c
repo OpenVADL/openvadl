@@ -20,6 +20,13 @@ const char * const [(${gen_arch_lower})]_cpu_[(${reg.name_lower})]_names[(${reg.
 [/][/]
 
 [# th:each="reg : ${register_tensors}"]
+[# th:each="access : ${reg.access_patterns}"]
+[(${access.signature})]
+{
+    [(${access.body})] }
+[/][/]
+
+[# th:each="reg : ${register_tensors}"]
 [(${reg.cpu_getter_signature})]
 {   [# th:each="dim : ${reg.index_dims}"]
     assert( [(${dim.arg_name})] < [(${dim["size"]})]); [/]

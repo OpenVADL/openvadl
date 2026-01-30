@@ -58,6 +58,7 @@ import vadl.iss.passes.IssMemoryAccessTransformationPass;
 import vadl.iss.passes.IssMemoryDetectionPass;
 import vadl.iss.passes.IssNormalizationPass;
 import vadl.iss.passes.IssPcAccessConversionPass;
+import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
 import vadl.iss.passes.IssSelectLoweringPass;
 import vadl.iss.passes.IssTcgSchedulingPass;
 import vadl.iss.passes.IssTcgVAllocationPass;
@@ -522,6 +523,7 @@ public class PassOrders {
 
         // pre emit passes
         .add(new IssCFunctionExtractionPass(config))
+        .add(new IssRegisterAccessInfoRetrievalPass(config))
     ;
 
     addDecodePasses(order, config);

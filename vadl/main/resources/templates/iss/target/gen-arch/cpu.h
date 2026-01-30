@@ -79,9 +79,9 @@ int [(${gen_arch_lower})]_cpu_gdb_write_register(CPUState *cpu, uint8_t *buf, in
 
 // CPU register getters and setters
 [# th:each="reg : ${register_tensors}"]
-[(${reg.cpu_getter_signature})];
-[(${reg.cpu_setter_signature})];
-[/]
+[# th:each="access : ${reg.access_patterns}"]
+[(${access.signature})];
+[/][/]
 
 
 #include "exec/cpu-all.h"
