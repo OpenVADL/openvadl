@@ -30,6 +30,7 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":vadl-common"))
     annotationProcessor(project(":java-annotations"))
     compileOnly(project(":java-annotations"))
     implementation("org.thymeleaf:thymeleaf:3.1.2.RELEASE")

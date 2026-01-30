@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,16 +16,29 @@
 
 package vadl.utils;
 
-/**
- * A helper construct to define a tuple.
- */
-public record Triple<T, X, Z>(
-    T left,
-    X middle,
-    Z right
-) {
+import java.util.Objects;
+import javax.annotation.Nullable;
 
-  public static <T, X, Z> Triple<T, X, Z> of(T left, X middle, Z right) {
-    return new Triple<>(left, middle, right);
+/**
+ * A file to work around the "quirks" of some editors and IDE's.
+ */
+public class EditorUtils {
+
+  @Nullable
+  private static Boolean isIntelliJ = null;
+
+  /**
+   * Detect whether the program is currently executing inside IntelliJ.
+   */
+  public static boolean isIntelliJIDE() {
+    if (isIntelliJ == null) {
+      isIntelliJ = Objects.requireNonNullElse(System.getenv("TERMINAL_EMULATOR"), "")
+          .equals("JetBrains-JediTerm")
+          || Objects.requireNonNullElse(System.getenv("XPC_SERVICE_NAME"), "")
+          .startsWith("application.com.jetbrains")
+      ;
+    }
+
+    return isIntelliJ;
   }
 }

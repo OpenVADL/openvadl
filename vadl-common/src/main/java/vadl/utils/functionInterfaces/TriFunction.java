@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,23 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.error;
+package vadl.utils.functionInterfaces;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
+import java.util.function.Function;
 
 /**
- * A general exception that something went wrong with a list of errors that caused the problem.
+ * A Java function interface with 3 parameter and a return value.
  */
-public class DiagnosticList extends RuntimeException {
-  public List<Diagnostic> items;
+@FunctionalInterface
+public interface TriFunction<A, B, C, R> {
+  R apply(A var1, B var2, C var3);
 
-  public DiagnosticList(List<Diagnostic> items) {
-    super(items.size() + " diagnostics(s):\n" + buildErrorMessage(items));
-    this.items = items;
-  }
-
-  private static String buildErrorMessage(List<Diagnostic> errors) {
-    return errors.stream().map(Diagnostic::getMessage).collect(Collectors.joining("\n"));
+  default <V> TriFunction<A, B, C, V> andThen(
+      Function<? super R, ? extends V> after) {
+    Objects.requireNonNull(after);
+    return (a, b, c) -> after.apply(this.apply(a, b, c));
   }
 }
