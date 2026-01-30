@@ -1,30 +1,17 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 pluginManagement {
-    includeBuild("build-logic")
-
-    repositories {
-        gradlePluginPortal()
-        mavenCentral()
+    plugins {
+        kotlin("jvm") version "2.3.0"
     }
 }
-
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-
-dependencyResolutionManagement {
-    repositories {
-        mavenCentral()
-    }
+plugins {
+    // Apply the foojay-resolver plugin to allow automatic download of JDKs
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.7.0"
 }
 
 rootProject.name = "open-vadl"
 
-include(
-    "vadl",
-    "vadl-common",
-    "java-annotations",
-    "vadl-cli",
-    "vadl-lsp",
-    "vadl-test"
-)
+include("vadl")
+include("java-annotations")
+include("vadl-cli")
+include("vadl-lsp")
+include("vadl-test")

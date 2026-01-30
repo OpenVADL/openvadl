@@ -15,13 +15,20 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 plugins {
-    id("conventions-java")
+    id("java")
+}
+
+group = "vadl"
+version = "1.0-SNAPSHOT"
+
+repositories {
+    mavenCentral()
 }
 
 dependencies {
-    compileOnly(libs.auto.service.annotations)
-    annotationProcessor(libs.auto.service)
-    compileOnly(libs.errorprone.api)
+    compileOnly("com.google.auto.service:auto-service-annotations:1.1.1")
+    annotationProcessor("com.google.auto.service:auto-service:1.1.1")
+    compileOnly("com.google.errorprone:error_prone_check_api:2.26.1")
 }
 
 tasks.withType<JavaCompile> {
@@ -44,3 +51,5 @@ tasks.withType<JavaCompile> {
         )
     )
 }
+
+

@@ -1,11 +1,9 @@
 plugins {
-    alias(libs.plugins.conventions.java)
     application
     id("io.github.rascmatt.z3") version "1.0.2"
     id("org.graalvm.buildtools.native") version "0.11.2"
     id("org.beryx.jlink") version "3.2.0"
 }
-
 
 group = "vadl"
 version = "unspecified"
@@ -17,13 +15,13 @@ repositories {
 dependencies {
     implementation(project(":vadl"))
     implementation(project(":vadl-lsp"))
-    implementation(libs.picocli)
-    implementation(libs.commons.compress)
-    annotationProcessor(libs.picocli.codegen)
+    implementation("info.picocli:picocli:4.7.6")
+    implementation("org.apache.commons:commons-compress:1.27.1")
+    annotationProcessor("info.picocli:picocli-codegen:4.7.6")
 
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
-    testRuntimeOnly(libs.junit.platform.launcher)
+    testImplementation(platform("org.junit:junit-bom:5.11.4"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 application {

@@ -14,31 +14,36 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import net.ltgt.gradle.errorprone.CheckSeverity
+import net.ltgt.gradle.errorprone.errorprone
+
+buildscript {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath("net.ltgt.gradle:gradle-errorprone-plugin:2.43.0")
+    }
+}
+
 plugins {
-    alias(libs.plugins.conventions.cocor) apply false
-    alias(libs.plugins.conventions.java) apply false
-    alias(libs.plugins.conventions.root)
-    alias(libs.plugins.git.versioning)
-    alias(libs.plugins.test.logger)
+    id("java")
+    checkstyle
+    id("net.ltgt.errorprone") version "4.3.0" apply false
+    id("me.qoomon.git-versioning") version "6.4.4"
+
+
+    // log executed tests
+    id("com.adarshr.test-logger") version "4.0.0"
+
+    // custom plugins
+    id("vadl.IdeConfigPlugin")
 }
 
 
 group = "openvadl"
 version = "0.0.0-SNAPSHOT"
-
-
-/**************
- * CI TEST TASK CONFIGS
- *************/
-
-tasks.register<Test>("test-common") {
-    dependsOn(":vadl:test-others", ":vadl-cli:test", ":java-annotations:test")
-}
-
-/**************
- * GIT BASE OPENVADL VERSIONING
- *************/
-
 gitVersioning.apply {
 
     refs {
@@ -53,4 +58,113 @@ gitVersioning.apply {
     rev {
         version = "\${commit}"
     }
+}
+
+
+subprojects {
+    plugins.apply("java")
+    plugins.apply("net.ltgt.errorprone")
+    plugins.apply("checkstyle")
+    plugins.apply("com.adarshr.test-logger")
+
+    val errorProneVersion by extra("2.43.0")
+
+    repositories {
+        mavenCentral()
+    }
+
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(25))
+        }
+    }
+
+    extra {
+        errorProneVersion
+    }
+
+    checkstyle {
+        toolVersion = "10.15.0"
+        // configFile = project.projectDir.resolve("../config/checkstyle/checkstyle.xml")
+        configDirectory.set(project.projectDir.resolve("../config/checkstyle/"))
+        sourceSets = listOf()
+        maxWarnings = 0
+    }
+
+    dependencies {
+        add("errorprone", "com.uber.nullaway:nullaway:0.10.25")
+        add("compileOnly", "com.google.code.findbugs:jsr305:3.0.2")
+        add("errorprone", "com.google.errorprone:error_prone_core:$errorProneVersion")
+        add("compileOnly", "com.google.errorprone:error_prone_annotations:$errorProneVersion")
+        add("compileOnly", "org.jetbrains:annotations:24.0.1")
+        add("implementation", "ch.qos.logback:logback-classic:1.5.24")
+    }
+
+
+    sourceSets {
+        main {
+            java {
+                srcDir("main")
+                exclude("main/resources/**")
+            }
+            resources {
+                srcDir("main/resources")
+            }
+        }
+
+        test {
+            java {
+                srcDir("test")
+                exclude("test/resources/**")
+            }
+            resources {
+                srcDir("test/resources")
+            }
+        }
+    }
+
+    tasks.withType<JavaCompile> {
+        if (!name.lowercase().contains("test")) {
+            options.errorprone {
+                check("NullAway", CheckSeverity.ERROR)
+                option("NullAway:AnnotatedPackages", "vadl,java-annotations")
+                disable("EqualsGetClass", "StringCaseLocaleUsage", "EffectivelyPrivate", "ClassInitializationDeadlock")
+                excludedPaths.set(".*/generated/sources/.*/java/main/vadl/.*")
+            }
+        }
+
+        if (project.hasProperty("FailOnWarnings")) {
+            options.compilerArgs.add("-Werror")
+        }
+    }
+
+    tasks.withType<JavaExec> {
+        standardInput = System.`in`
+        workingDir = rootProject.projectDir
+        outputs.upToDateWhen { false }
+    }
+
+    tasks {
+        compileTestJava {
+            options.errorprone.isEnabled.set(false)
+        }
+    }
+}
+
+/**************
+ * CI TEST TASK CONFIGS
+ *************/
+
+tasks.register<Test>("test-common") {
+    dependsOn(":vadl:test-others", ":vadl-cli:test", ":java-annotations:test")
+}
+
+/**************
+ * CHECKSTYLE TASK CONFIGS
+ *************/
+
+tasks.register("checkstyleAll") {
+    val checkstyleTasks = subprojects.map { setOf(it.tasks.checkstyleMain, it.tasks.checkstyleTest) }.flatten()
+
+    dependsOn(checkstyleTasks)
 }

@@ -1,9 +1,4 @@
-
-plugins {
-    alias(libs.plugins.conventions.java)
-}
-
 dependencies {
-    implementation(projects.vadl)
-    implementation(libs.lsp4j)
+    implementation(project(":vadl"))
+    implementation("org.eclipse.lsp4j:org.eclipse.lsp4j:0.24.0")
 }
