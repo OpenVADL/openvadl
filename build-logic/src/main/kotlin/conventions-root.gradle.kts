@@ -1,27 +1,25 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
-// SPDX-License-Identifier: GPL-3.0-or-later
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-package vadl
-
+import gradle.kotlin.dsl.accessors._93daea375daf749b91a493da031ba15d.checkstyleMain
+import gradle.kotlin.dsl.accessors._93daea375daf749b91a493da031ba15d.checkstyleTest
 import groovy.util.Node
 import org.jetbrains.gradle.ext.settings
 
 plugins {
     id("org.jetbrains.gradle.plugin.idea-ext")
 }
+
+/**************
+ * CHECKSTYLE TASK CONFIGS
+ *************/
+
+tasks.register("checkstyleAll") {
+    val checkstyleTasks = subprojects.map { setOf(it.tasks.checkstyleMain, it.tasks.checkstyleTest) }.flatten()
+
+    dependsOn(checkstyleTasks)
+}
+
+/**************
+ * INTELLIJ CONFIG MODIFICATION
+ *************/
 
 fun Node.ensureChild(name: String, attributes: Map<String, String> = emptyMap()): Node {
     // Search for an existing child node with the specified name and attributes

@@ -15,22 +15,21 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import vadl.CocoR_gradle
 import java.util.*
 
 plugins {
-    id("vadl.CocoR")
+    alias(libs.plugins.conventions.java)
+    alias(libs.plugins.conventions.cocor)
     id("io.github.rascmatt.z3") version "1.0.2"
     kotlin("jvm") version "2.3.0"
 }
 
 
 dependencies {
-    implementation(projects.vadlCommon)
+    api(projects.vadlCommon)
     annotationProcessor(projects.javaAnnotations)
     compileOnly(projects.javaAnnotations)
     implementation(libs.thymeleaf)
-    implementation(libs.guava)
     implementation(libs.commons.io)
     implementation(libs.commons.lang3)
     implementation(libs.commons.text)
@@ -38,14 +37,11 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
 
     testCompileOnly(projects.javaAnnotations)
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
-    testRuntimeOnly(libs.junit.platform.launcher)
+    testAnnotationProcessor(projects.javaAnnotations)
     testImplementation(libs.assertj)
     testImplementation(libs.awaitility)
     testImplementation(libs.testcontainers)
     testImplementation(libs.archunit)
-    testAnnotationProcessor(projects.javaAnnotations)
     // Helps getting test files small and concise
     testImplementation(libs.velocity)
     testImplementation(libs.jqwik)
@@ -57,11 +53,6 @@ kotlin {
 }
 
 sourceSets {
-    main {
-        java {
-            srcDir("build/generated/sources/coco/java/main")
-        }
-    }
     test {
         resources {
             srcDir(project(":vadl-test").layout.projectDirectory.dir("resources"))
@@ -83,14 +74,6 @@ tasks.withType<Checkstyle> {
     }
 }
 
-// Register the custom task with your configuration
-tasks.register<CocoR_gradle.GenerateCocoParserTask>("generateCocoParser") {
-    group = "build"
-    inputFiles.from("main/vadl/ast/vadl.ATG")
-    parserFrame.set(project.file("main/vadl/ast/Parser.frame"))
-    outputDir.set(outputDir.get().dir("vadl/ast"))
-    cocoJar.set(project.file("libs/Coco.jar"))
-}
 
 // add the generated open-vadl.properties file to the JAR package.
 tasks.processResources {
