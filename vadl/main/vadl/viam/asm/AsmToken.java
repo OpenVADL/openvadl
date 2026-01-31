@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,7 @@ package vadl.viam.asm;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.ast.AsmGrammarDefaultRules;
 
 /**
  * Represents a token of the asm parser.
@@ -80,5 +81,23 @@ public class AsmToken {
   @Override
   public int hashCode() {
     return Objects.hash(ruleName);
+  }
+
+  /**
+   * Searches for the matching terminal rule in {@link AsmGrammarDefaultRules} and builds an
+   * AsmToken with the found terminal rule.
+   *
+   * @param parseValue the value to match the terminal rule regular expression against
+   * @return the AsmToken with the inferred terminal rule
+   */
+  public static AsmToken inferTerminalRule(String parseValue) {
+    var inferredRule = AsmGrammarDefaultRules.getMatchingTerminalRule(parseValue);
+    if (inferredRule == null) {
+      // FIXME: Ensure that pattern cache in DefaultAsmGrammarRules is filled
+      // throw Diagnostic.error("Could not infer asm terminal rule for parse value: " + parseValue,
+      //    SourceLocation.INVALID_SOURCE_LOCATION).build();
+      inferredRule = "IDENTIFIER";
+    }
+    return new AsmToken(inferredRule, parseValue);
   }
 }

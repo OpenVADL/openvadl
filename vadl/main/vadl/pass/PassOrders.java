@@ -89,6 +89,7 @@ import vadl.iss.template.target.EmitIssTranslateCPass;
 import vadl.lcb.codegen.assembly.WrapInIntegralPass;
 import vadl.lcb.include.llvm.IR.EmitMiddleendIntrinsicsTableGenPass;
 import vadl.lcb.passes.OverwriteInputOperandsPass;
+import vadl.lcb.passes.asm.AsmGrammarRuleGenerationPass;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
@@ -324,6 +325,8 @@ public class PassOrders {
     order.add(new GenerateLinkerComponentsPass(configuration));
 
     order.add(new WrapInIntegralPass(configuration));
+
+    order.add(new AsmGrammarRuleGenerationPass(configuration));
 
     addHtmlDump(order, configuration,
         "lcbLlvmLowering",

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -26,10 +26,10 @@ import vadl.types.asmTypes.AsmType;
  * both represented by the {@code Alternatives} class.
  * </p>
  */
-public record AsmGroup(@Nullable AsmAssignTo assignTo,
+public record AsmGroup(@Nullable AsmAssignTo assignToElement,
                        AsmAlternatives alternatives,
                        boolean isEnclosingAlternativeOfAsmGroupType,
-                       AsmType asmType) implements AsmGrammarElement {
+                       AsmType asmType) implements AsmGrammarElement, HasAssignTo {
   @Override
   public AsmType getAsmType() {
     return asmType;

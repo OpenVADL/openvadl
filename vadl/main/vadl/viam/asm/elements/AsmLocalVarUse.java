@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@ public record AsmLocalVarUse(@Nullable AsmAssignTo assignToElement,
                              String invokedLocalVar,
                              AsmType invokedLocalVarType,
                              AsmType asmType)
-    implements AsmGrammarElement {
+    implements AsmGrammarElement, HasAssignTo {
   @Override
   public AsmType getAsmType() {
     return asmType;

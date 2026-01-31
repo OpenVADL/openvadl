@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -334,8 +334,7 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<Set<AsmToken>> {
 
     if (entity.stringLiteral != null) {
       var stringValue = ((StringLiteral) entity.stringLiteral).value;
-      var inferredRule = inferTerminalRule(stringValue);
-      return new HashSet<>(List.of(new AsmToken(inferredRule.identifier().name, stringValue)));
+      return new HashSet<>(List.of(new AsmToken(inferTerminalRule(stringValue), stringValue)));
     }
 
     Objects.requireNonNull(entity.id);
@@ -403,18 +402,15 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<Set<AsmToken>> {
     return firstEntityTokens;
   }
 
-  private AsmGrammarRuleDefinition inferTerminalRule(String value) {
-    var inferredRule =
-        AsmGrammarDefaultRules.terminalRuleRegexPatterns().entrySet().stream().filter(
-            entry -> entry.getValue().matcher(value).matches()
-        ).findFirst();
+  private String inferTerminalRule(String value) {
+    var inferredRule = AsmGrammarDefaultRules.getMatchingTerminalRule(value);
 
-    if (inferredRule.isEmpty()) {
+    if (inferredRule == null) {
       throw new RuntimeException(
           "Could not infer asm terminal rule for string literal: '%s'".formatted(value));
     }
 
-    return inferredRule.get().getKey();
+    return inferredRule;
   }
 }
 
