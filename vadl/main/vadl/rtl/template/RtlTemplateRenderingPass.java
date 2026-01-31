@@ -24,6 +24,7 @@ import vadl.error.Diagnostic;
 import vadl.pass.PassResults;
 import vadl.template.AbstractMultiTemplateRenderingPass;
 import vadl.viam.Definition;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 
@@ -70,8 +71,9 @@ public abstract class RtlTemplateRenderingPass extends AbstractMultiTemplateRend
     vars.put("package", configuration.getScalaPackage());
     vars.put("topModule", configuration.getTopModule());
     vars.put("projectName", configuration.getProjectName());
-    vars.put("isaName", viam.isa().map(Definition::simpleName).orElseThrow(() ->
-        Diagnostic.error("Can not emit RTL without ISA", viam.location()).build()));
+    vars.put("isaName", viam.mia().map(MicroArchitecture::isa)
+        .map(Definition::simpleName).orElseThrow(() ->
+            Diagnostic.error("Can not emit RTL without ISA", viam.location()).build()));
     return vars;
   }
 

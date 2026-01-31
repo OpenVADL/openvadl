@@ -44,11 +44,3 @@ micro architecture FiveStage implements RV64IM = {
       instr.write( @X )                  // write back to register file X
     }
 }
-
-processor rv64imFive implements RV64IM = {
-    constant reset_vec_addr = 0x1000
-
-    reset = {
-      PC := reset_vec_addr
-    }
-}

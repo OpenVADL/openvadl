@@ -33,6 +33,7 @@ import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.nodes.RtlReadMemNode;
 import vadl.rtl.ipg.nodes.RtlWriteMemNode;
 import vadl.rtl.map.MiaMapping;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -60,7 +61,7 @@ public class InstructionProgressGraphMergePass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var optIsa = viam.isa();
+    var optIsa = viam.mia().map(MicroArchitecture::isa);
     if (optIsa.isEmpty()) {
       return null;
     }

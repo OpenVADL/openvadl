@@ -1475,8 +1475,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Override
   public Optional<vadl.viam.Definition> visit(MicroArchitectureDefinition definition) {
     var identifier = generateIdentifier(definition.viamId, definition.identifier());
-    var isa = visitIsa(
-        (InstructionSetDefinition) requireNonNull(definition.isa.target()));
+    var isa = visitIsa(mergeIsa(
+        (InstructionSetDefinition) requireNonNull(definition.isa.target())));
 
     var children = definition.definitions.stream().map(this::fetch).filter(Optional::isPresent)
         .map(Optional::orElseThrow).toList();

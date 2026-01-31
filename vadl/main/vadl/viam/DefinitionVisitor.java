@@ -314,6 +314,7 @@ public interface DefinitionVisitor {
       microArchitecture.ownRegisters().forEach(register -> register.accept(this));
       microArchitecture.ownMemories().forEach(memory -> memory.accept(this));
       microArchitecture.ownFunctions().forEach(function -> function.accept(this));
+      microArchitecture.isa().accept(this);
       afterTraversal(microArchitecture);
     }
 

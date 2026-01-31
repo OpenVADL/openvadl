@@ -34,6 +34,7 @@ import vadl.rtl.ipg.nodes.RtlSelectByInstructionNode;
 import vadl.rtl.map.MiaMapping;
 import vadl.utils.Pair;
 import vadl.viam.Constant;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
@@ -62,7 +63,7 @@ public class HazardAnalysisPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var optIsa = viam.isa();
+    var optIsa = viam.mia().map(MicroArchitecture::isa);
     if (optIsa.isEmpty()) {
       return null;
     }

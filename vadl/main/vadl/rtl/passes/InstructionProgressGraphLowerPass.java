@@ -38,6 +38,7 @@ import vadl.rtl.utils.RtlSimplificationRules;
 import vadl.rtl.utils.RtlSimplifier;
 import vadl.types.UIntType;
 import vadl.utils.GraphUtils;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -62,7 +63,7 @@ public class InstructionProgressGraphLowerPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var isa = viam.isa().orElse(null);
+    var isa = viam.mia().map(MicroArchitecture::isa).orElse(null);
     var mia = viam.mia().orElse(null);
     if (isa == null || mia == null) {
       return null;

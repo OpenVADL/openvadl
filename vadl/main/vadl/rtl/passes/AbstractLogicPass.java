@@ -51,7 +51,7 @@ public abstract class AbstractLogicPass extends AbstractRtlPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
 
-    var isa = viam.isa().orElse(null);
+    var isa = viam.mia().map(MicroArchitecture::isa).orElse(null);
     var mia = viam.mia().orElse(null);
     if (isa == null || mia == null) {
       return null;

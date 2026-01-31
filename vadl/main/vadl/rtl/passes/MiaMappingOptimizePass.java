@@ -39,6 +39,7 @@ import vadl.rtl.map.MiaMapping;
 import vadl.rtl.utils.GraphMergeUtils;
 import vadl.rtl.utils.RtlSimplificationRules;
 import vadl.rtl.utils.RtlSimplifier;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.graph.Node;
@@ -67,7 +68,7 @@ public class MiaMappingOptimizePass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var optIsa = viam.isa();
+    var optIsa = viam.mia().map(MicroArchitecture::isa);
     if (optIsa.isEmpty()) {
       return null;
     }

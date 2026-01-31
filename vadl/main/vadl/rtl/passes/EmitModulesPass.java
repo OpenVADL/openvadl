@@ -38,6 +38,7 @@ import vadl.vdt.passes.VdtLoweringPass;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Logic;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.Resource;
 import vadl.viam.Signal;
 import vadl.viam.Specification;
@@ -72,9 +73,8 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
   protected List<RenderInput> createRenderInputs(PassResults passResults, Specification viam,
                                                  Map<String, Object> base) {
     var mia = viam.mia().orElse(null);
-    var isa = viam.isa().orElse(null);
-    var mip = viam.processor().orElse(null);
-    if (mia == null || isa == null || mip == null) {
+    var isa = viam.mia().map(MicroArchitecture::isa).orElse(null);
+    if (mia == null || isa == null) {
       return List.of();
     }
 
@@ -94,8 +94,8 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
       vdt = null;
     }
 
-    var context = new HdlEmitContext(viam, isa, mia, mip, vdt, inlineRes.inlineMap(), resetVector,
-        configuration().getKeepSignals());
+    var context = new HdlEmitContext(viam, isa, mia, viam.processor().orElse(null), vdt,
+        inlineRes.inlineMap(), resetVector, configuration().getKeepSignals());
 
     List<HdlModule> modules = new ArrayList<>();
     mia.stages().stream().map(stage -> stage(context, stage)).forEach(modules::add);
@@ -154,6 +154,9 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
     }
 
     // copy reset behavior, merge writes to get only one write per resource
+    if (context.processor() == null) {
+      return;
+    }
     var resetBehavior = context.processor().reset().behavior().copy();
     GraphMergeUtils.mergeWritesOnBranches(resetBehavior);
 

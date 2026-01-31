@@ -44,6 +44,7 @@ import vadl.rtl.utils.RtlSimplifier;
 import vadl.rtl.utils.SubgraphUtils;
 import vadl.types.Type;
 import vadl.viam.Constant;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
@@ -88,7 +89,7 @@ public class InstructionBehaviorCheckPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var isa = viam.isa().orElseThrow();
+    var isa = viam.mia().map(MicroArchitecture::isa).orElseThrow();
     var pc = Objects.requireNonNull(isa.pc()).registerTensor();
     var ipg = isa.expectExtension(InstructionProgressGraphExtension.class).ipg();
 
@@ -98,7 +99,7 @@ public class InstructionBehaviorCheckPass extends Pass {
 
     for (var curInstr : isa.ownInstructions()) {
       if (curInstr.behavior().getNodes(ProcCallNode.class).findAny().isPresent()) {
-        continue; // skip for now, since procedure calls are inlined in ipg, skip for now
+        continue; // since procedure calls are inlined in ipg, skip for now
       }
 
       Graph graph;
@@ -215,8 +216,8 @@ public class InstructionBehaviorCheckPass extends Pass {
         .filter(node -> !ignore.contains(node))
         .filter(n -> filterResource(n, resource)).toList();
     Assertions.assertEquals(countNodes(inInstr, resource), inGraph.size(),
-        "Number of " + typeIns.getSimpleName() + " nodes does not match number of "
-            + typeIpg.getSimpleName() + " nodes for resource " + resource);
+        "%s: Number of %s nodes does not match number of %s nodes for %s"
+            .formatted(instrBeh.name, typeIns.getSimpleName(), typeIpg.getSimpleName(), resource));
   }
 
   private boolean filterResource(Node node, Resource resource) {

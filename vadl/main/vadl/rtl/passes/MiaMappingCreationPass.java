@@ -39,6 +39,7 @@ import vadl.rtl.map.MiaMapping;
 import vadl.types.BuiltInTable;
 import vadl.types.MicroArchitectureType;
 import vadl.utils.Pair;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.StageOutput;
@@ -82,7 +83,7 @@ public class MiaMappingCreationPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var optIsa = viam.isa();
+    var optIsa = viam.mia().map(MicroArchitecture::isa);
     var optMia = viam.mia();
     if (optIsa.isEmpty() || optMia.isEmpty()) {
       return null;

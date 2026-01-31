@@ -38,6 +38,7 @@ import vadl.rtl.utils.SubgraphUtils;
 import vadl.types.MicroArchitectureType;
 import vadl.utils.GraphUtils;
 import vadl.utils.Pair;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
@@ -82,7 +83,7 @@ public class MiaMappingInlinePass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var optIsa = viam.isa();
+    var optIsa = viam.mia().map(MicroArchitecture::isa);
     if (optIsa.isEmpty()) {
       return null;
     }

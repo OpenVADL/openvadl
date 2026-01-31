@@ -26,6 +26,7 @@ import vadl.utils.ViamUtils;
 import vadl.viam.Instruction;
 import vadl.viam.Procedure;
 import vadl.viam.Specification;
+import vadl.viam.Stage;
 
 /**
  * A pass that finds all instructions and procedures in the specification and
@@ -59,6 +60,12 @@ public class SideEffectConditionResolvingPass extends Pass {
         .findDefinitionsByFilter(viam, d -> d instanceof Procedure);
     for (var procedure : procedures) {
       SideEffectConditionResolver.run(((Procedure) procedure).behavior());
+    }
+
+    var stages = ViamUtils
+        .findDefinitionsByFilter(viam, d -> d instanceof Stage);
+    for (var stage : stages) {
+      SideEffectConditionResolver.run(((Stage) stage).behavior());
     }
 
     return null;

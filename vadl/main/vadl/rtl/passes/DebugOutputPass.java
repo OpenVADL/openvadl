@@ -26,6 +26,7 @@ import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
 import vadl.rtl.ipg.nodes.RtlDebugPrintNode;
 import vadl.rtl.map.MiaMapping;
 import vadl.viam.Constant;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
@@ -51,7 +52,7 @@ public class DebugOutputPass extends AbstractRtlPass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var isa = viam.isa().orElse(null);
+    var isa = viam.mia().map(MicroArchitecture::isa).orElse(null);
     var mia = viam.mia().orElse(null);
     if (isa == null || mia == null) {
       return null;

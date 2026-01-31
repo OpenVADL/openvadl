@@ -48,7 +48,7 @@ public record HdlEmitContext(
     Specification viam,
     InstructionSetArchitecture isa,
     MicroArchitecture mia,
-    Processor processor,
+    @Nullable Processor processor,
     @Nullable vadl.vdt.model.Node vdt,
     BiMap<Node, Node> inlineMap,
     @Nullable Signal resetVector,
