@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -128,8 +128,9 @@ public class DiagnosticPrinter {
     builder.append("     │\n");
 
     // TODO: Sort them accordig to their line number in the future
-    var allSnippets = new ArrayList<>(diagnostic.multiLocation.secondaryLocations());
+    var allSnippets = new ArrayList<Diagnostic.LabeledLocation>();
     allSnippets.add(diagnostic.multiLocation.primaryLocation());
+    allSnippets.addAll(diagnostic.multiLocation.secondaryLocations());
 
     for (int i = 0; i < allSnippets.size(); i++) {
       var snippet = allSnippets.get(i);

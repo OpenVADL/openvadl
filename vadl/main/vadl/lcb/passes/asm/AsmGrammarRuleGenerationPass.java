@@ -22,9 +22,13 @@ import java.util.List;
 import java.util.Set;
 import javax.annotation.CheckForNull;
 import vadl.configuration.GeneralConfiguration;
+import vadl.error.DeferredDiagnosticStore;
+import vadl.error.Diagnostic;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.Pair;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.asm.AsmToken;
 import vadl.viam.asm.elements.AsmAlternative;
@@ -64,33 +68,80 @@ public class AsmGrammarRuleGenerationPass extends Pass {
               var ctx = new AsmRuleContext(instruction);
               AsmGrammarRuleGeneratorDispatcher.dispatch(ruleGenerator, ctx, returnNode);
 
-              return ctx.builtRule;
+              return new Pair<>(instruction, ctx.builtRule);
             }
         ).toList();
 
     // TODO: case if assembly description does not exist --> what is default behavior?
 
     var assemblyDescription = viam.assemblyDescription().get();
-    var allRules = new ArrayList<>(assemblyDescription.rules());
-    allRules.addAll(generatedRules);
-    assemblyDescription.setRules(allRules);
-
-    var instructionRule = (AsmNonTerminalRule) allRules.stream()
+    var instructionRule = (AsmNonTerminalRule) assemblyDescription.rules().stream()
         .filter(rule -> rule.simpleName().equals("Instruction"))
         .findFirst()
         .orElseThrow();
 
-    // Add the generated rules as alternatives to the Instruction rule
+    var conflictingRules = new ArrayList<Pair<Instruction, AsmGrammarRule>>();
+    computeConflictingRules(instructionRule, generatedRules, conflictingRules);
+
+    var nonConflictingRules = generatedRules.stream()
+        .filter(p -> !conflictingRules.contains(p))
+        .toList();
+
+    // Add invocations of the generated rules to the alternatives of the Instruction rule
     instructionRule.getAlternatives().alternatives().addAll(
-        generatedRules.stream()
-            .map(r -> (AsmNonTerminalRule) r)
+        nonConflictingRules.stream()
+            .map(r -> (AsmNonTerminalRule) r.right())
             .map(rule -> ruleInvocationInAlternative(rule,
                 rule.getAlternatives().alternatives().getFirst()
                     .firstTokens()))
             .toList()
     );
 
+    // Add the generated rules to the assembly description
+    var allRules = new ArrayList<>(assemblyDescription.rules());
+    allRules.addAll(nonConflictingRules.stream().map(Pair::right).toList());
+    assemblyDescription.setRules(allRules);
+
     return null;
+  }
+
+  private void computeConflictingRules(AsmNonTerminalRule instructionRule,
+                                       List<Pair<Instruction, AsmGrammarRule>> generatedRules,
+                                       ArrayList<Pair<Instruction, AsmGrammarRule>> conflictingRules) {
+    for (var alternative : instructionRule.getAlternatives().alternatives()) {
+      for (var generatedPair : generatedRules) {
+        for (var generatedAlternative : ((AsmNonTerminalRule) generatedPair.right()).getAlternatives()
+            .alternatives()) {
+
+          var intersection = alternative.firstTokens().stream().filter(
+              token -> generatedAlternative.firstTokens().contains(token)
+          ).toList();
+
+          if (!intersection.isEmpty()) {
+            var conflictingRule = ((AsmRuleInvocation) alternative.elements().getFirst()).rule();
+            conflictingRules.add(generatedPair);
+
+            reportWarningForConflictingRule(generatedPair, intersection, conflictingRule);
+          }
+        }
+      }
+    }
+  }
+
+  private void reportWarningForConflictingRule(Pair<Instruction, AsmGrammarRule> generatedPair,
+                                               List<AsmToken> intersection,
+                                               AsmGrammarRule conflictingRule) {
+    DeferredDiagnosticStore.add(
+        Diagnostic.warning("Cannot generate assembly grammar rule for instruction: "
+                + generatedPair.left().simpleName(), generatedPair.left())
+            .note("The overlapping first tokens are [%s]",
+                String.join(", ", intersection.stream().map(AsmToken::toString).toList()))
+            .locationDescription(conflictingRule,
+                "Trying to generate an grammar rule leads to an LL(1) conflict"
+                    + " with the user defined grammar rule %s.",
+                conflictingRule.simpleName())
+            .build()
+    );
   }
 
   private AsmAlternative ruleInvocationInAlternative(AsmGrammarRule rule,
