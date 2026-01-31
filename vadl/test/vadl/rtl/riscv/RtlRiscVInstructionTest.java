@@ -27,12 +27,13 @@ import vadl.rtl.RtlDockerTest;
 public class RtlRiscVInstructionTest extends RtlDockerTest {
 
     @Test
-    void rv32imTest() {
+    void rv64imFiveTest() {
 
       /* GIVEN */
       var generalConfig =
           new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
       var config = new RtlConfiguration(generalConfig);
+      config.setResetVector("reset_vector");
 
       var decoderOptions = new DecoderOptions();
       decoderOptions.setGenerator(DecoderOptions.Generator.REGULAR);
