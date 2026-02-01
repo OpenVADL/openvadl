@@ -569,27 +569,16 @@ instruction set architecture PPC64SFS = {
     )
   }
 
-  // sets fixed-point exception register and condition register using a single overflow expression
-  model SetXERAndCRWithOV (oe : Bool, ce : Bool, rc : Bool, ov : Ex) : Stats = {
+  // sets fixed-point exception register and condition register using two overflow expressions
+  model SetXERAndCRWithOV3264 (oe : Bool, ce : Bool, rc : Bool, ov32 : Ex, ov64 : Ex) : Stats = {
     match : Stats
-    ( $oe = true => let mov = $ov in
+    ( $oe = true => let mov = $ov64 in
                       let so = XER.so | mov in {
-                        $SetXERAndCRBase($oe; $ce; $rc; mov; false; result)
+                        $SetXERAndCRBase($oe; $ce; $rc; $ov32; false; result)
                       }
     ; _          => $SetXERAndCRBase($oe; $ce; $rc; false; false; result)
     )
   }
-
-  // sets fixed-point exception register and condition register using two overflow expressions
-  model SetXERAndCRWithOV3264 (oe : Bool, ce : Bool, rc : Bool, ov32 : Ex, ov64 : Ex) : Stats = {
-    match : Stats
-      ( $oe = true => let mov = $ov64 in
-                        let so = XER.so | mov in {
-                          $SetXERAndCRBase($oe; $ce; $rc; $ov32; false; result)
-                        }
-      ; _          => $SetXERAndCRBase($oe; $ce; $rc; false; false; result)
-      )
-    }
 
   // read value from special-purpose register to X(rs)
   model ReadSPR () : Stat = {
@@ -1219,11 +1208,11 @@ instruction set architecture PPC64SFS = {
         let udf = $r.udf in
           let result = if udf then $r.ures else res as Word as $r.type in {
             X(rs) := result
-            $SetXERAndCRWithOV($oe; false; $rc; udf | flags.overflow)
+            $SetXERAndCRWithOV3264($oe; false; $rc; mov; udf | flags.overflow)
           }
       else let result = $r.zres as UDWord in {
         X(rs) := result
-        $SetXERAndCRWithOV($oe; false; $rc; true)
+        $SetXERAndCRWithOV3264($oe; false; $rc; mov; true)
       }
     encoding $eid = {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc}
     assembly $eid = ($r.x.asm, $orStr($oe; $rc), " ", decimal(rs), ",", decimal(ra), ",", decimal(rb))
@@ -1244,7 +1233,7 @@ instruction set architecture PPC64SFS = {
       let prod = VADL::$r.x.op(XW(ra), XW(rb)) in
         let result = $r.res as UDWord in {
           X(rs) := result
-          $SetXERAndCRWithOV($oe; false; $rc; prod != (prod as SWord) as SDWord)
+          $SetXERAndCRWithOV3264($oe; false; $rc; mov; prod != (prod as SWord) as SDWord)
         }
     encoding $eid = {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc}
     assembly $eid = ($r.x.asm, $rStr($rc), " ", decimal(rs), ",", decimal(ra), ",", decimal(rb)) // oStr not necessary
