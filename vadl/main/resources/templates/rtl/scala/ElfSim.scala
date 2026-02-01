@@ -14,15 +14,12 @@ import org.scalatest.funspec.AnyFunSpec
 
 import java.nio.file.Path
 
-/**
- * Build the ElfSim simulator.
- */
-class ElfSimBuild extends AnyFunSpec with ChiselSim {
+class ElfSimBase(directory: String) extends AnyFunSpec with ChiselSim {
 
   implicit val testingDirectory: HasTestingDirectory = new HasTestingDirectory {
     override def getDirectory: Path = svsim.Workspace.getProjectRootOrCwd
       .resolve("build")
-      .resolve("elfsim")
+      .resolve(directory)
   }
 
   implicit val hasSimulator: HasSimulator = HasSimulator.simulators.verilator(
@@ -55,6 +52,13 @@ class ElfSimBuild extends AnyFunSpec with ChiselSim {
     th:if="${resetVector == null}"]None[/])) { dut => }
   }
 
+}
+
+/**
+ * Build the ElfSim simulator.
+ */
+class ElfSimBuild extends ElfSimBase("elfsim") {
+
   it("builds") {
     build()
   }
@@ -64,17 +68,17 @@ class ElfSimBuild extends AnyFunSpec with ChiselSim {
 /**
  * Build the ElfSim simulator and run the riscv-tests on it.
  */
-class ElfSimTest extends ElfSimBuild with BeforeAndAfterAll {
+class ElfSimTest extends ElfSimBase("elfsimtest") with BeforeAndAfterAll {
 
   override def beforeAll(): Unit = {
     build()
   }
 
   // run riscv-tests
-  new java.io.File("riscv-tests/isa").listFiles(_.getName.matches("[(${#strings.substring(isaName, 0, 4).toLowerCase()})]ui-p-[^.]*"))
+  new java.io.File("/riscv-tests/isa").listFiles(_.getName.matches("[(${#strings.substring(isaName, 0, 4).toLowerCase()})]ui-p-[^.]*"))
     .filter(file => !file.getName.contains("fence")) // not supported
     .foreach(file => {
-      it(f"test $file") {
+      it(f"${file.getName}") {
         val relFile = workingDirectory.toAbsolutePath.relativize(file.toPath.toAbsolutePath)
         val settings = CommonSimulationSettings.default.copy(
           plusArgs = Seq(new svsim.PlusArg("elf", Some(f"$relFile")))
@@ -87,8 +91,8 @@ class ElfSimTest extends ElfSimBuild with BeforeAndAfterAll {
           .redirectErrorStream(true)
           .start()
 
-        val cycles = 2_000
-        val trace = false
+        val cycles = 10_000
+        val trace = true
         process.outputWriter.write(
           s"""R a
              |S 1 0
@@ -96,15 +100,15 @@ class ElfSimTest extends ElfSimBuild with BeforeAndAfterAll {
              |S 1 1
              |T 0 0,1-5*1
              |S 1 0
-             |R 0
-             |W ${if (trace) 1 else 0}
+             |R 0${if (trace) "\nW 1" else ""}
              |T 0 0,1-5*${cycles.toHexString}
-             |D\n""".stripMargin)
+             |D\n""".stripMargin.replace("\r", ""))
+        process.outputWriter.flush()
 
         var success: Option[String] = None
         var fail: Option[String] = None
         process.inputReader.lines().forEach(line => {
-          if (line.contains("RVTEST_SUCCESS")) {
+          if (line.contains("RVTEST_PASS")) {
             success = Some(line)
           }
           if (line.contains("RVTEST_FAIL")) {
