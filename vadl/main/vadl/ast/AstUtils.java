@@ -16,15 +16,11 @@
 
 package vadl.ast;
 
-import static java.util.Objects.requireNonNull;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
 import vadl.types.SIntType;
 import vadl.types.Type;
@@ -64,10 +60,6 @@ class AstUtils {
     }
 
     return matchingBuiltin.get(0);
-  }
-
-  static BuiltInTable.BuiltIn getBinOpBuiltIn(BinaryExpr expr) {
-    return getOperatorBuiltIn(expr.operator(), List.of(expr.left.type(), expr.right.type()));
   }
 
   static BuiltInTable.BuiltIn getOperatorBuiltIn(Operator operator, List<Type> argTypes) {
@@ -133,30 +125,6 @@ class AstUtils {
               builtIns));
     };
   }
-
-
-  // FIXME: This is a temporary workaround, a more robust solution should be found in the future
-  static UnaryExpr getBuiltinUnOp(CallIndexExpr expr, BuiltInTable.BuiltIn builtin) {
-    List<Expr> args =
-        !expr.argsIndices.isEmpty() ? expr.argsIndices.get(0).values : new ArrayList<>();
-    var operatorSymbol = requireNonNull(builtin.operator());
-    if (operatorSymbol.equals("~") && args.get(0).type instanceof BoolType) {
-      operatorSymbol = "!";
-    }
-    var operator = UnaryOperator.fromSymbol(operatorSymbol);
-    return
-        new UnaryExpr(new UnOp(operator, expr.location), args.get(0));
-  }
-
-  // FIXME: This is a temporary workaround, a more robust solution should be found in the future
-  static BinaryExpr getBuiltinBinOp(CallIndexExpr expr, BuiltInTable.BuiltIn builtin) {
-    var operator = requireNonNull(Operator.fromString(requireNonNull(builtin.operator())));
-    return
-        new BinaryExpr(expr.argsIndices.get(0).values.get(0),
-            new BinOp(operator, expr.location),
-            expr.argsIndices.get(0).values.get(1));
-  }
-
 
   static List<Expr> flatArguments(List<CallIndexExpr.Arguments> args) {
     return args.stream().flatMap(a -> a.values.stream()).collect(Collectors.toList());

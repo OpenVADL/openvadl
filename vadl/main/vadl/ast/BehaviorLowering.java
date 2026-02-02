@@ -1053,7 +1053,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(BinaryExpr expr) {
-    var builtin = AstUtils.getBinOpBuiltIn(expr);
+    var builtin =
+        AstUtils.getOperatorBuiltIn(expr.operator(), List.of(expr.left.type(), expr.right.type()));
     var left = fetch(expr.left);
     var right = fetch(expr.right);
     return new BuiltInCall(builtin, new NodeList<>(left, right),

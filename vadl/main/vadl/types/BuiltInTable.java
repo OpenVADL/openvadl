@@ -1367,7 +1367,8 @@ public class BuiltInTable {
       ADD, SUB, MUL,
       SDIV, UDIV,
       SMOD, UMOD,
-      SMULL, UMULL, SUMULL
+      SMULL, UMULL, SUMULL,
+      CONCATENATE_STRINGS
   );
 
   public static final List<BuiltIn> arithmeticComparisons = List.of(
