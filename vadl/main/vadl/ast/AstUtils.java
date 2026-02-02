@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -67,10 +67,10 @@ class AstUtils {
   }
 
   static BuiltInTable.BuiltIn getBinOpBuiltIn(BinaryExpr expr) {
-    return getOperatorBuiltIn(expr.operator(), expr.left.type(), expr.right.type());
+    return getOperatorBuiltIn(expr.operator(), List.of(expr.left.type(), expr.right.type()));
   }
 
-  static BuiltInTable.BuiltIn getOperatorBuiltIn(Operator operator, Type leftType, Type rightType) {
+  static BuiltInTable.BuiltIn getOperatorBuiltIn(Operator operator, List<Type> argTypes) {
 
     var symbol = operator.symbol;
     var operatorRewrites = Map.of(
@@ -81,14 +81,13 @@ class AstUtils {
       symbol = operatorRewrites.get(symbol);
     }
 
-    if (operator.equals(Operator.Add) && leftType.equals(Type.string())
-        && rightType.equals(Type.string())) {
+    if (operator.equals(Operator.Add) && argTypes.equals(List.of(Type.string(), Type.string()))) {
       return BuiltInTable.CONCATENATE_STRINGS;
     }
 
     String finalOperatorSymbol = symbol;
     var builtIns = BuiltInTable.builtIns()
-        .filter(b -> b.signature().argTypeClasses().size() == 2)
+        .filter(b -> b.signature().argTypeClasses().size() == argTypes.size())
         .filter(b -> Objects.equals(b.operator(), finalOperatorSymbol))
         .toList();
 
@@ -98,9 +97,9 @@ class AstUtils {
           "Couldn't get any matching builtin for %s".formatted(operator));
       case 1 -> builtIns.get(0);
       case 2 -> {
-        var singed = Objects.requireNonNull(leftType).getClass() == SIntType.class;
+        var isSigned = argTypes.getFirst().getClass() == SIntType.class;
         builtIns = builtIns.stream()
-            .filter(b -> (b.signature().argTypeClasses().get(0) == SIntType.class) == singed)
+            .filter(b -> (b.signature().argTypeClasses().get(0) == SIntType.class) == isSigned)
             .toList();
         if (builtIns.size() != 1) {
           throw new IllegalStateException("Couldn't find a builtin function");
@@ -108,8 +107,8 @@ class AstUtils {
         yield builtIns.get(0);
       }
       case 3 -> {
-        int numSinged = Objects.requireNonNull(leftType).getClass() == SIntType.class ? 1 : 0;
-        numSinged += Objects.requireNonNull(rightType).getClass() == SIntType.class ? 1 : 0;
+        int numSinged = argTypes.get(0).getClass() == SIntType.class ? 1 : 0;
+        numSinged += argTypes.get(1).getClass() == SIntType.class ? 1 : 0;
 
         var targetArgs = switch (numSinged) {
           case 0 -> List.of(UIntType.class, UIntType.class);

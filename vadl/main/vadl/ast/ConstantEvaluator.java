@@ -29,6 +29,7 @@ import java.util.function.BinaryOperator;
 import javax.annotation.Nullable;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
+import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.StringType;
 import vadl.types.Type;
@@ -70,6 +71,63 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     var result = expr.accept(this);
     cache.put(expr, result);
     return result;
+  }
+
+  public ConstantValue evalBuiltin(BuiltInTable.BuiltIn builtin, List<ConstantValue> args, WithLocation loc) {
+
+    if (args.size() == 1) {
+      var innerVal = args.getFirst();
+      if (innerVal.type() instanceof ConstantType) {
+        if (builtin == BuiltInTable.NEG) {
+          return innerVal.withValue(innerVal.value().negate());
+        } else if (builtin == BuiltInTable.NOT) {
+          return innerVal.withValue(innerVal.value().not());
+        }
+        // For logical NOT on booleans: innerVal.withValue(innerVal.value().xor(BigInteger.ONE))
+      }
+    }
+
+    // Logical operations
+    // And shifts with the left side constant
+    // And all other operations with both side constant
+    // ... are handled directly.
+    if (args.size() == 2) {
+      var leftVal = args.getFirst();
+      var rightVal = args.getLast();
+      if (BuiltInTable.logicalComparisons.contains(builtin)
+          || (BuiltInTable.SHIFTING_BUILT_INS.contains(builtin) && args.getFirst()
+          .type() instanceof ConstantType)
+          || (leftVal.type() instanceof ConstantType && rightVal.type() instanceof ConstantType)) {
+
+        var func = BinOpFuncs.get(builtin);
+        if (func != null) {
+          var val = func.apply(leftVal.value(), rightVal.value());
+          var type = BuiltInTable.arithmeticOperators.contains(builtin) ? new ConstantType(val) :
+              Type.bool();
+
+          return new ConstantValue(val, type);
+        }
+      }
+    }
+
+    var val = builtin
+        .compute(args.stream().map(c -> (Constant)c.toViamConstant()).toList())
+        .orElseThrow();
+
+    Type type;
+    if (BuiltInTable.arithmeticOperators.contains(builtin)) {
+      type = args.getFirst().type();
+    } else if (BuiltInTable.arithmeticComparisons.contains(builtin)) {
+      type = Type.bool();
+    } else if(args.size() == 1) {
+      type = args.getFirst().type();
+    } else {
+      // Just throw so that we now we need to implement something, should never happen if we are
+      // done.
+      throw new IllegalStateException("Cannot find result type for builtin " + builtin.name());
+    }
+
+    return new ConstantValue(val.asVal().integer(), type);
   }
 
   private ConstantValue visitIdentifiable(Expr expr) {
@@ -158,83 +216,57 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     return visitIdentifiable(expr);
   }
 
-  private static final Map<Operator, BinaryOperator<BigInteger>> BinOpFuncs = new HashMap<>();
+  private static final Map<BuiltInTable.BuiltIn, BinaryOperator<BigInteger>> BinOpFuncs = new HashMap<>();
 
   static {
     // FIXME: Fill in the missing functions
-    BinOpFuncs.put(Operator.LogicalOr, BigInteger::or);
-    BinOpFuncs.put(Operator.LogicalAnd, BigInteger::and);
-    BinOpFuncs.put(Operator.Or, BigInteger::or);
-    BinOpFuncs.put(Operator.Xor, BigInteger::xor);
-    BinOpFuncs.put(Operator.And, BigInteger::and);
-    BinOpFuncs.put(Operator.Equal, (a, b) -> a.equals(b) ? BigInteger.ONE : BigInteger.ZERO);
-    BinOpFuncs.put(Operator.NotEqual, (a, b) -> !a.equals(b) ? BigInteger.ONE : BigInteger.ZERO);
-    BinOpFuncs.put(Operator.GreaterEqual,
-        (a, b) -> a.compareTo(b) >= 0 ? BigInteger.ONE : BigInteger.ZERO);
-    BinOpFuncs.put(Operator.Greater,
-        (a, b) -> a.compareTo(b) > 0 ? BigInteger.ONE : BigInteger.ZERO);
-    BinOpFuncs.put(Operator.LessEqual,
-        (a, b) -> a.compareTo(b) <= 0 ? BigInteger.ONE : BigInteger.ZERO);
-    BinOpFuncs.put(Operator.Less,
-        (a, b) -> a.compareTo(b) < 0 ? BigInteger.ONE : BigInteger.ZERO);
-    //BinOpFuncs.put(Operator.RotateRight, BigInteger::add);
-    //BinOpFuncs.put(Operator.RotateLeft, BigInteger::add);
-    BinOpFuncs.put(Operator.ShiftLeft, (a, b) -> a.shiftLeft(b.intValueExact()));
-    BinOpFuncs.put(Operator.ShiftRight, (a, b) -> a.shiftRight(b.intValueExact()));
-    BinOpFuncs.put(Operator.Add, BigInteger::add);
-    BinOpFuncs.put(Operator.Subtract, BigInteger::subtract);
-    //BinOpFuncs.put(Operator.SaturatedAdd, BigInteger::add);
-    //BinOpFuncs.put(Operator.SaturatedSubtract, BigInteger::add);
-    BinOpFuncs.put(Operator.Multiply, BigInteger::multiply);
-    BinOpFuncs.put(Operator.Divide, BigInteger::divide);
-    BinOpFuncs.put(Operator.Modulo, BigInteger::mod);
-    BinOpFuncs.put(Operator.LongMultiply, BigInteger::multiply);
-    //BinOpFuncs.put(Operator.In, BigInteger::add);
-    //BinOpFuncs.put(Operator.NotIn, BigInteger::add);
-    //BinOpFuncs.put(Operator.ElementOf, BigInteger::add);
-    //BinOpFuncs.put(Operator.NotElementOf, BigInteger::add);
+    // Logical operations (bitwise)
+    BinOpFuncs.put(BuiltInTable.OR, BigInteger::or);
+    BinOpFuncs.put(BuiltInTable.XOR, BigInteger::xor);
+    BinOpFuncs.put(BuiltInTable.AND, BigInteger::and);
+
+    // Comparison operations
+    BinOpFuncs.put(BuiltInTable.EQU, (a, b) -> a.equals(b) ? BigInteger.ONE : BigInteger.ZERO);
+    BinOpFuncs.put(BuiltInTable.NEQ, (a, b) -> !a.equals(b) ? BigInteger.ONE : BigInteger.ZERO);
+    BinOpFuncs.put(BuiltInTable.SGEQ, (a, b) -> a.compareTo(b) >= 0 ? BigInteger.ONE : BigInteger.ZERO);
+    BinOpFuncs.put(BuiltInTable.UGEQ, (a, b) -> a.compareTo(b) >= 0 ? BigInteger.ONE : BigInteger.ZERO);
+    BinOpFuncs.put(BuiltInTable.SGTH, (a, b) -> a.compareTo(b) > 0 ? BigInteger.ONE : BigInteger.ZERO);
+    BinOpFuncs.put(BuiltInTable.UGTH, (a, b) -> a.compareTo(b) > 0 ? BigInteger.ONE : BigInteger.ZERO);
+    BinOpFuncs.put(BuiltInTable.SLEQ, (a, b) -> a.compareTo(b) <= 0 ? BigInteger.ONE : BigInteger.ZERO);
+    BinOpFuncs.put(BuiltInTable.ULEQ, (a, b) -> a.compareTo(b) <= 0 ? BigInteger.ONE : BigInteger.ZERO);
+    BinOpFuncs.put(BuiltInTable.SLTH, (a, b) -> a.compareTo(b) < 0 ? BigInteger.ONE : BigInteger.ZERO);
+    BinOpFuncs.put(BuiltInTable.ULTH, (a, b) -> a.compareTo(b) < 0 ? BigInteger.ONE : BigInteger.ZERO);
+
+    // Rotation (TODO: implement proper rotation logic)
+    //BinOpFuncs.put(BuiltInTable.ROR, BigInteger::add);
+    //BinOpFuncs.put(BuiltInTable.ROL, BigInteger::add);
+
+    // Shifting
+    BinOpFuncs.put(BuiltInTable.LSL, (a, b) -> a.shiftLeft(b.intValueExact()));
+    BinOpFuncs.put(BuiltInTable.LSR, (a, b) -> a.shiftRight(b.intValueExact()));
+    BinOpFuncs.put(BuiltInTable.ASR, (a, b) -> a.shiftRight(b.intValueExact()));
+
+    // Arithmetic
+    BinOpFuncs.put(BuiltInTable.ADD, BigInteger::add);
+    BinOpFuncs.put(BuiltInTable.SUB, BigInteger::subtract);
+    //BinOpFuncs.put(BuiltInTable.SSATADD, BigInteger::add); // TODO: implement saturating arithmetic
+    //BinOpFuncs.put(BuiltInTable.USATADD, BigInteger::add);
+    //BinOpFuncs.put(BuiltInTable.SSATSUB, BigInteger::subtract);
+    //BinOpFuncs.put(BuiltInTable.USATSUB, BigInteger::subtract);
+    BinOpFuncs.put(BuiltInTable.MUL, BigInteger::multiply);
+    BinOpFuncs.put(BuiltInTable.SDIV, BigInteger::divide);
+    BinOpFuncs.put(BuiltInTable.UDIV, BigInteger::divide);
+    BinOpFuncs.put(BuiltInTable.SMOD, BigInteger::mod);
+    BinOpFuncs.put(BuiltInTable.UMOD, BigInteger::mod);
+    BinOpFuncs.put(BuiltInTable.SMULL, BigInteger::multiply);
+    BinOpFuncs.put(BuiltInTable.UMULL, BigInteger::multiply);
+    BinOpFuncs.put(BuiltInTable.SUMULL, BigInteger::multiply);
   }
 
   @Override
   public ConstantValue visit(BinaryExpr expr) {
-    var leftVal = eval(expr.left);
-    var rightVal = eval(expr.right);
-
-    // Logical operations 
-    // And shifts with the left side constant
-    // And all other operations with both side constant
-    // ... are handled directly.
-    if (Operator.logicalComparisions.contains(expr.operator())
-        || (List.of(Operator.ShiftLeft, Operator.ShiftRight).contains(expr.operator())
-        && leftVal.type() instanceof ConstantType)
-        || (leftVal.type() instanceof ConstantType && rightVal.type() instanceof ConstantType)) {
-
-      var func = Objects.requireNonNull(BinOpFuncs.get(expr.operator()));
-      var val = func.apply(leftVal.value(), rightVal.value());
-      var type = Operator.arithmeticOperators.contains(expr.operator()) ? new ConstantType(val) :
-          Type.bool();
-
-      return new ConstantValue(val, type);
-    }
-
-
-    var builtIn = AstUtils.getBinOpBuiltIn(expr);
-    var val = builtIn
-        .compute(List.of(leftVal.toViamConstant(), rightVal.toViamConstant()))
-        .orElseThrow();
-
-    Type type;
-    if (Operator.arithmeticOperators.contains(expr.operator())) {
-      type = leftVal.type();
-    } else if (Operator.artihmeticComparisons.contains(expr.operator())) {
-      type = Type.bool();
-    } else {
-      // Just throw so that we now we need to implement something, should never happen if we are
-      // done.
-      throw new IllegalStateException("Cannot find result type for operator " + expr.operator());
-    }
-
-    return new ConstantValue(val.asVal().integer(), type);
+    var builtin  = AstUtils.getOperatorBuiltIn(expr.operator(), List.of(expr.left.type(), expr.right.type()));
+    return evalBuiltin(builtin, List.of(eval(expr.left), eval(expr.right)), expr);
   }
 
   @Override
@@ -312,23 +344,8 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(UnaryExpr expr) {
-    var innerVal = eval(expr.operand);
-
-    // Constant's (with variable bit width) types are evaluated directly.
-    if (innerVal.type() instanceof ConstantType) {
-      return switch (expr.unOp().operator) {
-        case NEGATIVE -> innerVal.withValue(innerVal.value().negate());
-        case COMPLEMENT -> innerVal.withValue(innerVal.value().not());
-        case LOG_NOT -> innerVal.withValue(innerVal.value().xor(BigInteger.ONE));
-      };
-    }
-
-    return ConstantValue.fromViam(
-        (
-            (Constant.Value) Objects.requireNonNull(expr.computedTarget)
-                .compute(List.of(innerVal.toViamConstant())).get()
-        ).castTo((DataType) innerVal.type())
-    );
+      var inner = eval(expr.operand);
+      return evalBuiltin(requireNonNull(expr.computedTarget), List.of(inner), expr);
   }
 
   @Override
@@ -350,21 +367,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
         throw new EvaluationError(
             "The constant evaluator cannot handle subcalls or indexing/slicing", expr);
       }
-
-      if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 1) {
-
-        var fakeUnExpr = AstUtils.getBuiltinUnOp(expr, builtin);
-        result = eval(fakeUnExpr);
-      } else if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 2) {
-        // If the function is also a binary operation, we instead type check it as if it were a
-        // binary operation which has some special type rules.
-        var fakeBinExpr = AstUtils.getBuiltinBinOp(expr, builtin);
-        result = eval(fakeBinExpr);
-      } else {
-        throw new EvaluationError(
-            "At the moment the constant evaluator can only evaluate builtins that are also binary "
-                + "or unary operators.", expr);
-      }
+      result = evalBuiltin(builtin, args.stream().map(this::eval).toList(), expr);
     }
 
     // FIXME: User Defined Functions

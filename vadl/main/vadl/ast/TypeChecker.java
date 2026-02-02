@@ -3875,7 +3875,7 @@ public class TypeChecker
         .sum();
 
     if (expr.operation == ForallExpr.Operation.FOLD) {
-      var builtIn = AstUtils.getOperatorBuiltIn(expr.getFoldOperator(), bodyType, bodyType);
+      var builtIn = AstUtils.getOperatorBuiltIn(expr.getFoldOperator(), List.of(bodyType, bodyType));
 
       // FIXME: In the future try a more sophisticated approach that determines the allowed
       // functions based on the types, but this will require a larger rewrite of the
