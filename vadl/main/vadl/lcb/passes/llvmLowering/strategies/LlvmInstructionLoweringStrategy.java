@@ -72,10 +72,8 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstr
 import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
-import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
-import vadl.viam.Parameter;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.annotations.FieldAccessAnnotation;
 import vadl.viam.graph.Graph;
@@ -246,14 +244,6 @@ public abstract class LlvmInstructionLoweringStrategy {
               .orElseThrow(
                   () -> Diagnostic.error("Cannot cast requested type",
                       upcastAnnotation.location()).build());
-          var graph = ensureNonNull(immediateOperand.origin().graph(),
-              () -> Diagnostic.error("Graph can not be null",
-                  instruction.location().join(immediateOperand.fieldAccess().location())));
-          var fun =
-              new Function(immediateOperand.fieldAccess().identifier, new Parameter[] {},
-                  upcastedCppType, graph);
-          upcastAnnotation.field().setAccessFunction(fun);
-          immediateOperand.fieldAccess().setAccessFunction(fun);
           llvmNode =
               new LlvmFieldAccessRefNode(instruction,
                   immediateOperand.fieldAccess(),

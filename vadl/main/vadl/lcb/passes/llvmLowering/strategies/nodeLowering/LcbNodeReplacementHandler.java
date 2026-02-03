@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -63,7 +63,9 @@ import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.viam.Constant;
+import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
+import vadl.viam.annotations.FieldAccessAnnotation;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.BranchBeginNode;
 import vadl.viam.graph.control.BranchEndNode;
@@ -430,6 +432,16 @@ public class LcbNodeReplacementHandler {
     var originalType = fieldAccessRefNode.fieldAccess().accessFunction().returnType();
     var llvmType = ValueType.from(CppTypeMap.upcast(originalType)).orElseThrow(() ->
         Diagnostic.error("Cannot construct LLVM type", fieldAccessRefNode.location()).build());
+
+    if (printableInstruction instanceof Instruction instruction && instruction.hasAnnotation(
+        FieldAccessAnnotation.class)) {
+      var annotation = instruction.annotation(FieldAccessAnnotation.class);
+      ensureNonNull(annotation,
+          () -> Diagnostic.error("Expected to have FieldAccessAnnotation", instruction.location()));
+
+      llvmType = ValueType.from(CppTypeMap.upcast(annotation.resultBitWidth())).orElseThrow(() ->
+          Diagnostic.error("Cannot construct LLVM type", fieldAccessRefNode.location()).build());
+    }
 
     fieldAccessRefNode.replaceAndDelete(
         new LlvmFieldAccessRefNode(
