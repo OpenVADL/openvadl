@@ -21,6 +21,11 @@ import vadl.viam.Annotation;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 
+
+/**
+ * The {@code [ upcast access to : <ident>, <Int> ]} annotation that can be set on an instruction
+ * to mark that the field access should have the type {@code <Int>}.
+ */
 public class FieldAccessAnnotation extends Annotation<Instruction> {
 
   private final UIntType resultBitWidth;

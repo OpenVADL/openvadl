@@ -1034,6 +1034,11 @@ class EnableAnnotation extends Annotation {
   }
 }
 
+/**
+ * Provides the annotation {@code [ upcast access to : <ident>, <int> ]} on an instruction that
+ * treats the field access of {@code <ident>} as being of type and name {@code <int>}.
+ * This is useful when there is a type mismatch between the field access and an LLVM type.
+ */
 class UpcastAnnotation extends Annotation {
 
   @LazyInit
@@ -1071,7 +1076,7 @@ class UpcastAnnotation extends Annotation {
 
   @Override
   public String usageString() {
-    return "[ " + name + " : <ident>, <lit> ]";
+    return "[ " + name + " : <ident>, <int> ]";
   }
 }
 
