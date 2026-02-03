@@ -454,7 +454,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Check if some properties for the naive approach do not uphold.
    * Return {@code true} if it is not lowerable.
    */
-  public boolean hasRedFlags(
+  protected boolean hasRedFlags(
       Instruction instruction,
       Graph graph) {
     if (hasUnlowerableSDNode(graph)

@@ -349,7 +349,7 @@ public class Format extends Definition implements DefProp.WithType {
    */
   public static class FieldAccess extends Definition implements DefProp.WithType {
 
-    private Function accessFunction;
+    private final Function accessFunction;
     @LazyInit
     private Function predicate;
     private final List<Field> fieldRefs;
@@ -379,10 +379,6 @@ public class Format extends Definition implements DefProp.WithType {
       if (predicate != null) {
         this.predicate = predicate;
       }
-    }
-
-    public void setAccessFunction(Function accessFunction) {
-      this.accessFunction = accessFunction;
     }
 
     public Function accessFunction() {
