@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -97,15 +97,15 @@ public class CheckMachineInstructionTableGenOperandsRiscv64PassTest extends Abst
     inputOperands.add(
         new Entry("SH", List.of("X:$rs1", "X:$rs2", "RV3264Base_SH_immSAsInt64:$immS")));
     inputOperands.add(new Entry("SLL", List.of("X:$rs1", "X:$rs2")));
-    inputOperands.add(new Entry("SLLI", List.of("X:$rs1", "RV3264Base_SLLI_shamtAsInt8:$shamt")));
+    inputOperands.add(new Entry("SLLI", List.of("X:$rs1", "RV3264Base_SLLI_shamtAsInt64:$shamt")));
     inputOperands.add(new Entry("SLT", List.of("X:$rs1", "X:$rs2")));
     inputOperands.add(new Entry("SLTI", List.of("X:$rs1", "RV3264Base_SLTI_immSAsInt64:$immS")));
     inputOperands.add(new Entry("SLTIU", List.of("X:$rs1", "RV3264Base_SLTIU_immSAsInt64:$immS")));
     inputOperands.add(new Entry("SLTU", List.of("X:$rs1", "X:$rs2")));
     inputOperands.add(new Entry("SRA", List.of("X:$rs1", "X:$rs2")));
-    inputOperands.add(new Entry("SRAI", List.of("X:$rs1", "RV3264Base_SRAI_shamtAsInt8:$shamt")));
+    inputOperands.add(new Entry("SRAI", List.of("X:$rs1", "RV3264Base_SRAI_shamtAsInt64:$shamt")));
     inputOperands.add(new Entry("SRL", List.of("X:$rs1", "X:$rs2")));
-    inputOperands.add(new Entry("SRLI", List.of("X:$rs1", "RV3264Base_SRLI_shamtAsInt8:$shamt")));
+    inputOperands.add(new Entry("SRLI", List.of("X:$rs1", "RV3264Base_SRLI_shamtAsInt64:$shamt")));
     inputOperands.add(new Entry("SUB", List.of("X:$rs1", "X:$rs2")));
     inputOperands.add(new Entry("XOR", List.of("X:$rs1", "X:$rs2")));
     inputOperands.add(new Entry("XORI", List.of("X:$rs1", "RV3264Base_XORI_immSAsInt64:$immS")));
