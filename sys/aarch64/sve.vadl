@@ -258,6 +258,25 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     assembly $i.id = ( $i.mnemo, ' ', register(vd), ', ', register(pg), ', ', register(zn), $elStr )
     }
 
+// SIMD move models ************************************************************
+
+  format SIMDMoveFormat: Instr =           // SIMD move format
+    { op       [31,29..21]     : Bits10    // opcode
+    , sf       [30]            : Bits1     // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , idx      [20]            : Bits1     // index into SIMD vector
+    , imm5     [19..16]        : Bits4     // index / size
+    , opc      [15..10]        : Bits6     // opcode second part
+    , vn       [9..5]          : Index     // source register (V)
+    , rd       [4..0]          : Index     // destination register (X)
+    }
+
+  model SIMDMoveInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: SIMDMoveFormat =
+      X(rd) := ZD(vn)(0)
+    encoding $i.id = { op = 0b000'111'0000, opc = $i.opcode, sf = SF::XSize, idx = 0, imm5 = 0b1000 }
+    assembly $i.id = ( $i.mnemo, ' ', register(rd), ', ', register(vn), ',.d[0]')
+    }
+
 // SVE increment models ********************************************************
 
   model BHSDDecodePredCount (size: Id): Id = {
@@ -325,7 +344,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     , imm4     [19..16]        : Bits4     // unsigned multiplier
     , opc      [15..10]        : Bits6     // opcode second part
     , pattern  [9..5]          : Bits5     // pattern
-    , dn       [4..0]          : Index     // source and destination predicate register
+    , dn       [4..0]          : Index     // source and destination register
     , imm      = imm4 as BitsX + 1
     , countB   = DecodePredCountB(pattern)
     , countH   = DecodePredCountH(pattern)
@@ -845,6 +864,8 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 //  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldOR     ; "orv"   ; 0b0'1100'0001    ; or       ))
 //  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldXOR    ; "eorv"  ; 0b0'1100'1001    ; xor      ))
 //
+//  $SIMDMoveInstr    (                            (SIMDUMOV      ; "umov"  ; 0b00'1111                   ))
+
   $SVEAddVLInstr    (                            (SVEADDVL      ; "addvl" ; 0b0'1010                    ))
   $SVEIncrInstr     (                            (SVEINC        ; "inc"   ; 0b111'000        ; inc      ))
 
