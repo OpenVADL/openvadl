@@ -508,8 +508,10 @@ instruction set architecture PPC64SFS = {
   // sets CR field 0 based on signed comparison between two arguments
   model SetCRCmp (a : TwoArgs, logical : Bool) : Stat = {
     match : Stat
-    ( $logical = true => if l = Mode::M32 then $SetCRBase(crt; $a; UWord; false) else $SetCRBase(crt; $a; UDWord; false)
-    ;  _              => if l = Mode::M32 then $SetCRBase(crt; $a; SWord; false) else $SetCRBase(crt; $a; SDWord; false)
+    ( $logical = true => if l = Mode::M32 then $SetCRBase(crt; $a; UWord ; XER.so)
+                                          else $SetCRBase(crt; $a; UDWord; XER.so)
+    ;  _              => if l = Mode::M32 then $SetCRBase(crt; $a; SWord ; XER.so)
+                                          else $SetCRBase(crt; $a; SDWord; XER.so)
     )
   }
 
@@ -628,7 +630,7 @@ instruction set architecture PPC64SFS = {
                             ( $rev = false => X($dst) := byterevh(MEM<2>($ea)) as $type
                             ; _            => X($dst) := MEM<2>($ea)           as $type
                             )
-    ; _ => X($dst) := MEM($ea) as $type
+    ; _                  => X($dst) := MEM($ea) as $type
     )
   }
 
