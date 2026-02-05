@@ -30,6 +30,7 @@ import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.annotations.AsmGenerateRulesAnno;
 import vadl.viam.asm.AsmToken;
 import vadl.viam.asm.elements.AsmAlternative;
 import vadl.viam.asm.elements.AsmRuleInvocation;
@@ -56,6 +57,13 @@ public class AsmGrammarRuleGenerationPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
 
+    var assemblyDescription = viam.assemblyDescription().get();
+
+    var shouldGenerateRulesAnno = assemblyDescription.annotation(AsmGenerateRulesAnno.class);
+    if (shouldGenerateRulesAnno == null || !shouldGenerateRulesAnno.shouldGenerateRules()) {
+      return null;
+    }
+
     var generatedRules = viam.isa().get().ownInstructions().stream()
         .filter(instruction -> instruction.simpleName().equals("ADD"))
         .map(
@@ -72,9 +80,7 @@ public class AsmGrammarRuleGenerationPass extends Pass {
             }
         ).toList();
 
-    // TODO: case if assembly description does not exist --> what is default behavior?
 
-    var assemblyDescription = viam.assemblyDescription().get();
     var instructionRule = (AsmNonTerminalRule) assemblyDescription.rules().stream()
         .filter(rule -> rule.simpleName().equals("Instruction"))
         .findFirst()
@@ -106,11 +112,14 @@ public class AsmGrammarRuleGenerationPass extends Pass {
   }
 
   private void computeConflictingRules(AsmNonTerminalRule instructionRule,
-                                       List<Pair<Instruction, AsmGrammarRule>> generatedRules,
-                                       ArrayList<Pair<Instruction, AsmGrammarRule>> conflictingRules) {
+                                       List<Pair<Instruction, AsmGrammarRule>>
+                                           generatedRules,
+                                       ArrayList<Pair<Instruction, AsmGrammarRule>>
+                                           conflictingRules) {
     for (var alternative : instructionRule.getAlternatives().alternatives()) {
       for (var generatedPair : generatedRules) {
-        for (var generatedAlternative : ((AsmNonTerminalRule) generatedPair.right()).getAlternatives()
+        var generatedRule = (AsmNonTerminalRule) generatedPair.right();
+        for (var generatedAlternative : generatedRule.getAlternatives()
             .alternatives()) {
 
           var intersection = alternative.firstTokens().stream().filter(

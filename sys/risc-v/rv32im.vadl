@@ -103,6 +103,7 @@ application binary interface ABI for RV32IM = {
 }
 
 [ comment string: "#" ]
+[ generate rules ]
 assembly description ASM for ABI = {
 
   modifiers = {
