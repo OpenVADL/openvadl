@@ -817,9 +817,15 @@ public class TypeChecker
       // Now revert to the generic handling of functions.
     }
 
-    // FIXME: Better casting for const types.
-    // Should we also constanteval here if all arguments are constant?
     var argTypes = args.stream().map(Expr::type).toList();
+    var areAllArgs = argTypes.stream().allMatch(ConstantType.class::isInstance);
+    if (areAllArgs) {
+      var type = constantEvaluator
+          .evalBuiltin(builtIn, args.stream().map(constantEvaluator::eval).toList(), location)
+          .type();
+      return new BuiltInCheckResult(type, null);
+    }
+
     if (!builtIn.takes(argTypes)) {
       // FIXME: Better format that error
       addErrorAndStopChecking(error("Type Mismatch", location)

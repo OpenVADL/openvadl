@@ -21,6 +21,7 @@ import static vadl.types.Type.constructDataType;
 
 import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.FormatMethod;
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -897,6 +898,12 @@ public class BuiltInTable {
       func("VADL::cob", Type.relation(BitsType.class, UIntType.class))
           .takesDefault()
           .returnsFirstBitWidth(UIntType.class)
+          .compute(args -> {
+            var arg = args.getFirst();
+            return Constant.Value.fromInteger(
+                BigInteger.valueOf(arg.asVal().integer().bitCount()),
+                Type.unsignedInt(arg.type().asDataType().bitWidth()));
+          })
           .build();
 
 
@@ -907,6 +914,13 @@ public class BuiltInTable {
       func("VADL::czb", Type.relation(BitsType.class, UIntType.class))
           .takesDefault()
           .returnsFirstBitWidth(UIntType.class)
+          .compute(args -> {
+            var arg = args.getFirst();
+            var width = arg.type().asDataType().bitWidth();
+            return Constant.Value.fromInteger(
+                BigInteger.valueOf(width - arg.asVal().integer().bitCount()),
+                Type.unsignedInt(width));
+          })
           .build();
 
 

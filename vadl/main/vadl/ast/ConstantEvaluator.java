@@ -84,7 +84,6 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
         } else if (builtin == BuiltInTable.NOT) {
           return innerVal.withValue(innerVal.value().not());
         }
-        // For logical NOT on booleans: innerVal.withValue(innerVal.value().xor(BigInteger.ONE))
       }
     }
 
@@ -119,13 +118,14 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
             "Built-in function `%s` cannot be constant evaluated (yet).".formatted(builtin.name()),
             loc));
 
+    var areAllArgsConst = args.stream().allMatch(ConstantValue.class::isInstance);
     Type type;
     if (BuiltInTable.arithmeticOperators.contains(builtin)) {
-      type = args.getFirst().type();
+      type = areAllArgsConst ? new ConstantType(val.asVal().integer()) : args.getFirst().type();
     } else if (BuiltInTable.arithmeticComparisons.contains(builtin)) {
       type = Type.bool();
     } else if (args.size() == 1) {
-      type = args.getFirst().type();
+      type = areAllArgsConst ? new ConstantType(val.asVal().integer()) : args.getFirst().type();
     } else {
       // Just throw so that we now we need to implement something, should never happen if we are
       // done.

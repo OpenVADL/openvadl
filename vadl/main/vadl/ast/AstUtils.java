@@ -99,10 +99,10 @@ class AstUtils {
         yield builtIns.get(0);
       }
       case 3 -> {
-        int numSinged = argTypes.get(0).getClass() == SIntType.class ? 1 : 0;
-        numSinged += argTypes.get(1).getClass() == SIntType.class ? 1 : 0;
+        int numSigned = argTypes.get(0).getClass() == SIntType.class ? 1 : 0;
+        numSigned += argTypes.get(1).getClass() == SIntType.class ? 1 : 0;
 
-        var targetArgs = switch (numSinged) {
+        var targetArgs = switch (numSigned) {
           case 0 -> List.of(UIntType.class, UIntType.class);
           case 1 -> List.of(SIntType.class, UIntType.class);
           case 2 -> List.of(SIntType.class, SIntType.class);

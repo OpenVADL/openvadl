@@ -1,0 +1,14 @@
+// This has been an issue before where the typechecker couldn't validate this.
+// https://github.com/OpenVADL/openvadl/issues/648
+
+constant VL        = 128              // vector length, number of bits in a vector register
+constant ElementsB = VL >> 3          // number of byte   sized elements in a vector register
+constant Log2ElemB = VADL::cob(ElementsB-1)
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest
