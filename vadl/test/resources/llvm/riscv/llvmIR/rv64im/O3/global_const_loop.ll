@@ -9,9 +9,8 @@ define dso_local i32 @foo(i32 noundef %i) local_unnamed_addr #0 {
 ; CHECK-NEXT: SD ra,8(sp)                             # 8-byte Folded Spill
 ; CHECK-NEXT: SD fp,0(sp)                             # 8-byte Folded Spill
 ; CHECK-NEXT: ADDI fp,sp,16
-; CHECK-NEXT: ADDI a1,zero,32
-; CHECK-NEXT: SLL a0,a0,a1
-; CHECK-NEXT: SRA a0,a0,a1
+; CHECK-NEXT: SLLI a0,a0,32
+; CHECK-NEXT: SRAI a0,a0,32
 ; CHECK-NEXT: ADDI a1,zero,999
 ; CHECK-NEXT: BLT a1,a0,.LBB0_2
 ; CHECK-LABEL: .LBB0_1:                                # %while.body.us

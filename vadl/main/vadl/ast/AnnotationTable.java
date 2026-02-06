@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -42,6 +42,7 @@ import vadl.gcb.annotations.RelocationSyntaxAnnotation;
 import vadl.gcb.annotations.SkipPruningAnnotation;
 import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.types.Type;
+import vadl.types.UIntType;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
@@ -62,6 +63,7 @@ import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
 import vadl.viam.annotations.DefineOperandAnnotation;
 import vadl.viam.annotations.EnableHtifAnno;
+import vadl.viam.annotations.FieldAccessAnnotation;
 import vadl.viam.annotations.InstructionUndefinedAnno;
 
 /**
@@ -285,6 +287,16 @@ public class AnnotationTable {
         .applyViam((def, annotation, lowering) -> {
           var lit = (StringLiteral) annotation.definition.values.getFirst();
           def.addAnnotation(new RelocationSyntaxAnnotation(lit.value));
+        }).build();
+
+    annotationOn(InstructionDefinition.class, "upcast access to", UpcastAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          var field =
+              (Format.FieldAccess) ensurePresent(lowering.fetch((FormatField) annotation.targetDef),
+                  () -> Diagnostic.error("Cannot find field", annotation.targetDef.location()));
+
+          def.addAnnotation(new FieldAccessAnnotation(field,
+              UIntType.unsignedInt(annotation.bitSize.value().intValue())));
         }).build();
   }
 
@@ -1019,6 +1031,52 @@ class EnableAnnotation extends Annotation {
   @Override
   public String usageString() {
     return "[ " + name + " ]";
+  }
+}
+
+/**
+ * Provides the annotation {@code [ upcast access to : <ident>, <int> ]} on an instruction that
+ * treats the field access of {@code <ident>} as being of type and name {@code <int>}.
+ * This is useful when there is a type mismatch between the field access and an LLVM type.
+ */
+class UpcastAnnotation extends Annotation {
+
+  @LazyInit
+  ConstantValue bitSize;
+
+  @LazyInit
+  Definition targetDef;
+
+  public UpcastAnnotation() {
+    super();
+  }
+
+  @Override
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+    verifyValuesCnt(definition, 2);
+    definition.values.getFirst().accept(resolver);
+  }
+
+  @Override
+  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+
+    var def = definition.values.getFirst();
+    ensure(def instanceof Identifier, () -> error("Invalid annotation value", def)
+        .description("A single identifier was expected.")
+    );
+    var target = ((Identifier) def).target();
+    ensure(target instanceof Definition, () -> error("Invalid annotation value", def)
+        .description("The identifier must reference a definition."));
+    targetDef = ((Definition) target);
+
+    var valueExpr = definition.values.get(1);
+    typeChecker.check(valueExpr);
+    bitSize = typeChecker.constantEvaluator.eval(valueExpr);
+  }
+
+  @Override
+  public String usageString() {
+    return "[ " + name + " : <ident>, <int> ]";
   }
 }
 

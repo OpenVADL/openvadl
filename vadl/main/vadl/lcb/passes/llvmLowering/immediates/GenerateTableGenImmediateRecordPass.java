@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -35,6 +35,7 @@ import vadl.pass.PassResults;
 import vadl.types.BitsType;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.annotations.FieldAccessAnnotation;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -95,6 +96,15 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
                         "Compiler generator was not able to change the type to the architecture's "
                             + "bit width: " + upcastedType.toString(),
                         fieldAccess.location()));
+                var upcastAnnotation = instruction.annotation(FieldAccessAnnotation.class);
+                if (upcastAnnotation != null) {
+                  var upcastedCppType = CppTypeMap.upcast(upcastAnnotation.resultBitWidth());
+                  upcastedValueType = ValueType.from(upcastedCppType.makeSigned())
+                      .orElseThrow(() -> Diagnostic.error(
+                          "Unable to cast access to requested bit width: "
+                              + upcastAnnotation.resultBitWidth(),
+                          upcastAnnotation.location()).build());
+                }
                 immediates.add(new TableGenImmediateRecord(instruction,
                     fieldAccess,
                     upcastedValueType));
