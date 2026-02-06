@@ -481,9 +481,9 @@ class RV3264Base_SLLI_shamt<ValueType ty> : Operand<ty>
   let DecoderMethod = "RV3264Base_SLLI_shamt_decode_wrapper";
 }
 
-def RV3264Base_SLLI_shamtAsInt8
-    : RV3264Base_SLLI_shamt<i8>
-    , ImmLeaf<i8, [{ return RV3264Base_SLLI_shamt_predicate(Imm); }]>;
+def RV3264Base_SLLI_shamtAsInt64
+    : RV3264Base_SLLI_shamt<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_SLLI_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SLLI_shamtAsLabel : RV3264Base_SLLI_shamt<OtherVT>;
 
@@ -529,9 +529,9 @@ class RV3264Base_SRAI_shamt<ValueType ty> : Operand<ty>
   let DecoderMethod = "RV3264Base_SRAI_shamt_decode_wrapper";
 }
 
-def RV3264Base_SRAI_shamtAsInt8
-    : RV3264Base_SRAI_shamt<i8>
-    , ImmLeaf<i8, [{ return RV3264Base_SRAI_shamt_predicate(Imm); }]>;
+def RV3264Base_SRAI_shamtAsInt64
+    : RV3264Base_SRAI_shamt<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_SRAI_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SRAI_shamtAsLabel : RV3264Base_SRAI_shamt<OtherVT>;
 
@@ -553,9 +553,9 @@ class RV3264Base_SRLI_shamt<ValueType ty> : Operand<ty>
   let DecoderMethod = "RV3264Base_SRLI_shamt_decode_wrapper";
 }
 
-def RV3264Base_SRLI_shamtAsInt8
-    : RV3264Base_SRLI_shamt<i8>
-    , ImmLeaf<i8, [{ return RV3264Base_SRLI_shamt_predicate(Imm); }]>;
+def RV3264Base_SRLI_shamtAsInt64
+    : RV3264Base_SRLI_shamt<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_SRLI_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SRLI_shamtAsLabel : RV3264Base_SRLI_shamt<OtherVT>;
 
@@ -2982,7 +2982,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SLLI_shamtAsInt8:$shamt );
+let InOperandList = ( ins X:$rs1, RV3264Base_SLLI_shamtAsInt64:$shamt );
 
 field bits<32> Inst;
 
@@ -3404,7 +3404,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SRAI_shamtAsInt8:$shamt );
+let InOperandList = ( ins X:$rs1, RV3264Base_SRAI_shamtAsInt64:$shamt );
 
 field bits<32> Inst;
 
@@ -3618,7 +3618,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SRLI_shamtAsInt8:$shamt );
+let InOperandList = ( ins X:$rs1, RV3264Base_SRLI_shamtAsInt64:$shamt );
 
 field bits<32> Inst;
 
@@ -5071,8 +5071,8 @@ def : Pat<(shl X:$rs1, X:$rs2),
         (SLL X:$rs1, X:$rs2)>;
 
 
-def : Pat<(shl X:$rs1, RV3264Base_SLLI_shamtAsInt8:$shamt),
-        (SLLI X:$rs1, RV3264Base_SLLI_shamtAsInt8:$shamt)>;
+def : Pat<(shl X:$rs1, RV3264Base_SLLI_shamtAsInt64:$shamt),
+        (SLLI X:$rs1, RV3264Base_SLLI_shamtAsInt64:$shamt)>;
 
 
 def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
@@ -5122,16 +5122,16 @@ def : Pat<(sra X:$rs1, X:$rs2),
         (SRA X:$rs1, X:$rs2)>;
 
 
-def : Pat<(sra X:$rs1, RV3264Base_SRAI_shamtAsInt8:$shamt),
-        (SRAI X:$rs1, RV3264Base_SRAI_shamtAsInt8:$shamt)>;
+def : Pat<(sra X:$rs1, RV3264Base_SRAI_shamtAsInt64:$shamt),
+        (SRAI X:$rs1, RV3264Base_SRAI_shamtAsInt64:$shamt)>;
 
 
 def : Pat<(srl X:$rs1, X:$rs2),
         (SRL X:$rs1, X:$rs2)>;
 
 
-def : Pat<(srl X:$rs1, RV3264Base_SRLI_shamtAsInt8:$shamt),
-        (SRLI X:$rs1, RV3264Base_SRLI_shamtAsInt8:$shamt)>;
+def : Pat<(srl X:$rs1, RV3264Base_SRLI_shamtAsInt64:$shamt),
+        (SRLI X:$rs1, RV3264Base_SRLI_shamtAsInt64:$shamt)>;
 
 
 def : Pat<(sub X:$rs1, X:$rs2),
