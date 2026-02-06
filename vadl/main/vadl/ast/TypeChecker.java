@@ -606,8 +606,14 @@ public class TypeChecker
 
   }
 
+  /// Check if the built-in function call, but doesn't care which kind of expression it arises from
+  /// binary expressions, unary expressions or direct calls.
+  /// The passed arguments don't have to already cecked.
   private BuiltInCheckResult checkBuiltin(BuiltInTable.BuiltIn builtIn, List<Expr> args,
                                           WithLocation location) {
+    // Check all incoming arguments
+    args.forEach(this::check);
+
     if (args.size() == 1) {
       var innerType = args.getFirst().type();
 
@@ -3857,10 +3863,12 @@ public class TypeChecker
 
       // Check as expression
       if (index.domain instanceof RangeExpr rangeExpr) {
+        check(rangeExpr.from);
+        check(rangeExpr.to);
         index.computedFrom = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
         index.computedTo = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
-
       } else {
+        check(index.domain);
         index.computedFrom = constantEvaluator.eval(index.domain).value().intValueExact();
         index.computedTo = index.computedFrom;
       }
@@ -4220,9 +4228,12 @@ public class TypeChecker
 
       // Check as expression
       if (index.domain instanceof RangeExpr rangeExpr) {
+        check(rangeExpr.from);
+        check(rangeExpr.to);
         index.computedFrom = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
         index.computedTo = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
       } else {
+        check(index.domain);
         index.computedFrom = constantEvaluator.eval(index.domain).value().intValueExact();
         index.computedTo = index.computedFrom;
       }

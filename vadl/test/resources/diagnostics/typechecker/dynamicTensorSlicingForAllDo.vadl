@@ -55,8 +55,8 @@ instruction set architecture Tensor = {
 //    . : ' | Identifier name: "Bits" type: null
 //    . : ' | IntegerLiteral literal: 4 (4) type: Const<4>
 //    . : ' RangeExpr type: null
-//    . : ' | IntegerLiteral literal: 0 (0) type: null
-//    . : ' | IntegerLiteral literal: 3 (3) type: null
+//    . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | IntegerLiteral literal: 3 (3) type: Const<3>
 //    . : ' AssignmentStatement
 //    . : ' | CallIndexExpr type: Bits<32>
 //    . : ' | . Identifier name: "X" type: null
