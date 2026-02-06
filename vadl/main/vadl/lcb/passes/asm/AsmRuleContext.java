@@ -19,7 +19,8 @@ package vadl.lcb.passes.asm;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.List;
-import vadl.viam.Instruction;
+import java.util.Set;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.asm.AsmToken;
 import vadl.viam.asm.elements.AsmGrammarElement;
 import vadl.viam.asm.rules.AsmGrammarRule;
@@ -29,18 +30,18 @@ import vadl.viam.asm.rules.AsmGrammarRule;
  * instruction's assembly printing function.
  */
 public class AsmRuleContext {
-  Instruction instruction;
+  PrintableInstruction instruction;
 
   // TODO: Use a stack to allow nested alternatives
   List<AsmGrammarElement> currentElements = new ArrayList<>();
 
   @LazyInit
-  AsmToken firstToken;
+  Set<AsmToken> firstTokens;
 
   @LazyInit
   AsmGrammarRule builtRule;
 
-  public AsmRuleContext(Instruction instruction) {
+  public AsmRuleContext(PrintableInstruction instruction) {
     this.instruction = instruction;
   }
 
@@ -49,13 +50,13 @@ public class AsmRuleContext {
   }
 
   /**
-   * Set the firstToken if there isn't already one.
+   * Set the firstTokens if the field is null.
    *
-   * @param firstToken the token to set
+   * @param firstTokens the token to set
    */
-  public void setFirstTokenIfNotExists(AsmToken firstToken) {
-    if (this.firstToken == null) {
-      this.firstToken = firstToken;
+  public void setFirstTokensIfNull(Set<AsmToken> firstTokens) {
+    if (this.firstTokens == null) {
+      this.firstTokens = firstTokens;
     }
   }
 }

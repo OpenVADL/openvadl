@@ -120,8 +120,7 @@ assembly description ASM for ABI = {
   }
 
   grammar = {
-    // "ADD" |
-    RRIds :  "ADD" | "SUB" | "AND" | "OR" | "XOR" | "SLT" | "SLTU" | "SLL" | "SRL" | "SRA"
+    RRIds : "ADD" | "SUB" | "AND" | "OR" | "XOR" | "SLT" | "SLTU" | "SLL" | "SRL" | "SRA"
             | "MUL" | "MULH" | "MULHSU" | "MULHU" | "DIV" | "DIVU" | "REM" | "REMU"
     ;
 
@@ -133,7 +132,7 @@ assembly description ASM for ABI = {
     ;
 
 
-    ITypeIds : "ANDI" | "ORI" | "XORI" | "SLTI" | "SLTIU" ;
+    ITypeIds :  "ANDI" | "ORI" | "XORI" | "SLTI" | "SLTIU" ;
 
     ITypeInstruction @instruction:
       mnemonic = ITypeIds @operand
@@ -274,7 +273,7 @@ assembly description ASM for ABI = {
 
     SymbolPseudoInstruction @instruction :
       mnemonic = SymbolPseudoIds @operand
-      symbol = (Identifier @symbol) @operand
+      symbol = Label @operand
     ;
 
 

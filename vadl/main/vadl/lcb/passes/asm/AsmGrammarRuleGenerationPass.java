@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.annotation.CheckForNull;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.DeferredDiagnosticStore;
@@ -28,7 +29,8 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
-import vadl.viam.Instruction;
+import vadl.viam.AssemblyDescription;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.Specification;
 import vadl.viam.annotations.AsmGenerateRulesAnno;
 import vadl.viam.asm.AsmToken;
@@ -57,6 +59,9 @@ public class AsmGrammarRuleGenerationPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
 
+    if (viam.assemblyDescription().isEmpty()) {
+      return null;
+    }
     var assemblyDescription = viam.assemblyDescription().get();
 
     var shouldGenerateRulesAnno = assemblyDescription.annotation(AsmGenerateRulesAnno.class);
@@ -64,29 +69,25 @@ public class AsmGrammarRuleGenerationPass extends Pass {
       return null;
     }
 
-    var generatedRules = viam.isa().get().ownInstructions().stream()
-        .filter(instruction -> instruction.simpleName().equals("ADD"))
-        .map(
-            instruction -> {
-              var returnNodes =
-                  instruction.assembly().function().behavior().getNodes(ReturnNode.class).toList();
-              var returnNode = returnNodes.getFirst();
+    // TODO: preprocess printing functions / detect unsupported forms
 
-              var ruleGenerator = new AsmGrammarRuleGenerator();
-              var ctx = new AsmRuleContext(instruction);
-              AsmGrammarRuleGeneratorDispatcher.dispatch(ruleGenerator, ctx, returnNode);
+    var generatedInstructionRules = viam.isa().get().ownInstructions().stream()
+        // TODO: remove filter
+        .filter(instruction -> instruction.simpleName().equals("ADD")
+            || instruction.simpleName().equals("ANDI"))
+        .map(instruction -> mapToGeneratedRulePair(instruction, assemblyDescription));
 
-              return new Pair<>(instruction, ctx.builtRule);
-            }
-        ).toList();
+    var generatedPseudoRules = viam.isa().get().ownPseudoInstructions().stream()
+        // TODO: remove filter
+        .filter(instruction -> instruction.simpleName().equals("JR")
+            || instruction.simpleName().equals("J"))
+        .map(instruction -> mapToGeneratedRulePair(instruction, assemblyDescription));
 
+    var generatedRules = Stream.concat(generatedInstructionRules, generatedPseudoRules).toList();
 
-    var instructionRule = (AsmNonTerminalRule) assemblyDescription.rules().stream()
-        .filter(rule -> rule.simpleName().equals("Instruction"))
-        .findFirst()
-        .orElseThrow();
+    var instructionRule = getNonTerminalRule(assemblyDescription, "Instruction");
 
-    var conflictingRules = new ArrayList<Pair<Instruction, AsmGrammarRule>>();
+    var conflictingRules = new ArrayList<Pair<PrintableInstruction, AsmGrammarRule>>();
     computeConflictingRules(instructionRule, generatedRules, conflictingRules);
 
     var nonConflictingRules = generatedRules.stream()
@@ -111,13 +112,28 @@ public class AsmGrammarRuleGenerationPass extends Pass {
     return null;
   }
 
+  private Pair<PrintableInstruction, AsmGrammarRule> mapToGeneratedRulePair(
+      PrintableInstruction instruction, AssemblyDescription assemblyDescription) {
+    var returnNodes =
+        instruction.assembly().function().behavior().getNodes(ReturnNode.class).toList();
+    var returnNode = returnNodes.getFirst();
+
+    var ruleGenerator = new AsmGrammarRuleGenerator(
+        getNonTerminalRule(assemblyDescription, "Register"),
+        getNonTerminalRule(assemblyDescription, "ImmediateOperand")
+    );
+    var ctx = new AsmRuleContext(instruction);
+    AsmGrammarRuleGeneratorDispatcher.dispatch(ruleGenerator, ctx, returnNode);
+
+    return new Pair<>(instruction, ctx.builtRule);
+  }
+
   private void computeConflictingRules(AsmNonTerminalRule instructionRule,
-                                       List<Pair<Instruction, AsmGrammarRule>>
-                                           generatedRules,
-                                       ArrayList<Pair<Instruction, AsmGrammarRule>>
-                                           conflictingRules) {
+                                       List<Pair<PrintableInstruction, AsmGrammarRule>> generated,
+                                       List<Pair<PrintableInstruction, AsmGrammarRule>>
+                                           conflicting) {
     for (var alternative : instructionRule.getAlternatives().alternatives()) {
-      for (var generatedPair : generatedRules) {
+      for (var generatedPair : generated) {
         var generatedRule = (AsmNonTerminalRule) generatedPair.right();
         for (var generatedAlternative : generatedRule.getAlternatives()
             .alternatives()) {
@@ -128,7 +144,7 @@ public class AsmGrammarRuleGenerationPass extends Pass {
 
           if (!intersection.isEmpty()) {
             var conflictingRule = ((AsmRuleInvocation) alternative.elements().getFirst()).rule();
-            conflictingRules.add(generatedPair);
+            conflicting.add(generatedPair);
 
             reportWarningForConflictingRule(generatedPair, intersection, conflictingRule);
           }
@@ -137,12 +153,13 @@ public class AsmGrammarRuleGenerationPass extends Pass {
     }
   }
 
-  private void reportWarningForConflictingRule(Pair<Instruction, AsmGrammarRule> generatedPair,
-                                               List<AsmToken> intersection,
-                                               AsmGrammarRule conflictingRule) {
+  private void reportWarningForConflictingRule(
+      Pair<PrintableInstruction, AsmGrammarRule> generatedPair,
+      List<AsmToken> intersection,
+      AsmGrammarRule conflictingRule) {
     DeferredDiagnosticStore.add(
         Diagnostic.warning("Cannot generate assembly grammar rule for instruction: "
-                + generatedPair.left().simpleName(), generatedPair.left())
+                + generatedPair.left().identifier().simpleName(), generatedPair.left().assembly())
             .note("The overlapping first tokens are [%s]",
                 String.join(", ", intersection.stream().map(AsmToken::toString).toList()))
             .locationDescription(conflictingRule,
@@ -157,5 +174,11 @@ public class AsmGrammarRuleGenerationPass extends Pass {
                                                      Set<AsmToken> firstTokens) {
     var invocation = new AsmRuleInvocation(null, rule, List.of(), rule.getAsmType());
     return new AsmAlternative(null, firstTokens, rule.getAsmType(), false, List.of(invocation));
+  }
+
+  private AsmNonTerminalRule getNonTerminalRule(AssemblyDescription ad, String name) {
+    var nonTerminal = ad.rules().stream().filter(rule -> rule.simpleName().equals(name)).findFirst()
+        .orElseThrow();
+    return (AsmNonTerminalRule) nonTerminal;
   }
 }

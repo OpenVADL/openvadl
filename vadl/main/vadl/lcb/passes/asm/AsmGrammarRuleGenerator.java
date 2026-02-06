@@ -29,11 +29,9 @@ import vadl.types.BuiltInTable;
 import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.OperandAsmType;
-import vadl.types.asmTypes.RegisterAsmType;
 import vadl.types.asmTypes.StringAsmType;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
-import vadl.viam.Identifier;
 import vadl.viam.asm.AsmToken;
 import vadl.viam.asm.elements.AsmAlternative;
 import vadl.viam.asm.elements.AsmAlternatives;
@@ -41,7 +39,6 @@ import vadl.viam.asm.elements.AsmAssignToAttribute;
 import vadl.viam.asm.elements.AsmRuleInvocation;
 import vadl.viam.asm.elements.AsmStringLiteralUse;
 import vadl.viam.asm.elements.HasAssignTo;
-import vadl.viam.asm.rules.AsmBuiltinRule;
 import vadl.viam.asm.rules.AsmNonTerminalRule;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.BranchBeginNode;
@@ -100,13 +97,24 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 )
 public class AsmGrammarRuleGenerator {
 
+  private final AsmNonTerminalRule registerRule;
+  private final AsmNonTerminalRule immediateOperandRule;
+
+  public AsmGrammarRuleGenerator(AsmNonTerminalRule registerRule,
+                                 AsmNonTerminalRule immediateOperandRule) {
+    this.registerRule = registerRule;
+    this.immediateOperandRule = immediateOperandRule;
+  }
+
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, ConstantNode node) {
     if (node.constant() instanceof Constant.Str str && !isWhitespace(str.value())) {
       var elem = new AsmStringLiteralUse(null, str.value(), StringAsmType.instance());
       ctx.addElement(elem);
-      ctx.setFirstTokenIfNotExists(AsmToken.inferTerminalRule(str.value()));
+
+      var tokens = Set.of(AsmToken.inferTerminalRule(str.value()));
+      ctx.setFirstTokensIfNull(tokens);
     }
   }
 
@@ -121,33 +129,44 @@ public class AsmGrammarRuleGenerator {
   public void handle(AsmRuleContext ctx, BuiltInCall node) {
 
     if (node.builtIn() == BuiltInTable.MNEMONIC) {
+      var instructionName = ctx.instruction.identifier().simpleName();
       var elem = new AsmStringLiteralUse(
           new AsmAssignToAttribute("mnemonic", false),
-          ctx.instruction.simpleName(), OperandAsmType.instance());
+          instructionName, OperandAsmType.instance());
       ctx.addElement(elem);
-      ctx.setFirstTokenIfNotExists(new AsmToken("IDENTIFIER", ctx.instruction.simpleName()));
+      ctx.setFirstTokensIfNull(Set.of(new AsmToken("IDENTIFIER", instructionName)));
+      return;
     }
 
     // Transform "register(rd)" to "rd = Register @operand"
     if (node.builtIn() == BuiltInTable.REGISTER) {
 
-      String registerName;
-      if (node.arg(0) instanceof FieldRefNode fieldRef) {
-        registerName = fieldRef.formatField().simpleName();
+      var arg = node.arg(0);
+      String registerField;
+
+      if (arg instanceof FieldRefNode fieldRef) {
+        registerField = fieldRef.formatField().simpleName();
+      } else if (arg instanceof FieldAccessRefNode fieldAccessRef) {
+        // TODO
+        registerField = "TODO";
+      } else if (arg instanceof FuncParamNode funcParam) {
+        registerField = funcParam.parameter().simpleName();
       } else {
-        registerName = "error";
-        // TODO: error
+        registerField = "error";
+        // TODO: can this ever be the case?
       }
 
       var elem = new AsmRuleInvocation(
-          // Register builtin only ever has one argument
-          new AsmAssignToAttribute(registerName, false),
-          new AsmBuiltinRule(Identifier.noLocation("Register"), RegisterAsmType.instance()),
+          new AsmAssignToAttribute(registerField, false),
+          registerRule,
           List.of(),
           OperandAsmType.instance()
       );
       ctx.addElement(elem);
-      ctx.setFirstTokenIfNotExists(new AsmToken("IDENTIFIER", null));
+
+      var tokens = firstTokensOfNonTerminalRule(registerRule);
+      ctx.setFirstTokensIfNull(tokens);
+      return;
     }
 
     if (node.builtIn() == BuiltInTable.CONCATENATE_STRINGS) {
@@ -155,9 +174,41 @@ public class AsmGrammarRuleGenerator {
         var argNode = node.arg(i);
         AsmGrammarRuleGeneratorDispatcher.dispatch(this, ctx, argNode);
       }
+      return;
     }
 
-    // TODO: other builtin calls
+    if (isImmediateBuiltin(node)) {
+      var argument = node.arg(0);
+      String attributeName;
+      if (argument instanceof FieldRefNode fieldRef) {
+        attributeName = fieldRef.formatField().simpleName();
+      } else if (argument instanceof FieldAccessRefNode fieldAccessRef) {
+        attributeName = fieldAccessRef.fieldAccess().simpleName();
+      } else if (argument instanceof FuncParamNode funcParam) {
+        attributeName = funcParam.parameter().simpleName();
+      } else {
+        // TODO: Find FieldRef / FARef / FuncParam in the subtree
+        attributeName = "TODO";
+      }
+
+      var elem = new AsmRuleInvocation(
+          new AsmAssignToAttribute(attributeName, false),
+          immediateOperandRule,
+          List.of(),
+          OperandAsmType.instance()
+      );
+      ctx.addElement(elem);
+
+      var tokens = firstTokensOfNonTerminalRule(registerRule);
+      ctx.setFirstTokensIfNull(tokens);
+    }
+
+    if (node.builtIn() == BuiltInTable.INTEGRAL) {
+      // Integral is a field used as register index, but printed as immediate not as register
+      // TODO
+    }
+
+    // TODO: other builtin calls as in expressions
 
   }
 
@@ -199,7 +250,7 @@ public class AsmGrammarRuleGenerator {
 
     ctx.builtRule = new AsmNonTerminalRule(ctx.instruction.identifier(),
         new AsmAlternatives(List.of(
-            new AsmAlternative(null, Set.of(ctx.firstToken), groupType,
+            new AsmAlternative(null, ctx.firstTokens, groupType,
                 false, ctx.currentElements)
         ), groupType), InstructionAsmType.instance(),
         SourceLocation.INVALID_SOURCE_LOCATION
@@ -447,5 +498,18 @@ public class AsmGrammarRuleGenerator {
       }
     }
     return true;
+  }
+
+  private boolean isImmediateBuiltin(BuiltInCall node) {
+    var builtin = node.builtIn();
+    return builtin == BuiltInTable.SDEC || builtin == BuiltInTable.UDEC
+        || builtin == BuiltInTable.HEX || builtin == BuiltInTable.OCTAL
+        || builtin == BuiltInTable.BINARY;
+  }
+
+  private Set<AsmToken> firstTokensOfNonTerminalRule(AsmNonTerminalRule rule) {
+    return rule.getAlternatives().alternatives().stream()
+        .flatMap(alterative -> alterative.firstTokens().stream())
+        .collect(java.util.stream.Collectors.toSet());
   }
 }
