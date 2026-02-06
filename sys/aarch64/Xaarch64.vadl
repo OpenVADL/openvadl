@@ -79,6 +79,9 @@ instruction set architecture AArch64Base = {
   [overflow status register]
   register NZCV_V : Bits1             // oVerflow
 
+  [syntax : ":{}:{}"]
+  relocation lo12( symbol : Bits<64> ) -> SInt<64> = (symbol as SInt<12>) as SInt<64>
+
   enumeration CondCode : Bits<4> =    // condition code encodings, do not change order
     { EQ                              // EQual                    Z == 1
     , NE                              // Not Equal                Z == 0
