@@ -602,6 +602,246 @@ public class TypeChecker
     return null;
   }
 
+  record BuiltInCheckResult(Type type, @Nullable List<Expr> castedArgs) {
+
+  }
+
+  /// Check if the built-in function call, but doesn't care which kind of expression it arises from
+  /// binary expressions, unary expressions or direct calls.
+  /// The passed arguments don't have to already cecked.
+  private BuiltInCheckResult checkBuiltin(BuiltInTable.BuiltIn builtIn, List<Expr> args,
+                                          WithLocation location) {
+    // Check all incoming arguments
+    args.forEach(this::check);
+
+    if (args.size() == 1) {
+      var innerType = args.getFirst().type();
+
+      if (builtIn == BuiltInTable.NEG && !(innerType instanceof BitsType)
+          && !(innerType instanceof ConstantType)) {
+        addErrorAndStopChecking(error("Type Mismatch", location)
+            .description("Expected a numerical type but got `%s`", innerType)
+            .build());
+      }
+
+      if (args.get(0).type() instanceof ConstantType) {
+        var type = constantEvaluator.evalBuiltin(builtIn,
+            args.stream().map(a -> constantEvaluator.eval(a)).toList(), location).type();
+        return new BuiltInCheckResult(type, null);
+      }
+
+      if (List.of(BuiltInTable.NEG, BuiltInTable.NOT).contains(builtIn)) {
+        return new BuiltInCheckResult(args.getFirst().type(), null);
+      }
+    }
+
+    if (args.size() == 2 && (BuiltInTable.arithmeticOperators.contains(builtIn)
+        || BuiltInTable.arithmeticComparisons.contains(builtIn))) {
+      var left = args.getFirst();
+      var right = args.getLast();
+
+      // Verify the rough shapes of the input parameters
+      // This however doesn't check if the types relate to each other.
+      if (left.type().equals(Type.bool())) {
+        left = wrapImplicitCast(left, Type.bits(1));
+      }
+      if (right.type().equals(Type.bool())) {
+        right = wrapImplicitCast(right, Type.bits(1));
+      }
+
+      // Special concat on strings
+      if (builtIn == BuiltInTable.CONCATENATE_STRINGS) {
+        return new BuiltInCheckResult(Type.string(), List.of(left, right));
+      }
+
+      if (!(left.type() instanceof BitsType) && !(left.type() instanceof ConstantType)) {
+        addErrorAndStopChecking(error("Type Mismatch", location)
+            .locationDescription(location, "Expected a number here but the left side was an `%s`",
+                left.type())
+            .build());
+      }
+      if (!(right.type() instanceof BitsType) && !(right.type() instanceof ConstantType)) {
+        addErrorAndStopChecking(error("Type Mismatch", location)
+            .locationDescription(location,
+                "Expected a number here but the right side was an `%s`",
+                right.type())
+            .build());
+      }
+
+      // Shifts and rotates require that the right type is uint and the left can be anything.
+      var requireRightUInt =
+          List.of("<<", ">>", "<<>", "<>>");
+      if (requireRightUInt.contains(builtIn.operator())) {
+
+        Type closestUIntType;
+        if (right.type() instanceof BitsType bitsRightType) {
+          closestUIntType = Type.unsignedInt(bitsRightType.bitWidth());
+        } else if (right.type() instanceof ConstantType constantRightType) {
+          closestUIntType = constantRightType.closestUInt();
+        } else {
+          throw new IllegalStateException("Don't handle buitlin " + builtIn.name());
+        }
+
+        if (!(right.type() instanceof UIntType || right.type() instanceof BitsType)
+            && !canImplicitCast(right.type(), closestUIntType)) {
+          addErrorAndStopChecking(error("Type Mismatch", location)
+              .locationNote(location, "The right type must be unsigned but is %s", right.type())
+              .build());
+        }
+
+        if (!(right.type() instanceof UIntType)) {
+          right = new CastExpr(right, closestUIntType);
+        }
+
+        // Only the left side decides the output type
+        if (left.type() instanceof ConstantType) {
+
+          if (List.of("<>>", "<<>").contains(builtIn.operator())) {
+            addErrorAndStopChecking(error("Type Mismatch", location)
+                .locationNote(location, "The left side must be a concrete type but was %s",
+                    right.type())
+                .description("Rotate operations require a type with a fixed bit width.")
+                .build());
+          }
+
+          if (constantEvaluator.isConstant(right)) {
+            var result = constantEvaluator.evalBuiltin(builtIn,
+                List.of(left, right).stream().map(a -> constantEvaluator.eval(a)).toList(),
+                location);
+            return new BuiltInCheckResult(result.type(), List.of(left, right));
+          }
+
+          // The left side is constant but the right isn't
+          // lets throw an error because it doesn't make sense to cast the left side to the right
+          // side if the types are independent of each other.
+          throw addErrorAndStopChecking(error("Type Mismatch", location)
+              .description(
+                  "%s",
+                  "Cannot infer a type for the result of this operation, because the left side is "
+                      + "constant but the right side is not: `%s`.".formatted(right.type())
+              )
+              .help("You can cast the left argument to an explicit type.")
+              .build());
+        }
+
+        return new BuiltInCheckResult(left.type(), List.of(left, right));
+      }
+
+      // Const types are a special case
+      if (left.type() instanceof ConstantType && right.type() instanceof ConstantType) {
+        var result = constantEvaluator.evalBuiltin(builtIn,
+            List.of(left, right).stream().map(a -> constantEvaluator.eval(a)).toList(), location);
+        return new BuiltInCheckResult(result.type(), List.of(left, right));
+      }
+
+      // If only one type is const, cast it to it's partner (or as close as possible)
+      if (left.type() instanceof ConstantType leftConstType) {
+        left = new CastExpr(left, leftConstType.closestTo(right.type()));
+      } else if (right.type() instanceof ConstantType rightConstType) {
+        right = new CastExpr(right, rightConstType.closestTo(left.type()));
+      }
+
+      // Long Multiply has different rules than all other arithmetic operations
+      if (builtIn.operator() != null && builtIn.operator().equals("*#")) {
+        // At this point both must be Bits or a subtype
+        var leftBitWidth = ((BitsType) left.type()).bitWidth();
+        var rightBitWidth = ((BitsType) right.type()).bitWidth();
+        if (leftBitWidth != rightBitWidth) {
+          addErrorAndStopChecking(error("Type Mismatch", location)
+              .description(
+                  "Both sides must have the same width but left is `%s` while right is `%s`",
+                  left.type(), right.type())
+              .build());
+        }
+
+        // Rules determining the return type (switched input operators omitted because of
+        // commutative property)
+        // SInt<N> +# SInt<N> -> SInt<2*N>
+        // SInt<N> +# UInt<N> -> SInt<2*N>
+        // SInt<N> +# Bits<N> -> SInt<2*N>
+        // UInt<N> +# UInt<N> -> UInt<2*N>
+        // UInt<N> +# Bits<N> -> UInt<2*N>
+        // Bits<N> +# Bits<N> -> Bits<2*N>
+        if (left.type() instanceof SIntType || right.type() instanceof SIntType) {
+          var type = Type.signedInt(leftBitWidth * 2);
+          return new BuiltInCheckResult(type, List.of(left, right));
+        } else if (left.type() instanceof UIntType || right.type() instanceof UIntType) {
+          var type = Type.unsignedInt(leftBitWidth * 2);
+          return new BuiltInCheckResult(type, List.of(left, right));
+        }
+        var type = Type.bits(leftBitWidth * 2);
+        return new BuiltInCheckResult(type, List.of(left, right));
+      }
+
+      var bitWidth = ((BitsType) left.type()).bitWidth();
+      var sizedUInt = Type.unsignedInt(bitWidth);
+      var sizedSInt = Type.signedInt(bitWidth);
+      var sizedBits = Type.bits(bitWidth);
+      var specialBinaryPattern = Map.of(
+          Pair.of(sizedUInt, sizedBits), Pair.of(sizedUInt, sizedUInt),
+          Pair.of(sizedBits, sizedUInt), Pair.of(sizedUInt, sizedUInt),
+          Pair.of(sizedSInt, sizedBits), Pair.of(sizedSInt, sizedSInt),
+          Pair.of(sizedBits, sizedSInt), Pair.of(sizedSInt, sizedSInt)
+      );
+
+      if (((BitsType) left.type()).bitWidth() == ((BitsType) right.type()).bitWidth()
+          && specialBinaryPattern.containsKey(Pair.of(left.type(), right.type()))) {
+        var target = requireNonNull(specialBinaryPattern.get(Pair.of(left.type(), right.type())));
+        if (!left.type().equals(target.left())) {
+          left = new CastExpr(left, target.left());
+        } else {
+          right = new CastExpr(right, target.right());
+        }
+      }
+
+      // Apply general implicit casting rules after specialised once.
+      left = wrapImplicitCast(left, right.type());
+      right = wrapImplicitCast(right, left.type());
+
+      if (!left.type().equals(right.type())) {
+        addErrorAndStopChecking(error("Type Mismatch", location)
+            .locationNote(location, "The left type is %s while right is %s", left.type(),
+                right.type())
+            .description(
+                "Both types on the left and right side of an binary operation should be equal.")
+            .build());
+      }
+
+      if (BuiltInTable.arithmeticComparisons.contains(builtIn)) {
+        // Output type depends on type of operation
+        var type = Type.bool();
+        return new BuiltInCheckResult(type, List.of(left, right));
+      }
+      if (BuiltInTable.arithmeticOperators.contains(builtIn)) {
+        // Note: No that isn't the same as leftTyp
+        var type = left.type();
+        return new BuiltInCheckResult(type, List.of(left, right));
+      }
+
+      //throw new RuntimeException("Don't yet know how to handle " + builtIn);
+      // Fallback: This concludes all the special handling we do on functions with two arguments.
+      // Now revert to the generic handling of functions.
+    }
+
+    var argTypes = args.stream().map(Expr::type).toList();
+    var areAllArgs = argTypes.stream().allMatch(ConstantType.class::isInstance);
+    if (areAllArgs) {
+      var type = constantEvaluator
+          .evalBuiltin(builtIn, args.stream().map(constantEvaluator::eval).toList(), location)
+          .type();
+      return new BuiltInCheckResult(type, null);
+    }
+
+    if (!builtIn.takes(argTypes)) {
+      // FIXME: Better format that error
+      addErrorAndStopChecking(error("Type Mismatch", location)
+          .description("Expected %s but got `%s`", builtIn.signature().argTypeClasses(), argTypes)
+          .build());
+    }
+
+    // Note: cannot set the computed type because builtins aren't a definition.
+    return new BuiltInCheckResult(builtIn.returns(argTypes), null);
+  }
 
   @Override
   public Void visit(ConstantDefinition definition) {
@@ -2500,242 +2740,57 @@ public class TypeChecker
     return null;
   }
 
-  private void visitLogicalBinaryExpression(BinaryExpr expr) {
-    var leftTyp = requireNonNull(expr.left.type);
+  private BuiltInCheckResult checkLogicalBuiltIn(Expr left,
+                                                 Expr right, WithLocation location) {
 
     // Both sides must be boolean
-    if (!(leftTyp instanceof BoolType) && !canImplicitCast(leftTyp, Type.bool())) {
+    if (!(left.type() instanceof BoolType) && !canImplicitCast(left.type(), Type.bool())) {
       // We can still continue here, the expression still returns a boolean.
-      errors.add(error("Type Mismatch", expr)
-          .locationDescription(expr, "Expected a `Bool` here but the left side was an `%s`",
-              leftTyp)
-          .description("The `%s` operator only works on booleans.", expr.operator())
+      errors.add(error("Type Mismatch", location)
+          .locationDescription(location, "Expected a `Bool` here but the left side was an `%s`",
+              left.type())
+          //.description("The `%s` operator only works on booleans.", builtIn.operator())
           .build());
     }
-    expr.left = wrapImplicitCast(expr.left, Type.bool());
+    left = wrapImplicitCast(left, Type.bool());
 
-    var rightTyp = requireNonNull(expr.right.type);
-    if (!(rightTyp instanceof BoolType) && !canImplicitCast(rightTyp, Type.bool())) {
+    if (!(right.type() instanceof BoolType) && !canImplicitCast(right.type(), Type.bool())) {
       // We can still continue here, the expression still returns a boolean.
-      errors.add(error("Type Mismatch", expr)
-          .locationDescription(expr, "Expected a `Bool` here but the right side was an `%s`",
-              rightTyp)
-          .description("The `%s` operator only works on booleans.", expr.operator())
+      errors.add(error("Type Mismatch", location)
+          .locationDescription(location, "Expected a `Bool` here but the right side was an `%s`",
+              right.type())
+          //.description("The `%s` operator only works on booleans.", builtIn.operator())
           .build());
     }
-    expr.right = wrapImplicitCast(expr.right, Type.bool());
+    right = wrapImplicitCast(right, Type.bool());
 
     // Return is always boolean
-    expr.type = Type.bool();
+    var type = Type.bool();
+    return new BuiltInCheckResult(type, List.of(left, right));
   }
 
   @Override
   public Void visit(BinaryExpr expr) {
-    var leftTyp = check(expr.left);
-    var rightTyp = check(expr.right);
+    check(expr.left);
+    check(expr.right);
 
-    // Logical operations are easy, let's get them out of the way.
+    var builtin =
+        AstUtils.getOperatorBuiltIn(expr.operator(), List.of(expr.left.type(), expr.right.type()));
+
+    BuiltInCheckResult checkResult;
     if (Operator.logicalComparisions.contains(expr.operator())) {
-      visitLogicalBinaryExpression(expr);
-      return null;
-    }
-
-    // Verify the rough shapes of the input parameters
-    // This however doesn't check if the types relate to each other.
-    if (Operator.arithmeticOperators.contains(expr.operator())
-        || Operator.artihmeticComparisons.contains(expr.operator())) {
-
-      if (leftTyp.equals(Type.bool())) {
-        expr.left = wrapImplicitCast(expr.left, Type.bits(1));
-        leftTyp = requireNonNull(expr.left.type);
-      }
-      if (rightTyp.equals(Type.bool())) {
-        expr.right = wrapImplicitCast(expr.right, Type.bits(1));
-        rightTyp = requireNonNull(expr.right.type);
-      }
-
-      // Special concat on strings
-      if (expr.operator().equals(Operator.Add) && leftTyp.equals(Type.string())
-          && rightTyp.equals(Type.string())) {
-        expr.type = Type.string();
-        return null;
-      }
-
-      if (!(leftTyp instanceof BitsType) && !(leftTyp instanceof ConstantType)) {
-        addErrorAndStopChecking(error("Type Mismatch", expr)
-            .locationDescription(expr, "Expected a number here but the left side was an `%s`",
-                leftTyp)
-            .description("The `%s` operator only works on pairs of numbers or strings.",
-                expr.operator())
-            .build());
-      }
-      if (!(rightTyp instanceof BitsType) && !(rightTyp instanceof ConstantType)) {
-        addErrorAndStopChecking(error("Type Mismatch", expr)
-            .locationDescription(expr, "Expected a number here but the right side was an `%s`",
-                rightTyp)
-            .description("The `%s` operator only works on pairs of numbers or string.s",
-                expr.operator())
-            .build());
-      }
+      // Unfortunatley we cannot do this in the checkBuiltin because this information is only in the
+      // operator and not in the builtin function we want to call.
+      checkResult = checkLogicalBuiltIn(expr.left, expr.right, expr);
     } else {
-      throw new RuntimeException("Don't know how to handle operator " + expr.operator());
+      checkResult = checkBuiltin(builtin, List.of(expr.left, expr.right), expr);
     }
 
-    // Shifts and rotates require that the right type is uint and the left can be anything.
-    var requireRightUInt =
-        List.of(Operator.ShiftLeft, Operator.ShiftRight, Operator.RotateLeft, Operator.RotateRight);
-    if (requireRightUInt.contains(expr.operator())) {
-
-      Type closestUIntType;
-      if (rightTyp instanceof BitsType bitsRightType) {
-        closestUIntType = Type.unsignedInt(bitsRightType.bitWidth());
-      } else if (rightTyp instanceof ConstantType constantRightType) {
-        closestUIntType = constantRightType.closestUInt();
-      } else {
-        throw new IllegalStateException("Don't handle operator " + expr.operator());
-      }
-
-      if (!(rightTyp instanceof UIntType || rightTyp instanceof BitsType)
-          && !canImplicitCast(rightTyp, closestUIntType)) {
-        addErrorAndStopChecking(error("Type Mismatch", expr)
-            .locationNote(expr, "The right type must be unsigned but is %s", rightTyp)
-            .build());
-      }
-
-      if (!(rightTyp instanceof UIntType)) {
-        expr.right = new CastExpr(expr.right, closestUIntType);
-        rightTyp = requireNonNull(expr.right.type);
-      }
-
-      // Only the left side decides the output type
-      if (leftTyp instanceof ConstantType) {
-
-        if (List.of(Operator.RotateLeft, Operator.RotateRight).contains(expr.operator())) {
-          addErrorAndStopChecking(error("Type Mismatch", expr)
-              .locationNote(expr, "The left side must be a concrete type but was %s", rightTyp)
-              .description("Rotate operations require a type with a fixed bit width.")
-              .build());
-        }
-
-        if (constantEvaluator.isConstant(expr.right)) {
-          var result = constantEvaluator.eval(expr);
-          expr.type = result.type();
-          return null;
-        }
-
-        // The left side is constant but the right isn't
-        // lets throw an error because it doesn't make sense to cast the left side to the right
-        // side if the types are independent of each other.
-        throw addErrorAndStopChecking(error("Type Mismatch", expr)
-            .description(
-                "%s",
-                "Cannot infer a type for the result of this operation, because the left side is "
-                    + "constant but the right side is not: `%s`.".formatted(rightTyp)
-            )
-            .help("You can cast the left argument to an explicit type.")
-            .build());
-      }
-
-      expr.type = leftTyp;
-      return null;
+    if (checkResult.castedArgs != null) {
+      expr.left = checkResult.castedArgs.get(0);
+      expr.right = checkResult.castedArgs.get(1);
     }
-
-    // Const types are a special case
-    if (leftTyp instanceof ConstantType && rightTyp instanceof ConstantType) {
-      var result = constantEvaluator.eval(expr);
-      expr.type = result.type();
-      return null;
-    }
-
-    // If only one type is const, cast it to it's partner (or as close as possible)
-    if (leftTyp instanceof ConstantType leftConstType) {
-      expr.left = new CastExpr(expr.left, leftConstType.closestTo(rightTyp));
-      leftTyp = requireNonNull(expr.left.type);
-    } else if (rightTyp instanceof ConstantType rightConstType) {
-      expr.right =
-          new CastExpr(expr.right, rightConstType.closestTo(leftTyp));
-      rightTyp = requireNonNull(expr.right.type);
-    }
-
-    // Long Multiply has different rules than all other arithmetic operations
-    if (expr.operator() == Operator.LongMultiply) {
-      // At this point both must be Bits or a subtype
-      var leftBitWidth = ((BitsType) leftTyp).bitWidth();
-      var rightBitWidth = ((BitsType) rightTyp).bitWidth();
-      if (leftBitWidth != rightBitWidth) {
-        addErrorAndStopChecking(error("Type Mismatch", expr)
-            .description("Both sides must have the same width but left is `%s` while right is `%s`",
-                leftTyp, rightTyp)
-            .build());
-      }
-
-      // Rules determining the return type (switched input operators omitted because of
-      // commutative property)
-      // SInt<N> +# SInt<N> -> SInt<2*N>
-      // SInt<N> +# UInt<N> -> SInt<2*N>
-      // SInt<N> +# Bits<N> -> SInt<2*N>
-      // UInt<N> +# UInt<N> -> UInt<2*N>
-      // UInt<N> +# Bits<N> -> UInt<2*N>
-      // Bits<N> +# Bits<N> -> Bits<2*N>
-      if (leftTyp instanceof SIntType || rightTyp instanceof SIntType) {
-        expr.type = Type.signedInt(leftBitWidth * 2);
-        return null;
-      } else if (leftTyp instanceof UIntType || rightTyp instanceof UIntType) {
-        expr.type = Type.unsignedInt(leftBitWidth * 2);
-        return null;
-      }
-      expr.type = Type.bits(leftBitWidth * 2);
-      return null;
-    }
-
-    var bitWidth = ((BitsType) leftTyp).bitWidth();
-    var sizedUInt = Type.unsignedInt(bitWidth);
-    var sizedSInt = Type.signedInt(bitWidth);
-    var sizedBits = Type.bits(bitWidth);
-    var specialBinaryPattern = Map.of(
-        Pair.of(sizedUInt, sizedBits), Pair.of(sizedUInt, sizedUInt),
-        Pair.of(sizedBits, sizedUInt), Pair.of(sizedUInt, sizedUInt),
-        Pair.of(sizedSInt, sizedBits), Pair.of(sizedSInt, sizedSInt),
-        Pair.of(sizedBits, sizedSInt), Pair.of(sizedSInt, sizedSInt)
-    );
-
-    if (((BitsType) leftTyp).bitWidth() == ((BitsType) rightTyp).bitWidth()
-        && specialBinaryPattern.containsKey(Pair.of(leftTyp, rightTyp))) {
-      var target = requireNonNull(specialBinaryPattern.get(Pair.of(leftTyp, rightTyp)));
-      if (!leftTyp.equals(target.left())) {
-        expr.left = new CastExpr(expr.left, target.left());
-        leftTyp = expr.left.type();
-      } else {
-        expr.right = new CastExpr(expr.right, target.right());
-        rightTyp = expr.right.type();
-      }
-    }
-
-    // Apply general implicit casting rules after specialised once.
-    expr.left = wrapImplicitCast(expr.left, rightTyp);
-    leftTyp = expr.left.type();
-
-    expr.right = wrapImplicitCast(expr.right, leftTyp);
-    rightTyp = expr.right.type();
-
-    if (!leftTyp.equals(rightTyp)) {
-      addErrorAndStopChecking(error("Type Mismatch", expr)
-          .locationNote(expr, "The left type is %s while right is %s", leftTyp, rightTyp)
-          .description(
-              "Both types on the left and right side of an binary operation should be equal.")
-          .build());
-    }
-
-    if (Operator.artihmeticComparisons.contains(expr.operator())) {
-      // Output type depends on type of operation
-      expr.type = Type.bool();
-    } else if (Operator.arithmeticOperators.contains(expr.operator())) {
-      // Note: No that isn't the same as leftTyp
-      expr.type = expr.left.type;
-    } else {
-      throw new RuntimeException("Don't yet know how to handle " + expr.operator);
-    }
-
+    expr.type = checkResult.type;
     return null;
   }
 
@@ -3019,41 +3074,33 @@ public class TypeChecker
   public Void visit(UnaryExpr expr) {
     var innerType = check(expr.operand);
 
-    switch (expr.unOp().operator) {
-      case NEGATIVE -> {
-        expr.computedTarget = BuiltInTable.NEG;
-        if (!(innerType instanceof BitsType) && !(innerType instanceof ConstantType)) {
-          addErrorAndStopChecking(error("Type Mismatch", expr)
-              .description("Expected a numerical type but got `%s`", innerType)
-              .build());
-        }
-      }
+    var builtin = switch (expr.unOp().operator) {
+      case NEGATIVE -> BuiltInTable.NEG;
       case COMPLEMENT -> {
-        expr.computedTarget = BuiltInTable.NOT;
         if (!(innerType instanceof BitsType)) {
           addErrorAndStopChecking(error("Type Mismatch", expr)
               .description("Expected a numerical type with fixed bit-width but got `%s`", innerType)
               .build());
         }
+        yield BuiltInTable.NOT;
       }
       case LOG_NOT -> {
-        expr.computedTarget = BuiltInTable.NOT;
         if (!innerType.equals(Type.bool())) {
           addErrorAndStopChecking(
               error("Type Mismatch: expected `Bool`, got `%s`".formatted(innerType), expr)
                   .help("For numerical types you can negate them with a minus `-`")
                   .build());
         }
+        yield BuiltInTable.NOT;
       }
-      default -> throwUnimplemented(expr);
-    }
+    };
+    expr.computedTarget = builtin;
 
-    if (innerType instanceof ConstantType) {
-      // Evaluate the expression for constant types
-      expr.type = constantEvaluator.eval(expr).type();
-    } else {
-      expr.type = innerType;
+    var result = checkBuiltin(builtin, List.of(expr.operand), expr);
+    if (result.castedArgs != null) {
+      expr.operand = result.castedArgs.get(0);
     }
+    expr.type = result.type();
 
     return null;
   }
@@ -3426,50 +3473,12 @@ public class TypeChecker
 
     expr.computedBuiltIn = builtin;
 
-    // FIXME: Find a better solution that is universal enough for binary operations and builtin
-    // functions.
-
-    // If the function is also a unary operation, we instead type check it as if it were a unary
-    // operation which has some special type rules.
-    if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 1) {
-
-      var fakeUnExpr = AstUtils.getBuiltinUnOp(expr, builtin);
-      check(fakeUnExpr);
-
-      // Set type and arguments since they might have been wrapped in type casts
-      expr.argsIndices.get(0).values.set(0, fakeUnExpr.operand);
-      expr.typeBeforeSlice = fakeUnExpr.type;
-      expr.argsIndices.get(0).type = fakeUnExpr.type;
+    var checkResult = checkBuiltin(builtin, args, expr);
+    if (checkResult.castedArgs != null) {
+      expr.replaceArgsFor(0, checkResult.castedArgs);
     }
-
-    // If the function is also a binary operation, we instead type check it as if it were a binary
-    // operation which has some special type rules.
-    if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 2) {
-      var fakeBinExpr = AstUtils.getBuiltinBinOp(expr, builtin);
-      check(fakeBinExpr);
-
-      // Set type and arguments since they might have been wraped in type casts
-      expr.replaceArgsFor(0, List.of(fakeBinExpr.left, fakeBinExpr.right));
-      expr.typeBeforeSlice = fakeBinExpr.type;
-      expr.argsIndices.get(0).type = fakeBinExpr.type;
-    }
-
-    // FIXME: Better casting for const types.
-    // Should we also constanteval here if all arguments are constant?
-    argTypes = requireNonNull(expr.argsIndices.get(0).values.stream().map(v -> v.type)).toList();
-    if (expr.typeBeforeSlice == null && !builtin.takes(argTypes)) {
-      // FIXME: Better format that error
-      addErrorAndStopChecking(error("Type Mismatch", expr)
-          .description("Expected %s but got `%s`", builtin.signature().argTypeClasses(), argTypes)
-          .build());
-    }
-
-    // Note: cannot set the computed type because builtins aren't a definition.
-    expr.computedBuiltIn = builtin;
-    if (expr.typeBeforeSlice == null) {
-      expr.typeBeforeSlice = builtin.returns(argTypes);
-      expr.argsIndices.getFirst().type = builtin.returns(argTypes);
-    }
+    expr.typeBeforeSlice = checkResult.type;
+    expr.argsIndices.get(0).type = checkResult.type;
   }
 
   private void processStageCall(CallIndexExpr expr, StageDefinition callTarget) {
@@ -3854,10 +3863,12 @@ public class TypeChecker
 
       // Check as expression
       if (index.domain instanceof RangeExpr rangeExpr) {
+        check(rangeExpr.from);
+        check(rangeExpr.to);
         index.computedFrom = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
         index.computedTo = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
-
       } else {
+        check(index.domain);
         index.computedFrom = constantEvaluator.eval(index.domain).value().intValueExact();
         index.computedTo = index.computedFrom;
       }
@@ -3875,7 +3886,8 @@ public class TypeChecker
         .sum();
 
     if (expr.operation == ForallExpr.Operation.FOLD) {
-      var builtIn = AstUtils.getOperatorBuiltIn(expr.getFoldOperator(), bodyType, bodyType);
+      var builtIn =
+          AstUtils.getOperatorBuiltIn(expr.getFoldOperator(), List.of(bodyType, bodyType));
 
       // FIXME: In the future try a more sophisticated approach that determines the allowed
       // functions based on the types, but this will require a larger rewrite of the
@@ -4216,9 +4228,12 @@ public class TypeChecker
 
       // Check as expression
       if (index.domain instanceof RangeExpr rangeExpr) {
+        check(rangeExpr.from);
+        check(rangeExpr.to);
         index.computedFrom = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
         index.computedTo = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
       } else {
+        check(index.domain);
         index.computedFrom = constantEvaluator.eval(index.domain).value().intValueExact();
         index.computedTo = index.computedFrom;
       }

@@ -21,6 +21,8 @@ constant q = VADL::sub(a, b)          // 9
 constant r = VADL::mul(a, b)          // 2142
 constant s = VADL::div(a, 5)          // 5
 constant t = VADL::mod(b, 20)         // 2
+constant u = VADL::cob(0b110110)      // 4
+constant v = VADL::czb(0b110110)      // 2
 
 
 //  Reported Diagnostics:
@@ -138,6 +140,16 @@ constant t = VADL::mod(b, 20)         // 2
 //    . : ArgsIndices
 //    . : ' Identifier name: "b" type: Const<42>
 //    . : ' IntegerLiteral literal: 20 (20) type: Const<20>
+//    ConstantDefinition name: "u"
+//    . CallIndexExpr type: Const<4>
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' BinaryLiteral literal: 0b110110 (54) type: Const<54>
+//    ConstantDefinition name: "v"
+//    . CallIndexExpr type: Const<2>
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' BinaryLiteral literal: 0b110110 (54) type: Const<54>
 //
 //
 // Part of the class vadl.ast.DiagnosticsTest

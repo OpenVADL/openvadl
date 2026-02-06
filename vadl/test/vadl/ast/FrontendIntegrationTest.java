@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -26,13 +26,18 @@ public class FrontendIntegrationTest {
 
   @ParameterizedTest
   @ValueSource(strings = {
-      "../sys/risc-v/rv32i.vadl",
-      "../sys/risc-v/rv64i.vadl",
-      "../sys/risc-v/rv32im.vadl",
-      "../sys/risc-v/rv64im.vadl",
-      "../sys/risc-v/rvcsr.vadl",
       "../sys/aarch64/aarch64.vadl",
+      "../sys/aarch64/aarch64-abi.vadl",
+      "../sys/aarch64/sve.vadl",
+      "../sys/aarch64/virt.vadl",
+      "../sys/aarch64/vprocessor.vadl",
       "../sys/ppc64/ppc64.vadl",
+      "../sys/risc-v/rv32i.vadl",
+      "../sys/risc-v/rv32im.vadl",
+      "../sys/risc-v/rv64i.vadl",
+      "../sys/risc-v/rv64im.vadl",
+      "../sys/risc-v/rv64v.vadl",
+      "../sys/risc-v/rvcsr.vadl",
       "../sys/v-risc/ABI.vadl"
   })
   public void testFrontendPassingOnSysSpecs(String filename) {

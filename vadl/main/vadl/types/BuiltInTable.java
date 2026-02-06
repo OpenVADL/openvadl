@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -21,6 +21,7 @@ import static vadl.types.Type.constructDataType;
 
 import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.FormatMethod;
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -897,6 +898,12 @@ public class BuiltInTable {
       func("VADL::cob", Type.relation(BitsType.class, UIntType.class))
           .takesDefault()
           .returnsFirstBitWidth(UIntType.class)
+          .compute(args -> {
+            var arg = args.getFirst();
+            return Constant.Value.fromInteger(
+                BigInteger.valueOf(arg.asVal().integer().bitCount()),
+                Type.unsignedInt(arg.type().asDataType().bitWidth()));
+          })
           .build();
 
 
@@ -907,6 +914,13 @@ public class BuiltInTable {
       func("VADL::czb", Type.relation(BitsType.class, UIntType.class))
           .takesDefault()
           .returnsFirstBitWidth(UIntType.class)
+          .compute(args -> {
+            var arg = args.getFirst();
+            var width = arg.type().asDataType().bitWidth();
+            return Constant.Value.fromInteger(
+                BigInteger.valueOf(width - arg.asVal().integer().bitCount()),
+                Type.unsignedInt(width));
+          })
           .build();
 
 
@@ -1216,9 +1230,7 @@ public class BuiltInTable {
 
   /// // FIELDS /////
 
-  public static final List<BuiltIn> BUILT_INS = List.of(
-      // ARITHMETIC
-
+  public static final List<BuiltIn> ARITHMETIC_BUILT_INS = List.of(
       NEG,
 
       ADD,
@@ -1265,20 +1277,20 @@ public class BuiltInTable {
       SDIV,
       UDIV,
       SDIVS,
-      UDIVS,
+      UDIVS
+  );
 
-      // LOGICAL
-
+  public static final List<BuiltIn> LOGICAL_BUILT_INS = List.of(
       NOT,
       AND,
       ANDS,
       XOR,
       XORS,
       OR,
-      ORS,
+      ORS
+  );
 
-      // Comparison
-
+  public static final List<BuiltIn> COMPARISON_BUILT_INS = List.of(
       EQU,
       NEQ,
       SLTH,
@@ -1288,10 +1300,10 @@ public class BuiltInTable {
       SGTH,
       UGTH,
       SGEQ,
-      UGEQ,
+      UGEQ
+  );
 
-      // Shifting
-
+  public static final List<BuiltIn> SHIFTING_BUILT_INS = List.of(
       LSL,
       LSLS,
       LSLC,
@@ -1307,20 +1319,20 @@ public class BuiltInTable {
       ROR,
       RORS,
       RORC,
-      RRX,
+      RRX
+  );
 
-      // Bitwise Counting
-
+  public static final List<BuiltIn> BITWISE_COUNTING_BUILT_INS = List.of(
       COB,
       CZB,
       CLZ,
       CLO,
       CLS,
       CTZ,
-      CTO,
+      CTO
+  );
 
-      // FUNCTIONS
-
+  public static final List<BuiltIn> FUNCTION_BUILT_INS = List.of(
       MNEMONIC,
       CONCATENATE_STRINGS,
       REGISTER,
@@ -1329,14 +1341,15 @@ public class BuiltInTable {
       SDEC,
       UDEC,
       HEX,
-      OCTAL,
+      OCTAL
+  );
 
-      // ASM PARSER FUNCTIONS
-
+  public static final List<BuiltIn> ASM_PARSER_BUILT_INS_LIST = List.of(
       LA_ID_IN,
-      LA_ID_EQ,
+      LA_ID_EQ
+  );
 
-      // MICRO ARCHITECTURE
+  public static final List<BuiltIn> MICRO_ARCHITECTURE_BUILT_INS = List.of(
       DECODE,
       FETCH_NEXT,
       INSTRUCTION_ADDRESS,
@@ -1346,6 +1359,38 @@ public class BuiltInTable {
       INSTRUCTION_RESULTS,
       INSTRUCTION_VERIFY,
       INSTRUCTION_WRITE
+  );
+
+  public static final List<BuiltIn> BUILT_INS = Stream.of(
+      ARITHMETIC_BUILT_INS.stream(),
+      LOGICAL_BUILT_INS.stream(),
+      COMPARISON_BUILT_INS.stream(),
+      SHIFTING_BUILT_INS.stream(),
+      BITWISE_COUNTING_BUILT_INS.stream(),
+      FUNCTION_BUILT_INS.stream(),
+      ASM_PARSER_BUILT_INS_LIST.stream(),
+      MICRO_ARCHITECTURE_BUILT_INS.stream()
+  ).flatMap(s -> s).toList();
+
+  // Operator-like categorizations for BuiltIns
+  public static final List<BuiltIn> logicalComparisons = List.of();
+
+  public static final List<BuiltIn> arithmeticOperators = List.of(
+      OR, XOR, AND,
+      ROR, ROL, LSL, LSR, ASR,
+      ADD, SUB, MUL,
+      SDIV, UDIV,
+      SMOD, UMOD,
+      SMULL, UMULL, SUMULL,
+      CONCATENATE_STRINGS
+  );
+
+  public static final List<BuiltIn> arithmeticComparisons = List.of(
+      EQU, NEQ,
+      SGEQ, UGEQ,
+      SGTH, UGTH,
+      SLEQ, ULEQ,
+      SLTH, ULTH
   );
 
   public static final HashSet<BuiltIn> COMMUTATIVE = new HashSet<>(List.of(
