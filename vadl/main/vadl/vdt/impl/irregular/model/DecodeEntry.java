@@ -22,7 +22,7 @@ import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
 
 /**
- * An decode entry as required by the {@link IrregularDecodeTreeGenerator}.
+ * A decode entry as required by the {@link IrregularDecodeTreeGenerator}.
  */
 public class DecodeEntry extends Instruction {
 

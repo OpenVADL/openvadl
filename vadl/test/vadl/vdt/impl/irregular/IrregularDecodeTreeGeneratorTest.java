@@ -44,6 +44,7 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassManager;
+import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.AbstractDecisionTreeTest;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
@@ -638,6 +639,145 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     Assertions.assertEquals(
         BitVector.fromValue(new BigInteger("FF", 16), 8),
         decisionNode.getMask());
+  }
+
+  @Test
+  void test_fournel_table2() throws DuplicatedPassKeyException, IOException {
+
+    // Nicolas Fournel et al.
+    // https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6691197
+
+    /* GIVEN */
+    final String vadl = """
+        instruction set architecture TEST = {
+        
+          register X: Bits<5>
+        
+          format F_1: Bits<8> =
+          { c   [7..5]
+          , v   [4]
+          , r   [3..2]
+          , op  [1..0]
+          }
+        
+          format F_2: Bits<8> =
+          { imm [7..4]
+          , op  [3,1..0]
+          , x   [2]
+          }
+        
+          instruction A: F_1 = { }
+          // [ select when : c != 0b111 ] (automatically synthesized)
+          encoding A = { op = 0b00 }
+          assembly A = ( mnemonic )
+        
+          instruction B: F_1 = { }
+          encoding B = { op = 0b00, c = 0b111 }
+          assembly B = ( mnemonic )
+        
+          instruction C: F_2 = { }
+          encoding C = { op = 0b001 }
+          assembly C = ( mnemonic )
+        
+          instruction D: F_2 = { }
+          encoding D = { op = 0b101 }
+          assembly D = ( mnemonic )
+        }
+        """;
+
+    var config =
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));
+    var spec = TestUtils.compileToViam(vadl);
+
+    var manager = new PassManager();
+    manager.add(new VdtEncodingConstraintValidationPass(config));
+    manager.add(new VdtInputPreparationPass(config));
+    manager.add(new VdtConstraintSynthesisPass(config));
+    manager.add(new VdtEncodingSemanticVerificationPass(config));
+    manager.add(new VdtLoweringPass(config));
+
+    /* WHEN */
+    manager.run(spec);
+
+    /* THEN */
+    var decodeTree = manager.getPassResults().lastResultOf(VdtLoweringPass.class, Node.class);
+
+    Assertions.assertNotNull(decodeTree);
+
+    var stats = DecisionTreeStatsCalculator.statistics(decodeTree);
+
+    log.info("VDT: {}", stats);
+    log.info("Decoder: \n{}", new TextGraphGenerator(decodeTree).generate());
+  }
+
+  @Test
+  void test_fournel_table3() throws DuplicatedPassKeyException, IOException {
+
+    // Nicolas Fournel et al.
+    // https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6691197
+
+    /* GIVEN */
+    final String vadl = """
+        instruction set architecture TEST = {
+        
+          register X: Bits<5>
+        
+          format F_1: Bits<8> =
+          { c   [7..5]
+          , v   [4]
+          , r   [3..2]
+          , op  [1..0]
+          }
+        
+          format F_2: Bits<8> =
+          { imm [7..4]
+          , op  [3,1..0]
+          , x   [2]
+          }
+        
+          instruction A: F_1 = { }
+          [ select when : c != 0b111 && (v != 0b1 || c = 0b000) ]
+          encoding A = { op = 0b00 }
+          assembly A = ( mnemonic )
+        
+          instruction B: F_1 = { }
+          encoding B = { op = 0b00, c = 0b111 }
+          assembly B = ( mnemonic )
+        
+          instruction C: F_2 = { }
+          encoding C = { op = 0b001 }
+          assembly C = ( mnemonic )
+        
+          instruction D: F_2 = { }
+          encoding D = { op = 0b101 }
+          assembly D = ( mnemonic )
+        }
+        """;
+
+    var config =
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), true));
+    var spec = TestUtils.compileToViam(vadl);
+
+    var manager = new PassManager();
+    manager.add(PassOrders.check(config));
+    /*manager.add(new VdtEncodingConstraintValidationPass(config));
+    manager.add(new VdtInputPreparationPass(config));
+    manager.add(new VdtConstraintSynthesisPass(config));
+    manager.add(new VdtEncodingSemanticVerificationPass(config));
+    manager.add(new VdtLoweringPass(config));*/
+
+    /* WHEN */
+    manager.run(spec);
+
+    /* THEN */
+    var decodeTree = manager.getPassResults().lastResultOf(VdtLoweringPass.class, Node.class);
+
+    Assertions.assertNotNull(decodeTree);
+
+    var stats = DecisionTreeStatsCalculator.statistics(decodeTree);
+
+    log.info("VDT: {}", stats);
+    log.info("Decoder: \n{}", new TextGraphGenerator(decodeTree).generate());
   }
 
   @SuppressWarnings("unchecked")

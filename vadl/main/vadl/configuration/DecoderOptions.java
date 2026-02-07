@@ -31,7 +31,7 @@ public class DecoderOptions {
     REGULAR("Regular decoder generator", "regular"),
     IRREGULAR("Irregular decoder generator, default", "irregular"),
     RTL_TABLE("RTL table based decoder", "rtl-table"),
-    ;
+    OCC("Irregular decoder generator, using occurrence probabilities", "occ");
 
     private final String selector;
     private final String desc;
@@ -141,6 +141,16 @@ public class DecoderOptions {
 
   public void setGenerator(Generator generator) {
     this.generator = generator;
+  }
+
+  public DecoderOptions withGenerator(Generator generator) {
+    setGenerator(generator);
+    return this;
+  }
+
+  public DecoderOptions withOptsToSkip(OptionToSkip... optsToSkip) {
+    setOptsToSkip(optsToSkip);
+    return this;
   }
 
   @Override
