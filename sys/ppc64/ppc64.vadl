@@ -94,6 +94,15 @@ instruction set architecture PPC64SFS = {
   register TB   : Reg64                          // time base register
   register TAR  : Reg64                          // target address register
 
+  enumeration SPRIndex : Bits<10> =              // index of special purpose registers
+  { XER = 0b00000'00001
+  , LR  = 0b00000'01000
+  , CTR
+  , TBL = 0b01000'01100
+  , TBH
+  , TAR = 0b11001'01111
+  }
+
   enumeration Mode : Bit =                       // computation modes, M32 = 32-bit mode
   { M32
   , M64
@@ -422,7 +431,7 @@ instruction set architecture PPC64SFS = {
   function mask (start : Bits<6>, end : Bits<6>) -> DWord =
     let lo = VADL::lsl(-1 as SDWord, start) in
       let hi = VADL::lsr(-1 as SDWord, 63 - end) in
-        if VADL::uleq(start, end)
+        if start <= end
         then lo & hi
         else lo | hi
 
@@ -515,16 +524,16 @@ instruction set architecture PPC64SFS = {
     )
   }
 
-  // conditionally computes the XER.ov field and passes it to a given stat as mov
-  model COV (oe : Bool, stat : Stat) : Stat = {
+  // conditionally computes the mode-dependent XER.ov
+  model CMOV (oe : Bool, stat : Stat) : Stat = {
     match : Stat
     ( $oe = true => let mov = if MSR.sf = Mode::M32 then flags32.overflow else flags64.overflow in $stat
     ; _          => $stat
     )
   }
 
-  // conditionally computes the XER.ca field and passes it to a given stat as mca
-  model CCA (ce : Bool, stat : Stat) : Stat = {
+  // conditionally computes the mode-dependent XER.ca
+  model CMCA (ce : Bool, stat : Stat) : Stat = {
     match : Stat
     ( $ce = true => let mca = if MSR.sf = Mode::M32 then flags32.carry else flags64.carry in $stat
     ; _          => $stat
@@ -546,11 +555,11 @@ instruction set architecture PPC64SFS = {
 
   // sets fixed-point exception register
   model SetXER (oe : Bool, ce : Bool) : Stat = {
-    $COV($oe; $CCA($ce; $SetXERBase($oe; $ce; flags32.overflow; flags32.carry)))
+    $CMOV($oe; $CMCA($ce; $SetXERBase($oe; $ce; flags32.overflow; flags32.carry)))
   }
 
   model SetXERAndCRBase (oe : Bool, ce : Bool, rc : Bool, ov32 : Ex, ca32 : Ex, result : Id) : Stats = {
-    $CCA($ce; $SetXERBase($oe; $ce; $ov32; $ca32))
+    $CMCA($ce; $SetXERBase($oe; $ce; $ov32; $ca32))
     match : Stat
     ( $rc = true => match : Stat
                     ( $oe = true  => $SetCR0($result; so    )
@@ -586,16 +595,16 @@ instruction set architecture PPC64SFS = {
   model ReadSPR () : Stat = {
     let rspr = (spr(4..0), spr(9..5)) in
       match rspr with
-      { 0b00000'00001 => X(rs) := XER as UDWord
-      , 0b00000'01000 => X(rs) := LR
-      , 0b00000'01001 => X(rs) := CTR
-      , 0b01000'01100 => X(rs) := TB
-      , 0b01000'01101 => X(rs) := TB(63..32) as UDWord
+      { SPRIndex::XER => X(rs) := XER as UDWord
+      , SPRIndex::LR  => X(rs) := LR
+      , SPRIndex::CTR => X(rs) := CTR
+      , SPRIndex::TBL => X(rs) := TB
+      , SPRIndex::TBH => X(rs) := TB(63..32) as UDWord
       , 0b11001'01000 => {}
       , 0b11001'01001 => {}
       , 0b11001'01010 => {}
       , 0b11001'01011 => {}
-      , 0b11001'01111 => X(rs) := TAR
+      , SPRIndex::TAR => X(rs) := TAR
       , _ => if spr(9) = 0 then raise Illegal
                            else raise Privilege
       }
@@ -605,14 +614,14 @@ instruction set architecture PPC64SFS = {
   model WriteSPR () : Stat = {
     let rspr = (spr(4..0), spr(9..5)) in
       match rspr with
-      { 0b00000'00001 => XER := XW(rs)
-      , 0b00000'01000 => LR  := X(rs)
-      , 0b00000'01001 => CTR := X(rs)
+      { SPRIndex::XER => XER := XW(rs)
+      , SPRIndex::LR  => LR  := X(rs)
+      , SPRIndex::CTR => CTR := X(rs)
       , 0b11001'01000 => {}
       , 0b11001'01001 => {}
       , 0b11001'01010 => {}
       , 0b11001'01011 => {}
-      , 0b11001'01111 => TAR := X(rs)
+      , SPRIndex::TAR => TAR := X(rs)
       , _ => if spr(9) = 0 then raise Illegal
                            else raise Privilege
       }
@@ -1321,7 +1330,7 @@ instruction set architecture PPC64SFS = {
                   (XW(ra) = 0x8000'0000 & XW(rb) = 0xFFFF'FFFF) | (res != (res as SWord) as SDWord);
                   0               ; 0     ))
   $XOFormDivInstr((("DIVWEU"; udivs; 0b1100'01011); (XW(ra) as UDWord << 32; XW(rb) as UDWord); UDWord;
-                  VADL::ugeq(res as UDWord, maxU32E)                                               ;
+                  res as UDWord >= maxU32E                                                         ;
                   0               ; 0     ))
 
   $XOFormNegateInstr("NEG")
