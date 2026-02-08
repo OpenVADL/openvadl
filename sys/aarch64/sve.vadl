@@ -2,7 +2,7 @@ import aarch64::AArch64Base
 
 instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
-  constant VL           =  64             // vector length, number of bits in a vector register
+  constant VL           = 128             // vector length, number of bits in a vector register
   constant PL           = VL >> 3         // predicate length, number of elements in a predicate register
   constant NumBytesPL   = PL >> 3         // number of bytes in a predicate register
   constant NumElementsB = VL >> 3         // number of byte   sized elements in a vector register
@@ -295,7 +295,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
               ; _             => DecodePredCountW)
   }
 
-  model GenDecodePredCount (elSize: Id): IsaDefs = { 
+  model GenDecodePredCount (elSize: Id): IsaDefs = {
     function $BHSDDecodePredCount ($elSize)(pattern: Bits5) -> BitsX =
       let elCount = VL as BitsX >> (3 + ElSize::$elSize) in
         match pattern with
@@ -807,7 +807,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
   function Imm2lslU  (imm: Bits<2>)  -> String =
     if imm = 0 then "" else (", lsl #", udec(imm))
- 
+
   record MemSVE    (dtype: Id, elCount: Id, memBytes: Int, elSize: Id, elStr: Str, elType: Id, extStr: Str)
   record MulMemSVE (dtype: Id, elCount: Id, numVector: Id, elSize: Id, elStr: Str, extStr: Str)
 

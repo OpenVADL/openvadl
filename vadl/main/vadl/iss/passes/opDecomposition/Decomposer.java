@@ -20,6 +20,8 @@ import static vadl.utils.StreamUtils.only;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import javax.annotation.Nullable;
+import vadl.iss.passes.opDecomposition.decomposer.ArithmeticDecomposer;
+import vadl.iss.passes.opDecomposition.decomposer.LogicDecomposer;
 import vadl.iss.passes.opDecomposition.decomposer.ShiftDecomposer;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
@@ -74,7 +76,8 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 )
 @SuppressWarnings("OverloadMethodsDeclarationOrder")
 class Decomposer
-    implements VadlBuiltInEmptyNoStatusDispatcher<Decomposer.Request>, ShiftDecomposer {
+    implements VadlBuiltInEmptyNoStatusDispatcher<Decomposer.Request>, ShiftDecomposer, LogicDecomposer,
+    ArithmeticDecomposer {
 
   record Slice(int hi, int lo) {
     int width() {
@@ -392,6 +395,31 @@ class Decomposer
   @Override
   public void handleLSR(Request rq) {
     rq.result = lsrDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleLSL(Request rq) {
+    rq.result = lslDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleOR(Request rq) {
+    rq.result = orDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleAND(Request rq) {
+    rq.result = andDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleXOR(Request rq) {
+    rq.result = xorDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleSUB(Request rq) {
+    rq.result = subDecompose(currCall, rq.slice.hi(), rq.slice.lo());
   }
 
 

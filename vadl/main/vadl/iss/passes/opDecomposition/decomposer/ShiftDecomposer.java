@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -74,7 +74,62 @@ public interface ShiftDecomposer extends IDecomposer {
    */
   default ExpressionNode lsrDecompose(BuiltInCall src, int hi, int lo) {
     src.ensure(src.builtIn() == BuiltInTable.LSR, "Not a lsr built-in call");
+    return shiftDecompose(src, hi, lo, true);
+  }
 
+  private ExpressionNode effectiveShiftAmount(ExpressionNode expr, int srcW) {
+    var exprW = expr.type().asDataType().bitWidth();
+    var srcMinW = BitsType.minimalRequiredWidthFor(srcW);
+    var t = Type.bits(Math.max(srcMinW, exprW));
+    expr = GraphUtils.zeroExtend(expr, t);
+    return BuiltInTable.UMOD.call(expr, Constant.Value.of(srcW, t).toNode());
+  }
+
+  /**
+   * De-composes a logical-shift-left call so that **only** the bit-range
+   * {@code [hi‥lo]} of the result is materialised.
+   *
+   * <p>Instead of building the full {@code a << (b % N)} value (word-width =N),
+   * the method:
+   * <ol>
+   *   <li>retrieves {@code a} and {@code b} from {@code src};</li>
+   *   <li>computes the effective distance
+   *       {@code eff = b % N}</li>
+   *   <li>splits it into whole-chunk and in-chunk parts<br>
+   *       {@code sb   = eff / K}   // K = piece size, e.g. 8<br>
+   *       {@code sbit = eff % K};</li>
+   *   <li>selects just the source pieces that can contribute to bits
+   *       {@code hi‥lo} (at most two);</li>
+   *   <li>builds those two pieces with 8-bit helpers:<br>
+   *       {@code hi = lsl8(src[i-sb], sbit);} <br>
+   *       {@code lo = sbit? lsr8(src[i-sb-1], K-sbit) : 0;}<br>
+   *       however, this is unrolled and represented as a chain of selects in the dependency graph
+   *       </li>
+   *   <li>ORs, masks and concatenates so the final node is exactly
+   *       {@code hi-lo+1} bits wide.</li>
+   * </ol>
+   *
+   * @param src built-in LSL call {@code LSL(a,b)} (both unsigned)
+   * @param hi  most-significant bit of the slice (inclusive, 0 = LSB)
+   * @param lo  least-significant bit of the slice
+   * @return graph expression that equals {@code (a << (b % N))[hi:lo]}
+   * @throws IllegalArgumentException if {@code hi < lo} or indices exceed word width
+   */
+  default ExpressionNode lslDecompose(BuiltInCall src, int hi, int lo) {
+    src.ensure(src.builtIn() == BuiltInTable.LSL, "Not a lsl built-in call");
+    return shiftDecompose(src, hi, lo, false);
+  }
+
+  /**
+   * Common shift decomposition logic for both LSR and LSL.
+   *
+   * @param src          built-in shift call
+   * @param hi           most-significant bit of the slice
+   * @param lo           least-significant bit of the slice
+   * @param isRightShift true for LSR, false for LSL
+   * @return decomposed shift expression
+   */
+  private ExpressionNode shiftDecompose(BuiltInCall src, int hi, int lo, boolean isRightShift) {
     var a = src.arg(0);
     var aT = a.type().asDataType();
 
@@ -111,7 +166,7 @@ public interface ShiftDecomposer extends IDecomposer {
     // order little endian ... LSB -> MSB
     List<ExpressionNode> outs = new ArrayList<>();
     for (var i = firstIdx; i <= lastIdx; i++) {
-      var piece = calculatePiece(i, pieces, sp, sbit, carry, SP_MAX);
+      var piece = calculateShiftPiece(i, pieces, sp, sbit, carry, SP_MAX, isRightShift);
       outs.add(piece);
     }
 
@@ -135,93 +190,115 @@ public interface ShiftDecomposer extends IDecomposer {
     return GraphUtils.concat(outs.toArray(ExpressionNode[]::new));
   }
 
-  private ExpressionNode calculatePiece(int i, List<ExpressionNode> pieces, ExpressionNode sp,
-                                        ExpressionNode sbit, ExpressionNode carry, int spMax) {
-    var lo = lsrCalcLow(i, pieces, sp, spMax);
-    var hi = lsrCalcHigh(i, pieces, sp, spMax);
-    return lsrBuildOut(lo, hi, carry, sbit);
+  /**
+   * Calculates a single piece of the shift result.
+   *
+   * @param i            output piece index
+   * @param pieces       input pieces
+   * @param sp           shift pieces expression
+   * @param sbit         shift bits expression
+   * @param carry        carry flag expression
+   * @param spMax        maximum shift pieces value
+   * @param isRightShift true for LSR, false for LSL
+   * @return the calculated piece
+   */
+  private ExpressionNode calculateShiftPiece(int i, List<ExpressionNode> pieces, ExpressionNode sp,
+                                             ExpressionNode sbit, ExpressionNode carry, int spMax,
+                                             boolean isRightShift) {
+    if (isRightShift) {
+      var lo = calcShiftPart(i, pieces, sp, spMax, 0, true);
+      var hi = calcShiftPart(i, pieces, sp, spMax, 1, true);
+      return buildShiftOut(lo, hi, carry, sbit, BuiltInTable.LSR, BuiltInTable.LSL);
+    } else {
+      var hi = calcShiftPart(i, pieces, sp, spMax, 0, false);
+      var lo = calcShiftPart(i, pieces, sp, spMax, 1, false);
+      return buildShiftOut(hi, lo, carry, sbit, BuiltInTable.LSL, BuiltInTable.LSR);
+    }
   }
 
-  private ExpressionNode lsrBuildOut(ExpressionNode lo, ExpressionNode hi, ExpressionNode carry,
-                                     ExpressionNode sbit) {
-    // constants
-    var pieceSize = lo.type().asDataType().bitWidth();
+  /**
+   * Builds output from main and carry parts using specified shift operations.
+   *
+   * @param mainPart  the main part to shift with sbit
+   * @param carryPart the carry part to shift with K-sbit
+   * @param carry     carry flag
+   * @param sbit      shift bits
+   * @param mainOp    shift operation for main part
+   * @param carryOp   shift operation for carry part
+   * @return combined result
+   */
+  private ExpressionNode buildShiftOut(ExpressionNode mainPart, ExpressionNode carryPart,
+                                       ExpressionNode carry, ExpressionNode sbit,
+                                       BuiltInTable.BuiltIn mainOp,
+                                       BuiltInTable.BuiltIn carryOp) {
+    var pieceSize = mainPart.type().asDataType().bitWidth();
     var pieceSizeNode = GraphUtils.bits(pieceSize, sbit.type().asDataType().bitWidth()).toNode();
 
-    // calulate the << shift amount to place the hi bits in place of the result
+    // calculate shift amount for carry part
     var adj = BuiltInTable.SUB.call(pieceSizeNode, sbit);
-    // if carry is false, there are no bit shifts (only whole piece shifts (sp), and therefore
-    // we don't have to place the higher bits into position
+    // if carry is false, there are no bit shifts
     var select = GraphUtils.select(carry,
-        BuiltInTable.LSL.call(hi, adj),
-        Constant.Value.zero(hi.type().asDataType()).toNode()
+        carryOp.call(carryPart, adj),
+        Constant.Value.zero(carryPart.type().asDataType()).toNode()
     );
 
-    // we shift lo part of the piece by the shift bits
-    var lsr = BuiltInTable.LSR.call(lo, sbit);
-    // we merge upper and lower part to one
-    return BuiltInTable.OR.call(lsr, select);
+    // shift main part
+    var shifted = mainOp.call(mainPart, sbit);
+    // merge parts
+    return BuiltInTable.OR.call(shifted, select);
   }
 
-  private ExpressionNode lsrCalcLow(int i,
-                                    List<ExpressionNode> pieces,
-                                    ExpressionNode sp,
-                                    int spMax) {
+  /**
+   * Calculates a shift part (main or carry) for a given output piece.
+   *
+   * @param i            output piece index
+   * @param pieces       input pieces
+   * @param sp           shift pieces expression
+   * @param spMax        maximum shift pieces value
+   * @param offset       0 for main part, 1 for carry part
+   * @param isRightShift true for LSR, false for LSL
+   * @return the calculated part
+   */
+  private ExpressionNode calcShiftPart(int i, List<ExpressionNode> pieces, ExpressionNode sp,
+                                       int spMax, int offset, boolean isRightShift) {
     int pieceW = pieces.getFirst().type().asDataType().bitWidth();
     var zeroExpr = Constant.Value.zero(Type.bits(pieceW)).toNode();
-    int last = pieces.size() - 1;          // index of the MSB slice
 
-    ExpressionNode lo = zeroExpr;              // default = 0
+    ExpressionNode result = zeroExpr;
 
-    /* build a chain of  selects:  (sp==j ? pieces[i+j] : prev) ------ */
-    for (int j = spMax; j >= 0; --j) {        // j = 0 … SP_MAX
-      int srcIdx = i + j;                    // slice that would land here
-      if (srcIdx > last) {
-        continue;           // shifts beyond word ⇒ 0
+    // For right shift: main from i+sp, carry from i+sp+1
+    // For left shift: main from i-sp, carry from i-sp-1
+    int sign = isRightShift ? 1 : -1;
+
+    // Early return checks
+    if (offset == 1) {
+      if (isRightShift && i == spMax) {
+        return result; // SP_MAX + 1 is always out of bounds
       }
-
-      var target = pieces.get(srcIdx);       // valid source slice
-
-      // constant `j`
-      var cmpVal = bits(j, sp.type().asDataType().bitWidth()).toNode();
-      var cmp = equ(sp, cmpVal);
-      lo = select(cmp, target, lo);
-    }
-    return lo;                                 // 8-bit data-flow only
-  }
-
-  private ExpressionNode lsrCalcHigh(int i, List<ExpressionNode> pieces, ExpressionNode sp,
-                                     int spMax) {
-    int pieceW = pieces.getFirst().type().asDataType().bitWidth();
-    var zeroExpr = Constant.Value.zero(Type.bits(pieceW)).toNode();
-    int last = pieces.size() - 1;          // index of the MSB slice
-
-    ExpressionNode hi = zeroExpr;
-
-    if (i == spMax) {
-      // not possible, SP_MAX + 1 is always 0
-      return hi;
+      if (!isRightShift && i == 0) {
+        return result; // 0 - 1 is always out of bounds
+      }
     }
 
-    for (var j = spMax; j >= i; --j) {
-      int srcIdx = i + j + 1;
-      if (srcIdx > last) {
+    // Determine loop range based on shift direction and offset
+    // For LSR: low part j=spMax..0, high part j=spMax..i
+    // For LSL: both parts j=spMax..0
+    int startJ = spMax;
+    int endJ = (offset == 1 && isRightShift) ? i : 0;
+
+    for (int j = startJ; j >= endJ; --j) {
+      int srcIdx = i + sign * (j + offset);
+      if (srcIdx < 0 || srcIdx >= pieces.size()) {
         continue;
       }
+
       var target = pieces.get(srcIdx);
       var cmpVal = bits(j, sp.type().asDataType().bitWidth()).toNode();
       var cmp = equ(sp, cmpVal);
-      hi = select(cmp, target, hi);
+      result = select(cmp, target, result);
     }
-    return hi;
-  }
 
-  private ExpressionNode effectiveShiftAmount(ExpressionNode expr, int srcW) {
-    var exprW = expr.type().asDataType().bitWidth();
-    var srcMinW = BitsType.minimalRequiredWidthFor(srcW);
-    var t = Type.bits(Math.max(srcMinW, exprW));
-    expr = GraphUtils.zeroExtend(expr, t);
-    return BuiltInTable.UMOD.call(expr, Constant.Value.of(srcW, t).toNode());
+    return result;
   }
 
   private List<ExpressionNode> getPieces(ExpressionNode src, int pieceWidth) {
