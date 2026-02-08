@@ -27,3 +27,8 @@ html {
 #nav-tree-contents li a.active {
     color: var(--primary-color) !important;
 }
+
+*{
+    font-variant-ligatures: none !important;
+    font-feature-settings: "liga" 0, "calt" 0 !important;
+}

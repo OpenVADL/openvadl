@@ -52,4 +52,5 @@ sed \
 
 # This is a bit safer than using cd to move to a dir
 find "$DIR" -name "*.tex" -exec sed "${SED_I[@]}" \
-  -e '/{\\footnotesize\\ttfamily/ s/^%*/%/' {} \;
+  -e 's/{\\footnotesize\\ttfamily/{\\ttfamily/g' \
+  {} \;

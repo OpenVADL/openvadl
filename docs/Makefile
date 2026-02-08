@@ -3,7 +3,7 @@ LATEST_VERSION := $(shell git describe --tags --abbrev=0 | sed 's/^v//')
 
 default: docs
 
-.PHONY: docs
+.PHONY: docs clean clean-html clean-latex
 
 docs: latex html
 
@@ -25,6 +25,7 @@ refman/tutorial.md \
 refman/refmanual.md \
 handbook/iss.md \
 handbook/lcb.md \
+../vadl/main/vadl/ast/vadl.ATG \
 refman/acronyms.md
 
 html: open-vadl-html-docs
@@ -39,7 +40,7 @@ open-vadl-html-docs: doxygen
 	PROJECT_LOGO="" \
 	OUTPUT_DIRECTORY="./obj/doc/open-vadl-docs" \
 	INPUT="$(OPEN_VADL_HTML_DOCS)" \
-	$(DOXYGEN) Doxyfile.html.doxygen
+	$(DOXYGEN) html.cfg
 	@echo "-- Generating HTML Documentation refman [DONE]"
 
 open-vadl-latex: doxygen
@@ -56,3 +57,12 @@ open-vadl-latex: doxygen
 	@cp obj/doc/open-vadl-refman/latex/refman.pdf obj/doc/open-vadl-refman/open-vadl.pdf
 	@echo "-- Generating LaTeX Documentation [DONE]"
 
+clean: clean-html clean-latex
+
+clean-html:
+	@echo "-- Cleaning HTML documentation"
+	@rm -rf obj/doc/open-vadl-docs
+
+clean-latex:
+	@echo "-- Cleaning LaTeX documentation"
+	@rm -rf obj/doc/open-vadl-refman

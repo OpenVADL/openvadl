@@ -239,23 +239,23 @@
 {\huge $title}\\
 \vspace*{1cm}
 
-\tabulinesep=1mm
-\begin{longtabu}spread 0pt [c]{*{2}{X[-1]}}
-\input{authors.md}
-\\
-\PBS\raggedleft\large Release: & $projectbrief \\
-\\
-\PBS\raggedleft\large Branch/Tag: & $projectnumber \\
-\\
-\PBS\raggedleft\large Revision: & $projectlogo \\
-\\
-\PBS\raggedleft\large License: & CC-BY-4.0
-\end{longtabu}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{10pt}
+
+\begin{tabular}{@{}r@{\hspace{12pt}}l@{}}
+  % Author row spans both columns and is centered
+  \multicolumn{2}{c}{\textbf{Andreas Krall}\quad\texttt{andi@complang.tuwien.ac.at}}\\[1.2ex]
+
+  \textbf{Release:}    & $projectbrief \\
+  \textbf{Branch/Tag:} & $projectnumber \\
+  \textbf{Revision:}   & $projectlogo \\
+  \textbf{License:}    & CC-BY-4.0 \\
+\end{tabular}
 %\vspace*{1cm}
 %{\large $generatedby Doxygen $doxygenversion}\\
 %%BEGIN LATEX_TIMESTAMP
 \vspace*{0.5cm}
-{\today}
+%{\today}
 %{\small $datetime}
 %%END LATEX_TIMESTAMP
 \end{center}
