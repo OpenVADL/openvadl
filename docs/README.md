@@ -6,7 +6,7 @@ The VADL reference manual can be built as PDF by running
 DOXYGEN=/path/to/doxygen make latex
 ```
 
-Note that you will need the [VADL Coco/R Doxygen] (https://github.com/OpenVADL/doxygen) version to successfully build this.
+Note that you will need the [VADL Coco/R Doxygen](https://github.com/OpenVADL/doxygen) version to successfully build this.
 The official doxygen is currently not able to build the Latex PDF.
 
 The HTML version contains both, the VADL reference manual and the OpenVADL usage documentation.
