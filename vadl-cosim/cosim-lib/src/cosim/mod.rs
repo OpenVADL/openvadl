@@ -120,7 +120,7 @@ impl Broker {
         }
 
         for client in &mut self.clients {
-            client.terminate().unwrap();
+            client.terminate()?;
         }
 
         Ok(())
@@ -271,7 +271,7 @@ impl Broker {
                                 &self.clients[1],
                             ),
                         );
-                        let ctx = self.build_diff_context(config)?;
+                        let ctx = self.build_diff_context_for_client(config, 0)?;                        
                         return Ok(Report::failed(vec![diff], ctx));
                     }
                     (None, Some(c2insn)) => {
@@ -284,7 +284,7 @@ impl Broker {
                                 &self.clients[0],
                             ),
                         );
-                        let ctx = self.build_diff_context(config)?;
+                        let ctx = self.build_diff_context_for_client(config, 1)?;
                         return Ok(Report::failed(vec![diff], ctx));
                     }
                 }
@@ -354,7 +354,7 @@ impl Broker {
                                 &self.clients[1],
                             ),
                         );
-                        let ctx = self.build_diff_context(config)?;
+                        let ctx = self.build_diff_context_for_client(config, 0)?;
                         return Ok(Report::failed(vec![diff], ctx));
                     }
                     (None, Some(c2tb)) => {
@@ -366,14 +366,15 @@ impl Broker {
                                 &self.clients[0],
                             ),
                         );
-                        let ctx = self.build_diff_context(config)?;
+                        let ctx = self.build_diff_context_for_client(config, 1)?;
                         return Ok(Report::failed(vec![diff], ctx));
                     }
                 }
             },
         }
 
-        Ok(Report::passed())
+        let ctx = self.build_diff_context(config)?;
+        Ok(Report::failed(vec![], ctx))
     }
 
     #[allow(unused_variables)]
@@ -538,6 +539,34 @@ impl Broker {
                 Ok(())
             }
         }
+    }
+
+    fn build_diff_context_for_client(&mut self, config: &Config, client_idx: usize) -> Result<DiffContext> {
+        let mut before_states = get_all_clients_contexts_before(&self.clients[client_idx..=client_idx], config);
+        let mut after_states = get_all_clients_contexts_current(&mut self.clients[client_idx..=client_idx], config)?;
+        let mut error_instructions = get_all_clients_instructions(&self.clients[client_idx..=client_idx], config);
+        let mut diff_context = vec![];
+
+        for client in &self.clients[client_idx..=client_idx] {
+            let before_state = before_states.pop_front().unwrap();
+            let error_instruction = error_instructions.pop_front().unwrap();
+            let after_state = after_states.pop_front().unwrap();
+
+            let client_id = client.id.clone();
+            let client_name = client.name.clone();
+            let client_run_count = client.run_count;
+
+            diff_context.push(DiffContextClient::new(
+                client_id,
+                client_name,
+                client_run_count,
+                before_state,
+                error_instruction,
+                after_state,
+            ));
+        }
+
+        Ok(diff_context)
     }
 
     fn build_diff_context(&mut self, config: &Config) -> Result<DiffContext> {
