@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -38,6 +38,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.TestUtils;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.Pass;
@@ -371,7 +372,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
 
     /* GIVEN */
     var spec = TestUtils.compileToViam(TEST_ISA);
-    var config = new GeneralConfiguration(Path.of("build/test-output"), false);
+    var config = new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
 
     var passManager = new PassManager();
     passManager.add(new VdtInputPreparationPass(config));
@@ -423,7 +424,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
           encoding I1 = { a = 0b0000 }
         }
         """);
-    var config = new GeneralConfiguration(Path.of("build/test-output"), false);
+    var config = new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
 
     var passManager = new PassManager();
     passManager.add(new VdtInputPreparationPass(config));
@@ -473,7 +474,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
           encoding I1 = { %s }
         }
         """.formatted(constraint, fixedEncoding));
-    var config = new GeneralConfiguration(Path.of("build/test-output"), false);
+    var config = new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
 
     var passManager = new PassManager();
     passManager.add(new VdtInputPreparationPass(config));
@@ -543,7 +544,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         """;
 
     var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
     var spec = TestUtils.compileToViam(vadl);
 
     var manager = new PassManager();
@@ -601,7 +602,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         """;
 
     var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
     var spec = TestUtils.compileToViam(vadl);
 
     var manager = new PassManager();

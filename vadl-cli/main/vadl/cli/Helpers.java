@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -21,12 +21,14 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Stack;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.stream.Streams;
 import picocli.CommandLine;
 import vadl.OpenVadlProperties;
 import vadl.configuration.DecoderOptions;
+import vadl.configuration.DumpMode;
 import vadl.configuration.IssConfiguration;
 
 class Helpers {
@@ -177,5 +179,58 @@ class DecoderOptsConverter implements Iterable<String>, CommandLine.ITypeConvert
   @Override
   public Iterator<String> iterator() {
     return getOptions().iterator();
+  }
+}
+
+class DumpModeConverter implements CommandLine.ITypeConverter<DumpMode>, Iterable<String>,
+    CommandLine.IParameterConsumer {
+  @Override
+  public DumpMode convert(String value) {
+    if (value == null || value.isEmpty()) {
+      return DumpMode.ALWAYS;
+    }
+    try {
+      return DumpMode.fromString(value);
+    } catch (IllegalArgumentException e) {
+      // In case Picocli passes something else or fromString fails
+      throw new CommandLine.TypeConversionException(
+          "\nAvailable options are %s".formatted(
+              Streams.of(iterator()).sorted().collect(Collectors.joining(", "))
+          )
+      );
+    }
+  }
+
+  @Nonnull
+  @Override
+  public Iterator<String> iterator() {
+    return DumpMode.modeStrings.iterator();
+  }
+
+  @Override
+  public void consumeParameters(Stack<String> args, CommandLine.Model.ArgSpec argSpec,
+                                CommandLine.Model.CommandSpec commandSpec) {
+    // check if the next argument is bound to the dump mode or some other parameter
+    String token = args.peek();
+
+    // --dump=mode
+    var idx = token.indexOf('=');
+    if (idx >= 0) {
+      args.pop();
+      var mode = convert(token.substring(idx + 1));
+      argSpec.setValue(mode);
+      return;
+    }
+
+    // --dump mode  (only if mode is valid)
+    if (DumpMode.modeStrings.contains(token)) {
+      args.pop();
+      var mode = convert(token);
+      argSpec.setValue(mode);
+      return;
+    }
+
+    // --dump  (flag)
+    argSpec.setValue(DumpMode.ALWAYS);
   }
 }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.AbstractTest;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.dump.HtmlDumpPass;
@@ -39,11 +40,12 @@ public class IssLoweringTest extends AbstractTest {
     var logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(HtmlDumpPass.class);
     logger.setLevel(Level.DEBUG);
   }
-  
+
   @Test
   void issRiscvLoweringTest() throws IOException, DuplicatedPassKeyException {
     var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), true));
+        new IssConfiguration(
+            new GeneralConfiguration(Path.of("build/test-output"), DumpMode.ALWAYS));
 
     setupPassManagerAndRunSpec("sys/risc-v/rv64im.vadl",
         PassOrders.iss(config)
@@ -53,7 +55,7 @@ public class IssLoweringTest extends AbstractTest {
   @Test
   void issAarch64LoweringTest() throws IOException, DuplicatedPassKeyException {
     var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
 
     setupPassManagerAndRunSpec("sys/aarch64/virt.vadl",
         PassOrders.iss(config)

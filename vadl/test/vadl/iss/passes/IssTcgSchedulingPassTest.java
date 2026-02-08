@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassOrders;
@@ -45,7 +46,7 @@ public class IssTcgSchedulingPassTest extends AbstractTest {
   @Test
   public void test_schedule_in_both_branches() throws IOException, DuplicatedPassKeyException {
     var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
 
     var setup = setupPassManagerAndRunSpec("passes/issTcgScheduling/valid_branch_1.vadl",
         PassOrders.iss(config)

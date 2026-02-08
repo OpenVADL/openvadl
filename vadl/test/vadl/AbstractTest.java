@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -45,6 +45,7 @@ import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.provider.Arguments;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.PassKey;
 import vadl.pass.PassManager;
@@ -392,7 +393,8 @@ public abstract class AbstractTest {
 
   public GeneralConfiguration getConfiguration(boolean doDump) {
     var directory = getTestDirectory();
-    return new GeneralConfiguration(directory.toAbsolutePath(), doDump);
+    return new GeneralConfiguration(directory.toAbsolutePath(),
+        doDump ? DumpMode.ALWAYS : DumpMode.NONE);
   }
 
   public record TestSetup(PassManager passManager, Specification specification) {

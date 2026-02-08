@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -29,7 +29,7 @@ public class RiscVInstructionTest extends RtlDockerTest {
   //
   //    /* GIVEN */
   //    var generalConfig =
-  //        new GeneralConfiguration(Path.of("build/test-output"), false);
+  //        new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
   //    var config = new RtlConfiguration(generalConfig);
   //
   //    var decoderOptions = new DecoderOptions();

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -47,6 +47,7 @@ import vadl.ast.Ungrouper;
 import vadl.ast.VadlParser;
 import vadl.ast.ViamLowering;
 import vadl.configuration.DecoderOptions;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.ArtifactTracker;
 import vadl.error.DeferredDiagnosticStore;
@@ -76,7 +77,6 @@ public abstract class BaseCommand implements Callable<Integer> {
   @Option(names = {"-o",
       "--output"}, scope = INHERIT, description = "The output directory (default: \"output\")")
   Path output = Paths.get("output");
-
   @Option(names = {"-m", "--model"}, scope = INHERIT,
       description = "Override the value of an Id macro model.")
   @Nullable
@@ -84,8 +84,15 @@ public abstract class BaseCommand implements Callable<Integer> {
 
   @Option(names = {"--dump"},
       scope = INHERIT,
-      description = "Generate all dumps of intermediate representations.")
-  boolean dump;
+      arity = "0..1",
+      fallbackValue = "always",
+      paramLabel = "<mode>",
+      description = "Generate all dumps of intermediate representations. Valid values: ${COMPLETION-CANDIDATES}",
+      parameterConsumer = DumpModeConverter.class,
+      converter = DumpModeConverter.class,
+      completionCandidates = DumpModeConverter.class)
+
+  DumpMode dump = DumpMode.NONE;
 
   @Option(names = "--timings", scope = INHERIT,
       description = "Print timings of the phases of the compiler")
@@ -200,7 +207,7 @@ public abstract class BaseCommand implements Callable<Integer> {
    * @param ast to be dumped.
    */
   private void dumpUntyped(Ast ast) {
-    if (!dump) {
+    if (dump != DumpMode.ALWAYS) {
       return;
     }
 
@@ -221,7 +228,7 @@ public abstract class BaseCommand implements Callable<Integer> {
    * @param ast to be dumped.
    */
   private void dumpTyped(Ast ast) {
-    if (!dump) {
+    if (dump != DumpMode.ALWAYS) {
       return;
     }
 

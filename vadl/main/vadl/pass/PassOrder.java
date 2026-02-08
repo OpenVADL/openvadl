@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import javax.annotation.Nullable;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.HtmlDumpPass;
 
@@ -187,7 +188,7 @@ public final class PassOrder {
    * Adds a dump pass that outputs the dump to the given path.
    */
   public PassOrder addDump(String outPath) {
-    var config = new GeneralConfiguration(Path.of(outPath), true);
+    var config = new GeneralConfiguration(Path.of(outPath), DumpMode.ALWAYS);
     var last = order.getLast();
     HtmlDumpPass dumpPass = new HtmlDumpPass(HtmlDumpPass.Config.from(config,
         last.pass().getName().value(),
