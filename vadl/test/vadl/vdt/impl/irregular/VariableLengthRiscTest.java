@@ -43,11 +43,12 @@ public class VariableLengthRiscTest extends AbstractTest {
     var spec = runAndGetViamSpecification("sys/v-risc/VarRisc.vadl");
 
     Assertions.assertTrue(spec.isa().isPresent());
+    double occurrence = 1.0 / spec.isa().get().ownInstructions().size();
     var insns = spec.isa().get().ownInstructions()
         .stream()
         .map(i -> {
           BitPattern pattern = PatternUtils.toFixedBitPattern(i, ByteOrder.LITTLE_ENDIAN);
-          return new DecodeEntry(i, pattern.width(), pattern, Set.of());
+          return new DecodeEntry(i, pattern.width(), pattern, Set.of(), occurrence);
         })
         .toList();
 

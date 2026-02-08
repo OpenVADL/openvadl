@@ -82,8 +82,9 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     ));
 
     // Create decode entries with empty exclusion conditions
+    final double occurrence = 1.0 / instructions.size();
     final List<DecodeEntry> decodeEntries = instructions.stream()
-        .map(i -> new DecodeEntry(i.source(), i.width(), i.pattern(), Set.of()))
+        .map(i -> new DecodeEntry(i.source(), i.width(), i.pattern(), Set.of(), occurrence))
         .toList();
 
     /* WHEN */
@@ -113,21 +114,22 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     ));
 
     final List<DecodeEntry> decodeEntries = new ArrayList<>();
+    final double occurrence = 1.0 / insns.size();
 
     {
-      var entry = toDecodeEntry(insns.get(0),
+      var entry = toDecodeEntry(insns.get(0), occurrence,
           exclude("--00----", "------00", "------11"),
           exclude("--11----"));
       decodeEntries.add(entry);
     }
     {
-      var entry = toDecodeEntry(insns.get(1), "--11----");
+      var entry = toDecodeEntry(insns.get(1), occurrence, "--11----");
       decodeEntries.add(entry);
     }
 
     // The rest do not have exclusion conditions
     for (int i = 2; i < insns.size(); i++) {
-      decodeEntries.add(toDecodeEntry(insns.get(i)));
+      decodeEntries.add(toDecodeEntry(insns.get(i), occurrence));
     }
 
     /* WHEN */
@@ -159,22 +161,23 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         "-0-11----"
     ));
 
+    final double occurrence = 1.0 / insns.size();
     final List<DecodeEntry> decodeEntries = new ArrayList<>();
 
     {
-      var entry = toDecodeEntry(insns.get(0),
+      var entry = toDecodeEntry(insns.get(0), occurrence,
           exclude("---00----", "-------00", "-------11"),
           exclude("---11----"));
       decodeEntries.add(entry);
     }
     {
-      var entry = toDecodeEntry(insns.get(1), "---11----");
+      var entry = toDecodeEntry(insns.get(1), occurrence, "---11----");
       decodeEntries.add(entry);
     }
 
     // The rest do not have exclusion conditions
     for (int i = 2; i < insns.size(); i++) {
-      decodeEntries.add(toDecodeEntry(insns.get(i)));
+      decodeEntries.add(toDecodeEntry(insns.get(i), occurrence));
     }
 
     /* WHEN */
@@ -206,22 +209,23 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         "-0-11----"
     ));
 
+    final double occurrence = 1.0 / insns.size();
     final List<DecodeEntry> decodeEntries = new ArrayList<>();
 
     {
-      var entry = toDecodeEntry(insns.get(0),
+      var entry = toDecodeEntry(insns.get(0), occurrence,
           exclude("---00----", "-------00", "-------11"),
           exclude("---11----"));
       decodeEntries.add(entry);
     }
     {
-      var entry = toDecodeEntry(insns.get(1), "---11----");
+      var entry = toDecodeEntry(insns.get(1), occurrence, "---11----");
       decodeEntries.add(entry);
     }
 
     // The rest do not have exclusion conditions
     for (int i = 2; i < insns.size(); i++) {
-      decodeEntries.add(toDecodeEntry(insns.get(i)));
+      decodeEntries.add(toDecodeEntry(insns.get(i), occurrence));
     }
 
     /* WHEN */
@@ -300,10 +304,12 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         "10000011 --000--- --------"
     ));
 
+    final double occurrence = 1.0 / insns.size();
+
     // For this set we don't need exclusion conditions
     final List<DecodeEntry> decodeEntries = new ArrayList<>();
     for (Instruction insn : insns) {
-      decodeEntries.add(toDecodeEntry(insn));
+      decodeEntries.add(toDecodeEntry(insn, occurrence));
     }
 
     /* WHEN */
@@ -785,11 +791,11 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     return (T) passManager.getPassResults().lastResultOf(passType);
   }
 
-  private DecodeEntry toDecodeEntry(Instruction insn) {
-    return new DecodeEntry(insn.source(), insn.width(), insn.pattern(), Set.of());
+  private DecodeEntry toDecodeEntry(Instruction insn, double o) {
+    return new DecodeEntry(insn.source(), insn.width(), insn.pattern(), Set.of(), o);
   }
 
-  private DecodeEntry toDecodeEntry(Instruction insn, String... exclusionPattern) {
+  private DecodeEntry toDecodeEntry(Instruction insn, double o, String... exclusionPattern) {
     Set<ExclusionCondition> exclusions = Arrays.stream(exclusionPattern)
         .map(s -> {
           s = s.replace(" ", "");
@@ -797,11 +803,11 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
           return new ExclusionCondition(matching, Set.of());
         })
         .collect(Collectors.toSet());
-    return new DecodeEntry(insn.source(), insn.width(), insn.pattern(), exclusions);
+    return new DecodeEntry(insn.source(), insn.width(), insn.pattern(), exclusions, o);
   }
 
-  private DecodeEntry toDecodeEntry(Instruction insn, ExclusionCondition... exclusions) {
-    return new DecodeEntry(insn.source(), insn.width(), insn.pattern(), Set.of(exclusions));
+  private DecodeEntry toDecodeEntry(Instruction insn, double o, ExclusionCondition... exclusions) {
+    return new DecodeEntry(insn.source(), insn.width(), insn.pattern(), Set.of(exclusions), o);
   }
 
   private ExclusionCondition exclude(String matchingPattern, String... unmatchingPattern) {

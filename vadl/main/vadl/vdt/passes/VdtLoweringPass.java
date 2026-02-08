@@ -27,9 +27,8 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.vdt.impl.irregular.IrregularDecodeTreeGenerator;
-import vadl.vdt.impl.irregular.OccurenceAwareDecodeTreeGenerator;
+import vadl.vdt.impl.irregular.OccurrenceAwareDecodeTreeGenerator;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
-import vadl.vdt.impl.irregular.model.OccurrenceAwareDecodeEntry;
 import vadl.vdt.impl.regular.RegularDecodeTreeGenerator;
 import vadl.vdt.model.Node;
 import vadl.vdt.utils.Instruction;
@@ -59,7 +58,6 @@ public class VdtLoweringPass extends Pass {
   public @Nullable Node execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    // TODO: Adapt this (and the synthesis pass) to preserve occurrence information
     final List<DecodeEntry> entries;
     if (passResults.hasRunPassOnce(VdtConstraintSynthesisPass.class)) {
       entries =
@@ -84,17 +82,8 @@ public class VdtLoweringPass extends Pass {
     }
 
     if (generator == OCC) {
-
-      // TODO: Add the option to collect & supply occurrence probabilities. For now we assume
-      //       a uniform distribution.
-      final var occ = 1 / entries.size();
-
-      var eSet = entries.stream()
-          .map(i -> new OccurrenceAwareDecodeEntry(i, occ))
-          .toList();
-
       // TODO: Add the option to specify the memory penalty
-      return new OccurenceAwareDecodeTreeGenerator(1).generate(eSet);
+      return new OccurrenceAwareDecodeTreeGenerator(1).generate(entries);
     }
 
     return new IrregularDecodeTreeGenerator().generate(entries);

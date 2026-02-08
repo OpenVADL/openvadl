@@ -16,10 +16,8 @@
 
 package vadl.vdt.impl.irregular;
 
-import java.util.Collection;
 import org.apache.commons.lang3.NotImplementedException;
-import vadl.vdt.impl.irregular.model.OccurrenceAwareDecodeEntry;
-import vadl.vdt.model.DecodeTreeGenerator;
+import vadl.vdt.impl.irregular.model.DecodeEntries;
 import vadl.vdt.model.Node;
 
 /**
@@ -30,29 +28,17 @@ import vadl.vdt.model.Node;
  * href="https://dl.acm.org/doi/pdf/10.1145/775832.776027">Automated synthesis of efficient binary
  * decoders for retargetable software toolkits (Wei Qin, Sharad Malik)</a>
  */
-public class OccurenceAwareDecodeTreeGenerator
-    implements DecodeTreeGenerator<OccurrenceAwareDecodeEntry> {
+public class OccurrenceAwareDecodeTreeGenerator extends IrregularDecodeTreeGenerator {
 
   private final double memoryPenalty;
 
-  public OccurenceAwareDecodeTreeGenerator(double memoryPenalty) {
+  public OccurrenceAwareDecodeTreeGenerator(double memoryPenalty) {
     this.memoryPenalty = memoryPenalty;
   }
 
-  /**
-   * Entry point for the decode tree generator.
-   *
-   * @param input The entry set
-   * @return The generated decode tree
-   */
   @Override
-  public Node generate(Collection<OccurrenceAwareDecodeEntry> input) {
-
-    if (input.isEmpty()) {
-      throw new IllegalArgumentException("Entry set must not be empty");
-    }
-
-    throw new NotImplementedException("Not implemented yet");
+  protected Node makeNode(DecodeEntries decodeEntries) {
+    throw new NotImplementedException("TODO");
   }
 
 

@@ -18,26 +18,11 @@ package vadl.vdt.impl.irregular.model;
 
 import java.util.Set;
 import vadl.vdt.utils.BitPattern;
-import vadl.viam.Instruction;
+import vadl.vdt.utils.BitVector;
 
-public class OccurrenceAwareDecodeEntry extends DecodeEntry {
+public record MultiPatterns(BitVector mask, Set<BitPattern> patterns) {
 
-  private final double occurrenceProbability;
-
-  public OccurrenceAwareDecodeEntry(Instruction source, int width,
-                                    BitPattern pattern,
-                                    Set<ExclusionCondition> exclusionConditions,
-                                    double occurrenceProbability) {
-    super(source, width, pattern, exclusionConditions);
-    this.occurrenceProbability = occurrenceProbability;
-  }
-
-  public OccurrenceAwareDecodeEntry(DecodeEntry entry, double occurrenceProbability) {
-    this(entry.source(), entry.width(), entry.pattern(), entry.exclusionConditions(),
-        occurrenceProbability);
-  }
-
-  public double getProbability() {
-    return occurrenceProbability;
+  public boolean hasDecision() {
+    return patterns.size() > 1;
   }
 }

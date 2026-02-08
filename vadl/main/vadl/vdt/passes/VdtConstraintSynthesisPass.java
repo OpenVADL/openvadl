@@ -88,7 +88,7 @@ public class VdtConstraintSynthesisPass extends Pass {
           }
 
           var constraints = getSynthesizedExclusions(bo, grouped, entry);
-          return new DecodeEntry(entry.source(), entry.width(), entry.pattern(), constraints);
+          return DecodeEntry.withExclusions(entry, constraints);
         })
         .toList();
   }
