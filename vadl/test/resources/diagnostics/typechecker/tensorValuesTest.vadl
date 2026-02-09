@@ -199,8 +199,8 @@ constant j = i as Dim_2_a
 //    . : ' Identifier name: "x" type: Bits<64>
 //    . : ' ArgsIndices
 //    . : ' | RangeExpr type: null
-//    . : ' | . IntegerLiteral literal: 15 (15) type: null
-//    . : ' | . IntegerLiteral literal: 0 (0) type: null
+//    . : ' | . IntegerLiteral literal: 15 (15) type: Const<15>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
 //    ConstantDefinition name: "g"
 //    . LetExpr type: Bits<16>
 //    . : Identifier name: "x" type: Bits<64>
@@ -216,8 +216,8 @@ constant j = i as Dim_2_a
 //    . : ' Identifier name: "x" type: Bits<64>
 //    . : ' ArgsIndices
 //    . : ' | RangeExpr type: null
-//    . : ' | . IntegerLiteral literal: 63 (63) type: null
-//    . : ' | . IntegerLiteral literal: 48 (48) type: null
+//    . : ' | . IntegerLiteral literal: 63 (63) type: Const<63>
+//    . : ' | . IntegerLiteral literal: 48 (48) type: Const<48>
 //    ConstantDefinition name: "h"
 //    . LetExpr type: Bits<16>
 //    . : Identifier name: "x" type: Bits<64>
@@ -233,8 +233,8 @@ constant j = i as Dim_2_a
 //    . : ' Identifier name: "x" type: Bits<64>
 //    . : ' ArgsIndices
 //    . : ' | RangeExpr type: null
-//    . : ' | . IntegerLiteral literal: 63 (63) type: null
-//    . : ' | . IntegerLiteral literal: 48 (48) type: null
+//    . : ' | . IntegerLiteral literal: 63 (63) type: Const<63>
+//    . : ' | . IntegerLiteral literal: 48 (48) type: Const<48>
 //    ConstantDefinition name: "i"
 //    . CastExpr type: Bits<64>
 //    . : BinaryLiteral literal: 0xfedc'da98'7654'3210 (18364793728865153552) type: Const<18364793728865153552>
