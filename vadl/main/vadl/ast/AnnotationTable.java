@@ -1035,8 +1035,9 @@ class EnableAnnotation extends Annotation {
 }
 
 /**
- * Provides the annotation {@code [ upcast access to : <ident>, <int> ]} on an instruction that
- * treats the field access of {@code <ident>} as being of type and name {@code <int>}.
+ * Provides the annotation {@code [ upcast access to : <ident>, <ex> ]} on an instruction that
+ * treats the field access of {@code <ident>} as being of type {@code <ex>}. {@code <ex>} has to
+ * evaluate to a positive integer.
  * This is useful when there is a type mismatch between the field access and an LLVM type.
  */
 class UpcastAnnotation extends Annotation {
@@ -1054,7 +1055,9 @@ class UpcastAnnotation extends Annotation {
   @Override
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
     verifyValuesCnt(definition, 2);
-    definition.values.getFirst().accept(resolver);
+    for (var val : definition.values) {
+      val.accept(resolver);
+    }
   }
 
   @Override
@@ -1072,6 +1075,8 @@ class UpcastAnnotation extends Annotation {
     var valueExpr = definition.values.get(1);
     typeChecker.check(valueExpr);
     bitSize = typeChecker.constantEvaluator.eval(valueExpr);
+    ensure(bitSize.value().signum() > 0,
+        () -> error("Bit size of type has to be bigger than zero", valueExpr));
   }
 
   @Override
