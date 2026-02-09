@@ -144,6 +144,7 @@ typedef struct {
   uint8_t size;
   // the amount written to the data-array depends on the size
   uint8_t data[16];
+  bool is_store;
 } MemAccessInfo;
 
 typedef enum {
@@ -439,6 +440,7 @@ static void vcpu_mem_cb(unsigned int cpu_index, qemu_plugin_meminfo_t info,
     shm.shm_insn.mem_access_info.vaddr = vaddr;
 
     qemu_plugin_mem_value data = qemu_plugin_mem_get_value(info);
+    shm.shm_insn.mem_access_info.is_store = qemu_plugin_mem_is_store(info);
 
     shm.shm_insn.mem_access_info.size = data.type;
     memcpy(&shm.shm_insn.mem_access_info.data, &data.data, 1 << data.type);

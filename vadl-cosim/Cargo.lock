@@ -1252,6 +1252,7 @@ dependencies = [
  "color-eyre",
  "cosim-lib",
  "figment",
+ "object 0.38.1",
  "serde_yaml",
  "tracing",
  "tracing-subscriber",

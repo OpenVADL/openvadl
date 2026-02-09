@@ -16,3 +16,4 @@ tracing = { version = "0.1.41", features = ["attributes"] }
 tracing-subscriber = "0.3.20"
 serde_yaml = "0.9.34"
 color-eyre = "0.6.5"
+object = "0.38.1"
