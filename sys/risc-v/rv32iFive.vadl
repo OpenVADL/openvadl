@@ -3,9 +3,9 @@
 
 // RISC-V 32 I instruction set
 
-import rv64im::{RV64IM}
+import rv32i::{RV32I}
 
-micro architecture FiveStage implements RV64IM = {
+micro architecture FiveStage implements RV32I = {
 
   stage FETCH -> ( fr : FetchResult ) = {
     fr := fetchNext                      // fetch next instruction from memory (or cache)

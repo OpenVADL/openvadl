@@ -1,0 +1,21 @@
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: Apache-2.0
+
+// RISC-V 32 I instruction set
+
+import rv32i::{RV32I}
+
+/**
+ * Single stage MiA description.
+ *
+ * Placing the whole instruction behavior in a single pipeline stage may require the stage to
+ * take more than one cycle for execution. In this case an implementation could share resources
+ * between the execution steps (which our hardware generation currently does not do).
+ */
+micro architecture SingleStage implements RV32I = {
+
+  stage ISS -> ( ) = {
+    let instr = decode( fetchNext ) in    // fetch next instruction from memory and decode
+      instr.write
+  }
+}

@@ -3400,7 +3400,7 @@ public class TypeChecker
         // Is the order important? Are the types of the arguments important? What rulse do even
         // aply. Are all the functions vararg?
         expr.type = fieldName.equals("unknown") ? Type.bool() : Type.void_();
-        var argumentfreeFields = List.of("unknown", "compute", "verify");
+        var argumentfreeFields = List.of("unknown", "compute", "verify"); // else: any num of args
         if (argumentfreeFields.contains(fieldName)) {
           if (!subCall.argsIndices.isEmpty()) {
             addErrorAndStopChecking(
@@ -3410,14 +3410,6 @@ public class TypeChecker
                     .build());
           }
           return;
-        } else {
-          if (subCall.argsIndices.size() == 0) {
-            addErrorAndStopChecking(
-                error("Wrong Argument Number",
-                    subCall.id)
-                    .description("This subcall expects at least one argument.")
-                    .build());
-          }
         }
       } else if (expr.target instanceof Identifier id
           && id.target() instanceof StageDefinition stageDef) {
