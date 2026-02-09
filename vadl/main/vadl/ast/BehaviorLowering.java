@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -490,7 +491,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // If the [overwrite source:] annotation is set, we instead either zero or sign extend the
       // write value to overwrite the whole source register.
       writeValue = switch (overwriteMode) {
-        case null -> sliceWriteValue(writeValue,
+        case null -> staticSliceWriteValue(writeValue,
             new ReadRegTensorNode(reg, indices, sourceRegType, null), List.of(slice));
         case "zero" -> zeroExtend(writeValue, sourceRegType);
         case "sign" -> signExtend(writeValue, sourceRegType);
@@ -810,21 +811,28 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   private List<WriteResourceNode> writeTensorResourceSliced(RegisterResource resource,
                                                             List<ExpressionNode> indices,
                                                             ExpressionNode value,
-                                                            List<Constant.BitSlice> slices) {
+                                                            List<Constant.BitSlice> slices,
+                                                            @Nullable ExpressionNode dynamicIndex) {
     // No multiple writes and slices needed
     if (resource.indexTypes().size() <= indices.size()) {
       switch (resource) {
         case RegisterTensor register -> {
-          var slicedValue = sliceWriteValue(value,
-              new ReadRegTensorNode(register, new NodeList<>(indices), register.resultType(), null),
-              slices);
+          var resourceRead =
+              new ReadRegTensorNode(register, new NodeList<>(indices), register.resultType(), null);
+          var slicedValue = dynamicIndexWriteValue(
+              staticSliceWriteValue(value, resourceRead, slices),
+              resourceRead,
+              dynamicIndex);
           return List.of(
               new WriteRegTensorNode(register, new NodeList<>(indices), slicedValue, null, null));
         }
         case ArtificialResource register -> {
-          var slicedValue = sliceWriteValue(value,
-              new ReadArtificialResNode(register, new NodeList<>(indices), register.resultType()),
-              slices);
+          var resourceRead =
+              new ReadArtificialResNode(register, new NodeList<>(indices), register.resultType());
+          var slicedValue =
+              dynamicIndexWriteValue(staticSliceWriteValue(value, resourceRead, slices),
+                  resourceRead,
+                  dynamicIndex);
           return List.of(
               new WriteArtificialResNode(register, new NodeList<>(indices), slicedValue));
         }
@@ -1591,7 +1599,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     vadl.ast.Definition targetDef;
     List<CallIndexExpr.Arguments> argGroups = List.of();
-    List<Constant.BitSlice> slices = new ArrayList<>();
+    List<Constant.BitSlice> staticSlices = new ArrayList<>();
+    AtomicReference<ExpressionNode> dynamicIndexExpr = new AtomicReference<>();
 
     // the MEM<xyz>(...) value
     @Nullable Integer callSize = null;
@@ -1600,12 +1609,16 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       targetDef = (vadl.ast.Definition) callTarget.computedTarget();
       argGroups = callTarget.args();
       callTarget.slices().forEach(s -> {
-        slices.add(requireNonNull(s.computedstaticBitSlice));
+        if (s.computedstaticBitSlice != null) {
+          staticSlices.add(requireNonNull(s.computedstaticBitSlice));
+        } else {
+          dynamicIndexExpr.set(fetch(s.values.getFirst()));
+        }
       });
       // add all slices that come from format field accesses
       callTarget.subCalls.forEach(s -> {
         if (s.computedBitSlice != null) {
-          slices.add(s.computedBitSlice);
+          staticSlices.add(s.computedBitSlice);
         }
       });
 
@@ -1623,22 +1636,25 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         .collect(Collectors.toCollection(NodeList::new));
     var viamTargetDef = viamLowering.fetch(targetDef).orElseThrow();
 
+    var dynamicIndex = dynamicIndexExpr.get();
+
     // No need to call getViamType here as the viam definitions should already have that.
     var writeNodes = switch (viamTargetDef) {
       case RegisterTensor regDef -> writeTensorResourceSliced(
-          regDef, argExprs, value, slices
+          regDef, argExprs, value, staticSlices, dynamicIndex
       );
 
       case ArtificialResource aliasDef -> writeTensorResourceSliced(
-          aliasDef, argExprs, value, slices
+          aliasDef, argExprs, value, staticSlices, dynamicIndex
       );
 
       case Memory memDef -> {
         var words = callSize != null ? callSize : 1;
         // slice the written value before writing it
-        var slicedValue = sliceWriteValue(value,
-            new ReadMemNode(memDef, words, argExprs.getFirst(),
-                ((BitsType) memDef.resultType()).scaleBy(words)), slices);
+        var resourceRead = new ReadMemNode(memDef, words, argExprs.getFirst(),
+            ((BitsType) memDef.resultType()).scaleBy(words));
+        var slicedValue = dynamicIndexWriteValue(staticSliceWriteValue(value,
+            resourceRead, staticSlices), resourceRead, dynamicIndex);
         yield List.of((vadl.viam.graph.Node) new WriteMemNode(
             memDef, callSize != null ? callSize : 1,
             argExprs.getFirst(), slicedValue
@@ -1646,13 +1662,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       }
 
       // FIXME: Adjust value based on counter position
-      case Counter counterDef ->
-          List.of(new WriteRegTensorNode(counterDef.registerTensor(), argExprs,
-              // slice the written value before writing it
-              sliceWriteValue(value,
-                  new ReadRegTensorNode(counterDef.registerTensor(), argExprs,
-                      counterDef.registerTensor().resultType(), null), slices),
-              null, null));
+      case Counter counterDef -> {
+        var resourceRead = new ReadRegTensorNode(counterDef.registerTensor(), argExprs,
+            counterDef.registerTensor().resultType(), null);
+        yield List.of(new WriteRegTensorNode(counterDef.registerTensor(), argExprs,
+            // slice the written value before writing it
+            dynamicIndexWriteValue(staticSliceWriteValue(value,
+                resourceRead, staticSlices), resourceRead, dynamicIndex),
+            null, null));
+      }
 
       case StageOutput output -> List.of(
           new WriteStageOutputNode(output, value)
@@ -1661,13 +1679,39 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       default -> throw new IllegalStateException("Unexpected target: " + viamTargetDef);
     };
 
-
     for (var writeNode : writeNodes) {
       writeNode.setSourceLocationIfNotSet(statement.target.location());
     }
 
     return SubgraphContext.of(statement,
         writeNodes.stream().map(n -> (vadl.viam.graph.Node) n).toList());
+  }
+
+  /**
+   * Method that prepares the value so that it can be used for a dynamic write of a resource.
+   *
+   * @param value       value that is being written (right side of assignment)
+   * @param entireRead  resource value before value is written
+   * @param index       the dynamic expression of the index.
+   * @return            that incorporates the written value into the resource.
+   */
+  private ExpressionNode dynamicIndexWriteValue(ExpressionNode value, ReadResourceNode entireRead,
+                                                @Nullable ExpressionNode index) {
+    if (index == null) {
+      return value;
+    }
+
+    ExpressionNode mask = Constant.Value.of(1, entireRead.type()).toNode();
+    mask = BuiltInTable.LSL.call(mask, index);
+    mask = BuiltInTable.NOT.call(mask);
+
+    return BuiltInTable.OR.call(
+        BuiltInTable.AND.call(
+            entireRead,
+            mask
+        ),
+        BuiltInTable.LSL.call(new ZeroExtendNode(value, entireRead.type()), index)
+    );
   }
 
   /**
@@ -1685,9 +1729,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
    *                   The example above has one bit-slice with two parts
    * @return expression that incorporates the written value into the resource.
    */
-  private ExpressionNode sliceWriteValue(ExpressionNode value,
-                                         ReadResourceNode entireRead,
-                                         List<Constant.BitSlice> slices) {
+  private ExpressionNode staticSliceWriteValue(ExpressionNode value,
+                                               ReadResourceNode entireRead,
+                                               List<Constant.BitSlice> slices) {
     if (slices.isEmpty()) {
       return value;
     }

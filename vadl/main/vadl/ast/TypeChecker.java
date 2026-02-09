@@ -3106,6 +3106,8 @@ public class TypeChecker
   }
 
   private Constant.BitSlice.Part checkSliceRange(RangeExpr range, BitsType valueType) {
+    check(range.from);
+    check(range.to);
     int from = constantEvaluator.eval(range.from).value().intValueExact();
     int to = constantEvaluator.eval(range.to).value().intValueExact();
 
@@ -3131,8 +3133,22 @@ public class TypeChecker
     return new Constant.BitSlice.Part(from, to);
   }
 
+  /**
+   * Checks if the index is valid for the given bits type. If the index is static a bits-slice part
+   * is returned.
+   *
+   * @param indexExpr The index expression to check.
+   * @param valueType The bits type to check against.
+   * @return The index slice if static, null otherwise.
+   */
+  @Nullable
   private Constant.BitSlice.Part checkIndexSlice(Expr indexExpr, BitsType valueType) {
     check(indexExpr);
+    if (!constantEvaluator.isConstant(indexExpr)) {
+      // The index can also be dynamic computed in which we don't assign anything.
+      return null;
+    }
+
     int sliceIndex = constantEvaluator.eval(indexExpr).value().intValueExact();
     if (sliceIndex >= valueType.bitWidth()) {
       addErrorAndStopChecking(error("Invalid Index", indexExpr)
@@ -3188,23 +3204,40 @@ public class TypeChecker
           parts.add(part);
         }
 
-        var bitSlice = new Constant.BitSlice(parts.toArray(new Constant.BitSlice.Part[0]));
-        if (bitSlice.hasOverlappingParts()) {
-          // FIXME: Currently, we don't allow overlapping slices for both slices on read values
-          // and write targets.
-          // In the future we might want to allow overlapping slices on read values.
-          // For written values (`X(1, 1) := 2`) this must not be allowed, as the same value
-          // position is written twice.
-          addErrorAndStopChecking(error("Overlapping slice parts", slice.location)
-              .locationDescription(slice.location, "Some parts of the slice are overlapping.")
-              .note("Slices must have distinct, non-overlapping parts.")
-              .build());
-        }
+        var hasDynamicSlice = parts.stream().anyMatch(p -> p == null);
+        if (hasDynamicSlice) {
+          // FIXME: Implement this
+          // Dynamic slices cannot be stacked because of a VIAM constraint
+          if (parts.size() > 1) {
+            addErrorAndStopChecking(error("Invalid Slice", expr)
+                .description("Dynamic slices cannot be stacked.")
+                .build());
+          }
 
-        currType = Type.bits(bitSlice.bitSize());
-        slice.computedstaticBitSlice = bitSlice;
-        slice.type = currType;
-        expr.type = currType;
+          // Dynamic slices can only result in a single bit for now.
+          currType = Type.bits(1);
+          slice.type = currType;
+          expr.type = currType;
+
+        } else {
+          var bitSlice = new Constant.BitSlice(parts.toArray(new Constant.BitSlice.Part[0]));
+          if (bitSlice.hasOverlappingParts()) {
+            // FIXME: Currently, we don't allow overlapping slices for both slices on read values
+            // and write targets.
+            // In the future we might want to allow overlapping slices on read values.
+            // For written values (`X(1, 1) := 2`) this must not be allowed, as the same value
+            // position is written twice.
+            addErrorAndStopChecking(error("Overlapping slice parts", slice.location)
+                .locationDescription(slice.location, "Some parts of the slice are overlapping.")
+                .note("Slices must have distinct, non-overlapping parts.")
+                .build());
+          }
+
+          currType = Type.bits(bitSlice.bitSize());
+          slice.computedstaticBitSlice = bitSlice;
+          slice.type = currType;
+          expr.type = currType;
+        }
       }
       if (currType instanceof TensorType currTensoType) {
         if (slice.values.size() != 1) {
