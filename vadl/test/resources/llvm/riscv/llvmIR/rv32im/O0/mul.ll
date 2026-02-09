@@ -31,8 +31,7 @@ define signext i32 @mul_constant(i32 %a) nounwind {
 define i32 @mul_pow2(i32 %a) nounwind {
 ; CHECK-LABEL: mul_pow2: # @mul_pow2
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: ADDI a1,zero,3
-; CHECK-NEXT: SLL a0,a0,a1
+; CHECK-NEXT: SLLI a0,a0,3
 ; CHECK-NEXT: RET
   %1 = mul i32 %a, 8
   ret i32 %1
