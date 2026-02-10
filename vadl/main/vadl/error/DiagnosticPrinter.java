@@ -35,6 +35,7 @@ import vadl.utils.SourceLocation;
 public class DiagnosticPrinter {
 
   public boolean forceRelativePaths = false;
+  public boolean forceUnixPaths = false;
   private final PrinterColors colors;
   private final Map<Path, List<String>> fileLineCache = new HashMap<>();
 
@@ -123,7 +124,7 @@ public class DiagnosticPrinter {
     builder.append("     %s╭──[%s]\n".formatted(colors.cyan(),
         diagnostic.multiLocation.primaryLocation().location().toIDEString(
             forceRelativePaths ? SourceLocation.IDEDetectionMode.RELATIVE :
-                SourceLocation.IDEDetectionMode.AUTO)));
+                SourceLocation.IDEDetectionMode.AUTO, forceUnixPaths)));
     builder.append("     │\n");
 
     // TODO: Sort them accordig to their line number in the future
@@ -162,7 +163,7 @@ public class DiagnosticPrinter {
       var message = "     %s⋮\n".formatted(colors.cyan());
       message += "     ╭─ %s\n".formatted(
           next.toIDEString(forceRelativePaths ? SourceLocation.IDEDetectionMode.RELATIVE :
-              SourceLocation.IDEDetectionMode.AUTO));
+              SourceLocation.IDEDetectionMode.AUTO, forceUnixPaths));
       return message;
     } else if (next.begin().line() == previous.end().line() + 1) {
       return "     %s│\n".formatted(colors.cyan());

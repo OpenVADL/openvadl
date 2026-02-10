@@ -16,7 +16,7 @@
 
 package vadl.ast;
 
-import static vadl.TestUtils.assertEqualsFileContent;
+import static vadl.TestUtils.assertEqualsFileLines;
 import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
 import java.io.IOException;
@@ -89,10 +89,11 @@ public class DiagnosticsTest {
     // FIXME: Maybe deferred diagnostic store here but add later because it might have problems
     // being global state not reset by the test suite.
 
-    // Force relative paths because the tests must always produce the same and the absolut path
-    // will differ on different machines.
+    // Force relative and slashified paths because the tests must always produce the same and the
+    // absolute path and file separator will differ on different machines.
     DiagnosticPrinter printer = new DiagnosticPrinter(false);
     printer.forceRelativePaths = true;
+    printer.forceUnixPaths = true;
     var output = "Reported Diagnostics:\n\n";
     output += !diagnostics.isEmpty() ? printer.toString(diagnostics).stripTrailing() :
         "No diagnostics were reported, the input was correctly parsed, typechecked and lowered.";
@@ -122,7 +123,7 @@ public class DiagnosticsTest {
       return;
     }
 
-    assertEqualsFileContent(path, actual);
+    assertEqualsFileLines(path, actual);
   }
 
   // Similar to the full version but it infers the name from the method name of the test.
