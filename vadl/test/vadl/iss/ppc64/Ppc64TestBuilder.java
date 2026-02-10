@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,6 +19,7 @@ package vadl.iss.ppc64;
 import com.google.errorprone.annotations.FormatMethod;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 import net.jqwik.api.Arbitraries;
@@ -26,6 +27,13 @@ import net.jqwik.api.Arbitrary;
 import vadl.iss.CosimTestUtils;
 
 public class Ppc64TestBuilder {
+
+  private static final int[] implementedSPRs = {
+      0b00000_00001, // XER [  1]
+      0b00000_01000, // LR  [  8]
+      0b00000_01001, // CTR [  9]
+      0b11001_01111  // TAR [815]
+  };
 
   private static final int commentCol = 40;
 
@@ -42,11 +50,11 @@ public class Ppc64TestBuilder {
   public BigInteger fillCR() {
     BigInteger value = fillReg("0");
     add("mtcrf 255, 0");
-    return BigInteger.valueOf(value.intValue());
+    return value;
   }
 
   public BigInteger fillReg(String reg) {
-    return fillReg(reg, anyImmS(32));
+    return fillReg(reg, getImmS(32));
   }
 
   // loads a 32-bit signed value, which is then sign extended to 64 bits
@@ -58,7 +66,7 @@ public class Ppc64TestBuilder {
     String preg = reg.length() == 1 ? " " + reg : reg;
     String lisLine =
         lis + " ".repeat(Math.max(0, commentCol - lis.length())) + " # X(" + preg + ") := "
-            + toLoadedHexString(value);
+            + getLoadedValueString(value);
     String oriLine = ori + " ".repeat(Math.max(0, commentCol - ori.length())) + " # ↑";
     instructions.add(lisLine);
     instructions.add(oriLine);
@@ -68,9 +76,9 @@ public class Ppc64TestBuilder {
 
   // loads a random 32-bit value into memory
   public BigInteger fillMem(BigInteger mem) {
-    fillReg("0", mem);
-    BigInteger value = fillReg("1");
-    add("stw 1, 0(0)");
+    fillReg("1", mem);
+    BigInteger value = fillReg("2");
+    add("stw 2, 0(1)");
     return value;
   }
 
@@ -82,6 +90,11 @@ public class Ppc64TestBuilder {
     return Arbitraries.of(IntStream.range(1, 32).mapToObj(Integer::toString).toList());
   }
 
+  public Arbitrary<String> anyImplementedSpecialReg() {
+    return Arbitraries.of(Arrays.stream(implementedSPRs)
+        .mapToObj(String::valueOf).toArray(String[]::new));
+  }
+
   public Arbitrary<String> anyCRField() {
     return Arbitraries.integers().between(0, 7).map(String::valueOf);
   }
@@ -90,7 +103,7 @@ public class Ppc64TestBuilder {
     return Arbitraries.integers().between(0, 31).map(String::valueOf);
   }
 
-  public BigInteger anyImmS(int bits) {
+  public BigInteger getImmS(int bits) {
     var b = BigInteger.ONE.shiftLeft(bits - 1);
     return Arbitraries.bigIntegers()
         .greaterOrEqual(b.negate())
@@ -98,23 +111,47 @@ public class Ppc64TestBuilder {
         .sample();
   }
 
-  public BigInteger anyImmU(int bits) {
+  public BigInteger getImmU(int bits) {
     return Arbitraries.bigIntegers()
         .greaterOrEqual(BigInteger.ZERO)
         .lessOrEqual(BigInteger.ONE.shiftLeft(bits).subtract(BigInteger.ONE))
         .sample();
   }
 
-  public BigInteger anyImmUFrom(int bits, BigInteger min) {
+  public BigInteger getImmUFrom(int bits, BigInteger min) {
     return Arbitraries.bigIntegers()
         .greaterOrEqual(min)
         .lessOrEqual(BigInteger.ONE.shiftLeft(bits).subtract(BigInteger.ONE))
         .sample();
   }
 
-  public BigInteger anySelectImmU(int bits) {
+  public BigInteger getSelectImmU(int bits) {
     int bitPosition = Arbitraries.integers().between(0, bits - 1).sample();
     return BigInteger.ONE.shiftLeft(bitPosition);
+  }
+
+  public String getBOField() {
+    String[] validPatterns = {
+        "0",              // 0000z
+        "2",              // 0001z
+        "4",  "6",  "7",  // 001at
+        "8",              // 0100z
+        "10",             // 0101z
+        "12", "14", "15", // 011at
+        "16", "24", "25", // 1a00t
+        "18", "26", "27", // 1a01t
+        "20"              // 1z1zz
+    };
+    return Arbitraries.of(validPatterns).sample();
+  }
+
+  public String getLimitedBOField() {
+    String[] validPatterns = {
+        "4",  "6",  "7",  // 001at
+        "12", "14", "15", // 011at
+        "20"              // 1z1zz
+    };
+    return Arbitraries.of(validPatterns).sample();
   }
 
   @FormatMethod
@@ -131,7 +168,7 @@ public class Ppc64TestBuilder {
     return new CosimTestUtils.TestCase(name + "-" + id, false, toAsmString());
   }
 
-  private static String toLoadedHexString(BigInteger value) {
+  private static String getLoadedValueString(BigInteger value) {
     long signed64 = value.intValue();
     return "0x" + String.format("%016X", signed64) + " (" + signed64 + ")";
   }
