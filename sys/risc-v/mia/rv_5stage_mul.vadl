@@ -1,11 +1,15 @@
 // SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: Apache-2.0
 
-// RISC-V 64 five stage pipeline with longer mul/div pipeline
+// RISC-V five stage pipeline with longer mul/div pipeline
 
-import rv64im::{RV64IM}
+import "../rv32im"::RV32IM
 
-micro architecture FiveStage implements RV64IM = {
+import "../rv64im"::RV64IM
+
+model Isa() : Id = {RV32IM}             // invoke vadl -m "Isa=RV64IM" for 64 bit arch
+
+micro architecture FiveStageMul implements $Isa = {
  
   operation AddOps = {ADD, SUB, AND, OR, XOR, SLT, SLTU, SLL, SRL, SRA}
   operation ImmOps = {ADDI, ANDI, ORI, XORI, SLTI, SLTIU, AUIPC, LUI}

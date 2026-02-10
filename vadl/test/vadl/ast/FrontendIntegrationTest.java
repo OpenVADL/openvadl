@@ -38,6 +38,9 @@ public class FrontendIntegrationTest {
       "../sys/risc-v/rv64im.vadl",
       "../sys/risc-v/rv64v.vadl",
       "../sys/risc-v/rvcsr.vadl",
+      "../sys/risc-v/mia/rv_1stage.vadl",
+      "../sys/risc-v/mia/rv_3stage.vadl",
+      "../sys/risc-v/mia/rv_5stage.vadl",
       "../sys/v-risc/ABI.vadl"
   })
   public void testFrontendPassingOnSysSpecs(String filename) {

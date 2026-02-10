@@ -39,7 +39,7 @@ public class RtlRiscVInstructionTest extends RtlDockerTest {
       decoderOptions.setGenerator(DecoderOptions.Generator.REGULAR);
       config.setDecoderOptions(decoderOptions);
 
-      var image = generateRtlImage("sys/risc-v/rv64imFive.vadl", config);
+      var image = generateRtlImage("sys/risc-v/mia/rv_5stage.vadl", config);
 
       runContainer(image,
           /* WHEN */

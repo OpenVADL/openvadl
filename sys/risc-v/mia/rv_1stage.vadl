@@ -1,9 +1,13 @@
 // SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: Apache-2.0
 
-// RISC-V 32 I instruction set
+import "../rv32i"::RV32I
+import "../rv32im"::RV32IM
 
-import rv32i::{RV32I}
+import "../rv64i"::RV64I
+import "../rv64im"::RV64IM
+
+model Isa() : Id = {RV32I}             // invoke vadl -m "Isa=RV64I" for 64 bit arch
 
 /**
  * Single stage MiA description.
@@ -12,7 +16,7 @@ import rv32i::{RV32I}
  * take more than one cycle for execution. In this case an implementation could share resources
  * between the execution steps (which our hardware generation currently does not do).
  */
-micro architecture SingleStage implements RV32I = {
+micro architecture SingleStage implements $Isa = {
 
   stage ISS -> ( ) = {
     let instr = decode( fetchNext ) in    // fetch next instruction from memory and decode

@@ -49,7 +49,7 @@ public class RtlEmitMinimizedRiscVTest extends AbstractTest {
     var order = PassOrders.rtl(config);
     order.addAfterFirst(PassOrders.ViamCreationPass.class, new PruneIsaPass(config, instructions));
 
-    setupPassManagerAndRunSpec("sys/risc-v/rv32iFive.vadl", order);
+    setupPassManagerAndRunSpec("sys/risc-v/mia/rv_5stage.vadl", order);
   }
 
 }

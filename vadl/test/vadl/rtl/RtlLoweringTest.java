@@ -71,7 +71,7 @@ public class RtlLoweringTest extends AbstractTest {
     addDumpAndCheck(config, order, MiaMappingOptimizePass.class);
     addDumpAndCheck(config, order, InstructionProgressGraphLowerPass.class, false);
 
-    setupPassManagerAndRunSpec("sys/risc-v/rv64imFive.vadl", order);
+    setupPassManagerAndRunSpec("sys/risc-v/mia/rv_5stage.vadl", order);
   }
 
   private void addDumpAndCheck(GeneralConfiguration config, PassOrder order, Class<?> selector) {

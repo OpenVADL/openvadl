@@ -1,9 +1,13 @@
 // SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: Apache-2.0
 
-// RISC-V 32 I instruction set
+import "../rv32i"::RV32I
+import "../rv32im"::RV32IM
 
-import rv32i::{RV32I}
+import "../rv64i"::RV64I
+import "../rv64im"::RV64IM
+
+model Isa() : Id = {RV32I}               // invoke vadl -m "Isa=RV64I" for 64 bit arch
 
 /**
  * Three stage MiA description.
@@ -14,7 +18,7 @@ import rv32i::{RV32I}
  * Schoeberl, M. (2025). Wildcat: Educational RISC-V Microprocessors. arXiv.
  * http://arxiv.org/abs/2502.20197
  */
-micro architecture ThreeStage implements RV32I = {
+micro architecture ThreeStage implements $Isa = {
 
   stage IF -> ( fr : FetchResult ) = {
     fr := fetchNext                      // fetch next instruction from memory (or cache)

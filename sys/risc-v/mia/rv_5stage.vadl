@@ -1,11 +1,17 @@
 // SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: Apache-2.0
 
-// RISC-V 32 I instruction set
+// RISC-V five stage pipeline
 
-import rv32i::{RV32I}
+import "../rv32i"::RV32I
+import "../rv32im"::RV32IM
 
-micro architecture FiveStage implements RV32I = {
+import "../rv64i"::RV64I
+import "../rv64im"::RV64IM
+
+model Isa() : Id = {RV32I}               // invoke vadl -m "Isa=RV64I" for 64 bit arch
+
+micro architecture FiveStage implements $Isa = {
 
   stage FETCH -> ( fr : FetchResult ) = {
     fr := fetchNext                      // fetch next instruction from memory (or cache)
