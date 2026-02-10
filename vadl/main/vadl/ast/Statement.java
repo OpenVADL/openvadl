@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -66,6 +66,9 @@ interface StatementVisitor<T> {
   T visit(StatementList statement);
 }
 
+/**
+ * A block of multiple statements surrounded by curly braces.
+ */
 final class BlockStatement extends Statement {
   @Child
   List<Statement> statements;
@@ -216,6 +219,11 @@ final class LetStatement extends Statement {
   }
 }
 
+/**
+ * A conditional statement of the form {@code if condition then thenStmt else elseStmt}.
+ * Unlike {@link IfExpr}, the else branch is optional since a statement does not need
+ * to produce a value.
+ */
 final class IfStatement extends Statement {
   @Child
   Expr condition;
@@ -280,6 +288,10 @@ final class IfStatement extends Statement {
   }
 }
 
+/**
+ * An assignment statement that stores a value in a register, register file, or memory location.
+ * The target (LHS) and value expression (RHS) are separated by the {@code :=} operator.
+ */
 final class AssignmentStatement extends Statement {
   @Child
   Expr target;
@@ -333,6 +345,9 @@ final class AssignmentStatement extends Statement {
   }
 }
 
+/**
+ * An ordered list of statements executed sequentially.
+ */
 final class StatementList extends Statement {
 
   @Child
@@ -365,6 +380,12 @@ final class StatementList extends Statement {
   }
 }
 
+/**
+ * Marks the following statement as exceptional code.
+ * After the raise statement finishes, no further instruction behavior is executed.
+ *
+ * @see ExceptionDefinition
+ */
 final class RaiseStatement extends Statement {
 
   @Child
@@ -413,6 +434,10 @@ final class RaiseStatement extends Statement {
   }
 }
 
+/**
+ * A standalone call statement (e.g. a function or instruction call without assignment).
+ * Used for pseudo instruction definitions and ABI sequence definitions.
+ */
 final class CallStatement extends Statement {
 
   @Child
@@ -456,6 +481,10 @@ final class CallStatement extends Statement {
   }
 }
 
+/**
+ * An internal temporary placeholder node inside model definitions.
+ * This node should never leave the parser.
+ */
 final class PlaceholderStatement extends Statement {
 
   List<String> segments;
@@ -598,6 +627,12 @@ final class MacroMatchStatement extends Statement implements IsMacroMatch {
   }
 }
 
+/**
+ * A match statement that selects a statement to execute based on pattern matching.
+ * Written as {@code match expr with { pattern => stmt, ..., _ => default }}.
+ * Each case has one or more patterns on the LHS and a statement on the RHS of {@code =>}.
+ * The wildcard {@code _} default case is optional for statements (unlike {@link MatchExpr}).
+ */
 final class MatchStatement extends Statement {
   Expr candidate;
   List<Case> cases;
@@ -741,6 +776,11 @@ final class MatchStatement extends Statement {
   }
 }
 
+/**
+ * A call to an instruction or pseudo instruction.
+ * Supports both named arguments (using mapping syntax {@code {name = value}})
+ * and unnamed positional arguments.
+ */
 final class InstructionCallStatement extends Statement {
 
   @Child
@@ -885,6 +925,13 @@ final class InstructionCallStatement extends Statement {
   }
 }
 
+/**
+ * A lock statement that gains exclusive access to a memory part,
+ * guaranteeing atomic read-modify-write operations.
+ * The lock is automatically released after the subsequent statement or block completes.
+ *
+ * <p>Written as {@code lock expr in statement}.
+ */
 final class LockStatement extends Statement {
   @Child
   Expr expr;
@@ -1006,6 +1053,11 @@ final class ForallStatement extends Statement {
 
 }
 
+/**
+ * An index variable binding in a {@link ForallStatement} or {@link ForallExpr}.
+ * Binds a name to a range domain.
+ * e.g. {@code i: Bits<8> in 0..3}.
+ */
 final class ForallIndex extends Node implements IdentifiableNode {
   @Child
   IsId name;

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -152,6 +152,11 @@ interface ExprVisitor<R> {
   R visit(ResourceReferenceExression expr);
 }
 
+/**
+ * A reference to a named entity in the specification.
+ * The {@link #target} field is resolved during symbol resolving to point to the
+ * referenced {@link Node}.
+ */
 final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
   String name;
   SourceLocation loc;
@@ -484,6 +489,11 @@ class BinaryExpr extends Expr {
   }
 }
 
+/**
+ * A unary expression using prefix notation.
+ * Supported operators are {@code -} (negation), {@code !} (logical not),
+ * and {@code ~} (bitwise complement).
+ */
 class UnaryExpr extends Expr {
   IsUnOp operator;
   @Child
@@ -559,6 +569,11 @@ class UnaryExpr extends Expr {
   }
 }
 
+/**
+ * A positive integer literal in decimal form.
+ * Digits can be separated with {@code '} for readability (e.g. {@code 1'000'000}).
+ * Negative numeric literals are represented by applying the negation {@link UnaryExpr}.
+ */
 class IntegerLiteral extends Expr {
   String token;
   BigInteger number;
@@ -620,6 +635,9 @@ class IntegerLiteral extends Expr {
   }
 }
 
+/**
+ * A wildcard literal ({@code *}) used as a catch-all pattern in match expressions.
+ */
 class WildcardLiteral extends Expr {
   SourceLocation loc;
 
@@ -720,6 +738,9 @@ class BinaryLiteral extends Expr {
   }
 }
 
+/**
+ * A boolean literal ({@code true} or {@code false}).
+ */
 class BoolLiteral extends Expr {
   boolean value;
   SourceLocation loc;
@@ -773,6 +794,10 @@ class BoolLiteral extends Expr {
   }
 }
 
+/**
+ * A string literal delimited by double quotes.
+ * Like {@code "apfelstrudel"}
+ */
 class StringLiteral extends Expr {
   String token;
   String value;
@@ -1293,6 +1318,10 @@ class GroupedExpr extends Expr {
   }
 }
 
+/**
+ * A range expression of the form {@code from..to}.
+ * Used in forall expression/statements, slicing, and sequence literals.
+ */
 class RangeExpr extends Expr {
   @Child
   Expr from;
@@ -1511,6 +1540,12 @@ sealed interface IsId extends IsSymExpr
   Node target();
 }
 
+/**
+ * An identifier path pointing to one or multiple nested namespaces, separated by {@code ::}.
+ * The first N-1 segments are namespace references and the last segment is the actual identifier.
+ *
+ * <p>Example: {@code MyIsa::MyFormat::fieldName}
+ */
 final class IdentifierPath extends Expr implements IsId {
   /**
    * List of segments in this path; the first N-1 segments are (nested) namespaces,
@@ -1993,6 +2028,11 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
   }
 }
 
+/**
+ * A conditional expression of the form {@code if condition then thenExpr else elseExpr}.
+ * Unlike {@link IfStatement}, the expression form always requires an else branch
+ * since it must evaluate to a value.
+ */
 class IfExpr extends Expr {
   @Child
   Expr condition;
@@ -2066,6 +2106,12 @@ class IfExpr extends Expr {
   }
 }
 
+/**
+ * A let expression that binds a value to one or more identifiers within a body expression.
+ * Written as {@code let x = expr in body}.
+ * Supports tuple unpacking when multiple identifiers are provided:
+ * {@code let a, b = tupleExpr in body}.
+ */
 class LetExpr extends Expr {
   List<Identifier> identifiers;
   @Child
@@ -2170,6 +2216,12 @@ class LetExpr extends Expr {
   }
 }
 
+/**
+ * A type cast expression using the {@code as} keyword.
+ * Performs explicit type conversions between VADL types, e.g. for signed/unsigned arithmetic.
+ *
+ * <p>Example: {@code value as UInt<32>}
+ */
 class CastExpr extends Expr {
   @Child
   Expr value;
@@ -2241,6 +2293,12 @@ class CastExpr extends Expr {
   }
 }
 
+/**
+ * A match expression that selects a result based on pattern matching.
+ * Written as {@code match expr with { pattern => result, ..., _ => default }}.
+ * Each case has one or more patterns on the LHS and a result expression on the RHS of {@code =>}.
+ * Must contain a wildcard {@code _} as the default catch-all case.
+ */
 class MatchExpr extends Expr {
   Expr candidate;
   List<Case> cases;
@@ -2369,6 +2427,11 @@ class MatchExpr extends Expr {
   }
 }
 
+/**
+ * An existential quantifier expression over a set of operations.
+ * Written as {@code exists in {op1, op2, ...}}.
+ * Evaluates to true if the current context matches any of the listed operations.
+ */
 class ExistsInExpr extends Expr {
   List<IsId> operations;
   SourceLocation loc;
@@ -2425,6 +2488,11 @@ class ExistsInExpr extends Expr {
   }
 }
 
+/**
+ * An existential quantifier expression with a body.
+ * Written as {@code exists x in {op1, op2, ...} then expr}.
+ * Binds identifiers to operations from the given set and evaluates the body expression.
+ */
 class ExistsInThenExpr extends Expr {
   List<Condition> conditions;
   @Child
@@ -2625,6 +2693,12 @@ class ForallExpr extends Expr {
   }
 }
 
+/**
+ * A reference literal that references a structural element using the {@code @} prefix.
+ * Written as {@code @identifier}, e.g. {@code @PC} to reference the program counter resource.
+ * This syntax is mostly used in the microarchitecture to differentiate between direct usages and
+ * references.
+ */
 class ResourceReferenceExression extends Expr {
   @Child
   Identifier resource;
@@ -2672,6 +2746,12 @@ class ResourceReferenceExression extends Expr {
   }
 }
 
+/**
+ * A sequence call expression used in the ABI modeling view to represent a list of alias
+ * registers with the same identifier.
+ * Provides syntactic sugar like {@code a{1..4}} which is equivalent to listing
+ * {@code a1, a2, a3, a4} individually.
+ */
 class SequenceCallExpr extends Expr {
 
   @Child
