@@ -1,0 +1,91 @@
+// INCLUDE-AST-DUMP
+
+// Previously there was a bug where this program would crash, because one expression wasn't typechecked before it was
+// evaluated.
+// https://github.com/OpenVADL/openvadl/issues/714
+
+instruction set architecture Test = {
+  memory   MEM : Bits<64> -> Bits<8>
+  register Reg : Bits<8><64>
+
+  format Inst: Bits<4> = {op : Bits<4>}
+
+  instruction t : Inst = Reg(7) := MEM<(1 << 3)>(Reg(0))
+  //                                    ^^^^^^ This expression crashed
+  encoding t = {op = 0}
+  assembly t = ("load")
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "Test"
+//    . MemoryDefinition name: "MEM"
+//    . : TypeLiteral type: Bits<64>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 64 (64) type: Const<64>
+//    . : TypeLiteral type: Bits<8>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    . RegisterDefinition name: "Reg"
+//    . : TypeLiteral type: Bits<8><64>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : ' IntegerLiteral literal: 64 (64) type: Const<64>
+//    . FormatDefinition name: "Inst"
+//    . : TypeLiteral type: Bits<4>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : TypedFormatField name: "op"
+//    . : ' TypeLiteral type: Bits<4>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 4 (4) type: Const<4>
+//    . InstructionDefinition name: "t"
+//    . : Identifier name: "Inst" type: null
+//    . : AssignmentStatement
+//    . : ' CallIndexExpr type: Bits<64>
+//    . : ' | Identifier name: "Reg" type: null
+//    . : ' | ArgsIndices
+//    . : ' | . CastExpr type: Bits<3>
+//    . : ' | . : IntegerLiteral literal: 7 (7) type: Const<7>
+//    . : ' | . : TypeLiteral type: Bits<3>
+//    . : ' | . : ' Identifier name: "Bits" type: null
+//    . : ' | . : ' IntegerLiteral literal: 3 (3) type: null
+//    . : ' CallIndexExpr type: Bits<64>
+//    . : ' | SymbolExpr type: null
+//    . : ' | . Identifier name: "MEM" type: null
+//    . : ' | . BinaryExpr operator: << type: Const<8>
+//    . : ' | . : IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : ' | . : CastExpr type: UInt<2>
+//    . : ' | . : ' IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | . : ' TypeLiteral type: UInt<2>
+//    . : ' | . : ' | Identifier name: "UInt" type: null
+//    . : ' | . : ' | IntegerLiteral literal: 2 (2) type: null
+//    . : ' | ArgsIndices
+//    . : ' | . CallIndexExpr type: Bits<64>
+//    . : ' | . : Identifier name: "Reg" type: null
+//    . : ' | . : ArgsIndices
+//    . : ' | . : ' CastExpr type: Bits<3>
+//    . : ' | . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . : ' | TypeLiteral type: Bits<3>
+//    . : ' | . : ' | . Identifier name: "Bits" type: null
+//    . : ' | . : ' | . IntegerLiteral literal: 3 (3) type: null
+//    . EncodingDefinition
+//    . : Identifier name: "t" type: null
+//    . : Identifier name: "op" type: null
+//    . : CastExpr type: Bits<4>
+//    . : ' IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' TypeLiteral type: Bits<4>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 4 (4) type: null
+//    . AssemblyDefinition
+//    . : GroupedExpr type: String
+//    . : ' StringLiteral literal: "load" ("load") type: String
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest

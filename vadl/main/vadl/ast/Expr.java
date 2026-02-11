@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -1638,9 +1638,11 @@ final class SymbolExpr extends Expr implements IsSymExpr {
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     path.prettyPrint(indent, builder);
-    builder.append("< ");
+    var prefix = size instanceof BinaryExpr ? "<( " : "< ";
+    var suffix = size instanceof BinaryExpr ? " )>" : " >";
+    builder.append(prefix);
     size.prettyPrintExpr(indent, builder, Precedence.NoPrecedence);
-    builder.append(" >");
+    builder.append(suffix);
   }
 
   @Override
