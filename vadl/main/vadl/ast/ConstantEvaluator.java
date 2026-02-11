@@ -19,7 +19,9 @@ package vadl.ast;
 import static java.util.Objects.requireNonNull;
 
 import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -48,6 +50,7 @@ import vadl.viam.Constant;
 class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   private final IdentityHashMap<Expr, ConstantValue> cache = new IdentityHashMap<>();
+  private final Deque<FunctionFrame> functionStack = new ArrayDeque<>();
 
   public boolean isConstant(Expr expr) {
     try {
@@ -118,7 +121,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
             "Built-in function `%s` cannot be constant evaluated (yet).".formatted(builtin.name()),
             loc));
 
-    var areAllArgsConst = args.stream().allMatch(ConstantValue.class::isInstance);
+    var areAllArgsConst = args.stream().allMatch(a -> a.type() instanceof ConstantType);
     Type type;
     if (BuiltInTable.arithmeticOperators.contains(builtin)) {
       type = areAllArgsConst ? new ConstantType(val.asVal().integer()) : args.getFirst().type();
@@ -132,7 +135,12 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
       throw new IllegalStateException("Cannot find result type for builtin " + builtin.name());
     }
 
-    return new ConstantValue(val.asVal().integer(), type);
+    var finalVal = val.asVal();
+    if (!val.type().equals(type) && type instanceof DataType dataType) {
+      finalVal = finalVal.castTo(dataType);
+    }
+
+    return new ConstantValue(finalVal.integer(), type);
   }
 
   private ConstantValue visitIdentifiable(Expr expr) {
@@ -164,6 +172,13 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
       }
 
       return eval(letExpr.valueExpr);
+    }
+
+    if (origin instanceof Parameter parameter) {
+      if (functionStack.isEmpty()) {
+        throw new IllegalStateException("There cannot be parameters outside of functions");
+      }
+      return requireNonNull(functionStack.peek().arguments.get(parameter.name.name));
     }
 
     if (origin instanceof EnumerationDefinition.Entry entry) {
@@ -386,9 +401,19 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
       result = evalBuiltin(builtin, args.stream().map(this::eval).toList(), expr);
     }
 
-    // FIXME: User Defined Functions
-    if (!(expr.target.path() instanceof TypedNode)) {
-      throw new EvaluationError("Cannot evaluate function calls (yet).", expr);
+    // User Defined Functions
+    var computedTarget = expr.target.path().target();
+    if (computedTarget instanceof FunctionDefinition functionDef) {
+      var arguments = new HashMap<String, ConstantValue>();
+      for (var i = 0; i < expr.args().size(); i++) {
+        arguments.put(functionDef.params.get(i).name.name, eval(expr.args().get(i).values.get(0)));
+      }
+      functionStack.push(new FunctionFrame(functionDef, arguments));
+      try {
+        result = eval(functionDef.expr);
+      } finally {
+        functionStack.pop();
+      }
     }
 
     // If the expr is just a slice, let's load it.
@@ -530,6 +555,8 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     throw new RuntimeException(
         "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
   }
+
+  record FunctionFrame(FunctionDefinition functionDef, HashMap<String, ConstantValue> arguments) {}
 }
 
 /**

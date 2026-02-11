@@ -1,10 +1,6 @@
 constant a = "kuchen"
 constant b = forall i: Bits<2> in 0..3 fold + with (4 as Bits<32>)
 
-function f(a1: Bits<32>) -> Bits<32> = a1 + 1
-
-constant c = f(9)
-
 
 //  Reported Diagnostics:
 //
@@ -20,16 +16,6 @@ constant c = f(9)
 //       │
 //     2 │ constant b = forall i: Bits<2> in 0..3 fold + with (4 as Bits<32>)
 //       │              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ The constant evaluator cannot evaluate ForallExpr.
-//       │
-//       All constants must be able to be evaluated
-//  error: Invalid constant value
-//       ╭──[test/resources/diagnostics/typechecker/invalidConstNotEvaluatable.vadl:6:14]
-//       │
-//     4 │ function f(a1: Bits<32>) -> Bits<32> = a1 + 1
-//       │                                        -- Cannot evaluate identifier with origin of vadl.ast.Parameter
-//       ⋮
-//     6 │ constant c = f(9)
-//       │              ^^^^
 //       │
 //       All constants must be able to be evaluated
 //
