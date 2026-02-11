@@ -3647,7 +3647,9 @@ public class TypeChecker
                 expr.typeBeforeSlice())
             .build());
       }
+
       // handle the targetSize expression if defined
+      check(targetSizeExpr);
       int multiplier = constantEvaluator.eval(targetSizeExpr).value().intValueExact();
 
       if (callTarget instanceof MemoryDefinition) {
