@@ -1715,7 +1715,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
         term<out Expr right, allowedOps>          (. expr = new BinaryExpr(expr, operator, right); .)
       | macroReplacement<out Node node>
         term<out Expr right, allowedOps>          (. expr = new BinaryExpr(expr, castBinOp(this, node), right); .)
-      | SYM_AS                                    (. var typeStart = lastTokenLoc(); .)
+      | SYM_AS                                    (. var typeStart = nextTokenLoc(); .)
         identifierPath<out IsId path>             (. TypeLiteral castTarget = new TypeLiteral(path, new ArrayList<>(), typeStart.join(lastTokenLoc()));
                                                      expr = new CastExpr(expr, castTarget); .)
         { IF (expr instanceof CastExpr && la.kind == _SYM_LT)
@@ -1724,7 +1724,8 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
           [
             IF (!allowedOps[_SYM_LT] || la.kind == _SYM_GT) (. isSize = true; .)
             SYM_GT                                (. castTarget.sizeIndices.add(term); .)
-          ]                                       (. if (!isSize) expr = new BinaryExpr(reorderCastExpr(expr), new BinOp(Operator.Less, lessLoc), term); .)
+          ]                                       (. castTarget.loc = typeStart.join(lastTokenLoc());
+                                                     if (!isSize) expr = new BinaryExpr(reorderCastExpr(expr), new BinOp(Operator.Less, lessLoc), term); .)
         }                                         (. if (expr instanceof CastExpr) expr = reorderCastExpr(expr); .)
       )
     }                                             (. expr = reorderBinaryExpr(expr); .)
