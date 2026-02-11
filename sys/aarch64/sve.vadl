@@ -803,7 +803,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
   function Imm2lslU  (imm: Bits<2>)  -> String =
     if imm = 0 then "" else (", lsl #", udec(imm))
-
+ 
   record MemSVE    (dtype: Id, elCount: Id, memBytes: Int, elSize: Id, elStr: Str, elType: Id, extStr: Str)
   record MulMemSVE (dtype: Id, elCount: Id, numVector: Id, elSize: Id, elStr: Str, extStr: Str)
 
@@ -811,6 +811,23 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     match: Id ($mul = X2 => offsetX2 ; $mul = X3 => offsetX3 ; _ => offsetX4)
   }
 
+  model SVE2Regs (ext: Str): Ex = {
+    (register(zt), $ext, ', ', register(zt2), $ext)
+  }
+
+  model SVE3Regs (ext: Str): Ex = {
+    ($SVE2Regs ($ext), ', ', register(zt3), $ext)
+  }
+
+  model SVE4Regs (ext: Str): Ex = {
+    ($SVE3Regs ($ext), ', ', register(zt4), $ext)
+  }
+
+  model-type ModelStrEx = (Str) -> Ex
+
+  model SVEXRegs (mul: Id, ext: Str): Ex = {
+    match: Ex ($mul = X2 => $SVE2Regs($ext) ; $mul = X3 => $SVE3Regs($ext) ;  _ => $SVE4Regs($ext))
+    }
 
 // SVE load / store scalar scalar single register models ***********************
 
@@ -895,6 +912,20 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     assembly $i.id = ( AsStr($i.mnemo, $d.extStr), ' ', register(zt), $d.elStr, ', ', register(pg), '/z, ', XSizeSP(rn), ', #', sdec(imm4))
     }
 
+  model SVMulMemReg (mul: Id, elSize: Id): Stat = {
+    match: Stat ($mul = X2 => {} ;
+                 $mul = X3 =>  $BHSDReg($elSize)(zt3)(i) := MEM<(ElBytes::$elSize)>(base + i * ElBytes::$elSize * NumVectors::$mul + ElBytes::$elSize * 2) ;
+                         _ => {$BHSDReg($elSize)(zt3)(i) := MEM<(ElBytes::$elSize)>(base + i * ElBytes::$elSize * NumVectors::$mul + ElBytes::$elSize * 2)
+                               $BHSDReg($elSize)(zt4)(i) := MEM<(ElBytes::$elSize)>(base + i * ElBytes::$elSize * NumVectors::$mul + ElBytes::$elSize * 3)})
+  }
+
+  model SVMulClearReg (mul: Id, elSize: Id): Stat = {
+    match: Stat ($mul = X2 => {} ;
+                 $mul = X3 =>  $BHSDReg($elSize)(zt3)(i) := 0 ;
+                         _ => {$BHSDReg($elSize)(zt3)(i) := 0
+                               $BHSDReg($elSize)(zt4)(i) := 0})
+  }
+
   model SVELoadMulScalarImmInstr (i: InstrWithFunct, d: MulMemSVE): IsaDefs = {
     instruction $i.id: SVEMemScalarImmOneFormat =
       let base = S(rn) + ($SVEMulOffset($d.numVector) << ElSize::$d.elSize) * $d.elCount in
@@ -902,15 +933,17 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
         forall i : SIntX in 0..$d.elCount-1 do
           if pred(i << ElSize::$d.elSize)
             then {
-              Z(zt )(i) := MEM<(1 << ElSize::$d.elSize)>(base + i * ElBytes::$d.elSize * NumVectors::$d.numVector)
-              Z(zt )(i) := MEM<(1 << ElSize::$d.elSize)>(base + i * ElBytes::$d.elSize * NumVectors::$d.numVector + ElBytes::$d.elSize)
+              $BHSDReg($d.elSize)(zt )(i) := MEM<(ElBytes::$d.elSize)>(base + i * ElBytes::$d.elSize * NumVectors::$d.numVector)
+              $BHSDReg($d.elSize)(zt2)(i) := MEM<(ElBytes::$d.elSize)>(base + i * ElBytes::$d.elSize * NumVectors::$d.numVector + ElBytes::$d.elSize)
+              $SVMulMemReg($d.numVector; $d.elSize)
               }
             else {
-              Z(zt )(i) := 0
-              Z(zt2)(i) := 0
+              $BHSDReg($d.elSize)(zt )(i) := 0
+              $BHSDReg($d.elSize)(zt2)(i) := 0
+              $SVMulClearReg($d.numVector; $d.elSize)
             }
     encoding $i.id = { op = 0b101'0010, opc = $i.opcode, dtype = MulDtype::$d.dtype }
-    assembly $i.id = ( AsStr($i.mnemo, $d.extStr), ' ', register(zt), $d.elStr, ', ', register(pg), '/z, ', XSizeSP(rn), ', #', sdec(imm4))
+    assembly $i.id = ( AsStr($i.mnemo, $d.extStr), ' {', $SVEXRegs($d.numVector; $d.elStr), '}, ', register(pg), '/z, ', XSizeSP(rn), ', #', sdec(imm4))
     }
 
 // instruction enriching models ************************************************
@@ -955,6 +988,14 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     $modelid ($ExtInstrStr ($i; "2H"); (Dt2H; NumElementsH; X2; SizeH; '.h'; "2h" ))
     $modelid ($ExtInstrStr ($i; "2W"); (Dt2W; NumElementsW; X2; SizeW; '.s'; "2s" ))
     $modelid ($ExtInstrStr ($i; "2D"); (Dt2D; NumElementsD; X2; SizeD; '.d'; "2d" ))
+    $modelid ($ExtInstrStr ($i; "3B"); (Dt3B; NumElementsB; X3; SizeB; '.b'; "3b" ))
+    $modelid ($ExtInstrStr ($i; "3H"); (Dt3H; NumElementsH; X3; SizeH; '.h'; "3h" ))
+    $modelid ($ExtInstrStr ($i; "3W"); (Dt3W; NumElementsW; X3; SizeW; '.s'; "3s" ))
+    $modelid ($ExtInstrStr ($i; "3D"); (Dt3D; NumElementsD; X3; SizeD; '.d'; "3d" ))
+    $modelid ($ExtInstrStr ($i; "4B"); (Dt4B; NumElementsB; X4; SizeB; '.b'; "4b" ))
+    $modelid ($ExtInstrStr ($i; "4H"); (Dt4H; NumElementsH; X4; SizeH; '.h'; "4h" ))
+    $modelid ($ExtInstrStr ($i; "4W"); (Dt4W; NumElementsW; X4; SizeW; '.s'; "4s" ))
+    $modelid ($ExtInstrStr ($i; "4D"); (Dt4D; NumElementsD; X4; SizeD; '.d'; "4d" ))
   }
 
   model InstrBHSD (modelid: InstrWithFunctElemSizeType, i: InstrWithFunct): IsaDefs = {
@@ -1026,6 +1067,6 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   $InstrMemST10     (SVEStoreScalarScalarInstr ; (SVEsclST1     ; "st1"   ;  0b010           ; unused   ))
   $InstrMemLD16     (SVELoadScalarImmInstr     ; (SVEimmLD1     ; "ld1"   ; 0b0101           ; unused   ))
   $InstrMemST10     (SVEStoreScalarImmInstr    ; (SVEimmST1     ; "st1"   ; 0b0111           ; unused   ))
-//  $InstrMemX12      (SVELoadMulScalarImmInstr  ; (SVEimmLD      ; "ld"    ; 0b0111           ; unused   ))
+  $InstrMemX12      (SVELoadMulScalarImmInstr  ; (SVEimmLD      ; "ld"    ; 0b0111           ; unused   ))
 
 }
