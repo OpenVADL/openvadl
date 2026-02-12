@@ -364,7 +364,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   model SVEIncrementAll (id: Id, mnemo: Str, count: Id, elSize: Id): IsaDefs = {
     instruction $id: SVEIncrementFormat =
       X(dn) := X(dn) + (VL as BitsX >> (3+ElSize::$elSize)) * imm
-    encoding $id = { op = 0b0000'0100'1, opc = 0b111000, size = ElSize::$elSize, pattern = 0b1'1111 }
+    encoding $id = { op = 0b0000'0100'11, opc = 0b111000, size = ElSize::$elSize, pattern = 0b1'1111 }
     assembly $id = ( $mnemo, ' ', register(dn), ', all, mul #', udec(imm) )
     }
 
@@ -372,7 +372,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     instruction $id: SVEIncrementFormat =
       X(dn) := X(dn) + $count * imm
     [select when : pattern != 0b1'1111]
-    encoding $id = { op = 0b0000'0100'1, opc = 0b111000, size = ElSize::$elSize }
+    encoding $id = { op = 0b0000'0100'11, opc = 0b111000, size = ElSize::$elSize }
     assembly $id = ( $mnemo, ' ', register(dn), ', ', patternStr(pattern), ', mul #', udec(imm) )
     }
 
@@ -1125,9 +1125,9 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   $InstrMemST10     (SVEStoreScalarImmInstr    ; (SVEimmST1     ; "st1"   ; 0b111            ; unused   ))
   $InstrMemLD16     (SVELoadScalarScalarInstr  ; (SVEsclLD1     ; "ld1"   ; 0b010            ; unused   ))
   $InstrMemST10     (SVEStoreScalarScalarInstr ; (SVEsclST1     ; "st1"   ; 0b010            ; unused   ))
-  $InstrMemX12      (SVELoadMulScalarImmInstr  ; (SVEimmLD      ; "ld"    ; 0b101'0010'0     ; unused   ))
-  $InstrMemX12      (SVEStoreMulScalarImmInstr ; (SVEimmST      ; "st"    ; 0b111'0010'1     ; unused   ))
-  $InstrMemX12      (SVELoadMulScalarSclInstr  ; (SVEsclLD      ; "ld"    ; 0b101'0010       ; unused   ))
-  $InstrMemX12      (SVEStoreMulScalarSclInstr ; (SVEsclST      ; "st"    ; 0b111'0010       ; unused   ))
+  //$InstrMemX12      (SVELoadMulScalarImmInstr  ; (SVEimmLD      ; "ld"    ; 0b101'0010'0     ; unused   ))
+  //$InstrMemX12      (SVEStoreMulScalarImmInstr ; (SVEimmST      ; "st"    ; 0b111'0010'1     ; unused   ))
+  //$InstrMemX12      (SVELoadMulScalarSclInstr  ; (SVEsclLD      ; "ld"    ; 0b101'0010       ; unused   ))
+  //$InstrMemX12      (SVEStoreMulScalarSclInstr ; (SVEsclST      ; "st"    ; 0b111'0010       ; unused   ))
 
 }
