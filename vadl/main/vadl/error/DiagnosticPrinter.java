@@ -128,9 +128,8 @@ public class DiagnosticPrinter {
     builder.append("     │\n");
 
     // TODO: Sort them accordig to their line number in the future
-    var allSnippets = new ArrayList<Diagnostic.LabeledLocation>();
+    var allSnippets = new ArrayList<>(diagnostic.multiLocation.secondaryLocations());
     allSnippets.add(diagnostic.multiLocation.primaryLocation());
-    allSnippets.addAll(diagnostic.multiLocation.secondaryLocations());
 
     for (int i = 0; i < allSnippets.size(); i++) {
       var snippet = allSnippets.get(i);
