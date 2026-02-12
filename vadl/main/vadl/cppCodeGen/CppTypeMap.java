@@ -16,8 +16,8 @@
 
 package vadl.cppCodeGen;
 
-import javax.annotation.Nullable;
 import vadl.cppCodeGen.model.CppType;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.SIntType;
@@ -30,6 +30,23 @@ import vadl.types.UIntType;
  * the corresponding cpp type.
  */
 public class CppTypeMap {
+  /**
+   * Returns the cpp type given the {@link Type}. The builtin tablegen tool does not support
+   * {@code uint8}. Therefore, we added a customization.
+   */
+  public static String getCppBuiltinTypeNameByVadlType(ValueType type) {
+    var width = type.getBitwidth();
+    if (type.isSigned() && width == 8) {
+      return "char";
+    } else if (!type.isSigned() && width == 8) {
+      return "unsigned char";
+    }
+
+    return getCppTypeNameByVadlType(
+        type.isSigned() ? SIntType.bits(width) : Type.unsignedInt(width)
+    );
+  }
+
   /**
    * Returns the cpp type given the {@link Type}.
    */

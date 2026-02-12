@@ -5179,11 +5179,20 @@ def : Pat<(target_call texternalsym:$func), (CALL texternalsym:$func)>;
 def : Pat<(int_processorNameValue_ADD X:$rs1, X:$rs2),
         (ADD X:$rs1, X:$rs2)>;
 
+def : Pat<(int_processorNameValue_ADDI X:$rs1, RV3264Base_ADDI_immSAsInt64:$immS),
+        (ADDI X:$rs1, RV3264Base_ADDI_immSAsInt64:$immS)>;
+
+def : Pat<(int_processorNameValue_ADDIW X:$rs1, RV3264Base_ADDIW_immSAsInt64:$immS),
+        (ADDIW X:$rs1, RV3264Base_ADDIW_immSAsInt64:$immS)>;
+
 def : Pat<(int_processorNameValue_ADDW X:$rs1, X:$rs2),
         (ADDW X:$rs1, X:$rs2)>;
 
 def : Pat<(int_processorNameValue_AND X:$rs1, X:$rs2),
         (AND X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_ANDI X:$rs1, RV3264Base_ANDI_immSAsInt64:$immS),
+        (ANDI X:$rs1, RV3264Base_ANDI_immSAsInt64:$immS)>;
 
 def : Pat<(int_processorNameValue_DIV X:$rs2, X:$rs1),
         (DIV X:$rs2, X:$rs1)>;
@@ -5196,6 +5205,36 @@ def : Pat<(int_processorNameValue_DIVUW X:$rs2, X:$rs1),
 
 def : Pat<(int_processorNameValue_DIVW X:$rs2, X:$rs1),
         (DIVW X:$rs2, X:$rs1)>;
+
+def : Pat<(int_processorNameValue_EBREAK ),
+        (EBREAK )>;
+
+def : Pat<(int_processorNameValue_ECALL ),
+        (ECALL )>;
+
+def : Pat<(int_processorNameValue_LB X:$rs1, RV3264Base_LB_immSAsInt64:$immS),
+        (LB X:$rs1, RV3264Base_LB_immSAsInt64:$immS)>;
+
+def : Pat<(int_processorNameValue_LBU X:$rs1, RV3264Base_LBU_immSAsInt64:$immS),
+        (LBU X:$rs1, RV3264Base_LBU_immSAsInt64:$immS)>;
+
+def : Pat<(int_processorNameValue_LD X:$rs1, RV3264Base_LD_immSAsInt64:$immS),
+        (LD X:$rs1, RV3264Base_LD_immSAsInt64:$immS)>;
+
+def : Pat<(int_processorNameValue_LH X:$rs1, RV3264Base_LH_immSAsInt64:$immS),
+        (LH X:$rs1, RV3264Base_LH_immSAsInt64:$immS)>;
+
+def : Pat<(int_processorNameValue_LHU X:$rs1, RV3264Base_LHU_immSAsInt64:$immS),
+        (LHU X:$rs1, RV3264Base_LHU_immSAsInt64:$immS)>;
+
+def : Pat<(int_processorNameValue_LUI RV3264Base_LUI_immUpAsInt64:$immUp),
+        (LUI RV3264Base_LUI_immUpAsInt64:$immUp)>;
+
+def : Pat<(int_processorNameValue_LW X:$rs1, RV3264Base_LW_immSAsInt64:$immS),
+        (LW X:$rs1, RV3264Base_LW_immSAsInt64:$immS)>;
+
+def : Pat<(int_processorNameValue_LWU X:$rs1, RV3264Base_LWU_immSAsInt64:$immS),
+        (LWU X:$rs1, RV3264Base_LWU_immSAsInt64:$immS)>;
 
 def : Pat<(int_processorNameValue_MUL X:$rs1, X:$rs2),
         (MUL X:$rs1, X:$rs2)>;
@@ -5215,6 +5254,9 @@ def : Pat<(int_processorNameValue_MULW X:$rs1, X:$rs2),
 def : Pat<(int_processorNameValue_OR X:$rs1, X:$rs2),
         (OR X:$rs1, X:$rs2)>;
 
+def : Pat<(int_processorNameValue_ORI X:$rs1, RV3264Base_ORI_immSAsInt64:$immS),
+        (ORI X:$rs1, RV3264Base_ORI_immSAsInt64:$immS)>;
+
 def : Pat<(int_processorNameValue_REM X:$rs2, X:$rs1),
         (REM X:$rs2, X:$rs1)>;
 
@@ -5227,8 +5269,23 @@ def : Pat<(int_processorNameValue_REMUW X:$rs2, X:$rs1),
 def : Pat<(int_processorNameValue_REMW X:$rs2, X:$rs1),
         (REMW X:$rs2, X:$rs1)>;
 
+def : Pat<(int_processorNameValue_SB X:$rs1, X:$rs2, RV3264Base_SB_immSAsInt64:$immS),
+        (SB X:$rs1, X:$rs2, RV3264Base_SB_immSAsInt64:$immS)>;
+
+def : Pat<(int_processorNameValue_SD X:$rs1, X:$rs2, RV3264Base_SD_immSAsInt64:$immS),
+        (SD X:$rs1, X:$rs2, RV3264Base_SD_immSAsInt64:$immS)>;
+
+def : Pat<(int_processorNameValue_SH X:$rs1, X:$rs2, RV3264Base_SH_immSAsInt64:$immS),
+        (SH X:$rs1, X:$rs2, RV3264Base_SH_immSAsInt64:$immS)>;
+
 def : Pat<(int_processorNameValue_SLL X:$rs1, X:$rs2),
         (SLL X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_SLLI X:$rs1, RV3264Base_SLLI_shamtAsInt64:$shamt),
+        (SLLI X:$rs1, RV3264Base_SLLI_shamtAsInt64:$shamt)>;
+
+def : Pat<(int_processorNameValue_SLLIW X:$rs1, RV3264Base_SLLIW_shamtAsInt8:$shamt),
+        (SLLIW X:$rs1, RV3264Base_SLLIW_shamtAsInt8:$shamt)>;
 
 def : Pat<(int_processorNameValue_SLLW X:$rs1, X:$rs2),
         (SLLW X:$rs1, X:$rs2)>;
@@ -5236,17 +5293,35 @@ def : Pat<(int_processorNameValue_SLLW X:$rs1, X:$rs2),
 def : Pat<(int_processorNameValue_SLT X:$rs1, X:$rs2),
         (SLT X:$rs1, X:$rs2)>;
 
+def : Pat<(int_processorNameValue_SLTI X:$rs1, RV3264Base_SLTI_immSAsInt64:$immS),
+        (SLTI X:$rs1, RV3264Base_SLTI_immSAsInt64:$immS)>;
+
+def : Pat<(int_processorNameValue_SLTIU X:$rs1, RV3264Base_SLTIU_immSAsInt64:$immS),
+        (SLTIU X:$rs1, RV3264Base_SLTIU_immSAsInt64:$immS)>;
+
 def : Pat<(int_processorNameValue_SLTU X:$rs1, X:$rs2),
         (SLTU X:$rs1, X:$rs2)>;
 
 def : Pat<(int_processorNameValue_SRA X:$rs1, X:$rs2),
         (SRA X:$rs1, X:$rs2)>;
 
+def : Pat<(int_processorNameValue_SRAI X:$rs1, RV3264Base_SRAI_shamtAsInt64:$shamt),
+        (SRAI X:$rs1, RV3264Base_SRAI_shamtAsInt64:$shamt)>;
+
+def : Pat<(int_processorNameValue_SRAIW X:$rs1, RV3264Base_SRAIW_shamtAsInt8:$shamt),
+        (SRAIW X:$rs1, RV3264Base_SRAIW_shamtAsInt8:$shamt)>;
+
 def : Pat<(int_processorNameValue_SRAW X:$rs1, X:$rs2),
         (SRAW X:$rs1, X:$rs2)>;
 
 def : Pat<(int_processorNameValue_SRL X:$rs1, X:$rs2),
         (SRL X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_SRLI X:$rs1, RV3264Base_SRLI_shamtAsInt64:$shamt),
+        (SRLI X:$rs1, RV3264Base_SRLI_shamtAsInt64:$shamt)>;
+
+def : Pat<(int_processorNameValue_SRLIW X:$rs1, RV3264Base_SRLIW_shamtAsInt8:$shamt),
+        (SRLIW X:$rs1, RV3264Base_SRLIW_shamtAsInt8:$shamt)>;
 
 def : Pat<(int_processorNameValue_SRLW X:$rs1, X:$rs2),
         (SRLW X:$rs1, X:$rs2)>;
@@ -5257,5 +5332,11 @@ def : Pat<(int_processorNameValue_SUB X:$rs1, X:$rs2),
 def : Pat<(int_processorNameValue_SUBW X:$rs1, X:$rs2),
         (SUBW X:$rs1, X:$rs2)>;
 
+def : Pat<(int_processorNameValue_SW X:$rs1, X:$rs2, RV3264Base_SW_immSAsInt64:$immS),
+        (SW X:$rs1, X:$rs2, RV3264Base_SW_immSAsInt64:$immS)>;
+
 def : Pat<(int_processorNameValue_XOR X:$rs1, X:$rs2),
         (XOR X:$rs1, X:$rs2)>;
+
+def : Pat<(int_processorNameValue_XORI X:$rs1, RV3264Base_XORI_immSAsInt64:$immS),
+        (XORI X:$rs1, RV3264Base_XORI_immSAsInt64:$immS)>;
