@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.HtmlDumpPass;
 import vadl.pass.PassResults;
@@ -55,7 +56,7 @@ public class HtmlDumpTest extends AbstractTest {
     spec.add(func);
 
     new HtmlDumpPass(HtmlDumpPass.Config.from(
-        new GeneralConfiguration(Path.of("build"), true), "demoDump",
+        new GeneralConfiguration(Path.of("build"), DumpMode.ALWAYS), "demoDump",
         "Now the gcb produced all necessary encoding function for field accesses "
             + "and normalized VIAM types to Cpp types."))
         .execute(PassResults.empty(), spec);

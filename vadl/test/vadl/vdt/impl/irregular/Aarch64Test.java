@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.AbstractTest;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassManager;
@@ -50,7 +51,7 @@ class Aarch64Test extends AbstractTest {
     /* GIVEN */
 
     var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
 
     var spec = runAndGetViamSpecification("sys/aarch64/virt.vadl");
 
@@ -78,7 +79,7 @@ class Aarch64Test extends AbstractTest {
     /* GIVEN */
 
     var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
 
     var spec = runAndGetViamSpecification("sys/aarch64/virt.vadl");
 

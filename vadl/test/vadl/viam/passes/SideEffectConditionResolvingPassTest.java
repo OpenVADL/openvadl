@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -29,6 +29,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.AbstractTest;
 import vadl.TestUtils;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -184,7 +185,7 @@ public class SideEffectConditionResolvingPassTest extends AbstractTest {
   @TestFactory
   Stream<DynamicTest> sideEffectConditionResolvingPass()
       throws IOException, DuplicatedPassKeyException {
-    var config = new GeneralConfiguration(Path.of("build/test-out"), true);
+    var config = new GeneralConfiguration(Path.of("build/test-out"), DumpMode.ALWAYS);
     var setup = setupPassManagerAndRunSpec(
         "passes/sideEffectConditionResolving/valid_test_cases.vadl",
         PassOrders.viam(config)

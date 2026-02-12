@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -541,6 +541,55 @@ public class Graph {
     });
 
     return added;
+  }
+
+  /**
+   * Links and adds the copies given by the copies map into this graph.
+   *
+   * <p>The Key must be the original node, and the value the shallow copy of
+   * the original one.
+   */
+  @SuppressWarnings("ModifyCollectionInEnhancedForLoop")
+  public void linkAndAddCopies(Map<Node, Node> copies) {
+    copies.values().forEach(newNode -> {
+      // replace shallow copied input by a new uninitialized one
+      newNode.inputs().forEach(oldInput -> {
+        var newInput = copies.get(oldInput);
+        if (newInput == null) {
+          return;
+        }
+        // replace inputs
+        newNode.applyOnInputsUnsafe((self, input) -> {
+          if (input == oldInput) {
+            return newInput;
+          }
+          return input;
+        });
+      });
+
+      // replace shallow copied successor by new uninitialized one
+      newNode.successors().forEach(oldSuccessor -> {
+        var newSuccessor = copies.get(oldSuccessor);
+        if (newSuccessor == null) {
+          return;
+        }
+        // replace successor
+        newNode.applyOnSuccessorsUnsafe((self, succ) -> {
+          if (succ == oldSuccessor) {
+            return newSuccessor;
+          }
+          return succ;
+        });
+      });
+    });
+
+    // activate all copies
+    for (var key : copies.keySet()) {
+      var copy = requireNonNull(copies.get(key));
+      if (copy.isUninitialized()) {
+        copies.put(key, addWithInputs(copy));
+      }
+    }
   }
 
   /**

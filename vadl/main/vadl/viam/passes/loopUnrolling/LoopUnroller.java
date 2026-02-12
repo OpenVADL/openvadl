@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 import vadl.utils.GraphUtils;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
@@ -119,7 +118,7 @@ public class LoopUnroller implements CfgTraverser {
 
     var firstInLoop = start.beginNode().next();
     var lastInLoop = end.endNode().predecessor();
-    if (lastInLoop instanceof AbstractBeginNode) {
+    if (lastInLoop == start.beginNode()) {
       lastInLoop = null;
     }
 
@@ -136,8 +135,7 @@ public class LoopUnroller implements CfgTraverser {
       // Now, we have a shallow copy of all original nodes.
       // However, the new nodes are still linked to the original nodes.
       // In this step we replace all inputs and successors with the corresponding new nodes.
-      restoreLinks(cache);
-      addNewNodesToGraph(cache);
+      graph.linkAndAddCopies(cache);
 
       // we must cache all unrolled side effects of this loop iteration, so it can
       // be added to the outer scoped abstract end node.
@@ -145,9 +143,14 @@ public class LoopUnroller implements CfgTraverser {
 
       // we link the forall node's predecessor to the iteration's forall node successor
       var firstNode = cache.get(firstInLoop);
+      DirectionalNode lastNode = null;
+      if (lastInLoop != null) {
+        lastNode = (DirectionalNode) requireNonNull(cache.get(lastInLoop));
+        lastNode.unlinkNext();
+      }
       currBeforeStart.setNext((ControlNode) firstNode);
-      currBeforeStart = lastInLoop != null
-          ? (DirectionalNode) requireNonNull(cache.get(lastInLoop))
+      currBeforeStart = lastNode != null
+          ? lastNode
           : currBeforeStart;
     }
 
@@ -181,40 +184,6 @@ public class LoopUnroller implements CfgTraverser {
       cache.put(node, newNode);
     }
     return cache;
-  }
-
-  private void restoreLinks(Map<Node, Node> cache) {
-    // Now, we have a shallow copy of all original nodes.
-    // However, the new nodes are still linked to the original nodes.
-    // In this step we replace all inputs and successors with the corresponding new nodes.
-    cache.values().forEach(newNode -> {
-      // replace shallow copied input by a new uninitialized one
-      newNode.inputs().forEach(oldInput -> {
-        var newInput = cache.get(oldInput);
-        if (newInput == null) {
-          return;
-        }
-        newNode.replaceInput(oldInput, newInput);
-      });
-
-      // replace shallow copied successor by new uninitialized one
-      newNode.successors().forEach(oldSuccessor -> {
-        var newSuccessor = cache.get(oldSuccessor);
-        if (newSuccessor == null) {
-          return;
-        }
-        // replace successor
-        newNode.replaceSuccessor(oldSuccessor, newSuccessor);
-      });
-    });
-  }
-
-  private void addNewNodesToGraph(Map<Node, Node> cache) {
-    cache.values().forEach(newNode -> {
-      if (newNode.isUninitialized()) {
-        graph.addWithInputs(newNode);
-      }
-    });
   }
 
   private void saveUnrolledSideEffects(AbstractEndNode endNode, Map<Node, Node> copiedCache) {

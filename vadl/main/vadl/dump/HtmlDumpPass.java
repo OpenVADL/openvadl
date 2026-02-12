@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.entitySuppliers.VdtEntitySupplier;
 import vadl.dump.entitySuppliers.ViamEntitySupplier;
@@ -116,7 +117,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
      * @param description          the description what happened since the last dump
      */
     public Config(GeneralConfiguration generalConfiguration, String phase, String description) {
-      super(generalConfiguration.outputPath(), true);
+      super(generalConfiguration.outputPath(), DumpMode.ALWAYS);
       this.phase = phase;
       this.description = description;
     }

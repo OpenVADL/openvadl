@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -23,14 +23,14 @@ import java.nio.file.Path;
  */
 public class GeneralConfiguration {
   private final Path outputPath;
-  private final boolean doDump;
+  private final DumpMode dumpMode;
   private boolean dryRun = false;
   private DecoderOptions decoderOptions = new DecoderOptions();
 
 
-  public GeneralConfiguration(Path outputPath, boolean doDump) {
+  public GeneralConfiguration(Path outputPath, DumpMode dumpMode) {
     this.outputPath = outputPath;
-    this.doDump = doDump;
+    this.dumpMode = dumpMode;
   }
 
   /**
@@ -39,7 +39,7 @@ public class GeneralConfiguration {
    * @param generalConfig the configuration to copy.
    */
   public GeneralConfiguration(GeneralConfiguration generalConfig) {
-    this(generalConfig.outputPath, generalConfig.doDump);
+    this(generalConfig.outputPath, generalConfig.dumpMode);
     decoderOptions = generalConfig.getDecoderOptions();
     dryRun = generalConfig.isDryRun();
   }
@@ -48,8 +48,12 @@ public class GeneralConfiguration {
     return outputPath;
   }
 
+  public DumpMode dumpMode() {
+    return dumpMode;
+  }
+
   public boolean doDump() {
-    return doDump;
+    return dumpMode == DumpMode.ALWAYS;
   }
 
   public boolean isDryRun() {

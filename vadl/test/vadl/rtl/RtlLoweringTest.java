@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.configuration.DecoderOptions;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
 import vadl.dump.HtmlDumpPass;
@@ -33,8 +34,6 @@ import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
 import vadl.pass.PassResults;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.rtl.passes.DebugOutputPass;
-import vadl.rtl.passes.HazardAnalysisPass;
 import vadl.rtl.passes.InstructionProgressGraphCreationPass;
 import vadl.rtl.passes.InstructionProgressGraphLowerPass;
 import vadl.rtl.passes.InstructionProgressGraphMergePass;
@@ -54,7 +53,7 @@ public class RtlLoweringTest extends AbstractTest {
   void instructionBehaviorCheck() throws IOException, DuplicatedPassKeyException {
 
     var generalConfig =
-        new GeneralConfiguration(Path.of("build/test-output"), true);
+        new GeneralConfiguration(Path.of("build/test-output"), DumpMode.ALWAYS);
     var config = new RtlConfiguration(generalConfig);
 
     var decoderOptions = new DecoderOptions();
@@ -101,7 +100,7 @@ public class RtlLoweringTest extends AbstractTest {
     /**
      * New prune ISA pass that removes all instructions, but the ones referenced by a set of names.
      *
-     * @param config configuration
+     * @param config       configuration
      * @param instructions set of instruction names
      */
     public PruneIsaPass(GeneralConfiguration config, Set<String> instructions) {
@@ -114,8 +113,8 @@ public class RtlLoweringTest extends AbstractTest {
      * New prune ISA pass that removes all instructions, but the ones referenced by a set of names.
      * Optionally, remove register tensor constraints.
      *
-     * @param config configuration
-     * @param instructions set of instruction names
+     * @param config               configuration
+     * @param instructions         set of instruction names
      * @param regTensorConstraints keep register tensor constraints, if true
      */
     public PruneIsaPass(GeneralConfiguration config, Set<String> instructions,

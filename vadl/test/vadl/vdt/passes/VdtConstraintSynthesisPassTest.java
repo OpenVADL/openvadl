@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -24,6 +24,7 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.TestUtils;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassManager;
@@ -77,7 +78,7 @@ public class VdtConstraintSynthesisPassTest {
   void testSynthesizeConstraints() throws DuplicatedPassKeyException, IOException {
     /* GIVEN */
     var spec = TestUtils.compileToViam(ISA);
-    var config = new GeneralConfiguration(Path.of("build/test-output"), false);
+    var config = new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
 
     var passManager = new PassManager();
     passManager.add(new VdtInputPreparationPass(config));

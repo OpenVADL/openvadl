@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.AbstractTest;
 import vadl.configuration.DecoderOptions;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -46,7 +47,7 @@ class RiscVTest extends AbstractTest {
 
     /* GIVEN */
 
-    var config = new GeneralConfiguration(Path.of("build/test-output"), false);
+    var config = new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
     config.getDecoderOptions().setGenerator(DecoderOptions.Generator.REGULAR);
 
     var spec = runAndGetViamSpecification("sys/risc-v/rv64im.vadl");

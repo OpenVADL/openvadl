@@ -27,8 +27,11 @@ import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
+import vadl.viam.graph.control.ForallNode;
+import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
@@ -100,7 +103,12 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
     return instr().behavior().getNodes(ReadRegTensorNode.class)
         .anyMatch(n -> regInfo(n.regTensor()).isGVec())
         || instr().behavior().getNodes(WriteRegTensorNode.class)
-        .anyMatch(n -> regInfo(n.regTensor()).isGVec());
+        .anyMatch(n -> regInfo(n.regTensor()).isGVec())
+        // TODO: This must also work as TCG
+        || instr().behavior().getNodes(ForallNode.class).findAny().isPresent()
+        || instr().behavior().getNodes(TensorNode.class).findAny().isPresent()
+        || instr().behavior().getNodes(FoldNode.class).findAny().isPresent()
+        ;
   }
 
   public void addExtractedFunction(Function function) {

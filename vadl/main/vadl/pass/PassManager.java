@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.configuration.DumpMode;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
 import vadl.error.Diagnostic;
@@ -170,8 +171,15 @@ public class PassManager {
       return pass.execute(passResults, viam);
     } catch (Exception e) {
       var config = pipeline.get(0).pass().configuration();
-      if (!config.doDump() && (e instanceof Diagnostic || e instanceof DiagnosticList)) {
-        // if we are not dumping and the error is a diagnostic, we don't generate an
+
+      if (config.dumpMode() == DumpMode.NONE) {
+        // if we are not dumping at all, we just propagate the error
+        throw e;
+      }
+
+      if (config.dumpMode() == DumpMode.ON_FAILURE
+          && (e instanceof Diagnostic || e instanceof DiagnosticList)) {
+        // if we are only dumping failures and the error is a diagnostic, we don't generate an
         // exception dump.
         throw e;
       }
