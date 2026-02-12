@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -561,30 +561,31 @@ class ParserUtils {
         || n instanceof PlaceholderStatement;
   }
 
-  private static <T> T castOrDummy(Parser p, Node n,
+  private static <T> T castOrDummy(Parser parser, Node node,
                                    Class<T> type,
                                    T dummy,
                                    String expected) {
-    if (type.isInstance(n)) {
-      return type.cast(n);
+    if (type.isInstance(node)) {
+      return type.cast(node);
     }
 
     String message;
-    if (isPlaceholder(n)) {
+    if (isPlaceholder(node)) {
       var sb = new StringBuilder("");
-      n.prettyPrint(0, sb);
+      node.prettyPrint(0, sb);
       var name = sb.toString();
 
-      p.diagnostics.add(
-          Diagnostic.error("Unknown Model `%s`".formatted(name), n)
+      parser.diagnostics.add(
+          Diagnostic.error("Unknown Model `%s`".formatted(name), node)
               .help("Make sure the macro is defined before (above) they are used.")
               .build());
 
     } else {
       message =
-          "Expected node of type " + expected + ", received " + n.syntaxType().print() + " - " + n;
-      p.diagnostics.add(
-          Diagnostic.error("SyntaxType Mismatch", n)
+          "Expected node of type " + expected + ", received "
+              + node.syntaxType().print() + " - " + node;
+      parser.diagnostics.add(
+          Diagnostic.error("SyntaxType Mismatch", node)
               .description("%s", message)
               .build());
     }

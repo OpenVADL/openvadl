@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,12 +16,8 @@
 
 package vadl.ast;
 
-import static vadl.error.Diagnostic.error;
-
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -102,13 +98,6 @@ public class VadlParser {
   }
 
   private static Ast parse(Parser parser) {
-    // Setting up the Error printing, so we can parse it again.
-    // This is mainly because coco/r doesn't give us access to the errors internally but always
-    // want's to print them.
-    var outStream = new ByteArrayOutputStream();
-    parser.errors.errorStream = new PrintStream(outStream);
-    parser.errors.errMsgFormat = "{0};{1};{2}";
-
     List<Diagnostic> errors = new ArrayList<>();
 
     try {
@@ -120,40 +109,6 @@ public class VadlParser {
     }
 
     errors.addAll(parser.diagnostics);
-
-    if (parser.errors.count > 0) {
-      var lines = outStream.toString(StandardCharsets.UTF_8).split("\n", -1);
-      for (var line : lines) {
-        if (line.trim().isEmpty()) {
-          continue;
-        }
-
-        var fields = line.split(";", 3);
-        // Not every error has a location specified
-        var lineNum = fields.length == 3 ? Integer.parseInt(fields[0]) : -1;
-        var colNum = fields.length == 3 ? Integer.parseInt(fields[1]) : -1;
-        var message = fields[fields.length - 1];
-
-        // Rewrite some of the most obscure messages
-        if (message.equals("EOF expected") || message.equals("invalid term")) {
-          message = "Unexpected character";
-        }
-
-        var location =
-            new SourceLocation(parser.sourceFile, new SourceLocation.Position(lineNum, colNum));
-        var error = error("Parsing Error", location)
-            .locationDescription(location, "%s", message)
-            .description(
-                "The parser got confused at this point, probably because of a "
-                    + "syntax error in your code.");
-        if (message.matches("^expected .+")) {
-          error.note(
-              "Sometimes the expected is just something with what the parser could work with "
-                  + " but maybe not what you intended.");
-        }
-        errors.add(error.build());
-      }
-    }
 
     if (!errors.isEmpty()) {
       throw new DiagnosticList(errors.stream().distinct().toList());

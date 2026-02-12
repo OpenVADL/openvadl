@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -20,8 +20,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -37,20 +35,18 @@ class ParserUtilsTest {
    */
   @Test
   void identifierTokens() {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
     for (int i = 0; i < Parser.maxT + 1; i++) {
-      var parser = parser("", out);
+      var parser = parser("");
       var token = new Token();
       token.kind = i;
       token.val = "dummy";
       parser.la = token;
       var isIdToken = ParserUtils.isIdentifierToken(token);
       var parsedWithoutError = tryParse(parser::identifier);
-      var wasParsedAsId = parsedWithoutError && out.size() == 0;
+      var wasParsedAsId = parsedWithoutError && !parser.hasErrors();
 
       var message = "Grammar / isIdentifierToken mismatch (token %d)".formatted(i);
       assertThat(message, isIdToken, is(wasParsedAsId));
-      out.reset();
     }
   }
 
@@ -60,20 +56,18 @@ class ParserUtilsTest {
    */
   @Test
   void binaryOperators() {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
     for (int i = 0; i < Parser.maxT + 1; i++) {
-      var parser = parser("", out);
+      var parser = parser("");
       var token = new Token();
       token.kind = i;
       token.val = "dummy";
       parser.la = token;
       var isBinOpToken = ParserUtils.BIN_OPS[token.kind];
       var parsedWithoutError = tryParse(parser::binaryOperator);
-      var wasParsedAsBinOp = parsedWithoutError && out.size() == 0;
+      var wasParsedAsBinOp = parsedWithoutError && !parser.hasErrors();
 
       var message = "Grammar / BIN_OPS mismatch (token %d)".formatted(i);
       assertThat(message, isBinOpToken, is(wasParsedAsBinOp));
-      out.reset();
     }
   }
 
@@ -83,29 +77,26 @@ class ParserUtilsTest {
    */
   @Test
   void unaryOperators() {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
     for (int i = 0; i < Parser.maxT + 1; i++) {
-      var parser = parser("", out);
+      var parser = parser("");
       var token = new Token();
       token.kind = i;
       token.val = "dummy";
       parser.la = token;
       var isUnOpToken = ParserUtils.isUnaryOperator(token);
       var parsedWithoutError = tryParse(parser::unaryOperator);
-      var wasParsedAsUnOp = parsedWithoutError && out.size() == 0;
+      var wasParsedAsUnOp = parsedWithoutError && !parser.hasErrors();
 
 
       var message = "Grammar / UN_OPS mismatch (token %d)".formatted(i);
       assertThat(message, isUnOpToken, is(wasParsedAsUnOp));
-      out.reset();
     }
   }
 
-  private Parser parser(String restProgram, ByteArrayOutputStream outputStream) {
+  private Parser parser(String restProgram) {
     Parser parser = new Parser(new Scanner(new ByteArrayInputStream(restProgram.getBytes())));
     parser.t = new Token();
     parser.t.val = "dummy";
-    parser.errors.errorStream = new PrintStream(outputStream);
     return parser;
   }
 
