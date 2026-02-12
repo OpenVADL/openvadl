@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -840,17 +840,17 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Handler
   void handle(FoldNode toHandle) {
-    throw new UnsupportedOperationException("Type FoldNode not yet implemented");
+    // do nothing
   }
 
   @Handler
   void handle(ForIdxNode toHandle) {
-    throw new UnsupportedOperationException("Type ForIdxNode not yet implemented");
+    // do nothing
   }
 
   @Handler
   void handle(TensorNode toHandle) {
-    throw new UnsupportedOperationException("Type TensorNode not yet implemented");
+    // do nothing
   }
 
 }

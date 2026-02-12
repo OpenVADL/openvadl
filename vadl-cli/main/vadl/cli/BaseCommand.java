@@ -87,7 +87,8 @@ public abstract class BaseCommand implements Callable<Integer> {
       arity = "0..1",
       fallbackValue = "always",
       paramLabel = "<mode>",
-      description = "Generate all dumps of intermediate representations. Valid values: ${COMPLETION-CANDIDATES}",
+      description = "Generate all dumps of intermediate representations. "
+          + "Valid values: ${COMPLETION-CANDIDATES}",
       parameterConsumer = DumpModeConverter.class,
       converter = DumpModeConverter.class,
       completionCandidates = DumpModeConverter.class)
