@@ -16,7 +16,7 @@
 
 $package=vadl.ast
 import java.util.ArrayDeque;
-import java.util.ArrayList;
+
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -24,8 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
-import vadl.utils.SourceLocation;
-import vadl.error.Diagnostic;
+
 
 import static vadl.ast.CounterDefinition.CounterKind.GROUP;
 import static vadl.ast.CounterDefinition.CounterKind.PROGRAM;
@@ -39,9 +38,7 @@ COMPILER vadl
   SymbolTable macroTable = new SymbolTable();
   Map<String, Identifier> macroOverrides = new HashMap<>();
 
-  // This list is for our custom generated errors that are richer than the one COCO/R produces.
- 
-  List<Diagnostic> diagnostics = new ArrayList<>();
+
 
   {
     ast.rootSymbolTable = new SymbolTable();
@@ -337,14 +334,14 @@ ISA section (#instructionsetDefinition). It is also possible to define macros (#
     topLevelDefinition<out Definition def>     (. addDef(ast.definitions, def);
                                                   // Only call the symbol resolver if there were no errors, because other
                                                   // wise the AST might be invalid, causing a crash.
-                                                  if (errors.count == 0) {
+                                                  if (!hasErrors()) {
                                                     new SymbolTable.SymbolCollector().collectSymbols(ast.rootSymbolTable(), def);
                                                   }
                                                 .)
     | macroDefinition<out ModelDefinition def> (. addDef(ast.definitions, def);
                                                   // Only call the symbol resolver if there were no errors, because other
                                                   // wise the AST might be invalid, causing a crash.
-                                                  if (errors.count == 0) {
+                                                  if (!hasErrors()) {
                                                     new SymbolTable.SymbolCollector().collectSymbols(ast.rootSymbolTable(), def); macroTable.addModelDefinition(def);
                                                   }
                                             .)

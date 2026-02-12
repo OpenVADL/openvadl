@@ -11,9 +11,8 @@ model XYZ() = { }
 //       ╭──[test/resources/diagnostics/parser/invalidModelMissingReturnType.vadl:5:13]
 //       │
 //     5 │ model XYZ() = { }
-//       │             ^ `:` expected
+//       │             ^ The parser expected `:` here.
 //       │
-//       The parser got confused at this point, probably because of a syntax error in your code.
 //
 //
 // Part of the class vadl.ast.DiagnosticsTest

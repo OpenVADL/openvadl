@@ -185,9 +185,8 @@ model-type SVEWhileStatModel = (WhileRec, Id) -> Stat
 //       ╭──[test/resources/diagnostics/parser/invalidHigherOrderModelWrongArgumentCount.vadl:147:38]
 //       │
 //   147 │     $SVEWhileCondInstr ($ExtInstrStr ($i;  "W"); WSize ; $elements ; $elSize ; $elStr)
-//       │                                      ^ `)` expected
+//       │                                      ^ The parser expected `)` here.
 //       │
-//       The parser got confused at this point, probably because of a syntax error in your code.
 //
 //
 // Part of the class vadl.ast.DiagnosticsTest
