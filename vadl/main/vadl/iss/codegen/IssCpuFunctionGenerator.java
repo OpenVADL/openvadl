@@ -21,9 +21,12 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
 import vadl.cppCodeGen.context.CGenContext;
+import vadl.types.BuiltInTable;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -60,6 +63,9 @@ public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
         .spacedIn();
     if (returnNode.value() instanceof TensorNode tensorNode) {
       ctx.gen(tensorNode);
+      ctx.ln().ln("return result;");
+    } else if (returnNode.value() instanceof FoldNode foldNode) {
+      ctx.gen(foldNode);
       ctx.ln().ln("return result;");
     } else {
       ctx.wr("return ").gen(returnNode.value()).ln(";");
@@ -112,5 +118,76 @@ public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
         .ln("result |= v << (i * %s);", elemWidth)
         .spaceOut()
         .ln("}");
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, FoldNode toHandle) {
+    toHandle.ensure(toHandle.usageCount() == 1
+            && toHandle.usages().findFirst().get() instanceof ReturnNode,
+        "The fold is not a direct dependent of the return node. "
+            + "So it is not part of an extracted C function as it should be "
+            + "(IssCFunctionExtractorPass)."
+    );
+
+    var from = toHandle.idx().fromIdx();
+    var to = toHandle.idx().toIdx();
+    var cmp = from <= to ? "<=" : ">=";
+    var cnt = from <= to ? "++" : "--";
+    var resultType = getCppTypeNameByVadlType(function.returnType());
+    var combiner = foldCombiner(toHandle);
+    var neutral = foldNeutral(combiner, resultType);
+    var op = foldOperator(combiner);
+
+    ctx.ln(resultType + " result = " + neutral + ";");
+    ctx.wr("for (int64_t i = %s; i %s %s; i%s)", from, cmp, to, cnt)
+        .ln("{")
+        .spacedIn()
+        .wr(resultType + " v = ")
+        .gen(toHandle.body())
+        .ln(";")
+        .ln("result = (" + resultType + ") (result " + op + " v);")
+        .spaceOut()
+        .ln("}");
+  }
+
+  private BuiltInTable.BuiltIn foldCombiner(FoldNode fold) {
+    var combinerReturn = getSingleNode(fold.combiner().behavior(), ReturnNode.class);
+    fold.ensure(combinerReturn.value() instanceof BuiltInCall,
+        "Expected fold combiner to return a BuiltInCall.");
+    return ((BuiltInCall) combinerReturn.value()).builtIn();
+  }
+
+  private String foldOperator(BuiltInTable.BuiltIn combiner) {
+    if (combiner == BuiltInTable.ADD) {
+      return "+";
+    }
+    if (combiner == BuiltInTable.MUL) {
+      return "*";
+    }
+    if (combiner == BuiltInTable.AND) {
+      return "&";
+    }
+    if (combiner == BuiltInTable.OR) {
+      return "|";
+    }
+    if (combiner == BuiltInTable.XOR) {
+      return "^";
+    }
+    throw new IllegalStateException("Unsupported fold combiner: " + combiner.name());
+  }
+
+  private String foldNeutral(BuiltInTable.BuiltIn combiner, String resultType) {
+    if (combiner == BuiltInTable.MUL) {
+      return "((" + resultType + ")1)";
+    }
+    if (combiner == BuiltInTable.AND) {
+      return "((" + resultType + ")~((" + resultType + ")0))";
+    }
+    if (combiner == BuiltInTable.ADD
+        || combiner == BuiltInTable.OR
+        || combiner == BuiltInTable.XOR) {
+      return "((" + resultType + ")0)";
+    }
+    throw new IllegalStateException("Unsupported fold combiner: " + combiner.name());
   }
 }

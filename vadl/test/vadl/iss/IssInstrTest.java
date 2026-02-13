@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -166,35 +166,11 @@ public abstract class IssInstrTest extends QemuIssTest {
             () -> {
               var testSpec = testCaseMap.get(e.id());
               var success = IssTestUtils.TestResult.Status.PASS == e.status();
-              System.out.println("----------------");
-              System.out.println("Test " + e.id());
-              System.out.println("ASM: \n" + testSpec.asmCore());
-              System.out.println("\nRan stages: " + e.completedStages());
-              System.out.println("Register tests: ");
-              e.regTests().stream()
-                  .sorted(Comparator.comparing(IssTestUtils.TestResult.RegTestResult::reg))
-                  .forEachOrdered(r -> {
-                    System.out.println(
-                        "- " + r.reg() + " exp: " + r.expected() + " act: " + r.actual());
-                  });
-              System.out.println("Duration: " + e.duration());
-
               if (!success) {
-                for (var log : e.simLogs().entrySet()) {
-                  System.out.println("[SIM] Logs of " + log.getKey() + ": ");
-                  log.getValue().stream().map((l) -> "- " + l)
-                      .forEach(System.out::println);
-                }
-                for (var log : e.refLogs().entrySet()) {
-                  System.out.println("[REF] Logs of " + log.getKey() + ": ");
-                  log.getValue().stream().map((l) -> "- " + l)
-                      .forEach(System.out::println);
-                }
+                var sb = new StringBuilder();
+                appendFailureDetails(sb, testSpec, e);
+                Assertions.fail(sb.toString());
               }
-              System.out.println("----------------");
-
-              Assertions.assertEquals(IssTestUtils.TestResult.Status.PASS, e.status(),
-                  String.join(",\n\t", e.errors()));
             }
         ));
 
@@ -210,6 +186,51 @@ public abstract class IssInstrTest extends QemuIssTest {
         normalTestResultDynamicTests,
         notFoundResultDynamicTests
     );
+  }
+
+  private void appendFailureDetails(StringBuilder sb,
+                                    IssTestUtils.TestCase testSpec,
+                                    IssTestUtils.TestResult result) {
+    sb.append("Test failed for test: ").append(result.id()).append("\n");
+    sb.append("ASM:\n").append(testSpec.asmCore()).append("\n");
+    sb.append("Ran stages: ").append(result.completedStages()).append("\n");
+    sb.append("Duration: ").append(result.duration()).append("\n");
+    if (!result.errors().isEmpty()) {
+      sb.append("Errors:\n");
+      for (var error : result.errors()) {
+        sb.append("- ").append(error).append("\n");
+      }
+    }
+    if (!result.regTests().isEmpty()) {
+      sb.append("Register diffs:\n");
+      result.regTests().stream()
+          .sorted(Comparator.comparing(IssTestUtils.TestResult.RegTestResult::reg))
+          .forEachOrdered(r -> sb.append("- ")
+              .append(r.reg())
+              .append(" exp: ")
+              .append(r.expected())
+              .append(" act: ")
+              .append(r.actual())
+              .append("\n"));
+    }
+    if (!result.simLogs().isEmpty()) {
+      sb.append("[SIM] Logs:\n");
+      for (var entry : result.simLogs().entrySet()) {
+        sb.append("- ").append(entry.getKey()).append(":\n");
+        for (var line : entry.getValue()) {
+          sb.append("  ").append(line).append("\n");
+        }
+      }
+    }
+    if (!result.refLogs().isEmpty()) {
+      sb.append("[REF] Logs:\n");
+      for (var entry : result.refLogs().entrySet()) {
+        sb.append("- ").append(entry.getKey()).append(":\n");
+        for (var line : entry.getValue()) {
+          sb.append("  ").append(line).append("\n");
+        }
+      }
+    }
   }
 
 }
