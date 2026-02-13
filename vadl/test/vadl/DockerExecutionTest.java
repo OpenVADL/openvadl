@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 package vadl;
 
 import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Mount;
@@ -42,8 +42,8 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicTest;
 import org.slf4j.Logger;
@@ -54,7 +54,6 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.images.builder.dockerfile.DockerfileBuilder;
-import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 import org.testcontainers.utility.MountableFile;
 import org.testcontainers.utility.ThrowingFunction;
 import vadl.utils.Pair;
@@ -98,7 +97,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
         var statusCode = split[1];
 
         tests.add(DynamicTest.dynamicTest(name,
-            () -> Assertions.assertEquals("0", statusCode)));
+            () -> assertEquals("0", statusCode)));
       });
     }
 

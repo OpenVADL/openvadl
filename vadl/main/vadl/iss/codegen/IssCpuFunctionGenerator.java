@@ -54,7 +54,7 @@ public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
     var ctx = context();
     var returnNode = getSingleNode(function.behavior(), ReturnNode.class);
     var resultType = getCppTypeNameByVadlType(function.returnType());
-    ctx.wr(resultType + " " + genFunctionName() + "(" + cpuStateName
+    ctx.wr("static " + resultType + " " + genFunctionName() + "(" + cpuStateName
             + "* env, " + genFunctionParameters(function.parameters()) + ")"
         ).ln("   {")
         .spacedIn();
@@ -95,12 +95,15 @@ public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
 
     var from = toHandle.idx().fromIdx();
     var to = toHandle.idx().toIdx();
-    var cmp = from < to ? "<=" : ">=";
-    var cnt = from < to ? "++" : "--";
+    toHandle.ensure(from >= 0 && to >= 0,
+        "Tensor extraction requires non-negative loop bounds. Got from=%s, to=%s.",
+        from, to);
+    var cmp = from <= to ? "<=" : ">=";
+    var cnt = from <= to ? "++" : "--";
     var resultType = getCppTypeNameByVadlType(function.returnType());
     var elemWidth = toHandle.body().type().asDataType().bitWidth();
     ctx.ln(resultType + " result = 0;");
-    ctx.wr("for (uint64_t i = %s; i %s %s; i%s)", from, cmp, to, cnt)
+    ctx.wr("for (int64_t i = %s; i %s %s; i%s)", from, cmp, to, cnt)
         .ln("{")
         .spacedIn()
         .wr(resultType + " v = ")

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,10 +19,10 @@ package vadl.lcb.aarch64.template;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.io.Files;
-import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass;
 import vadl.pass.PassKey;

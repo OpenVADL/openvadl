@@ -19,6 +19,7 @@ package vadl.iss.codegen;
 import static vadl.iss.passes.TcgPassUtils.instrInfo;
 import static vadl.utils.GraphUtils.getSingleNode;
 
+import java.util.stream.IntStream;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
@@ -67,6 +68,7 @@ public class IssInstrHelperGenerator extends IssProcGen
 
   private final IssConfiguration configuration;
   private final InstrInfo instrInfo;
+  private final HelperParamPacking packing;
 
   /**
    * Constructs the helper function generator.
@@ -78,6 +80,7 @@ public class IssInstrHelperGenerator extends IssProcGen
     );
     this.configuration = configuration;
     this.instrInfo = instrInfo;
+    this.packing = HelperParamPacking.from(instrInfo);
   }
 
   /**
@@ -87,11 +90,8 @@ public class IssInstrHelperGenerator extends IssProcGen
    */
   public String fetch() {
     var targetUpper = configuration.targetName().toUpperCase();
-    var params = instrInfo.helperFormatParamOrder()
-        .map(p -> {
-          var tcgSize = Tcg_32_64.nextFitting(p.type()).width;
-          return "uint" + tcgSize + "_t " + paramName(p);
-        })
+    var params = IntStream.range(0, packing.blockCount())
+        .mapToObj(i -> "uint64_t packed" + i)
         .reduce((a, b) -> a + ", " + b)
         .map(s -> ", " + s)
         .orElse("");
@@ -101,6 +101,8 @@ public class IssInstrHelperGenerator extends IssProcGen
             targetUpper,
             params)
         .spacedIn();
+
+    unpackPackedHelperParams();
 
     // init reads at start of function
     initReadRegs(instrInfo.instr().behavior());
@@ -186,6 +188,33 @@ public class IssInstrHelperGenerator extends IssProcGen
 
   private String paramName(ParamNode def) {
     return def.definition().simpleName().toLowerCase();
+  }
+
+  private void unpackPackedHelperParams() {
+    for (var param : packing.params()) {
+      var paramType = "uint" + Tcg_32_64.nextFitting(param.param().type()).width + "_t";
+      var paramName = paramName(param.param());
+
+      ctx().ln(paramType + " " + paramName + " = 0;");
+      for (var slice : packing.slicesForParam(param)) {
+        var piece = "packed" + slice.blockIndex();
+        if (slice.blockOffset() > 0) {
+          piece = "(" + piece + " >> " + slice.blockOffset() + ")";
+        }
+        if (slice.width() < 64) {
+          piece = "(" + piece + " & " + HelperParamPacking.u64MaskLiteral(slice.width()) + ")";
+        }
+
+        piece = "((" + paramType + ")" + piece + ")";
+        if (slice.paramOffset() > 0) {
+          piece = "(" + piece + " << " + slice.paramOffset() + ")";
+        }
+        ctx().ln(paramName + " |= " + piece + ";");
+      }
+    }
+    if (!packing.params().isEmpty()) {
+      ctx().ln();
+    }
   }
 
 }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,8 @@
 
 package vadl.viam.passes.statusBuiltInInlinePass;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.util.List;
@@ -111,13 +111,13 @@ abstract class StatusBuiltinInlineTest {
     // constant evaluate function
     var result = Canonicalizer.canonicalizeSubGraph(returnNode.value());
 
-    assertTrue("Result is not a constant value", result instanceof ConstantNode);
+    assertInstanceOf(ConstantNode.class, result, "Result is not a constant value");
 
     var resultVal = (Constant.Value) ((ConstantNode) result).constant();
-    assertEquals("Result value does not match expected value", test.expectedValue().hexadecimal(),
-        resultVal.hexadecimal());
-    assertEquals("Result type size does not match expected size",
-        test.expectedValue().type().bitWidth(), resultVal.type().bitWidth());
+    assertEquals(test.expectedValue().hexadecimal(),
+        resultVal.hexadecimal(), "Result value does not match expected value");
+    assertEquals(test.expectedValue().type().bitWidth(), resultVal.type().bitWidth(),
+        "Result type size does not match expected size");
   }
 
   private Graph buildFuncGraph(String name, ExpressionNode call, int statusIndex) {
