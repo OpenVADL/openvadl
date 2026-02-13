@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Docker wrapper for OpenVADL Doxygen
+# This script runs the custom Doxygen build (with VADL Coco/R support) in a Docker container.
+# It mounts the entire project root to allow access to files outside docs/ (e.g., vadl.ATG),
+# and forwards all environment variables needed by the Makefile to configure Doxygen.
+set -euo pipefail
+
+VERSION=1.16.1-openvadl2
+IMAGE=ghcr.io/openvadl/doxygen:$VERSION
+
+# Get the project root (parent of docs/)
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Get the current working directory
+CURRENT_DIR="$(pwd)"
+# Calculate relative path from project root to current directory
+RELATIVE_PATH="${CURRENT_DIR#$PROJECT_ROOT/}"
+
+docker run --rm \
+  -u $(id -u):$(id -g) \
+  --group-add $(id -g) \
+  -v "$PROJECT_ROOT":/work \
+  -w "/work/$RELATIVE_PATH" \
+  -e LATEST_VERSION \
+  -e PROJECT_NAME \
+  -e PROJECT_NUMBER \
+  -e PROJECT_BRIEF \
+  -e PROJECT_LOGO \
+  -e OUTPUT_DIRECTORY \
+  -e INPUT \
+  "$IMAGE" "$@"

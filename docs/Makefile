@@ -1,4 +1,4 @@
-DOXYGEN ?= ./doxygen
+DOXYGEN ?= ./doxygen-openvadl
 LATEST_VERSION := $(shell git describe --tags --abbrev=0 | sed 's/^v//')
 
 default: docs
@@ -37,7 +37,7 @@ open-vadl-html-docs: doxygen
 	PROJECT_NAME="OpenVADL" \
 	PROJECT_NUMBER="(`(git describe --always --dirty)`)" \
 	PROJECT_BRIEF="open-vadl" \
-	PROJECT_LOGO="" \
+	PROJECT_LOGO="./assets/img/logo-icon-dark.png" \
 	OUTPUT_DIRECTORY="./obj/doc/open-vadl-docs" \
 	INPUT="$(OPEN_VADL_HTML_DOCS)" \
 	$(DOXYGEN) html.cfg
@@ -48,7 +48,7 @@ open-vadl-latex: doxygen
 	PROJECT_NAME="Vienna Architecture Description Language" \
 	PROJECT_NUMBER="(`(git describe --always --dirty)`)" \
 	PROJECT_BRIEF="open-vadl" \
-	PROJECT_LOGO="" \
+	PROJECT_LOGO="./assets/img/logo-icon-dark.png" \
 	OUTPUT_DIRECTORY="./obj/doc/open-vadl-refman" \
 	INPUT="$(OPEN_VADL_DOC_INPUT_REFMAN)" \
 	$(DOXYGEN) latex.cfg
