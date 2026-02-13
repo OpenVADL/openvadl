@@ -36,7 +36,7 @@ open-vadl-html-docs: doxygen
 	LATEST_VERSION=$(LATEST_VERSION) \
 	PROJECT_NAME="OpenVADL" \
 	PROJECT_NUMBER="(`(git describe --tags --always --dirty)`)" \
-	PROJECT_BRIEF="open-vadl" \
+	PROJECT_BRIEF="" \
 	PROJECT_LOGO="./assets/img/logo-icon-dark.png" \
 	OUTPUT_DIRECTORY="./obj/doc/open-vadl-docs" \
 	INPUT="$(OPEN_VADL_HTML_DOCS)" \
