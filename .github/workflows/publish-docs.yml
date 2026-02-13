@@ -22,9 +22,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: self-hosted-x64
-    container:
-      image: ghcr.io/openvadl/doxygen:1.13.2
-      options: --user 998 # run as a github-runner user, otherwise it will create things as root
     name: Build refman and deploy
     steps:
       - uses: actions/checkout@v4
@@ -32,7 +29,7 @@ jobs:
           submodules: true
           fetch-depth: 0 # required to find the latest OpenVADL release (from tags)
       - name: Build
-        run: cd docs && DOXYGEN=doxygen make open-vadl-html-docs
+        run: cd docs && make html
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
