@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -98,33 +98,44 @@ public abstract class CosimInstrTest extends CosimTest {
     return testCases.stream()
         .map(e -> DynamicTest.dynamicTest(e.id(),
             () -> {
-              System.out.println("Assembly core: \n" + e.asmCore());
               if (!resultFiles.containsKey(e.id())) {
                 Assertions.fail("Result file is missing for test: " + e.id());
               }
               var file = resultFiles.get(e.id());
               var parsed = CosimTestUtils.yamlToTestResult(file);
-              var clients = parsed.diffContext();
               if (!parsed.passed()) {
-                if (!parsed.diffs().isEmpty()) {
-                  System.out.println("Differences found:");
-                  for (var diff : parsed.diffs()) {
-                    System.out.println(diff.description() + ":");
-                    int maxNameLen = clients.stream()
-                        .mapToInt(c -> c.clientName().length())
-                        .max()
-                        .orElse(0);
-                    for (int i = 0; i < diff.values().size(); i++) {
-                      var name = clients.get(i).clientName();
-                      var pad = " ".repeat(maxNameLen - name.length());
-                      System.out.println("-" + name + pad + " " + diff.values().get(i));
-                    }
-                  }
-                }
-                Assertions.fail("Test failed for test: " + e.id());
+                var sb = new StringBuilder();
+                appendFailureDetails(sb, e, parsed);
+                Assertions.fail(sb.toString());
               }
             }
         ));
+  }
+
+  private void appendFailureDetails(StringBuilder sb,
+                                    CosimTestUtils.TestCase testCase,
+                                    CosimTestUtils.TestResult result) {
+    sb.append("Test failed for test: ").append(testCase.id()).append("\n");
+    sb.append("Assembly core:\n").append(testCase.asmCore()).append("\n");
+    if (!result.diffs().isEmpty()) {
+      sb.append("Differences:\n");
+      var clients = result.diffContext();
+      for (var diff : result.diffs()) {
+        sb.append("- ").append(diff.description()).append(":\n");
+        int maxNameLen = clients.stream()
+            .map(c -> c.clientName() == null ? "<unknown>" : c.clientName())
+            .mapToInt(String::length)
+            .max()
+            .orElse(0);
+        for (int i = 0; i < diff.values().size(); i++) {
+          var name = i < clients.size() && clients.get(i).clientName() != null
+              ? clients.get(i).clientName() : "<unknown>";
+          var pad = " ".repeat(maxNameLen - name.length());
+          sb.append("  ").append(name).append(pad).append(" ").append(diff.values().get(i))
+              .append("\n");
+        }
+      }
+    }
   }
 
 }
