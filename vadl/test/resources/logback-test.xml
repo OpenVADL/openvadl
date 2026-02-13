@@ -1,0 +1,18 @@
+<configuration debug="false">
+    <property name="LOG_LEVEL" value="${vadl.test.log.level:-INFO}"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Docker Java HTTP wire/debug logs are too noisy for regular test runs -->
+    <logger name="com.github.dockerjava.zerodep.shaded.org.apache.hc.client5.http.wire" level="WARN"/>
+    <logger name="org.apache.hc.client5.http.wire" level="WARN"/>
+    <logger name="com.github.dockerjava" level="INFO"/>
+
+    <root level="${LOG_LEVEL}">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>
