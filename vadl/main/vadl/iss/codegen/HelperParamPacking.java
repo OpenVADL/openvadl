@@ -82,6 +82,13 @@ public final class HelperParamPacking {
     return fromParams(instrInfo.helperFormatParamOrder().toList());
   }
 
+  /**
+   * Creates a new `HelperParamPacking` instance from a list of ordered parameter nodes.
+   *
+   * <p>This method processes the provided list of `ParamNode` objects, calculates
+   * their bit placements in a concatenated bit stream, and constructs the
+   * corresponding `HelperParamPacking` object.
+   */
   public static HelperParamPacking fromParams(List<ParamNode> orderedParams) {
     var placements = new ArrayList<ParamPlacement>();
     var bitOffset = 0;
@@ -105,6 +112,14 @@ public final class HelperParamPacking {
     return blockCount;
   }
 
+  /**
+   * Calculates and returns a list of contiguous slices for the specified parameter, representing
+   * how the parameter is split across one or more 64-bit blocks.
+   *
+   * <p>The method processes the bit placement of the parameter within the overall bit stream and
+   * divides it into multiple slices when it spans multiple blocks. Each slice corresponds
+   * to a section of the parameter stored within a single block.
+   */
   public List<ParamSlice> slicesForParam(ParamPlacement param) {
     var slices = new ArrayList<ParamSlice>();
     var remaining = param.bitWidth();
@@ -124,6 +139,12 @@ public final class HelperParamPacking {
     return slices;
   }
 
+  /**
+   * Retrieves a list of parameter slices that belong to the specified block index.
+   *
+   * <p>This method filters and collects all `ParamSlice` objects from the parameters
+   * whose `blockIndex` matches the given block index.
+   */
   public List<ParamSlice> slicesForBlock(int blockIndex) {
     var slices = new ArrayList<ParamSlice>();
     for (var param : params) {

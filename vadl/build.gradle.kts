@@ -46,7 +46,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.26.3")
     testImplementation("org.awaitility:awaitility:4.2.1")
-    testImplementation("org.testcontainers:testcontainers:1.21.4")
+    testImplementation("org.testcontainers:testcontainers:2.0.3")
     testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
     testAnnotationProcessor(project(":java-annotations"))
     // Helps getting test files small and concise

@@ -288,8 +288,7 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
                   blockCount)
               .description("The QEMU helper macros support at most %s explicit helper arguments "
                       + "in addition to env.",
-                  HelperParamPacking.MAX_HELPER_ARG_BLOCKS)
-              .note("Reduce helper parameter usage or split behavior into extracted helper functions.");
+                  HelperParamPacking.MAX_HELPER_ARG_BLOCKS);
         })
         .filter(Objects::nonNull)
         .forEach(diagnostics::add)

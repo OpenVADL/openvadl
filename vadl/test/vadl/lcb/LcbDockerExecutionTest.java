@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FileUtils;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.riscv.DockerRiscvImageProvider;
