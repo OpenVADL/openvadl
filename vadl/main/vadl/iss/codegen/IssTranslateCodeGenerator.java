@@ -21,6 +21,7 @@ import static vadl.iss.passes.TcgPassUtils.instrInfo;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.context.CGenContext;
@@ -30,7 +31,6 @@ import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.extensions.InstrInfo;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
@@ -291,6 +291,7 @@ class HelperCallGenerator {
   private CodeGeneratorAppendable builder;
   private String targetName;
   private InstrInfo info;
+  private HelperParamPacking packing;
 
   HelperCallGenerator(Instruction instr,
                       IssConfiguration configuration) {
@@ -298,6 +299,7 @@ class HelperCallGenerator {
     this.info = instrInfo(instr);
     this.builder = new StringBuilderAppendable();
     this.targetName = configuration.targetName();
+    this.packing = HelperParamPacking.from(info);
   }
 
   String fetch() {
@@ -324,13 +326,10 @@ class HelperCallGenerator {
   }
 
   private void genArgTcgVs() {
-    info.helperFormatParamOrder()
-        .forEach(p -> {
-          var name = paramName(p);
-          var val = "a->" + name;
-          var tcgSize = Tcg_32_64.nextFitting(p.type());
-          var stmt =
-              "TCGv_" + tcgSize + " " + name + "_tmp = tcg_constant_" + tcgSize + "(" + val + ");";
+    IntStream.range(0, packing.blockCount())
+        .forEach(blockIndex -> {
+          var stmt = "TCGv_i64 packed" + blockIndex + "_tmp = tcg_constant_i64("
+              + packedBlockExpr(blockIndex) + ");";
           builder.appendLn(stmt);
         });
   }
@@ -375,12 +374,39 @@ class HelperCallGenerator {
   }
 
   private Stream<String> fieldArgs() {
-    return info.helperFormatParamOrder()
-        .map(p -> paramName(p) + "_tmp");
+    return IntStream.range(0, packing.blockCount())
+        .mapToObj(i -> "packed" + i + "_tmp");
   }
 
   private String paramName(ParamNode p) {
     return p.definition().simpleName();
+  }
+
+  private String packedBlockExpr(int blockIndex) {
+    var slices = packing.slicesForBlock(blockIndex);
+    if (slices.isEmpty()) {
+      return "UINT64_C(0)";
+    }
+    return slices.stream().map(this::packedSliceExpr)
+        .collect(Collectors.joining(" | ", "(", ")"));
+  }
+
+  private String packedSliceExpr(HelperParamPacking.ParamSlice slice) {
+    var p = slice.param().param();
+    var expr = "((uint64_t)(a->" + paramName(p) + "))";
+    if (slice.param().bitWidth() < 64) {
+      expr = "(" + expr + " & " + HelperParamPacking.u64MaskLiteral(slice.param().bitWidth()) + ")";
+    }
+    if (slice.paramOffset() > 0) {
+      expr = "(" + expr + " >> " + slice.paramOffset() + ")";
+    }
+    if (slice.width() < 64) {
+      expr = "(" + expr + " & " + HelperParamPacking.u64MaskLiteral(slice.width()) + ")";
+    }
+    if (slice.blockOffset() > 0) {
+      expr = "(" + expr + " << " + slice.blockOffset() + ")";
+    }
+    return expr;
   }
 
 }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,11 +18,10 @@ package vadl.iss.template.target;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.codegen.HelperParamPacking;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.extensions.InstrInfo;
-import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -60,12 +59,10 @@ public class EmitIssHelperHPass extends IssTemplateRenderingPass {
   }
 
   private String instrHelperDef(InstrInfo instr) {
-    var params = instr.helperFormatParamOrder().toList();
-    var argSize = params.size() + 1; // plus one because of the tcg env
-    // all params are passed as i32 containers... i32, i32, ...
-    var paramTypes = argSize == 1 ? "" :
-        ", " + params.stream().map(i -> Tcg_32_64.nextFitting(i.type()).toString())
-            .collect(Collectors.joining(","));
+    var packing = HelperParamPacking.from(instr);
+    var argSize = packing.blockCount() + 1; // plus one because of the tcg env
+    var paramTypes = packing.blockCount() == 0 ? ""
+        : ", " + "i64,".repeat(packing.blockCount() - 1) + "i64";
     return "DEF_HELPER_%s(%s, void, env%s)".formatted(
         argSize,
         instr.helperName(),
