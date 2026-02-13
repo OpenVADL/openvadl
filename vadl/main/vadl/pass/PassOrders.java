@@ -25,12 +25,14 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.DecoderOptions;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GcbConfiguration;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.configuration.RtlConfiguration;
 import vadl.dump.CollectBehaviorDotGraphPass;
+import vadl.dump.DumpIssInstructionGraphsPass;
 import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.DetermineBuiltinAttributesPass;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
@@ -53,6 +55,7 @@ import vadl.iss.passes.IssExecStrategyPass;
 import vadl.iss.passes.IssExtractOptimizationPass;
 import vadl.iss.passes.IssGdbInfoExtractionPass;
 import vadl.iss.passes.IssHardcodedTcgAddOnPass;
+import vadl.iss.passes.IssHelperOnlyWideRegAccessLoweringPass;
 import vadl.iss.passes.IssInfoRetrievalPass;
 import vadl.iss.passes.IssLoopUnrollPass;
 import vadl.iss.passes.IssMemoryAccessTransformationPass;
@@ -525,10 +528,15 @@ public class PassOrders {
 
         // pre emit passes
         .add(new IssCFunctionExtractionPass(config))
+        .add(new IssHelperOnlyWideRegAccessLoweringPass(config))
         .add(new IssRegisterAccessInfoRetrievalPass(config))
     ;
 
     addDecodePasses(order, config);
+
+    if (config.dumpMode() == DumpMode.ISS_PASS_GRAPHS) {
+      addIssInstructionGraphDumpPasses(order, config);
+    }
 
     addHtmlDump(order, config, "ISS Lowering Dump",
         "This dump is executed after the iss transformation passes were executed.",
@@ -541,6 +549,19 @@ public class PassOrders {
     }
 
     return order;
+  }
+
+  /**
+   * Adds {@link DumpIssInstructionGraphsPass} after each pass in ISS mode.
+   */
+  private static PassOrder addIssInstructionGraphDumpPasses(PassOrder order,
+                                                            GeneralConfiguration config) {
+    return order.addBetweenEach((current, next) -> {
+      if (current instanceof DumpIssInstructionGraphsPass) {
+        return Optional.empty();
+      }
+      return Optional.of(new DumpIssInstructionGraphsPass(config));
+    });
   }
 
   private static void addIssEmitPasses(PassOrder order, IssConfiguration config) {
