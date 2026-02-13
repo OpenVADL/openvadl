@@ -1084,12 +1084,11 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprSUB    ; "sub"   ; 0b000'001        ; sub      ))
   $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprMUL    ; "mul"   ; 0b011'000        ; mul      ))
 
-// Fold is not yet supported by the ISS generator
-//   $InstrBHSD        (SVEAddExtReductionInstr   ; (SVEfoldSADD   ; "saddv" ; 0b0'0000'0001    ; SIntX    ))
-//   $InstrBHSD        (SVEAddExtReductionInstr   ; (SVEfoldUADD   ; "uaddv" ; 0b0'0000'1001    ; UIntX    ))
-//   $InstrBHSD        (SVEReductionInstr         ; (SVEfoldAND    ; "andv"  ; 0b0'1101'0001    ; and      ))
-//   $InstrBHSD        (SVEReductionInstr         ; (SVEfoldOR     ; "orv"   ; 0b0'1100'0001    ; or       ))
-//   $InstrBHSD        (SVEReductionInstr         ; (SVEfoldXOR    ; "eorv"  ; 0b0'1100'1001    ; xor      ))
+  $InstrBHSD        (SVEAddExtReductionInstr   ; (SVEfoldSADD   ; "saddv" ; 0b0'0000'0001    ; SIntX    ))
+  $InstrBHSD        (SVEAddExtReductionInstr   ; (SVEfoldUADD   ; "uaddv" ; 0b0'0000'1001    ; UIntX    ))
+  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldAND    ; "andv"  ; 0b0'1101'0001    ; and      ))
+  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldOR     ; "orv"   ; 0b0'1100'0001    ; or       ))
+  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldXOR    ; "eorv"  ; 0b0'1100'1001    ; xor      ))
 
   $SIMDMoveInstr    (                            (SIMDUMOV      ; "umov"  ; 0b00'1111                   ))
 
