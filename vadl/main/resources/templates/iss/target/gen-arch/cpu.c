@@ -26,26 +26,6 @@ const char * const [(${gen_arch_lower})]_cpu_[(${reg.name_lower})]_names[(${reg.
     [(${access.body})] }
 [/][/]
 
-[# th:each="reg : ${register_tensors}"]
-[(${reg.cpu_getter_signature})]
-{   [# th:each="dim : ${reg.index_dims}"]
-    assert( [(${dim.arg_name})] < [(${dim["size"]})]); [/]
-    [# th:each="constraint : ${reg.constraints}"]
-    if ([(${constraint.check})]) return [(${constraint.value})];
-    [/]
-    return env->[(${reg.name_lower})][(${reg.c_array_index})];
-}
-
-[(${reg.cpu_setter_signature})]
-{   [# th:each="dim : ${reg.index_dims}"]
-    assert( [(${dim.arg_name})] < [(${dim["size"]})]); [/]
-    [# th:each="constraint : ${reg.constraints}"]
-    if ([(${constraint.check})]) return;
-    [/]
-    env->[(${reg.name_lower})][(${reg.c_array_index})] = val;
-}
-[/]
-
 static void [(${gen_arch_lower})]_cpu_disas_set_info(CPUState *cpu, disassemble_info *info)
 {
     trace_[(${gen_arch_lower})]_cpu_call(__func__);

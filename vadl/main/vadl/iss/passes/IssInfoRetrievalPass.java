@@ -194,6 +194,19 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
 
             reg.attachExtension(new RegInfo(configuration(), reg, readsForReg, writesForReg));
 
+            var pc = isa.pc();
+            if (pc != null && pc.registerTensor() == reg) {
+              var regInfo = reg.expectExtension(RegInfo.class);
+              if (!regInfo.isTcgScalar()) {
+                return error("Unsupported PC execution class", reg.location())
+                    .locationDescription(reg.location(),
+                        "Program counter must be scalar-TCG mappable but is %s.",
+                        regInfo.execClass().name())
+                    .description("The ISS requires program counter registers to be scalar "
+                        + "registers with a width <= 64 bits.");
+              }
+            }
+
             return null;
           })
           .filter(Objects::nonNull)

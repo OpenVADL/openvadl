@@ -167,6 +167,10 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   }
 
   public String valueCType() {
+    if (!isTcgScalar()) {
+      throw new IllegalStateException(
+          "valueCType is only valid for scalar-TCG mappable registers: " + name());
+    }
     return CppTypeMap.nextFittingUInt(reg().resultType(reg().maxNumberOfAccessIndices()));
   }
 
@@ -211,22 +215,20 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       renderObj.put("name_upper", name().toUpperCase());
       renderObj.put("index_dims", dims);
       renderObj.put("value_width", resultType.bitWidth());
-      renderObj.put("value_c_type", valueCType());
       renderObj.put("cpu_state_type_width", cpuStateTypeWidth());
       renderObj.put("names", names());
-      renderObj.put("is_tcg", !isGVec());
+      renderObj.put("is_tcg", isTcgScalar());
       renderObj.put("is_gvec", isGVec());
       renderObj.put("exec_class", execClass().name());
       renderObj.put("constraints", renderConstraints(dims));
       renderObj.put("getter_params", renderParamsComma);
       renderObj.put("access_patterns", accessPatterns.stream()
           .sorted(Comparator.comparing(a -> a.type)).toList());
-      renderObj.put("cpu_getter_signature",
-          valueCType() + " get_cpu_" + nameLower() + "(" + cpuStateName() + "* env"
-              + renderParamsComma + ")");
-      renderObj.put("cpu_setter_signature",
-          "void set_cpu_" + nameLower() + "(" + cpuStateName() + "* env"
-              + renderParamsComma + ", " + valueCType() + " val)");
+      if (isTcgScalar()) {
+        renderObj.put("value_c_type", valueCType());
+      } else {
+        renderObj.put("value_c_type", "");
+      }
       renderObj.put("c_array_def", renderCArrayDef());
       renderObj.put("c_array_index", cArrayIndex("d"));
       renderObj.put("c_reg_name_array_def", renderCRegNameArrayDef());
@@ -510,11 +512,11 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
           .mapToObj(i -> "uint32_t i" + i)
           .forEach(args::add);
       if (type == AccessType.WRITE) {
-        args.add(CppTypeMap.cppUintType(CppTypeMap.nextFittingBitSize(elementWidth)) + " value");
+        args.add(accessValueCType() + " value");
       }
 
       String ret = (type == AccessType.READ)
-          ? CppTypeMap.cppUintType(CppTypeMap.nextFittingBitSize(elementWidth))
+          ? accessValueCType()
           : "void";
 
       return ret + " " + name() + "(" + String.join(", ", args) + ")";
@@ -616,10 +618,10 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
 
       if (type == AccessType.READ) {
         b.append("""
-              uint64_t v = 0;
+              %s v = 0;
               memcpy(&v, env->%s + off, %d);
               return v;
-            """.formatted(owner.nameLower(), elemBytes));
+            """.formatted(accessValueCType(), owner.nameLower(), elemBytes));
       } else {
         b.append("""
               memcpy(env->%s + off, &value, %d);
@@ -627,6 +629,20 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       }
 
       return b.toString();
+    }
+
+    private String accessValueCType() {
+      return switch (CppTypeMap.nextFittingBitSize(elementWidth)) {
+        case 1 -> "bool";
+        case 8 -> "uint8_t";
+        case 16 -> "uint16_t";
+        case 32 -> "uint32_t";
+        case 64 -> "uint64_t";
+        case 128 -> throw new RuntimeException(
+            "Access patterns >64 bit are not supported yet. "
+                + "Expected decomposition to split this access: " + name());
+        default -> throw new RuntimeException("Unsupported access width: " + elementWidth);
+      };
     }
 
     /**
@@ -698,7 +714,8 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
      * @return the access pattern
      */
     public static AccessPattern of(ReadRegTensorNode read) {
-      return of(read, AccessType.READ, read.regTensor(), read.indices());
+      return of(read, AccessType.READ, read.regTensor(), read.indices(),
+          read.type().asDataType().bitWidth());
     }
 
     /**
@@ -708,7 +725,8 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
      * @return the access pattern
      */
     public static AccessPattern of(WriteRegTensorNode write) {
-      return of(write, AccessType.WRITE, write.regTensor(), write.indices());
+      return of(write, AccessType.WRITE, write.regTensor(), write.indices(),
+          write.writeBitWidth());
     }
 
     /**
@@ -721,13 +739,14 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
      * @return the access pattern
      */
     public static AccessPattern of(Node origin, AccessType type, RegisterTensor reg,
-                                   List<ExpressionNode> indices) {
+                                   List<ExpressionNode> indices,
+                                   int accessedWidth) {
       var info = regInfo(reg);
       var indexDims = reg.indexDimensions().stream()
           .limit(indices.size())
           .map(d -> new RegInfo.AccessDim(d.indexType().bitWidth(), d.size()))
           .toList();
-      return new RegInfo.AccessPattern(info, type, indexDims, reg.resultType().bitWidth(), origin);
+      return new RegInfo.AccessPattern(info, type, indexDims, accessedWidth, origin);
     }
   }
 }
