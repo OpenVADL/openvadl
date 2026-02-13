@@ -35,7 +35,7 @@ open-vadl-html-docs: doxygen
 	@echo "-- Generating HTML Documentation"
 	LATEST_VERSION=$(LATEST_VERSION) \
 	PROJECT_NAME="OpenVADL" \
-	PROJECT_NUMBER="(`(git describe --always --dirty)`)" \
+	PROJECT_NUMBER="(`(git describe --tags --always --dirty)`)" \
 	PROJECT_BRIEF="open-vadl" \
 	PROJECT_LOGO="./assets/img/logo-icon-dark.png" \
 	OUTPUT_DIRECTORY="./obj/doc/open-vadl-docs" \
@@ -46,7 +46,7 @@ open-vadl-html-docs: doxygen
 open-vadl-latex: doxygen
 	@echo "-- Generating LaTeX Documentation"
 	PROJECT_NAME="Vienna Architecture Description Language" \
-	PROJECT_NUMBER="(`(git describe --always --dirty)`)" \
+	PROJECT_NUMBER="(`(git describe --tags --always --dirty)`)" \
 	PROJECT_BRIEF="open-vadl" \
 	PROJECT_LOGO="./assets/img/logo-icon-dark.png" \
 	OUTPUT_DIRECTORY="./obj/doc/open-vadl-refman" \
