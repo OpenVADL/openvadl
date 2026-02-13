@@ -362,6 +362,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // alisas register A: Bits<4><2><2>
       // First we read the closest index, in this case only the outer most and then slice the last
       // one.
+      var consumedDimensions = reg.indexDimensions().size();
       var regIndicies = indices.stream().limit(reg.indexDimensions().size())
           .collect(Collectors.toCollection(NodeList::new));
       regAccess = new ReadRegTensorNode(
@@ -371,8 +372,12 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           null
       );
 
-      var msbLsb = getMsbAndLsbOfIndexAccess(regFileDef.type().asDataType(), resultType, indices,
-          dimensions);
+      var remainingIndices = indices.stream().skip(consumedDimensions).toList();
+      var remainingDimensions = dimensions.stream().skip(consumedDimensions).toList();
+      ensureExpansionAliasSliceFits(definition, reg.resultType(consumedDimensions),
+          resultType, remainingDimensions);
+      var msbLsb = getMsbAndLsbOfIndexAccess(reg.resultType(consumedDimensions), resultType,
+          remainingIndices, remainingDimensions);
       var msb = msbLsb.left();
       var lsb = msbLsb.right();
       regAccess = new DynSliceNode(regAccess, msb, lsb, (DataType) getViamType(resultType));
@@ -506,6 +511,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // Expansion Alias
       // register R: Bits<4><4>
       // alisas register A: Bits<4><2><2>
+      var consumedDimensions = reg.indexDimensions().size();
 
       // We are building this with:
       // R(1) := R(1) & ~mask | v << lsb
@@ -513,8 +519,12 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // and v the value we want to write
 
       // 1) Calculate msb and lsb
-      var msbLsb = getMsbAndLsbOfIndexAccess(regFileDef.type().asDataType(), resultType, indices,
-          dimensions);
+      var remainingIndices = indices.stream().skip(consumedDimensions).toList();
+      var remainingDimensions = dimensions.stream().skip(consumedDimensions).toList();
+      ensureExpansionAliasSliceFits(definition, reg.resultType(consumedDimensions),
+          resultType, remainingDimensions);
+      var msbLsb = getMsbAndLsbOfIndexAccess(reg.resultType(consumedDimensions), resultType,
+          remainingIndices, remainingDimensions);
       var maskType = reg.resultType();
       var msb = zeroExtend(msbLsb.left(), maskType);
       var lsb = zeroExtend(msbLsb.right(), maskType);
@@ -616,16 +626,17 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
                                                                          List<ExpressionNode> indices,
                                                                          List<RegisterTensor.Dimension> dimensions) {
     var sourceSize = sourceValueType.bitWidth();
-    var sliceType = Type.bits(BitsType.indexWidthFor(sourceSize));
+    var maxLiteral = Math.max((long) sourceSize, (long) resultType.bitWidth() - 1);
+    for (int i = 0; i < indices.size(); i++) {
+      maxLiteral = Math.max(maxLiteral, strideForVirtualIndex(resultType, dimensions, i));
+    }
+    var sliceType = Type.bits(BitsType.indexWidthFor(Math.addExact(maxLiteral, 1)));
     ExpressionNode lsb = Constant.Value.of(0, sliceType).toNode();
     for (int i = 0; i < indices.size(); i++) {
       var indexExpr = indices.get(i);
       // Zero extend so the index isn't too narrow.
       indexExpr = new ZeroExtendNode(indexExpr, sliceType);
-      var p = resultType.bitWidth() * dimensions.stream()
-          .skip(i + 1)
-          .mapToInt(RegisterTensor.Dimension::size)
-          .reduce(1, (a, b) -> a * b);
+      var p = strideForVirtualIndex(resultType, dimensions, i);
       var multiplication = BuiltInTable.MUL.call(
           indexExpr,
           Constant.Value.of(p, sliceType).toNode()
@@ -636,6 +647,50 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         Constant.Value.of(resultType.bitWidth() - 1, sliceType).toNode());
 
     return Pair.of(msb, lsb);
+  }
+
+  private long strideForVirtualIndex(DataType resultType,
+                                     List<RegisterTensor.Dimension> dimensions,
+                                     int index) {
+    long stride = resultType.bitWidth();
+    for (var dim : dimensions.stream().skip(index + 1).toList()) {
+      stride = Math.multiplyExact(stride, dim.size());
+    }
+    return stride;
+  }
+
+  /**
+   * For expansion aliases we first read a concrete source value and then dynamically slice it.
+   * This validates that the virtual remaining dimensions map into that already-read source width.
+   */
+  private void ensureExpansionAliasSliceFits(AliasDefinition definition,
+                                             DataType sourceValueType,
+                                             DataType resultType,
+                                             List<RegisterTensor.Dimension> remainingDimensions) {
+    long coveredBits = resultType.bitWidth();
+    try {
+      for (var dim : remainingDimensions) {
+        coveredBits = Math.multiplyExact(coveredBits, dim.size());
+      }
+    } catch (ArithmeticException e) {
+      throw new IllegalStateException(
+          "Expansion alias mapping overflow for "
+              + definition.viamId
+              + ": while calculating covered bit width.",
+          e
+      );
+    }
+    if (coveredBits > sourceValueType.bitWidth()) {
+      throw new IllegalStateException(
+          "Invalid expansion alias mapping for "
+              + definition.viamId
+              + ": virtual alias indexing may address "
+              + coveredBits
+              + " bits, but source read provides only "
+              + sourceValueType.bitWidth()
+              + " bits."
+      );
+    }
   }
 
 
