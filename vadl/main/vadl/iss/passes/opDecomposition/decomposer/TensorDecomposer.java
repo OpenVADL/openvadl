@@ -52,42 +52,17 @@ public interface TensorDecomposer extends IDecomposer {
 
     int firstSlot = Math.max(0, reqLo / elementWidth);
     int lastSlot = Math.min(elementCount - 1, reqHi / elementWidth);
-    int firstSlotLsb = firstSlot * elementWidth;
-    int lastSlotLsb = lastSlot * elementWidth;
-    int firstLo = Math.max(0, reqLo - firstSlotLsb);
-    int firstHi = Math.min(elementWidth - 1, reqHi - firstSlotLsb);
-    int lastLo = Math.max(0, reqLo - lastSlotLsb);
-    int lastHi = Math.min(elementWidth - 1, reqHi - lastSlotLsb);
-
-    ExpressionNode lowPart = requestTensorElementSlice(
-        tensor, idx, firstSlot + minIdx, firstHi, firstLo);
-    if (firstSlot == lastSlot) {
-      return lowPart;
+    ExpressionNode result = null;
+    for (int slot = firstSlot; slot <= lastSlot; slot++) {
+      int slotLsb = slot * elementWidth;
+      int loInElement = Math.max(0, reqLo - slotLsb);
+      int hiInElement = Math.min(elementWidth - 1, reqHi - slotLsb);
+      var part = requestTensorElementSlice(
+          tensor, idx, slot + minIdx, hiInElement, loInElement);
+      result = result == null ? part : GraphUtils.concat(part, result);
     }
-
-    ExpressionNode highPart = requestTensorElementSlice(
-        tensor, idx, lastSlot + minIdx, lastHi, lastLo);
-
-    var middleFirstSlot = firstSlot + 1;
-    var middleLastSlot = lastSlot - 1;
-    ExpressionNode middlePart = null;
-    if (middleFirstSlot <= middleLastSlot) {
-      int middleFirstIdx = middleFirstSlot + minIdx;
-      int middleLastIdx = middleLastSlot + minIdx;
-      var middleIdx = new ForIdxNode(idx.type(), middleFirstIdx, middleLastIdx);
-      var middleBody = copyWithNodeSubstitution(
-          tensor.body(), idx, middleIdx, new IdentityHashMap<>());
-      middlePart = new TensorNode(
-          Type.bits((middleLastSlot - middleFirstSlot + 1) * elementWidth),
-          middleIdx,
-          middleBody
-      );
-      middlePart.setSourceLocation(tensor.location());
-    }
-
-    return middlePart == null
-        ? GraphUtils.concat(highPart, lowPart)
-        : GraphUtils.concat(highPart, GraphUtils.concat(middlePart, lowPart));
+    tensor.ensure(result != null, "Tensor slice decomposition produced no result.");
+    return result;
   }
 
   private ExpressionNode requestTensorElementSlice(TensorNode tensor,

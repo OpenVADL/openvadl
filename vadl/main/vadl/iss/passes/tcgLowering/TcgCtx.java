@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -24,6 +24,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.IssMoveNode;
+import vadl.iss.passes.nodes.IssRegChunkWriteNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
@@ -147,6 +148,11 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
     List<TcgVRefNode> destOf(WriteRegTensorNode toHandle) {
       return assignments.computeIfAbsent(toHandle,
           n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), true));
+    }
+
+    @Handler
+    List<TcgVRefNode> destOf(IssRegChunkWriteNode toHandle) {
+      return List.of();
     }
 
     @Handler

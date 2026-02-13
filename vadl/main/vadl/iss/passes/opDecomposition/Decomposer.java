@@ -20,6 +20,8 @@ import static vadl.utils.StreamUtils.only;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import javax.annotation.Nullable;
+import vadl.iss.passes.nodes.IssRegChunkReadNode;
+import vadl.iss.passes.nodes.IssRegChunkWriteNode;
 import vadl.iss.passes.opDecomposition.decomposer.ArithmeticDecomposer;
 import vadl.iss.passes.opDecomposition.decomposer.LogicDecomposer;
 import vadl.iss.passes.opDecomposition.decomposer.ShiftDecomposer;
@@ -266,55 +268,23 @@ class Decomposer
     }
 
     var regTensor = write.regTensor();
-    var indices = write.indices();
     var value = write.value();
     var condition = write.nullableCondition();
-    var staticCounterAccess = write.staticCounterAccess();
     var graph = write.ensureGraph();
 
     var ends = write.usages().gather(only(AbstractEndNode.class)).toList();
-
-    // Always decompose to innermost dimension (individual registers)
-    int innermostSize = regTensor.innermostDim().size();
-    int maxIndices = regTensor.maxNumberOfAccessIndices();
-
-    // Calculate how many innermost registers we need to write
-    int registersNeeded = writeWidth / innermostSize;
-    write.ensure(writeWidth % innermostSize == 0,
-        "Write width %d is not a multiple of innermost dimension size %d",
-        writeWidth, innermostSize);
-
-    // Calculate dimension sizes for multi-dimensional indexing
-    var dims = regTensor.dimensions();
-    int[] dimSizes = new int[maxIndices];
-    for (int d = 0; d < maxIndices; d++) {
-      dimSizes[d] = dims.get(d).size();
-    }
-
-    // Split the write into multiple writes to individual innermost registers
-    for (int i = 0; i < registersNeeded; i++) {
-      int lsb = i * innermostSize;
-      int msb = lsb + innermostSize - 1;
-
-      // Extract slice of the value for this innermost register
-      var chunkValue = request(value, msb, lsb);
-
-      // Calculate multi-dimensional index from linear index i
-      var newIndices = indices.copy();
-      int remaining = i;
-      for (int d = indices.size(); d < maxIndices; d++) {
-        int dimIndex = remaining % dimSizes[d];
-        remaining /= dimSizes[d];
-        var indexConst = Constant.Value.of(dimIndex, dims.get(d).indexType()).toNode();
-        newIndices.add(indexConst);
-      }
-
-      // Create new WriteRegTensorNode for this innermost register
-      var chunkWrite = graph.addWithInputs(
-          new WriteRegTensorNode(regTensor, newIndices, chunkValue, staticCounterAccess,
-              condition));
-
-      // Preserve source location
+    for (int chunkOffset = 0; chunkOffset < writeWidth; chunkOffset += targetSize) {
+      int chunkWidth = Math.min(targetSize, writeWidth - chunkOffset);
+      int chunkMsb = chunkOffset + chunkWidth - 1;
+      var chunkValue = request(value, chunkMsb, chunkOffset);
+      var chunkWrite = graph.addWithInputs(new IssRegChunkWriteNode(
+          regTensor,
+          write.indices().copy(),
+          chunkValue,
+          chunkOffset,
+          chunkWidth,
+          condition
+      ));
       chunkWrite.setSourceLocation(write.location());
 
       for (var end : ends) {
@@ -441,8 +411,7 @@ class Decomposer
   @Handler
   void handle(Request rq, ReadRegTensorNode toHandle) {
     var regTensor = toHandle.regTensor();
-    var indices = toHandle.indices();
-    var readWidth = regTensor.resultType(indices.size()).bitWidth();
+    var readWidth = regTensor.resultType(toHandle.indices().size()).bitWidth();
 
     // Ensure the requested slice is within bounds
     toHandle.ensure(rq.slice.hi() < readWidth,
@@ -457,46 +426,22 @@ class Decomposer
       return;
     }
 
-    // Need to decompose: read one or more innermost registers
-    int innermostSize = regTensor.innermostDim().size();
-    int maxIndices = regTensor.maxNumberOfAccessIndices();
-
-    // Calculate which innermost registers contain our requested slice
-    int firstRegIdx = rq.slice.lo() / innermostSize;
-    int lastRegIdx = rq.slice.hi() / innermostSize;
-
-    // Calculate dimension sizes for multi-dimensional indexing
-    var dims = regTensor.dimensions();
-    int[] dimSizes = new int[maxIndices];
-    for (int d = 0; d < maxIndices; d++) {
-      dimSizes[d] = dims.get(d).size();
-    }
-
+    // Need to decompose: read one or more target-sized chunks.
+    int firstChunkIdx = rq.slice.lo() / targetSize;
+    int lastChunkIdx = rq.slice.hi() / targetSize;
     ExpressionNode result = null;
 
-    // Read each innermost register that contains part of the requested slice
-    for (int regIdx = firstRegIdx; regIdx <= lastRegIdx; regIdx++) {
-      int regLsb = regIdx * innermostSize;
-
-      // Calculate multi-dimensional index from linear index
-      var newIndices = indices.copy();
-      int remaining = regIdx;
-      for (int d = indices.size(); d < maxIndices; d++) {
-        int dimIndex = remaining % dimSizes[d];
-        remaining /= dimSizes[d];
-        var indexConst = Constant.Value.of(dimIndex, dims.get(d).indexType()).toNode();
-        newIndices.add(indexConst);
-      }
-
-      // Read this innermost register
-      var regRead = new ReadRegTensorNode(
+    for (int chunkIdx = firstChunkIdx; chunkIdx <= lastChunkIdx; chunkIdx++) {
+      int chunkOffset = chunkIdx * targetSize;
+      int chunkWidth = Math.min(targetSize, readWidth - chunkOffset);
+      var chunkRead = new IssRegChunkReadNode(
           regTensor,
-          newIndices,
-          Type.bits(innermostSize).asDataType(),
+          toHandle.indices().copy(),
+          chunkOffset,
+          chunkWidth,
           toHandle.staticCounterAccess()
       );
-
-      result = accumulateChunk(result, regRead, rq.slice, regLsb, innermostSize, toHandle);
+      result = accumulateChunk(result, chunkRead, rq.slice, chunkOffset, chunkWidth, toHandle);
     }
 
     rq.result = result;
@@ -677,6 +622,7 @@ class Decomposer
   void handle(Request rq, TensorNode toHandle) {
     rq.result = decomposeTensorSlice(toHandle, rq.slice.hi(), rq.slice.lo());
   }
+
 
   @Handler
   void handle(Request rq, ReadSignalNode toHandle) {

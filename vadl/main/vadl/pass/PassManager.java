@@ -137,16 +137,23 @@ public class PassManager {
       }
     }
 
-    for (var step : affectedSteps) {
+    for (int passIdx = 0; passIdx < affectedSteps.size(); passIdx++) {
+      var step = affectedSteps.get(passIdx);
       @SuppressWarnings("VariableDeclarationUsageDistance")
       var startTime = System.currentTimeMillis();
-      logger.debug("Running pass with key: {}", step.key());
       // Wrapping the passResults into an unmodifiable map so a pass cannot modify
       // the results.
       var pass = step.pass();
+      logger.debug(">>> [{}/{}] Pass start: key='{}', class='{}', name='{}'",
+          passIdx + 1,
+          affectedSteps.size(),
+          step.key().value(),
+          pass.getClass().getSimpleName(),
+          pass.getName().value());
 
       if (pass.skip()) {
-        logger.debug("Skipping pass with key: {}", step.key());
+        logger.debug(">>> [{}/{}] Pass skipped: key='{}'",
+            passIdx + 1, affectedSteps.size(), step.key().value());
         passResults.addSkipped(step.key(), pass);
         continue;
       }
@@ -155,12 +162,11 @@ public class PassManager {
       pass.verification(viam, passResult);
 
       // we always store the pass result, even if the result is `null`
-      logger.debug("Storing result of pass with key: {}", step.key());
       var duration = System.currentTimeMillis() - startTime;
       passResults.add(step.key(), pass, duration, passResult);
 
-      logger.debug("Pass completed: {} -- {} ms", step.key(),
-          duration);
+      logger.debug(">>> [{}/{}] Pass done: key='{}' ({} ms)",
+          passIdx + 1, affectedSteps.size(), step.key().value(), duration);
     }
   }
 

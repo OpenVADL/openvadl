@@ -57,10 +57,11 @@ private class FunctionExtractor(
         toProcess.visitInputs(this)
 
         val creator = when (toProcess) {
-            is TensorNode -> toProcess.createFunction()
-            is FoldNode -> toProcess.createFunction()
+            is TensorNode -> if (toProcess.isExtractableToCFunction()) toProcess.createFunction() else null
+            is FoldNode -> if (toProcess.isExtractableToCFunction()) toProcess.createFunction() else null
             else -> return
         }
+        if (creator == null) return
         toProcess.replaceAndDelete(creator.call)
         instrInfo.addExtractedFunction(creator.definition)
     }
@@ -84,6 +85,28 @@ private class FunctionExtractor(
             kindName = "fold"
         )
     }
+}
+
+private const val MAX_C_EXTRACT_WIDTH_BITS = 64
+
+private fun TensorNode.isExtractableToCFunction(): Boolean {
+    if (this.type().asDataType().bitWidth() > MAX_C_EXTRACT_WIDTH_BITS) {
+        return false
+    }
+    return this.body()
+        .findAllIndependentOf(this.idx())
+        .filter { it !is ConstantNode }
+        .all { it.type().asDataType().bitWidth() <= MAX_C_EXTRACT_WIDTH_BITS }
+}
+
+private fun FoldNode.isExtractableToCFunction(): Boolean {
+    if (this.type().asDataType().bitWidth() > MAX_C_EXTRACT_WIDTH_BITS) {
+        return false
+    }
+    return this.body()
+        .findAllIndependentOf(this.idx())
+        .filter { it !is ConstantNode }
+        .all { it.type().asDataType().bitWidth() <= MAX_C_EXTRACT_WIDTH_BITS }
 }
 
 private class FunctionCreator(

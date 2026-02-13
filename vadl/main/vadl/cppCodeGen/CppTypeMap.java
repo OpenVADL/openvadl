@@ -46,8 +46,8 @@ public class CppTypeMap {
       return "int32_t";
     } else if (type instanceof SIntType sinttype && sinttype.bitWidth() == 64) {
       return "int64_t";
-    } else if (type instanceof SIntType sinttype && sinttype.bitWidth() == 128) {
-      return "int128_t";
+    } else if (type instanceof SIntType sinttype && sinttype.bitWidth() < 64) {
+      return cppSintType(nextFittingBitSize(sinttype.bitWidth()));
     } else if (type instanceof UIntType uinttype && uinttype.bitWidth() == 1) {
       return "bool";
     } else if (type instanceof UIntType uinttype && uinttype.bitWidth() == 8) {
@@ -58,8 +58,8 @@ public class CppTypeMap {
       return "uint32_t";
     } else if (type instanceof UIntType uinttype && uinttype.bitWidth() == 64) {
       return "uint64_t";
-    } else if (type instanceof UIntType uinttype && uinttype.bitWidth() == 128) {
-      return "uint128_t";
+    } else if (type instanceof UIntType uinttype && uinttype.bitWidth() < 64) {
+      return cppUintType(nextFittingBitSize(uinttype.bitWidth()));
     } else if (type instanceof BitsType bitsType && bitsType.bitWidth() == 8) {
       return "uint8_t";
     } else if (type instanceof BitsType bitsType && bitsType.bitWidth() == 16) {
@@ -68,8 +68,8 @@ public class CppTypeMap {
       return "uint32_t";
     } else if (type instanceof BitsType bitsType && bitsType.bitWidth() == 64) {
       return "uint64_t";
-    } else if (type instanceof BitsType bitsType && bitsType.bitWidth() == 128) {
-      return "uint128_t";
+    } else if (type instanceof BitsType bitsType && bitsType.bitWidth() < 64) {
+      return cppUintType(nextFittingBitSize(bitsType.bitWidth()));
     } else if (type instanceof CppType cppType) {
       return cppType.lower();
     } else if (type instanceof StringType) {
@@ -141,11 +141,10 @@ public class CppTypeMap {
       return 32;
     } else if (old > 32 && old <= 64) {
       return 64;
-    } else if (old > 64 && old <= 128) {
-      return 128;
+    } else if (old > 64) {
+      throw new RuntimeException("Types with more than 64 bits are not supported");
     }
-
-    throw new RuntimeException("Types with more than 128 bits are not supported");
+    throw new RuntimeException("Types with more than 64 bits are not supported");
   }
 
   /**

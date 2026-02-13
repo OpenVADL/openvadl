@@ -32,6 +32,8 @@ import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.iss.IssUtils;
+import vadl.iss.passes.nodes.IssRegChunkReadNode;
+import vadl.iss.passes.nodes.IssRegChunkWriteNode;
 import vadl.template.Renderable;
 import vadl.utils.WithLocation;
 import vadl.utils.codegen.CStringBuilder;
@@ -456,6 +458,8 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     private final AccessType type;
     private final List<AccessDim> dims;
     private final int elementWidth;
+    private final int containerWidth;
+    private final int chunkOffsetBits;
     private final WithLocation origin;
 
     /**
@@ -472,12 +476,16 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
         AccessType type,
         List<AccessDim> dims,
         int elementWidth,
+        int containerWidth,
+        int chunkOffsetBits,
         WithLocation origin
     ) {
       this.owner = owner;
       this.type = type;
       this.dims = dims;
       this.elementWidth = elementWidth;
+      this.containerWidth = containerWidth;
+      this.chunkOffsetBits = chunkOffsetBits;
       this.origin = origin;
     }
 
@@ -496,6 +504,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       return (type == READ ? "get" : "set")
           + "_" + owner.nameLower()
           + dimSuffix
+          + (chunkOffsetBits != 0 ? "_o" + chunkOffsetBits : "")
           + "_u" + elementWidth;
     }
 
@@ -608,8 +617,13 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
             .append(")");
       }
 
-      int elemBytes = elementWidth / 8;
+      int elemBytes = containerWidth / 8;
+      int copyBytes = elementWidth / 8;
+      int chunkOffsetBytes = chunkOffsetBits / 8;
       off.append(") * ").append(elemBytes).append(";");
+      if (chunkOffsetBytes > 0) {
+        off.append("\noff += ").append(chunkOffsetBytes).append(";");
+      }
 
       StringBuilder b = new StringBuilder();
 
@@ -621,11 +635,11 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
               %s v = 0;
               memcpy(&v, env->%s + off, %d);
               return v;
-            """.formatted(accessValueCType(), owner.nameLower(), elemBytes));
+            """.formatted(accessValueCType(), owner.nameLower(), copyBytes));
       } else {
         b.append("""
               memcpy(env->%s + off, &value, %d);
-            """.formatted(owner.nameLower(), elemBytes));
+            """.formatted(owner.nameLower(), copyBytes));
       }
 
       return b.toString();
@@ -683,6 +697,8 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
           + "type=" + type + ", "
           + "dims=" + dims + ", "
           + "elementWidth=" + elementWidth + ", "
+          + "containerWidth=" + containerWidth + ", "
+          + "chunkOffsetBits=" + chunkOffsetBits + ", "
           + "origin=" + origin + ']';
     }
 
@@ -698,13 +714,17 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
         return false;
       }
       AccessPattern that = (AccessPattern) o;
-      return elementWidth == that.elementWidth && Objects.equals(owner, that.owner)
-          && type == that.type && Objects.equals(dims, that.dims);
+      return elementWidth == that.elementWidth
+          && containerWidth == that.containerWidth
+          && chunkOffsetBits == that.chunkOffsetBits
+          && Objects.equals(owner, that.owner)
+          && type == that.type
+          && Objects.equals(dims, that.dims);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(owner, type, dims, elementWidth);
+      return Objects.hash(owner, type, dims, elementWidth, containerWidth, chunkOffsetBits);
     }
 
     /**
@@ -715,7 +735,9 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
      */
     public static AccessPattern of(ReadRegTensorNode read) {
       return of(read, AccessType.READ, read.regTensor(), read.indices(),
-          read.type().asDataType().bitWidth());
+          read.type().asDataType().bitWidth(),
+          read.regTensor().resultType(read.indices().size()).bitWidth(),
+          0);
     }
 
     /**
@@ -726,7 +748,23 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
      */
     public static AccessPattern of(WriteRegTensorNode write) {
       return of(write, AccessType.WRITE, write.regTensor(), write.indices(),
-          write.writeBitWidth());
+          write.writeBitWidth(),
+          write.regTensor().resultType(write.indices().size()).bitWidth(),
+          0);
+    }
+
+    public static AccessPattern of(IssRegChunkReadNode read) {
+      return of(read, AccessType.READ, read.regTensor(), read.indices(),
+          read.chunkWidthBits(),
+          read.regTensor().resultType(read.indices().size()).bitWidth(),
+          read.chunkOffsetBits());
+    }
+
+    public static AccessPattern of(IssRegChunkWriteNode write) {
+      return of(write, AccessType.WRITE, write.regTensor(), write.indices(),
+          write.chunkWidthBits(),
+          write.regTensor().resultType(write.indices().size()).bitWidth(),
+          write.chunkOffsetBits());
     }
 
     /**
@@ -740,13 +778,16 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
      */
     public static AccessPattern of(Node origin, AccessType type, RegisterTensor reg,
                                    List<ExpressionNode> indices,
-                                   int accessedWidth) {
+                                   int elementWidth,
+                                   int containerWidth,
+                                   int chunkOffsetBits) {
       var info = regInfo(reg);
       var indexDims = reg.indexDimensions().stream()
           .limit(indices.size())
           .map(d -> new RegInfo.AccessDim(d.indexType().bitWidth(), d.size()))
           .toList();
-      return new RegInfo.AccessPattern(info, type, indexDims, accessedWidth, origin);
+      return new RegInfo.AccessPattern(info, type, indexDims, elementWidth, containerWidth,
+          chunkOffsetBits, origin);
     }
   }
 }

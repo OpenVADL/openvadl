@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.error.Diagnostic;
@@ -52,10 +53,12 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
-import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.graph.dependency.WriteMemNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -93,12 +96,11 @@ public class IssOpDecompositionPass extends AbstractIssPass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var largeOperationErrors = new ArrayList<Diagnostic>();
     allInstrs(viam).map(Instruction::behavior)
-        .forEach(behavior -> {
-          new OpDecomposer(behavior, configuration().targetSize())
-              .decompose();
-          // check if there are still large operations left
-          checkNoLargeOperations(behavior).ifPresent(largeOperationErrors::add);
-        });
+        .forEach(behavior -> new OpDecomposer(behavior, configuration().targetSize()).decompose());
+
+    // Large-op validation is only required for TCG-mappable instruction paths.
+    tcgInstrs(viam).map(Instruction::behavior)
+        .forEach(behavior -> checkNoLargeOperations(behavior).ifPresent(largeOperationErrors::add));
 
     if (!largeOperationErrors.isEmpty()) {
       throw new DiagnosticList(largeOperationErrors);
@@ -152,9 +154,19 @@ class OpDecomposer {
   }
 
   private boolean decomposeSideeffects() {
-    // TODO: Handle WriteRegTensorNode
-    var hit = behavior.getNodes(WriteResourceNode.class)
-        .filter(node -> node.writeBitWidth() > targetSize.width)
+    var hit = Stream.concat(
+            behavior.getNodes(WriteMemNode.class).map(SideEffectNode.class::cast),
+            behavior.getNodes(WriteRegTensorNode.class).map(SideEffectNode.class::cast)
+        )
+        .filter(node -> {
+          if (node instanceof WriteMemNode w) {
+            return w.writeBitWidth() > targetSize.width;
+          }
+          if (node instanceof WriteRegTensorNode w) {
+            return w.writeBitWidth() > targetSize.width;
+          }
+          return false;
+        })
         .findFirst();
     if (hit.isPresent()) {
       // replace the current hit with the decomposed version.

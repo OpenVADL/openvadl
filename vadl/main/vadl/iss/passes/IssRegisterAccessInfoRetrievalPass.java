@@ -25,6 +25,8 @@ import java.util.Set;
 import javax.annotation.CheckForNull;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.extensions.RegInfo;
+import vadl.iss.passes.nodes.IssRegChunkReadNode;
+import vadl.iss.passes.nodes.IssRegChunkWriteNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;
@@ -55,20 +57,27 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
     var pc = requireNonNull(viam.isa().get().pc());
     var info = regInfo(pc.registerTensor());
     info.accessPatterns.add(new RegInfo.AccessPattern(
-        info, RegInfo.AccessType.READ, List.of(), pc.resultType().bitWidth(), pc
+        info, RegInfo.AccessType.READ, List.of(), pc.resultType().bitWidth(),
+        pc.resultType().bitWidth(), 0, pc
     ));
     info.accessPatterns.add(new RegInfo.AccessPattern(
-        info, RegInfo.AccessType.WRITE, List.of(), pc.resultType().bitWidth(), pc
+        info, RegInfo.AccessType.WRITE, List.of(), pc.resultType().bitWidth(),
+        pc.resultType().bitWidth(), 0, pc
     ));
 
     return null;
   }
 
   private void collectRegisterAccessPatterns(Graph behavior) {
-    behavior.getNodes(Set.of(ReadRegTensorNode.class, WriteRegTensorNode.class))
+    behavior.getNodes(Set.of(ReadRegTensorNode.class, WriteRegTensorNode.class,
+            IssRegChunkReadNode.class, IssRegChunkWriteNode.class))
         .forEach((n) -> {
           if (n instanceof ReadRegTensorNode readRegTensorNode) {
             collectRegisterAccessPattern(readRegTensorNode);
+          } else if (n instanceof IssRegChunkReadNode readChunk) {
+            collectRegisterAccessPattern(readChunk);
+          } else if (n instanceof IssRegChunkWriteNode writeChunk) {
+            collectRegisterAccessPattern(writeChunk);
           } else {
             collectRegisterAccessPattern((WriteRegTensorNode) n);
           }
@@ -81,6 +90,16 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
   }
 
   private void collectRegisterAccessPattern(WriteRegTensorNode node) {
+    var info = regInfo(node.regTensor());
+    info.accessPatterns.add(RegInfo.AccessPattern.of(node));
+  }
+
+  private void collectRegisterAccessPattern(IssRegChunkReadNode node) {
+    var info = regInfo(node.regTensor());
+    info.accessPatterns.add(RegInfo.AccessPattern.of(node));
+  }
+
+  private void collectRegisterAccessPattern(IssRegChunkWriteNode node) {
     var info = regInfo(node.regTensor());
     info.accessPatterns.add(RegInfo.AccessPattern.of(node));
   }

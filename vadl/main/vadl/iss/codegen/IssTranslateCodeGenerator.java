@@ -29,6 +29,8 @@ import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.extensions.InstrInfo;
+import vadl.iss.passes.nodes.IssRegChunkReadNode;
+import vadl.iss.passes.nodes.IssRegChunkWriteNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
@@ -217,6 +219,16 @@ class DefaultGenerator implements
   @Handler
   void handle(CGenContext<Node> ctx, FoldNode toHandle) {
     throwNotAllowed(toHandle, "forall fold expressions");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, IssRegChunkReadNode toHandle) {
+    throwNotAllowed(toHandle, "helper-only register chunk reads in translate function");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, IssRegChunkWriteNode toHandle) {
+    throwNotAllowed(toHandle, "helper-only register chunk writes in translate function");
   }
 }
 

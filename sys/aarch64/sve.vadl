@@ -154,7 +154,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
   format SVEAddVLFormat: Instr =           // add vector length format
     { op       [31..21]  : Bits11          // opcode
-    , rn       [20..16]  : Index           // source register (SP)
+      , rn       [20..16]  : Index           // source register (SP)
     , opc      [15..11]  : Bits5           // opcode second part
     , imm      [10..5]   : Bits6           // signed scaled immediate operand
     , rd       [4..0]    : Index           // destination register (SP)
@@ -1078,59 +1078,65 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
 // common sve and sme instructions *********************************************
 
+  // Incremental bring-up mode:
+  // Start with all concrete SVE instruction instantiations disabled.
+  // Re-enable in small batches after checking generated helper.c output.
+  //
   $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredADD    ; "add"   ; 0b0000'0000      ; add      ))
   $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredSUB    ; "sub"   ; 0b0000'1000      ; sub      ))
   $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredMUL    ; "mul"   ; 0b1000'0000      ; mul      ))
   $InstrSD          (SVEArithmeticPredInstr    ; (SVEpredSDIV   ; "sdiv"  ; 0b1010'0000      ; sdiv     ))
   $InstrSD          (SVEArithmeticPredInstr    ; (SVEpredUDIV   ; "udiv"  ; 0b1010'1000      ; udiv     ))
-
+  //
   $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprADD    ; "add"   ; 0b000'000        ; add      ))
   $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprSUB    ; "sub"   ; 0b000'001        ; sub      ))
   $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprMUL    ; "mul"   ; 0b011'000        ; mul      ))
-
-  $InstrBHSD        (SVEAddExtReductionInstr   ; (SVEfoldSADD   ; "saddv" ; 0b0'0000'0001    ; SIntX    ))
-  $InstrBHSD        (SVEAddExtReductionInstr   ; (SVEfoldUADD   ; "uaddv" ; 0b0'0000'1001    ; UIntX    ))
-  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldAND    ; "andv"  ; 0b0'1101'0001    ; and      ))
-  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldOR     ; "orv"   ; 0b0'1100'0001    ; or       ))
-  $InstrBHSD        (SVEReductionInstr         ; (SVEfoldXOR    ; "eorv"  ; 0b0'1100'1001    ; xor      ))
-
+  //
+  // currently blocked by frontend restriction: "forall fold expressions are not allowed"
+  // $InstrBHSD        (SVEAddExtReductionInstr   ; (SVEfoldSADD   ; "saddv" ; 0b0'0000'0001    ; SIntX    ))
+  // $InstrBHSD        (SVEAddExtReductionInstr   ; (SVEfoldUADD   ; "uaddv" ; 0b0'0000'1001    ; UIntX    ))
+  // currently blocked by frontend restriction: "forall fold expressions are not allowed"
+  // $InstrBHSD        (SVEReductionInstr         ; (SVEfoldAND    ; "andv"  ; 0b0'1101'0001    ; and      ))
+  // $InstrBHSD        (SVEReductionInstr         ; (SVEfoldOR     ; "orv"   ; 0b0'1100'0001    ; or       ))
+  // $InstrBHSD        (SVEReductionInstr         ; (SVEfoldXOR    ; "eorv"  ; 0b0'1100'1001    ; xor      ))
+  //
   $SIMDMoveInstr    (                            (SIMDUMOV      ; "umov"  ; 0b00'1111                   ))
-
+  //
   $SVEAddVLInstr    (                            (SVEADDVL      ; "addvl" ; 0b0'1010                    ))
   $SVEIncrInstr     (                            (SVEINC        ; "inc"   ; 0b111'000        ; inc      ))
-
+  //
   $InstrBHSD        (SVEPTrueInstr             ; (SVEPTRUE      ; "ptrue" ; 0b1110'000       ; OffFlags ))
   $InstrBHSD        (SVEPTrueInstr             ; (SVEPTRUES     ; "ptrues"; 0b1110'000       ; SetFlags ))
   $SVEPFalseInstr   (                            (SVEPFALSE     ; "pfalse"; 0b1110'010       ; OffFlags ))
-
-  $SVEPredLogicInstr(                            (SVEPAND       ; "and"   ; 0b0'0100         ; predAnd  ))
-  $SVEPredLogicInstr(                            (SVEPBIC       ; "bic"   ; 0b0'0101         ; predBic  ))
-  $SVEPredLogicInstr(                            (SVEPXOR       ; "eor"   ; 0b0'0110         ; predXor  ))
-  $SVEPredLogicInstr(                            (SVEPNAND      ; "nand"  ; 0b1'0111         ; predNand ))
-  $SVEPredLogicInstr(                            (SVEPNOR       ; "nor"   ; 0b1'0110         ; predNor  ))
-  $SVEPredLogicInstr(                            (SVEPORN       ; "orn"   ; 0b1'0101         ; predOrn  ))
-  $SVEPredLogicInstr(                            (SVEPOR        ; "orr"   ; 0b1'0100         ; predOr   ))
-  $SVEPredLogicOffFl(                            (SVEPSEL       ; "sel"   ; 0b0'0111         ; predSel  ))
-  $SVEPredTestInstr (                            (SVEPTEST      ; "ptest" ; 0b0'1100         ; unused   ))
-
-  $InstrB           (SVEPredFirstInstr         ; (SVEPFIRST     ; "pfirst"; 0b1000'1100'0000 ; unused   ))
-  $InstrBHSD        (SVEPredNextInstr          ; (SVEPNEXT      ; "pnext" ; 0b1001'1100'0100 ; unused   ))
-  $InstrBHSD        (SVEPredCountInstr         ; (SVECOUNTP     ; "cntp"  ; 0b0001'00        ; unused   ))
-  $InstrBHSD        (SVEPredIncCountInstr      ; (SVEINCTP      ; "incp"  ; 0b1001'00        ; unused   ))
-  $InstrBHSD        (SVEWhileXWInstr           ; (SVEWHILE      ; "while" ; 0b000            ; unused   ))
-
-  $SVELoadPredInstr (                            (SVELDRPrd     ; "ldr"   ; 0b100'001'0110   ; unused   ))
-  $SVEStorePredInstr(                            (SVESRRPrd     ; "str"   ; 0b111'001'0110   ; unused   ))
-  $SVELoadVectInstr (                            (SVELDRVec     ; "ldr"   ; 0b100'001'0110   ; unused   ))
-  $SVEStoreVectInstr(                            (SVESRRVec     ; "str"   ; 0b111'001'0110   ; unused   ))
-
-  $InstrMemLD16     (SVELoadScalarImmInstr     ; (SVEimmLD1     ; "ld1"   ; 0b101            ; unused   ))
-  $InstrMemST10     (SVEStoreScalarImmInstr    ; (SVEimmST1     ; "st1"   ; 0b111            ; unused   ))
-  $InstrMemLD16     (SVELoadScalarScalarInstr  ; (SVEsclLD1     ; "ld1"   ; 0b010            ; unused   ))
-  $InstrMemST10     (SVEStoreScalarScalarInstr ; (SVEsclST1     ; "st1"   ; 0b010            ; unused   ))
-  $InstrMemX12      (SVELoadMulScalarImmInstr  ; (SVEimmLD      ; "ld"    ; 0b101'0010'0     ; unused   ))
-  $InstrMemX12      (SVEStoreMulScalarImmInstr ; (SVEimmST      ; "st"    ; 0b111'0010'1     ; unused   ))
-  $InstrMemX12      (SVELoadMulScalarSclInstr  ; (SVEsclLD      ; "ld"    ; 0b101'0010       ; unused   ))
-  $InstrMemX12      (SVEStoreMulScalarSclInstr ; (SVEsclST      ; "st"    ; 0b111'0010       ; unused   ))
+  //
+  // $SVEPredLogicInstr(                            (SVEPAND       ; "and"   ; 0b0'0100         ; predAnd  ))
+  // $SVEPredLogicInstr(                            (SVEPBIC       ; "bic"   ; 0b0'0101         ; predBic  ))
+  // $SVEPredLogicInstr(                            (SVEPXOR       ; "eor"   ; 0b0'0110         ; predXor  ))
+  // $SVEPredLogicInstr(                            (SVEPNAND      ; "nand"  ; 0b1'0111         ; predNand ))
+  // $SVEPredLogicInstr(                            (SVEPNOR       ; "nor"   ; 0b1'0110         ; predNor  ))
+  // $SVEPredLogicInstr(                            (SVEPORN       ; "orn"   ; 0b1'0101         ; predOrn  ))
+  // $SVEPredLogicInstr(                            (SVEPOR        ; "orr"   ; 0b1'0100         ; predOr   ))
+  // $SVEPredLogicOffFl(                            (SVEPSEL       ; "sel"   ; 0b0'0111         ; predSel  ))
+  // $SVEPredTestInstr (                            (SVEPTEST      ; "ptest" ; 0b0'1100         ; unused   ))
+  //
+  // $InstrB           (SVEPredFirstInstr         ; (SVEPFIRST     ; "pfirst"; 0b1000'1100'0000 ; unused   ))
+  // $InstrBHSD        (SVEPredNextInstr          ; (SVEPNEXT      ; "pnext" ; 0b1001'1100'0100 ; unused   ))
+  // $InstrBHSD        (SVEPredCountInstr         ; (SVECOUNTP     ; "cntp"  ; 0b0001'00        ; unused   ))
+  // $InstrBHSD        (SVEPredIncCountInstr      ; (SVEINCTP      ; "incp"  ; 0b1001'00        ; unused   ))
+  // $InstrBHSD        (SVEWhileXWInstr           ; (SVEWHILE      ; "while" ; 0b000            ; unused   ))
+  //
+  // $SVELoadPredInstr (                            (SVELDRPrd     ; "ldr"   ; 0b100'001'0110   ; unused   ))
+  // $SVEStorePredInstr(                            (SVESRRPrd     ; "str"   ; 0b111'001'0110   ; unused   ))
+  // $SVELoadVectInstr (                            (SVELDRVec     ; "ldr"   ; 0b100'001'0110   ; unused   ))
+  // $SVEStoreVectInstr(                            (SVESRRVec     ; "str"   ; 0b111'001'0110   ; unused   ))
+  //
+  // $InstrMemLD16     (SVELoadScalarImmInstr     ; (SVEimmLD1     ; "ld1"   ; 0b101            ; unused   ))
+  // $InstrMemST10     (SVEStoreScalarImmInstr    ; (SVEimmST1     ; "st1"   ; 0b111            ; unused   ))
+  // $InstrMemLD16     (SVELoadScalarScalarInstr  ; (SVEsclLD1     ; "ld1"   ; 0b010            ; unused   ))
+  // $InstrMemST10     (SVEStoreScalarScalarInstr ; (SVEsclST1     ; "st1"   ; 0b010            ; unused   ))
+  // $InstrMemX12      (SVELoadMulScalarImmInstr  ; (SVEimmLD      ; "ld"    ; 0b101'0010'0     ; unused   ))
+  // $InstrMemX12      (SVEStoreMulScalarImmInstr ; (SVEimmST      ; "st"    ; 0b111'0010'1     ; unused   ))
+  // $InstrMemX12      (SVELoadMulScalarSclInstr  ; (SVEsclLD      ; "ld"    ; 0b101'0010       ; unused   ))
+  // $InstrMemX12      (SVEStoreMulScalarSclInstr ; (SVEsclST      ; "st"    ; 0b111'0010       ; unused   ))
 
 }
