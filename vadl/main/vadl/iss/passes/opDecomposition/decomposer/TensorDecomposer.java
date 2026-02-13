@@ -1,0 +1,136 @@
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package vadl.iss.passes.opDecomposition.decomposer;
+
+import java.util.IdentityHashMap;
+import vadl.types.Type;
+import vadl.utils.GraphUtils;
+import vadl.viam.Constant;
+import vadl.viam.graph.Canonicalizable;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.ForIdxNode;
+import vadl.viam.graph.dependency.TensorNode;
+
+/**
+ * Decomposes {@link TensorNode} expressions by materializing only the requested slice.
+ *
+ * <p>The implementation keeps loop structure for fully covered middle elements while specializing
+ * boundary elements to minimal requested slices.</p>
+ */
+public interface TensorDecomposer extends IDecomposer {
+
+  default ExpressionNode decomposeTensorSlice(TensorNode tensor, int reqHi, int reqLo) {
+    var idx = tensor.idx();
+    var from = idx.fromIdx();
+    var to = idx.toIdx();
+    var minIdx = Math.min(from, to);
+    var maxIdx = Math.max(from, to);
+    int elementWidth = tensor.body().type().asDataType().bitWidth();
+    int tensorWidth = tensor.type().bitWidth();
+    int elementCount = maxIdx - minIdx + 1;
+
+    tensor.ensure(tensorWidth == elementWidth * elementCount,
+        "Tensor width mismatch: result width=%d, element width=%d, index range=[%d..%d]",
+        tensorWidth, elementWidth, from, to);
+    tensor.ensure(reqHi < tensorWidth,
+        "Requested slice [%d:%d] exceeds tensor width of %d bits",
+        reqHi, reqLo, tensorWidth);
+
+    int firstSlot = Math.max(0, reqLo / elementWidth);
+    int lastSlot = Math.min(elementCount - 1, reqHi / elementWidth);
+    int firstSlotLsb = firstSlot * elementWidth;
+    int lastSlotLsb = lastSlot * elementWidth;
+    int firstLo = Math.max(0, reqLo - firstSlotLsb);
+    int firstHi = Math.min(elementWidth - 1, reqHi - firstSlotLsb);
+    int lastLo = Math.max(0, reqLo - lastSlotLsb);
+    int lastHi = Math.min(elementWidth - 1, reqHi - lastSlotLsb);
+
+    ExpressionNode lowPart = requestTensorElementSlice(
+        tensor, idx, firstSlot + minIdx, firstHi, firstLo);
+    if (firstSlot == lastSlot) {
+      return lowPart;
+    }
+
+    ExpressionNode highPart = requestTensorElementSlice(
+        tensor, idx, lastSlot + minIdx, lastHi, lastLo);
+
+    var middleFirstSlot = firstSlot + 1;
+    var middleLastSlot = lastSlot - 1;
+    ExpressionNode middlePart = null;
+    if (middleFirstSlot <= middleLastSlot) {
+      int middleFirstIdx = middleFirstSlot + minIdx;
+      int middleLastIdx = middleLastSlot + minIdx;
+      var middleIdx = new ForIdxNode(idx.type(), middleFirstIdx, middleLastIdx);
+      var middleBody = copyWithNodeSubstitution(
+          tensor.body(), idx, middleIdx, new IdentityHashMap<>());
+      middlePart = new TensorNode(
+          Type.bits((middleLastSlot - middleFirstSlot + 1) * elementWidth),
+          middleIdx,
+          middleBody
+      );
+      middlePart.setSourceLocation(tensor.location());
+    }
+
+    return middlePart == null
+        ? GraphUtils.concat(highPart, lowPart)
+        : GraphUtils.concat(highPart, GraphUtils.concat(middlePart, lowPart));
+  }
+
+  private ExpressionNode requestTensorElementSlice(TensorNode tensor,
+                                                   ForIdxNode idx,
+                                                   int idxValue,
+                                                   int hiInElement,
+                                                   int loInElement) {
+    var idxConst = Constant.Value.of(idxValue, idx.type()).toNode();
+    var bodyAtIdx = copyWithNodeSubstitution(tensor.body(), idx, idxConst, new IdentityHashMap<>());
+    var elementPart = request(bodyAtIdx, hiInElement, loInElement);
+    elementPart.setSourceLocation(tensor.location());
+    return elementPart;
+  }
+
+  private ExpressionNode copyWithNodeSubstitution(ExpressionNode node,
+                                                  ExpressionNode toReplace,
+                                                  ExpressionNode replacement,
+                                                  IdentityHashMap<ExpressionNode, ExpressionNode> cache) {
+    if (node == toReplace) {
+      return replacement;
+    }
+
+    var cached = cache.get(node);
+    if (cached != null) {
+      return cached;
+    }
+
+    var copy = (ExpressionNode) node.shallowCopy();
+    cache.put(node, copy);
+    copy.applyOnInputs((self, input) -> {
+      if (input instanceof ExpressionNode inputExpr) {
+        return copyWithNodeSubstitution(inputExpr, toReplace, replacement, cache);
+      }
+      return input;
+    });
+
+    if (copy instanceof Canonicalizable canonicalizable) {
+      var canonical = canonicalizable.canonical();
+      if (canonical instanceof ExpressionNode exprCanonical) {
+        copy = exprCanonical;
+      }
+    }
+    cache.put(node, copy);
+    return copy;
+  }
+}

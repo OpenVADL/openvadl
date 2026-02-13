@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
 import vadl.iss.passes.opDecomposition.decomposer.ArithmeticDecomposer;
 import vadl.iss.passes.opDecomposition.decomposer.LogicDecomposer;
 import vadl.iss.passes.opDecomposition.decomposer.ShiftDecomposer;
+import vadl.iss.passes.opDecomposition.decomposer.TensorDecomposer;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.types.BuiltInTable;
@@ -77,7 +78,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 @SuppressWarnings("OverloadMethodsDeclarationOrder")
 class Decomposer
     implements VadlBuiltInEmptyNoStatusDispatcher<Decomposer.Request>, ShiftDecomposer, LogicDecomposer,
-    ArithmeticDecomposer {
+    ArithmeticDecomposer, TensorDecomposer {
 
   record Slice(int hi, int lo) {
     int width() {
@@ -254,9 +255,7 @@ class Decomposer
     }
 
     // Delete the original large write
-    for (var end : ends) {
-      end.removeSideEffect(write);
-    }
+    removeFromAllEndSideEffects(write);
     write.safeDelete();
   }
 
@@ -324,10 +323,21 @@ class Decomposer
     }
 
     // Delete the original large write
-    for (var end : ends) {
-      end.removeSideEffect(write);
-    }
+    removeFromAllEndSideEffects(write);
     write.safeDelete();
+  }
+
+  private void removeFromAllEndSideEffects(SideEffectNode sideEffect) {
+    var removed = true;
+    while (removed) {
+      removed = false;
+      for (var usage : sideEffect.usages().toList()) {
+        if (usage instanceof AbstractEndNode end && end.sideEffects().contains(sideEffect)) {
+          end.removeSideEffect(sideEffect);
+          removed = true;
+        }
+      }
+    }
   }
 
   @Override
@@ -658,12 +668,14 @@ class Decomposer
 
   @Handler
   void handle(Request rq, ForIdxNode toHandle) {
-    throw new UnsupportedOperationException("Type ForIdxNode not yet implemented");
+    rq.result = new SliceNode(toHandle,
+        Constant.BitSlice.of(rq.slice.hi(), rq.slice.lo()),
+        Type.bits(rq.slice.width()));
   }
 
   @Handler
   void handle(Request rq, TensorNode toHandle) {
-    throw new UnsupportedOperationException("Type TensorNode not yet implemented");
+    rq.result = decomposeTensorSlice(toHandle, rq.slice.hi(), rq.slice.lo());
   }
 
   @Handler

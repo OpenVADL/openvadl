@@ -61,7 +61,7 @@ private class FunctionExtractor(
             is FoldNode -> toProcess.createFunction()
             else -> return
         }
-        (toProcess as ExpressionNode).replaceAndDelete(creator.call)
+        toProcess.replaceAndDelete(creator.call)
         instrInfo.addExtractedFunction(creator.definition)
     }
 

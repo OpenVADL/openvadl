@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -49,6 +49,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SliceNode;
@@ -166,6 +167,8 @@ class OpDecomposer {
   private boolean decomposeExpressions(Set<Node> processed) {
     var hit = behavior.getNodes(ExpressionNode.class)
         .filter(node -> node.type() instanceof DataType)
+        // dynamic slices are normalized later to ISS extract nodes
+        .filter(node -> !(node instanceof DynSliceNode))
         // find any expression node that is within the target size while having a too large input.
         .filter(node -> node.type().asDataType().bitWidth() <= targetSize.width)
         .filter(node -> node.inputs().map(ExpressionNode.class::cast)
