@@ -129,6 +129,30 @@ public class IssRV64VInstrTest extends AbstractIssRiscv64InstrTest {
         b.add("# immediate value: %d", imm));
   }
 
+  private IssTestUtils.TestCase createReductionVecInstrTest(RV64IMVTestBuilder b,
+                                                            String instruction) {
+    b.configureCpuForVecOps("x1");
+
+    b.add("# fill destination vector");
+    b.fillVectorAddr("v0", VECTOR_DEST_ADDR, "x1", "x2");
+
+    b.add("# fill reduction source vector (vs2)");
+    b.fillVectorAddr("v1", VECTOR_SRC_1_ADDR, "x1", "x2");
+
+    b.add("# fill reduction seed vector (vs1)");
+    b.fillVectorAddr("v2", VECTOR_SRC_2_ADDR, "x1", "x2");
+
+    b.add("# reduction vector instruction");
+    b.add("%s.vs v0, v1, v2", instruction);
+
+    b.add("# store result in memory");
+    b.storeVectorToMemory("v0", VECTOR_DEST_ADDR, "x2");
+
+    b.add("# load result into registers");
+    b.loadArrayToRegs(VECTOR_DEST_ADDR, RESULT_REG_START, RESULT_REG_END, "x2");
+    return b.toTestCase();
+  }
+
   private Stream<DynamicTest> testBinaryVecInstr(String instruction,
                                                  boolean v, boolean x, boolean i)
       throws IOException {
@@ -290,6 +314,26 @@ public class IssRV64VInstrTest extends AbstractIssRiscv64InstrTest {
   @TestFactory
   Stream<DynamicTest> vnmsac() throws IOException {
     return testBinaryVecInstr("vnmsac", true, true, true, true, false);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> vredsum() throws IOException {
+    return runTestsWith((id) -> createReductionVecInstrTest(getBuilder("VREDSUM.VS", id), "vredsum"));
+  }
+
+  @TestFactory
+  Stream<DynamicTest> vredand() throws IOException {
+    return runTestsWith((id) -> createReductionVecInstrTest(getBuilder("VREDAND.VS", id), "vredand"));
+  }
+
+  @TestFactory
+  Stream<DynamicTest> vredor() throws IOException {
+    return runTestsWith((id) -> createReductionVecInstrTest(getBuilder("VREDOR.VS", id), "vredor"));
+  }
+
+  @TestFactory
+  Stream<DynamicTest> vredxor() throws IOException {
+    return runTestsWith((id) -> createReductionVecInstrTest(getBuilder("VREDXOR.VS", id), "vredxor"));
   }
 
 }
