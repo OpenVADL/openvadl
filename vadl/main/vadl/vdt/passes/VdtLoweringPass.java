@@ -83,7 +83,7 @@ public class VdtLoweringPass extends Pass {
 
     if (generator == OCC) {
       // TODO: Add the option to specify the memory penalty
-      return new OccurrenceAwareDecodeTreeGenerator(1).generate(entries);
+      return new OccurrenceAwareDecodeTreeGenerator(0.5).generate(entries);
     }
 
     return new IrregularDecodeTreeGenerator().generate(entries);

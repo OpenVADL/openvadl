@@ -126,11 +126,18 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     final MultiPatterns patterns = makePatterns(decodeEntries);
 
     if (!patterns.hasDecision()) {
-      // Split entry set by exclusion conditions instead
-      return makeConditionNode(decodeEntries);
+      // Select best splitting pattern based on exclusion conditions
+      final BitPattern pattern = selectPattern(decodeEntries);
+      return makeConditionNode(decodeEntries, pattern);
     }
 
     final MultiSplitEntrySet splitEntries = split(decodeEntries, patterns.mask());
+
+    return makeMultiDecisionNode(decodeEntries, splitEntries);
+  }
+
+  protected MultiDecisionNode makeMultiDecisionNode(DecodeEntries decodeEntries,
+                                                    MultiSplitEntrySet splitEntries) {
 
     final Map<BitPattern, Node> children = new LinkedHashMap<>();
     for (var branches : splitEntries.entries().entrySet()) {
@@ -149,13 +156,10 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
       children.put(pattern, childNode);
     }
 
-    return new MultiDecisionNode(patterns.mask(), children);
+    return new MultiDecisionNode(splitEntries.mask(), children);
   }
 
-  private Node makeConditionNode(DecodeEntries decodeEntries) {
-
-    // Select best splitting pattern based on exclusion conditions
-    final BitPattern pattern = selectPattern(decodeEntries);
+  protected Node makeConditionNode(DecodeEntries decodeEntries, BitPattern pattern) {
 
     // Split the entry set
     final SingleSplitEntrySet splitEntries = split(decodeEntries, pattern);
@@ -191,7 +195,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
 
     // We don't need to check bits more than once
     BitVector checked = decodeEntries.checkedBits().toMaskVector();
-    mask = mask.xor(checked);
+    mask = mask.and(checked.not());
 
     final Set<BitPattern> options = new LinkedHashSet<>();
     for (DecodeEntry e : decodeEntries.entries()) {
@@ -219,7 +223,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
    * @param pattern       the splitting pattern.
    * @return the split entry set.
    */
-  private SingleSplitEntrySet split(DecodeEntries decodeEntries, BitPattern pattern) {
+  protected SingleSplitEntrySet split(DecodeEntries decodeEntries, BitPattern pattern) {
 
     final List<DecodeEntry> matchingEntries = new ArrayList<>();
     final List<DecodeEntry> otherEntries = new ArrayList<>();
@@ -265,7 +269,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
    * @param mask          the splitting mask.
    * @return the split entry set.
    */
-  private MultiSplitEntrySet split(DecodeEntries decodeEntries, BitVector mask) {
+  protected MultiSplitEntrySet split(DecodeEntries decodeEntries, BitVector mask) {
 
     final MultiPatterns patterns = makePatterns(decodeEntries, mask);
     final Map<BitPattern, List<DecodeEntry>> entries = new LinkedHashMap<>();
@@ -663,7 +667,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
         .map(Definition::simpleName)
         .toList();
 
-    var diagnostic = error(("Unable to split instruction set during decoder generation: %s")
+    var diagnostic = error("Unable to split instruction set during decoder generation: %s"
         .formatted(insnNames), primary);
 
     for (DecodeEntry e : decodeEntries.entries()) {
