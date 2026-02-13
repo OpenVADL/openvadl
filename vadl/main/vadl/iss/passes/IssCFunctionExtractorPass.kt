@@ -19,7 +19,8 @@ import java.io.IOException
 
 /**
  * An ISS pass that extracts expressions into functions and replaces them by calls.
- * E.g., this is done for [TensorNode], as the generated function becomes cleaner.
+ * E.g., this is done for [TensorNode] and [FoldNode], as the generated helper function code
+ * becomes cleaner.
  */
 class IssCFunctionExtractionPass(config: IssConfiguration) : AbstractIssPass(config) {
     override fun getName(): PassName {
@@ -30,7 +31,7 @@ class IssCFunctionExtractionPass(config: IssConfiguration) : AbstractIssPass(con
     @Throws(IOException::class)
     override fun execute(passResults: PassResults, viam: Specification): Any? {
         helperInstrs(viam).forEach {
-            // extract tensor nodes
+            // extract forall-expression nodes rendered through C helper functions
             FunctionExtractor(it).run()
         }
         return null
@@ -52,21 +53,46 @@ private class FunctionExtractor(
     }
 
     override fun processUnprocessedNode(toProcess: Node) {
-        // first extract the inner tensors
+        // first extract inner forall expressions
         toProcess.visitInputs(this)
 
-        val tensor = toProcess as? TensorNode ?: return
-        val creator = tensor.createFunction()
-        tensor.replaceAndDelete(creator.call)
+        val creator = when (toProcess) {
+            is TensorNode -> toProcess.createFunction()
+            is FoldNode -> toProcess.createFunction()
+            else -> return
+        }
+        (toProcess as ExpressionNode).replaceAndDelete(creator.call)
         instrInfo.addExtractedFunction(creator.definition)
     }
 
     fun TensorNode.createFunction(): FunctionCreator {
-        return FunctionCreator(instruction, this)
+        return FunctionCreator(
+            instruction = instruction,
+            expr = this,
+            idx = this.idx(),
+            body = this.body(),
+            kindName = "tensor"
+        )
+    }
+
+    fun FoldNode.createFunction(): FunctionCreator {
+        return FunctionCreator(
+            instruction = instruction,
+            expr = this,
+            idx = this.idx(),
+            body = this.body(),
+            kindName = "fold"
+        )
     }
 }
 
-private class FunctionCreator(val instruction: Instruction, val tensor: TensorNode) {
+private class FunctionCreator(
+    val instruction: Instruction,
+    val expr: ExpressionNode,
+    val idx: ForIdxNode,
+    val body: ExpressionNode,
+    val kindName: String
+) {
 
     private val funcIdent: Identifier
     private val paramArgs: List<Pair<ExpressionNode, Parameter>>
@@ -74,7 +100,7 @@ private class FunctionCreator(val instruction: Instruction, val tensor: TensorNo
     val call: Node
 
     init {
-        val name = "tensor_${instruction.simpleName()}_${tensor.id}"
+        val name = "${kindName}_${instruction.simpleName()}_${expr.id}"
         funcIdent = instruction.identifier().append(name)
         paramArgs = findParamsArgs()
         definition = produceDefinition()
@@ -86,14 +112,14 @@ private class FunctionCreator(val instruction: Instruction, val tensor: TensorNo
         val function = Function(
             funcIdent,
             params,
-            tensor.type(),
-            createFuncGraph("Tensor Function ${funcIdent.simpleName()}")
+            expr.type(),
+            createFuncGraph("${kindName.replaceFirstChar { it.uppercase() }} Function ${funcIdent.simpleName()}")
         )
         return function
     }
 
     private fun produceCall(): FuncCallNode {
-        return FuncCallNode(definition, NodeList(paramArgs.map { it.first }), tensor.type())
+        return FuncCallNode(definition, NodeList(paramArgs.map { it.first }), expr.type())
     }
 
     /**
@@ -110,7 +136,7 @@ private class FunctionCreator(val instruction: Instruction, val tensor: TensorNo
     private fun findParamsArgs(): List<Pair<ExpressionNode, Parameter>> {
         // Find all expression nodes that don't depend on the tensor index variable
         // These are values from outside the tensor scope that need to be passed as parameters
-        val externalExpressions = tensor.body().findAllIndependentOf(tensor.idx())
+        val externalExpressions = body.findAllIndependentOf(idx)
             // constant nodes shouldn't be passed as parameters
             .filter { it !is ConstantNode }
 
@@ -160,11 +186,11 @@ private class FunctionCreator(val instruction: Instruction, val tensor: TensorNo
             }
         }
 
-        // Copy the tensor expression tree with parameters substituted
-        val tensorCopy = tensor.copySubExpression()
+        // Copy the expression tree with parameters substituted
+        val exprCopy = expr.copySubExpression()
 
         // Wrap in a return statement and add to the graph
-        val end = addWithInputs(ReturnNode(tensorCopy))
+        val end = addWithInputs(ReturnNode(exprCopy))
         addWithInputs(StartNode(end))
     }
 }
