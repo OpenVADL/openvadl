@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.error.DiagnosticBuilder;
 import vadl.error.DiagnosticList;
+import vadl.iss.codegen.HelperParamPacking;
 import vadl.iss.passes.extensions.ExceptionInfo;
 import vadl.iss.passes.extensions.InstrInfo;
 import vadl.iss.passes.extensions.RegInfo;
@@ -77,16 +78,18 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
     checkMipExists(viam, diagnostics);
     checkProgramCounter(viam, diagnostics);
     checkRegisterTensors(viam, diagnostics);
+
+    // The following checks and emissions use InstrInfo.
+    withIsa(viam, this::attachInstrInfo);
+
     checkFormats(viam, diagnostics);
     checkMemory(viam, diagnostics);
 
     // behavior checks
     checkSlice(viam, diagnostics);
+    checkHelperParamPacking(viam, diagnostics);
 
-    withIsa(viam, isa -> {
-      attachExceptionInfo(isa);
-      attachInstrInfo(isa);
-    });
+    withIsa(viam, this::attachExceptionInfo);
 
 
     if (!diagnostics.isEmpty()) {
@@ -263,6 +266,34 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
       }
     }
 
+  }
+
+  private void checkHelperParamPacking(Specification viam, List<DiagnosticBuilder> diagnostics) {
+    withIsa(viam, isa -> isa.ownInstructions().stream()
+        .map(instr -> {
+          var info = instr.expectExtension(InstrInfo.class);
+          if (!info.asHelperCall()) {
+            return null;
+          }
+
+          var blockCount = HelperParamPacking.from(info).blockCount();
+          if (blockCount <= HelperParamPacking.MAX_HELPER_ARG_BLOCKS) {
+            return null;
+          }
+
+          return error("Too many helper argument blocks", instr)
+              .locationDescription(instr.identifier,
+                  "Instruction `%s` requires %s packed 64-bit helper argument blocks.",
+                  instr.simpleName(),
+                  blockCount)
+              .description("The QEMU helper macros support at most %s explicit helper arguments "
+                      + "in addition to env.",
+                  HelperParamPacking.MAX_HELPER_ARG_BLOCKS)
+              .note("Reduce helper parameter usage or split behavior into extracted helper functions.");
+        })
+        .filter(Objects::nonNull)
+        .forEach(diagnostics::add)
+    );
   }
 
   // checks if all slices are not greater than 64 bit
