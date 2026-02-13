@@ -54,7 +54,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   @Nullable
   private Map<String, Object> renderObj;
   private final IssConfiguration config;
-  private final boolean isGVecValue;
+  private final ExecClass execClass;
 
   public final Set<AccessPattern> accessPatterns = new HashSet<>();
 
@@ -71,7 +71,21 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
                  List<ReadRegTensorNode> reads,
                  List<WriteRegTensorNode> writes) {
     this.config = config;
-    this.isGVecValue = isGVec(reg, reads, writes);
+    this.execClass = determineExecClass(reg, reads, writes);
+  }
+
+  /**
+   * Backend execution class for register accesses.
+   */
+  public enum ExecClass {
+    /**
+     * Register can be represented with scalar TCG variables.
+     */
+    TCG_SCALAR,
+    /**
+     * Register must be accessed through helper/cpu-state code.
+     */
+    HELPER_ONLY
   }
 
   /**
@@ -125,7 +139,21 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
    * @return true if register is a generic vector
    */
   public boolean isGVec() {
-    return isGVecValue;
+    return execClass == ExecClass.HELPER_ONLY;
+  }
+
+  /**
+   * Returns whether the register is scalar-TCG mappable.
+   */
+  public boolean isTcgScalar() {
+    return execClass == ExecClass.TCG_SCALAR;
+  }
+
+  /**
+   * Returns the execution class used for backend selection.
+   */
+  public ExecClass execClass() {
+    return execClass;
   }
 
   /**
@@ -188,6 +216,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       renderObj.put("names", names());
       renderObj.put("is_tcg", !isGVec());
       renderObj.put("is_gvec", isGVec());
+      renderObj.put("exec_class", execClass().name());
       renderObj.put("constraints", renderConstraints(dims));
       renderObj.put("getter_params", renderParamsComma);
       renderObj.put("access_patterns", accessPatterns.stream()
@@ -337,8 +366,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     return numIndices < reg.maxNumberOfAccessIndices();
   }
 
-  /// Determines whether a register tensor should be treated as a generic vector (gvec)
-  /// or as individual TCG variables.
+  /// Determines backend execution class for a register tensor.
   ///
   /// A register is considered a gvec if:
   /// - Any single element exceeds 64 bits (can't fit in TCG scalar types)
@@ -359,17 +387,17 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   /// @param reg    the register tensor to analyze
   /// @param reads  all read accesses to this register
   /// @param writes all write accesses to this register
-  /// @return true if the register should be treated as a gvec, false for TCG variables
+  /// @return execution class for backend selection
   @SuppressWarnings("OverloadMethodsDeclarationOrder")
-  private static boolean isGVec(RegisterTensor reg,
-                                List<ReadRegTensorNode> reads,
-                                List<WriteRegTensorNode> writes) {
+  private static ExecClass determineExecClass(RegisterTensor reg,
+                                                           List<ReadRegTensorNode> reads,
+                                                           List<WriteRegTensorNode> writes) {
 
     // 1. Check if any individual element (fully indexed access) exceeds 64 bits
     //    If so, even scalar accesses can't use TCG variables
     int fullyIndexedWidth = reg.resultType(reg.maxNumberOfAccessIndices()).bitWidth();
     if (fullyIndexedWidth > 64) {
-      return true;
+      return ExecClass.HELPER_ONLY;
     }
 
     // TODO: We should propably do proper analysis if the register is used
@@ -377,17 +405,18 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     // 2. Check if it is more than 2 dimensions.
     //    If so, it is typically used as vector registers within loops.
     if (reg.dimensions().size() > 2) {
-      return true;
+      return ExecClass.HELPER_ONLY;
     }
 
     // 3. If we have vector-style accesses, use gvec
     //    Otherwise, all accesses are fully indexed (scalar accesses)
     //    Even if total width > 64 bits, we can use separate TCG variables
     //    for each element (like GPR[32] where each register is separate)
-    return reads.stream()
+    var hasVectorStyleAccess = reads.stream()
         .anyMatch(read -> isVectorAccess(reg, read.indices().size()))
         || writes.stream()
         .anyMatch(write -> isVectorAccess(reg, write.indices().size()));
+    return hasVectorStyleAccess ? ExecClass.HELPER_ONLY : ExecClass.TCG_SCALAR;
   }
 
   /**

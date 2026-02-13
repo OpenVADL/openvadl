@@ -1064,11 +1064,11 @@ class UpcastAnnotation extends Annotation {
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
 
     var def = definition.values.getFirst();
-    ensure(def instanceof Identifier, () -> error("Invalid annotation value", def)
+    Diagnostic.ensure(def instanceof Identifier, () -> error("Invalid annotation value", def)
         .description("A single identifier was expected.")
     );
     var target = ((Identifier) def).target();
-    ensure(target instanceof Definition, () -> error("Invalid annotation value", def)
+    Diagnostic.ensure(target instanceof Definition, () -> error("Invalid annotation value", def)
         .description("The identifier must reference a definition."));
     targetDef = ((Definition) target);
 

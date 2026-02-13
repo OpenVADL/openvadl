@@ -49,6 +49,7 @@ import vadl.gcb.passes.operands.GenerateInstructionOperandsPass;
 import vadl.iss.passes.IssBuiltInArgTruncOptPass;
 import vadl.iss.passes.IssCFunctionExtractionPass;
 import vadl.iss.passes.IssConfigurationPass;
+import vadl.iss.passes.IssExecStrategyPass;
 import vadl.iss.passes.IssExtractOptimizationPass;
 import vadl.iss.passes.IssGdbInfoExtractionPass;
 import vadl.iss.passes.IssHardcodedTcgAddOnPass;
@@ -499,6 +500,7 @@ public class PassOrders {
     // iss function passes
     order
         .add(new IssInfoRetrievalPass(config))
+        .add(new IssExecStrategyPass(config))
         .add(new IssConfigurationPass(config))
         .add(new IssMemoryDetectionPass(config))
         .add(new IssOpDecompositionPass(config))

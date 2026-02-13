@@ -27,11 +27,8 @@ import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
-import vadl.viam.graph.control.ForallNode;
-import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
@@ -41,8 +38,22 @@ import vadl.viam.graph.dependency.WriteRegTensorNode;
 public class InstrInfo extends DefinitionExtension<Instruction> {
 
 
+  /**
+   * Backend execution strategy for an instruction.
+   */
+  public enum ExecStrategy {
+    /**
+     * Instruction can be lowered to direct TCG translation.
+     */
+    DIRECT_TCG,
+    /**
+     * Instruction must be translated as helper call.
+     */
+    HELPER_CALL
+  }
+
   @Nullable
-  Boolean asHelperCall = null;
+  private ExecStrategy execStrategy = null;
 
   List<Function> extractedFunctions = new ArrayList<>();
 
@@ -51,10 +62,34 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
    * a C implementation of this instruction.
    */
   public boolean asHelperCall() {
-    if (asHelperCall == null) {
-      asHelperCall = computeAsHelperCall();
+    return execStrategy() == ExecStrategy.HELPER_CALL;
+  }
+
+  /**
+   * Gets the execution strategy used by code generation.
+   */
+  public ExecStrategy execStrategy() {
+    if (execStrategy == null) {
+      execStrategy = computeFallbackExecStrategy();
     }
-    return asHelperCall;
+    return execStrategy;
+  }
+
+  /**
+   * Sets the execution strategy as computed by the strategy classifier pass.
+   */
+  public void setExecStrategy(ExecStrategy execStrategy) {
+    this.execStrategy = execStrategy;
+  }
+
+  private ExecStrategy computeFallbackExecStrategy() {
+    var hasHelperOnlyReads = instr().behavior().getNodes(ReadRegTensorNode.class)
+        .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.HELPER_ONLY);
+    var hasHelperOnlyWrites = instr().behavior().getNodes(WriteRegTensorNode.class)
+        .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.HELPER_ONLY);
+    return hasHelperOnlyReads || hasHelperOnlyWrites
+        ? ExecStrategy.HELPER_CALL
+        : ExecStrategy.DIRECT_TCG;
   }
 
   /**
@@ -94,21 +129,6 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
   public Stream<ParamNode> helperFormatParamOrder() {
     return instr().behavior().getNodes(ParamNode.class)
         .sorted(Comparator.comparing((a) -> a.definition().simpleName()));
-  }
-
-
-  private boolean computeAsHelperCall() {
-    // Check if one of the registers used in the instruction is a generic vector.
-    // In that case, we fall back to a helper call.
-    return instr().behavior().getNodes(ReadRegTensorNode.class)
-        .anyMatch(n -> regInfo(n.regTensor()).isGVec())
-        || instr().behavior().getNodes(WriteRegTensorNode.class)
-        .anyMatch(n -> regInfo(n.regTensor()).isGVec())
-        // TODO: This must also work as TCG
-        || instr().behavior().getNodes(ForallNode.class).findAny().isPresent()
-        || instr().behavior().getNodes(TensorNode.class).findAny().isPresent()
-        || instr().behavior().getNodes(FoldNode.class).findAny().isPresent()
-        ;
   }
 
   public void addExtractedFunction(Function function) {

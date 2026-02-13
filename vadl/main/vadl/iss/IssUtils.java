@@ -43,7 +43,7 @@ public class IssUtils {
   }
 
   public static boolean isTcgReg(RegisterTensor registerTensor) {
-    return !regInfo(registerTensor).isGVec();
+    return regInfo(registerTensor).isTcgScalar();
   }
 
   /**

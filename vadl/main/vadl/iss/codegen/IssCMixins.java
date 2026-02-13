@@ -19,7 +19,6 @@ package vadl.iss.codegen;
 import static vadl.iss.IssUtils.internalError;
 
 import vadl.cppCodeGen.context.CGenContext;
-import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssMoveNode;
@@ -206,24 +205,14 @@ public interface IssCMixins {
     @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx,
                         WriteRegTensorNode node) {
-      var accessPattern = RegInfo.AccessPattern.of(node);
-      ctx.wr(accessPattern.name() + "(env");
-      for (var i : node.indices()) {
-        ctx.wr(", ").gen(i);
-      }
-      ctx.wr(", ").gen(node.value()).wr(")");
+      RegisterAccessEmitters.emitWrite(ctx, node);
     }
 
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx,
                         ReadRegTensorNode node) {
-      var accessPattern = RegInfo.AccessPattern.of(node);
-      ctx.wr(accessPattern.name() + "(env");
-      for (var i : node.indices()) {
-        ctx.wr(", ").gen(i);
-      }
-      ctx.wr(")");
+      RegisterAccessEmitters.emitRead(ctx, node);
     }
   }
 
