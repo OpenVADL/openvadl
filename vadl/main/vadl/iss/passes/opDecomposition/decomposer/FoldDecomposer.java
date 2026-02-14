@@ -34,6 +34,9 @@ import vadl.viam.graph.dependency.ForIdxNode;
  */
 public interface FoldDecomposer extends IDecomposer {
 
+  /**
+   * Decomposes a requested fold result slice.
+   */
   default ExpressionNode decomposeFoldSlice(FoldNode fold, int reqHi, int reqLo) {
     fold.ensure(reqHi >= reqLo, "Expected reqHi >= reqLo, got [%d:%d]", reqHi, reqLo);
     int foldWidth = fold.type().bitWidth();
@@ -129,10 +132,10 @@ public interface FoldDecomposer extends IDecomposer {
       var bodyAtIdx = ForallSubstitution.copyWithIndexSubstitution(fold.body(), idx, idxValue);
       ExpressionNode carry = Constant.Value.zero(Type.bool()).toNode();
       for (int block = 0; block <= lastBlock; block++) {
-        var yChunk = request(bodyAtIdx, blockHi[block], blockLo[block]);
-        var yWord = GraphUtils.zeroExtend(yChunk, mathType);
+        var chunkSlice = request(bodyAtIdx, blockHi[block], blockLo[block]);
+        var chunkWord = GraphUtils.zeroExtend(chunkSlice, mathType);
 
-        var tmp = BuiltInTable.ADD.call(blockAcc[block], yWord);
+        var tmp = BuiltInTable.ADD.call(blockAcc[block], chunkWord);
         var carryWord = boolToWord(carry, mathType);
         var sum = BuiltInTable.ADD.call(tmp, carryWord);
 

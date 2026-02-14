@@ -92,7 +92,6 @@ public interface ArithmeticDecomposer extends IDecomposer {
    */
   default ExpressionNode umodDecompose(BuiltInCall src, int hi, int lo) {
     src.ensure(src.builtIn() == BuiltInTable.UMOD, "Not an UMOD built-in call");
-    var dividend = src.arg(0);
     var divisor = src.arg(1);
 
     if (!(divisor instanceof ConstantNode divisorConst)) {
@@ -112,6 +111,7 @@ public interface ArithmeticDecomposer extends IDecomposer {
 
     int srcLo = lo;
     int srcHi = Math.min(hi, keptBits - 1);
+    var dividend = src.arg(0);
     var sliced = request(dividend, srcHi, srcLo);
     return sliced.type().asDataType().bitWidth() == outWidth
         ? sliced
@@ -152,14 +152,14 @@ public interface ArithmeticDecomposer extends IDecomposer {
       int chunkWidth = chunkHi - chunkLo + 1;
       var chunkType = Type.bits(chunkWidth);
 
-      var aChunk = request(a, chunkHi, chunkLo);
-      var bChunk = request(b, chunkHi, chunkLo);
+      var leftChunk = request(a, chunkHi, chunkLo);
+      var rightChunk = request(b, chunkHi, chunkLo);
       var carryWord = boolToWord(carryIn, chunkType);
 
-      var sum0 = BuiltInTable.ADD.call(aChunk, bChunk);
+      var sum0 = BuiltInTable.ADD.call(leftChunk, rightChunk);
       var sum = BuiltInTable.ADD.call(sum0, carryWord);
 
-      var carry0 = BuiltInTable.ULTH.call(sum0, aChunk);
+      var carry0 = BuiltInTable.ULTH.call(sum0, leftChunk);
       var carry1 = BuiltInTable.ULTH.call(sum, sum0);
       carryIn = GraphUtils.or(carry0, carry1);
 
@@ -204,14 +204,14 @@ public interface ArithmeticDecomposer extends IDecomposer {
       int chunkWidth = chunkHi - chunkLo + 1;
       var chunkType = Type.bits(chunkWidth);
 
-      var aChunk = request(a, chunkHi, chunkLo);
-      var bChunk = request(b, chunkHi, chunkLo);
+      var leftChunk = request(a, chunkHi, chunkLo);
+      var rightChunk = request(b, chunkHi, chunkLo);
       var borrowWord = boolToWord(borrowIn, chunkType);
 
-      var diff0 = BuiltInTable.SUB.call(aChunk, bChunk);
+      var diff0 = BuiltInTable.SUB.call(leftChunk, rightChunk);
       var diff = BuiltInTable.SUB.call(diff0, borrowWord);
 
-      var borrow0 = BuiltInTable.ULTH.call(aChunk, bChunk);
+      var borrow0 = BuiltInTable.ULTH.call(leftChunk, rightChunk);
       var borrow1 = BuiltInTable.ULTH.call(diff0, borrowWord);
       borrowIn = GraphUtils.or(borrow0, borrow1);
 

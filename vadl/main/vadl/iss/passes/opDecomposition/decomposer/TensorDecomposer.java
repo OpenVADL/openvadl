@@ -30,6 +30,9 @@ import vadl.viam.graph.dependency.TensorNode;
  */
 public interface TensorDecomposer extends IDecomposer {
 
+  /**
+   * Decomposes a requested tensor result slice.
+   */
   default ExpressionNode decomposeTensorSlice(TensorNode tensor, int reqHi, int reqLo) {
     var idx = tensor.idx();
     var from = idx.fromIdx();

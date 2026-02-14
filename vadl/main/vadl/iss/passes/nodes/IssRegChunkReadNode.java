@@ -43,6 +43,9 @@ public class IssRegChunkReadNode extends ReadResourceNode {
   @Nullable
   private Counter staticCounterAccess;
 
+  /**
+   * Creates a helper-only chunked register read node.
+   */
   public IssRegChunkReadNode(RegisterTensor regTensor,
                              NodeList<ExpressionNode> indices,
                              int chunkOffsetBits,

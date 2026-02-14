@@ -252,10 +252,10 @@ public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
   private void emitDynSliceSameChunkCondition(
       CGenContext<Node> ctx, DynSliceNode node, int readWidth, int chunkIndex) {
     int chunkLo = chunkIndex * 64;
-    int chunkHi = Math.min(readWidth - 1, chunkLo + 63);
     ctx.wr("(");
     ctx.gen(node.lsb()).wr(" >= ").wr(Integer.toString(chunkLo));
     ctx.wr(" && ");
+    int chunkHi = Math.min(readWidth - 1, chunkLo + 63);
     ctx.gen(node.msb()).wr(" <= ").wr(Integer.toString(chunkHi));
     ctx.wr(")");
   }
@@ -307,16 +307,14 @@ public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
   ) {
     int lowChunkOffset = lowChunkIndex * 64;
     int highChunkOffset = lowChunkOffset + 64;
-    int lowChunkWidth = Math.min(64, readWidth - lowChunkOffset);
     int highChunkWidth = Math.min(64, readWidth - highChunkOffset);
-    int lowChunkTop = lowChunkWidth - 1;
-    int boundary = highChunkOffset;
 
     // crossing case: [msb:lsb] spans a chunk boundary.
     // compose from high and low chunk pieces using only <=64-bit operations.
     ctx.wr("VADL_slice((");
     ctx.wr("(VADL_slice(");
     emitRegChunkRead(ctx, read, highChunkOffset, highChunkWidth);
+    int boundary = highChunkOffset;
     ctx.wr(", 1, (").gen(node.msb()).wr(" - ").wr(Integer.toString(highChunkOffset))
         .wr("), 0) << (")
         .wr(Integer.toString(boundary))
@@ -325,7 +323,9 @@ public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
         .wr("))");
     ctx.wr(" | ");
     ctx.wr("VADL_slice(");
+    int lowChunkWidth = Math.min(64, readWidth - lowChunkOffset);
     emitRegChunkRead(ctx, read, lowChunkOffset, lowChunkWidth);
+    int lowChunkTop = lowChunkWidth - 1;
     ctx.wr(", 1, ").wr(Integer.toString(lowChunkTop)).wr(", ");
     if (lowChunkOffset > 0) {
       ctx.wr("(").gen(node.lsb()).wr(" - ").wr(Integer.toString(lowChunkOffset)).wr(")");

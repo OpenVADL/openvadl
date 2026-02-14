@@ -48,11 +48,11 @@ public interface LogicDecomposer extends IDecomposer {
     var b = src.arg(1);
 
     // Request the same slice from both operands
-    var aSlice = request(a, hi, lo);
-    var bSlice = request(b, hi, lo);
+    var leftSlice = request(a, hi, lo);
+    var rightSlice = request(b, hi, lo);
 
     // OR the two slices together
-    return BuiltInTable.OR.call(aSlice, bSlice);
+    return BuiltInTable.OR.call(leftSlice, rightSlice);
   }
 
   /**
@@ -77,11 +77,11 @@ public interface LogicDecomposer extends IDecomposer {
     var b = src.arg(1);
 
     // Request the same slice from both operands
-    var aSlice = request(a, hi, lo);
-    var bSlice = request(b, hi, lo);
+    var leftSlice = request(a, hi, lo);
+    var rightSlice = request(b, hi, lo);
 
     // AND the two slices together
-    return BuiltInTable.AND.call(aSlice, bSlice);
+    return BuiltInTable.AND.call(leftSlice, rightSlice);
   }
 
   /**
@@ -106,10 +106,10 @@ public interface LogicDecomposer extends IDecomposer {
     var b = src.arg(1);
 
     // Request the same slice from both operands
-    var aSlice = request(a, hi, lo);
-    var bSlice = request(b, hi, lo);
+    var leftSlice = request(a, hi, lo);
+    var rightSlice = request(b, hi, lo);
 
     // XOR the two slices together
-    return BuiltInTable.XOR.call(aSlice, bSlice);
+    return BuiltInTable.XOR.call(leftSlice, rightSlice);
   }
 }

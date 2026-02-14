@@ -2,7 +2,9 @@ import aarch64::AArch64Base
 
 instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
-  constant VL           = 64             // vector length, number of bits in a vector register
+  model VLConst () : Int = {128}          // vector length as macro to act as macro condition
+
+  constant VL           = $VLConst        // vector length, number of bits in a vector register
   constant PL           = VL >> 3         // predicate length, number of elements in a predicate register
   constant NumBytesPL   = PL >> 3         // number of bytes in a predicate register
   constant NumElementsB = VL >> 3         // number of byte   sized elements in a vector register
@@ -1075,13 +1077,15 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     $modelid ($ExtInstrStr ($i; "D"); NumElementsD; SizeD; ".d")
     }
 
+  model VL64Only ( defs: IsaDefs ): IsaDefs = {
+    match : IsaDefs
+    ( $VLConst = 64 => $defs
+    ; _ =>
+    )
+  }
 
 // common sve and sme instructions *********************************************
 
-  // Incremental bring-up mode:
-  // Start with all concrete SVE instruction instantiations disabled.
-  // Re-enable in small batches after checking generated helper.c output.
-  //
   $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredADD    ; "add"   ; 0b0000'0000      ; add      ))
   $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredSUB    ; "sub"   ; 0b0000'1000      ; sub      ))
   $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredMUL    ; "mul"   ; 0b1000'0000      ; mul      ))
@@ -1132,9 +1136,12 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   $InstrMemST10     (SVEStoreScalarImmInstr    ; (SVEimmST1     ; "st1"   ; 0b111            ; unused   ))
   $InstrMemLD16     (SVELoadScalarScalarInstr  ; (SVEsclLD1     ; "ld1"   ; 0b010            ; unused   ))
   $InstrMemST10     (SVEStoreScalarScalarInstr ; (SVEsclST1     ; "st1"   ; 0b010            ; unused   ))
-  $InstrMemX12      (SVELoadMulScalarImmInstr  ; (SVEimmLD      ; "ld"    ; 0b101'0010'0     ; unused   ))
   $InstrMemX12      (SVEStoreMulScalarImmInstr ; (SVEimmST      ; "st"    ; 0b111'0010'1     ; unused   ))
-  $InstrMemX12      (SVELoadMulScalarSclInstr  ; (SVEsclLD      ; "ld"    ; 0b101'0010       ; unused   ))
   $InstrMemX12      (SVEStoreMulScalarSclInstr ; (SVEsclST      ; "st"    ; 0b111'0010       ; unused   ))
+  // On >64 bit, those instructions are currently exploding, leading to 20 MB of C code
+  $VL64Only(
+    $InstrMemX12      (SVELoadMulScalarImmInstr  ; (SVEimmLD      ; "ld"    ; 0b101'0010'0     ; unused   ))
+    $InstrMemX12      (SVELoadMulScalarSclInstr  ; (SVEsclLD      ; "ld"    ; 0b101'0010       ; unused   ))
+  )
 
 }

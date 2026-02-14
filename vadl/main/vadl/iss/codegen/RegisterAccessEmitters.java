@@ -37,16 +37,16 @@ public final class RegisterAccessEmitters {
   private RegisterAccessEmitters() {
   }
 
-  public static void emitWrite(CGenContext<Node> ctx, WriteRegTensorNode node) {
-    emitterFor(regInfo(node.regTensor())).emitWrite(ctx, node);
-  }
-
   public static void emitRead(CGenContext<Node> ctx, ReadRegTensorNode node) {
     emitterFor(regInfo(node.regTensor())).emitRead(ctx, node);
   }
 
   public static void emitRead(CGenContext<Node> ctx, IssRegChunkReadNode node) {
     emitterFor(regInfo(node.regTensor())).emitRead(ctx, node);
+  }
+
+  public static void emitWrite(CGenContext<Node> ctx, WriteRegTensorNode node) {
+    emitterFor(regInfo(node.regTensor())).emitWrite(ctx, node);
   }
 
   public static void emitWrite(CGenContext<Node> ctx, IssRegChunkWriteNode node) {
@@ -60,13 +60,13 @@ public final class RegisterAccessEmitters {
   }
 
   private interface RegisterAccessEmitter {
-    void emitWrite(CGenContext<Node> ctx, WriteRegTensorNode node);
-
     void emitRead(CGenContext<Node> ctx, ReadRegTensorNode node);
 
-    void emitWrite(CGenContext<Node> ctx, IssRegChunkWriteNode node);
-
     void emitRead(CGenContext<Node> ctx, IssRegChunkReadNode node);
+
+    void emitWrite(CGenContext<Node> ctx, WriteRegTensorNode node);
+
+    void emitWrite(CGenContext<Node> ctx, IssRegChunkWriteNode node);
   }
 
   /**
@@ -74,16 +74,6 @@ public final class RegisterAccessEmitters {
    */
   private static final class TcgScalarRegisterAccessEmitter implements RegisterAccessEmitter {
     static final TcgScalarRegisterAccessEmitter INSTANCE = new TcgScalarRegisterAccessEmitter();
-
-    @Override
-    public void emitWrite(CGenContext<Node> ctx, WriteRegTensorNode node) {
-      var accessPattern = RegInfo.AccessPattern.of(node);
-      ctx.wr(accessPattern.name() + "(env");
-      for (var i : node.indices()) {
-        ctx.wr(", ").gen(i);
-      }
-      ctx.wr(", ").gen(node.value()).wr(")");
-    }
 
     @Override
     public void emitRead(CGenContext<Node> ctx, ReadRegTensorNode node) {
@@ -96,7 +86,17 @@ public final class RegisterAccessEmitters {
     }
 
     @Override
-    public void emitWrite(CGenContext<Node> ctx, IssRegChunkWriteNode node) {
+    public void emitRead(CGenContext<Node> ctx, IssRegChunkReadNode node) {
+      var accessPattern = RegInfo.AccessPattern.of(node);
+      ctx.wr(accessPattern.name() + "(env");
+      for (var i : node.indices()) {
+        ctx.wr(", ").gen(i);
+      }
+      ctx.wr(")");
+    }
+
+    @Override
+    public void emitWrite(CGenContext<Node> ctx, WriteRegTensorNode node) {
       var accessPattern = RegInfo.AccessPattern.of(node);
       ctx.wr(accessPattern.name() + "(env");
       for (var i : node.indices()) {
@@ -106,13 +106,13 @@ public final class RegisterAccessEmitters {
     }
 
     @Override
-    public void emitRead(CGenContext<Node> ctx, IssRegChunkReadNode node) {
+    public void emitWrite(CGenContext<Node> ctx, IssRegChunkWriteNode node) {
       var accessPattern = RegInfo.AccessPattern.of(node);
       ctx.wr(accessPattern.name() + "(env");
       for (var i : node.indices()) {
         ctx.wr(", ").gen(i);
       }
-      ctx.wr(")");
+      ctx.wr(", ").gen(node.value()).wr(")");
     }
   }
 
@@ -123,16 +123,6 @@ public final class RegisterAccessEmitters {
     static final HelperOnlyRegisterAccessEmitter INSTANCE = new HelperOnlyRegisterAccessEmitter();
 
     @Override
-    public void emitWrite(CGenContext<Node> ctx, WriteRegTensorNode node) {
-      var accessPattern = RegInfo.AccessPattern.of(node);
-      ctx.wr(accessPattern.name() + "(env");
-      for (var i : node.indices()) {
-        ctx.wr(", ").gen(i);
-      }
-      ctx.wr(", ").gen(node.value()).wr(")");
-    }
-
-    @Override
     public void emitRead(CGenContext<Node> ctx, ReadRegTensorNode node) {
       var accessPattern = RegInfo.AccessPattern.of(node);
       ctx.wr(accessPattern.name() + "(env");
@@ -143,7 +133,17 @@ public final class RegisterAccessEmitters {
     }
 
     @Override
-    public void emitWrite(CGenContext<Node> ctx, IssRegChunkWriteNode node) {
+    public void emitRead(CGenContext<Node> ctx, IssRegChunkReadNode node) {
+      var accessPattern = RegInfo.AccessPattern.of(node);
+      ctx.wr(accessPattern.name() + "(env");
+      for (var i : node.indices()) {
+        ctx.wr(", ").gen(i);
+      }
+      ctx.wr(")");
+    }
+
+    @Override
+    public void emitWrite(CGenContext<Node> ctx, WriteRegTensorNode node) {
       var accessPattern = RegInfo.AccessPattern.of(node);
       ctx.wr(accessPattern.name() + "(env");
       for (var i : node.indices()) {
@@ -153,13 +153,13 @@ public final class RegisterAccessEmitters {
     }
 
     @Override
-    public void emitRead(CGenContext<Node> ctx, IssRegChunkReadNode node) {
+    public void emitWrite(CGenContext<Node> ctx, IssRegChunkWriteNode node) {
       var accessPattern = RegInfo.AccessPattern.of(node);
       ctx.wr(accessPattern.name() + "(env");
       for (var i : node.indices()) {
         ctx.wr(", ").gen(i);
       }
-      ctx.wr(")");
+      ctx.wr(", ").gen(node.value()).wr(")");
     }
   }
 }

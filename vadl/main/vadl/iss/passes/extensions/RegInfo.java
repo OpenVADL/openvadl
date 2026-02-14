@@ -168,6 +168,9 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
         reg().resultType(reg().maxNumberOfAccessIndices()).bitWidth());
   }
 
+  /**
+   * Returns the scalar C type used for register access values.
+   */
   public String valueCType() {
     if (!isTcgScalar()) {
       throw new IllegalStateException(
@@ -618,7 +621,6 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       }
 
       int elemBytes = containerWidth / 8;
-      int copyBytes = elementWidth / 8;
       int chunkOffsetBytes = chunkOffsetBits / 8;
       off.append(") * ").append(elemBytes).append(";");
       if (chunkOffsetBytes > 0) {
@@ -631,12 +633,14 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       b.append(off).append('\n');
 
       if (type == AccessType.READ) {
+        int copyBytes = elementWidth / 8;
         b.append("""
               %s v = 0;
               memcpy(&v, env->%s + off, %d);
               return v;
             """.formatted(accessValueCType(), owner.nameLower(), copyBytes));
       } else {
+        int copyBytes = elementWidth / 8;
         b.append("""
               memcpy(env->%s + off, &value, %d);
             """.formatted(owner.nameLower(), copyBytes));
@@ -753,6 +757,9 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
           0);
     }
 
+    /**
+     * Creates an access pattern from a chunked read node.
+     */
     public static AccessPattern of(IssRegChunkReadNode read) {
       return of(read, AccessType.READ, read.regTensor(), read.indices(),
           read.chunkWidthBits(),
@@ -760,6 +767,9 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
           read.chunkOffsetBits());
     }
 
+    /**
+     * Creates an access pattern from a chunked write node.
+     */
     public static AccessPattern of(IssRegChunkWriteNode write) {
       return of(write, AccessType.WRITE, write.regTensor(), write.indices(),
           write.chunkWidthBits(),

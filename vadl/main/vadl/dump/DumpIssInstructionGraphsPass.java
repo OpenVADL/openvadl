@@ -38,6 +38,9 @@ import vadl.viam.Specification;
  * {@code <output>/dump/iss-pass-graphs/<pass-key>/<instruction>.dot}</p>
  */
 public class DumpIssInstructionGraphsPass extends Pass {
+  /**
+   * Result payload for one dump execution.
+   */
   public record Result(Path outputDirectory, int fileCount, PassKey sourcePass) {
   }
 

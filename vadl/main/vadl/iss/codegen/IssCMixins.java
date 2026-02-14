@@ -323,7 +323,6 @@ public interface IssCMixins {
       for (int chunk = 0; chunk < chunks; chunk++) {
         var chunkOffset = chunk * 64;
         var chunkWidth = Math.min(64, bitWidth - chunkOffset);
-        var chunkMsb = chunkOffset + chunkWidth - 1;
         var suffix = switch (chunkWidth) {
           case 8 -> "b";
           case 16 -> "w";
@@ -346,6 +345,7 @@ public interface IssCMixins {
         }
         ctx.wr(", VADL_slice(");
         ctx.gen(node.value());
+        var chunkMsb = chunkOffset + chunkWidth - 1;
         ctx.wr(", 1, ").wr(Integer.toString(chunkMsb)).wr(", ").wr(Integer.toString(chunkOffset))
             .wr("),").wr(ra).wr(")");
       }

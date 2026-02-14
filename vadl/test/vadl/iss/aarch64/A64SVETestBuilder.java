@@ -43,14 +43,14 @@ public class A64SVETestBuilder extends A64TestBuilder {
     }
   }
 
-  public void loadZFromMemory(String zReg, long addr, String addrReg) {
+  public void loadZFromMemory(String zregister, long addr, String addrReg) {
     add("ldr %s, =0x%x", addrReg, addr);
-    add("ldr %s, [%s]", zReg, addrReg);
+    add("ldr %s, [%s]", zregister, addrReg);
   }
 
-  public void storeZToMemory(String zReg, long addr, String addrReg) {
+  public void storeZToMemory(String zregister, long addr, String addrReg) {
     add("ldr %s, =0x%x", addrReg, addr);
-    add("str %s, [%s]", zReg, addrReg);
+    add("str %s, [%s]", zregister, addrReg);
   }
 
   public void loadMemory64ToRegs(long addr, int words, int firstReg, String addrReg) {
@@ -60,7 +60,7 @@ public class A64SVETestBuilder extends A64TestBuilder {
     }
   }
 
-  public void setPredicateAllTrue(String pReg, String elemSuffix) {
-    add("ptrue %s.%s", pReg, elemSuffix);
+  public void setPredicateAllTrue(String predicateRegister, String elemSuffix) {
+    add("ptrue %s.%s", predicateRegister, elemSuffix);
   }
 }

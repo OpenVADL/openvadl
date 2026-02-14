@@ -37,15 +37,16 @@ import vadl.utils.GraphUtils;
 import vadl.utils.ViamUtils;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
-import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * Rewrites helper-only register reads wider than target width into concatenations of smaller reads.
- * It also validates that no helper-only register accesses wider than target width remain afterwards.
+ * It also validates that no helper-only register accesses wider than target width remain
+ * afterwards.
  */
 public class IssHelperOnlyWideRegAccessLoweringPass extends AbstractIssPass {
   public IssHelperOnlyWideRegAccessLoweringPass(IssConfiguration configuration) {
@@ -61,7 +62,8 @@ public class IssHelperOnlyWideRegAccessLoweringPass extends AbstractIssPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     ViamUtils.findAllBehaviors(viam).forEach(behavior -> {
-      var processedReads = Collections.newSetFromMap(new IdentityHashMap<ReadRegTensorNode, Boolean>());
+      var processedReads = Collections.newSetFromMap(
+          new IdentityHashMap<ReadRegTensorNode, Boolean>());
       var processedWrites =
           Collections.newSetFromMap(new IdentityHashMap<WriteRegTensorNode, Boolean>());
       var changed = true;

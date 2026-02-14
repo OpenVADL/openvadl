@@ -43,6 +43,9 @@ public class IssRegChunkWriteNode extends SideEffectNode {
   @Input
   private ExpressionNode value;
 
+  /**
+   * Creates a helper-only chunked register write node.
+   */
   public IssRegChunkWriteNode(RegisterTensor regTensor,
                               NodeList<ExpressionNode> indices,
                               ExpressionNode value,
@@ -109,7 +112,12 @@ public class IssRegChunkWriteNode extends SideEffectNode {
   @Override
   public IssRegChunkWriteNode copy() {
     return new IssRegChunkWriteNode(
-        regTensor, indices.copy(), value.copy(), chunkOffsetBits, chunkWidthBits, nullableCondition());
+        regTensor,
+        indices.copy(),
+        value.copy(),
+        chunkOffsetBits,
+        chunkWidthBits,
+        nullableCondition());
   }
 
   @Override
