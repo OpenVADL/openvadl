@@ -24,12 +24,16 @@ import static vadl.types.BuiltInTable.SUMULL;
 import static vadl.types.BuiltInTable.UMULL;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import vadl.configuration.IssConfiguration;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
@@ -82,6 +86,8 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * size of 64 bits.</p>
  */
 public class IssOpDecompositionPass extends AbstractIssPass {
+  private static final Logger LOG = LoggerFactory.getLogger(IssOpDecompositionPass.class);
+
   public IssOpDecompositionPass(IssConfiguration configuration) {
     super(configuration);
   }
@@ -95,8 +101,14 @@ public class IssOpDecompositionPass extends AbstractIssPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var largeOperationErrors = new ArrayList<Diagnostic>();
-    allInstrs(viam).map(Instruction::behavior)
-        .forEach(behavior -> new OpDecomposer(behavior, configuration().targetSize()).decompose());
+    allInstrs(viam).forEach(instr -> {
+      var instrName = instr.identifier().toString();
+      var startNs = System.nanoTime();
+      LOG.debug("OpDecompose start: {}", instrName);
+      new OpDecomposer(instr.behavior(), configuration().targetSize(), instrName).decompose();
+      var durMs = (System.nanoTime() - startNs) / 1_000_000;
+      LOG.debug("OpDecompose done: {} ({} ms)", instrName, durMs);
+    });
 
     // Large-op validation is only required for TCG-mappable instruction paths.
     tcgInstrs(viam).map(Instruction::behavior)
@@ -130,13 +142,17 @@ public class IssOpDecompositionPass extends AbstractIssPass {
  * performance reasons.
  */
 class OpDecomposer {
+  private static final Logger LOG = LoggerFactory.getLogger(OpDecomposer.class);
 
   Tcg_32_64 targetSize;
   Graph behavior;
+  String instrName;
+  int exprDecomposeCount = 0;
 
-  public OpDecomposer(Graph behavior, Tcg_32_64 targetSize) {
+  public OpDecomposer(Graph behavior, Tcg_32_64 targetSize, String instrName) {
     this.behavior = behavior;
     this.targetSize = targetSize;
+    this.instrName = instrName;
   }
 
   void decompose() {
@@ -147,9 +163,23 @@ class OpDecomposer {
     // decompose nodes until there any more nodes to decompose.
     var foundOne = true;
     var processed = new HashSet<Node>();
+    int iteration = 0;
     while (foundOne) {
       // first decompose side effects, then expressions.
-      foundOne = decomposeSideeffects() || decomposeExpressions(processed);
+      iteration++;
+      var sideEffectHit = decomposeSideeffects();
+      if (sideEffectHit) {
+        LOG.debug("OpDecompose [{}] iteration {}: decomposed side effect", instrName, iteration);
+      }
+      var exprHit = sideEffectHit ? false : decomposeExpressions(processed);
+      if (exprHit) {
+        LOG.debug("OpDecompose [{}] iteration {}: decomposed expression, processed={}", instrName,
+            iteration, processed.size());
+      }
+      foundOne = sideEffectHit || exprHit;
+      if (!foundOne) {
+        LOG.debug("OpDecompose [{}] converged after {} iterations", instrName, iteration);
+      }
     }
   }
 
@@ -169,7 +199,6 @@ class OpDecomposer {
         })
         .findFirst();
     if (hit.isPresent()) {
-      // replace the current hit with the decomposed version.
       new Decomposer(targetSize.width).decompose(hit.get());
       return true;
     }
@@ -177,23 +206,48 @@ class OpDecomposer {
   }
 
   private boolean decomposeExpressions(Set<Node> processed) {
-    var hit = behavior.getNodes(ExpressionNode.class)
-        .filter(node -> node.type() instanceof DataType)
-        // dynamic slices are normalized later to ISS extract nodes
-        .filter(node -> !(node instanceof DynSliceNode))
-        // find any expression node that is within the target size while having a too large input.
-        .filter(node -> node.type().asDataType().bitWidth() <= targetSize.width)
-        .filter(node -> node.inputs().map(ExpressionNode.class::cast)
-            .anyMatch(i -> i.type().asDataType().bitWidth() > targetSize.width))
+    Deque<ExpressionNode> worklist = new ArrayDeque<>();
+    behavior.getNodes(ExpressionNode.class)
+        .filter(this::isDecomposeExpressionCandidate)
         .filter(node -> !processed.contains(node))
-        .findFirst();
-    if (hit.isPresent()) {
-      // replace the current hit with the decomposed version.
-      new Decomposer(targetSize.width).decompose(hit.get());
-      processed.add(hit.get());
+        .forEach(worklist::addLast);
+
+    while (!worklist.isEmpty()) {
+      var node = worklist.removeFirst();
+      if (node.isDeleted() || processed.contains(node) || !isDecomposeExpressionCandidate(node)) {
+        continue;
+      }
+
+      exprDecomposeCount++;
+      if (LOG.isDebugEnabled() && (exprDecomposeCount <= 20 || exprDecomposeCount % 500 == 0)) {
+        var kind = node.getClass().getSimpleName();
+        var detail = node instanceof BuiltInCall b
+            ? b.builtIn().toString()
+            : kind;
+        var inputW = node.inputs().map(ExpressionNode.class::cast)
+            .map(i -> Integer.toString(i.type().asDataType().bitWidth()))
+            .reduce((a, b) -> a + "," + b)
+            .orElse("-");
+        LOG.debug("OpDecompose [{}] hit #{}: {} inputWidths=[{}] outWidth={}",
+            instrName, exprDecomposeCount, detail, inputW, node.type().asDataType().bitWidth());
+      }
+
+      new Decomposer(targetSize.width).decompose(node);
+      processed.add(node);
       return true;
     }
+
     return false;
+  }
+
+  private boolean isDecomposeExpressionCandidate(ExpressionNode node) {
+    return node.type() instanceof DataType
+        // dynamic slices are normalized later to ISS extract nodes
+        && !(node instanceof DynSliceNode)
+        // find any expression node that is within the target size while having a too large input.
+        && node.type().asDataType().bitWidth() <= targetSize.width
+        && node.inputs().map(ExpressionNode.class::cast)
+        .anyMatch(i -> i.type().asDataType().bitWidth() > targetSize.width);
   }
 
   private void handle(BuiltInCall call) {

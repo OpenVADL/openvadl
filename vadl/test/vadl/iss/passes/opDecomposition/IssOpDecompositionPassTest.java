@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,9 @@ package vadl.iss.passes.opDecomposition;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static vadl.utils.GraphUtils.bits;
+import static vadl.utils.GraphUtils.slice;
 
+import java.util.ArrayList;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -75,6 +77,55 @@ public class IssOpDecompositionPassTest {
     );
   }
 
+  @TestFactory
+  Stream<DynamicTest> arithmeticSliceTests() {
+    return Stream.of(
+        DynamicTest.dynamicTest("ADD_16_cross_chunk_carry", () -> {
+          var expr = BuiltInTable.ADD.call(bits(0x00FF, 16).toNode(), bits(0x0001, 16).toNode());
+          testSliceAgainstCanonical(expr, 11, 4, 8);
+        }),
+        DynamicTest.dynamicTest("ADD_16_full_overflow", () -> {
+          var expr = BuiltInTable.ADD.call(bits(0xFFFF, 16).toNode(), bits(0x0001, 16).toNode());
+          testSliceAgainstCanonical(expr, 15, 8, 8);
+        }),
+        DynamicTest.dynamicTest("ADD_24_multi_chunk", () -> {
+          var expr =
+              BuiltInTable.ADD.call(bits(0x12FFFF, 24).toNode(), bits(0x000201, 24).toNode());
+          testSliceAgainstCanonical(expr, 20, 13, 8);
+        }),
+        DynamicTest.dynamicTest("SUB_16_cross_chunk_borrow", () -> {
+          var expr = BuiltInTable.SUB.call(bits(0x0100, 16).toNode(), bits(0x0001, 16).toNode());
+          testSliceAgainstCanonical(expr, 11, 4, 8);
+        }),
+        DynamicTest.dynamicTest("SUB_16_full_underflow", () -> {
+          var expr = BuiltInTable.SUB.call(bits(0x0000, 16).toNode(), bits(0x0001, 16).toNode());
+          testSliceAgainstCanonical(expr, 15, 8, 8);
+        }),
+        DynamicTest.dynamicTest("SUB_24_multi_chunk", () -> {
+          var expr =
+              BuiltInTable.SUB.call(bits(0x120000, 24).toNode(), bits(0x000201, 24).toNode());
+          testSliceAgainstCanonical(expr, 20, 13, 8);
+        }),
+        DynamicTest.dynamicTest("UDIV_pow2", () -> {
+          var expr = BuiltInTable.UDIV.call(bits(0xABCD, 16).toNode(), bits(8, 16).toNode());
+          testSliceAgainstCanonical(expr, 11, 4, 8);
+        }),
+        DynamicTest.dynamicTest("UDIV_after_UMOD_pow2", () -> {
+          var umod = BuiltInTable.UMOD.call(bits(0xABCD, 16).toNode(), bits(64, 16).toNode());
+          var expr = BuiltInTable.UDIV.call(umod, bits(8, 16).toNode());
+          testSliceAgainstCanonical(expr, 6, 0, 8);
+        }),
+        DynamicTest.dynamicTest("UMOD_pow2_low_slice", () -> {
+          var expr = BuiltInTable.UMOD.call(bits(0xABCD, 16).toNode(), bits(32, 16).toNode());
+          testSliceAgainstCanonical(expr, 4, 0, 8);
+        }),
+        DynamicTest.dynamicTest("UMOD_pow2_high_slice_zero_fill", () -> {
+          var expr = BuiltInTable.UMOD.call(bits(0xABCD, 16).toNode(), bits(32, 16).toNode());
+          testSliceAgainstCanonical(expr, 7, 5, 8);
+        })
+    );
+  }
+
   private DynamicTest lsrSimple(long a, int b, int width, int targetSize) {
     return DynamicTest.dynamicTest("LSR_" + a + "_" + b, () -> {
       var aN = bits(a, width).toNode();
@@ -119,6 +170,39 @@ public class IssOpDecompositionPassTest {
     System.out.println(((ConstantNode) expectedResult).constant().asVal().binary());
     var hi = ref.type().asDataType().bitWidth() - 1;
     testRequest(ref, hi, 0, expectedVal, targetSize);
+  }
+
+  private void testSliceAgainstCanonical(ExpressionNode expr, int hi, int lo, int targetSize) {
+    var refGraph = new Graph("ref");
+    var refExpr = refGraph.addWithInputs(expr.copy());
+    var refSlice = refGraph.addWithInputs(slice(refExpr, hi, lo));
+    var expected = Canonicalizer.canonicalizeSubGraph(refSlice);
+    assertThat(expected).isInstanceOf(ConstantNode.class);
+    var expectedValue = ((ConstantNode) expected).constant().asVal().longValue();
+    var decomposed = new Decomposer(targetSize).request(expr.copy(), hi, lo);
+    assertSubgraphWithinTarget(decomposed, targetSize);
+    var testGraph = new Graph("test");
+    testGraph.addWithInputs(decomposed);
+    var decomposeResult = Canonicalizer.canonicalizeSubGraph(decomposed);
+    assertThat(decomposeResult).isInstanceOf(ConstantNode.class);
+    var decompVal = ((ConstantNode) decomposeResult).constant().asVal();
+    assertThat(decompVal.longValue()).isEqualTo(expectedValue);
+  }
+
+  private void assertSubgraphWithinTarget(ExpressionNode root, int targetSize) {
+    var nodes = new ArrayList<ExpressionNode>();
+    root.collectInputsWithChildren(nodes, ExpressionNode.class);
+    nodes.add(root);
+
+    for (var node : nodes) {
+      if (node instanceof ConstantNode) {
+        continue;
+      }
+      var width = node.type().asDataType().bitWidth();
+      assertThat(width)
+          .withFailMessage("Node exceeds target width (%d > %d): %s", width, targetSize, node)
+          .isLessThanOrEqualTo(targetSize);
+    }
   }
 
 }

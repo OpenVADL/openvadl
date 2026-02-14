@@ -19,6 +19,8 @@ package vadl.iss.passes.opDecomposition;
 import static vadl.utils.StreamUtils.only;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
+import java.util.ArrayList;
+import java.util.HashSet;
 import javax.annotation.Nullable;
 import vadl.iss.passes.nodes.IssRegChunkReadNode;
 import vadl.iss.passes.nodes.IssRegChunkWriteNode;
@@ -29,6 +31,7 @@ import vadl.iss.passes.opDecomposition.decomposer.TensorDecomposer;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.types.BuiltInTable;
+import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.utils.GraphUtils;
 import vadl.utils.VadlBuiltInEmptyNoStatusDispatcher;
@@ -79,7 +82,8 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 )
 @SuppressWarnings("OverloadMethodsDeclarationOrder")
 class Decomposer
-    implements VadlBuiltInEmptyNoStatusDispatcher<Decomposer.Request>, ShiftDecomposer, LogicDecomposer,
+    implements VadlBuiltInEmptyNoStatusDispatcher<Decomposer.Request>, ShiftDecomposer,
+    LogicDecomposer,
     ArithmeticDecomposer, TensorDecomposer {
 
   record Slice(int hi, int lo) {
@@ -130,7 +134,36 @@ class Decomposer
       // if the replacement is the same as the original, we can skip the replace
       return;
     }
+    ensureSubgraphWithinTarget(repl);
     expr.replaceAndDelete(repl);
+  }
+
+  /**
+   * Ensures that the decomposition result subgraph does not contain non-read expressions that
+   * exceed the target width. This catches illegal decomposition outputs early.
+   */
+  private void ensureSubgraphWithinTarget(ExpressionNode root) {
+    var nodes = new ArrayList<ExpressionNode>();
+    root.collectInputsWithChildren(nodes, ExpressionNode.class);
+
+    var visited = new HashSet<ExpressionNode>();
+    visited.add(root);
+    visited.addAll(nodes);
+
+    for (var node : visited) {
+      if (node.isDeleted()) {
+        continue;
+      }
+      if (node instanceof ReadRegTensorNode || node instanceof ConstantNode) {
+        continue;
+      }
+      if (!(node.type() instanceof DataType dt)) {
+        continue;
+      }
+      node.ensure(dt.bitWidth() <= targetSize,
+          "Decomposer produced node above target width: %s (%d > %d)",
+          node, dt.bitWidth(), targetSize);
+    }
   }
 
   void decompose(SideEffectNode sideEffect) {
@@ -180,14 +213,14 @@ class Decomposer
   }
 
   private ExpressionNode request(ExpressionNode node, Slice slice) {
-    if (slice.lo() == 0 && node.type().asDataType().bitWidth() <= targetSize) {
-      // if the slice is just a truncate and the node does fit in the target size, we
-      // can just truncate and return it.
-      if (node.type().asDataType().bitWidth() - 1 == slice.hi()) {
+    var nodeWidth = node.type().asDataType().bitWidth();
+    if (nodeWidth <= targetSize) {
+      // For already-mappable nodes, avoid recursive decomposition completely and
+      // just materialize the requested slice directly.
+      if (slice.lo() == 0 && nodeWidth - 1 == slice.hi()) {
         return node;
-      } else {
-        return GraphUtils.truncate(node, Type.bits(slice.width()));
       }
+      return GraphUtils.slice(node, slice.hi(), slice.lo());
     }
 
     return internalRequest(node, slice);
@@ -398,8 +431,76 @@ class Decomposer
   }
 
   @Override
+  public void handleADD(Request rq) {
+    rq.result = addDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
   public void handleSUB(Request rq) {
     rq.result = subDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleUDIV(Request rq) {
+    rq.result = udivDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleUMOD(Request rq) {
+    rq.result = umodDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  private void handleCompare(Request rq) {
+    // Compare built-ins produce a single result bit. When a wider slice is requested,
+    // bit 0 carries the compare result and higher bits are zero.
+    if (rq.slice.lo() > 0) {
+      rq.result = Constant.Value.zero(Type.bits(rq.slice.width())).toNode();
+      return;
+    }
+
+    var lhs = currCall.arg(0);
+    var rhs = currCall.arg(1);
+    var width = lhs.type().asDataType().bitWidth();
+
+    ExpressionNode cmpBit = null;
+    for (int chunkLo = 0; chunkLo < width; chunkLo += targetSize) {
+      int chunkHi = Math.min(chunkLo + targetSize - 1, width - 1);
+      var lhsChunk = request(lhs, chunkHi, chunkLo);
+      var rhsChunk = request(rhs, chunkHi, chunkLo);
+      var chunkCmp = currCall.builtIn() == BuiltInTable.EQU
+          ? GraphUtils.equ(lhsChunk, rhsChunk)
+          : GraphUtils.neq(lhsChunk, rhsChunk);
+      if (cmpBit == null) {
+        cmpBit = chunkCmp;
+      } else {
+        cmpBit = currCall.builtIn() == BuiltInTable.EQU
+            ? GraphUtils.and(cmpBit, chunkCmp)
+            : GraphUtils.or(cmpBit, chunkCmp);
+      }
+    }
+
+    // Defensive fallback for zero-width compare inputs (should not happen for valid data types).
+    if (cmpBit == null) {
+      cmpBit = Constant.Value.one(Type.bool()).toNode();
+    }
+
+    cmpBit = GraphUtils.truncate(cmpBit, Type.bits(1));
+    if (rq.slice.width() == 1) {
+      rq.result = cmpBit;
+      return;
+    }
+
+    rq.result = GraphUtils.zeroExtend(cmpBit, Type.bits(rq.slice.width()));
+  }
+
+  @Override
+  public void handleEQU(Request rq) {
+    handleCompare(rq);
+  }
+
+  @Override
+  public void handleNEQ(Request rq) {
+    handleCompare(rq);
   }
 
 
