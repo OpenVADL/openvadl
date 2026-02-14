@@ -57,8 +57,10 @@ private class FunctionExtractor(
         toProcess.visitInputs(this)
 
         val creator = when (toProcess) {
-            is TensorNode -> if (toProcess.isExtractableToCFunction()) toProcess.createFunction() else null
-            is FoldNode -> if (toProcess.isExtractableToCFunction()) toProcess.createFunction() else null
+            is TensorNode -> toProcess.extractableParameterExpressions()
+                ?.let { toProcess.createFunction(it) }
+            is FoldNode -> toProcess.extractableParameterExpressions()
+                ?.let { toProcess.createFunction(it) }
             else -> return
         }
         if (creator == null) return
@@ -66,47 +68,106 @@ private class FunctionExtractor(
         instrInfo.addExtractedFunction(creator.definition)
     }
 
-    fun TensorNode.createFunction(): FunctionCreator {
+    fun TensorNode.createFunction(params: List<ExpressionNode>): FunctionCreator {
         return FunctionCreator(
             instruction = instruction,
             expr = this,
             idx = this.idx(),
             body = this.body(),
-            kindName = "tensor"
+            kindName = "tensor",
+            paramExprs = params
         )
     }
 
-    fun FoldNode.createFunction(): FunctionCreator {
+    fun FoldNode.createFunction(params: List<ExpressionNode>): FunctionCreator {
         return FunctionCreator(
             instruction = instruction,
             expr = this,
             idx = this.idx(),
             body = this.body(),
-            kindName = "fold"
+            kindName = "fold",
+            paramExprs = params
         )
     }
 }
 
 private const val MAX_C_EXTRACT_WIDTH_BITS = 64
 
-private fun TensorNode.isExtractableToCFunction(): Boolean {
+private fun TensorNode.extractableParameterExpressions(): List<ExpressionNode>? {
     if (this.type().asDataType().bitWidth() > MAX_C_EXTRACT_WIDTH_BITS) {
-        return false
+        return null
     }
-    return this.body()
-        .findAllIndependentOf(this.idx())
-        .filter { it !is ConstantNode }
-        .all { it.type().asDataType().bitWidth() <= MAX_C_EXTRACT_WIDTH_BITS }
+    return this.body().extractableParameterExpressionsFor(this.idx())
 }
 
-private fun FoldNode.isExtractableToCFunction(): Boolean {
+private fun FoldNode.extractableParameterExpressions(): List<ExpressionNode>? {
     if (this.type().asDataType().bitWidth() > MAX_C_EXTRACT_WIDTH_BITS) {
-        return false
+        return null
     }
-    return this.body()
-        .findAllIndependentOf(this.idx())
+    return this.body().extractableParameterExpressionsFor(this.idx())
+}
+
+/**
+ * Computes the parameter expressions for extraction.
+ *
+ * Starts with values independent of the forall-index and recursively expands
+ * any >64-bit values into <=64-bit leaves. This allows extraction of fold/tensor
+ * nodes that close over wide reads (e.g., vector register reads), while keeping
+ * the generated C-function parameter types <=64-bit.
+ *
+ * Returns `null` if such a decomposition into narrow leaves is not possible.
+ */
+private fun ExpressionNode.extractableParameterExpressionsFor(idx: ForIdxNode): List<ExpressionNode>? {
+    val independentNodes = this.findAllIndependentOf(idx)
         .filter { it !is ConstantNode }
-        .all { it.type().asDataType().bitWidth() <= MAX_C_EXTRACT_WIDTH_BITS }
+
+    val memo = mutableMapOf<ExpressionNode, Set<ExpressionNode>?>()
+    val params = linkedSetOf<ExpressionNode>()
+    for (node in independentNodes) {
+        val widened = node.narrowParameterLeaves(memo) ?: return null
+        params.addAll(widened)
+    }
+    return params.sortedBy { it.id.numericId() }
+}
+
+/**
+ * Recursively decomposes this node into <=64-bit parameter leaves.
+ *
+ * - constants contribute no parameters
+ * - <=64-bit nodes are valid leaves
+ * - >64-bit nodes are replaced by the union of their input leaves
+ *
+ * Returns `null` if a >64-bit node has no expression inputs to decompose.
+ */
+private fun ExpressionNode.narrowParameterLeaves(
+    memo: MutableMap<ExpressionNode, Set<ExpressionNode>?>
+): Set<ExpressionNode>? {
+    if (memo.containsKey(this)) {
+        return memo[this]
+    }
+    if (this is ConstantNode) {
+        return emptySet()
+    }
+    if (this.type().asDataType().bitWidth() <= MAX_C_EXTRACT_WIDTH_BITS) {
+        return setOf(this)
+    }
+
+    val narrowed = linkedSetOf<ExpressionNode>()
+    val exprInputs = inputs().toList().mapNotNull { it as? ExpressionNode }
+    if (exprInputs.isEmpty()) {
+        memo[this] = null
+        return null
+    }
+
+    for (input in exprInputs) {
+        val leaves = input.narrowParameterLeaves(memo) ?: run {
+            memo[this] = null
+            return null
+        }
+        narrowed.addAll(leaves)
+    }
+    memo[this] = narrowed
+    return narrowed
 }
 
 private class FunctionCreator(
@@ -114,7 +175,8 @@ private class FunctionCreator(
     val expr: ExpressionNode,
     val idx: ForIdxNode,
     val body: ExpressionNode,
-    val kindName: String
+    val kindName: String,
+    private val paramExprs: List<ExpressionNode>
 ) {
 
     private val funcIdent: Identifier
@@ -152,19 +214,13 @@ private class FunctionCreator(
      * we need to identify which values come from outside the tensor scope and should become parameters.
      *
      * This method:
-     * 1. Finds all nodes in the tensor body that don't depend on the loop index (e.g., `a` but not `b[i]`)
+     * 1. Uses precomputed parameter expressions (`paramExprs`) selected by the extractor.
      * 2. Creates a parameter for each independent node (named p0, p1, p2, ...)
      * 3. Returns pairs of (Parameter definition, Expression to pass as argument)
      */
     private fun findParamsArgs(): List<Pair<ExpressionNode, Parameter>> {
-        // Find all expression nodes that don't depend on the tensor index variable
-        // These are values from outside the tensor scope that need to be passed as parameters
-        val externalExpressions = body.findAllIndependentOf(idx)
-            // constant nodes shouldn't be passed as parameters
-            .filter { it !is ConstantNode }
-
-        // Create a parameter for each independent node, naming them p0, p1, p2, etc.
-        return externalExpressions.mapIndexed { i, node ->
+        // Create a parameter for each extracted expression, naming them p0, p1, p2, etc.
+        return paramExprs.mapIndexed { i, node ->
             val ident = funcIdent.append("p$i")
             Pair(node, Parameter(ident, node.type(), i))
         }
