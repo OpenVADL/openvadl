@@ -73,22 +73,21 @@ public class AsmGrammarRuleGenerationPass extends Pass {
 
     var generatedInstructionRules = viam.isa().get().ownInstructions().stream()
         // TODO: remove filter
-        .filter(instruction -> instruction.simpleName().equals("ADD")
-            || instruction.simpleName().equals("ANDI"))
+//        .filter(instruction -> instruction.simpleName().equals("ADD")
+//            || instruction.simpleName().equals("ANDI"))
         .map(instruction -> mapToGeneratedRulePair(instruction, assemblyDescription));
 
     var generatedPseudoRules = viam.isa().get().ownPseudoInstructions().stream()
         // TODO: remove filter
-        .filter(instruction -> instruction.simpleName().equals("JR")
-            || instruction.simpleName().equals("J"))
+//        .filter(instruction -> instruction.simpleName().equals("JR")
+//            || instruction.simpleName().equals("J"))
         .map(instruction -> mapToGeneratedRulePair(instruction, assemblyDescription));
 
     var generatedRules = Stream.concat(generatedInstructionRules, generatedPseudoRules).toList();
 
     var instructionRule = getNonTerminalRule(assemblyDescription, "Instruction");
 
-    var conflictingRules = new ArrayList<Pair<PrintableInstruction, AsmGrammarRule>>();
-    computeConflictingRules(instructionRule, generatedRules, conflictingRules);
+    var conflictingRules = computeConflictingRules(instructionRule, generatedRules);
 
     var nonConflictingRules = generatedRules.stream()
         .filter(p -> !conflictingRules.contains(p))
@@ -128,10 +127,11 @@ public class AsmGrammarRuleGenerationPass extends Pass {
     return new Pair<>(instruction, ctx.builtRule);
   }
 
-  private void computeConflictingRules(AsmNonTerminalRule instructionRule,
-                                       List<Pair<PrintableInstruction, AsmGrammarRule>> generated,
-                                       List<Pair<PrintableInstruction, AsmGrammarRule>>
-                                           conflicting) {
+  private List<Pair<PrintableInstruction, AsmGrammarRule>> computeConflictingRules(
+      AsmNonTerminalRule instructionRule,
+      List<Pair<PrintableInstruction, AsmGrammarRule>> generated) {
+    var conflicting = new ArrayList<Pair<PrintableInstruction, AsmGrammarRule>>();
+
     for (var alternative : instructionRule.getAlternatives().alternatives()) {
       for (var generatedPair : generated) {
         var generatedRule = (AsmNonTerminalRule) generatedPair.right();
@@ -151,6 +151,7 @@ public class AsmGrammarRuleGenerationPass extends Pass {
         }
       }
     }
+    return conflicting;
   }
 
   private void reportWarningForConflictingRule(

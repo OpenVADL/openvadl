@@ -26,6 +26,7 @@ import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.lcb.graph.DefinedImmediateSideEffectNode;
 import vadl.types.BuiltInTable;
+import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.OperandAsmType;
@@ -110,10 +111,11 @@ public class AsmGrammarRuleGenerator {
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, ConstantNode node) {
     if (node.constant() instanceof Constant.Str str && !isWhitespace(str.value())) {
-      var elem = new AsmStringLiteralUse(null, str.value(), StringAsmType.instance());
+      var trimmedValue = str.value().trim();
+      var elem = new AsmStringLiteralUse(null, trimmedValue, StringAsmType.instance());
       ctx.addElement(elem);
 
-      var tokens = Set.of(AsmToken.inferTerminalRule(str.value()));
+      var tokens = Set.of(AsmToken.inferTerminalRule(trimmedValue));
       ctx.setFirstTokensIfNull(tokens);
     }
   }
@@ -235,24 +237,32 @@ public class AsmGrammarRuleGenerator {
   public void handle(AsmRuleContext ctx, ReturnNode node) {
     AsmGrammarRuleGeneratorDispatcher.dispatch(this, ctx, node.value());
 
-    var subtypeMap = ctx.currentElements.stream()
-        .filter(e -> e instanceof HasAssignTo assignTo
-            && assignTo.assignToElement() != null
-            && assignTo.assignToElement() instanceof AsmAssignToAttribute)
-        .map(e -> (HasAssignTo) e)
-        .collect(
-            java.util.stream.Collectors.toMap(
-                e -> requireNonNull(e.assignToElement()).getAssignToName(),
-                HasAssignTo::getAsmType
-            )
-        );
-    var groupType = new GroupAsmType(subtypeMap);
+    AsmType ruleType;
+
+    // TODO: only use relevant elements in this check
+    if (ctx.currentElements.size() > 1) {
+
+      var subtypeMap = ctx.currentElements.stream()
+          .filter(e -> e instanceof HasAssignTo assignTo
+              && assignTo.assignToElement() != null
+              && assignTo.assignToElement() instanceof AsmAssignToAttribute)
+          .map(e -> (HasAssignTo) e)
+          .collect(
+              java.util.stream.Collectors.toMap(
+                  e -> requireNonNull(e.assignToElement()).getAssignToName(),
+                  HasAssignTo::getAsmType
+              )
+          );
+      ruleType = new GroupAsmType(subtypeMap);
+    } else {
+      ruleType = ctx.currentElements.getFirst().getAsmType();
+    }
 
     ctx.builtRule = new AsmNonTerminalRule(ctx.instruction.identifier(),
         new AsmAlternatives(List.of(
-            new AsmAlternative(null, ctx.firstTokens, groupType,
+            new AsmAlternative(null, ctx.firstTokens, ruleType,
                 false, ctx.currentElements)
-        ), groupType), InstructionAsmType.instance(),
+        ), ruleType), InstructionAsmType.instance(),
         SourceLocation.INVALID_SOURCE_LOCATION
     );
   }
