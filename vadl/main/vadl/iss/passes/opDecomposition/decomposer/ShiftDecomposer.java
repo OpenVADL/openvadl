@@ -77,12 +77,26 @@ public interface ShiftDecomposer extends IDecomposer {
     return shiftDecompose(src, hi, lo, true);
   }
 
-  private ExpressionNode effectiveShiftAmount(ExpressionNode expr, int srcW) {
+  private ExpressionNode effectiveShiftAmount(ExpressionNode expr, int shiftBits, int ctrlWidth) {
+    if (shiftBits < 0) {
+      throw new IllegalArgumentException("Expected non-negative shift bit-width, got " + shiftBits);
+    }
+    if (ctrlWidth <= 0) {
+      throw new IllegalArgumentException("Expected positive control width, got " + ctrlWidth);
+    }
+
+    if (shiftBits == 0) {
+      return Constant.Value.zero(Type.bits(ctrlWidth)).toNode();
+    }
+
     var exprW = expr.type().asDataType().bitWidth();
-    var srcMinW = BitsType.minimalRequiredWidthFor(srcW);
-    var t = Type.bits(Math.max(srcMinW, exprW));
-    expr = GraphUtils.zeroExtend(expr, t);
-    return BuiltInTable.UMOD.call(expr, Constant.Value.of(srcW, t).toNode());
+    ExpressionNode lowBits = exprW >= shiftBits
+        ? request(expr, shiftBits - 1, 0)
+        : GraphUtils.zeroExtend(expr, Type.bits(shiftBits));
+
+    return lowBits.type().asDataType().bitWidth() == ctrlWidth
+        ? lowBits
+        : GraphUtils.zeroExtend(lowBits, Type.bits(ctrlWidth));
   }
 
   /**
@@ -135,9 +149,17 @@ public interface ShiftDecomposer extends IDecomposer {
 
     // bit width of source type
     final var N = aT.bitWidth();
+    ensure(Integer.bitCount(N) == 1, () -> error("Unsupported shift decomposition", src)
+        .note("Shift decomposition currently only supports source widths that are powers of two.")
+        .note("Got width %s for operation %s.", N, src.builtIn()));
 
-    // shift amount in VADL is b % N
-    var b = effectiveShiftAmount(src.arg(1), N);
+    // shift amount in VADL is b % N, and for power-of-two N this equals low log2(N) bits.
+    var shiftBits = Integer.numberOfTrailingZeros(N);
+    var ctrlWidth = Math.max(
+        shiftBits,
+        BitsType.minimalRequiredWidthFor(Math.max(targetSize(), N))
+    );
+    var b = effectiveShiftAmount(src.arg(1), shiftBits, ctrlWidth);
     var bT = b.type().asDataType();
 
     // bit width per piece
