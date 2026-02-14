@@ -77,24 +77,39 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
       sb.callStmt("qemu_fprintf", "f",
           "\" " + reg.simpleName() + ":    \" TARGET_FMT_lx \"\\n\"",
           "env->" + regLower);
-      sb.append("qemu_fprintf(f, \" %s:    \" TARGET_FMT_lx \"\\n\", env->%s);"
-          .formatted(reg.simpleName(), regLower));
     } else if (dims.size() == 1) {
-      sb.forLoop("i", dims.getFirst().size(), (_) -> {
-        sb.callStmt("qemu_fprintf", "f", "\" %-8s \" TARGET_FMT_lx", names + "[i]",
-            "env->" + regLower + "[i]");
-        sb.ifStmt("i & 3 == 3", (_) ->
-            sb.callStmt("qemu_fprintf", "f", "\"\\n\"")
-        );
-      });
+      var flatSize = dims.getFirst().size();
+      var isWideElement = reg.resultType().bitWidth() > 64;
+
+      if (isWideElement) {
+        var bytesPerReg = reg.resultType().bitWidth() / 8;
+        sb.varDecl("uint8_t *", "p", "(uint8_t *) env->" + regLower);
+        sb.forLoop("i", flatSize, (_) -> {
+          sb.callStmt("qemu_fprintf", "f", "\" %-8s \"", names + "[i]");
+          sb.forLoop("int j = " + (bytesPerReg - 1), "j >= 0", "j--", (_) -> {
+            sb.callStmt("qemu_fprintf", "f", "\"%02x\"",
+                "*(p + i * " + bytesPerReg + " + j)");
+          });
+          sb.callStmt("qemu_fprintf", "f", "\"\\n\"");
+        });
+      } else {
+        sb.forLoop("i", flatSize, (_) -> {
+          sb.callStmt("qemu_fprintf", "f", "\" %-8s \" TARGET_FMT_lx", names + "[i]",
+              "env->" + regLower + "[i]");
+          sb.ifStmt("(i & 3) == 3", (_) ->
+              sb.callStmt("qemu_fprintf", "f", "\"\\n\"")
+          );
+        });
+      }
     } else {
       sb.forLoop("i", dims.getFirst().size(), (_) -> {
         sb.callStmt("qemu_fprintf", "f", "\" %-8s \"", names + "[i]");
         sb.varDecl("uint8_t *", "p", "(uint8_t *) env->" + regLower);
         var innerSizeBytes = reg.resultType(1).bitWidth() / 8;
-        sb.forLoop("int j = " + innerSizeBytes, "j >= 0", "j--", (_) -> {
+        sb.forLoop("int j = " + (innerSizeBytes - 1), "j >= 0", "j--", (_) -> {
           sb.callStmt("qemu_fprintf", "f", "\"%02x\"", "*(p + i * " + innerSizeBytes + " + j)");
         });
+        sb.callStmt("qemu_fprintf", "f", "\"\\n\"");
       });
     }
   }
