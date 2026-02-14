@@ -1497,6 +1497,7 @@ instruction set architecture PPC64SFS = {
 
   $XFXMoveSPRInstr(("MFSPR"; 0b01010'10011); true )
   $XFXMoveSPRInstr(("MTSPR"; 0b01110'10011); false)
+  $XFXMoveSPRInstr(("MFTB" ; 0b01011'10011); true ) // [phased-out]
 
   //------------------------Other------------------------------
   $XFormReverseInstr(("BRH"; 0b00110'11011); Unit::Half)
