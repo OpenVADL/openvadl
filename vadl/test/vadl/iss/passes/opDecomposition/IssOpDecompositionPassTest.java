@@ -17,17 +17,34 @@
 package vadl.iss.passes.opDecomposition;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static vadl.utils.GraphUtils.bits;
 import static vadl.utils.GraphUtils.slice;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.types.BuiltInTable;
+import vadl.types.Type;
+import vadl.utils.GraphUtils;
+import vadl.viam.Function;
+import vadl.viam.Identifier;
+import vadl.viam.Parameter;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FoldNode;
+import vadl.viam.graph.dependency.ForIdxNode;
+import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.canonicalization.Canonicalizer;
 
 public class IssOpDecompositionPassTest {
@@ -126,6 +143,29 @@ public class IssOpDecompositionPassTest {
     );
   }
 
+  @TestFactory
+  Stream<DynamicTest> foldSliceTests() {
+    return Stream.of(
+        DynamicTest.dynamicTest("FOLD_ADD_128_cross_block", () ->
+            testFoldSliceAgainstExpected(BuiltInTable.ADD, 128, 0, 5, 95, 64, 64)),
+        DynamicTest.dynamicTest("FOLD_ADD_128_descending", () ->
+            testFoldSliceAgainstExpected(BuiltInTable.ADD, 128, 6, 2, 85, 40, 64)),
+        DynamicTest.dynamicTest("FOLD_AND_128", () ->
+            testFoldSliceAgainstExpected(BuiltInTable.AND, 128, 0, 4, 90, 64, 64)),
+        DynamicTest.dynamicTest("FOLD_OR_128", () ->
+            testFoldSliceAgainstExpected(BuiltInTable.OR, 128, 0, 4, 70, 32, 64)),
+        DynamicTest.dynamicTest("FOLD_XOR_128", () ->
+            testFoldSliceAgainstExpected(BuiltInTable.XOR, 128, 1, 5, 63, 16, 64)),
+        DynamicTest.dynamicTest("FOLD_MUL_unsupported", () ->
+            assertThatThrownBy(() -> {
+              var fold = buildFoldExpr(BuiltInTable.MUL, 128, 0, 3);
+              new Decomposer(64).request(fold, 90, 60);
+            })
+                .isInstanceOf(vadl.viam.graph.ViamGraphError.class)
+                .hasMessageContaining("Unsupported fold combiner"))
+    );
+  }
+
   private DynamicTest lsrSimple(long a, int b, int width, int targetSize) {
     return DynamicTest.dynamicTest("LSR_" + a + "_" + b, () -> {
       var aN = bits(a, width).toNode();
@@ -203,6 +243,137 @@ public class IssOpDecompositionPassTest {
           .withFailMessage("Node exceeds target width (%d > %d): %s", width, targetSize, node)
           .isLessThanOrEqualTo(targetSize);
     }
+  }
+
+  private void testFoldSliceAgainstExpected(BuiltInTable.BuiltIn combiner,
+                                            int width,
+                                            int from,
+                                            int to,
+                                            int hi,
+                                            int lo,
+                                            int targetSize) {
+    var fold = buildFoldExpr(combiner, width, from, to);
+    var decomposed = new Decomposer(targetSize).request(fold.copy(), hi, lo);
+    assertSubgraphWithinTarget(decomposed, targetSize);
+
+    var expected = expectedFoldSlice(combiner, width, from, to, hi, lo);
+    var actual = evalToConstant(decomposed).unsignedInteger();
+    assertThat(actual).isEqualTo(expected);
+  }
+
+  private FoldNode buildFoldExpr(BuiltInTable.BuiltIn combiner, int width, int from, int to) {
+    var idx = new ForIdxNode(Type.bits(8), from, to);
+    var idxWide = GraphUtils.zeroExtend(idx, Type.bits(width).asDataType());
+    var seed = bits(0x1234, width).toNode();
+    var body = BuiltInTable.ADD.call(seed, idxWide);
+    return new FoldNode(
+        Type.bits(width).asDataType(),
+        idx,
+        body,
+        buildCombiner(combiner, width)
+    );
+  }
+
+  private Function buildCombiner(BuiltInTable.BuiltIn combiner, int width) {
+    var type = Type.bits(width).asDataType();
+    var left = new Parameter(Identifier.noLocation("l"), type, 0);
+    var right = new Parameter(Identifier.noLocation("r"), type, 1);
+    var graph = new Graph("fold_combiner_" + combiner.name().toLowerCase());
+    var ret = graph.addWithInputs(new ReturnNode(combiner.call(new FuncParamNode(left),
+        new FuncParamNode(right))));
+    graph.addWithInputs(new StartNode(ret));
+    return new Function(
+        Identifier.noLocation("fold_combiner_" + combiner.name().toLowerCase()),
+        new Parameter[] {left, right},
+        type,
+        graph
+    );
+  }
+
+  private BigInteger expectedFoldSlice(BuiltInTable.BuiltIn combiner,
+                                       int width,
+                                       int from,
+                                       int to,
+                                       int hi,
+                                       int lo) {
+    var mask = BigInteger.ONE.shiftLeft(width).subtract(BigInteger.ONE);
+    BigInteger acc;
+    if (combiner == BuiltInTable.AND) {
+      acc = mask;
+    } else if (combiner == BuiltInTable.ADD
+        || combiner == BuiltInTable.OR
+        || combiner == BuiltInTable.XOR) {
+      acc = BigInteger.ZERO;
+    } else {
+      throw new IllegalArgumentException("Unsupported combiner in test: " + combiner);
+    }
+
+    var step = from <= to ? 1 : -1;
+    for (int idx = from; ; idx += step) {
+      var term = BigInteger.valueOf(0x1234L + idx).and(mask);
+      if (combiner == BuiltInTable.ADD) {
+        acc = acc.add(term).and(mask);
+      } else if (combiner == BuiltInTable.AND) {
+        acc = acc.and(term);
+      } else if (combiner == BuiltInTable.OR) {
+        acc = acc.or(term).and(mask);
+      } else if (combiner == BuiltInTable.XOR) {
+        acc = acc.xor(term).and(mask);
+      } else {
+        throw new IllegalStateException("Unexpected combiner");
+      }
+      if (idx == to) {
+        break;
+      }
+    }
+
+    var sliceMask = BigInteger.ONE.shiftLeft(hi - lo + 1).subtract(BigInteger.ONE);
+    return acc.shiftRight(lo).and(sliceMask);
+  }
+
+  private vadl.viam.Constant.Value evalToConstant(ExpressionNode expr) {
+    if (expr instanceof ConstantNode c) {
+      return c.constant().asVal();
+    }
+    if (expr instanceof BuiltInCall call) {
+      var a = evalToConstant(call.arg(0));
+      var b = evalToConstant(call.arg(1));
+      if (call.builtIn() == BuiltInTable.ADD) {
+        return a.add(b, false).get(0, vadl.viam.Constant.Value.class);
+      }
+      if (call.builtIn() == BuiltInTable.AND) {
+        return a.and(b);
+      }
+      if (call.builtIn() == BuiltInTable.OR) {
+        return a.or(b);
+      }
+      if (call.builtIn() == BuiltInTable.XOR) {
+        return a.xor(b);
+      }
+      if (call.builtIn() == BuiltInTable.ULTH) {
+        return a.lth(b, false);
+      }
+      if (call.builtIn() == BuiltInTable.CONCATENATE_BITS) {
+        return a.concat(b);
+      }
+      throw new IllegalStateException("Unsupported built-in in test evaluator: " + call.builtIn());
+    }
+    if (expr instanceof SliceNode sliceNode) {
+      return evalToConstant(sliceNode.value()).slice(sliceNode.bitSlice());
+    }
+    if (expr instanceof ZeroExtendNode zeroExtendNode) {
+      return evalToConstant(zeroExtendNode.value()).zeroExtend(zeroExtendNode.type().asDataType());
+    }
+    if (expr instanceof TruncateNode truncateNode) {
+      return evalToConstant(truncateNode.value()).truncate(truncateNode.type().asDataType());
+    }
+    if (expr instanceof SelectNode selectNode) {
+      return evalToConstant(selectNode.condition()).bool()
+          ? evalToConstant(selectNode.trueCase())
+          : evalToConstant(selectNode.falseCase());
+    }
+    throw new IllegalStateException(
+        "Unsupported node in fold decomposition test evaluator: " + expr.getClass().getName());
   }
 
 }

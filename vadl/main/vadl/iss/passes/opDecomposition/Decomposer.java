@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
 import vadl.iss.passes.nodes.IssRegChunkReadNode;
 import vadl.iss.passes.nodes.IssRegChunkWriteNode;
 import vadl.iss.passes.opDecomposition.decomposer.ArithmeticDecomposer;
+import vadl.iss.passes.opDecomposition.decomposer.FoldDecomposer;
 import vadl.iss.passes.opDecomposition.decomposer.LogicDecomposer;
 import vadl.iss.passes.opDecomposition.decomposer.ShiftDecomposer;
 import vadl.iss.passes.opDecomposition.decomposer.TensorDecomposer;
@@ -84,7 +85,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 class Decomposer
     implements VadlBuiltInEmptyNoStatusDispatcher<Decomposer.Request>, ShiftDecomposer,
     LogicDecomposer,
-    ArithmeticDecomposer, TensorDecomposer {
+    ArithmeticDecomposer, TensorDecomposer, FoldDecomposer {
 
   record Slice(int hi, int lo) {
     int width() {
@@ -709,7 +710,7 @@ class Decomposer
 
   @Handler
   void handle(Request rq, FoldNode toHandle) {
-    throw new UnsupportedOperationException("Type FoldNode not yet implemented");
+    rq.result = decomposeFoldSlice(toHandle, rq.slice.hi(), rq.slice.lo());
   }
 
   @Handler

@@ -16,11 +16,8 @@
 
 package vadl.iss.passes.opDecomposition.decomposer;
 
-import java.util.IdentityHashMap;
 import vadl.types.Type;
 import vadl.utils.GraphUtils;
-import vadl.viam.Constant;
-import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.TensorNode;
@@ -70,42 +67,9 @@ public interface TensorDecomposer extends IDecomposer {
                                                    int idxValue,
                                                    int hiInElement,
                                                    int loInElement) {
-    var idxConst = Constant.Value.of(idxValue, idx.type()).toNode();
-    var bodyAtIdx = copyWithNodeSubstitution(tensor.body(), idx, idxConst, new IdentityHashMap<>());
+    var bodyAtIdx = ForallSubstitution.copyWithIndexSubstitution(tensor.body(), idx, idxValue);
     var elementPart = request(bodyAtIdx, hiInElement, loInElement);
     elementPart.setSourceLocation(tensor.location());
     return elementPart;
-  }
-
-  private ExpressionNode copyWithNodeSubstitution(ExpressionNode node,
-                                                  ExpressionNode toReplace,
-                                                  ExpressionNode replacement,
-                                                  IdentityHashMap<ExpressionNode, ExpressionNode> cache) {
-    if (node == toReplace) {
-      return replacement;
-    }
-
-    var cached = cache.get(node);
-    if (cached != null) {
-      return cached;
-    }
-
-    var copy = (ExpressionNode) node.shallowCopy();
-    cache.put(node, copy);
-    copy.applyOnInputs((self, input) -> {
-      if (input instanceof ExpressionNode inputExpr) {
-        return copyWithNodeSubstitution(inputExpr, toReplace, replacement, cache);
-      }
-      return input;
-    });
-
-    if (copy instanceof Canonicalizable canonicalizable) {
-      var canonical = canonicalizable.canonical();
-      if (canonical instanceof ExpressionNode exprCanonical) {
-        copy = exprCanonical;
-      }
-    }
-    cache.put(node, copy);
-    return copy;
   }
 }
