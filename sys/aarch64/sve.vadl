@@ -355,37 +355,37 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     , pattern  [9..5]          : Bits5     // pattern
     , dn       [4..0]          : Index     // source and destination register
     , imm      = imm4 as BitsX + 1
-    , countB   = DecodePredCountB(pattern)
-    , countH   = DecodePredCountH(pattern)
-    , countW   = DecodePredCountW(pattern)
-    , countD   = DecodePredCountD(pattern)
+    , countSizeB   = DecodePredCountB(pattern)
+    , countSizeH   = DecodePredCountH(pattern)
+    , countSizeW   = DecodePredCountW(pattern)
+    , countSizeD   = DecodePredCountD(pattern)
     }
 
-  model SVEIncrementAll (id: Id, mnemo: Str, count: Id, elSize: Id): IsaDefs = {
+  model SVEIncrementAll (id: Id, mnemo: Str, elSize: Id): IsaDefs = {
     instruction $id: SVEIncrementFormat =
       X(dn) := X(dn) + (VL as BitsX >> (3+ElSize::$elSize)) * imm
     encoding $id = { op = 0b0000'0100'11, opc = 0b111000, size = ElSize::$elSize, pattern = 0b1'1111 }
     assembly $id = ( $mnemo, ' ', register(dn), ', all, mul #', udec(imm) )
     }
 
-  model SVEIncrementPat (id: Id, mnemo: Str, count: Id, elSize: Id): IsaDefs = {
+  model SVEIncrementPat (id: Id, mnemo: Str, elSize: Id): IsaDefs = {
     instruction $id: SVEIncrementFormat =
-      X(dn) := X(dn) + $count * imm
+      X(dn) := X(dn) + AsId(count, $elSize) * imm
     [select when : pattern != 0b1'1111]
     encoding $id = { op = 0b0000'0100'11, opc = 0b111000, size = ElSize::$elSize }
     assembly $id = ( $mnemo, ' ', register(dn), ', ', patternStr(pattern), ', mul #', udec(imm) )
     }
 
-  model SVEIncrementBase (id: Id, mnemo: Str, count: Id, elSize: Id): IsaDefs = {
-    $SVEIncrementAll (     $id;       $mnemo; $count; $elSize)
-    $SVEIncrementPat (AsId($id, Pat); $mnemo; $count; $elSize)
+  model SVEIncrementBase (id: Id, mnemo: Str, elSize: Id): IsaDefs = {
+    $SVEIncrementAll (     $id;       $mnemo; $elSize)
+    $SVEIncrementPat (AsId($id, Pat); $mnemo; $elSize)
     }
 
   model SVEIncrInstr (i: InstrWithFunct): IsaDefs = {
-    $SVEIncrementBase (SVEINCB; "incb"; countB; SizeB)
-    $SVEIncrementBase (SVEINCH; "inch"; countH; SizeH)
-    $SVEIncrementBase (SVEINCW; "incw"; countW; SizeW)
-    $SVEIncrementBase (SVEINCD; "incd"; countD; SizeD)
+    $SVEIncrementBase (SVEINCB; "incb"; SizeB)
+    $SVEIncrementBase (SVEINCH; "inch"; SizeH)
+    $SVEIncrementBase (SVEINCW; "incw"; SizeW)
+    $SVEIncrementBase (SVEINCD; "incd"; SizeD)
     }
 
 // predicate true / false models ***********************************************
@@ -397,6 +397,10 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     , opc      [15..10,4]      : Bits7     // opcode second part
     , pattern  [9..5]          : Bits5     // pattern
     , pd       [3..0]          : IndexP    // destination predicate register
+    , countSizeB   = DecodePredCountB(pattern)
+    , countSizeH   = DecodePredCountH(pattern)
+    , countSizeS   = DecodePredCountW(pattern)
+    , countSizeD   = DecodePredCountD(pattern)
     }
 
   model SVEPTrueAllInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
@@ -409,7 +413,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
   model SVEPTruePatInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
     instruction $i.id: SVEPTrueFormat =
-      let count = $BHSDDecodePredCount($elSize)(pattern) in
+      let count = AsId(count, $elSize) in
       let pred  =
         if count = 0
           then 0
