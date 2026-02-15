@@ -117,10 +117,10 @@ instruction set architecture PPC64SFS = {
   }
 
   format CRField : Nibble =
-  { lt [3]                                       // result < 0 or operand1 < operand2
-  , gt [2]                                       // result > 0 or operand1 > operand2
-  , eq [1]                                       // result = 0 or operand1 = operand2
-  , so [0]                                       // usually a copy of XER.so
+  { lt : Bit                                     // result < 0 or operand1 < operand2
+  , gt : Bit                                     // result > 0 or operand1 > operand2
+  , eq : Bit                                     // result = 0 or operand1 = operand2
+  , so : Bit                                     // usually a copy of XER.so
   }
 
   format XERFormat : Reg32 =
@@ -191,6 +191,8 @@ instruction set architecture PPC64SFS = {
   , l    : Bit                                   // if set the instruction uses 64-bit operands
   , rs   : XIndex                                // source register
   , imm  : Half                                  // immediate value
+  , immU = imm as UDWord                         // immediate value zero extended to 64 bits
+  , immS = imm as SDWord                         // immediate value sign extended to 64 bits
   }
 
   format DFormC : Instr =
@@ -506,97 +508,52 @@ instruction set architecture PPC64SFS = {
     )
   }
 
-  // CR access functions, inverted to match powerpc conventions
-  model CRField (index : Ex) : Ex = { CRF( 7 - $index) }
-  model CRBit   (index : Ex) : Ex = { CRB(31 - $index) }
-
-  model SetCRBase (dst : Ex, a : TwoArgs, type : Id, so : Ex) : Stat = {
-    $CRField($dst) := ($a.arg1 as $type < $a.arg2 as $type,
-                       $a.arg1 as $type > $a.arg2 as $type,
-                       $a.arg1 as $type = $a.arg2 as $type,
-                       $so)
+  model SetCRBase (dst : Ex, a : TwoArgs, sf : Ex, type64 : Id, so : Ex) : Stat = {
+    let m32 = $sf = Mode::M32 in
+      let a1 = if m32 then $a.arg1 as Word as $type64
+                      else $a.arg1         as $type64 in
+        let a2 = if m32 then $a.arg2 as Word as $type64
+                        else $a.arg2         as $type64 in
+          CRF(7 - $dst) := (a1 < a2, a1 > a2, a1 = a2, $so)
   }
 
   // sets CR field 0 based on signed comparison of the result to zero
-  model SetCR0 (result : Ex, so : Ex) : Stat = {
-    if MSR.sf = Mode::M32 then $SetCRBase(0; ($result; 0); SWord ; $so)
-                          else $SetCRBase(0; ($result; 0); SDWord; $so)
+  model SetCR0 (rc : Bool, so : Ex) : Stat = {
+    $CS($rc; $SetCRBase(0; (result; 0); MSR.sf; SDWord; $so))
   }
 
-  // sets CR field 0 based on signed comparison between two arguments
+  // sets CR field based on signed comparison between two arguments
   model SetCRCmp (a : TwoArgs, logical : Bool) : Stat = {
-    match : Stat
-    ( $logical = true => if l = Mode::M32 then $SetCRBase(crt; $a; UWord ; XER.so)
-                                          else $SetCRBase(crt; $a; UDWord; XER.so)
-    ;  _              => if l = Mode::M32 then $SetCRBase(crt; $a; SWord ; XER.so)
-                                          else $SetCRBase(crt; $a; SDWord; XER.so)
-    )
+    $SetCRBase(crt; $a; l; match : Id ( $logical = true => UDWord; _ => SDWord ); XER.so)
   }
 
-  // conditionally computes the mode-dependent XER.ov
-  model CMOV (oe : Bool, stat : Stat) : Stat = {
+  model SetXERBase (oe : Bool, ce : Bool, ov32 : Ex) : Stat = {
     match : Stat
-    ( $oe = true => let mov = if MSR.sf = Mode::M32 then flags32.overflow else flags64.overflow in $stat
-    ; _          => $stat
-    )
-  }
-
-  // conditionally computes the mode-dependent XER.ca
-  model CMCA (ce : Bool, stat : Stat) : Stat = {
-    match : Stat
-    ( $ce = true => let mca = if MSR.sf = Mode::M32 then flags32.carry else flags64.carry in $stat
-    ; _          => $stat
-    )
-  }
-
-  model SetXERBase (oe : Bool, ce : Bool, ov32 : Ex, ca32 : Ex) : Stat = {
-    match : Stat
-    ( $oe = true  => match : Stat
-      ( $ce = true  => XER := (so    , mov   , mca   , XER.rsv1, $ov32   , $ca32   , XER.rsv2, XER.nbytes)
-      ; _           => XER := (so    , mov   , XER.ca, XER.rsv1, $ov32   , XER.ca32, XER.rsv2, XER.nbytes)
+    ( $ce = true  => let mca = if MSR.sf = Mode::M32 then flags32.carry else flags64.carry in
+      match : Stat
+      ( $oe = true  => XER := (so    , ov    , mca   , XER.rsv1, $ov32   , flags32.carry, XER.rsv2, XER.nbytes)
+      ; _           => XER := (XER.so, XER.ov, mca   , XER.rsv1, XER.ov32, flags32.carry, XER.rsv2, XER.nbytes)
       )
-    ; _           => match : Stat
-      ( $ce = true  => XER := (XER.so, XER.ov, mca   , XER.rsv1, XER.ov32, $ca32   , XER.rsv2, XER.nbytes)
+    ; _           =>
+      match : Stat
+      ( $oe = true  => XER := (so    , ov    , XER.ca, XER.rsv1, $ov32   , XER.ca32     , XER.rsv2, XER.nbytes)
       ; _           => {}
       )
     )
   }
 
-  // sets fixed-point exception register
-  model SetXER (oe : Bool, ce : Bool) : Stat = {
-    $CMOV($oe; $CMCA($ce; $SetXERBase($oe; $ce; flags32.overflow; flags32.carry)))
-  }
-
-  model SetXERAndCRBase (oe : Bool, ce : Bool, rc : Bool, ov32 : Ex, ca32 : Ex, result : Id) : Stats = {
-    $CMCA($ce; $SetXERBase($oe; $ce; $ov32; $ca32))
+  // sets fixed-point exception register and condition register
+  model SetFlags (oe : Bool, ce : Bool, rc : Bool, ov32 : Ex, ov : Ex) : Stat = {
     match : Stat
-    ( $rc = true => match : Stat
-                    ( $oe = true  => $SetCR0($result; so    )
-                    ; _           => $SetCR0($result; XER.so)
-                    )
-    ; _ => {}
-    )
-  }
-
-  // sets fixed-point exception register and condition register using flags
-  model SetXERAndCRWithFlags (oe : Bool, ce : Bool, rc : Bool) : Stats = {
-    match : Stats
-    ( $oe = true => let mov = if MSR.sf = Mode::M32 then flags32.overflow else flags64.overflow in
-                      let so = XER.so | mov in {
-                        $SetXERAndCRBase($oe; $ce; $rc; flags32.overflow; flags32.carry; result64)
+    ( $oe = true => let ov = $ov in
+                      let so = XER.so | ov in {
+                        $SetXERBase(true; $ce; $ov32)
+                        $SetCR0($rc; so)
                       }
-    ; _          => $SetXERAndCRBase($oe; $ce; $rc; false; flags32.carry; result64)
-    )
-  }
-
-  // sets fixed-point exception register and condition register using two overflow expressions
-  model SetXERAndCRWithOV3264 (oe : Bool, ce : Bool, rc : Bool, ov32 : Ex, ov64 : Ex) : Stats = {
-    match : Stats
-    ( $oe = true => let mov = $ov64 in
-                      let so = XER.so | mov in {
-                        $SetXERAndCRBase($oe; $ce; $rc; $ov32; false; result)
-                      }
-    ; _          => $SetXERAndCRBase($oe; $ce; $rc; false; false; result)
+    ; _          => {
+                      $SetXERBase(false; $ce; $ov32)
+                      $SetCR0($rc; XER.so)
+                    }
     )
   }
 
@@ -687,7 +644,7 @@ instruction set architecture PPC64SFS = {
       $CS($lk; LR := PC.next)
       let nctr = if bo(2) then CTR else CTR - 1 in
         let mctr = if MSR.sf = Mode::M32 then nctr & maxU32E else nctr in {
-          if (bo(2) | ((mctr != 0) ^ bo(1))) & (bo(4) | ($CRBit(crbs) = bo(3)))
+          if (bo(2) | ((mctr != 0) ^ bo(1))) & (bo(4) | (CRB(31 - crbs) = bo(3)))
           then PC := $TargetAddrImm(extBd; $aa)
           CTR := nctr
         }
@@ -709,11 +666,11 @@ instruction set architecture PPC64SFS = {
   // instructions: addi, addic, addic., addis, subfic
   model DFormAddSubInstr (x : AsmOpOpcdId, a : TwoArgs, rc : Bool, ce : Bool) : IsaDefs = {
     instruction $x.id : DFormA =
-      let result32, flags32 = VADL::$x.op($a.arg1 as SWord, $a.arg2 as SWord) in
-        let result64, flags64 = VADL::$x.op($a.arg1 as SDWord, $a.arg2 as SDWord) in {
-          X(rs) := result64
-          $SetXER(false; $ce)
-          $CS($rc; $SetCR0(result64; XER.so))
+      let result32, flags32 = VADL::$x.op($a.arg1 as SWord , $a.arg2 as SWord ) in
+        let result, flags64 = VADL::$x.op($a.arg1 as SDWord, $a.arg2 as SDWord) in {
+          X(rs) := result
+          $SetFlags(false; $ce; $rc; flags32.overflow;
+            if MSR.sf = Mode::M32 then flags32.overflow else flags64.overflow)
         }
     encoding $x.id = {opcd = $x.opcd}
     assembly $x.id = ($x.asm, $rStr($rc), " ", decimal(rs), ",", decimal(ra), ",", decimal(imm))
@@ -724,7 +681,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($x.asm) : DFormA =
       let result = VADL::$x.op(X(rs), $arg2) in {
         X(ra) := result
-        $CS($rc; $SetCR0(result; XER.so))
+        $SetCR0($rc; XER.so)
       }
     encoding AsId($x.asm) = {opcd = $x.opcd}
     assembly AsId($x.asm) = ($x.asm, $rStr($rc), " ", decimal(ra), ",", decimal(rs), ",", decimal(imm))
@@ -767,7 +724,8 @@ instruction set architecture PPC64SFS = {
   // instructions: cmpi, cmpli
   model DFormCmpInstr (x : AsmOpcd, logical : Bool) : IsaDefs = {
     instruction AsId($x.asm) : DFormB =
-      $SetCRCmp((X(rs); imm); $logical)
+      let immExt = match : Ex ( $logical = true => immU; _ => immS ) in
+        $SetCRCmp((X(rs); immExt); $logical)
     encoding AsId($x.asm) = {opcd = $x.opcd, rsv = 0b0}
     assembly AsId($x.asm) = ($x.asm, " ", decimal(crt), ",", decimal(l), ",", decimal(rs), ",", decimal(imm))
   }
@@ -819,7 +777,7 @@ instruction set architecture PPC64SFS = {
         let m = mask (31 - me6, 31 - mb6) in
           let result = $r.res in {
             X(ra) := result
-            $CS($rc; $SetCR0(result; XER.so))
+            $SetCR0($rc; XER.so)
           }
     encoding AsId($r.x.asm, $rId($rc)) =
       {opcd = $r.x.opcd, rc = $rc}
@@ -850,7 +808,7 @@ instruction set architecture PPC64SFS = {
           let ca = if $r.shift > 31 then X(rs)(31) else X(rs)(31) & (r(31..0) != 0) in {
             X(ra) := result
             XER := (XER.so, XER.ov, ca, XER.rsv1, XER.ov32, ca, XER.rsv2, XER.nbytes)
-            $CS($rc; $SetCR0(result; XER.so))
+            $SetCR0($rc; XER.so)
           }
     encoding AsId($r.x.asm, $rId($rc)) =
       {opcd = 0b011111, extopcd = $r.x.ext, rc = $rc}
@@ -898,7 +856,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($r.x.asm, $rId($rc)) : XFormA =
       let result = $r.res in {
         X(ra) := result
-        $CS($rc; $SetCR0(result; XER.so))
+        $SetCR0($rc; XER.so)
       }
     encoding AsId($r.x.asm, $rId($rc)) =
       {opcd = 0b011111, rb = 0b00000, extopcd = $r.x.ext, rc = $rc}
@@ -931,7 +889,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($r.x.asm, $rId($rc)) : XFormA =
       let result = $r.x.op(X(rs), $r.arg2) in {
         X(ra) := result
-        $CS($rc; $SetCR0(result; XER.so))
+        $SetCR0($rc; XER.so)
       }
     encoding AsId($r.x.asm, $rId($rc)) =
       {opcd = 0b011111, extopcd = $r.x.ext, rc = $rc}
@@ -949,7 +907,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($x.asm, $rId($rc)) : XFormA =
       let result = if X(rb)(5) = 0 then VADL::$x.op(XW(rs), X(rb)(4..0)) as UDWord else 0 in {
         X(ra) := result
-        $CS($rc; $SetCR0(result; XER.so))
+        $SetCR0($rc; XER.so)
       }
     encoding AsId($x.asm, $rId($rc)) =
       {opcd = 0b011111, extopcd = $x.ext, rc = $rc}
@@ -1043,7 +1001,7 @@ instruction set architecture PPC64SFS = {
       let b = XB(ra) as UByte in
         let m = ((X(rb)( 7.. 0) <= b) & (b <= X(rb)(15.. 8))    ) |
                 ((X(rb)(23..16) <= b) & (b <= X(rb)(31..24)) & l) in
-          $CRField(crt) := (0 as Bit, m, 0 as Bits<2>)
+          CRF(7 - crt) := (0 as Bit, m, 0 as Bits<2>)
     encoding AsId($asm) = {opcd = 0b011111, rsv1 = 0b0, extopcd = 0b00110'00000, rsv2 = 0b0}
     assembly AsId($asm) = ($asm, " ", decimal(crt), ",", decimal(l), ",", decimal(ra), ",", decimal(rb))
   }
@@ -1051,8 +1009,8 @@ instruction set architecture PPC64SFS = {
   // instructions: setb
   model XFormBoolInstr (asm : Str) : IsaDefs = {
     instruction AsId($asm) : XFormC =
-      X(rs) := if      $CRBit(crs as Bits<5> * 4    ) then -1 as SDWord
-               else if $CRBit(crs as Bits<5> * 4 + 1) then  1 as SDWord
+      X(rs) := if      CRB(31 - crs as Bits<5> * 4) then -1 as SDWord
+               else if CRB(30 - crs as Bits<5> * 4) then  1 as SDWord
                else                                         0 as SDWord
     encoding AsId($asm) = {opcd = 0b011111, rsv1 = 0b0000000, extopcd =  0b00100'00000, rsv2 = 0b0}
     assembly AsId($asm) = ($asm, " ", decimal(rs), ",", decimal(crs))
@@ -1061,7 +1019,7 @@ instruction set architecture PPC64SFS = {
   // instructions: setbc, setbcr, setnbc, setnbcr
   model XFormBoolCondInstr (x : AsmExt, tval : Ex, fval : Ex) : IsaDefs = {
     instruction AsId($x.asm) : XFormD =
-      X(rs) := if $CRBit(crbs) then $tval else $fval
+      X(rs) := if CRB(31 - crbs) then $tval else $fval
     encoding AsId($x.asm) = {opcd = 0b011111, rsv1 = 0b00000, extopcd = $x.ext, rsv2 = 0b0}
     assembly AsId($x.asm) = ($x.asm, " ", decimal(rs), ",", decimal(crbs))
   }
@@ -1074,7 +1032,7 @@ instruction set architecture PPC64SFS = {
                 (b = X(rb)(47..40)) | (b = X(rb)(39..32)) |
                 (b = X(rb)(31..24)) | (b = X(rb)(23..16)) |
                 (b = X(rb)(15.. 8)) | (b = X(rb)( 7.. 0)) in
-          $CRField(crt) := (0 as Bit, m, 0 as Bits<2>)
+          CRF(7 - crt) := (0 as Bit, m, 0 as Bits<2>)
     encoding AsId($asm) = {opcd = 0b011111, rsv1 = 0b00, extopcd = 0b00111'00000, rsv2 = 0b0}
     assembly AsId($asm) = ($asm, " ", decimal(crt), ",", decimal(ra), ",", decimal(rb))
   }
@@ -1082,7 +1040,7 @@ instruction set architecture PPC64SFS = {
   // instructions: mcrxrx
   model XFormMoveXERCRFInstr (asm : Str) : IsaDefs = {
     instruction AsId($asm) : XFormE =
-      $CRField(crt) := (XER.ov, XER.ov32, XER.ca, XER.ca32)
+      CRF(7 - crt) := (XER.ov, XER.ov32, XER.ca, XER.ca32)
     encoding AsId($asm) = {opcd = 0b011111, rsv1 = 0b00, ra = 0b00000, rb = 0b00000, extopcd = 0b10010'00000, rsv2 = 0b0}
     assembly AsId($asm) = ($asm, " ", decimal(crt))
   }
@@ -1169,7 +1127,7 @@ instruction set architecture PPC64SFS = {
   // instructions: crand, crandc, creqv, crnand, crnor, cror, crorc, crxor
   model XLFormLogicalInstr (x : AsmOpExt, arg2 : Ex) : IsaDefs = {
     instruction AsId($x.asm) : XLFormA =
-      $CRBit(crbt) := $x.op($CRBit(crbs1), $arg2)
+      CRB(31 - crbt) := $x.op(CRB(31 - crbs1), $arg2)
     encoding AsId($x.asm) = {opcd = 0b010011, extopcd = $x.ext, rsv = 0b0}
     assembly AsId($x.asm) = ($x.asm, " ", decimal(crbt), ",", decimal(crbs1), ",", decimal(crbs2))
   }
@@ -1181,7 +1139,7 @@ instruction set architecture PPC64SFS = {
       let lrv = PC.next in
         let nctr = if ~($r.cntr as Bit) | bo(2) then CTR else CTR - 1 in
           let mctr = if MSR.sf = Mode::M32 then nctr & maxU32E else nctr in {
-            if (~($r.cntr as Bit) | bo(2) | ((mctr != 0) ^ bo(1))) & (bo(4) | ($CRBit(crbs) = bo(3)))
+            if (~($r.cntr as Bit) | bo(2) | ((mctr != 0) ^ bo(1))) & (bo(4) | (CRB(31 - crbs) = bo(3)))
             then PC := $TargetAddrReg($r.breg)
             $CS($lk    ; LR  := lrv )
             $CS($r.cntr; CTR := nctr)
@@ -1201,7 +1159,7 @@ instruction set architecture PPC64SFS = {
   // instructions: mcrf
   model XLFormMoveCRFCRFInstr (asm : Str) : IsaDefs = {
     instruction AsId($asm) : XLFormC =
-      $CRField(crt) := $CRField(crs)
+      CRF(7 - crt) := CRF(7 - crs)
     encoding AsId($asm) = {opcd = 0b010011, rsv1 = 0b00, rsv2 = 0b00'00000'00000'000000}
     assembly AsId($asm) = ($asm, " ", decimal(crt), ",", decimal(crs))
   }
@@ -1220,10 +1178,11 @@ instruction set architecture PPC64SFS = {
 
   model XOFormAddSubInstrExt (r : XOFormAddSubInstrRec, oe : Bool, rc : Bool) : IsaDefs = {
     instruction AsId($r.x.asm, $orId($oe; $rc)) : XOForm =
-      let result32, flags32 = VADL::$r.x.op($r.a.arg1 as SWord, $r.a.arg2 as SWord, $r.ca) in
-        let result64, flags64 = VADL::$r.x.op($r.a.arg1 as SDWord, $r.a.arg2 as SDWord, $r.ca) in {
-          X(rs) := result64
-          $SetXERAndCRWithFlags($oe; $r.ce; $rc)
+      let result32, flags32 = VADL::$r.x.op($r.a.arg1 as SWord , $r.a.arg2 as SWord , $r.ca) in
+        let result, flags64 = VADL::$r.x.op($r.a.arg1 as SDWord, $r.a.arg2 as SDWord, $r.ca) in {
+          X(rs) := result
+          $SetFlags($oe; $r.ce; $rc; flags32.overflow;
+            if MSR.sf = Mode::M32 then flags32.overflow else flags64.overflow)
         }
     encoding AsId($r.x.asm, $orId($oe; $rc)) =
       {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc, $r.enc}
@@ -1248,11 +1207,11 @@ instruction set architecture PPC64SFS = {
         let udf = $r.udf in
           let result = if udf then $r.ures else res as Word as $r.type in {
             X(rs) := result
-            $SetXERAndCRWithOV3264($oe; false; $rc; mov; udf | flags.overflow)
+            $SetFlags($oe; false; $rc; ov; udf | flags.overflow)
           }
       else let result = $r.zres as UDWord in {
         X(rs) := result
-        $SetXERAndCRWithOV3264($oe; false; $rc; mov; true)
+        $SetFlags($oe; false; $rc; ov; true)
       }
     encoding AsId($r.x.asm, $orId($oe; $rc)) =
       {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc}
@@ -1275,7 +1234,7 @@ instruction set architecture PPC64SFS = {
       let prod = VADL::$r.x.op(XW(ra), XW(rb)) in
         let result = $r.res as UDWord in {
           X(rs) := result
-          $SetXERAndCRWithOV3264($oe; false; $rc; mov; prod != (prod as SWord) as SDWord)
+          $SetFlags($oe; false; $rc; ov; prod != (prod as SWord) as SDWord)
         }
     encoding AsId($r.x.asm, $rId($rc)) =
       {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc}
@@ -1295,7 +1254,7 @@ instruction set architecture PPC64SFS = {
         let ov64 = if MSR.sf = Mode::M32 then ov32 else X(ra) = minS64 in
           let result = ~X(ra) + 1 in {
             X(rs) := result
-            $SetXERAndCRWithOV3264($oe; false; $rc; ov32; ov64)
+            $SetFlags($oe; false; $rc; ov32; ov64)
           }
     encoding AsId($asm, $orId($oe; $rc)) =
       {opcd = 0b011111, rb = 0b00000, oe = $oe, extopcd = 0b0011'01000, rc = $rc}
@@ -1315,8 +1274,8 @@ instruction set architecture PPC64SFS = {
   model Z23FormAddInstr (asm : Str) : IsaDefs = {
     instruction AsId($asm) : Z23Form =
       let result32, flags32 = VADL::addc(XW(ra), XW(rb), XER.ov) in
-        let result64, flags64 = VADL::addc(X(ra), X(rb), XER.ov) in {
-          X(rs) := result64
+        let result, flags64 = VADL::addc(X(ra) , X(rb) , XER.ov) in {
+          X(rs) := result
           let mca = if MSR.sf = Mode::M32 then flags32.carry else flags64.carry in
             XER := (XER.so, mca, XER.ca, XER.rsv1, flags32.carry, XER.ca32, XER.rsv2, XER.nbytes)
         }
@@ -1383,14 +1342,14 @@ instruction set architecture PPC64SFS = {
   $XFormLogicalInstr((("ORC" ; VADL::or ; 0b01100'11100); ~X(rb)))
   $XFormLogicalInstr((("XOR" ; VADL::xor; 0b01001'11100);  X(rb)))
 
-  $XLFormLogicalInstr(("CRAND" ; VADL::and; 0b01000'00001);  $CRBit(crbs2))
-  $XLFormLogicalInstr(("CRANDC"; VADL::and; 0b00100'00001); ~$CRBit(crbs2))
-  $XLFormLogicalInstr(("CREQV" ; nxor1    ; 0b01001'00001);  $CRBit(crbs2))
-  $XLFormLogicalInstr(("CRNAND"; nand1    ; 0b00111'00001);  $CRBit(crbs2))
-  $XLFormLogicalInstr(("CRNOR" ; nor1     ; 0b00001'00001);  $CRBit(crbs2))
-  $XLFormLogicalInstr(("CROR"  ; VADL::or ; 0b01110'00001);  $CRBit(crbs2))
-  $XLFormLogicalInstr(("CRORC" ; VADL::or ; 0b01101'00001); ~$CRBit(crbs2))
-  $XLFormLogicalInstr(("CRXOR" ; VADL::xor; 0b00110'00001);  $CRBit(crbs2))
+  $XLFormLogicalInstr(("CRAND" ; VADL::and; 0b01000'00001);  CRB(31 - crbs2))
+  $XLFormLogicalInstr(("CRANDC"; VADL::and; 0b00100'00001); ~CRB(31 - crbs2))
+  $XLFormLogicalInstr(("CREQV" ; nxor1    ; 0b01001'00001);  CRB(31 - crbs2))
+  $XLFormLogicalInstr(("CRNAND"; nand1    ; 0b00111'00001);  CRB(31 - crbs2))
+  $XLFormLogicalInstr(("CRNOR" ; nor1     ; 0b00001'00001);  CRB(31 - crbs2))
+  $XLFormLogicalInstr(("CROR"  ; VADL::or ; 0b01110'00001);  CRB(31 - crbs2))
+  $XLFormLogicalInstr(("CRORC" ; VADL::or ; 0b01101'00001); ~CRB(31 - crbs2))
+  $XLFormLogicalInstr(("CRXOR" ; VADL::xor; 0b00110'00001);  CRB(31 - crbs2))
 
   $DFormLogicalInstr(("ANDI" ; and; 0b011100); immU  ; true )
   $DFormLogicalInstr(("ANDIS"; and; 0b011101); shImmU; true )
