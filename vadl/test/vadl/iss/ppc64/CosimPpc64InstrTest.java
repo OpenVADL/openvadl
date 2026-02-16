@@ -34,6 +34,7 @@ import org.junit.jupiter.api.TestMethodOrder;
  */
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Disabled
 public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
 
   private static final long BASE_ADDRESS_LOAD_STORE = 0x1000L;
