@@ -1,0 +1,36 @@
+name: Cosim PPC64 Instr (x64)
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  cosim-ppc64-instr:
+    runs-on: self-hosted-x64
+    env:
+      isCI: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run CosimPpc64InstrTest
+        run: ./gradlew test-iss --tests "vadl.iss.ppc64.CosimPpc64InstrTest"
+      - name: Test Report
+        uses: dorny/test-reporter@v2
+        if: success() || failure()
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+        with:
+          name: report CosimPpc64InstrTest
+          path: '**/build/test-results/**/TEST-*.xml'
+          reporter: java-junit
+          list-tests: failed
