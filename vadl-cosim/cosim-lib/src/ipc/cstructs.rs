@@ -447,6 +447,28 @@ impl MemAccessInfo {
 
         format!("0x{s}")
     }
+
+    pub fn to_u128(&self, endian: &Endian) -> u128 {
+        let bytes = self.data_slice();
+        let mut buf = [0u8; 16];
+        match endian {
+            Endian::Little => {
+                buf[..bytes.len()].copy_from_slice(bytes);
+                u128::from_le_bytes(buf)
+            }
+            Endian::Big => {
+                let offset = 16 - bytes.len();
+                buf[offset..].copy_from_slice(bytes);
+                u128::from_be_bytes(buf)
+            }
+        }
+    }
+
+    pub fn data_value_fmt(&self, endian: &Endian) -> String {
+        let width = self.data_slice().len() * 2;
+        let val = self.to_u128(endian);
+        format!("0x{val:0width$X}")
+    }
 }
 
 #[repr(C)]
