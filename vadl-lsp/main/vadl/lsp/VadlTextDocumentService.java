@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -37,10 +37,8 @@ import org.eclipse.lsp4j.SemanticTokensParams;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
-import org.eclipse.lsp4j.jsonrpc.validation.NonNull;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import vadl.ast.Ast;
 import vadl.ast.LspTokenizer;
 import vadl.ast.ModelRemover;
@@ -69,16 +67,16 @@ class VadlTextDocumentService implements TextDocumentService {
    */
   private static final URI PRIMARY_FILE = URI.create("memory://internal");
 
-  private static final Logger log = LoggerFactory.getLogger(VadlTextDocumentService.class);
-
-  @NonNull
   private final VadlLanguageServer server;
-  private @Nullable LspTokenizer tokenizer;
+  private final Logger log;
+  @Nullable
+  private LspTokenizer tokenizer;
 
   private final Map<String, Document> openDocuments = new HashMap<>();
 
   VadlTextDocumentService(VadlLanguageServer server) {
     this.server = server;
+    this.log = server.getLogger(VadlTextDocumentService.class);
   }
 
   /**
@@ -88,7 +86,7 @@ class VadlTextDocumentService implements TextDocumentService {
    *
    * @param tokenizer A fully configured Tokenizer for VADL
    */
-  void setTokenizer(@NonNull LspTokenizer tokenizer) {
+  void setTokenizer(LspTokenizer tokenizer) {
     this.tokenizer = tokenizer;
   }
 

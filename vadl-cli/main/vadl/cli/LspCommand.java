@@ -17,6 +17,7 @@
 package vadl.cli;
 
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import vadl.lsp.LspEntryPoint;
@@ -32,12 +33,14 @@ import vadl.lsp.LspEntryPoint;
 public class LspCommand implements Callable<Integer> {
 
   @Option(names = {"-p", "--port"},
-      description = "Port on which to listen to. Default: 10999",
-      defaultValue = "10999")
-  int port;
+      description =
+          "TCP port on which to listen. If not given: Communicate via stdin/stdout instead",
+      defaultValue = Option.NULL_VALUE)
+  @Nullable
+  Integer port;
 
   @Override
   public Integer call() {
-    return LspEntryPoint.start(port);
+    return LspEntryPoint.run(port);
   }
 }
