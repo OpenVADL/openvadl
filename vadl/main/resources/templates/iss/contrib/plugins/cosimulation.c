@@ -428,52 +428,6 @@ inline static bool is_consecutive_memory_region(uint64_t addr1,
   return addr1 + (1 << addr1_size) == addr2;
 }
 
-static void mem_value_to_le_bytes(qemu_plugin_mem_value value,
-                                  uint8_t *out,
-                                  uint8_t size_log2) {
-  uint8_t bytes = (uint8_t)(1U << size_log2);
-
-  switch (bytes) {
-  case 1: {
-    out[0] = value.data.u8;
-    return;
-  }
-  case 2: {
-    uint16_t v = value.data.u16;
-    out[0] = (uint8_t)(v & 0xFFU);
-    out[1] = (uint8_t)((v >> 8) & 0xFFU);
-    return;
-  }
-  case 4: {
-    uint32_t v = value.data.u32;
-    out[0] = (uint8_t)(v & 0xFFU);
-    out[1] = (uint8_t)((v >> 8) & 0xFFU);
-    out[2] = (uint8_t)((v >> 16) & 0xFFU);
-    out[3] = (uint8_t)((v >> 24) & 0xFFU);
-    return;
-  }
-  case 8: {
-    uint64_t v = value.data.u64;
-    out[0] = (uint8_t)(v & 0xFFU);
-    out[1] = (uint8_t)((v >> 8) & 0xFFU);
-    out[2] = (uint8_t)((v >> 16) & 0xFFU);
-    out[3] = (uint8_t)((v >> 24) & 0xFFU);
-    out[4] = (uint8_t)((v >> 32) & 0xFFU);
-    out[5] = (uint8_t)((v >> 40) & 0xFFU);
-    out[6] = (uint8_t)((v >> 48) & 0xFFU);
-    out[7] = (uint8_t)((v >> 56) & 0xFFU);
-    return;
-  }
-  case 16:
-    // No stable scalar type is exposed for 16-byte values in all QEMU builds.
-    // Keep a byte copy for this width until an API-stable representation is available.
-    memcpy(out, &value.data, bytes);
-    return;
-  default:
-    PLUGIN_ASSERT(false, "unsupported memory access width: %d bytes", bytes);
-  }
-}
-
 static void vcpu_mem_cb(unsigned int cpu_index, qemu_plugin_meminfo_t info,
                         uint64_t vaddr, void *udata) {
 
@@ -487,7 +441,7 @@ static void vcpu_mem_cb(unsigned int cpu_index, qemu_plugin_meminfo_t info,
     qemu_plugin_mem_value data = qemu_plugin_mem_get_value(info);
 
     shm.shm_insn.mem_access_info.size = data.type;
-    mem_value_to_le_bytes(data, shm.shm_insn.mem_access_info.data, data.type);
+    memcpy(&shm.shm_insn.mem_access_info.data, &data.data, 1 << data.type);
     shm.shm_insn.insn_info = *tbinsn_info;
 
     combined_mem_data = shm;
@@ -507,10 +461,8 @@ static void vcpu_mem_cb(unsigned int cpu_index, qemu_plugin_meminfo_t info,
 
     uint8_t data_offset =
         (1 << combined_mem_data.shm_insn.mem_access_info.size);
-    mem_value_to_le_bytes(
-        data,
-        combined_mem_data.shm_insn.mem_access_info.data + data_offset,
-        data.type);
+    memcpy(combined_mem_data.shm_insn.mem_access_info.data + data_offset,
+           &data.data, 1 << data.type);
     combined_mem_data.shm_insn.mem_access_info.size++;
   } else {
     write_combined_mem_data();

@@ -17,7 +17,7 @@ thread_local! {
 pub fn diff_mem_access(
     mem_access_info1: &MemAccessInfo,
     mem_access_info2: &MemAccessInfo,
-    config: &Config,
+    _config: &Config,
 ) -> Vec<DiffEntry> {
     let mut diffs = vec![];
 
@@ -43,36 +43,13 @@ pub fn diff_mem_access(
         ));
     }
 
-    let raw_equal = mem_access_info1.data_slice() == mem_access_info2.data_slice();
-    let semantically_equal = if config.qemu.clients.len() >= 2 {
-        let lhs = mem_access_info1.to_u128(&config.qemu.clients[0].endian);
-        let rhs = mem_access_info2.to_u128(&config.qemu.clients[1].endian);
-        lhs == rhs
-    } else {
-        false
-    };
-
-    let mem_data_matches = if config.qemu.has_equal_endianess() {
-        raw_equal
-    } else {
-        raw_equal || semantically_equal
-    };
-
-    if !mem_data_matches {
-        let lhs = if config.qemu.clients.is_empty() {
-            mem_access_info1.data_slice_fmt()
-        } else {
-            mem_access_info1.data_value_fmt(&config.qemu.clients[0].endian)
-        };
-        let rhs = if config.qemu.clients.len() < 2 {
-            mem_access_info2.data_slice_fmt()
-        } else {
-            mem_access_info2.data_value_fmt(&config.qemu.clients[1].endian)
-        };
-
+    if mem_access_info1.data_slice() != mem_access_info2.data_slice() {
         diffs.push(DiffEntry::new(
             "mem.data",
-            vec![lhs, rhs],
+            vec![
+                mem_access_info1.data_slice_fmt(),
+                mem_access_info2.data_slice_fmt(),
+            ],
             "Memory-Access data did not match",
         ));
     }
