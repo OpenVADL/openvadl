@@ -2354,7 +2354,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     ( identifier<out Identifier id>                         (. body = createMacroReference(this, id); .)
     | macroReplacement<out body>
     )
-  | IF (type == BasicSyntaxType.INVALID)                    (. System.out.println(); .)
+  | IF (type == BasicSyntaxType.INVALID)                    (. .)
   | unreachableRule
   )                                                         (. assertSyntaxType(this, body, type, "Mismatched node type"); .)
   .

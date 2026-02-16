@@ -595,7 +595,6 @@ record ConstantValue(BigInteger value, Type type) {
       try {
         return Constant.Value.fromInteger(value, closestType);
       } catch (Exception e) {
-        System.out.println();
         throw e;
       }
     }
