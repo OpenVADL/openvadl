@@ -80,12 +80,10 @@ define i64 @andi(i64 %a) nounwind {
 define i64 @slli(i64 %a) nounwind {
 ; CHECK-LABEL: slli: # @slli
 ; CHECK-LABEL: # %bb.0:
-; CHECK: ADDI a2,zero,25
-; CHECK: SRL a3,a0,a2
-; CHECK-NEXT: ADDI a2,zero,7
-; CHECK-NEXT: SLL a1,a1,a2
-; CHECK-NEXT: OR a1,a1,a3
-; CHECK-NEXT: SLL a0,a0,a2
+; CHECK: SRLI a2,a0,25
+; CHECK-NEXT: SLLI a1,a1,7
+; CHECK-NEXT: OR a1,a1,a2
+; CHECK-NEXT: SLLI a0,a0,7
 ; CHECK-NEXT: RET
   %1 = shl i64 %a, 7
   ret i64 %1
@@ -94,12 +92,10 @@ define i64 @slli(i64 %a) nounwind {
 define i64 @srli(i64 %a) nounwind {
 ; CHECK-LABEL: srli: # @srli
 ; CHECK-LABEL: # %bb.0:
-; CHECK: ADDI a2,zero,24
-; CHECK: SLL a3,a1,a2
-; CHECK: ADDI a2,zero,8
-; CHECK-NEXT: SRL a0,a0,a2
-; CHECK-NEXT: OR a0,a0,a3
-; CHECK-NEXT: SRL a1,a1,a2
+; CHECK: SLLI a2,a1,24
+; CHECK-NEXT: SRLI a0,a0,8
+; CHECK-NEXT: OR a0,a0,a2
+; CHECK-NEXT: SRLI a1,a1,8
 ; CHECK-NEXT: RET
   %1 = lshr i64 %a, 8
   ret i64 %1
@@ -108,12 +104,10 @@ define i64 @srli(i64 %a) nounwind {
 define i64 @srai(i64 %a) nounwind {
 ; CHECK-LABEL: srai: # @srai
 ; CHECK-LABEL: # %bb.0:
-; CHECK: ADDI a2,zero,23
-; CHECK-NEXT: SLL a3,a1,a2
-; CHECK-NEXT: ADDI a2,zero,9
-; CHECK-NEXT: SRL a0,a0,a2
-; CHECK-NEXT: OR a0,a0,a3
-; CHECK-NEXT: SRA a1,a1,a2
+; CHECK: SLLI a2,a1,23
+; CHECK-NEXT: SRLI a0,a0,9
+; CHECK-NEXT: OR a0,a0,a2
+; CHECK-NEXT: SRAI a1,a1,9
 ; CHECK-NEXT: RET
   %1 = ashr i64 %a, 9
   ret i64 %1
