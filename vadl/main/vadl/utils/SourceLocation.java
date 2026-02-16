@@ -31,6 +31,8 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * References a location span in source.
@@ -48,6 +50,8 @@ public record SourceLocation(
     Position end,
     @Nullable SourceLocation expandedFrom
 ) implements WithLocation {
+
+  private static final Logger logger = LoggerFactory.getLogger(SourceLocation.class);
 
   private static final URI INVALID_MEMORY = URI.create("memory://unknown");
 
@@ -290,7 +294,7 @@ public record SourceLocation(
           .collect(Collectors.joining("\n"));
 
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.error(e.getMessage(), e);
       return "Failed to load source location " + this.toConciseString() + ": " + e.getMessage();
     }
   }

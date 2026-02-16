@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -20,6 +20,7 @@ import static com.tngtech.archunit.base.DescribedPredicate.not;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.equivalentTo;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
+import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
@@ -55,5 +56,14 @@ public class ArchitectureTest {
     layeredArchitecture.check(jc);
   }
 
+  @Test
+  void shouldNotUseSystemOut() {
+    JavaClasses jc = new ClassFileImporter()
+        .withImportOption(new ImportOption.DoNotIncludeTests())
+        .importPackages("vadl");
+
+    NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS
+        .check(jc);
+  }
 
 }
