@@ -39,6 +39,7 @@ import vadl.rtl.passes.InstructionProgressGraphLowerPass;
 import vadl.rtl.passes.InstructionProgressGraphMergePass;
 import vadl.rtl.passes.MiaMappingCreationPass;
 import vadl.rtl.passes.MiaMappingOptimizePass;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
@@ -70,7 +71,7 @@ public class RtlLoweringTest extends AbstractTest {
     addDumpAndCheck(config, order, MiaMappingOptimizePass.class);
     addDumpAndCheck(config, order, InstructionProgressGraphLowerPass.class, false);
 
-    setupPassManagerAndRunSpec("sys/risc-v/rv32i.vadl", order);
+    setupPassManagerAndRunSpec("sys/risc-v/mia/rv_5stage.vadl", order);
   }
 
   private void addDumpAndCheck(GeneralConfiguration config, PassOrder order, Class<?> selector) {
@@ -132,7 +133,7 @@ public class RtlLoweringTest extends AbstractTest {
     @Nullable
     @Override
     public Object execute(PassResults passResults, Specification viam) throws IOException {
-      viam.isa().ifPresent(isa -> {
+      viam.mia().map(MicroArchitecture::isa).ifPresent(isa -> {
         if (!instructions.isEmpty()) {
           isa.ownInstructions().removeIf(ins -> !instructions.contains(ins.simpleName()));
         }

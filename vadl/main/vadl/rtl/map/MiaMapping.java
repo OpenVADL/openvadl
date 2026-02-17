@@ -32,6 +32,7 @@ import vadl.viam.Stage;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.ViamGraphError;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.SideEffectNode;
@@ -332,7 +333,7 @@ public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
      * @return true if decode context
      */
     public boolean isDecode() {
-      return (node instanceof MiaBuiltInCall b && b.builtIn() == BuiltInTable.DECODE);
+      return (node instanceof BuiltInCall b && b.builtIn() == BuiltInTable.DECODE);
     }
   }
 

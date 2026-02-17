@@ -4380,6 +4380,10 @@ class MicroArchitectureDefinition extends Definition implements IdentifiableNode
     return id;
   }
 
+  InstructionSetDefinition isaNode() {
+    return (InstructionSetDefinition) Objects.requireNonNull(isa.target());
+  }
+
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);

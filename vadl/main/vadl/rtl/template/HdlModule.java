@@ -164,7 +164,7 @@ public class HdlModule {
   public Map<String, Object> createVariables() {
     return Map.of(
         "name", name,
-        "syncReset", definition instanceof MicroArchitecture,
+        "syncReset", false, //definition instanceof MicroArchitecture,
         "children", children.stream().map(this::childVars).toList(),
         "resources", resources.stream().map(this::resourceVars).toList(),
         "ports", ports.stream().map(this::portVars).toList(),

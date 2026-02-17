@@ -19,12 +19,15 @@ package vadl.rtl.passes;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -35,15 +38,21 @@ import vadl.rtl.map.MiaBuiltInCallMatcher;
 import vadl.rtl.map.MiaMapping;
 import vadl.types.BuiltInTable;
 import vadl.types.MicroArchitectureType;
+import vadl.utils.Pair;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.StageOutput;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.ViamGraphError;
+import vadl.viam.graph.control.AbstractEndNode;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.MiaBuiltInCall;
+import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.StageEffectNode;
 import vadl.viam.graph.dependency.WriteStageOutputNode;
 
 /**
@@ -74,7 +83,7 @@ public class MiaMappingCreationPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var optIsa = viam.isa();
+    var optIsa = viam.mia().map(MicroArchitecture::isa);
     var optMia = viam.mia();
     if (optIsa.isEmpty() || optMia.isEmpty()) {
       return null;
@@ -90,6 +99,28 @@ public class MiaMappingCreationPass extends Pass {
     final var mapping = new MiaMapping(optMia.get(), ipg);
 
     for (Stage stage : stages) {
+
+      // integrate stage effects into the data-flow
+      // the mia built-in calls attached to stage effects replace the output of their input node
+      stage.behavior().getNodes(AbstractEndNode.class).forEach(endNode -> {
+        endNode.sideEffects().forEach(sideEffect -> {
+          if (sideEffect instanceof StageEffectNode stageEffect) {
+            var call = stageEffect.miaCall();
+            var inputs = call.inputs().toList();
+
+            ViamGraphError.ensure(inputs.size() == 1, stage.behavior(), call,
+                "MiA bult-in call can only have one input");
+
+            // replace usages, keep stage effect usages
+            var stageEffectUsages = inputs.getFirst().usages()
+                .filter(StageEffectNode.class::isInstance).toList();
+            inputs.getFirst().replaceAtAllUsages(call);
+            stageEffectUsages.forEach(stageEffectUsage ->
+                stageEffectUsage.replaceInput(call, inputs.getFirst()));
+          }
+        });
+      });
+
       // sources, maps, sinks based on input/output types of the nodes
       var sources = stage.behavior().getNodes().filter(this::isSource)
           .collect(Collectors.toCollection(LinkedHashSet::new));
@@ -118,22 +149,21 @@ public class MiaMappingCreationPass extends Pass {
         }
       }
 
-      // travers map nodes depth-first. only process nodes, if all inputs were processed earlier.
-      var matcher = new MiaBuiltInCallMatcher();
+      // traverse map nodes depth-first. only process nodes, if all inputs were processed earlier.
       var q = new ArrayDeque<Node>();
       sources.forEach(source -> {
         if (maps.contains(source)) {
           q.add(source);
         } else {
-          source.usages().filter(maps::contains).forEach(q::addLast);
+          resolveUsages(source).filter(maps::contains).forEach(q::addLast);
         }
       });
       while (!q.isEmpty()) {
         var mapNode = q.removeFirst();
-        var mapNodeInputs = mapNode.inputs().filter(this::instructionNode).toList();
+        var mapNodeInputs = resolveInputs(mapNode).filter(this::instructionNode).toList();
 
         // combine done nodes from inputs
-        var inputDoneSets = mapNode.inputs().map(done::get).filter(Objects::nonNull).toList();
+        var inputDoneSets = resolveInputs(mapNode).map(done::get).filter(Objects::nonNull).toList();
         if (inputDoneSets.size() < mapNodeInputs.size()) {
           // skip if not all inputs are processed yet,
           // only process node after the last input adds it to the queue
@@ -142,43 +172,26 @@ public class MiaMappingCreationPass extends Pass {
         var inputDone = inputDoneSets.stream().flatMap(Collection::stream)
             .collect(Collectors.toSet());
 
-        Set<Node> matched;
-        if (mapNode instanceof MiaBuiltInCall miaCall) {
-          // use matcher
-          matched = matcher.match(miaCall, ipgNodes, inputDone);
-        } else {
-          throw new PassError("Could not map node handling instructions %s in stage %s",
-              mapNode, stage);
-        }
-
-        // grow matches up until nodes already done at inputs
-        var mapped = new LinkedHashSet<Node>();
-        matched.forEach(match -> growInputs(match, mapped, inputDone));
+        // map
+        var matchedMapped = mapNodes(mapNode, ipgNodes, inputDone, stage);
 
         // mark nodes in ipg
-        var inputContexts = mapNodeInputs.stream()
-            .map(input -> {
-              if (isMap(input)) {
-                return mapping.contexts().get(input);
-              }
-              if (input instanceof ReadStageOutputNode read) {
-                return writeContext.get(read.stageOutput());
-              }
-              return null;
-            })
-            .filter(Objects::nonNull).collect(Collectors.toList());
+        var inputContexts = getInputContexts(mapNodeInputs, mapping, writeContext);
         var context = mapping.createContext(stage, mapNode, inputContexts);
-        var fixed = new LinkedHashSet<>(matched);
-        fixed.removeIf(inputDone::contains);
-        context.fixedIpgNodes().addAll(fixed);
-        context.ipgNodes().addAll(mapped);
+        context.fixedIpgNodes().addAll(matchedMapped.left());
+        context.ipgNodes().addAll(matchedMapped.right());
+        for (Node usage : mapNode.usages().toList()) {
+          if (usage instanceof StageEffectNode stageEffect) {
+            context.sideEffects().add(stageEffect);
+          }
+        }
 
         // save done set for this node
-        inputDone.addAll(mapped);
+        inputDone.addAll(matchedMapped.right());
         done.put(mapNode, inputDone);
 
         // add map node usages to queue
-        mapNode.usages().filter(maps::contains).forEach(q::addLast);
+        resolveUsages(mapNode).filter(maps::contains).forEach(q::addLast);
       }
 
       // check if all mapped
@@ -189,15 +202,20 @@ public class MiaMappingCreationPass extends Pass {
       // save write contexts to map at sinks
       for (Node sink : sinks) {
         if (sink instanceof WriteStageOutputNode write) {
-          var valueContext = mapping.contexts().get(write.value());
-          if (valueContext == null) {
+          var inputs = resolveInputs(write).filter(n -> isMap(n) || isSource(n)).toList();
+          if (inputs.isEmpty()) {
+            throw new PassError("Could not resolve input node at %s in stage %s",
+                write, stage);
+          }
+          var valueContexts = getInputContexts(inputs, mapping, writeContext);
+          if (valueContexts.isEmpty()) {
             throw new PassError("Could not load mapping context at %s in stage %s",
                 write, stage);
           }
-          setSideEffect(valueContext, write); // set side effect reference to all inputs
+          setSideEffect(valueContexts.getFirst(), write); // set side effect reference to all inputs
           var output = write.stageOutput();
           if (output != null) {
-            writeContext.put(write.stageOutput(), valueContext);
+            writeContext.put(write.stageOutput(), valueContexts.getFirst());
           }
         }
       }
@@ -211,6 +229,45 @@ public class MiaMappingCreationPass extends Pass {
     optMia.get().attachExtension(mapping);
 
     return mapping;
+  }
+
+  @Nonnull
+  private List<MiaMapping.NodeContext> getInputContexts(
+      List<Node> mapNodeInputs,
+      MiaMapping mapping,
+      Map<StageOutput, MiaMapping.NodeContext> writeContext
+  ) {
+    return mapNodeInputs.stream()
+        .map(input -> {
+          if (isMap(input)) {
+            return mapping.contexts().get(input);
+          }
+          if (input instanceof ReadStageOutputNode read) {
+            return writeContext.get(read.stageOutput());
+          }
+          return null;
+        })
+        .filter(Objects::nonNull).collect(Collectors.toList());
+  }
+
+  private Pair<Set<Node>, Set<Node>> mapNodes(Node mapNode, Set<Node> ipgNodes, Set<Node> inputDone,
+                                              Stage stage) {
+    var matcher = new MiaBuiltInCallMatcher();
+
+    Set<Node> matched;
+    if (mapNode instanceof BuiltInCall call) {
+      // use matcher
+      matched = matcher.match(call, ipgNodes, inputDone);
+      matched.removeAll(inputDone);
+    } else {
+      throw new PassError("Could not map node handling instructions %s in stage %s",
+          mapNode, stage);
+    }
+
+    // grow matches up until nodes already done at inputs
+    var mapped = new LinkedHashSet<Node>();
+    matched.forEach(match -> growInputs(match, mapped, inputDone));
+    return Pair.of(matched, mapped);
   }
 
   // expression node with instruction output
@@ -230,11 +287,34 @@ public class MiaMappingCreationPass extends Pass {
     return false;
   }
 
+  // resolve usages stepping over let nodes
+  private Stream<Node> resolveUsages(Node node) {
+    return node.usages().flatMap(u -> {
+      if (u instanceof LetNode let) {
+        return resolveUsages(let);
+      }
+      return Stream.of(u);
+    });
+  }
+
+  // resolve inputs stepping over let nodes
+  private Stream<Node> resolveInputs(Node node) {
+    return node.inputs().flatMap(i -> {
+      if (i instanceof LetNode let) {
+        return resolveInputs(let);
+      }
+      return Stream.of(i);
+    });
+  }
+
   // expression node with instruction output _and_ instruction inputs
   private boolean isMap(Node node) {
-    if (node instanceof MiaBuiltInCall miaCall
-        && Set.of(BuiltInTable.DECODE, BuiltInTable.FETCH_NEXT).contains(miaCall.builtIn())) {
+    if (node instanceof BuiltInCall call
+        && Set.of(BuiltInTable.DECODE, BuiltInTable.FETCH_NEXT).contains(call.builtIn())) {
       return true;
+    }
+    if (node instanceof LetNode) {
+      return false;
     }
     if (node instanceof ExpressionNode expr) {
       return (expr.inputs().anyMatch(this::instructionNode) && instructionNode(expr));
@@ -244,8 +324,7 @@ public class MiaMappingCreationPass extends Pass {
 
   // node with instruction inputs and _no_ instruction outputs
   private boolean isSink(Node node) {
-    return node.inputs().anyMatch(this::instructionNode)
-        && node.usages().noneMatch(this::instructionNode);
+    return node.inputs().anyMatch(this::instructionNode) && !instructionNode(node);
   }
 
   // recursively grow result nodes set up until (and excluding) the limit set of nodes
@@ -258,7 +337,9 @@ public class MiaMappingCreationPass extends Pass {
   }
 
   private void setSideEffect(MiaMapping.NodeContext context, SideEffectNode node) {
-    context.sideEffects().add(node);
+    if (context.sideEffects().isEmpty()) {
+      context.sideEffects().add(node);
+    }
     // set side effects on all predecessor contexts still in the same stage
     context.pred().forEach(pred -> {
       if (context.stage().equals(pred.stage())) {

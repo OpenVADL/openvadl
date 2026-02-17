@@ -18,6 +18,7 @@ package vadl.viam.matching;
 
 import vadl.viam.graph.Node;
 import vadl.viam.matching.impl.BuiltInMatcher;
+import vadl.viam.matching.impl.NegMatcher;
 
 /**
  * Interfaces to check the structure of a {@link Node}.
@@ -36,5 +37,14 @@ public interface Matcher {
    */
   default Matcher swapOperands() {
     throw new RuntimeException("Swapping operands is not allowed");
+  }
+
+  /**
+   * Return a {@link NegMatcher} wrapping this matcher.
+   *
+   * @return matcher that gives the negated result of this matcher
+   */
+  default Matcher not() {
+    return new NegMatcher(this);
   }
 }

@@ -72,6 +72,16 @@ public class Stage extends Definition implements DefProp.WithBehavior {
     this.registers = new ArrayList<>();
     this.localNames = new HashSet<>();
 
+    // TODO this should be handled by the frontend (only add stage outputs from definition)
+    // currently the passed stage output list is always empty, it could contain the list of
+    // outputs give in the spec
+    this.behavior.getNodes(WriteStageOutputNode.class)
+        .map(WriteStageOutputNode::stageOutput).forEach(output -> {
+          if (!this.outputs.contains(output)) {
+            this.outputs.add(output);
+          }
+        });
+
     this.behavior.setParentDefinition(this);
   }
 

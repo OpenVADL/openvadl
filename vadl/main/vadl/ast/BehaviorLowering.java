@@ -1275,6 +1275,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             }
 
             switch (viamArg) {
+              case Counter cnt -> call.add(cnt.registerTensor());
               case Resource res -> call.add(res);
               case Logic logic -> call.add(logic);
               default -> throw new IllegalStateException();

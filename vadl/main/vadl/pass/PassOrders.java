@@ -119,9 +119,13 @@ import vadl.rtl.passes.DebugOutputPass;
 import vadl.rtl.passes.EmitBuildSbtPass;
 import vadl.rtl.passes.EmitCoreEmitPass;
 import vadl.rtl.passes.EmitCoreTestPass;
+import vadl.rtl.passes.EmitElfSimPass;
 import vadl.rtl.passes.EmitModulesPass;
+import vadl.rtl.passes.EmitRVFIOutputsPass;
 import vadl.rtl.passes.EmitRtlMakefilePass;
 import vadl.rtl.passes.EmitScalafmtConfigPass;
+import vadl.rtl.passes.EmitSimMemCppPass;
+import vadl.rtl.passes.EmitSimMemSvPass;
 import vadl.rtl.passes.EmitVadlLibPass;
 import vadl.rtl.passes.ForwardingLogicPass;
 import vadl.rtl.passes.HazardAnalysisPass;
@@ -151,7 +155,6 @@ import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
-import vadl.viam.passes.dummyPasses.DummyMiaPass;
 import vadl.viam.passes.functionInliner.ArtificialResInlinerPass;
 import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
@@ -651,8 +654,6 @@ public class PassOrders {
 
     order.add(new RtlConfigurationPass(config));
 
-    // TODO: Remove once frontend creates it
-    order.add(new DummyMiaPass(config));
     order.add(new StageOrderingPass(config));
 
     order.add(new InstructionProgressGraphCreationPass(config))
@@ -662,16 +663,28 @@ public class PassOrders {
         .add(new InstructionProgressGraphLowerPass(config))
         .add(new InstructionProgressGraphNamePass(config));
 
-    order.add(new HazardAnalysisPass(config))
-        .add(new DebugOutputPass(config));
+    addHtmlDump(order, config,
+        "mia-map",
+        "MiA after mapping instruction behavior");
 
-    order.add(new MiaMappingInlinePass(config))
-        .add(new ForwardingLogicPass(config))
+    order.add(new HazardAnalysisPass(config));
+
+    if (config.isEmitDebugPrint()) {
+      order.add(new DebugOutputPass(config));
+    }
+
+    order.add(new MiaMappingInlinePass(config));
+
+    if (config.isEmitRVFI()) {
+      order.add(new EmitRVFIOutputsPass(config));
+    }
+
+    order.add(new ForwardingLogicPass(config))
         .add(new ControlLogicPass(config));
 
     addHtmlDump(order, config,
-        "mia",
-        "MiA after mapping and inlining instruction behavior");
+        "mia-inline",
+        "MiA after inlining instruction behavior");
 
     if (config.getDecoderOptions().getGenerator() != RTL_TABLE) {
       // Prepares and constructs the VDT, which is not used by the rtl-table strategy
@@ -689,8 +702,13 @@ public class PassOrders {
     order.add(new EmitBuildSbtPass(config))
         .add(new EmitModulesPass(config))
         .add(new EmitVadlLibPass(config))
+        // tests and simulation
         .add(new EmitCoreTestPass(config))
         .add(new EmitCoreEmitPass(config))
+        .add(new EmitElfSimPass(config))
+        .add(new EmitSimMemSvPass(config))
+        .add(new EmitSimMemCppPass(config))
+        // build files
         .add(new EmitScalafmtConfigPass(config))
         .add(new EmitRtlMakefilePass(config))
         .add(new CleanupEmitDirectoryPass(config));

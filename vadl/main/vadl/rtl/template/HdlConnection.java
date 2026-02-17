@@ -18,6 +18,7 @@ package vadl.rtl.template;
 
 import javax.annotation.Nullable;
 import vadl.viam.Resource;
+import vadl.viam.Signal;
 import vadl.viam.graph.Node;
 
 /**
@@ -62,6 +63,37 @@ public record HdlConnection(
       }
       return "io." + port.hdlName();
     }
+  }
+
+  /**
+   * Create a connection between two port endpoints.
+   *
+   * @param end1 port endpoint
+   * @param end2 port endpoint
+   * @return connection, not bidirectional for signals
+   */
+  public static HdlConnection of(PortEndpoint end1, PortEndpoint end2) {
+    if (end1.port().resource() instanceof Signal && end2.port().resource() instanceof Signal) {
+      var child1 = end1.child() != null && end2.child() == null;
+      var child2 = end1.child() == null && end2.child() != null;
+      var childBoth = end1.child() != null && end2.child() != null;
+      var swap = false;
+      if (child1 && end1.port().output() && end2.port().output()) {
+        swap = true;
+      }
+      if (child2 && end1.port().input() && end2.port().input()) {
+        swap = true;
+      }
+      if (childBoth && end1.port().output() && end2.port().input()) {
+        swap = true;
+      }
+      if (swap) {
+        return new HdlConnection(end2, end1, false, null);
+      } else {
+        return new HdlConnection(end1, end2, false, null);
+      }
+    }
+    return new HdlConnection(end1, end2, true, null);
   }
 
   /**

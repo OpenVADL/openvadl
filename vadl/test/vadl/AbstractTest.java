@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -147,10 +148,11 @@ public abstract class AbstractTest {
    */
   public static Stream<Arguments> getTestSourceArgsForParameterizedTest(String sourcePrefix,
                                                                         Arguments... args) {
+    var cleanPrefix = sourcePrefix.replace("/", FileSystems.getDefault().getSeparator());
     var testSources = findAllTestSources(sourcePrefix);
     var preparedArgs = Stream.of(args).map(e -> {
       assertEquals(2, e.get().length, "Wrong number of arguments for " + e);
-      return arguments(sourcePrefix + e.get()[0] + ".vadl", e.get()[1]);
+      return arguments(cleanPrefix + e.get()[0] + ".vadl", e.get()[1]);
     }).toList();
 
     List<String> expectedSubstrings = preparedArgs.stream().map(e -> (String) e.get()[0]).toList();
@@ -170,6 +172,7 @@ public abstract class AbstractTest {
    * @throws RuntimeException if an IO exception occurs
    */
   public static List<String> findAllTestSources(String prefix) {
+    prefix = prefix.replace("/", FileSystems.getDefault().getSeparator());
     var resourceUrl = Objects.requireNonNull(
         // just get some class for resource fetching
         frontendProvider.getClass().getResource("/" + TEST_SOURCE_DIR + "/"));

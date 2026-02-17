@@ -1,21 +1,27 @@
 // SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: Apache-2.0
 
-// RISC-V 32 I instruction set
+// RISC-V five stage pipeline
 
-import rv64im::{RV64IM}
+import "../rv32i"::RV32I
+import "../rv32im"::RV32IM
 
-micro architecture FiveStage implements RV64IM = {
+import "../rv64i"::RV64I
+import "../rv64im"::RV64IM
+
+model Isa() : Id = {RV32I}               // invoke vadl -m "Isa=RV64I" for 64 bit arch
+
+micro architecture FiveStage implements $Isa = {
 
   stage FETCH -> ( fr : FetchResult ) = {
-    fr := fetchNext                      // fetch next packet from memory (or cache)
+    fr := fetchNext                      // fetch next instruction from memory (or cache)
   }
 
   stage DECODE -> ( ir : Instruction ) = {
     let instr = decode( FETCH. fr ) in { // decode the fetch packet, gives an Instruction
-      if ( instr.unknown ) then
-        raise invalidInstruction         // raise an invalid instruction exception
-      instr.address( @X )                // output computed address (X + offset ) to memory
+//       if ( instr.unknown ) then
+//         raise invalidInstruction         // raise an invalid instruction exception
+      instr.address( @X )                // compute addresses to access register file X
       instr.read( @X )                   // read from the X register file
       instr.read( @PC )                  // read from the PC
       ir := instr                        // stage output is the Instruction ir

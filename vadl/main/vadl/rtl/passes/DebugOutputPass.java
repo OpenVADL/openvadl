@@ -17,6 +17,7 @@
 package vadl.rtl.passes;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.configuration.RtlConfiguration;
@@ -24,8 +25,12 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
 import vadl.rtl.ipg.nodes.RtlDebugPrintNode;
+import vadl.rtl.ipg.nodes.RtlReadMemNode;
+import vadl.rtl.ipg.nodes.RtlWriteMemNode;
 import vadl.rtl.map.MiaMapping;
 import vadl.viam.Constant;
+import vadl.viam.Logic;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
@@ -51,7 +56,7 @@ public class DebugOutputPass extends AbstractRtlPass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var isa = viam.isa().orElse(null);
+    var isa = viam.mia().map(MicroArchitecture::isa).orElse(null);
     var mia = viam.mia().orElse(null);
     if (isa == null || mia == null) {
       return null;
@@ -61,6 +66,15 @@ public class DebugOutputPass extends AbstractRtlPass {
     var mapping = mia.extension(MiaMapping.class);
     if (mapping == null) {
       return null;
+    }
+
+    // ignored resources
+    var ignore = new HashSet<Resource>();
+    if (passResults.hasRunPassOnce(EmitRVFIOutputsPass.class)) {
+      var rvfi = passResults.lastResultOf(EmitRVFIOutputsPass.class, Logic.RVFI.class);
+      ignore.addAll(rvfi.outputSignals());
+      ignore.addAll(rvfi.registers());
+      ignore.addAll(rvfi.signals());
     }
 
     // add unknown instruction debug output
@@ -87,24 +101,29 @@ public class DebugOutputPass extends AbstractRtlPass {
 
     // add read debug output
     for (RtlConditionalReadNode read : ipg.getNodes(RtlConditionalReadNode.class).toList()) {
-      if (read.asReadNode().resourceDefinition().equals(pc)) {
+      if (read.asReadNode().resourceDefinition().equals(pc)
+            || ignore.contains(read.asReadNode().resourceDefinition())) {
         continue;
       }
       var node = read.asReadNode();
       var context = mapping.ensureContext(node);
       var addr = node.hasAddress() ? node.address() : null;
       var print = readWriteOutput(readPc, "rd", node.resourceDefinition(),
-          read.nullableCondition(), addr, node);
+          read.nullableCondition(), addr, node,
+          (node instanceof RtlReadMemNode rd) ? rd.words() : null);
       print = ipg.addWithInputs(print, ipg.getContext(node).instructions());
       context.ipgNodes().add(print);
     }
 
     // add write debug output
     for (WriteResourceNode write : ipg.getNodes(WriteResourceNode.class).toList()) {
+      if (ignore.contains(write.resourceDefinition())) {
+        continue;
+      }
       var context = mapping.ensureContext(write);
       var addr = write.hasAddress() ? write.address() : null;
       var print = readWriteOutput(readPc, "wr", write.resourceDefinition(), write.condition(),
-          addr, write.value());
+          addr, write.value(), (write instanceof RtlWriteMemNode wr) ? wr.words() : null);
       print = ipg.addWithInputs(print, ipg.getContext(write).instructions());
       context.ipgNodes().add(print);
     }
@@ -114,7 +133,9 @@ public class DebugOutputPass extends AbstractRtlPass {
 
   private RtlDebugPrintNode readWriteOutput(ExpressionNode readPc, String op, Resource res,
                                             @Nullable ExpressionNode cond,
-                                            @Nullable ExpressionNode addr, ExpressionNode value) {
+                                            @Nullable ExpressionNode addr,
+                                            ExpressionNode value,
+                                            @Nullable ExpressionNode words) {
     var values = new NodeList<>(readPc);
     var sb = new StringBuilder().append("%x ").append(op).append(" ").append(res.simpleName());
     if (addr != null) {
@@ -127,6 +148,11 @@ public class DebugOutputPass extends AbstractRtlPass {
     }
     sb.append(" = %x");
     values.add(value);
+
+    if (words != null) {
+      sb.append(" (%d)");
+      values.add(words);
+    }
 
     if (cond == null) {
       cond = Constant.Value.of(true).toNode();

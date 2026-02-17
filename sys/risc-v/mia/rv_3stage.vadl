@@ -1,0 +1,44 @@
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: Apache-2.0
+
+import "../rv32i"::RV32I
+import "../rv32im"::RV32IM
+
+import "../rv64i"::RV64I
+import "../rv64im"::RV64IM
+
+model Isa() : Id = {RV32I}               // invoke vadl -m "Isa=RV64I" for 64 bit arch
+
+/**
+ * Three stage MiA description.
+ *
+ * This models a pipeline with stages Instruction Fetch, Instruction Decode and Execute following
+ * the design of the Wildcat educational processor.
+ *
+ * Schoeberl, M. (2025). Wildcat: Educational RISC-V Microprocessors. arXiv.
+ * http://arxiv.org/abs/2502.20197
+ */
+micro architecture ThreeStage implements $Isa = {
+
+  stage IF -> ( fr : FetchResult ) = {
+    fr := fetchNext                      // fetch next instruction from memory (or cache)
+  }
+
+  stage ID -> ( ir : Instruction ) = {
+    let instr = decode( IF.fr ) in {     // decode the fetch packet, gives an Instruction
+//       if ( instr.unknown ) then
+//         raise invalidInstruction         // raise an invalid instruction exception
+      instr.address( @X )                // compute addresses to access register file X
+      instr.read( @X )                   // read from the X register file
+      instr.read( @PC )                  // read from the PC
+      ir := instr                        // stage output is the Instruction ir
+    }
+  }
+
+  stage EX -> ( ir : Instruction ) = {
+    let instr = ID.ir in {
+      instr.write                        // write PC
+      ir := instr
+    }
+  }
+}

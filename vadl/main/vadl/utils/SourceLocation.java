@@ -21,6 +21,7 @@ import static vadl.utils.EditorUtils.isIntelliJIDE;
 import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -222,6 +223,17 @@ public record SourceLocation(
    * </p>
    */
   public String toIDEString(IDEDetectionMode mode) {
+    return toIDEString(mode, false);
+  }
+
+  /**
+   * Produces version that is easily understandable for IDE's.
+   *
+   * <p>E.g.: {@code SourceLocation("relative/path/to/file.vadl", (1, 3), (2, 4))}
+   * becomes  {@code "relative/path/to/file.vadl:1:3"}
+   * </p>
+   */
+  public String toIDEString(IDEDetectionMode mode, boolean forceUnixPaths) {
     if (!this.isValid()) {
       return "Source Location was lost";
     }
@@ -236,6 +248,9 @@ public record SourceLocation(
       var filePath = Paths.get(this.uri);
       var currentWorkingDir = Paths.get(System.getProperty("user.dir"));
       printablePath = currentWorkingDir.relativize(filePath).toFile().getPath();
+    }
+    if (forceUnixPaths) {
+      printablePath = printablePath.replace(FileSystems.getDefault().getSeparator(), "/");
     }
 
     return printablePath

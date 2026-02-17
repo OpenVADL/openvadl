@@ -252,6 +252,11 @@ public class HdlBehavior {
     }
 
     @Handler
+    String handle(LetNode node) {
+      return dispatch(node.expression());
+    }
+
+    @Handler
     String handle(SliceNode node) {
       var slices = node.bitSlice().parts()
           .map(p -> dispatch(node.value()) + "(" + p.msb() + ", " + p.lsb() + ")").toList();
@@ -291,7 +296,7 @@ public class HdlBehavior {
         // The name is prefixed with 'dec_' by now to indicate that the signal will be assigned
         // by the decode tree.
         var name = module.context().name(usage, module.localNames(), fallbackName(usage));
-        var id = def.identifier.append("dec_" + name);
+        var id = def.identifier.append(name);
         var signal = new Signal(id, ((ExpressionNode) usage).type().asDataType());
         signals.add(signal);
 
@@ -405,6 +410,11 @@ public class HdlBehavior {
     }
 
     @Handler
+    String handle(RtlResetSignalNode node) {
+      return "reset.asBool";
+    }
+
+    @Handler
     String handle(RtlValidSignalNode node) {
       if (node.validNode() instanceof RtlReadMemNode read) {
         var expr = portOrResource(read, read.resourceDefinition());
@@ -448,6 +458,17 @@ public class HdlBehavior {
             addrEnd,
             false, null
         ));
+        if (node instanceof RtlReadMemNode read) {
+          var wordsEnd = new HdlConnection.ExpressionEndpoint(
+              read.words(),
+              dispatch(read.words())
+          );
+          module.connections().add(new HdlConnection(
+              new HdlConnection.ExpressionEndpoint(node, expr + ".words"),
+              wordsEnd,
+              false, null
+          ));
+        }
       }
       if (res.isPresent() || node instanceof ReadSignalNode) {
         return expr;
@@ -513,6 +534,17 @@ public class HdlBehavior {
               false, null
           ));
         }
+        if (node instanceof RtlWriteMemNode write) {
+          var wordsEnd = new HdlConnection.ExpressionEndpoint(
+              write.words(),
+              dispatch(write.words())
+          );
+          module.connections().add(new HdlConnection(
+              new HdlConnection.ExpressionEndpoint(node, expr + ".words"),
+              wordsEnd,
+              false, null
+          ));
+        }
         var valueEnd = new HdlConnection.ExpressionEndpoint(
             node.value(),
             dispatch(node.value()) + ".asTypeOf(" + expr + ".data)"
@@ -557,11 +589,12 @@ public class HdlBehavior {
         || node instanceof UnaryNode
         || node instanceof RtlValidSignalNode
         || node instanceof ReadResourceNode
-        || node instanceof RtlDecodeTreeNode) {
+        || node instanceof RtlDecodeTreeNode
+        || node instanceof RtlResetSignalNode
+        || (node instanceof BuiltInCall builtIn && builtIn.arguments().size() < 2)) {
       return false;
     }
     return (node.usageCount() > 1
-        || node instanceof LetNode
         || node instanceof SelectNode
         || node instanceof RtlIsInstructionNode
         || node instanceof RtlInvalidInstructionNode);

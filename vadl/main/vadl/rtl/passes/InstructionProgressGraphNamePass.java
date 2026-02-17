@@ -43,6 +43,7 @@ import vadl.types.SIntType;
 import vadl.types.UIntType;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
@@ -73,7 +74,7 @@ public class InstructionProgressGraphNamePass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var optIsa = viam.isa();
+    var optIsa = viam.mia().map(MicroArchitecture::isa);
     if (optIsa.isEmpty()) {
       return null;
     }
@@ -240,6 +241,9 @@ public class InstructionProgressGraphNamePass extends Pass {
   }
 
   private String nameInsSet(Set<Instruction> instructions, InstructionProgressGraph ipg) {
+    if (instructions.equals(ipg.instructions())) {
+      return "any";
+    }
     if (instructions.size() > ipg.instructions().size() / 2) {
       // generate name for complement
       var complement = new LinkedHashSet<>(ipg.instructions());
@@ -261,7 +265,7 @@ public class InstructionProgressGraphNamePass extends Pass {
     }
     // fallback to concatenation of all instruction names
     return instructions.stream()
-        .map(Definition::simpleName).collect(Collectors.joining(""));
+        .map(Definition::simpleName).sorted().collect(Collectors.joining(""));
   }
 
   private void nameSelect(InstructionProgressGraph ipg) {

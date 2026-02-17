@@ -34,6 +34,7 @@ import vadl.rtl.ipg.nodes.RtlSelectByInstructionNode;
 import vadl.rtl.map.MiaMapping;
 import vadl.utils.Pair;
 import vadl.viam.Constant;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
@@ -41,6 +42,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -62,7 +64,7 @@ public class HazardAnalysisPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var optIsa = viam.isa();
+    var optIsa = viam.mia().map(MicroArchitecture::isa);
     if (optIsa.isEmpty()) {
       return null;
     }
@@ -207,6 +209,9 @@ public class HazardAnalysisPass extends Pass {
         conditions.add(Pair.of(select.condition(), Constant.Value.of(true).toNode()));
         return res;
       }
+    }
+    if (value instanceof LetNode let) {
+      return resolveForward(mapping, stageFrom, let.expression(), conditions);
     }
     return null;
   }

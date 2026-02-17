@@ -42,7 +42,7 @@ public class EmitVadlLibPass extends RtlTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "rtl/VADL.scala";
+    return "rtl/scala/VADL.scala";
   }
 
   @Override

@@ -17,12 +17,14 @@
 package vadl.rtl.passes;
 
 import java.io.IOException;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.configuration.RtlConfiguration;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.utils.Pair;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.Logic;
 import vadl.viam.MicroArchitecture;
 import vadl.viam.Signal;
 import vadl.viam.Specification;
@@ -30,6 +32,7 @@ import vadl.viam.Stage;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -47,11 +50,21 @@ public abstract class AbstractLogicPass extends AbstractRtlPass {
     super(configuration);
   }
 
+  protected Logic.Control getControl(MicroArchitecture mia) {
+    var control = (Logic.Control) mia.logic().stream()
+        .filter(Logic.Control.class::isInstance).findAny()
+        .orElseGet(() -> new Logic.Control(mia.identifier.append("control")));
+    if (!mia.logic().contains(control)) {
+      mia.logic().add(control);
+    }
+    return control;
+  }
+
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
 
-    var isa = viam.isa().orElse(null);
+    var isa = viam.mia().map(MicroArchitecture::isa).orElse(null);
     var mia = viam.mia().orElse(null);
     if (isa == null || mia == null) {
       return null;
@@ -60,6 +73,7 @@ public abstract class AbstractLogicPass extends AbstractRtlPass {
     return execute(passResults, viam, isa, mia);
   }
 
+  @Nullable
   protected abstract Object execute(PassResults passResults, Specification viam,
                                     InstructionSetArchitecture isa, MicroArchitecture mia);
 
@@ -83,6 +97,8 @@ public abstract class AbstractLogicPass extends AbstractRtlPass {
     if (ipgNode == null) {
       return null;
     }
+
+    // otherwise try to find registers or signals
     ExpressionNode stageNode = null;
     if (stage.prev() != null) {
       var outputInPrev = inline.stageRegisterMap().get(Pair.of(ipgNode, stage.prev()));
@@ -118,6 +134,12 @@ public abstract class AbstractLogicPass extends AbstractRtlPass {
 
   protected ExpressionNode getStageSignalRead(Stage stage, ExpressionNode stageNode,
                                               @Nullable MiaMappingInlinePass.Result inline) {
+    return getStageSignalRead(stage, stageNode, inline, null);
+  }
+
+  protected ExpressionNode getStageSignalRead(Stage stage, ExpressionNode stageNode,
+                                              @Nullable MiaMappingInlinePass.Result inline,
+                                              @Nullable String fallbackName) {
     // just a constant
     if (stageNode instanceof ConstantNode c) {
       return c.copy();
@@ -134,15 +156,15 @@ public abstract class AbstractLogicPass extends AbstractRtlPass {
           rd.staticCounterAccess());
     }
 
-    // check if already placed into a signal
+    // check if already placed into a signal internal to the MiA
     WriteSignalNode wrSig = (WriteSignalNode) stageNode.usages()
-        .filter(WriteSignalNode.class::isInstance).findAny().orElse(null);
-    if (wrSig != null) {
+        .filter(WriteSignalNode.class::isInstance).findFirst().orElse(null);
+    if (wrSig != null && isMiaSignal(stage.mia(), wrSig.signal())) {
       return new ReadSignalNode(wrSig.signal()); // use existing signal
     }
 
     // create new signal
-    var name = "n_" + stageNode.id.numericId();
+    var name = (fallbackName != null) ? fallbackName : "n_" + stageNode.id.numericId();
     if (inline != null) {
       // name from ipg if possible
       var ipgNode = inline.inlineMap().inverse().get(stageNode);
@@ -157,6 +179,19 @@ public abstract class AbstractLogicPass extends AbstractRtlPass {
     stage.addSignal(sig);
 
     return new ReadSignalNode(sig);
+  }
+
+  private boolean isMiaSignal(MicroArchitecture mia, Signal signal) {
+    if (mia.signals().contains(signal)) {
+      return true;
+    }
+    if (mia.stages().stream().anyMatch(s -> s.signals().contains(signal))) {
+      return true;
+    }
+    if (mia.logic().stream().anyMatch(l -> l.signals().contains(signal))) {
+      return true;
+    }
+    return false;
   }
 
 }

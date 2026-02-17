@@ -65,9 +65,7 @@ public class ForwardingLogicPass extends AbstractLogicPass {
     var inline = passResults.lastResultOf(MiaMappingInlinePass.class,
         MiaMappingInlinePass.Result.class);
 
-    var control = (Logic.Control) mia.logic().stream()
-        .filter(Logic.Control.class::isInstance).findAny()
-        .orElseGet(() -> new Logic.Control(mia.identifier.append("control")));
+    var control = getControl(mia);
 
     var forwarding = (Logic.Forwarding) mia.logic().stream()
         .filter(Logic.Forwarding.class::isInstance).findAny()
@@ -111,10 +109,21 @@ public class ForwardingLogicPass extends AbstractLogicPass {
               }
               en = GraphUtils.and(en, new ReadSignalNode(control.getEnable(curStage)));
 
-              // forwarding value
+              // add forwarding enable for stage to fwd logic
+              var enFromSig = new Signal(
+                  forwarding.identifier.append(
+                      "fwd_" + res.simpleName() + i + "_" + curStage.simpleName() + "_en"),
+                  Type.bool()
+              );
+              forwarding.putEnableFrom(rd.asReadNode(), curStage, enFromSig);
+              var enFromWr = behavior.addWithInputs(new WriteSignalNode(enFromSig, en));
+              en = enFromWr.value();
+
+              // forwarding enable and value
               var val = resolveStageValue(curStage, fwd.value(), inline);
               enList.add(en);
               valList.add(val);
+
               curStage = curStage.prev();
             }
           }
@@ -171,7 +180,9 @@ public class ForwardingLogicPass extends AbstractLogicPass {
     }
 
     // optimize
-    new RtlSimplifier(RtlSimplificationRules.rules).run(forwarding.behavior());
+    var simplifier = new RtlSimplifier(RtlSimplificationRules.rules);
+    simplifier.run(forwarding.behavior());
+    mia.stages().forEach(stage -> simplifier.run(stage.behavior()));
 
     // verify
     forwarding.verify();

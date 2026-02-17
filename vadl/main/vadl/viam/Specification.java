@@ -54,7 +54,8 @@ public class Specification extends Definition {
         .map(InstructionSetArchitecture.class::cast)
         .findFirst();
     if (isaDef.isEmpty()) {
-      return processor().map(Processor::isa);
+      return processor().map(Processor::isa)
+          .or(() -> mia().map(MicroArchitecture::isa));
     }
     return isaDef;
   }

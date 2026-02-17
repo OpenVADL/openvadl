@@ -17,6 +17,7 @@
 package vadl.rtl.passes;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -34,6 +35,7 @@ import vadl.rtl.analysis.HazardAnalysis;
 import vadl.rtl.ipg.nodes.RtlConditionalMemNode;
 import vadl.rtl.ipg.nodes.RtlConditionalNode;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
+import vadl.rtl.ipg.nodes.RtlResetSignalNode;
 import vadl.rtl.ipg.nodes.RtlValidSignalNode;
 import vadl.rtl.ipg.nodes.RtlWriteRegTensorNode;
 import vadl.rtl.utils.RtlSimplificationRules;
@@ -87,9 +89,7 @@ public class ControlLogicPass extends AbstractLogicPass {
     var inline = passResults.lastResultOf(MiaMappingInlinePass.class,
         MiaMappingInlinePass.Result.class);
 
-    var control = (Logic.Control) mia.logic().stream()
-        .filter(Logic.Control.class::isInstance).findAny()
-        .orElseGet(() -> new Logic.Control(mia.identifier.append("control")));
+    var control = getControl(mia);
 
 
     // full registers
@@ -107,12 +107,20 @@ public class ControlLogicPass extends AbstractLogicPass {
       if (full == null) {
         // first stage
         if (stop != null) {
-          // empty stage with stop
-          fullRd = GraphUtils.not(new FuncCallNode(stop, new NodeList<>(), Type.bool()));
+          // empty stages with stop (provide this as signal)
+          var fullSig = new Signal(control.identifier.append(stage.simpleName() + "_full"),
+              Type.bool());
+          control.addSignal(fullSig);
+          var notStop = GraphUtils.not(new FuncCallNode(stop, new NodeList<>(), Type.bool()));
+          control.behavior().addWithInputs(new WriteSignalNode(fullSig, notStop));
+
+          fullRd = new ReadSignalNode(fullSig);
         } else {
           // always full otherwise
           fullRd = Constant.Value.of(true).toNode();
         }
+        // mask with reset
+        fullRd = GraphUtils.and(GraphUtils.not(new RtlResetSignalNode()), fullRd);
       } else {
         fullRd = new ReadRegTensorNode(full, new NodeList<>(), Type.bool(), null);
       }
@@ -131,8 +139,9 @@ public class ControlLogicPass extends AbstractLogicPass {
           rbCond = GraphUtils.or(rbCond, rb);
         }
       } else {
-        // the first stage only needs to roll back if it has data hazards (specifically on the pc)
-        var dhaz = dataHazard(isa, mia, control, stage, fullRdMap, inline, false);
+        // the first stage only needs to roll back if it has data hazards (especially on the pc)
+        // data hazards are evaluated here ignoring stages that will roll back anyway
+        var dhaz = dataHazard(isa, mia, control, stage, fullRdMap, inline, false, rollbackMap);
         rbCond = GraphUtils.and(rbCond, dhaz);
         rollbackMap.put(stage, rbCond);
       }
@@ -142,16 +151,23 @@ public class ControlLogicPass extends AbstractLogicPass {
     var stallMap = new HashMap<Stage, ExpressionNode>();
     for (int i = mia.stages().size() - 1; i >= 0; i--) {
       var stage = mia.stages().get(i);
-      var dhaz = dataHazard(isa, mia, control, stage, fullRdMap, inline, true);
+      var dhaz = dataHazard(isa, mia, control, stage, fullRdMap, inline, true,
+          Collections.emptyMap());
       var fullRd = Objects.requireNonNull(fullRdMap.get(stage));
       var extStall = extStall(stage, inline);
+      ExpressionNode stall;
       if (i == mia.stages().size() - 1) {
-        stallMap.put(stage, GraphUtils.and(GraphUtils.or(dhaz, extStall), fullRd));
+        stall = GraphUtils.and(GraphUtils.or(dhaz, extStall), fullRd);
       } else {
         var stallNext = Objects.requireNonNull(stallMap.get(mia.stages().get(i + 1)));
-        stallMap.put(stage, GraphUtils.and(
-            GraphUtils.or(dhaz, extStall, stallNext), fullRd));
+        stall = GraphUtils.and(
+            GraphUtils.or(dhaz, extStall, stallNext), fullRd);
       }
+      var sig = new Signal(control.identifier.append(stage.simpleName() + "_stall"), Type.bool());
+      var wr = new WriteSignalNode(sig, stall);
+      control.behavior().addWithInputs(wr);
+      control.addSignal(sig);
+      stallMap.put(stage, new ReadSignalNode(sig));
     }
 
     // enable signals
@@ -185,18 +201,14 @@ public class ControlLogicPass extends AbstractLogicPass {
     // patch side effects in stages
     for (Stage stage : mia.stages()) {
       var en = Objects.requireNonNull(control.getEnable(stage));
-      var enRd = stage.behavior().add(new ReadSignalNode(en));
-      var full = fullMap.get(stage);
-      ExpressionNode fullRd = Constant.Value.of(true).toNode();
-      if (full != null) {
-        fullRd = new ReadRegTensorNode(full, new NodeList<>(), Type.bool(), null);
-      }
-      ExpressionNode finalFullRd = stage.behavior().add(fullRd);
+      var fullRd = Objects.requireNonNull(fullRdMap.get(stage));
       stage.behavior().getNodes(RtlConditionalNode.class).forEach(condNode -> {
-        ExpressionNode enCond =  enRd;
+        ExpressionNode enCond;
         if (condNode instanceof RtlConditionalMemNode
             || condNode instanceof RtlConditionalReadNode) {
-          enCond = finalFullRd;
+          enCond = stage.behavior().addWithInputs(fullRd.copy());
+        } else {
+          enCond = stage.behavior().add(new ReadSignalNode(en));
         }
         var cond = patchCondition(condNode.nullableCondition(), enCond);
         condNode.setCondition(cond);
@@ -246,7 +258,9 @@ public class ControlLogicPass extends AbstractLogicPass {
 
     // optimize
     Inliner.inlineFuncs(control.behavior());
-    new RtlSimplifier(RtlSimplificationRules.rules).run(control.behavior());
+    var simplifier = new RtlSimplifier(RtlSimplificationRules.rules);
+    simplifier.run(control.behavior());
+    mia.stages().forEach(stage -> simplifier.run(stage.behavior()));
 
     // verify
     control.verify();
@@ -258,7 +272,8 @@ public class ControlLogicPass extends AbstractLogicPass {
                                     Logic.Control control, Stage stage,
                                     Map<Stage, ExpressionNode> fullRdMap,
                                     MiaMappingInlinePass.Result inline,
-                                    boolean excludePc) {
+                                    boolean excludePc,
+                                    Map<Stage, ExpressionNode> rollbackMap) {
 
     var forwarding = (Logic.Forwarding) mia.logic().stream()
         .filter(Logic.Forwarding.class::isInstance).findAny().orElse(null);
@@ -283,6 +298,10 @@ public class ControlLogicPass extends AbstractLogicPass {
           var curStage = wr.effect();
           while (curStage != null && !curStage.equals(stage)) {
             ExpressionNode and = Objects.requireNonNull(fullRdMap.get(curStage));
+            var rb = rollbackMap.get(curStage);
+            if (rb != null) {
+              and = GraphUtils.and(and, GraphUtils.not(rb));
+            }
             if (wr.node().nullableCondition() != null) {
               var enWr = resolveStageValue(curStage, wr.node().nullableCondition(), inline);
               if (enWr != null) {
@@ -293,7 +312,7 @@ public class ControlLogicPass extends AbstractLogicPass {
                 and = GraphUtils.and(and, enRd);
               }
               if (forwarding != null) {
-                var enFwd = forwarding.getEnable(rd.asReadNode());
+                var enFwd = forwarding.getEnableFrom(rd.asReadNode(), curStage);
                 if (enFwd != null) {
                   and = GraphUtils.and(and, GraphUtils.not(new ReadSignalNode(enFwd)));
                 }
@@ -312,7 +331,14 @@ public class ControlLogicPass extends AbstractLogicPass {
         }
       }
     }
-    return control.behavior().addWithInputs(cond);
+    cond = control.behavior().addWithInputs(cond);
+
+    var sigName = stage.simpleName() + "_dhaz" + (excludePc ? "" : "_pc");
+    var sig = new Signal(control.identifier.append(sigName), Type.bool());
+    var wr = new WriteSignalNode(sig, cond);
+    control.behavior().addWithInputs(wr);
+    control.addSignal(sig);
+    return new ReadSignalNode(sig);
   }
 
   @Nullable
@@ -359,7 +385,7 @@ public class ControlLogicPass extends AbstractLogicPass {
         .collect(Collectors.toSet());
     var extStallCond = anyNotValid(extStallNodes);
     return extStallCond.map(stage.behavior()::addWithInputs)
-        .map(expr -> getStageSignalRead(stage, expr, inline))
+        .map(expr -> getStageSignalRead(stage, expr, inline, stage.simpleName() + "_extstall"))
         .orElse(Constant.Value.of(false).toNode());
   }
 

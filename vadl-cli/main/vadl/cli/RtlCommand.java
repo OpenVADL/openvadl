@@ -37,12 +37,6 @@ import vadl.pass.PassOrders;
 )
 public class RtlCommand extends BaseCommand {
 
-  @CommandLine.Option(names = {"--dummy-mia"},
-      scope = INHERIT,
-      description = "Select a dummy MiA: ${COMPLETION-CANDIDATES} (stages in pipeline)",
-      defaultValue = "five")
-  RtlConfiguration.DummyMia dummyMia = RtlConfiguration.DummyMia.five;
-
   @CommandLine.Option(names = {"--memory"},
       scope = INHERIT,
       description = "Configure external memory interface: ${COMPLETION-CANDIDATES}",
@@ -84,6 +78,12 @@ public class RtlCommand extends BaseCommand {
       defaultValue = "false")
   boolean keepSignals = false;
 
+  @CommandLine.Option(names = {"--rvfi"},
+      scope = INHERIT,
+      description = "Emit outputs for the RISC-V Formal Interface.",
+      defaultValue = "false")
+  boolean emitRVFI = false;
+
   @CommandLine.Option(names = {"--dry-run"},
       scope = INHERIT,
       description = "Don't emit generated files.")
@@ -92,13 +92,13 @@ public class RtlCommand extends BaseCommand {
   @Override
   PassOrder passOrder(GeneralConfiguration configuration) throws IOException {
     var rtlConfig = new RtlConfiguration(configuration);
-    rtlConfig.setDummyMia(dummyMia);
     rtlConfig.setMemory(memory);
     rtlConfig.setResetVector(resetVector);
     rtlConfig.setKeepSignals(keepSignals);
     rtlConfig.setScalaPackageAndDirs(scalaPackage);
     rtlConfig.setTopModule(topModule);
     rtlConfig.setProjectName(projectName);
+    rtlConfig.setEmitRVFI(emitRVFI);
     rtlConfig.setDryRun(dryRun);
     return PassOrders.rtl(rtlConfig);
   }

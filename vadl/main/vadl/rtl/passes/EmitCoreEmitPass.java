@@ -40,7 +40,7 @@ public class EmitCoreEmitPass extends RtlTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "rtl/CoreEmit.scala";
+    return "rtl/scala/CoreEmit.scala";
   }
 
   @Override

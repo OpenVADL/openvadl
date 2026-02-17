@@ -47,6 +47,7 @@ import vadl.utils.GraphUtils;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.MicroArchitecture;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
@@ -94,7 +95,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var optIsa = viam.isa();
+    var optIsa = viam.mia().map(MicroArchitecture::isa);
     if (optIsa.isEmpty()) {
       return null;
     }
@@ -205,7 +206,6 @@ public class InstructionProgressGraphCreationPass extends Pass {
         ipg.getNodes(WriteMemNode.class)
             .filter(write -> write.resourceDefinition().equals(mem))
             .toList().forEach(write -> {
-              var words = new ConstantNode(Constant.Value.of(write.words(), wordType));
               ExpressionNode value = write.value();
               while (value instanceof TruncateNode truncate) {
                 value = truncate.value();
@@ -213,6 +213,10 @@ public class InstructionProgressGraphCreationPass extends Pass {
               if (value.type().asDataType().bitWidth() < valType.bitWidth()) {
                 value = new ZeroExtendNode(value, valType);
               }
+              if (value.type().asDataType().bitWidth() > valType.bitWidth()) {
+                value = new TruncateNode(value, valType);
+              }
+              var words = new ConstantNode(Constant.Value.of(write.words(), wordType));
               var rtlWrite = new RtlWriteMemNode(write.memory(), maxWrite.getAsInt(), words,
                   write.address(), value, write.nullableCondition());
               ipg.replaceAndDelete(write, rtlWrite);

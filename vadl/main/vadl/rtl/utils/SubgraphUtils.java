@@ -24,6 +24,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.ViamGraphError;
 
 /**
  * Utils for copying subgraphs.
@@ -90,22 +91,35 @@ public class SubgraphUtils {
       return cached;
     }
 
-    Streams.forEachPair(original.inputs(), copy.inputs(), (originalInput, copyInput) -> {
+    var originalInputs = original.inputs().toList();
+    var copyInputs = copy.inputs().toList();
 
-      var newInput = copyInput;
+    if (originalInputs.size() != copyInputs.size()) {
+      throw new ViamGraphError(
+          "Input mismatch: %d original inputs, %d copy inputs",
+          originalInputs.size(), copyInputs.size())
+          .addContext("original", original)
+          .addContext("copy", copy);
+    }
 
-      if (set.contains(originalInput)) {
-        newInput = addWithMissingInputs(dest, originalInput, copyInput, set, missingInput, cache);
-      } else {
-        var suppliedInput = missingInput.supply(original, originalInput, copy);
-        if (suppliedInput != null) {
-          newInput = dest.addWithInputs(suppliedInput);
-        }
-      }
+    Streams.forEachPair(originalInputs.stream(), copyInputs.stream(),
+        (originalInput, copyInput) -> {
 
-      copy.replaceInput(copyInput, newInput);
+          var newInput = copyInput;
 
-    });
+          if (set.contains(originalInput)) {
+            newInput =
+                addWithMissingInputs(dest, originalInput, copyInput, set, missingInput, cache);
+          } else {
+            var suppliedInput = missingInput.supply(original, originalInput, copy);
+            if (suppliedInput != null) {
+              newInput = dest.addWithInputs(suppliedInput);
+            }
+          }
+
+          copy.replaceInput(copyInput, newInput);
+
+        });
 
     var result = dest.add(copy);
 

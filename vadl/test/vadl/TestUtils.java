@@ -120,17 +120,19 @@ public class TestUtils {
   /**
    * Asserts that the File referenced with the provided Path contains equals the actual string.
    * This test is optimized for IntelliJ and by throwing a custom AssertionFailedError the IDE will
-   * show a diff editor in which the user can accept the changes into the referenced filed.
+   * show a diff editor in which the user can accept the changes into the referenced file.
+   * We compare the content line-by-line in order to ignore different line endings in different
+   * environments.
    *
    * @param expectedPath the file to compare the actual string with
    * @param actual       the actual string the test produced.
    * @throws IOException if the file cannot be read.
    */
-  public static void assertEqualsFileContent(Path expectedPath, String actual)
+  public static void assertEqualsFileLines(Path expectedPath, String actual)
       throws
       IOException {
     var expected = Files.readString(expectedPath);
-    if (!expected.equals(actual)) {
+    if (!expected.lines().toList().equals(actual.lines().toList())) {
       throw new AssertionFailedError(
           "Actual data differs from file.",
           new FileInfo(expectedPath.toAbsolutePath().toString(),

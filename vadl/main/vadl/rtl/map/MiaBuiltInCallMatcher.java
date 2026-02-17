@@ -42,7 +42,7 @@ import vadl.viam.graph.dependency.WriteResourceNode;
 public class MiaBuiltInCallMatcher {
 
   interface Matcher {
-    boolean match(Node matchNode, MiaBuiltInCall mapNode, Set<Node> doneNodes);
+    boolean match(Node matchNode, BuiltInCall mapNode, Set<Node> doneNodes);
   }
 
   private static final IdentityHashMap<BuiltInTable.BuiltIn, Matcher> MATCHERS =
@@ -63,11 +63,13 @@ public class MiaBuiltInCallMatcher {
     });
     MATCHERS.put(BuiltInTable.INSTRUCTION_READ, (matchNode, mapNode, doneNodes) -> {
       return matchNode instanceof ReadResourceNode n
-          && mapNode.matchResource(n.resourceDefinition());
+          && mapNode instanceof MiaBuiltInCall call
+          && call.matchResource(n.resourceDefinition());
     });
     MATCHERS.put(BuiltInTable.INSTRUCTION_WRITE, (matchNode, mapNode, doneNodes) -> {
       return matchNode instanceof WriteResourceNode n
-          && mapNode.matchResource(n.resourceDefinition());
+          && mapNode instanceof MiaBuiltInCall call
+          && call.matchResource(n.resourceDefinition());
     });
     MATCHERS.put(BuiltInTable.INSTRUCTION_COMPUTE, (matchNode, mapNode, doneNodes) -> {
       if (matchNode instanceof ConstantNode) {
@@ -77,18 +79,24 @@ public class MiaBuiltInCallMatcher {
     });
     MATCHERS.put(BuiltInTable.INSTRUCTION_ADDRESS, (matchNode, mapNode, doneNodes) -> {
       return matchNode.usages().anyMatch(use -> {
-        if (use instanceof ReadResourceNode n && mapNode.matchResource(n.resourceDefinition())) {
-          return (n.hasAddress() && n.address() == matchNode);
-        }
-        if (use instanceof WriteResourceNode n && mapNode.matchResource(n.resourceDefinition())) {
-          return (n.hasAddress() && n.address() == matchNode);
+        if (mapNode instanceof MiaBuiltInCall call) {
+          if (use instanceof ReadResourceNode n
+              && call.matchResource(n.resourceDefinition())) {
+            return (n.hasAddress() && n.address() == matchNode);
+          }
+          if (use instanceof WriteResourceNode n
+              && call.matchResource(n.resourceDefinition())) {
+            return (n.hasAddress() && n.address() == matchNode);
+          }
         }
         return false;
       });
     });
     MATCHERS.put(BuiltInTable.INSTRUCTION_RESULTS, (matchNode, mapNode, doneNodes) -> {
       return matchNode.usages().anyMatch(use -> {
-        if (use instanceof WriteResourceNode n && mapNode.matchResource(n.resourceDefinition())) {
+        if (use instanceof WriteResourceNode n
+            && mapNode instanceof MiaBuiltInCall call
+            && call.matchResource(n.resourceDefinition())) {
           return (n.hasAddress() && n.value() == matchNode
               && resolveDoneThroughUnaryNodes(matchNode, doneNodes));
         }
@@ -97,7 +105,8 @@ public class MiaBuiltInCallMatcher {
     });
     MATCHERS.put(BuiltInTable.INSTRUCTION_READ_OR_FORWARD, (matchNode, mapNode, doneNodes) -> {
       return matchNode instanceof ReadResourceNode n
-          && mapNode.matchResource(n.resourceDefinition());
+          && mapNode instanceof MiaBuiltInCall call
+          && call.matchResource(n.resourceDefinition());
     });
     MATCHERS.put(BuiltInTable.INSTRUCTION_VERIFY, (matchNode, mapNode, doneNodes) -> {
       return matchNode.usages().anyMatch(use ->
@@ -158,17 +167,15 @@ public class MiaBuiltInCallMatcher {
    * @return true, if node is part of compute
    */
   private static boolean resolveCompute(Node matchNode, Set<Node> doneNodes) {
-    if (matchNode instanceof BuiltInCall) {
-      if (isCompute(matchNode)) {
-        return true;
-      }
-      return matchNode.inputs()
-          .allMatch(input -> doneNodes.contains(input) || resolveCompute(input, doneNodes));
-    }
     if (matchNode instanceof ConstantNode) {
       return true;
     }
-    if (matchNode instanceof SelectNode || matchNode instanceof UnaryNode) {
+    if (matchNode instanceof BuiltInCall
+        || matchNode instanceof SelectNode
+        || matchNode instanceof UnaryNode) {
+      if (isCompute(matchNode)) {
+        return true;
+      }
       return matchNode.inputs()
           .allMatch(input -> doneNodes.contains(input) || resolveCompute(input, doneNodes));
     }
@@ -183,7 +190,7 @@ public class MiaBuiltInCallMatcher {
    * @param nodes   set of nodes to filter
    * @return filtered set of nodes
    */
-  public Set<Node> match(MiaBuiltInCall mapNode, Set<Node> nodes, Set<Node> doneNodes) {
+  public Set<Node> match(BuiltInCall mapNode, Set<Node> nodes, Set<Node> doneNodes) {
     var matcher = MATCHERS.get(mapNode.builtIn());
     if (matcher == null) {
       return new LinkedHashSet<>();

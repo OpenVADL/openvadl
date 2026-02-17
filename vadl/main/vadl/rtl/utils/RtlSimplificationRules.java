@@ -18,15 +18,17 @@ package vadl.rtl.utils;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import vadl.rtl.ipg.nodes.RtlSelectByInstructionNode;
 import vadl.types.BuiltInTable;
 import vadl.utils.BigIntUtils;
+import vadl.utils.GraphUtils;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SelectNode;
@@ -68,6 +70,9 @@ public class RtlSimplificationRules {
     rules.add(new AndWithOnesSimplificationRule());
     rules.add(new OrWithOnesSimplificationRule());
     rules.add(new OrWithZerosSimplificationRule());
+    rules.add(new NotAndSimplificationRule());
+    rules.add(new NotOrSimplificationRule());
+    rules.add(new NotNotSimplificationRule());
     rules.add(new SelectWithEqCasesSimplificationRule());
     rules.add(new SelectWithConstCondSimplificationRule());
     rules.add(new SelByInstrEqCasesSimplificationRule());
@@ -157,6 +162,129 @@ public class RtlSimplificationRules {
   }
 
   /**
+   * Eliminate double logical negations.
+   */
+  public static class NotNotSimplificationRule implements AlgebraicSimplificationRule {
+    @Override
+    public Optional<Node> simplify(Node node) {
+      if (node instanceof ExpressionNode n) {
+        var matcher =
+            new BuiltInMatcher(BuiltInTable.NOT,
+                new BuiltInMatcher(BuiltInTable.NOT, List.of()));
+
+        var matchings = TreeMatcher.matches(Stream.of(node), matcher);
+        if (!matchings.isEmpty() && n instanceof BuiltInCall not1
+            && not1.arg(0) instanceof BuiltInCall not2) {
+          return Optional.of(not2.arg(0));
+        }
+      }
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Push in logical negations inside and built-in calls.
+   */
+  public static class NotAndSimplificationRule implements AlgebraicSimplificationRule {
+    @Override
+    public Optional<Node> simplify(Node node) {
+      if (node instanceof ExpressionNode n) {
+        var matcher =
+            new BuiltInMatcher(BuiltInTable.NOT,
+                new BuiltInMatcher(BuiltInTable.AND, List.of()));
+
+        var matchings = TreeMatcher.matches(Stream.of(node), matcher);
+        if (!matchings.isEmpty() && n instanceof BuiltInCall not
+            && not.arg(0) instanceof BuiltInCall and) {
+          if (and.usageCount() > 1) {
+            return Optional.empty();
+          }
+          return and.arguments().stream()
+              .map(GraphUtils::not).reduce(GraphUtils::or)
+              .map(Node.class::cast);
+        }
+      }
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Push in logical negations inside or built-in calls.
+   */
+  public static class NotOrSimplificationRule implements AlgebraicSimplificationRule {
+    @Override
+    public Optional<Node> simplify(Node node) {
+      if (node instanceof ExpressionNode n) {
+        var matcher =
+            new BuiltInMatcher(BuiltInTable.NOT,
+                new BuiltInMatcher(BuiltInTable.OR, List.of()));
+
+        var matchings = TreeMatcher.matches(Stream.of(node), matcher);
+        if (!matchings.isEmpty() && n instanceof BuiltInCall not
+            && not.arg(0) instanceof BuiltInCall or) {
+          if (or.usageCount() > 1) {
+            return Optional.empty();
+          }
+          return or.arguments().stream()
+              .map(GraphUtils::not).reduce(GraphUtils::and)
+              .map(Node.class::cast);
+        }
+      }
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Move nested and built-in calls to the right.
+   */
+  public static class NestedAndSimplificationRule implements AlgebraicSimplificationRule {
+    @Override
+    public Optional<Node> simplify(Node node) {
+      if (node instanceof ExpressionNode n) {
+        var matcher =
+            new BuiltInMatcher(BuiltInTable.AND,
+                new BuiltInMatcher(BuiltInTable.AND,
+                    new BuiltInMatcher(BuiltInTable.AND, List.of()).not()),
+                new AnyNodeMatcher());
+
+        var matchings = TreeMatcher.matches(Stream.of(node), matcher);
+        if (!matchings.isEmpty() && n instanceof BuiltInCall and1
+            && and1.arg(0) instanceof BuiltInCall and2) {
+          return Optional.of(GraphUtils.and(
+              and2.arg(0), GraphUtils.and(and2.arg(1), and1.arg(1))
+          ));
+        }
+      }
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Move nested or built-in calls to the right.
+   */
+  public static class NestedOrSimplificationRule implements AlgebraicSimplificationRule {
+    @Override
+    public Optional<Node> simplify(Node node) {
+      if (node instanceof ExpressionNode n) {
+        var matcher =
+            new BuiltInMatcher(BuiltInTable.OR,
+                new BuiltInMatcher(BuiltInTable.OR,
+                    new BuiltInMatcher(BuiltInTable.OR, List.of()).not()),
+                new AnyNodeMatcher());
+
+        var matchings = TreeMatcher.matches(Stream.of(node), matcher);
+        if (!matchings.isEmpty() && n instanceof BuiltInCall or1
+            && or1.arg(0) instanceof BuiltInCall or2) {
+          return Optional.of(GraphUtils.or(
+              or2.arg(0), GraphUtils.or(or2.arg(1), or1.arg(1))
+          ));
+        }
+      }
+      return Optional.empty();
+    }
+  }
+
+  /**
    * Simplify select with equal cases.
    */
   public static class SelectWithEqCasesSimplificationRule implements AlgebraicSimplificationRule {
@@ -199,7 +327,7 @@ public class RtlSimplificationRules {
           return Optional.of(first);
         }
         // optimize values (merges equal values)
-        var values = new HashSet<>(n.values());
+        var values = new LinkedHashSet<>(n.values());
         if (values.size() < n.values().size()) {
           for (ExpressionNode value : values) {
             if (n.values().stream().filter(value::equals).count() > 1) {

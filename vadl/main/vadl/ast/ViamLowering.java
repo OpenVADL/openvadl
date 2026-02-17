@@ -213,7 +213,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     // If there's only one most specialized ISA, return it
     if (mostSpecialized.size() == 1) {
-      return visitIsa(mergeIsa(mostSpecialized.getFirst()));
+      return visitAndMergeIsa(mostSpecialized.getFirst());
     }
 
     if (mostSpecialized.size() > 1) {
@@ -1382,12 +1382,20 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     return Optional.of(instruction);
   }
 
-  private InstructionSetArchitecture visitIsa(InstructionSetDefinition definition) {
-    var identifier = generateIdentifier(definition.identifier().name, definition.identifier());
+  private InstructionSetArchitecture visitAndMergeIsa(InstructionSetDefinition definition) {
+
+    var cached = definitionCache.get(definition);
+    if (cached != null && cached.isPresent()) {
+      return (InstructionSetArchitecture) cached.get();
+    }
+
+    var mergedDef = mergeIsa(definition);
+
+    var identifier = generateIdentifier(mergedDef.identifier().name, mergedDef.identifier());
 
     // FIXME: make this togroup instead of toList
     var allDefinitions =
-        definition.definitions.stream().map(this::fetch).flatMap(Optional::stream)
+        mergedDef.definitions.stream().map(this::fetch).flatMap(Optional::stream)
             .toList();
     var formats = filterAndCastToInstance(allDefinitions, Format.class);
     var functions = filterAndCastToInstance(allDefinitions, Function.class);
@@ -1411,7 +1419,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       registers.add(programCounter.registerTensor());
     }
 
-    return new InstructionSetArchitecture(
+    var isa = new InstructionSetArchitecture(
         identifier,
         currentSpecification,
         formats,
@@ -1425,6 +1433,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         memories,
         artificialResources
     );
+
+    definitionCache.put(definition, Optional.of(isa));
+    return isa;
   }
 
   @Override
@@ -1475,8 +1486,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Override
   public Optional<vadl.viam.Definition> visit(MicroArchitectureDefinition definition) {
     var identifier = generateIdentifier(definition.viamId, definition.identifier());
-    var isa = visitIsa(
-        (InstructionSetDefinition) requireNonNull(definition.isa.target()));
+    var isa = visitAndMergeIsa(definition.isaNode());
 
     var children = definition.definitions.stream().map(this::fetch).filter(Optional::isPresent)
         .map(Optional::orElseThrow).toList();
@@ -1512,7 +1522,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // for each isa in mip add definitions to definition list
     // create new isa ast node with list of definitions
     // visitIsa on created isa ast node
-    var isa = visitIsa(mergeIsa(definition.implementedIsaNode()));
+    var isa = visitAndMergeIsa(definition.implementedIsaNode());
 
     var reset = (Procedure) definition.findCpuProcDef(CpuProcessDefinition.ProcessKind.RESET)
         .findFirst()
