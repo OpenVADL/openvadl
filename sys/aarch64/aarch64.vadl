@@ -1657,6 +1657,8 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     , CPACR_EL1 = 0b11'000'0001'0000'010     // architectural feature access control register exception level 1
     }
 
+  constant SysRegNZCV15 = SysRegEncode::NZCV as Bits15
+
   register CurrentEL:Bits2                   // exception level register
   register SPSel:    Bits1                   // stack pointer select register
   register SP_EL0:   Address                 // stack pointer exception level level 0
@@ -1756,12 +1758,17 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
                    udec(sysreg( 2.. 0)))
       }
 
-  model MrsRegInstr (i: InstrNoFunct): IsaDefs = {
+  model MrsNZCVInstr (i: InstrNoFunct): IsaDefs = {
+    instruction AsId($i.id, NZCV): MoveSystemRegFormat =
+      X(rt) := (NZCV_N, NZCV_Z, NZCV_C, NZCV_V) as BitsX << 28
+    encoding AsId($i.id, NZCV) = {op = $i.opcode, rs = SysRegNZCV15}
+    assembly AsId($i.id, NZCV) = ($i.mnemo, ' ', XSize(rt), ', nzcv')
+    }
+
+  model MrsRegBase (i: InstrNoFunct): IsaDefs = {
     [skip pruning]
     instruction $i.id: MoveSystemRegFormat =
-      if sysreg = SysRegEncode::NZCV
-        then X(rt) := (NZCV_N, NZCV_Z, NZCV_C, NZCV_V) as BitsX << 28
-        else if CurrentEL = 0
+      if CurrentEL = 0
         then raise $UndefinedException ()
         else match sysreg with
           { SysRegEncode::CurrentEL => X(rt) := CurrentEL as BitsX << 2
@@ -1781,8 +1788,14 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
           , SysRegEncode::VBAR_EL1  => X(rt) := VBAR_EL1
           , _                       => raise $UndefinedException ()
           }
+    [select when : rs != SysRegNZCV15]
     encoding $i.id = {op = $i.opcode}
     assembly $i.id = ($i.mnemo, ' ', XSize(rt), ', ', SysRegName(sysreg))
+    }
+
+  model MrsRegInstr (i: InstrNoFunct): IsaDefs = {
+    $MrsNZCVInstr ($i)
+    $MrsRegBase ($i)
     }
 
   model MsrRegInstr (i: InstrNoFunct): IsaDefs = {
