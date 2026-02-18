@@ -39373,7 +39373,7 @@ let Uses = [  ];
 let Defs = [ SP_EL1 ];
 }
 
-def MSR : Instruction
+def MRSNZCV : Instruction
 {
 let Namespace = "processorNameValue";
 
@@ -39381,7 +39381,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rt, AArch64Base_MSR_sysregAsInt16:$sysreg );
+let InOperandList = ( ins X:$rt, AArch64Base_MSRNZCV_sysregAsInt16:$sysreg );
 
 field bits<32> Inst;
 
