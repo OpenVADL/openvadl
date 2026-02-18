@@ -678,13 +678,15 @@ instruction set architecture PPC64SFS = {
 
   // instructions: andi., andis., ori, oris, xori, xoris
   model DFormLogicalInstr (x : AsmOpOpcd, arg2 : Id, rc : Bool) : IsaDefs = {
-    instruction AsId($x.asm) : DFormA =
+    instruction AsId($x.asm, $rId($rc)) : DFormA =
       let result = VADL::$x.op(X(rs), $arg2) in {
         X(ra) := result
         $SetCR0($rc; XER.so)
       }
-    encoding AsId($x.asm) = {opcd = $x.opcd}
-    assembly AsId($x.asm) = ($x.asm, $rStr($rc), " ", decimal(ra), ",", decimal(rs), ",", decimal(imm))
+    encoding AsId($x.asm, $rId($rc)) =
+      {opcd = $x.opcd}
+    assembly AsId($x.asm, $rId($rc)) =
+      ($x.asm, $rStr($rc), " ", decimal(ra), ",", decimal(rs), ",", decimal(imm))
   }
 
   // instructions: lbz, lbzu, lha, lhau, lhz, lhzu, lwz, lwzu
