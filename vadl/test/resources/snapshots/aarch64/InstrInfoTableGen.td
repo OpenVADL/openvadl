@@ -39380,8 +39380,55 @@ let Namespace = "processorNameValue";
 let Size = 4;
 let CodeSize = 4;
 
+let OutOperandList = ( outs X:$rt );
+let InOperandList = ( ins  );
+
+field bits<32> Inst;
+
+// SoftFail is a field the disassembler can use to provide a way for
+// instructions to not match without killing the whole decode process. It is
+// mainly used for ARM, but Tablegen expects this field to exist or it fails
+// to build the decode table.
+field bits<32> SoftFail = 0;
+
+bits<12> op = 0b110101010011;
+bits<15> rs = 0b101101000010000;
+bits<64> rt;
+
+let Inst{31-20} = op{11-0};
+let Inst{19-5} = rs{14-0};
+let Inst{4-0} = rt{4-0};
+
+let isTerminator       = 0;
+let isBranch           = 0;
+let isCall             = 0;
+let isReturn           = 0;
+let isPseudo           = 0;
+let isCodeGenOnly      = 0;
+let mayLoad            = 0;
+let mayStore           = 0;
+let isBarrier          = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Pattern = [];
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+def MSR : Instruction
+{
+let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rt, AArch64Base_MSRNZCV_sysregAsInt16:$sysreg );
+let InOperandList = ( ins X:$rt, AArch64Base_MSR_sysregAsInt16:$sysreg );
 
 field bits<32> Inst;
 
@@ -52636,6 +52683,9 @@ def : Pat<(int_processorNameValue_MADDW W:$ra, W:$rn, W:$rm),
 
 def : Pat<(int_processorNameValue_MADDX X:$ra, X:$rn, X:$rm),
         (MADDX X:$ra, X:$rn, X:$rm)>;
+
+def : Pat<(int_processorNameValue_MRSNZCV ),
+        (MRSNZCV )>;
 
 def : Pat<(int_processorNameValue_MSUBW W:$ra, W:$rn, W:$rm),
         (MSUBW W:$ra, W:$rn, W:$rm)>;
