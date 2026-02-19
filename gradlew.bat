@@ -70,16 +70,25 @@ goto fail
 :execute
 @rem Setup the command line
 
-rem Add minimum Java major version check, see: https://github.com/OpenVADL/openvadl/pull/162
-for /f "tokens=2 delims==" %%v in ('"%JAVA_EXE%" -version 2^>^&1 ^| findstr /i "version"') do (
-set "JAVA_VERSION_STRING=%%~v"
+@rem Add minimum Java major version check, see: https://github.com/OpenVADL/openvadl/pull/162
+set JAVA_VERSION_STRING=
+set JAVA_VERSION_MAJOR=0
+for /f "tokens=3" %%v in ('^""%JAVA_EXE%" -version 2^>^&1 ^| findstr /i "version"^"') do (
+    set "JAVA_VERSION_STRING=%%~v"
 )
 for /f "tokens=1 delims=." %%m in ("%JAVA_VERSION_STRING%") do (
-set /a JAVA_VERSION_MAJOR=%%m
+    set "JAVA_VERSION_MAJOR=%%m"
+)
+@rem Special case for old Versions (1.8 → 8)
+if "%JAVA_VERSION_MAJOR%"=="1" (
+    for /F "tokens=2 delims=." %%m in ("%JAVA_VERSION_STRING%") do (
+        set "JAVA_VERSION_MAJOR=%%m"
+    )
 )
 if %JAVA_VERSION_MAJOR% lss 25 (
 echo ERROR: Java 25 or higher is required. Found Java version %JAVA_VERSION_STRING%.
 exit /b 1
+)
 
 @rem Execute Gradle
 "%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -jar "%APP_HOME%\gradle\wrapper\gradle-wrapper.jar" %*
