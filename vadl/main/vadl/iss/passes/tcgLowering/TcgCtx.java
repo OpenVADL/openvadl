@@ -22,8 +22,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import vadl.iss.passes.TcgPassUtils;
+import vadl.iss.passes.nodes.IssAliasReadRegTensorNode;
+import vadl.iss.passes.nodes.IssAliasWriteRegTensorNode;
 import vadl.iss.passes.nodes.IssMoveNode;
+import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssRegChunkWriteNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.DispatchFor;
@@ -147,12 +151,26 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
     @Handler
     List<TcgVRefNode> destOf(WriteRegTensorNode toHandle) {
       return assignments.computeIfAbsent(toHandle,
-          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), true));
+          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), true, null));
+    }
+
+    @Handler
+    List<TcgVRefNode> destOf(IssAliasWriteRegTensorNode toHandle) {
+      return assignments.computeIfAbsent(toHandle,
+          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), true,
+              toHandle.aliasAccessorName()));
     }
 
     @Handler
     List<TcgVRefNode> destOf(IssRegChunkWriteNode toHandle) {
       return List.of();
+    }
+
+    @Handler
+    List<TcgVRefNode> destOf(IssRegBitfieldWriteNode toHandle) {
+      return assignments.computeIfAbsent(toHandle,
+          n -> createRegVar(toHandle.regTensor(), toHandle.indices(), true,
+              toHandle.aliasAccessorName()));
     }
 
     @Handler
@@ -168,7 +186,14 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
     @Handler
     List<TcgVRefNode> destOf(ReadRegTensorNode toHandle) {
       return assignments.computeIfAbsent(toHandle,
-          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), false));
+          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), false, null));
+    }
+
+    @Handler
+    List<TcgVRefNode> destOf(IssAliasReadRegTensorNode toHandle) {
+      return assignments.computeIfAbsent(toHandle,
+          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), false,
+              toHandle.aliasAccessorName()));
     }
 
     @Handler
@@ -243,8 +268,11 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
      * @return The variable corresponding to the register.
      */
     private List<TcgVRefNode> createRegVar(RegisterTensor reg,
-                                           NodeList<ExpressionNode> indices, boolean isDest) {
-      var key = Triple.of(reg, indices, isDest);
+                                           NodeList<ExpressionNode> indices,
+                                           boolean isDest,
+                                           @Nullable String accessorBaseName) {
+      var accessorKey = accessorBaseName == null ? "" : accessorBaseName;
+      var key = Triple.of(Triple.of(reg, indices, isDest), accessorKey, "");
       var dest = isDest ? "_dest" : "";
       return tcgVCache.computeIfAbsent(key, k -> {
         var idxStr = indices.stream().map(TcgPassUtils::exprVarName)
@@ -252,7 +280,7 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
         idxStr = idxStr.isEmpty() ? "" : "_" + idxStr;
         idxStr += dest;
         var regFileVar = TcgV.reg("reg_" + reg.simpleName().toLowerCase() + idxStr,
-            targetSize, reg, indices, isDest);
+            targetSize, reg, indices, accessorBaseName, isDest);
 
         // add index as dependency to var reference node
         return List.of(toNode(regFileVar, indices));

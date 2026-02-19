@@ -46,6 +46,10 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
     var vars = super.createVariables(passResults, specification);
     vars.put("reg_dump_code", dumpRegsCode(specification));
     vars.put("reset", getResetCode(specification));
+    vars.put("alias_cpu_read_accessors",
+        AliasCpuAccessors.renderReadAccessors(specification, configuration()));
+    vars.put("alias_cpu_write_accessors",
+        AliasCpuAccessors.renderWriteAccessors(specification, configuration()));
     return vars;
   }
 

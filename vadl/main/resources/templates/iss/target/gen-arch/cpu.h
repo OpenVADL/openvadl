@@ -83,6 +83,14 @@ int [(${gen_arch_lower})]_cpu_gdb_write_register(CPUState *cpu, uint8_t *buf, in
 [(${access.signature})];
 [/][/]
 
+// Alias register getters for helper/procedure/exception code paths
+[# th:each="access : ${alias_cpu_read_accessors}"]
+[(${access.signature})];
+[/]
+[# th:each="access : ${alias_cpu_write_accessors}"]
+[(${access.signature})];
+[/]
+
 
 #include "exec/cpu-all.h"
 

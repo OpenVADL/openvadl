@@ -26,6 +26,19 @@ const char * const [(${gen_arch_lower})]_cpu_[(${reg.name_lower})]_names[(${reg.
     [(${access.body})] }
 [/][/]
 
+[# th:each="access : ${alias_cpu_read_accessors}"]
+[(${access.signature})]
+{
+    [(${access.body})]
+}
+[/]
+[# th:each="access : ${alias_cpu_write_accessors}"]
+[(${access.signature})]
+{
+    [(${access.body})]
+}
+[/]
+
 static void [(${gen_arch_lower})]_cpu_disas_set_info(CPUState *cpu, disassemble_info *info)
 {
     trace_[(${gen_arch_lower})]_cpu_call(__func__);

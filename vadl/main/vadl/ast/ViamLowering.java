@@ -431,6 +431,38 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         default -> new ArrayList<>();
       };
 
+      var fixedIndices = requireNonNull(definition.computedFixedArgs).stream()
+          .map(constantEvaluator::eval)
+          .map(ConstantValue::toViamConstant)
+          .toList();
+
+      ArtificialResource.OverwriteMode overwriteMode = ArtificialResource.OverwriteMode.MERGE;
+      var overwriteAnno = definition.findAnnotation("overwrite source", EnumAnnotation.class);
+      if (overwriteAnno != null) {
+        overwriteMode = switch (overwriteAnno.value) {
+          case "zero" -> ArtificialResource.OverwriteMode.ZERO;
+          case "sign" -> ArtificialResource.OverwriteMode.SIGN;
+          default -> throw new IllegalStateException("Unexpected overwrite mode: "
+              + overwriteAnno.value);
+        };
+      }
+
+      ArtificialResource.ZeroConstraint zeroConstraint = null;
+      var zeroAnno = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
+      if (zeroAnno != null) {
+        zeroConstraint = new ArtificialResource.ZeroConstraint(
+            zeroAnno.indices.stream().map(ConstantValue::toViamConstant).toList());
+      }
+
+      var semantics = new ArtificialResource.Semantics(
+          innerResource,
+          fixedIndices,
+          dimensions,
+          definition.slice,
+          overwriteMode,
+          zeroConstraint
+      );
+
       return Optional.of(new ArtificialResource(
           identifier,
           ArtificialResource.Kind.REGISTER,
@@ -438,7 +470,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
           new BehaviorLowering(this).getRegisterAliasReadFunc(definition, dimensions),
           new BehaviorLowering(this).getRegisterAliasWriteProc(definition, dimensions),
           dimensions,
-          definition.slice
+          definition.slice,
+          semantics
       ));
     }
 

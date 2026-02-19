@@ -84,6 +84,26 @@ static TCGv dest_[(${reg.name_lower})](DisasContext *ctx [(${reg.getter_params})
 }
 [/]
 
+[# th:each="alias : ${alias_accessors}"]
+static TCGv get_[(${alias.name_lower})](DisasContext *ctx [(${alias.getter_params})])
+{   [# th:each="dim : ${alias.index_dims}"]
+    assert( [(${dim.arg_name})] < [(${dim["size"]})]); [/]
+    [# th:if="${alias.has_zero_check}"]
+    if ([(${alias.zero_check})]) return tcg_constant_i[(${alias.value_width})](0);
+    [/]
+    return get_[(${alias.base_name_lower})](ctx[(${alias.forward_args})]);
+}
+
+static TCGv dest_[(${alias.name_lower})](DisasContext *ctx [(${alias.getter_params})])
+{   [# th:each="dim : ${alias.index_dims}"]
+    assert( [(${dim.arg_name})] < [(${dim["size"]})]); [/]
+    [# th:if="${alias.has_zero_check}"]
+    if ([(${alias.zero_check})]) return tcg_temp_new_i[(${alias.value_width})]();
+    [/]
+    return dest_[(${alias.base_name_lower})](ctx[(${alias.forward_args})]);
+}
+[/]
+
 static void gen_update_pc(DisasContext *ctx, target_ulong pc) {
     tcg_gen_movi_tl(cpu_[(${pc_reg.name_lower})], pc);
 }

@@ -48,6 +48,7 @@ import vadl.gcb.passes.SetMissingConfigurationValuesPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingAndPredicateFunctionsPass;
 import vadl.gcb.passes.operands.GenerateInstructionOperandsPass;
+import vadl.iss.passes.IssAliasAccessLoweringPass;
 import vadl.iss.passes.IssBuiltInArgTruncOptPass;
 import vadl.iss.passes.IssCFunctionExtractionPass;
 import vadl.iss.passes.IssConfigurationPass;
@@ -495,6 +496,7 @@ public class PassOrders {
     var order = viam(config);
 
     // skip inlining of field access
+    order.skip(ArtificialResInlinerPass.class);
     order.skip(FieldAccessInlinerPass.class);
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
     order.skip(RenamingConflictingRegistersPass.class);
@@ -506,6 +508,7 @@ public class PassOrders {
         .add(new IssExecStrategyPass(config))
         .add(new IssConfigurationPass(config))
         .add(new IssMemoryDetectionPass(config))
+        .add(new IssAliasAccessLoweringPass(config))
         .add(new IssOpDecompositionPass(config))
         .add(new IssNormalizationPass(config))
         .add(new IssExtractOptimizationPass(config))

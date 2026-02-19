@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,9 +16,11 @@
 
 package vadl.iss.template.target;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
 
 import com.google.common.collect.Streams;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,6 +34,7 @@ import vadl.template.AbstractMultiTemplateRenderingPass;
 import vadl.utils.Pair;
 import vadl.utils.codegen.CodeGeneratorAppendable;
 import vadl.utils.codegen.StringBuilderAppendable;
+import vadl.viam.ArtificialResource;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
@@ -60,6 +63,7 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
     vars.put("mem_word_size", getMemoryWordSize(specification));
     vars.put("trans_includes", translationIncludes(passResults));
     vars.put("tcg_v_init_code", genRegInitCode(specification));
+    vars.put("alias_accessors", renderAliasAccessors(specification));
     return vars;
   }
 
@@ -126,6 +130,43 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
           sb.append("\n");
         });
     return sb.toString();
+  }
+
+  private List<Map<String, Object>> renderAliasAccessors(Specification specification) {
+    var aliases = new ArrayList<Map<String, Object>>();
+    specification.artificialResources()
+        .filter(alias -> alias.semantics().aliasSlice() == null)
+        .filter(alias -> alias.semantics().totalIndexCount()
+            == alias.semantics().baseTensor().indexDimensions().size())
+        .forEach(alias -> aliases.add(renderAliasAccessor(alias)));
+    return aliases;
+  }
+
+  private Map<String, Object> renderAliasAccessor(ArtificialResource alias) {
+    var base = alias.semantics().baseTensor();
+    var baseRender = base.expectExtension(RegInfo.class).renderObj();
+    var dims = (List<Map<String, Object>>) requireNonNull(baseRender.get("index_dims"));
+    var argNames = dims.stream().map(d -> (String) d.get("arg_name")).toList();
+    var forwardArgs = argNames.isEmpty() ? "" : ", " + String.join(", ", argNames);
+    var zero = alias.semantics().zeroConstraint();
+    String zeroCheck = null;
+    if (zero != null && !zero.indices().isEmpty()) {
+      var checks = new ArrayList<String>();
+      for (int i = 0; i < zero.indices().size(); i++) {
+        checks.add(argNames.get(i) + " == " + zero.indices().get(i).intValue());
+      }
+      zeroCheck = String.join(" && ", checks);
+    }
+    return Map.of(
+        "name_lower", alias.simpleName().toLowerCase(),
+        "base_name_lower", base.simpleName().toLowerCase(),
+        "getter_params", baseRender.get("getter_params"),
+        "index_dims", dims,
+        "value_width", baseRender.get("value_width"),
+        "zero_check", zeroCheck == null ? "" : zeroCheck,
+        "has_zero_check", zeroCheck != null,
+        "forward_args", forwardArgs
+    );
   }
 
   private void regInitCode(CodeGeneratorAppendable sb, RegisterTensor reg) {

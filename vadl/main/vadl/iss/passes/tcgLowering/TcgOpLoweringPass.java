@@ -36,6 +36,7 @@ import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssLoadNode;
 import vadl.iss.passes.nodes.IssMoveNode;
+import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssRegChunkReadNode;
 import vadl.iss.passes.nodes.IssRegChunkWriteNode;
 import vadl.iss.passes.nodes.IssSelectNode;
@@ -604,6 +605,22 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     } else {
       replaceCurrent(new TcgMoveNode(destVar, srcVar));
     }
+  }
+
+  @Handler
+  void handle(IssRegBitfieldWriteNode toHandle) {
+    var dest = singleDestOf(toHandle);
+    var value = singleDestOf(toHandle.value());
+    if (toHandle.bitOffset() instanceof ConstantNode bitOffsetConst
+        && toHandle.bitWidth() instanceof ConstantNode bitWidthConst) {
+      var bitOffset = bitOffsetConst.constant().asVal().intValue();
+      var bitWidth = bitWidthConst.constant().asVal().intValue();
+      if (bitOffset == 0 && bitWidth == targetSize.width) {
+        replaceCurrent(new TcgMoveNode(dest, value));
+        return;
+      }
+    }
+    replaceCurrent(new TcgDepositNode(dest, dest, value, toHandle.bitOffset(), toHandle.bitWidth()));
   }
 
   /**

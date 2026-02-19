@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -29,6 +29,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.IssGhostCastNode;
+import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssSelectNode;
 import vadl.iss.passes.tcgLowering.TcgCondition;
 import vadl.pass.PassName;
@@ -364,6 +365,23 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
             regWrite.indices()
         );
       }
+    }
+
+    if (toProcess instanceof IssRegBitfieldWriteNode regWrite) {
+      for (var i : regWrite.indices()) {
+        var addressRes = getResultOf(i, Optional.class);
+        regWrite.ensure(addressRes.isEmpty(),
+            "Node's address is not allowed to be TCG time but must "
+                + "be compile-time annotated (immediates): %s",
+            regWrite.indices()
+        );
+      }
+      var offsetRes = getResultOf(regWrite.bitOffset(), Optional.class);
+      regWrite.ensure(offsetRes.isEmpty(),
+          "Bitfield write offset must be translation-time constant, got TCG-scheduled expression");
+      var widthRes = getResultOf(regWrite.bitWidth(), Optional.class);
+      regWrite.ensure(widthRes.isEmpty(),
+          "Bitfield write width must be translation-time constant, got TCG-scheduled expression");
     }
   }
 

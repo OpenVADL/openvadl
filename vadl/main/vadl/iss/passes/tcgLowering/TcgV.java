@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -49,6 +49,8 @@ public class TcgV {
   private final RegisterTensor registerOrFile;
   @Nullable
   private final List<ExpressionNode> regIndices;
+  @Nullable
+  private final String accessorBaseName;
   // indicates if the register is a destination register.
   // this is only useful for register file variables
   private final boolean isDest;
@@ -69,6 +71,7 @@ public class TcgV {
               @Nullable ExpressionNode constValue,
               @Nullable RegisterTensor registerOrFile,
               @Nullable List<ExpressionNode> regIndices,
+              @Nullable String accessorBaseName,
               boolean isDest
   ) {
     this.name = name;
@@ -76,21 +79,29 @@ public class TcgV {
     this.kind = kind;
     this.registerOrFile = registerOrFile;
     this.regIndices = regIndices;
+    this.accessorBaseName = accessorBaseName;
     this.isDest = isDest;
     this.constValue = constValue;
   }
 
   public static TcgV tmp(String name, Tcg_32_64 width) {
-    return new TcgV(name, width, Kind.TMP, null, null, null, false);
+    return new TcgV(name, width, Kind.TMP, null, null, null, null, false);
   }
 
   public static TcgV constant(String name, Tcg_32_64 width, ExpressionNode constValue) {
-    return new TcgV(name, width, Kind.CONST, constValue, null, null, false);
+    return new TcgV(name, width, Kind.CONST, constValue, null, null, null, false);
   }
 
   public static TcgV reg(String name, Tcg_32_64 width, RegisterTensor regFile,
                          List<ExpressionNode> indices, boolean isDest) {
-    return new TcgV(name, width, Kind.REG_TENSOR, null, regFile, indices, isDest);
+    return new TcgV(name, width, Kind.REG_TENSOR, null, regFile, indices, null, isDest);
+  }
+
+  public static TcgV reg(String name, Tcg_32_64 width, RegisterTensor regFile,
+                         List<ExpressionNode> indices, @Nullable String accessorBaseName,
+                         boolean isDest) {
+    return new TcgV(name, width, Kind.REG_TENSOR, null, regFile, indices, accessorBaseName,
+        isDest);
   }
 
   public Tcg_32_64 width() {
@@ -122,6 +133,10 @@ public class TcgV {
 
   public boolean isDest() {
     return isDest;
+  }
+
+  public @Nullable String accessorBaseName() {
+    return accessorBaseName;
   }
 
   @Override

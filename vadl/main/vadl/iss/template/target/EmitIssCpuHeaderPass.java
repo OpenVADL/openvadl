@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -40,6 +40,10 @@ public class EmitIssCpuHeaderPass extends IssTemplateRenderingPass {
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
+    vars.put("alias_cpu_read_accessors",
+        AliasCpuAccessors.renderReadAccessors(specification, configuration()));
+    vars.put("alias_cpu_write_accessors",
+        AliasCpuAccessors.renderWriteAccessors(specification, configuration()));
     return vars;
   }
 

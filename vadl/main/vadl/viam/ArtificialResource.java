@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -50,8 +50,31 @@ public class ArtificialResource extends RegisterResource {
   private final Procedure writeProcedure;
   @Nullable
   private final Constant.BitSlice aliasSlice;
+  private final Semantics semantics;
 
   private final List<RegisterTensor.Dimension> dimensions;
+
+  public enum OverwriteMode {
+    MERGE,
+    ZERO,
+    SIGN
+  }
+
+  public record ZeroConstraint(List<Constant.Value> indices) {
+  }
+
+  public record Semantics(
+      RegisterTensor baseTensor,
+      List<Constant.Value> fixedIndices,
+      List<RegisterTensor.Dimension> dynamicDimensions,
+      @Nullable Constant.BitSlice aliasSlice,
+      OverwriteMode overwriteMode,
+      @Nullable ZeroConstraint zeroConstraint
+  ) {
+    public int totalIndexCount() {
+      return fixedIndices.size() + dynamicDimensions.size();
+    }
+  }
 
   /**
    * Constructs the artificial resource.
@@ -64,7 +87,8 @@ public class ArtificialResource extends RegisterResource {
                             Function readFunction,
                             Procedure writeProcedure,
                             List<RegisterTensor.Dimension> dimensions,
-                            @Nullable Constant.BitSlice aliasSlice
+                            @Nullable Constant.BitSlice aliasSlice,
+                            Semantics semantics
   ) {
     super(identifier);
     this.kind = kind;
@@ -73,6 +97,7 @@ public class ArtificialResource extends RegisterResource {
     this.writeProcedure = writeProcedure;
     this.dimensions = dimensions;
     this.aliasSlice = aliasSlice;
+    this.semantics = semantics;
   }
 
   public Kind kind() {
@@ -93,6 +118,10 @@ public class ArtificialResource extends RegisterResource {
 
   public @Nullable Constant.BitSlice aliasSlice() {
     return aliasSlice;
+  }
+
+  public Semantics semantics() {
+    return semantics;
   }
 
   @Override

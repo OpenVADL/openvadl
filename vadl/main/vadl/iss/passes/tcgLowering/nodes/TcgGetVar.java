@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -212,10 +212,13 @@ public abstract sealed class TcgGetVar extends TcgOpNode {
     @Override
     public String cCode(Function<Node, String> nodeToCCode) {
       var prefix = kind() == Kind.DEST ? "dest" : "get";
+      var accessorBase = firstDest().var().accessorBaseName();
+      accessorBase =
+          accessorBase == null ? registerTensor.simpleName().toLowerCase() : accessorBase;
       var args = indices.stream().map(nodeToCCode).collect(Collectors.joining(", "));
       args = args.isEmpty() ? "" : ", " + args;
       return "TCGv_" + firstDest().var().width() + " " + firstDest().var().varName() + " = "
-          + prefix + "_" + registerTensor.simpleName().toLowerCase()
+          + prefix + "_" + accessorBase
           + "(ctx" + args + ");";
     }
 

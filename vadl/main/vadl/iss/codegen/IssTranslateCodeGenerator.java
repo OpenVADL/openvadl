@@ -29,6 +29,7 @@ import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.extensions.InstrInfo;
+import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssRegChunkReadNode;
 import vadl.iss.passes.nodes.IssRegChunkWriteNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
@@ -229,6 +230,11 @@ class DefaultGenerator implements
   @Handler
   void handle(CGenContext<Node> ctx, IssRegChunkWriteNode toHandle) {
     throwNotAllowed(toHandle, "helper-only register chunk writes in translate function");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, IssRegBitfieldWriteNode toHandle) {
+    throwNotAllowed(toHandle, "bitfield register writes should be lowered to TCG before codegen");
   }
 }
 
