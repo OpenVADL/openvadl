@@ -97,7 +97,7 @@ final class AliasCpuAccessors {
     var cpuStateType = "CPU" + config.targetName().toUpperCase() + "State";
     var retType = toCUnsignedType(baseWidth);
     var baseGetter = baseGetterName(base, baseWidth);
-    var signature = retType + " get_" + alias.simpleName().toLowerCase()
+    var signature = retType + " cpu_get_" + alias.simpleName().toLowerCase()
         + "(" + cpuStateType + " *env" + argDecls + ")";
 
     var body = new StringBuilder();
@@ -177,7 +177,7 @@ final class AliasCpuAccessors {
     var valueType = toCUnsignedType(alias.resultType().bitWidth());
     var baseGetter = baseGetterName(base, baseWidth);
     var baseSetter = baseSetterName(base, baseWidth);
-    var signature = "void set_" + alias.simpleName().toLowerCase()
+    var signature = "void cpu_set_" + alias.simpleName().toLowerCase()
         + "(" + cpuStateType + " *env" + argDecls + ", " + valueType + " value)";
 
     var body = new StringBuilder();

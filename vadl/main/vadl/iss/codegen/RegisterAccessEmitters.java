@@ -20,10 +20,10 @@ import static vadl.iss.passes.TcgPassUtils.regInfo;
 
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.iss.passes.extensions.RegInfo;
-import vadl.iss.passes.nodes.IssAliasReadRegTensorNode;
-import vadl.iss.passes.nodes.IssAliasWriteRegTensorNode;
+import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssRegChunkReadNode;
 import vadl.iss.passes.nodes.IssRegChunkWriteNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -58,35 +58,37 @@ public final class RegisterAccessEmitters {
   }
 
   static String readAccessorName(ReadRegTensorNode node) {
-    if (node instanceof IssAliasReadRegTensorNode aliasRead) {
-      var accessor = aliasRead.aliasAccessorName();
-      aliasRead.ensure(accessor != null && !accessor.isBlank(),
+    if (node instanceof IssReadRegNode readNode && readNode.accessKind() == IssReadRegNode.AccessKind.ALIAS) {
+      var accessor = readNode.accessorName();
+      readNode.ensure(accessor != null && !accessor.isBlank(),
           "Alias read accessor name is missing.");
-      return "get_" + accessor;
+      return "cpu_get_" + accessor;
     }
     return RegInfo.AccessPattern.of(node).name();
   }
 
   static NodeList<ExpressionNode> readAccessorArgs(ReadRegTensorNode node) {
-    if (node instanceof IssAliasReadRegTensorNode aliasRead) {
-      return aliasRead.accessorIndices();
+    if (node instanceof IssReadRegNode readNode && readNode.accessKind() == IssReadRegNode.AccessKind.ALIAS) {
+      return readNode.accessorIndices();
     }
     return node.indices();
   }
 
   static String writeAccessorName(WriteRegTensorNode node) {
-    if (node instanceof IssAliasWriteRegTensorNode aliasWrite) {
-      var accessor = aliasWrite.aliasAccessorName();
-      aliasWrite.ensure(accessor != null && !accessor.isBlank(),
+    if (node instanceof IssWriteRegNode writeNode
+        && writeNode.accessKind() == IssWriteRegNode.AccessKind.ALIAS) {
+      var accessor = writeNode.accessorName();
+      writeNode.ensure(accessor != null && !accessor.isBlank(),
           "Alias write accessor name is missing.");
-      return "set_" + accessor;
+      return "cpu_set_" + accessor;
     }
     return RegInfo.AccessPattern.of(node).name();
   }
 
   static NodeList<ExpressionNode> writeAccessorArgs(WriteRegTensorNode node) {
-    if (node instanceof IssAliasWriteRegTensorNode aliasWrite) {
-      return aliasWrite.accessorIndices();
+    if (node instanceof IssWriteRegNode writeNode
+        && writeNode.accessKind() == IssWriteRegNode.AccessKind.ALIAS) {
+      return writeNode.accessorIndices();
     }
     return node.indices();
   }

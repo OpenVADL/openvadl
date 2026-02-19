@@ -24,11 +24,11 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.iss.passes.TcgPassUtils;
-import vadl.iss.passes.nodes.IssAliasReadRegTensorNode;
-import vadl.iss.passes.nodes.IssAliasWriteRegTensorNode;
 import vadl.iss.passes.nodes.IssMoveNode;
+import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssRegChunkWriteNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
@@ -150,15 +150,11 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
 
     @Handler
     List<TcgVRefNode> destOf(WriteRegTensorNode toHandle) {
+      var accessorName = toHandle instanceof IssWriteRegNode issWrite
+          ? issWrite.accessorName()
+          : null;
       return assignments.computeIfAbsent(toHandle,
-          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), true, null));
-    }
-
-    @Handler
-    List<TcgVRefNode> destOf(IssAliasWriteRegTensorNode toHandle) {
-      return assignments.computeIfAbsent(toHandle,
-          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), true,
-              toHandle.aliasAccessorName()));
+          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), true, accessorName));
     }
 
     @Handler
@@ -185,15 +181,11 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
 
     @Handler
     List<TcgVRefNode> destOf(ReadRegTensorNode toHandle) {
+      var accessorName = toHandle instanceof IssReadRegNode issRead
+          ? issRead.accessorName()
+          : null;
       return assignments.computeIfAbsent(toHandle,
-          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), false, null));
-    }
-
-    @Handler
-    List<TcgVRefNode> destOf(IssAliasReadRegTensorNode toHandle) {
-      return assignments.computeIfAbsent(toHandle,
-          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), false,
-              toHandle.aliasAccessorName()));
+          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), false, accessorName));
     }
 
     @Handler

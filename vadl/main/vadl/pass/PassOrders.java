@@ -48,7 +48,6 @@ import vadl.gcb.passes.SetMissingConfigurationValuesPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingAndPredicateFunctionsPass;
 import vadl.gcb.passes.operands.GenerateInstructionOperandsPass;
-import vadl.iss.passes.IssAliasAccessLoweringPass;
 import vadl.iss.passes.IssBuiltInArgTruncOptPass;
 import vadl.iss.passes.IssCFunctionExtractionPass;
 import vadl.iss.passes.IssConfigurationPass;
@@ -64,6 +63,7 @@ import vadl.iss.passes.IssMemoryDetectionPass;
 import vadl.iss.passes.IssNormalizationPass;
 import vadl.iss.passes.IssPcAccessConversionPass;
 import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
+import vadl.iss.passes.IssRegisterAccessLoweringPass;
 import vadl.iss.passes.IssSelectLoweringPass;
 import vadl.iss.passes.IssTcgSchedulingPass;
 import vadl.iss.passes.IssTcgVAllocationPass;
@@ -508,7 +508,7 @@ public class PassOrders {
         .add(new IssExecStrategyPass(config))
         .add(new IssConfigurationPass(config))
         .add(new IssMemoryDetectionPass(config))
-        .add(new IssAliasAccessLoweringPass(config))
+        .add(new IssRegisterAccessLoweringPass(config))
         .add(new IssOpDecompositionPass(config))
         .add(new IssNormalizationPass(config))
         .add(new IssExtractOptimizationPass(config))

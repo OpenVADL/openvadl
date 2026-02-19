@@ -25,7 +25,7 @@ import java.util.Set;
 import javax.annotation.CheckForNull;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.extensions.RegInfo;
-import vadl.iss.passes.nodes.IssAliasReadRegTensorNode;
+import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssRegChunkReadNode;
 import vadl.iss.passes.nodes.IssRegChunkWriteNode;
 import vadl.pass.PassName;
@@ -87,14 +87,15 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
 
   private void collectRegisterAccessPattern(ReadRegTensorNode node) {
     var info = regInfo(node.regTensor());
-    if (node instanceof IssAliasReadRegTensorNode aliasRead) {
-      var baseIndexCount = aliasRead.regTensor().indexDimensions().size();
-      var baseIndices = aliasRead.indices().stream().limit(baseIndexCount).toList();
-      var baseWidth = aliasRead.regTensor().resultType(baseIndexCount).bitWidth();
+    if (node instanceof IssReadRegNode readNode
+        && readNode.accessKind() == IssReadRegNode.AccessKind.ALIAS) {
+      var baseIndexCount = readNode.regTensor().indexDimensions().size();
+      var baseIndices = readNode.indices().stream().limit(baseIndexCount).toList();
+      var baseWidth = readNode.regTensor().resultType(baseIndexCount).bitWidth();
       info.accessPatterns.add(RegInfo.AccessPattern.of(
-          aliasRead,
+          readNode,
           RegInfo.AccessType.READ,
-          aliasRead.regTensor(),
+          readNode.regTensor(),
           baseIndices,
           baseWidth,
           baseWidth,

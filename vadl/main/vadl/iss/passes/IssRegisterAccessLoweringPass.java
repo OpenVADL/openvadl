@@ -26,9 +26,9 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.nodes.IssAliasReadRegTensorNode;
-import vadl.iss.passes.nodes.IssAliasWriteRegTensorNode;
+import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
@@ -49,29 +49,27 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
-import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
-import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * Rewrites alias register accesses into base-register accesses for ISS without cloning
  * artificial read/write behavior graphs.
  */
-public class IssAliasAccessLoweringPass extends AbstractIssPass {
+public class IssRegisterAccessLoweringPass extends AbstractIssPass {
 
-  public IssAliasAccessLoweringPass(IssConfiguration configuration) {
+  public IssRegisterAccessLoweringPass(IssConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   public PassName getName() {
-    return PassName.of("ISS Alias Access Lowering");
+    return PassName.of("ISS Register Access Lowering");
   }
 
   @Override
@@ -81,18 +79,18 @@ public class IssAliasAccessLoweringPass extends AbstractIssPass {
         bitfieldWriteEnabled.put(instr.behavior(), !instrInfo(instr).asHelperCall()));
 
     ViamUtils.findAllBehaviors(viam).forEach(behavior ->
-        new IssAliasAccessLowering(behavior,
+        new IssRegisterAccessLowering(behavior,
             bitfieldWriteEnabled.getOrDefault(behavior, false)).run());
     return null;
   }
 }
 
-class IssAliasAccessLowering {
+class IssRegisterAccessLowering {
 
   private final Graph behavior;
   private final boolean enableBitfieldWriteNode;
 
-  IssAliasAccessLowering(Graph behavior, boolean enableBitfieldWriteNode) {
+  IssRegisterAccessLowering(Graph behavior, boolean enableBitfieldWriteNode) {
     this.behavior = behavior;
     this.enableBitfieldWriteNode = enableBitfieldWriteNode;
   }
@@ -126,10 +124,17 @@ class IssAliasAccessLowering {
       var resourceIndices = helperExpansionAccessor
           ? new NodeList<>(aliasIndices.stream().limit(baseDims).toList())
           : aliasIndices;
-      var aliasRead = new IssAliasReadRegTensorNode(
+      var readShape = helperExpansionAccessor
+          ? IssReadRegNode.ReadShape.EXPANSION
+          : semantics.aliasSlice() != null
+              ? IssReadRegNode.ReadShape.SLICE
+              : IssReadRegNode.ReadShape.FULL;
+      var aliasRead = new IssReadRegNode(
           semantics.baseTensor(),
           resourceIndices,
           semantics.baseTensor().resultType(baseDims),
+          IssReadRegNode.AccessKind.ALIAS,
+          readShape,
           read.resourceDefinition().simpleName().toLowerCase(),
           aliasIndices.copy()
       );
@@ -163,8 +168,14 @@ class IssAliasAccessLowering {
     var baseIndexCount = baseTensor.indexDimensions().size();
 
     if (aliasIndices.size() == baseIndexCount) {
-      return new ReadRegTensorNode(baseTensor, aliasIndices.copy(),
-          baseTensor.resultType(baseIndexCount), null);
+      return new IssReadRegNode(
+          baseTensor,
+          aliasIndices.copy(),
+          baseTensor.resultType(baseIndexCount),
+          IssReadRegNode.AccessKind.BASE,
+          IssReadRegNode.ReadShape.FULL,
+          null,
+          aliasIndices.copy());
     }
 
     if (aliasIndices.size() < baseIndexCount) {
@@ -177,7 +188,14 @@ class IssAliasAccessLowering {
       baseIndices.add(aliasIndices.get(i));
     }
     var baseReadType = baseTensor.resultType(baseIndexCount);
-    ExpressionNode baseRead = new ReadRegTensorNode(baseTensor, baseIndices, baseReadType, null);
+    ExpressionNode baseRead = new IssReadRegNode(
+        baseTensor,
+        baseIndices,
+        baseReadType,
+        IssReadRegNode.AccessKind.BASE,
+        IssReadRegNode.ReadShape.FULL,
+        null,
+        baseIndices.copy());
 
     var remainingIndices = aliasIndices.stream().skip(baseIndexCount).toList();
     var dynamicConsumed = Math.max(0, baseIndexCount - semantics.fixedIndices().size());
@@ -209,8 +227,12 @@ class IssAliasAccessLowering {
     var userCondition = write.nullableCondition();
     var guard = buildDontMatchGuard(aliasIndices, semantics);
     var condition = userCondition;
+    var guardKind = userCondition == null
+        ? IssWriteRegNode.WriteGuardKind.NONE
+        : IssWriteRegNode.WriteGuardKind.CONDITIONAL;
     if (guard != null) {
       condition = condition == null ? guard : BuiltInTable.AND.call(condition, guard);
+      guardKind = IssWriteRegNode.WriteGuardKind.ZERO_CONSTRAINT;
     }
 
     var helperAliasWriteAccessor = !enableBitfieldWriteNode
@@ -223,13 +245,15 @@ class IssAliasAccessLowering {
         && semantics.aliasSlice().isContinuous()
         && aliasIndices.size() == baseIndexCount;
     if (helperAliasWriteAccessor || helperSliceWriteAccessor) {
-      var replacement = new IssAliasWriteRegTensorNode(
+      var replacement = new IssWriteRegNode(
           baseTensor,
           baseIndices,
           write.value(),
+          userCondition,
+          IssWriteRegNode.AccessKind.ALIAS,
+          guardKind,
           write.resourceDefinition().simpleName().toLowerCase(),
-          aliasIndices.copy(),
-          userCondition
+          aliasIndices.copy()
       );
       replacement.setSourceLocationIfNotSet(write.location());
       write.replaceAndDelete(replacement);
@@ -289,7 +313,14 @@ class IssAliasAccessLowering {
       var sourceType = baseTensor.resultType(baseIndexCount);
       writeValue = switch (semantics.overwriteMode()) {
         case MERGE -> {
-          var current = new ReadRegTensorNode(baseTensor, baseIndices.copy(), sourceType, null);
+          var current = new IssReadRegNode(
+              baseTensor,
+              baseIndices.copy(),
+              sourceType,
+              IssReadRegNode.AccessKind.BASE,
+              IssReadRegNode.ReadShape.FULL,
+              null,
+              baseIndices.copy());
           yield staticSliceWriteValue(writeValue, current, semantics.aliasSlice());
         }
         case ZERO -> new ZeroExtendNode(writeValue, sourceType);
@@ -315,20 +346,30 @@ class IssAliasAccessLowering {
     if (semantics.aliasSlice() == null
         && aliasIndices.size() == baseIndexCount
         && semantics.overwriteMode() == ArtificialResource.OverwriteMode.MERGE) {
-      var replacement = new IssAliasWriteRegTensorNode(
+      var replacement = new IssWriteRegNode(
           baseTensor,
           baseIndices,
           writeValue,
+          null,
+          IssWriteRegNode.AccessKind.ALIAS,
+          IssWriteRegNode.WriteGuardKind.NONE,
           write.resourceDefinition().simpleName().toLowerCase(),
-          baseIndices.copy(),
-          null
+          baseIndices.copy()
       );
       replacement.setSourceLocationIfNotSet(write.location());
       write.replaceAndDelete(replacement);
       return;
     }
 
-    var replacement = new WriteRegTensorNode(baseTensor, baseIndices, writeValue, null, condition);
+    var replacement = new IssWriteRegNode(
+        baseTensor,
+        baseIndices,
+        writeValue,
+        condition,
+        IssWriteRegNode.AccessKind.BASE,
+        guardKind,
+        null,
+        baseIndices.copy());
     replacement.setSourceLocationIfNotSet(write.location());
     write.replaceAndDelete(replacement);
   }
@@ -362,7 +403,14 @@ class IssAliasAccessLowering {
     ).toNode();
     var invertedMask = BuiltInTable.XOR.call(mask, fullMask);
 
-    ExpressionNode original = new ReadRegTensorNode(baseTensor, baseIndices.copy(), maskType, null);
+    ExpressionNode original = new IssReadRegNode(
+        baseTensor,
+        baseIndices.copy(),
+        maskType,
+        IssReadRegNode.AccessKind.BASE,
+        IssReadRegNode.ReadShape.FULL,
+        null,
+        baseIndices.copy());
     original = BuiltInTable.AND.call(original, invertedMask);
 
     writeValue = new ZeroExtendNode(writeValue, maskType);
