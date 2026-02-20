@@ -163,9 +163,6 @@ class Decomposer
       if (node.isDeleted()) {
         continue;
       }
-      if (node instanceof ReadRegTensorNode || node instanceof ConstantNode) {
-        continue;
-      }
       if (!(node.type() instanceof DataType dt)) {
         continue;
       }
@@ -526,6 +523,15 @@ class Decomposer
 
   @Handler
   void handle(Request rq, ReadRegTensorNode toHandle) {
+    if (toHandle instanceof IssReadRegNode readRegNode) {
+      handle(rq, readRegNode);
+      return;
+    }
+    throw new IllegalStateException(
+        "Unexpected ReadRegTensorNode in ISS op decomposition; expected IssReadRegNode.");
+  }
+
+  void handle(Request rq, IssReadRegNode toHandle) {
     var regTensor = toHandle.regTensor();
     var readWidth = regTensor.resultType(toHandle.indices().size()).bitWidth();
 
@@ -542,7 +548,9 @@ class Decomposer
       return;
     }
 
-    // Need to decompose: read one or more target-sized chunks.
+    // Need to decompose: read one or more target-sized windows.
+    // We emit exact requested windows directly in IssReadRegNode chunk metadata,
+    // so no follow-up SliceNode is necessary.
     int firstChunkIdx = rq.slice.lo() / targetSize;
     int lastChunkIdx = rq.slice.hi() / targetSize;
     ExpressionNode result = null;
@@ -550,20 +558,24 @@ class Decomposer
     for (int chunkIdx = firstChunkIdx; chunkIdx <= lastChunkIdx; chunkIdx++) {
       int chunkOffset = chunkIdx * targetSize;
       int chunkWidth = Math.min(targetSize, readWidth - chunkOffset);
+      int requestedLsbInChunk = Math.max(rq.slice.lo(), chunkOffset);
+      int requestedMsbInChunk = Math.min(rq.slice.hi(), chunkOffset + chunkWidth - 1);
+      int requestedWidth = requestedMsbInChunk - requestedLsbInChunk + 1;
       var chunkRead = new IssReadRegNode(
           regTensor,
           toHandle.indices().copy(),
-          Type.bits(chunkWidth).asDataType(),
+          Type.bits(requestedWidth).asDataType(),
           toHandle.staticCounterAccess(),
           readAccessKind(toHandle),
           readShape(toHandle),
           readAccessorName(toHandle),
           readAccessorIndices(toHandle),
           IssReadRegNode.WindowKind.CHUNK,
-          Constant.Value.of(chunkOffset, Type.bits(32)).toNode(),
-          Constant.Value.of(chunkWidth, Type.bits(32)).toNode()
+          Constant.Value.of(requestedLsbInChunk, Type.bits(32)).toNode(),
+          Constant.Value.of(requestedWidth, Type.bits(32)).toNode()
       );
-      result = accumulateChunk(result, chunkRead, rq.slice, chunkOffset, chunkWidth, toHandle);
+      chunkRead.setSourceLocation(toHandle.location());
+      result = result == null ? chunkRead : GraphUtils.concat(chunkRead, result);
     }
 
     rq.result = result;

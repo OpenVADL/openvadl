@@ -38,6 +38,8 @@ import vadl.configuration.IssConfiguration;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 import vadl.iss.passes.AbstractIssPass;
+import vadl.iss.passes.nodes.IssReadRegNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
 import vadl.iss.passes.opDecomposition.nodes.IssMulKind;
 import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
@@ -47,7 +49,6 @@ import vadl.pass.PassResults;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
-import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
@@ -56,7 +57,6 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
@@ -108,11 +108,9 @@ public class IssOpDecompositionPass extends AbstractIssPass {
       new OpDecomposer(instr.behavior(), configuration().targetSize(), instrName).decompose();
       var durMs = (System.nanoTime() - startNs) / 1_000_000;
       LOG.debug("OpDecompose done: {} ({} ms)", instrName, durMs);
-    });
 
-    // Large-op validation is only required for TCG-mappable instruction paths.
-    tcgInstrs(viam).map(Instruction::behavior)
-        .forEach(behavior -> checkNoLargeOperations(behavior).ifPresent(largeOperationErrors::add));
+      checkNoLargeOperations(instr.behavior()).ifPresent(largeOperationErrors::add);
+    });
 
     if (!largeOperationErrors.isEmpty()) {
       throw new DiagnosticList(largeOperationErrors);
@@ -122,8 +120,8 @@ public class IssOpDecompositionPass extends AbstractIssPass {
   }
 
   private Optional<Diagnostic> checkNoLargeOperations(Graph behavior) {
-    return behavior.getNodes(ExpressionNode.class)
-        .filter(e -> !(e instanceof ReadRegTensorNode))
+    var tooLargeExpr = behavior.getNodes(ExpressionNode.class)
+        .filter(e -> !(e instanceof IssReadRegNode))
         .filter(n -> (n.type() instanceof DataType)
             && n.type().asDataType().bitWidth() > configuration().targetSize().width)
         .map(n -> Diagnostic.error("Too large operation type", n)
@@ -132,6 +130,41 @@ public class IssOpDecompositionPass extends AbstractIssPass {
                 + "only implemented for special cases.")
             .build())
         .findFirst();
+    if (tooLargeExpr.isPresent()) {
+      return tooLargeExpr;
+    }
+
+    var tooLargeMemWrite = behavior.getNodes(WriteMemNode.class)
+        .filter(w -> w.writeBitWidth() > configuration().targetSize().width)
+        .map(w -> Diagnostic.error("Too large memory write", w)
+            .locationDescription(w,
+                "The ISS was not able to decompose this write to target-sized chunks.")
+            .build())
+        .findFirst();
+    if (tooLargeMemWrite.isPresent()) {
+      return tooLargeMemWrite;
+    }
+
+    return behavior.getNodes(WriteRegTensorNode.class)
+        .filter(w -> effectiveWriteBitWidth(w) > configuration().targetSize().width)
+        .map(w -> Diagnostic.error("Too large register write", w)
+            .locationDescription(w,
+                "The ISS was not able to decompose this write to target-sized chunks.")
+            .build())
+        .findFirst();
+  }
+
+  private int effectiveWriteBitWidth(WriteRegTensorNode write) {
+    if (write instanceof IssWriteRegNode iw
+        && iw.windowKind() == IssWriteRegNode.WindowKind.CHUNK) {
+      if (iw.bitWidth() instanceof ConstantNode c) {
+        return c.constant().asVal().intValue();
+      }
+      if (iw.value().type() instanceof DataType dt) {
+        return dt.bitWidth();
+      }
+    }
+    return write.writeBitWidth();
   }
 }
 
@@ -167,7 +200,15 @@ class OpDecomposer {
     while (foundOne) {
       // first decompose side effects, then expressions.
       iteration++;
+      var oversizedBefore = oversizedSideEffectCount();
       var sideEffectHit = decomposeSideeffects();
+      if (sideEffectHit) {
+        var oversizedAfter = oversizedSideEffectCount();
+        behavior.ensure(oversizedAfter < oversizedBefore,
+            "Side-effect decomposition did not make progress in %s: oversized writes before=%d "
+                + "after=%d",
+            instrName, oversizedBefore, oversizedAfter);
+      }
       if (sideEffectHit) {
         LOG.debug("OpDecompose [{}] iteration {}: decomposed side effect", instrName, iteration);
       }
@@ -186,14 +227,15 @@ class OpDecomposer {
   private boolean decomposeSideeffects() {
     var hit = Stream.concat(
             behavior.getNodes(WriteMemNode.class).map(SideEffectNode.class::cast),
-            behavior.getNodes(WriteRegTensorNode.class).map(SideEffectNode.class::cast)
+            behavior.getNodes(IssWriteRegNode.class).map(SideEffectNode.class::cast)
         )
+        .filter(node -> !node.isDeleted())
         .filter(node -> {
           if (node instanceof WriteMemNode w) {
             return w.writeBitWidth() > targetSize.width;
           }
-          if (node instanceof WriteRegTensorNode w) {
-            return w.writeBitWidth() > targetSize.width;
+          if (node instanceof IssWriteRegNode w) {
+            return effectiveWriteBitWidth(w) > targetSize.width;
           }
           return false;
         })
@@ -203,6 +245,33 @@ class OpDecomposer {
       return true;
     }
     return false;
+  }
+
+  private long oversizedSideEffectCount() {
+    return behavior.getNodes(SideEffectNode.class)
+        .filter(node -> !node.isDeleted())
+        .filter(node -> {
+          if (node instanceof WriteMemNode w) {
+            return w.writeBitWidth() > targetSize.width;
+          }
+          if (node instanceof IssWriteRegNode w) {
+            return effectiveWriteBitWidth(w) > targetSize.width;
+          }
+          return false;
+        })
+        .count();
+  }
+
+  private int effectiveWriteBitWidth(IssWriteRegNode write) {
+    if (write.windowKind() == IssWriteRegNode.WindowKind.CHUNK) {
+      if (write.bitWidth() instanceof ConstantNode c) {
+        return c.constant().asVal().intValue();
+      }
+      if (write.value().type() instanceof DataType dt) {
+        return dt.bitWidth();
+      }
+    }
+    return write.writeBitWidth();
   }
 
   private boolean decomposeExpressions(Set<Node> processed) {
@@ -267,8 +336,8 @@ class OpDecomposer {
     var kind = call.builtIn() == SUMULL
         ? IssMulKind.SIGNED_UNSIGNED
         : call.builtIn() == SMULL
-        ? IssMulKind.SIGNED_SIGNED
-        : IssMulKind.UNSIGNED_UNSIGNED;
+          ? IssMulKind.SIGNED_SIGNED
+          : IssMulKind.UNSIGNED_UNSIGNED;
 
     for (var user : call.usages().toList()) {
       replaceLongMulForUser(call, user, kind);

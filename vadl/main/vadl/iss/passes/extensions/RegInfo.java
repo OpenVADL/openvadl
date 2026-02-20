@@ -665,6 +665,13 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     }
 
     /**
+     * Returns the C scalar type used for this concrete access pattern's value.
+     */
+    public String valueCType() {
+      return accessValueCType();
+    }
+
+    /**
      * Generates constraint check condition for register constraints.
      *
      * @param constraint the constraint to check

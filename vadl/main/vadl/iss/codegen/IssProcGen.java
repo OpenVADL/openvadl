@@ -90,10 +90,10 @@ abstract class IssProcGen implements CDefaultMixins.All,
   }
 
   void initSingleReadReg(ReadRegTensorNode read) {
-    var info = read.regTensor().expectExtension(RegInfo.class);
+    var accessPattern = RegInfo.AccessPattern.of(read);
     var name = readRegVariable(read);
     var accessName = RegisterAccessEmitters.readAccessorName(read);
-    ctx.wr(info.valueCType() + " " + name + " = ")
+    ctx.wr(accessPattern.valueCType() + " " + name + " = ")
         .wr(accessName + "(env");
     for (var i : RegisterAccessEmitters.readAccessorArgs(read)) {
       ctx.wr(", ").gen(i);
