@@ -40,6 +40,7 @@ import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 import vadl.utils.Levenshtein;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithLocation;
 
 class ParserUtils {
 
@@ -715,7 +716,8 @@ class ParserUtils {
                                   List<List<Identifier>> importedSymbols,
                                   List<StringLiteral> args, SourceLocation loc) {
     var modulePath = filePath == null
-        ? resolveUri(parser, Objects.requireNonNull(fileId)) : resolveUri(parser, filePath.value);
+        ? resolveUri(parser, Objects.requireNonNull(fileId))
+        : resolveUri(parser, filePath.value, filePath);
     if (modulePath != null) {
       var macroOverrides = new HashMap<String, String>();
       for (StringLiteral arg : args) {
@@ -741,24 +743,14 @@ class ParserUtils {
             .build();
       }
     }
-    return new ConstantDefinition(new Identifier("invalid", parser.lastTokenLoc()), null,
-        new Identifier("invalid", parser.lastTokenLoc()), parser.lastTokenLoc());
+    return DUMMY_DEF;
   }
 
-  static @Nullable Path resolveUri(Parser parser, IsId importPath) {
-    if (importPath instanceof Identifier id) {
-      return resolveUri(parser, id.name);
-    } else if (importPath instanceof IdentifierPath identifierPath) {
-      return resolveUri(parser, ((Identifier) identifierPath.segments.get(0)).name);
-    } else {
-      parser.diagnostics.add(Diagnostic.error("Import Error", parser.lastTokenLoc())
-          .description("Could not resolve module path: \"%s\"", importPath)
-          .build());
-      return null;
-    }
+  static @Nullable Path resolveUri(Parser parser, Identifier importPath) {
+    return resolveUri(parser, importPath.name, importPath);
   }
 
-  static @Nullable Path resolveUri(Parser parser, String name) {
+  static @Nullable Path resolveUri(Parser parser, String name, WithLocation location) {
     var resolutionUri = Objects.requireNonNullElse(parser.resolutionUri, parser.sourceFile);
     var relativeToSpec = Paths.get(resolutionUri.resolve(name));
     if (Files.isRegularFile(relativeToSpec)) {
@@ -770,7 +762,7 @@ class ParserUtils {
     if (Files.isRegularFile(withAppendedExtension)) {
       return withAppendedExtension;
     }
-    parser.diagnostics.add(Diagnostic.error("Import Error", parser.lastTokenLoc())
+    parser.diagnostics.add(Diagnostic.error("Import Error", location)
         .description("Could not resolve module path: \"%s\"", name)
         .build());
     return null;
