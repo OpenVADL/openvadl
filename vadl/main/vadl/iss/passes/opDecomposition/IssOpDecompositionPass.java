@@ -48,7 +48,10 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.utils.ViamUtils;
 import vadl.viam.Constant;
+import vadl.viam.Instruction;
+import vadl.viam.Procedure;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
@@ -101,16 +104,19 @@ public class IssOpDecompositionPass extends AbstractIssPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var largeOperationErrors = new ArrayList<Diagnostic>();
-    allInstrs(viam).forEach(instr -> {
-      var instrName = instr.identifier().toString();
-      var startNs = System.nanoTime();
-      LOG.debug("OpDecompose start: {}", instrName);
-      new OpDecomposer(instr.behavior(), configuration().targetSize(), instrName).decompose();
-      var durMs = (System.nanoTime() - startNs) / 1_000_000;
-      LOG.debug("OpDecompose done: {} ({} ms)", instrName, durMs);
+    ViamUtils.findAllBehaviors(viam)
+        .filter(behavior -> behavior.parentDefinition() instanceof Instruction
+            || behavior.parentDefinition() instanceof Procedure)
+        .forEach(behavior -> {
+          var behaviorName = behavior.toString();
+          var startNs = System.nanoTime();
+          LOG.debug("OpDecompose start: {}", behaviorName);
+          new OpDecomposer(behavior, configuration().targetSize(), behaviorName).decompose();
+          var durMs = (System.nanoTime() - startNs) / 1_000_000;
+          LOG.debug("OpDecompose done: {} ({} ms)", behaviorName, durMs);
 
-      checkNoLargeOperations(instr.behavior()).ifPresent(largeOperationErrors::add);
-    });
+          checkNoLargeOperations(behavior).ifPresent(largeOperationErrors::add);
+        });
 
     if (!largeOperationErrors.isEmpty()) {
       throw new DiagnosticList(largeOperationErrors);
@@ -222,6 +228,10 @@ class OpDecomposer {
         LOG.debug("OpDecompose [{}] converged after {} iterations", instrName, iteration);
       }
     }
+
+    // Decomposition may leave replaced wide read nodes dangling.
+    // Remove them so later access-pattern retrieval only sees effective accesses.
+    behavior.deleteUnusedDependencies();
   }
 
   private boolean decomposeSideeffects() {

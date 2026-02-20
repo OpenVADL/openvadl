@@ -17,17 +17,14 @@
 package vadl.iss.passes;
 
 import static java.util.Objects.requireNonNull;
-import static vadl.iss.passes.TcgPassUtils.instrInfo;
 import static vadl.utils.GraphUtils.intU;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.IssReadRegNode;
-import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -93,13 +90,8 @@ public class IssRegisterAccessLoweringPass extends AbstractIssPass {
 
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam) throws IOException {
-    IdentityHashMap<Graph, Boolean> bitfieldWriteEnabled = new IdentityHashMap<>();
-    allInstrs(viam).forEach(instr ->
-        bitfieldWriteEnabled.put(instr.behavior(), !instrInfo(instr).asHelperCall()));
-
     ViamUtils.findAllBehaviors(viam).forEach(behavior ->
-        new IssRegisterAccessLowering(behavior,
-            bitfieldWriteEnabled.getOrDefault(behavior, false)).run());
+        new IssRegisterAccessLowering(behavior).run());
     return null;
   }
 }
@@ -107,11 +99,9 @@ public class IssRegisterAccessLoweringPass extends AbstractIssPass {
 class IssRegisterAccessLowering {
 
   private final Graph behavior;
-  private final boolean enableBitfieldWriteNode;
-
-  IssRegisterAccessLowering(Graph behavior, boolean enableBitfieldWriteNode) {
+  
+  IssRegisterAccessLowering(Graph behavior) {
     this.behavior = behavior;
-    this.enableBitfieldWriteNode = enableBitfieldWriteNode;
   }
 
   void run() {
@@ -175,25 +165,9 @@ class IssRegisterAccessLowering {
     var baseDims = semantics.baseTensor().indexDimensions().size();
     var simpleAliasAccessor = semantics.aliasSlice() == null
         && aliasIndices.size() == baseDims;
-    var helperSliceAccessor = !enableBitfieldWriteNode
-        && semantics.aliasSlice() != null
-        && semantics.aliasSlice().isContinuous()
-        && aliasIndices.size() == baseDims
-        && read.type().asDataType().bitWidth() <= 64;
-    var helperExpansionAccessor = !enableBitfieldWriteNode
-        && semantics.aliasSlice() == null
-        && aliasIndices.size() > baseDims
-        && read.type().asDataType().bitWidth() <= 64;
-
-    if (simpleAliasAccessor || helperSliceAccessor || helperExpansionAccessor) {
-      var resourceIndices = helperExpansionAccessor
-          ? new NodeList<>(aliasIndices.stream().limit(baseDims).toList())
-          : aliasIndices;
-      var readShape = helperExpansionAccessor
-          ? IssReadRegNode.ReadShape.EXPANSION
-          : semantics.aliasSlice() != null
-              ? IssReadRegNode.ReadShape.SLICE
-              : IssReadRegNode.ReadShape.FULL;
+    if (simpleAliasAccessor) {
+      var resourceIndices = aliasIndices;
+      var readShape = IssReadRegNode.ReadShape.FULL;
       var aliasRead = new IssReadRegNode(
           semantics.baseTensor(),
           resourceIndices,
@@ -300,16 +274,10 @@ class IssRegisterAccessLowering {
       guardKind = IssWriteRegNode.WriteGuardKind.ZERO_CONSTRAINT;
     }
 
-    var helperAliasWriteAccessor = !enableBitfieldWriteNode
-        && write.value().type().asDataType().bitWidth() <= 64
+    var simpleAliasWriteAccessor = write.value().type().asDataType().bitWidth() <= 64
         && semantics.aliasSlice() == null
-        && aliasIndices.size() >= baseIndexCount;
-    var helperSliceWriteAccessor = !enableBitfieldWriteNode
-        && write.value().type().asDataType().bitWidth() <= 64
-        && semantics.aliasSlice() != null
-        && semantics.aliasSlice().isContinuous()
         && aliasIndices.size() == baseIndexCount;
-    if (helperAliasWriteAccessor || helperSliceWriteAccessor) {
+    if (simpleAliasWriteAccessor) {
       var replacement = new IssWriteRegNode(
           baseTensor,
           baseIndices,
@@ -325,27 +293,30 @@ class IssRegisterAccessLowering {
       return;
     }
 
-    if (enableBitfieldWriteNode
-        && semantics.aliasSlice() != null
+    if (semantics.aliasSlice() != null
         && semantics.aliasSlice().isContinuous()
         && semantics.overwriteMode() == ArtificialResource.OverwriteMode.MERGE
         && aliasIndices.size() == baseIndexCount) {
-      var replacement = new IssRegBitfieldWriteNode(
+      var replacement = new IssWriteRegNode(
           baseTensor,
           baseIndices,
           write.value(),
-          intU(semantics.aliasSlice().lsb(), 32).toNode(),
-          intU(semantics.aliasSlice().bitSize(), 32).toNode(),
+          null,
+          userCondition,
+          IssWriteRegNode.AccessKind.ALIAS,
+          guardKind,
           write.resourceDefinition().simpleName().toLowerCase(),
-          userCondition
+          aliasIndices.copy(),
+          IssWriteRegNode.WindowKind.CHUNK,
+          intU(semantics.aliasSlice().lsb(), 32).toNode(),
+          intU(semantics.aliasSlice().bitSize(), 32).toNode()
       );
       replacement.setSourceLocationIfNotSet(write.location());
       write.replaceAndDelete(replacement);
       return;
     }
 
-    if (enableBitfieldWriteNode
-        && aliasIndices.size() > baseIndexCount
+    if (aliasIndices.size() > baseIndexCount
         && semantics.overwriteMode() == ArtificialResource.OverwriteMode.MERGE
         && semantics.aliasSlice() == null) {
       var remainingIndices = aliasIndices.stream().skip(baseIndexCount).toList();
@@ -358,14 +329,19 @@ class IssRegisterAccessLowering {
           remainingDimensions);
       var lsb = msbLsb.right();
       if (isTranslationTimeConstant(lsb)) {
-        var replacement = new IssRegBitfieldWriteNode(
+        var replacement = new IssWriteRegNode(
             baseTensor,
             baseIndices,
             write.value(),
-            lsb,
-            intU(resultType.bitWidth(), 32).toNode(),
             null,
-            userCondition
+            userCondition,
+            IssWriteRegNode.AccessKind.BASE,
+            guardKind,
+            null,
+            baseIndices.copy(),
+            IssWriteRegNode.WindowKind.CHUNK,
+            lsb,
+            intU(resultType.bitWidth(), 32).toNode()
         );
         replacement.setSourceLocationIfNotSet(write.location());
         write.replaceAndDelete(replacement);

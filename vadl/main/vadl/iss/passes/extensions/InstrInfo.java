@@ -23,13 +23,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.iss.passes.nodes.IssReadRegNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.graph.dependency.ParamNode;
-import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * Provides extended information and capabilities for ISA instruction definitions.
@@ -83,9 +83,9 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
   }
 
   private ExecStrategy computeFallbackExecStrategy() {
-    var hasHelperOnlyReads = instr().behavior().getNodes(ReadRegTensorNode.class)
+    var hasHelperOnlyReads = instr().behavior().getNodes(IssReadRegNode.class)
         .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.HELPER_ONLY);
-    var hasHelperOnlyWrites = instr().behavior().getNodes(WriteRegTensorNode.class)
+    var hasHelperOnlyWrites = instr().behavior().getNodes(IssWriteRegNode.class)
         .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.HELPER_ONLY);
     return hasHelperOnlyReads || hasHelperOnlyWrites
         ? ExecStrategy.HELPER_CALL

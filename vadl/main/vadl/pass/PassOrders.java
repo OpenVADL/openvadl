@@ -48,6 +48,7 @@ import vadl.gcb.passes.SetMissingConfigurationValuesPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingAndPredicateFunctionsPass;
 import vadl.gcb.passes.operands.GenerateInstructionOperandsPass;
+import vadl.iss.passes.IssBitfieldWriteLoweringPass;
 import vadl.iss.passes.IssBuiltInArgTruncOptPass;
 import vadl.iss.passes.IssCFunctionExtractionPass;
 import vadl.iss.passes.IssConfigurationPass;
@@ -504,10 +505,13 @@ public class PassOrders {
     // iss function passes
     order
         .add(new IssInfoRetrievalPass(config))
-        .add(new IssExecStrategyPass(config))
         .add(new IssConfigurationPass(config))
         .add(new IssMemoryDetectionPass(config))
         .add(new IssRegisterAccessLoweringPass(config))
+        .add(new IssExecStrategyPass(config))
+        .add(new IssBitfieldWriteLoweringPass(config))
+        // run canonicalization, as register access lowering may create constant nodes
+        .add(new CanonicalizationPass(config))
         .add(new IssOpDecompositionPass(config))
         .add(new IssNormalizationPass(config))
         .add(new IssExtractOptimizationPass(config))

@@ -30,6 +30,9 @@ import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;
+import vadl.viam.ArtificialResource;
+import vadl.viam.Instruction;
+import vadl.viam.Procedure;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -63,7 +66,11 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
   @CheckForNull
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    ViamUtils.findAllBehaviors(viam).forEach(this::collectRegisterAccessPatterns);
+    ViamUtils.findAllBehaviors(viam)
+        .filter(behavior -> !(behavior.parentDefinition() instanceof ArtificialResource))
+        .filter(behavior -> behavior.parentDefinition() instanceof Instruction
+            || behavior.parentDefinition() instanceof Procedure)
+        .forEach(this::collectRegisterAccessPatterns);
 
     // add custom one for program counter
     var pc = requireNonNull(viam.isa().get().pc());
@@ -84,14 +91,14 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
     behavior.getNodes(Set.of(ReadRegTensorNode.class, WriteRegTensorNode.class))
         .forEach((n) -> {
           if (n instanceof ReadRegTensorNode readRegTensorNode) {
-            collectRegisterAccessPattern(readRegTensorNode);
+            collectRegisterAccessPattern(behavior, readRegTensorNode);
           } else {
-            collectRegisterAccessPattern((WriteRegTensorNode) n);
+            collectRegisterAccessPattern(behavior, (WriteRegTensorNode) n);
           }
         });
   }
 
-  private void collectRegisterAccessPattern(ReadRegTensorNode node) {
+  private void collectRegisterAccessPattern(Graph behavior, ReadRegTensorNode node) {
     var info = regInfo(node.regTensor());
     if (node instanceof IssReadRegNode readNode
         && readNode.accessKind() == IssReadRegNode.AccessKind.ALIAS) {
@@ -100,7 +107,7 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
       var baseWidth = readNode.regTensor().resultType(baseIndexCount).bitWidth();
       var readOffset = constIntOr(readNode.bitOffset(), 0);
       var readWidth = constIntOr(readNode.bitWidth(), baseWidth);
-      info.accessPatterns.add(RegInfo.AccessPattern.of(
+      var pattern = RegInfo.AccessPattern.of(
           readNode,
           RegInfo.AccessType.READ,
           readNode.regTensor(),
@@ -108,13 +115,17 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
           readWidth,
           baseWidth,
           readOffset
-      ));
+      );
+      ensureSupportedPatternWidth(behavior, pattern);
+      info.accessPatterns.add(pattern);
       return;
     }
-    info.accessPatterns.add(RegInfo.AccessPattern.of(node));
+    var pattern = RegInfo.AccessPattern.of(node);
+    ensureSupportedPatternWidth(behavior, pattern);
+    info.accessPatterns.add(pattern);
   }
 
-  private void collectRegisterAccessPattern(WriteRegTensorNode node) {
+  private void collectRegisterAccessPattern(Graph behavior, WriteRegTensorNode node) {
     var info = regInfo(node.regTensor());
     if (node instanceof IssWriteRegNode writeNode
         && writeNode.accessKind() == IssWriteRegNode.AccessKind.ALIAS) {
@@ -123,7 +134,7 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
       var baseWidth = writeNode.regTensor().resultType(baseIndexCount).bitWidth();
       var writeOffset = constIntOr(writeNode.bitOffset(), 0);
       var writeWidth = constIntOr(writeNode.bitWidth(), baseWidth);
-      info.accessPatterns.add(RegInfo.AccessPattern.of(
+      var pattern = RegInfo.AccessPattern.of(
           writeNode,
           RegInfo.AccessType.WRITE,
           writeNode.regTensor(),
@@ -131,10 +142,14 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
           writeWidth,
           baseWidth,
           writeOffset
-      ));
+      );
+      ensureSupportedPatternWidth(behavior, pattern);
+      info.accessPatterns.add(pattern);
       return;
     }
-    info.accessPatterns.add(RegInfo.AccessPattern.of(node));
+    var pattern = RegInfo.AccessPattern.of(node);
+    ensureSupportedPatternWidth(behavior, pattern);
+    info.accessPatterns.add(pattern);
   }
 
   private int constIntOr(ExpressionNode expr, int fallback) {
@@ -142,5 +157,17 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
       return constantNode.constant().asVal().intValue();
     }
     return fallback;
+  }
+
+  private void ensureSupportedPatternWidth(Graph behavior, RegInfo.AccessPattern pattern) {
+    if (pattern.elementWidth() > configuration().targetSize().width) {
+      var owner = behavior.parentDefinition();
+      throw new IllegalStateException(
+          "Unsupported register access pattern above target width in ISS retrieval: "
+              + pattern
+              + ", behavior=" + behavior
+              + ", owner="
+              + (owner == null ? "null" : owner.getClass().getSimpleName() + ":" + owner));
+    }
   }
 }

@@ -24,14 +24,14 @@ import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.extensions.InstrInfo;
 import vadl.iss.passes.extensions.RegInfo;
+import vadl.iss.passes.nodes.IssReadRegNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 import vadl.viam.graph.control.ForallNode;
 import vadl.viam.graph.dependency.FoldNode;
-import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.TensorNode;
-import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * Computes and stores ISS backend execution strategies for instructions.
@@ -58,9 +58,9 @@ public class IssExecStrategyPass extends AbstractIssPass {
 
     var isa = viam.isa().get();
     isa.ownInstructions().forEach(instr -> {
-      var hasHelperOnlyReads = instr.behavior().getNodes(ReadRegTensorNode.class)
+      var hasHelperOnlyReads = instr.behavior().getNodes(IssReadRegNode.class)
           .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.HELPER_ONLY);
-      var hasHelperOnlyWrites = instr.behavior().getNodes(WriteRegTensorNode.class)
+      var hasHelperOnlyWrites = instr.behavior().getNodes(IssWriteRegNode.class)
           .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.HELPER_ONLY);
 
       // TODO: Eventually this must be supported by TCG as well
@@ -77,4 +77,3 @@ public class IssExecStrategyPass extends AbstractIssPass {
     return null;
   }
 }
-

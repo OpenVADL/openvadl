@@ -651,7 +651,20 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     }
 
     private String accessValueCType() {
-      return switch (CppTypeMap.nextFittingBitSize(elementWidth)) {
+      final int fitted;
+      try {
+        fitted = CppTypeMap.nextFittingBitSize(elementWidth);
+      } catch (RuntimeException ex) {
+        throw new RuntimeException(
+            "Unsupported access pattern value width. "
+                + "owner=" + owner.name()
+                + ", type=" + type
+                + ", elementWidth=" + elementWidth
+                + ", containerWidth=" + containerWidth
+                + ", chunkOffsetBits=" + chunkOffsetBits
+                + ", origin=" + origin.getClass().getSimpleName(), ex);
+      }
+      return switch (fitted) {
         case 1 -> "bool";
         case 8 -> "uint8_t";
         case 16 -> "uint16_t";
@@ -659,7 +672,14 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
         case 64 -> "uint64_t";
         case 128 -> throw new RuntimeException(
             "Access patterns >64 bit are not supported yet. "
-                + "Expected decomposition to split this access: " + name());
+                + "Expected decomposition to split this access: "
+                + "name=" + name()
+                + ", owner=" + owner.name()
+                + ", type=" + type
+                + ", elementWidth=" + elementWidth
+                + ", containerWidth=" + containerWidth
+                + ", chunkOffsetBits=" + chunkOffsetBits
+                + ", origin=" + origin.getClass().getSimpleName());
         default -> throw new RuntimeException("Unsupported access width: " + elementWidth);
       };
     }
@@ -712,6 +732,10 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
           + "containerWidth=" + containerWidth + ", "
           + "chunkOffsetBits=" + chunkOffsetBits + ", "
           + "origin=" + origin + ']';
+    }
+
+    public int elementWidth() {
+      return elementWidth;
     }
 
     /**

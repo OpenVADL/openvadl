@@ -56,6 +56,10 @@ final class AliasCpuAccessors {
     if (alias.resultType().bitWidth() > 64) {
       return false;
     }
+    if (semantics.baseTensor().resultType(semantics.baseTensor().indexDimensions().size())
+        .bitWidth() > 64) {
+      return false;
+    }
     var baseIndexCount = semantics.baseTensor().indexDimensions().size();
     var totalIndexCount = semantics.totalIndexCount();
     if (totalIndexCount < baseIndexCount) {
@@ -85,12 +89,6 @@ final class AliasCpuAccessors {
       throw new IllegalStateException(
           "Unsupported alias helper read accessor shape for " + alias.simpleName());
     }
-    if (baseWidth > 64) {
-      throw new IllegalStateException(
-          "Alias helper accessors support only <= 64-bit reads, but " + alias.simpleName()
-              + " maps to " + baseWidth + " bits.");
-    }
-
     var totalIndexCount = semantics.totalIndexCount();
     var argDecls = renderArgDecls(totalIndexCount);
     var baseArgList = renderArgList(semantics.baseTensor().indexDimensions().size());
