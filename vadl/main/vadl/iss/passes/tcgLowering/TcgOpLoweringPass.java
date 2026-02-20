@@ -37,13 +37,12 @@ import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssLoadNode;
 import vadl.iss.passes.nodes.IssMoveNode;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
-import vadl.iss.passes.nodes.IssRegChunkReadNode;
-import vadl.iss.passes.nodes.IssRegChunkWriteNode;
 import vadl.iss.passes.nodes.IssSelectNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssStoreNode;
 import vadl.iss.passes.nodes.IssTempExprNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
 import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
@@ -140,6 +139,10 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * that generates variables on demand and attaches them to the dependency node.
  * Once lowering is complete, all dependency nodes are removed from the graph.
  * The resulting structure is a CFG consisting of TCG op nodes in SSA form.</p>
+ *
+ * <p>Register writes on unified ISS nodes use window metadata:
+ * full-window writes lower to move semantics, chunk-window writes lower to deposit semantics.
+ * See {@code docs/iss/register-access-domain-map.md}.
  */
 public class TcgOpLoweringPass extends AbstractIssPass {
 
@@ -600,6 +603,12 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   void handle(WriteRegTensorNode toHandle) {
     var destVar = singleDestOf(toHandle);
     var srcVar = singleDestOf(toHandle.value());
+    if (toHandle instanceof IssWriteRegNode issWrite
+        && issWrite.windowKind() == IssWriteRegNode.WindowKind.CHUNK) {
+      replaceCurrent(new TcgDepositNode(destVar, destVar, srcVar,
+          issWrite.bitOffset(), issWrite.bitWidth()));
+      return;
+    }
     if (destVar.equals(srcVar)) {
       replaceCurrent();
     } else {
@@ -620,7 +629,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
         return;
       }
     }
-    replaceCurrent(new TcgDepositNode(dest, dest, value, toHandle.bitOffset(), toHandle.bitWidth()));
+    replaceCurrent(new TcgDepositNode(
+        dest, dest, value, toHandle.bitOffset(), toHandle.bitWidth()));
   }
 
   /**
@@ -875,16 +885,6 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   @Handler
   void handle(ReadSignalNode toHandle) {
-    throw failShouldNotHappen(toHandle);
-  }
-
-  @Handler
-  void handle(IssRegChunkReadNode toHandle) {
-    throw failShouldNotHappen(toHandle);
-  }
-
-  @Handler
-  void handle(IssRegChunkWriteNode toHandle) {
     throw failShouldNotHappen(toHandle);
   }
 

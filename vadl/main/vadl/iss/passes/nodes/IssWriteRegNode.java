@@ -19,6 +19,9 @@ package vadl.iss.passes.nodes;
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
+import vadl.javaannotations.viam.Input;
+import vadl.types.Type;
+import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Node;
@@ -27,19 +30,41 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
- * Unified ISS register write node for base and alias accesses.
+ * Unified ISS register write node used by all ISS backends.
+ *
+ * <p>This node carries register/alias accessor metadata and access-window metadata.
+ * {@code indices()} represent effective resource indices used for validation and hazard analysis.
+ * {@code accessorIndices()} represent backend accessor call arguments and may differ for aliases.
+ *
+ * <p>Window metadata ({@code windowKind}, {@code bitOffset}, {@code bitWidth}) models full writes
+ * and chunked writes with one node shape, so backends can share scheduling and info retrieval.
+ * See {@code docs/iss/register-access-domain-map.md} for the contract across lowering and codegen.
  */
 public class IssWriteRegNode extends WriteRegTensorNode {
 
+  /**
+   * Defines whether this write addresses the base tensor directly or an alias accessor.
+   */
   public enum AccessKind {
     BASE,
     ALIAS
   }
 
+  /**
+   * Classifies how write guards are interpreted during lowering/codegen.
+   */
   public enum WriteGuardKind {
     NONE,
     ZERO_CONSTRAINT,
     CONDITIONAL
+  }
+
+  /**
+   * Defines whether the write covers the full value or a chunk window.
+   */
+  public enum WindowKind {
+    FULL,
+    CHUNK
   }
 
   @DataValue
@@ -51,15 +76,29 @@ public class IssWriteRegNode extends WriteRegTensorNode {
   private final String accessorName;
   @DataValue
   private final NodeList<ExpressionNode> accessorIndices;
+  @DataValue
+  private final WindowKind windowKind;
+  @Input
+  private ExpressionNode bitOffset;
+  @Input
+  private ExpressionNode bitWidth;
 
+  /**
+   * Creates a base full-window write node.
+   */
   public IssWriteRegNode(RegisterTensor regTensor,
                          NodeList<ExpressionNode> resourceIndices,
                          ExpressionNode value,
                          @Nullable ExpressionNode condition) {
-    this(regTensor, resourceIndices, value, condition, AccessKind.BASE, WriteGuardKind.NONE, null,
-        resourceIndices.copy());
+    this(regTensor, resourceIndices, value, null, condition,
+        AccessKind.BASE, WriteGuardKind.NONE, null,
+        resourceIndices.copy(), WindowKind.FULL, intConst(0),
+        intConst(value.type().asDataType().bitWidth()));
   }
 
+  /**
+   * Creates a full-window write node with explicit accessor metadata.
+   */
   public IssWriteRegNode(RegisterTensor regTensor,
                          NodeList<ExpressionNode> resourceIndices,
                          ExpressionNode value,
@@ -69,9 +108,13 @@ public class IssWriteRegNode extends WriteRegTensorNode {
                          @Nullable String accessorName,
                          NodeList<ExpressionNode> accessorIndices) {
     this(regTensor, resourceIndices, value, null, condition, accessKind, writeGuardKind,
-        accessorName, accessorIndices);
+        accessorName, accessorIndices, WindowKind.FULL, intConst(0),
+        intConst(value.type().asDataType().bitWidth()));
   }
 
+  /**
+   * Creates a unified ISS write node with explicit accessor and window metadata.
+   */
   public IssWriteRegNode(RegisterTensor regTensor,
                          NodeList<ExpressionNode> resourceIndices,
                          ExpressionNode value,
@@ -81,11 +124,34 @@ public class IssWriteRegNode extends WriteRegTensorNode {
                          WriteGuardKind writeGuardKind,
                          @Nullable String accessorName,
                          NodeList<ExpressionNode> accessorIndices) {
+    this(regTensor, resourceIndices, value, staticCounterAccess, condition, accessKind,
+        writeGuardKind, accessorName, accessorIndices, WindowKind.FULL, intConst(0),
+        intConst(value.type().asDataType().bitWidth()));
+  }
+
+  /**
+   * Creates a unified ISS write node with explicit accessor and chunk/full window metadata.
+   */
+  public IssWriteRegNode(RegisterTensor regTensor,
+                         NodeList<ExpressionNode> resourceIndices,
+                         ExpressionNode value,
+                         @Nullable Counter staticCounterAccess,
+                         @Nullable ExpressionNode condition,
+                         AccessKind accessKind,
+                         WriteGuardKind writeGuardKind,
+                         @Nullable String accessorName,
+                         NodeList<ExpressionNode> accessorIndices,
+                         WindowKind windowKind,
+                         ExpressionNode bitOffset,
+                         ExpressionNode bitWidth) {
     super(regTensor, resourceIndices, value, staticCounterAccess, condition);
     this.accessKind = accessKind;
     this.writeGuardKind = writeGuardKind;
     this.accessorName = accessorName;
     this.accessorIndices = accessorIndices;
+    this.windowKind = windowKind;
+    this.bitOffset = bitOffset;
+    this.bitWidth = bitWidth;
   }
 
   public AccessKind accessKind() {
@@ -104,6 +170,18 @@ public class IssWriteRegNode extends WriteRegTensorNode {
     return accessorIndices;
   }
 
+  public WindowKind windowKind() {
+    return windowKind;
+  }
+
+  public ExpressionNode bitOffset() {
+    return bitOffset;
+  }
+
+  public ExpressionNode bitWidth() {
+    return bitWidth;
+  }
+
   @Override
   public Node copy() {
     return new IssWriteRegNode(
@@ -115,7 +193,10 @@ public class IssWriteRegNode extends WriteRegTensorNode {
         accessKind,
         writeGuardKind,
         accessorName,
-        accessorIndices.copy()
+        accessorIndices.copy(),
+        windowKind,
+        bitOffset.copy(),
+        bitWidth.copy()
     );
   }
 
@@ -130,8 +211,25 @@ public class IssWriteRegNode extends WriteRegTensorNode {
         accessKind,
         writeGuardKind,
         accessorName,
-        accessorIndices
+        accessorIndices,
+        windowKind,
+        bitOffset,
+        bitWidth
     );
+  }
+
+  @Override
+  protected void collectInputs(List<Node> collection) {
+    super.collectInputs(collection);
+    collection.add(bitOffset);
+    collection.add(bitWidth);
+  }
+
+  @Override
+  public void applyOnInputsUnsafe(vadl.viam.graph.GraphVisitor.Applier<Node> visitor) {
+    super.applyOnInputsUnsafe(visitor);
+    bitOffset = visitor.apply(this, bitOffset, ExpressionNode.class);
+    bitWidth = visitor.apply(this, bitWidth, ExpressionNode.class);
   }
 
   @Override
@@ -141,5 +239,10 @@ public class IssWriteRegNode extends WriteRegTensorNode {
     collection.add(writeGuardKind);
     collection.add(accessorName);
     collection.addAll(accessorIndices);
+    collection.add(windowKind);
+  }
+
+  private static ExpressionNode intConst(int value) {
+    return Constant.Value.of(value, Type.bits(32)).toNode();
   }
 }

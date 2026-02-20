@@ -60,8 +60,25 @@ import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
- * Rewrites alias register accesses into base-register accesses for ISS without cloning
- * artificial read/write behavior graphs.
+ * Lowers all ISS register accesses to the unified ISS register access model.
+ *
+ * <p>Scope:
+ * <ul>
+ *   <li>Runs on all behaviors (instruction, exception, model/procedure/helper).</li>
+ *   <li>Rewrites {@link ReadArtificialResNode}/{@link WriteArtificialResNode} into
+ *   {@link IssReadRegNode}/{@link IssWriteRegNode} plus shaping nodes where required.</li>
+ *   <li>Normal base register accesses are normalized to unified ISS nodes as well.</li>
+ * </ul>
+ *
+ * <p>Contract:
+ * <ul>
+ *   <li>{@code indices()} represent resource-level access and drive validation/conflict
+ *   analysis.</li>
+ *   <li>{@code accessorIndices()} + accessor name represent emitted accessor calls.</li>
+ *   <li>Alias semantics are sourced from {@link ArtificialResource.Semantics}.</li>
+ * </ul>
+ *
+ * <p>See {@code docs/iss/register-access-domain-map.md}.
  */
 public class IssRegisterAccessLoweringPass extends AbstractIssPass {
 
@@ -105,6 +122,10 @@ class IssRegisterAccessLowering {
     if (behavior.getNodes(ReadArtificialResNode.class).findAny().isPresent()) {
       throw new IllegalStateException(
           "ISS alias lowering left artificial reads in behavior graph.");
+    }
+    if (behavior.getNodes(WriteArtificialResNode.class).findAny().isPresent()) {
+      throw new IllegalStateException(
+          "ISS alias lowering left artificial writes in behavior graph.");
     }
   }
 
@@ -270,7 +291,6 @@ class IssRegisterAccessLowering {
 
     var userCondition = write.nullableCondition();
     var guard = buildDontMatchGuard(aliasIndices, semantics);
-    var condition = userCondition;
     var guardKind = userCondition == null
         ? IssWriteRegNode.WriteGuardKind.NONE
         : IssWriteRegNode.WriteGuardKind.CONDITIONAL;
@@ -408,7 +428,7 @@ class IssRegisterAccessLowering {
         baseTensor,
         baseIndices,
         writeValue,
-        condition,
+        userCondition,
         IssWriteRegNode.AccessKind.BASE,
         guardKind,
         null,

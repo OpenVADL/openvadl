@@ -65,6 +65,9 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * Since register file indices and memory addresses are not statically known,
  * all reads to these resources must be conservatively treated as potential conflicts
  * with all writes to the same resource.</p>
+ *
+ * <p>The analysis intentionally uses post-lowering resource accesses so alias accesses are checked
+ * against their effective base resources.
  */
 public class IssSafeResourceReadPass extends AbstractIssPass {
 

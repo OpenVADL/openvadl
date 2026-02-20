@@ -21,8 +21,10 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
 import vadl.cppCodeGen.context.CGenContext;
-import vadl.iss.passes.extensions.RegInfo;
+import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.types.BuiltInTable;
+import vadl.types.Type;
+import vadl.viam.Constant;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ReturnNode;
@@ -39,6 +41,10 @@ import vadl.viam.graph.dependency.TensorNode;
  * with memory and register tensors for CPU-specific behavior. This class extends the
  * `PureFunctionCodeGenerator` and implements interfaces for reading/writing memory and
  * writing registers.
+ *
+ * <p>Wide register reads in helper-side dynamic slicing are emitted via the same unified
+ * register-access metadata used across ISS lowering/codegen.
+ * See {@code docs/iss/register-access-domain-map.md}.
  */
 public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
     implements IssCMixins.CpuSourceReadWriteMemory, IssCMixins.CpuSourceWriteRegTensor {
@@ -342,22 +348,44 @@ public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
       int chunkOffsetBits,
       int chunkWidthBits
   ) {
-    var containerWidth = read.regTensor().resultType(read.indices().size()).bitWidth();
-    var pattern = RegInfo.AccessPattern.of(
-        read,
-        RegInfo.AccessType.READ,
-        read.regTensor(),
-        read.indices(),
-        chunkWidthBits,
-        containerWidth,
-        chunkOffsetBits
-    );
-
-    ctx.wr(pattern.name()).wr("(env");
-    for (var index : read.indices()) {
+    var loweredRead = toChunkRead(read, chunkOffsetBits, chunkWidthBits);
+    var accessName = RegisterAccessEmitters.readAccessorName(loweredRead);
+    ctx.wr(accessName).wr("(env");
+    for (var index : RegisterAccessEmitters.readAccessorArgs(loweredRead)) {
       ctx.wr(", ");
       ctx.gen(index);
     }
     ctx.wr(")");
+  }
+
+  private ReadRegTensorNode toChunkRead(ReadRegTensorNode read,
+                                        int chunkOffsetBits,
+                                        int chunkWidthBits) {
+    if (read instanceof IssReadRegNode issRead) {
+      return new IssReadRegNode(
+          issRead.regTensor(),
+          issRead.indices().copy(),
+          Type.bits(chunkWidthBits).asDataType(),
+          issRead.staticCounterAccess(),
+          issRead.accessKind(),
+          issRead.readShape(),
+          issRead.accessorName(),
+          issRead.accessorIndices().copy(),
+          IssReadRegNode.WindowKind.CHUNK,
+          Constant.Value.of(chunkOffsetBits, Type.bits(32)).toNode(),
+          Constant.Value.of(chunkWidthBits, Type.bits(32)).toNode());
+    }
+    return new IssReadRegNode(
+        read.regTensor(),
+        read.indices().copy(),
+        Type.bits(chunkWidthBits).asDataType(),
+        read.staticCounterAccess(),
+        IssReadRegNode.AccessKind.BASE,
+        IssReadRegNode.ReadShape.FULL,
+        null,
+        read.indices().copy(),
+        IssReadRegNode.WindowKind.CHUNK,
+        Constant.Value.of(chunkOffsetBits, Type.bits(32)).toNode(),
+        Constant.Value.of(chunkWidthBits, Type.bits(32)).toNode());
   }
 }

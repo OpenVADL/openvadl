@@ -32,6 +32,13 @@ import vadl.viam.graph.dependency.SideEffectNode;
 /**
  * Writes a bitfield into a register tensor element:
  * {@code reg = deposit(base, value, offset, width)}.
+ *
+ * <p>This node is used when a write updates only a sub-window of a scalar register container.
+ * It keeps bit-window information as graph inputs so translation-time constants can be propagated
+ * through lowering and directly mapped to TCG deposit operations.
+ *
+ * <p>See {@code docs/iss/register-access-domain-map.md} for the relation to unified
+ * {@link IssWriteRegNode} accesses and backend lowering.
  */
 public class IssRegBitfieldWriteNode extends SideEffectNode {
 
@@ -49,6 +56,9 @@ public class IssRegBitfieldWriteNode extends SideEffectNode {
   @Nullable
   private String aliasAccessorName;
 
+  /**
+   * Creates a bitfield write for a register element with explicit destination window.
+   */
   public IssRegBitfieldWriteNode(RegisterTensor regTensor,
                                  NodeList<ExpressionNode> indices,
                                  ExpressionNode value,

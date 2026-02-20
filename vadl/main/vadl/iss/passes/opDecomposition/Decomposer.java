@@ -22,8 +22,8 @@ import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import javax.annotation.Nullable;
-import vadl.iss.passes.nodes.IssRegChunkReadNode;
-import vadl.iss.passes.nodes.IssRegChunkWriteNode;
+import vadl.iss.passes.nodes.IssReadRegNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.iss.passes.opDecomposition.decomposer.ArithmeticDecomposer;
 import vadl.iss.passes.opDecomposition.decomposer.FoldDecomposer;
 import vadl.iss.passes.opDecomposition.decomposer.LogicDecomposer;
@@ -37,6 +37,7 @@ import vadl.types.Type;
 import vadl.utils.GraphUtils;
 import vadl.utils.VadlBuiltInEmptyNoStatusDispatcher;
 import vadl.viam.Constant;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -75,6 +76,13 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * The request is dispatched to the correct implementation, which than takes care of
  * returning an expression that represents the result of the requested slice.
  * It must only use operations that are smaller equal the target size.
+ *
+ * <p>For register accesses this pass emits unified {@link IssReadRegNode}/{@link IssWriteRegNode}
+ * nodes with chunk window metadata instead of backend-specific chunk node types.
+ * This keeps one register-access representation across decomposition, access-pattern retrieval and
+ * code generation.
+ *
+ * <p>See {@code docs/iss/register-access-domain-map.md}.
  */
 @DispatchFor(
     value = ExpressionNode.class,
@@ -311,13 +319,19 @@ class Decomposer
       int chunkWidth = Math.min(targetSize, writeWidth - chunkOffset);
       int chunkMsb = chunkOffset + chunkWidth - 1;
       var chunkValue = request(value, chunkMsb, chunkOffset);
-      var chunkWrite = graph.addWithInputs(new IssRegChunkWriteNode(
+      var chunkWrite = graph.addWithInputs(new IssWriteRegNode(
           regTensor,
           write.indices().copy(),
           chunkValue,
-          chunkOffset,
-          chunkWidth,
-          condition
+          write.staticCounterAccess(),
+          condition,
+          writeAccessKind(write),
+          writeGuardKind(write),
+          writeAccessorName(write),
+          writeAccessorIndices(write),
+          IssWriteRegNode.WindowKind.CHUNK,
+          Constant.Value.of(chunkOffset, Type.bits(32)).toNode(),
+          Constant.Value.of(chunkWidth, Type.bits(32)).toNode()
       ));
       chunkWrite.setSourceLocation(write.location());
 
@@ -536,12 +550,18 @@ class Decomposer
     for (int chunkIdx = firstChunkIdx; chunkIdx <= lastChunkIdx; chunkIdx++) {
       int chunkOffset = chunkIdx * targetSize;
       int chunkWidth = Math.min(targetSize, readWidth - chunkOffset);
-      var chunkRead = new IssRegChunkReadNode(
+      var chunkRead = new IssReadRegNode(
           regTensor,
           toHandle.indices().copy(),
-          chunkOffset,
-          chunkWidth,
-          toHandle.staticCounterAccess()
+          Type.bits(chunkWidth).asDataType(),
+          toHandle.staticCounterAccess(),
+          readAccessKind(toHandle),
+          readShape(toHandle),
+          readAccessorName(toHandle),
+          readAccessorIndices(toHandle),
+          IssReadRegNode.WindowKind.CHUNK,
+          Constant.Value.of(chunkOffset, Type.bits(32)).toNode(),
+          Constant.Value.of(chunkWidth, Type.bits(32)).toNode()
       );
       result = accumulateChunk(result, chunkRead, rq.slice, chunkOffset, chunkWidth, toHandle);
     }
@@ -729,6 +749,64 @@ class Decomposer
   @Handler
   void handle(Request rq, ReadSignalNode toHandle) {
     throw new UnsupportedOperationException("Type ReadSignalNode not yet implemented");
+  }
+
+  private IssReadRegNode.AccessKind readAccessKind(ReadRegTensorNode read) {
+    if (read instanceof IssReadRegNode issRead) {
+      return issRead.accessKind();
+    }
+    return IssReadRegNode.AccessKind.BASE;
+  }
+
+  private IssReadRegNode.ReadShape readShape(ReadRegTensorNode read) {
+    if (read instanceof IssReadRegNode issRead) {
+      return issRead.readShape();
+    }
+    return IssReadRegNode.ReadShape.FULL;
+  }
+
+  private @Nullable String readAccessorName(ReadRegTensorNode read) {
+    if (read instanceof IssReadRegNode issRead) {
+      return issRead.accessorName();
+    }
+    return null;
+  }
+
+  private NodeList<ExpressionNode> readAccessorIndices(ReadRegTensorNode read) {
+    if (read instanceof IssReadRegNode issRead) {
+      return issRead.accessorIndices().copy();
+    }
+    return read.indices().copy();
+  }
+
+  private IssWriteRegNode.AccessKind writeAccessKind(WriteRegTensorNode write) {
+    if (write instanceof IssWriteRegNode issWrite) {
+      return issWrite.accessKind();
+    }
+    return IssWriteRegNode.AccessKind.BASE;
+  }
+
+  private IssWriteRegNode.WriteGuardKind writeGuardKind(WriteRegTensorNode write) {
+    if (write instanceof IssWriteRegNode issWrite) {
+      return issWrite.writeGuardKind();
+    }
+    return write.nullableCondition() == null
+        ? IssWriteRegNode.WriteGuardKind.NONE
+        : IssWriteRegNode.WriteGuardKind.CONDITIONAL;
+  }
+
+  private @Nullable String writeAccessorName(WriteRegTensorNode write) {
+    if (write instanceof IssWriteRegNode issWrite) {
+      return issWrite.accessorName();
+    }
+    return null;
+  }
+
+  private NodeList<ExpressionNode> writeAccessorIndices(WriteRegTensorNode write) {
+    if (write instanceof IssWriteRegNode issWrite) {
+      return issWrite.accessorIndices().copy();
+    }
+    return write.indices().copy();
   }
 
 }

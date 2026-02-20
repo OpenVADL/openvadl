@@ -32,8 +32,8 @@ import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.iss.IssUtils;
-import vadl.iss.passes.nodes.IssRegChunkReadNode;
-import vadl.iss.passes.nodes.IssRegChunkWriteNode;
+import vadl.iss.passes.nodes.IssReadRegNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.template.Renderable;
 import vadl.utils.WithLocation;
 import vadl.utils.codegen.CStringBuilder;
@@ -42,6 +42,7 @@ import vadl.viam.DefinitionExtension;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
@@ -738,10 +739,16 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
      * @return the access pattern
      */
     public static AccessPattern of(ReadRegTensorNode read) {
+      var bitOffset = 0;
+      var bitWidth = read.type().asDataType().bitWidth();
+      if (read instanceof IssReadRegNode issRead) {
+        bitOffset = constIntOr(issRead.bitOffset(), 0);
+        bitWidth = constIntOr(issRead.bitWidth(), bitWidth);
+      }
       return of(read, AccessType.READ, read.regTensor(), read.indices(),
-          read.type().asDataType().bitWidth(),
+          bitWidth,
           read.regTensor().resultType(read.indices().size()).bitWidth(),
-          0);
+          bitOffset);
     }
 
     /**
@@ -751,30 +758,16 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
      * @return the access pattern
      */
     public static AccessPattern of(WriteRegTensorNode write) {
+      var bitOffset = 0;
+      var bitWidth = write.writeBitWidth();
+      if (write instanceof IssWriteRegNode issWrite) {
+        bitOffset = constIntOr(issWrite.bitOffset(), 0);
+        bitWidth = constIntOr(issWrite.bitWidth(), bitWidth);
+      }
       return of(write, AccessType.WRITE, write.regTensor(), write.indices(),
-          write.writeBitWidth(),
+          bitWidth,
           write.regTensor().resultType(write.indices().size()).bitWidth(),
-          0);
-    }
-
-    /**
-     * Creates an access pattern from a chunked read node.
-     */
-    public static AccessPattern of(IssRegChunkReadNode read) {
-      return of(read, AccessType.READ, read.regTensor(), read.indices(),
-          read.chunkWidthBits(),
-          read.regTensor().resultType(read.indices().size()).bitWidth(),
-          read.chunkOffsetBits());
-    }
-
-    /**
-     * Creates an access pattern from a chunked write node.
-     */
-    public static AccessPattern of(IssRegChunkWriteNode write) {
-      return of(write, AccessType.WRITE, write.regTensor(), write.indices(),
-          write.chunkWidthBits(),
-          write.regTensor().resultType(write.indices().size()).bitWidth(),
-          write.chunkOffsetBits());
+          bitOffset);
     }
 
     /**
@@ -798,6 +791,13 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
           .toList();
       return new RegInfo.AccessPattern(info, type, indexDims, elementWidth, containerWidth,
           chunkOffsetBits, origin);
+    }
+
+    private static int constIntOr(ExpressionNode expr, int fallback) {
+      if (expr instanceof ConstantNode constantNode) {
+        return constantNode.constant().asVal().intValue();
+      }
+      return fallback;
     }
   }
 }

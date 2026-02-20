@@ -464,7 +464,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         definition.getClass().getSimpleName(), definition.kind));
   }
 
-  private ArtificialResource.OverwriteMode resolveEffectiveOverwriteMode(AliasDefinition definition) {
+  /**
+   * Resolves the effective overwrite mode for a register alias chain.
+   *
+   * <p>The result is stored in {@link ArtificialResource.Semantics} and later consumed by ISS
+   * register access lowering.
+   */
+  private ArtificialResource.OverwriteMode resolveEffectiveOverwriteMode(
+      AliasDefinition definition) {
     var overwriteAnno = definition.findAnnotation("overwrite source", EnumAnnotation.class);
     if (overwriteAnno != null) {
       return switch (overwriteAnno.value) {
@@ -482,6 +489,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     return ArtificialResource.OverwriteMode.MERGE;
   }
 
+  /**
+   * Resolves the effective zero-constraint for a register alias chain.
+   *
+   * <p>This computes the guard basis used by ISS alias write/read lowering.
+   */
   private @Nullable ArtificialResource.ZeroConstraint resolveEffectiveZeroConstraint(
       AliasDefinition definition) {
     var own = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
@@ -502,6 +514,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     return mapZeroConstraintThroughAliasAccess(definition, inherited);
   }
 
+  /**
+   * Returns the source alias definition if this alias references another register alias.
+   */
   private @Nullable AliasDefinition sourceAliasDefinition(AliasDefinition definition) {
     var targetIdent = switch (definition.value) {
       case Identifier ident -> ident;
@@ -518,6 +533,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     return alias;
   }
 
+  /**
+   * Maps inherited zero-constraint indices through the current alias access mapping.
+   */
   private @Nullable ArtificialResource.ZeroConstraint mapZeroConstraintThroughAliasAccess(
       AliasDefinition definition,
       ArtificialResource.ZeroConstraint inherited) {

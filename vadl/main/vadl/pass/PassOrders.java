@@ -55,7 +55,6 @@ import vadl.iss.passes.IssExecStrategyPass;
 import vadl.iss.passes.IssExtractOptimizationPass;
 import vadl.iss.passes.IssGdbInfoExtractionPass;
 import vadl.iss.passes.IssHardcodedTcgAddOnPass;
-import vadl.iss.passes.IssHelperOnlyWideRegAccessLoweringPass;
 import vadl.iss.passes.IssInfoRetrievalPass;
 import vadl.iss.passes.IssLoopUnrollPass;
 import vadl.iss.passes.IssMemoryAccessTransformationPass;
@@ -531,7 +530,6 @@ public class PassOrders {
 
         // pre emit passes
         .add(new IssCFunctionExtractionPass(config))
-        .add(new IssHelperOnlyWideRegAccessLoweringPass(config))
         .add(new IssRegisterAccessInfoRetrievalPass(config))
     ;
 

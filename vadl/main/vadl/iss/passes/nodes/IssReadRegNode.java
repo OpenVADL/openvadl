@@ -19,7 +19,10 @@ package vadl.iss.passes.nodes;
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
+import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
+import vadl.types.Type;
+import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.NodeList;
@@ -27,19 +30,46 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 
 /**
- * Unified ISS register read node for base and alias accesses.
+ * Unified ISS register read node used by all ISS backends.
+ *
+ * <p>This node represents both base register and alias register reads. The same metadata is used
+ * by TCG translation paths and helper/cpu-side code generation:
+ * <ul>
+ *   <li>{@code indices()} describe the effective resource access and must match the referenced
+ *   register tensor rank expected by validators and conflict analysis.</li>
+ *   <li>{@code accessorIndices()} describe emitted accessor call arguments and may differ from
+ *   resource indices for aliases.</li>
+ *   <li>Window metadata ({@code windowKind}, {@code bitOffset}, {@code bitWidth}) describes
+ *   full-width accesses and chunked sub-accesses in a backend-neutral form.</li>
+ * </ul>
+ *
+ * <p>See {@code docs/iss/register-access-domain-map.md} for the cross-domain contract.
  */
 public class IssReadRegNode extends ReadRegTensorNode {
 
+  /**
+   * Defines whether this read addresses the base tensor directly or an alias accessor.
+   */
   public enum AccessKind {
     BASE,
     ALIAS
   }
 
+  /**
+   * Describes alias read shaping from the lowered semantics perspective.
+   */
   public enum ReadShape {
     FULL,
     SLICE,
     EXPANSION
+  }
+
+  /**
+   * Defines whether the access covers the full value or a chunk window.
+   */
+  public enum WindowKind {
+    FULL,
+    CHUNK
   }
 
   @DataValue
@@ -51,14 +81,23 @@ public class IssReadRegNode extends ReadRegTensorNode {
   private final String accessorName;
   @DataValue
   private final NodeList<ExpressionNode> accessorIndices;
+  @DataValue
+  private final WindowKind windowKind;
+  @Input
+  private ExpressionNode bitOffset;
+  @Input
+  private ExpressionNode bitWidth;
 
   public IssReadRegNode(RegisterTensor regTensor,
                         NodeList<ExpressionNode> resourceIndices,
                         DataType type) {
-    this(regTensor, resourceIndices, type, AccessKind.BASE, ReadShape.FULL, null,
-        resourceIndices.copy());
+    this(regTensor, resourceIndices, type, null, AccessKind.BASE, ReadShape.FULL, null,
+        resourceIndices.copy(), WindowKind.FULL, intConst(0), intConst(type.bitWidth()));
   }
 
+  /**
+   * Creates a unified ISS read node with explicit accessor and window metadata.
+   */
   public IssReadRegNode(RegisterTensor regTensor,
                         NodeList<ExpressionNode> resourceIndices,
                         DataType type,
@@ -67,9 +106,12 @@ public class IssReadRegNode extends ReadRegTensorNode {
                         @Nullable String accessorName,
                         NodeList<ExpressionNode> accessorIndices) {
     this(regTensor, resourceIndices, type, null, accessKind, readShape, accessorName,
-        accessorIndices);
+        accessorIndices, WindowKind.FULL, intConst(0), intConst(type.bitWidth()));
   }
 
+  /**
+   * Creates a unified ISS read node with explicit accessor and window metadata.
+   */
   public IssReadRegNode(RegisterTensor regTensor,
                         NodeList<ExpressionNode> resourceIndices,
                         DataType type,
@@ -78,11 +120,32 @@ public class IssReadRegNode extends ReadRegTensorNode {
                         ReadShape readShape,
                         @Nullable String accessorName,
                         NodeList<ExpressionNode> accessorIndices) {
+    this(regTensor, resourceIndices, type, staticCounterAccess, accessKind, readShape,
+        accessorName, accessorIndices, WindowKind.FULL, intConst(0), intConst(type.bitWidth()));
+  }
+
+  /**
+   * Creates a unified ISS read node with explicit accessor and chunk/full window metadata.
+   */
+  public IssReadRegNode(RegisterTensor regTensor,
+                        NodeList<ExpressionNode> resourceIndices,
+                        DataType type,
+                        @Nullable Counter staticCounterAccess,
+                        AccessKind accessKind,
+                        ReadShape readShape,
+                        @Nullable String accessorName,
+                        NodeList<ExpressionNode> accessorIndices,
+                        WindowKind windowKind,
+                        ExpressionNode bitOffset,
+                        ExpressionNode bitWidth) {
     super(regTensor, resourceIndices, type, staticCounterAccess);
     this.accessKind = accessKind;
     this.readShape = readShape;
     this.accessorName = accessorName;
     this.accessorIndices = accessorIndices;
+    this.windowKind = windowKind;
+    this.bitOffset = bitOffset;
+    this.bitWidth = bitWidth;
   }
 
   public AccessKind accessKind() {
@@ -101,6 +164,18 @@ public class IssReadRegNode extends ReadRegTensorNode {
     return accessorIndices;
   }
 
+  public WindowKind windowKind() {
+    return windowKind;
+  }
+
+  public ExpressionNode bitOffset() {
+    return bitOffset;
+  }
+
+  public ExpressionNode bitWidth() {
+    return bitWidth;
+  }
+
   @Override
   public IssReadRegNode copy() {
     return new IssReadRegNode(
@@ -111,7 +186,10 @@ public class IssReadRegNode extends ReadRegTensorNode {
         accessKind,
         readShape,
         accessorName,
-        accessorIndices.copy());
+        accessorIndices.copy(),
+        windowKind,
+        bitOffset.copy(),
+        bitWidth.copy());
   }
 
   @Override
@@ -124,7 +202,25 @@ public class IssReadRegNode extends ReadRegTensorNode {
         accessKind,
         readShape,
         accessorName,
-        accessorIndices);
+        accessorIndices,
+        windowKind,
+        bitOffset,
+        bitWidth);
+  }
+
+  @Override
+  protected void collectInputs(List<vadl.viam.graph.Node> collection) {
+    super.collectInputs(collection);
+    collection.add(bitOffset);
+    collection.add(bitWidth);
+  }
+
+  @Override
+  public void applyOnInputsUnsafe(
+      vadl.viam.graph.GraphVisitor.Applier<vadl.viam.graph.Node> visitor) {
+    super.applyOnInputsUnsafe(visitor);
+    bitOffset = visitor.apply(this, bitOffset, ExpressionNode.class);
+    bitWidth = visitor.apply(this, bitWidth, ExpressionNode.class);
   }
 
   @Override
@@ -134,5 +230,10 @@ public class IssReadRegNode extends ReadRegTensorNode {
     collection.add(readShape);
     collection.add(accessorName);
     collection.addAll(accessorIndices);
+    collection.add(windowKind);
+  }
+
+  private static ExpressionNode intConst(int value) {
+    return Constant.Value.of(value, Type.bits(32)).toNode();
   }
 }

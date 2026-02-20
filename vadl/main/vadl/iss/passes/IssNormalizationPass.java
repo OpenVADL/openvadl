@@ -35,7 +35,6 @@ import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
-import vadl.iss.passes.nodes.IssRegChunkReadNode;
 import vadl.iss.passes.nodes.IssSelectNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssTempExprNode;
@@ -247,11 +246,6 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Handler
   void handle(ReadRegTensorNode toHandle) {
-    // do nothing
-  }
-
-  @Handler
-  void handle(IssRegChunkReadNode toHandle) {
     // do nothing
   }
 

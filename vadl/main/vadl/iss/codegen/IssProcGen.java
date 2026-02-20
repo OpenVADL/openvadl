@@ -39,6 +39,10 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 /**
  * A node dispatcher for procedure c code rendering in the ISS.
  *
+ * <p>Procedure/exception/helper generators preload register reads using unified ISS access
+ * metadata so emitted C variables follow the same accessor mapping contract as instruction paths.
+ * See {@code docs/iss/register-access-domain-map.md}.
+ *
  * @see IssResetGen
  */
 @DispatchFor(

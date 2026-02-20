@@ -21,8 +21,6 @@ import static vadl.iss.passes.TcgPassUtils.regInfo;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.passes.nodes.IssReadRegNode;
-import vadl.iss.passes.nodes.IssRegChunkReadNode;
-import vadl.iss.passes.nodes.IssRegChunkWriteNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -35,6 +33,17 @@ import vadl.viam.graph.dependency.WriteRegTensorNode;
  *
  * <p>This centralizes backend strategy selection for register reads/writes to keep code generation
  * modules free from ad-hoc backend checks.</p>
+ *
+ * <p>Accessor resolution contract:
+ * <ul>
+ *   <li>Alias accessors are used for full-window alias nodes.</li>
+ *   <li>Chunk-window accesses use access patterns derived from resource indices and window
+ *   metadata.</li>
+ *   <li>Accessor arguments come from unified node metadata ({@code accessorIndices}) when alias
+ *   accessors are active.</li>
+ * </ul>
+ *
+ * <p>See {@code docs/iss/register-access-domain-map.md}.
  */
 public final class RegisterAccessEmitters {
 
@@ -45,20 +54,14 @@ public final class RegisterAccessEmitters {
     emitterFor(regInfo(node.regTensor())).emitRead(ctx, node);
   }
 
-  public static void emitRead(CGenContext<Node> ctx, IssRegChunkReadNode node) {
-    emitterFor(regInfo(node.regTensor())).emitRead(ctx, node);
-  }
-
   public static void emitWrite(CGenContext<Node> ctx, WriteRegTensorNode node) {
     emitterFor(regInfo(node.regTensor())).emitWrite(ctx, node);
   }
 
-  public static void emitWrite(CGenContext<Node> ctx, IssRegChunkWriteNode node) {
-    emitterFor(regInfo(node.regTensor())).emitWrite(ctx, node);
-  }
-
   static String readAccessorName(ReadRegTensorNode node) {
-    if (node instanceof IssReadRegNode readNode && readNode.accessKind() == IssReadRegNode.AccessKind.ALIAS) {
+    if (node instanceof IssReadRegNode readNode
+        && readNode.accessKind() == IssReadRegNode.AccessKind.ALIAS
+        && readNode.windowKind() == IssReadRegNode.WindowKind.FULL) {
       var accessor = readNode.accessorName();
       readNode.ensure(accessor != null && !accessor.isBlank(),
           "Alias read accessor name is missing.");
@@ -68,7 +71,9 @@ public final class RegisterAccessEmitters {
   }
 
   static NodeList<ExpressionNode> readAccessorArgs(ReadRegTensorNode node) {
-    if (node instanceof IssReadRegNode readNode && readNode.accessKind() == IssReadRegNode.AccessKind.ALIAS) {
+    if (node instanceof IssReadRegNode readNode
+        && readNode.accessKind() == IssReadRegNode.AccessKind.ALIAS
+        && readNode.windowKind() == IssReadRegNode.WindowKind.FULL) {
       return readNode.accessorIndices();
     }
     return node.indices();
@@ -76,7 +81,8 @@ public final class RegisterAccessEmitters {
 
   static String writeAccessorName(WriteRegTensorNode node) {
     if (node instanceof IssWriteRegNode writeNode
-        && writeNode.accessKind() == IssWriteRegNode.AccessKind.ALIAS) {
+        && writeNode.accessKind() == IssWriteRegNode.AccessKind.ALIAS
+        && writeNode.windowKind() == IssWriteRegNode.WindowKind.FULL) {
       var accessor = writeNode.accessorName();
       writeNode.ensure(accessor != null && !accessor.isBlank(),
           "Alias write accessor name is missing.");
@@ -87,7 +93,8 @@ public final class RegisterAccessEmitters {
 
   static NodeList<ExpressionNode> writeAccessorArgs(WriteRegTensorNode node) {
     if (node instanceof IssWriteRegNode writeNode
-        && writeNode.accessKind() == IssWriteRegNode.AccessKind.ALIAS) {
+        && writeNode.accessKind() == IssWriteRegNode.AccessKind.ALIAS
+        && writeNode.windowKind() == IssWriteRegNode.WindowKind.FULL) {
       return writeNode.accessorIndices();
     }
     return node.indices();
@@ -122,11 +129,7 @@ public final class RegisterAccessEmitters {
   private interface RegisterAccessEmitter {
     void emitRead(CGenContext<Node> ctx, ReadRegTensorNode node);
 
-    void emitRead(CGenContext<Node> ctx, IssRegChunkReadNode node);
-
     void emitWrite(CGenContext<Node> ctx, WriteRegTensorNode node);
-
-    void emitWrite(CGenContext<Node> ctx, IssRegChunkWriteNode node);
   }
 
   /**
@@ -141,28 +144,8 @@ public final class RegisterAccessEmitters {
     }
 
     @Override
-    public void emitRead(CGenContext<Node> ctx, IssRegChunkReadNode node) {
-      var accessPattern = RegInfo.AccessPattern.of(node);
-      ctx.wr(accessPattern.name() + "(env");
-      for (var i : node.indices()) {
-        ctx.wr(", ").gen(i);
-      }
-      ctx.wr(")");
-    }
-
-    @Override
     public void emitWrite(CGenContext<Node> ctx, WriteRegTensorNode node) {
       emitWriteCall(ctx, node, writeAccessorName(node));
-    }
-
-    @Override
-    public void emitWrite(CGenContext<Node> ctx, IssRegChunkWriteNode node) {
-      var accessPattern = RegInfo.AccessPattern.of(node);
-      ctx.wr(accessPattern.name() + "(env");
-      for (var i : node.indices()) {
-        ctx.wr(", ").gen(i);
-      }
-      ctx.wr(", ").gen(node.value()).wr(")");
     }
   }
 
@@ -178,28 +161,8 @@ public final class RegisterAccessEmitters {
     }
 
     @Override
-    public void emitRead(CGenContext<Node> ctx, IssRegChunkReadNode node) {
-      var accessPattern = RegInfo.AccessPattern.of(node);
-      ctx.wr(accessPattern.name() + "(env");
-      for (var i : node.indices()) {
-        ctx.wr(", ").gen(i);
-      }
-      ctx.wr(")");
-    }
-
-    @Override
     public void emitWrite(CGenContext<Node> ctx, WriteRegTensorNode node) {
       emitWriteCall(ctx, node, writeAccessorName(node));
-    }
-
-    @Override
-    public void emitWrite(CGenContext<Node> ctx, IssRegChunkWriteNode node) {
-      var accessPattern = RegInfo.AccessPattern.of(node);
-      ctx.wr(accessPattern.name() + "(env");
-      for (var i : node.indices()) {
-        ctx.wr(", ").gen(i);
-      }
-      ctx.wr(", ").gen(node.value()).wr(")");
     }
   }
 }

@@ -27,7 +27,6 @@ import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.IssMoveNode;
 import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
-import vadl.iss.passes.nodes.IssRegChunkWriteNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.DispatchFor;
@@ -56,6 +55,13 @@ import vadl.viam.graph.dependency.WriteStageOutputNode;
  * The TCG context is associated with an instruction.
  * It holds all necessary information required across multiple passes.
  * Most importantly the {@link Assignment}.
+ *
+ * <p>Register assignment requests consume unified ISS register nodes
+ * ({@link IssReadRegNode}/{@link IssWriteRegNode}) and map them to TCG variable identities.
+ * Accessor metadata is only used for full-window accesses; chunk-window accesses intentionally use
+ * base resource identities.
+ *
+ * <p>See {@code docs/iss/register-access-domain-map.md}.
  */
 public class TcgCtx extends DefinitionExtension<Instruction> {
 
@@ -151,15 +157,11 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
     @Handler
     List<TcgVRefNode> destOf(WriteRegTensorNode toHandle) {
       var accessorName = toHandle instanceof IssWriteRegNode issWrite
+          && issWrite.windowKind() == IssWriteRegNode.WindowKind.FULL
           ? issWrite.accessorName()
           : null;
       return assignments.computeIfAbsent(toHandle,
           n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), true, accessorName));
-    }
-
-    @Handler
-    List<TcgVRefNode> destOf(IssRegChunkWriteNode toHandle) {
-      return List.of();
     }
 
     @Handler
@@ -182,10 +184,12 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
     @Handler
     List<TcgVRefNode> destOf(ReadRegTensorNode toHandle) {
       var accessorName = toHandle instanceof IssReadRegNode issRead
+          && issRead.windowKind() == IssReadRegNode.WindowKind.FULL
           ? issRead.accessorName()
           : null;
       return assignments.computeIfAbsent(toHandle,
-          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), false, accessorName));
+          n -> createRegVar(
+              toHandle.resourceDefinition(), toHandle.indices(), false, accessorName));
     }
 
     @Handler

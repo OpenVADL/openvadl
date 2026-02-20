@@ -26,19 +26,29 @@ import javax.annotation.CheckForNull;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.passes.nodes.IssReadRegNode;
-import vadl.iss.passes.nodes.IssRegChunkReadNode;
-import vadl.iss.passes.nodes.IssRegChunkWriteNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
- * Retrieves register access information for each register tensor access in the specification.
+ * Collects backend register access patterns from unified ISS register access nodes.
+ *
+ * <p>This pass is the bridge between ISS graph-level register access metadata and emitted C
+ * accessor functions. It interprets:
+ * <ul>
+ *   <li>resource indices from unified read/write nodes,</li>
+ *   <li>window metadata ({@code bitOffset}/{@code bitWidth}),</li>
+ *   <li>alias-vs-base access kind for base-resource pattern ownership.</li>
+ * </ul>
+ *
+ * <p>See {@code docs/iss/register-access-domain-map.md}.
  */
 public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
   public IssRegisterAccessInfoRetrievalPass(IssConfiguration config) {
@@ -71,15 +81,10 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
   }
 
   private void collectRegisterAccessPatterns(Graph behavior) {
-    behavior.getNodes(Set.of(ReadRegTensorNode.class, WriteRegTensorNode.class,
-            IssRegChunkReadNode.class, IssRegChunkWriteNode.class))
+    behavior.getNodes(Set.of(ReadRegTensorNode.class, WriteRegTensorNode.class))
         .forEach((n) -> {
           if (n instanceof ReadRegTensorNode readRegTensorNode) {
             collectRegisterAccessPattern(readRegTensorNode);
-          } else if (n instanceof IssRegChunkReadNode readChunk) {
-            collectRegisterAccessPattern(readChunk);
-          } else if (n instanceof IssRegChunkWriteNode writeChunk) {
-            collectRegisterAccessPattern(writeChunk);
           } else {
             collectRegisterAccessPattern((WriteRegTensorNode) n);
           }
@@ -93,14 +98,16 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
       var baseIndexCount = readNode.regTensor().indexDimensions().size();
       var baseIndices = readNode.indices().stream().limit(baseIndexCount).toList();
       var baseWidth = readNode.regTensor().resultType(baseIndexCount).bitWidth();
+      var readOffset = constIntOr(readNode.bitOffset(), 0);
+      var readWidth = constIntOr(readNode.bitWidth(), baseWidth);
       info.accessPatterns.add(RegInfo.AccessPattern.of(
           readNode,
           RegInfo.AccessType.READ,
           readNode.regTensor(),
           baseIndices,
+          readWidth,
           baseWidth,
-          baseWidth,
-          0
+          readOffset
       ));
       return;
     }
@@ -114,27 +121,26 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
       var baseIndexCount = writeNode.regTensor().indexDimensions().size();
       var baseIndices = writeNode.indices().stream().limit(baseIndexCount).toList();
       var baseWidth = writeNode.regTensor().resultType(baseIndexCount).bitWidth();
+      var writeOffset = constIntOr(writeNode.bitOffset(), 0);
+      var writeWidth = constIntOr(writeNode.bitWidth(), baseWidth);
       info.accessPatterns.add(RegInfo.AccessPattern.of(
           writeNode,
           RegInfo.AccessType.WRITE,
           writeNode.regTensor(),
           baseIndices,
+          writeWidth,
           baseWidth,
-          baseWidth,
-          0
+          writeOffset
       ));
       return;
     }
     info.accessPatterns.add(RegInfo.AccessPattern.of(node));
   }
 
-  private void collectRegisterAccessPattern(IssRegChunkReadNode node) {
-    var info = regInfo(node.regTensor());
-    info.accessPatterns.add(RegInfo.AccessPattern.of(node));
-  }
-
-  private void collectRegisterAccessPattern(IssRegChunkWriteNode node) {
-    var info = regInfo(node.regTensor());
-    info.accessPatterns.add(RegInfo.AccessPattern.of(node));
+  private int constIntOr(ExpressionNode expr, int fallback) {
+    if (expr instanceof ConstantNode constantNode) {
+      return constantNode.constant().asVal().intValue();
+    }
+    return fallback;
   }
 }

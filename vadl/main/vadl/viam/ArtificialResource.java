@@ -54,21 +54,67 @@ public class ArtificialResource extends RegisterResource {
 
   private final List<RegisterTensor.Dimension> dimensions;
 
+  /**
+   * Describes how alias writes expand values to the base tensor width.
+   */
   public enum OverwriteMode {
+    /**
+     * Preserve non-overwritten source bits and merge written bits.
+     */
     MERGE,
+    /**
+     * Overwritten bits outside the alias value are zero-extended.
+     */
     ZERO,
+    /**
+     * Overwritten bits outside the alias value are sign-extended.
+     */
     SIGN
   }
 
+  /**
+   * Encodes alias zero-constraint guard basis as concrete index values.
+   */
   public record ZeroConstraint(List<Constant.Value> indices) {
   }
 
+  /**
+   * Canonical semantics payload for register aliases in VIAM.
+   *
+   * <p>This payload describes how an alias maps to its underlying base tensor.
+   */
   public record Semantics(
+      /**
+       * The concrete base register tensor the alias ultimately refers to.
+       */
       RegisterTensor baseTensor,
+      /**
+       * Prefix indices fixed by the alias definition.
+       *
+       * <p>These constants are prepended before dynamic indices when constructing an effective
+       * base-tensor access.
+       */
       List<Constant.Value> fixedIndices,
+      /**
+       * Dynamic index dimensions exposed by the alias.
+       *
+       * <p>Together with {@code fixedIndices}, this defines the alias index space.
+       */
       List<RegisterTensor.Dimension> dynamicDimensions,
+      /**
+       * Optional static slice applied on top of the mapped base access.
+       */
       @Nullable Constant.BitSlice aliasSlice,
+      /**
+       * Overwrite policy used when alias writes update only a subset of source bits.
+       */
       OverwriteMode overwriteMode,
+      /**
+       * Optional zero-constraint basis for guard semantics.
+       *
+       * <p>If present, the listed index tuple identifies accesses that are constrained by the
+       * alias definition (for example, writes that are discarded or reads that return zero).
+       */
       @Nullable ZeroConstraint zeroConstraint
   ) {
     public int totalIndexCount() {

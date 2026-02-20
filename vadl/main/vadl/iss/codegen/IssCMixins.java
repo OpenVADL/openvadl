@@ -22,8 +22,6 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssMoveNode;
-import vadl.iss.passes.nodes.IssRegChunkReadNode;
-import vadl.iss.passes.nodes.IssRegChunkWriteNode;
 import vadl.iss.passes.nodes.IssSelectNode;
 import vadl.iss.passes.nodes.IssTempExprNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
@@ -214,20 +212,6 @@ public interface IssCMixins {
     @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx,
                         ReadRegTensorNode node) {
-      RegisterAccessEmitters.emitRead(ctx, node);
-    }
-
-    @Handler
-    @SuppressWarnings("MissingJavadocMethod")
-    default void handle(CGenContext<Node> ctx,
-                        IssRegChunkWriteNode node) {
-      RegisterAccessEmitters.emitWrite(ctx, node);
-    }
-
-    @Handler
-    @SuppressWarnings("MissingJavadocMethod")
-    default void handle(CGenContext<Node> ctx,
-                        IssRegChunkReadNode node) {
       RegisterAccessEmitters.emitRead(ctx, node);
     }
   }
