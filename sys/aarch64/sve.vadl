@@ -242,14 +242,15 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
   model SVEReductionInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
     instruction $i.id: SVEReductionFormat =
-      let pred  = P(pg) in
-      let elems = Z(zn) as $BitsBHSD($elSize) in
-        $BHSDReg($elSize)(vd)(0) :=
-          forall i : IndexE in 0..$elCount-1
+      let pred   = P(pg) in
+      let elems  = Z(zn) as $BitsBHSD($elSize) in
+      let result = forall i : IndexE in 0..$elCount-1
             fold $FoldOp($i.funct) with //$FoldOp($i.funct)
               if pred(i << ElSize::$elSize)
               then elems(i)
               else $NeutralElFold($i.funct; $elSize)
+          in
+      Z(vd) := result as BitsZ
     encoding $i.id = { op = 0b0000'0100, opc = $i.opcode, size = ElSize::$elSize }
     assembly $i.id = ( $i.mnemo, ' ', register(vd), $elStr, ', ', register(pg), ', ', register(zn), $elStr )
     }
@@ -257,14 +258,15 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   model SVEAddExtReductionInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
     [undefined when : size = 0b11]
     instruction $i.id: SVEReductionFormat =
-      let pred  = P(pg) in
-      let elems = Z(zn) as $BitsBHSD($elSize) in
-        ZD(vd)(0) :=
-          forall i : IndexE in 0..$elCount-1
+      let pred   = P(pg) in
+      let elems  = Z(zn) as $BitsBHSD($elSize) in
+      let result = forall i : IndexE in 0..$elCount-1
             fold + with
               if pred(i << ElSize::$elSize)
               then elems(i) as $i.funct
               else 0
+          in
+      Z(vd) := result as UInt as BitsZ
     encoding $i.id = { op = 0b0000'0100, opc = $i.opcode, size = ElSize::$elSize }
     assembly $i.id = ( $i.mnemo, ' ', register(vd), ', ', register(pg), ', ', register(zn), $elStr )
     }
