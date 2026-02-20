@@ -27,6 +27,7 @@ import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.DynSliceNode;
@@ -370,7 +371,7 @@ public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
           issRead.accessKind(),
           issRead.readShape(),
           issRead.accessorName(),
-          issRead.accessorIndices().copy(),
+          new NodeList<>(issRead.accessorIndices()),
           IssReadRegNode.WindowKind.CHUNK,
           Constant.Value.of(chunkOffsetBits, Type.bits(32)).toNode(),
           Constant.Value.of(chunkWidthBits, Type.bits(32)).toNode());

@@ -56,16 +56,18 @@ final class AliasCpuAccessors {
     if (alias.resultType().bitWidth() > 64) {
       return false;
     }
-    if (semantics.baseTensor().resultType(semantics.baseTensor().indexDimensions().size())
-        .bitWidth() > 64) {
-      return false;
-    }
+    var baseWidth = semantics.baseTensor()
+        .resultType(semantics.baseTensor().indexDimensions().size())
+        .bitWidth();
     var baseIndexCount = semantics.baseTensor().indexDimensions().size();
     var totalIndexCount = semantics.totalIndexCount();
     if (totalIndexCount < baseIndexCount) {
       return false;
     }
     var isExpansion = totalIndexCount > baseIndexCount;
+    if (baseWidth > 64 && !isExpansion) {
+      return false;
+    }
     var slice = semantics.aliasSlice();
     if (slice != null && !slice.isContinuous()) {
       return false;
@@ -89,11 +91,17 @@ final class AliasCpuAccessors {
       throw new IllegalStateException(
           "Unsupported alias helper read accessor shape for " + alias.simpleName());
     }
+    if (baseWidth > 64 && alias.resultType().bitWidth() % 8 != 0) {
+      throw new IllegalStateException(
+          "Wide-base alias helper read accessors require byte-aligned result width for "
+              + alias.simpleName());
+    }
     var totalIndexCount = semantics.totalIndexCount();
     var argDecls = renderArgDecls(totalIndexCount);
-    var baseArgList = renderArgList(semantics.baseTensor().indexDimensions().size());
+    var baseIndexCount = semantics.baseTensor().indexDimensions().size();
+    var baseArgList = renderArgList(baseIndexCount);
     var cpuStateType = "CPU" + config.targetName().toUpperCase() + "State";
-    var retType = toCUnsignedType(baseWidth);
+    var retType = toCUnsignedType(alias.resultType().bitWidth());
     var baseGetter = baseGetterName(base, baseWidth);
     final var signature = retType + " cpu_get_" + alias.simpleName().toLowerCase()
         + "(" + cpuStateType + " *env" + argDecls + ")";
@@ -105,13 +113,7 @@ final class AliasCpuAccessors {
           .append(zeroCheck(zero.indices()))
           .append(") {\n  return 0;\n}\n");
     }
-    body.append("uint64_t base = ")
-        .append(baseGetter)
-        .append("(env")
-        .append(baseArgList)
-        .append(");\n");
     var slice = semantics.aliasSlice();
-    var baseIndexCount = semantics.baseTensor().indexDimensions().size();
     var isExpansion = semantics.totalIndexCount() > baseIndexCount;
     if (isExpansion) {
       var dynamicConsumed = Math.max(0, baseIndexCount - semantics.fixedIndices().size());
@@ -128,13 +130,39 @@ final class AliasCpuAccessors {
             .append(stride)
             .append(";\n");
       }
-      body.append("uint64_t shifted = VADL_lsr(base, ")
-          .append(baseWidth)
-          .append(", lsb, 64);\n");
-      body.append("return ")
-          .append(toTypedExtract("shifted", baseWidth, alias.resultType().bitWidth()))
-          .append(";");
+      if (baseWidth <= 64) {
+        body.append("uint64_t base = ")
+            .append(baseGetter)
+            .append("(env")
+            .append(baseArgList)
+            .append(");\n");
+        body.append("uint64_t shifted = VADL_lsr(base, ")
+            .append(baseWidth)
+            .append(", lsb, 64);\n");
+        body.append("return ")
+            .append(toTypedExtract("shifted", baseWidth, alias.resultType().bitWidth()))
+            .append(";");
+      } else {
+        body.append("size_t off = ")
+            .append(flatBaseIndexExpr(base))
+            .append(" * ((size_t) ")
+            .append(baseWidth / 8)
+            .append(");\n");
+        body.append("off += (size_t) (lsb >> 3);\n");
+        body.append(retType).append(" out = 0;\n");
+        body.append("memcpy(&out, ((uint8_t*) env->")
+            .append(base.simpleName().toLowerCase())
+            .append(") + off, ")
+            .append(alias.resultType().bitWidth() / 8)
+            .append(");\n");
+        body.append("return out;");
+      }
     } else {
+      body.append("uint64_t base = ")
+          .append(baseGetter)
+          .append("(env")
+          .append(baseArgList)
+          .append(");\n");
       if (slice == null) {
         body.append("return ")
             .append(toTypedExtract("base", baseWidth, alias.resultType().bitWidth()))
@@ -167,10 +195,16 @@ final class AliasCpuAccessors {
       throw new IllegalStateException(
           "Unsupported alias helper write accessor shape for " + alias.simpleName());
     }
+    if (baseWidth > 64 && alias.resultType().bitWidth() % 8 != 0) {
+      throw new IllegalStateException(
+          "Wide-base alias helper write accessors require byte-aligned result width for "
+              + alias.simpleName());
+    }
 
     var totalIndexCount = semantics.totalIndexCount();
     var argDecls = renderArgDecls(totalIndexCount);
-    var baseArgList = renderArgList(semantics.baseTensor().indexDimensions().size());
+    var baseIndexCount = semantics.baseTensor().indexDimensions().size();
+    var baseArgList = renderArgList(baseIndexCount);
     var cpuStateType = "CPU" + config.targetName().toUpperCase() + "State";
     var valueType = toCUnsignedType(alias.resultType().bitWidth());
     var baseGetter = baseGetterName(base, baseWidth);
@@ -186,20 +220,19 @@ final class AliasCpuAccessors {
           .append(") {\n  return;\n}\n");
     }
 
-    var baseIndexCount = semantics.baseTensor().indexDimensions().size();
     var isExpansion = semantics.totalIndexCount() > baseIndexCount;
     var slice = semantics.aliasSlice();
     if (isExpansion) {
+      if (semantics.overwriteMode() != ArtificialResource.OverwriteMode.MERGE) {
+        throw new IllegalStateException(
+            "Wide-base expansion alias helper writes only support overwrite=merge for "
+                + alias.simpleName());
+      }
       var dynamicConsumed = Math.max(0, baseIndexCount - semantics.fixedIndices().size());
       var remainingDimensions = semantics.dynamicDimensions().subList(
           dynamicConsumed,
           semantics.dynamicDimensions().size()
       );
-      body.append("uint64_t base = ")
-          .append(baseGetter)
-          .append("(env")
-          .append(baseArgList)
-          .append(");\n");
       body.append("uint64_t lsb = 0;\n");
       for (int i = 0; i < remainingDimensions.size(); i++) {
         long stride = strideForVirtualIndex(alias.resultType().bitWidth(), remainingDimensions, i);
@@ -209,22 +242,41 @@ final class AliasCpuAccessors {
             .append(stride)
             .append(";\n");
       }
-      body.append("uint64_t mask = VADL_mask(")
-          .append(alias.resultType().bitWidth())
-          .append(");\n");
-      body.append("mask = VADL_lsl(mask, ")
-          .append(baseWidth)
-          .append(", lsb, 64);\n");
-      body.append("uint64_t shifted = VADL_lsl((uint64_t) value, ")
-          .append(baseWidth)
-          .append(", lsb, 64);\n");
-      body.append("uint64_t merged = (base & (~mask)) | (shifted & mask);\n");
-      body.append(baseSetter)
-          .append("(env")
-          .append(baseArgList)
-          .append(", (")
-          .append(toCUnsignedType(baseWidth))
-          .append(") merged);");
+      if (baseWidth <= 64) {
+        body.append("uint64_t base = ")
+            .append(baseGetter)
+            .append("(env")
+            .append(baseArgList)
+            .append(");\n");
+        body.append("uint64_t mask = VADL_mask(")
+            .append(alias.resultType().bitWidth())
+            .append(");\n");
+        body.append("mask = VADL_lsl(mask, ")
+            .append(baseWidth)
+            .append(", lsb, 64);\n");
+        body.append("uint64_t shifted = VADL_lsl((uint64_t) value, ")
+            .append(baseWidth)
+            .append(", lsb, 64);\n");
+        body.append("uint64_t merged = (base & (~mask)) | (shifted & mask);\n");
+        body.append(baseSetter)
+            .append("(env")
+            .append(baseArgList)
+            .append(", (")
+            .append(toCUnsignedType(baseWidth))
+            .append(") merged);");
+      } else {
+        body.append("size_t off = ")
+            .append(flatBaseIndexExpr(base))
+            .append(" * ((size_t) ")
+            .append(baseWidth / 8)
+            .append(");\n");
+        body.append("off += (size_t) (lsb >> 3);\n");
+        body.append("memcpy(((uint8_t*) env->")
+            .append(base.simpleName().toLowerCase())
+            .append(") + off, &value, ")
+            .append(alias.resultType().bitWidth() / 8)
+            .append(");");
+      }
       return Map.of("signature", signature, "body", body.toString());
     }
 
@@ -343,6 +395,18 @@ final class AliasCpuAccessors {
       checks.add("d" + i + " == ((uint32_t) " + values.get(i).hexadecimal() + ")");
     }
     return String.join(" && ", checks);
+  }
+
+  private static String flatBaseIndexExpr(RegisterTensor base) {
+    var dims = base.indexDimensions();
+    if (dims.isEmpty()) {
+      return "((size_t) 0)";
+    }
+    var expr = "((size_t) d0)";
+    for (int i = 1; i < dims.size(); i++) {
+      expr = "((" + expr + ") * ((size_t) " + dims.get(i).size() + ") + ((size_t) d" + i + "))";
+    }
+    return expr;
   }
 
   private static String toCUnsignedType(int width) {

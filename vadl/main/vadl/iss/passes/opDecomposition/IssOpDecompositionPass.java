@@ -58,7 +58,6 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SliceNode;
@@ -127,9 +126,8 @@ public class IssOpDecompositionPass extends AbstractIssPass {
 
   private Optional<Diagnostic> checkNoLargeOperations(Graph behavior) {
     var tooLargeExpr = behavior.getNodes(ExpressionNode.class)
-        .filter(e -> !(e instanceof IssReadRegNode))
-        .filter(n -> (n.type() instanceof DataType)
-            && n.type().asDataType().bitWidth() > configuration().targetSize().width)
+        .filter(n -> n.type() instanceof DataType)
+        .filter(n -> effectiveExpressionBitWidth(n) > configuration().targetSize().width)
         .map(n -> Diagnostic.error("Too large operation type", n)
             .locationDescription(n, "The ISS was not able to decompose this to smaller types.")
             .note("Operation decomposition is still in early stages and "
@@ -171,6 +169,17 @@ public class IssOpDecompositionPass extends AbstractIssPass {
       }
     }
     return write.writeBitWidth();
+  }
+
+  private int effectiveExpressionBitWidth(ExpressionNode expr) {
+    if (expr instanceof IssReadRegNode ir
+        && ir.windowKind() == IssReadRegNode.WindowKind.CHUNK) {
+      if (ir.bitWidth() instanceof ConstantNode c) {
+        return c.constant().asVal().intValue();
+      }
+      return ir.type().bitWidth();
+    }
+    return expr.type().asDataType().bitWidth();
   }
 }
 
@@ -321,8 +330,6 @@ class OpDecomposer {
 
   private boolean isDecomposeExpressionCandidate(ExpressionNode node) {
     return node.type() instanceof DataType
-        // dynamic slices are normalized later to ISS extract nodes
-        && !(node instanceof DynSliceNode)
         // find any expression node that is within the target size while having a too large input.
         && node.type().asDataType().bitWidth() <= targetSize.width
         && node.inputs().map(ExpressionNode.class::cast)

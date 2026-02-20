@@ -1139,9 +1139,9 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   $InstrMemX12      (SVEStoreMulScalarImmInstr ; (SVEimmST      ; "st"    ; 0b111'0010'1     ; unused   ))
   $InstrMemX12      (SVEStoreMulScalarSclInstr ; (SVEsclST      ; "st"    ; 0b111'0010       ; unused   ))
   // On >64 bit, those instructions are currently exploding, leading to 20 MB of C code
-  $VL64Only(
+//   $VL64Only(
+//   )
     $InstrMemX12      (SVELoadMulScalarImmInstr  ; (SVEimmLD      ; "ld"    ; 0b101'0010'0     ; unused   ))
     $InstrMemX12      (SVELoadMulScalarSclInstr  ; (SVEsclLD      ; "ld"    ; 0b101'0010       ; unused   ))
-  )
 
 }

@@ -20,6 +20,7 @@ import static vadl.iss.passes.TcgPassUtils.regInfo;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -29,6 +30,7 @@ import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ParamNode;
 
 /**
@@ -127,8 +129,30 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
   }
 
   public Stream<ParamNode> helperFormatParamOrder() {
-    return instr().behavior().getNodes(ParamNode.class)
+    var params = new LinkedHashMap<String, ParamNode>();
+    instr().behavior().getNodes(ParamNode.class)
+        .forEach(p -> params.putIfAbsent(p.definition().simpleName(), p));
+
+    Stream.concat(
+            instr().behavior().getNodes(IssReadRegNode.class)
+                .flatMap(n -> n.accessorIndices().stream()),
+            instr().behavior().getNodes(IssWriteRegNode.class)
+                .flatMap(n -> n.accessorIndices().stream())
+        )
+        .forEach(expr -> collectParamNodes(expr)
+            .forEach(p -> params.putIfAbsent(p.definition().simpleName(), p)));
+
+    return params.values().stream()
         .sorted(Comparator.comparing((a) -> a.definition().simpleName()));
+  }
+
+  private List<ParamNode> collectParamNodes(ExpressionNode expr) {
+    var out = new ArrayList<ParamNode>();
+    if (expr instanceof ParamNode param) {
+      out.add(param);
+    }
+    expr.collectInputsWithChildren(out, ParamNode.class);
+    return out;
   }
 
   public void addExtractedFunction(Function function) {

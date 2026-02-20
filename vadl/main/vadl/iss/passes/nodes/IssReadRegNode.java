@@ -17,6 +17,7 @@
 package vadl.iss.passes.nodes;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -79,8 +80,8 @@ public class IssReadRegNode extends ReadRegTensorNode {
   @DataValue
   @Nullable
   private final String accessorName;
-  @DataValue
-  private final NodeList<ExpressionNode> accessorIndices;
+  @Input
+  private NodeList<ExpressionNode> accessorIndices;
   @DataValue
   private final WindowKind windowKind;
   @Input
@@ -92,7 +93,7 @@ public class IssReadRegNode extends ReadRegTensorNode {
                         NodeList<ExpressionNode> resourceIndices,
                         DataType type) {
     this(regTensor, resourceIndices, type, null, AccessKind.BASE, ReadShape.FULL, null,
-        resourceIndices.copy(), WindowKind.FULL, intConst(0), intConst(type.bitWidth()));
+        new NodeList<>(resourceIndices), WindowKind.FULL, intConst(0), intConst(type.bitWidth()));
   }
 
   /**
@@ -186,7 +187,7 @@ public class IssReadRegNode extends ReadRegTensorNode {
         accessKind,
         readShape,
         accessorName,
-        accessorIndices.copy(),
+        new NodeList<>(accessorIndices),
         windowKind,
         bitOffset.copy(),
         bitWidth.copy());
@@ -211,6 +212,7 @@ public class IssReadRegNode extends ReadRegTensorNode {
   @Override
   protected void collectInputs(List<vadl.viam.graph.Node> collection) {
     super.collectInputs(collection);
+    collection.addAll(accessorIndices);
     collection.add(bitOffset);
     collection.add(bitWidth);
   }
@@ -219,6 +221,9 @@ public class IssReadRegNode extends ReadRegTensorNode {
   public void applyOnInputsUnsafe(
       vadl.viam.graph.GraphVisitor.Applier<vadl.viam.graph.Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
+    accessorIndices = accessorIndices.stream()
+        .map(e -> visitor.apply(this, e, ExpressionNode.class))
+        .collect(Collectors.toCollection(NodeList::new));
     bitOffset = visitor.apply(this, bitOffset, ExpressionNode.class);
     bitWidth = visitor.apply(this, bitWidth, ExpressionNode.class);
   }
@@ -229,7 +234,6 @@ public class IssReadRegNode extends ReadRegTensorNode {
     collection.add(accessKind);
     collection.add(readShape);
     collection.add(accessorName);
-    collection.addAll(accessorIndices);
     collection.add(windowKind);
   }
 

@@ -17,6 +17,7 @@
 package vadl.iss.passes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.iss.passes.TcgPassUtils.regInfo;
 import static vadl.utils.GraphUtils.intU;
 
 import java.io.IOException;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.pass.PassName;
@@ -109,14 +111,10 @@ class IssRegisterAccessLowering {
     behavior.getNodes(WriteArtificialResNode.class).toList().forEach(this::lowerWrite);
     behavior.getNodes(ReadRegTensorNode.class).toList().forEach(this::lowerBaseRead);
     behavior.getNodes(WriteRegTensorNode.class).toList().forEach(this::lowerBaseWrite);
-    if (behavior.getNodes(ReadArtificialResNode.class).findAny().isPresent()) {
-      throw new IllegalStateException(
-          "ISS alias lowering left artificial reads in behavior graph.");
-    }
-    if (behavior.getNodes(WriteArtificialResNode.class).findAny().isPresent()) {
-      throw new IllegalStateException(
-          "ISS alias lowering left artificial writes in behavior graph.");
-    }
+    behavior.ensure(behavior.getNodes(ReadArtificialResNode.class).findAny().isEmpty(),
+        "ISS alias lowering left artificial reads in behavior graph.");
+    behavior.ensure(behavior.getNodes(WriteArtificialResNode.class).findAny().isEmpty(),
+        "ISS alias lowering left artificial writes in behavior graph.");
   }
 
   private void lowerBaseRead(ReadRegTensorNode read) {
@@ -165,17 +163,26 @@ class IssRegisterAccessLowering {
     var baseDims = semantics.baseTensor().indexDimensions().size();
     var simpleAliasAccessor = semantics.aliasSlice() == null
         && aliasIndices.size() == baseDims;
-    if (simpleAliasAccessor) {
-      var resourceIndices = aliasIndices;
-      var readShape = IssReadRegNode.ReadShape.FULL;
+    var helperExpansionAccessor = regInfo(semantics.baseTensor()).execClass()
+        == RegInfo.ExecClass.HELPER_ONLY
+        && semantics.aliasSlice() == null
+        && aliasIndices.size() > baseDims
+        && read.type().asDataType().bitWidth() <= 64;
+    if (simpleAliasAccessor || helperExpansionAccessor) {
+      var resourceIndices = helperExpansionAccessor
+          ? new NodeList<>(aliasIndices.stream().limit(baseDims).toList())
+          : aliasIndices;
+      var readShape = helperExpansionAccessor
+          ? IssReadRegNode.ReadShape.EXPANSION
+          : IssReadRegNode.ReadShape.FULL;
       var aliasRead = new IssReadRegNode(
           semantics.baseTensor(),
           resourceIndices,
-          semantics.baseTensor().resultType(baseDims),
+          read.type().asDataType(),
           IssReadRegNode.AccessKind.ALIAS,
           readShape,
           read.resourceDefinition().simpleName().toLowerCase(),
-          aliasIndices.copy()
+          new NodeList<>(aliasIndices)
       );
       aliasRead.setSourceLocationIfNotSet(read.location());
       read.replaceAndDelete(aliasRead);
@@ -209,17 +216,18 @@ class IssRegisterAccessLowering {
     if (aliasIndices.size() == baseIndexCount) {
       return new IssReadRegNode(
           baseTensor,
-          aliasIndices.copy(),
+          new NodeList<>(aliasIndices),
           baseTensor.resultType(baseIndexCount),
           IssReadRegNode.AccessKind.BASE,
           IssReadRegNode.ReadShape.FULL,
           null,
-          aliasIndices.copy());
+          new NodeList<>(aliasIndices));
     }
 
     if (aliasIndices.size() < baseIndexCount) {
-      throw new IllegalStateException(
-          "Unsupported alias compression in ISS for " + read.resourceDefinition().simpleName());
+      read.ensure(false,
+          "Unsupported alias compression in ISS for %s",
+          read.resourceDefinition().simpleName());
     }
 
     var baseIndices = new NodeList<ExpressionNode>();
@@ -245,7 +253,23 @@ class IssRegisterAccessLowering {
         remainingDimensions);
     var msbLsb = getMsbAndLsbOfIndexAccess(baseReadType, resultType, remainingIndices,
         remainingDimensions);
-    return new DynSliceNode(baseRead, msbLsb.left(), msbLsb.right(), resultType);
+    var lsb = msbLsb.right();
+    if (resultType.bitWidth() <= 64 && isTranslationTimeConstant(lsb)) {
+      return new IssReadRegNode(
+          baseTensor,
+          baseIndices,
+          resultType,
+          null,
+          IssReadRegNode.AccessKind.BASE,
+          IssReadRegNode.ReadShape.EXPANSION,
+          null,
+          baseIndices.copy(),
+          IssReadRegNode.WindowKind.CHUNK,
+          lsb,
+          intU(resultType.bitWidth(), 32).toNode()
+      );
+    }
+    return new DynSliceNode(baseRead, msbLsb.left(), lsb, resultType);
   }
 
   private void lowerWrite(WriteArtificialResNode write) {
@@ -254,8 +278,9 @@ class IssRegisterAccessLowering {
     var baseTensor = semantics.baseTensor();
     var baseIndexCount = baseTensor.indexDimensions().size();
     if (aliasIndices.size() < baseIndexCount) {
-      throw new IllegalStateException(
-          "Unsupported alias compression in ISS for " + write.resourceDefinition().simpleName());
+      write.ensure(false,
+          "Unsupported alias compression in ISS for %s",
+          write.resourceDefinition().simpleName());
     }
 
     var baseIndices = new NodeList<ExpressionNode>();
@@ -286,7 +311,7 @@ class IssRegisterAccessLowering {
           IssWriteRegNode.AccessKind.ALIAS,
           guardKind,
           write.resourceDefinition().simpleName().toLowerCase(),
-          aliasIndices.copy()
+          new NodeList<>(aliasIndices)
       );
       replacement.setSourceLocationIfNotSet(write.location());
       write.replaceAndDelete(replacement);
@@ -306,7 +331,7 @@ class IssRegisterAccessLowering {
           IssWriteRegNode.AccessKind.ALIAS,
           guardKind,
           write.resourceDefinition().simpleName().toLowerCase(),
-          aliasIndices.copy(),
+          new NodeList<>(aliasIndices),
           IssWriteRegNode.WindowKind.CHUNK,
           intU(semantics.aliasSlice().lsb(), 32).toNode(),
           intU(semantics.aliasSlice().bitSize(), 32).toNode()
@@ -393,7 +418,7 @@ class IssRegisterAccessLowering {
           IssWriteRegNode.AccessKind.ALIAS,
           guardKind,
           write.resourceDefinition().simpleName().toLowerCase(),
-          aliasIndices.copy()
+          new NodeList<>(aliasIndices)
       );
       replacement.setSourceLocationIfNotSet(write.location());
       write.replaceAndDelete(replacement);
@@ -462,13 +487,12 @@ class IssRegisterAccessLowering {
                                                      NodeList<ExpressionNode> dynamicIndices) {
     var baseDims = semantics.baseTensor().indexDimensions();
     if (semantics.fixedIndices().size() > baseDims.size()) {
-      throw new IllegalStateException(
-          "Invalid alias semantics: fixed indices exceed base tensor dimensions");
+      behavior.ensure(false, "Invalid alias semantics: fixed indices exceed base tensor dimensions");
     }
     if (dynamicIndices.size() > semantics.dynamicDimensions().size()) {
-      throw new IllegalStateException(
-          "Invalid alias access: provided " + dynamicIndices.size()
-              + " dynamic indices, expected at most " + semantics.dynamicDimensions().size());
+      behavior.ensure(false,
+          "Invalid alias access: provided %d dynamic indices, expected at most %d",
+          dynamicIndices.size(), semantics.dynamicDimensions().size());
     }
 
     var indices = new NodeList<ExpressionNode>();
@@ -489,9 +513,9 @@ class IssRegisterAccessLowering {
 
     var constraints = zeroConstraint.indices();
     if (constraints.size() > indices.size()) {
-      throw new IllegalStateException(
-          "Invalid zero-constraint alias semantics for " + semantics.baseTensor().simpleName()
-              + ": " + constraints.size() + " constraints for " + indices.size() + " indices");
+      behavior.ensure(false,
+          "Invalid zero-constraint alias semantics for %s: %d constraints for %d indices",
+          semantics.baseTensor().simpleName(), constraints.size(), indices.size());
     }
 
     var checks = new ArrayList<ExpressionNode>();
@@ -560,15 +584,10 @@ class IssRegisterAccessLowering {
       coveredBits = Math.multiplyExact(coveredBits, dim.size());
     }
     if (coveredBits > sourceValueType.bitWidth()) {
-      throw new IllegalStateException(
-          "Invalid expansion alias mapping for "
-              + alias.simpleName()
-              + ": virtual alias indexing may address "
-              + coveredBits
-              + " bits, but source read provides only "
-              + sourceValueType.bitWidth()
-              + " bits."
-      );
+      behavior.ensure(false,
+          "Invalid expansion alias mapping for %s: virtual alias indexing may address %d bits, "
+              + "but source read provides only %d bits.",
+          alias.simpleName(), coveredBits, sourceValueType.bitWidth());
     }
   }
 

@@ -116,12 +116,16 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
           baseWidth,
           readOffset
       );
-      ensureSupportedPatternWidth(behavior, pattern);
+      if (!shouldCollectPattern(behavior, node, pattern)) {
+        return;
+      }
       info.accessPatterns.add(pattern);
       return;
     }
     var pattern = RegInfo.AccessPattern.of(node);
-    ensureSupportedPatternWidth(behavior, pattern);
+    if (!shouldCollectPattern(behavior, node, pattern)) {
+      return;
+    }
     info.accessPatterns.add(pattern);
   }
 
@@ -143,12 +147,16 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
           baseWidth,
           writeOffset
       );
-      ensureSupportedPatternWidth(behavior, pattern);
+      if (!shouldCollectPattern(behavior, node, pattern)) {
+        return;
+      }
       info.accessPatterns.add(pattern);
       return;
     }
     var pattern = RegInfo.AccessPattern.of(node);
-    ensureSupportedPatternWidth(behavior, pattern);
+    if (!shouldCollectPattern(behavior, node, pattern)) {
+      return;
+    }
     info.accessPatterns.add(pattern);
   }
 
@@ -159,15 +167,43 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
     return fallback;
   }
 
-  private void ensureSupportedPatternWidth(Graph behavior, RegInfo.AccessPattern pattern) {
-    if (pattern.elementWidth() > configuration().targetSize().width) {
-      var owner = behavior.parentDefinition();
-      throw new IllegalStateException(
-          "Unsupported register access pattern above target width in ISS retrieval: "
-              + pattern
-              + ", behavior=" + behavior
-              + ", owner="
-              + (owner == null ? "null" : owner.getClass().getSimpleName() + ":" + owner));
+  private boolean shouldCollectPattern(Graph behavior, ReadRegTensorNode node,
+                                       RegInfo.AccessPattern pattern) {
+    if (pattern.elementWidth() <= configuration().targetSize().width) {
+      return true;
     }
+    if (regInfo(node.regTensor()).execClass() == RegInfo.ExecClass.HELPER_ONLY) {
+      // Helper-only wide accesses are emitted via helper/cpu paths and do not require
+      // scalar access-pattern signatures.
+      return false;
+    }
+    var owner = behavior.parentDefinition();
+    node.ensure(false,
+        "Unsupported register access pattern above target width in ISS retrieval: %s, "
+            + "behavior=%s, owner=%s",
+        pattern,
+        behavior,
+        owner == null ? "null" : owner.getClass().getSimpleName() + ":" + owner);
+    return false;
+  }
+
+  private boolean shouldCollectPattern(Graph behavior, WriteRegTensorNode node,
+                                       RegInfo.AccessPattern pattern) {
+    if (pattern.elementWidth() <= configuration().targetSize().width) {
+      return true;
+    }
+    if (regInfo(node.regTensor()).execClass() == RegInfo.ExecClass.HELPER_ONLY) {
+      // Helper-only wide accesses are emitted via helper/cpu paths and do not require
+      // scalar access-pattern signatures.
+      return false;
+    }
+    var owner = behavior.parentDefinition();
+    node.ensure(false,
+        "Unsupported register access pattern above target width in ISS retrieval: %s, "
+            + "behavior=%s, owner=%s",
+        pattern,
+        behavior,
+        owner == null ? "null" : owner.getClass().getSimpleName() + ":" + owner);
+    return false;
   }
 }

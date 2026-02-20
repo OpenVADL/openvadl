@@ -17,6 +17,7 @@
 package vadl.iss.passes.nodes;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -74,8 +75,8 @@ public class IssWriteRegNode extends WriteRegTensorNode {
   @DataValue
   @Nullable
   private final String accessorName;
-  @DataValue
-  private final NodeList<ExpressionNode> accessorIndices;
+  @Input
+  private NodeList<ExpressionNode> accessorIndices;
   @DataValue
   private final WindowKind windowKind;
   @Input
@@ -92,7 +93,7 @@ public class IssWriteRegNode extends WriteRegTensorNode {
                          @Nullable ExpressionNode condition) {
     this(regTensor, resourceIndices, value, null, condition,
         AccessKind.BASE, WriteGuardKind.NONE, null,
-        resourceIndices.copy(), WindowKind.FULL, intConst(0),
+        new NodeList<>(resourceIndices), WindowKind.FULL, intConst(0),
         intConst(value.type().asDataType().bitWidth()));
   }
 
@@ -193,7 +194,7 @@ public class IssWriteRegNode extends WriteRegTensorNode {
         accessKind,
         writeGuardKind,
         accessorName,
-        accessorIndices.copy(),
+        new NodeList<>(accessorIndices),
         windowKind,
         bitOffset.copy(),
         bitWidth.copy()
@@ -221,6 +222,7 @@ public class IssWriteRegNode extends WriteRegTensorNode {
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);
+    collection.addAll(accessorIndices);
     collection.add(bitOffset);
     collection.add(bitWidth);
   }
@@ -228,6 +230,9 @@ public class IssWriteRegNode extends WriteRegTensorNode {
   @Override
   public void applyOnInputsUnsafe(vadl.viam.graph.GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
+    accessorIndices = accessorIndices.stream()
+        .map(e -> visitor.apply(this, e, ExpressionNode.class))
+        .collect(Collectors.toCollection(NodeList::new));
     bitOffset = visitor.apply(this, bitOffset, ExpressionNode.class);
     bitWidth = visitor.apply(this, bitWidth, ExpressionNode.class);
   }
@@ -238,7 +243,6 @@ public class IssWriteRegNode extends WriteRegTensorNode {
     collection.add(accessKind);
     collection.add(writeGuardKind);
     collection.add(accessorName);
-    collection.addAll(accessorIndices);
     collection.add(windowKind);
   }
 

@@ -18,11 +18,11 @@ package vadl.iss.codegen;
 
 import static vadl.error.DiagUtils.throwNotAllowed;
 
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.cppCodeGen.mixins.CInvalidMixins;
-import vadl.iss.passes.extensions.RegInfo;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.utils.functionInterfaces.TriConsumer;
@@ -90,10 +90,13 @@ abstract class IssProcGen implements CDefaultMixins.All,
   }
 
   void initSingleReadReg(ReadRegTensorNode read) {
-    var accessPattern = RegInfo.AccessPattern.of(read);
+    var width = read.type().asDataType().bitWidth();
+    read.ensure(width <= 64,
+        "Helper read preload expects <=64-bit reads, got %d-bit on %s", width, read);
+    var valueType = CppTypeMap.nextFittingUInt(read.type().asDataType());
     var name = readRegVariable(read);
     var accessName = RegisterAccessEmitters.readAccessorName(read);
-    ctx.wr(accessPattern.valueCType() + " " + name + " = ")
+    ctx.wr(valueType + " " + name + " = ")
         .wr(accessName + "(env");
     for (var i : RegisterAccessEmitters.readAccessorArgs(read)) {
       ctx.wr(", ").gen(i);

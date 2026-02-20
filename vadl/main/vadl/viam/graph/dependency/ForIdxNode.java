@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -40,7 +40,7 @@ public class ForIdxNode extends ExpressionNode {
    * Construct the index node.
    */
   public ForIdxNode(Type type, int fromIdx, int toIdx) {
-    super(type);
+    super(normalizeType(type));
     this.fromIdx = fromIdx;
     this.toIdx = toIdx;
   }
@@ -86,5 +86,14 @@ public class ForIdxNode extends ExpressionNode {
     super.collectData(collection);
     collection.add(fromIdx);
     collection.add(toIdx);
+  }
+
+  /**
+   * Canonicalize forall index types to unsigned bits. This avoids creating two semantically
+   * equivalent index nodes for signed/unsigned-only interpretation differences.
+   */
+  private static DataType normalizeType(Type type) {
+    var dt = type.asDataType();
+    return Type.bits(dt.bitWidth()).asDataType();
   }
 }

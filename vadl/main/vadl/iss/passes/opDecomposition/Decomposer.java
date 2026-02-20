@@ -527,7 +527,7 @@ class Decomposer
       handle(rq, readRegNode);
       return;
     }
-    throw new IllegalStateException(
+    toHandle.ensure(false,
         "Unexpected ReadRegTensorNode in ISS op decomposition; expected IssReadRegNode.");
   }
 
@@ -732,7 +732,38 @@ class Decomposer
 
   @Handler
   void handle(Request rq, DynSliceNode toHandle) {
-    throw new UnsupportedOperationException("Type DynSliceNode not yet implemented");
+    // A common oversized pattern is a target-sized dynamic slice on top of a wide register read.
+    // Represent it directly as a chunk-window IssReadRegNode so helper/TCG paths avoid full-wide
+    // preloads.
+    if (toHandle.value() instanceof IssReadRegNode readRegNode) {
+      var requestedWidth = rq.slice.width();
+      var lsbType = toHandle.lsb().type().asDataType();
+      var lsbOffset = rq.slice.lo() == 0
+          ? toHandle.lsb()
+          : toHandle.ensureGraph().addWithInputs(BuiltInTable.ADD.call(
+              toHandle.lsb(),
+              Constant.Value.of(rq.slice.lo(), lsbType).toNode()));
+
+      var chunkRead = new IssReadRegNode(
+          readRegNode.regTensor(),
+          readRegNode.indices().copy(),
+          Type.bits(requestedWidth).asDataType(),
+          readRegNode.staticCounterAccess(),
+          readRegNode.accessKind(),
+          readRegNode.readShape(),
+          readRegNode.accessorName(),
+          new NodeList<>(readRegNode.accessorIndices()),
+          IssReadRegNode.WindowKind.CHUNK,
+          lsbOffset,
+          Constant.Value.of(requestedWidth, Type.bits(32)).toNode());
+      chunkRead.setSourceLocation(toHandle.location());
+      rq.result = chunkRead;
+      return;
+    }
+
+    toHandle.ensure(false,
+        "DynSlice decomposition above target width requires IssReadReg source, got %s",
+        toHandle.value().getClass().getSimpleName());
   }
 
   @Handler
@@ -786,7 +817,7 @@ class Decomposer
 
   private NodeList<ExpressionNode> readAccessorIndices(ReadRegTensorNode read) {
     if (read instanceof IssReadRegNode issRead) {
-      return issRead.accessorIndices().copy();
+      return new NodeList<>(issRead.accessorIndices());
     }
     return read.indices().copy();
   }
@@ -816,7 +847,7 @@ class Decomposer
 
   private NodeList<ExpressionNode> writeAccessorIndices(WriteRegTensorNode write) {
     if (write instanceof IssWriteRegNode issWrite) {
-      return issWrite.accessorIndices().copy();
+      return new NodeList<>(issWrite.accessorIndices());
     }
     return write.indices().copy();
   }

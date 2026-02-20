@@ -1070,7 +1070,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           .orElseThrow();
 
       return new ForIdxNode(
-          getViamType(expr.type()),
+          forallIndexType(getViamType(expr.type())),
           requireNonNull(index.computedFrom),
           requireNonNull(index.computedTo));
     }
@@ -1083,7 +1083,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           .orElseThrow();
 
       return new ForIdxNode(
-          getViamType(expr.type()),
+          forallIndexType(getViamType(expr.type())),
           requireNonNull(index.computedFrom),
           requireNonNull(index.computedTo));
     }
@@ -1589,7 +1589,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     var index = requireNonNull(expr.indices.getFirst());
-    var idx = new ForIdxNode(requireNonNull(index.typeLiteral).type(),
+    var idx = new ForIdxNode(forallIndexType(requireNonNull(index.typeLiteral).type()),
         requireNonNull(index.computedFrom),
         requireNonNull(index.computedTo));
 
@@ -1899,7 +1899,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var index = requireNonNull(statement.indices.getFirst());
     var idx =
-        new ForIdxNode(requireNonNull(index.typeLiteral).type(), requireNonNull(index.computedFrom),
+        new ForIdxNode(forallIndexType(requireNonNull(index.typeLiteral).type()),
+            requireNonNull(index.computedFrom),
             requireNonNull(index.computedTo));
     var branchBegin = addToGraph(new BranchBeginNode(next));
     var forallNode = addToGraph(new ForallNode(idx, branchBegin));
@@ -1921,6 +1922,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var mergeNode = addToGraph(new MergeNode(new NodeList<>(ifEnd, elseEnd)));
     var ifNode = addToGraph(new IfNode(condition, ifStart, elseStart));
     return SubgraphContext.of(statement, ifNode, mergeNode);
+  }
+
+  private static Type forallIndexType(Type type) {
+    return Type.bits(type.asDataType().bitWidth());
   }
 
   @Override
