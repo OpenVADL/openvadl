@@ -18,6 +18,7 @@ package vadl.iss.codegen;
 
 import static vadl.iss.passes.TcgPassUtils.regInfo;
 
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.passes.nodes.IssReadRegNode;
@@ -157,11 +158,40 @@ public final class RegisterAccessEmitters {
 
     @Override
     public void emitRead(CGenContext<Node> ctx, ReadRegTensorNode node) {
+      if (node instanceof IssReadRegNode readNode
+          && readNode.accessKind() == IssReadRegNode.AccessKind.BASE
+          && readNode.windowKind() == IssReadRegNode.WindowKind.CHUNK) {
+        var valueType = CppTypeMap.nextFittingUInt(node.type().asDataType());
+        ctx.wr("((").wr(valueType).wr(") cpu_get_")
+            .wr(node.regTensor().simpleName().toLowerCase())
+            .wr("_chunk(env");
+        for (var i : readNode.indices()) {
+          ctx.wr(", ").gen(i);
+        }
+        ctx.wr(", ").gen(readNode.bitOffset());
+        ctx.wr(", ").gen(readNode.bitWidth());
+        ctx.wr("))");
+        return;
+      }
       emitReadCall(ctx, node, readAccessorName(node));
     }
 
     @Override
     public void emitWrite(CGenContext<Node> ctx, WriteRegTensorNode node) {
+      if (node instanceof IssWriteRegNode writeNode
+          && writeNode.accessKind() == IssWriteRegNode.AccessKind.BASE
+          && writeNode.windowKind() == IssWriteRegNode.WindowKind.CHUNK) {
+        ctx.wr("cpu_set_")
+            .wr(node.regTensor().simpleName().toLowerCase())
+            .wr("_chunk(env");
+        for (var i : writeNode.indices()) {
+          ctx.wr(", ").gen(i);
+        }
+        ctx.wr(", ").gen(writeNode.bitOffset());
+        ctx.wr(", ").gen(writeNode.bitWidth());
+        ctx.wr(", ((uint64_t) ").gen(node.value()).wr("))");
+        return;
+      }
       emitWriteCall(ctx, node, writeAccessorName(node));
     }
   }

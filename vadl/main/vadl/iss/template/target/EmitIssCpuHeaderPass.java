@@ -44,6 +44,10 @@ public class EmitIssCpuHeaderPass extends IssTemplateRenderingPass {
         AliasCpuAccessors.renderReadAccessors(specification, configuration()));
     vars.put("alias_cpu_write_accessors",
         AliasCpuAccessors.renderWriteAccessors(specification, configuration()));
+    vars.put("base_chunk_cpu_read_accessors",
+        BaseChunkCpuAccessors.renderReadAccessors(specification, configuration()));
+    vars.put("base_chunk_cpu_write_accessors",
+        BaseChunkCpuAccessors.renderWriteAccessors(specification, configuration()));
     return vars;
   }
 

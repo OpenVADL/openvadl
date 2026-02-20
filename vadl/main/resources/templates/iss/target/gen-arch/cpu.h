@@ -90,6 +90,12 @@ int [(${gen_arch_lower})]_cpu_gdb_write_register(CPUState *cpu, uint8_t *buf, in
 [# th:each="access : ${alias_cpu_write_accessors}"]
 [(${access.signature})];
 [/]
+[# th:each="access : ${base_chunk_cpu_read_accessors}"]
+[(${access.signature})];
+[/]
+[# th:each="access : ${base_chunk_cpu_write_accessors}"]
+[(${access.signature})];
+[/]
 
 
 #include "exec/cpu-all.h"
