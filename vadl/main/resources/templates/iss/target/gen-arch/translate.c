@@ -91,7 +91,14 @@ static TCGv get_[(${alias.name_lower})](DisasContext *ctx [(${alias.getter_param
     [# th:if="${alias.has_zero_check}"]
     if ([(${alias.zero_check})]) return tcg_constant_i[(${alias.value_width})](0);
     [/]
+    [# th:if="${alias.has_slice}"]
+    TCGv base = get_[(${alias.base_name_lower})](ctx[(${alias.forward_args})]);
+    TCGv result = tcg_temp_new_i[(${alias.value_width})]();
+    tcg_gen_extract_i[(${alias.value_width})](result, base, [(${alias.slice_lsb})], [(${alias.slice_width})]);
+    return result;
+    [/] [# th:unless="${alias.has_slice}"]
     return get_[(${alias.base_name_lower})](ctx[(${alias.forward_args})]);
+    [/]
 }
 
 static TCGv dest_[(${alias.name_lower})](DisasContext *ctx [(${alias.getter_params})])

@@ -20,6 +20,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
+import vadl.viam.Counter;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -65,7 +66,19 @@ public class IssReadRegNode extends ReadRegTensorNode {
                         ReadShape readShape,
                         @Nullable String accessorName,
                         NodeList<ExpressionNode> accessorIndices) {
-    super(regTensor, resourceIndices, type, null);
+    this(regTensor, resourceIndices, type, null, accessKind, readShape, accessorName,
+        accessorIndices);
+  }
+
+  public IssReadRegNode(RegisterTensor regTensor,
+                        NodeList<ExpressionNode> resourceIndices,
+                        DataType type,
+                        @Nullable Counter staticCounterAccess,
+                        AccessKind accessKind,
+                        ReadShape readShape,
+                        @Nullable String accessorName,
+                        NodeList<ExpressionNode> accessorIndices) {
+    super(regTensor, resourceIndices, type, staticCounterAccess);
     this.accessKind = accessKind;
     this.readShape = readShape;
     this.accessorName = accessorName;
@@ -94,6 +107,7 @@ public class IssReadRegNode extends ReadRegTensorNode {
         regTensor(),
         indices().copy(),
         type(),
+        staticCounterAccess(),
         accessKind,
         readShape,
         accessorName,
@@ -106,6 +120,7 @@ public class IssReadRegNode extends ReadRegTensorNode {
         regTensor(),
         indices(),
         type(),
+        staticCounterAccess(),
         accessKind,
         readShape,
         accessorName,

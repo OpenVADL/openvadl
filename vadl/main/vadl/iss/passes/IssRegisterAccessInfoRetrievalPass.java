@@ -28,6 +28,7 @@ import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssRegChunkReadNode;
 import vadl.iss.passes.nodes.IssRegChunkWriteNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;
@@ -108,6 +109,22 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
 
   private void collectRegisterAccessPattern(WriteRegTensorNode node) {
     var info = regInfo(node.regTensor());
+    if (node instanceof IssWriteRegNode writeNode
+        && writeNode.accessKind() == IssWriteRegNode.AccessKind.ALIAS) {
+      var baseIndexCount = writeNode.regTensor().indexDimensions().size();
+      var baseIndices = writeNode.indices().stream().limit(baseIndexCount).toList();
+      var baseWidth = writeNode.regTensor().resultType(baseIndexCount).bitWidth();
+      info.accessPatterns.add(RegInfo.AccessPattern.of(
+          writeNode,
+          RegInfo.AccessType.WRITE,
+          writeNode.regTensor(),
+          baseIndices,
+          baseWidth,
+          baseWidth,
+          0
+      ));
+      return;
+    }
     info.accessPatterns.add(RegInfo.AccessPattern.of(node));
   }
 

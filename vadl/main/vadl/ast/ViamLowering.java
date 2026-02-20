@@ -436,23 +436,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
           .map(ConstantValue::toViamConstant)
           .toList();
 
-      ArtificialResource.OverwriteMode overwriteMode = ArtificialResource.OverwriteMode.MERGE;
-      var overwriteAnno = definition.findAnnotation("overwrite source", EnumAnnotation.class);
-      if (overwriteAnno != null) {
-        overwriteMode = switch (overwriteAnno.value) {
-          case "zero" -> ArtificialResource.OverwriteMode.ZERO;
-          case "sign" -> ArtificialResource.OverwriteMode.SIGN;
-          default -> throw new IllegalStateException("Unexpected overwrite mode: "
-              + overwriteAnno.value);
-        };
-      }
-
-      ArtificialResource.ZeroConstraint zeroConstraint = null;
-      var zeroAnno = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
-      if (zeroAnno != null) {
-        zeroConstraint = new ArtificialResource.ZeroConstraint(
-            zeroAnno.indices.stream().map(ConstantValue::toViamConstant).toList());
-      }
+      var overwriteMode = resolveEffectiveOverwriteMode(definition);
+      var zeroConstraint = resolveEffectiveZeroConstraint(definition);
 
       var semantics = new ArtificialResource.Semantics(
           innerResource,
@@ -477,6 +462,95 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     throw new RuntimeException("The ViamGenerator does not support `%s` of kind %s yet".formatted(
         definition.getClass().getSimpleName(), definition.kind));
+  }
+
+  private ArtificialResource.OverwriteMode resolveEffectiveOverwriteMode(AliasDefinition definition) {
+    var overwriteAnno = definition.findAnnotation("overwrite source", EnumAnnotation.class);
+    if (overwriteAnno != null) {
+      return switch (overwriteAnno.value) {
+        case "zero" -> ArtificialResource.OverwriteMode.ZERO;
+        case "sign" -> ArtificialResource.OverwriteMode.SIGN;
+        default -> throw new IllegalStateException("Unexpected overwrite mode: "
+            + overwriteAnno.value);
+      };
+    }
+
+    var sourceAlias = sourceAliasDefinition(definition);
+    if (sourceAlias != null) {
+      return resolveEffectiveOverwriteMode(sourceAlias);
+    }
+    return ArtificialResource.OverwriteMode.MERGE;
+  }
+
+  private @Nullable ArtificialResource.ZeroConstraint resolveEffectiveZeroConstraint(
+      AliasDefinition definition) {
+    var own = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
+    if (own != null) {
+      return new ArtificialResource.ZeroConstraint(
+          own.indices.stream().map(ConstantValue::toViamConstant).toList());
+    }
+
+    var sourceAlias = sourceAliasDefinition(definition);
+    if (sourceAlias == null) {
+      return null;
+    }
+
+    var inherited = resolveEffectiveZeroConstraint(sourceAlias);
+    if (inherited == null) {
+      return null;
+    }
+    return mapZeroConstraintThroughAliasAccess(definition, inherited);
+  }
+
+  private @Nullable AliasDefinition sourceAliasDefinition(AliasDefinition definition) {
+    var targetIdent = switch (definition.value) {
+      case Identifier ident -> ident;
+      case CallIndexExpr expr -> expr.target.path();
+      default -> null;
+    };
+    if (targetIdent == null) {
+      return null;
+    }
+    var alias = definition.symbolTable().findAs(targetIdent, AliasDefinition.class);
+    if (alias == null || alias.kind != AliasDefinition.AliasKind.REGISTER) {
+      return null;
+    }
+    return alias;
+  }
+
+  private @Nullable ArtificialResource.ZeroConstraint mapZeroConstraintThroughAliasAccess(
+      AliasDefinition definition,
+      ArtificialResource.ZeroConstraint inherited) {
+    if (definition.value instanceof Identifier) {
+      return new ArtificialResource.ZeroConstraint(List.copyOf(inherited.indices()));
+    }
+    if (!(definition.value instanceof CallIndexExpr call)) {
+      return null;
+    }
+
+    var accessArgs = call.argsIndices.stream()
+        .filter(a -> !a.values.isEmpty() && !(a.values.getFirst() instanceof RangeExpr))
+        .toList();
+    if (accessArgs.size() < inherited.indices().size()) {
+      return null;
+    }
+
+    var mapped = new ArrayList<Constant.Value>();
+    for (int i = 0; i < inherited.indices().size(); i++) {
+      var argExpr = accessArgs.get(i).values.getFirst();
+      var inheritedIdx = inherited.indices().get(i);
+      if (argExpr instanceof WildcardLiteral) {
+        mapped.add(inheritedIdx);
+        continue;
+      }
+
+      var argConst = constantEvaluator.eval(argExpr).toViamConstant();
+      if (!argConst.equals(inheritedIdx)) {
+        // Fixed index does not match inherited zero constraint; no effective guard on this path.
+        return null;
+      }
+    }
+    return new ArtificialResource.ZeroConstraint(mapped);
   }
 
   @Override

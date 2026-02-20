@@ -19,6 +19,7 @@ package vadl.iss.passes.nodes;
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
+import vadl.viam.Counter;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -67,7 +68,20 @@ public class IssWriteRegNode extends WriteRegTensorNode {
                          WriteGuardKind writeGuardKind,
                          @Nullable String accessorName,
                          NodeList<ExpressionNode> accessorIndices) {
-    super(regTensor, resourceIndices, value, null, condition);
+    this(regTensor, resourceIndices, value, null, condition, accessKind, writeGuardKind,
+        accessorName, accessorIndices);
+  }
+
+  public IssWriteRegNode(RegisterTensor regTensor,
+                         NodeList<ExpressionNode> resourceIndices,
+                         ExpressionNode value,
+                         @Nullable Counter staticCounterAccess,
+                         @Nullable ExpressionNode condition,
+                         AccessKind accessKind,
+                         WriteGuardKind writeGuardKind,
+                         @Nullable String accessorName,
+                         NodeList<ExpressionNode> accessorIndices) {
+    super(regTensor, resourceIndices, value, staticCounterAccess, condition);
     this.accessKind = accessKind;
     this.writeGuardKind = writeGuardKind;
     this.accessorName = accessorName;
@@ -96,6 +110,7 @@ public class IssWriteRegNode extends WriteRegTensorNode {
         regTensor(),
         indices().copy(),
         value().copy(),
+        staticCounterAccess(),
         nullableCondition() == null ? null : nullableCondition().copy(),
         accessKind,
         writeGuardKind,
@@ -110,6 +125,7 @@ public class IssWriteRegNode extends WriteRegTensorNode {
         regTensor(),
         indices(),
         value(),
+        staticCounterAccess(),
         nullableCondition(),
         accessKind,
         writeGuardKind,

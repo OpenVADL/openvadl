@@ -135,7 +135,6 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
   private List<Map<String, Object>> renderAliasAccessors(Specification specification) {
     var aliases = new ArrayList<Map<String, Object>>();
     specification.artificialResources()
-        .filter(alias -> alias.semantics().aliasSlice() == null)
         .filter(alias -> alias.semantics().totalIndexCount()
             == alias.semantics().baseTensor().indexDimensions().size())
         .forEach(alias -> aliases.add(renderAliasAccessor(alias)));
@@ -149,6 +148,7 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
     var argNames = dims.stream().map(d -> (String) d.get("arg_name")).toList();
     var forwardArgs = argNames.isEmpty() ? "" : ", " + String.join(", ", argNames);
     var zero = alias.semantics().zeroConstraint();
+    var slice = alias.semantics().aliasSlice();
     String zeroCheck = null;
     if (zero != null && !zero.indices().isEmpty()) {
       var checks = new ArrayList<String>();
@@ -157,15 +157,19 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
       }
       zeroCheck = String.join(" && ", checks);
     }
-    return Map.of(
-        "name_lower", alias.simpleName().toLowerCase(),
-        "base_name_lower", base.simpleName().toLowerCase(),
-        "getter_params", baseRender.get("getter_params"),
-        "index_dims", dims,
-        "value_width", baseRender.get("value_width"),
-        "zero_check", zeroCheck == null ? "" : zeroCheck,
-        "has_zero_check", zeroCheck != null,
-        "forward_args", forwardArgs
+    return Map.ofEntries(
+        Map.entry("name_lower", alias.simpleName().toLowerCase()),
+        Map.entry("base_name_lower", base.simpleName().toLowerCase()),
+        Map.entry("getter_params", baseRender.get("getter_params")),
+        Map.entry("index_dims", dims),
+        Map.entry("value_width", baseRender.get("value_width")),
+        Map.entry("alias_value_width", alias.resultType().bitWidth()),
+        Map.entry("has_slice", slice != null),
+        Map.entry("slice_lsb", slice == null ? 0 : slice.lsb()),
+        Map.entry("slice_width", slice == null ? alias.resultType().bitWidth() : slice.bitSize()),
+        Map.entry("zero_check", zeroCheck == null ? "" : zeroCheck),
+        Map.entry("has_zero_check", zeroCheck != null),
+        Map.entry("forward_args", forwardArgs)
     );
   }
 

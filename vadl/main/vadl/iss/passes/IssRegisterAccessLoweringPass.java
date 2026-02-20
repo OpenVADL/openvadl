@@ -49,12 +49,14 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -98,10 +100,52 @@ class IssRegisterAccessLowering {
   void run() {
     behavior.getNodes(ReadArtificialResNode.class).toList().forEach(this::lowerRead);
     behavior.getNodes(WriteArtificialResNode.class).toList().forEach(this::lowerWrite);
+    behavior.getNodes(ReadRegTensorNode.class).toList().forEach(this::lowerBaseRead);
+    behavior.getNodes(WriteRegTensorNode.class).toList().forEach(this::lowerBaseWrite);
     if (behavior.getNodes(ReadArtificialResNode.class).findAny().isPresent()) {
       throw new IllegalStateException(
           "ISS alias lowering left artificial reads in behavior graph.");
     }
+  }
+
+  private void lowerBaseRead(ReadRegTensorNode read) {
+    if (read instanceof IssReadRegNode) {
+      return;
+    }
+    var replacement = new IssReadRegNode(
+        read.regTensor(),
+        read.indices().copy(),
+        read.type().asDataType(),
+        read.staticCounterAccess(),
+        IssReadRegNode.AccessKind.BASE,
+        IssReadRegNode.ReadShape.FULL,
+        null,
+        read.indices().copy()
+    );
+    replacement.setSourceLocationIfNotSet(read.location());
+    read.replaceAndDelete(replacement);
+  }
+
+  private void lowerBaseWrite(WriteRegTensorNode write) {
+    if (write instanceof IssWriteRegNode) {
+      return;
+    }
+    var guardKind = write.nullableCondition() == null
+        ? IssWriteRegNode.WriteGuardKind.NONE
+        : IssWriteRegNode.WriteGuardKind.CONDITIONAL;
+    var replacement = new IssWriteRegNode(
+        write.regTensor(),
+        write.indices().copy(),
+        write.value(),
+        write.staticCounterAccess(),
+        write.nullableCondition(),
+        IssWriteRegNode.AccessKind.BASE,
+        guardKind,
+        null,
+        write.indices().copy()
+    );
+    replacement.setSourceLocationIfNotSet(write.location());
+    write.replaceAndDelete(replacement);
   }
 
   private void lowerRead(ReadArtificialResNode read) {
@@ -231,7 +275,8 @@ class IssRegisterAccessLowering {
         ? IssWriteRegNode.WriteGuardKind.NONE
         : IssWriteRegNode.WriteGuardKind.CONDITIONAL;
     if (guard != null) {
-      condition = condition == null ? guard : BuiltInTable.AND.call(condition, guard);
+      // Alias guard semantics must be enforced via dest_<alias>(...) in TCG lowering.
+      // Do not encode them only as side-effect conditions.
       guardKind = IssWriteRegNode.WriteGuardKind.ZERO_CONSTRAINT;
     }
 
@@ -272,7 +317,7 @@ class IssRegisterAccessLowering {
           intU(semantics.aliasSlice().lsb(), 32).toNode(),
           intU(semantics.aliasSlice().bitSize(), 32).toNode(),
           write.resourceDefinition().simpleName().toLowerCase(),
-          condition
+          userCondition
       );
       replacement.setSourceLocationIfNotSet(write.location());
       write.replaceAndDelete(replacement);
@@ -300,7 +345,7 @@ class IssRegisterAccessLowering {
             lsb,
             intU(resultType.bitWidth(), 32).toNode(),
             null,
-            condition
+            userCondition
         );
         replacement.setSourceLocationIfNotSet(write.location());
         write.replaceAndDelete(replacement);
@@ -343,18 +388,16 @@ class IssRegisterAccessLowering {
       );
     }
 
-    if (semantics.aliasSlice() == null
-        && aliasIndices.size() == baseIndexCount
-        && semantics.overwriteMode() == ArtificialResource.OverwriteMode.MERGE) {
+    if (aliasIndices.size() == baseIndexCount && writeValue.type().asDataType().bitWidth() <= 64) {
       var replacement = new IssWriteRegNode(
           baseTensor,
           baseIndices,
           writeValue,
-          null,
+          userCondition,
           IssWriteRegNode.AccessKind.ALIAS,
-          IssWriteRegNode.WriteGuardKind.NONE,
+          guardKind,
           write.resourceDefinition().simpleName().toLowerCase(),
-          baseIndices.copy()
+          aliasIndices.copy()
       );
       replacement.setSourceLocationIfNotSet(write.location());
       write.replaceAndDelete(replacement);
