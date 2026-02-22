@@ -652,7 +652,7 @@ instruction set architecture PPC64SFS = {
     encoding AsId($asm, $laStr($lk; $aa)) =
       {opcd = 0b010000, aa = $aa, lk = $lk}
     assembly AsId($asm, $laStr($lk; $aa)) =
-      ($asm, $laStr($lk; $aa), " ", decimal(bo), ",", decimal(crbs), ",", decimal($TargetAddrImm(extBd; $aa)))
+      ($asm, $laStr($lk; $aa), " ", udec(bo), ",", udec(crbs), ",", udec($TargetAddrImm(extBd; $aa)))
   }
 
   // instructions: bc[l][a]
@@ -673,7 +673,7 @@ instruction set architecture PPC64SFS = {
             if MSR.sf = Mode::M32 then flags32.overflow else flags64.overflow)
         }
     encoding $x.id = {opcd = $x.opcd}
-    assembly $x.id = ($x.asm, $rStr($rc), " ", decimal(rs), ",", decimal(ra), ",", decimal(imm))
+    assembly $x.id = ($x.asm, $rStr($rc), " ", udec(rs), ",", udec(ra), ",", sdec(imm))
   }
 
   // instructions: andi., andis., ori, oris, xori, xoris
@@ -686,7 +686,7 @@ instruction set architecture PPC64SFS = {
     encoding AsId($x.asm, $rId($rc)) =
       {opcd = $x.opcd}
     assembly AsId($x.asm, $rId($rc)) =
-      ($x.asm, $rStr($rc), " ", decimal(ra), ",", decimal(rs), ",", decimal(imm))
+      ($x.asm, $rStr($rc), " ", udec(ra), ",", udec(rs), ",", udec(imm))
   }
 
   // instructions: lbz, lbzu, lha, lhau, lhz, lhzu, lwz, lwzu
@@ -699,7 +699,7 @@ instruction set architecture PPC64SFS = {
           $CS($update; X(ra) := ea)
         }
     encoding AsId($x.asm) = {opcd = $x.opcd}
-    assembly AsId($x.asm) = ($x.asm, " ", decimal(rs), ",", decimal(imm), "(", decimal(ra), ")")
+    assembly AsId($x.asm) = ($x.asm, " ", udec(rs), ",", sdec(imm), "(", udec(ra), ")")
   }
 
   // instructions: mulli
@@ -707,7 +707,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($asm) : DFormA =
       X(rs) := X(ra) * immS
     encoding AsId($asm) = {opcd = 0b000111}
-    assembly AsId($asm) = ($asm, " ", decimal(rs), ",", decimal(ra), ",", decimal(imm))
+    assembly AsId($asm) = ($asm, " ", udec(rs), ",", udec(ra), ",", sdec(imm))
   }
 
   // instructions: stb, stbu, sth, sthu, stw, stwu
@@ -720,7 +720,7 @@ instruction set architecture PPC64SFS = {
           $CS($update; X(ra) := ea)
         }
     encoding AsId($x.asm) = {opcd = $x.opcd}
-    assembly AsId($x.asm) = ($x.asm, " ", decimal(rs), ",", decimal(imm), "(", decimal(ra), ")")
+    assembly AsId($x.asm) = ($x.asm, " ", udec(rs), ",", sdec(imm), "(", udec(ra), ")")
   }
 
   // instructions: cmpi, cmpli
@@ -729,7 +729,10 @@ instruction set architecture PPC64SFS = {
       let immExt = match : Ex ( $logical = true => immU; _ => immS ) in
         $SetCRCmp((X(rs); immExt); $logical)
     encoding AsId($x.asm) = {opcd = $x.opcd, rsv = 0b0}
-    assembly AsId($x.asm) = ($x.asm, " ", decimal(crt), ",", decimal(l), ",", decimal(rs), ",", decimal(imm))
+    assembly AsId($x.asm) = ($x.asm, " ", udec(crt), ",", udec(l), ",", udec(rs), ",", match : Ex
+                                                                                       ( $logical = true => udec(imm)
+                                                                                       ; _               => sdec(imm)
+                                                                                       ))
   }
 
   // instructions: twi
@@ -741,7 +744,7 @@ instruction set architecture PPC64SFS = {
            ((VADL::ugth(a, immS)) & to(0))
         then raise Trap
     encoding AsId($asm) = {opcd = 0b000011}
-    assembly AsId($asm) = ($asm, " ", decimal(to), ",", decimal(rs), ",", decimal(imm))
+    assembly AsId($asm) = ($asm, " ", udec(to), ",", udec(rs), ",", sdec(imm))
   }
 
   // instructions: addpcis
@@ -749,7 +752,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($asm) : DXForm =
       X(rs) := PC.next + shImmS
     encoding AsId($asm) = {opcd = 0b010011, rsv = 0b00010}
-    assembly AsId($asm) = ($asm, " ", decimal(rs), ",", decimal(imm))
+    assembly AsId($asm) = ($asm, " ", udec(rs), ",", sdec(imm))
   }
 
   model IFormBranchInstrExt (asm : Str, lk : Bool, aa : Bool) : IsaDefs = {
@@ -760,7 +763,7 @@ instruction set architecture PPC64SFS = {
     encoding AsId($asm, $laStr($lk; $aa)) =
       {opcd = 0b010010, aa = $aa, lk = $lk}
     assembly AsId($asm, $laStr($lk; $aa)) =
-      ($asm, $laStr($lk; $aa), " ", decimal($TargetAddrImm(extLi; $aa)))
+      ($asm, $laStr($lk; $aa), " ", udec($TargetAddrImm(extLi; $aa)))
   }
 
   // instructions: b[l][a]
@@ -784,7 +787,7 @@ instruction set architecture PPC64SFS = {
     encoding AsId($r.x.asm, $rId($rc)) =
       {opcd = $r.x.opcd, rc = $rc}
     assembly AsId($r.x.asm, $rId($rc)) =
-      ($r.x.asm, $rStr($rc), " ", decimal(ra), ",", decimal(rs), ",", decimal(sh), ",", decimal(mb), ",", decimal(me))
+      ($r.x.asm, $rStr($rc), " ", udec(ra), ",", udec(rs), ",", udec(sh), ",", udec(mb), ",", udec(me))
   }
 
   // instructions: rlwimi[.], rlwinm[.], rlwnm[.]
@@ -798,7 +801,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($x.asm) : SCForm =
       raise $ex
     encoding AsId($x.asm) = {opcd = 0b010001, rsv1 = 0b00000'00000'0000, rsv2 = 0b000, extopcd = $x.ext}
-    assembly AsId($x.asm) = ($x.asm, " ", decimal(lev))
+    assembly AsId($x.asm) = ($x.asm, " ", udec(lev))
   }
 
   record XFormArithmeticShiftInstrRec (x : AsmExt, shift : Ex, res : Ex)
@@ -815,7 +818,7 @@ instruction set architecture PPC64SFS = {
     encoding AsId($r.x.asm, $rId($rc)) =
       {opcd = 0b011111, extopcd = $r.x.ext, rc = $rc}
     assembly AsId($r.x.asm, $rId($rc)) =
-      ($r.x.asm, $rStr($rc), " ", decimal(ra), ",", decimal(rs), ",", decimal(rb))
+      ($r.x.asm, $rStr($rc), " ", udec(ra), ",", udec(rs), ",", udec(rb))
   }
 
   // instructions: sraw[.], srawi[.]
@@ -834,7 +837,7 @@ instruction set architecture PPC64SFS = {
                                     0 as Bits<12>, bcdtodpd(X(rs)(23..12)), bcdtodpd(X(rs)(11.. 0)))
                )
     encoding AsId($x.asm) = {opcd = 0b011111, rb = 0b00000, extopcd = $x.ext, rc = 0b0}
-    assembly AsId($x.asm) = ($x.asm, " ", decimal(ra), ",", decimal(rs))
+    assembly AsId($x.asm) = ($x.asm, " ", udec(ra), ",", udec(rs))
   }
 
   // instructions: cmpb
@@ -849,7 +852,7 @@ instruction set architecture PPC64SFS = {
                 if X(rs)(15.. 8) = X(rb)(15.. 8) then 0xFF as Byte else 0,
                 if X(rs)( 7.. 0) = X(rb)( 7.. 0) then 0xFF as Byte else 0)
     encoding AsId($asm) = {opcd = 0b011111, extopcd = 0b01111'11100, rc = 0b0}
-    assembly AsId($asm) = ($asm, " ", decimal(ra), ",", decimal(rs), ",", decimal(rb))
+    assembly AsId($asm) = ($asm, " ", udec(ra), ",", udec(rs), ",", udec(rb))
   }
 
   record XFormExCRInstrRec (x : AsmExt, res : Ex)
@@ -863,7 +866,7 @@ instruction set architecture PPC64SFS = {
     encoding AsId($r.x.asm, $rId($rc)) =
       {opcd = 0b011111, rb = 0b00000, extopcd = $r.x.ext, rc = $rc}
     assembly AsId($r.x.asm, $rId($rc)) =
-      ($r.x.asm, $rStr($rc), " ", decimal(ra), ",", decimal(rs))
+      ($r.x.asm, $rStr($rc), " ", udec(ra), ",", udec(rs))
   }
 
   // instructions: extsb[.], extsh[.], cntlzw[.], cnttzw[.]
@@ -882,7 +885,7 @@ instruction set architecture PPC64SFS = {
           $CS($update; X(ra) := ea)
         }
     encoding AsId($x.asm) = {opcd = 0b011111, extopcd = $x.ext, rc = 0b0}
-    assembly AsId($x.asm) = ($x.asm, " ", decimal(rs), ",", decimal(ra), ",", decimal(rb))
+    assembly AsId($x.asm) = ($x.asm, " ", udec(rs), ",", udec(ra), ",", udec(rb))
   }
 
   record XFormLogicalInstrRec (x : AsmOpExt, arg2 : Ex)
@@ -896,7 +899,7 @@ instruction set architecture PPC64SFS = {
     encoding AsId($r.x.asm, $rId($rc)) =
       {opcd = 0b011111, extopcd = $r.x.ext, rc = $rc}
     assembly AsId($r.x.asm, $rId($rc)) =
-      ($r.x.asm, $rStr($rc), " ", decimal(ra), ",", decimal(rs), ",", decimal(rb))
+      ($r.x.asm, $rStr($rc), " ", udec(ra), ",", udec(rs), ",", udec(rb))
   }
 
   // instructions: and[.], andc[.], eqv[.], nand[.], nor[.], or[.], orc[.], xor[.]
@@ -914,7 +917,7 @@ instruction set architecture PPC64SFS = {
     encoding AsId($x.asm, $rId($rc)) =
       {opcd = 0b011111, extopcd = $x.ext, rc = $rc}
     assembly AsId($x.asm, $rId($rc)) =
-      ($x.asm, $rStr($rc), " ", decimal(ra), ",", decimal(rs), ",", decimal(rb))
+      ($x.asm, $rStr($rc), " ", udec(ra), ",", udec(rs), ",", udec(rb))
   }
 
   // instructions: slw[.], srw[.]
@@ -930,7 +933,7 @@ instruction set architecture PPC64SFS = {
                then VADL::$x.op(XW(ra), XW(rb)) as $type
                else 0
     encoding AsId($x.asm) = {opcd = 0b011111, extopcd = $x.ext, rc = 0b0}
-    assembly AsId($x.asm) = ($x.asm, " ", decimal(rs), ",", decimal(ra), ",", decimal(rb))
+    assembly AsId($x.asm) = ($x.asm, " ", udec(rs), ",", udec(ra), ",", udec(rb))
   }
 
   // instruction: mfmsr
@@ -939,7 +942,7 @@ instruction set architecture PPC64SFS = {
       if MSR.pr = 0 then X(rs) := MSR
                     else raise Privilege
     encoding AsId($asm) = {opcd = 0b011111, ra = 0b00000, rb = 0b00000, extopcd = 0b00010'10011, rc = 0b0}
-    assembly AsId($asm) = ($asm, " ", decimal(rs))
+    assembly AsId($asm) = ($asm, " ", udec(rs))
   }
 
   // instructions: prtyw
@@ -948,7 +951,7 @@ instruction set architecture PPC64SFS = {
       X(ra) := ((VADL::cob(X(rs) & 0x01010101'00000000) & 1) as UWord,
                 (VADL::cob(X(rs) & 0x00000000'01010101) & 1) as UWord)
     encoding AsId($asm) = {opcd = 0b011111, rb = 0b00000, extopcd = 0b00100'11010, rc = 0b0}
-    assembly AsId($asm) = ($asm, " ", decimal(ra), ",", decimal(rs))
+    assembly AsId($asm) = ($asm, " ", udec(ra), ",", udec(rs))
   }
 
   // instructions: popcntb, popcntw
@@ -962,7 +965,7 @@ instruction set architecture PPC64SFS = {
                ; _                  => (VADL::cob(X(rs)(63..32)), VADL::cob(X(rs)(31.. 0)))
                )
     encoding AsId($x.asm) = {opcd = 0b011111, rb = 0b00000, extopcd = $x.ext, rc = 0b0}
-    assembly AsId($x.asm) = ($x.asm, " ", decimal(ra), ",", decimal(rs))
+    assembly AsId($x.asm) = ($x.asm, " ", udec(ra), ",", udec(rs))
   }
 
   // instructions: brh, brw
@@ -973,7 +976,7 @@ instruction set architecture PPC64SFS = {
                ; _                  => (byterevw   (X(rs)(63..32)), byterevw   (X(rs)(31..0)))
                )
     encoding AsId($x.asm) = {opcd = 0b011111, rb = 0b00000, extopcd = $x.ext, rc = 0b0}
-    assembly AsId($x.asm) = ($x.asm, " ", decimal(ra), ",", decimal(rs))
+    assembly AsId($x.asm) = ($x.asm, " ", udec(ra), ",", udec(rs))
   }
 
   // instructions: stbx, stbux, sthx, sthux, sthbrx, stwx, stwux, stwbrx
@@ -986,7 +989,7 @@ instruction set architecture PPC64SFS = {
           $CS($update; X(ra) := ea)
         }
     encoding AsId($x.asm) = {opcd = 0b011111, extopcd = $x.ext, rc = 0b0}
-    assembly AsId($x.asm) = ($x.asm, " ", decimal(rs), ",", decimal(ra), ",", decimal(rb))
+    assembly AsId($x.asm) = ($x.asm, " ", udec(rs), ",", udec(ra), ",", udec(rb))
   }
 
   // instructions: cmp, cmpl
@@ -994,7 +997,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($x.asm) : XFormB =
       $SetCRCmp((X(ra); X(rb)); $logical)
     encoding AsId($x.asm) = {opcd = 0b011111, rsv1 = 0b0, extopcd = $x.ext, rsv2 = 0b0}
-    assembly AsId($x.asm) = ($x.asm, " ", decimal(crt), ",", decimal(l), ",", decimal(ra), ",", decimal(rb))
+    assembly AsId($x.asm) = ($x.asm, " ", udec(crt), ",", udec(l), ",", udec(ra), ",", udec(rb))
   }
 
   // instructions: cmprb
@@ -1005,7 +1008,7 @@ instruction set architecture PPC64SFS = {
                 ((X(rb)(23..16) <= b) & (b <= X(rb)(31..24)) & l) in
           CRF(7 - crt) := (0 as Bit, m, 0 as Bits<2>)
     encoding AsId($asm) = {opcd = 0b011111, rsv1 = 0b0, extopcd = 0b00110'00000, rsv2 = 0b0}
-    assembly AsId($asm) = ($asm, " ", decimal(crt), ",", decimal(l), ",", decimal(ra), ",", decimal(rb))
+    assembly AsId($asm) = ($asm, " ", udec(crt), ",", udec(l), ",", udec(ra), ",", udec(rb))
   }
 
   // instructions: setb
@@ -1015,7 +1018,7 @@ instruction set architecture PPC64SFS = {
                else if CRB(30 - crs as Bits<5> * 4) then  1 as SDWord
                else                                         0 as SDWord
     encoding AsId($asm) = {opcd = 0b011111, rsv1 = 0b0000000, extopcd =  0b00100'00000, rsv2 = 0b0}
-    assembly AsId($asm) = ($asm, " ", decimal(rs), ",", decimal(crs))
+    assembly AsId($asm) = ($asm, " ", udec(rs), ",", udec(crs))
   }
 
   // instructions: setbc, setbcr, setnbc, setnbcr
@@ -1023,7 +1026,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($x.asm) : XFormD =
       X(rs) := if CRB(31 - crbs) then $tval else $fval
     encoding AsId($x.asm) = {opcd = 0b011111, rsv1 = 0b00000, extopcd = $x.ext, rsv2 = 0b0}
-    assembly AsId($x.asm) = ($x.asm, " ", decimal(rs), ",", decimal(crbs))
+    assembly AsId($x.asm) = ($x.asm, " ", udec(rs), ",", udec(crbs))
   }
 
   // instructions: cmpeqb
@@ -1036,7 +1039,7 @@ instruction set architecture PPC64SFS = {
                 (b = X(rb)(15.. 8)) | (b = X(rb)( 7.. 0)) in
           CRF(7 - crt) := (0 as Bit, m, 0 as Bits<2>)
     encoding AsId($asm) = {opcd = 0b011111, rsv1 = 0b00, extopcd = 0b00111'00000, rsv2 = 0b0}
-    assembly AsId($asm) = ($asm, " ", decimal(crt), ",", decimal(ra), ",", decimal(rb))
+    assembly AsId($asm) = ($asm, " ", udec(crt), ",", udec(ra), ",", udec(rb))
   }
 
   // instructions: mcrxrx
@@ -1044,7 +1047,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($asm) : XFormE =
       CRF(7 - crt) := (XER.ov, XER.ov32, XER.ca, XER.ca32)
     encoding AsId($asm) = {opcd = 0b011111, rsv1 = 0b00, ra = 0b00000, rb = 0b00000, extopcd = 0b10010'00000, rsv2 = 0b0}
-    assembly AsId($asm) = ($asm, " ", decimal(crt))
+    assembly AsId($asm) = ($asm, " ", udec(crt))
   }
 
   // instructions: mtmsr
@@ -1060,7 +1063,7 @@ instruction set architecture PPC64SFS = {
                   else (MSR(63..16), X(rs)(15), MSR(14..2), X(rs)(1), MSR(0))
       else raise Privilege
     encoding AsId($asm) = {opcd = 0b011111, rsv1 = 0b0000, rsv2 = 0b00000, extopcd = 0b00100'10010, rsv3 = 0b0}
-    assembly AsId($asm) = ($asm, " ", decimal(rs), ",", decimal(l))
+    assembly AsId($asm) = ($asm, " ", udec(rs), ",", udec(l))
   }
 
   // instructions: tw
@@ -1073,7 +1076,7 @@ instruction set architecture PPC64SFS = {
              ((VADL::ugth(a, b)) & to(0))
           then raise Trap
     encoding AsId($asm) = {opcd = 0b011111, extopcd = 0b00000'00100, rsv = 0b0}
-    assembly AsId($asm) = ($asm, " ", decimal(to), ",", decimal(ra), ",", decimal(rb))
+    assembly AsId($asm) = ($asm, " ", udec(to), ",", udec(ra), ",", udec(rb))
   }
 
   // instructions: mfcr
@@ -1081,7 +1084,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($asm) : XFXFormA =
       X(rs) := CR as UDWord
     encoding AsId($asm) = {opcd = 0b011111, m = 0b0, fxm = 0b0000'0000, rsv1 = 0b0, extopcd = 0b00000'10011, rsv2 = 0b0}
-    assembly AsId($asm) = ($asm, " ", decimal(rs))
+    assembly AsId($asm) = ($asm, " ", udec(rs))
   }
 
   // instructions: mtcrf
@@ -1090,7 +1093,7 @@ instruction set architecture PPC64SFS = {
       let mask = crmask(fxm) in
         CR := (XW(rs) & mask) | (CR & ~mask)
     encoding AsId($asm) = {opcd = 0b011111, m = 0b0, rsv1 = 0b0, extopcd = 0b00100'10000, rsv2 = 0b0}
-    assembly AsId($asm) = ($asm, " ", decimal(fxm), ",", decimal(rs))
+    assembly AsId($asm) = ($asm, " ", udec(fxm), ",", udec(rs))
   }
 
   // instructions: mtocrf
@@ -1100,7 +1103,7 @@ instruction set architecture PPC64SFS = {
             then let mask = crmask(fxm) in (XW(rs) & mask) | (CR & ~mask)
             else 0
     encoding AsId($asm) = {opcd = 0b011111, m = 0b1, rsv1 = 0b0, extopcd = 0b00100'10000, rsv2 = 0b0}
-    assembly AsId($asm) = ($asm, " ", decimal(fxm), ",", decimal(rs))
+    assembly AsId($asm) = ($asm, " ", udec(fxm), ",", udec(rs))
   }
 
   // instructions: mfocrf
@@ -1110,7 +1113,7 @@ instruction set architecture PPC64SFS = {
                then (CR & crmask(fxm)) as UDWord
                else 0
     encoding AsId($asm) = {opcd = 0b011111, m = 0b1, rsv1 = 0b0, extopcd = 0b00000'10011, rsv2 = 0b0}
-    assembly AsId($asm) = ($asm, " ", decimal(rs), ",", decimal(fxm))
+    assembly AsId($asm) = ($asm, " ", udec(rs), ",", udec(fxm))
   }
 
   // instructions: mfspr, mtspr
@@ -1118,11 +1121,11 @@ instruction set architecture PPC64SFS = {
     instruction AsId($x.asm) : XFXFormB =
       match : Stat ( $read = true => $ReadSPR(); _ => $WriteSPR() )
     encoding AsId($x.asm) = {opcd = 0b011111, extopcd = $x.ext, rsv = 0b0}
-    assembly AsId($x.asm) = ($x.asm, " ", match : Ex ( $read = true => decimal(rs)
-                                                     ; _            => decimal((spr(4..0), spr(9..5)))
+    assembly AsId($x.asm) = ($x.asm, " ", match : Ex ( $read = true => udec(rs)
+                                                     ; _            => udec((spr(4..0), spr(9..5)))
                                                      ), ",",
-                                          match : Ex ( $read = true => decimal((spr(4..0), spr(9..5)))
-                                                     ; _            => decimal(rs)
+                                          match : Ex ( $read = true => udec((spr(4..0), spr(9..5)))
+                                                     ; _            => udec(rs)
                                                      ))
   }
 
@@ -1131,7 +1134,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($x.asm) : XLFormA =
       CRB(31 - crbt) := $x.op(CRB(31 - crbs1), $arg2)
     encoding AsId($x.asm) = {opcd = 0b010011, extopcd = $x.ext, rsv = 0b0}
-    assembly AsId($x.asm) = ($x.asm, " ", decimal(crbt), ",", decimal(crbs1), ",", decimal(crbs2))
+    assembly AsId($x.asm) = ($x.asm, " ", udec(crbt), ",", udec(crbs1), ",", udec(crbs2))
   }
 
   record XLFormBranchInstrRec (x : AsmExt, breg : Id, cntr : Bool)
@@ -1149,7 +1152,7 @@ instruction set architecture PPC64SFS = {
     encoding AsId($r.x.asm, $lStr($lk)) =
       {opcd = 0b010011, rsv = 0b000, bh = 0b00, extopcd = $r.x.ext, lk = $lk}
     assembly AsId($r.x.asm, $lStr($lk)) =
-      ($r.x.asm, $lStr($lk), " ", decimal(bo), ",", decimal(crbs), ",", decimal(bh))
+      ($r.x.asm, $lStr($lk), " ", udec(bo), ",", udec(crbs), ",", udec(bh))
   }
 
   // instructions: bcctr[l], bclr[l], bctar[l]
@@ -1163,7 +1166,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($asm) : XLFormC =
       CRF(7 - crt) := CRF(7 - crs)
     encoding AsId($asm) = {opcd = 0b010011, rsv1 = 0b00, rsv2 = 0b00'00000'00000'000000}
-    assembly AsId($asm) = ($asm, " ", decimal(crt), ",", decimal(crs))
+    assembly AsId($asm) = ($asm, " ", udec(crt), ",", udec(crs))
   }
 
   // instructions: addg6s
@@ -1173,7 +1176,7 @@ instruction set architecture PPC64SFS = {
         let carry = (((X(ra) & X(rb)) | ((X(ra) ^ X(rb)) & ~sum)) >> 3) & 0x1111'1111'1111'1111 in
           X(rs) := ~(carry * 0xF) & 0x6666'6666'6666'6666
     encoding AsId($asm) = {opcd = 0b011111, oe = 0b0, extopcd = 0b0010'01010, rc = 0b0}
-    assembly AsId($asm) = ($asm, " ", decimal(rs), ",", decimal(ra), ",", decimal(rb))
+    assembly AsId($asm) = ($asm, " ", udec(rs), ",", udec(ra), ",", udec(rb))
   }
 
   record XOFormAddSubInstrRec (x : AsmOpExt, a : TwoArgs, enc : Encs, ca : Ex, ce : Bool, rbasm : Ex)
@@ -1189,7 +1192,7 @@ instruction set architecture PPC64SFS = {
     encoding AsId($r.x.asm, $orId($oe; $rc)) =
       {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc, $r.enc}
     assembly AsId($r.x.asm, $orId($oe; $rc)) =
-      ($r.x.asm, $orStr($oe; $rc), " ", decimal(rs), ",", decimal(ra), $r.rbasm)
+      ($r.x.asm, $orStr($oe; $rc), " ", udec(rs), ",", udec(ra), $r.rbasm)
   }
 
   // instructions: add[o][.], addc[o][.], adde[o][.], subf[o][.], subfc[o][.], subfe[o][.], addme[o][.], addze[o][.], subfme[o][.], subfze[o][.]
@@ -1218,7 +1221,7 @@ instruction set architecture PPC64SFS = {
     encoding AsId($r.x.asm, $orId($oe; $rc)) =
       {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc}
     assembly AsId($r.x.asm, $orId($oe; $rc)) =
-      ($r.x.asm, $orStr($oe; $rc), " ", decimal(rs), ",", decimal(ra), ",", decimal(rb))
+      ($r.x.asm, $orStr($oe; $rc), " ", udec(rs), ",", udec(ra), ",", udec(rb))
   }
 
   // instructions: divw[o][.], divwu[o][.], divwe[o][.], divweu[o][.]
@@ -1241,7 +1244,7 @@ instruction set architecture PPC64SFS = {
     encoding AsId($r.x.asm, $rId($rc)) =
       {opcd = 0b011111, oe = $oe, extopcd = $r.x.ext, rc = $rc}
     assembly AsId($r.x.asm, $rId($rc)) =
-      ($r.x.asm, $rStr($rc), " ", decimal(rs), ",", decimal(ra), ",", decimal(rb)) // oStr not necessary
+      ($r.x.asm, $rStr($rc), " ", udec(rs), ",", udec(ra), ",", udec(rb)) // oStr not necessary
   }
 
   // instructions: mullw[o][.], mulhw[.], mulhwu[.]
@@ -1261,7 +1264,7 @@ instruction set architecture PPC64SFS = {
     encoding AsId($asm, $orId($oe; $rc)) =
       {opcd = 0b011111, rb = 0b00000, oe = $oe, extopcd = 0b0011'01000, rc = $rc}
     assembly AsId($asm, $orId($oe; $rc)) =
-      ($asm, $orStr($oe; $rc), " ", decimal(rs), ",", decimal(ra))
+      ($asm, $orStr($oe; $rc), " ", udec(rs), ",", udec(ra))
   }
 
   // instructions: neg[o][.]
@@ -1282,22 +1285,22 @@ instruction set architecture PPC64SFS = {
             XER := (XER.so, mca, XER.ca, XER.rsv1, flags32.carry, XER.ca32, XER.rsv2, XER.nbytes)
         }
     encoding AsId($asm) = {opcd = 0b011111, cy = 0b00, extopcd = 0b101'01010, rsv = 0b0}
-    assembly AsId($asm) = ($asm, " ", decimal(rs), ",", decimal(ra), ",", decimal(rb), ",", decimal(cy))
+    assembly AsId($asm) = ($asm, " ", udec(rs), ",", udec(ra), ",", udec(rb), ",", udec(cy))
   }
 
   //------------------------Arithmetic-------------------------
   $DXFormAddInstr("ADDPCIS")
 
-  $XOFormAddSubInstr((("ADD"   ; addc; 0b1000'01010); (X(ra); X(rb)); none         ; false ; false; (",", decimal(rb))))
-  $XOFormAddSubInstr((("ADDC"  ; addc; 0b0000'01010); (X(ra); X(rb)); none         ; false ; true ; (",", decimal(rb))))
-  $XOFormAddSubInstr((("ADDE"  ; addc; 0b0100'01010); (X(ra); X(rb)); none         ; XER.ca; true ; (",", decimal(rb))))
-  $XOFormAddSubInstr((("SUBF"  ; subc; 0b0001'01000); (X(rb); X(ra)); none         ; true  ; false; (",", decimal(rb))))
-  $XOFormAddSubInstr((("SUBFC" ; subc; 0b0000'01000); (X(rb); X(ra)); none         ; true  ; true ; (",", decimal(rb))))
-  $XOFormAddSubInstr((("SUBFE" ; subc; 0b0100'01000); (X(rb); X(ra)); none         ; XER.ca; true ; (",", decimal(rb))))
-  $XOFormAddSubInstr((("ADDME" ; addc; 0b0111'01010); (X(ra); -1   ); rb = 0b00000 ; XER.ca; true ; ""                ))
-  $XOFormAddSubInstr((("ADDZE" ; addc; 0b0110'01010); (X(ra);  0   ); rb = 0b00000 ; XER.ca; true ; ""                ))
-  $XOFormAddSubInstr((("SUBFME"; subc; 0b0111'01000); (-1   ; X(ra)); rb = 0b00000 ; XER.ca; true ; ""                ))
-  $XOFormAddSubInstr((("SUBFZE"; subc; 0b0110'01000); ( 0   ; X(ra)); rb = 0b00000 ; XER.ca; true ; ""                ))
+  $XOFormAddSubInstr((("ADD"   ; addc; 0b1000'01010); (X(ra); X(rb)); none         ; false ; false; (",", udec(rb))))
+  $XOFormAddSubInstr((("ADDC"  ; addc; 0b0000'01010); (X(ra); X(rb)); none         ; false ; true ; (",", udec(rb))))
+  $XOFormAddSubInstr((("ADDE"  ; addc; 0b0100'01010); (X(ra); X(rb)); none         ; XER.ca; true ; (",", udec(rb))))
+  $XOFormAddSubInstr((("SUBF"  ; subc; 0b0001'01000); (X(rb); X(ra)); none         ; true  ; false; (",", udec(rb))))
+  $XOFormAddSubInstr((("SUBFC" ; subc; 0b0000'01000); (X(rb); X(ra)); none         ; true  ; true ; (",", udec(rb))))
+  $XOFormAddSubInstr((("SUBFE" ; subc; 0b0100'01000); (X(rb); X(ra)); none         ; XER.ca; true ; (",", udec(rb))))
+  $XOFormAddSubInstr((("ADDME" ; addc; 0b0111'01010); (X(ra); -1   ); rb = 0b00000 ; XER.ca; true ; ""             ))
+  $XOFormAddSubInstr((("ADDZE" ; addc; 0b0110'01010); (X(ra);  0   ); rb = 0b00000 ; XER.ca; true ; ""             ))
+  $XOFormAddSubInstr((("SUBFME"; subc; 0b0111'01000); (-1   ; X(ra)); rb = 0b00000 ; XER.ca; true ; ""             ))
+  $XOFormAddSubInstr((("SUBFZE"; subc; 0b0110'01000); ( 0   ; X(ra)); rb = 0b00000 ; XER.ca; true ; ""             ))
 
   $DFormAddSubInstr(("ADDI"  ; adds ; 0b001110; ADDI  ); (XZ(ra); immS  ); false; false)
   $DFormAddSubInstr(("ADDIC" ; adds ; 0b001100; ADDIC ); (X(ra) ; immS  ); false; true )
