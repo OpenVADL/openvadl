@@ -22,6 +22,10 @@ import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.VdtEntity;
+import vadl.pass.PassResults;
+import vadl.vdt.impl.irregular.model.DecodeEntry;
+import vadl.vdt.passes.VdtConstraintSynthesisPass;
+import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.target.common.DecisionTreeStatsCalculator;
 import vadl.vdt.target.dump.DotGraphGenerator;
 import vadl.vdt.target.dump.InsnDecisionTableGenerator;
@@ -108,6 +112,7 @@ public class VdtEnricherCollection {
         entity.addInfo(info);
       });
 
+  @SuppressWarnings("unchecked")
   public static InfoEnricher VDT_STATS_EXPANDABLE =
       InfoEnricher.forType(VdtEntity.class, (entity, passResults) -> {
 
@@ -115,14 +120,28 @@ public class VdtEnricherCollection {
 
         final var statsTable = new ArrayList<List<String>>();
 
-        statsTable.add(List.of("Property", "Number of Nodes", "Number of Leaves (Instructions)",
-            "Minimum Depth",
-            "Maximal Depth", "Average Depth", "Longest instruction width"));
-        statsTable.add(List.of("Value", String.valueOf(stats.getNumberOfNodes()),
-            String.valueOf(stats.getNumberOfLeafNodes()), String.valueOf(stats.getMinDepth()),
-            String.valueOf(stats.getMaxDepth()),
-            String.valueOf(Math.round(stats.getAvgDepth() * 100) / 100.0),
-            stats.getMaxInstructionWidth() + " bit"));
+        final List<String> categories = new ArrayList<>(
+            List.of("Property", "Number of Nodes", "Number of Instructions",
+                "Number of Leaves", "Minimum Depth", "Maximal Depth", "Average Depth"));
+        if (stats.getOccurrenceProbability() > 0.0) {
+          categories.add("Weighted Average Depth");
+        }
+        categories.add("Longest instruction width");
+        statsTable.add(categories);
+
+        final List<String> values = new ArrayList<>(
+            List.of("Value", String.valueOf(stats.getNumberOfNodes()),
+                String.valueOf(getInsnCount(passResults)),
+                String.valueOf(stats.getNumberOfLeafNodes()), String.valueOf(stats.getMinDepth()),
+                String.valueOf(stats.getMaxDepth()),
+                String.valueOf(Math.round(stats.getAvgDepth() * 100) / 100.0))
+        );
+        if (stats.getOccurrenceProbability() > 0.0) {
+          values.add(String.valueOf(Math.round(stats.getWeightedAvgDepth() * 100) / 100.0));
+        }
+        values.add(stats.getMaxInstructionWidth() + " bit");
+
+        statsTable.add(values);
 
         var info = InfoUtils.createTableExpandable("Statistics", statsTable);
         entity.addInfo(info);
@@ -133,12 +152,32 @@ public class VdtEnricherCollection {
 
         var stats = DecisionTreeStatsCalculator.statistics(entity.tree());
 
-        entity.addInfo(Info.Tag.of("Instructions", String.valueOf(stats.getNumberOfLeafNodes())));
+        entity.addInfo(Info.Tag.of("Instructions", String.valueOf(getInsnCount(passResults))));
         entity.addInfo(Info.Tag.of("Nodes", String.valueOf(stats.getNumberOfNodes())));
+        entity.addInfo(Info.Tag.of("Leaves", String.valueOf(stats.getNumberOfLeafNodes())));
         entity.addInfo(Info.Tag.of("Max Depth", String.valueOf(stats.getMaxDepth())));
         entity.addInfo(Info.Tag.of("Avg Depth",
             String.valueOf(Math.round(stats.getAvgDepth() * 100) / 100.0)));
+
+        if (stats.getOccurrenceProbability() > 0.0) {
+          entity.addInfo(Info.Tag.of("Weighted Avg Depth",
+              String.valueOf(Math.round(stats.getWeightedAvgDepth() * 100) / 100.0)));
+        }
       });
+
+  @SuppressWarnings("unchecked")
+  private static int getInsnCount(PassResults passResults) {
+    final List<DecodeEntry> entries;
+    if (passResults.hasRunPassOnce(VdtConstraintSynthesisPass.class)) {
+      entries =
+          (List<DecodeEntry>) passResults.lastNullableResultOf(
+              VdtConstraintSynthesisPass.class);
+    } else {
+      entries =
+          (List<DecodeEntry>) passResults.lastNullableResultOf(VdtInputPreparationPass.class);
+    }
+    return entries != null ? entries.size() : 0;
+  }
 
   public static List<InfoEnricher> all = List.of(
       VDT_STATS_TAGS,

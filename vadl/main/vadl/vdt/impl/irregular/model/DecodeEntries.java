@@ -33,4 +33,8 @@ public record DecodeEntries(BitPattern checkedBits, List<DecodeEntry> entries) {
     return entries.stream().map(DecodeEntry::source).collect(Collectors.toSet()).size() > 1;
   }
 
+  public boolean isEmpty() {
+    return entries.isEmpty();
+  }
+
 }

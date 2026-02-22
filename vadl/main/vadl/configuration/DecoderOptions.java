@@ -28,10 +28,14 @@ public class DecoderOptions {
    * The possible VADL decode tree generator strategies to choose from.
    */
   public enum Generator {
+    /**
+     * For now only supported by the RTL backend target, since HW is the only target which would
+     * now require sequential lookup. Supports only regular encodings.
+     */
+    TABLE("Lookup table based decoder", "table"),
     REGULAR("Regular decoder generator", "regular"),
     IRREGULAR("Irregular decoder generator, default", "irregular"),
-    RTL_TABLE("RTL table based decoder", "rtl-table"),
-    OCC("Irregular decoder generator, using occurrence probabilities", "occ");
+    OCCURRENCE_AWARE("Occurrence aware generator", "occ-aware");
 
     private final String selector;
     private final String desc;
@@ -122,9 +126,18 @@ public class DecoderOptions {
   private OptionToSkip[] optsToSkip;
   private Generator generator;
 
+  /**
+   * Options for occurrence aware decoder generator.
+   */
+  private double memoryPenalty;
+
+  @Nullable
+  private String statistics;
+
   public DecoderOptions() {
     optsToSkip = new OptionToSkip[0];
     generator = Generator.IRREGULAR;
+    memoryPenalty = 1.0;
   }
 
   public OptionToSkip[] getOptsToSkip() {
@@ -143,6 +156,23 @@ public class DecoderOptions {
     this.generator = generator;
   }
 
+  public Double getMemoryPenalty() {
+    return memoryPenalty;
+  }
+
+  public void setMemoryPenalty(Double memoryPenalty) {
+    this.memoryPenalty = memoryPenalty;
+  }
+
+  @Nullable
+  public String getStatistics() {
+    return statistics;
+  }
+
+  public void setStatistics(@Nullable String statistics) {
+    this.statistics = statistics;
+  }
+
   public DecoderOptions withGenerator(Generator generator) {
     setGenerator(generator);
     return this;
@@ -150,6 +180,16 @@ public class DecoderOptions {
 
   public DecoderOptions withOptsToSkip(OptionToSkip... optsToSkip) {
     setOptsToSkip(optsToSkip);
+    return this;
+  }
+
+  public DecoderOptions withMemoryPenalty(Double memoryPenalty) {
+    setMemoryPenalty(memoryPenalty);
+    return this;
+  }
+
+  public DecoderOptions withStatistics(@Nullable String statistics) {
+    setStatistics(statistics);
     return this;
   }
 

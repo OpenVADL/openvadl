@@ -34,11 +34,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.TestUtils;
+import vadl.configuration.DecoderOptions;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
@@ -692,7 +692,10 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         """;
 
     var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
+    config.setDecoderOptions(new DecoderOptions()
+        .withGenerator(DecoderOptions.Generator.IRREGULAR));
+
     var spec = TestUtils.compileToViam(vadl);
 
     var manager = new PassManager();
@@ -761,16 +764,14 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         """;
 
     var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), true));
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
+    config.setDecoderOptions(new DecoderOptions()
+        .withGenerator(DecoderOptions.Generator.IRREGULAR));
+
     var spec = TestUtils.compileToViam(vadl);
 
     var manager = new PassManager();
     manager.add(PassOrders.check(config));
-    /*manager.add(new VdtEncodingConstraintValidationPass(config));
-    manager.add(new VdtInputPreparationPass(config));
-    manager.add(new VdtConstraintSynthesisPass(config));
-    manager.add(new VdtEncodingSemanticVerificationPass(config));
-    manager.add(new VdtLoweringPass(config));*/
 
     /* WHEN */
     manager.run(spec);

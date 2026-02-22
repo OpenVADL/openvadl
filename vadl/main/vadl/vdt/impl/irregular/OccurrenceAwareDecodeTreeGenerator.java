@@ -148,9 +148,13 @@ public class OccurrenceAwareDecodeTreeGenerator extends IrregularDecodeTreeGener
         .filter(Objects::nonNull)
         .min(Comparator.comparing(Pair::left)).orElse(null);
 
+    if (base == null) {
+      return Optional.empty();
+    }
+
     final var checked = decodeEntries.checkedBits().toMaskVector();
 
-    Pair<Double, MultiSplitEntrySet> prev = Objects.requireNonNull(base);
+    Pair<Double, MultiSplitEntrySet> prev = base;
     Pair<Double, MultiSplitEntrySet> next = prev;
     do {
 
@@ -224,7 +228,7 @@ public class OccurrenceAwareDecodeTreeGenerator extends IrregularDecodeTreeGener
 
     } while (nextCost < prevCost);
 
-    return Optional.of(prev);
+    return prev == base ? Optional.empty() : Optional.of(prev);
   }
 
   /**

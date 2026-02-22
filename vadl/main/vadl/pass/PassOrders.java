@@ -16,7 +16,7 @@
 
 package vadl.pass;
 
-import static vadl.configuration.DecoderOptions.Generator.RTL_TABLE;
+import static vadl.configuration.DecoderOptions.Generator.TABLE;
 import static vadl.configuration.DecoderOptions.OptionToSkip.OPT_CONSTRAINT_SYNTHESIS;
 import static vadl.configuration.DecoderOptions.OptionToSkip.OPT_DECODER_VERIFICATION;
 import static vadl.configuration.DecoderOptions.OptionToSkip.OPT_ENCODING_VERIFICATION;
@@ -699,8 +699,8 @@ public class PassOrders {
         "mia-inline",
         "MiA after inlining instruction behavior");
 
-    if (config.getDecoderOptions().getGenerator() != RTL_TABLE) {
-      // Prepares and constructs the VDT, which is not used by the rtl-table strategy
+    if (config.getDecoderOptions().getGenerator() != TABLE) {
+      // Prepares and constructs the VDT, which is not used by the 'table' strategy
       addDecodePasses(order, config);
     }
 

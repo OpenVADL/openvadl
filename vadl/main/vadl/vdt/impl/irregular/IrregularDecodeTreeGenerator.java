@@ -100,6 +100,10 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
       return makeNode(decodeEntries);
     }
 
+    if (decodeEntries.isEmpty()) {
+      throw new IllegalStateException("Entry set must not be empty");
+    }
+
     // It's possible to have multiple decode entries pointing to the same instruction
     var entry = combineEntries(decodeEntries);
 
@@ -230,18 +234,31 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
 
     for (DecodeEntry e : decodeEntries.entries()) {
 
-      var matchesThen = compatible(e.pattern(), pattern) && e.exclusionConditions().stream()
-          .noneMatch(c -> contain(pattern, c.matching())
-              && c.unmatching().stream().noneMatch(p -> compatible(pattern, p)));
-      var matchesElse = !contain(e.pattern(), pattern);
+      // See if there is an encoding that matches the base pattern and is not excluded by the
+      // exclusion conditions
+      var mThen = compatible(e.pattern(), pattern) && e.exclusionConditions().stream()
+          .allMatch(ex -> {
+            var combined = combinePatterns(e.pattern(), pattern);
+            return !contain(combined, ex.matching()) || ex.unmatching().stream()
+                .anyMatch(u -> compatible(combined, u));
+          });
 
-      if (matchesThen ^ matchesElse) {
+      // See if there is an encoding that either does not match the base pattern or is excluded by
+      // the exclusion conditions (and not re-included by the unmatching patterns)
+      var mElse = !compatible(e.pattern(), pattern) || e.exclusionConditions().stream()
+          .anyMatch(ex -> {
+            var combined = combinePatterns(e.pattern(), pattern);
+            return compatible(combined, ex.matching()) && ex.unmatching().stream()
+                .noneMatch(u -> compatible(combined, u));
+          });
+
+      if (mThen ^ mElse) {
         // The entry occurs only on one side of the branch, we can keep the current probability.
-        (matchesThen ? matchingEntries : otherEntries).add(e);
+        (mThen ? matchingEntries : otherEntries).add(e);
         continue;
       }
 
-      if (!matchesThen) {
+      if (!mThen) {
         // Must not happen
         throw toConstructionDiagnostic(decodeEntries);
       }
