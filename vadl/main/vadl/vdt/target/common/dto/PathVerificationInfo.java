@@ -17,12 +17,12 @@
 package vadl.vdt.target.common.dto;
 
 import com.microsoft.z3.BoolExpr;
-import vadl.vdt.target.common.DecisionTreeSoundVerifier;
+import vadl.vdt.target.common.DecisionTreeSoundnessVerifier;
 import vadl.vdt.utils.Instruction;
 
 /**
  * Encapsulates information about a path in the decode tree, used within the soundness verification
- * condition generator {@link DecisionTreeSoundVerifier}.
+ * condition generator {@link DecisionTreeSoundnessVerifier}.
  *
  * @param leaf          The leaf of this decode path.
  * @param leafCondition The condition to select the path conditions.

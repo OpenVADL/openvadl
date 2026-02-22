@@ -16,7 +16,7 @@
 
 package vadl.vdt.target.common;
 
-import static vadl.vdt.target.common.DecisionTreeSoundVerifierDispatcher.dispatch;
+import static vadl.vdt.target.common.DecisionTreeSoundnessVerifierDispatcher.dispatch;
 import static vadl.vdt.target.common.DecisionTreeStatsCalculator.statistics;
 
 import com.microsoft.z3.BitVecExpr;
@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
@@ -54,10 +56,12 @@ import vadl.vdt.utils.Instruction;
  * belongs to instruction B or is entirely invalid.
  */
 @DispatchFor(value = InnerNode.class, include = {"vadl.vdt"}, returnType = List.class)
-public class DecisionTreeSoundVerifier
+public class DecisionTreeSoundnessVerifier
     implements Visitor<List<Pair<PathVerificationInfo, BoolExpr>>> {
 
   private final Node tree;
+  private final Map<vadl.viam.Instruction, Instruction> entries;
+
   private final Context ctx;
   private final BitVecExpr insn;
 
@@ -66,9 +70,11 @@ public class DecisionTreeSoundVerifier
    *
    * @param tree The VADL decode tree.
    */
-  public DecisionTreeSoundVerifier(Context ctx, Node tree) {
+  public DecisionTreeSoundnessVerifier(Context ctx, Node tree, List<Instruction> entries) {
     this.tree = tree;
     this.ctx = ctx;
+    this.entries = entries.stream()
+        .collect(Collectors.toMap(Instruction::source, Function.identity()));
 
     final var stats = statistics(tree);
     final BitVecSort sort = ctx.mkBitVecSort(stats.getMaxInstructionWidth());
@@ -101,18 +107,25 @@ public class DecisionTreeSoundVerifier
   }
 
   /**
-   * Each path is verified individually, so for every leaf-node we create a separate bit vector
-   * constant which we add the constraints over.
+   * Each path is verified individually, so for every leaf-node we create a separate boolean
+   * constant (selector condition).
    *
    * @param node the leaf-node
-   * @return The verification condition, including the leaf-node's bit vector constant.
+   * @return The verification condition, including the leaf-node's selector-condition.
    */
   @Override
   public List<Pair<PathVerificationInfo, BoolExpr>> visit(LeafNode node) {
-    final BoolExpr leafCondition = (BoolExpr) ctx.mkFreshConst("c", ctx.getBoolSort());
-    final var info = new PathVerificationInfo(node.instruction(), leafCondition);
 
-    final BoolExpr condition = toConstraint(insn, node.instruction());
+    final var viamInsn = node.instruction().source();
+    final Instruction i = entries.get(viamInsn);
+    if (i == null) {
+      throw new IllegalStateException("Instruction " + viamInsn + " not found in the entry set");
+    }
+
+    final BoolExpr leafCondition = (BoolExpr) ctx.mkFreshConst("c", ctx.getBoolSort());
+    final var info = new PathVerificationInfo(i, leafCondition);
+
+    final BoolExpr condition = toConstraint(insn, i);
     final BoolExpr negated = ctx.mkNot(condition);
 
     return List.of(Pair.of(info, negated));

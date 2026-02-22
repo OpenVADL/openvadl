@@ -190,6 +190,10 @@ public class PassOrders {
     // check if VDT can be constructed
     addDecodePasses(order, configuration);
 
+    addHtmlDump(order, configuration,
+        "VDT Creation",
+        "Dump directly after VDT generation.");
+
     return order;
   }
 
