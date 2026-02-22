@@ -17,6 +17,9 @@
 package vadl.pass;
 
 import static vadl.configuration.DecoderOptions.Generator.RTL_TABLE;
+import static vadl.configuration.DecoderOptions.OptionToSkip.OPT_CONSTRAINT_SYNTHESIS;
+import static vadl.configuration.DecoderOptions.OptionToSkip.OPT_DECODER_VERIFICATION;
+import static vadl.configuration.DecoderOptions.OptionToSkip.OPT_ENCODING_VERIFICATION;
 import static vadl.iss.template.IssDefaultRenderingPass.issDefault;
 
 import com.google.common.collect.Streams;
@@ -24,7 +27,6 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import vadl.configuration.DecoderOptions;
 import vadl.configuration.GcbConfiguration;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
@@ -144,6 +146,7 @@ import vadl.vdt.passes.VdtEncodingConstraintValidationPass;
 import vadl.vdt.passes.VdtEncodingSemanticVerificationPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
+import vadl.vdt.passes.VdtVerificationPass;
 import vadl.viam.Specification;
 import vadl.viam.passes.ControlFlowOptimizationPass;
 import vadl.viam.passes.DetectRegisterIndicesPass;
@@ -628,18 +631,24 @@ public class PassOrders {
         .add(new VdtInputPreparationPass(config));
 
     var skipSynthesis = Stream.of(config.getDecoderOptions().getOptsToSkip())
-        .anyMatch(o -> o == DecoderOptions.OptionToSkip.OPT_CONSTRAINT_SYNTHESIS);
+        .anyMatch(o -> o == OPT_CONSTRAINT_SYNTHESIS);
     if (!skipSynthesis) {
       order.add(new VdtConstraintSynthesisPass(config));
     }
 
-    var skipVerification = Stream.of(config.getDecoderOptions().getOptsToSkip())
-        .anyMatch(o -> o == DecoderOptions.OptionToSkip.OPT_ENCODING_VERIFICATION);
-    if (!skipVerification) {
+    var skipEncodingVerification = Stream.of(config.getDecoderOptions().getOptsToSkip())
+        .anyMatch(o -> o == OPT_ENCODING_VERIFICATION);
+    if (!skipEncodingVerification) {
       order.add(new VdtEncodingSemanticVerificationPass(config));
     }
 
     order.add(new VdtLoweringPass(config));
+
+    var skipDecoderVerification = Stream.of(config.getDecoderOptions().getOptsToSkip())
+        .anyMatch(o -> o == OPT_DECODER_VERIFICATION);
+    if (!skipDecoderVerification) {
+      order.add(new VdtVerificationPass(config));
+    }
   }
 
   /**

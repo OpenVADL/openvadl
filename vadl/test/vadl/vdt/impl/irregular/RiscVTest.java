@@ -34,6 +34,7 @@ import vadl.vdt.model.Node;
 import vadl.vdt.passes.VdtConstraintSynthesisPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
+import vadl.vdt.passes.VdtVerificationPass;
 import vadl.vdt.target.common.CheckedBitsCollector;
 import vadl.vdt.target.common.DecisionTreeStatsCalculator;
 import vadl.vdt.target.dump.TextGraphGenerator;
@@ -56,6 +57,7 @@ class RiscVTest extends AbstractTest {
     manager.add(new VdtInputPreparationPass(config));
     manager.add(new VdtConstraintSynthesisPass(config));
     manager.add(new VdtLoweringPass(config));
+    manager.add(new VdtVerificationPass(config));
 
     /* WHEN */
     manager.run(spec);
@@ -83,6 +85,7 @@ class RiscVTest extends AbstractTest {
     manager.add(new VdtInputPreparationPass(config));
     manager.add(new VdtConstraintSynthesisPass(config));
     manager.add(new VdtLoweringPass(config));
+    manager.add(new VdtVerificationPass(config));
     manager.run(spec);
 
     var decodeTree = manager.getPassResults().lastResultOf(VdtLoweringPass.class, Node.class);

@@ -34,6 +34,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,7 @@ import vadl.vdt.passes.VdtEncodingConstraintValidationPass;
 import vadl.vdt.passes.VdtEncodingSemanticVerificationPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
+import vadl.vdt.passes.VdtVerificationPass;
 import vadl.vdt.target.common.CheckedBitsCollector;
 import vadl.vdt.target.common.DecisionTreeDecoder;
 import vadl.vdt.target.common.DecisionTreeStatsCalculator;
@@ -378,6 +380,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     passManager.add(new VdtInputPreparationPass(config));
     passManager.add(new VdtConstraintSynthesisPass(config));
     passManager.add(new VdtLoweringPass(config));
+    passManager.add(new VdtVerificationPass(config));
 
     /* WHEN */
     passManager.run(spec);
@@ -430,6 +433,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     passManager.add(new VdtInputPreparationPass(config));
     passManager.add(new VdtConstraintSynthesisPass(config));
     passManager.add(new VdtLoweringPass(config));
+    passManager.add(new VdtVerificationPass(config));
 
     /* WHEN */
     passManager.run(spec);
@@ -480,6 +484,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     passManager.add(new VdtInputPreparationPass(config));
     passManager.add(new VdtConstraintSynthesisPass(config));
     passManager.add(new VdtLoweringPass(config));
+    passManager.add(new VdtVerificationPass(config));
 
     /* WHEN */
     passManager.run(spec);
@@ -552,6 +557,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     manager.add(new VdtInputPreparationPass(config));
     manager.add(new VdtEncodingSemanticVerificationPass(config));
     manager.add(new VdtLoweringPass(config));
+    manager.add(new VdtVerificationPass(config));
 
     /* WHEN */
     manager.run(spec);
@@ -610,6 +616,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     manager.add(new VdtInputPreparationPass(config));
     manager.add(new VdtEncodingSemanticVerificationPass(config));
     manager.add(new VdtLoweringPass(config));
+    manager.add(new VdtVerificationPass(config));
 
     /* WHEN */
     manager.run(spec);
