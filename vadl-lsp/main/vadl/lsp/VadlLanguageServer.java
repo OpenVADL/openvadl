@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -39,7 +39,6 @@ import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.ServerInfo;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.TextDocumentSyncOptions;
-import org.eclipse.lsp4j.jsonrpc.validation.NonNull;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageClientAware;
 import org.eclipse.lsp4j.services.LanguageServer;
@@ -146,7 +145,7 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
    *
    * @param listeningFuture As produced by LSPLauncher.startListening()
    */
-  public void setListeningFuture(@NonNull Future<Void> listeningFuture) {
+  public void setListeningFuture(Future<Void> listeningFuture) {
     this.listeningFuture = listeningFuture;
   }
   

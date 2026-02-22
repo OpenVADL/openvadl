@@ -17,11 +17,14 @@
 package vadl.lsp;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import javax.annotation.Nullable;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
@@ -34,20 +37,32 @@ import org.slf4j.LoggerFactory;
 public class LspEntryPoint {
   private static final Logger log = LoggerFactory.getLogger(LspEntryPoint.class);
 
-  /**
-   * Runs a language server on a specific port.
-   *
-   * @param port Port on which to listen to.
-   */
-  public static int start(
-      int port
-  ) {
-    var exitCode = 0;
-    try (ServerSocket serverSocket = new ServerSocket(port)) {
-      log.info("Started OpenVADL language server on port {}", serverSocket.getLocalPort());
+  @Nullable
+  private final Integer port;
 
-      Socket socket = serverSocket.accept();
-      serveClient(socket);
+  private LspEntryPoint(@Nullable Integer port) {
+    this.port = port;
+  }
+
+  private int runServer() {
+    var exitCode = 0;
+    try {
+      if (port == null) {
+        log.info("Started OpenVADL language server on stdin/stdout");
+        serveClient(System.in, System.out);
+
+      } else {
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+          log.info("Started OpenVADL language server on port {}", serverSocket.getLocalPort());
+
+          Socket socket = serverSocket.accept();
+          log.info(
+              "Connection established with {}:{}", socket.getInetAddress().getHostAddress(),
+              socket.getPort()
+          );
+          serveClient(socket.getInputStream(), socket.getOutputStream());
+        }
+      }
 
     } catch (IOException | InterruptedException | ExecutionException e) {
       log.error(e.toString());
@@ -61,23 +76,20 @@ public class LspEntryPoint {
   /**
    * Provides the actual language server functionality to a single client.
    *
-   * @param socket the accepted socket
+   * @param in Input Stream for receiving messages from client
+   * @param out Output Stream for sending messages to client
    */
-  protected static void serveClient(Socket socket) throws
+  private void serveClient(InputStream in, OutputStream out) throws
       IOException,
       InterruptedException,
       ExecutionException {
-    log.info(
-        "Connection established with {}:{}", socket.getInetAddress().getHostAddress(),
-        socket.getPort()
-    );
 
     // According to https://github.com/eclipse-lsp4j/lsp4j/blob/main/documentation/README.md
     VadlLanguageServer server = new VadlLanguageServer();
     Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(
         server,
-        socket.getInputStream(),
-        socket.getOutputStream()
+        in,
+        out
     );
     server.connect(launcher.getRemoteProxy());
     Future<Void> future = launcher.startListening();
@@ -92,5 +104,16 @@ public class LspEntryPoint {
     } finally {
       server.tearDown();
     }
+  }
+
+
+  /**
+   * Runs a language server, which will either communicate via a specific TCP port or stdin/stdout.
+   *
+   * @param port Port on which to listen on. Null: Use stdin/stdout for communication instead.
+   * @return exit code
+   */
+  public static int run(@Nullable Integer port) {
+    return new LspEntryPoint(port).runServer();
   }
 }
