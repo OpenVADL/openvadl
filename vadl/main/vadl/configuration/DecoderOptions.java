@@ -30,7 +30,8 @@ public class DecoderOptions {
   public enum Generator {
     REGULAR("Regular decoder generator", "regular"),
     IRREGULAR("Irregular decoder generator, default", "irregular"),
-    RTL_TABLE("RTL table based decoder", "rtl-table"),;
+    RTL_TABLE("RTL table based decoder", "rtl-table"),
+    ;
 
     private final String selector;
     private final String desc;
@@ -77,7 +78,10 @@ public class DecoderOptions {
         "constraint-synthesis"),
 
     OPT_ENCODING_VERIFICATION("Skip the encoding verification, default: enabled",
-        "encoding-verification");
+        "encoding-verification"),
+
+    OPT_DECODER_VERIFICATION("Skip the correctness verification of the decode tree, default: "
+                                 + "enabled", "decoder-verification");
 
     private final String selector;
     private final String desc;
