@@ -39,6 +39,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import vadl.ast.Ast;
 import vadl.ast.LspTokenizer;
 import vadl.ast.ModelRemover;
@@ -67,8 +68,9 @@ class VadlTextDocumentService implements TextDocumentService {
    */
   private static final URI PRIMARY_FILE = URI.create("memory://internal");
 
+  private static final Logger log = LoggerFactory.getLogger(VadlTextDocumentService.class);
+
   private final VadlLanguageServer server;
-  private final Logger log;
   @Nullable
   private LspTokenizer tokenizer;
 
@@ -76,7 +78,6 @@ class VadlTextDocumentService implements TextDocumentService {
 
   VadlTextDocumentService(VadlLanguageServer server) {
     this.server = server;
-    this.log = server.getLogger(VadlTextDocumentService.class);
   }
 
   /**

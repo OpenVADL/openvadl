@@ -44,16 +44,15 @@ import org.eclipse.lsp4j.services.LanguageClientAware;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
-import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import vadl.ast.LspTokenizer;
 
 /**
  * The openVADL language server, based on lsp4j.
  */
 public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
-  private final ILoggerFactory loggerFactory;
-  private final Logger log;
+  private static final Logger log = LoggerFactory.getLogger(VadlLanguageServer.class);
 
   @Nullable
   private LanguageClient client;
@@ -61,35 +60,12 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
   private Future<Void> listeningFuture;
   private final ExecutorService executor = Executors.newCachedThreadPool();
   
-  private final VadlTextDocumentService textService;
+  private final VadlTextDocumentService textService = new VadlTextDocumentService(this);
 
   @Nullable
   private InitializeParams params;
   @Nullable
   private ServerCapabilities serverCapabilities;
-
-  /**
-   * Creates a new Server instance.
-   *
-   * @param loggerFactory Used to create a logger
-   */
-  public VadlLanguageServer(ILoggerFactory loggerFactory) {
-    this.loggerFactory = loggerFactory;
-    this.log = getLogger(VadlLanguageServer.class);
-
-    this.textService = new VadlTextDocumentService(this);
-  }
-
-  /**
-   * Returns a logger named corresponding to the class passed as parameter. Will return a
-   * {@link org.slf4j.helpers.NOPLogger} if server communicates via stdin/stdout (so that there is
-   * no conflict between LSP and log messages).
-   *
-   * @param clazz the returned logger will be named after clazz
-   */
-  public Logger getLogger(Class<?> clazz) {
-    return loggerFactory.getLogger(clazz.getName());
-  }
 
   @Override
   public CompletableFuture<InitializeResult> initialize(InitializeParams params) {

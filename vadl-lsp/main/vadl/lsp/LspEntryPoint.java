@@ -28,27 +28,20 @@ import javax.annotation.Nullable;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
-import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.helpers.NOPLoggerFactory;
 
 /**
  * Entrypoint to the OpenVADL language server.
  */
 public class LspEntryPoint {
-  private final ILoggerFactory loggerFactory;
-  private final Logger log;
+  private static final Logger log = LoggerFactory.getLogger(LspEntryPoint.class);
+
   @Nullable
   private final Integer port;
 
   private LspEntryPoint(@Nullable Integer port) {
     this.port = port;
-    // If using stdin/stdout for communication: Disable logging to avoid conflicts
-    this.loggerFactory = (port == null)
-        ? new NOPLoggerFactory()
-        : LoggerFactory.getILoggerFactory();
-    this.log = this.loggerFactory.getLogger(LspEntryPoint.class.getName());
   }
 
   private int runServer() {
@@ -92,7 +85,7 @@ public class LspEntryPoint {
       ExecutionException {
 
     // According to https://github.com/eclipse-lsp4j/lsp4j/blob/main/documentation/README.md
-    VadlLanguageServer server = new VadlLanguageServer(loggerFactory);
+    VadlLanguageServer server = new VadlLanguageServer();
     Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(
         server,
         in,
