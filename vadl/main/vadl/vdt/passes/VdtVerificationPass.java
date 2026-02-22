@@ -36,9 +36,9 @@ import vadl.error.DeferredDiagnosticStore;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.utils.Pair;
 import vadl.vdt.model.Node;
-import vadl.vdt.target.common.DecisionTreeSoundVerifier;
+import vadl.vdt.target.common.DecisionTreeCompletenessVerifier;
+import vadl.vdt.target.common.DecisionTreeSoundnessVerifier;
 import vadl.vdt.target.common.dto.PathVerificationInfo;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
@@ -63,11 +63,25 @@ public class VdtVerificationPass extends Pass {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public @Nullable Void execute(PassResults passResults, Specification viam)
       throws IOException {
 
     final Node vdt = (Node) passResults.lastNullableResultOf(VdtLoweringPass.class);
     if (vdt == null) {
+      return null;
+    }
+
+    final List<vadl.vdt.utils.Instruction> entries;
+    if (passResults.hasRunPassOnce(VdtConstraintSynthesisPass.class)) {
+      entries = (List<vadl.vdt.utils.Instruction>)
+          passResults.lastNullableResultOf(VdtConstraintSynthesisPass.class);
+    } else {
+      entries = (List<vadl.vdt.utils.Instruction>)
+          passResults.lastNullableResultOf(VdtInputPreparationPass.class);
+    }
+
+    if (entries == null) {
       return null;
     }
 
@@ -80,42 +94,61 @@ public class VdtVerificationPass extends Pass {
       return null;
     }
 
+    boolean hasError = false;
+
+    // Verify soundness (no false-positives)
     try (Context ctx = new Context()) {
 
-      final var soundnessCondGenerator = new DecisionTreeSoundVerifier(ctx, vdt);
-
-      final List<Pair<PathVerificationInfo, BoolExpr>> conditions =
-          soundnessCondGenerator.generateGuardedConditions();
-      final BitVecExpr insnConst = soundnessCondGenerator.getInsnConst();
+      final var soundCondGenerator = new DecisionTreeSoundnessVerifier(ctx, vdt, entries);
+      final var conditions = soundCondGenerator.generateGuardedConditions();
+      final BitVecExpr insnConst = soundCondGenerator.getInsnConst();
 
       final Solver solver = ctx.mkSolver();
       conditions.forEach(p -> solver.add(p.right()));
 
       for (var path : conditions) {
-        checkUnsat(solver, ctx, insnConst, path.left());
+        hasError |= !checkSoundnessUnsat(solver, insnConst, path.left());
       }
+    }
+
+    // Verify completeness (no false-negatives)
+    try (Context ctx = new Context()) {
+
+      final var compCondGenerator = new DecisionTreeCompletenessVerifier(ctx, vdt, entries);
+      final var conditions = compCondGenerator.generateGuardedConditions();
+      final BitVecExpr insnConst = compCondGenerator.getInsnConst();
+
+      final Solver solver = ctx.mkSolver();
+      conditions.forEach(p -> solver.add(p.right()));
+
+      for (var path : conditions) {
+        hasError |= !checkCompletenessUnsat(solver, insnConst, path.left(), path.middle());
+      }
+    }
+
+    if (hasError) {
+      throw error("Invalid decoder generated. See additional errors for details.", viam)
+          .build();
     }
 
     return null;
   }
 
-  private static void checkUnsat(Solver solver, Context ctx, BitVecExpr insn,
-                                 PathVerificationInfo info) {
+  private static boolean checkSoundnessUnsat(Solver solver, BitVecExpr insn,
+                                             PathVerificationInfo info) {
     final var assumption = info.leafCondition();
 
-    final Status result = solver.check(
-        ctx.mkEq(assumption, ctx.mkTrue())
-    );
+    final Status result = solver.check(assumption);
 
     if (result == Status.UNSATISFIABLE) {
       // All good
-      return;
+      return true;
     }
 
     if (result == Status.UNKNOWN) {
       var diagnostic = warning("Unable to verify encoding definitions.", info.leaf().source());
       DeferredDiagnosticStore.add(diagnostic);
-      return;
+      return true;
     }
 
     final Model model = solver.getModel();
@@ -140,5 +173,48 @@ public class VdtVerificationPass extends Pass {
         .description("This error indicates an implementation error. Please try a "
             + "different generation strategy, and raise a bug report.");
     DeferredDiagnosticStore.add(e);
+
+    return false;
+  }
+
+  private static boolean checkCompletenessUnsat(Solver solver, BitVecExpr insn,
+                                                Instruction viamInsn, BoolExpr assumption) {
+
+    final Status result = solver.check(assumption);
+
+    if (result == Status.UNSATISFIABLE) {
+      // All good
+      return true;
+    }
+
+    if (result == Status.UNKNOWN) {
+      var diagnostic = warning("Unable to verify encoding definitions.", viamInsn);
+      DeferredDiagnosticStore.add(diagnostic);
+      return true;
+    }
+
+    final Model model = solver.getModel();
+    final FuncDecl<?>[] consts = model.getConstDecls();
+
+    if (consts.length == 0) {
+      // Should not happen, if it's SAT we must have model
+      final var e = error("Incomplete decoder generated.", viamInsn)
+          .description("This error indicates an implementation error. Please try a "
+              + "different generation strategy, and raise a bug report.");
+      DeferredDiagnosticStore.add(e);
+    }
+
+    // Extract the encoding as counterexample
+    final BitVecNum counterExample = (BitVecNum) solver.getModel().getConstInterp(insn);
+
+    final var e = error(
+        ("Incomplete decoder generated. It does not correctly select instruction %s for"
+            + " encoding 0x%x.")
+            .formatted(viamInsn.simpleName(), counterExample.getBigInteger()), viamInsn)
+        .description("This error indicates an implementation error. Please try a "
+            + "different generation strategy, and raise a bug report.");
+    DeferredDiagnosticStore.add(e);
+
+    return false;
   }
 }

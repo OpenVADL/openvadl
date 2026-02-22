@@ -89,6 +89,7 @@ class Aarch64Test extends AbstractTest {
     manager.add(new VdtInputPreparationPass(config));
     manager.add(new VdtConstraintSynthesisPass(config));
     manager.add(new VdtLoweringPass(config));
+    manager.add(new VdtVerificationPass(config));
     manager.run(spec);
 
     var decodeTree = manager.getPassResults().lastResultOf(VdtLoweringPass.class, Node.class);

@@ -16,6 +16,7 @@
 
 package vadl.pass;
 
+import static vadl.configuration.DecoderOptions.Generator.RTL_TABLE;
 import static vadl.configuration.DecoderOptions.OptionToSkip.OPT_CONSTRAINT_SYNTHESIS;
 import static vadl.configuration.DecoderOptions.OptionToSkip.OPT_DECODER_VERIFICATION;
 import static vadl.configuration.DecoderOptions.OptionToSkip.OPT_ENCODING_VERIFICATION;
@@ -195,6 +196,10 @@ public class PassOrders {
 
     // check if VDT can be constructed
     addDecodePasses(order, configuration);
+
+    addHtmlDump(order, configuration,
+        "VDT Creation",
+        "Dump directly after VDT generation.");
 
     return order;
   }
