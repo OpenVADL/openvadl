@@ -19,6 +19,7 @@ package vadl.iss.aarch64;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.SplittableRandom;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
@@ -39,7 +40,7 @@ import vadl.viam.RegisterTensor;
 public class IssA64SVEInstrTest extends AbstractIssAarch64InstrTest {
 
   private static final String VADL_SPEC = "sys/aarch64/vprocessor.vadl";
-  private static final int TESTS_PER_INSTRUCTION = 1;
+  private static final int TESTS_PER_INSTRUCTION = 10;
 
   private static final long VECTOR_SRC_1_ADDR = 0x40400000L;
   private static final long VECTOR_SRC_2_ADDR = 0x40410000L;
@@ -125,37 +126,44 @@ public class IssA64SVEInstrTest extends AbstractIssAarch64InstrTest {
 
   private IssTestUtils.TestCase createPredicatedBinaryInstrTest(A64SVETestBuilder b,
                                                                 String instruction,
-                                                                String elemSuffix) {
+                                                                String elemSuffix,
+                                                                int id) {
+    var regs = randomRegs("pred-" + instruction + "-" + elemSuffix, id, true);
     b.configureCpuForSveOps("x1", vlBits);
 
     b.fillMemory64(VECTOR_DEST_ADDR, vectorChunkCount, "x1", "x2");
-    b.loadZFromMemory("z0", VECTOR_DEST_ADDR, "x1");
+    b.loadZFromMemory(regs.zd(), VECTOR_DEST_ADDR, "x1");
 
     b.fillMemory64(VECTOR_SRC_1_ADDR, vectorChunkCount, "x1", "x2");
-    b.loadZFromMemory("z1", VECTOR_SRC_1_ADDR, "x1");
+    b.loadZFromMemory(regs.zm(), VECTOR_SRC_1_ADDR, "x1");
 
-    b.setPredicateAllTrue("p0", elemSuffix);
-    b.add("%s z0.%s, p0/m, z0.%s, z1.%s", instruction, elemSuffix, elemSuffix, elemSuffix);
+    b.setPredicateAllTrue(regs.pg(), elemSuffix);
+    b.add("%s %s.%s, %s/m, %s.%s, %s.%s",
+        instruction, regs.zd(), elemSuffix, regs.pg(), regs.zd(), elemSuffix, regs.zm(),
+        elemSuffix);
 
-    b.storeZToMemory("z0", VECTOR_DEST_ADDR, "x1");
+    b.storeZToMemory(regs.zd(), VECTOR_DEST_ADDR, "x1");
     b.loadMemory64ToRegs(VECTOR_DEST_ADDR, vectorChunkCount, RESULT_REG_START, "x1");
     return b.toTestCase();
   }
 
   private IssTestUtils.TestCase createUnpredicatedBinaryInstrTest(A64SVETestBuilder b,
                                                                   String instruction,
-                                                                  String elemSuffix) {
+                                                                  String elemSuffix,
+                                                                  int id) {
+    var regs = randomRegs("unpred-" + instruction + "-" + elemSuffix, id, false);
     b.configureCpuForSveOps("x1", vlBits);
 
     b.fillMemory64(VECTOR_SRC_1_ADDR, vectorChunkCount, "x1", "x2");
-    b.loadZFromMemory("z1", VECTOR_SRC_1_ADDR, "x1");
+    b.loadZFromMemory(regs.zn(), VECTOR_SRC_1_ADDR, "x1");
 
     b.fillMemory64(VECTOR_SRC_2_ADDR, vectorChunkCount, "x1", "x2");
-    b.loadZFromMemory("z2", VECTOR_SRC_2_ADDR, "x1");
+    b.loadZFromMemory(regs.zm(), VECTOR_SRC_2_ADDR, "x1");
 
-    b.add("%s z0.%s, z1.%s, z2.%s", instruction, elemSuffix, elemSuffix, elemSuffix);
+    b.add("%s %s.%s, %s.%s, %s.%s", instruction, regs.zd(), elemSuffix, regs.zn(), elemSuffix,
+        regs.zm(), elemSuffix);
 
-    b.storeZToMemory("z0", VECTOR_DEST_ADDR, "x1");
+    b.storeZToMemory(regs.zd(), VECTOR_DEST_ADDR, "x1");
     b.loadMemory64ToRegs(VECTOR_DEST_ADDR, vectorChunkCount, RESULT_REG_START, "x1");
     return b.toTestCase();
   }
@@ -163,46 +171,85 @@ public class IssA64SVEInstrTest extends AbstractIssAarch64InstrTest {
   private IssTestUtils.TestCase createReductionInstrTest(A64SVETestBuilder b,
                                                          String instruction,
                                                          String elemSuffix,
-                                                         boolean extendedAddReduction) {
+                                                         boolean extendedAddReduction,
+                                                         int id) {
+    var regs = randomRegs("red-" + instruction + "-" + elemSuffix, id, true);
     b.configureCpuForSveOps("x1", vlBits);
 
     b.fillMemory64(VECTOR_DEST_ADDR, vectorChunkCount, "x1", "x2");
-    b.loadZFromMemory("z0", VECTOR_DEST_ADDR, "x1");
+    b.loadZFromMemory(regs.zd(), VECTOR_DEST_ADDR, "x1");
 
     b.fillMemory64(VECTOR_SRC_1_ADDR, vectorChunkCount, "x1", "x2");
-    b.loadZFromMemory("z1", VECTOR_SRC_1_ADDR, "x1");
+    b.loadZFromMemory(regs.zn(), VECTOR_SRC_1_ADDR, "x1");
 
-    b.setPredicateAllTrue("p0", elemSuffix);
+    b.setPredicateAllTrue(regs.pg(), elemSuffix);
 
     if (extendedAddReduction) {
-      b.add("%s d0, p0, z1.%s", instruction, elemSuffix);
+      b.add("%s d%d, %s, %s.%s", instruction, regs.zdIndex(), regs.pg(), regs.zn(), elemSuffix);
     } else {
-      b.add("%s %s, p0, z1.%s", instruction, scalarDestFor(elemSuffix), elemSuffix);
+      b.add("%s %s, %s, %s.%s", instruction, scalarDestFor(elemSuffix, regs.zdIndex()),
+          regs.pg(), regs.zn(), elemSuffix);
     }
 
-    b.storeZToMemory("z0", VECTOR_DEST_ADDR, "x1");
+    b.storeZToMemory(regs.zd(), VECTOR_DEST_ADDR, "x1");
     b.loadMemory64ToRegs(VECTOR_DEST_ADDR, vectorChunkCount, RESULT_REG_START, "x1");
     return b.toTestCase();
   }
 
-  private String scalarDestFor(String elemSuffix) {
+  private String scalarDestFor(String elemSuffix, int regIndex) {
     return switch (elemSuffix) {
-      case "b" -> "b0";
-      case "h" -> "h0";
-      case "s" -> "s0";
-      case "d" -> "d0";
+      case "b" -> "b" + regIndex;
+      case "h" -> "h" + regIndex;
+      case "s" -> "s" + regIndex;
+      case "d" -> "d" + regIndex;
       default -> throw new IllegalArgumentException("Unsupported element suffix: " + elemSuffix);
     };
   }
 
-  private IssTestUtils.TestCase createUmovInstrTest(A64SVETestBuilder b) {
+  private IssTestUtils.TestCase createUmovInstrTest(A64SVETestBuilder b, int id) {
+    var regs = randomRegs("umov", id, false);
+    var xdst = 9 + Math.floorMod(id, 10);
     b.configureCpuForSveOps("x1", vlBits);
 
     b.fillMemory64(VECTOR_SRC_1_ADDR, vectorChunkCount, "x1", "x2");
-    b.loadZFromMemory("z1", VECTOR_SRC_1_ADDR, "x1");
+    b.loadZFromMemory(regs.zn(), VECTOR_SRC_1_ADDR, "x1");
 
-    b.add("umov x9, v1.d[0]");
+    b.add("umov x%d, v%d.d[0]", xdst, regs.znIndex());
     return b.toTestCase();
+  }
+
+  private record RandomRegs(int zdIndex, int znIndex, int zmIndex, int pgIndex) {
+    String zd() {
+      return "z" + zdIndex;
+    }
+
+    String zn() {
+      return "z" + znIndex;
+    }
+
+    String zm() {
+      return "z" + zmIndex;
+    }
+
+    String pg() {
+      return "p" + pgIndex;
+    }
+  }
+
+  private RandomRegs randomRegs(String salt, int id, boolean withPredicate) {
+    var seed = 0x5EED5EEDL ^ (((long) id) << 32) ^ salt.hashCode();
+    var rnd = new SplittableRandom(seed);
+    var zd = rnd.nextInt(32);
+    var zn = rnd.nextInt(32);
+    while (zn == zd) {
+      zn = rnd.nextInt(32);
+    }
+    var zm = rnd.nextInt(32);
+    while (zm == zd || zm == zn) {
+      zm = rnd.nextInt(32);
+    }
+    var pg = withPredicate ? rnd.nextInt(8) : 0;
+    return new RandomRegs(zd, zn, zm, pg);
   }
 
   private Stream<DynamicTest> runPredicatedBinaryInstrTests(String instruction,
@@ -211,7 +258,7 @@ public class IssA64SVEInstrTest extends AbstractIssAarch64InstrTest {
     var generators = Arrays.stream(elemSuffixes)
         .map(elem -> (Function<Integer, IssTestUtils.TestCase>) (id -> {
           var builder = getBuilder("SVE.PRED." + instruction.toUpperCase() + "." + elem, id);
-          return createPredicatedBinaryInstrTest(builder, instruction, elem);
+          return createPredicatedBinaryInstrTest(builder, instruction, elem, id);
         }))
         .toList();
     return runTestsWith(generators);
@@ -223,7 +270,7 @@ public class IssA64SVEInstrTest extends AbstractIssAarch64InstrTest {
     var generators = Arrays.stream(elemSuffixes)
         .map(elem -> (Function<Integer, IssTestUtils.TestCase>) (id -> {
           var builder = getBuilder("SVE.UNPRED." + instruction.toUpperCase() + "." + elem, id);
-          return createUnpredicatedBinaryInstrTest(builder, instruction, elem);
+          return createUnpredicatedBinaryInstrTest(builder, instruction, elem, id);
         }))
         .toList();
     return runTestsWith(generators);
@@ -236,7 +283,7 @@ public class IssA64SVEInstrTest extends AbstractIssAarch64InstrTest {
     List<Function<Integer, IssTestUtils.TestCase>> generators = Arrays.stream(elemSuffixes)
         .map(elem -> (Function<Integer, IssTestUtils.TestCase>) (id -> {
           var builder = getBuilder("SVE.RED." + instruction.toUpperCase() + "." + elem, id);
-          return createReductionInstrTest(builder, instruction, elem, extendedAddReduction);
+          return createReductionInstrTest(builder, instruction, elem, extendedAddReduction, id);
         }))
         .toList();
     return runTestsWith(generators);
@@ -299,6 +346,6 @@ public class IssA64SVEInstrTest extends AbstractIssAarch64InstrTest {
 
   @TestFactory
   Stream<DynamicTest> sveUmov() throws IOException {
-    return runTestsWith((id) -> createUmovInstrTest(getBuilder("SVE.UMOV", id)));
+    return runTestsWith((id) -> createUmovInstrTest(getBuilder("SVE.UMOV", id), id));
   }
 }
