@@ -52,6 +52,9 @@ bin/
 ### Python ###
 .venv
 
+### Java ###
+*.log
+
 ### OTHER ###
 .swp
 .jqwik-database
