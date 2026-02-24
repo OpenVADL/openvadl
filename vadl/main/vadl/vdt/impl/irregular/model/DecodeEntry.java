@@ -22,19 +22,31 @@ import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
 
 /**
- * An decode entry as required by the {@link IrregularDecodeTreeGenerator}.
+ * A decode entry as required by the {@link IrregularDecodeTreeGenerator}.
  */
 public class DecodeEntry extends Instruction {
 
+  private final double occurrenceProbability;
   private final Set<ExclusionCondition> exclusionConditions;
 
   public DecodeEntry(vadl.viam.Instruction source, int width, BitPattern pattern,
-                     Set<ExclusionCondition> exclusionConditions) {
+                     Set<ExclusionCondition> exclusionConditions, double occurrenceProbability) {
     super(source, width, pattern);
     this.exclusionConditions = exclusionConditions;
+    this.occurrenceProbability = occurrenceProbability;
+  }
+
+  public static DecodeEntry withExclusions(DecodeEntry e,
+                                           Set<ExclusionCondition> exclusionConditions) {
+    return new DecodeEntry(e.source(), e.width(), e.pattern(), exclusionConditions,
+        e.occurrenceProbability());
   }
 
   public Set<ExclusionCondition> exclusionConditions() {
     return exclusionConditions;
+  }
+
+  public double occurrenceProbability() {
+    return occurrenceProbability;
   }
 }

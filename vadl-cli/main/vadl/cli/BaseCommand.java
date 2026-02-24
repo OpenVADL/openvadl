@@ -450,6 +450,34 @@ public abstract class BaseCommand implements Callable<Integer> {
       result.setOptsToSkip(skipOpts.toArray(new DecoderOptions.OptionToSkip[0]));
     }
 
+    var statisticOpts = decoderOptions.stream()
+        .filter(DecoderStatistics.class::isInstance)
+        .map(DecoderStatistics.class::cast)
+        .map(DecoderStatistics::stats)
+        .toList();
+
+    if (statisticOpts.size() > 1) {
+      throw new IllegalArgumentException("Multiple statistics configuration are not allowed.");
+    }
+
+    if (statisticOpts.size() == 1) {
+      result.setStatistics(statisticOpts.getFirst().getAbsolutePath());
+    }
+
+    var penaltyOpts = decoderOptions.stream()
+        .filter(DecoderPenaltyFactor.class::isInstance)
+        .map(DecoderPenaltyFactor.class::cast)
+        .map(DecoderPenaltyFactor::penalty)
+        .toList();
+
+    if (penaltyOpts.size() > 1) {
+      throw new IllegalArgumentException("Multiple penalty configuration are not allowed.");
+    }
+
+    if (penaltyOpts.size() == 1) {
+      result.setMemoryPenalty(penaltyOpts.getFirst());
+    }
+
     return result;
   }
 }

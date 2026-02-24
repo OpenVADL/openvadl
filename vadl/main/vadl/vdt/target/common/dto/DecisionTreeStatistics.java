@@ -28,6 +28,9 @@ public class DecisionTreeStatistics {
   private int minDepth;
   private double avgDepth;
 
+  private double occurrenceProbability;
+  private double weightedAvgDepth;
+
   private int maxInstructionWidth;
 
   public int getNumberOfNodes() {
@@ -70,6 +73,22 @@ public class DecisionTreeStatistics {
     this.avgDepth = avgDepth;
   }
 
+  public double getOccurrenceProbability() {
+    return occurrenceProbability;
+  }
+
+  public void setOccurrenceProbability(double occurrenceProbability) {
+    this.occurrenceProbability = occurrenceProbability;
+  }
+
+  public double getWeightedAvgDepth() {
+    return weightedAvgDepth;
+  }
+
+  public void setWeightedAvgDepth(double weightedAvgDepth) {
+    this.weightedAvgDepth = weightedAvgDepth;
+  }
+
   public int getMaxInstructionWidth() {
     return maxInstructionWidth;
   }
@@ -86,6 +105,7 @@ public class DecisionTreeStatistics {
         + "  maxDepth: " + maxDepth + ",\n"
         + "  minDepth: " + minDepth + ",\n"
         + "  avgDepth: " + avgDepth + "\n"
+        + "  weightedAvgDepth: " + weightedAvgDepth + "\n"
         + "  maxInsnWidth: " + maxInstructionWidth + "\n"
         + "}";
   }

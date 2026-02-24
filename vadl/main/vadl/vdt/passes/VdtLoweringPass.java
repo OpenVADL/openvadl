@@ -16,6 +16,7 @@
 
 package vadl.vdt.passes;
 
+import static vadl.configuration.DecoderOptions.Generator.OCCURRENCE_AWARE;
 import static vadl.configuration.DecoderOptions.Generator.REGULAR;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.vdt.impl.irregular.IrregularDecodeTreeGenerator;
+import vadl.vdt.impl.irregular.OccurrenceAwareDecodeTreeGenerator;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.impl.regular.RegularDecodeTreeGenerator;
 import vadl.vdt.model.Node;
@@ -70,11 +72,26 @@ public class VdtLoweringPass extends Pass {
       return null;
     }
 
-    if (configuration().getDecoderOptions().getGenerator() == REGULAR) {
+    final var opts = configuration().getDecoderOptions();
+
+    if (opts.getGenerator() == REGULAR) {
       var insns = entries.stream()
           .map(Instruction.class::cast)
           .toList();
       return new RegularDecodeTreeGenerator().generate(insns);
+    }
+
+    if (opts.getGenerator() == OCCURRENCE_AWARE) {
+      final double penalty;
+      if (opts.getMemoryPenalty() == null) {
+        // TODO: How to show a warning that something's missing
+        // TODO: What's a good default value here?
+        penalty = 1;
+      } else {
+        penalty = opts.getMemoryPenalty();
+      }
+
+      return new OccurrenceAwareDecodeTreeGenerator(penalty).generate(entries);
     }
 
     return new IrregularDecodeTreeGenerator().generate(entries);

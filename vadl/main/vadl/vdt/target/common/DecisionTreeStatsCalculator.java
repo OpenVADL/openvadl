@@ -17,6 +17,7 @@
 package vadl.vdt.target.common;
 
 import java.util.Objects;
+import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.LeafNode;
 import vadl.vdt.model.Node;
@@ -25,7 +26,8 @@ import vadl.vdt.target.common.dto.DecisionTreeStatistics;
 
 /**
  * Calculate general statistics about the structure of a decision tree, such as the number of nodes,
- * the number of leaf nodes, the maximum depth, the minimum depth, and the average depth.
+ * the number of leaf nodes, the maximum depth, the minimum depth, and the average depth as well as
+ * the weighted average depth (by occurrence probability).
  */
 public class DecisionTreeStatsCalculator implements Visitor<DecisionTreeStatistics> {
 
@@ -47,6 +49,7 @@ public class DecisionTreeStatsCalculator implements Visitor<DecisionTreeStatisti
 
     stats.setMaxDepth(0);
     stats.setMinDepth(Integer.MAX_VALUE);
+    stats.setOccurrenceProbability(0);
     stats.setAvgDepth(0);
 
     for (Node child : node.children()) {
@@ -58,6 +61,10 @@ public class DecisionTreeStatsCalculator implements Visitor<DecisionTreeStatisti
       stats.setMinDepth(Math.min(stats.getMinDepth(), childStats.getMinDepth()));
       stats.setMaxInstructionWidth(
           Math.max(stats.getMaxInstructionWidth(), childStats.getMaxInstructionWidth()));
+      stats.setOccurrenceProbability(
+          stats.getOccurrenceProbability() + childStats.getOccurrenceProbability());
+      stats.setWeightedAvgDepth(stats.getWeightedAvgDepth() +
+          childStats.getWeightedAvgDepth() + childStats.getOccurrenceProbability());
 
       double avgDepth = (childStats.getAvgDepth() + 1) * childStats.getNumberOfLeafNodes();
       stats.setAvgDepth(stats.getAvgDepth() + avgDepth);
@@ -78,6 +85,9 @@ public class DecisionTreeStatsCalculator implements Visitor<DecisionTreeStatisti
     stats.setMaxDepth(0);
     stats.setMinDepth(0);
     stats.setAvgDepth(0);
+    stats.setWeightedAvgDepth(0);
+    stats.setOccurrenceProbability(
+        node.instruction() instanceof DecodeEntry e ? e.occurrenceProbability() : 0);
     stats.setMaxInstructionWidth(node.instruction().source().format().type().bitWidth());
     return stats;
   }

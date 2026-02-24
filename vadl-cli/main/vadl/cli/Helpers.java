@@ -16,6 +16,7 @@
 
 package vadl.cli;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Stack;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.stream.Streams;
 import picocli.CommandLine;
 import vadl.OpenVadlProperties;
@@ -117,10 +119,19 @@ record DecoderStrategy(DecoderOptions.Generator generator) implements DecoderOpt
 record DecoderSkipOption(DecoderOptions.OptionToSkip option) implements DecoderOpt {
 }
 
+record DecoderPenaltyFactor(Double penalty) implements DecoderOpt {
+}
+
+record DecoderStatistics(File stats) implements DecoderOpt {
+}
+
 class DecoderOptsConverter implements Iterable<String>, CommandLine.ITypeConverter<DecoderOpt> {
 
   static final String KEY_STRATEGY = "strategy";
   static final String KEY_SKIP = "skip";
+
+  static final String KEY_STATS = "statistics";
+  static final String KEY_PENALTY_FACTOR = "penalty";
 
   @Override
   public DecoderOpt convert(String value) throws Exception {
@@ -156,6 +167,26 @@ class DecoderOptsConverter implements Iterable<String>, CommandLine.ITypeConvert
                   .map(DecoderOptions.OptionToSkip::getSelector).toList()));
     }
 
+    if (KEY_STATS.equals(fragments[0].trim())) {
+      var statFile = new File(fragments[1].trim());
+      if (!statFile.exists()) {
+        throw new CommandLine.TypeConversionException(
+            "Unable to parse decoder option '%s'. Stats file does not exist".formatted(
+                statFile.getAbsolutePath())
+        );
+      }
+      return new DecoderStatistics(statFile);
+    }
+
+    if (KEY_PENALTY_FACTOR.equals(fragments[0].trim())) {
+      var val = fragments[1].trim();
+      if (!StringUtils.isNumeric(val)) {
+        throw new CommandLine.TypeConversionException(
+            "Unable to parse decoder option '%s'. Penalty factor is not numeric".formatted(val));
+      }
+      return new DecoderPenaltyFactor(Double.parseDouble(val));
+    }
+
     throw new CommandLine.TypeConversionException(
         "Illegal decoder option '%s'. Available options are: %s".formatted(value,
             List.of(KEY_SKIP, KEY_STRATEGY)));
@@ -172,6 +203,10 @@ class DecoderOptsConverter implements Iterable<String>, CommandLine.ITypeConvert
       options.add(
           "%n%s=%s (%s)".formatted(KEY_SKIP, skipOption.getSelector(), skipOption.getDesc()));
     }
+    options.add("%n%s=%f (Penalty factor for occurrence aware decoder generator)".formatted(
+        KEY_PENALTY_FACTOR, 1.0));
+    options.add(
+        "%n%s=%s (Instruction occurrence statistics)".formatted(KEY_STATS, "/insn-stats.json"));
     return options;
   }
 

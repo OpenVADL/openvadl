@@ -38,8 +38,11 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
+import vadl.vdt.impl.irregular.model.DecodeEntries;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.impl.irregular.model.ExclusionCondition;
+import vadl.vdt.impl.irregular.model.ExclusionConditions;
+import vadl.vdt.impl.irregular.model.MultiPatterns;
 import vadl.vdt.impl.irregular.tree.MultiDecisionNode;
 import vadl.vdt.impl.irregular.tree.SingleDecisionNode;
 import vadl.vdt.model.DecodeTreeGenerator;
@@ -47,7 +50,6 @@ import vadl.vdt.model.Node;
 import vadl.vdt.model.impl.LeafNodeImpl;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
-import vadl.vdt.utils.PBit;
 import vadl.vdt.utils.PatternUtils;
 import vadl.viam.Definition;
 
@@ -91,11 +93,15 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
    * @param decodeEntries The entry set
    * @return The generated decode (sub-) tree
    */
-  private Node generateInternal(DecodeEntries decodeEntries) {
+  protected Node generateInternal(DecodeEntries decodeEntries) {
 
     if (decodeEntries.hasMultiple()) {
       // Split the entry set
       return makeNode(decodeEntries);
+    }
+
+    if (decodeEntries.isEmpty()) {
+      throw new IllegalStateException("Entry set must not be empty");
     }
 
     // It's possible to have multiple decode entries pointing to the same instruction
@@ -119,51 +125,58 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     return new SingleDecisionNode(remainingFixedBitPattern, innerNode, null);
   }
 
-  private Node makeNode(DecodeEntries decodeEntries) {
+  protected Node makeNode(DecodeEntries decodeEntries) {
 
     final MultiPatterns patterns = makePatterns(decodeEntries);
 
     if (!patterns.hasDecision()) {
-      // Split entry set by exclusion conditions instead
-      return makeConditionNode(decodeEntries);
+      // Select best splitting pattern based on exclusion conditions
+      final BitPattern pattern = selectPattern(decodeEntries);
+      return makeConditionNode(decodeEntries, pattern);
     }
 
+    final MultiSplitEntrySet splitEntries = split(decodeEntries, patterns.mask());
+
+    return makeMultiDecisionNode(decodeEntries, splitEntries);
+  }
+
+  protected MultiDecisionNode makeMultiDecisionNode(DecodeEntries decodeEntries,
+                                                    MultiSplitEntrySet splitEntries) {
+
     final Map<BitPattern, Node> children = new LinkedHashMap<>();
-    for (BitPattern p : patterns.patterns()) {
-      final List<DecodeEntry> matchingEntries = makeMatchingEntries(decodeEntries.entries(), p);
+    for (var branches : splitEntries.entries().entrySet()) {
+
+      final BitPattern pattern = branches.getKey();
+      final List<DecodeEntry> matchingEntries = branches.getValue();
 
       if (matchingEntries.isEmpty()) {
         continue;
       }
 
-      final BitPattern checked = combinePatterns(decodeEntries.checkedBits(), p);
+      final BitPattern checked = combinePatterns(decodeEntries.checkedBits(), pattern);
 
       final DecodeEntries entries = new DecodeEntries(checked, matchingEntries);
       final Node childNode = generateInternal(entries);
-      children.put(p, childNode);
+      children.put(pattern, childNode);
     }
 
-    return new MultiDecisionNode(patterns.mask(), children);
+    return new MultiDecisionNode(splitEntries.mask(), children);
   }
 
-  private Node makeConditionNode(DecodeEntries decodeEntries) {
-
-    // Select best splitting pattern based on exclusion conditions
-    final BitPattern pattern = selectPattern(decodeEntries.entries());
+  protected Node makeConditionNode(DecodeEntries decodeEntries, BitPattern pattern) {
 
     // Split the entry set
-    final List<DecodeEntry> matching = makeMatchingEntries(decodeEntries.entries(), pattern);
-    final List<DecodeEntry> others = makeOtherEntries(decodeEntries.entries(), pattern);
+    final SingleSplitEntrySet splitEntries = split(decodeEntries, pattern);
 
     // We can only consider the splitting pattern as 'checked' for the matching entries
     final BitPattern parentChecked = decodeEntries.checkedBits();
     final BitPattern checked = combinePatterns(parentChecked, pattern);
 
     // Recursively build child-trees
-    final DecodeEntries me = new DecodeEntries(checked, matching);
+    final DecodeEntries me = new DecodeEntries(checked, splitEntries.matching());
     final Node matchingChild = generateInternal(me);
 
-    final DecodeEntries oe = new DecodeEntries(parentChecked, others);
+    final DecodeEntries oe = new DecodeEntries(parentChecked, splitEntries.others());
     final Node otherChild = generateInternal(oe);
 
     return new SingleDecisionNode(pattern, matchingChild, otherChild);
@@ -179,12 +192,17 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
       mask = mask.and(e.pattern().toMaskVector());
     }
 
+    return makePatterns(decodeEntries, mask);
+  }
+
+  private MultiPatterns makePatterns(DecodeEntries decodeEntries, BitVector mask) {
+
     // We don't need to check bits more than once
     BitVector checked = decodeEntries.checkedBits().toMaskVector();
-    mask = mask.xor(checked);
+    mask = mask.and(checked.not());
 
     final Set<BitPattern> options = new LinkedHashSet<>();
-    for (DecodeEntry e : entries) {
+    for (DecodeEntry e : decodeEntries.entries()) {
       final BitVector b = e.pattern().toBitVector().and(mask);
       final BitPattern p = BitPattern.fromBitVector(mask, b);
       options.add(p);
@@ -193,8 +211,122 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     return new MultiPatterns(mask, options);
   }
 
-  private List<DecodeEntry> makeMatchingEntries(List<DecodeEntry> decodeEntries,
-                                                BitPattern pattern) {
+  protected record SingleSplitEntrySet(BitPattern pattern, List<DecodeEntry> matching,
+                                       List<DecodeEntry> others) {
+  }
+
+  protected record MultiSplitEntrySet(BitVector mask, Map<BitPattern, List<DecodeEntry>> entries) {
+
+  }
+
+  /**
+   * Split the entry set by the given pattern, distributing the occurrence probabilities
+   * accordingly, and adapting the exclusion conditions.
+   *
+   * @param decodeEntries the decode entries.
+   * @param pattern       the splitting pattern.
+   * @return the split entry set.
+   */
+  protected SingleSplitEntrySet split(DecodeEntries decodeEntries, BitPattern pattern) {
+
+    final List<DecodeEntry> matchingEntries = new ArrayList<>();
+    final List<DecodeEntry> otherEntries = new ArrayList<>();
+
+    for (DecodeEntry e : decodeEntries.entries()) {
+
+      // See if there is an encoding that matches the base pattern and is not excluded by the
+      // exclusion conditions
+      var mThen = compatible(e.pattern(), pattern) && e.exclusionConditions().stream()
+          .allMatch(ex -> {
+            var combined = combinePatterns(e.pattern(), pattern);
+            return !contain(combined, ex.matching()) || ex.unmatching().stream()
+                .anyMatch(u -> compatible(combined, u));
+          });
+
+      // See if there is an encoding that either does not match the base pattern or is excluded by
+      // the exclusion conditions (and not re-included by the unmatching patterns)
+      var mElse = !compatible(e.pattern(), pattern) || e.exclusionConditions().stream()
+          .anyMatch(ex -> {
+            var combined = combinePatterns(e.pattern(), pattern);
+            return compatible(combined, ex.matching()) && ex.unmatching().stream()
+                .noneMatch(u -> compatible(combined, u));
+          });
+
+      if (mThen ^ mElse) {
+        // The entry occurs only on one side of the branch, we can keep the current probability.
+        (mThen ? matchingEntries : otherEntries).add(e);
+        continue;
+      }
+
+      if (!mThen) {
+        // Must not happen
+        throw toConstructionDiagnostic(decodeEntries);
+      }
+
+      // Distribute the occurrence probability
+      // TODO: Distribute proportionally
+      matchingEntries.add(
+          new DecodeEntry(e.source(), e.width(), e.pattern(), e.exclusionConditions(),
+              e.occurrenceProbability() / 2));
+      otherEntries.add(new DecodeEntry(e.source(), e.width(), e.pattern(), e.exclusionConditions(),
+          e.occurrenceProbability() / 2));
+    }
+
+    final var matching = makeMatchingEntries(matchingEntries, pattern);
+    final var others = makeOtherEntries(otherEntries, pattern);
+
+    return new SingleSplitEntrySet(pattern, matching, others);
+  }
+
+  /**
+   * Split the entry set by the given mask, distributing the occurrence probabilities accordingly
+   * across all children, and adapting the exclusion conditions.
+   *
+   * @param decodeEntries the decode entries.
+   * @param mask          the splitting mask.
+   * @return the split entry set.
+   */
+  protected MultiSplitEntrySet split(DecodeEntries decodeEntries, BitVector mask) {
+
+    final MultiPatterns patterns = makePatterns(decodeEntries, mask);
+    final Map<BitPattern, List<DecodeEntry>> entries = new LinkedHashMap<>();
+
+    for (DecodeEntry e : decodeEntries.entries()) {
+
+      final Map<BitPattern, DecodeEntry> branches = new LinkedHashMap<>();
+      for (BitPattern pattern : patterns.patterns()) {
+
+        var match = compatible(e.pattern(), pattern) && e.exclusionConditions().stream()
+            .noneMatch(c -> contain(pattern, c.matching())
+                && c.unmatching().stream().noneMatch(p -> compatible(pattern, p)));
+
+        if (match) {
+          branches.put(pattern, e);
+        }
+      }
+
+      // TODO: Distribute proportionally
+      final var occurrence = e.occurrenceProbability() / branches.size();
+      for (BitPattern pattern : branches.keySet()) {
+        entries
+            .computeIfAbsent(pattern, _ -> new ArrayList<>())
+            .add(new DecodeEntry(e.source(), e.width(), e.pattern(), e.exclusionConditions(),
+                occurrence));
+      }
+    }
+
+    final Map<BitPattern, List<DecodeEntry>> result = new LinkedHashMap<>();
+
+    for (final var branch : entries.entrySet()) {
+      final var pattern = branch.getKey();
+      result.put(pattern, makeMatchingEntries(branch.getValue(), pattern));
+    }
+
+    return new MultiSplitEntrySet(mask, result);
+  }
+
+  protected List<DecodeEntry> makeMatchingEntries(List<DecodeEntry> decodeEntries,
+                                                  BitPattern pattern) {
 
     // Step 1
     final List<DecodeEntry> matchingEntries = decodeEntries.stream()
@@ -219,7 +351,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
           })
           .collect(Collectors.toSet());
 
-      matchingEntries2.add(new DecodeEntry(e.source(), e.width(), e.pattern(), ex));
+      matchingEntries2.add(DecodeEntry.withExclusions(e, ex));
     }
 
     // Step 3
@@ -234,49 +366,15 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
             return new ExclusionCondition(newMatching, newUnmatching);
           })
           .collect(Collectors.toSet());
-      matchingEntries3.add(new DecodeEntry(e.source(), e.width(), e.pattern(), newExclusions));
+      matchingEntries3.add(DecodeEntry.withExclusions(e, newExclusions));
     }
 
     // Step 4
-    final List<DecodeEntry> matchingEntries4 = new ArrayList<>();
-    for (DecodeEntry e : matchingEntries3) {
-
-      if (e.exclusionConditions().isEmpty()) {
-        matchingEntries4.add(e);
-        continue;
-      }
-
-      if (e.exclusionConditions().stream().noneMatch(c -> c.matching().doesMatchAll())) {
-        matchingEntries4.add(e);
-        continue;
-      }
-
-      // Collect exclusions which do not become the match-all pattern
-      final Set<ExclusionCondition> validExclusions = e.exclusionConditions().stream()
-          .filter(c -> !c.matching().doesMatchAll())
-          .collect(Collectors.toSet());
-
-      // Expand unmatching conditions to their own decode entries
-      e.exclusionConditions().stream()
-          .filter(c -> c.matching().doesMatchAll())
-          .flatMap(c -> c.unmatching().stream())
-          .map(pu -> {
-            final PBit[] newOpcodePattern = new PBit[e.width()];
-            for (int i = 0; i < e.width(); i++) {
-              newOpcodePattern[i] =
-                  pu.get(i).getValue() == PBit.Value.DONT_CARE ? e.pattern().get(i) : pu.get(i);
-            }
-            final BitPattern po = new BitPattern(newOpcodePattern);
-            return new DecodeEntry(e.source(), e.width(), po, validExclusions);
-          })
-          .forEach(matchingEntries4::add);
-    }
-
-    return matchingEntries4;
+    return expandUnmatchingConditions(matchingEntries3);
   }
 
-  private List<DecodeEntry> makeOtherEntries(List<DecodeEntry> decodeEntries,
-                                             BitPattern pattern) {
+  protected List<DecodeEntry> makeOtherEntries(List<DecodeEntry> decodeEntries,
+                                               BitPattern pattern) {
     // Step 1
     final List<DecodeEntry> otherEntries = decodeEntries.stream()
         .filter(d -> !contain(d.pattern(), pattern))
@@ -296,36 +394,36 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
           })
           .collect(Collectors.toSet());
 
-      otherEntries2.add(new DecodeEntry(e.source(), e.width(), e.pattern(), newExclusions));
+      otherEntries2.add(DecodeEntry.withExclusions(e, newExclusions));
     }
 
     return otherEntries2;
   }
 
-  private BitPattern selectPattern(List<DecodeEntry> decodeEntries) {
+  private BitPattern selectPattern(DecodeEntries decodeEntries) {
 
-    final Set<BitPattern> patternCandidates = decodeEntries.stream()
+    final Set<BitPattern> patternCandidates = decodeEntries.entries().stream()
         .flatMap(e -> e.exclusionConditions().stream())
         .map(ExclusionCondition::matching)
         .collect(Collectors.toSet());
 
     if (patternCandidates.isEmpty()) {
-      throw toOverlappingInstructionDiagnostic(decodeEntries);
+      throw toConstructionDiagnostic(decodeEntries);
     }
 
     int bestSplit = Integer.MAX_VALUE;
     BitPattern minimizingPattern = null;
 
     for (BitPattern p : patternCandidates) {
-      var matching = makeMatchingEntries(decodeEntries, p);
-      var others = makeOtherEntries(decodeEntries, p);
+
+      var split = split(decodeEntries, p);
 
       // If the candidate pattern does not split the entry set at all, skip it
-      if (matching.isEmpty() || others.isEmpty()) {
+      if (split.matching().isEmpty() || split.others().isEmpty()) {
         continue;
       }
 
-      var splitSize = matching.size() + others.size();
+      var splitSize = split.matching().size() + split.others().size();
 
       if (bestSplit <= splitSize) {
         continue;
@@ -336,33 +434,10 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     }
 
     if (minimizingPattern == null) {
-      throw toOverlappingInstructionDiagnostic(decodeEntries);
+      throw toConstructionDiagnostic(decodeEntries);
     }
 
     return minimizingPattern;
-  }
-
-  private Diagnostic toOverlappingInstructionDiagnostic(List<DecodeEntry> decodeEntries) {
-    var primary = decodeEntries.getFirst().source();
-    var insnNames = decodeEntries.stream()
-        .map(DecodeEntry::source)
-        .map(Definition::simpleName)
-        .toList();
-
-    var diagnostic = error(("Overlapping instructions found during decoder "
-        + "generation: %s").formatted(insnNames), primary);
-
-    for (DecodeEntry e : decodeEntries) {
-      var others = insnNames.stream()
-          .filter(n -> !n.equals(e.source().simpleName())).toList();
-
-      diagnostic.locationDescription(e.source().encoding(),
-          "Encoding definition overlaps with other instruction%s: %s",
-          others.size() != 1 ? "s" : "",
-          others.size() == 1 ? others.getFirst() : others);
-    }
-
-    return diagnostic.build();
   }
 
   /**
@@ -412,27 +487,33 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
         continue;
       }
 
-      final Set<ExclusionCondition> exclusionConditions = new LinkedHashSet<>();
-      for (ExclusionCondition ec : e.exclusionConditions()) {
-
-        if (!ec.matching().doesMatchAll() || ec.unmatching().isEmpty()) {
-          exclusionConditions.add(ec);
-          continue;
-        }
-
-        // Expand the 'unmatching' patterns to their opcode patterns
-        for (BitPattern up : ec.unmatching()) {
-          final BitPattern op = combinePatterns(e.pattern(), up);
-          expandedEntries.add(new DecodeEntry(e.source(), e.width(), op, Set.of()));
-        }
+      if (e.exclusionConditions().stream().noneMatch(c -> c.matching().doesMatchAll())) {
+        expandedEntries.add(e);
+        continue;
       }
 
-      if (!exclusionConditions.isEmpty()) {
-        final var def = new DecodeEntry(e.source(), e.width(), e.pattern(), exclusionConditions);
-        expandedEntries.add(def);
-      }
+      // Collect exclusions which do not become the match-all pattern
+      final Set<ExclusionCondition> validExclusions = e.exclusionConditions().stream()
+          .filter(c -> !c.matching().doesMatchAll())
+          .collect(Collectors.toSet());
 
+      // Expand unmatching conditions to their own decode entries
+      final var unmatching = e.exclusionConditions().stream()
+          .filter(c -> c.matching().doesMatchAll())
+          .flatMap(c -> c.unmatching().stream())
+          .toList();
+
+      // TODO: Distributed probability proportionally
+      final double occurrence = e.occurrenceProbability() / unmatching.size();
+
+      for (BitPattern pu : unmatching) {
+        final BitPattern op = combinePatterns(e.pattern(), pu);
+        final var nd = new DecodeEntry(e.source(), e.width(), op, validExclusions, occurrence);
+
+        expandedEntries.add(nd);
+      }
     }
+
     return expandedEntries;
   }
 
@@ -461,7 +542,11 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
         .reduce(first.pattern(), PatternUtils::commonPattern);
 
     final ExclusionConditions conditions = new ExclusionConditions();
+
+    double occurrence = 0;
     for (DecodeEntry e : entries) {
+      occurrence += e.occurrenceProbability();
+
       final BitPattern diff = invalidate(e.pattern(), commonPattern);
       conditions.add(e.exclusionConditions());
 
@@ -473,7 +558,8 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
       conditions.add(Set.of(condition));
     }
 
-    return new DecodeEntry(first.source(), first.width(), commonPattern, conditions.conditions());
+    return new DecodeEntry(first.source(), first.width(), commonPattern, conditions.conditions(),
+        occurrence);
   }
 
   /**
@@ -497,7 +583,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
         .collect(Collectors.toSet());
 
     return new DecodeEntry(entry.source(), transformedPattern.width(), transformedPattern,
-        transformedExclusions);
+        transformedExclusions, entry.occurrenceProbability());
   }
 
   /**
@@ -591,76 +677,26 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     return node;
   }
 
-  /**
-   * Encapsulate the decode entry set, keeping track of which bits have definitively been checked
-   * in the current context.
-   *
-   * @param checkedBits The bits already checked by the algorithm
-   * @param entries     The decode entries and patterns
-   */
-  private record DecodeEntries(BitPattern checkedBits, List<DecodeEntry> entries) {
+  private Diagnostic toConstructionDiagnostic(DecodeEntries decodeEntries) {
+    var primary = decodeEntries.entries().getFirst().source();
+    var insnNames = decodeEntries.entries().stream()
+        .map(DecodeEntry::source)
+        .map(Definition::simpleName)
+        .toList();
 
-    boolean hasMultiple() {
-      return entries.stream().map(DecodeEntry::source).collect(Collectors.toSet()).size() > 1;
+    var diagnostic = error("Unable to split instruction set during decoder generation: %s"
+        .formatted(insnNames), primary);
+
+    for (DecodeEntry e : decodeEntries.entries()) {
+      var others = insnNames.stream()
+          .filter(n -> !n.equals(e.source().simpleName())).toList();
+
+      diagnostic.locationDescription(e.source().encoding(),
+          "Unable to split encoding definition with other instruction%s: %s",
+          others.size() != 1 ? "s" : "",
+          others.size() == 1 ? others.getFirst() : others);
     }
 
-  }
-
-  private record MultiPatterns(BitVector mask, Set<BitPattern> patterns) {
-
-    boolean hasDecision() {
-      return patterns.size() > 1;
-    }
-  }
-
-  private record ExclusionConditions(Set<ExclusionCondition> conditions) {
-
-    private ExclusionConditions(Set<ExclusionCondition> conditions) {
-      this.conditions = new LinkedHashSet<>(conditions);
-    }
-
-    private ExclusionConditions() {
-      this(new LinkedHashSet<>());
-    }
-
-    /**
-     * Combine the exclusion conditions by keeping a single tautological matching pattern.
-     *
-     * @param newConditions The exclusion conditions to add
-     */
-    void add(Collection<ExclusionCondition> newConditions) {
-
-      newConditions = new LinkedHashSet<>(newConditions);
-
-      final ExclusionCondition newDoesMatchAll = newConditions.stream()
-          .filter(c -> c.matching().doesMatchAll())
-          .findFirst().orElse(null);
-
-      if (newDoesMatchAll == null) {
-        conditions.addAll(newConditions);
-        return;
-      }
-
-      final ExclusionCondition existingMatchAll = conditions.stream()
-          .filter(c -> c.matching().doesMatchAll())
-          .findFirst().orElse(null);
-
-      if (existingMatchAll == null) {
-        conditions.addAll(newConditions);
-        return;
-      }
-
-      final Set<BitPattern> union = new LinkedHashSet<>(existingMatchAll.unmatching());
-      union.addAll(newDoesMatchAll.unmatching());
-
-      final ExclusionCondition combined =
-          new ExclusionCondition(existingMatchAll.matching(), union);
-
-      conditions.removeIf(c -> c.matching().doesMatchAll());
-      conditions.add(combined);
-
-      newConditions.removeIf(c -> c.matching().doesMatchAll());
-      conditions.addAll(newConditions);
-    }
+    return diagnostic.build();
   }
 }

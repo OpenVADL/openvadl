@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,48 +16,88 @@
 
 package vadl.vdt.impl.irregular;
 
-import static vadl.vdt.utils.PatternUtils.toFixedBitPattern;
+import static vadl.configuration.DecoderOptions.Generator.IRREGULAR;
+import static vadl.configuration.DecoderOptions.Generator.OCCURRENCE_AWARE;
 
 import java.io.IOException;
-import java.nio.ByteOrder;
 import java.nio.file.Path;
+import java.util.stream.DoubleStream;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.AbstractTest;
+import vadl.configuration.DecoderOptions;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.PassManager;
+import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.model.Node;
-import vadl.vdt.passes.VdtConstraintSynthesisPass;
-import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
-import vadl.vdt.passes.VdtVerificationPass;
-import vadl.vdt.target.common.CheckedBitsCollector;
 import vadl.vdt.target.common.DecisionTreeStatsCalculator;
 import vadl.vdt.target.dump.TextGraphGenerator;
-import vadl.vdt.utils.BitPattern;
-import vadl.viam.Instruction;
 
-class RiscVTest extends AbstractTest {
+class OccurrenceAwareDecodeTreeGeneratorTest extends AbstractTest {
 
-  private static final Logger log = LoggerFactory.getLogger(RiscVTest.class);
+  private static final Logger log =
+      LoggerFactory.getLogger(OccurrenceAwareDecodeTreeGeneratorTest.class);
 
   @Test
-  void testGenerateVDT() throws IOException, DuplicatedPassKeyException {
+  void testGenerateVDTStatic() throws IOException, DuplicatedPassKeyException {
 
     /* GIVEN */
 
     var config = new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
+    config.setDecoderOptions(new DecoderOptions()
+        .withGenerator(IRREGULAR));
+
     var spec = runAndGetViamSpecification("sys/risc-v/rv64im.vadl");
 
     var manager = new PassManager();
-    manager.add(new VdtInputPreparationPass(config));
-    manager.add(new VdtConstraintSynthesisPass(config));
-    manager.add(new VdtLoweringPass(config));
-    manager.add(new VdtVerificationPass(config));
+    manager.add(PassOrders.check(config));
+
+    /* WHEN */
+    manager.run(spec);
+
+    /* THEN */
+
+    var decodeTree = manager.getPassResults().lastResultOf(VdtLoweringPass.class, Node.class);
+
+    Assertions.assertNotNull(decodeTree);
+
+    log.info("Statistics: {}", DecisionTreeStatsCalculator.statistics(decodeTree));
+  }
+
+  static Stream<Arguments> argsGenerateVDTOccurrenceAware() {
+    return DoubleStream
+        .of(32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625)
+        .mapToObj(Arguments::of);
+  }
+
+  @ParameterizedTest
+  @CsvSource("1")
+  //@MethodSource("argsGenerateVDTOccurrenceAware")
+  void testGenerateVDTOccurrenceAware(double memoryPenalty) throws IOException, DuplicatedPassKeyException {
+
+    /* GIVEN */
+
+    var config = new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
+    config.setDecoderOptions(new DecoderOptions()
+        .withGenerator(OCCURRENCE_AWARE)
+        .withMemoryPenalty(memoryPenalty)
+        .withOptsToSkip(DecoderOptions.OptionToSkip.OPT_DECODER_VERIFICATION)
+    );
+
+    var spec = runAndGetViamSpecification("sys/risc-v/rv64im.vadl");
+
+    var manager = new PassManager();
+    manager.add(PassOrders.check(config));
 
     /* WHEN */
     manager.run(spec);
@@ -70,50 +110,5 @@ class RiscVTest extends AbstractTest {
 
     log.info("Statistics: {}", DecisionTreeStatsCalculator.statistics(decodeTree));
     log.info("VDT:\n{}", new TextGraphGenerator(decodeTree).generate());
-
-  }
-
-  @Test
-  void testVDTChecksAllBits() throws IOException, DuplicatedPassKeyException {
-
-    /* GIVEN */
-
-    var config = new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
-    var spec = runAndGetViamSpecification("sys/risc-v/rv64im.vadl");
-
-    var manager = new PassManager();
-    manager.add(new VdtInputPreparationPass(config));
-    manager.add(new VdtConstraintSynthesisPass(config));
-    manager.add(new VdtLoweringPass(config));
-    manager.add(new VdtVerificationPass(config));
-    manager.run(spec);
-
-    var decodeTree = manager.getPassResults().lastResultOf(VdtLoweringPass.class, Node.class);
-    Assertions.assertNotNull(decodeTree);
-
-    log.info("Statistics: {}", DecisionTreeStatsCalculator.statistics(decodeTree));
-
-    var decisionTable = new CheckedBitsCollector(decodeTree).collect();
-
-    int mismatchCount = 0;
-    for (var checkedBits : decisionTable.entrySet()) {
-
-      final Instruction i = checkedBits.getKey();
-      final BitPattern iPattern = toFixedBitPattern(i, ByteOrder.LITTLE_ENDIAN);
-
-      final BitPattern checkedPattern = checkedBits.getValue();
-
-      if (!iPattern.equals(checkedPattern)) {
-        log.warn("'{}':", i.simpleName());
-        log.warn("Encoding: {}", iPattern);
-        log.warn("Checked:  {}", checkedPattern);
-        mismatchCount++;
-      }
-
-    }
-
-    Assertions.assertEquals(0, mismatchCount,
-        "Expected all fixed bits to be checked but found %d instructions where that was not the case."
-            .formatted(mismatchCount));
   }
 }

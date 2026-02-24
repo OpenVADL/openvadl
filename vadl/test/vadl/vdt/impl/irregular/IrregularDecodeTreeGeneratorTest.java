@@ -38,11 +38,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.TestUtils;
+import vadl.configuration.DecoderOptions;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassManager;
+import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.AbstractDecisionTreeTest;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
@@ -54,6 +56,7 @@ import vadl.vdt.passes.VdtEncodingConstraintValidationPass;
 import vadl.vdt.passes.VdtEncodingSemanticVerificationPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
+import vadl.vdt.passes.VdtVerificationPass;
 import vadl.vdt.target.common.CheckedBitsCollector;
 import vadl.vdt.target.common.DecisionTreeDecoder;
 import vadl.vdt.target.common.DecisionTreeStatsCalculator;
@@ -79,8 +82,9 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     ));
 
     // Create decode entries with empty exclusion conditions
+    final double occurrence = 1.0 / instructions.size();
     final List<DecodeEntry> decodeEntries = instructions.stream()
-        .map(i -> new DecodeEntry(i.source(), i.width(), i.pattern(), Set.of()))
+        .map(i -> new DecodeEntry(i.source(), i.width(), i.pattern(), Set.of(), occurrence))
         .toList();
 
     /* WHEN */
@@ -110,21 +114,22 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     ));
 
     final List<DecodeEntry> decodeEntries = new ArrayList<>();
+    final double occurrence = 1.0 / insns.size();
 
     {
-      var entry = toDecodeEntry(insns.get(0),
+      var entry = toDecodeEntry(insns.get(0), occurrence,
           exclude("--00----", "------00", "------11"),
           exclude("--11----"));
       decodeEntries.add(entry);
     }
     {
-      var entry = toDecodeEntry(insns.get(1), "--11----");
+      var entry = toDecodeEntry(insns.get(1), occurrence, "--11----");
       decodeEntries.add(entry);
     }
 
     // The rest do not have exclusion conditions
     for (int i = 2; i < insns.size(); i++) {
-      decodeEntries.add(toDecodeEntry(insns.get(i)));
+      decodeEntries.add(toDecodeEntry(insns.get(i), occurrence));
     }
 
     /* WHEN */
@@ -156,22 +161,23 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         "-0-11----"
     ));
 
+    final double occurrence = 1.0 / insns.size();
     final List<DecodeEntry> decodeEntries = new ArrayList<>();
 
     {
-      var entry = toDecodeEntry(insns.get(0),
+      var entry = toDecodeEntry(insns.get(0), occurrence,
           exclude("---00----", "-------00", "-------11"),
           exclude("---11----"));
       decodeEntries.add(entry);
     }
     {
-      var entry = toDecodeEntry(insns.get(1), "---11----");
+      var entry = toDecodeEntry(insns.get(1), occurrence, "---11----");
       decodeEntries.add(entry);
     }
 
     // The rest do not have exclusion conditions
     for (int i = 2; i < insns.size(); i++) {
-      decodeEntries.add(toDecodeEntry(insns.get(i)));
+      decodeEntries.add(toDecodeEntry(insns.get(i), occurrence));
     }
 
     /* WHEN */
@@ -203,22 +209,23 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         "-0-11----"
     ));
 
+    final double occurrence = 1.0 / insns.size();
     final List<DecodeEntry> decodeEntries = new ArrayList<>();
 
     {
-      var entry = toDecodeEntry(insns.get(0),
+      var entry = toDecodeEntry(insns.get(0), occurrence,
           exclude("---00----", "-------00", "-------11"),
           exclude("---11----"));
       decodeEntries.add(entry);
     }
     {
-      var entry = toDecodeEntry(insns.get(1), "---11----");
+      var entry = toDecodeEntry(insns.get(1), occurrence, "---11----");
       decodeEntries.add(entry);
     }
 
     // The rest do not have exclusion conditions
     for (int i = 2; i < insns.size(); i++) {
-      decodeEntries.add(toDecodeEntry(insns.get(i)));
+      decodeEntries.add(toDecodeEntry(insns.get(i), occurrence));
     }
 
     /* WHEN */
@@ -297,10 +304,12 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         "10000011 --000--- --------"
     ));
 
+    final double occurrence = 1.0 / insns.size();
+
     // For this set we don't need exclusion conditions
     final List<DecodeEntry> decodeEntries = new ArrayList<>();
     for (Instruction insn : insns) {
-      decodeEntries.add(toDecodeEntry(insn));
+      decodeEntries.add(toDecodeEntry(insn, occurrence));
     }
 
     /* WHEN */
@@ -378,6 +387,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     passManager.add(new VdtInputPreparationPass(config));
     passManager.add(new VdtConstraintSynthesisPass(config));
     passManager.add(new VdtLoweringPass(config));
+    passManager.add(new VdtVerificationPass(config));
 
     /* WHEN */
     passManager.run(spec);
@@ -430,6 +440,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     passManager.add(new VdtInputPreparationPass(config));
     passManager.add(new VdtConstraintSynthesisPass(config));
     passManager.add(new VdtLoweringPass(config));
+    passManager.add(new VdtVerificationPass(config));
 
     /* WHEN */
     passManager.run(spec);
@@ -480,6 +491,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     passManager.add(new VdtInputPreparationPass(config));
     passManager.add(new VdtConstraintSynthesisPass(config));
     passManager.add(new VdtLoweringPass(config));
+    passManager.add(new VdtVerificationPass(config));
 
     /* WHEN */
     passManager.run(spec);
@@ -552,6 +564,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     manager.add(new VdtInputPreparationPass(config));
     manager.add(new VdtEncodingSemanticVerificationPass(config));
     manager.add(new VdtLoweringPass(config));
+    manager.add(new VdtVerificationPass(config));
 
     /* WHEN */
     manager.run(spec);
@@ -610,6 +623,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     manager.add(new VdtInputPreparationPass(config));
     manager.add(new VdtEncodingSemanticVerificationPass(config));
     manager.add(new VdtLoweringPass(config));
+    manager.add(new VdtVerificationPass(config));
 
     /* WHEN */
     manager.run(spec);
@@ -633,16 +647,156 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         decisionNode.getMask());
   }
 
+  @Test
+  void test_fournel_table2() throws DuplicatedPassKeyException, IOException {
+
+    // Nicolas Fournel et al.
+    // https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6691197
+
+    /* GIVEN */
+    final String vadl = """
+        instruction set architecture TEST = {
+        
+          register X: Bits<5>
+        
+          format F_1: Bits<8> =
+          { c   [7..5]
+          , v   [4]
+          , r   [3..2]
+          , op  [1..0]
+          }
+        
+          format F_2: Bits<8> =
+          { imm [7..4]
+          , op  [3,1..0]
+          , x   [2]
+          }
+        
+          instruction A: F_1 = { }
+          // [ select when : c != 0b111 ] (automatically synthesized)
+          encoding A = { op = 0b00 }
+          assembly A = ( mnemonic )
+        
+          instruction B: F_1 = { }
+          encoding B = { op = 0b00, c = 0b111 }
+          assembly B = ( mnemonic )
+        
+          instruction C: F_2 = { }
+          encoding C = { op = 0b001 }
+          assembly C = ( mnemonic )
+        
+          instruction D: F_2 = { }
+          encoding D = { op = 0b101 }
+          assembly D = ( mnemonic )
+        }
+        """;
+
+    var config =
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
+    config.setDecoderOptions(new DecoderOptions()
+        .withGenerator(DecoderOptions.Generator.IRREGULAR));
+
+    var spec = TestUtils.compileToViam(vadl);
+
+    var manager = new PassManager();
+    manager.add(new VdtEncodingConstraintValidationPass(config));
+    manager.add(new VdtInputPreparationPass(config));
+    manager.add(new VdtConstraintSynthesisPass(config));
+    manager.add(new VdtEncodingSemanticVerificationPass(config));
+    manager.add(new VdtLoweringPass(config));
+
+    /* WHEN */
+    manager.run(spec);
+
+    /* THEN */
+    var decodeTree = manager.getPassResults().lastResultOf(VdtLoweringPass.class, Node.class);
+
+    Assertions.assertNotNull(decodeTree);
+
+    var stats = DecisionTreeStatsCalculator.statistics(decodeTree);
+
+    log.info("VDT: {}", stats);
+    log.info("Decoder: \n{}", new TextGraphGenerator(decodeTree).generate());
+  }
+
+  @Test
+  void test_fournel_table3() throws DuplicatedPassKeyException, IOException {
+
+    // Nicolas Fournel et al.
+    // https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6691197
+
+    /* GIVEN */
+    final String vadl = """
+        instruction set architecture TEST = {
+        
+          register X: Bits<5>
+        
+          format F_1: Bits<8> =
+          { c   [7..5]
+          , v   [4]
+          , r   [3..2]
+          , op  [1..0]
+          }
+        
+          format F_2: Bits<8> =
+          { imm [7..4]
+          , op  [3,1..0]
+          , x   [2]
+          }
+        
+          instruction A: F_1 = { }
+          [ select when : c != 0b111 && (v != 0b1 || c = 0b000) ]
+          encoding A = { op = 0b00 }
+          assembly A = ( mnemonic )
+        
+          instruction B: F_1 = { }
+          encoding B = { op = 0b00, c = 0b111 }
+          assembly B = ( mnemonic )
+        
+          instruction C: F_2 = { }
+          encoding C = { op = 0b001 }
+          assembly C = ( mnemonic )
+        
+          instruction D: F_2 = { }
+          encoding D = { op = 0b101 }
+          assembly D = ( mnemonic )
+        }
+        """;
+
+    var config =
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
+    config.setDecoderOptions(new DecoderOptions()
+        .withGenerator(DecoderOptions.Generator.IRREGULAR));
+
+    var spec = TestUtils.compileToViam(vadl);
+
+    var manager = new PassManager();
+    manager.add(PassOrders.check(config));
+
+    /* WHEN */
+    manager.run(spec);
+
+    /* THEN */
+    var decodeTree = manager.getPassResults().lastResultOf(VdtLoweringPass.class, Node.class);
+
+    Assertions.assertNotNull(decodeTree);
+
+    var stats = DecisionTreeStatsCalculator.statistics(decodeTree);
+
+    log.info("VDT: {}", stats);
+    log.info("Decoder: \n{}", new TextGraphGenerator(decodeTree).generate());
+  }
+
   @SuppressWarnings("unchecked")
   private <T, U extends Pass> T getResult(PassManager passManager, Class<U> passType) {
     return (T) passManager.getPassResults().lastResultOf(passType);
   }
 
-  private DecodeEntry toDecodeEntry(Instruction insn) {
-    return new DecodeEntry(insn.source(), insn.width(), insn.pattern(), Set.of());
+  private DecodeEntry toDecodeEntry(Instruction insn, double o) {
+    return new DecodeEntry(insn.source(), insn.width(), insn.pattern(), Set.of(), o);
   }
 
-  private DecodeEntry toDecodeEntry(Instruction insn, String... exclusionPattern) {
+  private DecodeEntry toDecodeEntry(Instruction insn, double o, String... exclusionPattern) {
     Set<ExclusionCondition> exclusions = Arrays.stream(exclusionPattern)
         .map(s -> {
           s = s.replace(" ", "");
@@ -650,11 +804,11 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
           return new ExclusionCondition(matching, Set.of());
         })
         .collect(Collectors.toSet());
-    return new DecodeEntry(insn.source(), insn.width(), insn.pattern(), exclusions);
+    return new DecodeEntry(insn.source(), insn.width(), insn.pattern(), exclusions, o);
   }
 
-  private DecodeEntry toDecodeEntry(Instruction insn, ExclusionCondition... exclusions) {
-    return new DecodeEntry(insn.source(), insn.width(), insn.pattern(), Set.of(exclusions));
+  private DecodeEntry toDecodeEntry(Instruction insn, double o, ExclusionCondition... exclusions) {
+    return new DecodeEntry(insn.source(), insn.width(), insn.pattern(), Set.of(exclusions), o);
   }
 
   private ExclusionCondition exclude(String matchingPattern, String... unmatchingPattern) {

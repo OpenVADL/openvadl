@@ -104,7 +104,11 @@ public class VdtInputPreparationPass extends Pass {
           final var pattern = toFixedBitPattern(i, bo);
           final var exclusions = getExclusionsFromConstraints(bo, i);
 
-          return new DecodeEntry(i, pattern.width(), pattern, exclusions);
+          // TODO: Process & parse the occurrence probabilities. For now we'll assume uniform
+          //       distribution.
+          final double probability = 1.0 / isa.ownInstructions().size();
+
+          return new DecodeEntry(i, pattern.width(), pattern, exclusions, probability);
         })
         .toList();
   }
