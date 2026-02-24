@@ -102,10 +102,15 @@ jlink {
     }
 }
 
-// The plugin only merges dependency jars, not the main application jar.
-// Manually copy it into mergedjars to include it in the merged module.
-tasks.named("prepareMergedJarsDir") {
+tasks.prepareMergedJarsDir {
+    rootProject.allprojects.forEach { p ->
+        dependsOn(p.tasks.jar)
+        inputs.files(p.tasks.named("jar"))
+    }
+
     doLast {
+        // The plugin only merges dependency jars, not the main application jar.
+        // Manually copy it into mergedjars to include it in the merged module.
         copy {
             from(zipTree(tasks.jar.get().archiveFile))
             into("${layout.buildDirectory.get()}/jlinkbase/mergedjars")
