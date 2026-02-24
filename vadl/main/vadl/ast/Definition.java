@@ -216,6 +216,8 @@ interface DefinitionVisitor<R> {
 
   R visit(StageDefinition definition);
 
+  R visit(UserModeEmulationDefinition definition);
+
   R visit(UsingDefinition definition);
 
   R visit(AbiClangTypeDefinition abiClangTypeDefinition);
@@ -3397,6 +3399,78 @@ class ApplicationBinaryInterfaceDefinition extends Definition implements Identif
   }
 }
 
+//TODO: add umesequencedefinition aswell? 
+class UserModeEmulationDefinition extends Definition implements IdentifiableNode {
+  Identifier id;
+  @Child
+  IsId isa;
+  @Child
+  List<Definition> definitions;
+  SourceLocation loc;
+
+  @Nullable
+  InstructionSetDefinition isaNode;
+
+  UserModeEmulationDefinition(Identifier id, IsId isa, List<Definition> definitions,
+                                       SourceLocation loc) {
+    this.id = id;
+    this.isa = isa;
+    this.definitions = definitions;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    prettyPrintAnnotations(indent, builder);
+    builder.append(prettyIndentString(indent)).append("user mode emulation ");
+    id.prettyPrint(indent, builder);
+    builder.append(" for ");
+    isa.prettyPrint(indent, builder);
+    builder.append(" = {\n");
+    prettyPrintDefinitions(indent + 1, builder, definitions);
+    builder.append(prettyIndentString(indent)).append("}\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    UserModeEmulationDefinition that = (UserModeEmulationDefinition) o;
+    return Objects.equals(id, that.id) && Objects.equals(isa, that.isa)
+        && Objects.equals(definitions, that.definitions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, isa, definitions);
+  }
+
+  @Override
+  public Identifier identifier() {
+    return id;
+  }
+}
+
+
 /**
  * The compiler generator requires a few special instructions. Those need to be defined
  * in the ABI. They are distinguished with the {@link AbiSpecialPurposeInstructionDefinition#kind}
@@ -3881,6 +3955,14 @@ class ProcessorDefinition extends Definition implements IdentifiableNode {
     }
     return (ApplicationBinaryInterfaceDefinition) Objects.requireNonNull(abi.target());
   }
+
+  /*@Nullable
+  UserModeEmulationDefinition umeNode() {
+    if (ume == null) {
+      return null;
+    }
+    return (UserModeEmulationDefinition) Objects.requireNonNull(ume.target());
+  } */
 
   @Override
   public SourceLocation location() {

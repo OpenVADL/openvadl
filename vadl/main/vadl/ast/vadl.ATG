@@ -157,6 +157,7 @@ TOKENS
   ARCHITECTURE = "architecture".
   ARGUMENT     = "argument".
   ASSEMBLY     = "assembly".
+  AS_ID        = "AsId".
   BINARY       = "binary".
   CACHE        = "cache".
   CALL         = "call".
@@ -170,11 +171,11 @@ TOKENS
   DIRECTIVES   = "directives".
   DO           = "do".
   ELSE         = "else".
+  EMULATION    = "emulation".
   ENCODING     = "encoding".
   ENUMERATION  = "enumeration".
   EXCEPTION    = "exception".
   EXISTS       = "exists".
-  AS_ID        = "AsId".
   EXTENDING    = "extending".
   FALSE        = "false".
   FETCH        = "fetch".
@@ -207,6 +208,7 @@ TOKENS
   MEMORY       = "memory".
   MICRO        = "micro".
   MISS         = "miss".
+  MODE         = "mode".
   MODEL        = "model".
   MODEL_TYPE   = "model-type".
   MODIFIERS    = "modifiers".
@@ -251,7 +253,9 @@ TOKENS
   TRANSLATION  = "translation".
   TRUE         = "true".
   TYPE         = "type".
+  UME          = "ume".
   UNSIGNED     = "unsigned".
+  USER         = "user".
   USING        = "using".
   VALUE        = "value".
   VAR          = "var".
@@ -386,6 +390,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   = annotations<.out List<AnnotationDefinition> annotations.>
   ( instructionsetDefinition<out def>
   | applicationBinaryInterfaceDefinition<out def>
+  | userModeEmulationDefinition<out def>
   | processorDefinition<out def>
   | microArchitectureDefinition<out def>
   | commonDefinition<out def>
@@ -948,6 +953,37 @@ elements. A single annotation is described in the #annotation production rule.
       groupSequence<out seq>              (. sequences.add(seq); .)
     }
     SYM_BRACE_CLOSE                       (. group = new Group.Permutation(sequences, start.join(lastTokenLoc())); .)
+  .
+
+  // -- USER MODE EMULATION-----------------------------------------------------------------------------------------------
+
+  userModeEmulationDefinition<out Definition def> (. var start = nextTokenLoc(); .)
+  = USER MODE EMULATION
+    identifier<out Identifier id>
+    FOR
+    identifierPath<out IsId isaPath>
+    SYM_EQ
+    SYM_BRACE_OPEN                              (. var elements = new ArrayList<Definition>(); .)
+    {
+      umeElementDefinition<out Definition elem> (. addDef(elements, elem); .)
+    }
+    SYM_BRACE_CLOSE                             (. def = new userModeEmulationDefinition(id, isaPath, elements, start.join(lastTokenLoc())); .)
+  .
+
+  umeSequenceDef<out Definition def>                         (. var start = nextTokenLoc(); .)
+  =                                                          (. UmeSequenceDefinition.SeqKind kind = null; .)
+  (
+    CONSTANT                                                 (. kind = UmeSequenceDefinition.SeqKind.CONSTANT; .)
+    | REGISTER ADJUSTMENT                                    (. kind = UmeSequenceDefinition.SeqKind.REGISTER; .)
+  )
+  SEQUENCE                                                   (. List<Parameter> params = new ArrayList<>(); .)
+  [ parameters<.out params.> ]
+  SYM_EQ
+  SYM_BRACE_OPEN                                             (. var stmts = new ArrayList<InstructionCallStatement>(); .)
+  {
+    instructionCallStmt<out InstructionCallStatement stmt>   (. stmts.add(stmt); .)
+  }
+  SYM_BRACE_CLOSE                                            (. def = new UmeSequenceDefinition(kind, params, stmts, start.join(lastTokenLoc())); .)
   .
 
   // -- ABI DEFINITIONS-----------------------------------------------------------------------------------------------

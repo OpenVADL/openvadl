@@ -17,5 +17,6 @@ subdir('sh4')
 subdir('sparc')
 subdir('tricore')
 subdir('xtensa')
+subdir('mytarget')
 # VADL generated line
 subdir('[(${gen_arch})]')

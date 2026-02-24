@@ -516,6 +516,7 @@ public class PassOrders {
         .add(new TcgOpLoweringPass(config))
         .add(new IssHardcodedTcgAddOnPass(config))
         .add(new IssTcgVAllocationPass(config))
+        .add(new IssMyTargetConfigPass(config))
 
         // Common passes
         .add(new IssGdbInfoExtractionPass(config))
@@ -611,6 +612,34 @@ public class PassOrders {
         .add(issDefault("/contrib/plugins/meson.build", config))
         // cosimulation plugin
         .add(issDefault("/contrib/plugins/cosimulation.c", config))
+
+
+
+
+       // .add(issDefault("/configs/targets/mytarget-linux-user.mak", config))
+
+        .add(issDefault("/linux-user/mytarget/cpu_loop.c", config))
+        .add(issDefault("/linux-user/mytarget/signal.c", config))
+        .add(issDefault("/linux-user/mytarget/syscall_nr.h", config))
+        
+        .add(issDefault("/linux-user/mytarget/target_syscall.h", config))
+        .add(issDefault("/linux-user/mytarget/target_cpu.h", config))
+        .add(issDefault("/linux-user/mytarget/target_structs.h", config))
+        .add(issDefault("/linux-user/mytarget/target_elf.h", config))
+        .add(issDefault("/linux-user/mytarget/target_errno_defs.h", config)) 
+        .add(issDefault("/linux-user/mytarget/sockbits.h", config))
+        .add(issDefault("/linux-user/mytarget/target_fcntl.h", config))
+        .add(issDefault("/linux-user/mytarget/target_mman.h", config))
+        .add(issDefault("/linux-user/mytarget/target_prctl.h", config))
+        .add(issDefault("/linux-user/mytarget/target_proc.h", config))
+        .add(issDefault("/linux-user/mytarget/target_resource.h", config))
+        .add(issDefault("/linux-user/mytarget/target_signal.h", config))
+        .add(issDefault("/linux-user/mytarget/termbits.h", config))
+        .add(issDefault("/linux-user/mytarget/vdso-asmoffset.h", config))
+
+        .add(issDefault("/linux-user/mytarget/meson.build", config))
+        
+        .add(issDefault("/linux-user/meson.build", config))
     ;
   }
 

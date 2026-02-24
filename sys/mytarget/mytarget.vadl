@@ -1,0 +1,84 @@
+// hardware components
+component register_file Regs {
+    count = 32 // cpu has 32 grp (general purpose) registers
+    width = 64 // each register is 64 bits wide
+    type = unsigned long // datatype used when generating simulator code
+}
+
+architecture mytarget {
+
+    // physical properties
+    machine {
+        word_size = 64
+        address_width = 64
+    }
+
+    register_file regs : Regs
+
+    //program counter
+    // keeps track of memory address of next instr taht CPU needs to execute
+    register pc {
+        width = 64
+        type = unsigned long
+        is_pc = true
+    }
+
+    // how software progs use physical registers
+    application binary interface ABI {
+        
+        alias register syscall_id = regs[17]
+        
+        alias register retval = regs[10]
+
+        // map arguments to registers
+        alias register arg0 = regs[10]
+        alias register arg1 = regs[11]
+        alias register arg2 = regs[12]
+        alias register arg3 = regs[13]
+        alias register arg4 = regs[14]
+        alias register arg5 = regs[15]
+
+        alias register sp = regs[2]  // stack pointer
+        alias register ra = regs[1]  // return address
+        
+        stack pointer = sp
+        return address = ra
+        
+        function argument = [arg0, arg1, arg2, arg3, arg4, arg5]
+        return value = retval
+    }
+    
+    // assembly instructions for CPU 
+    instruction set ISA {
+        assembly nop = "nop"
+        encoding nop = {opcode = 0x00000013 } // Standard RISC-V NOP
+        instruction nop = { /* Do nothing */ }
+        
+        // correct riscv ecall
+        encoding ecall = {opcode = 0b111'0011, funct3 = 0b000, rd = 0b0'0000, rs1 = 0b0'0000, imm = 0}
+        assembly ecall = (mnemonic)
+        instruction ecall : Itype = { // encoding format Itype
+            //full system emulation behavior
+        }
+    }
+
+    // user mode emulation
+    // how to intercept syscalls & fwd them to host os
+
+    // choose os here (linux, bsd, ...)
+    [target os : linux] // annotation to user mode emulation 
+    user mode emulation USER_MODE for ISA with ABI = {
+        
+        syscall instruction = ecall // instr to trigger syscall, ignores full system behavior 
+        syscall register = syscall_id // register to hold syscallID
+        syscall field = imm16 // format field of instr to hold syscall ID  
+        
+        syscall argument = [arg0, arg1, arg2, arg3, arg4, arg5] // registers to pass data to host os
+
+        //negative return commonly used in riscv
+        [error convention : negative_return] // annotation to syscall return
+        syscall return = [retval] // store result here
+
+        unhandled syscall = trap
+    }
+}
