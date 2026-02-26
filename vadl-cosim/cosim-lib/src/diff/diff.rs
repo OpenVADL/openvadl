@@ -17,7 +17,7 @@ thread_local! {
 pub fn diff_mem_access(
     mem_access_info1: &MemAccessInfo,
     mem_access_info2: &MemAccessInfo,
-    _config: &Config,
+    config: &Config,
 ) -> Vec<DiffEntry> {
     let mut diffs = vec![];
 
@@ -43,7 +43,10 @@ pub fn diff_mem_access(
         ));
     }
 
-    if mem_access_info1.data_slice() != mem_access_info2.data_slice() {
+    if mem_access_info1.data_slice() != mem_access_info2.data_slice()
+        && mem_access_info1.to_u128(&config.qemu.clients[0].endian)
+            != mem_access_info2.to_u128(&config.qemu.clients[1].endian)
+    {
         diffs.push(DiffEntry::new(
             "mem.data",
             vec![
