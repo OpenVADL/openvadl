@@ -40,7 +40,7 @@ public abstract class CosimTest extends DockerExecutionTest {
 
   // config of qemu test image
   private static final String QEMU_TEST_IMAGE =
-      "ghcr.io/openvadl/iss-test-base@sha256:e70f997ba639324b1e43ac08fee9460b10e321dfec3da1a6e710eae419acf2e1";
+      "ghcr.io/openvadl/iss-test-base@sha256:134d41337274a2f54790c13582e14a23a78617bb90554214f8a6f721c5287e85";
 
   // specification to image cache
   private static final ConcurrentHashMap<String, ImageFromDockerfile> issImageCache =
