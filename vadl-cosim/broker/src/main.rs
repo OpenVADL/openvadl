@@ -1,7 +1,10 @@
 use std::{fs, path::Path, str::FromStr};
 
 use clap::Parser;
-use color_eyre::{Result, eyre::bail};
+use color_eyre::{
+    Result,
+    eyre::{Context, bail},
+};
 use figment::{
     Figment,
     providers::{Format, Toml},
@@ -45,7 +48,7 @@ pub struct Cli {
     /// If set, instructs the cosim-broker to stop cosimulation at whenever a memory-write occurs
     /// at the given address (hardcoded or by symbol). This can further be filtered to only exit if
     /// a certain value (hardcoded or by symbol) gets written to the address.
-    #[arg(long, value_name = "(<ADDR>|<SYMBOL>)[,(<VALUE>|<SYMBOL>)]")]
+    #[arg(long, value_name = "(<ADDR>|<SYMBOL>)[,(<VALUE>)]")]
     pub exit_on_write: Option<String>,
 }
 
@@ -111,11 +114,7 @@ fn main() -> Result<()> {
     let mem_write = &mut config.testing.exit_condition.on_mem_write;
     if let Some(ref mem_write_label) = mem_write.on_label {
         let addr = parse_address_or_symbol(mem_write_label, &obj_test_file, obj_test_file_name)?;
-        mem_write.on_address = Some(addr);
-    }
-
-    if let Some(ref _mem_value_label) = mem_write.with_symbol_value {
-        todo!()
+        mem_write.on_address = Some(addr as u64);
     }
 
     if let Some(exit_on_write) = cli.exit_on_write {
@@ -232,7 +231,8 @@ fn parse_exit_on_exec_argument(
     elf: &object::File<'_>,
     elf_name: &str,
 ) -> Result<u64> {
-    parse_address_or_symbol(exit_on_exec, elf, elf_name)
+    let addr = parse_address_or_symbol(exit_on_exec, elf, elf_name)?;
+    Ok(addr as u64)
 }
 
 fn parse_exit_on_write_argument(
@@ -244,29 +244,39 @@ fn parse_exit_on_write_argument(
     match &exit_on_write[..] {
         [dest_addr_or_symbol] => {
             let dest_addr = parse_address_or_symbol(dest_addr_or_symbol, elf, elf_name)?;
-            Ok((dest_addr, None))
+            Ok((dest_addr as u64, None))
         }
-        [dest_addr_or_symbol, _write_value_or_symbol] => {
-            let _dest_addr = parse_address_or_symbol(*dest_addr_or_symbol, elf, elf_name)?;
-            let _write_addr = todo!();
-            Ok((_dest_addr, Some(_write_addr)))
+        [dest_addr_or_symbol, write_value] => {
+            let dest_addr = parse_address_or_symbol(*dest_addr_or_symbol, elf, elf_name)?;
+            let Some(write_addr) = parse_address(write_value) else {
+                bail!("expected valid write address");
+            };
+            Ok((dest_addr as u64, Some(write_addr?)))
         }
         _ => bail!("invalid exit-on-write arguments"),
     }
 }
 
-fn parse_address_or_symbol(input: &str, elf: &object::File<'_>, elf_name: &str) -> Result<u64> {
+fn parse_address(input: &str) -> Option<Result<u128>> {
     if input.starts_with("0x") {
         let input = input.trim_start_matches("0x");
-        let address = u64::from_str_radix(input, 16)?;
-        Ok(address)
-    } else if let Ok(address) = input.parse::<u64>() {
-        Ok(address)
+        let address = u128::from_str_radix(input, 16);
+        Some(address.context("invalid hex number"))
+    } else if let Ok(address) = input.parse::<u128>() {
+        Some(Ok(address))
+    } else {
+        None
+    }
+}
+
+fn parse_address_or_symbol(input: &str, elf: &object::File<'_>, elf_name: &str) -> Result<u128> {
+    if let Some(address) = parse_address(input) {
+        address
     } else {
         let Some(label_address) = get_address_of_symbol(&input, &elf) else {
             bail!("could not find label {} in {}", input, elf_name,);
         };
-        Ok(label_address)
+        Ok(label_address as u128)
     }
 }
 

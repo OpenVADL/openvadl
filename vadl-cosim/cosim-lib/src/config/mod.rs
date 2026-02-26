@@ -171,7 +171,6 @@ pub struct MemWriteExitCondition {
     pub on_address: Option<u64>,
     pub on_label: Option<String>,
     pub with_constant_value: Option<u128>,
-    pub with_symbol_value: Option<String>,
 }
 
 
