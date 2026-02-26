@@ -429,7 +429,9 @@ impl Serialize for MemAccessInfo {
 }
 
 impl MemAccessInfo {
-    pub fn new(size: u8, data: [u8; 16], vaddr: u64) -> Self {
+    const BUF_LEN: usize = 16;
+
+    pub fn new(size: u8, data: [u8; Self::BUF_LEN], vaddr: u64) -> Self {
         Self { size, data, vaddr }
     }
 
@@ -446,6 +448,21 @@ impl MemAccessInfo {
             .collect::<String>();
 
         format!("0x{s}")
+    }
+
+    pub fn to_u128(&self, endian: &Endian) -> u128 {
+        let mut buf: [u8; Self::BUF_LEN] = [0; Self::BUF_LEN];
+        let source_slice = self.data_slice();
+        match endian {
+            Endian::Little => {
+                buf[..source_slice.len() as usize].copy_from_slice(source_slice);
+                u128::from_le_bytes(buf)
+            },
+            Endian::Big => {
+                buf[Self::BUF_LEN - source_slice.len() as usize..].copy_from_slice(source_slice);
+                u128::from_be_bytes(buf)
+            },
+        }
     }
 }
 
