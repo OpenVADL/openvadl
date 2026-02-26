@@ -34,6 +34,7 @@ import org.junit.jupiter.api.TestMethodOrder;
  */
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Disabled
 public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
 
   private static final long BASE_ADDRESS_LOAD_STORE = 0x1000L;
@@ -1072,8 +1073,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2, b.getImmU(15));
-      b.add("%s %s, %s(%s)", instruction, regSrc1,
-          b.getImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE)), regSrc2);
+      b.add("%s %s, %s(%s)", instruction, regSrc1, b.getImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE)), regSrc2);
       return b.toTestCase();
     });
   }

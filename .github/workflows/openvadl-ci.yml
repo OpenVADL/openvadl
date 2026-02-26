@@ -43,14 +43,7 @@ jobs:
       matrix:
         task: [ test-lcb, test-common, test-iss, test-rtl ]
         include:
-          - task: test-lcb
-            runner: self-hosted
-          - task: test-common
-            runner: self-hosted
-          - task: test-iss
-            runner: self-hosted-arm64
-          - task: test-rtl
-            runner: self-hosted
+          - runner: self-hosted
     with:
       test-task: ${{ matrix.task }}
       runner: ${{ matrix.runner }}
