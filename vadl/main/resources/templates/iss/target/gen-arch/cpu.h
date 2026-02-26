@@ -14,6 +14,8 @@
 #define [(${gen_arch_upper})]_PC [(${pc_reg.name_lower})]
 #define [(${gen_arch_upper})]_PC_TYPE [(${pc_reg.value_c_type})]
 
+#define MMU_USER_IDX 0
+
 [# th:each="reg : ${register_tensors}"][# th:if="${reg.index_dims.size} > 0"]
 extern const char * const [(${gen_arch_lower})]_cpu_[(${reg.name_lower})]_names[(${reg.c_reg_name_array_def})];
 [/][/]
