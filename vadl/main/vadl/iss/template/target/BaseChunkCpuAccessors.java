@@ -61,11 +61,6 @@ final class BaseChunkCpuAccessors {
 
   private static Map<String, Object> renderReadAccessor(RegisterTensor reg,
                                                         IssConfiguration config) {
-    var signature = "uint64_t cpu_get_" + reg.simpleName().toLowerCase() + "_chunk("
-        + "CPU" + config.targetName().toUpperCase() + "State *env"
-        + renderArgDecls(reg.indexDimensions().size())
-        + ", uint64_t bit_offset, uint32_t bit_width)";
-
     var body = new StringBuilder();
     var containerWidth = reg.resultType(reg.indexDimensions().size()).bitWidth();
     body.append("assert(bit_width > 0);\n");
@@ -97,6 +92,10 @@ final class BaseChunkCpuAccessors {
     body.append("}\n");
     body.append("return out;");
 
+    var signature = "uint64_t cpu_get_" + reg.simpleName().toLowerCase() + "_chunk("
+        + "CPU" + config.targetName().toUpperCase() + "State *env"
+        + renderArgDecls(reg.indexDimensions().size())
+        + ", uint64_t bit_offset, uint32_t bit_width)";
     return Map.of(
         "signature", signature,
         "body", body.toString()
@@ -105,11 +104,6 @@ final class BaseChunkCpuAccessors {
 
   private static Map<String, Object> renderWriteAccessor(RegisterTensor reg,
                                                          IssConfiguration config) {
-    var signature = "void cpu_set_" + reg.simpleName().toLowerCase() + "_chunk("
-        + "CPU" + config.targetName().toUpperCase() + "State *env"
-        + renderArgDecls(reg.indexDimensions().size())
-        + ", uint64_t bit_offset, uint32_t bit_width, uint64_t value)";
-
     var body = new StringBuilder();
     var containerWidth = reg.resultType(reg.indexDimensions().size()).bitWidth();
     body.append("assert(bit_width > 0);\n");
@@ -140,6 +134,10 @@ final class BaseChunkCpuAccessors {
     body.append("  *dst = (uint8_t) ((*dst & (uint8_t)(~mask)) | (uint8_t)(bit ? mask : 0));\n");
     body.append("}\n");
 
+    var signature = "void cpu_set_" + reg.simpleName().toLowerCase() + "_chunk("
+        + "CPU" + config.targetName().toUpperCase() + "State *env"
+        + renderArgDecls(reg.indexDimensions().size())
+        + ", uint64_t bit_offset, uint32_t bit_width, uint64_t value)";
     return Map.of(
         "signature", signature,
         "body", body.toString()

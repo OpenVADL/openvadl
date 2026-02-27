@@ -487,7 +487,8 @@ class IssRegisterAccessLowering {
                                                      NodeList<ExpressionNode> dynamicIndices) {
     var baseDims = semantics.baseTensor().indexDimensions();
     if (semantics.fixedIndices().size() > baseDims.size()) {
-      behavior.ensure(false, "Invalid alias semantics: fixed indices exceed base tensor dimensions");
+      behavior.ensure(false,
+          "Invalid alias semantics: fixed indices exceed base tensor dimensions");
     }
     if (dynamicIndices.size() > semantics.dynamicDimensions().size()) {
       behavior.ensure(false,

@@ -128,6 +128,9 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
     return Instruction.class;
   }
 
+  /**
+   * Returns helper parameter order matching the instruction behavior's first-seen parameter names.
+   */
   public Stream<ParamNode> helperFormatParamOrder() {
     var params = new LinkedHashMap<String, ParamNode>();
     instr().behavior().getNodes(ParamNode.class)

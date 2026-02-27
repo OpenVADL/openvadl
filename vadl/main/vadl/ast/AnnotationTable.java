@@ -1075,7 +1075,7 @@ class UpcastAnnotation extends Annotation {
     var valueExpr = definition.values.get(1);
     typeChecker.check(valueExpr);
     bitSize = typeChecker.constantEvaluator.eval(valueExpr);
-    ensure(bitSize.value().signum() > 0,
+    Diagnostic.ensure(bitSize.value().signum() > 0,
         () -> error("Bit size of type has to be bigger than zero", valueExpr));
   }
 

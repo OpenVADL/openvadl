@@ -105,7 +105,10 @@ public class IssOpDecompositionPass extends AbstractIssPass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var largeOperationErrors = new ArrayList<Diagnostic>();
     var aliasSemanticBehaviors = viam.artificialResources()
-        .flatMap(alias -> Stream.of(alias.readFunction().behavior(), alias.writeProcedure().behavior()))
+        .flatMap(alias -> Stream.of(
+            alias.readFunction().behavior(),
+            alias.writeProcedure().behavior()
+        ))
         .collect(() -> java.util.Collections.newSetFromMap(new IdentityHashMap<>()),
             Set::add,
             Set::addAll);

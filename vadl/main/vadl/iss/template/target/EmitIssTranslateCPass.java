@@ -137,7 +137,10 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
     specification.artificialResources()
         .filter(alias -> alias.semantics().totalIndexCount()
             == alias.semantics().baseTensor().indexDimensions().size())
-        .filter(alias -> alias.semantics().baseTensor().expectExtension(RegInfo.class).isTcgScalar())
+        .filter(alias -> alias.semantics()
+            .baseTensor()
+            .expectExtension(RegInfo.class)
+            .isTcgScalar())
         .forEach(alias -> aliases.add(renderAliasAccessor(alias)));
     return aliases;
   }

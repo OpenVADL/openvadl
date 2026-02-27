@@ -312,7 +312,10 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
   // checks if all slices are not greater than 64 bit
   private void checkSlice(Specification viam, List<DiagnosticBuilder> diagnostics) {
     var aliasSemanticBehaviors = viam.artificialResources()
-        .flatMap(alias -> Stream.of(alias.readFunction().behavior(), alias.writeProcedure().behavior()))
+        .flatMap(alias -> Stream.of(
+            alias.readFunction().behavior(),
+            alias.writeProcedure().behavior()
+        ))
         .collect(() -> java.util.Collections.newSetFromMap(new IdentityHashMap<>()),
             Set::add,
             Set::addAll);
