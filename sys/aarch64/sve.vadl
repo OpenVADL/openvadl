@@ -26,8 +26,8 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
   constant Log2ElemB =   8                // number of bits required for the biggest element index
   constant NumZ = 32                      // number of vector registers in register file
-  constant VBound = if VL < 128           // upper bound of the scalar view V on the vector registers
-    then VL - 1 else 127
+  constant VSize = if VL < 128            // size of the scalar view V on the vector registers
+    then VL else 128
 
   using IndexP = Bits4                    // index type for the 16 predicate register file
   using IndexE = Bits<Log2ElemB>          // the biggest index type for element indices
@@ -41,6 +41,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   using BitsH  = Half                     // 16 bit half word type
   using BitsS  = BitsW                    // 32 bit word type
   using BitsD  = BitsX                    // 64 bit double word type
+  using BitsV  = Bits<VSize>
 
   register   P : IndexP -> BitsP          // predicate register file
   register FFR :           BitsP          // first fault register, predicate register
@@ -50,7 +51,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   alias register ZH : BitsZH<NumZ> = Z    // half   vector register file
   alias register ZS : BitsZS<NumZ> = Z    // single vector register file
   alias register ZD : BitsZD<NumZ> = Z    // double vector register file
-  alias register V = Z(*)(VBound..0)      // scalar view of the vector registers
+  alias register V = Z(*)(VSize-1..0)    // scalar view of the vector registers
 
   enumeration ElSize =                    // element size encoding
     { SizeB = 0                           // byte   size
@@ -253,7 +254,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
               then elems(i)
               else $NeutralElFold($i.funct; $elSize)
           in
-      V(vd) := result as BitsZ
+      V(vd) := result as BitsV
     encoding $i.id = { op = 0b0000'0100, opc = $i.opcode, size = ElSize::$elSize }
     assembly $i.id = ( $i.mnemo, ' ', register(vd), $elStr, ', ', register(pg), ', ', register(zn), $elStr )
     }
@@ -269,7 +270,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
               then elems(i) as $i.funct
               else 0
           in
-      V(vd) := result as UInt as BitsZ
+      V(vd) := result as UInt as BitsV
     encoding $i.id = { op = 0b0000'0100, opc = $i.opcode, size = ElSize::$elSize }
     assembly $i.id = ( $i.mnemo, ' ', register(vd), ', ', register(pg), ', ', register(zn), $elStr )
     }
