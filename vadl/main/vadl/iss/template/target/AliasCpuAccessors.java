@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
 import vadl.viam.RegisterTensor;
@@ -410,7 +411,7 @@ final class AliasCpuAccessors {
   }
 
   private static String toCUnsignedType(int width) {
-    return switch (width) {
+    return switch (CppTypeMap.nextFittingBitSize(width)) {
       case 1 -> "bool";
       case 8 -> "uint8_t";
       case 16 -> "uint16_t";

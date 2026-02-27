@@ -129,7 +129,10 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
      * Get all tcg variables used in the assignment.
      */
     public Stream<TcgVRefNode> tcgVariables() {
-      return assignments.values().stream().flatMap(Collection::stream).distinct();
+      return Stream.concat(
+              assignments.values().stream().flatMap(Collection::stream),
+              tcgVCache.values().stream().flatMap(Collection::stream))
+          .distinct();
     }
 
     /**
@@ -183,6 +186,10 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
 
     @Handler
     List<TcgVRefNode> destOf(ReadRegTensorNode toHandle) {
+      if (toHandle instanceof IssReadRegNode issRead
+          && issRead.windowKind() == IssReadRegNode.WindowKind.CHUNK) {
+        return assignments.computeIfAbsent(toHandle, v -> createTempExprVar(toHandle));
+      }
       var accessorName = toHandle instanceof IssReadRegNode issRead
           && issRead.windowKind() == IssReadRegNode.WindowKind.FULL
           ? issRead.accessorName()
@@ -190,6 +197,29 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
       return assignments.computeIfAbsent(toHandle,
           n -> createRegVar(
               toHandle.resourceDefinition(), toHandle.indices(), false, accessorName));
+    }
+
+    /**
+     * Returns the base container TCG variable for a chunked register read.
+     *
+     * <p>Chunk reads lower to an explicit extract during TCG lowering, so they need access to the
+     * underlying full register container in addition to their own temporary result variable.
+     */
+    public TcgVRefNode singleBaseReadOf(IssReadRegNode read) {
+      read.ensure(read.windowKind() == IssReadRegNode.WindowKind.CHUNK,
+          "Expected a chunk-window register read.");
+      var baseType = read.regTensor().resultType(read.indices().size()).asDataType();
+      var baseRead = new IssReadRegNode(
+          read.regTensor(),
+          read.indices().copy(),
+          baseType,
+          read.staticCounterAccess(),
+          IssReadRegNode.AccessKind.BASE,
+          IssReadRegNode.ReadShape.FULL,
+          null,
+          new NodeList<>(read.indices()));
+      return createRegVar(baseRead.resourceDefinition(), baseRead.indices(), false, null)
+          .getFirst();
     }
 
     @Handler

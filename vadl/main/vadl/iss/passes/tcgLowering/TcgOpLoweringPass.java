@@ -36,6 +36,7 @@ import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssLoadNode;
 import vadl.iss.passes.nodes.IssMoveNode;
+import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssSelectNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
@@ -576,6 +577,14 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   @Handler
   void handle(ReadRegTensorNode toHandle) {
+    if (toHandle instanceof IssReadRegNode issRead
+        && issRead.windowKind() == IssReadRegNode.WindowKind.CHUNK) {
+      var dest = singleDestOf(toHandle);
+      var base = assignments.singleBaseReadOf(issRead);
+      replaceCurrent(new TcgExtractNode(dest, base, issRead.bitOffset(), issRead.bitWidth(),
+          TcgExtend.fromBoolean(toHandle.type().asDataType().isSigned())));
+      return;
+    }
     // Nothing to do; register reads are TCG variables created at instruction start
     replaceCurrent();
   }
