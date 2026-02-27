@@ -533,7 +533,7 @@ class Decomposer
 
   void handle(Request rq, IssReadRegNode toHandle) {
     var regTensor = toHandle.regTensor();
-    var readWidth = regTensor.resultType(toHandle.indices().size()).bitWidth();
+    var readWidth = toHandle.readBitWidth();
 
     // Ensure the requested slice is within bounds
     toHandle.ensure(rq.slice.hi() < readWidth,

@@ -27,6 +27,7 @@ import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 
@@ -175,6 +176,23 @@ public class IssReadRegNode extends ReadRegTensorNode {
 
   public ExpressionNode bitWidth() {
     return bitWidth;
+  }
+
+  /**
+   * Returns the effective width of this read access.
+   *
+   * <p>For full-window reads this is the node result width. For chunk-window reads this is the
+   * chunk width, which is expected to match the node result width and is carried explicitly for
+   * downstream passes/codegen.
+   */
+  public int readBitWidth() {
+    if (windowKind == WindowKind.FULL) {
+      return type().bitWidth();
+    }
+    if (bitWidth instanceof ConstantNode c) {
+      return c.constant().asVal().intValue();
+    }
+    return type().bitWidth();
   }
 
   @Override

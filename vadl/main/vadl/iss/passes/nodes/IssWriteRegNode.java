@@ -27,6 +27,7 @@ import vadl.viam.Counter;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
@@ -181,6 +182,17 @@ public class IssWriteRegNode extends WriteRegTensorNode {
 
   public ExpressionNode bitWidth() {
     return bitWidth;
+  }
+
+  @Override
+  public int writeBitWidth() {
+    if (windowKind == WindowKind.FULL) {
+      return super.writeBitWidth();
+    }
+    if (bitWidth instanceof ConstantNode c) {
+      return c.constant().asVal().intValue();
+    }
+    return value().type().asDataType().bitWidth();
   }
 
   @Override

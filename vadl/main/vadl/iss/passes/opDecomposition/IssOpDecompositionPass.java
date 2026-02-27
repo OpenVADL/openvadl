@@ -134,7 +134,7 @@ public class IssOpDecompositionPass extends AbstractIssPass {
   private Optional<Diagnostic> checkNoLargeOperations(Graph behavior) {
     var tooLargeExpr = behavior.getNodes(ExpressionNode.class)
         .filter(n -> n.type() instanceof DataType)
-        .filter(n -> effectiveExpressionBitWidth(n) > configuration().targetSize().width)
+        .filter(n -> expressionBitWidth(n) > configuration().targetSize().width)
         .map(n -> Diagnostic.error("Too large operation type", n)
             .locationDescription(n, "The ISS was not able to decompose this to smaller types.")
             .note("Operation decomposition is still in early stages and "
@@ -157,7 +157,7 @@ public class IssOpDecompositionPass extends AbstractIssPass {
     }
 
     return behavior.getNodes(WriteRegTensorNode.class)
-        .filter(w -> effectiveWriteBitWidth(w) > configuration().targetSize().width)
+        .filter(w -> w.writeBitWidth() > configuration().targetSize().width)
         .map(w -> Diagnostic.error("Too large register write", w)
             .locationDescription(w,
                 "The ISS was not able to decompose this write to target-sized chunks.")
@@ -165,26 +165,9 @@ public class IssOpDecompositionPass extends AbstractIssPass {
         .findFirst();
   }
 
-  private int effectiveWriteBitWidth(WriteRegTensorNode write) {
-    if (write instanceof IssWriteRegNode iw
-        && iw.windowKind() == IssWriteRegNode.WindowKind.CHUNK) {
-      if (iw.bitWidth() instanceof ConstantNode c) {
-        return c.constant().asVal().intValue();
-      }
-      if (iw.value().type() instanceof DataType dt) {
-        return dt.bitWidth();
-      }
-    }
-    return write.writeBitWidth();
-  }
-
-  private int effectiveExpressionBitWidth(ExpressionNode expr) {
-    if (expr instanceof IssReadRegNode ir
-        && ir.windowKind() == IssReadRegNode.WindowKind.CHUNK) {
-      if (ir.bitWidth() instanceof ConstantNode c) {
-        return c.constant().asVal().intValue();
-      }
-      return ir.type().bitWidth();
+  private int expressionBitWidth(ExpressionNode expr) {
+    if (expr instanceof IssReadRegNode ir) {
+      return ir.readBitWidth();
     }
     return expr.type().asDataType().bitWidth();
   }
@@ -261,7 +244,7 @@ class OpDecomposer {
             return w.writeBitWidth() > targetSize.width;
           }
           if (node instanceof IssWriteRegNode w) {
-            return effectiveWriteBitWidth(w) > targetSize.width;
+            return w.writeBitWidth() > targetSize.width;
           }
           return false;
         })
@@ -281,23 +264,11 @@ class OpDecomposer {
             return w.writeBitWidth() > targetSize.width;
           }
           if (node instanceof IssWriteRegNode w) {
-            return effectiveWriteBitWidth(w) > targetSize.width;
+            return w.writeBitWidth() > targetSize.width;
           }
           return false;
         })
         .count();
-  }
-
-  private int effectiveWriteBitWidth(IssWriteRegNode write) {
-    if (write.windowKind() == IssWriteRegNode.WindowKind.CHUNK) {
-      if (write.bitWidth() instanceof ConstantNode c) {
-        return c.constant().asVal().intValue();
-      }
-      if (write.value().type() instanceof DataType dt) {
-        return dt.bitWidth();
-      }
-    }
-    return write.writeBitWidth();
   }
 
   private boolean decomposeExpressions(Set<Node> processed) {
