@@ -115,17 +115,10 @@ assembly description ASM for ABI = {
   }
 
   grammar = {
-    AddIInstruction @instruction:
-      mnemonic = "ADDI" @operand
-      rd = Register@operand ","
-      rs1 = Register@operand ","
-      immS = LoImmediateOperand
-    ;
-
-    LoImmediateOperand :
-      ImmediateOperand
+    ImmediateOperand :
+      Expression @operand
       | op = (
-          "%" mod="lo"@modifier
+          "%" mod = ("lo" | "hi" | "pcrel_lo" | "pcrel_hi") @modifier
           "(" val = Expression ")"
         ) @operand
     ;
@@ -140,9 +133,9 @@ assembly description ASM for ABI = {
           rdTmp = Register@operand ","
           ( ?(LaIdEq(1 as Bits<1>, ",") )         // jalr rd, rs, imm
               rs1Tmp = Register@operand ","
-              immTmp = JalrImmediateOperand
+              immTmp = ImmediateOperand
             |
-              immTmp = JalrImmediateOperand       // jalr rd, imm(rs)
+              immTmp = ImmediateOperand           // jalr rd, imm(rs)
               "(" rs1Tmp = Register@operand  ")"
           )
       | rdTmp = (x1_string @register) @operand    // jalr rs
@@ -152,68 +145,6 @@ assembly description ASM for ABI = {
       rd = rdTmp
       rs1 = rs1Tmp
       immS = immTmp
-    ;
-
-    JalrImmediateOperand :
-      ImmediateOperand
-      | op = (
-          "%" mod= ("pcrel_lo" | "lo" ) @modifier
-          "(" val = Expression ")"
-        ) @operand
-    ;
-
-    LuiInstruction @instruction:
-      mnemonic = "LUI" @operand
-      rd = Register@operand ","
-      imm = LuiImmediateOperand
-    ;
-
-    LuiImmediateOperand :
-      ImmediateOperand
-      | op = (
-          "%" mod="hi"@modifier
-          "(" val = Expression ")"
-        ) @operand
-    ;
-
-    AuipcInstruction @instruction:
-      mnemonic = "AUIPC" @operand
-      rd = Register@operand ","
-      imm = AuipcImmediateOperand
-    ;
-
-    AuipcImmediateOperand :
-      ImmediateOperand
-      | op = (
-          "%" mod="pcrel_hi" @modifier
-          "(" val = Expression ")"
-        ) @operand
-    ;
-
-    LTypeIds : "LB" | "LBU" | "LH" | "LHU" | "LW" ;
-
-    LTypeInstruction @instruction:
-      mnemonic = LTypeIds @operand
-      rd = Register @operand ","
-      immS = LoImmediateOperand
-      "(" rs1 = Register @operand ")"
-    ;
-
-
-    STypeIds : "SB" | "SH" | "SW" ;
-
-    STypeInstruction @instruction:
-      mnemonic = STypeIds @operand
-      rs2 = Register @operand ","
-      immS = LoImmediateOperand
-      "(" rs1 = Register @operand ")"
-    ;
-
-    SymbolPseudoIds : "CALL" | "TAIL" ;
-
-    SymbolPseudoInstruction @instruction :
-      mnemonic = SymbolPseudoIds @operand
-      symbol = Label @operand
     ;
   }
 
