@@ -16,17 +16,20 @@
 
 package vadl.iss.template.target;
 
-import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
 
 import com.google.common.collect.Streams;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.iss.IssUtils;
+import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.passes.extensions.RegInfo;
+import vadl.iss.passes.extensions.RegInfo.AliasAccessorDescriptor;
 import vadl.iss.template.IssRenderUtils;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -34,7 +37,6 @@ import vadl.template.AbstractMultiTemplateRenderingPass;
 import vadl.utils.Pair;
 import vadl.utils.codegen.CodeGeneratorAppendable;
 import vadl.utils.codegen.StringBuilderAppendable;
-import vadl.viam.ArtificialResource;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
@@ -59,11 +61,13 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
+    var accessorRegistry = passResults.lastResultOf(IssRegisterAccessInfoRetrievalPass.class,
+        IssAccessorRegistry.class);
     vars.put("insn_width", getInstructionWidth(specification));
     vars.put("mem_word_size", getMemoryWordSize(specification));
     vars.put("trans_includes", translationIncludes(passResults));
     vars.put("tcg_v_init_code", genRegInitCode(specification));
-    vars.put("alias_accessors", renderAliasAccessors(specification));
+    vars.put("alias_accessors", renderAliasAccessors(accessorRegistry));
     return vars;
   }
 
@@ -132,41 +136,31 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
     return sb.toString();
   }
 
-  private List<Map<String, Object>> renderAliasAccessors(Specification specification) {
-    var aliases = new ArrayList<Map<String, Object>>();
-    specification.artificialResources()
-        .filter(alias -> alias.semantics().totalIndexCount()
-            == alias.semantics().baseTensor().indexDimensions().size())
-        .filter(alias -> alias.semantics()
-            .baseTensor()
-            .expectExtension(RegInfo.class)
-            .isTcgScalar())
-        .forEach(alias -> aliases.add(renderAliasAccessor(alias)));
-    return aliases;
+  private List<Map<String, Object>> renderAliasAccessors(IssAccessorRegistry accessorRegistry) {
+    return accessorRegistry.aliasAccessors(RegInfo.AccessType.READ, RegInfo.BackendKind.TCG)
+        .stream()
+        .map(this::renderAliasAccessor)
+        .toList();
   }
 
-  private Map<String, Object> renderAliasAccessor(ArtificialResource alias) {
+  private Map<String, Object> renderAliasAccessor(AliasAccessorDescriptor descriptor) {
+    var alias = descriptor.alias();
     var base = alias.semantics().baseTensor();
-    var baseRender = base.expectExtension(RegInfo.class).renderObj();
-    var dims = (List<Map<String, Object>>) requireNonNull(baseRender.get("index_dims"));
-    var argNames = dims.stream().map(d -> (String) d.get("arg_name")).toList();
-    var forwardArgs = argNames.isEmpty() ? "" : ", " + String.join(", ", argNames);
-    var zero = alias.semantics().zeroConstraint();
+    var dims = descriptor.accessorArgs().stream()
+        .map(arg -> Map.of(
+            "size", arg.size(),
+            "index_ctype", arg.ctype(),
+            "arg_name", arg.name()))
+        .toList();
+    var forwardArgs = renderBaseForwardArgs(descriptor);
     var slice = alias.semantics().aliasSlice();
-    String zeroCheck = null;
-    if (zero != null && !zero.indices().isEmpty()) {
-      var checks = new ArrayList<String>();
-      for (int i = 0; i < zero.indices().size(); i++) {
-        checks.add(argNames.get(i) + " == " + zero.indices().get(i).intValue());
-      }
-      zeroCheck = String.join(" && ", checks);
-    }
+    var zeroCheck = renderZeroCheck(descriptor.zeroGuard(), descriptor.accessorArgs());
     return Map.ofEntries(
-        Map.entry("name_lower", alias.simpleName().toLowerCase()),
+        Map.entry("name_lower", descriptor.accessorBaseName()),
         Map.entry("base_name_lower", base.simpleName().toLowerCase()),
-        Map.entry("getter_params", baseRender.get("getter_params")),
+        Map.entry("getter_params", renderAccessorParams(descriptor.accessorArgs())),
         Map.entry("index_dims", dims),
-        Map.entry("value_width", baseRender.get("value_width")),
+        Map.entry("value_width", descriptor.owner().renderObj().get("value_width")),
         Map.entry("alias_value_width", alias.resultType().bitWidth()),
         Map.entry("has_slice", slice != null),
         Map.entry("slice_lsb", slice == null ? 0 : slice.lsb()),
@@ -175,6 +169,42 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
         Map.entry("has_zero_check", zeroCheck != null),
         Map.entry("forward_args", forwardArgs)
     );
+  }
+
+  private String renderAccessorParams(List<RegInfo.AccessorArg> args) {
+    var params = args.stream()
+        .map(arg -> arg.ctype() + " " + arg.name())
+        .collect(Collectors.joining(", "));
+    return params.isEmpty() ? "" : ", " + params;
+  }
+
+  private String renderBaseForwardArgs(AliasAccessorDescriptor descriptor) {
+    var args = descriptor.baseArgBindings().stream()
+        .map(binding -> {
+          if (binding instanceof RegInfo.FixedArgBinding fixed) {
+            return "((" + CppTypeMap.nextFittingUInt(fixed.value().type()) + ") "
+                + fixed.value().hexadecimal() + " )";
+          }
+          var forwarded = (RegInfo.ForwardedArgBinding) binding;
+          return descriptor.accessorArgs().get(forwarded.accessorArgIndex()).name();
+        })
+        .collect(Collectors.joining(", "));
+    return args.isEmpty() ? "" : ", " + args;
+  }
+
+  private @Nullable String renderZeroCheck(@Nullable RegInfo.ZeroGuard guard,
+                                           List<RegInfo.AccessorArg> args) {
+    if (guard == null) {
+      return null;
+    }
+    if (guard instanceof RegInfo.AlwaysZeroGuard) {
+      return "1";
+    }
+    var conditional = (RegInfo.ConditionalZeroGuard) guard;
+    return conditional.matches().stream()
+        .map(match -> args.get(match.accessorArgIndex()).name() + " == "
+            + match.value().intValue())
+        .collect(Collectors.joining(" && "));
   }
 
   private void regInitCode(CodeGeneratorAppendable sb, RegisterTensor reg) {

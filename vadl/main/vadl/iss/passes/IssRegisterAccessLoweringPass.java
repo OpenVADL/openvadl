@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.extensions.IssAliasAccessorDescriptors;
 import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
@@ -129,6 +130,7 @@ class IssRegisterAccessLowering {
         IssReadRegNode.AccessKind.BASE,
         IssReadRegNode.ReadShape.FULL,
         null,
+        null,
         read.indices().copy()
     );
     replacement.setSourceLocationIfNotSet(read.location());
@@ -151,6 +153,7 @@ class IssRegisterAccessLowering {
         IssWriteRegNode.AccessKind.BASE,
         guardKind,
         null,
+        null,
         write.indices().copy()
     );
     replacement.setSourceLocationIfNotSet(write.location());
@@ -159,7 +162,7 @@ class IssRegisterAccessLowering {
 
   private void lowerRead(ReadArtificialResNode read) {
     var semantics = read.resourceDefinition().semantics();
-    var aliasIndices = buildAliasIndices(semantics, read.indices());
+    var aliasIndices = buildAliasIndices(read.resourceDefinition(), read.indices());
     var baseDims = semantics.baseTensor().indexDimensions().size();
     var simpleAliasAccessor = semantics.aliasSlice() == null
         && aliasIndices.size() == baseDims;
@@ -179,10 +182,12 @@ class IssRegisterAccessLowering {
           semantics.baseTensor(),
           resourceIndices,
           read.type().asDataType(),
+          null,
           IssReadRegNode.AccessKind.ALIAS,
           readShape,
           read.resourceDefinition().simpleName().toLowerCase(),
-          new NodeList<>(aliasIndices)
+          read.resourceDefinition(),
+          read.indices().copy()
       );
       aliasRead.setSourceLocationIfNotSet(read.location());
       read.replaceAndDelete(aliasRead);
@@ -218,8 +223,10 @@ class IssRegisterAccessLowering {
           baseTensor,
           new NodeList<>(aliasIndices),
           baseTensor.resultType(baseIndexCount),
+          null,
           IssReadRegNode.AccessKind.BASE,
           IssReadRegNode.ReadShape.FULL,
+          null,
           null,
           new NodeList<>(aliasIndices));
     }
@@ -239,8 +246,10 @@ class IssRegisterAccessLowering {
         baseTensor,
         baseIndices,
         baseReadType,
+        null,
         IssReadRegNode.AccessKind.BASE,
         IssReadRegNode.ReadShape.FULL,
+        null,
         null,
         baseIndices.copy());
 
@@ -263,6 +272,7 @@ class IssRegisterAccessLowering {
           IssReadRegNode.AccessKind.BASE,
           IssReadRegNode.ReadShape.EXPANSION,
           null,
+          null,
           baseIndices.copy(),
           IssReadRegNode.WindowKind.CHUNK,
           lsb,
@@ -274,7 +284,7 @@ class IssRegisterAccessLowering {
 
   private void lowerWrite(WriteArtificialResNode write) {
     var semantics = write.resourceDefinition().semantics();
-    var aliasIndices = buildAliasIndices(semantics, write.indices());
+    var aliasIndices = buildAliasIndices(write.resourceDefinition(), write.indices());
     var baseTensor = semantics.baseTensor();
     var baseIndexCount = baseTensor.indexDimensions().size();
     if (aliasIndices.size() < baseIndexCount) {
@@ -311,7 +321,8 @@ class IssRegisterAccessLowering {
           IssWriteRegNode.AccessKind.ALIAS,
           guardKind,
           write.resourceDefinition().simpleName().toLowerCase(),
-          new NodeList<>(aliasIndices)
+          write.resourceDefinition(),
+          write.indices().copy()
       );
       replacement.setSourceLocationIfNotSet(write.location());
       write.replaceAndDelete(replacement);
@@ -331,7 +342,8 @@ class IssRegisterAccessLowering {
           IssWriteRegNode.AccessKind.ALIAS,
           guardKind,
           write.resourceDefinition().simpleName().toLowerCase(),
-          new NodeList<>(aliasIndices),
+          write.resourceDefinition(),
+          write.indices().copy(),
           IssWriteRegNode.WindowKind.CHUNK,
           intU(semantics.aliasSlice().lsb(), 32).toNode(),
           intU(semantics.aliasSlice().bitSize(), 32).toNode()
@@ -363,6 +375,7 @@ class IssRegisterAccessLowering {
             IssWriteRegNode.AccessKind.BASE,
             guardKind,
             null,
+            null,
             baseIndices.copy(),
             IssWriteRegNode.WindowKind.CHUNK,
             lsb,
@@ -383,8 +396,10 @@ class IssRegisterAccessLowering {
               baseTensor,
               baseIndices.copy(),
               sourceType,
+              null,
               IssReadRegNode.AccessKind.BASE,
               IssReadRegNode.ReadShape.FULL,
+              null,
               null,
               baseIndices.copy());
           yield staticSliceWriteValue(writeValue, current, semantics.aliasSlice());
@@ -418,7 +433,8 @@ class IssRegisterAccessLowering {
           IssWriteRegNode.AccessKind.ALIAS,
           guardKind,
           write.resourceDefinition().simpleName().toLowerCase(),
-          new NodeList<>(aliasIndices)
+          write.resourceDefinition(),
+          write.indices().copy()
       );
       replacement.setSourceLocationIfNotSet(write.location());
       write.replaceAndDelete(replacement);
@@ -432,6 +448,7 @@ class IssRegisterAccessLowering {
         userCondition,
         IssWriteRegNode.AccessKind.BASE,
         guardKind,
+        null,
         null,
         baseIndices.copy());
     replacement.setSourceLocationIfNotSet(write.location());
@@ -483,10 +500,12 @@ class IssRegisterAccessLowering {
     return BuiltInTable.OR.call(original, writeValue);
   }
 
-  private NodeList<ExpressionNode> buildAliasIndices(ArtificialResource.Semantics semantics,
+  private NodeList<ExpressionNode> buildAliasIndices(ArtificialResource alias,
                                                      NodeList<ExpressionNode> dynamicIndices) {
+    var semantics = alias.semantics();
     var baseDims = semantics.baseTensor().indexDimensions();
-    if (semantics.fixedIndices().size() > baseDims.size()) {
+    var fixedPrefix = IssAliasAccessorDescriptors.resolvedFixedBasePrefix(alias);
+    if (fixedPrefix.size() > baseDims.size()) {
       behavior.ensure(false,
           "Invalid alias semantics: fixed indices exceed base tensor dimensions");
     }
@@ -497,9 +516,9 @@ class IssRegisterAccessLowering {
     }
 
     var indices = new NodeList<ExpressionNode>();
-    for (int i = 0; i < semantics.fixedIndices().size(); i++) {
+    for (int i = 0; i < fixedPrefix.size(); i++) {
       var dimType = baseDims.get(i).indexType();
-      indices.add(semantics.fixedIndices().get(i).castTo(dimType).toNode());
+      indices.add(fixedPrefix.get(i).castTo(dimType).toNode());
     }
     indices.addAll(dynamicIndices);
     return indices;

@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Set;
 import javax.annotation.CheckForNull;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
+import vadl.iss.passes.extensions.IssAliasAccessorDescriptors;
 import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
@@ -31,25 +33,24 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;
 import vadl.viam.ArtificialResource;
-import vadl.viam.Instruction;
-import vadl.viam.Procedure;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
- * Collects backend register access patterns from unified ISS register access nodes.
+ * Collects backend base accessor descriptors from unified ISS register access nodes.
  *
- * <p>This pass is the bridge between ISS graph-level register access metadata and emitted C
- * accessor functions. It interprets:
+ * <p>This pass is the bridge between ISS graph-level register access metadata and emitted raw C
+ * storage accessors. It interprets:
  * <ul>
  *   <li>resource indices from unified read/write nodes,</li>
  *   <li>window metadata ({@code bitOffset}/{@code bitWidth}),</li>
- *   <li>alias-vs-base access kind for base-resource pattern ownership.</li>
+ *   <li>alias-vs-base access kind for base-resource accessor ownership.</li>
  * </ul>
+ *
+ * <p>It records each descriptor centrally on {@link RegInfo} so later codegen reuses the collected
+ * descriptor instead of reconstructing it ad hoc.
  *
  * <p>See {@code docs/iss/register-access-domain-map.md}.
  */
@@ -66,142 +67,139 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
   @CheckForNull
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    ViamUtils.findAllBehaviors(viam)
-        .filter(behavior -> !(behavior.parentDefinition() instanceof ArtificialResource))
-        .filter(behavior -> behavior.parentDefinition() instanceof Instruction
-            || behavior.parentDefinition() instanceof Procedure)
-        .forEach(this::collectRegisterAccessPatterns);
+    var registry = new IssAccessorRegistry();
+    viam.isa().ifPresent(isa -> {
+      isa.artificialResources()
+          .forEach(alias -> collectAllAliasAccessorDescriptors(alias, registry));
+      ViamUtils.findAllBehaviors(isa)
+          .filter(behavior -> !(behavior.parentDefinition() instanceof ArtificialResource))
+          .forEach(behavior -> collectAccessorDescriptors(behavior, registry));
+    });
 
     // add custom one for program counter
     var pc = requireNonNull(viam.isa().get().pc());
     var info = regInfo(pc.registerTensor());
-    info.accessPatterns.add(new RegInfo.AccessPattern(
+    registry.addBaseAccessor(new RegInfo.BaseAccessorDescriptor(
         info, RegInfo.AccessType.READ, List.of(), pc.resultType().bitWidth(),
         pc.resultType().bitWidth(), 0, pc
     ));
-    info.accessPatterns.add(new RegInfo.AccessPattern(
+    registry.addBaseAccessor(new RegInfo.BaseAccessorDescriptor(
         info, RegInfo.AccessType.WRITE, List.of(), pc.resultType().bitWidth(),
         pc.resultType().bitWidth(), 0, pc
     ));
 
-    return null;
+    return registry;
   }
 
-  private void collectRegisterAccessPatterns(Graph behavior) {
+  private void collectAccessorDescriptors(Graph behavior,
+                                         IssAccessorRegistry registry) {
     behavior.getNodes(Set.of(ReadRegTensorNode.class, WriteRegTensorNode.class))
         .forEach((n) -> {
           if (n instanceof ReadRegTensorNode readRegTensorNode) {
-            collectRegisterAccessPattern(behavior, readRegTensorNode);
+            collectAccessorDescriptor(behavior, readRegTensorNode, registry);
+            collectAliasAccessorDescriptor(readRegTensorNode, registry);
           } else {
-            collectRegisterAccessPattern(behavior, (WriteRegTensorNode) n);
+            var writeRegTensorNode = (WriteRegTensorNode) n;
+            collectAccessorDescriptor(behavior, writeRegTensorNode, registry);
+            collectAliasAccessorDescriptor(writeRegTensorNode, registry);
           }
         });
   }
 
-  private void collectRegisterAccessPattern(Graph behavior, ReadRegTensorNode node) {
-    var info = regInfo(node.regTensor());
-    if (node instanceof IssReadRegNode readNode
-        && readNode.accessKind() == IssReadRegNode.AccessKind.ALIAS) {
-      var baseIndexCount = readNode.regTensor().indexDimensions().size();
-      var baseIndices = readNode.indices().stream().limit(baseIndexCount).toList();
-      var baseWidth = readNode.regTensor().resultType(baseIndexCount).bitWidth();
-      var readOffset = constIntOr(readNode.bitOffset(), 0);
-      var readWidth = constIntOr(readNode.bitWidth(), baseWidth);
-      var pattern = RegInfo.AccessPattern.of(
-          readNode,
-          RegInfo.AccessType.READ,
-          readNode.regTensor(),
-          baseIndices,
-          readWidth,
-          baseWidth,
-          readOffset
-      );
-      if (!shouldCollectPattern(behavior, node, pattern)) {
-        return;
+  private void collectAccessorDescriptor(Graph behavior, ReadRegTensorNode node,
+                                         IssAccessorRegistry registry) {
+    var descriptor = RegInfo.BaseAccessorDescriptor.ofOrigin(node);
+    if (!shouldCollectDescriptor(behavior, node, descriptor)) {
+      return;
+    }
+    registry.recordBaseAccessor(node, descriptor);
+  }
+
+  private void collectAccessorDescriptor(Graph behavior, WriteRegTensorNode node,
+                                         IssAccessorRegistry registry) {
+    var descriptor = RegInfo.BaseAccessorDescriptor.ofOrigin(node);
+    if (!shouldCollectDescriptor(behavior, node, descriptor)) {
+      return;
+    }
+    registry.recordBaseAccessor(node, descriptor);
+  }
+
+  private void collectAliasAccessorDescriptor(ReadRegTensorNode node,
+                                              IssAccessorRegistry registry) {
+    if (!(node instanceof IssReadRegNode readNode)
+        || readNode.accessKind() != IssReadRegNode.AccessKind.ALIAS
+        || readNode.windowKind() != IssReadRegNode.WindowKind.FULL) {
+      return;
+    }
+    collectAliasAccessorDescriptor(readNode.aliasResource(), RegInfo.AccessType.READ, registry);
+  }
+
+  private void collectAliasAccessorDescriptor(WriteRegTensorNode node,
+                                              IssAccessorRegistry registry) {
+    if (!(node instanceof IssWriteRegNode writeNode)
+        || writeNode.accessKind() != IssWriteRegNode.AccessKind.ALIAS
+        || writeNode.windowKind() != IssWriteRegNode.WindowKind.FULL) {
+      return;
+    }
+    collectAliasAccessorDescriptor(writeNode.aliasResource(), RegInfo.AccessType.WRITE, registry);
+  }
+
+  private void collectAliasAccessorDescriptor(@CheckForNull ArtificialResource alias,
+                                              RegInfo.AccessType type,
+                                              IssAccessorRegistry registry) {
+    if (alias == null) {
+      return;
+    }
+    for (var backend : RegInfo.BackendKind.values()) {
+      var descriptor = IssAliasAccessorDescriptors.descriptor(alias, type, backend);
+      if (descriptor != null) {
+        registry.addAliasAccessor(descriptor);
       }
-      info.accessPatterns.add(pattern);
-      return;
     }
-    var pattern = RegInfo.AccessPattern.of(node);
-    if (!shouldCollectPattern(behavior, node, pattern)) {
-      return;
-    }
-    info.accessPatterns.add(pattern);
   }
 
-  private void collectRegisterAccessPattern(Graph behavior, WriteRegTensorNode node) {
-    var info = regInfo(node.regTensor());
-    if (node instanceof IssWriteRegNode writeNode
-        && writeNode.accessKind() == IssWriteRegNode.AccessKind.ALIAS) {
-      var baseIndexCount = writeNode.regTensor().indexDimensions().size();
-      var baseIndices = writeNode.indices().stream().limit(baseIndexCount).toList();
-      var baseWidth = writeNode.regTensor().resultType(baseIndexCount).bitWidth();
-      var writeOffset = constIntOr(writeNode.bitOffset(), 0);
-      var writeWidth = constIntOr(writeNode.bitWidth(), baseWidth);
-      var pattern = RegInfo.AccessPattern.of(
-          writeNode,
-          RegInfo.AccessType.WRITE,
-          writeNode.regTensor(),
-          baseIndices,
-          writeWidth,
-          baseWidth,
-          writeOffset
-      );
-      if (!shouldCollectPattern(behavior, node, pattern)) {
-        return;
-      }
-      info.accessPatterns.add(pattern);
-      return;
+  private void collectAllAliasAccessorDescriptors(ArtificialResource alias,
+                                                  IssAccessorRegistry registry) {
+    for (var type : RegInfo.AccessType.values()) {
+      collectAliasAccessorDescriptor(alias, type, registry);
     }
-    var pattern = RegInfo.AccessPattern.of(node);
-    if (!shouldCollectPattern(behavior, node, pattern)) {
-      return;
-    }
-    info.accessPatterns.add(pattern);
   }
 
-  private int constIntOr(ExpressionNode expr, int fallback) {
-    if (expr instanceof ConstantNode constantNode) {
-      return constantNode.constant().asVal().intValue();
-    }
-    return fallback;
-  }
-
-  private boolean shouldCollectPattern(Graph behavior, ReadRegTensorNode node,
-                                       RegInfo.AccessPattern pattern) {
-    if (pattern.elementWidth() <= configuration().targetSize().width) {
+  private boolean shouldCollectDescriptor(Graph behavior, ReadRegTensorNode node,
+                                          RegInfo.BaseAccessorDescriptor descriptor) {
+    if (descriptor.elementWidth() <= configuration().targetSize().width) {
       return true;
     }
     if (regInfo(node.regTensor()).execClass() == RegInfo.ExecClass.HELPER_ONLY) {
       // Helper-only wide accesses are emitted via helper/cpu paths and do not require
-      // scalar access-pattern signatures.
+      // scalar base-accessor signatures.
       return false;
     }
     var owner = behavior.parentDefinition();
     node.ensure(false,
-        "Unsupported register access pattern above target width in ISS retrieval: %s, "
+        "Unsupported base accessor descriptor above target width in ISS retrieval: %s, "
             + "behavior=%s, owner=%s",
-        pattern,
+        descriptor,
         behavior,
         owner == null ? "null" : owner.getClass().getSimpleName() + ":" + owner);
     return false;
   }
 
-  private boolean shouldCollectPattern(Graph behavior, WriteRegTensorNode node,
-                                       RegInfo.AccessPattern pattern) {
-    if (pattern.elementWidth() <= configuration().targetSize().width) {
+  private boolean shouldCollectDescriptor(Graph behavior, WriteRegTensorNode node,
+                                          RegInfo.BaseAccessorDescriptor descriptor) {
+    if (descriptor.elementWidth() <= configuration().targetSize().width) {
       return true;
     }
     if (regInfo(node.regTensor()).execClass() == RegInfo.ExecClass.HELPER_ONLY) {
       // Helper-only wide accesses are emitted via helper/cpu paths and do not require
-      // scalar access-pattern signatures.
+      // scalar base-accessor signatures.
       return false;
     }
     var owner = behavior.parentDefinition();
     node.ensure(false,
-        "Unsupported register access pattern above target width in ISS retrieval: %s, "
+        "Unsupported base accessor descriptor above target width in ISS retrieval: %s, "
             + "behavior=%s, owner=%s",
-        pattern,
+        descriptor,
         behavior,
         owner == null ? "null" : owner.getClass().getSimpleName() + ":" + owner);
     return false;

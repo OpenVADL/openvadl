@@ -21,6 +21,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
 import vadl.cppCodeGen.context.CGenContext;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
@@ -49,13 +50,21 @@ import vadl.viam.graph.dependency.TensorNode;
  */
 public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
     implements IssCMixins.CpuSourceReadWriteMemory, IssCMixins.CpuSourceWriteRegTensor {
+  private final IssAccessorRegistry accessorRegistry;
+
   /**
    * Creates a new pure function code generator for the specified function.
    *
    * @param function the function for which code should be generated
    */
-  public IssCpuFunctionGenerator(Function function) {
+  public IssCpuFunctionGenerator(Function function, IssAccessorRegistry accessorRegistry) {
     super(function);
+    this.accessorRegistry = accessorRegistry;
+  }
+
+  @Override
+  public IssAccessorRegistry accessorRegistry() {
+    return accessorRegistry;
   }
 
   /**
@@ -350,7 +359,7 @@ public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
       int chunkWidthBits
   ) {
     var loweredRead = toChunkRead(read, chunkOffsetBits, chunkWidthBits);
-    var accessName = RegisterAccessEmitters.readAccessorName(loweredRead);
+    var accessName = RegisterAccessEmitters.readAccessorName(loweredRead, accessorRegistry);
     ctx.wr(accessName).wr("(env");
     for (var index : RegisterAccessEmitters.readAccessorArgs(loweredRead)) {
       ctx.wr(", ");
@@ -371,6 +380,7 @@ public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
           issRead.accessKind(),
           issRead.readShape(),
           issRead.accessorName(),
+          issRead.aliasResource(),
           new NodeList<>(issRead.accessorIndices()),
           IssReadRegNode.WindowKind.CHUNK,
           Constant.Value.of(chunkOffsetBits, Type.bits(32)).toNode(),
@@ -383,6 +393,7 @@ public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
         read.staticCounterAccess(),
         IssReadRegNode.AccessKind.BASE,
         IssReadRegNode.ReadShape.FULL,
+        null,
         null,
         read.indices().copy(),
         IssReadRegNode.WindowKind.CHUNK,

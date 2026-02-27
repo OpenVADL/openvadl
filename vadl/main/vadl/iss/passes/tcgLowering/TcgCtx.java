@@ -159,12 +159,17 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
 
     @Handler
     List<TcgVRefNode> destOf(WriteRegTensorNode toHandle) {
+      var callIndices = toHandle instanceof IssWriteRegNode issWrite
+          && issWrite.windowKind() == IssWriteRegNode.WindowKind.FULL
+          && issWrite.accessorName() != null
+          ? issWrite.accessorIndices()
+          : toHandle.indices();
       var accessorName = toHandle instanceof IssWriteRegNode issWrite
           && issWrite.windowKind() == IssWriteRegNode.WindowKind.FULL
           ? issWrite.accessorName()
           : null;
       return assignments.computeIfAbsent(toHandle,
-          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), true, accessorName));
+          n -> createRegVar(toHandle.resourceDefinition(), callIndices, true, accessorName));
     }
 
     @Handler
@@ -190,36 +195,18 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
           && issRead.windowKind() == IssReadRegNode.WindowKind.CHUNK) {
         return assignments.computeIfAbsent(toHandle, v -> createTempExprVar(toHandle));
       }
+      var callIndices = toHandle instanceof IssReadRegNode issRead
+          && issRead.windowKind() == IssReadRegNode.WindowKind.FULL
+          && issRead.accessorName() != null
+          ? issRead.accessorIndices()
+          : toHandle.indices();
       var accessorName = toHandle instanceof IssReadRegNode issRead
           && issRead.windowKind() == IssReadRegNode.WindowKind.FULL
           ? issRead.accessorName()
           : null;
       return assignments.computeIfAbsent(toHandle,
           n -> createRegVar(
-              toHandle.resourceDefinition(), toHandle.indices(), false, accessorName));
-    }
-
-    /**
-     * Returns the base container TCG variable for a chunked register read.
-     *
-     * <p>Chunk reads lower to an explicit extract during TCG lowering, so they need access to the
-     * underlying full register container in addition to their own temporary result variable.
-     */
-    public TcgVRefNode singleBaseReadOf(IssReadRegNode read) {
-      read.ensure(read.windowKind() == IssReadRegNode.WindowKind.CHUNK,
-          "Expected a chunk-window register read.");
-      var baseType = read.regTensor().resultType(read.indices().size()).asDataType();
-      var baseRead = new IssReadRegNode(
-          read.regTensor(),
-          read.indices().copy(),
-          baseType,
-          read.staticCounterAccess(),
-          IssReadRegNode.AccessKind.BASE,
-          IssReadRegNode.ReadShape.FULL,
-          null,
-          new NodeList<>(read.indices()));
-      return createRegVar(baseRead.resourceDefinition(), baseRead.indices(), false, null)
-          .getFirst();
+              toHandle.resourceDefinition(), callIndices, false, accessorName));
     }
 
     @Handler
@@ -252,6 +239,30 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
     @Handler
     List<TcgVRefNode> handle(ProcCallNode toHandle) {
       throw new IllegalStateException("ProcCallNode should not exist here.");
+    }
+
+    /**
+     * Returns the base container TCG variable for a chunked register read.
+     *
+     * <p>Chunk reads lower to an explicit extract during TCG lowering, so they need access to the
+     * underlying full register container in addition to their own temporary result variable.
+     */
+    public TcgVRefNode singleBaseReadOf(IssReadRegNode read) {
+      read.ensure(read.windowKind() == IssReadRegNode.WindowKind.CHUNK,
+          "Expected a chunk-window register read.");
+      var baseType = read.regTensor().resultType(read.indices().size()).asDataType();
+      var baseRead = new IssReadRegNode(
+          read.regTensor(),
+          read.indices().copy(),
+          baseType,
+          read.staticCounterAccess(),
+          IssReadRegNode.AccessKind.BASE,
+          IssReadRegNode.ReadShape.FULL,
+          null,
+          null,
+          new NodeList<>(read.indices()));
+      return createRegVar(baseRead.resourceDefinition(), baseRead.indices(), false, null)
+          .getFirst();
     }
 
     private TcgVRefNode toNode(TcgV tcgV) {

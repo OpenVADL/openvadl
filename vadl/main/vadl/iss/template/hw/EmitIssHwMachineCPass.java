@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.codegen.IssMemoryRegionInitCodeGen;
+import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.passes.extensions.MemoryRegionInfo;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -50,11 +52,13 @@ public class EmitIssHwMachineCPass extends IssTemplateRenderingPass {
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
+    var accessorRegistry = passResults.lastResultOf(IssRegisterAccessInfoRetrievalPass.class,
+        IssAccessorRegistry.class);
     vars.put("dram_base", getDramBaseExpr());
     // the start address of the firmware, when we don't load an elf
     vars.put("firmware_base_addr", getFirmwareBaseAddress(specification));
     vars.put("htif_enabled", htifEnabled(specification));
-    vars.put("mem_region_inits", getMemoryRegionInits(specification));
+    vars.put("mem_region_inits", getMemoryRegionInits(specification, accessorRegistry));
     return vars;
   }
 
@@ -76,14 +80,15 @@ public class EmitIssHwMachineCPass extends IssTemplateRenderingPass {
     return mip.hasAnnotation(EnableHtifAnno.class);
   }
 
-  private List<Map<String, Object>> getMemoryRegionInits(Specification specification) {
+  private List<Map<String, Object>> getMemoryRegionInits(Specification specification,
+                                                         IssAccessorRegistry accessorRegistry) {
     return specification.processor().get().memoryRegions().stream()
         .filter(MemoryRegion::hasInitialization)
         .map(r -> Map.of(
             "mem", r.expectExtension(MemoryRegionInfo.class),
             "function",
             new IssMemoryRegionInitCodeGen(r.expectExtension(MemoryRegionInfo.class),
-                configuration())
+                configuration(), accessorRegistry)
                 .fetch()))
         .toList();
   }

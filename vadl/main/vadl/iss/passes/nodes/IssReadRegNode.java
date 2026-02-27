@@ -23,6 +23,7 @@ import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.RegisterTensor;
@@ -81,6 +82,9 @@ public class IssReadRegNode extends ReadRegTensorNode {
   @DataValue
   @Nullable
   private final String accessorName;
+  @DataValue
+  @Nullable
+  private final ArtificialResource aliasResource;
   @Input
   private NodeList<ExpressionNode> accessorIndices;
   @DataValue
@@ -93,7 +97,7 @@ public class IssReadRegNode extends ReadRegTensorNode {
   public IssReadRegNode(RegisterTensor regTensor,
                         NodeList<ExpressionNode> resourceIndices,
                         DataType type) {
-    this(regTensor, resourceIndices, type, null, AccessKind.BASE, ReadShape.FULL, null,
+    this(regTensor, resourceIndices, type, null, AccessKind.BASE, ReadShape.FULL, null, null,
         new NodeList<>(resourceIndices), WindowKind.FULL, intConst(0), intConst(type.bitWidth()));
   }
 
@@ -107,7 +111,7 @@ public class IssReadRegNode extends ReadRegTensorNode {
                         ReadShape readShape,
                         @Nullable String accessorName,
                         NodeList<ExpressionNode> accessorIndices) {
-    this(regTensor, resourceIndices, type, null, accessKind, readShape, accessorName,
+    this(regTensor, resourceIndices, type, null, accessKind, readShape, accessorName, null,
         accessorIndices, WindowKind.FULL, intConst(0), intConst(type.bitWidth()));
   }
 
@@ -121,9 +125,11 @@ public class IssReadRegNode extends ReadRegTensorNode {
                         AccessKind accessKind,
                         ReadShape readShape,
                         @Nullable String accessorName,
+                        @Nullable ArtificialResource aliasResource,
                         NodeList<ExpressionNode> accessorIndices) {
     this(regTensor, resourceIndices, type, staticCounterAccess, accessKind, readShape,
-        accessorName, accessorIndices, WindowKind.FULL, intConst(0), intConst(type.bitWidth()));
+        accessorName, aliasResource, accessorIndices, WindowKind.FULL, intConst(0),
+        intConst(type.bitWidth()));
   }
 
   /**
@@ -136,6 +142,7 @@ public class IssReadRegNode extends ReadRegTensorNode {
                         AccessKind accessKind,
                         ReadShape readShape,
                         @Nullable String accessorName,
+                        @Nullable ArtificialResource aliasResource,
                         NodeList<ExpressionNode> accessorIndices,
                         WindowKind windowKind,
                         ExpressionNode bitOffset,
@@ -144,6 +151,7 @@ public class IssReadRegNode extends ReadRegTensorNode {
     this.accessKind = accessKind;
     this.readShape = readShape;
     this.accessorName = accessorName;
+    this.aliasResource = aliasResource;
     this.accessorIndices = accessorIndices;
     this.windowKind = windowKind;
     this.bitOffset = bitOffset;
@@ -160,6 +168,10 @@ public class IssReadRegNode extends ReadRegTensorNode {
 
   public @Nullable String accessorName() {
     return accessorName;
+  }
+
+  public @Nullable ArtificialResource aliasResource() {
+    return aliasResource;
   }
 
   public NodeList<ExpressionNode> accessorIndices() {
@@ -205,6 +217,7 @@ public class IssReadRegNode extends ReadRegTensorNode {
         accessKind,
         readShape,
         accessorName,
+        aliasResource,
         new NodeList<>(accessorIndices),
         windowKind,
         bitOffset.copy(),
@@ -221,6 +234,7 @@ public class IssReadRegNode extends ReadRegTensorNode {
         accessKind,
         readShape,
         accessorName,
+        aliasResource,
         accessorIndices,
         windowKind,
         bitOffset,
@@ -252,6 +266,7 @@ public class IssReadRegNode extends ReadRegTensorNode {
     collection.add(accessKind);
     collection.add(readShape);
     collection.add(accessorName);
+    collection.add(aliasResource);
     collection.add(windowKind);
   }
 

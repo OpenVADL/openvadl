@@ -24,6 +24,7 @@ import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.iss.passes.extensions.InstrInfo;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
@@ -74,8 +75,9 @@ public class IssInstrHelperGenerator extends IssProcGen
   /**
    * Constructs the helper function generator.
    */
-  public IssInstrHelperGenerator(IssConfiguration configuration, InstrInfo instrInfo) {
-    super((issProcGenThis, ctx, node)
+  public IssInstrHelperGenerator(IssConfiguration configuration, InstrInfo instrInfo,
+                                 IssAccessorRegistry accessorRegistry) {
+    super(accessorRegistry, (issProcGenThis, ctx, node)
         -> IssInstrHelperGeneratorDispatcher.dispatch((IssInstrHelperGenerator) issProcGenThis, ctx,
         node)
     );

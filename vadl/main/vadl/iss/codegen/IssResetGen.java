@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,6 +19,7 @@ package vadl.iss.codegen;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import vadl.cppCodeGen.context.CGenContext;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.viam.Procedure;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.StartNode;
@@ -35,7 +36,8 @@ public class IssResetGen extends IssProcGen implements IssCMixins.CpuSourceWrite
 
   private final Procedure reset;
 
-  public IssResetGen(Procedure reset) {
+  public IssResetGen(Procedure reset, IssAccessorRegistry accessorRegistry) {
+    super(accessorRegistry);
     this.reset = reset;
   }
 

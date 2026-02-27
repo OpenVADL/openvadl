@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
+import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.RegisterTensor;
@@ -76,6 +77,9 @@ public class IssWriteRegNode extends WriteRegTensorNode {
   @DataValue
   @Nullable
   private final String accessorName;
+  @DataValue
+  @Nullable
+  private final ArtificialResource aliasResource;
   @Input
   private NodeList<ExpressionNode> accessorIndices;
   @DataValue
@@ -93,7 +97,7 @@ public class IssWriteRegNode extends WriteRegTensorNode {
                          ExpressionNode value,
                          @Nullable ExpressionNode condition) {
     this(regTensor, resourceIndices, value, null, condition,
-        AccessKind.BASE, WriteGuardKind.NONE, null,
+        AccessKind.BASE, WriteGuardKind.NONE, null, null,
         new NodeList<>(resourceIndices), WindowKind.FULL, intConst(0),
         intConst(value.type().asDataType().bitWidth()));
   }
@@ -108,9 +112,10 @@ public class IssWriteRegNode extends WriteRegTensorNode {
                          AccessKind accessKind,
                          WriteGuardKind writeGuardKind,
                          @Nullable String accessorName,
+                         @Nullable ArtificialResource aliasResource,
                          NodeList<ExpressionNode> accessorIndices) {
     this(regTensor, resourceIndices, value, null, condition, accessKind, writeGuardKind,
-        accessorName, accessorIndices, WindowKind.FULL, intConst(0),
+        accessorName, aliasResource, accessorIndices, WindowKind.FULL, intConst(0),
         intConst(value.type().asDataType().bitWidth()));
   }
 
@@ -125,9 +130,10 @@ public class IssWriteRegNode extends WriteRegTensorNode {
                          AccessKind accessKind,
                          WriteGuardKind writeGuardKind,
                          @Nullable String accessorName,
+                         @Nullable ArtificialResource aliasResource,
                          NodeList<ExpressionNode> accessorIndices) {
     this(regTensor, resourceIndices, value, staticCounterAccess, condition, accessKind,
-        writeGuardKind, accessorName, accessorIndices, WindowKind.FULL, intConst(0),
+        writeGuardKind, accessorName, aliasResource, accessorIndices, WindowKind.FULL, intConst(0),
         intConst(value.type().asDataType().bitWidth()));
   }
 
@@ -142,6 +148,7 @@ public class IssWriteRegNode extends WriteRegTensorNode {
                          AccessKind accessKind,
                          WriteGuardKind writeGuardKind,
                          @Nullable String accessorName,
+                         @Nullable ArtificialResource aliasResource,
                          NodeList<ExpressionNode> accessorIndices,
                          WindowKind windowKind,
                          ExpressionNode bitOffset,
@@ -150,6 +157,7 @@ public class IssWriteRegNode extends WriteRegTensorNode {
     this.accessKind = accessKind;
     this.writeGuardKind = writeGuardKind;
     this.accessorName = accessorName;
+    this.aliasResource = aliasResource;
     this.accessorIndices = accessorIndices;
     this.windowKind = windowKind;
     this.bitOffset = bitOffset;
@@ -166,6 +174,10 @@ public class IssWriteRegNode extends WriteRegTensorNode {
 
   public @Nullable String accessorName() {
     return accessorName;
+  }
+
+  public @Nullable ArtificialResource aliasResource() {
+    return aliasResource;
   }
 
   public NodeList<ExpressionNode> accessorIndices() {
@@ -206,6 +218,7 @@ public class IssWriteRegNode extends WriteRegTensorNode {
         accessKind,
         writeGuardKind,
         accessorName,
+        aliasResource,
         new NodeList<>(accessorIndices),
         windowKind,
         bitOffset.copy(),
@@ -224,6 +237,7 @@ public class IssWriteRegNode extends WriteRegTensorNode {
         accessKind,
         writeGuardKind,
         accessorName,
+        aliasResource,
         accessorIndices,
         windowKind,
         bitOffset,
@@ -255,6 +269,7 @@ public class IssWriteRegNode extends WriteRegTensorNode {
     collection.add(accessKind);
     collection.add(writeGuardKind);
     collection.add(accessorName);
+    collection.add(aliasResource);
     collection.add(windowKind);
   }
 

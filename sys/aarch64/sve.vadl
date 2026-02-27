@@ -1083,13 +1083,6 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     $modelid ($ExtInstrStr ($i; "D"); NumElementsD; SizeD; ".d")
     }
 
-  model VL64Only ( defs: IsaDefs ): IsaDefs = {
-    match : IsaDefs
-    ( $VLConst = 64 => $defs
-    ; _ =>
-    )
-  }
-
 // common sve and sme instructions *********************************************
 
   $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredADD    ; "add"   ; 0b0000'0000      ; add      ))

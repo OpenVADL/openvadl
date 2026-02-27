@@ -16,15 +16,16 @@
 
 package vadl.iss.template.target;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
+import vadl.iss.passes.extensions.RegInfo;
+import vadl.iss.passes.extensions.RegInfo.AliasAccessorDescriptor;
 import vadl.viam.ArtificialResource;
-import vadl.viam.Constant;
 import vadl.viam.RegisterTensor;
-import vadl.viam.Specification;
 
 /**
  * Renders helper/procedure/exceptions-side alias read accessors for CPU source/header templates.
@@ -34,73 +35,36 @@ final class AliasCpuAccessors {
   private AliasCpuAccessors() {
   }
 
-  static List<Map<String, Object>> renderReadAccessors(Specification specification,
+  static List<Map<String, Object>> renderReadAccessors(IssAccessorRegistry accessorRegistry,
                                                        IssConfiguration config) {
-    var out = new ArrayList<Map<String, Object>>();
-    specification.artificialResources()
-        .filter(AliasCpuAccessors::supportsReadAccessor)
-        .forEach(alias -> out.add(renderReadAccessor(alias, config)));
-    return out;
+    return accessorRegistry.aliasAccessors(RegInfo.AccessType.READ, RegInfo.BackendKind.CPU_HELPER)
+        .stream()
+        .map(alias -> renderReadAccessor(alias, config))
+        .toList();
   }
 
-  static List<Map<String, Object>> renderWriteAccessors(Specification specification,
+  static List<Map<String, Object>> renderWriteAccessors(IssAccessorRegistry accessorRegistry,
                                                         IssConfiguration config) {
-    var out = new ArrayList<Map<String, Object>>();
-    specification.artificialResources()
-        .filter(AliasCpuAccessors::supportsWriteAccessor)
-        .forEach(alias -> out.add(renderWriteAccessor(alias, config)));
-    return out;
+    return accessorRegistry.aliasAccessors(RegInfo.AccessType.WRITE, RegInfo.BackendKind.CPU_HELPER)
+        .stream()
+        .map(alias -> renderWriteAccessor(alias, config))
+        .toList();
   }
 
-  static boolean supportsReadAccessor(ArtificialResource alias) {
-    var semantics = alias.semantics();
-    if (alias.resultType().bitWidth() > 64) {
-      return false;
-    }
-    var baseWidth = semantics.baseTensor()
-        .resultType(semantics.baseTensor().indexDimensions().size())
-        .bitWidth();
-    var baseIndexCount = semantics.baseTensor().indexDimensions().size();
-    var totalIndexCount = semantics.totalIndexCount();
-    if (totalIndexCount < baseIndexCount) {
-      return false;
-    }
-    var isExpansion = totalIndexCount > baseIndexCount;
-    if (baseWidth > 64 && !isExpansion) {
-      return false;
-    }
-    var slice = semantics.aliasSlice();
-    if (slice != null && !slice.isContinuous()) {
-      return false;
-    }
-    // We currently support either:
-    //  - base aliases with optional continuous slice
-    //  - expansion aliases without additional slices.
-    return !isExpansion || slice == null;
-  }
-
-  static boolean supportsWriteAccessor(ArtificialResource alias) {
-    return supportsReadAccessor(alias);
-  }
-
-  private static Map<String, Object> renderReadAccessor(ArtificialResource alias,
+  private static Map<String, Object> renderReadAccessor(AliasAccessorDescriptor descriptor,
                                                         IssConfiguration config) {
+    var alias = descriptor.alias();
     var semantics = alias.semantics();
     var base = semantics.baseTensor();
     var baseWidth = base.resultType(base.indexDimensions().size()).bitWidth();
-    if (!supportsReadAccessor(alias)) {
-      throw new IllegalStateException(
-          "Unsupported alias helper read accessor shape for " + alias.simpleName());
-    }
     if (baseWidth > 64 && alias.resultType().bitWidth() % 8 != 0) {
       throw new IllegalStateException(
           "Wide-base alias helper read accessors require byte-aligned result width for "
               + alias.simpleName());
     }
-    var totalIndexCount = semantics.totalIndexCount();
-    var argDecls = renderArgDecls(totalIndexCount);
+    var argDecls = renderArgDecls(descriptor.accessorArgs());
     var baseIndexCount = semantics.baseTensor().indexDimensions().size();
-    var baseArgList = renderArgList(baseIndexCount);
+    var baseArgList = renderArgList(descriptor);
     var cpuStateType = "CPU" + config.targetName().toUpperCase() + "State";
     var retType = toCUnsignedType(alias.resultType().bitWidth());
     var baseGetter = baseGetterName(base, baseWidth);
@@ -108,10 +72,10 @@ final class AliasCpuAccessors {
         + "(" + cpuStateType + " *env" + argDecls + ")";
 
     var body = new StringBuilder();
-    var zero = semantics.zeroConstraint();
-    if (zero != null && !zero.indices().isEmpty()) {
+    var zero = zeroCheck(descriptor);
+    if (zero != null) {
       body.append("if (")
-          .append(zeroCheck(zero.indices()))
+          .append(zero)
           .append(") {\n  return 0;\n}\n");
     }
     var slice = semantics.aliasSlice();
@@ -125,8 +89,8 @@ final class AliasCpuAccessors {
       body.append("uint64_t lsb = 0;\n");
       for (int i = 0; i < remainingDimensions.size(); i++) {
         long stride = strideForVirtualIndex(alias.resultType().bitWidth(), remainingDimensions, i);
-        body.append("lsb += ((uint64_t) d")
-            .append(baseIndexCount + i)
+        body.append("lsb += ((uint64_t) ")
+            .append(descriptor.accessorArgs().get(descriptor.expansionArgStart() + i).name())
             .append(") * ")
             .append(stride)
             .append(";\n");
@@ -145,7 +109,7 @@ final class AliasCpuAccessors {
             .append(";");
       } else {
         body.append("size_t off = ")
-            .append(flatBaseIndexExpr(base))
+            .append(flatBaseIndexExpr(descriptor))
             .append(" * ((size_t) ")
             .append(baseWidth / 8)
             .append(");\n");
@@ -187,25 +151,21 @@ final class AliasCpuAccessors {
     );
   }
 
-  private static Map<String, Object> renderWriteAccessor(ArtificialResource alias,
+  private static Map<String, Object> renderWriteAccessor(AliasAccessorDescriptor descriptor,
                                                          IssConfiguration config) {
+    var alias = descriptor.alias();
     var semantics = alias.semantics();
     var base = semantics.baseTensor();
     var baseWidth = base.resultType(base.indexDimensions().size()).bitWidth();
-    if (!supportsWriteAccessor(alias)) {
-      throw new IllegalStateException(
-          "Unsupported alias helper write accessor shape for " + alias.simpleName());
-    }
     if (baseWidth > 64 && alias.resultType().bitWidth() % 8 != 0) {
       throw new IllegalStateException(
           "Wide-base alias helper write accessors require byte-aligned result width for "
               + alias.simpleName());
     }
 
-    var totalIndexCount = semantics.totalIndexCount();
-    var argDecls = renderArgDecls(totalIndexCount);
+    var argDecls = renderArgDecls(descriptor.accessorArgs());
     var baseIndexCount = semantics.baseTensor().indexDimensions().size();
-    var baseArgList = renderArgList(baseIndexCount);
+    var baseArgList = renderArgList(descriptor);
     var cpuStateType = "CPU" + config.targetName().toUpperCase() + "State";
     var valueType = toCUnsignedType(alias.resultType().bitWidth());
     var baseGetter = baseGetterName(base, baseWidth);
@@ -214,10 +174,10 @@ final class AliasCpuAccessors {
         + "(" + cpuStateType + " *env" + argDecls + ", " + valueType + " value)";
 
     var body = new StringBuilder();
-    var zero = semantics.zeroConstraint();
-    if (zero != null && !zero.indices().isEmpty()) {
+    var zero = zeroCheck(descriptor);
+    if (zero != null) {
       body.append("if (")
-          .append(zeroCheck(zero.indices()))
+          .append(zero)
           .append(") {\n  return;\n}\n");
     }
 
@@ -237,8 +197,8 @@ final class AliasCpuAccessors {
       body.append("uint64_t lsb = 0;\n");
       for (int i = 0; i < remainingDimensions.size(); i++) {
         long stride = strideForVirtualIndex(alias.resultType().bitWidth(), remainingDimensions, i);
-        body.append("lsb += ((uint64_t) d")
-            .append(baseIndexCount + i)
+        body.append("lsb += ((uint64_t) ")
+            .append(descriptor.accessorArgs().get(descriptor.expansionArgStart() + i).name())
             .append(") * ")
             .append(stride)
             .append(";\n");
@@ -267,7 +227,7 @@ final class AliasCpuAccessors {
             .append(") merged);");
       } else {
         body.append("size_t off = ")
-            .append(flatBaseIndexExpr(base))
+            .append(flatBaseIndexExpr(descriptor))
             .append(" * ((size_t) ")
             .append(baseWidth / 8)
             .append(");\n");
@@ -343,23 +303,30 @@ final class AliasCpuAccessors {
     return Map.of("signature", signature, "body", body.toString());
   }
 
-  private static String renderArgDecls(int argCount) {
-    var sb = new StringBuilder();
-    for (int i = 0; i < argCount; i++) {
-      sb.append(", uint32_t d").append(i);
-    }
-    return sb.toString();
-  }
-
-  private static String renderArgList(int argCount) {
-    if (argCount == 0) {
+  private static String renderArgDecls(List<RegInfo.AccessorArg> args) {
+    if (args.isEmpty()) {
       return "";
     }
-    var args = new StringBuilder();
-    for (int i = 0; i < argCount; i++) {
-      args.append(", d").append(i);
+    return args.stream()
+        .map(arg -> ", " + arg.ctype() + " " + arg.name())
+        .collect(java.util.stream.Collectors.joining());
+  }
+
+  private static String renderArgList(AliasAccessorDescriptor descriptor) {
+    if (descriptor.baseArgBindings().isEmpty()) {
+      return "";
     }
-    return args.toString();
+    var args = descriptor.baseArgBindings().stream()
+        .map(binding -> {
+          if (binding instanceof RegInfo.FixedArgBinding fixed) {
+            return "((" + CppTypeMap.nextFittingUInt(fixed.value().type()) + ") "
+                + fixed.value().hexadecimal() + ")";
+          }
+          var forwarded = (RegInfo.ForwardedArgBinding) binding;
+          return descriptor.accessorArgs().get(forwarded.accessorArgIndex()).name();
+        })
+        .collect(java.util.stream.Collectors.joining(", "));
+    return ", " + args;
   }
 
   private static String baseGetterName(RegisterTensor base, int width) {
@@ -390,22 +357,40 @@ final class AliasCpuAccessors {
     return "set_" + base.simpleName().toLowerCase() + dimSuffix + "_u" + width;
   }
 
-  private static String zeroCheck(List<Constant.Value> values) {
-    var checks = new ArrayList<String>();
-    for (int i = 0; i < values.size(); i++) {
-      checks.add("d" + i + " == ((uint32_t) " + values.get(i).hexadecimal() + ")");
+  private static @Nullable String zeroCheck(AliasAccessorDescriptor descriptor) {
+    var guard = descriptor.zeroGuard();
+    if (guard == null) {
+      return null;
     }
-    return String.join(" && ", checks);
+    if (guard instanceof RegInfo.AlwaysZeroGuard) {
+      return "1";
+    }
+    var conditional = (RegInfo.ConditionalZeroGuard) guard;
+    return conditional.matches().stream()
+        .map(match -> descriptor.accessorArgs().get(match.accessorArgIndex()).name()
+            + " == ((" + CppTypeMap.nextFittingUInt(match.value().type()) + ") "
+            + match.value().hexadecimal() + ")")
+        .collect(java.util.stream.Collectors.joining(" && "));
   }
 
-  private static String flatBaseIndexExpr(RegisterTensor base) {
-    var dims = base.indexDimensions();
+  private static String flatBaseIndexExpr(AliasAccessorDescriptor descriptor) {
+    var dims = descriptor.alias().semantics().baseTensor().indexDimensions();
     if (dims.isEmpty()) {
       return "((size_t) 0)";
     }
-    var expr = "((size_t) d0)";
+    var args = descriptor.baseArgBindings().stream()
+        .map(binding -> {
+          if (binding instanceof RegInfo.FixedArgBinding fixed) {
+            return "((size_t) " + fixed.value().intValue() + ")";
+          }
+          var forwarded = (RegInfo.ForwardedArgBinding) binding;
+          return "((size_t) " + descriptor.accessorArgs().get(forwarded.accessorArgIndex()).name()
+              + ")";
+        })
+        .toList();
+    var expr = args.get(0);
     for (int i = 1; i < dims.size(); i++) {
-      expr = "((" + expr + ") * ((size_t) " + dims.get(i).size() + ") + ((size_t) d" + i + "))";
+      expr = "((" + expr + ") * ((size_t) " + dims.get(i).size() + ") + " + args.get(i) + ")";
     }
     return expr;
   }

@@ -18,6 +18,8 @@ package vadl.iss.template.target;
 
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -40,10 +42,13 @@ public class EmitIssCpuHeaderPass extends IssTemplateRenderingPass {
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
+    var accessorRegistry = passResults.lastResultOf(IssRegisterAccessInfoRetrievalPass.class,
+        IssAccessorRegistry.class);
+    vars.put("base_accessors", accessorRegistry.baseAccessors());
     vars.put("alias_cpu_read_accessors",
-        AliasCpuAccessors.renderReadAccessors(specification, configuration()));
+        AliasCpuAccessors.renderReadAccessors(accessorRegistry, configuration()));
     vars.put("alias_cpu_write_accessors",
-        AliasCpuAccessors.renderWriteAccessors(specification, configuration()));
+        AliasCpuAccessors.renderWriteAccessors(accessorRegistry, configuration()));
     vars.put("base_chunk_cpu_read_accessors",
         BaseChunkCpuAccessors.renderReadAccessors(specification, configuration()));
     vars.put("base_chunk_cpu_write_accessors",

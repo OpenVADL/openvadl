@@ -20,13 +20,10 @@ import static java.util.stream.Collectors.joining;
 import static vadl.iss.passes.TcgPassUtils.regInfo;
 import static vadl.iss.passes.extensions.RegInfo.AccessType.READ;
 
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
@@ -37,6 +34,8 @@ import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.template.Renderable;
 import vadl.utils.WithLocation;
 import vadl.utils.codegen.CStringBuilder;
+import vadl.viam.ArtificialResource;
+import vadl.viam.Constant;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.RegisterResource;
@@ -58,8 +57,6 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   private Map<String, Object> renderObj;
   private final IssConfiguration config;
   private final ExecClass execClass;
-
-  public final Set<AccessPattern> accessPatterns = new HashSet<>();
 
   /**
    * Constructs a RegInfo for the given register tensor.
@@ -109,8 +106,8 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   public List<String> names() {
     return reg().isSingleRegister() ? List.of(reg().simpleName()) :
         IntStream.range(0, reg().outermostDim().size())
-            .mapToObj(i -> reg().simpleName() + i)
-            .toList();
+        .mapToObj(i -> reg().simpleName() + i)
+        .toList();
   }
 
   /**
@@ -228,8 +225,6 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       renderObj.put("exec_class", execClass().name());
       renderObj.put("constraints", renderConstraints(dims));
       renderObj.put("getter_params", renderParamsComma);
-      renderObj.put("access_patterns", accessPatterns.stream()
-          .sorted(Comparator.comparing(a -> a.type)).toList());
       if (isTcgScalar()) {
         renderObj.put("value_c_type", valueCType());
       } else {
@@ -356,7 +351,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   }
 
   /**
-   * Checks if an access pattern is a vector access (operates on multiple elements).
+   * Checks if a base accessor descriptor would target multiple elements.
    *
    * @param reg        the register tensor being accessed
    * @param numIndices number of indices used in the access
@@ -398,8 +393,8 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   /// @return execution class for backend selection
   @SuppressWarnings("OverloadMethodsDeclarationOrder")
   private static ExecClass determineExecClass(RegisterTensor reg,
-                                                           List<ReadRegTensorNode> reads,
-                                                           List<WriteRegTensorNode> writes) {
+                                              List<ReadRegTensorNode> reads,
+                                              List<WriteRegTensorNode> writes) {
 
     // 1. Check if any individual element (fully indexed access) exceeds 64 bits
     //    If so, even scalar accesses can't use TCG variables
@@ -442,6 +437,166 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   }
 
   /**
+   * Backend family that consumes an accessor descriptor.
+   */
+  public enum BackendKind {
+    TCG,
+    CPU_HELPER
+  }
+
+  /**
+   * Emission-oriented descriptor of a generated register accessor.
+   *
+   * <p>This is narrower than the full register-access semantics carried by unified ISS register
+   * nodes. It describes the accessor interface that must exist in generated code, while the actual
+   * semantic meaning remains on {@link ArtificialResource.Semantics} and on the lowered
+   * {@link IssReadRegNode}/{@link IssWriteRegNode}.
+   *
+   * <p>Descriptor properties map directly to the emitted C signature family:
+   * <ul>
+   *   <li>{@link BaseAccessorDescriptor} describes raw storage accessors such as
+   *   {@code uint64_t get_x_i32_u64(CPUState *env, uint32_t i0)} or
+   *   {@code void set_csr_i32_u32(CPUState *env, uint32_t i0, uint32_t value)}.</li>
+   *   <li>{@link AliasAccessorDescriptor} describes alias-surface accessors such as
+   *   {@code static TCGv get_mepc(DisasContext *ctx)},
+   *   {@code static TCGv dest_w(DisasContext *ctx, uint8_t d0)} or
+   *   {@code uint32_t cpu_get_mtvec(CPUState *env)} where the alias-visible signature differs
+   *   from the effective base-register call.</li>
+   *   <li>Dynamic chunk helpers such as
+   *   {@code uint64_t cpu_get_z_chunk(CPUState *env, uint32_t i0, uint32_t bit_offset,
+   *   uint32_t bit_width)} are emitted by dedicated helper-only chunk generation and are not
+   *   represented by these descriptors.</li>
+   *   <li>TCG chunk accesses are also not represented as standalone descriptors: they are emitted
+   *   inline in {@code trans_*} through explicit extract/deposit operations using the
+   *   {@link IssReadRegNode}/{@link IssWriteRegNode} window metadata. This includes
+   *   translation-time dynamic offsets on scalar-TCG registers, where the accessor signature stays
+   *   fixed (for example {@code get_cr(ctx)}) and the offset is rendered in the generated TCG
+   *   operation instead of being encoded into the accessor name.</li>
+   * </ul>
+   */
+  public sealed interface AccessorDescriptor
+      permits BaseAccessorDescriptor, AliasAccessorDescriptor {
+    RegInfo owner();
+
+    AccessType accessType();
+
+    BackendKind backendKind();
+
+    String accessorBaseName();
+  }
+
+  /**
+   * Descriptor for an alias accessor family.
+   *
+   * <p>The descriptor stores the alias-visible signature and the binding plan that maps that
+   * signature back to the base register accessor arguments.
+   *
+   * <p>The emitted C signature is determined by:
+   * <ul>
+   *   <li>{@code accessType}: read yields {@code get_<alias>} / {@code cpu_get_<alias>}, write
+   *   yields {@code dest_<alias>} / {@code cpu_set_<alias>}.</li>
+   *   <li>{@code backendKind}: {@link BackendKind#TCG} emits translate-side wrappers such as
+   *   {@code static TCGv get_mepc(DisasContext *ctx)} or
+   *   {@code static TCGv dest_w(DisasContext *ctx, uint8_t d0)};
+   *   {@link BackendKind#CPU_HELPER} emits helper-side wrappers such as
+   *   {@code uint32_t cpu_get_mepc(CPUState *env)} or
+   *   {@code void cpu_set_mepc(CPUState *env, uint32_t value)}.</li>
+   *   <li>{@code accessorArgs}: these are the only arguments visible at the alias call-site.
+   *   For a fixed alias like {@code mepc = CSR(constant)} this list is empty, so the emitted
+   *   signature has no index arguments. For a forwarding alias like {@code W = X(*)} this list
+   *   contains one index argument, yielding signatures such as
+   *   {@code static TCGv get_w(DisasContext *ctx, uint8_t d0)}.</li>
+   *   <li>{@code baseArgBindings}: these do not change the alias signature, but determine the
+   *   effective base call inside the emitted body, for example
+   *   {@code return get_csr(ctx, ((uint8_t) 0x6));} for {@code mepc},
+   *   {@code return dest_x(ctx, d0);} for a TCG destination alias, or
+   *   {@code return get_x(ctx, d0);} for a forwarding alias read. If the access is a TCG
+   *   chunked/scalar extraction with a translation-time dynamic offset (for example a bit alias on
+   *   {@code CR}), the alias descriptor still only describes the fixed wrapper call and the offset
+   *   itself is emitted later in the TCG extract/deposit operation.</li>
+   *   <li>{@code zeroGuard}: if present, the emitted body adds a guard before the forwarded base
+   *   call, for example returning a throwaway destination or {@code 0} for zero-constrained
+   *   aliases.</li>
+   * </ul>
+   */
+  public record AliasAccessorDescriptor(
+      RegInfo owner,
+      ArtificialResource alias,
+      AccessType accessType,
+      BackendKind backendKind,
+      String accessorBaseName,
+      List<AccessorArg> accessorArgs,
+      List<BaseArgBinding> baseArgBindings,
+      int expansionArgStart,
+      @Nullable ZeroGuard zeroGuard
+  ) implements AccessorDescriptor {
+  }
+
+  /**
+   * One emitted accessor argument.
+   *
+   * <p>Each entry becomes one C function parameter in the alias-visible signature, for example
+   * {@code AccessorArg("d0", "uint8_t", 32)} contributes {@code uint8_t d0} to
+   * {@code get_w(ctx, uint8_t d0)}.
+   */
+  public record AccessorArg(
+      String name,
+      String ctype,
+      int size
+  ) {
+  }
+
+  /**
+   * Mapping of alias-surface arguments to the effective base accessor arguments.
+   *
+   * <p>This affects the body of an alias accessor, not its signature:
+   * <ul>
+   *   <li>{@link FixedArgBinding} injects a constant base argument, for example
+   *   {@code get_csr(ctx, ((uint8_t) 0x6))}.</li>
+   *   <li>{@link ForwardedArgBinding} forwards one alias-visible argument, for example
+   *   {@code get_x(ctx, d0)}.</li>
+   * </ul>
+   */
+  public sealed interface BaseArgBinding permits FixedArgBinding, ForwardedArgBinding {
+  }
+
+  /**
+   * Binds one effective base-access argument to a constant value.
+   */
+  public record FixedArgBinding(Constant.Value value) implements BaseArgBinding {
+  }
+
+  /**
+   * Binds one effective base-access argument to one alias-visible accessor argument.
+   */
+  public record ForwardedArgBinding(int accessorArgIndex) implements BaseArgBinding {
+  }
+
+  /**
+   * Guard condition induced by alias zero-constraints after projecting them into accessor args.
+   */
+  public sealed interface ZeroGuard permits AlwaysZeroGuard, ConditionalZeroGuard {
+  }
+
+  /**
+   * The alias is unconditionally guarded (for example a fully-fixed zero register alias).
+   */
+  public record AlwaysZeroGuard() implements ZeroGuard {
+  }
+
+  /**
+   * The alias is guarded if the listed accessor arguments match the listed constants.
+   */
+  public record ConditionalZeroGuard(List<ForwardedArgMatch> matches) implements ZeroGuard {
+  }
+
+  /**
+   * One forwarded accessor argument that must match a constant to trigger the projected guard.
+   */
+  public record ForwardedArgMatch(int accessorArgIndex, Constant.Value value) {
+  }
+
+  /**
    * Dimension metadata for register access.
    *
    * @param typeWidth bit width of the index type
@@ -454,10 +609,65 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   }
 
   /**
-   * Represents a specific access pattern for a register.
-   * Contains information about how a register is accessed and generates corresponding C code.
+   * Descriptor for a generated base register accessor family.
+   *
+   * <p>This captures the emitted CPU/helper accessor interface for a concrete base-register access
+   * shape. It is narrower than the full ISS register-access semantics and only describes the raw
+   * storage accessor family that must exist in generated code.
+   *
+   * <p>The descriptor fields map directly to the emitted raw base-accessor C signature:
+   * <ul>
+   *   <li>{@code type} selects {@code get_} vs {@code set_}.</li>
+   *   <li>{@code dims} contributes the flattened index parameters, for example
+   *   {@code uint32_t i0} for a one-dimensional register file, yielding names such as
+   *   {@code get_x_i32_u64(..., uint32_t i0)}.</li>
+   *   <li>{@code elementWidth} determines the value type suffix and C type, for example
+   *   {@code _u64} with return type {@code uint64_t}.</li>
+   *   <li>{@code chunkOffsetBits} contributes an offset suffix for static chunked accessors, for
+   *   example {@code get_v_i32_o64_u64(...)} for the high 64-bit half of a 128-bit container.</li>
+   * </ul>
+   *
+   * <p>This descriptor models the generated CPU/helper raw storage accessors only. It does not
+   * model:
+   * <ul>
+   *   <li>translate-side TCG register wrappers such as
+   *   {@code static TCGv get_x(DisasContext *ctx, uint8_t d0)} and
+   *   {@code static TCGv dest_x(DisasContext *ctx, uint8_t d0)}, which are derived directly from
+   *   register metadata. This also includes scalar-TCG chunk accesses with translation-time
+   *   dynamic offsets, where the wrapper stays fixed (for example {@code get_cr(ctx)}) and the
+   *   varying offset is emitted in the TCG extract/deposit operation, nor</li>
+   *   <li>dynamic helper chunk accessors such as
+   *   {@code uint64_t cpu_get_z_chunk(CPUState *env, uint32_t i0, uint32_t bit_offset,
+   *   uint32_t bit_width)}.</li>
+   * </ul>
+   *
+   * <p>Typical emitted signatures are:
+   * <ul>
+   *   <li>{@code uint64_t get_x_i32_u64(CPUState *env, uint32_t i0)}</li>
+   *   <li>{@code void set_csr_i32_u32(CPUState *env, uint32_t i0, uint32_t value)}</li>
+   *   <li>{@code uint64_t get_v_i32_o64_u64(CPUState *env, uint32_t i0)}</li>
+   * </ul>
    */
-  public static final class AccessPattern implements Renderable {
+  public static final class BaseAccessorDescriptor implements AccessorDescriptor, Renderable {
+    /**
+     * Canonical lookup key for centrally collected base accessor descriptors.
+     */
+    public record Key(
+        RegInfo owner,
+        AccessType type,
+        List<AccessDim> dims,
+        int elementWidth,
+        int containerWidth,
+        int chunkOffsetBits
+    ) {
+      /**
+       * Creates the canonical key represented by one lowered register-access node.
+       */
+      public static Key ofOrigin(Node origin) {
+        return BaseAccessorDescriptor.ofOrigin(origin).key();
+      }
+    }
+
     private final RegInfo owner;
     private final AccessType type;
     private final List<AccessDim> dims;
@@ -467,15 +677,15 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     private final WithLocation origin;
 
     /**
-     * Constructs an access pattern.
+     * Constructs one base accessor descriptor.
      *
-     * @param owner        the register info this pattern belongs to
+     * @param owner        the register info this descriptor belongs to
      * @param type         the access type (read or write)
      * @param dims         dimension metadata for the access
      * @param elementWidth bit width of accessed elements
      * @param origin       source location of this access
      */
-    public AccessPattern(
+    public BaseAccessorDescriptor(
         RegInfo owner,
         AccessType type,
         List<AccessDim> dims,
@@ -493,17 +703,35 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       this.origin = origin;
     }
 
+    @Override
+    public RegInfo owner() {
+      return owner;
+    }
+
+    @Override
+    public AccessType accessType() {
+      return type;
+    }
+
+    @Override
+    public BackendKind backendKind() {
+      return BackendKind.CPU_HELPER;
+    }
+
+    @Override
+    public String accessorBaseName() {
+      return owner.nameLower();
+    }
+
     /**
-     * Generates the function name for this access pattern.
-     *
-     * @return the C function name
+     * Generates the C function name for this descriptor.
      */
     public String name() {
       String dimSuffix = dims.isEmpty()
           ? ""
           : dims.stream()
-          .map(w -> "i" + w.size)
-          .collect(joining("_", "_", ""));
+            .map(w -> "i" + w.size)
+            .collect(joining("_", "_", ""));
 
       return (type == READ ? "get" : "set")
           + "_" + owner.nameLower()
@@ -513,9 +741,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     }
 
     /**
-     * Generates the C function signature for this access pattern.
-     *
-     * @return the complete function signature
+     * Generates the complete C function signature for this descriptor.
      */
     String signature() {
 
@@ -536,9 +762,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     }
 
     /**
-     * Generates the C function body for this access pattern.
-     *
-     * @return the function body code
+     * Generates the C function body for this descriptor.
      */
     private String body() {
       if (owner.isGVec()) {
@@ -656,7 +880,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
         fitted = CppTypeMap.nextFittingBitSize(elementWidth);
       } catch (RuntimeException ex) {
         throw new RuntimeException(
-            "Unsupported access pattern value width. "
+            "Unsupported base accessor descriptor value width. "
                 + "owner=" + owner.name()
                 + ", type=" + type
                 + ", elementWidth=" + elementWidth
@@ -671,7 +895,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
         case 32 -> "uint32_t";
         case 64 -> "uint64_t";
         case 128 -> throw new RuntimeException(
-            "Access patterns >64 bit are not supported yet. "
+            "Base accessor descriptors >64 bit are not supported yet. "
                 + "Expected decomposition to split this access: "
                 + "name=" + name()
                 + ", owner=" + owner.name()
@@ -685,7 +909,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     }
 
     /**
-     * Returns the C scalar type used for this concrete access pattern's value.
+     * Returns the C scalar type used for this descriptor's value.
      */
     public String valueCType() {
       return accessValueCType();
@@ -724,7 +948,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
 
     @Override
     public String toString() {
-      return "AccessPattern["
+      return "BaseAccessorDescriptor["
           + "owner=" + owner + ", "
           + "type=" + type + ", "
           + "dims=" + dims + ", "
@@ -739,17 +963,21 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     }
 
     /**
-     * Checks if this access pattern equals another object.
-     *
-     * @param o the object to compare with
-     * @return true if objects are equal
+     * Returns the canonical lookup key for this descriptor.
+     */
+    public Key key() {
+      return new Key(owner, type, dims, elementWidth, containerWidth, chunkOffsetBits);
+    }
+
+    /**
+     * Checks if this descriptor equals another object.
      */
     @Override
     public boolean equals(Object o) {
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-      AccessPattern that = (AccessPattern) o;
+      BaseAccessorDescriptor that = (BaseAccessorDescriptor) o;
       return elementWidth == that.elementWidth
           && containerWidth == that.containerWidth
           && chunkOffsetBits == that.chunkOffsetBits
@@ -764,12 +992,9 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     }
 
     /**
-     * Creates an access pattern from a read node.
-     *
-     * @param read the read node
-     * @return the access pattern
+     * Creates a base accessor descriptor from a read node.
      */
-    public static AccessPattern of(ReadRegTensorNode read) {
+    public static BaseAccessorDescriptor of(ReadRegTensorNode read) {
       var bitOffset = 0;
       var bitWidth = read.type().asDataType().bitWidth();
       if (read instanceof IssReadRegNode issRead) {
@@ -783,12 +1008,9 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     }
 
     /**
-     * Creates an access pattern from a write node.
-     *
-     * @param write the write node
-     * @return the access pattern
+     * Creates a base accessor descriptor from a write node.
      */
-    public static AccessPattern of(WriteRegTensorNode write) {
+    public static BaseAccessorDescriptor of(WriteRegTensorNode write) {
       var bitOffset = 0;
       var bitWidth = write.writeBitWidth();
       if (write instanceof IssWriteRegNode issWrite) {
@@ -802,25 +1024,26 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     }
 
     /**
-     * Creates an access pattern from node components.
+     * Creates a base accessor descriptor from node components.
      *
      * @param origin  the originating node
      * @param type    the access type
      * @param reg     the register tensor
      * @param indices the access indices
-     * @return the access pattern
+     * @return the descriptor
      */
-    public static AccessPattern of(Node origin, AccessType type, RegisterTensor reg,
-                                   List<ExpressionNode> indices,
-                                   int elementWidth,
-                                   int containerWidth,
-                                   int chunkOffsetBits) {
+    public static BaseAccessorDescriptor of(Node origin, AccessType type, RegisterTensor reg,
+                                            List<ExpressionNode> indices,
+                                            int elementWidth,
+                                            int containerWidth,
+                                            int chunkOffsetBits) {
       var info = regInfo(reg);
       var indexDims = reg.indexDimensions().stream()
           .limit(indices.size())
           .map(d -> new RegInfo.AccessDim(d.indexType().bitWidth(), d.size()))
           .toList();
-      return new RegInfo.AccessPattern(info, type, indexDims, elementWidth, containerWidth,
+      return new RegInfo.BaseAccessorDescriptor(info, type, indexDims, elementWidth,
+          containerWidth,
           chunkOffsetBits, origin);
     }
 
@@ -829,6 +1052,43 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
         return constantNode.constant().asVal().intValue();
       }
       return fallback;
+    }
+
+    /**
+     * Creates the canonical base accessor descriptor represented by one lowered register-access
+     * node. This matches the descriptor shape collected by the ISS register-access retrieval pass.
+     */
+    public static BaseAccessorDescriptor ofOrigin(Node origin) {
+      if (origin instanceof ReadRegTensorNode read) {
+        if (read instanceof IssReadRegNode issRead
+            && issRead.accessKind() == IssReadRegNode.AccessKind.ALIAS) {
+          var baseIndexCount = issRead.regTensor().indexDimensions().size();
+          var baseIndices = issRead.indices().stream().limit(baseIndexCount).toList();
+          var baseWidth = issRead.regTensor().resultType(baseIndexCount).bitWidth();
+          var readOffset = constIntOr(issRead.bitOffset(), 0);
+          var readWidth = constIntOr(issRead.bitWidth(), baseWidth);
+          return of(issRead, AccessType.READ, issRead.regTensor(), baseIndices, readWidth,
+              baseWidth, readOffset);
+        }
+        return of(read);
+      }
+      if (origin instanceof WriteRegTensorNode write) {
+        if (write instanceof IssWriteRegNode issWrite
+            && issWrite.accessKind() == IssWriteRegNode.AccessKind.ALIAS) {
+          var baseIndexCount = issWrite.regTensor().indexDimensions().size();
+          var baseIndices = issWrite.indices().stream().limit(baseIndexCount).toList();
+          var baseWidth = issWrite.regTensor().resultType(baseIndexCount).bitWidth();
+          var writeOffset = constIntOr(issWrite.bitOffset(), 0);
+          var writeWidth = constIntOr(issWrite.bitWidth(), baseWidth);
+          return of(issWrite, AccessType.WRITE, issWrite.regTensor(), baseIndices, writeWidth,
+              baseWidth, writeOffset);
+        }
+        return of(write);
+      }
+      origin.ensure(false,
+          "Expected register access node but got %s",
+          origin.getClass().getSimpleName());
+      throw new IllegalStateException("unreachable");
     }
   }
 }

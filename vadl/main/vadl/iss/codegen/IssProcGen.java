@@ -23,6 +23,7 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.cppCodeGen.mixins.CInvalidMixins;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.utils.functionInterfaces.TriConsumer;
@@ -55,13 +56,16 @@ abstract class IssProcGen implements CDefaultMixins.All,
 
   private final CNodeContext ctx;
   private final StringBuilder builder;
+  private final IssAccessorRegistry accessorRegistry;
 
-  public IssProcGen() {
-    this(IssProcGenDispatcher::dispatch);
+  public IssProcGen(IssAccessorRegistry accessorRegistry) {
+    this(accessorRegistry, IssProcGenDispatcher::dispatch);
   }
 
-  public <T extends IssProcGen> IssProcGen(TriConsumer<T, CNodeContext, Node> dispatcher) {
+  public <T extends IssProcGen> IssProcGen(IssAccessorRegistry accessorRegistry,
+                                           TriConsumer<T, CNodeContext, Node> dispatcher) {
     this.builder = new StringBuilder();
+    this.accessorRegistry = accessorRegistry;
     //noinspection unchecked
     this.ctx = new CNodeContext(
         builder::append,
@@ -75,6 +79,10 @@ abstract class IssProcGen implements CDefaultMixins.All,
 
   protected StringBuilder builder() {
     return builder;
+  }
+
+  public IssAccessorRegistry accessorRegistry() {
+    return accessorRegistry;
   }
 
   /**
@@ -95,7 +103,7 @@ abstract class IssProcGen implements CDefaultMixins.All,
         "Helper read preload expects <=64-bit reads, got %d-bit on %s", width, read);
     var valueType = CppTypeMap.nextFittingUInt(read.type().asDataType());
     var name = readRegVariable(read);
-    var accessName = RegisterAccessEmitters.readAccessorName(read);
+    var accessName = RegisterAccessEmitters.readAccessorName(read, accessorRegistry);
     ctx.wr(valueType + " " + name + " = ")
         .wr(accessName + "(env");
     for (var i : RegisterAccessEmitters.readAccessorArgs(read)) {

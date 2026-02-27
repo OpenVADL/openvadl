@@ -232,7 +232,7 @@ class OpDecomposer {
     }
 
     // Decomposition may leave replaced wide read nodes dangling.
-    // Remove them so later access-pattern retrieval only sees effective accesses.
+    // Remove them so later base-accessor descriptor retrieval only sees effective accesses.
     behavior.deleteUnusedDependencies();
   }
 

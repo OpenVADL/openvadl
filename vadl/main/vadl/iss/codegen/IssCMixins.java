@@ -19,6 +19,7 @@ package vadl.iss.codegen;
 import static vadl.iss.IssUtils.internalError;
 
 import vadl.cppCodeGen.context.CGenContext;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssMoveNode;
@@ -200,19 +201,20 @@ public interface IssCMixins {
    * Implements the register write in the {@code cpu.c}.
    */
   interface CpuSourceWriteRegTensor {
+    IssAccessorRegistry accessorRegistry();
 
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx,
                         WriteRegTensorNode node) {
-      RegisterAccessEmitters.emitWrite(ctx, node);
+      RegisterAccessEmitters.emitWrite(ctx, node, accessorRegistry());
     }
 
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx,
                         ReadRegTensorNode node) {
-      RegisterAccessEmitters.emitRead(ctx, node);
+      RegisterAccessEmitters.emitRead(ctx, node, accessorRegistry());
     }
   }
 

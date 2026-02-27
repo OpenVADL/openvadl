@@ -19,6 +19,8 @@ package vadl.iss.template.target;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.codegen.IssResetGen;
+import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.utils.codegen.CCodeBuilder;
@@ -44,12 +46,15 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
+    var accessorRegistry = passResults.lastResultOf(IssRegisterAccessInfoRetrievalPass.class,
+        IssAccessorRegistry.class);
     vars.put("reg_dump_code", dumpRegsCode(specification));
-    vars.put("reset", getResetCode(specification));
+    vars.put("reset", getResetCode(specification, accessorRegistry));
+    vars.put("base_accessors", accessorRegistry.baseAccessors());
     vars.put("alias_cpu_read_accessors",
-        AliasCpuAccessors.renderReadAccessors(specification, configuration()));
+        AliasCpuAccessors.renderReadAccessors(accessorRegistry, configuration()));
     vars.put("alias_cpu_write_accessors",
-        AliasCpuAccessors.renderWriteAccessors(specification, configuration()));
+        AliasCpuAccessors.renderWriteAccessors(accessorRegistry, configuration()));
     vars.put("base_chunk_cpu_read_accessors",
         BaseChunkCpuAccessors.renderReadAccessors(specification, configuration()));
     vars.put("base_chunk_cpu_write_accessors",
@@ -57,9 +62,9 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
     return vars;
   }
 
-  private String getResetCode(Specification specification) {
+  private String getResetCode(Specification specification, IssAccessorRegistry accessorRegistry) {
     var proc = specification.processor().get();
-    return new IssResetGen(proc.reset()).fetch();
+    return new IssResetGen(proc.reset(), accessorRegistry).fetch();
   }
 
   private String dumpRegsCode(Specification specification) {

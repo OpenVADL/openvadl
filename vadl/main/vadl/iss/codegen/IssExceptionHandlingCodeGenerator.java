@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -21,6 +21,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.iss.passes.extensions.ExceptionInfo;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.FuncParamNode;
@@ -49,7 +50,9 @@ public class IssExceptionHandlingCodeGenerator extends IssProcGen
   /**
    * Constructs the exception handling code generator.
    */
-  public IssExceptionHandlingCodeGenerator(ExceptionInfo.Entry excInfo, IssConfiguration config) {
+  public IssExceptionHandlingCodeGenerator(ExceptionInfo.Entry excInfo, IssConfiguration config,
+                                           IssAccessorRegistry accessorRegistry) {
+    super(accessorRegistry);
     this.excInfo = excInfo;
     this.config = config;
   }

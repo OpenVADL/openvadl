@@ -19,12 +19,11 @@ const char * const [(${gen_arch_lower})]_cpu_[(${reg.name_lower})]_names[(${reg.
 };
 [/][/]
 
-[# th:each="reg : ${register_tensors}"]
-[# th:each="access : ${reg.access_patterns}"]
+[# th:each="access : ${base_accessors}"]
 [(${access.signature})]
 {
     [(${access.body})] }
-[/][/]
+[/]
 
 /* Alias accessors map unified ISS alias metadata to CPU-side helper access. */
 [# th:each="access : ${alias_cpu_read_accessors}"]

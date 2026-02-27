@@ -36,6 +36,7 @@ import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.utils.GraphUtils;
 import vadl.utils.VadlBuiltInEmptyNoStatusDispatcher;
+import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractEndNode;
@@ -79,8 +80,8 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  *
  * <p>For register accesses this pass emits unified {@link IssReadRegNode}/{@link IssWriteRegNode}
  * nodes with chunk window metadata instead of backend-specific chunk node types.
- * This keeps one register-access representation across decomposition, access-pattern retrieval and
- * code generation.
+ * This keeps one register-access representation across decomposition, accessor-descriptor retrieval
+ * and code generation.
  *
  * <p>See {@code docs/iss/register-access-domain-map.md}.
  */
@@ -325,6 +326,7 @@ class Decomposer
           writeAccessKind(write),
           writeGuardKind(write),
           writeAccessorName(write),
+          writeAliasResource(write),
           writeAccessorIndices(write),
           IssWriteRegNode.WindowKind.CHUNK,
           Constant.Value.of(chunkOffset, Type.bits(32)).toNode(),
@@ -569,6 +571,7 @@ class Decomposer
           readAccessKind(toHandle),
           readShape(toHandle),
           readAccessorName(toHandle),
+          readAliasResource(toHandle),
           readAccessorIndices(toHandle),
           IssReadRegNode.WindowKind.CHUNK,
           Constant.Value.of(requestedLsbInChunk, Type.bits(32)).toNode(),
@@ -752,6 +755,7 @@ class Decomposer
           readRegNode.accessKind(),
           readRegNode.readShape(),
           readRegNode.accessorName(),
+          readRegNode.aliasResource(),
           new NodeList<>(readRegNode.accessorIndices()),
           IssReadRegNode.WindowKind.CHUNK,
           lsbOffset,
@@ -815,6 +819,13 @@ class Decomposer
     return null;
   }
 
+  private @Nullable ArtificialResource readAliasResource(ReadRegTensorNode read) {
+    if (read instanceof IssReadRegNode issRead) {
+      return issRead.aliasResource();
+    }
+    return null;
+  }
+
   private NodeList<ExpressionNode> readAccessorIndices(ReadRegTensorNode read) {
     if (read instanceof IssReadRegNode issRead) {
       return new NodeList<>(issRead.accessorIndices());
@@ -841,6 +852,13 @@ class Decomposer
   private @Nullable String writeAccessorName(WriteRegTensorNode write) {
     if (write instanceof IssWriteRegNode issWrite) {
       return issWrite.accessorName();
+    }
+    return null;
+  }
+
+  private @Nullable ArtificialResource writeAliasResource(WriteRegTensorNode write) {
+    if (write instanceof IssWriteRegNode issWrite) {
+      return issWrite.aliasResource();
     }
     return null;
   }
