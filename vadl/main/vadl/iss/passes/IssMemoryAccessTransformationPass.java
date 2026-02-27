@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -56,10 +56,8 @@ public class IssMemoryAccessTransformationPass extends AbstractIssPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
 
-    viam.isa().get()
-        .ownInstructions().forEach((instruction) -> {
-          new MemoryTransformer(instruction.behavior()).run();
-        });
+    tcgInstrs(viam)
+        .forEach(instruction -> new MemoryTransformer(instruction.behavior()).run());
 
     return null;
   }
@@ -126,4 +124,3 @@ class MemoryTransformer {
   }
 
 }
-

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
@@ -64,6 +65,9 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * Since register file indices and memory addresses are not statically known,
  * all reads to these resources must be conservatively treated as potential conflicts
  * with all writes to the same resource.</p>
+ *
+ * <p>The analysis intentionally uses post-lowering resource accesses so alias accesses are checked
+ * against their effective base resources.
  */
 public class IssSafeResourceReadPass extends AbstractIssPass {
 
@@ -143,7 +147,11 @@ class IssResourceReadSecurer {
    * Runs the resource read securer on the instruction.
    */
   void run() {
-    var readResources = instruction.readResources();
+    // Use post-lowering graph resources instead of Instruction.readResources() cache,
+    // because alias lowering rewrites accesses to their effective base resources.
+    var readResources = instruction.behavior().getNodes(ReadResourceNode.class)
+        .map(ReadResourceNode::resourceDefinition)
+        .collect(Collectors.toSet());
 
     for (var resource : readResources) {
       handleReadResource(resource);

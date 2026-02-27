@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -21,6 +21,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.passes.extensions.MemoryRegionInfo;
 import vadl.iss.template.hw.EmitIssHwMachineCPass;
 import vadl.viam.Processor;
@@ -54,7 +55,9 @@ public class IssMemoryRegionInitCodeGen extends IssProcGen {
    *
    * @param memInfo of the generating memory region
    */
-  public IssMemoryRegionInitCodeGen(MemoryRegionInfo memInfo, IssConfiguration config) {
+  public IssMemoryRegionInitCodeGen(MemoryRegionInfo memInfo, IssConfiguration config,
+                                    IssAccessorRegistry accessorRegistry) {
+    super(accessorRegistry);
     this.memInfo = memInfo;
     this.config = config;
   }

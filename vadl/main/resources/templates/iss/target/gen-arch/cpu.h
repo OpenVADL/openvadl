@@ -78,9 +78,22 @@ int [(${gen_arch_lower})]_cpu_gdb_read_register(CPUState *cpu, GByteArray *buf, 
 int [(${gen_arch_lower})]_cpu_gdb_write_register(CPUState *cpu, uint8_t *buf, int reg);
 
 // CPU register getters and setters
-[# th:each="reg : ${register_tensors}"]
-[(${reg.cpu_getter_signature})];
-[(${reg.cpu_setter_signature})];
+[# th:each="access : ${base_accessors}"]
+[(${access.signature})];
+[/]
+
+// Alias register accessors consumed by unified ISS helper/procedure/exception paths.
+[# th:each="access : ${alias_cpu_read_accessors}"]
+[(${access.signature})];
+[/]
+[# th:each="access : ${alias_cpu_write_accessors}"]
+[(${access.signature})];
+[/]
+[# th:each="access : ${base_chunk_cpu_read_accessors}"]
+[(${access.signature})];
+[/]
+[# th:each="access : ${base_chunk_cpu_write_accessors}"]
+[(${access.signature})];
 [/]
 
 

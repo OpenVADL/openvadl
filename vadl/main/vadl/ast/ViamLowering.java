@@ -431,6 +431,23 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         default -> new ArrayList<>();
       };
 
+      var fixedIndices = requireNonNull(definition.computedFixedArgs).stream()
+          .map(constantEvaluator::eval)
+          .map(ConstantValue::toViamConstant)
+          .toList();
+
+      var overwriteMode = resolveEffectiveOverwriteMode(definition);
+      var zeroConstraint = resolveEffectiveZeroConstraint(definition);
+
+      var semantics = new ArtificialResource.Semantics(
+          innerResource,
+          fixedIndices,
+          dimensions,
+          definition.slice,
+          overwriteMode,
+          zeroConstraint
+      );
+
       return Optional.of(new ArtificialResource(
           identifier,
           ArtificialResource.Kind.REGISTER,
@@ -438,12 +455,120 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
           new BehaviorLowering(this).getRegisterAliasReadFunc(definition, dimensions),
           new BehaviorLowering(this).getRegisterAliasWriteProc(definition, dimensions),
           dimensions,
-          definition.slice
+          definition.slice,
+          semantics
       ));
     }
 
     throw new RuntimeException("The ViamGenerator does not support `%s` of kind %s yet".formatted(
         definition.getClass().getSimpleName(), definition.kind));
+  }
+
+  /**
+   * Resolves the effective overwrite mode for a register alias chain.
+   *
+   * <p>The result is stored in {@link ArtificialResource.Semantics} and later consumed by ISS
+   * register access lowering.
+   */
+  private ArtificialResource.OverwriteMode resolveEffectiveOverwriteMode(
+      AliasDefinition definition) {
+    var overwriteAnno = definition.findAnnotation("overwrite source", EnumAnnotation.class);
+    if (overwriteAnno != null) {
+      return switch (overwriteAnno.value) {
+        case "zero" -> ArtificialResource.OverwriteMode.ZERO;
+        case "sign" -> ArtificialResource.OverwriteMode.SIGN;
+        default -> throw new IllegalStateException("Unexpected overwrite mode: "
+            + overwriteAnno.value);
+      };
+    }
+
+    var sourceAlias = sourceAliasDefinition(definition);
+    if (sourceAlias != null) {
+      return resolveEffectiveOverwriteMode(sourceAlias);
+    }
+    return ArtificialResource.OverwriteMode.MERGE;
+  }
+
+  /**
+   * Resolves the effective zero-constraint for a register alias chain.
+   *
+   * <p>This computes the guard basis used by ISS alias write/read lowering.
+   */
+  private @Nullable ArtificialResource.ZeroConstraint resolveEffectiveZeroConstraint(
+      AliasDefinition definition) {
+    var own = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
+    if (own != null) {
+      return new ArtificialResource.ZeroConstraint(
+          own.indices.stream().map(ConstantValue::toViamConstant).toList());
+    }
+
+    var sourceAlias = sourceAliasDefinition(definition);
+    if (sourceAlias == null) {
+      return null;
+    }
+
+    var inherited = resolveEffectiveZeroConstraint(sourceAlias);
+    if (inherited == null) {
+      return null;
+    }
+    return mapZeroConstraintThroughAliasAccess(definition, inherited);
+  }
+
+  /**
+   * Returns the source alias definition if this alias references another register alias.
+   */
+  private @Nullable AliasDefinition sourceAliasDefinition(AliasDefinition definition) {
+    var targetIdent = switch (definition.value) {
+      case Identifier ident -> ident;
+      case CallIndexExpr expr -> expr.target.path();
+      default -> null;
+    };
+    if (targetIdent == null) {
+      return null;
+    }
+    var alias = definition.symbolTable().findAs(targetIdent, AliasDefinition.class);
+    if (alias == null || alias.kind != AliasDefinition.AliasKind.REGISTER) {
+      return null;
+    }
+    return alias;
+  }
+
+  /**
+   * Maps inherited zero-constraint indices through the current alias access mapping.
+   */
+  private @Nullable ArtificialResource.ZeroConstraint mapZeroConstraintThroughAliasAccess(
+      AliasDefinition definition,
+      ArtificialResource.ZeroConstraint inherited) {
+    if (definition.value instanceof Identifier) {
+      return new ArtificialResource.ZeroConstraint(List.copyOf(inherited.indices()));
+    }
+    if (!(definition.value instanceof CallIndexExpr call)) {
+      return null;
+    }
+
+    var accessArgs = call.argsIndices.stream()
+        .filter(a -> !a.values.isEmpty() && !(a.values.getFirst() instanceof RangeExpr))
+        .toList();
+    if (accessArgs.size() < inherited.indices().size()) {
+      return null;
+    }
+
+    var mapped = new ArrayList<Constant.Value>();
+    for (int i = 0; i < inherited.indices().size(); i++) {
+      var argExpr = accessArgs.get(i).values.getFirst();
+      var inheritedIdx = inherited.indices().get(i);
+      if (argExpr instanceof WildcardLiteral) {
+        mapped.add(inheritedIdx);
+        continue;
+      }
+
+      var argConst = constantEvaluator.eval(argExpr).toViamConstant();
+      if (!argConst.equals(inheritedIdx)) {
+        // Fixed index does not match inherited zero constraint; no effective guard on this path.
+        return null;
+      }
+    }
+    return new ArtificialResource.ZeroConstraint(mapped);
   }
 
   @Override

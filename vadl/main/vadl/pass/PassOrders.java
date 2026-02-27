@@ -25,12 +25,14 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.DecoderOptions;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GcbConfiguration;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.configuration.RtlConfiguration;
 import vadl.dump.CollectBehaviorDotGraphPass;
+import vadl.dump.DumpIssInstructionGraphsPass;
 import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.DetermineBuiltinAttributesPass;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
@@ -46,9 +48,11 @@ import vadl.gcb.passes.SetMissingConfigurationValuesPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingAndPredicateFunctionsPass;
 import vadl.gcb.passes.operands.GenerateInstructionOperandsPass;
+import vadl.iss.passes.IssBitfieldWriteLoweringPass;
 import vadl.iss.passes.IssBuiltInArgTruncOptPass;
 import vadl.iss.passes.IssCFunctionExtractionPass;
 import vadl.iss.passes.IssConfigurationPass;
+import vadl.iss.passes.IssExecStrategyPass;
 import vadl.iss.passes.IssExtractOptimizationPass;
 import vadl.iss.passes.IssGdbInfoExtractionPass;
 import vadl.iss.passes.IssHardcodedTcgAddOnPass;
@@ -58,6 +62,8 @@ import vadl.iss.passes.IssMemoryAccessTransformationPass;
 import vadl.iss.passes.IssMemoryDetectionPass;
 import vadl.iss.passes.IssNormalizationPass;
 import vadl.iss.passes.IssPcAccessConversionPass;
+import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
+import vadl.iss.passes.IssRegisterAccessLoweringPass;
 import vadl.iss.passes.IssSelectLoweringPass;
 import vadl.iss.passes.IssTcgSchedulingPass;
 import vadl.iss.passes.IssTcgVAllocationPass;
@@ -490,6 +496,7 @@ public class PassOrders {
     var order = viam(config);
 
     // skip inlining of field access
+    order.skip(ArtificialResInlinerPass.class);
     order.skip(FieldAccessInlinerPass.class);
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
     order.skip(RenamingConflictingRegistersPass.class);
@@ -500,6 +507,11 @@ public class PassOrders {
         .add(new IssInfoRetrievalPass(config))
         .add(new IssConfigurationPass(config))
         .add(new IssMemoryDetectionPass(config))
+        .add(new IssRegisterAccessLoweringPass(config))
+        .add(new IssExecStrategyPass(config))
+        .add(new IssBitfieldWriteLoweringPass(config))
+        // run canonicalization, as register access lowering may create constant nodes
+        .add(new CanonicalizationPass(config))
         .add(new IssOpDecompositionPass(config))
         .add(new IssNormalizationPass(config))
         .add(new IssExtractOptimizationPass(config))
@@ -522,9 +534,14 @@ public class PassOrders {
 
         // pre emit passes
         .add(new IssCFunctionExtractionPass(config))
+        .add(new IssRegisterAccessInfoRetrievalPass(config))
     ;
 
     addDecodePasses(order, config);
+
+    if (config.dumpMode() == DumpMode.ISS_PASS_GRAPHS) {
+      addIssInstructionGraphDumpPasses(order, config);
+    }
 
     addHtmlDump(order, config, "ISS Lowering Dump",
         "This dump is executed after the iss transformation passes were executed.",
@@ -537,6 +554,19 @@ public class PassOrders {
     }
 
     return order;
+  }
+
+  /**
+   * Adds {@link DumpIssInstructionGraphsPass} after each pass in ISS mode.
+   */
+  private static PassOrder addIssInstructionGraphDumpPasses(PassOrder order,
+                                                            GeneralConfiguration config) {
+    return order.addBetweenEach((current, next) -> {
+      if (current instanceof DumpIssInstructionGraphsPass) {
+        return Optional.empty();
+      }
+      return Optional.of(new DumpIssInstructionGraphsPass(config));
+    });
   }
 
   private static void addIssEmitPasses(PassOrder order, IssConfiguration config) {

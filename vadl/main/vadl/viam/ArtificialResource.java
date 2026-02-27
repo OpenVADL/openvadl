@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -50,8 +50,59 @@ public class ArtificialResource extends RegisterResource {
   private final Procedure writeProcedure;
   @Nullable
   private final Constant.BitSlice aliasSlice;
+  private final Semantics semantics;
 
   private final List<RegisterTensor.Dimension> dimensions;
+
+  /**
+   * Describes how alias writes expand values to the base tensor width.
+   */
+  public enum OverwriteMode {
+    /**
+     * Preserve non-overwritten source bits and merge written bits.
+     */
+    MERGE,
+    /**
+     * Overwritten bits outside the alias value are zero-extended.
+     */
+    ZERO,
+    /**
+     * Overwritten bits outside the alias value are sign-extended.
+     */
+    SIGN
+  }
+
+  /**
+   * Encodes alias zero-constraint guard basis as concrete index values.
+   */
+  public record ZeroConstraint(List<Constant.Value> indices) {
+  }
+
+  /**
+   * Canonical semantics payload for register aliases in VIAM.
+   *
+   * <p>This payload describes how an alias maps to its underlying base tensor.
+   *
+   * @param baseTensor the concrete base register tensor the alias ultimately refers to
+   * @param fixedIndices prefix indices fixed by the alias definition and prepended before dynamic
+   *     indices when constructing the effective base access
+   * @param dynamicDimensions the alias-visible dynamic index dimensions
+   * @param aliasSlice an optional static bit slice applied after index remapping
+   * @param overwriteMode defines how partial writes update the base bits
+   * @param zeroConstraint optionally describes the index tuple that triggers guard semantics
+   */
+  public record Semantics(
+      RegisterTensor baseTensor,
+      List<Constant.Value> fixedIndices,
+      List<RegisterTensor.Dimension> dynamicDimensions,
+      @Nullable Constant.BitSlice aliasSlice,
+      OverwriteMode overwriteMode,
+      @Nullable ZeroConstraint zeroConstraint
+  ) {
+    public int totalIndexCount() {
+      return fixedIndices.size() + dynamicDimensions.size();
+    }
+  }
 
   /**
    * Constructs the artificial resource.
@@ -64,7 +115,8 @@ public class ArtificialResource extends RegisterResource {
                             Function readFunction,
                             Procedure writeProcedure,
                             List<RegisterTensor.Dimension> dimensions,
-                            @Nullable Constant.BitSlice aliasSlice
+                            @Nullable Constant.BitSlice aliasSlice,
+                            Semantics semantics
   ) {
     super(identifier);
     this.kind = kind;
@@ -73,6 +125,7 @@ public class ArtificialResource extends RegisterResource {
     this.writeProcedure = writeProcedure;
     this.dimensions = dimensions;
     this.aliasSlice = aliasSlice;
+    this.semantics = semantics;
   }
 
   public Kind kind() {
@@ -93,6 +146,10 @@ public class ArtificialResource extends RegisterResource {
 
   public @Nullable Constant.BitSlice aliasSlice() {
     return aliasSlice;
+  }
+
+  public Semantics semantics() {
+    return semantics;
   }
 
   @Override

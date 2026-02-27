@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,8 @@ package vadl.iss.template.target;
 
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -40,6 +42,17 @@ public class EmitIssCpuHeaderPass extends IssTemplateRenderingPass {
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
+    var accessorRegistry = passResults.lastResultOf(IssRegisterAccessInfoRetrievalPass.class,
+        IssAccessorRegistry.class);
+    vars.put("base_accessors", accessorRegistry.baseAccessors());
+    vars.put("alias_cpu_read_accessors",
+        AliasCpuAccessors.renderReadAccessors(accessorRegistry, configuration()));
+    vars.put("alias_cpu_write_accessors",
+        AliasCpuAccessors.renderWriteAccessors(accessorRegistry, configuration()));
+    vars.put("base_chunk_cpu_read_accessors",
+        BaseChunkCpuAccessors.renderReadAccessors(specification, configuration()));
+    vars.put("base_chunk_cpu_write_accessors",
+        BaseChunkCpuAccessors.renderWriteAccessors(specification, configuration()));
     return vars;
   }
 

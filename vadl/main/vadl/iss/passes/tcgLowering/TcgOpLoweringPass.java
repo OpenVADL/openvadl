@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -36,11 +36,14 @@ import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssLoadNode;
 import vadl.iss.passes.nodes.IssMoveNode;
+import vadl.iss.passes.nodes.IssReadRegNode;
+import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssSelectNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssStoreNode;
 import vadl.iss.passes.nodes.IssTempExprNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
 import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
@@ -137,6 +140,10 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * that generates variables on demand and attaches them to the dependency node.
  * Once lowering is complete, all dependency nodes are removed from the graph.
  * The resulting structure is a CFG consisting of TCG op nodes in SSA form.</p>
+ *
+ * <p>Register writes on unified ISS nodes use window metadata:
+ * full-window writes lower to move semantics, chunk-window writes lower to deposit semantics.
+ * See {@code docs/iss/register-access-domain-map.md}.
  */
 public class TcgOpLoweringPass extends AbstractIssPass {
 
@@ -570,6 +577,14 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   @Handler
   void handle(ReadRegTensorNode toHandle) {
+    if (toHandle instanceof IssReadRegNode issRead
+        && issRead.windowKind() == IssReadRegNode.WindowKind.CHUNK) {
+      var dest = singleDestOf(toHandle);
+      var base = assignments.singleBaseReadOf(issRead);
+      replaceCurrent(new TcgExtractNode(dest, base, issRead.bitOffset(), issRead.bitWidth(),
+          TcgExtend.fromBoolean(toHandle.type().asDataType().isSigned())));
+      return;
+    }
     // Nothing to do; register reads are TCG variables created at instruction start
     replaceCurrent();
   }
@@ -597,11 +612,34 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   void handle(WriteRegTensorNode toHandle) {
     var destVar = singleDestOf(toHandle);
     var srcVar = singleDestOf(toHandle.value());
+    if (toHandle instanceof IssWriteRegNode issWrite
+        && issWrite.windowKind() == IssWriteRegNode.WindowKind.CHUNK) {
+      replaceCurrent(new TcgDepositNode(destVar, destVar, srcVar,
+          issWrite.bitOffset(), issWrite.bitWidth()));
+      return;
+    }
     if (destVar.equals(srcVar)) {
       replaceCurrent();
     } else {
       replaceCurrent(new TcgMoveNode(destVar, srcVar));
     }
+  }
+
+  @Handler
+  void handle(IssRegBitfieldWriteNode toHandle) {
+    var dest = singleDestOf(toHandle);
+    var value = singleDestOf(toHandle.value());
+    if (toHandle.bitOffset() instanceof ConstantNode bitOffsetConst
+        && toHandle.bitWidth() instanceof ConstantNode bitWidthConst) {
+      var bitOffset = bitOffsetConst.constant().asVal().intValue();
+      var bitWidth = bitWidthConst.constant().asVal().intValue();
+      if (bitOffset == 0 && bitWidth == targetSize.width) {
+        replaceCurrent(new TcgMoveNode(dest, value));
+        return;
+      }
+    }
+    replaceCurrent(new TcgDepositNode(
+        dest, dest, value, toHandle.bitOffset(), toHandle.bitWidth()));
   }
 
   /**

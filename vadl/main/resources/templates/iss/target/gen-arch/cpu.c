@@ -19,23 +19,35 @@ const char * const [(${gen_arch_lower})]_cpu_[(${reg.name_lower})]_names[(${reg.
 };
 [/][/]
 
-[# th:each="reg : ${register_tensors}"]
-[(${reg.cpu_getter_signature})]
-{   [# th:each="dim : ${reg.index_dims}"]
-    assert( [(${dim.arg_name})] < [(${dim["size"]})]); [/]
-    [# th:each="constraint : ${reg.constraints}"]
-    if ([(${constraint.check})]) return [(${constraint.value})];
-    [/]
-    return env->[(${reg.name_lower})][(${reg.c_array_index})];
-}
+[# th:each="access : ${base_accessors}"]
+[(${access.signature})]
+{
+    [(${access.body})] }
+[/]
 
-[(${reg.cpu_setter_signature})]
-{   [# th:each="dim : ${reg.index_dims}"]
-    assert( [(${dim.arg_name})] < [(${dim["size"]})]); [/]
-    [# th:each="constraint : ${reg.constraints}"]
-    if ([(${constraint.check})]) return;
-    [/]
-    env->[(${reg.name_lower})][(${reg.c_array_index})] = val;
+/* Alias accessors map unified ISS alias metadata to CPU-side helper access. */
+[# th:each="access : ${alias_cpu_read_accessors}"]
+[(${access.signature})]
+{
+    [(${access.body})]
+}
+[/]
+[# th:each="access : ${alias_cpu_write_accessors}"]
+[(${access.signature})]
+{
+    [(${access.body})]
+}
+[/]
+[# th:each="access : ${base_chunk_cpu_read_accessors}"]
+[(${access.signature})]
+{
+    [(${access.body})]
+}
+[/]
+[# th:each="access : ${base_chunk_cpu_write_accessors}"]
+[(${access.signature})]
+{
+    [(${access.body})]
 }
 [/]
 

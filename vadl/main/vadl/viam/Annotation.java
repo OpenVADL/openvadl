@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -78,6 +78,7 @@ public abstract class Annotation<T extends Definition> implements WithLocation {
    * Ensures that the condition is true. Otherwise, it will throw an error with the
    * definition's context.
    */
+  @Override
   @FormatMethod
   @Contract("false, _, _-> fail")
   public void ensure(boolean condition, String message, Object... args) {

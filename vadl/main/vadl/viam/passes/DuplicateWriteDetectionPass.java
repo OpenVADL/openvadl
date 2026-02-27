@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -33,15 +33,18 @@ import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.DiagnosticBuilder;
 import vadl.error.DiagnosticList;
+import vadl.iss.passes.extensions.RegInfo;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
 import vadl.viam.Definition;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -93,6 +96,7 @@ public class DuplicateWriteDetectionPass extends Pass {
       // if there are diagnostics throw them
       throw new DiagnosticList(
           diagnostics.stream().map(DiagnosticBuilder::build)
+              .distinct()
               .collect(Collectors.toList()));
     }
     return null;
@@ -143,8 +147,31 @@ class DuplicateWriteDetector {
    * in the same execution path.
    */
   void run() {
+    if (skipCheck()) {
+      // TODO: Improve write detection to support partial writes by applying slices
+      return;
+    }
     checkResourceType(WriteRegTensorNode.class, "Register is written twice at same index");
     checkResourceType(WriteMemNode.class, "Memory address is written twice");
+  }
+
+  private boolean skipCheck() {
+    var hasHelperOnlyRegAccess = behavior.getNodes(ReadResourceNode.class).anyMatch(n ->
+        n.resourceDefinition() instanceof RegisterTensor reg
+            && reg.hasExtension(RegInfo.class)
+            && reg.expectExtension(RegInfo.class).execClass() == RegInfo.ExecClass.HELPER_ONLY
+    ) || behavior.getNodes(WriteRegTensorNode.class).anyMatch(n ->
+        n.regTensor().hasExtension(RegInfo.class)
+            && n.regTensor().expectExtension(RegInfo.class).execClass()
+            == RegInfo.ExecClass.HELPER_ONLY
+    );
+    if (hasHelperOnlyRegAccess) {
+      return true;
+    }
+
+    // fallback for non-ISS pipelines where RegInfo is not attached
+    return behavior.getNodes(ReadResourceNode.class).anyMatch(n -> n.type().bitWidth() > 64)
+        || behavior.getNodes(WriteRegTensorNode.class).anyMatch(n -> n.writeBitWidth() > 64);
   }
 
   private <T extends WriteResourceNode> void checkResourceType(Class<T> resourceWriteType,
@@ -418,4 +445,3 @@ class DuplicateWriteDetector {
   }
 
 }
-

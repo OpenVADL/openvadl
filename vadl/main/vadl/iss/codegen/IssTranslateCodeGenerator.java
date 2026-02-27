@@ -29,6 +29,7 @@ import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.extensions.InstrInfo;
+import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
@@ -217,6 +218,11 @@ class DefaultGenerator implements
   @Handler
   void handle(CGenContext<Node> ctx, FoldNode toHandle) {
     throwNotAllowed(toHandle, "forall fold expressions");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, IssRegBitfieldWriteNode toHandle) {
+    throwNotAllowed(toHandle, "bitfield register writes should be lowered to TCG before codegen");
   }
 }
 

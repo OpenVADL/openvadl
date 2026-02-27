@@ -9,17 +9,7 @@
 
     <!-- Testcontainers recommended logging profile -->
     <logger name="org.testcontainers" level="INFO"/>
-    <logger name="tc" level="INFO"/>
-    <logger name="com.github.dockerjava" level="WARN"/>
-    <logger name="org.testcontainers.shaded.com.github.dockerjava" level="WARN"/>
-    <logger name="org.testcontainers.shaded.com.github.dockerjava.core.command.BuildImageResultCallback" level="DEBUG"/>
-    <logger name="com.github.dockerjava.core.command.BuildImageResultCallback" level="DEBUG"/>
-    <logger name="com.github.dockerjava.api.command.BuildImageResultCallback" level="DEBUG"/>
-    <logger name="com.github.dockerjava.zerodep.shaded.org.apache.hc.client5" level="OFF"/>
-    <logger name="org.testcontainers.shaded.com.github.dockerjava.zerodep.shaded.org.apache.hc.client5" level="OFF"/>
-    <logger name="com.github.dockerjava.zerodep.shaded.org.apache.hc.client5.http.wire" level="OFF"/>
-    <logger name="com.github.dockerjava.zerodep.shaded.org.apache.hc.client5.http.headers" level="OFF"/>
-    <logger name="org.apache.hc.client5.http.wire" level="OFF"/>
+    <logger name="tc" level="DEBUG"/>
 
     <root level="${LOG_LEVEL}">
         <appender-ref ref="STDOUT"/>

@@ -1064,18 +1064,18 @@ class UpcastAnnotation extends Annotation {
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
 
     var def = definition.values.getFirst();
-    ensure(def instanceof Identifier, () -> error("Invalid annotation value", def)
+    Diagnostic.ensure(def instanceof Identifier, () -> error("Invalid annotation value", def)
         .description("A single identifier was expected.")
     );
     var target = ((Identifier) def).target();
-    ensure(target instanceof Definition, () -> error("Invalid annotation value", def)
+    Diagnostic.ensure(target instanceof Definition, () -> error("Invalid annotation value", def)
         .description("The identifier must reference a definition."));
     targetDef = ((Definition) target);
 
     var valueExpr = definition.values.get(1);
     typeChecker.check(valueExpr);
     bitSize = typeChecker.constantEvaluator.eval(valueExpr);
-    ensure(bitSize.value().signum() > 0,
+    Diagnostic.ensure(bitSize.value().signum() > 0,
         () -> error("Bit size of type has to be bigger than zero", valueExpr));
   }
 
@@ -1285,7 +1285,7 @@ class ExprAnnotation extends Annotation {
   }
 
   public void verifyExprType(Type type) {
-    ensure(expr.type() == type, () -> error("Invalid annotation expression", expr)
+    Diagnostic.ensure(expr.type() == type, () -> error("Invalid annotation expression", expr)
         .locationDescription(expr, "Expression must be a %s", type));
   }
 }
@@ -1393,11 +1393,11 @@ class DefinitionRefAnnotation extends Annotation {
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
     for (var v : definition.values) {
-      ensure(v instanceof Identifier, () -> error("Invalid annotation value", v)
+      Diagnostic.ensure(v instanceof Identifier, () -> error("Invalid annotation value", v)
           .description("A single identifier was expected.")
       );
       var target = ((Identifier) v).target();
-      ensure(target instanceof Definition, () -> error("Invalid annotation value", v)
+      Diagnostic.ensure(target instanceof Definition, () -> error("Invalid annotation value", v)
           .description("The identifier must reference a definition."));
       def.add((Definition) target);
     }
@@ -1414,7 +1414,7 @@ class DefinitionRefAnnotation extends Annotation {
    * @return the casted definition.
    */
   public <T extends Definition> T verifyDefinitionType(Class<T> defClass) {
-    ensure(defClass.isInstance(def), () -> error("Invalid annotation value", firstVal())
+    Diagnostic.ensure(defClass.isInstance(def), () -> error("Invalid annotation value", firstVal())
         .locationDescription(firstVal(), "The identifier must reference a %s, but was %s",
             defClass.getSimpleName(),
             def));

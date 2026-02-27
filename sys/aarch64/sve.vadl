@@ -2,7 +2,9 @@ import aarch64::AArch64Base
 
 instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
-  constant VL           =  64             // vector length, number of bits in a vector register
+  model VLConst () : Int = {128}          // vector length as macro to act as macro condition
+
+  constant VL           = $VLConst        // vector length, number of bits in a vector register
   constant PL           = VL >> 3         // predicate length, number of elements in a predicate register
   constant NumBytesPL   = PL >> 3         // number of bytes in a predicate register
   constant NumElementsB = VL >> 3         // number of byte   sized elements in a vector register
@@ -24,6 +26,8 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
   constant Log2ElemB =   8                // number of bits required for the biggest element index
   constant NumZ = 32                      // number of vector registers in register file
+  constant VSize = if VL < 128            // size of the scalar view V on the vector registers
+    then VL else 128
 
   using IndexP = Bits4                    // index type for the 16 predicate register file
   using IndexE = Bits<Log2ElemB>          // the biggest index type for element indices
@@ -37,6 +41,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   using BitsH  = Half                     // 16 bit half word type
   using BitsS  = BitsW                    // 32 bit word type
   using BitsD  = BitsX                    // 64 bit double word type
+  using BitsV  = Bits<VSize>
 
   register   P : IndexP -> BitsP          // predicate register file
   register FFR :           BitsP          // first fault register, predicate register
@@ -46,6 +51,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   alias register ZH : BitsZH<NumZ> = Z    // half   vector register file
   alias register ZS : BitsZS<NumZ> = Z    // single vector register file
   alias register ZD : BitsZD<NumZ> = Z    // double vector register file
+  alias register V = Z(*)(VSize-1..0)    // scalar view of the vector registers
 
   enumeration ElSize =                    // element size encoding
     { SizeB = 0                           // byte   size
@@ -240,14 +246,15 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
   model SVEReductionInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
     instruction $i.id: SVEReductionFormat =
-      let pred  = P(pg) in
-      let elems = Z(zn) as $BitsBHSD($elSize) in
-        $BHSDReg($elSize)(vd)(0) :=
-          forall i : IndexE in 0..$elCount-1
+      let pred   = P(pg) in
+      let elems  = Z(zn) as $BitsBHSD($elSize) in
+      let result = forall i : IndexE in 0..$elCount-1
             fold $FoldOp($i.funct) with //$FoldOp($i.funct)
               if pred(i << ElSize::$elSize)
               then elems(i)
               else $NeutralElFold($i.funct; $elSize)
+          in
+      V(vd) := result as BitsV
     encoding $i.id = { op = 0b0000'0100, opc = $i.opcode, size = ElSize::$elSize }
     assembly $i.id = ( $i.mnemo, ' ', register(vd), $elStr, ', ', register(pg), ', ', register(zn), $elStr )
     }
@@ -255,14 +262,15 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   model SVEAddExtReductionInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
     [undefined when : size = 0b11]
     instruction $i.id: SVEReductionFormat =
-      let pred  = P(pg) in
-      let elems = Z(zn) as $BitsBHSD($elSize) in
-        ZD(vd)(0) :=
-          forall i : IndexE in 0..$elCount-1
+      let pred   = P(pg) in
+      let elems  = Z(zn) as $BitsBHSD($elSize) in
+      let result = forall i : IndexE in 0..$elCount-1
             fold + with
               if pred(i << ElSize::$elSize)
               then elems(i) as $i.funct
               else 0
+          in
+      V(vd) := result as UInt as BitsV
     encoding $i.id = { op = 0b0000'0100, opc = $i.opcode, size = ElSize::$elSize }
     assembly $i.id = ( $i.mnemo, ' ', register(vd), ', ', register(pg), ', ', register(zn), $elStr )
     }
@@ -295,7 +303,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
               ; _             => DecodePredCountW)
   }
 
-  model GenDecodePredCount (elSize: Id): IsaDefs = { 
+  model GenDecodePredCount (elSize: Id): IsaDefs = {
     function $BHSDDecodePredCount ($elSize)(pattern: Bits5) -> BitsX =
       let elCount = VL as BitsX >> (3 + ElSize::$elSize) in
         match pattern with
@@ -807,7 +815,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
   function Imm2lslU  (imm: Bits<2>)  -> String =
     if imm = 0 then "" else (", lsl #", udec(imm))
- 
+
   record MemSVE    (dtype: Id, elCount: Id, memBytes: Int, elSize: Id, elStr: Str, elType: Id, extStr: Str)
   record MulMemSVE (dtype: Id, elCount: Id, numVector: Id, elSize: Id, elStr: Str, extStr: Str)
 
@@ -1075,7 +1083,6 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     $modelid ($ExtInstrStr ($i; "D"); NumElementsD; SizeD; ".d")
     }
 
-
 // common sve and sme instructions *********************************************
 
   $InstrBHSD        (SVEArithmeticPredInstr    ; (SVEpredADD    ; "add"   ; 0b0000'0000      ; add      ))
@@ -1132,5 +1139,4 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   $InstrMemX12      (SVEStoreMulScalarImmInstr ; (SVEimmST      ; "st"    ; 0b111'0010'1     ; unused   ))
   $InstrMemX12      (SVELoadMulScalarSclInstr  ; (SVEsclLD      ; "ld"    ; 0b101'0010       ; unused   ))
   $InstrMemX12      (SVEStoreMulScalarSclInstr ; (SVEsclST      ; "st"    ; 0b111'0010       ; unused   ))
-
 }

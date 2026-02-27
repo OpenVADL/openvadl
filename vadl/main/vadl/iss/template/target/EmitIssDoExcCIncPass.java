@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,9 @@ import java.util.List;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.codegen.IssExceptionHandlingCodeGenerator;
+import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
 import vadl.iss.passes.extensions.ExceptionInfo;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -49,16 +51,20 @@ public class EmitIssDoExcCIncPass extends IssTemplateRenderingPass {
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
-    vars.put("do_exc_funcs", doExcFuncs(specification));
+    var accessorRegistry = passResults.lastResultOf(IssRegisterAccessInfoRetrievalPass.class,
+        IssAccessorRegistry.class);
+    vars.put("do_exc_funcs", doExcFuncs(specification, accessorRegistry));
     return vars;
   }
 
-  private List<String> doExcFuncs(Specification specification) {
+  private List<String> doExcFuncs(Specification specification,
+                                  IssAccessorRegistry accessorRegistry) {
     var isa = specification.processor().get().isa();
     var excInfo = isa.expectExtension(ExceptionInfo.class);
 
     return excInfo.entries().stream()
-        .map(e -> new IssExceptionHandlingCodeGenerator(e, configuration()).fetch())
+        .map(e -> new IssExceptionHandlingCodeGenerator(
+            e, configuration(), accessorRegistry).fetch())
         .toList();
   }
 

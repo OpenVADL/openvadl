@@ -18,11 +18,12 @@ package vadl.iss.codegen;
 
 import static vadl.error.DiagUtils.throwNotAllowed;
 
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.cppCodeGen.mixins.CInvalidMixins;
-import vadl.iss.passes.extensions.RegInfo;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.utils.functionInterfaces.TriConsumer;
@@ -39,6 +40,10 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 /**
  * A node dispatcher for procedure c code rendering in the ISS.
  *
+ * <p>Procedure/exception/helper generators preload register reads using unified ISS access
+ * metadata so emitted C variables follow the same accessor mapping contract as instruction paths.
+ * See {@code docs/iss/register-access-domain-map.md}.
+ *
  * @see IssResetGen
  */
 @DispatchFor(
@@ -51,13 +56,16 @@ abstract class IssProcGen implements CDefaultMixins.All,
 
   private final CNodeContext ctx;
   private final StringBuilder builder;
+  private final IssAccessorRegistry accessorRegistry;
 
-  public IssProcGen() {
-    this(IssProcGenDispatcher::dispatch);
+  public IssProcGen(IssAccessorRegistry accessorRegistry) {
+    this(accessorRegistry, IssProcGenDispatcher::dispatch);
   }
 
-  public <T extends IssProcGen> IssProcGen(TriConsumer<T, CNodeContext, Node> dispatcher) {
+  public <T extends IssProcGen> IssProcGen(IssAccessorRegistry accessorRegistry,
+                                           TriConsumer<T, CNodeContext, Node> dispatcher) {
     this.builder = new StringBuilder();
+    this.accessorRegistry = accessorRegistry;
     //noinspection unchecked
     this.ctx = new CNodeContext(
         builder::append,
@@ -73,6 +81,10 @@ abstract class IssProcGen implements CDefaultMixins.All,
     return builder;
   }
 
+  public IssAccessorRegistry accessorRegistry() {
+    return accessorRegistry;
+  }
+
   /**
    * Renders register reads at the current context state.
    * This is used to prevent read-write conflict during c-code rendering of unscheduled
@@ -86,11 +98,15 @@ abstract class IssProcGen implements CDefaultMixins.All,
   }
 
   void initSingleReadReg(ReadRegTensorNode read) {
-    var info = read.regTensor().expectExtension(RegInfo.class);
+    var width = read.type().asDataType().bitWidth();
+    read.ensure(width <= 64,
+        "Helper read preload expects <=64-bit reads, got %d-bit on %s", width, read);
+    var valueType = CppTypeMap.nextFittingUInt(read.type().asDataType());
     var name = readRegVariable(read);
-    ctx.wr(info.valueCType() + " " + name + " = ")
-        .wr("get_cpu_" + info.name().toLowerCase() + "(env");
-    for (var i : read.indices()) {
+    var accessName = RegisterAccessEmitters.readAccessorName(read, accessorRegistry);
+    ctx.wr(valueType + " " + name + " = ")
+        .wr(accessName + "(env");
+    for (var i : RegisterAccessEmitters.readAccessorArgs(read)) {
       ctx.wr(", ").gen(i);
     }
     ctx.ln(");");

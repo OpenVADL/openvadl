@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -22,8 +22,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.IssMoveNode;
+import vadl.iss.passes.nodes.IssReadRegNode;
+import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
@@ -51,6 +55,13 @@ import vadl.viam.graph.dependency.WriteStageOutputNode;
  * The TCG context is associated with an instruction.
  * It holds all necessary information required across multiple passes.
  * Most importantly the {@link Assignment}.
+ *
+ * <p>Register assignment requests consume unified ISS register nodes
+ * ({@link IssReadRegNode}/{@link IssWriteRegNode}) and map them to TCG variable identities.
+ * Accessor metadata is only used for full-window accesses; chunk-window accesses intentionally use
+ * base resource identities.
+ *
+ * <p>See {@code docs/iss/register-access-domain-map.md}.
  */
 public class TcgCtx extends DefinitionExtension<Instruction> {
 
@@ -118,7 +129,10 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
      * Get all tcg variables used in the assignment.
      */
     public Stream<TcgVRefNode> tcgVariables() {
-      return assignments.values().stream().flatMap(Collection::stream).distinct();
+      return Stream.concat(
+              assignments.values().stream().flatMap(Collection::stream),
+              tcgVCache.values().stream().flatMap(Collection::stream))
+          .distinct();
     }
 
     /**
@@ -145,8 +159,24 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
 
     @Handler
     List<TcgVRefNode> destOf(WriteRegTensorNode toHandle) {
+      var callIndices = toHandle instanceof IssWriteRegNode issWrite
+          && issWrite.windowKind() == IssWriteRegNode.WindowKind.FULL
+          && issWrite.accessorName() != null
+          ? issWrite.accessorIndices()
+          : toHandle.indices();
+      var accessorName = toHandle instanceof IssWriteRegNode issWrite
+          && issWrite.windowKind() == IssWriteRegNode.WindowKind.FULL
+          ? issWrite.accessorName()
+          : null;
       return assignments.computeIfAbsent(toHandle,
-          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), true));
+          n -> createRegVar(toHandle.resourceDefinition(), callIndices, true, accessorName));
+    }
+
+    @Handler
+    List<TcgVRefNode> destOf(IssRegBitfieldWriteNode toHandle) {
+      return assignments.computeIfAbsent(toHandle,
+          n -> createRegVar(toHandle.regTensor(), toHandle.indices(), true,
+              toHandle.aliasAccessorName()));
     }
 
     @Handler
@@ -161,8 +191,22 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
 
     @Handler
     List<TcgVRefNode> destOf(ReadRegTensorNode toHandle) {
+      if (toHandle instanceof IssReadRegNode issRead
+          && issRead.windowKind() == IssReadRegNode.WindowKind.CHUNK) {
+        return assignments.computeIfAbsent(toHandle, v -> createTempExprVar(toHandle));
+      }
+      var callIndices = toHandle instanceof IssReadRegNode issRead
+          && issRead.windowKind() == IssReadRegNode.WindowKind.FULL
+          && issRead.accessorName() != null
+          ? issRead.accessorIndices()
+          : toHandle.indices();
+      var accessorName = toHandle instanceof IssReadRegNode issRead
+          && issRead.windowKind() == IssReadRegNode.WindowKind.FULL
+          ? issRead.accessorName()
+          : null;
       return assignments.computeIfAbsent(toHandle,
-          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), false));
+          n -> createRegVar(
+              toHandle.resourceDefinition(), callIndices, false, accessorName));
     }
 
     @Handler
@@ -195,6 +239,30 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
     @Handler
     List<TcgVRefNode> handle(ProcCallNode toHandle) {
       throw new IllegalStateException("ProcCallNode should not exist here.");
+    }
+
+    /**
+     * Returns the base container TCG variable for a chunked register read.
+     *
+     * <p>Chunk reads lower to an explicit extract during TCG lowering, so they need access to the
+     * underlying full register container in addition to their own temporary result variable.
+     */
+    public TcgVRefNode singleBaseReadOf(IssReadRegNode read) {
+      read.ensure(read.windowKind() == IssReadRegNode.WindowKind.CHUNK,
+          "Expected a chunk-window register read.");
+      var baseType = read.regTensor().resultType(read.indices().size()).asDataType();
+      var baseRead = new IssReadRegNode(
+          read.regTensor(),
+          read.indices().copy(),
+          baseType,
+          read.staticCounterAccess(),
+          IssReadRegNode.AccessKind.BASE,
+          IssReadRegNode.ReadShape.FULL,
+          null,
+          null,
+          new NodeList<>(read.indices()));
+      return createRegVar(baseRead.resourceDefinition(), baseRead.indices(), false, null)
+          .getFirst();
     }
 
     private TcgVRefNode toNode(TcgV tcgV) {
@@ -237,8 +305,11 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
      * @return The variable corresponding to the register.
      */
     private List<TcgVRefNode> createRegVar(RegisterTensor reg,
-                                           NodeList<ExpressionNode> indices, boolean isDest) {
-      var key = Triple.of(reg, indices, isDest);
+                                           NodeList<ExpressionNode> indices,
+                                           boolean isDest,
+                                           @Nullable String accessorBaseName) {
+      var accessorKey = accessorBaseName == null ? "" : accessorBaseName;
+      var key = Triple.of(Triple.of(reg, indices, isDest), accessorKey, "");
       var dest = isDest ? "_dest" : "";
       return tcgVCache.computeIfAbsent(key, k -> {
         var idxStr = indices.stream().map(TcgPassUtils::exprVarName)
@@ -246,7 +317,7 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
         idxStr = idxStr.isEmpty() ? "" : "_" + idxStr;
         idxStr += dest;
         var regFileVar = TcgV.reg("reg_" + reg.simpleName().toLowerCase() + idxStr,
-            targetSize, reg, indices, isDest);
+            targetSize, reg, indices, accessorBaseName, isDest);
 
         // add index as dependency to var reference node
         return List.of(toNode(regFileVar, indices));

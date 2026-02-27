@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -22,9 +22,14 @@ import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.iss.IssUtils;
+import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.passes.extensions.RegInfo;
+import vadl.iss.passes.extensions.RegInfo.AliasAccessorDescriptor;
 import vadl.iss.template.IssRenderUtils;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -56,10 +61,13 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
+    var accessorRegistry = passResults.lastResultOf(IssRegisterAccessInfoRetrievalPass.class,
+        IssAccessorRegistry.class);
     vars.put("insn_width", getInstructionWidth(specification));
     vars.put("mem_word_size", getMemoryWordSize(specification));
     vars.put("trans_includes", translationIncludes(passResults));
     vars.put("tcg_v_init_code", genRegInitCode(specification));
+    vars.put("alias_accessors", renderAliasAccessors(accessorRegistry));
     return vars;
   }
 
@@ -126,6 +134,77 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
           sb.append("\n");
         });
     return sb.toString();
+  }
+
+  private List<Map<String, Object>> renderAliasAccessors(IssAccessorRegistry accessorRegistry) {
+    return accessorRegistry.aliasAccessors(RegInfo.AccessType.READ, RegInfo.BackendKind.TCG)
+        .stream()
+        .map(this::renderAliasAccessor)
+        .toList();
+  }
+
+  private Map<String, Object> renderAliasAccessor(AliasAccessorDescriptor descriptor) {
+    var alias = descriptor.alias();
+    var base = alias.semantics().baseTensor();
+    var dims = descriptor.accessorArgs().stream()
+        .map(arg -> Map.of(
+            "size", arg.size(),
+            "index_ctype", arg.ctype(),
+            "arg_name", arg.name()))
+        .toList();
+    var forwardArgs = renderBaseForwardArgs(descriptor);
+    var slice = alias.semantics().aliasSlice();
+    var zeroCheck = renderZeroCheck(descriptor.zeroGuard(), descriptor.accessorArgs());
+    return Map.ofEntries(
+        Map.entry("name_lower", descriptor.accessorBaseName()),
+        Map.entry("base_name_lower", base.simpleName().toLowerCase()),
+        Map.entry("getter_params", renderAccessorParams(descriptor.accessorArgs())),
+        Map.entry("index_dims", dims),
+        Map.entry("value_width", descriptor.owner().renderObj().get("value_width")),
+        Map.entry("alias_value_width", alias.resultType().bitWidth()),
+        Map.entry("has_slice", slice != null),
+        Map.entry("slice_lsb", slice == null ? 0 : slice.lsb()),
+        Map.entry("slice_width", slice == null ? alias.resultType().bitWidth() : slice.bitSize()),
+        Map.entry("zero_check", zeroCheck == null ? "" : zeroCheck),
+        Map.entry("has_zero_check", zeroCheck != null),
+        Map.entry("forward_args", forwardArgs)
+    );
+  }
+
+  private String renderAccessorParams(List<RegInfo.AccessorArg> args) {
+    var params = args.stream()
+        .map(arg -> arg.ctype() + " " + arg.name())
+        .collect(Collectors.joining(", "));
+    return params.isEmpty() ? "" : ", " + params;
+  }
+
+  private String renderBaseForwardArgs(AliasAccessorDescriptor descriptor) {
+    var args = descriptor.baseArgBindings().stream()
+        .map(binding -> {
+          if (binding instanceof RegInfo.FixedArgBinding fixed) {
+            return "((" + CppTypeMap.nextFittingUInt(fixed.value().type()) + ") "
+                + fixed.value().hexadecimal() + " )";
+          }
+          var forwarded = (RegInfo.ForwardedArgBinding) binding;
+          return descriptor.accessorArgs().get(forwarded.accessorArgIndex()).name();
+        })
+        .collect(Collectors.joining(", "));
+    return args.isEmpty() ? "" : ", " + args;
+  }
+
+  private @Nullable String renderZeroCheck(@Nullable RegInfo.ZeroGuard guard,
+                                           List<RegInfo.AccessorArg> args) {
+    if (guard == null) {
+      return null;
+    }
+    if (guard instanceof RegInfo.AlwaysZeroGuard) {
+      return "1";
+    }
+    var conditional = (RegInfo.ConditionalZeroGuard) guard;
+    return conditional.matches().stream()
+        .map(match -> args.get(match.accessorArgIndex()).name() + " == "
+            + match.value().intValue())
+        .collect(Collectors.joining(" && "));
   }
 
   private void regInitCode(CodeGeneratorAppendable sb, RegisterTensor reg) {

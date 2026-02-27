@@ -348,7 +348,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         ? tensorType.innerType() : resultType;
 
     ExpressionNode regAccess;
-    if (dimensions.size() == reg.indexDimensions().size()) {
+    var fixedArgsCount = requireNonNull(definition.computedFixedArgs).size();
+    if (indices.size() == reg.indexDimensions().size()) {
       // Mapping of indexes of register and alias is the same.
       regAccess = new ReadRegTensorNode(
           reg,
@@ -356,7 +357,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           (DataType) getViamType(regReadType),
           null
       );
-    } else if (dimensions.size() > reg.indexDimensions().size()) {
+    } else if (indices.size() > reg.indexDimensions().size()) {
       // Expansion Alias
       // register R: Bits<4><4>
       // alisas register A: Bits<4><2><2>
@@ -373,7 +374,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       );
 
       var remainingIndices = indices.stream().skip(consumedDimensions).toList();
-      var remainingDimensions = dimensions.stream().skip(consumedDimensions).toList();
+      var dynamicConsumed = Math.max(0, consumedDimensions - fixedArgsCount);
+      var remainingDimensions = dimensions.stream().skip(dynamicConsumed).toList();
       ensureExpansionAliasSliceFits(definition, reg.resultType(consumedDimensions),
           resultType, remainingDimensions);
       var msbLsb = getMsbAndLsbOfIndexAccess(reg.resultType(consumedDimensions), resultType,
@@ -381,7 +383,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var msb = msbLsb.left();
       var lsb = msbLsb.right();
       regAccess = new DynSliceNode(regAccess, msb, lsb, (DataType) getViamType(resultType));
-    } else if (dimensions.size() < reg.indexDimensions().size()) {
+    } else if (indices.size() < reg.indexDimensions().size()) {
       // Compression Alias
       // FIXME: Implement compression aliases
       // We keep the wrong implementation here for some tests
@@ -507,7 +509,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var regIndicies = indices.stream().limit(reg.indexDimensions().size())
         .collect(Collectors.toCollection(NodeList::new));
-    if (dimensions.size() > reg.indexDimensions().size()) {
+    var fixedArgsCount = requireNonNull(definition.computedFixedArgs).size();
+    if (indices.size() > reg.indexDimensions().size()) {
       // Expansion Alias
       // register R: Bits<4><4>
       // alisas register A: Bits<4><2><2>
@@ -520,7 +523,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
       // 1) Calculate msb and lsb
       var remainingIndices = indices.stream().skip(consumedDimensions).toList();
-      var remainingDimensions = dimensions.stream().skip(consumedDimensions).toList();
+      var dynamicConsumed = Math.max(0, consumedDimensions - fixedArgsCount);
+      var remainingDimensions = dimensions.stream().skip(dynamicConsumed).toList();
       ensureExpansionAliasSliceFits(definition, reg.resultType(consumedDimensions),
           resultType, remainingDimensions);
       var msbLsb = getMsbAndLsbOfIndexAccess(reg.resultType(consumedDimensions), resultType,
@@ -553,7 +557,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
       // 5) Merge the original and the new value
       writeValue = BuiltInTable.OR.call(original, writeValue);
-    } else if (dimensions.size() < reg.indexDimensions().size()) {
+    } else if (indices.size() < reg.indexDimensions().size()) {
       // Compression Alias
       // FIXME: Implement compression aliases
       DeferredDiagnosticStore.add(warning("Compression Alias Not Yet Implemented", definition)
@@ -1066,7 +1070,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           .orElseThrow();
 
       return new ForIdxNode(
-          getViamType(expr.type()),
+          forallIndexType(getViamType(expr.type())),
           requireNonNull(index.computedFrom),
           requireNonNull(index.computedTo));
     }
@@ -1079,7 +1083,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           .orElseThrow();
 
       return new ForIdxNode(
-          getViamType(expr.type()),
+          forallIndexType(getViamType(expr.type())),
           requireNonNull(index.computedFrom),
           requireNonNull(index.computedTo));
     }
@@ -1585,7 +1589,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     var index = requireNonNull(expr.indices.getFirst());
-    var idx = new ForIdxNode(requireNonNull(index.typeLiteral).type(),
+    var idx = new ForIdxNode(forallIndexType(requireNonNull(index.typeLiteral).type()),
         requireNonNull(index.computedFrom),
         requireNonNull(index.computedTo));
 
@@ -1895,7 +1899,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var index = requireNonNull(statement.indices.getFirst());
     var idx =
-        new ForIdxNode(requireNonNull(index.typeLiteral).type(), requireNonNull(index.computedFrom),
+        new ForIdxNode(forallIndexType(requireNonNull(index.typeLiteral).type()),
+            requireNonNull(index.computedFrom),
             requireNonNull(index.computedTo));
     var branchBegin = addToGraph(new BranchBeginNode(next));
     var forallNode = addToGraph(new ForallNode(idx, branchBegin));
@@ -1917,6 +1922,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var mergeNode = addToGraph(new MergeNode(new NodeList<>(ifEnd, elseEnd)));
     var ifNode = addToGraph(new IfNode(condition, ifStart, elseStart));
     return SubgraphContext.of(statement, ifNode, mergeNode);
+  }
+
+  private static Type forallIndexType(Type type) {
+    return Type.bits(type.asDataType().bitWidth());
   }
 
   @Override

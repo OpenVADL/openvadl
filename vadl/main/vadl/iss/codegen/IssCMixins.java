@@ -19,6 +19,7 @@ package vadl.iss.codegen;
 import static vadl.iss.IssUtils.internalError;
 
 import vadl.cppCodeGen.context.CGenContext;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssMoveNode;
@@ -200,29 +201,20 @@ public interface IssCMixins {
    * Implements the register write in the {@code cpu.c}.
    */
   interface CpuSourceWriteRegTensor {
+    IssAccessorRegistry accessorRegistry();
 
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx,
                         WriteRegTensorNode node) {
-      var reg = node.regTensor();
-      ctx.wr("set_cpu_" + reg.simpleName().toLowerCase() + "(env");
-      for (var i : node.indices()) {
-        ctx.wr(", ").gen(i);
-      }
-      ctx.wr(", ").gen(node.value()).wr(")");
+      RegisterAccessEmitters.emitWrite(ctx, node, accessorRegistry());
     }
 
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx,
                         ReadRegTensorNode node) {
-      var reg = node.regTensor();
-      ctx.wr("get_cpu_" + reg.simpleName().toLowerCase() + "(env");
-      for (var i : node.indices()) {
-        ctx.wr(", ").gen(i);
-      }
-      ctx.wr(")");
+      RegisterAccessEmitters.emitRead(ctx, node, accessorRegistry());
     }
   }
 
@@ -250,17 +242,44 @@ public interface IssCMixins {
     @SuppressWarnings("MissingJavadocMethod")
     static void handle(CGenContext<Node> ctx, ReadMemNode node, boolean withGetPcRetAddr) {
       var bitWidth = node.readBitWidth();
-      var suffix = switch (bitWidth) {
+      var ra = withGetPcRetAddr ? "GETPC()" : "0";
+      if (bitWidth <= 64) {
+        var suffix = switch (bitWidth) {
+          case 8 -> "ub";
+          case 16 -> "uw";
+          case 32 -> "l";
+          case 64 -> "q";
+          default -> throw new IllegalArgumentException(
+              "Unsupported memory read width: " + bitWidth);
+        };
+        ctx.wr("cpu_ld" + suffix + "_data_ra(env, ");
+        ctx.gen(node.address()).wr(", ").wr(ra).wr(")");
+        return;
+      }
+
+      if (bitWidth > 128) {
+        throw new IllegalArgumentException("Unsupported memory read width: " + bitWidth);
+      }
+
+      // Compose wide read from low 64-bit chunk and upper remaining chunk.
+      var highWidth = bitWidth - 64;
+      var highSuffix = switch (highWidth) {
         case 8 -> "ub";
         case 16 -> "uw";
         case 32 -> "l";
         case 64 -> "q";
         default -> throw new IllegalArgumentException(
-            "Unsupported memory read width: " + bitWidth);
+            "Unsupported memory read chunk width: " + highWidth);
       };
-      var ra = withGetPcRetAddr ? "GETPC()" : "0";
-      ctx.wr("cpu_ld" + suffix + "_data_ra(env, ");
+
+      ctx.wr("VADL_concat(");
+      ctx.wr("cpu_ld").wr(highSuffix).wr("_data_ra(env, VADL_add(");
+      ctx.gen(node.address());
+      ctx.wr(", 64, ((uint64_t) 8), 64), ").wr(ra).wr(")");
+      ctx.wr(", ").wr(Integer.toString(highWidth)).wr(", ");
+      ctx.wr("cpu_ldq_data_ra(env, ");
       ctx.gen(node.address()).wr(", ").wr(ra).wr(")");
+      ctx.wr(", 64)");
     }
 
     /// In helper functions IO operations require the return address for unwinding.
@@ -269,18 +288,53 @@ public interface IssCMixins {
     @SuppressWarnings("MissingJavadocMethod")
     static void handle(CGenContext<Node> ctx, WriteMemNode node, boolean withGetPcRetAddr) {
       var bitWidth = node.writeBitWidth();
-      var suffix = switch (bitWidth) {
-        case 8 -> "b";
-        case 16 -> "w";
-        case 32 -> "l";
-        case 64 -> "q";
-        default -> throw new IllegalArgumentException(
-            "Unsupported memory write width: " + bitWidth);
-      };
       var ra = withGetPcRetAddr ? "GETPC()" : "0";
-      ctx.wr("cpu_st" + suffix + "_data_ra(env, ");
-      ctx.gen(node.address()).wr(", ");
-      ctx.gen(node.value()).wr(",").wr(ra).wr(")");
+      if (bitWidth <= 64) {
+        var suffix = switch (bitWidth) {
+          case 8 -> "b";
+          case 16 -> "w";
+          case 32 -> "l";
+          case 64 -> "q";
+          default -> throw new IllegalArgumentException(
+              "Unsupported memory write width: " + bitWidth);
+        };
+        ctx.wr("cpu_st" + suffix + "_data_ra(env, ");
+        ctx.gen(node.address()).wr(", ");
+        ctx.gen(node.value()).wr(",").wr(ra).wr(")");
+        return;
+      }
+
+      // Split wide writes into <=64-bit stores at increasing byte offsets.
+      var chunks = (bitWidth + 63) / 64;
+      for (int chunk = 0; chunk < chunks; chunk++) {
+        var chunkOffset = chunk * 64;
+        var chunkWidth = Math.min(64, bitWidth - chunkOffset);
+        var suffix = switch (chunkWidth) {
+          case 8 -> "b";
+          case 16 -> "w";
+          case 32 -> "l";
+          case 64 -> "q";
+          default -> throw new IllegalArgumentException(
+              "Unsupported memory write chunk width: " + chunkWidth);
+        };
+        if (chunk > 0) {
+          ctx.ln(";");
+        }
+        ctx.wr("cpu_st").wr(suffix).wr("_data_ra(env, ");
+        if (chunkOffset == 0) {
+          ctx.gen(node.address());
+        } else {
+          ctx.wr("VADL_add(");
+          ctx.gen(node.address());
+          ctx.wr(", 64, ").wr("((").wr("uint64_t").wr(") ").wr(Integer.toString(chunkOffset / 8))
+              .wr("), 64)");
+        }
+        ctx.wr(", VADL_slice(");
+        ctx.gen(node.value());
+        var chunkMsb = chunkOffset + chunkWidth - 1;
+        ctx.wr(", 1, ").wr(Integer.toString(chunkMsb)).wr(", ").wr(Integer.toString(chunkOffset))
+            .wr("),").wr(ra).wr(")");
+      }
     }
   }
 

@@ -30,6 +30,10 @@ public enum DumpMode {
    */
   ALWAYS,
   /**
+   * Dumps one DOT graph per instruction behavior after each ISS pass.
+   */
+  ISS_PASS_GRAPHS,
+  /**
    * Dumps are only generated if an internal error occurs.
    */
   ON_FAILURE,

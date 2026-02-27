@@ -22,8 +22,10 @@ import java.util.stream.Stream;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.codegen.IssCpuFunctionGenerator;
 import vadl.iss.codegen.IssInstrHelperGenerator;
+import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.extensions.InstrInfo;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -46,29 +48,33 @@ public class EmitIssHelperCPass extends IssTemplateRenderingPass {
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
-    vars.put("instr_helper_impls", helperImplementations(specification));
+    var accessorRegistry = passResults.lastResultOf(IssRegisterAccessInfoRetrievalPass.class,
+        IssAccessorRegistry.class);
+    vars.put("instr_helper_impls", helperImplementations(specification, accessorRegistry));
     return vars;
   }
 
-  private List<String> helperImplementations(Specification specification) {
+  private List<String> helperImplementations(Specification specification,
+                                             IssAccessorRegistry accessorRegistry) {
     return specification.isa().get().ownInstructions().stream()
         .map(TcgPassUtils::instrInfo)
         .filter(InstrInfo::asHelperCall)
         .flatMap(e -> Stream.concat(
-            instrExtractedFunctionImpl(e),
-            Stream.of(instrHelperImpl(e))
+            instrExtractedFunctionImpl(e, accessorRegistry),
+            Stream.of(instrHelperImpl(e, accessorRegistry))
         ))
         .toList();
   }
 
-  private String instrHelperImpl(InstrInfo info) {
-    return new IssInstrHelperGenerator(configuration(), info).fetch();
+  private String instrHelperImpl(InstrInfo info, IssAccessorRegistry accessorRegistry) {
+    return new IssInstrHelperGenerator(configuration(), info, accessorRegistry).fetch();
   }
 
-  private Stream<String> instrExtractedFunctionImpl(InstrInfo info) {
+  private Stream<String> instrExtractedFunctionImpl(InstrInfo info,
+                                                    IssAccessorRegistry accessorRegistry) {
     var cpuStateName = "CPU" + configuration().targetName().toUpperCase() + "State";
     return info.extractedFunctions().stream()
-        .map(f -> new IssCpuFunctionGenerator(f).fetch(cpuStateName));
+        .map(f -> new IssCpuFunctionGenerator(f, accessorRegistry).fetch(cpuStateName));
   }
 
 }

@@ -19,6 +19,8 @@ package vadl.iss.template.target;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.codegen.IssResetGen;
+import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.utils.codegen.CCodeBuilder;
@@ -44,14 +46,25 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
+    var accessorRegistry = passResults.lastResultOf(IssRegisterAccessInfoRetrievalPass.class,
+        IssAccessorRegistry.class);
     vars.put("reg_dump_code", dumpRegsCode(specification));
-    vars.put("reset", getResetCode(specification));
+    vars.put("reset", getResetCode(specification, accessorRegistry));
+    vars.put("base_accessors", accessorRegistry.baseAccessors());
+    vars.put("alias_cpu_read_accessors",
+        AliasCpuAccessors.renderReadAccessors(accessorRegistry, configuration()));
+    vars.put("alias_cpu_write_accessors",
+        AliasCpuAccessors.renderWriteAccessors(accessorRegistry, configuration()));
+    vars.put("base_chunk_cpu_read_accessors",
+        BaseChunkCpuAccessors.renderReadAccessors(specification, configuration()));
+    vars.put("base_chunk_cpu_write_accessors",
+        BaseChunkCpuAccessors.renderWriteAccessors(specification, configuration()));
     return vars;
   }
 
-  private String getResetCode(Specification specification) {
+  private String getResetCode(Specification specification, IssAccessorRegistry accessorRegistry) {
     var proc = specification.processor().get();
-    return new IssResetGen(proc.reset()).fetch();
+    return new IssResetGen(proc.reset(), accessorRegistry).fetch();
   }
 
   private String dumpRegsCode(Specification specification) {
@@ -77,24 +90,39 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
       sb.callStmt("qemu_fprintf", "f",
           "\" " + reg.simpleName() + ":    \" TARGET_FMT_lx \"\\n\"",
           "env->" + regLower);
-      sb.append("qemu_fprintf(f, \" %s:    \" TARGET_FMT_lx \"\\n\", env->%s);"
-          .formatted(reg.simpleName(), regLower));
     } else if (dims.size() == 1) {
-      sb.forLoop("i", dims.getFirst().size(), (_) -> {
-        sb.callStmt("qemu_fprintf", "f", "\" %-8s \" TARGET_FMT_lx", names + "[i]",
-            "env->" + regLower + "[i]");
-        sb.ifStmt("i & 3 == 3", (_) ->
-            sb.callStmt("qemu_fprintf", "f", "\"\\n\"")
-        );
-      });
+      var flatSize = dims.getFirst().size();
+      var isWideElement = reg.resultType().bitWidth() > 64;
+
+      if (isWideElement) {
+        var bytesPerReg = reg.resultType().bitWidth() / 8;
+        sb.varDecl("uint8_t *", "p", "(uint8_t *) env->" + regLower);
+        sb.forLoop("i", flatSize, (_) -> {
+          sb.callStmt("qemu_fprintf", "f", "\" %-8s \"", names + "[i]");
+          sb.forLoop("int j = " + (bytesPerReg - 1), "j >= 0", "j--", (_) -> {
+            sb.callStmt("qemu_fprintf", "f", "\"%02x\"",
+                "*(p + i * " + bytesPerReg + " + j)");
+          });
+          sb.callStmt("qemu_fprintf", "f", "\"\\n\"");
+        });
+      } else {
+        sb.forLoop("i", flatSize, (_) -> {
+          sb.callStmt("qemu_fprintf", "f", "\" %-8s \" TARGET_FMT_lx", names + "[i]",
+              "env->" + regLower + "[i]");
+          sb.ifStmt("(i & 3) == 3", (_) ->
+              sb.callStmt("qemu_fprintf", "f", "\"\\n\"")
+          );
+        });
+      }
     } else {
       sb.forLoop("i", dims.getFirst().size(), (_) -> {
         sb.callStmt("qemu_fprintf", "f", "\" %-8s \"", names + "[i]");
         sb.varDecl("uint8_t *", "p", "(uint8_t *) env->" + regLower);
         var innerSizeBytes = reg.resultType(1).bitWidth() / 8;
-        sb.forLoop("int j = " + innerSizeBytes, "j >= 0", "j--", (_) -> {
+        sb.forLoop("int j = " + (innerSizeBytes - 1), "j >= 0", "j--", (_) -> {
           sb.callStmt("qemu_fprintf", "f", "\"%02x\"", "*(p + i * " + innerSizeBytes + " + j)");
         });
+        sb.callStmt("qemu_fprintf", "f", "\"\\n\"");
       });
     }
   }

@@ -19,15 +19,26 @@ package vadl.iss.passes.opDecomposition;
 import static vadl.utils.StreamUtils.only;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
+import java.util.ArrayList;
+import java.util.HashSet;
 import javax.annotation.Nullable;
+import vadl.iss.passes.nodes.IssReadRegNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
+import vadl.iss.passes.opDecomposition.decomposer.ArithmeticDecomposer;
+import vadl.iss.passes.opDecomposition.decomposer.FoldDecomposer;
+import vadl.iss.passes.opDecomposition.decomposer.LogicDecomposer;
 import vadl.iss.passes.opDecomposition.decomposer.ShiftDecomposer;
+import vadl.iss.passes.opDecomposition.decomposer.TensorDecomposer;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.types.BuiltInTable;
+import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.utils.GraphUtils;
 import vadl.utils.VadlBuiltInEmptyNoStatusDispatcher;
+import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -66,6 +77,13 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * The request is dispatched to the correct implementation, which than takes care of
  * returning an expression that represents the result of the requested slice.
  * It must only use operations that are smaller equal the target size.
+ *
+ * <p>For register accesses this pass emits unified {@link IssReadRegNode}/{@link IssWriteRegNode}
+ * nodes with chunk window metadata instead of backend-specific chunk node types.
+ * This keeps one register-access representation across decomposition, accessor-descriptor retrieval
+ * and code generation.
+ *
+ * <p>See {@code docs/iss/register-access-domain-map.md}.
  */
 @DispatchFor(
     value = ExpressionNode.class,
@@ -74,7 +92,9 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 )
 @SuppressWarnings("OverloadMethodsDeclarationOrder")
 class Decomposer
-    implements VadlBuiltInEmptyNoStatusDispatcher<Decomposer.Request>, ShiftDecomposer {
+    implements VadlBuiltInEmptyNoStatusDispatcher<Decomposer.Request>, ShiftDecomposer,
+    LogicDecomposer,
+    ArithmeticDecomposer, TensorDecomposer, FoldDecomposer {
 
   record Slice(int hi, int lo) {
     int width() {
@@ -124,7 +144,33 @@ class Decomposer
       // if the replacement is the same as the original, we can skip the replace
       return;
     }
+    ensureSubgraphWithinTarget(repl);
     expr.replaceAndDelete(repl);
+  }
+
+  /**
+   * Ensures that the decomposition result subgraph does not contain non-read expressions that
+   * exceed the target width. This catches illegal decomposition outputs early.
+   */
+  private void ensureSubgraphWithinTarget(ExpressionNode root) {
+    var nodes = new ArrayList<ExpressionNode>();
+    root.collectInputsWithChildren(nodes, ExpressionNode.class);
+
+    var visited = new HashSet<ExpressionNode>();
+    visited.add(root);
+    visited.addAll(nodes);
+
+    for (var node : visited) {
+      if (node.isDeleted()) {
+        continue;
+      }
+      if (!(node.type() instanceof DataType dt)) {
+        continue;
+      }
+      node.ensure(dt.bitWidth() <= targetSize,
+          "Decomposer produced node above target width: %s (%d > %d)",
+          node, dt.bitWidth(), targetSize);
+    }
   }
 
   void decompose(SideEffectNode sideEffect) {
@@ -174,14 +220,14 @@ class Decomposer
   }
 
   private ExpressionNode request(ExpressionNode node, Slice slice) {
-    if (slice.lo() == 0 && node.type().asDataType().bitWidth() <= targetSize) {
-      // if the slice is just a truncate and the node does fit in the target size, we
-      // can just truncate and return it.
-      if (node.type().asDataType().bitWidth() - 1 == slice.hi()) {
+    var nodeWidth = node.type().asDataType().bitWidth();
+    if (nodeWidth <= targetSize) {
+      // For already-mappable nodes, avoid recursive decomposition completely and
+      // just materialize the requested slice directly.
+      if (slice.lo() == 0 && nodeWidth - 1 == slice.hi()) {
         return node;
-      } else {
-        return GraphUtils.truncate(node, Type.bits(slice.width()));
       }
+      return GraphUtils.slice(node, slice.hi(), slice.lo());
     }
 
     return internalRequest(node, slice);
@@ -191,7 +237,7 @@ class Decomposer
     var req = new Request(slice);
     DecomposerDispatcher.dispatch(this, req, node);
     if (req.result == null) {
-      throw new IllegalStateException("Not yet implemented: " + node);
+      node.fail("No decomposition result was produced for %s", node.getClass().getSimpleName());
     }
     return req.result;
   }
@@ -251,9 +297,7 @@ class Decomposer
     }
 
     // Delete the original large write
-    for (var end : ends) {
-      end.removeSideEffect(write);
-    }
+    removeFromAllEndSideEffects(write);
     write.safeDelete();
   }
 
@@ -264,55 +308,30 @@ class Decomposer
     }
 
     var regTensor = write.regTensor();
-    var indices = write.indices();
     var value = write.value();
     var condition = write.nullableCondition();
-    var staticCounterAccess = write.staticCounterAccess();
     var graph = write.ensureGraph();
 
     var ends = write.usages().gather(only(AbstractEndNode.class)).toList();
-
-    // Always decompose to innermost dimension (individual registers)
-    int innermostSize = regTensor.innermostDim().size();
-    int maxIndices = regTensor.maxNumberOfAccessIndices();
-
-    // Calculate how many innermost registers we need to write
-    int registersNeeded = writeWidth / innermostSize;
-    write.ensure(writeWidth % innermostSize == 0,
-        "Write width %d is not a multiple of innermost dimension size %d",
-        writeWidth, innermostSize);
-
-    // Calculate dimension sizes for multi-dimensional indexing
-    var dims = regTensor.dimensions();
-    int[] dimSizes = new int[maxIndices];
-    for (int d = 0; d < maxIndices; d++) {
-      dimSizes[d] = dims.get(d).size();
-    }
-
-    // Split the write into multiple writes to individual innermost registers
-    for (int i = 0; i < registersNeeded; i++) {
-      int lsb = i * innermostSize;
-      int msb = lsb + innermostSize - 1;
-
-      // Extract slice of the value for this innermost register
-      var chunkValue = request(value, msb, lsb);
-
-      // Calculate multi-dimensional index from linear index i
-      var newIndices = indices.copy();
-      int remaining = i;
-      for (int d = indices.size(); d < maxIndices; d++) {
-        int dimIndex = remaining % dimSizes[d];
-        remaining /= dimSizes[d];
-        var indexConst = Constant.Value.of(dimIndex, dims.get(d).indexType()).toNode();
-        newIndices.add(indexConst);
-      }
-
-      // Create new WriteRegTensorNode for this innermost register
-      var chunkWrite = graph.addWithInputs(
-          new WriteRegTensorNode(regTensor, newIndices, chunkValue, staticCounterAccess,
-              condition));
-
-      // Preserve source location
+    for (int chunkOffset = 0; chunkOffset < writeWidth; chunkOffset += targetSize) {
+      int chunkWidth = Math.min(targetSize, writeWidth - chunkOffset);
+      int chunkMsb = chunkOffset + chunkWidth - 1;
+      var chunkValue = request(value, chunkMsb, chunkOffset);
+      var chunkWrite = graph.addWithInputs(new IssWriteRegNode(
+          regTensor,
+          write.indices().copy(),
+          chunkValue,
+          write.staticCounterAccess(),
+          condition,
+          writeAccessKind(write),
+          writeGuardKind(write),
+          writeAccessorName(write),
+          writeAliasResource(write),
+          writeAccessorIndices(write),
+          IssWriteRegNode.WindowKind.CHUNK,
+          Constant.Value.of(chunkOffset, Type.bits(32)).toNode(),
+          Constant.Value.of(chunkWidth, Type.bits(32)).toNode()
+      ));
       chunkWrite.setSourceLocation(write.location());
 
       for (var end : ends) {
@@ -321,10 +340,21 @@ class Decomposer
     }
 
     // Delete the original large write
-    for (var end : ends) {
-      end.removeSideEffect(write);
-    }
+    removeFromAllEndSideEffects(write);
     write.safeDelete();
+  }
+
+  private void removeFromAllEndSideEffects(SideEffectNode sideEffect) {
+    var removed = true;
+    while (removed) {
+      removed = false;
+      for (var usage : sideEffect.usages().toList()) {
+        if (usage instanceof AbstractEndNode end && end.sideEffects().contains(sideEffect)) {
+          end.removeSideEffect(sideEffect);
+          removed = true;
+        }
+      }
+    }
   }
 
   @Override
@@ -394,6 +424,99 @@ class Decomposer
     rq.result = lsrDecompose(currCall, rq.slice.hi(), rq.slice.lo());
   }
 
+  @Override
+  public void handleLSL(Request rq) {
+    rq.result = lslDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleOR(Request rq) {
+    rq.result = orDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleAND(Request rq) {
+    rq.result = andDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleXOR(Request rq) {
+    rq.result = xorDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleADD(Request rq) {
+    rq.result = addDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleSUB(Request rq) {
+    rq.result = subDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleUDIV(Request rq) {
+    rq.result = udivDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleUMOD(Request rq) {
+    rq.result = umodDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  private void handleCompare(Request rq) {
+    // Compare built-ins produce a single result bit. When a wider slice is requested,
+    // bit 0 carries the compare result and higher bits are zero.
+    if (rq.slice.lo() > 0) {
+      rq.result = Constant.Value.zero(Type.bits(rq.slice.width())).toNode();
+      return;
+    }
+
+    var lhs = currCall.arg(0);
+    var rhs = currCall.arg(1);
+    var width = lhs.type().asDataType().bitWidth();
+
+    ExpressionNode cmpBit = null;
+    for (int chunkLo = 0; chunkLo < width; chunkLo += targetSize) {
+      int chunkHi = Math.min(chunkLo + targetSize - 1, width - 1);
+      var lhsChunk = request(lhs, chunkHi, chunkLo);
+      var rhsChunk = request(rhs, chunkHi, chunkLo);
+      var chunkCmp = currCall.builtIn() == BuiltInTable.EQU
+          ? GraphUtils.equ(lhsChunk, rhsChunk)
+          : GraphUtils.neq(lhsChunk, rhsChunk);
+      if (cmpBit == null) {
+        cmpBit = chunkCmp;
+      } else {
+        cmpBit = currCall.builtIn() == BuiltInTable.EQU
+            ? GraphUtils.and(cmpBit, chunkCmp)
+            : GraphUtils.or(cmpBit, chunkCmp);
+      }
+    }
+
+    // Defensive fallback for zero-width compare inputs (should not happen for valid data types).
+    if (cmpBit == null) {
+      cmpBit = Constant.Value.one(Type.bool()).toNode();
+    }
+
+    cmpBit = GraphUtils.truncate(cmpBit, Type.bits(1));
+    if (rq.slice.width() == 1) {
+      rq.result = cmpBit;
+      return;
+    }
+
+    rq.result = GraphUtils.zeroExtend(cmpBit, Type.bits(rq.slice.width()));
+  }
+
+  @Override
+  public void handleEQU(Request rq) {
+    handleCompare(rq);
+  }
+
+  @Override
+  public void handleNEQ(Request rq) {
+    handleCompare(rq);
+  }
+
 
   @Handler
   void handle(Request rq, MiaBuiltInCall toHandle) {
@@ -402,9 +525,17 @@ class Decomposer
 
   @Handler
   void handle(Request rq, ReadRegTensorNode toHandle) {
+    if (toHandle instanceof IssReadRegNode readRegNode) {
+      handle(rq, readRegNode);
+      return;
+    }
+    toHandle.ensure(false,
+        "Unexpected ReadRegTensorNode in ISS op decomposition; expected IssReadRegNode.");
+  }
+
+  void handle(Request rq, IssReadRegNode toHandle) {
     var regTensor = toHandle.regTensor();
-    var indices = toHandle.indices();
-    var readWidth = regTensor.resultType(indices.size()).bitWidth();
+    var readWidth = toHandle.readBitWidth();
 
     // Ensure the requested slice is within bounds
     toHandle.ensure(rq.slice.hi() < readWidth,
@@ -419,46 +550,35 @@ class Decomposer
       return;
     }
 
-    // Need to decompose: read one or more innermost registers
-    int innermostSize = regTensor.innermostDim().size();
-    int maxIndices = regTensor.maxNumberOfAccessIndices();
-
-    // Calculate which innermost registers contain our requested slice
-    int firstRegIdx = rq.slice.lo() / innermostSize;
-    int lastRegIdx = rq.slice.hi() / innermostSize;
-
-    // Calculate dimension sizes for multi-dimensional indexing
-    var dims = regTensor.dimensions();
-    int[] dimSizes = new int[maxIndices];
-    for (int d = 0; d < maxIndices; d++) {
-      dimSizes[d] = dims.get(d).size();
-    }
-
+    // Need to decompose: read one or more target-sized windows.
+    // We emit exact requested windows directly in IssReadRegNode chunk metadata,
+    // so no follow-up SliceNode is necessary.
+    int firstChunkIdx = rq.slice.lo() / targetSize;
+    int lastChunkIdx = rq.slice.hi() / targetSize;
     ExpressionNode result = null;
 
-    // Read each innermost register that contains part of the requested slice
-    for (int regIdx = firstRegIdx; regIdx <= lastRegIdx; regIdx++) {
-      int regLsb = regIdx * innermostSize;
-
-      // Calculate multi-dimensional index from linear index
-      var newIndices = indices.copy();
-      int remaining = regIdx;
-      for (int d = indices.size(); d < maxIndices; d++) {
-        int dimIndex = remaining % dimSizes[d];
-        remaining /= dimSizes[d];
-        var indexConst = Constant.Value.of(dimIndex, dims.get(d).indexType()).toNode();
-        newIndices.add(indexConst);
-      }
-
-      // Read this innermost register
-      var regRead = new ReadRegTensorNode(
+    for (int chunkIdx = firstChunkIdx; chunkIdx <= lastChunkIdx; chunkIdx++) {
+      int chunkOffset = chunkIdx * targetSize;
+      int chunkWidth = Math.min(targetSize, readWidth - chunkOffset);
+      int requestedLsbInChunk = Math.max(rq.slice.lo(), chunkOffset);
+      int requestedMsbInChunk = Math.min(rq.slice.hi(), chunkOffset + chunkWidth - 1);
+      int requestedWidth = requestedMsbInChunk - requestedLsbInChunk + 1;
+      var chunkRead = new IssReadRegNode(
           regTensor,
-          newIndices,
-          Type.bits(innermostSize).asDataType(),
-          toHandle.staticCounterAccess()
+          toHandle.indices().copy(),
+          Type.bits(requestedWidth).asDataType(),
+          toHandle.staticCounterAccess(),
+          readAccessKind(toHandle),
+          readShape(toHandle),
+          readAccessorName(toHandle),
+          readAliasResource(toHandle),
+          readAccessorIndices(toHandle),
+          IssReadRegNode.WindowKind.CHUNK,
+          Constant.Value.of(requestedLsbInChunk, Type.bits(32)).toNode(),
+          Constant.Value.of(requestedWidth, Type.bits(32)).toNode()
       );
-
-      result = accumulateChunk(result, regRead, rq.slice, regLsb, innermostSize, toHandle);
+      chunkRead.setSourceLocation(toHandle.location());
+      result = result == null ? chunkRead : GraphUtils.concat(chunkRead, result);
     }
 
     rq.result = result;
@@ -570,7 +690,7 @@ class Decomposer
 
   @Handler
   void handle(Request rq, FuncParamNode toHandle) {
-    throw new UnsupportedOperationException("Type FuncParamNode not yet implemented");
+    toHandle.fail("FuncParamNode not yet supported in decomposing ISS ops");
   }
 
   @Handler
@@ -615,7 +735,39 @@ class Decomposer
 
   @Handler
   void handle(Request rq, DynSliceNode toHandle) {
-    throw new UnsupportedOperationException("Type DynSliceNode not yet implemented");
+    // A common oversized pattern is a target-sized dynamic slice on top of a wide register read.
+    // Represent it directly as a chunk-window IssReadRegNode so helper/TCG paths avoid full-wide
+    // preloads.
+    if (toHandle.value() instanceof IssReadRegNode readRegNode) {
+      var requestedWidth = rq.slice.width();
+      var lsbType = toHandle.lsb().type().asDataType();
+      var lsbOffset = rq.slice.lo() == 0
+          ? toHandle.lsb()
+          : toHandle.ensureGraph().addWithInputs(BuiltInTable.ADD.call(
+          toHandle.lsb(),
+          Constant.Value.of(rq.slice.lo(), lsbType).toNode()));
+
+      var chunkRead = new IssReadRegNode(
+          readRegNode.regTensor(),
+          readRegNode.indices().copy(),
+          Type.bits(requestedWidth).asDataType(),
+          readRegNode.staticCounterAccess(),
+          readRegNode.accessKind(),
+          readRegNode.readShape(),
+          readRegNode.accessorName(),
+          readRegNode.aliasResource(),
+          new NodeList<>(readRegNode.accessorIndices()),
+          IssReadRegNode.WindowKind.CHUNK,
+          lsbOffset,
+          Constant.Value.of(requestedWidth, Type.bits(32)).toNode());
+      chunkRead.setSourceLocation(toHandle.location());
+      rq.result = chunkRead;
+      return;
+    }
+
+    toHandle.ensure(false,
+        "DynSlice decomposition above target width requires IssReadReg source, got %s",
+        toHandle.value().getClass().getSimpleName());
   }
 
   @Handler
@@ -625,22 +777,97 @@ class Decomposer
 
   @Handler
   void handle(Request rq, FoldNode toHandle) {
-    throw new UnsupportedOperationException("Type FoldNode not yet implemented");
+    rq.result = decomposeFoldSlice(toHandle, rq.slice.hi(), rq.slice.lo());
   }
 
   @Handler
   void handle(Request rq, ForIdxNode toHandle) {
-    throw new UnsupportedOperationException("Type ForIdxNode not yet implemented");
+    rq.result = new SliceNode(toHandle,
+        Constant.BitSlice.of(rq.slice.hi(), rq.slice.lo()),
+        Type.bits(rq.slice.width()));
   }
 
   @Handler
   void handle(Request rq, TensorNode toHandle) {
-    throw new UnsupportedOperationException("Type TensorNode not yet implemented");
+    rq.result = decomposeTensorSlice(toHandle, rq.slice.hi(), rq.slice.lo());
   }
+
 
   @Handler
   void handle(Request rq, ReadSignalNode toHandle) {
     throw new UnsupportedOperationException("Type ReadSignalNode not yet implemented");
+  }
+
+  private IssReadRegNode.AccessKind readAccessKind(ReadRegTensorNode read) {
+    if (read instanceof IssReadRegNode issRead) {
+      return issRead.accessKind();
+    }
+    return IssReadRegNode.AccessKind.BASE;
+  }
+
+  private IssReadRegNode.ReadShape readShape(ReadRegTensorNode read) {
+    if (read instanceof IssReadRegNode issRead) {
+      return issRead.readShape();
+    }
+    return IssReadRegNode.ReadShape.FULL;
+  }
+
+  private @Nullable String readAccessorName(ReadRegTensorNode read) {
+    if (read instanceof IssReadRegNode issRead) {
+      return issRead.accessorName();
+    }
+    return null;
+  }
+
+  private @Nullable ArtificialResource readAliasResource(ReadRegTensorNode read) {
+    if (read instanceof IssReadRegNode issRead) {
+      return issRead.aliasResource();
+    }
+    return null;
+  }
+
+  private NodeList<ExpressionNode> readAccessorIndices(ReadRegTensorNode read) {
+    if (read instanceof IssReadRegNode issRead) {
+      return new NodeList<>(issRead.accessorIndices());
+    }
+    return read.indices().copy();
+  }
+
+  private IssWriteRegNode.AccessKind writeAccessKind(WriteRegTensorNode write) {
+    if (write instanceof IssWriteRegNode issWrite) {
+      return issWrite.accessKind();
+    }
+    return IssWriteRegNode.AccessKind.BASE;
+  }
+
+  private IssWriteRegNode.WriteGuardKind writeGuardKind(WriteRegTensorNode write) {
+    if (write instanceof IssWriteRegNode issWrite) {
+      return issWrite.writeGuardKind();
+    }
+    return write.nullableCondition() == null
+        ? IssWriteRegNode.WriteGuardKind.NONE
+        : IssWriteRegNode.WriteGuardKind.CONDITIONAL;
+  }
+
+  private @Nullable String writeAccessorName(WriteRegTensorNode write) {
+    if (write instanceof IssWriteRegNode issWrite) {
+      return issWrite.accessorName();
+    }
+    return null;
+  }
+
+  private @Nullable ArtificialResource writeAliasResource(WriteRegTensorNode write) {
+    if (write instanceof IssWriteRegNode issWrite) {
+      return issWrite.aliasResource();
+    }
+    return null;
+  }
+
+  private NodeList<ExpressionNode> writeAccessorIndices(WriteRegTensorNode write) {
+    if (write instanceof IssWriteRegNode issWrite) {
+      return new NodeList<>(issWrite.accessorIndices());
+    }
+    return write.indices().copy();
   }
 
 }

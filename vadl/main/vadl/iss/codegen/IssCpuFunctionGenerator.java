@@ -21,11 +21,17 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
 import vadl.cppCodeGen.context.CGenContext;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
+import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.types.BuiltInTable;
+import vadl.types.Type;
+import vadl.viam.Constant;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -37,16 +43,28 @@ import vadl.viam.graph.dependency.TensorNode;
  * with memory and register tensors for CPU-specific behavior. This class extends the
  * `PureFunctionCodeGenerator` and implements interfaces for reading/writing memory and
  * writing registers.
+ *
+ * <p>Wide register reads in helper-side dynamic slicing are emitted via the same unified
+ * register-access metadata used across ISS lowering/codegen.
+ * See {@code docs/iss/register-access-domain-map.md}.
  */
 public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
     implements IssCMixins.CpuSourceReadWriteMemory, IssCMixins.CpuSourceWriteRegTensor {
+  private final IssAccessorRegistry accessorRegistry;
+
   /**
    * Creates a new pure function code generator for the specified function.
    *
    * @param function the function for which code should be generated
    */
-  public IssCpuFunctionGenerator(Function function) {
+  public IssCpuFunctionGenerator(Function function, IssAccessorRegistry accessorRegistry) {
     super(function);
+    this.accessorRegistry = accessorRegistry;
+  }
+
+  @Override
+  public IssAccessorRegistry accessorRegistry() {
+    return accessorRegistry;
   }
 
   /**
@@ -83,6 +101,52 @@ public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
   @Override
   public void handle(CGenContext<Node> ctx, ReadRegTensorNode node) {
     IssCMixins.CpuSourceWriteRegTensor.super.handle(ctx, node);
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, DynSliceNode node) {
+    if (!(node.value() instanceof ReadRegTensorNode read)) {
+      emitDefaultDynSlice(ctx, node);
+      return;
+    }
+
+    var readWidth = read.type().asDataType().bitWidth();
+    if (readWidth <= 64) {
+      emitDefaultDynSlice(ctx, node);
+      return;
+    }
+
+    var resultWidth = node.type().asDataType().bitWidth();
+    node.ensure(resultWidth <= 64,
+        "Extracted dyn-slice result width must be <= 64 bits.");
+
+    var chunkCount = (readWidth + 63) / 64;
+    ctx.wr("(");
+
+    var first = true;
+    // Case 1: both bounds are in the same chunk.
+    for (int chunk = 0; chunk < chunkCount; chunk++) {
+      if (!first) {
+        ctx.wr(" : ");
+      }
+      emitDynSliceSameChunkCondition(ctx, node, readWidth, chunk);
+      ctx.wr(" ? ");
+      emitDynSliceFromChunk(ctx, read, readWidth, chunk, node);
+      first = false;
+    }
+
+    // Case 2: bounds cross exactly one 64-bit chunk boundary.
+    // Since result width is <=64, at most one boundary can be crossed.
+    for (int boundaryChunk = 0; boundaryChunk < chunkCount - 1; boundaryChunk++) {
+      ctx.wr(" : ");
+      emitDynSliceCrossBoundaryCondition(ctx, node, boundaryChunk);
+      ctx.wr(" ? ");
+      emitDynSliceCrossChunk(ctx, read, readWidth, boundaryChunk, node, resultWidth);
+    }
+
+    ctx.wr(" : ").wr("((")
+        .wr(getCppTypeNameByVadlType(node.type()))
+        .wr(") 0))");
   }
 
   @Override
@@ -189,5 +253,151 @@ public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
       return "((" + resultType + ")0)";
     }
     throw new IllegalStateException("Unsupported fold combiner: " + combiner.name());
+  }
+
+  private void emitDefaultDynSlice(CGenContext<Node> ctx, DynSliceNode node) {
+    ctx.wr("VADL_slice(")
+        .gen(node.value())
+        .wr(", %s, ", 1)
+        .gen(node.msb())
+        .wr(", ")
+        .gen(node.lsb())
+        .wr(")");
+  }
+
+  private void emitDynSliceSameChunkCondition(
+      CGenContext<Node> ctx, DynSliceNode node, int readWidth, int chunkIndex) {
+    int chunkLo = chunkIndex * 64;
+    ctx.wr("(");
+    ctx.gen(node.lsb()).wr(" >= ").wr(Integer.toString(chunkLo));
+    ctx.wr(" && ");
+    int chunkHi = Math.min(readWidth - 1, chunkLo + 63);
+    ctx.gen(node.msb()).wr(" <= ").wr(Integer.toString(chunkHi));
+    ctx.wr(")");
+  }
+
+  private void emitDynSliceCrossBoundaryCondition(
+      CGenContext<Node> ctx, DynSliceNode node, int lowChunkIndex) {
+    int boundary = (lowChunkIndex + 1) * 64;
+    ctx.wr("(");
+    ctx.gen(node.lsb()).wr(" < ").wr(Integer.toString(boundary));
+    ctx.wr(" && ");
+    ctx.gen(node.msb()).wr(" >= ").wr(Integer.toString(boundary));
+    ctx.wr(")");
+  }
+
+  private void emitDynSliceFromChunk(
+      CGenContext<Node> ctx,
+      ReadRegTensorNode read,
+      int readWidth,
+      int chunkIndex,
+      DynSliceNode node
+  ) {
+    int chunkOffset = chunkIndex * 64;
+    int chunkWidth = Math.min(64, readWidth - chunkOffset);
+
+    ctx.wr("VADL_slice(");
+    emitRegChunkRead(ctx, read, chunkOffset, chunkWidth);
+    ctx.wr(", 1, ");
+    if (chunkOffset > 0) {
+      ctx.wr("(").gen(node.msb()).wr(" - ").wr(Integer.toString(chunkOffset)).wr(")");
+    } else {
+      ctx.gen(node.msb());
+    }
+    ctx.wr(", ");
+    if (chunkOffset > 0) {
+      ctx.wr("(").gen(node.lsb()).wr(" - ").wr(Integer.toString(chunkOffset)).wr(")");
+    } else {
+      ctx.gen(node.lsb());
+    }
+    ctx.wr(")");
+  }
+
+  private void emitDynSliceCrossChunk(
+      CGenContext<Node> ctx,
+      ReadRegTensorNode read,
+      int readWidth,
+      int lowChunkIndex,
+      DynSliceNode node,
+      int resultWidth
+  ) {
+    int lowChunkOffset = lowChunkIndex * 64;
+    int highChunkOffset = lowChunkOffset + 64;
+    int highChunkWidth = Math.min(64, readWidth - highChunkOffset);
+
+    // crossing case: [msb:lsb] spans a chunk boundary.
+    // compose from high and low chunk pieces using only <=64-bit operations.
+    ctx.wr("VADL_slice((");
+    ctx.wr("(VADL_slice(");
+    emitRegChunkRead(ctx, read, highChunkOffset, highChunkWidth);
+    int boundary = highChunkOffset;
+    ctx.wr(", 1, (").gen(node.msb()).wr(" - ").wr(Integer.toString(highChunkOffset))
+        .wr("), 0) << (")
+        .wr(Integer.toString(boundary))
+        .wr(" - ")
+        .gen(node.lsb())
+        .wr("))");
+    ctx.wr(" | ");
+    ctx.wr("VADL_slice(");
+    int lowChunkWidth = Math.min(64, readWidth - lowChunkOffset);
+    emitRegChunkRead(ctx, read, lowChunkOffset, lowChunkWidth);
+    int lowChunkTop = lowChunkWidth - 1;
+    ctx.wr(", 1, ").wr(Integer.toString(lowChunkTop)).wr(", ");
+    if (lowChunkOffset > 0) {
+      ctx.wr("(").gen(node.lsb()).wr(" - ").wr(Integer.toString(lowChunkOffset)).wr(")");
+    } else {
+      ctx.gen(node.lsb());
+    }
+    ctx.wr(")");
+    ctx.wr("), 1, ").wr(Integer.toString(resultWidth - 1)).wr(", 0)");
+  }
+
+  private void emitRegChunkRead(
+      CGenContext<Node> ctx,
+      ReadRegTensorNode read,
+      int chunkOffsetBits,
+      int chunkWidthBits
+  ) {
+    var loweredRead = toChunkRead(read, chunkOffsetBits, chunkWidthBits);
+    var accessName = RegisterAccessEmitters.readAccessorName(loweredRead, accessorRegistry);
+    ctx.wr(accessName).wr("(env");
+    for (var index : RegisterAccessEmitters.readAccessorArgs(loweredRead)) {
+      ctx.wr(", ");
+      ctx.gen(index);
+    }
+    ctx.wr(")");
+  }
+
+  private ReadRegTensorNode toChunkRead(ReadRegTensorNode read,
+                                        int chunkOffsetBits,
+                                        int chunkWidthBits) {
+    if (read instanceof IssReadRegNode issRead) {
+      return new IssReadRegNode(
+          issRead.regTensor(),
+          issRead.indices().copy(),
+          Type.bits(chunkWidthBits).asDataType(),
+          issRead.staticCounterAccess(),
+          issRead.accessKind(),
+          issRead.readShape(),
+          issRead.accessorName(),
+          issRead.aliasResource(),
+          new NodeList<>(issRead.accessorIndices()),
+          IssReadRegNode.WindowKind.CHUNK,
+          Constant.Value.of(chunkOffsetBits, Type.bits(32)).toNode(),
+          Constant.Value.of(chunkWidthBits, Type.bits(32)).toNode());
+    }
+    return new IssReadRegNode(
+        read.regTensor(),
+        read.indices().copy(),
+        Type.bits(chunkWidthBits).asDataType(),
+        read.staticCounterAccess(),
+        IssReadRegNode.AccessKind.BASE,
+        IssReadRegNode.ReadShape.FULL,
+        null,
+        null,
+        read.indices().copy(),
+        IssReadRegNode.WindowKind.CHUNK,
+        Constant.Value.of(chunkOffsetBits, Type.bits(32)).toNode(),
+        Constant.Value.of(chunkWidthBits, Type.bits(32)).toNode());
   }
 }

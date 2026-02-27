@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -98,7 +98,7 @@ public class IssGdbInfoExtractionPass extends AbstractIssPass {
     var res = new ArrayList<Result.Reg>();
     for (var reg : isa.registerTensors()) {
       // Skip gVec registers - they can't be accessed directly via GDB
-      if (regInfo(reg).isGVec()) {
+      if (!regInfo(reg).isTcgScalar()) {
         DeferredDiagnosticStore.add(
             warning("Vector register excluded from GDB", reg)
                 .description(
@@ -157,4 +157,3 @@ public class IssGdbInfoExtractionPass extends AbstractIssPass {
     return res;
   }
 }
-
