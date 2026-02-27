@@ -20,7 +20,7 @@ import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import vadl.viam.PrintableInstruction;
+import vadl.viam.Function;
 import vadl.viam.asm.AsmToken;
 import vadl.viam.asm.elements.AsmGrammarElement;
 import vadl.viam.asm.rules.AsmGrammarRule;
@@ -30,8 +30,6 @@ import vadl.viam.asm.rules.AsmGrammarRule;
  * instruction's assembly printing function.
  */
 public class AsmRuleContext {
-  PrintableInstruction instruction;
-
   // TODO: Use a stack to allow nested alternatives
   List<AsmGrammarElement> currentElements = new ArrayList<>();
 
@@ -41,9 +39,7 @@ public class AsmRuleContext {
   @LazyInit
   AsmGrammarRule builtRule;
 
-  public AsmRuleContext(PrintableInstruction instruction) {
-    this.instruction = instruction;
-  }
+  List<Function> generatedFunctions = new ArrayList<>();
 
   public void addElement(AsmGrammarElement element) {
     currentElements.add(element);

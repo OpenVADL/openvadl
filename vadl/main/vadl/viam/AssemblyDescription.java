@@ -29,7 +29,7 @@ public class AssemblyDescription extends Definition {
   private final List<AsmModifier> modifiers;
   private final List<AsmDirectiveMapping> directives;
   private List<AsmGrammarRule> rules;
-  private final List<Definition> commonDefinitions;
+  private List<Definition> commonDefinitions;
 
   /**
    * Creates a new Assembly Description definition.
@@ -73,5 +73,9 @@ public class AssemblyDescription extends Definition {
 
   public List<Definition> commonDefinitions() {
     return commonDefinitions;
+  }
+
+  public void setCommonDefinitions(List<Definition> commonDefinitions) {
+    this.commonDefinitions = commonDefinitions;
   }
 }

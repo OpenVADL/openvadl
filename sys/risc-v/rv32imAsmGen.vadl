@@ -215,19 +215,10 @@ assembly description ASM for ABI = {
       mnemonic = SymbolPseudoIds @operand
       symbol = Label @operand
     ;
-
-    LGA_32PseudoInstruction @instruction:
-      "LGA"
-      mnemonic = lga_32_string @operand
-      rd = Register @operand ","
-      symbol = ImmediateOperand
-    ;
   }
 
   function x1_string -> String = "x1"
   function zero_const -> SInt<64> = 0
-
-  function lga_32_string -> String = "LGA_32"
 }
 
 [ htif ]

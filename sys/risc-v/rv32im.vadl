@@ -103,7 +103,6 @@ application binary interface ABI for RV32IM = {
 }
 
 [ comment string: "#" ]
-[ generate rules ]
 assembly description ASM for ABI = {
 
   modifiers = {
@@ -132,7 +131,7 @@ assembly description ASM for ABI = {
     ;
 
 
-    ITypeIds :  "ANDI" | "ORI" | "XORI" | "SLTI" | "SLTIU" ;
+    ITypeIds : "ANDI" | "ORI" | "XORI" | "SLTI" | "SLTIU" ;
 
     ITypeInstruction @instruction:
       mnemonic = ITypeIds @operand
@@ -273,7 +272,7 @@ assembly description ASM for ABI = {
 
     SymbolPseudoInstruction @instruction :
       mnemonic = SymbolPseudoIds @operand
-      symbol = Label @operand
+      symbol = (Identifier @symbol) @operand
     ;
 
 

@@ -26,6 +26,7 @@ import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.lcb.graph.DefinedImmediateSideEffectNode;
 import vadl.types.BuiltInTable;
+import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
@@ -33,14 +34,20 @@ import vadl.types.asmTypes.OperandAsmType;
 import vadl.types.asmTypes.StringAsmType;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
+import vadl.viam.Function;
+import vadl.viam.Identifier;
+import vadl.viam.Parameter;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.asm.AsmToken;
 import vadl.viam.asm.elements.AsmAlternative;
 import vadl.viam.asm.elements.AsmAlternatives;
 import vadl.viam.asm.elements.AsmAssignToAttribute;
+import vadl.viam.asm.elements.AsmFunctionInvocation;
 import vadl.viam.asm.elements.AsmRuleInvocation;
 import vadl.viam.asm.elements.AsmStringLiteralUse;
 import vadl.viam.asm.elements.HasAssignTo;
 import vadl.viam.asm.rules.AsmNonTerminalRule;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.BranchBeginNode;
 import vadl.viam.graph.control.BranchEndNode;
@@ -96,13 +103,18 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
     context = AsmRuleContext.class,
     include = {"vadl.viam", "vadl.lcb.graph"}
 )
+@SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
 public class AsmGrammarRuleGenerator {
 
+  private final PrintableInstruction instruction;
   private final AsmNonTerminalRule registerRule;
   private final AsmNonTerminalRule immediateOperandRule;
 
-  public AsmGrammarRuleGenerator(AsmNonTerminalRule registerRule,
+  @SuppressWarnings("MissingJavadocMethod")
+  public AsmGrammarRuleGenerator(PrintableInstruction instruction,
+                                 AsmNonTerminalRule registerRule,
                                  AsmNonTerminalRule immediateOperandRule) {
+    this.instruction = instruction;
     this.registerRule = registerRule;
     this.immediateOperandRule = immediateOperandRule;
   }
@@ -120,6 +132,15 @@ public class AsmGrammarRuleGenerator {
     }
   }
 
+  private boolean isWhitespace(String s) {
+    for (int i = 0; i < s.length(); i++) {
+      if (!Character.isWhitespace(s.charAt(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, SelectNode node) {
@@ -131,7 +152,7 @@ public class AsmGrammarRuleGenerator {
   public void handle(AsmRuleContext ctx, BuiltInCall node) {
 
     if (node.builtIn() == BuiltInTable.MNEMONIC) {
-      var instructionName = ctx.instruction.identifier().simpleName();
+      var instructionName = instruction.identifier().simpleName();
       var elem = new AsmStringLiteralUse(
           new AsmAssignToAttribute("mnemonic", false),
           instructionName, OperandAsmType.instance());
@@ -148,14 +169,14 @@ public class AsmGrammarRuleGenerator {
 
       if (arg instanceof FieldRefNode fieldRef) {
         registerField = fieldRef.formatField().simpleName();
-      } else if (arg instanceof FieldAccessRefNode fieldAccessRef) {
+      } else if (arg instanceof FieldAccessRefNode) {
         // TODO
         registerField = "TODO";
       } else if (arg instanceof FuncParamNode funcParam) {
         registerField = funcParam.parameter().simpleName();
       } else {
-        registerField = "error";
-        // TODO: can this ever be the case?
+        // TODO: Deal with any other expression
+        registerField = "TODO";
       }
 
       var elem = new AsmRuleInvocation(
@@ -214,6 +235,19 @@ public class AsmGrammarRuleGenerator {
 
   }
 
+  private boolean isImmediateBuiltin(BuiltInCall node) {
+    var builtin = node.builtIn();
+    return builtin == BuiltInTable.SDEC || builtin == BuiltInTable.UDEC
+        || builtin == BuiltInTable.HEX || builtin == BuiltInTable.OCTAL
+        || builtin == BuiltInTable.BINARY;
+  }
+
+  private Set<AsmToken> firstTokensOfNonTerminalRule(AsmNonTerminalRule rule) {
+    return rule.getAlternatives().alternatives().stream()
+        .flatMap(alterative -> alterative.firstTokens().stream())
+        .collect(java.util.stream.Collectors.toSet());
+  }
+
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, FuncParamNode node) {
@@ -235,11 +269,15 @@ public class AsmGrammarRuleGenerator {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, ReturnNode node) {
+
+    addMnemonicIfNotInPrintingFunction(ctx);
+
     AsmGrammarRuleGeneratorDispatcher.dispatch(this, ctx, node.value());
 
     AsmType ruleType;
 
-    // TODO: only use relevant elements in this check
+    // TODO: only use relevant elements in this check for now all elements are relevant
+    //       (e.g. semantic predicates are not supported yet)
     if (ctx.currentElements.size() > 1) {
 
       var subtypeMap = ctx.currentElements.stream()
@@ -258,13 +296,36 @@ public class AsmGrammarRuleGenerator {
       ruleType = ctx.currentElements.getFirst().getAsmType();
     }
 
-    ctx.builtRule = new AsmNonTerminalRule(ctx.instruction.identifier(),
+    ctx.builtRule = new AsmNonTerminalRule(instruction.identifier(),
         new AsmAlternatives(List.of(
             new AsmAlternative(null, ctx.firstTokens, ruleType,
                 false, ctx.currentElements)
         ), ruleType), InstructionAsmType.instance(),
         SourceLocation.INVALID_SOURCE_LOCATION
     );
+  }
+
+  private void addMnemonicIfNotInPrintingFunction(AsmRuleContext ctx) {
+    if (instruction.assembly().function().behavior().getNodes()
+        .noneMatch(behaviorNode -> behaviorNode instanceof BuiltInCall builtInCall
+            && builtInCall.builtIn() == BuiltInTable.MNEMONIC)) {
+      var functionName = instruction.identifier().simpleName() + "_mnemonic";
+      var expressionNode =
+          new ConstantNode(new Constant.Str(instruction.identifier().simpleName()));
+      var returnNode = new ReturnNode(expressionNode);
+      var graph = new Graph(functionName);
+      graph.addWithInputs(returnNode);
+
+      var instructionNameConstantFunction = new Function(
+          new Identifier(functionName, SourceLocation.INVALID_SOURCE_LOCATION),
+          new Parameter[] {}, Type.string(), graph);
+      ctx.generatedFunctions.add(instructionNameConstantFunction);
+
+      var elem = new AsmFunctionInvocation(
+          new AsmAssignToAttribute("mnemonic", false),
+          instructionNameConstantFunction, List.of(), OperandAsmType.instance());
+      ctx.addElement(elem);
+    }
   }
 
   @Handler
@@ -499,27 +560,5 @@ public class AsmGrammarRuleGenerator {
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, SliceNode node) {
     throw Diagnostic.error("not supported", node.location()).build();
-  }
-
-  private boolean isWhitespace(String s) {
-    for (int i = 0; i < s.length(); i++) {
-      if (!Character.isWhitespace(s.charAt(i))) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private boolean isImmediateBuiltin(BuiltInCall node) {
-    var builtin = node.builtIn();
-    return builtin == BuiltInTable.SDEC || builtin == BuiltInTable.UDEC
-        || builtin == BuiltInTable.HEX || builtin == BuiltInTable.OCTAL
-        || builtin == BuiltInTable.BINARY;
-  }
-
-  private Set<AsmToken> firstTokensOfNonTerminalRule(AsmNonTerminalRule rule) {
-    return rule.getAlternatives().alternatives().stream()
-        .flatMap(alterative -> alterative.firstTokens().stream())
-        .collect(java.util.stream.Collectors.toSet());
   }
 }
