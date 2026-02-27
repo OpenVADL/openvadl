@@ -28,6 +28,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -103,7 +104,13 @@ public class IssOpDecompositionPass extends AbstractIssPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var largeOperationErrors = new ArrayList<Diagnostic>();
+    var aliasSemanticBehaviors = viam.artificialResources()
+        .flatMap(alias -> Stream.of(alias.readFunction().behavior(), alias.writeProcedure().behavior()))
+        .collect(() -> java.util.Collections.newSetFromMap(new IdentityHashMap<>()),
+            Set::add,
+            Set::addAll);
     ViamUtils.findAllBehaviors(viam)
+        .filter(behavior -> !aliasSemanticBehaviors.contains(behavior))
         .filter(behavior -> behavior.parentDefinition() instanceof Instruction
             || behavior.parentDefinition() instanceof Procedure)
         .forEach(behavior -> {

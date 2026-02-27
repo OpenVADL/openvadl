@@ -20,8 +20,10 @@ import static vadl.error.Diagnostic.error;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -35,7 +37,6 @@ import vadl.iss.passes.extensions.RegInfo;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;
-import vadl.viam.DefProp;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
@@ -310,18 +311,22 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
 
   // checks if all slices are not greater than 64 bit
   private void checkSlice(Specification viam, List<DiagnosticBuilder> diagnostics) {
-    ViamUtils.findDefinitionsByFilter(viam, d -> d instanceof DefProp.WithBehavior)
-        .stream()
-        .map(DefProp.WithBehavior.class::cast)
-        .flatMap(b -> b.behaviors().stream())
+    var aliasSemanticBehaviors = viam.artificialResources()
+        .flatMap(alias -> Stream.of(alias.readFunction().behavior(), alias.writeProcedure().behavior()))
+        .collect(() -> java.util.Collections.newSetFromMap(new IdentityHashMap<>()),
+            Set::add,
+            Set::addAll);
+    withIsa(viam, isa -> ViamUtils.findAllBehaviors(isa)
+        .filter(b -> !aliasSemanticBehaviors.contains(b))
         .flatMap(b -> b.getNodes(SliceNode.class))
         .filter(s -> s.bitSlice().bitSize() > 64)
-        .forEach(s -> {
-          diagnostics.add(error("Slice result greater than 64 bit", s)
-              .description("Currently the ISS requires slices to be less or equal 64 bit.")
-              .note("This is because the QEMU implementation only handles 64 bit.")
-          );
-        });
+        .forEach(s -> diagnostics.add(error("Slice result greater than 64 bit", s)
+            .description("Currently the ISS only supports slices <= 64 bit in directly "
+                + "emitted ISS behaviors.")
+            .note("Large slices inside alias semantic definitions are lowered separately "
+                + "and are not validated here.")
+            .note("This is because the QEMU implementation only handles 64 bit.")
+        )));
   }
 
   private void withIsa(Specification viam, Consumer<InstructionSetArchitecture> func) {

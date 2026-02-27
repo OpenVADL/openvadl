@@ -236,7 +236,7 @@ class Decomposer
     var req = new Request(slice);
     DecomposerDispatcher.dispatch(this, req, node);
     if (req.result == null) {
-      throw new IllegalStateException("Not yet implemented: " + node);
+      node.fail("No decomposition result was produced for %s", node.getClass().getSimpleName());
     }
     return req.result;
   }
@@ -687,7 +687,7 @@ class Decomposer
 
   @Handler
   void handle(Request rq, FuncParamNode toHandle) {
-    throw new UnsupportedOperationException("Type FuncParamNode not yet implemented");
+    toHandle.fail("FuncParamNode not yet supported in decomposing ISS ops");
   }
 
   @Handler
@@ -741,8 +741,8 @@ class Decomposer
       var lsbOffset = rq.slice.lo() == 0
           ? toHandle.lsb()
           : toHandle.ensureGraph().addWithInputs(BuiltInTable.ADD.call(
-              toHandle.lsb(),
-              Constant.Value.of(rq.slice.lo(), lsbType).toNode()));
+          toHandle.lsb(),
+          Constant.Value.of(rq.slice.lo(), lsbType).toNode()));
 
       var chunkRead = new IssReadRegNode(
           readRegNode.regTensor(),
