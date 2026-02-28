@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,23 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.viam.asm.elements;
+package vadl.lcb.riscv.riscv32.asm;
 
-import java.util.List;
-import javax.annotation.Nullable;
-import vadl.types.asmTypes.AsmType;
-import vadl.viam.asm.rules.AsmGrammarRule;
+import vadl.lcb.riscv.riscv32.AsmGenRiscv32FileCheckTest;
 
-/**
- * Represents the invocation of another grammar rule in a grammar rule.
- */
-public record AsmRuleInvocation(@Nullable AsmAssignTo assignToElement,
-                                AsmGrammarRule rule,
-                                List<AsmGrammarElement> parameters,
-                                AsmType asmType)
-    implements AsmGrammarElement, HasAssignTo {
+public class AsmGenParserRiscv32FileCheckTest extends AsmGenRiscv32FileCheckTest {
   @Override
-  public AsmType getAsmType() {
-    return asmType;
+  protected String getComponent() {
+    return "parser";
   }
 }

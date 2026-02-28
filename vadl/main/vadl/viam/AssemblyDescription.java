@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -28,8 +28,8 @@ public class AssemblyDescription extends Definition {
 
   private final List<AsmModifier> modifiers;
   private final List<AsmDirectiveMapping> directives;
-  private final List<AsmGrammarRule> rules;
-  private final List<Definition> commonDefinitions;
+  private List<AsmGrammarRule> rules;
+  private List<Definition> commonDefinitions;
 
   /**
    * Creates a new Assembly Description definition.
@@ -67,7 +67,15 @@ public class AssemblyDescription extends Definition {
     return rules;
   }
 
+  public void setRules(List<AsmGrammarRule> rules) {
+    this.rules = rules;
+  }
+
   public List<Definition> commonDefinitions() {
     return commonDefinitions;
+  }
+
+  public void setCommonDefinitions(List<Definition> commonDefinitions) {
+    this.commonDefinitions = commonDefinitions;
   }
 }

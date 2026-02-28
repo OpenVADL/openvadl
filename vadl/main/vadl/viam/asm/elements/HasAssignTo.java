@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,21 +16,15 @@
 
 package vadl.viam.asm.elements;
 
-import java.util.List;
 import javax.annotation.Nullable;
 import vadl.types.asmTypes.AsmType;
-import vadl.viam.asm.rules.AsmGrammarRule;
 
 /**
- * Represents the invocation of another grammar rule in a grammar rule.
+ * Represents {@link AsmGrammarElement} that has an {@link AsmAssignTo} element.
  */
-public record AsmRuleInvocation(@Nullable AsmAssignTo assignToElement,
-                                AsmGrammarRule rule,
-                                List<AsmGrammarElement> parameters,
-                                AsmType asmType)
-    implements AsmGrammarElement, HasAssignTo {
-  @Override
-  public AsmType getAsmType() {
-    return asmType;
-  }
+public interface HasAssignTo {
+  @Nullable
+  AsmAssignTo assignToElement();
+
+  AsmType getAsmType();
 }

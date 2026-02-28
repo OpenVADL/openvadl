@@ -59,6 +59,7 @@ import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.annotations.AlignmentAnnotation;
+import vadl.viam.annotations.AsmGenerateRulesAnno;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
 import vadl.viam.annotations.DefineOperandAnnotation;
@@ -88,6 +89,13 @@ public class AnnotationTable {
           var asmDescription = (AssemblyDescription) def;
           var strLit = (StringLiteral) annotation.definition.values.getFirst();
           asmDescription.addAnnotation(new AsmParserCommentString(strLit.value));
+        })
+        .build();
+
+    annotationOn(AsmDescriptionDefinition.class, "generate rules", EnableAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          var asmDescription = (AssemblyDescription) def;
+          asmDescription.addAnnotation(new AsmGenerateRulesAnno(annotation.isEnabled));
         })
         .build();
 

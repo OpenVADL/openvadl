@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -70,6 +70,24 @@ public class AsmGrammarDefaultRules {
    */
   public static Map<AsmGrammarRuleDefinition, Pattern> terminalRuleRegexPatterns() {
     return patternCache;
+  }
+
+  /**
+   * Get the name of the terminal rule that matches the given parse value.
+   *
+   * @param parseValue the parse value to match
+   * @return the name of the matching terminal rule, or null if no match is found
+   */
+  @Nullable
+  public static String getMatchingTerminalRule(String parseValue) {
+    for (var entry : patternCache.entrySet()) {
+      var pattern = entry.getValue();
+      var matcher = pattern.matcher(parseValue);
+      if (matcher.matches()) {
+        return entry.getKey().identifier().name;
+      }
+    }
+    return null;
   }
 
   private static List<AsmGrammarRuleDefinition> defaultRules() {
