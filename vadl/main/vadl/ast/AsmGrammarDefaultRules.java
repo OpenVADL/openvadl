@@ -90,7 +90,6 @@ public class AsmGrammarDefaultRules {
     return null;
   }
 
-  // TODO: Do this in static block?
   private static List<AsmGrammarRuleDefinition> defaultRules() {
     // regex pattern needed for checking LL(1) conflicts
     // in the AsmParser this is handled by the LLVM lexer

@@ -43,6 +43,21 @@ import vadl.viam.graph.control.ReturnNode;
 /**
  * A pass that generates assembly grammar rules per instruction,
  * based on their assembly printing function.
+ * To illustrate with an example, consider this assembly printing function for an ADD instruction:
+ * <pre>
+ * {@code assembly ADD = ("ADD", " ", register(rd), ",", register(rs1), ",", register(rs2))}
+ * </pre>
+ * This pass uses this printing function to generate an assembly grammar rule like:
+ * <pre>{@code
+ *  AddInstruction @instruction:
+ *    mnemonic = "ADD" @operand
+ *    rd = Register@operand ","
+ *    rs1 = Register@operand ","
+ *    rs2 = Register@operand
+ *  ;
+ * }</pre>
+ * The overall purpose is to relieve the user from writing grammar rules for instructions,
+ * by inferring them from printing functions when possible.
  */
 public class AsmGrammarRuleGenerationPass extends Pass {
 
@@ -127,6 +142,32 @@ public class AsmGrammarRuleGenerationPass extends Pass {
     return new Pair<>(instruction, ctx);
   }
 
+  /**
+   * Compute LL(1) conflicts between user written grammar rules and rules generated in this pass.
+   * A conflict arises when the {@link vadl.viam.asm.elements.AsmAlternative#firstTokens()} sets
+   * of two rules overlap, i.e. an {@link AsmToken} is contained in the firstToken sets of both
+   * rules. We cannot add conflicting rules to the parser, since then the parser would not able
+   * to decide which rule to apply based on the parsed first token.
+   * Therefore, we filter out any generated rules that conflict with a user written rule.
+   *
+   * <p>An example for a conflict would be the following scenario. First, we have an ADD
+   * instruction with this assembly printing function:
+   * <pre>
+   * {@code assembly ADD = ("ADD", " ", register(rd), ",", register(rs1), ",", register(rs2))}
+   * </pre>
+   * Second, the user has written the following grammar rule for the instruction:
+   * <pre>{@code
+   *  AddInstruction @instruction:
+   *    mnemonic = "ADD" @operand
+   *    rd = Register@operand ","
+   *    rs1 = Register@operand ","
+   *    rs2 = Register@operand
+   *  ;
+   * }</pre></p>
+   * This pass infers a rule for the assembly printing function with the first token set {"ADD"}.
+   * But the user written rule {@code AddInstruction} also has the first token set {"ADD"}.
+   * Since the first token sets overlap, we have a conflict and discard the generated rule.
+   */
   private List<Pair<PrintableInstruction, AsmRuleContext>> computeConflictingRules(
       AsmNonTerminalRule instructionRule,
       List<Pair<PrintableInstruction, AsmRuleContext>> generated) {

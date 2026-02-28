@@ -144,7 +144,6 @@ public class AsmGrammarRuleGenerator {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, SelectNode node) {
-    // TODO
   }
 
   @Handler
@@ -170,12 +169,10 @@ public class AsmGrammarRuleGenerator {
       if (arg instanceof FieldRefNode fieldRef) {
         registerField = fieldRef.formatField().simpleName();
       } else if (arg instanceof FieldAccessRefNode) {
-        // TODO
         registerField = "TODO";
       } else if (arg instanceof FuncParamNode funcParam) {
         registerField = funcParam.parameter().simpleName();
       } else {
-        // TODO: Deal with any other expression
         registerField = "TODO";
       }
 
@@ -210,7 +207,6 @@ public class AsmGrammarRuleGenerator {
       } else if (argument instanceof FuncParamNode funcParam) {
         attributeName = funcParam.parameter().simpleName();
       } else {
-        // TODO: Find FieldRef / FARef / FuncParam in the subtree
         attributeName = "TODO";
       }
 
@@ -228,10 +224,7 @@ public class AsmGrammarRuleGenerator {
 
     if (node.builtIn() == BuiltInTable.INTEGRAL) {
       // Integral is a field used as register index, but printed as immediate not as register
-      // TODO
     }
-
-    // TODO: other builtin calls as in expressions
 
   }
 
@@ -251,19 +244,19 @@ public class AsmGrammarRuleGenerator {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, FuncParamNode node) {
-    // TODO
+
   }
 
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, FieldAccessRefNode node) {
-    // TODO
+
   }
 
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, FieldRefNode node) {
-    // TODO
+
   }
 
   @Handler
