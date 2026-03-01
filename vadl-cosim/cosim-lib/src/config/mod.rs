@@ -153,7 +153,26 @@ pub enum ProtocolLayer {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Testing {
     pub protocol: Protocol,
+    #[serde(default)]
+    pub exit_condition: ExitCondition,
 }
+
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct ExitCondition {
+    pub on_address: Option<u64>, 
+    pub on_label: Option<String>,
+    #[serde(default)]
+    pub on_mem_write: MemWriteExitCondition,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct MemWriteExitCondition {
+    pub on_address: Option<u64>,
+    pub on_label: Option<String>,
+    pub with_constant_value: Option<u128>,
+}
+
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ClientGDB {

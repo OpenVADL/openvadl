@@ -1,6 +1,6 @@
 use std::collections::HashSet;
-use std::path::Path;
 use std::fs;
+use std::path::Path;
 
 use color_eyre::{
     Result, Section,
@@ -13,7 +13,7 @@ use crate::db::{
     CosimRunInfo, DBConnection, finish_cosimulation_run_trace, insert_new_cosimulation_run,
 };
 
-use crate::ipc::cstructs::BrokerSHMInsn;
+use crate::ipc::cstructs::{BrokerSHMInsn, BrokerSHMTB, MemAccessInfo};
 #[cfg(feature = "sqlite-tracing")]
 use crate::trace::{
     TraceEntryData, TraceStore, connect, get_client_trace, store_trace, trace_collect,
@@ -93,7 +93,7 @@ impl Broker {
     }
 
     pub fn run(&mut self, config: &Config) -> Result<Report> {
-        debug!(?config, "running broker");
+        debug!("running broker: {config:#?}");
 
         match config.testing.protocol.mode {
             crate::config::ProtocolMode::Lockstep => self.run_lockstep(config),
@@ -120,7 +120,7 @@ impl Broker {
         }
 
         for client in &mut self.clients {
-            client.terminate().unwrap();
+            client.terminate()?;
         }
 
         Ok(())
@@ -196,11 +196,11 @@ impl Broker {
                         .shm
                         .read_buffer()
                         .map(|opt| opt.map(|i| i.as_insn()))
-                        .map_err(|e| Broker::add_client_logs_to_error(e, &client.id, config));
+                        .map_err(|e| Self::add_client_logs_to_error(e, &client.id, config));
                     client.run_count += 1;
                     res
                 });
-                let reads = Broker::bcollect(&mut reads)?;
+                let reads = Self::bcollect(&mut reads)?;
 
                 let c1insn = reads[0];
                 let c2insn = reads[1];
@@ -211,6 +211,10 @@ impl Broker {
                         let diffs = if let Some(cpus1) = c1insn.cpus()
                             && let Some(cpus2) = c2insn.cpus()
                         {
+                            if Self::exec_exit_condition_hit_insn(&config, c1insn, c2insn) {
+                                break;
+                            }
+
                             let diffs =
                                 diff_cpus(cpus1, c1insn.init_mask, cpus2, c2insn.init_mask, config);
 
@@ -228,6 +232,14 @@ impl Broker {
                         } else if let Some(mem_access_info1) = c1insn.mem_access_info()
                             && let Some(mem_access_info2) = c2insn.mem_access_info()
                         {
+                            if Self::mem_write_exit_condition_hit(
+                                &config,
+                                mem_access_info1,
+                                mem_access_info2,
+                            ) {
+                                break;
+                            }
+
                             diff_mem_access(mem_access_info1, mem_access_info2, config)
                         } else {
                             let diff = DiffEntry::new(
@@ -237,11 +249,8 @@ impl Broker {
                                     Broker::format_insn_for_diff(&c2insn.insn_info),
                                 ],
                                 Broker::format_missing_memory_access_msg(
-                                    c1insn,
-                                    c2insn,
-                                    &c1name,
-                                    &c2name,
-                                )
+                                    c1insn, c2insn, &c1name, &c2name,
+                                ),
                             );
                             vec![diff]
                         };
@@ -271,7 +280,7 @@ impl Broker {
                                 &self.clients[1],
                             ),
                         );
-                        let ctx = self.build_diff_context(config)?;
+                        let ctx = self.build_diff_context_for_client(config, 0)?;
                         return Ok(Report::failed(vec![diff], ctx));
                     }
                     (None, Some(c2insn)) => {
@@ -284,7 +293,7 @@ impl Broker {
                                 &self.clients[0],
                             ),
                         );
-                        let ctx = self.build_diff_context(config)?;
+                        let ctx = self.build_diff_context_for_client(config, 1)?;
                         return Ok(Report::failed(vec![diff], ctx));
                     }
                 }
@@ -306,6 +315,10 @@ impl Broker {
                 match (c1insn, c2insn) {
                     // successfully read both clients -> compare
                     (Some(c1insn), Some(c2insn)) => {
+                        if Self::exec_exit_condition_hit_tb(&config, c1insn, c2insn) {
+                            break;
+                        }
+
                         if let TBSyncResult::Diverged(diff_entry) =
                             Self::check_if_clients_are_synchronized(&[c1insn, c2insn])
                         {
@@ -354,7 +367,7 @@ impl Broker {
                                 &self.clients[1],
                             ),
                         );
-                        let ctx = self.build_diff_context(config)?;
+                        let ctx = self.build_diff_context_for_client(config, 0)?;
                         return Ok(Report::failed(vec![diff], ctx));
                     }
                     (None, Some(c2tb)) => {
@@ -366,7 +379,7 @@ impl Broker {
                                 &self.clients[0],
                             ),
                         );
-                        let ctx = self.build_diff_context(config)?;
+                        let ctx = self.build_diff_context_for_client(config, 1)?;
                         return Ok(Report::failed(vec![diff], ctx));
                     }
                 }
@@ -540,6 +553,41 @@ impl Broker {
         }
     }
 
+    fn build_diff_context_for_client(
+        &mut self,
+        config: &Config,
+        client_idx: usize,
+    ) -> Result<DiffContext> {
+        let mut before_states =
+            get_all_clients_contexts_before(&self.clients[client_idx..=client_idx], config);
+        let mut after_states =
+            get_all_clients_contexts_current(&mut self.clients[client_idx..=client_idx], config)?;
+        let mut error_instructions =
+            get_all_clients_instructions(&self.clients[client_idx..=client_idx], config);
+        let mut diff_context = vec![];
+
+        for client in &self.clients[client_idx..=client_idx] {
+            let before_state = before_states.pop_front().unwrap();
+            let error_instruction = error_instructions.pop_front().unwrap();
+            let after_state = after_states.pop_front().unwrap();
+
+            let client_id = client.id.clone();
+            let client_name = client.name.clone();
+            let client_run_count = client.run_count;
+
+            diff_context.push(DiffContextClient::new(
+                client_id,
+                client_name,
+                client_run_count,
+                before_state,
+                error_instruction,
+                after_state,
+            ));
+        }
+
+        Ok(diff_context)
+    }
+
     fn build_diff_context(&mut self, config: &Config) -> Result<DiffContext> {
         let mut before_states = get_all_clients_contexts_before(&self.clients, config);
         let mut after_states = get_all_clients_contexts_current(&mut self.clients, config)?;
@@ -566,5 +614,61 @@ impl Broker {
         }
 
         Ok(diff_context)
+    }
+
+    fn exec_exit_condition_hit_insn(
+        config: &Config,
+        c1insn: &BrokerSHMInsn,
+        c2insn: &BrokerSHMInsn,
+    ) -> bool {
+        if let Some(cosim_exit_addr) = config.testing.exit_condition.on_address
+            && c1insn.insn_info.pc == cosim_exit_addr
+            && c2insn.insn_info.pc == cosim_exit_addr
+        {
+            return true;
+        }
+
+        false
+    }
+
+    fn mem_write_exit_condition_hit(
+        config: &Config,
+        c1mem: &MemAccessInfo,
+        c2mem: &MemAccessInfo,
+    ) -> bool {
+        if !c1mem.is_store || !c2mem.is_store {
+            return false;
+        }
+
+        let on_mem_write = &config.testing.exit_condition.on_mem_write;
+        let Some(cosim_write_addr) = on_mem_write.on_address else {
+            return false;
+        };
+
+        if c1mem.vaddr == cosim_write_addr && c2mem.vaddr == cosim_write_addr {
+            if let Some(cosim_write_value) = on_mem_write.with_constant_value {
+                return c1mem.data_u128() == cosim_write_value
+                    && c2mem.data_u128() == cosim_write_value;
+            }
+
+            return true;
+        }
+
+        false
+    }
+
+    fn exec_exit_condition_hit_tb(
+        config: &Config,
+        c1insn: &BrokerSHMTB,
+        c2insn: &BrokerSHMTB,
+    ) -> bool {
+        if let Some(cosim_exit_addr) = config.testing.exit_condition.on_address
+            && c1insn.tb_info.pc == cosim_exit_addr
+            && c2insn.tb_info.pc == cosim_exit_addr
+        {
+            return true;
+        }
+
+        false
     }
 }

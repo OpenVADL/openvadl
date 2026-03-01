@@ -413,6 +413,7 @@ pub struct MemAccessInfo {
     pub size: u8,
     // the amount written to the data-array depends on the size
     data: [u8; 16],
+    pub is_store: bool,
 }
 
 impl Serialize for MemAccessInfo {
@@ -424,6 +425,7 @@ impl Serialize for MemAccessInfo {
         s.serialize_field("size", &self.size)?;
         s.serialize_field("data", &self.data)?;
         s.serialize_field("vaddr", &self.vaddr)?;
+        s.serialize_field("is_store", &self.is_store)?;
         s.end()
     }
 }
@@ -431,13 +433,17 @@ impl Serialize for MemAccessInfo {
 impl MemAccessInfo {
     const BUF_LEN: usize = 16;
 
-    pub fn new(size: u8, data: [u8; Self::BUF_LEN], vaddr: u64) -> Self {
-        Self { size, data, vaddr }
+    pub fn new(size: u8, data: [u8; Self::BUF_LEN], vaddr: u64, is_store: bool) -> Self {
+        Self { size, data, vaddr, is_store }
     }
 
     pub fn data_slice(&self) -> &[u8] {
         let bytes: usize = 1 << self.size;
         &self.data[..bytes]
+    }
+
+    pub fn data_u128(&self) -> u128 {
+        u128::from_ne_bytes(self.data)
     }
 
     pub fn data_slice_fmt(&self) -> String {
