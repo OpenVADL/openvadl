@@ -46,7 +46,7 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vadl.ast.LspTokenizer;
+import vadl.ast.LspAstTokenizer;
 
 /**
  * The openVADL language server, based on lsp4j.
@@ -231,6 +231,6 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
       tokenModifiersMap.put(modifier, index);
       index++;
     }
-    textService.setTokenizer(new LspTokenizer(tokenTypesMap, tokenModifiersMap));
+    textService.setTokenizer(new LspAstTokenizer(tokenTypesMap, tokenModifiersMap));
   }
 }

@@ -140,15 +140,12 @@ class VadlTextDocumentService implements TextDocumentService {
             null
         ));
       }
+      DocumentSnapshot snapshot = document.getSnapshot();
 
-      List<Integer> tokens;
-      SemanticTokens result;
-      synchronized (document) {
-        tokens = tokenizer != null
-            ? tokenizer.getTokens(document.getText())
-            : new ArrayList<>();
-        result = new SemanticTokens(document.calculateUtf16Positions(tokens));
-      }
+      List<Integer> tokens = tokenizer != null
+          ? tokenizer.getTokens(snapshot)
+          : new ArrayList<>();
+      SemanticTokens result = new SemanticTokens(snapshot.calculateUtf16Positions(tokens));
       log.debug("<<- semanticTokens/full: <omitted>({} tokens)", tokens.size() / 5);
       return result;
     });
@@ -161,10 +158,7 @@ class VadlTextDocumentService implements TextDocumentService {
       // Don't push diagnostics if client doesn't support it
       return;
     }
-
-    // Work with current state of document
-    String text = document.getText();
-    int version = document.getVersion();
+    DocumentSnapshot snapshot = document.getSnapshot();
 
     var unused = server.executor().submit(() -> {
       try {
@@ -174,10 +168,10 @@ class VadlTextDocumentService implements TextDocumentService {
       } catch (InterruptedException e) {
         return;
       }
-      if (!documentVersionIsCurrent(document.getUri(), version)) {
+      if (!documentVersionIsCurrent(snapshot)) {
         log.debug(
             "ABORT publishDiagnostics (before): outdated version {} of document {}",
-            version,
+            snapshot.version(),
             document.getUri()
         );
         return;
@@ -185,7 +179,7 @@ class VadlTextDocumentService implements TextDocumentService {
 
       List<Diagnostic> lspItems = new ArrayList<>();
       try {
-        Ast ast = VadlParser.parse(text, URI.create(document.getUri()));
+        Ast ast = VadlParser.parse(snapshot.text(), URI.create(snapshot.uri()));
         new Ungrouper().ungroup(ast);
         new ModelRemover().removeModels(ast);
         new TypeChecker().verify(ast);
@@ -207,14 +201,10 @@ class VadlTextDocumentService implements TextDocumentService {
           }
 
           Diagnostic lspItem = new Diagnostic();
-          try {
-            lspItem.setRange(new Range(
-                document.calculateUtf16Position(location.begin(), version, false),
-                document.calculateUtf16Position(location.end(), version, true)
-            ));
-          } catch (Document.ObsoleteDocumentVersionException e) {
-            return;
-          }
+          lspItem.setRange(new Range(
+              snapshot.calculateUtf16Position(location.begin(), false),
+              snapshot.calculateUtf16Position(location.end(), true)
+          ));
           lspItem.setSeverity(
               switch (item.level) {
                 case ERROR -> DiagnosticSeverity.Error;
@@ -241,26 +231,26 @@ class VadlTextDocumentService implements TextDocumentService {
       // TODO There may be diagnostics in DeferredDiagnosticStore, but that is a static list and
       //      has no clear() method (i.e. outdated diagnostics remain visible)
 
-      if (!documentVersionIsCurrent(document.getUri(), version)) {
+      if (!documentVersionIsCurrent(snapshot)) {
         log.debug(
             "ABORT publishDiagnostics (after): outdated version {} of document {}",
-            version,
+            snapshot.version(),
             document.getUri()
         );
         return;
       }
-      var data = new PublishDiagnosticsParams(document.getUri(), lspItems, version);
+      var data = new PublishDiagnosticsParams(snapshot.uri(), lspItems, snapshot.version());
       log.debug("<< publishDiagnostics: {}", data);
       server.client().publishDiagnostics(data);
     });
   }
 
-  private boolean documentVersionIsCurrent(String uri, int version) {
-    Document document = getDocument(uri);
+  private boolean documentVersionIsCurrent(DocumentSnapshot snapshot) {
+    Document document = getDocument(snapshot.uri());
     if (document == null) {
       return false;
     }
-    return document.getVersion() == version;
+    return document.getVersion() == snapshot.version();
   }
 
   private @Nullable Document getDocument(String uri) {
