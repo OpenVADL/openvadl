@@ -16,14 +16,13 @@
 
 package vadl.utils;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.utils.EditorUtils.isIntelliJIDE;
 
 import com.google.common.collect.Streams;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -38,7 +37,7 @@ import org.slf4j.LoggerFactory;
 /**
  * References a location span in source.
  *
- * @param uri          uri to concrete source file
+ * @param path         path to concrete source file
  * @param begin        the span begin with line and column
  * @param end          the span end with line and column (this is inclusive)
  * @param expandedFrom pointing to the location of a macro instantiation from which the current ast
@@ -46,7 +45,7 @@ import org.slf4j.LoggerFactory;
  *                     the invocation. Is null for location that weren't expanded.
  */
 public record SourceLocation(
-    URI uri,
+    @Nullable Path path,
     Position begin,
     Position end,
     @Nullable SourceLocation expandedFrom
@@ -54,29 +53,28 @@ public record SourceLocation(
 
   private static final Logger logger = LoggerFactory.getLogger(SourceLocation.class);
 
-  private static final URI INVALID_MEMORY = URI.create("memory://unknown");
 
   public static final SourceLocation INVALID_SOURCE_LOCATION =
-      new SourceLocation(INVALID_MEMORY, 0);
+      new SourceLocation(null, 0);
 
-  public SourceLocation(URI uri, Position begin, Position end) {
-    this(uri, begin, end, null);
+  public SourceLocation(@Nullable Path path, Position begin, Position end) {
+    this(path, begin, end, null);
   }
 
-  public SourceLocation(URI uri, Position begin) {
-    this(uri, begin, begin);
+  public SourceLocation(@Nullable Path path, Position begin) {
+    this(path, begin, begin);
   }
 
-  public SourceLocation(URI uri, int lineBegin, int lineEnd) {
-    this(uri, new Position(lineBegin), new Position(lineEnd));
+  public SourceLocation(@Nullable Path path, int lineBegin, int lineEnd) {
+    this(path, new Position(lineBegin), new Position(lineEnd));
   }
 
-  public SourceLocation(URI uri, int line) {
-    this(uri, line, line);
+  public SourceLocation(@Nullable Path path, int line) {
+    this(path, line, line);
   }
 
   public boolean isValid() {
-    return !this.uri.equals(INVALID_MEMORY);
+    return this.path != null;
   }
 
   public SourceLocation orDefault(SourceLocation defaultLocation) {
@@ -144,7 +142,7 @@ public record SourceLocation(
     var firstLocation = locationPair.left();
     var secondLocation = locationPair.right();
 
-    if (!firstLocation.uri.equals(secondLocation.uri)) {
+    if (!Objects.equals(firstLocation.path, secondLocation.path)) {
       throw new IllegalArgumentException(
           "Cannot join source locations from different files.");
     }
@@ -157,7 +155,7 @@ public record SourceLocation(
         Objects.equals(firstLocation.expandedFrom, secondLocation.expandedFrom)
             ? firstLocation.expandedFrom : null;
 
-    return new SourceLocation(firstLocation.uri, begin, end, expanedFrom);
+    return new SourceLocation(firstLocation.path, begin, end, expanedFrom);
   }
 
 
@@ -179,7 +177,7 @@ public record SourceLocation(
       return INVALID_SOURCE_LOCATION;
     }
 
-    if (!this.uri.equals(other.uri)) {
+    if (!Objects.equals(this.path, other.path)) {
       throw new IllegalArgumentException(
           "Cannot intersect source locations that point to different files.");
     }
@@ -194,7 +192,7 @@ public record SourceLocation(
         Objects.equals(this.expandedFrom, other.expandedFrom)
             ? this.expandedFrom : null;
 
-    return new SourceLocation(this.uri, begin, end, expanedFrom);
+    return new SourceLocation(this.path, begin, end, expanedFrom);
   }
 
   /**
@@ -208,46 +206,23 @@ public record SourceLocation(
    * Produces version that is easily understandable for IDE's.
    *
    * <p>E.g.: {@code SourceLocation("relative/path/to/file.vadl", (1, 3), (2, 4))}
-   * becomes  {@code "relative/path/to/file.vadl:1:3"}
+   * becomes  {@code "relative/path/to/file.vadl:1:3"} for most Editors
+   * becomes  {@code "file:///absolut/path/to/file.vadl:1:3"} for IntelliJ
    * </p>
    */
-  public String toIDEString() {
-    return toIDEString(IDEDetectionMode.AUTO);
-  }
-
-  /**
-   * Produces version that is easily understandable for IDE's.
-   *
-   * <p>E.g.: {@code SourceLocation("relative/path/to/file.vadl", (1, 3), (2, 4))}
-   * becomes  {@code "relative/path/to/file.vadl:1:3"}
-   * </p>
-   */
-  public String toIDEString(IDEDetectionMode mode) {
-    return toIDEString(mode, false);
-  }
-
-  /**
-   * Produces version that is easily understandable for IDE's.
-   *
-   * <p>E.g.: {@code SourceLocation("relative/path/to/file.vadl", (1, 3), (2, 4))}
-   * becomes  {@code "relative/path/to/file.vadl:1:3"}
-   * </p>
-   */
-  public String toIDEString(IDEDetectionMode mode, boolean forceUnixPaths) {
+  public String toIDEString(VirtualFileSystem fileSystem, IDEDetectionMode mode,
+                            boolean forceUnixPaths) {
     if (!this.isValid()) {
       return "Source Location was lost";
     }
 
     String printablePath;
 
-    if (mode == IDEDetectionMode.ABSOLUTE || (mode == IDEDetectionMode.AUTO && (isIntelliJIDE()
-        || this.uri.getScheme().equals("memory")))) {
+    if (mode == IDEDetectionMode.ABSOLUTE || (mode == IDEDetectionMode.AUTO && isIntelliJIDE())) {
       // IntelliJ integrated terminal needs special treatment
-      printablePath = this.uri.toString();
+      printablePath = "file://" + fileSystem.toAbsolutePath(requireNonNull(path));
     } else {
-      var filePath = Paths.get(this.uri);
-      var currentWorkingDir = Paths.get(System.getProperty("user.dir"));
-      printablePath = currentWorkingDir.relativize(filePath).toFile().getPath();
+      printablePath = fileSystem.toRelativePath(requireNonNull(path)).toString();
     }
     if (forceUnixPaths) {
       printablePath = printablePath.replace(FileSystems.getDefault().getSeparator(), "/");
@@ -266,7 +241,7 @@ public record SourceLocation(
    * </p>
    */
   public String toConciseString() {
-    var uriAsString = this.uri.toString();
+    var uriAsString = this.path != null ? "file://" + this.path : "memory://invalid";
     var indexOfLastSlash = uriAsString.lastIndexOf('/');
     return uriAsString.substring(indexOfLastSlash + 1)
         + ":"
@@ -279,12 +254,12 @@ public record SourceLocation(
    * Reads the content of the source file at this location and
    * returns it as String.
    */
-  public String toSourceString() {
+  public String toSourceString(VirtualFileSystem fileSystem) {
     if (!this.isValid()) {
       return "Invalid source location: " + this;
     }
 
-    try (Stream<String> lines = Files.lines(Paths.get(uri))) {
+    try (Stream<String> lines = fileSystem.readLines(requireNonNull(this.path))) {
       if (begin.line <= 0) {
         return "Invalid source location: " + this;
       }
@@ -321,12 +296,15 @@ public record SourceLocation(
    * becomes "file:///path/file.vadl:1:3 .. 2:4"
    */
   public String toUriString() {
-    return uri.toString() + ":" + begin + " .. " + end;
+    if (path == null) {
+      return "memory://invalid";
+    }
+    return "file://" + path.toString() + ":" + begin + " .. " + end;
   }
 
   @Override
   public String toString() {
-    var printPath = !uri.getPath().isEmpty() ? uri.getPath() : "unknown";
+    var printPath = path != null ? path.toString() : "unknown";
     printPath += ":" + begin + ".." + end;
     return printPath;
   }
@@ -340,7 +318,7 @@ public record SourceLocation(
       return false;
     }
     SourceLocation that = (SourceLocation) o;
-    return Objects.equals(uri, that.uri)
+    return Objects.equals(path, that.path)
         && Objects.equals(begin, that.begin)
         && Objects.equals(end, that.end)
         && Objects.equals(expandedFrom, that.expandedFrom);
@@ -348,7 +326,7 @@ public record SourceLocation(
 
   @Override
   public int hashCode() {
-    return Objects.hash(uri, begin, end, expandedFrom);
+    return Objects.hash(path, begin, end, expandedFrom);
   }
 
   @Override

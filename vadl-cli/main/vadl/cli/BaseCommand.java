@@ -57,6 +57,7 @@ import vadl.error.DiagnosticPrinter;
 import vadl.pass.PassManager;
 import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.utils.DiskVirtualFileSystem;
 import vadl.utils.EditorUtils;
 import vadl.utils.SourceLocation;
 import vadl.viam.Specification;
@@ -172,7 +173,8 @@ public abstract class BaseCommand implements Callable<Integer> {
    */
   private Ast parseToAst() {
     try {
-      Ast ast = VadlParser.parse(input, Objects.requireNonNullElseGet(modelOverrides, Map::of));
+      Ast ast = VadlParser.parse(input, new DiskVirtualFileSystem(),
+          Objects.requireNonNullElseGet(modelOverrides, Map::of));
       new Ungrouper().ungroup(ast);
       new ModelRemover().removeModels(ast);
       return ast;
@@ -349,13 +351,13 @@ public abstract class BaseCommand implements Callable<Integer> {
       // Re-throw to let Picoli handle it
       throw e;
     } catch (Diagnostic d) {
-      System.out.println(new DiagnosticPrinter().toString(d));
+      System.out.println(new DiagnosticPrinter(new DiskVirtualFileSystem()).toString(d));
       if (showStacktrace) {
         System.out.println(getStackTrace(d));
       }
       returnVal = 1;
     } catch (DiagnosticList d) {
-      System.out.println(new DiagnosticPrinter().toString(d));
+      System.out.println(new DiagnosticPrinter(new DiskVirtualFileSystem()).toString(d));
       if (showStacktrace) {
         System.out.println(getStackTrace(d));
       }
@@ -389,7 +391,8 @@ public abstract class BaseCommand implements Callable<Integer> {
     }
 
     if (!DeferredDiagnosticStore.isEmpty()) {
-      System.out.println(new DiagnosticPrinter().toString(DeferredDiagnosticStore.getAll()));
+      System.out.println(new DiagnosticPrinter(new DiskVirtualFileSystem()).toString(
+          DeferredDiagnosticStore.getAll()));
 
       // Only exit abnormally if any diagnostic message is an error.
       if (DeferredDiagnosticStore.getAll().stream()

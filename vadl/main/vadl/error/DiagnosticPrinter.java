@@ -16,18 +16,16 @@
 
 package vadl.error;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.StringJoiner;
 import vadl.utils.SourceLocation;
+import vadl.utils.VirtualFileSystem;
 
 /**
  * A human focused command line printer for vadl diagnostics.
@@ -38,15 +36,16 @@ public class DiagnosticPrinter {
   public boolean forceUnixPaths = false;
   private final PrinterColors colors;
   private final Map<Path, List<String>> fileLineCache = new HashMap<>();
+  VirtualFileSystem fileSystem;
 
-  public DiagnosticPrinter() {
-    this(true);
+  public DiagnosticPrinter(VirtualFileSystem fileSystem) {
+    this(fileSystem, true);
   }
 
-  public DiagnosticPrinter(boolean enableColors) {
+  public DiagnosticPrinter(VirtualFileSystem fileSystem, boolean enableColors) {
     colors = enableColors ? new AnsiColors() : new NoColors();
+    this.fileSystem = fileSystem;
   }
-
 
   /**
    * Prints a list of diagnostics into a string.
@@ -123,8 +122,11 @@ public class DiagnosticPrinter {
     // Print preview header
     builder.append("     %s╭──[%s]\n".formatted(colors.cyan(),
         diagnostic.multiLocation.primaryLocation().location().toIDEString(
-            forceRelativePaths ? SourceLocation.IDEDetectionMode.RELATIVE :
-                SourceLocation.IDEDetectionMode.AUTO, forceUnixPaths)));
+            fileSystem,
+            forceRelativePaths
+                ? SourceLocation.IDEDetectionMode.RELATIVE
+                : SourceLocation.IDEDetectionMode.AUTO,
+            forceUnixPaths)));
     builder.append("     │\n");
 
     // TODO: Sort them accordig to their line number in the future
@@ -158,12 +160,16 @@ public class DiagnosticPrinter {
    */
   private String sourceDelimiter(SourceLocation previous,
                                  SourceLocation next) {
-    if (!previous.uri().equals(next.uri())) {
+    if (!Objects.equals(previous.path(), next.path())) {
       // This is so unusual that we print the location everytime
       var message = "     %s⋮\n".formatted(colors.cyan());
       message += "     ╭─ %s\n".formatted(
-          next.toIDEString(forceRelativePaths ? SourceLocation.IDEDetectionMode.RELATIVE :
-              SourceLocation.IDEDetectionMode.AUTO, forceUnixPaths));
+          next.toIDEString(
+              fileSystem,
+              forceRelativePaths
+                  ? SourceLocation.IDEDetectionMode.RELATIVE
+                  : SourceLocation.IDEDetectionMode.AUTO,
+              forceUnixPaths));
       return message;
     } else if (next.begin().line() == previous.end().line() + 1) {
       return "     %s│\n".formatted(colors.cyan());
@@ -214,10 +220,13 @@ public class DiagnosticPrinter {
                                   StringBuilder builder) {
     List<String> lines;
     try {
-      lines = getFileLines(location.location().uri());
+      if (location.location().path() == null) {
+        throw new IllegalStateException();
+      }
+      lines = getFileLines(location.location().path());
     } catch (IOException | IllegalArgumentException e) {
       var previewError = "No Preview available: Could not find the file '%s'".formatted(
-          location.location().uri()
+          location.location().path()
       );
       var prefix = "     %s│%s    ".formatted(colors.cyan(), colors.reset());
       var text = "%s%s%s\n%s".formatted(colors.yellow(), previewError, colors.reset(),
@@ -396,17 +405,16 @@ public class DiagnosticPrinter {
   /**
    * Get all lines fo a file.
    *
-   * @param uri of the file to load
+   * @param path of the file to load
    * @return list of lines.
    * @throws IOException if the file doesn't exist.
    */
-  private List<String> getFileLines(URI uri) throws IOException {
-    var path = new File(uri).toPath();
+  private List<String> getFileLines(Path path) throws IOException {
     if (fileLineCache.containsKey(path)) {
       return fileLineCache.get(path);
     }
 
-    var lines = Files.readAllLines(new File(uri).toPath(), Charset.defaultCharset());
+    var lines = fileSystem.readLines(path).toList();
     fileLineCache.put(path, lines);
     return lines;
   }

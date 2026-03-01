@@ -17,10 +17,13 @@
 package vadl.lsp;
 
 import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -48,6 +51,7 @@ import vadl.ast.Ungrouper;
 import vadl.ast.VadlParser;
 import vadl.error.Diagnostic.MsgType;
 import vadl.error.DiagnosticList;
+import vadl.utils.DiskVirtualFileSystem;
 import vadl.utils.SourceLocation;
 
 /**
@@ -61,12 +65,6 @@ class VadlTextDocumentService implements TextDocumentService {
    * developer is typing.
    */
   private static final int DIAGNOSTICS_DELAY_MS = 500;
-
-  /**
-   * The URI the Vadl Parser assigns to the String we give it for parsing. With this we can check
-   * if a location refers to this "file" or some other file that the Parser included along the way.
-   */
-  private static final URI PRIMARY_FILE = URI.create("memory://internal");
 
   private static final Logger log = LoggerFactory.getLogger(VadlTextDocumentService.class);
 
@@ -184,8 +182,9 @@ class VadlTextDocumentService implements TextDocumentService {
       }
 
       List<Diagnostic> lspItems = new ArrayList<>();
+      Path path = Paths.get(URI.create(document.getUri()));
       try {
-        Ast ast = VadlParser.parse(text, URI.create(document.getUri()));
+        Ast ast = VadlParser.parse(text, new DiskVirtualFileSystem(), Map.of(), path);
         new Ungrouper().ungroup(ast);
         new ModelRemover().removeModels(ast);
         new TypeChecker().verify(ast);
@@ -196,7 +195,7 @@ class VadlTextDocumentService implements TextDocumentService {
           // TODO Look into secondary locations too? Maybe as relatedInformation? Or to put a
           //      diagnostic message there as well?
           SourceLocation location = item.multiLocation.primaryLocation().location();
-          if (!location.uri().equals(PRIMARY_FILE)) {
+          if (!Objects.equals(location.path(), path)) {
             // Ignore errors for other files
             // TODO this means that errors in included files are not reported unless that file is
             //      opened in the client, even though the Parser gives us diagnostics for them

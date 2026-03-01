@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -29,6 +29,7 @@ import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
+import vadl.utils.DiskVirtualFileSystem;
 import vadl.utils.SourceLocation;
 
 /**
@@ -115,7 +116,8 @@ public class ViamError extends RuntimeException {
         .map("\n\twith %s"::formatted)
         .collect(Collectors.joining())
         + "\n\twith location:\t%s".formatted(location)
-        + "\n\twith source:\t%s".formatted(location.toSourceString());
+        // FIMXE: Introduce some global structure to get the current VFS instead of hardcoding it.
+        + "\n\twith source:\t%s".formatted(location.toSourceString(new DiskVirtualFileSystem()));
   }
 
 

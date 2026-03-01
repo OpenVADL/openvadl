@@ -1376,10 +1376,10 @@ class MacroExpander
     }
 
     if (loc.expandedFrom() == null) {
-      return new SourceLocation(loc.uri(), loc.begin(), loc.end(), expandingFrom);
+      return new SourceLocation(loc.path(), loc.begin(), loc.end(), expandingFrom);
     }
 
-    return new SourceLocation(loc.uri(), loc.begin(), loc.end(), copyLoc(loc.expandedFrom()));
+    return new SourceLocation(loc.path(), loc.begin(), loc.end(), copyLoc(loc.expandedFrom()));
   }
 
   static class MacroExpansionException extends Exception {

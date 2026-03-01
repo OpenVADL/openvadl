@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -29,6 +29,7 @@ import vadl.ast.VadlParser;
 import vadl.ast.ViamLowering;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticPrinter;
+import vadl.utils.DiskVirtualFileSystem;
 import vadl.viam.Specification;
 
 class OpenVadlTestFrontend implements TestFrontend {
@@ -54,7 +55,7 @@ class OpenVadlTestFrontend implements TestFrontend {
     } catch (Diagnostic e) {
       // FIXME: Proper print to string
       var stringWriter = new StringWriter();
-      stringWriter.append(new DiagnosticPrinter(false).toString(e));
+      stringWriter.append(new DiagnosticPrinter(new DiskVirtualFileSystem(), false).toString(e));
       stringWriter.append("\n");
       e.printStackTrace(new PrintWriter(stringWriter));
       logs = e.getMessage() + "\n" + stringWriter;
