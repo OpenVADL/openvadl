@@ -9,7 +9,7 @@
 #include "vadl-builtins.h"
 #include "vadl-iss-builtins.h"
 
-G_NORETURN void [(${gen_arch_lower})]_raise_exception(CPU[(${gen_arch_upper})]State *env, int32_t exception) {
+static G_NORETURN void [(${gen_arch_lower})]_raise_exception(CPU[(${gen_arch_upper})]State *env, int32_t exception) {
     CPUState *cs = env_cpu(env);
     cs->exception_index = exception;
     cpu_loop_exit_restore(cs, 0);

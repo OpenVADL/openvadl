@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -20,8 +20,11 @@ import static vadl.viam.ViamError.ensure;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -29,6 +32,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -112,6 +116,13 @@ public abstract class AbstractMultiTemplateRenderingPass extends Pass {
   protected abstract String getTemplatePath();
 
   /**
+   * Allows a pass to just emit files, without applying Thymeleaf.
+   */
+  protected boolean skipThymeleaf() {
+    return false;
+  }
+
+  /**
    * Set the line comment that should be used to start the copyright notice.
    */
   protected String lineComment() {
@@ -153,14 +164,20 @@ public abstract class AbstractMultiTemplateRenderingPass extends Pass {
       var finalFilePath = createOutputPath(configuration(), subDir, input.outputPath);
       emittedFiles.add(finalFilePath);
 
-      var writer = createFileWriter(finalFilePath);
       if (this.subDir.equals("dump")) {
         ArtifactTracker.addDump(finalFilePath);
       } else {
         ArtifactTracker.addArtifact(finalFilePath);
       }
 
-      renderTemplate(input.variables, writer);
+      try (var writer = createFileWriter(finalFilePath)) {
+        if (skipThymeleaf()) {
+          emitPlainTemplate(writer);
+        } else {
+          renderTemplate(input.variables, writer);
+        }
+      }
+
       formatRenderedFile(finalFilePath);
     }
 
@@ -173,6 +190,24 @@ public abstract class AbstractMultiTemplateRenderingPass extends Pass {
    */
   protected Result constructResult(List<Path> emittedFiles) {
     return new Result(emittedFiles);
+  }
+
+  private void emitPlainTemplate(Writer writer) throws IOException {
+    try (
+        var templateStream = getClass()
+            .getClassLoader()
+            .getResourceAsStream("templates/" + getTemplatePath());
+        Reader r = new InputStreamReader(
+            Objects.requireNonNull(templateStream,
+                "Template not found: templates/" + getTemplatePath()),
+            StandardCharsets.UTF_8
+        )
+    ) {
+      if (enableCopyright()) {
+        writer.write(getCopyrightNotice());
+      }
+      r.transferTo(writer);
+    }
   }
 
   private void renderTemplate(Map<String, Object> vars,
@@ -189,15 +224,10 @@ public abstract class AbstractMultiTemplateRenderingPass extends Pass {
     }
     vars.forEach(ctx::setVariable);
 
-    // Wrap the original writer to prepend the copyright notice.
-    try (
-        Writer wrappedWriter = new PrependingWriter(writer, getCopyrightNotice())) {
-
-      // if copyright is enabled, we use the wrapped writer.
-      var actualWriter = enableCopyright() ? wrappedWriter : writer;
-      templateEngine.process(getTemplatePath(), ctx, actualWriter);
-      actualWriter.flush();
-    }
+    // if copyright is enabled, we use the wrapped writer.
+    var actualWriter =
+        enableCopyright() ? new PrependingWriter(writer, getCopyrightNotice()) : writer;
+    templateEngine.process(getTemplatePath(), ctx, actualWriter);
   }
 
   private void formatRenderedFile(Path filePath) {

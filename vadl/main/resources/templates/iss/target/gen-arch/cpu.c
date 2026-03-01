@@ -140,6 +140,7 @@ static void [(${gen_arch_lower})]_cpu_set_pc(CPUState *cs, vaddr value)
     cpu->env.[(${gen_arch_upper})]_PC = value;
 }
 
+#ifndef CONFIG_USER_ONLY
 // include exception handling procedures
 #include "do_exception.c.inc"
 
@@ -159,18 +160,20 @@ static void [(${gen_arch_lower})]_cpu_do_interrupt(CPUState *cs)
     // mark handled
     cs->exception_index = [(${gen_arch_upper})]_EXCP_NONE;
 }
-
-static hwaddr [(${gen_arch_lower})]_cpu_get_phys_page_debug(CPUState *cs, vaddr addr)
-{
-    trace_[(${gen_arch_lower})]_cpu_call(__func__);
-    return addr; /* I assume 1:1 address correspondence */
-}
+#endif
 
 static int [(${gen_arch_lower})]_cpu_memory_rw_debug(CPUState *cs, vaddr addr, uint8_t *buf, int len, bool is_write)
 {
     trace_[(${gen_arch_lower})]_cpu_call(__func__);
     // TODO: Later
     return -1;
+}
+
+#ifndef CONFIG_USER_ONLY
+static hwaddr [(${gen_arch_lower})]_cpu_get_phys_page_debug(CPUState *cs, vaddr addr)
+{
+    trace_[(${gen_arch_lower})]_cpu_call(__func__);
+    return addr; /* I assume 1:1 address correspondence */
 }
 
 static bool [(${gen_arch_lower})]_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
@@ -189,6 +192,7 @@ static bool [(${gen_arch_lower})]_cpu_exec_halt(CPUState *cs)
     return [(${gen_arch_lower})]_cpu_has_work(cs);
 
 }
+#endif
 
 static void [(${gen_arch_lower})]_cpu_restore_state_to_opc(CPUState *cs, const TranslationBlock *tb, const uint64_t *data) {
     trace_[(${gen_arch_lower})]_cpu_call(__func__);
@@ -199,6 +203,7 @@ static void [(${gen_arch_lower})]_cpu_restore_state_to_opc(CPUState *cs, const T
     env->[(${gen_arch_upper})]_PC = data[0];
 }
 
+#ifndef CONFIG_USER_ONLY
 static bool [(${gen_arch_lower})]_cpu_tlb_fill(CPUState *cs, vaddr address, int size,
                        MMUAccessType access_type, int mmu_idx,
                        bool probe, uintptr_t retaddr)
@@ -211,6 +216,7 @@ static bool [(${gen_arch_lower})]_cpu_tlb_fill(CPUState *cs, vaddr address, int 
     tlb_set_page(cs, address, address, port, mmu_idx, TARGET_PAGE_SIZE);
     return true;
 }
+#endif
 
 static void [(${gen_arch_lower})]_cpu_synchronize_from_tb(CPUState *cs, const TranslationBlock *tb)
 {
@@ -219,12 +225,13 @@ static void [(${gen_arch_lower})]_cpu_synchronize_from_tb(CPUState *cs, const Tr
     cpu->env.[(${gen_arch_upper})]_PC = tb->pc;
 }
 
-
+#ifndef CONFIG_USER_ONLY
 #include "hw/core/sysemu-cpu-ops.h"
 
 static const struct SysemuCPUOps [(${gen_arch_lower})]_sysemu_ops = {
     .get_phys_page_debug = [(${gen_arch_lower})]_cpu_get_phys_page_debug,
 };
+#endif
 
 #include "hw/core/tcg-cpu-ops.h"
 
@@ -233,11 +240,13 @@ static const struct SysemuCPUOps [(${gen_arch_lower})]_sysemu_ops = {
 static const struct TCGCPUOps [(${gen_arch_lower})]_tcg_ops = {
     .initialize = [(${gen_arch_lower})]_tcg_init,
     .synchronize_from_tb = [(${gen_arch_lower})]_cpu_synchronize_from_tb,
+    .restore_state_to_opc = [(${gen_arch_lower})]_cpu_restore_state_to_opc,
+#ifndef CONFIG_USER_ONLY
     .cpu_exec_interrupt = [(${gen_arch_lower})]_cpu_exec_interrupt,
     .cpu_exec_halt = [(${gen_arch_lower})]_cpu_exec_halt,
     .tlb_fill = [(${gen_arch_lower})]_cpu_tlb_fill,
     .do_interrupt = [(${gen_arch_lower})]_cpu_do_interrupt,
-    .restore_state_to_opc = [(${gen_arch_lower})]_cpu_restore_state_to_opc,
+#endif
 };
 
 static Property [(${gen_arch_lower})]_cpu_properties[] = {
@@ -261,7 +270,9 @@ static void [(${gen_arch_lower})]_cpu_class_init(ObjectClass *oc, void *data)
     cc->dump_state = [(${gen_arch_lower})]_cpu_dump_state;
     cc->set_pc = [(${gen_arch_lower})]_cpu_set_pc;
     cc->memory_rw_debug = [(${gen_arch_lower})]_cpu_memory_rw_debug;
+#ifndef CONFIG_USER_ONLY
     cc->sysemu_ops = &[(${gen_arch_lower})]_sysemu_ops;
+#endif
     cc->disas_set_info = [(${gen_arch_lower})]_cpu_disas_set_info;
     cc->tcg_ops = &[(${gen_arch_lower})]_tcg_ops;
 

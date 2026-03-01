@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -31,9 +31,16 @@ public class IssDefaultRenderingPass extends IssTemplateRenderingPass {
 
   private final String issTemplatePath;
 
-  public IssDefaultRenderingPass(String issTemplatePath, IssConfiguration configuration) {
+  private final boolean skipThymeleaf;
+
+  /**
+   * Constructs an ISS default rendering pass object for rendering a specified ISS template.
+   */
+  public IssDefaultRenderingPass(String issTemplatePath, boolean skipThymeleaf,
+                                 IssConfiguration configuration) {
     super(configuration);
     this.issTemplatePath = issTemplatePath;
+    this.skipThymeleaf = skipThymeleaf;
   }
 
   @Override
@@ -41,8 +48,24 @@ public class IssDefaultRenderingPass extends IssTemplateRenderingPass {
     return issTemplatePath;
   }
 
+  @Override
+  protected boolean skipThymeleaf() {
+    return skipThymeleaf;
+  }
+
+  @Override
+  protected boolean enableCopyright() {
+    // if we do a plain copy, it is not auto-generated
+    return !skipThymeleaf;
+  }
+
   public static IssDefaultRenderingPass issDefault(String issTemplatePath,
                                                    IssConfiguration config) {
-    return new IssDefaultRenderingPass(issTemplatePath, config);
+    return issDefault(issTemplatePath, false, config);
+  }
+
+  public static IssDefaultRenderingPass issDefault(String issTemplatePath, boolean skipThymeleaf,
+                                                   IssConfiguration config) {
+    return new IssDefaultRenderingPass(issTemplatePath, skipThymeleaf, config);
   }
 }
