@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -32,7 +32,7 @@ import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.utility.MountableFile;
 import vadl.iss.QemuIssTest;
 
-public class IssCustomTests extends QemuIssTest {
+public class IssRV64CustomTests extends QemuIssTest {
 
   @Override
   protected List<String> withUpstreamTargets() {
