@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import vadl.lsp.LspEntryPoint;
+import vadl.lsp.VadlLanguageServer.Settings;
 
 /**
  * The Command provides the lsp subcommand.
@@ -39,8 +40,13 @@ public class LspCommand implements Callable<Integer> {
   @Nullable
   Integer port;
 
+  @Option(names = "--no-syntax-highlighting",
+      description = "Disable server-based syntax highlighting")
+  boolean noSyntaxHighlighting;
+
   @Override
   public Integer call() {
-    return LspEntryPoint.run(port);
+    var settings = new Settings(noSyntaxHighlighting);
+    return LspEntryPoint.run(port, settings);
   }
 }

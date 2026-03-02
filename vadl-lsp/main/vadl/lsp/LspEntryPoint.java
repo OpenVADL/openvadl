@@ -30,6 +30,7 @@ import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.lsp.VadlLanguageServer.Settings;
 
 /**
  * Entrypoint to the OpenVADL language server.
@@ -39,9 +40,11 @@ public class LspEntryPoint {
 
   @Nullable
   private final Integer port;
+  private final Settings settings;
 
-  private LspEntryPoint(@Nullable Integer port) {
+  private LspEntryPoint(@Nullable Integer port, Settings settings) {
     this.port = port;
+    this.settings = settings;
   }
 
   private int runServer() {
@@ -85,7 +88,7 @@ public class LspEntryPoint {
       ExecutionException {
 
     // According to https://github.com/eclipse-lsp4j/lsp4j/blob/main/documentation/README.md
-    VadlLanguageServer server = new VadlLanguageServer();
+    VadlLanguageServer server = new VadlLanguageServer(settings);
     Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(
         server,
         in,
@@ -111,9 +114,10 @@ public class LspEntryPoint {
    * Runs a language server, which will either communicate via a specific TCP port or stdin/stdout.
    *
    * @param port Port on which to listen on. Null: Use stdin/stdout for communication instead.
+   * @param settings Various settings for the language server itself.
    * @return exit code
    */
-  public static int run(@Nullable Integer port) {
-    return new LspEntryPoint(port).runServer();
+  public static int run(@Nullable Integer port, Settings settings) {
+    return new LspEntryPoint(port, settings).runServer();
   }
 }

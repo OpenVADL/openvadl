@@ -87,7 +87,7 @@ class VadlTextDocumentService implements TextDocumentService {
    *
    * @param tokenizer A fully configured Tokenizer for VADL
    */
-  void setTokenizer(LspTokenizer tokenizer) {
+  void setTokenizer(@Nullable LspTokenizer tokenizer) {
     this.tokenizer = tokenizer;
   }
 

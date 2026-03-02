@@ -62,10 +62,20 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
   
   private final VadlTextDocumentService textService = new VadlTextDocumentService(this);
 
+  private final Settings settings;
+
   @Nullable
   private InitializeParams params;
   @Nullable
   private ServerCapabilities serverCapabilities;
+
+
+  /**
+   * Creates a new Language Server with the given settings.
+   */
+  public VadlLanguageServer(Settings settings) {
+    this.settings = settings;
+  }
 
   @Override
   public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
@@ -189,48 +199,58 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
     c.setTextDocumentSync(tdso);
 
     // Semantic Tokens
-    String[] desiredTokenTypes = new String[] {
-        SemanticTokenTypes.Type,
-        SemanticTokenTypes.Variable,
-        SemanticTokenTypes.Keyword,
-        SemanticTokenTypes.String,
-        SemanticTokenTypes.Number,
-        SemanticTokenTypes.Operator
-    };
-    List<String> tokenTypes = new ArrayList<>(desiredTokenTypes.length);
-    // Limit token types to those supported by the client
-    List<String> clientSupportedTypes = params.getCapabilities().getTextDocument()
-        .getSemanticTokens().getTokenTypes();
-    for (String token : desiredTokenTypes) {
-      if (clientSupportedTypes.contains(token)) {
-        tokenTypes.add(token);
+    if (!settings.noSyntaxHighlighting()) {
+      String[] desiredTokenTypes = new String[] {
+          SemanticTokenTypes.Type,
+          SemanticTokenTypes.Variable,
+          SemanticTokenTypes.Keyword,
+          SemanticTokenTypes.String,
+          SemanticTokenTypes.Number,
+          SemanticTokenTypes.Operator
+      };
+      List<String> tokenTypes = new ArrayList<>(desiredTokenTypes.length);
+      // Limit token types to those supported by the client
+      List<String> clientSupportedTypes = params.getCapabilities().getTextDocument()
+          .getSemanticTokens().getTokenTypes();
+      for (String token : desiredTokenTypes) {
+        if (clientSupportedTypes.contains(token)) {
+          tokenTypes.add(token);
+        }
       }
-    }
-    c.setSemanticTokensProvider(new SemanticTokensWithRegistrationOptions(
-        new SemanticTokensLegend(
-            tokenTypes,
-            Arrays.asList(new String[] {
-                // No modifiers
-            })
-        ),
-        new SemanticTokensServerFull(false), // delta
-        false // range
-    ));
-    this.serverCapabilities = c;
+      c.setSemanticTokensProvider(new SemanticTokensWithRegistrationOptions(
+          new SemanticTokensLegend(
+              tokenTypes,
+              Arrays.asList(new String[] {
+                  // No modifiers
+              })
+          ),
+          new SemanticTokensServerFull(false), // delta
+          false // range
+      ));
 
-    // Create Tokenizer:
-    var tokenTypesMap = new HashMap<String, Integer>();
-    int index = 0;
-    for (String type : c.getSemanticTokensProvider().getLegend().getTokenTypes()) {
-      tokenTypesMap.put(type, index);
-      index++;
+      // Create Tokenizer:
+      var tokenTypesMap = new HashMap<String, Integer>();
+      int index = 0;
+      for (String type : c.getSemanticTokensProvider().getLegend().getTokenTypes()) {
+        tokenTypesMap.put(type, index);
+        index++;
+      }
+      var tokenModifiersMap = new HashMap<String, Integer>();
+      index = 0;
+      for (String modifier : c.getSemanticTokensProvider().getLegend().getTokenModifiers()) {
+        tokenModifiersMap.put(modifier, index);
+        index++;
+      }
+      textService.setTokenizer(new LspTokenizer(tokenTypesMap, tokenModifiersMap));
     }
-    var tokenModifiersMap = new HashMap<String, Integer>();
-    index = 0;
-    for (String modifier : c.getSemanticTokensProvider().getLegend().getTokenModifiers()) {
-      tokenModifiersMap.put(modifier, index);
-      index++;
-    }
-    textService.setTokenizer(new LspTokenizer(tokenTypesMap, tokenModifiersMap));
+
+    this.serverCapabilities = c;
   }
+
+  /**
+   * Various Server Settings.
+   *
+   * @param noSyntaxHighlighting True: Disable syntax highlighting (aka semantic tokens).
+   */
+  public record Settings(boolean noSyntaxHighlighting) {}
 }
