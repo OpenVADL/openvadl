@@ -493,9 +493,9 @@ class RV3264Base_SLLIW_shamt<ValueType ty> : Operand<ty>
   let DecoderMethod = "RV3264Base_SLLIW_shamt_decode_wrapper";
 }
 
-def RV3264Base_SLLIW_shamtAsInt8
-    : RV3264Base_SLLIW_shamt<i8>
-    , ImmLeaf<i8, [{ return RV3264Base_SLLIW_shamt_predicate(Imm); }]>;
+def RV3264Base_SLLIW_shamtAsInt64
+    : RV3264Base_SLLIW_shamt<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_SLLIW_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SLLIW_shamtAsLabel : RV3264Base_SLLIW_shamt<OtherVT>;
 
@@ -541,9 +541,9 @@ class RV3264Base_SRAIW_shamt<ValueType ty> : Operand<ty>
   let DecoderMethod = "RV3264Base_SRAIW_shamt_decode_wrapper";
 }
 
-def RV3264Base_SRAIW_shamtAsInt8
-    : RV3264Base_SRAIW_shamt<i8>
-    , ImmLeaf<i8, [{ return RV3264Base_SRAIW_shamt_predicate(Imm); }]>;
+def RV3264Base_SRAIW_shamtAsInt64
+    : RV3264Base_SRAIW_shamt<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_SRAIW_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SRAIW_shamtAsLabel : RV3264Base_SRAIW_shamt<OtherVT>;
 
@@ -565,9 +565,9 @@ class RV3264Base_SRLIW_shamt<ValueType ty> : Operand<ty>
   let DecoderMethod = "RV3264Base_SRLIW_shamt_decode_wrapper";
 }
 
-def RV3264Base_SRLIW_shamtAsInt8
-    : RV3264Base_SRLIW_shamt<i8>
-    , ImmLeaf<i8, [{ return RV3264Base_SRLIW_shamt_predicate(Imm); }]>;
+def RV3264Base_SRLIW_shamtAsInt64
+    : RV3264Base_SRLIW_shamt<i64>
+    , ImmLeaf<i64, [{ return RV3264Base_SRLIW_shamt_predicate(Imm); }]>;
 
 def RV3264Base_SRLIW_shamtAsLabel : RV3264Base_SRLIW_shamt<OtherVT>;
 
@@ -3037,7 +3037,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SLLIW_shamtAsInt8:$shamt );
+let InOperandList = ( ins X:$rs1, RV3264Base_SLLIW_shamtAsInt64:$shamt );
 
 field bits<32> Inst;
 
@@ -3459,7 +3459,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SRAIW_shamtAsInt8:$shamt );
+let InOperandList = ( ins X:$rs1, RV3264Base_SRAIW_shamtAsInt64:$shamt );
 
 field bits<32> Inst;
 
@@ -3673,7 +3673,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264Base_SRLIW_shamtAsInt8:$shamt );
+let InOperandList = ( ins X:$rs1, RV3264Base_SRLIW_shamtAsInt64:$shamt );
 
 field bits<32> Inst;
 
