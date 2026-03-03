@@ -99,7 +99,7 @@ public abstract class CosimInstrTest extends CosimTest {
         .map(e -> DynamicTest.dynamicTest(e.id(),
             () -> {
               if (!resultFiles.containsKey(e.id())) {
-                Assertions.fail("Result file is missing for test: " + e.id());
+                Assertions.fail("Result file is missing for test: " + e.id() + "asm:\n" + e.asmCore());
               }
               var file = resultFiles.get(e.id());
               var parsed = CosimTestUtils.yamlToTestResult(file);
