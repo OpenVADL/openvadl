@@ -144,6 +144,7 @@ instruction set architecture RV3264Base = {
     }
 
   model WShftInstr (name : Id, op : BinOp, funct3 : Bin, funct7 : Bin, lhsTy : Id) : IsaDefs = {
+    [ upcast access to : shamt, MLen ]
     instruction $name : Rtype =                        // shift immediate instructions word
       X(rd) := (((X(rs1) as $lhsTy) $op shamt) as SInt) as SIntR
     encoding $name = {opcode = 0b001'1011, funct3 = $funct3, funct7 = $funct7}
