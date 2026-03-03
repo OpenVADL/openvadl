@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -34,7 +34,7 @@ public class AstTestUtils {
     MODEL_REMOVER.removeModels(ast);
     UNGROUPER.ungroup(ast);
     var progPretty = ast.prettyPrintToString();
-    var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty, ast.fileUri),
+    var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty, ast.filePath),
         "Cannot parse prettified input \n" + progPretty);
     UNGROUPER.ungroup(astPretty);
     assertAstEquality(astPretty, ast);

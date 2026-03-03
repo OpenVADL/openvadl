@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 
 package vadl.ast;
 
-import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -30,7 +30,10 @@ import vadl.utils.WithLocation;
  */
 public class Ast {
   List<Definition> definitions = new ArrayList<>();
-  URI fileUri = SourceLocation.INVALID_SOURCE_LOCATION.uri();
+
+  @Nullable
+  Path filePath = null;
+
   public List<PassTimings> passTimings = new ArrayList<>();
 
 
@@ -107,7 +110,7 @@ abstract class Node implements WithLocation {
     if (symbolTable == null) {
       throw new IllegalStateException(
           "Node `%s` should have received a symbol table in a previous pass, found at: %s"
-              .formatted(toString(), location().toIDEString()));
+              .formatted(toString(), location().toConciseString()));
     }
     return symbolTable;
   }

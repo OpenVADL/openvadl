@@ -157,8 +157,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @SuppressWarnings("VariableDeclarationUsageDistance")
   public Specification generate(Ast ast) {
     var startTime = System.nanoTime();
+    var name = ast.filePath != null ? ParserUtils.baseName(ast.filePath) : "unknown";
     var spec = new Specification(
-        new vadl.viam.Identifier(ParserUtils.baseName(ast.fileUri),
+        new vadl.viam.Identifier(name,
             SourceLocation.INVALID_SOURCE_LOCATION));
     this.currentSpecification = spec;
 

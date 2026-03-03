@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import vadl.utils.DiskVirtualFileSystem;
 
 public class AstMacroTests {
 
@@ -65,7 +66,7 @@ public class AstMacroTests {
 
   private void assertAstEquality(Path vadlPath) throws IOException {
     var replacements = parseMacroReplacements(vadlPath.toAbsolutePath());
-    var ast = VadlParser.parse(vadlPath.toAbsolutePath(), replacements);
+    var ast = VadlParser.parse(vadlPath.toAbsolutePath(), new DiskVirtualFileSystem(), replacements);
     verifyPrettifiedAst(ast);
 
     var actualExpandedAst = ast.prettyPrintToString();

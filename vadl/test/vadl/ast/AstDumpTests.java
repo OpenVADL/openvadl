@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
@@ -59,7 +58,7 @@ public class AstDumpTests {
   }
 
   private void assertDumpEquality(Path vadlPath, Path expectedDumpPath) throws IOException {
-    var ast = VadlParser.parse(vadlPath.toAbsolutePath(), Map.of());
+    var ast = VadlParser.parse(vadlPath.toAbsolutePath());
     ModelRemover remover = new ModelRemover();
     remover.removeModels(ast);
     Ungrouper ungrouper = new Ungrouper();

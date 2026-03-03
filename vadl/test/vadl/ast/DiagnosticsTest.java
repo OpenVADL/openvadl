@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -32,6 +32,7 @@ import org.junit.jupiter.api.TestFactory;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 import vadl.error.DiagnosticPrinter;
+import vadl.utils.DiskVirtualFileSystem;
 import vadl.viam.passes.verification.ViamVerifier;
 
 /// Runs all files in the test/resources/diagnostics directory.
@@ -91,7 +92,7 @@ public class DiagnosticsTest {
 
     // Force relative and slashified paths because the tests must always produce the same and the
     // absolute path and file separator will differ on different machines.
-    DiagnosticPrinter printer = new DiagnosticPrinter(false);
+    DiagnosticPrinter printer = new DiagnosticPrinter(new DiskVirtualFileSystem(), false);
     printer.forceRelativePaths = true;
     printer.forceUnixPaths = true;
     var output = "Reported Diagnostics:\n\n";

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@ package vadl.ast;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static vadl.ast.AstTestUtils.assertAstEquality;
 
-import java.net.URI;
+import java.nio.file.Paths;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -309,7 +309,7 @@ public class MacroTests {
         """;
 
     var exception = Assertions.assertThrows(DiagnosticList.class,
-        () -> VadlParser.parse(prog, URI.create("memory://hardcoded")));
+        () -> VadlParser.parse(prog, Paths.get("hardcoded")));
     var location = exception.items.get(0).multiLocation.primaryLocation().location();
     Assertions.assertNotNull(location.expandedFrom());
     Assertions.assertEquals(5, location.expandedFrom().begin().line());

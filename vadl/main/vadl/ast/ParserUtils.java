@@ -18,13 +18,9 @@ package vadl.ast;
 
 import static vadl.error.Diagnostic.error;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -716,8 +712,8 @@ class ParserUtils {
                                   List<List<Identifier>> importedSymbols,
                                   List<StringLiteral> args, SourceLocation loc) {
     var modulePath = filePath == null
-        ? resolveUri(parser, Objects.requireNonNull(fileId))
-        : resolveUri(parser, filePath.value, filePath);
+        ? resolveImportPath(parser, Objects.requireNonNull(fileId))
+        : resolveImportPath(parser, filePath.value, filePath);
     if (modulePath != null) {
       var macroOverrides = new HashMap<String, String>();
       for (StringLiteral arg : args) {
@@ -731,7 +727,7 @@ class ParserUtils {
         macroOverrides.put(keyValue[0], keyValue[1]);
       }
       try {
-        var ast = VadlParser.parse(modulePath, macroOverrides);
+        var ast = VadlParser.parse(modulePath, parser.fileSystem, macroOverrides);
         parser.macroTable.importFrom(ast, importedSymbols);
         return new ImportDefinition(ast, importedSymbols, fileId, filePath, args, loc);
       } catch (DiagnosticList | Diagnostic e) {
@@ -746,20 +742,28 @@ class ParserUtils {
     return DUMMY_DEF;
   }
 
-  static @Nullable Path resolveUri(Parser parser, Identifier importPath) {
-    return resolveUri(parser, importPath.name, importPath);
+  static @Nullable Path resolveImportPath(Parser parser, Identifier importPath) {
+    return resolveImportPath(parser, importPath.name, importPath);
   }
 
-  static @Nullable Path resolveUri(Parser parser, String name, WithLocation location) {
-    var resolutionUri = Objects.requireNonNullElse(parser.resolutionUri, parser.sourceFile);
-    var relativeToSpec = Paths.get(resolutionUri.resolve(name));
-    if (Files.isRegularFile(relativeToSpec)) {
+  /**
+   * Resolves a usable path of the file to import.
+   * Since files are always imported relative to the caller this takes into account the path of the
+   * currently open file.
+   *
+   * @param parser      of the current file.
+   * @param name        to resolve, might be a path.
+   * @param location    of the import statement, used for errors.
+   * @return            a path to import.
+   */
+  static @Nullable Path resolveImportPath(Parser parser, String name, WithLocation location) {
+    var resolutionPath = Objects.requireNonNullElse(parser.resolutionPath, parser.sourceFile);
+    var relativeToSpec = resolutionPath.resolveSibling(name);
+    if (parser.fileSystem.exists(relativeToSpec)) {
       return relativeToSpec;
     }
-    var withAppendedExtension = relativeToSpec.resolveSibling(
-        relativeToSpec.getFileName() + VADL_EXTENSION
-    );
-    if (Files.isRegularFile(withAppendedExtension)) {
+    var withAppendedExtension = resolutionPath.resolveSibling(name + VADL_EXTENSION);
+    if (parser.fileSystem.exists(withAppendedExtension)) {
       return withAppendedExtension;
     }
     parser.diagnostics.add(Diagnostic.error("Import Error", location)
@@ -769,14 +773,14 @@ class ParserUtils {
   }
 
   /**
-   * Return the basename of a uri.
+   * Return the basename of a path.
    * Example: /home/flo/abc.txt -> abc
    *
-   * @param uri to extract the files basename
+   * @param path to extract the files basename
    * @return the basename
    */
-  static String baseName(URI uri) {
-    var name = new File(uri.getPath()).getName();
+  static String baseName(Path path) {
+    var name = path.getFileName().toString();
     return name.contains(".") ? name.substring(0, name.lastIndexOf('.')) : name;
   }
 

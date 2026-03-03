@@ -28,10 +28,16 @@ Coco/R itself) does not fall under the GNU General Public License.
 -->begin
 import java.util.ArrayList;
 import vadl.utils.SourceLocation;
+import vadl.utils.VirtualFileSystem;
 import vadl.error.Diagnostic;
 import static vadl.error.Diagnostic.error;
 
 public class Parser {
+
+  /**
+  * The file abstraction used to load imported files
+  */
+  VirtualFileSystem fileSystem = null;
 
   /**
   * All the errors the parser has encountered.

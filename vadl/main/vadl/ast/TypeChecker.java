@@ -309,7 +309,7 @@ public class TypeChecker
   private void throwUnimplemented(Node node) {
     throw new RuntimeException(
         "The typechecker doesn't know how to handle `%s` yet, found in %s".formatted(
-            node.getClass().getSimpleName(), node.location().toIDEString()));
+            node.getClass().getSimpleName(), node.location().toConciseString()));
   }
 
   /**
@@ -340,7 +340,7 @@ public class TypeChecker
   private IllegalStateException buildIllegalStateException(Node node, String message) {
     return new IllegalStateException(
         "The typechecker encountered an invalid state in `%s` at %s: %s".formatted(
-            node.getClass().getSimpleName(), node.location().toIDEString(), message));
+            node.getClass().getSimpleName(), node.location().toConciseString(), message));
   }
 
   private void throwInvalidAsmCast(AsmType from, AsmType to, WithLocation location) {
@@ -1432,7 +1432,7 @@ public class TypeChecker
         // FIXME: Support relational alias types on registers
         throw new IllegalStateException(
             "Relational alias types are not yet supported, found at: %s".formatted(
-                definition.loc.toIDEString()));
+                definition.loc.toConciseString()));
       }
 
       // we have to check the CallIndexExpr "manually" as the normal check cannot handle
@@ -1547,7 +1547,7 @@ public class TypeChecker
 
     throw new IllegalStateException(
         "Kind %s not yet implemented, found at: %s".formatted(definition.kind,
-            definition.loc.toIDEString()));
+            definition.loc.toConciseString()));
   }
 
   private Type setInnerMostType(Type type, BitsType innerType) {
@@ -2728,7 +2728,7 @@ public class TypeChecker
 
     throw new IllegalStateException(
         "Cannot find symbol `%s` found at: %s (The symbol resolver should already have caught that)"
-            .formatted(fullName, expr.location().toIDEString()));
+            .formatted(fullName, expr.location().toConciseString()));
   }
 
   @Override

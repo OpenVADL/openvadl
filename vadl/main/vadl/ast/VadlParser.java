@@ -18,10 +18,9 @@ package vadl.ast;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +28,10 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
+import vadl.utils.DiskVirtualFileSystem;
+import vadl.utils.EmptyVirtualFileSystem;
 import vadl.utils.SourceLocation;
+import vadl.utils.VirtualFileSystem;
 
 /**
  * A parser for the VADL language, generated using Coco.
@@ -40,62 +42,89 @@ public class VadlParser {
    * Parses the VADL source program at the specified path into an AST.
    */
   public static Ast parse(Path path) throws IOException {
-    return parse(path, Collections.emptyMap());
+    return parse(path, new DiskVirtualFileSystem(), Collections.emptyMap());
   }
 
   /**
    * Parses the VADL source program at the specified path into an AST.
-   * Works just like {@link VadlParser#parse(String, Map, URI)},
+   */
+  public static Ast parse(Path path, VirtualFileSystem fileSystem) throws IOException {
+    return parse(path, fileSystem, Collections.emptyMap());
+  }
+
+  /**
+   * Parses the VADL source program at the specified path into an AST.
+   * Works just like {@link VadlParser#parse(String, Map, Path)},
    * except errors will have the proper file locations set.
    */
-  public static Ast parse(Path path, Map<String, String> macroOverrides) throws IOException {
+  public static Ast parse(Path path, VirtualFileSystem fileSystem,
+                          Map<String, String> macroOverrides) throws IOException {
     final var startTime = System.nanoTime();
-    var scanner = new Scanner(Files.newInputStream(path));
+    var scanner = new Scanner(fileSystem.getInputStream(path));
     var parser = new Parser(scanner);
-    parser.sourceFile = path.toUri();
+    parser.sourceFile = fileSystem.toAbsolutePath(path);
+    parser.fileSystem = fileSystem;
     macroOverrides.forEach((key, value) -> parser.macroOverrides.put(key,
         new Identifier(value, SourceLocation.INVALID_SOURCE_LOCATION)));
     var ast = parse(parser);
-    ast.fileUri = path.toUri();
+    ast.filePath = fileSystem.toAbsolutePath(path);
     ast.passTimings.add(
         new Ast.PassTimings("Parsing", (System.nanoTime() - startTime) / 1_000_000));
-
-
     return ast;
   }
 
   /**
-   * Convenience overload for {@link VadlParser#parse(String, Map, URI)} without any overrides.
+   * Convenience overload for {@link VadlParser#parse(String, Map, Path)} without any overrides.
    */
   public static Ast parse(String program) {
-    return parse(program, Map.of(), null);
+    return parse(program, Map.of(), Paths.get("memory"));
   }
 
   /**
-   * Convenience overload for {@link VadlParser#parse(String, Map, URI)} without any overrides.
+   * Convenience overload for {@link VadlParser#parse(String, Map, Path)} without any overrides.
    */
-  public static Ast parse(String program, URI resolutionUri) {
-    return parse(program, Map.of(), resolutionUri);
+  public static Ast parse(String program, Path resolutionPath) {
+    return parse(program, Map.of(), resolutionPath);
   }
 
   /**
    * Parses a source program into an AST.
    *
-   * @param program        a source code file to parse
-   * @param macroOverrides The overrides to perform in the macro evaluation
-   * @return The parsed syntax tree.
+   * @param program         a source code file to parse
+   * @param macroOverrides  The overrides to perform in the macro evaluation
+   * @return                The parsed syntax tree.
    * @throws DiagnosticList if there are any parsing errors.
    */
   public static Ast parse(String program, Map<String, String> macroOverrides,
-                          @Nullable URI resolutionUri) {
+                          @Nullable Path resolutionPath) {
+    return parse(program, new EmptyVirtualFileSystem(), macroOverrides, resolutionPath);
+  }
+
+
+  /**
+   * Parses a source program into an AST.
+   *
+   *
+   * @param program         a source code file to parse
+   * @param fileSystem      an abstraction layer over the filesystem
+   * @param macroOverrides  The overrides to perform in the macro evaluation
+   * @param resolutionPath  The path from which imports should be started
+   * @return                The parsed syntax tree.
+   * @throws DiagnosticList if there are any parsing errors.
+   */
+  public static Ast parse(String program, VirtualFileSystem fileSystem,
+                          Map<String, String> macroOverrides,
+                          @Nullable Path resolutionPath) {
     var scanner = new Scanner(new ByteArrayInputStream(program.getBytes(StandardCharsets.UTF_8)));
     var parser = new Parser(scanner);
-    parser.resolutionUri = resolutionUri;
-    parser.sourceFile = URI.create("memory://internal");
+    parser.resolutionPath = resolutionPath;
+    parser.sourceFile = resolutionPath;
+    parser.fileSystem = fileSystem;
     macroOverrides.forEach((key, value) -> parser.macroOverrides.put(key,
         new Identifier(value, SourceLocation.INVALID_SOURCE_LOCATION)));
     return parse(parser);
   }
+
 
   private static Ast parse(Parser parser) {
     List<Diagnostic> errors = new ArrayList<>();
