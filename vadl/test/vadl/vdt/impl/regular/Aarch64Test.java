@@ -33,6 +33,7 @@ import vadl.vdt.model.Node;
 import vadl.vdt.passes.VdtConstraintSynthesisPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
+import vadl.vdt.passes.VdtVerificationPass;
 import vadl.vdt.target.common.DecisionTreeStatsCalculator;
 import vadl.vdt.target.dump.TextGraphGenerator;
 
@@ -55,6 +56,7 @@ class Aarch64Test extends AbstractTest {
     manager.add(new VdtInputPreparationPass(config));
     manager.add(new VdtConstraintSynthesisPass(config));
     manager.add(new VdtLoweringPass(config));
+    manager.add(new VdtVerificationPass(config));
 
     /* WHEN */
     manager.run(spec);

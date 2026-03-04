@@ -33,6 +33,7 @@ import vadl.vdt.passes.VdtEncodingConstraintValidationPass;
 import vadl.vdt.passes.VdtEncodingSemanticVerificationPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
+import vadl.vdt.passes.VdtVerificationPass;
 import vadl.vdt.target.common.DecisionTreeStatsCalculator;
 import vadl.vdt.target.dump.TextGraphGenerator;
 
@@ -54,6 +55,7 @@ class VarRiscTest extends AbstractTest {
     manager.add(new VdtConstraintSynthesisPass(config));
     manager.add(new VdtEncodingSemanticVerificationPass(config));
     manager.add(new VdtLoweringPass(config));
+    manager.add(new VdtVerificationPass(config));
 
     /* WHEN */
     manager.run(spec);
