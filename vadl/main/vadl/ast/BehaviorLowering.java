@@ -18,6 +18,7 @@ package vadl.ast;
 
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
 import static vadl.error.Diagnostic.warning;
@@ -708,7 +709,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   private Pair<BranchBeginNode, BranchEndNode> buildBranch(SubgraphContext branchCtx,
                                                            WithLocation locatable) {
-    var endNode = addToGraph(new BranchEndNode(branchCtx.sideEffectsOrEmptyList()));
+    var branchEnd = new BranchEndNode(branchCtx.sideEffectsOrEmptyList());
+    branchEnd.setSourceLocation(locatable.location());
+    var endNode = addToGraph(branchEnd);
 
     BranchBeginNode beginNode;
     if (branchCtx.controlBlock() != null) {
@@ -724,10 +727,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return new Pair<>(beginNode, endNode);
   }
 
-  private Pair<BranchBeginNode, BranchEndNode> buildBranch(@Nullable Statement stmt) {
+  private Pair<BranchBeginNode, BranchEndNode> buildBranch(@Nullable Statement stmt,
+                                                           WithLocation locatable) {
     if (stmt == null) {
       var endNode = addToGraph(new BranchEndNode(new NodeList<>()));
+      endNode.setSourceLocation(locatable.location());
       var beginNode = addToGraph(new BranchBeginNode(endNode));
+      beginNode.setSourceLocation(locatable.location());
       return new Pair<>(beginNode, endNode);
     }
 
@@ -1871,9 +1877,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public SubgraphContext visit(CallStatement statement) {
     var res = fetch(statement.expr);
     if (isInsideMia && res instanceof MiaBuiltInCall miaCall) {
-      return SubgraphContext.of(statement, List.of(
-          new StageEffectNode(miaCall)
-      ));
+      var stageEffect = new StageEffectNode(miaCall);
+      stageEffect.setSourceLocation(statement.location());
+      return SubgraphContext.of(statement, List.of(stageEffect));
     } else {
       // There is not a single
       throw new IllegalStateException("Unexpected call statement: " + statement);
@@ -1885,7 +1891,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var bodyGraph = statement.body.accept(this);
 
     var branchEnd = addToGraph(new BranchEndNode(bodyGraph.sideEffectsOrEmptyList()));
+    branchEnd.setSourceLocation(statement.body.location());
     var forallEndNode = addToGraph(new ForallEndNode(branchEnd));
+    forallEndNode.setSourceLocation(statement.location());
     ControlNode next = branchEnd;
     if (bodyGraph.hasControlBlock()) {
       var controlBlock = requireNonNull(bodyGraph.controlBlock());
@@ -1903,7 +1911,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             requireNonNull(index.computedFrom),
             requireNonNull(index.computedTo));
     var branchBegin = addToGraph(new BranchBeginNode(next));
+    branchBegin.setSourceLocation(statement.location());
     var forallNode = addToGraph(new ForallNode(idx, branchBegin));
+    forallNode.setSourceLocation(statement.location());
 
     return SubgraphContext.of(statement, forallNode, forallEndNode);
   }
@@ -1912,15 +1922,18 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public SubgraphContext visit(IfStatement statement) {
     var condition = fetch(statement.condition);
 
-    var ifPair = buildBranch(statement.thenStmt);
-    var elsePair = buildBranch(statement.elseStmt);
+    var ifPair = buildBranch(statement.thenStmt, statement.thenStmt);
+    var elsePair =
+        buildBranch(statement.elseStmt, requireNonNullElse(statement.elseStmt, statement));
     var ifStart = ifPair.left();
     var ifEnd = ifPair.right();
     var elseStart = elsePair.left();
     var elseEnd = elsePair.right();
 
     var mergeNode = addToGraph(new MergeNode(new NodeList<>(ifEnd, elseEnd)));
+    mergeNode.setSourceLocation(statement.location());
     var ifNode = addToGraph(new IfNode(condition, ifStart, elseStart));
+    ifNode.setSourceLocation(statement.location());
     return SubgraphContext.of(statement, ifNode, mergeNode);
   }
 
@@ -2003,7 +2016,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(MatchStatement statement) {
-    var defaultPair = buildBranch(statement.defaultResult);
+    var defaultPair = buildBranch(statement.defaultResult,
+        requireNonNullElse(statement.defaultResult, statement));
     //BeginNode beginnNode = defaultPair.left();
     IfNode start = null;
     MergeNode end = null;
@@ -2024,7 +2038,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             new BuiltInCall(BuiltInTable.OR, new NodeList<>(condition, patternCond), Type.bool());
       }
 
-      var consequencePair = buildBranch(kase.result);
+      var consequencePair = buildBranch(kase.result, kase.result);
 
       Pair<BranchBeginNode, BranchEndNode> contradictionPair;
       if (start == null) {

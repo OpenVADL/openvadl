@@ -78,6 +78,7 @@ public class DiagnosticsTest {
       var lowering = new ViamLowering();
       var spec = lowering.generate(ast);
       ViamVerifier.verifyAllIn(spec);
+      ViamLocationExistenceChecker.verify(spec);
 
       // Some additional checks
       verifyPrettifiedAst(ast);
