@@ -73,6 +73,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgTruncateNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgUnaryNopNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgXorNode;
 import vadl.javaannotations.Handler;
+import vadl.viam.annotations.BigEndianAnnotation;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -243,8 +244,9 @@ public interface IssCMixins {
     static void handle(CGenContext<Node> ctx, ReadMemNode node, boolean withGetPcRetAddr) {
       var bitWidth = node.readBitWidth();
       var ra = withGetPcRetAddr ? "GETPC()" : "0";
+      var endianSuffix = node.memory().hasAnnotation(BigEndianAnnotation.class) ? "_be" : "_le";
       if (bitWidth <= 64) {
-        var suffix = switch (bitWidth) {
+        var widthSuffix = switch (bitWidth) {
           case 8 -> "ub";
           case 16 -> "uw";
           case 32 -> "l";
@@ -252,7 +254,7 @@ public interface IssCMixins {
           default -> throw new IllegalArgumentException(
               "Unsupported memory read width: " + bitWidth);
         };
-        ctx.wr("cpu_ld" + suffix + "_data_ra(env, ");
+        ctx.wr("cpu_ld").wr(widthSuffix).wr(endianSuffix).wr("_data_ra(env, ");
         ctx.gen(node.address()).wr(", ").wr(ra).wr(")");
         return;
       }
@@ -263,7 +265,7 @@ public interface IssCMixins {
 
       // Compose wide read from low 64-bit chunk and upper remaining chunk.
       var highWidth = bitWidth - 64;
-      var highSuffix = switch (highWidth) {
+      var highWidthSuffix = switch (highWidth) {
         case 8 -> "ub";
         case 16 -> "uw";
         case 32 -> "l";
@@ -273,11 +275,11 @@ public interface IssCMixins {
       };
 
       ctx.wr("VADL_concat(");
-      ctx.wr("cpu_ld").wr(highSuffix).wr("_data_ra(env, VADL_add(");
+      ctx.wr("cpu_ld").wr(highWidthSuffix).wr(endianSuffix).wr("_data_ra(env, VADL_add(");
       ctx.gen(node.address());
       ctx.wr(", 64, ((uint64_t) 8), 64), ").wr(ra).wr(")");
       ctx.wr(", ").wr(Integer.toString(highWidth)).wr(", ");
-      ctx.wr("cpu_ldq_data_ra(env, ");
+      ctx.wr("cpu_ldq").wr(endianSuffix).wr("_data_ra(env, ");
       ctx.gen(node.address()).wr(", ").wr(ra).wr(")");
       ctx.wr(", 64)");
     }
@@ -289,8 +291,9 @@ public interface IssCMixins {
     static void handle(CGenContext<Node> ctx, WriteMemNode node, boolean withGetPcRetAddr) {
       var bitWidth = node.writeBitWidth();
       var ra = withGetPcRetAddr ? "GETPC()" : "0";
+      var endianSuffix = node.memory().hasAnnotation(BigEndianAnnotation.class) ? "_be" : "_le";
       if (bitWidth <= 64) {
-        var suffix = switch (bitWidth) {
+        var widthSuffix = switch (bitWidth) {
           case 8 -> "b";
           case 16 -> "w";
           case 32 -> "l";
@@ -298,7 +301,7 @@ public interface IssCMixins {
           default -> throw new IllegalArgumentException(
               "Unsupported memory write width: " + bitWidth);
         };
-        ctx.wr("cpu_st" + suffix + "_data_ra(env, ");
+        ctx.wr("cpu_st").wr(widthSuffix).wr(endianSuffix).wr("_data_ra(env, ");
         ctx.gen(node.address()).wr(", ");
         ctx.gen(node.value()).wr(",").wr(ra).wr(")");
         return;
@@ -309,7 +312,7 @@ public interface IssCMixins {
       for (int chunk = 0; chunk < chunks; chunk++) {
         var chunkOffset = chunk * 64;
         var chunkWidth = Math.min(64, bitWidth - chunkOffset);
-        var suffix = switch (chunkWidth) {
+        var widthSuffix = switch (chunkWidth) {
           case 8 -> "b";
           case 16 -> "w";
           case 32 -> "l";
@@ -320,7 +323,7 @@ public interface IssCMixins {
         if (chunk > 0) {
           ctx.ln(";");
         }
-        ctx.wr("cpu_st").wr(suffix).wr("_data_ra(env, ");
+        ctx.wr("cpu_st").wr(widthSuffix).wr(endianSuffix).wr("_data_ra(env, ");
         if (chunkOffset == 0) {
           ctx.gen(node.address());
         } else {
