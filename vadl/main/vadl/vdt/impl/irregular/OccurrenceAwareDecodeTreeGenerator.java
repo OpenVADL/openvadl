@@ -160,21 +160,33 @@ public class OccurrenceAwareDecodeTreeGenerator extends IrregularDecodeTreeGener
 
       prev = next;
 
-      // candidate bits to try next
+      // We only consider contiguous masks, so we try left- and right expansion
+
       var currentBase = prev.right().mask();
-      var bits = checked.not().and(currentBase.not()).toValue();
+      var unchecked = checked.not().and(currentBase.not()).toValue();
 
-      while (bits.getLowestSetBit() >= 0) {
-        int i = bits.getLowestSetBit();
+      var lowBit = currentBase.toValue().getLowestSetBit();
+      if (lowBit > 0 && unchecked.testBit(lowBit - 1)) {
 
-        var candidate = BitVector.fromValue(currentBase.toValue().setBit(i), currentBase.width());
+        var candidate =
+            BitVector.fromValue(currentBase.toValue().setBit(lowBit - 1), currentBase.width());
         var cost = calculateMultiCost(decodeEntries, candidate);
 
         if (cost.left() < prev.left()) {
           next = cost;
         }
 
-        bits = bits.clearBit(i);
+      }
+
+      var highBit = currentBase.toValue().bitLength() - 1;
+      if (highBit >= 0 && unchecked.testBit(highBit + 1)) {
+        var candidate =
+            BitVector.fromValue(currentBase.toValue().setBit(highBit + 1), currentBase.width());
+        var cost = calculateMultiCost(decodeEntries, candidate);
+
+        if (cost.left() < prev.left()) {
+          next = cost;
+        }
       }
 
     } while (next.left() < prev.left());

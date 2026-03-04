@@ -23,6 +23,12 @@ import static vadl.vdt.utils.PatternUtils.compatible;
 import static vadl.vdt.utils.PatternUtils.contain;
 import static vadl.vdt.utils.PatternUtils.invalidate;
 
+import com.microsoft.z3.BitVecExpr;
+import com.microsoft.z3.BitVecSort;
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import com.microsoft.z3.Status;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,6 +41,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
@@ -50,6 +57,7 @@ import vadl.vdt.model.Node;
 import vadl.vdt.model.impl.LeafNodeImpl;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
+import vadl.vdt.utils.Instruction;
 import vadl.vdt.utils.PatternUtils;
 import vadl.viam.Definition;
 
@@ -203,12 +211,44 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
 
     final Set<BitPattern> options = new LinkedHashSet<>();
     for (DecodeEntry e : decodeEntries.entries()) {
-      final BitVector b = e.pattern().toBitVector().and(mask);
-      final BitPattern p = BitPattern.fromBitVector(mask, b);
-      options.add(p);
+      options.addAll(makePatterns(e.pattern(), mask));
     }
 
     return new MultiPatterns(mask, options);
+  }
+
+  /**
+   * For unknown bits in the pattern selected by the mask, expand them to all possible variations.
+   * I.e. produces all variations for the bits selected by the mask, that match the given pattern.
+   *
+   * @param pattern the base pattern
+   * @param mask    the mask selecting possible bits to expand
+   * @return all variations of the bit pattern for the given mask.
+   */
+  private static Set<BitPattern> makePatterns(BitPattern pattern, BitVector mask) {
+
+    final BigInteger unknownBits = pattern.toMaskVector().not().and(mask).toValue();
+    final int width = unknownBits.bitCount();
+
+    return LongStream.range(0, 1L << width)
+        .mapToObj(BigInteger::valueOf)
+        .map(v -> {
+          BigInteger bits = unknownBits;
+          BigInteger result = pattern.toBitVector().toValue();
+
+          int i = 0;
+          while (bits.getLowestSetBit() >= 0) {
+            int offset = bits.getLowestSetBit();
+            bits = bits.clearBit(offset);
+            if (v.testBit(i++)) {
+              result = result.setBit(offset);
+            }
+          }
+
+          final BitVector value = BitVector.fromValue(result, mask.width());
+          return BitPattern.fromBitVector(mask, value);
+        })
+        .collect(Collectors.toSet());
   }
 
   protected record SingleSplitEntrySet(BitPattern pattern, List<DecodeEntry> matching,
@@ -227,30 +267,24 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
    * @param pattern       the splitting pattern.
    * @return the split entry set.
    */
+  long counter = 0;
+
   protected SingleSplitEntrySet split(DecodeEntries decodeEntries, BitPattern pattern) {
 
     final List<DecodeEntry> matchingEntries = new ArrayList<>();
     final List<DecodeEntry> otherEntries = new ArrayList<>();
 
     for (DecodeEntry e : decodeEntries.entries()) {
-
-      // See if there is an encoding that matches the base pattern and is not excluded by the
-      // exclusion conditions
       var mThen = compatible(e.pattern(), pattern) && e.exclusionConditions().stream()
-          .allMatch(ex -> {
-            var combined = combinePatterns(e.pattern(), pattern);
-            return !contain(combined, ex.matching()) || ex.unmatching().stream()
-                .anyMatch(u -> compatible(combined, u));
-          });
+          .noneMatch(c -> contain(pattern, c.matching())
+              && c.unmatching().stream().noneMatch(p -> compatible(pattern, p)));
+      var mElse = !contain(e.pattern(), pattern);
 
-      // See if there is an encoding that either does not match the base pattern or is excluded by
-      // the exclusion conditions (and not re-included by the unmatching patterns)
-      var mElse = !compatible(e.pattern(), pattern) || e.exclusionConditions().stream()
-          .anyMatch(ex -> {
-            var combined = combinePatterns(e.pattern(), pattern);
-            return compatible(combined, ex.matching()) && ex.unmatching().stream()
-                .noneMatch(u -> compatible(combined, u));
-          });
+      if (counter++ % 1_000 == 0) {
+        System.out.println("Counter: " + counter);
+      }
+
+      verifySingleSplit(e, pattern, mThen, mElse);
 
       if (mThen ^ mElse) {
         // The entry occurs only on one side of the branch, we can keep the current probability.
@@ -276,6 +310,41 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     final var others = makeOtherEntries(otherEntries, pattern);
 
     return new SingleSplitEntrySet(pattern, matching, others);
+  }
+
+  private void verifySingleSplit(DecodeEntry e, BitPattern pattern, boolean mThen, boolean mElse) {
+    try (Context ctx = new Context()) {
+
+      final BitVecSort sort = ctx.mkBitVecSort(pattern.width());
+
+      BitVecExpr insn = (BitVecExpr) ctx.mkFreshConst("insn", sort);
+      BoolExpr isInsn = toConstraint(ctx, insn, e);
+
+      BoolExpr match = match(ctx, insn, pattern);
+      BoolExpr noMatch = notMatch(ctx, insn, pattern);
+
+      final Solver solver = ctx.mkSolver();
+
+      if (mThen) {
+        if (solver.check(isInsn, match) != Status.SATISFIABLE) {
+          throw new IllegalStateException();
+        }
+      } else {
+        if (solver.check(isInsn, match) != Status.UNSATISFIABLE) {
+          throw new IllegalStateException();
+        }
+      }
+
+      if (mElse) {
+        if (solver.check(isInsn, noMatch) != Status.SATISFIABLE) {
+          throw new IllegalStateException();
+        }
+      } else {
+        if (solver.check(isInsn, noMatch) != Status.UNSATISFIABLE) {
+          throw new IllegalStateException();
+        }
+      }
+    }
   }
 
   /**
@@ -698,5 +767,58 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     }
 
     return diagnostic.build();
+  }
+
+  private BoolExpr toConstraint(Context ctx, BitVecExpr insn, Instruction instruction) {
+    final List<BoolExpr> constraints = new ArrayList<>();
+
+    // Always add fixed bits as initial constraints
+    constraints.add(
+        match(ctx, insn, instruction.pattern())
+    );
+
+    if (!(instruction instanceof DecodeEntry entry)) {
+      // No additional exclusion conditions to handle
+      return constraints.getFirst();
+    }
+
+    // Now encode the different constraints
+    for (ExclusionCondition ex : entry.exclusionConditions()) {
+
+      final List<BoolExpr> or = new ArrayList<>();
+      or.add(notMatch(ctx, insn, ex.matching()));
+
+      ex.unmatching().stream()
+          .map(u -> match(ctx, insn, u))
+          .forEach(or::add);
+
+      constraints.add(
+          ctx.mkOr(
+              or.toArray(new BoolExpr[0])
+          )
+      );
+
+    }
+
+    if (constraints.size() == 1) {
+      return constraints.getFirst();
+    }
+    return ctx.mkAnd(constraints.toArray(new BoolExpr[0]));
+  }
+
+  private BoolExpr match(Context ctx, BitVecExpr i, BitPattern pattern) {
+
+    // Pad the pattern to the sort width for comparison
+    int sortWidth = i.getSortSize();
+    pattern = pattern.rightPad(sortWidth - pattern.width());
+
+    return ctx.mkEq(
+        ctx.mkBVAND(i, ctx.mkBV(pattern.toMaskVector().toValue().toString(), sortWidth)),
+        ctx.mkBV(pattern.toBitVector().toValue().toString(), sortWidth)
+    );
+  }
+
+  private BoolExpr notMatch(Context ctx, BitVecExpr i, BitPattern pattern) {
+    return ctx.mkNot(match(ctx, i, pattern));
   }
 }

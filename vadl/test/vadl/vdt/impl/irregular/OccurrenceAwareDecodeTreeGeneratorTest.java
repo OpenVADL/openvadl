@@ -81,9 +81,9 @@ class OccurrenceAwareDecodeTreeGeneratorTest extends AbstractTest {
   }
 
   @ParameterizedTest
-  @CsvSource("1")
-  //@MethodSource("argsGenerateVDTOccurrenceAware")
-  void testGenerateVDTOccurrenceAware(double memoryPenalty) throws IOException, DuplicatedPassKeyException {
+  @MethodSource("argsGenerateVDTOccurrenceAware")
+  void testGenerateVDTOccurrenceAwareRiscV(double memoryPenalty)
+      throws IOException, DuplicatedPassKeyException {
 
     /* GIVEN */
 
@@ -91,7 +91,6 @@ class OccurrenceAwareDecodeTreeGeneratorTest extends AbstractTest {
     config.setDecoderOptions(new DecoderOptions()
         .withGenerator(OCCURRENCE_AWARE)
         .withMemoryPenalty(memoryPenalty)
-        .withOptsToSkip(DecoderOptions.OptionToSkip.OPT_DECODER_VERIFICATION)
     );
 
     var spec = runAndGetViamSpecification("sys/risc-v/rv64im.vadl");
@@ -109,6 +108,38 @@ class OccurrenceAwareDecodeTreeGeneratorTest extends AbstractTest {
     Assertions.assertNotNull(decodeTree);
 
     log.info("Statistics: {}", DecisionTreeStatsCalculator.statistics(decodeTree));
-    log.info("VDT:\n{}", new TextGraphGenerator(decodeTree).generate());
+    //log.info("VDT:\n{}", new TextGraphGenerator(decodeTree).generate());
+  }
+
+  @ParameterizedTest
+  @CsvSource("1")
+  //@MethodSource("argsGenerateVDTOccurrenceAware")
+  void testGenerateVDTOccurrenceAwareAarch64(double memoryPenalty)
+      throws IOException, DuplicatedPassKeyException {
+
+    /* GIVEN */
+
+    var config = new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
+    config.setDecoderOptions(new DecoderOptions()
+        .withGenerator(OCCURRENCE_AWARE)
+        .withMemoryPenalty(memoryPenalty)
+    );
+
+    var spec = runAndGetViamSpecification("sys/aarch64/virt.vadl");
+
+    var manager = new PassManager();
+    manager.add(PassOrders.check(config));
+
+    /* WHEN */
+    manager.run(spec);
+
+    /* THEN */
+
+    var decodeTree = manager.getPassResults().lastResultOf(VdtLoweringPass.class, Node.class);
+
+    Assertions.assertNotNull(decodeTree);
+
+    log.info("Statistics: {}", DecisionTreeStatsCalculator.statistics(decodeTree));
+    //log.info("VDT:\n{}", new TextGraphGenerator(decodeTree).generate());
   }
 }
