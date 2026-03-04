@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -32,12 +32,9 @@ import java.util.stream.Collectors;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import net.jqwik.api.arbitraries.BigIntegerArbitrary;
-import org.junit.jupiter.api.Assertions;
 import org.opentest4j.AssertionFailedError;
 import org.opentest4j.FileInfo;
-import vadl.ast.TypeChecker;
-import vadl.ast.VadlParser;
-import vadl.ast.ViamLowering;
+import vadl.ast.Frontend;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 import vadl.types.BitsType;
@@ -107,12 +104,7 @@ public class TestUtils {
    * Creates the VIAM for the given source code string.
    */
   public static Specification compileToViam(String sourceCode) {
-    var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(sourceCode), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    typechecker.verify(ast);
-    var lowering = new ViamLowering();
-    var spec = Assertions.assertDoesNotThrow(() -> lowering.generate(ast), "Cannot generate VIAM");
+    var spec = Frontend.compileToViam(sourceCode);
     ViamVerifier.verifyAllIn(spec);
     return spec;
   }

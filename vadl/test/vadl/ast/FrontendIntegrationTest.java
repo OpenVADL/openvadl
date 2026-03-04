@@ -16,10 +16,11 @@
 
 package vadl.ast;
 
-import java.nio.file.Path;
-import org.junit.jupiter.api.Assertions;
+import java.io.IOException;
+import java.nio.file.Paths;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import vadl.utils.DiskVirtualFileSystem;
 import vadl.viam.passes.verification.ViamVerifier;
 
 public class FrontendIntegrationTest {
@@ -43,17 +44,8 @@ public class FrontendIntegrationTest {
       "../sys/risc-v/mia/rv_5stage.vadl",
       "../sys/v-risc/ABI.vadl"
   })
-  public void testFrontendPassingOnSysSpecs(String filename) {
-    var path = Path.of(filename);
-    Assertions.assertTrue(path.toFile().exists());
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(path),
-        "Cannot parse input");
-    new Ungrouper().ungroup(ast);
-    new ModelRemover().removeModels(ast);
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var lowering = new ViamLowering();
-    var spec = Assertions.assertDoesNotThrow(() -> lowering.generate(ast), "Cannot generate VIAM");
+  public void testFrontendPassingOnSysSpecs(String filename) throws IOException {
+    var spec = Frontend.compileToViam(Paths.get(filename), new DiskVirtualFileSystem());
     ViamVerifier.verifyAllIn(spec);
   }
 

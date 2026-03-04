@@ -18,15 +18,9 @@ package vadl;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.Objects;
-import vadl.ast.Ast;
-import vadl.ast.ModelRemover;
-import vadl.ast.TypeChecker;
-import vadl.ast.Ungrouper;
-import vadl.ast.VadlParser;
-import vadl.ast.ViamLowering;
+import vadl.ast.Frontend;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticPrinter;
 import vadl.utils.DiskVirtualFileSystem;
@@ -38,19 +32,9 @@ class OpenVadlTestFrontend implements TestFrontend {
   private String logs = "";
 
   @Override
-  public boolean runSpecification(URI vadlFile) {
+  public boolean runSpecification(Path vadlFile) {
     try {
-      Ast ast = VadlParser.parse(Path.of(vadlFile));
-      {
-        // FIXME: These two passes must be part of the VadlParser parse API.
-        new Ungrouper().ungroup(ast);
-        new ModelRemover().removeModels(ast);
-      }
-
-      var typeChecker = new TypeChecker();
-      typeChecker.verify(ast);
-      var viamGenerator = new ViamLowering();
-      specification = viamGenerator.generate(ast);
+      specification = Frontend.compileToViam(vadlFile, new DiskVirtualFileSystem());
       return true;
     } catch (Diagnostic e) {
       // FIXME: Proper print to string

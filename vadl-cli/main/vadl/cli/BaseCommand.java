@@ -141,6 +141,12 @@ public abstract class BaseCommand implements Callable<Integer> {
     return now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
   }
 
+  private void withTimings(String title, Runnable runnable) {
+    var startTime = System.currentTimeMillis();
+    runnable.run();
+    timings.add(new Timing(title, System.currentTimeMillis() - startTime));
+  }
+
   /**
    * Dump a file.
    *
@@ -195,13 +201,13 @@ public abstract class BaseCommand implements Callable<Integer> {
       return;
     }
 
-    var startTime = System.currentTimeMillis();
-    var content =
-        new StringBuilder(
-            "// Sourcecode with expanded macros on %s\n\n".formatted(getTimeString()));
-    content.append(ast.prettyPrint());
-    dumpFile("expanded-macros.vadl", content);
-    timings.add(new Timing("Expanded Macros Dump", System.currentTimeMillis() - startTime));
+    withTimings("Expanded Macros Dump", () -> {
+      var content =
+          new StringBuilder(
+              "// Sourcecode with expanded macros on %s\n\n".formatted(getTimeString()));
+      content.append(ast.prettyPrint());
+      dumpFile("expanded-macros.vadl", content);
+    });
   }
 
   /**
@@ -214,15 +220,15 @@ public abstract class BaseCommand implements Callable<Integer> {
       return;
     }
 
-    final var startTime = System.currentTimeMillis();
-    var content =
-        new StringBuilder(
-            "// AST Dump without types generated on %s\n".formatted(getTimeString()));
-    content.append("// The file contains a dump of the AST with all macros expanded but, before "
-        + "the type-checker has run.\n\n");
-    content.append(new AstDumper().dump(ast));
-    dumpFile("ast-dump-untyped.txt", content);
-    timings.add(new Timing("Untyped AST Dump", System.currentTimeMillis() - startTime));
+    withTimings("Untyped AST Dump", () -> {
+      var content =
+          new StringBuilder(
+              "// AST Dump without types generated on %s\n".formatted(getTimeString()));
+      content.append("// The file contains a dump of the AST with all macros expanded but, before "
+          + "the type-checker has run.\n\n");
+      content.append(new AstDumper().dump(ast));
+      dumpFile("ast-dump-untyped.txt", content);
+    });
   }
 
   /**
@@ -235,15 +241,15 @@ public abstract class BaseCommand implements Callable<Integer> {
       return;
     }
 
-    final var startTime = System.currentTimeMillis();
-    var content =
-        new StringBuilder(
-            "// AST Dump with types generated on %s\n".formatted(getTimeString()));
-    content.append("// The file contains a dump of the AST with all macros expanded and "
-        + "validated by the typechecker.\n\n");
-    content.append(new AstDumper().dump(ast));
-    dumpFile("ast-dump-typed.txt", content);
-    timings.add(new Timing("Typed AST Dump", System.currentTimeMillis() - startTime));
+    withTimings("Typed AST Dump", () -> {
+      var content =
+          new StringBuilder(
+              "// AST Dump with types generated on %s\n".formatted(getTimeString()));
+      content.append("// The file contains a dump of the AST with all macros expanded and "
+          + "validated by the typechecker.\n\n");
+      content.append(new AstDumper().dump(ast));
+      dumpFile("ast-dump-typed.txt", content);
+    });
   }
 
   /**

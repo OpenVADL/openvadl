@@ -68,15 +68,9 @@ public class DiagnosticsTest {
     @Nullable Ast ast = null;
     List<Diagnostic> diagnostics = List.of();
     try {
-      ast = VadlParser.parse(path);
-      var remover = new ModelRemover();
-      remover.removeModels(ast);
-      var ungrouper = new Ungrouper();
-      ungrouper.ungroup(ast);
-      var typechecker = new TypeChecker();
-      typechecker.verify(ast);
-      var lowering = new ViamLowering();
-      var spec = lowering.generate(ast);
+      var result = Frontend.compileToAstAndViam(path, new DiskVirtualFileSystem());
+      ast = result.left();
+      var spec = result.right();
       ViamVerifier.verifyAllIn(spec);
       ViamLocationExistenceChecker.verify(spec);
 

@@ -249,8 +249,8 @@ public abstract class AbstractTest {
    * @param failureMessage the message to search for in the error logs (optional)
    */
   public void runAndAssumeFailure(String testSourcePath, @Nullable String failureMessage) {
-    var sourceUri = getTestSourcePath(testSourcePath);
-    var success = testFrontend.runSpecification(sourceUri.toUri());
+    var sourcePath = getTestSourcePath(testSourcePath);
+    var success = testFrontend.runSpecification(sourcePath);
     if (success) {
       fail("Assumed failure for specification " + testSourcePath + " but succeeded");
     }
@@ -297,7 +297,7 @@ public abstract class AbstractTest {
    * @param sourcePath The concrete resolved source path of the specification
    */
   private static void tryToRunSpecificationWithFrontend(Path sourcePath, TestFrontend frontend) {
-    var success = frontend.runSpecification(sourcePath.toUri());
+    var success = frontend.runSpecification(sourcePath);
     if (!success) {
       var logs = frontend.getLogAsString();
       var errorIndex = logs.indexOf(" error: ");

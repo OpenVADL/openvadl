@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 
 package vadl;
 
-import java.net.URI;
+import java.nio.file.Path;
 import vadl.viam.Specification;
 
 /**
@@ -35,7 +35,7 @@ public interface TestFrontend {
    * @param vadlFile the specification file
    * @return true if success, otherwise false
    */
-  boolean runSpecification(URI vadlFile);
+  boolean runSpecification(Path vadlFile);
 
   /**
    * Get the VIAM from the run result. This must be called after
