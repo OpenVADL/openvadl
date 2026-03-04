@@ -1,11 +1,7 @@
 use crate::{bail_on_libc_err, eprintln_on_libc_err};
 use color_eyre::{Result, eyre::bail};
 use libc::{
-    CLOCK_REALTIME, ETIMEDOUT, PTHREAD_PROCESS_SHARED, clock_gettime, pthread_cond_broadcast,
-    pthread_cond_destroy, pthread_cond_init, pthread_cond_t, pthread_cond_timedwait,
-    pthread_condattr_init, pthread_condattr_setpshared, pthread_condattr_t, pthread_mutex_destroy,
-    pthread_mutex_init, pthread_mutex_lock, pthread_mutex_t, pthread_mutex_unlock,
-    pthread_mutexattr_init, pthread_mutexattr_setpshared, pthread_mutexattr_t, timespec,
+    CLOCK_REALTIME, EBUSY, ETIMEDOUT, PTHREAD_PROCESS_SHARED, clock_gettime, pthread_cond_broadcast, pthread_cond_destroy, pthread_cond_init, pthread_cond_t, pthread_cond_timedwait, pthread_condattr_init, pthread_condattr_setpshared, pthread_condattr_t, pthread_mutex_destroy, pthread_mutex_init, pthread_mutex_lock, pthread_mutex_t, pthread_mutex_trylock, pthread_mutex_unlock, pthread_mutexattr_init, pthread_mutexattr_setpshared, pthread_mutexattr_t, timespec
 };
 use std::time::Duration;
 
@@ -63,6 +59,35 @@ impl Semaphore {
         }
 
         Ok(Self { mutex, cvar })
+    }
+
+    pub fn lock(&mut self) -> Result<()> {
+        let mutex_ptr = &mut self.mutex as *mut _;
+        unsafe { bail_on_libc_err!(pthread_mutex_lock(mutex_ptr)) };
+
+        Ok(())
+    }
+
+    pub fn try_lock(&mut self) -> Result<bool> {
+        let mutex_ptr = &mut self.mutex as *mut _;
+        let res = unsafe { pthread_mutex_trylock(mutex_ptr) };
+
+        if res == EBUSY {
+            return Ok(false);
+        }
+
+        if res == 0 {
+           return Ok(true);
+        }
+
+        bail!("try_lock failed");
+    }
+
+    pub fn unlock(&mut self) -> Result<()> {
+        let mutex_ptr = &mut self.mutex as *mut _;
+        unsafe { bail_on_libc_err!(pthread_mutex_unlock(mutex_ptr)) };
+
+        Ok(())
     }
 
     pub fn timedwait<Cond>(&mut self, duration: Duration, cond: Cond) -> Result<TimedWaitState>

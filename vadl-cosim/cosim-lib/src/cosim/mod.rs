@@ -1,4 +1,5 @@
-use std::collections::HashSet;
+use std::time::Duration;
+use std::{collections::HashSet, thread};
 use std::fs;
 use std::path::Path;
 
@@ -130,19 +131,20 @@ impl Broker {
         &self.clients
     }
 
-    fn add_client_logs_to_error(err: Error, client_id: &str, config: &Config) -> Error {
-        let base_path = Path::new(&config.logging.dir);
-        let stdout_path = base_path.join(format!("client-{client_id}-stdout.txt"));
-        let stderr_path = base_path.join(format!("client-{client_id}-stderr.txt"));
-
-        let stdout_content =
-            fs::read_to_string(stdout_path).expect("client stdout-file should exist");
-        let stderr_content =
-            fs::read_to_string(stderr_path).expect("client stderr-file should exist");
-
-        err.note(format!(
-            "\nClient stdout:\n{stdout_content}\n\nClient stderr:\n{stderr_content}"
-        ))
+    fn add_client_information_to_error(err: Error, client_id: &str, config: &Config) -> Error {
+        err
+        // let base_path = Path::new(&config.logging.dir);
+        // let stdout_path = base_path.join(format!("client-{client_id}-stdout.txt"));
+        // let stderr_path = base_path.join(format!("client-{client_id}-stderr.txt"));
+        //
+        // let stdout_content =
+        //     fs::read_to_string(stdout_path).expect("client stdout-file should exist");
+        // let stderr_content =
+        //     fs::read_to_string(stderr_path).expect("client stderr-file should exist");
+        //
+        // err.note(format!(
+        //     "\nClient stdout:\n{stdout_content}\n\nClient stderr:\n{stderr_content}"
+        // ))
     }
 
     fn bcollect<T>(iter: &mut impl Iterator<Item = Result<T>>) -> Result<Vec<T>> {
@@ -171,10 +173,11 @@ impl Broker {
 
     fn run_lockstep(&mut self, config: &Config) -> Result<Report> {
         // NOTE: maybe move "spawning" the clients into this method
+        thread::sleep(Duration::from_millis(100));
         for (idx, client) in self.clients.iter_mut().enumerate() {
             let client_cfg = config.for_client(idx);
             for _ in 0..client_cfg.skip_n_instructions {
-                let _ = client.shm.read_buffer();
+                client.shm.read_buffer_new()?;
                 client.shm.end_read_buffer();
             }
             debug!(
@@ -194,13 +197,26 @@ impl Broker {
                 let mut reads = self.clients.iter_mut().map(|client| {
                     let res = client
                         .shm
-                        .read_buffer()
+                        .read_buffer_new()
                         .map(|opt| opt.map(|i| i.as_insn()))
-                        .map_err(|e| Self::add_client_logs_to_error(e, &client.id, config));
+                        .map_err(|e| Self::add_client_information_to_error(e, &client.id, config));
                     client.run_count += 1;
                     res
                 });
-                let reads = Self::bcollect(&mut reads)?;
+                let reads = Self::bcollect(&mut reads);
+
+                if let Err(read_err) = &reads {
+                    let ctx = self.build_crash_context(&config);
+                    debug!("client seemed to crash -> reporting test failure");
+                    let diff = DiffEntry::new(
+                        "client-crash",
+                        vec![],
+                        format!("A client seems to have crashed: {read_err}"),
+                    );
+                    return Ok(Report::failed(vec![diff], ctx));
+                }
+
+                let reads = reads.expect("Tried to read client data but read failed. The error should've already been handled - this is a bug in the cosimulator.");
 
                 let c1insn = reads[0];
                 let c2insn = reads[1];
@@ -575,7 +591,7 @@ impl Broker {
             let client_name = client.name.clone();
             let client_run_count = client.run_count;
 
-            diff_context.push(DiffContextClient::new(
+            diff_context.push(DiffContextClient::new_with_after_state(
                 client_id,
                 client_name,
                 client_run_count,
@@ -586,6 +602,31 @@ impl Broker {
         }
 
         Ok(diff_context)
+    }
+
+    fn build_crash_context(&mut self, config: &Config) -> DiffContext {
+        let mut before_states = get_all_clients_contexts_before(&self.clients, config);
+        let mut error_instructions = get_all_clients_instructions(&self.clients, config);
+        let mut diff_context = vec![];
+
+        for client in &self.clients {
+            let before_state = before_states.pop_front().unwrap();
+            let error_instruction = error_instructions.pop_front().unwrap();
+
+            let client_id = client.id.clone();
+            let client_name = client.name.clone();
+            let client_run_count = client.run_count;
+
+            diff_context.push(DiffContextClient::new_without_after_state(
+                client_id,
+                client_name,
+                client_run_count,
+                before_state,
+                error_instruction,
+            ));
+        }
+
+        diff_context
     }
 
     fn build_diff_context(&mut self, config: &Config) -> Result<DiffContext> {
@@ -603,7 +644,7 @@ impl Broker {
             let client_name = client.name.clone();
             let client_run_count = client.run_count;
 
-            diff_context.push(DiffContextClient::new(
+            diff_context.push(DiffContextClient::new_with_after_state(
                 client_id,
                 client_name,
                 client_run_count,

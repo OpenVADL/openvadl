@@ -23,8 +23,12 @@ pub struct SharedMemory<T: Sized> {
 }
 
 impl<const SIZE: usize> SharedMemory<BrokerSHMRingBuffer<SIZE>> {
-    pub fn read_buffer(&mut self) -> Result<Option<&BrokerSHMData>> {
+    pub fn read_buffer_new(&mut self) -> Result<Option<&BrokerSHMData>> {
         self.get_mut().start_read()
+    }
+
+    pub fn read_buffer(&mut self) -> Result<Option<&BrokerSHMData>> {
+        Ok(Some(self.get_mut().read_this()))
     }
 
     pub fn read_buffer_prev(&self) -> &BrokerSHMData {

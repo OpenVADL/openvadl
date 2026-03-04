@@ -964,7 +964,9 @@ instruction set architecture PPC64SFS = {
   // instructions: modsw, moduw
   model XFormModInstr (x : AsmOpExt, type : Id) : IsaDefs = {
     instruction AsId($x.asm) : XFormA =
-      X(rs) := VADL::$x.op(XW(ra), XW(rb)) as $type
+      X(rs) := if XW(rb) != 0
+               then VADL::$x.op(XW(ra), XW(rb)) as $type
+               else 0
     encoding AsId($x.asm) = {opcd = 0b011111, extopcd = $x.ext, rc = 0b0}
     assembly AsId($x.asm) = ($x.asm, " ", decimal(rs), ",", decimal(ra), ",", decimal(rb))
   }
