@@ -1155,12 +1155,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     // first lower all format fields (that are not derived format fields).
     // this is because derived format fields may reference fields, which already must be lowered.
-    var fields = definition.fields.stream()
+    var fields = definition.fieldsWithoutEncodingPredicate().stream()
         .filter(f -> !(f instanceof DerivedFormatField))
         .map(fieldDefinition -> {
           var fieldIdent =
-              generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
-                  fieldDefinition.identifier());
+              generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier.name,
+                  fieldDefinition.identifier);
 
           var field = switch (fieldDefinition) {
             case TypedFormatField typed -> {
@@ -1206,17 +1206,20 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     // lower predicates, which are lowered and set when all field accesses got added to the
     // #formatFieldCache, as they are referencing them.
-    definition.auxiliaryFields.stream()
-        .filter(f -> f.kind == FormatDefinition.AuxiliaryField.AuxKind.PREDICATE)
+    definition.fields.stream()
+        .filter(f -> f instanceof PredicateFormatField)
+        .map(f -> (PredicateFormatField) f)
         .forEach(this::setFieldAccessPredicate);
 
     var cnt = new AtomicInteger();
-    ArrayList<Format.FieldEncoding> encodings = new ArrayList(definition.auxiliaryFields.stream()
-        .filter(f -> f.kind == FormatDefinition.AuxiliaryField.AuxKind.ENCODING)
-        .map(e -> getFieldEncoding(
-            format.identifier.append("encoding", e.field.name + "_" + cnt.getAndIncrement())
-                .withSourceLocation(e.field.loc),
-            e)
+    ArrayList<Format.FieldEncoding> encodings = new ArrayList(definition.fields.stream()
+        .filter(f -> f instanceof EncodingFormatField)
+        .map(f -> (EncodingFormatField) f)
+        .map(field -> getFieldEncoding(
+            format.identifier.append("encoding",
+                    field.identifier.name + "_" + cnt.getAndIncrement())
+                .withSourceLocation(field.location()),
+            field)
         ).toList());
 
     format.setFields(fields);
@@ -1275,8 +1278,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * As predicates references fields of the format we must first add the fields to
    * the {@link #formatFieldCache} before lowering the predicates.
    */
-  private void setFieldAccessPredicate(FormatDefinition.AuxiliaryField predField) {
-    var derivedField = (DerivedFormatField) predField.fieldDef();
+  private void setFieldAccessPredicate(PredicateFormatField predField) {
+    var derivedField = (DerivedFormatField) predField.target();
     var lowered = (Format.FieldAccess) requireNonNull(formatFieldCache.get(derivedField));
     var fieldIdent = lowered.identifier;
 
@@ -1301,14 +1304,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   /**
-   * Get the field encoding for the {@link vadl.ast.FormatDefinition.AuxiliaryField}
+   * Get the field encoding for the {@link vadl.ast.EncodingFormatField}
    * with the kind {@code ENCODING}.
    */
   @SuppressWarnings("LineLength")
   private Format.FieldEncoding getFieldEncoding(vadl.viam.Identifier ident,
-                                                FormatDefinition.AuxiliaryField encode) {
+                                                EncodingFormatField encode) {
     var behavior = new BehaviorLowering(this).getFunctionGraph(encode.expr, ident.toString());
-    var field = (Format.Field) requireNonNull(formatFieldCache.get(encode.fieldDef()));
+    var field = (Format.Field) requireNonNull(formatFieldCache.get(encode.target()));
     var encoding = new Format.FieldEncoding(ident, field, behavior);
     encoding.setSourceLocation(encode.location());
 
@@ -1406,9 +1409,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   @Override
-  public Optional<vadl.viam.Definition> visit(FormatDefinition.AuxiliaryField definition) {
+  public Optional<vadl.viam.Definition> visit(EncodingFormatField definition) {
     // For now this is implemented when visiting FormatDefinition
-    // (and visitAuxiliaryField)
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<vadl.viam.Definition> visit(PredicateFormatField definition) {
+    // For now this is implemented when visiting FormatDefinition
     return Optional.empty();
   }
 

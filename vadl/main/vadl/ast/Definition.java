@@ -16,6 +16,9 @@
 
 package vadl.ast;
 
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
+
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -156,7 +159,9 @@ interface DefinitionVisitor<R> {
 
   R visit(TypedFormatField definition);
 
-  R visit(FormatDefinition.AuxiliaryField definition);
+  R visit(EncodingFormatField definition);
+
+  R visit(PredicateFormatField definition);
 
   R visit(FunctionDefinition definition);
 
@@ -393,12 +398,16 @@ class ConstantDefinition extends Definition implements IdentifiableNode, TypedNo
   }
 }
 
-abstract class FormatField extends Definition implements IdentifiableNode {
+abstract class FormatField extends Definition {
+  Identifier identifier;
+
+  public FormatField(Identifier identifier) {
+    this.identifier = identifier;
+  }
 }
 
 
-class RangeFormatField extends FormatField {
-  Identifier identifier;
+class RangeFormatField extends FormatField implements IdentifiableNode {
   @Child
   List<Expr> ranges;
   @Child
@@ -417,7 +426,7 @@ class RangeFormatField extends FormatField {
 
   public RangeFormatField(Identifier identifier, List<Expr> ranges,
                           @Nullable TypeLiteral typeLiteral) {
-    this.identifier = identifier;
+    super(identifier);
     this.ranges = ranges;
     this.typeLiteral = typeLiteral;
   }
@@ -481,8 +490,7 @@ class RangeFormatField extends FormatField {
   }
 }
 
-class TypedFormatField extends FormatField {
-  final Identifier identifier;
+class TypedFormatField extends FormatField implements IdentifiableNode {
   @Child
   TypeLiteral typeLiteral;
 
@@ -491,7 +499,7 @@ class TypedFormatField extends FormatField {
   FormatDefinition.BitRange range;
 
   public TypedFormatField(Identifier identifier, TypeLiteral typeLiteral) {
-    this.identifier = identifier;
+    super(identifier);
     this.typeLiteral = typeLiteral;
   }
 
@@ -559,29 +567,12 @@ class TypedFormatField extends FormatField {
  * }
  * </pre>
  */
-class DerivedFormatField extends FormatField {
-  Identifier identifier;
+class DerivedFormatField extends FormatField implements IdentifiableNode {
   @Child
   Expr expr;
 
-  /**
-   * Since the predicate doesn't have to follow the derived format field, the parser cannot
-   * connect link them together and instead the typechecker does this by understanding the
-   * semantic.
-   */
-  @Nullable
-  Expr predicate;
-
-  //    /**
-  //     * Since the predicate doesn't have to follow the derived format field, the parser cannot
-  //     * connect link them together and instead the typechecker does this by understanding the
-  //     * semantic.
-  //     */
-  //    @Nullable
-  //    Expr encoding;
-
   public DerivedFormatField(Identifier identifier, Expr expr) {
-    this.identifier = identifier;
+    super(identifier);
     this.expr = expr;
   }
 
@@ -635,14 +626,148 @@ class DerivedFormatField extends FormatField {
   }
 }
 
+/**
+ * Encoding format field definition.
+ */
+class EncodingFormatField extends FormatField {
+  @Child
+  Expr expr;
+
+  public EncodingFormatField(Identifier identifier, Expr expr) {
+    super(identifier);
+    this.identifier = identifier;
+    this.expr = expr;
+  }
+
+  /**
+   * Returns the field for which this is a predicate.
+   *
+   * @return the field.
+   */
+  FormatField target() {
+    return (FormatField) requireNonNull(identifier.target());
+  }
+
+  @Override
+  List<Node> children() {
+    // This has to be hardcoded here because for this format field it's a child but for some it's
+    // the identfiyable name.
+    return List.of(identifier, expr);
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    identifier.prettyPrint(indent, builder);
+    builder.append(" := ");
+    expr.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return identifier.location().join(expr.location());
+  }
+
+  @Override
+  public final boolean equals(Object o) {
+    if (!(o instanceof EncodingFormatField that)) {
+      return false;
+    }
+
+    return identifier.equals(that.identifier) && expr.equals(that.expr);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = identifier.hashCode();
+    result = 31 * result + expr.hashCode();
+    return result;
+  }
+}
+
+/**
+ * Predicate format field definition.
+ */
+class PredicateFormatField extends FormatField {
+  @Child
+  Expr expr;
+
+  public PredicateFormatField(Identifier identifier, Expr expr) {
+    super(identifier);
+    this.expr = expr;
+  }
+
+  /**
+   * Returns the field for which this is a predicate.
+   *
+   * @return the field.
+   */
+  FormatField target() {
+    return (FormatField) requireNonNull(identifier.target());
+  }
+
+  @Override
+  List<Node> children() {
+    // This has to be hardcoded here because for this format field it's a child but for some it's
+    // the identfiyable name.
+    return List.of(identifier, expr);
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    identifier.prettyPrint(indent, builder);
+    builder.append(" :- ");
+    expr.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return identifier.location().join(expr.location());
+  }
+
+  @Override
+  public final boolean equals(Object o) {
+    if (!(o instanceof EncodingFormatField that)) {
+      return false;
+    }
+
+    return identifier.equals(that.identifier) && expr.equals(that.expr);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = identifier.hashCode();
+    result = 31 * result + expr.hashCode();
+    return result;
+  }
+}
+
+
 class FormatDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
   @Child
   TypeLiteral typeLiteral;
   @Child
   List<FormatField> fields;
-  @Child
-  List<AuxiliaryField> auxiliaryFields;
   SourceLocation loc;
 
   @Override
@@ -654,110 +779,30 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
   }
 
 
-  /**
-   * The predicate or encoding of a derived format field.
-   * Encodings are written using {@code :=} and predicates with {@code :-}.
-   *
-   * <p>Example format incldugin encoding and predicate: <pre>{@code
-   * format BitFieldMoveFormat: Instr =
-   *   { sf         :  Bits1
-   *   , op         :  Bits8
-   *   , imms       :  Bits6
-   *   , leftWSize  =  (-1 as Bits5 - imms(4..0)) as BitsX
-   *   , imms       :=  -1 as Bits5 - leftWSize as Bits6
-   *   , leftWSize  :- leftWSize  as Bits5 as BitsX = leftWSize
-   *   }
-   * }</pre>
-   */
-  static class AuxiliaryField extends Definition {
-
-    enum AuxKind {
-      PREDICATE, ENCODING
-    }
-
-    @Child
-    Identifier field;
-    @Child
-    Expr expr;
-    AuxKind kind;
-
-    AuxiliaryField(Identifier field, AuxKind kind, Expr expr) {
-      this.field = field;
-      this.kind = kind;
-      this.expr = expr;
-    }
-
-    FormatField fieldDef() {
-      return (FormatField) Objects.requireNonNull(field.target);
-    }
-
-    @Override
-    public SourceLocation location() {
-      return field.location().join(expr.location());
-    }
-
-    @Override
-    SyntaxType syntaxType() {
-      return BasicSyntaxType.INVALID;
-    }
-
-    @Override
-    public void prettyPrint(int indent, StringBuilder builder) {
-      builder.append(prettyIndentString(indent));
-      field.prettyPrint(0, builder);
-      var assign = switch (kind) {
-        case PREDICATE -> " :- ";
-        case ENCODING -> " := ";
-      };
-      builder.append(assign);
-      expr.prettyPrint(0, builder);
-    }
-
-    public AuxKind kind() {
-      return kind;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      AuxiliaryField that = (AuxiliaryField) o;
-      return Objects.equals(field, that.field) && Objects.equals(expr, that.expr)
-          && kind == that.kind;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = Objects.hashCode(field);
-      result = 31 * result + Objects.hashCode(expr);
-      result = 31 * result + Objects.hashCode(kind);
-      return result;
-    }
-
-    @Override
-    <R> R accept(DefinitionVisitor<R> visitor) {
-      return visitor.visit(this);
-    }
-  }
-
   public FormatDefinition(IdentifierOrPlaceholder identifier, TypeLiteral typeLiteral,
-                          List<FormatField> fields, List<AuxiliaryField> auxiliaryFields,
-                          SourceLocation location) {
+                          List<FormatField> fields, SourceLocation location) {
     this.identifier = identifier;
     this.typeLiteral = typeLiteral;
     this.fields = fields;
-    this.auxiliaryFields = auxiliaryFields;
     this.loc = location;
   }
 
+  List<FormatField> fieldsWithoutEncodingPredicate() {
+    return fields.stream()
+        .filter(f -> !(f instanceof PredicateFormatField))
+        .filter(f -> !(f instanceof EncodingFormatField))
+        .toList();
+  }
+
   boolean hasField(String name) {
-    return fields.stream().anyMatch(f -> f.identifier().name.equals(name));
+    return fieldsWithoutEncodingPredicate().stream()
+        .anyMatch(f -> f.identifier.name.equals(name));
   }
 
   FormatField getField(String name) {
-    return fields.stream().filter(f -> f.identifier().name.equals(name)).findFirst().orElseThrow();
+    return fieldsWithoutEncodingPredicate().stream()
+        .filter(f -> f.identifier.name.equals(name)).findFirst()
+        .orElseThrow();
   }
 
   @Nullable
@@ -844,10 +889,6 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
 
     }
 
-    for (var auxiliaryField : auxiliaryFields) {
-      auxiliaryField.prettyPrint(indent, builder);
-    }
-
     builder.append(prettyIndentString(indent));
     builder.append("}\n");
   }
@@ -871,8 +912,7 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     return annotations.equals(that.annotations)
         && identifier.equals(that.identifier)
         && typeLiteral.equals(that.typeLiteral)
-        && fields.equals(that.fields)
-        && auxiliaryFields.equals(that.auxiliaryFields);
+        && fields.equals(that.fields);
   }
 
   @Override
@@ -881,7 +921,6 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     result = 31 * result + identifier.hashCode();
     result = 31 * result + typeLiteral.hashCode();
     result = 31 * result + fields.hashCode();
-    result = 31 * result + auxiliaryFields.hashCode();
     return result;
   }
 }
@@ -910,7 +949,7 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
 
   List<InstructionSetDefinition> extendingNodes() {
     return extending.stream()
-        .map(id -> (InstructionSetDefinition) Objects.requireNonNull(id.target()))
+        .map(id -> (InstructionSetDefinition) requireNonNull(id.target()))
         .toList();
   }
 
@@ -1137,7 +1176,7 @@ class MemoryDefinition extends Definition implements IdentifiableNode, TypedNode
 
   @Override
   public ConcreteRelationType type() {
-    return Objects.requireNonNull(type);
+    return requireNonNull(type);
   }
 }
 
@@ -1213,7 +1252,7 @@ class RegisterDefinition extends Definition implements IdentifiableNode, TypedNo
 
   @Override
   public Type type() {
-    return Objects.requireNonNull(type);
+    return requireNonNull(type);
   }
 
   static final class RelationTypeLiteral extends Node {
@@ -1584,7 +1623,7 @@ class RelocationDefinition extends Definition implements IdentifiableNode, Typed
 
   @Override
   public ConcreteRelationType type() {
-    return Objects.requireNonNull(type);
+    return requireNonNull(type);
   }
 }
 
@@ -2007,7 +2046,7 @@ class FunctionDefinition extends Definition implements IdentifiableNode, TypedNo
 
   @Override
   public ConcreteRelationType type() {
-    return Objects.requireNonNull(type);
+    return requireNonNull(type);
   }
 }
 
@@ -2059,7 +2098,7 @@ class AliasDefinition extends Definition implements IdentifiableNode, TypedNode 
 
   @Override
   public Type type() {
-    return Objects.requireNonNull(type);
+    return requireNonNull(type);
   }
 
 
@@ -2160,11 +2199,11 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
   }
 
   Expr getEntryValue(String name) {
-    return Objects.requireNonNull(getEntry(name).value);
+    return requireNonNull(getEntry(name).value);
   }
 
   Type getEntryType(String name) {
-    return Objects.requireNonNull(getEntry(name).value).type();
+    return requireNonNull(getEntry(name).value).type();
   }
 
   @Override
@@ -2389,7 +2428,7 @@ final class ExceptionDefinition extends Definition implements IdentifiableNode, 
 
   @Override
   public ConcreteRelationType type() {
-    return Objects.requireNonNull(type);
+    return requireNonNull(type);
   }
 }
 
@@ -2576,7 +2615,7 @@ class ImportDefinition extends Definition {
   ImportDefinition(Ast moduleAst, List<List<Identifier>> importedSymbols,
                    @Nullable Identifier fileId, @Nullable StringLiteral filePath,
                    List<StringLiteral> args, SourceLocation loc) {
-    Objects.requireNonNullElse(fileId, filePath);
+    requireNonNullElse(fileId, filePath);
     this.moduleAst = moduleAst;
     this.importedSymbols = importedSymbols;
     this.fileId = fileId;
@@ -3871,7 +3910,7 @@ class ProcessorDefinition extends Definition implements IdentifiableNode {
   }
 
   InstructionSetDefinition implementedIsaNode() {
-    return (InstructionSetDefinition) Objects.requireNonNull(implementedIsa.target());
+    return (InstructionSetDefinition) requireNonNull(implementedIsa.target());
   }
 
   @Nullable
@@ -3879,7 +3918,7 @@ class ProcessorDefinition extends Definition implements IdentifiableNode {
     if (abi == null) {
       return null;
     }
-    return (ApplicationBinaryInterfaceDefinition) Objects.requireNonNull(abi.target());
+    return (ApplicationBinaryInterfaceDefinition) requireNonNull(abi.target());
   }
 
   @Override
@@ -4143,7 +4182,7 @@ class CpuMemoryRegionDefinition extends Definition implements IdentifiableNode {
   }
 
   MemoryDefinition memoryNode() {
-    return (MemoryDefinition) Objects.requireNonNull(memoryRef.target());
+    return (MemoryDefinition) requireNonNull(memoryRef.target());
   }
 
   @Override
@@ -4381,7 +4420,7 @@ class MicroArchitectureDefinition extends Definition implements IdentifiableNode
   }
 
   InstructionSetDefinition isaNode() {
-    return (InstructionSetDefinition) Objects.requireNonNull(isa.target());
+    return (InstructionSetDefinition) requireNonNull(isa.target());
   }
 
   @Override

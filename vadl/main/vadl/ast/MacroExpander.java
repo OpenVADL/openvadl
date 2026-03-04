@@ -533,11 +533,8 @@ class MacroExpander
   public Definition visit(FormatDefinition definition) {
     var fields = definition.fields.stream().map(f -> (FormatField) f.accept(this))
         .collect(Collectors.toCollection(ArrayList::new));
-    var auxFields = definition.auxiliaryFields.stream()
-        .map(f -> (FormatDefinition.AuxiliaryField) f.accept(this))
-        .collect(Collectors.toCollection(ArrayList::new));
     var id = expandId(definition.identifier);
-    return new FormatDefinition(id, definition.typeLiteral, fields, auxFields,
+    return new FormatDefinition(id, definition.typeLiteral, fields,
         copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
@@ -564,9 +561,13 @@ class MacroExpander
   }
 
   @Override
-  public Definition visit(FormatDefinition.AuxiliaryField definition) {
-    return new FormatDefinition.AuxiliaryField(definition.field, definition.kind,
-        expandExpr(definition.expr));
+  public Definition visit(EncodingFormatField definition) {
+    return new EncodingFormatField(definition.identifier, expandExpr(definition.expr));
+  }
+
+  @Override
+  public Definition visit(PredicateFormatField definition) {
+    return new PredicateFormatField(definition.identifier, expandExpr(definition.expr));
   }
 
   @Override

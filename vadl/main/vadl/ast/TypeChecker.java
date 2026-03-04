@@ -920,7 +920,10 @@ public class TypeChecker
     var nextOccupiedBit = bitWidth - 1;
 
     for (var field : definition.fields.stream()
-        .filter(field -> !(field instanceof DerivedFormatField)).toList()) {
+        .filter(field -> !(field instanceof DerivedFormatField))
+        .filter(field -> !(field instanceof EncodingFormatField))
+        .filter(field -> !(field instanceof PredicateFormatField))
+        .toList()) {
       if (field instanceof TypedFormatField typedField) {
         var fieldType = check(typedField.typeLiteral);
 
@@ -1012,24 +1015,34 @@ public class TypeChecker
     definition.fields.stream()
         .filter(field -> field instanceof DerivedFormatField)
         .map(field -> (DerivedFormatField) field)
-        .forEach(dfField -> check(dfField.expr));
+        .forEach(field -> check(field.expr));
+
+    definition.fields.stream()
+        .filter(field -> field instanceof EncodingFormatField)
+        .map(field -> (EncodingFormatField) field)
+        .forEach(field -> checkFieldEncoding(field));
+
+    definition.fields.stream()
+        .filter(field -> field instanceof PredicateFormatField)
+        .map(field -> (PredicateFormatField) field)
+        .forEach(field -> checkFieldAccessPredicate(field));
 
     // check that there are not multiple predicates for the same access field
     var derivedFieldsWithPredicate =
-        new HashMap<DerivedFormatField, FormatDefinition.AuxiliaryField>();
-    for (var aux : definition.auxiliaryFields) {
-      check(aux);
-      if (aux.kind == FormatDefinition.AuxiliaryField.AuxKind.PREDICATE) {
-        var conflict = derivedFieldsWithPredicate.get(aux.fieldDef());
-        if (conflict != null) {
-          addErrorAndStopChecking(error("Conflicting field access predicates", aux.field)
-              .locationDescription(aux.field,
-                  "A predicate for the field access `%s` already exists.", aux.field.name)
-              .locationHelp(conflict, "Predicate already defined here.")
-              .build());
-        }
-        derivedFieldsWithPredicate.put((DerivedFormatField) aux.fieldDef(), aux);
+        new HashMap<DerivedFormatField, PredicateFormatField>();
+    for (var field : definition.fields.stream()
+        .filter(field -> field instanceof PredicateFormatField)
+        .map(field -> (PredicateFormatField) field).toList()) {
+      var conflict = derivedFieldsWithPredicate.get(field.target());
+      if (conflict != null) {
+        addErrorAndStopChecking(error("Conflicting field access predicates", field.target())
+            .locationDescription(field.target(),
+                "A predicate for the field access `%s` already exists.",
+                field.target().identifier.name)
+            .locationHelp(conflict, "Predicate already defined here.")
+            .build());
       }
+      derivedFieldsWithPredicate.put((DerivedFormatField) field.target(), field);
     }
 
     if (bitsVerifier.hasViolations()) {
@@ -1060,42 +1073,48 @@ public class TypeChecker
   }
 
   @Override
-  public Void visit(FormatDefinition.AuxiliaryField definition) {
-    check(definition.expr);
-    switch (definition.kind) {
-      case PREDICATE -> checkFieldAccessPredicate(definition);
-      case ENCODING -> checkFieldEncoding(definition);
-    }
+  public Void visit(EncodingFormatField definition) {
+    // Do nothing on purpose for now, this definition is checked when visiting FormatDefinition.
     return null;
   }
 
-  private void checkFieldEncoding(FormatDefinition.AuxiliaryField auxiliaryField) {
-    var field = auxiliaryField.field.target();
-    var fieldType = switch (field) {
+  @Override
+  public Void visit(PredicateFormatField definition) {
+    // Do nothing on purpose for now, this definition is checked when visiting FormatDefinition.
+    return null;
+  }
+
+  private void checkFieldEncoding(EncodingFormatField definition) {
+    check(definition.expr);
+
+    var targetField = definition.target();
+    var fieldType = switch (targetField) {
       case RangeFormatField r -> requireNonNull(r.type);
       case TypedFormatField f -> f.typeLiteral.type();
-      default ->
-          throw addErrorAndStopChecking(error("Invalid format field encoding", auxiliaryField.field)
-              .locationDescription(auxiliaryField.field,
+      default -> throw addErrorAndStopChecking(
+          error("Invalid format field encoding", definition.identifier)
+              .locationDescription(definition.identifier,
                   "The encoding must reference a format field.")
               .build());
     };
-    auxiliaryField.expr = tryWrapImplicitCast(auxiliaryField.expr, fieldType);
+    definition.expr = tryWrapImplicitCast(definition.expr, fieldType);
   }
 
-  private void checkFieldAccessPredicate(FormatDefinition.AuxiliaryField auxiliaryField) {
-    var field = auxiliaryField.field.target();
+  private void checkFieldAccessPredicate(PredicateFormatField definition) {
+    check(definition.expr);
+
+    var field = definition.target();
     if (!(field instanceof DerivedFormatField)) {
-      throw error("Invalid format field predicate", auxiliaryField.field)
-          .locationDescription(auxiliaryField.field,
+      throw error("Invalid format field predicate", definition.identifier)
+          .locationDescription(definition.identifier,
               "The predicate must reference a field access function.")
           .build();
     }
-    if (auxiliaryField.expr.type() != Type.bool()) {
-      addErrorAndStopChecking(error("Invalid field access predicate", auxiliaryField.field)
-          .locationDescription(auxiliaryField.field,
+    if (definition.expr.type() != Type.bool()) {
+      addErrorAndStopChecking(error("Invalid field access predicate", definition.identifier)
+          .locationDescription(definition.identifier,
               "The predicate must be a `Bool` expression, but was `%s`.",
-              auxiliaryField.expr.type()).build());
+              definition.expr.type()).build());
     }
   }
 
@@ -3356,8 +3375,8 @@ public class TypeChecker
           var formatName = formatType.format.identifier().name;
           var suggestions = Levenshtein.suggestions(
               fieldName,
-              formatType.format.fields.stream()
-                  .map(f -> f.identifier().name).toList());
+              formatType.format.fieldsWithoutEncodingPredicate().stream()
+                  .map(f -> f.identifier.name).toList());
 
           addErrorAndStopChecking(error("Unknown format field `%s`".formatted(fieldName), expr)
               .description("Format `%s` doesn't have any field with this name", formatName)
