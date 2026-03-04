@@ -12,12 +12,12 @@ model magicNumber(): Ex = {
 //  error: Macro name already used: magicNumber
 //       ╭──[test/resources/diagnostics/imports/invalidImportAndRedeclareModel.vadl:5:7]
 //       │
-//     1 │ model magicNumber(): Ex = {
-//       │       ----------- First defined here.
-//       ⋮
-//       ╭─ test/resources/diagnostics/imports/invalidImportAndRedeclareModel.vadl:5:7
 //     5 │ model magicNumber(): Ex = {
 //       │       ^^^^^^^^^^^ Second definition here.
+//       ⋮
+//       ╭─ test/resources/diagnostics/imports/base.vadl:1:7
+//     1 │ model magicNumber(): Ex = {
+//       │       ----------- First defined here.
 //       │
 //       note: All macros must have a unique name.
 //

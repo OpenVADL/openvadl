@@ -129,9 +129,10 @@ public class DiagnosticPrinter {
             forceUnixPaths)));
     builder.append("     │\n");
 
-    // TODO: Sort them accordig to their line number in the future
-    var allSnippets = new ArrayList<>(diagnostic.multiLocation.secondaryLocations());
+    // TODO: Sort them according to their line number in the future
+    var allSnippets = new ArrayList<Diagnostic.LabeledLocation>();
     allSnippets.add(diagnostic.multiLocation.primaryLocation());
+    allSnippets.addAll(diagnostic.multiLocation.secondaryLocations());
 
     for (int i = 0; i < allSnippets.size(); i++) {
       var snippet = allSnippets.get(i);

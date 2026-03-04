@@ -7,11 +7,11 @@ constant a = 13
 //  error: Symbol name already used: a
 //       ╭──[test/resources/diagnostics/nameresolution/invalidResolveTwoOverlappingConstant.vadl:2:10]
 //       │
-//     1 │ constant a = 13
-//       │          - First defined here.
-//       │
 //     2 │ constant a = 13
 //       │          ^ Second definition here.
+//       ⋮
+//     1 │ constant a = 13
+//       │          - First defined here.
 //       │
 //       note: All symbols must have a unique name.
 //

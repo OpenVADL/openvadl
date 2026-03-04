@@ -7,10 +7,10 @@ function addOne(n: SInt<8>) -> SInt<8> = false
 //       ╭──[test/resources/diagnostics/typechecker/invalidFunctionDefinitionWrongReturnType.vadl:1:42]
 //       │
 //     1 │ function addOne(n: SInt<8>) -> SInt<8> = false
-//       │                                ------- Return type defined here as `SInt<8>`
+//       │                                          ^^^^^ Expected `SInt<8>` but got `Bool`
 //       ⋮
 //     1 │ function addOne(n: SInt<8>) -> SInt<8> = false
-//       │                                          ^^^^^ Expected `SInt<8>` but got `Bool`
+//       │                                ------- Return type defined here as `SInt<8>`
 //       │
 //
 //

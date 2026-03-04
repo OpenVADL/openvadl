@@ -9,11 +9,11 @@ instruction set architecture FLO = {
 //  error: Symbol name already used: X
 //       ╭──[test/resources/diagnostics/nameresolution/invalidResolveTwoOverlappingRegisterFileDefinitions.vadl:3:12]
 //       │
-//     2 │   register X : Bits<5> -> Bits<32>
-//       │            - First defined here.
-//       │
 //     3 │   register X : Bits<2> -> Bits<4>
 //       │            ^ Second definition here.
+//       ⋮
+//     2 │   register X : Bits<5> -> Bits<32>
+//       │            - First defined here.
 //       │
 //       note: All symbols must have a unique name.
 //
