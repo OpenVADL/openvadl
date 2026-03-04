@@ -1,0 +1,21 @@
+services:
+  dev:
+    image: ghcr.io/openvadl/rtl-test-base@sha256:975bacbae46da25dda52340a18772d349c7e43e3dd8aae43be61f254fc728ca8
+    working_dir: /rtl
+
+    command: sleep infinity
+    tty: true
+    stdin_open: true
+
+    volumes:
+      # Additional mounts
+      # - ../vadl/test/resources/scripts/rtl:/scripts
+
+      # Persist tool caches
+      - m2:/root/.m2
+      - gradle:/root/.gradle
+      - sdkman:/root/.sdkman
+volumes:
+  m2:
+  gradle:
+  sdkman:

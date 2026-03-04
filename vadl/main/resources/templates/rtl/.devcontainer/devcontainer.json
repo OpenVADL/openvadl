@@ -1,0 +1,15 @@
+{
+  "name": "rtl (base: rtl-test-base)",
+  "dockerComposeFile": "docker-compose.yaml",
+  "service": "dev",
+  "workspaceFolder": "/rtl",
+  "shutdownAction": "stopCompose",
+  "remoteUser": "root",
+  "customizations": {
+    "jetbrains": {
+      "plugins": [
+        "org.intellij.scala"
+      ]
+    }
+  }
+}

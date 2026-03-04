@@ -131,6 +131,8 @@ import vadl.rtl.passes.EmitCoreTestPass;
 import vadl.rtl.passes.EmitElfSimPass;
 import vadl.rtl.passes.EmitModulesPass;
 import vadl.rtl.passes.EmitRVFIOutputsPass;
+import vadl.rtl.passes.EmitRtlDevcontainerConfigPass;
+import vadl.rtl.passes.EmitRtlDevcontainerDockerComposePass;
 import vadl.rtl.passes.EmitRtlMakefilePass;
 import vadl.rtl.passes.EmitScalafmtConfigPass;
 import vadl.rtl.passes.EmitSimMemCppPass;
@@ -792,6 +794,9 @@ public class PassOrders {
         // build files
         .add(new EmitScalafmtConfigPass(config))
         .add(new EmitRtlMakefilePass(config))
+        // devcontainer
+        .add(new EmitRtlDevcontainerConfigPass(config))
+        .add(new EmitRtlDevcontainerDockerComposePass(config))
         .add(new CleanupEmitDirectoryPass(config));
   }
 
