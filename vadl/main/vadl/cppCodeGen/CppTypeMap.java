@@ -32,7 +32,7 @@ import vadl.types.UIntType;
 public class CppTypeMap {
   /**
    * Returns the cpp type given the {@link Type}. The builtin tablegen tool does not support
-   * {@code uint8}. Therefore, we added a customization.
+   * {@code uint8} or {@code uint16}. Therefore, we added a customization.
    */
   public static String getCppBuiltinTypeNameByVadlType(ValueType type) {
     var width = type.getBitwidth();
@@ -40,8 +40,11 @@ public class CppTypeMap {
       return "char";
     } else if (!type.isSigned() && width == 8) {
       return "unsigned char";
+    } else if (type.isSigned() && width == 16) {
+      return "short";
+    } else if (!type.isSigned() && width == 16) {
+      return "unsigned short";
     }
-
     return getCppTypeNameByVadlType(
         type.isSigned() ? SIntType.bits(width) : Type.unsignedInt(width)
     );
