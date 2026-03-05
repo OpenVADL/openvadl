@@ -47,6 +47,7 @@ public class FrontendIntegrationTest {
   public void testFrontendPassingOnSysSpecs(String filename) throws IOException {
     var spec = Frontend.compileToViam(Paths.get(filename), new DiskVirtualFileSystem());
     ViamVerifier.verifyAllIn(spec);
+    //ViamLocationExistenceChecker.verify(spec);
   }
 
 }
