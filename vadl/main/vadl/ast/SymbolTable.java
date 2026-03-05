@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -1098,7 +1098,8 @@ class SymbolTable {
           if (!format.hasField(field.name)) {
             var suggestions = Levenshtein.suggestions(
                 field.name,
-                format.fields.stream().map(f -> f.identifier().name).toList());
+                format.fields.stream()
+                    .map(f -> f.identifier.name).toList());
 
             definition.symbolTable()
                 .reportUnkownError("Field", field.name, field.location(), suggestions);
@@ -1192,15 +1193,16 @@ class SymbolTable {
         statement.instrDef = instr;
         for (var namedArgument : statement.namedArguments) {
           FormatField foundField = null;
-          for (var field : format.fields) {
-            if (field.identifier().name.equals(namedArgument.name.name)) {
+          for (var field : format.fieldsWithoutEncodingPredicate()) {
+            if (field.identifier.name.equals(namedArgument.name.name)) {
               foundField = field;
               break;
             }
           }
           if (foundField == null) {
             var suggestions = Levenshtein.suggestions(namedArgument.name.name,
-                format.fields.stream().map(f -> f.identifier().name).toList());
+                format.fieldsWithoutEncodingPredicate().stream()
+                    .map(f -> f.identifier.name).toList());
 
             statement.symbolTable()
                 .reportUnkownError("Field", namedArgument.name.name, namedArgument.location(),

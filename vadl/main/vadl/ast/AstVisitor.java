@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -291,7 +291,15 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   }
 
   @Override
-  public Void visit(FormatDefinition.AuxiliaryField definition) {
+  public Void visit(EncodingFormatField definition) {
+    beforeTravel(definition);
+    definition.children().forEach(this::travel);
+    afterTravel(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(PredicateFormatField definition) {
     beforeTravel(definition);
     definition.children().forEach(this::travel);
     afterTravel(definition);
