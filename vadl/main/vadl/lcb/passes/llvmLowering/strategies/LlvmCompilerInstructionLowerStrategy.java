@@ -113,6 +113,7 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
         mayStore,
         false,
         false,
+        false,
         false);
 
     var operandCtx =

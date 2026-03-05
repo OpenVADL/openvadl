@@ -98,6 +98,9 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
       return switch (x) {
         case NoMem -> "IntrNoMem";
         case Speculatable -> "IntrSpeculatable";
+        case ReadMem -> "IntrReadMem";
+        case WriteMem -> "IntrWriteMem";
+        case ReadWriteMem -> "IntrReadWriteMem";
       };
     }
   }

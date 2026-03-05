@@ -725,6 +725,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -776,6 +777,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 1;
 let isAsCheapAsAMove   = 1;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -827,6 +829,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -880,6 +883,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -933,6 +937,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -984,6 +989,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1031,6 +1037,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1085,6 +1092,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1139,6 +1147,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1193,6 +1202,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1247,6 +1257,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1301,6 +1312,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1355,6 +1367,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1408,6 +1421,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1461,6 +1475,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1514,6 +1529,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1567,6 +1583,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1618,6 +1635,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1669,6 +1687,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1719,6 +1738,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1770,6 +1790,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1821,6 +1842,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1872,6 +1894,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1923,6 +1946,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1974,6 +1998,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2025,6 +2050,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2072,6 +2098,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 1;
 let isAsCheapAsAMove   = 1;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2123,6 +2150,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2174,6 +2202,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2227,6 +2256,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2280,6 +2310,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2333,6 +2364,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2386,6 +2418,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2439,6 +2472,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2492,6 +2526,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2543,6 +2578,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 1;
 let isAsCheapAsAMove   = 1;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2596,6 +2632,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2649,6 +2686,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2702,6 +2740,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2755,6 +2794,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2807,6 +2847,7 @@ let mayStore           = 1;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2859,6 +2900,7 @@ let mayStore           = 1;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2911,6 +2953,7 @@ let mayStore           = 1;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2964,6 +3007,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3019,6 +3063,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3072,6 +3117,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3125,6 +3171,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3178,6 +3225,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3229,6 +3277,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3280,6 +3329,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3333,6 +3383,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3386,6 +3437,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3441,6 +3493,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3494,6 +3547,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3547,6 +3601,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3600,6 +3655,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3655,6 +3711,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3708,6 +3765,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3761,6 +3819,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3814,6 +3873,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3867,6 +3927,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3919,6 +3980,7 @@ let mayStore           = 1;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3972,6 +4034,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 0;
 let isAsCheapAsAMove   = 0;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -4023,6 +4086,7 @@ let mayStore           = 0;
 let isBarrier          = 0;
 let isReMaterializable = 1;
 let isAsCheapAsAMove   = 1;
+let hasSideEffects     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -5206,12 +5270,6 @@ def : Pat<(int_processorNameValue_DIVUW X:$rs2, X:$rs1),
 def : Pat<(int_processorNameValue_DIVW X:$rs2, X:$rs1),
         (DIVW X:$rs2, X:$rs1)>;
 
-def : Pat<(int_processorNameValue_EBREAK ),
-        (EBREAK )>;
-
-def : Pat<(int_processorNameValue_ECALL ),
-        (ECALL )>;
-
 def : Pat<(int_processorNameValue_LB X:$rs1, RV3264Base_LB_immSAsInt64:$immS),
         (LB X:$rs1, RV3264Base_LB_immSAsInt64:$immS)>;
 
@@ -5284,8 +5342,8 @@ def : Pat<(int_processorNameValue_SLL X:$rs1, X:$rs2),
 def : Pat<(int_processorNameValue_SLLI X:$rs1, RV3264Base_SLLI_shamtAsInt64:$shamt),
         (SLLI X:$rs1, RV3264Base_SLLI_shamtAsInt64:$shamt)>;
 
-def : Pat<(int_processorNameValue_SLLIW X:$rs1, RV3264Base_SLLIW_shamtAsInt8:$shamt),
-        (SLLIW X:$rs1, RV3264Base_SLLIW_shamtAsInt8:$shamt)>;
+def : Pat<(int_processorNameValue_SLLIW X:$rs1, RV3264Base_SLLIW_shamtAsInt64:$shamt),
+        (SLLIW X:$rs1, RV3264Base_SLLIW_shamtAsInt64:$shamt)>;
 
 def : Pat<(int_processorNameValue_SLLW X:$rs1, X:$rs2),
         (SLLW X:$rs1, X:$rs2)>;
@@ -5308,8 +5366,8 @@ def : Pat<(int_processorNameValue_SRA X:$rs1, X:$rs2),
 def : Pat<(int_processorNameValue_SRAI X:$rs1, RV3264Base_SRAI_shamtAsInt64:$shamt),
         (SRAI X:$rs1, RV3264Base_SRAI_shamtAsInt64:$shamt)>;
 
-def : Pat<(int_processorNameValue_SRAIW X:$rs1, RV3264Base_SRAIW_shamtAsInt8:$shamt),
-        (SRAIW X:$rs1, RV3264Base_SRAIW_shamtAsInt8:$shamt)>;
+def : Pat<(int_processorNameValue_SRAIW X:$rs1, RV3264Base_SRAIW_shamtAsInt64:$shamt),
+        (SRAIW X:$rs1, RV3264Base_SRAIW_shamtAsInt64:$shamt)>;
 
 def : Pat<(int_processorNameValue_SRAW X:$rs1, X:$rs2),
         (SRAW X:$rs1, X:$rs2)>;
@@ -5320,8 +5378,8 @@ def : Pat<(int_processorNameValue_SRL X:$rs1, X:$rs2),
 def : Pat<(int_processorNameValue_SRLI X:$rs1, RV3264Base_SRLI_shamtAsInt64:$shamt),
         (SRLI X:$rs1, RV3264Base_SRLI_shamtAsInt64:$shamt)>;
 
-def : Pat<(int_processorNameValue_SRLIW X:$rs1, RV3264Base_SRLIW_shamtAsInt8:$shamt),
-        (SRLIW X:$rs1, RV3264Base_SRLIW_shamtAsInt8:$shamt)>;
+def : Pat<(int_processorNameValue_SRLIW X:$rs1, RV3264Base_SRLIW_shamtAsInt64:$shamt),
+        (SRLIW X:$rs1, RV3264Base_SRLIW_shamtAsInt64:$shamt)>;
 
 def : Pat<(int_processorNameValue_SRLW X:$rs1, X:$rs2),
         (SRLW X:$rs1, X:$rs2)>;

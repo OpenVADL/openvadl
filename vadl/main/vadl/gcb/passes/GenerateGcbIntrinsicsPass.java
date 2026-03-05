@@ -105,14 +105,24 @@ public class GenerateGcbIntrinsicsPass extends Pass {
 
       var isNoMem = isNoMem(snapshot);
       var speculatable = speculatable(snapshot);
+      var readsMem = !snapshot.getNodes(ReadMemNode.class).toList().isEmpty();
+      var writesMem = !snapshot.getNodes(WriteMemNode.class).toList().isEmpty();
 
       var attributes = new ArrayList<InstructionIntrinsicAttributesCtx.Attribute>();
       if (isNoMem) {
         attributes.add(InstructionIntrinsicAttributesCtx.Attribute.NoMem);
+      } else if (readsMem) {
+        attributes.add(InstructionIntrinsicAttributesCtx.Attribute.ReadMem);
+      } else if (writesMem) {
+        attributes.add(InstructionIntrinsicAttributesCtx.Attribute.WriteMem);
+      } else {
+        attributes.add(InstructionIntrinsicAttributesCtx.Attribute.ReadWriteMem);
       }
+
       if (speculatable) {
         attributes.add(InstructionIntrinsicAttributesCtx.Attribute.Speculatable);
       }
+
 
       var builtinName = instruction.simpleName();
       var intrinsicName = gcbConfiguration.targetName().value() + "_" + instruction.simpleName();

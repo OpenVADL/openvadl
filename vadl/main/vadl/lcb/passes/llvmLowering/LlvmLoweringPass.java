@@ -137,9 +137,11 @@ public class LlvmLoweringPass extends Pass {
    */
   public record Flags(boolean isTerminator, boolean isBranch, boolean isCall, boolean isReturn,
                       boolean isPseudo, boolean isCodeGenOnly, boolean mayLoad, boolean mayStore,
-                      boolean isBarrier, boolean isRematerialisable, boolean isAsCheapAsAMove) {
+                      boolean isBarrier, boolean isRematerialisable, boolean isAsCheapAsAMove,
+                      boolean hasSideEffects) {
     public static Flags empty() {
-      return new Flags(false, false, false, false, false, false, false, false, false, false, false);
+      return new Flags(false, false, false, false, false, false, false, false, false, false, false,
+          false);
     }
 
     /**
@@ -148,7 +150,7 @@ public class LlvmLoweringPass extends Pass {
     public static Flags withTerminator(Flags flags) {
       return new Flags(true, flags.isBranch, flags.isCall, flags.isReturn, flags.isPseudo,
           flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
-          flags.isRematerialisable, flags.isAsCheapAsAMove);
+          flags.isRematerialisable, flags.isAsCheapAsAMove, flags.hasSideEffects);
     }
 
     /**
@@ -157,7 +159,7 @@ public class LlvmLoweringPass extends Pass {
     public static Flags withNoTerminator(Flags flags) {
       return new Flags(false, flags.isBranch, flags.isCall, flags.isReturn, flags.isPseudo,
           flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
-          flags.isRematerialisable, flags.isAsCheapAsAMove);
+          flags.isRematerialisable, flags.isAsCheapAsAMove, flags.hasSideEffects);
     }
 
     /**
@@ -167,7 +169,7 @@ public class LlvmLoweringPass extends Pass {
       return new Flags(flags.isTerminator(), true, flags.isCall, flags.isReturn, flags.isPseudo,
           flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
           flags.isRematerialisable,
-          flags.isAsCheapAsAMove);
+          flags.isAsCheapAsAMove, flags.hasSideEffects);
     }
 
     /**
@@ -177,7 +179,7 @@ public class LlvmLoweringPass extends Pass {
       return new Flags(flags.isTerminator(), flags.isBranch, flags.isCall, flags.isReturn, true,
           flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
           flags.isRematerialisable,
-          flags.isAsCheapAsAMove);
+          flags.isAsCheapAsAMove, flags.hasSideEffects);
     }
 
     /**
@@ -187,7 +189,7 @@ public class LlvmLoweringPass extends Pass {
       return new Flags(flags.isTerminator(), flags.isBranch, flags.isCall, flags.isReturn,
           flags.isPseudo,
           flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), true, flags.isRematerialisable,
-          flags.isAsCheapAsAMove);
+          flags.isAsCheapAsAMove, flags.hasSideEffects);
     }
 
     /**
@@ -196,7 +198,7 @@ public class LlvmLoweringPass extends Pass {
     public static Flags withNoBranch(Flags flags) {
       return new Flags(flags.isTerminator(), false, flags.isCall, flags.isReturn, flags.isPseudo,
           flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
-          flags.isRematerialisable, flags.isAsCheapAsAMove);
+          flags.isRematerialisable, flags.isAsCheapAsAMove, flags.hasSideEffects);
     }
 
     /**
@@ -206,7 +208,7 @@ public class LlvmLoweringPass extends Pass {
       return new Flags(flags.isTerminator(), flags.isBranch, flags.isCall, flags.isReturn,
           flags.isPseudo,
           flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
-          true, flags.isAsCheapAsAMove);
+          true, flags.isAsCheapAsAMove, flags.hasSideEffects);
     }
 
 
@@ -217,7 +219,7 @@ public class LlvmLoweringPass extends Pass {
       return new Flags(flags.isTerminator(), flags.isBranch, flags.isCall, flags.isReturn,
           flags.isPseudo,
           flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
-          flags.isRematerialisable, true);
+          flags.isRematerialisable, true, flags.hasSideEffects);
     }
 
     /**
@@ -227,7 +229,7 @@ public class LlvmLoweringPass extends Pass {
       return new Flags(flags.isTerminator(), flags.isBranch, flags.isCall, flags.isReturn,
           flags.isPseudo,
           false, flags.mayLoad, flags.mayStore(), flags.isBarrier,
-          flags.isRematerialisable, flags.isAsCheapAsAMove);
+          flags.isRematerialisable, flags.isAsCheapAsAMove, flags.hasSideEffects);
     }
 
 
@@ -237,7 +239,16 @@ public class LlvmLoweringPass extends Pass {
     public static Flags withMayLoad(Flags flags) {
       return new Flags(flags.isTerminator(), flags.isBranch, flags.isCall, flags.isReturn,
           flags.isPseudo, flags.isCodeGenOnly, true, flags.mayStore(), flags.isBarrier,
-          flags.isRematerialisable, flags.isAsCheapAsAMove);
+          flags.isRematerialisable, flags.isAsCheapAsAMove, flags.hasSideEffects);
+    }
+
+    /**
+     * Given {@link Flags} overwrite the {@code hasSideEffects} to true.
+     */
+    public static Flags withSideEffects(Flags flags) {
+      return new Flags(flags.isTerminator(), flags.isBranch, flags.isCall, flags.isReturn,
+          flags.isPseudo, flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
+          flags.isRematerialisable, flags.isAsCheapAsAMove, true);
     }
   }
 

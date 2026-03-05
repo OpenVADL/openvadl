@@ -27,6 +27,7 @@ import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValueNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
@@ -60,6 +61,13 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
   @Override
   protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
     return Set.of(MachineInstructionLabel.LOAD_MEM_WITH_IMMEDIATE);
+  }
+
+  @Override
+  protected LlvmLoweringPass.Flags getFlags(Graph graph) {
+    var flags = super.getFlags(graph);
+
+    return LlvmLoweringPass.Flags.withSideEffects(flags);
   }
 
   @Override

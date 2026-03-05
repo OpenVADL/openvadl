@@ -158,6 +158,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     var isBarrier = false;
     var isRemat = false;
     var isAsCheapAsMove = false;
+    var hasSideEffects = false;
 
     return new LlvmLoweringPass.Flags(
         isTerminator,
@@ -170,7 +171,8 @@ public abstract class LlvmInstructionLoweringStrategy {
         mayStore,
         isBarrier,
         isRemat,
-        isAsCheapAsMove
+        isAsCheapAsMove,
+        hasSideEffects
     );
   }
 
