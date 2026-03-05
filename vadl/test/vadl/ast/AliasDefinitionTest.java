@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,6 @@
 
 package vadl.ast;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class AliasDefinitionTest {
@@ -60,9 +59,7 @@ public class AliasDefinitionTest {
         encoding Test = { one = 0 }
         assembly Test = ""
         """);
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    new ViamLowering().generate(ast).verify();
+    var spec = Frontend.compileToViam(prog);
+    spec.verify();
   }
 }

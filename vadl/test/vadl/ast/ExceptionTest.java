@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -63,11 +63,7 @@ public class ExceptionTest {
         raise E1
         """;
     var spec = base.formatted(body);
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(spec), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    typechecker.verify(ast);
-    var lowering = new ViamLowering();
-    var viam = lowering.generate(ast);
+    var viam = Frontend.compileToViam(spec);
     assertEquals("ISA", viam.isa().get().simpleName());
   }
 
@@ -77,11 +73,7 @@ public class ExceptionTest {
         raise E2(En::ONE, 1)
         """;
     var spec = base.formatted(body);
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(spec), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    typechecker.verify(ast);
-    var lowering = new ViamLowering();
-    var viam = lowering.generate(ast);
+    var viam = Frontend.compileToViam(spec);
     assertEquals("ISA", viam.isa().get().simpleName());
   }
 

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -91,13 +91,7 @@ public class FormatFieldAccessTest {
   @ParameterizedTest
   void invalidCases(String prog, String expectedError) {
     assertThatThrownBy(() -> {
-      var ast = VadlParser.parse(wrapSpec(prog));
-      new Ungrouper().ungroup(ast);
-      new ModelRemover().removeModels(ast);
-      var typechecker = new TypeChecker();
-      typechecker.verify(ast);
-      var lowering = new ViamLowering();
-      lowering.generate(ast);
+      Frontend.compileToViam(wrapSpec(prog));
     })
         .isInstanceOfAny(Diagnostic.class, DiagnosticList.class)
         .hasMessageContaining(expectedError);
@@ -131,13 +125,7 @@ public class FormatFieldAccessTest {
         }
         """;
 
-    var ast = VadlParser.parse(spec);
-    new Ungrouper().ungroup(ast);
-    new ModelRemover().removeModels(ast);
-    var typechecker = new TypeChecker();
-    typechecker.verify(ast);
-    var lowering = new ViamLowering();
-    lowering.generate(ast);
+    Frontend.compileToViam(spec);
   }
 
 }

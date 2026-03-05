@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -91,12 +91,7 @@ public class CallIndexExprTest {
   @MethodSource("validReadInputs")
   @ParameterizedTest
   void validReads(String input) {
-    var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(wrapProg(input)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var lowering = new ViamLowering();
-    var spec = Assertions.assertDoesNotThrow(() -> lowering.generate(ast), "Cannot generate VIAM");
+    var spec = Frontend.compileToViam(wrapProg(input));
     ViamVerifier.verifyAllIn(spec);
     var testFuncs = ViamUtils.findDefinitionsByFilter(spec,
             d -> d instanceof Function && d.simpleName().startsWith("T"))
@@ -131,12 +126,7 @@ public class CallIndexExprTest {
         assembly T = ""
         """.formatted(input);
 
-    var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(wrapProg(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var lowering = new ViamLowering();
-    var spec = Assertions.assertDoesNotThrow(() -> lowering.generate(ast), "Cannot generate VIAM");
+    var spec = Frontend.compileToViam(wrapProg(prog));
     ViamVerifier.verifyAllIn(spec);
     var testFuncs = ViamUtils.findDefinitionsByFilter(spec,
             d -> d instanceof Function && d.simpleName().startsWith("T"))
