@@ -1,0 +1,280 @@
+// INCLUDE-VIAM-DUMP
+
+instruction set architecture Mini = {
+
+  using Inst     = Bits<32>               // instruction word is 32 bit
+  using Regs     = Bits<32>               // untyped register word type
+
+  register    X : Bits<5>   -> Regs  // integer register with 32 registers of 32 bits
+  register    V : Bits<5> -> Bits<1024>
+  alias register VL : Bits<32><32><32> = V
+  [ zero : XC(11) ]
+  alias register XC: Bits<32><12> = X(*)(11..0)
+
+  format Rtype : Inst =                   // Rtype register 3 operand instruction format
+    { funct7 : Bits<7>                    // [31..25] 7 bit function code
+    , rs2    : Bits<5>                    // [24..20] 2nd source register index / shamt
+    , rs1    : Bits<5>                    // [19..15] 1st source register index
+    , funct3 : Bits<3>                    // [14..12] 3 bit function code
+    , rd     : Bits<5>                    // [11..7]  destination register index
+    , opcode : Bits<7>                    // [6..0]   7 bit operation code
+    }
+
+  instruction ADD : Rtype = X(rd) := (X(rs1) + X(rs2)) as Regs
+  encoding ADD = {opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0000}
+  assembly ADD = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+}
+
+
+//  Dumped VIAM:
+//
+//    Specification name: "spec"
+//    . Definitions: 1
+//    . InstructionSetArchitecture name: "Mini"
+//    . : PC: -
+//    . : InstructionCount: 1
+//    . : PseudoInstructionCount: 0
+//    . : FormatCount: 1
+//    . : FunctionCount: 0
+//    . : ExceptionCount: 0
+//    . : RelocationCount: 0
+//    . : RegisterCount: 2
+//    . : MemoryCount: 0
+//    . : ArtificialResourceCount: 2
+//    . : Format name: "Rtype"
+//    . : ' Type: b32
+//    . : ' FieldCount: 6
+//    . : ' FieldAccessCount: 0
+//    . : ' FieldEncodingCount: 0
+//    . : ' Field name: "funct7"
+//    . : ' | Type: b7
+//    . : ' | BitSlice: [31..25]
+//    . : ' | RefFormat: -
+//    . : ' Field name: "rs2"
+//    . : ' | Type: b5
+//    . : ' | BitSlice: [24..20]
+//    . : ' | RefFormat: -
+//    . : ' Field name: "rs1"
+//    . : ' | Type: b5
+//    . : ' | BitSlice: [19..15]
+//    . : ' | RefFormat: -
+//    . : ' Field name: "funct3"
+//    . : ' | Type: b3
+//    . : ' | BitSlice: [14..12]
+//    . : ' | RefFormat: -
+//    . : ' Field name: "rd"
+//    . : ' | Type: b5
+//    . : ' | BitSlice: [11..7]
+//    . : ' | RefFormat: -
+//    . : ' Field name: "opcode"
+//    . : ' | Type: b7
+//    . : ' | BitSlice: [6..0]
+//    . : ' | RefFormat: -
+//    . : RegisterTensor name: "X"
+//    . : ' Type: b32
+//    . : ' Dimensions: [0:b5x32, 1:b5x32]
+//    . : ' ConstraintCount: 0
+//    . : RegisterTensor name: "V"
+//    . : ' Type: b1024
+//    . : ' Dimensions: [0:b5x32, 1:b10x1024]
+//    . : ' ConstraintCount: 0
+//    . : ArtificialResource name: "VL"
+//    . : ' Kind: REGISTER
+//    . : ' InnerResource: V
+//    . : ' ReadFunction: read
+//    . : ' WriteProcedure: write
+//    . : ' AliasSlice: null
+//    . : ' Semantics:
+//    . : ' | BaseTensor: V
+//    . : ' | FixedIndices: []
+//    . : ' | DynamicDimensions: [0:b5x32, 1:b5x32]
+//    . : ' | AliasSlice: null
+//    . : ' | OverwriteMode: MERGE
+//    . : ' | ZeroConstraint: -
+//    . : ' Function name: "read"
+//    . : ' | Type: (Bits<5>,Bits<5>)->Bits<32>
+//    . : ' | Signature: (Bits<5>, Bits<5>) -> Bits<32>
+//    . : ' | Parameters: [index:b5, index:b5]
+//    . : ' | Behavior Graph:
+//    . : ' | . n0  FuncParam           in: ()         succ: ()      type: b5      param: index   index: 0
+//    . : ' | . n1  ReadsRegisterTensor in: (n0)       succ: ()      type: b1024   reg: V
+//    . : ' | . n2  Constant            in: ()         succ: ()      type: b11     const: 0x0: Bits<11>
+//    . : ' | . n3  FuncParam           in: ()         succ: ()      type: b5      param: index   index: 0
+//    . : ' | . n4  ZeroExtend          in: (n3)       succ: ()      type: b11     fromWidth: 5
+//    . : ' | . n5  Constant            in: ()         succ: ()      type: b11     const: 0x20: Bits<11>
+//    . : ' | . n6  BuiltInCall         in: (n4 n5)    succ: ()      type: b11     builtin: VADL::mul   operator: *
+//    . : ' | . n7  BuiltInCall         in: (n2 n6)    succ: ()      type: b11     builtin: VADL::add   operator: +
+//    . : ' | . n8  Constant            in: ()         succ: ()      type: b11     const: 0x1f: Bits<11>
+//    . : ' | . n9  BuiltInCall         in: (n7 n8)    succ: ()      type: b11     builtin: VADL::add   operator: +
+//    . : ' | . n10 DynSlice            in: (n1 n9 n7) succ: ()      type: b32     slice: dynamic
+//    . : ' | . n11 Return              in: (n10)      succ: ()      retType: b32
+//    . : ' | . n12 Start               in: ()         succ: (n11)   next: set
+//    . : ' | Parameter name: "index"
+//    . : ' | . Index: 0
+//    . : ' | . Type: b5
+//    . : ' | Parameter name: "index"
+//    . : ' | . Index: 0
+//    . : ' | . Type: b5
+//    . : ' Procedure name: "write"
+//    . : ' | Parameters: [index:b5, index:b5, value:b32]
+//    . : ' | ReadResources: [V]
+//    . : ' | WrittenResources: [V]
+//    . : ' | Behavior Graph:
+//    . : ' | . n0  FuncParam            in: ()        succ: ()      type: b5      param: index   index: 0
+//    . : ' | . n1  ReadsRegisterTensor  in: (n0)      succ: ()      type: b1024   reg: V
+//    . : ' | . n2  Constant             in: ()        succ: ()      type: b1024   const: 0x1: Bits<1024>
+//    . : ' | . n3  Constant             in: ()        succ: ()      type: b11     const: 0x0: Bits<11>
+//    . : ' | . n4  FuncParam            in: ()        succ: ()      type: b5      param: index   index: 0
+//    . : ' | . n5  ZeroExtend           in: (n4)      succ: ()      type: b11     fromWidth: 5
+//    . : ' | . n6  Constant             in: ()        succ: ()      type: b11     const: 0x20: Bits<11>
+//    . : ' | . n7  BuiltInCall          in: (n5 n6)   succ: ()      type: b11     builtin: VADL::mul   operator: *
+//    . : ' | . n8  BuiltInCall          in: (n3 n7)   succ: ()      type: b11     builtin: VADL::add   operator: +
+//    . : ' | . n9  Constant             in: ()        succ: ()      type: b11     const: 0x1f: Bits<11>
+//    . : ' | . n10 BuiltInCall          in: (n8 n9)   succ: ()      type: b11     builtin: VADL::add   operator: +
+//    . : ' | . n11 ZeroExtend           in: (n10)     succ: ()      type: b1024   fromWidth: 11
+//    . : ' | . n12 ZeroExtend           in: (n8)      succ: ()      type: b1024   fromWidth: 11
+//    . : ' | . n13 BuiltInCall          in: (n11 n12) succ: ()      type: b1024   builtin: VADL::sub   operator: -
+//    . : ' | . n14 BuiltInCall          in: (n13 n2)  succ: ()      type: b1024   builtin: VADL::add   operator: +
+//    . : ' | . n15 BuiltInCall          in: (n2 n14)  succ: ()      type: b1024   builtin: VADL::lsl   operator: <<
+//    . : ' | . n16 BuiltInCall          in: (n15 n2)  succ: ()      type: b1024   builtin: VADL::sub   operator: -
+//    . : ' | . n17 BuiltInCall          in: (n16 n12) succ: ()      type: b1024   builtin: VADL::lsl   operator: <<
+//    . : ' | . n18 Constant             in: ()        succ: ()      type: b1024   const: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff: Bits<1024>
+//    . : ' | . n19 BuiltInCall          in: (n17 n18) succ: ()      type: b1024   builtin: VADL::xor   operator: ^
+//    . : ' | . n20 BuiltInCall          in: (n1 n19)  succ: ()      type: b1024   builtin: VADL::and   operator: &
+//    . : ' | . n21 FuncParam            in: ()        succ: ()      type: b32     param: value   index: 1
+//    . : ' | . n22 ZeroExtend           in: (n21)     succ: ()      type: b1024   fromWidth: 32
+//    . : ' | . n23 BuiltInCall          in: (n22 n12) succ: ()      type: b1024   builtin: VADL::lsl   operator: <<
+//    . : ' | . n24 BuiltInCall          in: (n20 n23) succ: ()      type: b1024   builtin: VADL::or    operator: |
+//    . : ' | . n25 WritesRegisterTensor in: (n0 n24)  succ: ()      reg: V
+//    . : ' | . n26 ProcEnd              in: (n25)     succ: ()      effects: 1
+//    . : ' | . n27 Start                in: ()        succ: (n26)   next: set
+//    . : ' | Parameter name: "index"
+//    . : ' | . Index: 0
+//    . : ' | . Type: b5
+//    . : ' | Parameter name: "index"
+//    . : ' | . Index: 0
+//    . : ' | . Type: b5
+//    . : ' | Parameter name: "value"
+//    . : ' | . Index: 1
+//    . : ' | . Type: b32
+//    . : ArtificialResource name: "XC"
+//    . : ' Kind: REGISTER
+//    . : ' InnerResource: X
+//    . : ' ReadFunction: read
+//    . : ' WriteProcedure: write
+//    . : ' AliasSlice: [11..0]
+//    . : ' Semantics:
+//    . : ' | BaseTensor: X
+//    . : ' | FixedIndices: []
+//    . : ' | DynamicDimensions: [0:b5x32]
+//    . : ' | AliasSlice: [11..0]
+//    . : ' | OverwriteMode: MERGE
+//    . : ' | ZeroConstraint: [0xb: Bits<5>]
+//    . : ' Function name: "read"
+//    . : ' | Type: (Bits<5>)->Bits<12>
+//    . : ' | Signature: (Bits<5>) -> Bits<12>
+//    . : ' | Parameters: [index:b5]
+//    . : ' | Behavior Graph:
+//    . : ' | . n0 FuncParam           in: ()         succ: ()     type: b5     param: index   index: 0
+//    . : ' | . n1 Constant            in: ()         succ: ()     type: b5     const: 0xb: Bits<5>
+//    . : ' | . n2 BuiltInCall         in: (n0 n1)    succ: ()     type: bool   builtin: VADL::neq   operator: !=
+//    . : ' | . n3 ReadsRegisterTensor in: (n0)       succ: ()     type: b32    reg: X
+//    . : ' | . n4 Constant            in: ()         succ: ()     type: b32    const: 0x0: Bits<32>
+//    . : ' | . n5 Select              in: (n2 n3 n4) succ: ()     type: b32
+//    . : ' | . n6 Slice               in: (n5)       succ: ()     type: b12    slice: [11..0]
+//    . : ' | . n7 Return              in: (n6)       succ: ()     retType: b12
+//    . : ' | . n8 Start               in: ()         succ: (n7)   next: set
+//    . : ' | Parameter name: "index"
+//    . : ' | . Index: 0
+//    . : ' | . Type: b5
+//    . : ' Procedure name: "write"
+//    . : ' | Parameters: [index:b5, value:b12]
+//    . : ' | ReadResources: [X]
+//    . : ' | WrittenResources: [X]
+//    . : ' | Behavior Graph:
+//    . : ' | . n0  ProcEnd              in: ()        succ: ()          effects: 0
+//    . : ' | . n1  FuncParam            in: ()        succ: ()          type: b5     param: index   index: 0
+//    . : ' | . n2  ReadsRegisterTensor  in: (n1)      succ: ()          type: b32    reg: X
+//    . : ' | . n3  Constant             in: ()        succ: ()          type: b32    const: 0xfffff000: Bits<32>
+//    . : ' | . n4  BuiltInCall          in: (n2 n3)   succ: ()          type: b32    builtin: VADL::and   operator: &
+//    . : ' | . n5  FuncParam            in: ()        succ: ()          type: b12    param: value   index: 1
+//    . : ' | . n6  Truncate             in: (n5)      succ: ()          type: b12    fromWidth: 12
+//    . : ' | . n7  ZeroExtend           in: (n6)      succ: ()          type: b32    fromWidth: 12
+//    . : ' | . n8  BuiltInCall          in: (n4 n7)   succ: ()          type: b32    builtin: VADL::or    operator: |
+//    . : ' | . n9  WritesRegisterTensor in: (n1 n8)   succ: ()          reg: X
+//    . : ' | . n10 BranchEnd            in: (n9)      succ: ()          effects: 1
+//    . : ' | . n11 BranchBegin          in: ()        succ: (n10)       next: set
+//    . : ' | . n12 BranchEnd            in: ()        succ: ()          effects: 0
+//    . : ' | . n13 BranchBegin          in: ()        succ: (n12)       next: set
+//    . : ' | . n14 Constant             in: ()        succ: ()          type: b5     const: 0xb: Bits<5>
+//    . : ' | . n15 BuiltInCall          in: (n1 n14)  succ: ()          type: bool   builtin: VADL::neq   operator: !=
+//    . : ' | . n16 If                   in: (n15)     succ: (n11 n13)   branches: 2
+//    . : ' | . n17 Merge                in: (n10 n12) succ: (n0)        branchEnds: 2
+//    . : ' | . n18 Start                in: ()        succ: (n16)       next: set
+//    . : ' | Parameter name: "index"
+//    . : ' | . Index: 0
+//    . : ' | . Type: b5
+//    . : ' | Parameter name: "value"
+//    . : ' | . Index: 1
+//    . : ' | . Type: b12
+//    . : Instruction name: "ADD" format: "Rtype"
+//    . : ' Inputs: rs1, rs2
+//    . : ' Outputs: rd
+//    . : ' Encoding: encoding
+//    . : ' Assembly: Mini::ADD::assembly
+//    . : ' Behavior Graph:
+//    . : ' | n0 FieldRef             in: ()      succ: ()     type: b5    field: rd    format: Rtype
+//    . : ' | n1 FieldRef             in: ()      succ: ()     type: b5    field: rs1   format: Rtype
+//    . : ' | n2 ReadsRegisterTensor  in: (n1)    succ: ()     type: b32   reg: X
+//    . : ' | n3 FieldRef             in: ()      succ: ()     type: b5    field: rs2   format: Rtype
+//    . : ' | n4 ReadsRegisterTensor  in: (n3)    succ: ()     type: b32   reg: X
+//    . : ' | n5 BuiltInCall          in: (n2 n4) succ: ()     type: b32   builtin: VADL::add   operator: +
+//    . : ' | n6 WritesRegisterTensor in: (n0 n5) succ: ()     reg: X
+//    . : ' | n7 InstrEnd             in: (n6)    succ: ()     effects: 1
+//    . : ' | n8 Start                in: ()      succ: (n7)   next: set
+//    . : ' Assembly name: "Mini::ADD::assembly"
+//    . : ' | Function: Mini::ADD::assembly::func
+//    . : ' | FieldAccesses: []
+//    . : ' | Function name: "Mini::ADD::assembly::func"
+//    . : ' | . Type: ()->String
+//    . : ' | . Signature: () -> String
+//    . : ' | . Parameters: []
+//    . : ' | . Behavior Graph:
+//    . : ' | . : n0  BuiltInCall in: ()        succ: ()      type: String   builtin: mnemonic
+//    . : ' | . : n1  Constant    in: ()        succ: ()      type: String   const: " "
+//    . : ' | . : n2  BuiltInCall in: (n0 n1)   succ: ()      type: String   builtin: VADL::concat_str
+//    . : ' | . : n3  FieldRef    in: ()        succ: ()      type: b5       field: rd    format: Rtype
+//    . : ' | . : n4  BuiltInCall in: (n3)      succ: ()      type: String   builtin: register
+//    . : ' | . : n5  BuiltInCall in: (n2 n4)   succ: ()      type: String   builtin: VADL::concat_str
+//    . : ' | . : n6  Constant    in: ()        succ: ()      type: String   const: ","
+//    . : ' | . : n7  BuiltInCall in: (n5 n6)   succ: ()      type: String   builtin: VADL::concat_str
+//    . : ' | . : n8  FieldRef    in: ()        succ: ()      type: b5       field: rs1   format: Rtype
+//    . : ' | . : n9  BuiltInCall in: (n8)      succ: ()      type: String   builtin: register
+//    . : ' | . : n10 BuiltInCall in: (n7 n9)   succ: ()      type: String   builtin: VADL::concat_str
+//    . : ' | . : n11 BuiltInCall in: (n10 n6)  succ: ()      type: String   builtin: VADL::concat_str
+//    . : ' | . : n12 FieldRef    in: ()        succ: ()      type: b5       field: rs2   format: Rtype
+//    . : ' | . : n13 BuiltInCall in: (n12)     succ: ()      type: String   builtin: register
+//    . : ' | . : n14 BuiltInCall in: (n11 n13) succ: ()      type: String   builtin: VADL::concat_str
+//    . : ' | . : n15 Return      in: (n14)     succ: ()      retType: String
+//    . : ' | . : n16 Start       in: ()        succ: (n15)   next: set
+//    . : ' Encoding name: "encoding"
+//    . : ' | Type: b32
+//    . : ' | Format: Rtype
+//    . : ' | FieldEncodings: 3
+//    . : ' | NonEncodedFields: [rs2, rs1, rd]
+//    . : ' | HasConstraint: false
+//    . : ' | Field name: "opcode"
+//    . : ' | . Field: opcode
+//    . : ' | . Type: b7
+//    . : ' | . Constant: 0x33: Bits<7>
+//    . : ' | Field name: "funct3"
+//    . : ' | . Field: funct3
+//    . : ' | . Type: b3
+//    . : ' | . Constant: 0x0: Bits<3>
+//    . : ' | Field name: "funct7"
+//    . : ' | . Field: funct7
+//    . : ' | . Type: b7
+//    . : ' | . Constant: 0x0: Bits<7>
+//
+//
+// Part of the class vadl.viam.ViamSnapshotTest
