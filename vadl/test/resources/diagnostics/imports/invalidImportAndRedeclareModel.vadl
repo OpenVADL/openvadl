@@ -1,5 +1,3 @@
-// FIXME: The diagnostics printing displays the wrong file for the first location.
-
 import base::magicNumber
 
 model magicNumber(): Ex = {
@@ -10,14 +8,14 @@ model magicNumber(): Ex = {
 //  Reported Diagnostics:
 //
 //  error: Macro name already used: magicNumber
-//       ╭──[test/resources/diagnostics/imports/invalidImportAndRedeclareModel.vadl:5:7]
+//       ╭──[test/resources/diagnostics/imports/invalidImportAndRedeclareModel.vadl:3:7]
 //       │
+//     3 │ model magicNumber(): Ex = {
+//       │       ^^^^^^^^^^^ Second definition here.
+//       ⋮
+//       ╭─ test/resources/diagnostics/imports/base.vadl:1:7
 //     1 │ model magicNumber(): Ex = {
 //       │       ----------- First defined here.
-//       ⋮
-//       ╭─ test/resources/diagnostics/imports/invalidImportAndRedeclareModel.vadl:5:7
-//     5 │ model magicNumber(): Ex = {
-//       │       ^^^^^^^^^^^ Second definition here.
 //       │
 //       note: All macros must have a unique name.
 //
