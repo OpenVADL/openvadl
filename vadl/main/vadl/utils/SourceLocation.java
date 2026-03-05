@@ -49,7 +49,7 @@ public record SourceLocation(
     Position begin,
     Position end,
     @Nullable SourceLocation expandedFrom
-) implements WithLocation {
+) implements WithLocation, Comparable<SourceLocation> {
 
   private static final Logger logger = LoggerFactory.getLogger(SourceLocation.class);
 
@@ -193,6 +193,21 @@ public record SourceLocation(
             ? this.expandedFrom : null;
 
     return new SourceLocation(this.path, begin, end, expanedFrom);
+  }
+
+  @Override
+  public int compareTo(@Nonnull SourceLocation o) {
+    if (Objects.equals(this.path, o.path)) {
+      return this.begin.compareTo(o.begin);
+    }
+
+    if (this.path == null) {
+      return -1;
+    }
+    if (o.path == null) {
+      return 1;
+    }
+    return this.path.compareTo(o.path);
   }
 
   /**
