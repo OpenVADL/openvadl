@@ -78,11 +78,11 @@ import vadl.viam.Specification;
  */
 public class LlvmLoweringPass extends Pass {
 
-  private boolean generatePatterns;
+  private final boolean generatePatterns;
 
   public LlvmLoweringPass(LcbConfiguration configuration) {
     super(configuration);
-    this.generatePatterns = !((LcbConfiguration) configuration()).skipPatternGeneration();
+    this.generatePatterns = !configuration.skipPatternGeneration();
   }
 
   /**
