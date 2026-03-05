@@ -35,8 +35,10 @@ import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -159,7 +161,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     graph.setSourceLocation(stmt.location());
     currentGraph = graph;
 
-    var stmtCtx = stmt.accept(this);
+    var stmtCtx = fetch(stmt);
     var sideEffects = stmtCtx.sideEffectsOrEmptyList();
 
     var end = graph.addWithInputs(new ProcEndNode(sideEffects));
@@ -183,7 +185,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
-    var stmtCtx = definition.behavior.accept(this);
+    var stmtCtx = fetch(definition.behavior);
     var sideEffects = stmtCtx.sideEffectsOrEmptyList();
 
     var end = graph.addWithInputs(new InstrEndNode(sideEffects));
@@ -212,7 +214,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     end.setSourceLocation(definition.location());
 
     var calls = definition.statements.stream()
-        .map(s -> (InstrCallNode) requireNonNull(s.accept(this).controlBlock()).firstNode())
+        .map(s -> (InstrCallNode) requireNonNull(fetch(s).controlBlock()).firstNode())
         .toList();
 
     ControlNode curr = end;
@@ -238,7 +240,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     isInsideMia = true;
     try {
-      var stmtCtx = stmt.accept(this);
+      var stmtCtx = fetch(stmt);
       var sideEffects = stmtCtx.sideEffectsOrEmptyList();
 
       var end = graph.addWithInputs(new InstrEndNode(sideEffects));
@@ -737,7 +739,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return new Pair<>(beginNode, endNode);
     }
 
-    var branchCtx = stmt.accept(this);
+    var branchCtx = fetch(stmt);
     return buildBranch(branchCtx, stmt);
   }
 
@@ -765,6 +767,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         "Tensor types must not exist in the VIAM");
     return result;
   }
+
+  private SubgraphContext fetch(Statement stmt) {
+    var result = stmt.accept(this);
+    result.allNodes().forEach(sideEffect -> {
+      sideEffect.setSourceLocationIfNotSet(stmt.location());
+    });
+    return result;
+  }
+
 
 
   /// This utility function can be used to fill in missing indexes of a tensor.
@@ -1844,7 +1855,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     @Nullable DirectionalNode lastNode = null;
 
     for (var stmt : statement.statements) {
-      var stmtCtx = stmt.accept(this);
+      var stmtCtx = fetch(stmt);
 
       if (stmtCtx.hasControlBlock()) {
         if (firstNode == null) {
@@ -1888,7 +1899,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(ForallStatement statement) {
-    var bodyGraph = statement.body.accept(this);
+    var bodyGraph = fetch(statement.body);
 
     var branchEnd = addToGraph(new BranchEndNode(bodyGraph.sideEffectsOrEmptyList()));
     branchEnd.setSourceLocation(statement.body.location());
@@ -1993,7 +2004,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public SubgraphContext visit(LetStatement statement) {
     // The bounded variable is already resolved and it's usages will be turned into a let-node.
     // So just return the body.
-    return statement.body.accept(this);
+    return fetch(statement.body);
   }
 
   @Override
@@ -2204,6 +2215,21 @@ class SubgraphContext {
   @Nullable
   ControlBlock controlBlock() {
     return controlBlock;
+  }
+
+  Set<vadl.viam.graph.Node> allNodes() {
+    var nodes = new HashSet<vadl.viam.graph.Node>();
+    if (controlBlock != null) {
+      nodes.add(controlBlock.firstNode());
+      controlBlock.firstNode().collectSuccessors().forEach(nodes::add);
+    }
+    if (sideEffects != null) {
+      nodes.addAll(sideEffects);
+    }
+//    for (var node : nodes) {
+//      node.inputs().forEach(nodes::add);
+//    }
+    return nodes;
   }
 
   @Nullable

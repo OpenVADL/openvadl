@@ -1053,7 +1053,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var behavior = definition.stmt != null
         ? new BehaviorLowering(this)
         .getProcedureGraph(definition.stmt, definition.identifier().name)
-        : emptyProcedureGraph(definition.identifier().name);
+        : emptyProcedureGraph(definition.identifier().name, definition);
 
     var kind = switch (definition.kind) {
       case RAM -> MemoryRegion.Kind.RAM;
@@ -1662,7 +1662,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .findFirst()
         .flatMap(this::fetch)
         .orElseGet(() -> new Procedure(generateIdentifier("reset", definition),
-            new vadl.viam.Parameter[] {}, emptyProcedureGraph("reset behavior")));
+            new vadl.viam.Parameter[] {}, emptyProcedureGraph("reset behavior", definition)));
 
     var memRegions = definition.findMemoryRegionDefs().map(this::fetch)
         .map(d -> (MemoryRegion) d.get()).toList();
@@ -2161,10 +2161,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   /**
    * Constructs an empty graph for a procedure.
    */
-  private static Graph emptyProcedureGraph(String name) {
+  private static Graph emptyProcedureGraph(String name, WithLocation location) {
     var graph = new Graph(name);
     var end = graph.add(new ProcEndNode(new NodeList<>()));
-    graph.add(new StartNode(end));
+    var start = graph.add(new StartNode(end));
+    end.setSourceLocationIfNotSet(location.location());
+    start.setSourceLocationIfNotSet(location.location());
     return graph;
   }
 
