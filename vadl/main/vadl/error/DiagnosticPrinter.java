@@ -19,6 +19,7 @@ package vadl.error;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -129,15 +130,11 @@ public class DiagnosticPrinter {
             forceUnixPaths)));
     builder.append("     │\n");
 
-    // TODO: Sort them accordig to their line number in the future
-    var allSnippets = new ArrayList<>(diagnostic.multiLocation.secondaryLocations());
-    allSnippets.add(diagnostic.multiLocation.primaryLocation());
+    var allSnippets = sortLabels(diagnostic.multiLocation.primaryLocation(),
+        diagnostic.multiLocation.secondaryLocations());
 
     for (int i = 0; i < allSnippets.size(); i++) {
       var snippet = allSnippets.get(i);
-
-      // FIXME: if the first location is not from the same file as the primary we don't currently
-      //        the file it is from.
 
       // Delimiter in multilocation
       if (i > 0) {
@@ -418,6 +415,55 @@ public class DiagnosticPrinter {
     fileLineCache.put(path, lines);
     return lines;
   }
+
+  /**
+   * Sort the labels (locations) within a multi-location diagnostic.
+   *
+   * <p><b>Algorithm:</b>
+   * The locations are first sorted into two buckets based on the file they originate from.
+   * The first bucket for the file from the primaryLocation and the second all other files.
+   * Inside the buckets all locations are sorted by their starting position of the location. Then
+   * the two buckets are merged into a single list, with the primary location first.
+   *
+   * <p>This ensures that the file of the primary location is always first even if the primary
+   * location might not be first and that in all files the locations are sorted, which closer
+   * resembles the order in the specification.
+   *
+   * <p>The algorithm might or might not have been rudely stolen from the Rust compiler and the
+   * excellent
+   * <a href="https://docs.rs/codespan-reporting/latest/codespan_reporting/files/index.html">
+   * code_span.</a> crate.
+   *
+   *
+   * @param primary     The primary label.
+   * @param secondary   All secondary label.
+   * @return            The sorted list of label.
+   */
+  private static List<Diagnostic.LabeledLocation> sortLabels(
+      Diagnostic.LabeledLocation primary,
+      List<Diagnostic.LabeledLocation> secondary
+  ) {
+    var primaryPath = primary.location().path();
+    var primaryLabels = new ArrayList<>(List.of(primary));
+    var otherLabels = new ArrayList<Diagnostic.LabeledLocation>();
+
+    secondary.forEach(l -> {
+      if (Objects.equals(l.location().path(), primaryPath)) {
+        primaryLabels.add(l);
+      } else {
+        otherLabels.add(l);
+      }
+    });
+
+    primaryLabels.sort(Comparator.comparing(Diagnostic.LabeledLocation::location));
+    otherLabels.sort(Comparator.comparing(Diagnostic.LabeledLocation::location));
+
+    var all = new ArrayList<Diagnostic.LabeledLocation>();
+    all.addAll(primaryLabels);
+    all.addAll(otherLabels);
+    return all;
+  }
+
 
   @SuppressWarnings("UnusedMethod")
   private interface PrinterColors {
