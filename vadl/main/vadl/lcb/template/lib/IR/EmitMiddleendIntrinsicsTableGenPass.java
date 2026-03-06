@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
@@ -31,13 +32,16 @@ import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
 import vadl.gcb.passes.InstructionIntrinsicAttributesCtx;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
+import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.types.DataType;
+import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 import vadl.viam.Instruction;
@@ -94,6 +98,9 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
       return switch (x) {
         case NoMem -> "IntrNoMem";
         case Speculatable -> "IntrSpeculatable";
+        case ReadMem -> "IntrReadMem";
+        case WriteMem -> "IntrWriteMem";
+        case ReadWriteMem -> "IntrReadWriteMem";
       };
     }
   }
@@ -111,8 +118,7 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
       var lcbIntrinsic =
           new Intrinsic(
               intrinsic.intrinsicName(),
-              record.getOutOperands().isEmpty() ? List.of("llvm_void_ty") :
-                  List.of("llvm_any_ty"),
+              List.of("llvm_any_ty"),
               record.getInOperands().stream().map(this::mapParam)
                   .filter(Optional::isPresent)
                   .map(Optional::get)
@@ -125,24 +131,32 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
     return result;
   }
 
+  private Type createType(ValueType valueType) {
+    var width = valueType.getBitwidth();
+    return valueType.isSigned() ? SIntType.bits(width) : Type.unsignedInt(width);
+  }
+
   private Optional<String> mapParam(GcbInstructionOperand gcbInstructionOperand) {
     if (gcbInstructionOperand instanceof GcbInstructionRegisterFileOperand op) {
       return Optional.of(mapType(op.registerFile().resultType()));
+    } else if (gcbInstructionOperand instanceof TableGenInstructionImmediateOperand op) {
+      return Optional.of(mapType((DataType) createType(op.immediateOperand().llvmType())));
     }
 
-    return Optional.empty();
+    throw Diagnostic.error("Not supported operand", gcbInstructionOperand.origin().location())
+        .build();
   }
 
   private String mapType(DataType dataType) {
-    var upcasted = dataType.fittingCppType();
+    var upcasted = Objects.requireNonNull(dataType.fittingCppType()).toBitsType();
 
-    if (upcasted == DataType.signedInt(8) || upcasted == Type.bits(8)) {
+    if (upcasted.equals(Type.bits(8))) {
       return "llvm_i8_ty";
-    } else if (upcasted == DataType.signedInt(16) || upcasted == Type.bits(16)) {
+    } else if (upcasted.equals(Type.bits(16))) {
       return "llvm_i16_ty";
-    } else if (upcasted == DataType.signedInt(32) || upcasted == Type.bits(32)) {
+    } else if (upcasted.equals(Type.bits(32))) {
       return "llvm_i32_ty";
-    } else if (upcasted == DataType.signedInt(64) || upcasted == Type.bits(64)) {
+    } else if (upcasted.equals(Type.bits(64))) {
       return "llvm_i64_ty";
     }
 

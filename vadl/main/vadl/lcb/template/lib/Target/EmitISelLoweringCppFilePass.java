@@ -26,11 +26,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
+import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.MachineInstructionLabelGroup;
 import vadl.gcb.passes.ValueRange;
@@ -39,9 +41,11 @@ import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.isaMatching.database.QueryResult;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.ISelLoweringOperationActionPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmMachineInstructionUtil;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenAliasRegisterClass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -109,6 +113,24 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
+  /**
+   * Tablegen cannot map intrinsics that have no inputs and outputs. That's why they have to be
+   * lowered in the ISelLowering. We add a mapping to map them into machine nodes (but only for
+   * those intrinsics).
+   *
+   * @param intrinsicName   is the name of the intrinsic.
+   * @param instructionName is the name of the instruction that has to be emitted.
+   */
+  record ZeroOutputInputIntrinsic(String intrinsicName, String instructionName)
+      implements Renderable {
+
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of("intrinsicName", intrinsicName,
+          "instructionName", instructionName);
+    }
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
@@ -136,6 +158,12 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
 
     var requiresTruncation = requiresTruncation(generatedTableGenRegisterOutput);
     var truncation = truncation(requiresTruncation, generatedTableGenRegisterOutput);
+    var intrinsicOutput =
+        (GenerateGcbIntrinsicsPass.Output) passResults
+            .lastResultOf(
+                GenerateGcbIntrinsicsPass.class);
+    var tableGenMachineRecords = (List<TableGenMachineInstruction>) passResults.lastResultOf(
+        GenerateTableGenMachineInstructionRecordPass.class);
 
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE, lcbConfiguration().targetName().value().toLowerCase());
@@ -216,7 +244,30 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
             .build())));
     map.put("requiresTruncation", requiresTruncation.isPresent());
     map.put("truncation", truncation);
+    map.put("zeroOutputInputIntrinsics",
+        zeroOutputInputIntrinsics(intrinsicOutput, tableGenMachineRecords));
     return map;
+  }
+
+  private List<ZeroOutputInputIntrinsic> zeroOutputInputIntrinsics(
+      GenerateGcbIntrinsicsPass.Output intrinsicOutput,
+      List<TableGenMachineInstruction> tableGenMachineRecords) {
+    var records = tableGenMachineRecords.stream().collect(Collectors.toMap(
+        TableGenMachineInstruction::instruction, x -> x));
+    return intrinsicOutput.intrinsics().stream()
+        .filter(intrinsic -> {
+          var tableGenRecord = records.get(intrinsic.instruction());
+
+          if (tableGenRecord != null) {
+            return tableGenRecord.getInOperands().isEmpty() && tableGenRecord.getOutOperands()
+                .isEmpty();
+          }
+
+          return false;
+        })
+        .map(intrinsic -> new ZeroOutputInputIntrinsic(intrinsic.intrinsicName(),
+            intrinsic.instruction().simpleName()))
+        .toList();
   }
 
   /**

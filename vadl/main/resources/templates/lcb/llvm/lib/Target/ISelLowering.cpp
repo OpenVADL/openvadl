@@ -9,6 +9,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/Intrinsics[(${namespace})].h"
 #include <iostream>
 
 #define DEBUG_TYPE "[(${namespace})]TargetLowering"
@@ -71,6 +73,7 @@ void [(${namespace})]TargetLowering::anchor() {}
     [#th:block th:if="${requiresTruncation}"]
     setOperationAction(ISD::TRUNCATE, MVT::[(${truncation.dest})], Custom);
     [/th:block]
+    setOperationAction(ISD::INTRINSIC_VOID, MVT::Other, Custom);
 
     setBooleanContents(ZeroOrOneBooleanContent);
 
@@ -239,9 +242,22 @@ SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG 
       return lowerSelect(Op, DAG);
     [/th:block]
     [#th:block th:if="${requiresTruncation}"]
-     case ISD::TRUNCATE:
+    case ISD::TRUNCATE:
           return lowerTruncate(Op, DAG);
     [/th:block]
+    case ISD::INTRINSIC_VOID: {
+      SDLoc DL(Op);
+      unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+      SDValue Chain = Op.getOperand(0);
+
+      [# th:each="intrinsic : ${zeroOutputInputIntrinsics}" ]
+        if (IntNo == Intrinsic::[(${intrinsic.intrinsicName})]) {
+          return SDValue(DAG.getMachineNode([(${namespace})]::[(${intrinsic.instructionName})], DL, MVT::Other, Chain), 0);
+        }
+      [/]
+
+      break;
+    }
     default : llvm_unreachable("unimplemented operand");
     }
 }

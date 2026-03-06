@@ -31,7 +31,10 @@ public class InstructionIntrinsicAttributesCtx extends DefinitionExtension<Instr
    */
   public enum Attribute {
     NoMem,
-    Speculatable
+    Speculatable,
+    ReadMem,
+    WriteMem,
+    ReadWriteMem
   }
 
   private final List<Attribute> attributes;

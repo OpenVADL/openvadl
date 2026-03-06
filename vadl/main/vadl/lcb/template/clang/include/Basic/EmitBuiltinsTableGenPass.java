@@ -28,8 +28,10 @@ import vadl.error.Diagnostic;
 import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
+import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
+import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -113,7 +115,16 @@ public class EmitBuiltinsTableGenPass extends LcbTemplateRenderingPass {
             .build();
       }
 
-      return CppTypeMap.getCppTypeNameByVadlType(ty);
+      return CppTypeMap.getCppBuiltinTypeNameByVadlType(ValueType.from(ty).get());
+    } else if (o instanceof TableGenInstructionImmediateOperand immediateOperand) {
+      var ty = immediateOperand.immediateOperand().llvmType();
+
+      if (ty == null) {
+        throw Diagnostic.error("Immediate file has no C++ type", immediateOperand.origin())
+            .build();
+      }
+
+      return CppTypeMap.getCppBuiltinTypeNameByVadlType(ty);
     }
 
     throw Diagnostic.error("Operand not supported for builtin generation",

@@ -19,10 +19,12 @@ package vadl.lcb.template.lib.Target;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
@@ -95,6 +97,8 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         GenerateTableGenAbiSequenceInstructionRecordPass.class);
     var intrinsics = ((GenerateGcbIntrinsicsPass.Output) passResults.lastResultOf(
         GenerateGcbIntrinsicsPass.class)).intrinsics();
+    var tableGenMachineRecordsLookup = tableGenMachineRecords.stream().collect(Collectors.toMap(
+        TableGenMachineInstruction::instruction, x -> x));
 
     var addi32 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_32);
     var addi64 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_64);
@@ -144,11 +148,24 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .map(x -> (TableGenPseudoInstExpansionPattern) x)
         .toList();
 
-    var renderedIntrinsics = intrinsics
-        .stream()
-        .map(x -> TableGenInstructionPatternRenderer.lower(tableGenMachineRecords, x))
-        .sorted()
-        .toList();
+    var renderedIntrinsics =
+        lcbConfiguration().skipPatternGeneration() ? Collections.emptyList() :
+            intrinsics
+                .stream()
+                .filter(intrinsic -> {
+                  // We cannot map intrinsics to instructions when they do not have any operands
+                  // (input, output). Instead, it is mapped in the ISelLowering.
+                  var record = tableGenMachineRecordsLookup.get(intrinsic.instruction());
+
+                  if (record != null) {
+                    return !(record.getInOperands().isEmpty() && record.getOutOperands().isEmpty());
+                  }
+
+                  return true;
+                })
+                .map(x -> TableGenInstructionPatternRenderer.lower(tableGenMachineRecords, x))
+                .sorted()
+                .toList();
 
     var compensationPatterns =
         (List<TableGenSelectionWithOutputPattern>) passResults.lastResultOf(

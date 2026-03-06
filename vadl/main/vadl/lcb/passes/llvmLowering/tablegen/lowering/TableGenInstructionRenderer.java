@@ -82,6 +82,7 @@ public final class TableGenInstructionRenderer {
             let isBarrier          = %d;
             let isReMaterializable = %d;
             let isAsCheapAsAMove   = %d;
+            let hasSideEffects     = %d;
             
             let Constraints = "%s";
             let AddedComplexity = 0;
@@ -117,6 +118,7 @@ public final class TableGenInstructionRenderer {
         toInt(instruction.getFlags().isBarrier()),
         toInt(instruction.getFlags().isRematerialisable()),
         toInt(instruction.getFlags().isAsCheapAsAMove()),
+        toInt(instruction.getFlags().hasSideEffects()),
         instruction.constraints()
             .stream()
             .map(TableGenInstructionRenderer::renderConstraint)
