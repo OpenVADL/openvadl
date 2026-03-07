@@ -16,9 +16,7 @@
 
 package vadl.lsp;
 
-import java.net.URI;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,11 +51,12 @@ import vadl.error.Diagnostic.MsgType;
 import vadl.error.DiagnosticList;
 import vadl.utils.DiskVirtualFileSystem;
 import vadl.utils.SourceLocation;
+import vadl.utils.VirtualFileSystem;
 
 /**
  * Handles document-related features of the language server.
  */
-class VadlTextDocumentService implements TextDocumentService {
+public class VadlTextDocumentService implements TextDocumentService {
   /**
    * How many milliseconds to wait before providing diagnostics for the latest change. If a new
    * document version is pushed by the client within this time, the now outdated version will not
@@ -73,6 +72,9 @@ class VadlTextDocumentService implements TextDocumentService {
   private LspTokenizer tokenizer;
 
   private final Map<String, Document> openDocuments = new HashMap<>();
+  private final DependencyMap<String> documentDependencies = new DependencyMap<>();
+
+  public final VirtualFileSystem underlyingFileSystem = new DiskVirtualFileSystem();
 
   VadlTextDocumentService(VadlLanguageServer server) {
     this.server = server;
@@ -92,7 +94,7 @@ class VadlTextDocumentService implements TextDocumentService {
   @Override
   public void didOpen(DidOpenTextDocumentParams params) {
     log.debug(">> didOpen: {}", params);
-    var document = new Document(params.getTextDocument());
+    var document = new Document(params.getTextDocument(), this);
     synchronized (openDocuments) {
       openDocuments.put(params.getTextDocument().getUri(), document);
     }
@@ -138,15 +140,12 @@ class VadlTextDocumentService implements TextDocumentService {
             null
         ));
       }
+      Document.Snapshot snapshot = document.getSnapshot();
 
-      List<Integer> tokens;
-      SemanticTokens result;
-      synchronized (document) {
-        tokens = tokenizer != null
-            ? tokenizer.getTokens(document.getText())
+      List<Integer> tokens = tokenizer != null
+            ? tokenizer.getTokens(snapshot.text())
             : new ArrayList<>();
-        result = new SemanticTokens(document.calculateUtf16Positions(tokens));
-      }
+      SemanticTokens result = new SemanticTokens(snapshot.calculateUtf16Positions(tokens));
       log.debug("<<- semanticTokens/full: <omitted>({} tokens)", tokens.size() / 5);
       return result;
     });
@@ -159,10 +158,7 @@ class VadlTextDocumentService implements TextDocumentService {
       // Don't push diagnostics if client doesn't support it
       return;
     }
-
-    // Work with current state of document
-    String text = document.getText();
-    int version = document.getVersion();
+    Document.Snapshot snapshot = document.getSnapshot();
 
     var unused = server.executor().submit(() -> {
       try {
@@ -172,97 +168,109 @@ class VadlTextDocumentService implements TextDocumentService {
       } catch (InterruptedException e) {
         return;
       }
-      if (!documentVersionIsCurrent(document.getUri(), version)) {
+      if (!documentVersionIsCurrent(snapshot)) {
         log.debug(
             "ABORT publishDiagnostics (before): outdated version {} of document {}",
-            version,
-            document.getUri()
+            snapshot.version(),
+            snapshot.uri()
         );
         return;
       }
 
-      List<Diagnostic> lspItems = new ArrayList<>();
-      Path path = Paths.get(URI.create(document.getUri()));
-      try {
-        Ast ast = VadlParser.parse(text, new DiskVirtualFileSystem(), Map.of(), path);
-        new Ungrouper().ungroup(ast);
-        new ModelRemover().removeModels(ast);
-        new TypeChecker().verify(ast);
+      publishDiagnosticsForOneDocumentSnapshot(snapshot);
 
-      } catch (DiagnosticList dl) {
-        log.debug("Raw diagnostics: {}", dl.getMessage());
-        for (vadl.error.Diagnostic item : dl.items) {
-          // TODO Look into secondary locations too? Maybe as relatedInformation? Or to put a
-          //      diagnostic message there as well?
-          SourceLocation location = item.multiLocation.primaryLocation().location();
-          if (!Objects.equals(location.path(), path)) {
-            // Ignore errors for other files
-            // TODO this means that errors in included files are not reported unless that file is
-            //      opened in the client, even though the Parser gives us diagnostics for them
-            //      (BUT: They are based on the file-system contents of that file, so maybe only
-            //      provide these diagnostics if the file in question isn't currently owned by
-            //      the client?)
-            continue;
-          }
-
-          Diagnostic lspItem = new Diagnostic();
-          try {
-            lspItem.setRange(new Range(
-                document.calculateUtf16Position(location.begin(), version, false),
-                document.calculateUtf16Position(location.end(), version, true)
-            ));
-          } catch (Document.ObsoleteDocumentVersionException e) {
-            return;
-          }
-          lspItem.setSeverity(
-              switch (item.level) {
-                case ERROR -> DiagnosticSeverity.Error;
-                case WARNING -> DiagnosticSeverity.Warning;
-              }
-          );
-          // labels (aka messages) per location
-          String labelsString = item.multiLocation.primaryLocation().labels().stream()
-              .map(vadl.error.Diagnostic.Message::content)
-              .collect(Collectors.joining("\n"));
-          // messages per Diagnostic - they may offer help or give additional notes
-          String messagesString = item.messages.stream()
-              .filter(m -> !m.type().equals(MsgType.PLAIN)
-                  || !m.content().contains("parser got confused at this point"))
-              .map(vadl.error.Diagnostic.Message::content)
-              .collect(Collectors.joining("\n"));
-
-          String fullMessage = item.reason + (!labelsString.isBlank() ? "\n" + labelsString : "")
-              + (!messagesString.isBlank() ? "\n" + messagesString : "");
-          lspItem.setMessage(fullMessage);
-          lspItems.add(lspItem);
+      // Update diagnostics for all dependent documents
+      for (String uri : documentDependencies.getDependents(snapshot.uri())) {
+        Document d = getDocument(uri);
+        if (d != null) {
+          publishDiagnosticsForOneDocumentSnapshot(d.getSnapshot());
         }
       }
-      // TODO There may be diagnostics in DeferredDiagnosticStore, but that is a static list and
-      //      has no clear() method (i.e. outdated diagnostics remain visible)
-
-      if (!documentVersionIsCurrent(document.getUri(), version)) {
-        log.debug(
-            "ABORT publishDiagnostics (after): outdated version {} of document {}",
-            version,
-            document.getUri()
-        );
-        return;
-      }
-      var data = new PublishDiagnosticsParams(document.getUri(), lspItems, version);
-      log.debug("<< publishDiagnostics: {}", data);
-      server.client().publishDiagnostics(data);
     });
   }
 
-  private boolean documentVersionIsCurrent(String uri, int version) {
-    Document document = getDocument(uri);
+  private void publishDiagnosticsForOneDocumentSnapshot(Document.Snapshot snapshot) {
+    List<Diagnostic> lspItems = new ArrayList<>();
+    Path path = snapshot.getPath();
+    try {
+      Ast ast = VadlParser.parse(snapshot.text(), snapshot.virtualFileSystem(), Map.of(), path);
+      new Ungrouper().ungroup(ast);
+      new ModelRemover().removeModels(ast);
+      new TypeChecker().verify(ast);
+
+    } catch (DiagnosticList dl) {
+      log.debug("Raw diagnostics ({}): {}", snapshot.uri(), dl.getMessage());
+      for (vadl.error.Diagnostic item : dl.items) {
+        // TODO Look into secondary locations too? Maybe as relatedInformation? Or to put a
+        //      diagnostic message there as well?
+        SourceLocation location = item.multiLocation.primaryLocation().location();
+        if (!Objects.equals(location.path(), path)) {
+          // Ignore errors for other files
+          // TODO this means that errors in included files are not reported unless that file is
+          //      opened in the client, even though the Parser gives us diagnostics for them
+          continue;
+        }
+
+        Diagnostic lspItem = new Diagnostic();
+        lspItem.setRange(new Range(
+            snapshot.calculateUtf16Position(location.begin(), false),
+            snapshot.calculateUtf16Position(location.end(), true)
+        ));
+        lspItem.setSeverity(
+            switch (item.level) {
+              case ERROR -> DiagnosticSeverity.Error;
+              case WARNING -> DiagnosticSeverity.Warning;
+            }
+        );
+        // labels (aka messages) per location
+        String labelsString = item.multiLocation.primaryLocation().labels().stream()
+            .map(vadl.error.Diagnostic.Message::content)
+            .collect(Collectors.joining("\n"));
+        // messages per Diagnostic - they may offer help or give additional notes
+        String messagesString = item.messages.stream()
+            .filter(m -> !m.type().equals(MsgType.PLAIN)
+                || !m.content().contains("parser got confused at this point"))
+            .map(vadl.error.Diagnostic.Message::content)
+            .collect(Collectors.joining("\n"));
+
+        String fullMessage = item.reason + (!labelsString.isBlank() ? "\n" + labelsString : "")
+            + (!messagesString.isBlank() ? "\n" + messagesString : "");
+        lspItem.setMessage(fullMessage);
+        lspItems.add(lspItem);
+      }
+    }
+    // TODO There may be diagnostics in DeferredDiagnosticStore, but that is a static list and
+    //      has no clear() method (i.e. outdated diagnostics remain visible)
+
+    if (!documentVersionIsCurrent(snapshot)) {
+      log.debug(
+          "ABORT publishDiagnostics (after): outdated version {} of document {}",
+          snapshot.version(),
+          snapshot.uri()
+      );
+      return;
+    }
+    documentDependencies.setDependencies(snapshot.uri(),
+        snapshot.virtualFileSystem().getReadFiles());
+    var data = new PublishDiagnosticsParams(snapshot.uri(), lspItems, snapshot.version());
+    log.debug("<< publishDiagnostics ({}: {}", snapshot.uri(), data);
+    server.client().publishDiagnostics(data);
+  }
+
+  private boolean documentVersionIsCurrent(Document.Snapshot snapshot) {
+    Document document = getDocument(snapshot.uri());
     if (document == null) {
       return false;
     }
-    return document.getVersion() == version;
+    return document.getCurrentVersion() == snapshot.version();
   }
 
-  private @Nullable Document getDocument(String uri) {
+  /**
+   * Returns the open document identified by {@code uri}.
+   *
+   * @return Null if desired document is currently not opened in the client.
+   */
+  public @Nullable Document getDocument(String uri) {
     synchronized (openDocuments) {
       return openDocuments.get(uri);
     }
