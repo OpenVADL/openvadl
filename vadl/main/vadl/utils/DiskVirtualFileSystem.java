@@ -24,10 +24,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * A abstraction layer to inject behavior into file loading.
+ * An abstraction layer to inject behavior into file loading.
  * Some tests and the LSP might want to hide or inject files into the parser. For example the
  * LSP has to work on files that are open in the editor but not yet saved, so it can overwrite
  * this implementation.
+ *
+ * <p>This implementation passes everything through to the real file system.
  */
 public class DiskVirtualFileSystem implements VirtualFileSystem {
   @Override
