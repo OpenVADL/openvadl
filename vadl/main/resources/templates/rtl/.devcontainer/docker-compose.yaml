@@ -1,6 +1,6 @@
 services:
   dev:
-    image: ghcr.io/openvadl/rtl-test-base@sha256:975bacbae46da25dda52340a18772d349c7e43e3dd8aae43be61f254fc728ca8
+    image: [(${image})]
     working_dir: /rtl
 
     command: sleep infinity

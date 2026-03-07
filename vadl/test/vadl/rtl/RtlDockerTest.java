@@ -16,6 +16,8 @@
 
 package vadl.rtl;
 
+import static vadl.rtl.passes.EmitRtlDevcontainerDockerComposePass.RTL_BASE_IMAGE;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Set;
@@ -27,9 +29,6 @@ import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
 public abstract class RtlDockerTest extends DockerExecutionTest {
-
-  private static final String RTL_BASE_IMAGE =
-      "ghcr.io/openvadl/rtl-test-base@sha256:975bacbae46da25dda52340a18772d349c7e43e3dd8aae43be61f254fc728ca8";
 
   private static final ConcurrentHashMap<String, ImageFromDockerfile> imageCache =
       new ConcurrentHashMap<>();

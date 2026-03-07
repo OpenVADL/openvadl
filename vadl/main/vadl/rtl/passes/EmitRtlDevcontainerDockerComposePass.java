@@ -27,6 +27,9 @@ import vadl.viam.Specification;
  */
 public class EmitRtlDevcontainerDockerComposePass extends AbstractTemplateRenderingPass {
 
+  public static final String RTL_BASE_IMAGE = "ghcr.io/openvadl/rtl-test-base"
+      + "@sha256:975bacbae46da25dda52340a18772d349c7e43e3dd8aae43be61f254fc728ca8";
+
   /**
    * Construct the RTL Devcontainer Docker Compose emit pass.
    *
@@ -54,6 +57,8 @@ public class EmitRtlDevcontainerDockerComposePass extends AbstractTemplateRender
   @Override
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
-    return Map.of();
+    return Map.of(
+        "image", RTL_BASE_IMAGE
+    );
   }
 }
