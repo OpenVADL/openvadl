@@ -57,7 +57,7 @@ SCALAFMT_FILE = scalafmt-$(SCALAFMT_ARCH)-$(SCALAFMT_OS).zip
 SCALAFMT_URL = https://github.com/scalameta/scalafmt/releases/download/v$(SCALAFMT_VER)/$(SCALAFMT_FILE)
 
 .scalafmt/$(SCALAFMT_FILE):
-	mkdir -p $@
+	mkdir -p $(dir $@)
 	curl -L --output $@ "$(SCALAFMT_URL)"
 .scalafmt/scalafmt$(SCALAFMT_EXT): .scalafmt/$(SCALAFMT_FILE)
 	unzip -od .scalafmt/ $<

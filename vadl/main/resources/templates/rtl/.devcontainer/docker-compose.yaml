@@ -1,0 +1,21 @@
+services:
+  dev:
+    image: [(${image})]
+    working_dir: /rtl
+
+    command: sleep infinity
+    tty: true
+    stdin_open: true
+
+    volumes:
+      # Additional mounts
+      # - ../vadl/test/resources/scripts/rtl:/scripts
+
+      # Persist tool caches
+      - m2:/root/.m2
+      - gradle:/root/.gradle
+      - sdkman:/root/.sdkman
+volumes:
+  m2:
+  gradle:
+  sdkman:
