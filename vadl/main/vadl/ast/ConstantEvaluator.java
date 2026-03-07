@@ -97,6 +97,10 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     if (args.size() == 2) {
       var leftVal = args.getFirst();
       var rightVal = args.getLast();
+
+      // Some general checks that cannot be evaluated
+      checkDivisionByZero(builtin, leftVal, rightVal, loc);
+
       if (BuiltInTable.logicalComparisons.contains(builtin)
           || (BuiltInTable.SHIFTING_BUILT_INS.contains(builtin) && args.getFirst()
           .type() instanceof ConstantType)
@@ -141,6 +145,26 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     }
 
     return new ConstantValue(finalVal.integer(), type);
+  }
+
+  @SuppressWarnings("UnusedVariable")
+  private void checkDivisionByZero(BuiltInTable.BuiltIn builtIn, ConstantValue leftVal,
+                                   ConstantValue rightVal, WithLocation loc) {
+    var divisionFunctions = List.of(
+        BuiltInTable.SDIV,
+        BuiltInTable.SDIVS,
+        BuiltInTable.SMOD,
+        BuiltInTable.SMODS,
+        BuiltInTable.UDIV,
+        BuiltInTable.UDIVS,
+        BuiltInTable.UMOD,
+        BuiltInTable.UMODS
+    );
+    if (rightVal.value().equals(BigInteger.ZERO) && divisionFunctions.contains(builtIn)
+    ) {
+      throw new EvaluationError("Division by zero cannot be computed.", loc);
+    }
+
   }
 
   private ConstantValue visitIdentifiable(Expr expr) {
