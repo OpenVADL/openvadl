@@ -125,10 +125,9 @@ public class AsmGrammarRuleGenerator {
     if (node.constant() instanceof Constant.Str str && !isWhitespace(str.value())) {
       var trimmedValue = str.value().trim();
       var elem = new AsmStringLiteralUse(null, trimmedValue, StringAsmType.instance());
-      ctx.addElement(elem);
-
       var tokens = Set.of(AsmToken.inferTerminalRule(trimmedValue));
-      ctx.setFirstTokensIfNull(tokens);
+
+      ctx.addElementWithTokens(elem, tokens);
     }
   }
 
@@ -155,8 +154,7 @@ public class AsmGrammarRuleGenerator {
       var elem = new AsmStringLiteralUse(
           new AsmAssignToAttribute("mnemonic", false),
           instructionName, OperandAsmType.instance());
-      ctx.addElement(elem);
-      ctx.setFirstTokensIfNull(Set.of(new AsmToken("IDENTIFIER", instructionName)));
+      ctx.addElementWithTokens(elem, Set.of(new AsmToken("IDENTIFIER", instructionName)));
       return;
     }
 
@@ -182,10 +180,9 @@ public class AsmGrammarRuleGenerator {
           List.of(),
           OperandAsmType.instance()
       );
-      ctx.addElement(elem);
 
       var tokens = firstTokensOfNonTerminalRule(registerRule);
-      ctx.setFirstTokensIfNull(tokens);
+      ctx.addElementWithTokens(elem, tokens);
       return;
     }
 
@@ -216,10 +213,9 @@ public class AsmGrammarRuleGenerator {
           List.of(),
           OperandAsmType.instance()
       );
-      ctx.addElement(elem);
 
       var tokens = firstTokensOfNonTerminalRule(registerRule);
-      ctx.setFirstTokensIfNull(tokens);
+      ctx.addElementWithTokens(elem, tokens);
     }
 
     if (node.builtIn() == BuiltInTable.INTEGRAL) {
@@ -271,9 +267,10 @@ public class AsmGrammarRuleGenerator {
 
     // TODO: only use relevant elements in this check for now all elements are relevant
     //       (e.g. semantic predicates are not supported yet)
-    if (ctx.currentElements.size() > 1) {
+    var elements = ctx.getElements();
+    if (elements.size() > 1) {
 
-      var subtypeMap = ctx.currentElements.stream()
+      var subtypeMap = elements.stream()
           .filter(e -> e instanceof HasAssignTo assignTo
               && assignTo.assignToElement() != null
               && assignTo.assignToElement() instanceof AsmAssignToAttribute)
@@ -286,13 +283,13 @@ public class AsmGrammarRuleGenerator {
           );
       ruleType = new GroupAsmType(subtypeMap);
     } else {
-      ruleType = ctx.currentElements.getFirst().getAsmType();
+      ruleType = elements.getFirst().getAsmType();
     }
 
     ctx.builtRule = new AsmNonTerminalRule(instruction.identifier(),
         new AsmAlternatives(List.of(
             new AsmAlternative(null, ctx.firstTokens, ruleType,
-                false, ctx.currentElements)
+                false, elements)
         ), ruleType), InstructionAsmType.instance(),
         SourceLocation.INVALID_SOURCE_LOCATION
     );
@@ -317,7 +314,7 @@ public class AsmGrammarRuleGenerator {
       var elem = new AsmFunctionInvocation(
           new AsmAssignToAttribute("mnemonic", false),
           instructionNameConstantFunction, List.of(), OperandAsmType.instance());
-      ctx.addElement(elem);
+      ctx.addElementWithTokens(elem, Set.of());
     }
   }
 

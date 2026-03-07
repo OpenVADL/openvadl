@@ -20,6 +20,7 @@ import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import vadl.utils.Pair;
 import vadl.viam.Function;
 import vadl.viam.asm.AsmToken;
 import vadl.viam.asm.elements.AsmGrammarElement;
@@ -31,7 +32,7 @@ import vadl.viam.asm.rules.AsmGrammarRule;
  */
 public class AsmRuleContext {
   // TODO: Use a stack to allow nested alternatives
-  List<AsmGrammarElement> currentElements = new ArrayList<>();
+  List<Pair<AsmGrammarElement, Set<AsmToken>>> elements = new ArrayList<>();
 
   @LazyInit
   Set<AsmToken> firstTokens;
@@ -41,8 +42,21 @@ public class AsmRuleContext {
 
   List<Function> generatedFunctions = new ArrayList<>();
 
-  public void addElement(AsmGrammarElement element) {
-    currentElements.add(element);
+  /**
+   * Add the element to the current rule and associate it with the given first tokens.
+   *
+   * @param element     the grammar element to add
+   * @param firstTokens the firstTokens of the added element
+   */
+  public void addElementWithTokens(AsmGrammarElement element, Set<AsmToken> firstTokens) {
+    elements.add(new Pair<>(element, firstTokens));
+    if (!firstTokens.isEmpty()) {
+      setFirstTokensIfNull(firstTokens);
+    }
+  }
+
+  public List<AsmGrammarElement> getElements() {
+    return elements.stream().map(Pair::left).toList();
   }
 
   /**
@@ -50,7 +64,7 @@ public class AsmRuleContext {
    *
    * @param firstTokens the token to set
    */
-  public void setFirstTokensIfNull(Set<AsmToken> firstTokens) {
+  private void setFirstTokensIfNull(Set<AsmToken> firstTokens) {
     if (this.firstTokens == null) {
       this.firstTokens = firstTokens;
     }
