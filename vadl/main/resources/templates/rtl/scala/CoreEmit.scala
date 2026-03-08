@@ -25,7 +25,7 @@ class CoreEmit extends AnyFunSpec with ChiselSim {
   it("emitDecode") {
     Files.createDirectories(Path.of("build"))
     val sv = ChiselStage.emitSystemVerilog(
-      new DECODE,
+      new [(${decodeModule})],
       firtoolOpts = Array(
         "--lowering-options=disallowPackedArrays,disallowLocalVariables",
         "--strip-debug-info",
@@ -33,6 +33,6 @@ class CoreEmit extends AnyFunSpec with ChiselSim {
         "--disable-layers=Verification"
       )
     )
-    Files.writeString(Paths.get("build/DECODE.sv"), sv)
+    Files.writeString(Paths.get("build/[(${decodeModule})].sv"), sv)
   }
 }

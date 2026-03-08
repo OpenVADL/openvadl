@@ -16,6 +16,10 @@
 
 package vadl.rtl.riscv;
 
+import static vadl.configuration.DecoderOptions.Generator.IRREGULAR;
+import static vadl.configuration.DecoderOptions.Generator.REGULAR;
+import static vadl.configuration.DecoderOptions.Generator.RTL_TABLE;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -29,79 +33,55 @@ import java.util.Scanner;
 import java.util.function.Function;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import vadl.configuration.DecoderOptions;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
+import vadl.pass.PassManager;
+import vadl.pass.PassOrders;
+import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.rtl.RtlDockerTest;
+import vadl.rtl.ipg.nodes.RtlDecodeTreeNode;
 import vadl.utils.Pair;
+import vadl.utils.Triple;
+import vadl.viam.Stage;
 
 public class RtlRiscVBenchmarkTest extends RtlDockerTest {
 
   public static final String ENV_RESULT_CSV = "RTL_DEC_BENCHMARK_RESULT_HOST_PATH";
 
-  @Test
-  @Order(0)
-  @Tag("BenchmarkTest")
-  void rv32imDecodeTable() {
+  /**
+   * Decode benchmark variants.
+   *
+   * @return the test arguments
+   */
+  static Stream<Arguments> decodeBenchmarkTestSource() {
+    return Stream.of(
+        Triple.of("sys/risc-v/mia/rv_3stage.vadl", "rv32i-3stage-rtl-table", RTL_TABLE),
+        Triple.of("sys/risc-v/mia/rv_3stage.vadl", "rv32i-3stage-vdt-regular", REGULAR),
+        Triple.of("sys/risc-v/mia/rv_3stage.vadl", "rv32i-3stage-vdt-irregular", IRREGULAR),
+        Triple.of("sys/risc-v/mia/rv_5stage.vadl", "rv32i-5stage-rtl-table", RTL_TABLE),
+        Triple.of("sys/risc-v/mia/rv_5stage.vadl", "rv32i-5stage-vdt-regular", REGULAR),
+        Triple.of("sys/risc-v/mia/rv_5stage.vadl", "rv32i-5stage-vdt-irregular", IRREGULAR)
+    ).map(args -> {
 
-    // GIVEN
-    var generalConfig =
-        new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
+      var generalConfig =
+          new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
+      var config = new RtlConfiguration(generalConfig);
+      config.setResetVector("reset_vector");
 
-    var config = new RtlConfiguration(generalConfig);
-    config.setResetVector("reset_vector");
+      var decoderOptions = new DecoderOptions();
+      decoderOptions.setGenerator(args.right());
+      config.setDecoderOptions(decoderOptions);
 
-    var decoderOptions = new DecoderOptions();
-    decoderOptions.setGenerator(DecoderOptions.Generator.RTL_TABLE);
-    config.setDecoderOptions(decoderOptions);
-
-    // WHEN / THEN
-    runBenchmark("sys/risc-v/mia/rv_5stage.vadl", "rv32im-rtl-table", config);
-  }
-
-  @Test
-  @Order(1)
-  @Tag("BenchmarkTest")
-  void rv32imDecodeRegular() {
-
-    // GIVEN
-    var generalConfig =
-        new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
-
-    var config = new RtlConfiguration(generalConfig);
-    config.setResetVector("reset_vector");
-
-    var decoderOptions = new DecoderOptions();
-    decoderOptions.setGenerator(DecoderOptions.Generator.REGULAR);
-    config.setDecoderOptions(decoderOptions);
-
-    // WHEN / THEN
-    runBenchmark("sys/risc-v/mia/rv_5stage.vadl", "rv32im-vdt-regular", config);
-  }
-
-  @Test
-  @Order(2)
-  @Tag("BenchmarkTest")
-  void rv32imDecodeIrregular() {
-
-    // GIVEN
-    var generalConfig =
-        new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
-
-    var config = new RtlConfiguration(generalConfig);
-    config.setResetVector("reset_vector");
-
-    var decoderOptions = new DecoderOptions();
-    decoderOptions.setGenerator(DecoderOptions.Generator.IRREGULAR);
-    config.setDecoderOptions(decoderOptions);
-
-    // WHEN / THEN
-    runBenchmark("sys/risc-v/mia/rv_5stage.vadl", "rv32im-vdt-irregular", config);
+      return Arguments.of(args.left(), args.middle(), config);
+    });
   }
 
   /**
@@ -111,7 +91,10 @@ public class RtlRiscVBenchmarkTest extends RtlDockerTest {
    * @param tag    The tag of the version that is tested.
    * @param config The run config.
    */
-  private void runBenchmark(String spec, String tag, RtlConfiguration config) {
+  @ParameterizedTest
+  @Tag("BenchmarkTest")
+  @MethodSource("decodeBenchmarkTestSource")
+  void decodeBenchmark(String spec, String tag, RtlConfiguration config) {
 
     // GIVEN
     var yosysLog = new File("build/test-output/bench/synth_decode_" + tag + ".log");
@@ -122,20 +105,24 @@ public class RtlRiscVBenchmarkTest extends RtlDockerTest {
         Pair.of("/rtl/build/time_decode.log", openStaLog.toString())
     );
 
+    var decodeModule = getDecodeStageName(spec, config);
+
     // WHEN
-    runBenchmarkWithSpec(spec, config, resultMappings);
+    runBenchmarkWithSpec(spec, config, resultMappings,
+        "/scripts/bench/bench_decode.sh", decodeModule);
 
     // THEN
 
     final BigDecimal chipArea = getMetric(yosysLog,
-        Pattern.compile("Chip area for module '\\\\DECODE': (?<chiparea>\\d+\\.\\d+)"),
+        Pattern.compile(
+            "Chip area for module '\\\\" + decodeModule + "': (?<chiparea>\\d+\\.\\d+)"),
         m -> new BigDecimal(m.group("chiparea")));
     Assertions.assertNotNull(chipArea);
 
-    final BigDecimal timingSlack = getMetric(openStaLog,
-        Pattern.compile("(?<slack>\\d+\\.\\d+)\\s*slack \\(MET\\)"),
-        m -> new BigDecimal(m.group("slack")));
-    Assertions.assertNotNull(timingSlack);
+    final BigDecimal dataArrivalTime = getMetric(openStaLog,
+        Pattern.compile("(?<dataArrivalTime>\\d+\\.\\d+)\\s*data arrival time"),
+        m -> new BigDecimal(m.group("dataArrivalTime")));
+    Assertions.assertNotNull(dataArrivalTime);
 
     final String envResultPath = System.getenv(ENV_RESULT_CSV);
     final File result =
@@ -146,13 +133,13 @@ public class RtlRiscVBenchmarkTest extends RtlDockerTest {
         new FileWriter(result, StandardCharsets.UTF_8, true))) {
 
       if (withHeader) {
-        writer.println("spec,tag,chip area,timing slack");
+        writer.println("spec,tag,chip area,data arrival time");
       }
 
       writer.print(spec + ",");
       writer.print(tag + ",");
       writer.print(chipArea.toPlainString() + ",");
-      writer.println(timingSlack.toPlainString());
+      writer.println(dataArrivalTime.toPlainString());
 
       writer.flush();
     } catch (IOException e) {
@@ -161,11 +148,12 @@ public class RtlRiscVBenchmarkTest extends RtlDockerTest {
   }
 
   private void runBenchmarkWithSpec(String spec, RtlConfiguration config,
-                                    List<Pair<String, String>> resultMappings) {
+                                    List<Pair<String, String>> resultMappings,
+                                    String... cmd) {
     // Create image from the rtl output & scripts
     final var image = generateRtlImage(spec, config);
     // Run the container with the benchmarking script
-    runContainerWithInAndOutput(image, List.of(), resultMappings, "/scripts/bench/bench.sh");
+    runContainerWithInAndOutput(image, List.of(), resultMappings, cmd);
   }
 
   private <T> T getMetric(File input, Pattern pattern, Function<MatchResult, T> extractor) {
@@ -177,6 +165,30 @@ public class RtlRiscVBenchmarkTest extends RtlDockerTest {
       Assertions.fail(e);
     }
     return null;
+  }
+
+  private String getDecodeStageName(String specPath, RtlConfiguration config) {
+
+    final var spec = runAndGetViamSpecification(specPath);
+
+    final var passManager = new PassManager();
+    try {
+      passManager.add(PassOrders.rtl(config));
+      passManager.run(spec);
+    } catch (DuplicatedPassKeyException | IOException e) {
+      Assertions.fail(e);
+    }
+
+    final var mia = spec.mia().orElse(null);
+    Assertions.assertNotNull(mia);
+
+    final Stage decodeStage = mia.stages().stream()
+        .filter(s -> s.behavior().getNodes(RtlDecodeTreeNode.class).findAny().isPresent())
+        .findAny().orElse(null);
+
+    Assertions.assertNotNull(decodeStage);
+
+    return decodeStage.simpleName();
   }
 
 }

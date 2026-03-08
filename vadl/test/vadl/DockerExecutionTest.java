@@ -206,7 +206,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
       ImageFromDockerfile image,
       List<Pair<String, String>> inputMappings,
       List<Pair<String, String>> outputMappings,
-      @Nullable String cmd) {
+      @Nullable String... cmd) {
     runContainer(image, (container) -> {
           if (cmd != null) {
             container.setCommand(cmd);
