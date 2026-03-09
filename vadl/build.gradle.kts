@@ -157,6 +157,11 @@ for (gen in generators) {
         filter {
             includeTestsMatching("$pkg.*")
         }
+
+        reports {
+            junitXml.required.set(true)
+            junitXml.isOutputPerTestCase = true  // 👈 makes dorny pick up stdout/stderr
+        }
     }
 }
 
