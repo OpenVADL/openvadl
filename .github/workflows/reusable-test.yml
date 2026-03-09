@@ -30,6 +30,12 @@ jobs:
         run: ./gradlew ${{ inputs.test-task }}
         env:
           isCI: true
+      - name: Publish Test Results
+        uses: mikepenz/action-junit-report@v4
+        if: always()
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+          detailed_summary: true
       - name: Test Report
         uses: dorny/test-reporter@v2
         if: success() || failure()
