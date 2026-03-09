@@ -34,18 +34,9 @@ jobs:
         uses: mikepenz/action-junit-report@v4
         if: always()
         with:
-          report_paths: '**/build/test-results/test/TEST-*.xml'
+          report_paths: '**/build/test-results/**/TEST-*.xml'
           detailed_summary: true
-      - name: Test Report
-        uses: dorny/test-reporter@v2
-        if: success() || failure()
-        env:
-          NODE_OPTIONS: --max-old-space-size=8192
-        with:
-          name: report ${{ inputs.test-task }}
-          path: '**/build/test-results/**/TEST-*.xml'
-          reporter: java-junit
-          list-tests: failed
+          include_passed: true
       - name: Upload Raw Report
         if: failure()
         uses: actions/upload-artifact@v4
