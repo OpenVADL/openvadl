@@ -1,0 +1,15 @@
+constant a = -9 as Bits<32>
+constant b = !(a = 3)
+constant c = ~a
+constant d = -4 as Bits<32>
+constant e = -(4 as Bits<32>)
+constant f = ~(3 as Bits<32>)
+constant g = !(3 as Bool)
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest

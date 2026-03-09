@@ -1,0 +1,11 @@
+instruction set architecture ISA = {
+  relocation HI ( symbol : Bits <16> ) -> Bits <16> = ( symbol >> 16 ) & 0xFFFF
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest

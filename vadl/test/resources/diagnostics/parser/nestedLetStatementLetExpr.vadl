@@ -1,0 +1,21 @@
+instruction set architecture Test = {
+  register X : Bits<5> -> Bits<64>
+
+  format testFormat : Bits<8> = {op: Bits<8>}
+
+  instruction test : testFormat =
+    let stmt = let expr = 1 in 1 in
+      X(31) := 1
+
+  encoding test = {op = 0}
+  assembly test = "test"
+
+  }
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest

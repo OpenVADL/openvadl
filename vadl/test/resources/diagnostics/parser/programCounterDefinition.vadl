@@ -1,0 +1,11 @@
+instruction set architecture FLO = {
+  program counter PC : Bits<32>   // PC = program counter
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest
