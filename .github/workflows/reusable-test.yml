@@ -40,9 +40,8 @@ jobs:
           path: '**/build/test-results/**/TEST-*.xml'
           reporter: java-junit
           list-tests: failed
-          use-actions-summary: true
       - name: Upload Raw Report
-        if: failure()
+        # if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: junit-test-report-xml
