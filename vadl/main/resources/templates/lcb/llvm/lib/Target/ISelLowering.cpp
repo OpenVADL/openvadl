@@ -1,3 +1,5 @@
+ERROR
+
 #include "[(${namespace})]ISelLowering.h"
 #include "[(${namespace})].h"
 #include "Utils/[(${namespace})]BaseInfo.h"
