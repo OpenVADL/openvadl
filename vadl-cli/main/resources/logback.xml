@@ -8,8 +8,6 @@
         <target>System.err</target>
     </appender>
 
-    <logger name="tc" level="INFO"/>
-
     <root level="${LOG_LEVEL}">
         <appender-ref ref="STDOUT"/>
     </root>
