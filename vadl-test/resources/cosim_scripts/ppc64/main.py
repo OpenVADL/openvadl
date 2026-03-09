@@ -23,7 +23,7 @@ def run_cosim(le: str, be: str, out: Path, cosim_config: Path):
     subprocess.run([
         "vadl-cosim-broker",
         "--config", cosim_config,
-        "--test-exec", le,
+        # "--test-exec", le, # ppc64sfs now takes big-endian
         "--test-exec", be,
         "--output-file", str(out)
         ],

@@ -16,6 +16,8 @@
 
 package vadl.iss.template;
 
+import static vadl.error.Diagnostic.ensure;
+import static vadl.error.Diagnostic.error;
 import static vadl.iss.template.IssRenderUtils.mapRegTensors;
 
 import java.util.HashMap;
@@ -150,6 +152,10 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
   }
 
   private boolean memIsBigEndian(Specification viam) {
-    return viam.isa().get().codeMemory().hasAnnotation(BigEndianAnnotation.class);
+    var isa = viam.isa().get();
+    var memories = isa.ownMemories();
+    ensure(memories.size() == 1,
+        () -> error("Only one memory definition is supported", isa));
+    return memories.getFirst().hasAnnotation(BigEndianAnnotation.class);
   }
 }

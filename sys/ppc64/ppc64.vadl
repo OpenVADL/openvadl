@@ -71,6 +71,8 @@ instruction set architecture PPC64SFS = {
   using Ext10       = Bits<10>                   // 10-bit extended opcode
 
   program counter PC  : Address
+
+  [ bigEndian ]
   memory          MEM : Address -> Byte
 
   register X        : XIndex -> Reg64            // 32 general-purpose 64-bit registers
@@ -639,12 +641,12 @@ instruction set architecture PPC64SFS = {
   model ReadMem (ea : Id, unit : SymEx, dst : Ex, rev : Bool, type : Id) : Stat = {
     match : Stat
     ( $unit = Unit::Word => match : Stat
-                            ( $rev = false => X($dst) := byterevw(MEM<4>($ea)) as $type
-                            ; _            => X($dst) := MEM<4>($ea)           as $type
+                            ( $rev = true => X($dst) := byterevw(MEM<4>($ea)) as $type
+                            ; _           => X($dst) := MEM<4>($ea)           as $type
                             )
     ; $unit = Unit::Half => match : Stat
-                            ( $rev = false => X($dst) := byterevh(MEM<2>($ea)) as $type
-                            ; _            => X($dst) := MEM<2>($ea)           as $type
+                            ( $rev = true => X($dst) := byterevh(MEM<2>($ea)) as $type
+                            ; _           => X($dst) := MEM<2>($ea)           as $type
                             )
     ; _                  => X($dst) := MEM($ea) as $type
     )
@@ -655,12 +657,12 @@ instruction set architecture PPC64SFS = {
   model WriteMem (ea : Id, unit : SymEx, src : Id, rev : Bool) : Stat = {
     match : Stat
     ( $unit = Unit::Word => match : Stat
-                            ( $rev = false => MEM<4>($ea) := byterevw(XW($src))
-                            ; _            => MEM<4>($ea) := XW($src)
+                            ( $rev = true => MEM<4>($ea) := byterevw(XW($src))
+                            ; _           => MEM<4>($ea) := XW($src)
                             )
     ; $unit = Unit::Half => match : Stat
-                            ( $rev = false => MEM<2>($ea) := byterevh(XH($src))
-                            ; _            => MEM<2>($ea) := XH($src)
+                            ( $rev = true => MEM<2>($ea) := byterevh(XH($src))
+                            ; _           => MEM<2>($ea) := XH($src)
                             )
     ; _                  => MEM($ea) := XB($src)
     )

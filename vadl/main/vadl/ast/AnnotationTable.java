@@ -196,7 +196,8 @@ public class AnnotationTable {
         .applyViam((def, annotation, lowering) -> {
           var viamDef = (Memory) def;
           viamDef.addAnnotation(new BigEndianAnnotation());
-        });
+        })
+        .build();
 
     /// PROCESSOR RELATED ///
 
