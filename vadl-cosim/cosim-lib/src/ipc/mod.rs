@@ -54,6 +54,17 @@ macro_rules! bail_on_libc_err {
 }
 
 #[macro_export]
+macro_rules! bail_on_dead_mutex_owner {
+    ($mutex_res:expr, $mutex_ptr:expr) => {{
+        let res = $mutex_res;
+        if res == EOWNERDEAD {
+            bail_on_libc_err!(pthread_mutex_consistent($mutex_ptr));
+            bail!("trying to lock mutex failed because the owner of the mutex (client) crashed without releasing it");
+        }
+    }};
+}
+
+#[macro_export]
 macro_rules! eprintln_on_libc_err {
     ($expr:expr) => {
         let res = $expr;

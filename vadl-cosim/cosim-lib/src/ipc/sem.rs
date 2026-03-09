@@ -1,8 +1,9 @@
-use crate::{bail_on_libc_err, eprintln_on_libc_err};
+use crate::{bail_on_dead_mutex_owner, bail_on_libc_err, eprintln_on_libc_err};
 use color_eyre::{Result, eyre::bail};
 use libc::{
-    CLOCK_REALTIME, EBUSY, ETIMEDOUT, PTHREAD_PROCESS_SHARED, clock_gettime, pthread_cond_broadcast, pthread_cond_destroy, pthread_cond_init, pthread_cond_t, pthread_cond_timedwait, pthread_condattr_init, pthread_condattr_setpshared, pthread_condattr_t, pthread_mutex_destroy, pthread_mutex_init, pthread_mutex_lock, pthread_mutex_t, pthread_mutex_trylock, pthread_mutex_unlock, pthread_mutexattr_init, pthread_mutexattr_setpshared, pthread_mutexattr_t, timespec
+    CLOCK_MONOTONIC, CLOCK_REALTIME, EBUSY, EINVAL, EOWNERDEAD, EPERM, ETIMEDOUT, PTHREAD_MUTEX_ERRORCHECK, PTHREAD_MUTEX_NORMAL, PTHREAD_MUTEX_ROBUST, PTHREAD_PROCESS_SHARED, clock_gettime, pthread_cond_broadcast, pthread_cond_destroy, pthread_cond_init, pthread_cond_t, pthread_cond_timedwait, pthread_condattr_init, pthread_condattr_setpshared, pthread_condattr_t, pthread_mutex_consistent, pthread_mutex_destroy, pthread_mutex_init, pthread_mutex_lock, pthread_mutex_t, pthread_mutex_trylock, pthread_mutex_unlock, pthread_mutexattr_init, pthread_mutexattr_setprotocol, pthread_mutexattr_setpshared, pthread_mutexattr_setrobust, pthread_mutexattr_settype, pthread_mutexattr_t, timespec
 };
+use tracing::debug;
 use std::time::Duration;
 
 use crate::ipc::get_last_error;
@@ -30,6 +31,8 @@ impl Semaphore {
                 mutex_attr_ptr,
                 PTHREAD_PROCESS_SHARED
             ));
+            bail_on_libc_err!(pthread_mutexattr_setrobust(mutex_attr_ptr, PTHREAD_MUTEX_ROBUST));
+            bail_on_libc_err!(pthread_mutexattr_settype(mutex_attr_ptr, PTHREAD_MUTEX_ERRORCHECK));
         }
 
         let mut mutex: pthread_mutex_t = unsafe { std::mem::zeroed() };
@@ -63,29 +66,16 @@ impl Semaphore {
 
     pub fn lock(&mut self) -> Result<()> {
         let mutex_ptr = &mut self.mutex as *mut _;
-        unsafe { bail_on_libc_err!(pthread_mutex_lock(mutex_ptr)) };
+        let res = unsafe { pthread_mutex_lock(mutex_ptr) };
+        unsafe { bail_on_dead_mutex_owner!(res, mutex_ptr) };
+        bail_on_libc_err!(res);
 
         Ok(())
     }
 
-    pub fn try_lock(&mut self) -> Result<bool> {
-        let mutex_ptr = &mut self.mutex as *mut _;
-        let res = unsafe { pthread_mutex_trylock(mutex_ptr) };
-
-        if res == EBUSY {
-            return Ok(false);
-        }
-
-        if res == 0 {
-           return Ok(true);
-        }
-
-        bail!("try_lock failed");
-    }
-
     pub fn unlock(&mut self) -> Result<()> {
         let mutex_ptr = &mut self.mutex as *mut _;
-        unsafe { bail_on_libc_err!(pthread_mutex_unlock(mutex_ptr)) };
+        let res = unsafe { bail_on_libc_err!(pthread_mutex_unlock(mutex_ptr)) };
 
         Ok(())
     }
@@ -104,27 +94,31 @@ impl Semaphore {
         let cond_ptr = &mut self.cvar as *mut _;
 
         unsafe {
-            bail_on_libc_err!(pthread_mutex_lock(mutex_ptr));
+            let mutexres = pthread_mutex_lock(mutex_ptr);
+            bail_on_dead_mutex_owner!(mutexres, mutex_ptr);
+            bail_on_libc_err!(mutexres);
             bail_on_libc_err!(clock_gettime(CLOCK_REALTIME, ts_ptr));
         }
 
-        ts.tv_sec += duration.as_secs() as i64;
-        ts.tv_nsec += duration.subsec_nanos() as i64;
+        unsafe {
+            (*ts_ptr).tv_sec += duration.as_secs() as i64;
+            (*ts_ptr).tv_nsec += duration.subsec_nanos() as i64;
+        }
 
         // ensure that tv_nsec is less than TV_NSEC_MAX (but larger than 0)
         // otherwise sem_timedwait returns EINVAL
         const TV_NSEC_MAX: i64 = 1_000_000_000;
         if ts.tv_nsec >= TV_NSEC_MAX {
-            ts.tv_sec += 1;
-            ts.tv_nsec -= TV_NSEC_MAX;
+            unsafe {
+                (*ts_ptr).tv_sec += 1;
+                (*ts_ptr).tv_nsec -= TV_NSEC_MAX;
+            }
         }
 
         let mut rc: i32 = 0;
         while !cond() && rc == 0 {
             rc = unsafe { pthread_cond_timedwait(cond_ptr, mutex_ptr, ts_ptr) };
         }
-
-        unsafe { bail_on_libc_err!(pthread_mutex_unlock(mutex_ptr)) };
 
         match rc {
             0 => Ok(TimedWaitState::Success),

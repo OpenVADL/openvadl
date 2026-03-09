@@ -173,12 +173,11 @@ impl Broker {
 
     fn run_lockstep(&mut self, config: &Config) -> Result<Report> {
         // NOTE: maybe move "spawning" the clients into this method
-        thread::sleep(Duration::from_millis(100));
         for (idx, client) in self.clients.iter_mut().enumerate() {
             let client_cfg = config.for_client(idx);
             for _ in 0..client_cfg.skip_n_instructions {
                 client.shm.read_buffer_new()?;
-                client.shm.end_read_buffer();
+                client.shm.end_read_buffer()?;
             }
             debug!(
                 "skipped {} instructions for {:?}",
@@ -278,7 +277,7 @@ impl Broker {
                         }
 
                         for client in &mut self.clients {
-                            client.shm.end_read_buffer();
+                            client.shm.end_read_buffer()?;
                         }
                     }
 
@@ -319,7 +318,7 @@ impl Broker {
                     .clients
                     .iter_mut()
                     .map(|client| {
-                        let res = client.shm.read_buffer().map(|opt| opt.map(|i| i.as_tb()));
+                        let res = client.shm.read_buffer_new().map(|opt| opt.map(|i| i.as_tb()));
                         client.run_count += 1;
                         res
                     })
@@ -359,7 +358,7 @@ impl Broker {
                         }
 
                         for client in &mut self.clients {
-                            client.shm.end_read_buffer();
+                            client.shm.end_read_buffer()?;
                         }
 
                         if !config.testing.protocol.execute_all_remaining_instructions {

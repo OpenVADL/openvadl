@@ -35,8 +35,8 @@ impl<const SIZE: usize> SharedMemory<BrokerSHMRingBuffer<SIZE>> {
         self.get().read_previous()
     }
 
-    pub fn end_read_buffer(&mut self) {
-        self.get_mut().end_read();
+    pub fn end_read_buffer(&mut self) -> Result<()> {
+        self.get_mut().end_read()
     }
 }
 

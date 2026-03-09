@@ -496,6 +496,7 @@ pub struct BrokerSHMRingBuffer<const SIZE: usize> {
     pub notifier: Semaphore,
     pub dbg_read_lock: Semaphore,
     pub dbg_write_lock: Semaphore,
+    pub dbg_mutex_lock: Semaphore,
 }
 
 impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
@@ -512,7 +513,8 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
         self.notifier = Semaphore::create()?;
         self.dbg_read_lock = Semaphore::create()?;
         self.dbg_write_lock = Semaphore::create()?;
-        self.dbg_read_lock.lock()?;
+        // self.dbg_read_lock.lock()?;
+        self.dbg_mutex_lock = Semaphore::create()?;
         Ok(())
     }
 
@@ -537,67 +539,36 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
     /// NOTE: `end_read` has to be called once the reference is not needed anymore to free the
     /// index in the ringbuffer for new writes.
     pub fn start_read(&mut self) -> Result<Option<&BrokerSHMData>> {
-        let mut max_wait = 1_000_000_000;
-        loop {
-            if !self.dbg_read_lock.try_lock()? {
-                if max_wait == 0 {
-                    bail!("cosim crashed?");
-                } else {
-                    max_wait -= 1;
-                    thread::sleep(Duration::from_nanos(100));
+        let waitres = self.dbg_mutex_lock.timedwait(Duration::from_secs(60), || {
+            self.write_end.load(Ordering::SeqCst) || self.count.load(Ordering::SeqCst) > 0
+        });
+
+        match waitres {
+            Ok(res) => match res {
+                crate::ipc::sem::TimedWaitState::Timeout => {
+                    bail!(
+                        "Failed to wait for a response from a qemu client. Note that a timeout should *not* mean that the client crash - it is more likely that the client is in an endless loop or that the cosimulator has a bug. Please refer to the logs for more information."
+                    );
                 }
-            } else {
-                break;
+                crate::ipc::sem::TimedWaitState::Success => {
+                    // If we successfully got a "response" from the writer, but the count is
+                    // still zero, then that means that the response was a write-end message.
+                    // Meaning all data was already read
+                    if self.count.load(Ordering::SeqCst) == 0 {
+                        self.dbg_mutex_lock.unlock()?;
+                        return Ok(None);
+                    }
+                }
+            },
+            Err(err) => {
+                return Err(err);
             }
-        }
-        if self.write_end.load(Ordering::SeqCst) {
-            self.dbg_write_lock.unlock()?;
-            return Ok(None);
         }
 
         let idx = self.ring_idx(self.read_idx);
         let elem = &self.data[idx];
-        return Ok(Some(elem));
 
-
-        // if self.count.load(Ordering::SeqCst) == 0 {
-        //     let count_ref = &self.count;
-        //     let write_end_ref = &self.write_end;
-        //     let cond =
-        //         || write_end_ref.load(Ordering::SeqCst) || count_ref.load(Ordering::SeqCst) > 0;
-        //     let res = self.notifier.timedwait(Duration::from_millis(1000), cond);
-        //     match res {
-        //         Ok(res) => match res {
-        //             crate::ipc::sem::TimedWaitState::Timeout => {
-        //                 if cond() {
-        //                     warn!("A timeout occurred while waiting for a qemu-client but the client did respond. This means a race-condition similar to https://stackoverflow.com/a/36130475 occurred. This scenario is handled such that the cosimulation still works correctly.");
-        //
-        //                     return self.start_read();
-        //                 }
-        //
-        //                 bail!(
-        //                     "Failed to wait for a response from a qemu client. Please refer to the logs for more information."
-        //                 );
-        //             }
-        //             crate::ipc::sem::TimedWaitState::Success => {
-        //                 // If we successfully got a "response" from the writer, but the count is
-        //                 // still zero, then that means that the response was a write-end message.
-        //                 // Meaning all data was already read
-        //                 if self.count.load(Ordering::SeqCst) == 0 {
-        //                     return Ok(None);
-        //                 }
-        //             }
-        //         },
-        //         Err(err) => {
-        //             return Err(err);
-        //         }
-        //     }
-        // }
-
-        // let idx = self.ring_idx(self.read_idx);
-        // let elem = &self.data[idx];
-        //
-        // Ok(Some(elem))
+        Ok(Some(elem))
     }
 
     pub const fn read_this(&self) -> &BrokerSHMData {
@@ -615,10 +586,13 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
         &self.data[idx]
     }
 
-    pub fn end_read(&mut self) {
+    pub fn end_read(&mut self) -> Result<()> {
         self.read_idx += 1;
-        let _ = self.notifier.post();
-        self.count.fetch_sub(1, Ordering::SeqCst);
-        self.dbg_write_lock.unlock().unwrap();
+        if self.count.fetch_sub(1, Ordering::SeqCst) == 0 {
+            panic!("end_read must not be called when count is 0");
+        }
+        self.dbg_mutex_lock.unlock()?;
+        self.dbg_mutex_lock.post()?;
+        Ok(())
     }
 }
