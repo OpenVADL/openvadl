@@ -221,10 +221,14 @@ public class DiagnosticPrinter {
         throw new IllegalStateException();
       }
       lines = getFileLines(location.location().path());
-    } catch (IOException | IllegalArgumentException e) {
-      var previewError = "No Preview available: Could not find the file '%s'".formatted(
-          location.location().path()
-      );
+    } catch (IOException | IllegalArgumentException | IllegalStateException e) {
+      var locationPath = location.location().path();
+      var previewError = "No Preview available: No source location found";
+      if (locationPath != null) {
+        previewError = "No Preview available: Could not find the file '%s'".formatted(
+                  location.location().path());
+      }
+
       var prefix = "     %s│%s    ".formatted(colors.cyan(), colors.reset());
       var text = "%s%s%s\n%s".formatted(colors.yellow(), previewError, colors.reset(),
           messageBlock(location));
