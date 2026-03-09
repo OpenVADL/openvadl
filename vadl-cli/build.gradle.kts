@@ -58,6 +58,11 @@ tasks.startScripts {
 
 tasks.test {
     useJUnitPlatform()
+
+    testLogging {
+        // set options for log level LIFECYCLE
+        events("failed")
+    }
 }
 
 jlink {
