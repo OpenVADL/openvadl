@@ -1,5 +1,4 @@
-use std::time::Duration;
-use std::{collections::HashSet, thread};
+use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 
@@ -132,19 +131,18 @@ impl Broker {
     }
 
     fn add_client_information_to_error(err: Error, client_id: &str, config: &Config) -> Error {
-        err
-        // let base_path = Path::new(&config.logging.dir);
-        // let stdout_path = base_path.join(format!("client-{client_id}-stdout.txt"));
-        // let stderr_path = base_path.join(format!("client-{client_id}-stderr.txt"));
-        //
-        // let stdout_content =
-        //     fs::read_to_string(stdout_path).expect("client stdout-file should exist");
-        // let stderr_content =
-        //     fs::read_to_string(stderr_path).expect("client stderr-file should exist");
-        //
-        // err.note(format!(
-        //     "\nClient stdout:\n{stdout_content}\n\nClient stderr:\n{stderr_content}"
-        // ))
+        let base_path = Path::new(&config.logging.dir);
+        let stdout_path = base_path.join(format!("client-{client_id}-stdout.txt"));
+        let stderr_path = base_path.join(format!("client-{client_id}-stderr.txt"));
+
+        let stdout_content =
+            fs::read_to_string(stdout_path).expect("client stdout-file should exist");
+        let stderr_content =
+            fs::read_to_string(stderr_path).expect("client stderr-file should exist");
+
+        err.note(format!(
+            "\nClient stdout:\n{stdout_content}\n\nClient stderr:\n{stderr_content}"
+        ))
     }
 
     fn bcollect<T>(iter: &mut impl Iterator<Item = Result<T>>) -> Result<Vec<T>> {
@@ -205,7 +203,7 @@ impl Broker {
                 let reads = Self::bcollect(&mut reads);
 
                 if let Err(read_err) = &reads {
-                    let ctx = self.build_crash_context(&config);
+                    let ctx = self.build_crash_context(config);
                     debug!("client seemed to crash -> reporting test failure");
                     let diff = DiffEntry::new(
                         "client-crash",
@@ -226,7 +224,7 @@ impl Broker {
                         let diffs = if let Some(cpus1) = c1insn.cpus()
                             && let Some(cpus2) = c2insn.cpus()
                         {
-                            if Self::exec_exit_condition_hit_insn(&config, c1insn, c2insn) {
+                            if Self::exec_exit_condition_hit_insn(config, c1insn, c2insn) {
                                 break;
                             }
 
@@ -248,7 +246,7 @@ impl Broker {
                             && let Some(mem_access_info2) = c2insn.mem_access_info()
                         {
                             if Self::mem_write_exit_condition_hit(
-                                &config,
+                                config,
                                 mem_access_info1,
                                 mem_access_info2,
                             ) {
@@ -318,7 +316,10 @@ impl Broker {
                     .clients
                     .iter_mut()
                     .map(|client| {
-                        let res = client.shm.read_buffer_new().map(|opt| opt.map(|i| i.as_tb()));
+                        let res = client
+                            .shm
+                            .read_buffer_new()
+                            .map(|opt| opt.map(|i| i.as_tb()));
                         client.run_count += 1;
                         res
                     })
@@ -330,7 +331,7 @@ impl Broker {
                 match (c1insn, c2insn) {
                     // successfully read both clients -> compare
                     (Some(c1insn), Some(c2insn)) => {
-                        if Self::exec_exit_condition_hit_tb(&config, c1insn, c2insn) {
+                        if Self::exec_exit_condition_hit_tb(config, c1insn, c2insn) {
                             break;
                         }
 

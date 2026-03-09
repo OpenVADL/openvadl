@@ -1,7 +1,7 @@
 use std::{
     fs::File,
     path::Path,
-    process::{Child, Command, Stdio},
+    process::{Child, Command},
 };
 
 use color_eyre::{eyre::Context, Result};
