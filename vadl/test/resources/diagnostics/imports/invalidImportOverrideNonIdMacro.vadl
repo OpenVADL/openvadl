@@ -1,0 +1,23 @@
+// FIXME: The second error shouldn't appear here
+import base::magicNumber with ("magicNumber=two")
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Model Override
+//       ╭──[test/resources/diagnostics/imports/base.vadl:1:1]
+//       │
+//     1 │ model magicNumber(): Ex = {
+//       │ ^^^^^^^^^^^^^^^^^^^^^^^ note: This model was overridden but only models returning `Id` can be overridden.
+//       │
+//
+//  error: Unknown Model `$num`
+//       ╭──[test/resources/diagnostics/imports/base.vadl:11:3]
+//       │
+//    11 │   $num + 1
+//       │   ^^^^
+//       │
+//       help: Make sure the macro is defined before (above) they are used.
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest

@@ -75,7 +75,7 @@ public class DiagnosticsTest {
       ViamLocationExistenceChecker.verify(spec);
 
       // Some additional checks
-      verifyPrettifiedAst(ast);
+      verifyPrettifiedAst(ast, new DiskVirtualFileSystem());
     } catch (DiagnosticList d) {
       diagnostics = d.items;
     } catch (Diagnostic d) {

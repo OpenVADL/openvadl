@@ -48,7 +48,7 @@ public class Frontend {
    */
   public static Ast compileToAst(String program) {
     try {
-      return compileToAst(SingleFileVirtualFileSystem.PATH,
+      return compileToAst(SingleFileVirtualFileSystem.DEFAULT_PATH,
           new SingleFileVirtualFileSystem(program));
     } catch (IOException e) {
       throw new RuntimeException("This can never happen as the filesystem always succeeds here.");
@@ -85,7 +85,7 @@ public class Frontend {
    */
   public static Specification compileToViam(String program) {
     try {
-      return compileToViam(SingleFileVirtualFileSystem.PATH,
+      return compileToViam(SingleFileVirtualFileSystem.DEFAULT_PATH,
           new SingleFileVirtualFileSystem(program));
     } catch (IOException e) {
       throw new RuntimeException("This can never happen as the filesystem always succeeds here.");

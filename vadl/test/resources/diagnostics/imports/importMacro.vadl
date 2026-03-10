@@ -1,15 +1,6 @@
-model magicNumber(): Ex = {
-  42
-}
+import base::magicNumber
 
-// This is mostly a target to be overwritten with inputs
-model num(): Id = {
-  doesnotexist
-}
-
-model numPlusOne(): Ex = {
-  $num + 1
-}
+constant flo = $magicNumber()
 
 
 //  Reported Diagnostics:

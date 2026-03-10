@@ -838,10 +838,12 @@ elements. A single annotation is described in the #annotation production rule.
     [
       WITH
       SYM_PAREN_OPEN
-      stringLiteral<out StringLiteral arg> (. args.add(arg); .)
+      ( stringLiteral<out StringLiteral arg>  (. args.add(arg); .)
+      | macroReplacement<out Node node>       (. args.add(castForceStringLiteral(this, node)); .)
+      )
       {
         SYM_COMMA
-        stringLiteral<out arg>             (. args.add(arg); .)
+        stringLiteral<out StringLiteral arg2>  (. args.add(arg2); .)
       }
       SYM_PAREN_CLOSE
     ]                                      (. def = importModules(this, fileId, filePath, importedSymbols(segments, symbolList), args, start.join(lastTokenLoc())); .)
@@ -2282,7 +2284,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     ]
     SYM_PAREN_CLOSE                         (. macroContext.addFirst(params); .)
     SYM_COLON
-    syntaxType<out SyntaxType returnType>
+    syntaxType<out SyntaxType returnType>   (. var signatureLoc = startLoc.join(lastTokenLoc()); .)
     SYM_EQ
 
     SYM_BRACE_OPEN
@@ -2291,6 +2293,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
                                                SyntaxType macroType = assertSyntaxType(this, body, returnType, "Macro body does not match signature")
                                                  ? returnType : BasicSyntaxType.INVALID;
                                                def = new ModelDefinition(id, params, body, macroType, startLoc.join(lastTokenLoc()));
+                                               verifyCorrectModelOverride(this, def, signatureLoc);
                                             .)
   .
 
