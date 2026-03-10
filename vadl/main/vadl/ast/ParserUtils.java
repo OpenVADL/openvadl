@@ -698,6 +698,19 @@ class ParserUtils {
     }
   }
 
+  static void verifyCorrectModelOverride(Parser parser, ModelDefinition def,
+                                         SourceLocation location) {
+    if (parser.macroOverrides.containsKey(def.id.pathToString()) && !def.returnType.equals(
+        BasicSyntaxType.ID)) {
+      parser.diagnostics.add(
+          error("Invalid Model Override", location)
+              .locationNote(location,
+                  "This model was overridden but only models returning `Id` can be overridden.")
+              .build()
+      );
+    }
+  }
+
   /**
    * Loads the referenced module and makes any given symbols available in the current module.
    * Either a {@code fileId} or a {@code filePath} MUST be specified.
@@ -726,8 +739,10 @@ class ParserUtils {
     if (importedSymbols.isEmpty() || importedSymbols.stream().allMatch(List::isEmpty)) {
       WithLocation fileLocation = requireNonNull(filePath == null ? fileId : filePath);
       throw error("Invalid Import", fileLocation)
-          .locationDescription(fileLocation, "The import only describes the file to import from but not what to import.")
-          .locationNote(fileLocation, "VADL doesn't have a wildcard import, you always have to define what to import")
+          .locationDescription(fileLocation,
+              "The import only describes the file to import from but not what to import.")
+          .locationNote(fileLocation,
+              "VADL doesn't have a wildcard import, you always have to define what to import")
           .build();
     }
 

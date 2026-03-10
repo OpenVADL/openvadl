@@ -2284,7 +2284,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     ]
     SYM_PAREN_CLOSE                         (. macroContext.addFirst(params); .)
     SYM_COLON
-    syntaxType<out SyntaxType returnType>
+    syntaxType<out SyntaxType returnType>   (. var signatureLoc = startLoc.join(lastTokenLoc()); .)
     SYM_EQ
 
     SYM_BRACE_OPEN
@@ -2293,6 +2293,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
                                                SyntaxType macroType = assertSyntaxType(this, body, returnType, "Macro body does not match signature")
                                                  ? returnType : BasicSyntaxType.INVALID;
                                                def = new ModelDefinition(id, params, body, macroType, startLoc.join(lastTokenLoc()));
+                                               verifyCorrectModelOverride(this, def, signatureLoc);
                                             .)
   .
 
