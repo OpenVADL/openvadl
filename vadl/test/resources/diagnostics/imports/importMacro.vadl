@@ -1,0 +1,11 @@
+import base::magicNumber
+
+constant flo = $magicNumber()
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest

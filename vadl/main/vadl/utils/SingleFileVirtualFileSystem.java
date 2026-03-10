@@ -29,21 +29,27 @@ import java.nio.file.Paths;
  * This is especially useful for testing, where we want to run the compiler on a single file.
  */
 public class SingleFileVirtualFileSystem implements VirtualFileSystem {
-  public static final Path PATH = Paths.get("spec.vadl");
+  public static final Path DEFAULT_PATH = Paths.get("spec.vadl");
+  public final Path path;
   private final String content;
 
   public SingleFileVirtualFileSystem(String content) {
+    this(content, DEFAULT_PATH);
+  }
+
+  public SingleFileVirtualFileSystem(String content,  Path path) {
+    this.path = path;
     this.content = content;
   }
 
   @Override
   public boolean exists(Path path) {
-    return path.equals(PATH);
+    return path.equals(this.path);
   }
 
   @Override
   public InputStream getInputStream(Path path) throws IOException {
-    if (!path.equals(PATH)) {
+    if (!path.equals(this.path)) {
       throw new FileNotFoundException("File not found: " + path);
     }
     return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));

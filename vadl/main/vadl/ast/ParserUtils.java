@@ -16,6 +16,7 @@
 
 package vadl.ast;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
 
 import java.io.IOException;
@@ -688,7 +689,7 @@ class ParserUtils {
     // as we don't have access to the macroTable of the referenced ISA, we must
     // do the traversal again.
     for (IsId extending : isa.extending) {
-      var extendingIsa = (InstructionSetDefinition) Objects.requireNonNull(extending.target());
+      var extendingIsa = (InstructionSetDefinition) requireNonNull(extending.target());
       readMacroSymbols(macroTable, extendingIsa);
     }
   }
@@ -712,34 +713,43 @@ class ParserUtils {
                                   List<List<Identifier>> importedSymbols,
                                   List<StringLiteral> args, SourceLocation loc) {
     var modulePath = filePath == null
-        ? resolveImportPath(parser, Objects.requireNonNull(fileId))
+        ? resolveImportPath(parser, requireNonNull(fileId))
         : resolveImportPath(parser, filePath.value, filePath);
-    if (modulePath != null) {
-      var macroOverrides = new HashMap<String, String>();
-      for (StringLiteral arg : args) {
-        var keyValue = arg.value.split("=", 2);
-        if (keyValue.length != 2) {
-          throw error("Invalid import", arg)
-              .locationDescription(arg,
-                  "Macro overrides must have the form `<macro-name>=<substitute>`.")
-              .build();
-        }
-        macroOverrides.put(keyValue[0], keyValue[1]);
-      }
-      try {
-        var ast = VadlParser.parse(modulePath, parser.fileSystem, macroOverrides);
-        parser.macroTable.importFrom(ast, importedSymbols);
-        return new ImportDefinition(ast, importedSymbols, fileId, filePath, args, loc);
-      } catch (DiagnosticList | Diagnostic e) {
-        throw e;
-      } catch (IOException e) {
-        throw error("Import Failed", loc)
-            .description("The following error occurred: %s",
-                e.getMessage() != null ? e.getMessage() : e)
+    if (modulePath == null) {
+      return DUMMY_DEF;
+    }
+
+    if (importedSymbols.isEmpty() || importedSymbols.stream().allMatch(List::isEmpty)) {
+      WithLocation fileLocation = requireNonNull(filePath == null ? fileId : filePath);
+      throw error("Invalid Import", fileLocation)
+          .locationDescription(fileLocation, "The import only describes the file to import from but not what to import.")
+          .locationNote(fileLocation, "VADL doesn't have a wildcard import, you always have to define what to import")
+          .build();
+    }
+
+    var macroOverrides = new HashMap<String, String>();
+    for (StringLiteral arg : args) {
+      var keyValue = arg.value.split("=", 2);
+      if (keyValue.length != 2) {
+        throw error("Invalid Import", arg)
+            .locationDescription(arg,
+                "Macro overrides must have the form `<macro-name>=<substitute>`.")
             .build();
       }
+      macroOverrides.put(keyValue[0], keyValue[1]);
     }
-    return DUMMY_DEF;
+    try {
+      var ast = VadlParser.parse(modulePath, parser.fileSystem, macroOverrides);
+      parser.macroTable.importFrom(ast, importedSymbols);
+      return new ImportDefinition(ast, importedSymbols, fileId, filePath, args, loc);
+    } catch (DiagnosticList | Diagnostic e) {
+      throw e;
+    } catch (IOException e) {
+      throw error("Import Failed", loc)
+          .description("The following error occurred: %s",
+              e.getMessage() != null ? e.getMessage() : e)
+          .build();
+    }
   }
 
   static @Nullable Path resolveImportPath(Parser parser, Identifier importPath) {
@@ -858,7 +868,7 @@ class ParserUtils {
         } else if (seqExpr.range instanceof IntegerLiteral integerLiteral) {
           start = end = integerLiteral.number;
         } else {
-          reportError(parser, "Unknown index type " + seqExpr.range, Objects.requireNonNull(
+          reportError(parser, "Unknown index type " + seqExpr.range, requireNonNull(
               seqExpr.range).location());
         }
         for (BigInteger i = start; i.compareTo(end) <= 0; i = i.add(BigInteger.ONE)) {

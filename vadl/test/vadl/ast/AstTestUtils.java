@@ -21,9 +21,11 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
+import vadl.utils.VirtualFileSystem;
 
 public class AstTestUtils {
 
@@ -35,6 +37,16 @@ public class AstTestUtils {
     UNGROUPER.ungroup(ast);
     var progPretty = ast.prettyPrintToString();
     var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty, ast.filePath),
+        "Cannot parse prettified input \n" + progPretty);
+    UNGROUPER.ungroup(astPretty);
+    assertAstEquality(astPretty, ast);
+  }
+
+  static void verifyPrettifiedAst(Ast ast, VirtualFileSystem fileSystem) {
+    MODEL_REMOVER.removeModels(ast);
+    UNGROUPER.ungroup(ast);
+    var progPretty = ast.prettyPrintToString();
+    var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty, fileSystem, Map.of(), ast.filePath),
         "Cannot parse prettified input \n" + progPretty);
     UNGROUPER.ungroup(astPretty);
     assertAstEquality(astPretty, ast);
