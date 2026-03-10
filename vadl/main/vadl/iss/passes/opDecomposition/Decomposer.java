@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
 import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.iss.passes.opDecomposition.decomposer.ArithmeticDecomposer;
+import vadl.iss.passes.opDecomposition.decomposer.CountDecomposer;
 import vadl.iss.passes.opDecomposition.decomposer.FoldDecomposer;
 import vadl.iss.passes.opDecomposition.decomposer.LogicDecomposer;
 import vadl.iss.passes.opDecomposition.decomposer.ShiftDecomposer;
@@ -93,7 +94,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 @SuppressWarnings("OverloadMethodsDeclarationOrder")
 class Decomposer
     implements VadlBuiltInEmptyNoStatusDispatcher<Decomposer.Request>, ShiftDecomposer,
-    LogicDecomposer,
+    LogicDecomposer, CountDecomposer,
     ArithmeticDecomposer, TensorDecomposer, FoldDecomposer {
 
   record Slice(int hi, int lo) {
@@ -430,6 +431,11 @@ class Decomposer
   }
 
   @Override
+  public void handleNOT(Request rq) {
+    rq.result = notDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
   public void handleOR(Request rq) {
     rq.result = orDecompose(currCall, rq.slice.hi(), rq.slice.lo());
   }
@@ -457,6 +463,21 @@ class Decomposer
   @Override
   public void handleUDIV(Request rq) {
     rq.result = udivDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleCTZ(Request rq) {
+    rq.result = ctzDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleCLZ(Request rq) {
+    rq.result = clzDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleCOB(Request rq) {
+    rq.result = cobDecompose(currCall, rq.slice.hi(), rq.slice.lo());
   }
 
   @Override
@@ -772,7 +793,10 @@ class Decomposer
 
   @Handler
   void handle(Request rq, SelectNode toHandle) {
-    throw new UnsupportedOperationException("Type SelectNode not yet implemented");
+    var condition = request(toHandle.condition(), 0, 0);
+    var trueCase = request(toHandle.trueCase(), rq.slice.hi(), rq.slice.lo());
+    var falseCase = request(toHandle.falseCase(), rq.slice.hi(), rq.slice.lo());
+    rq.result = GraphUtils.select(condition, trueCase, falseCase);
   }
 
   @Handler

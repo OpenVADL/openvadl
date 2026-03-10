@@ -21,10 +21,33 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
- * Decomposes bitwise logical operations (OR, AND, XOR) by requesting slices from operands
+ * Decomposes bitwise logical operations by requesting slices from operands
  * and combining them with the same operation.
  */
 public interface LogicDecomposer extends IDecomposer {
+
+  /**
+   * Decomposes a bitwise NOT call to extract only the bit-range [hi:lo] of the result.
+   *
+   * <p>For {@code ~a}, this method:
+   * <ol>
+   *   <li>requests the slice [hi:lo] from operand {@code a}</li>
+   *   <li>applies NOT to the requested slice</li>
+   * </ol>
+   *
+   * @param src built-in NOT call {@code NOT(a)}
+   * @param hi most-significant bit of the slice (inclusive, 0 = LSB)
+   * @param lo least-significant bit of the slice
+   * @return graph expression that equals {@code (~a)[hi:lo]}
+   */
+  default ExpressionNode notDecompose(BuiltInCall src, int hi, int lo) {
+    src.ensure(src.builtIn() == BuiltInTable.NOT, "Not a NOT built-in call");
+
+    var a = src.arg(0);
+    var slice = request(a, hi, lo);
+
+    return BuiltInTable.NOT.call(slice);
+  }
 
   /**
    * Decomposes a bitwise OR call to extract only the bit-range [hi:lo] of the result.
