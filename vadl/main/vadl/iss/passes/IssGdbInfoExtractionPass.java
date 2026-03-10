@@ -17,8 +17,6 @@
 package vadl.iss.passes;
 
 import static java.util.Objects.requireNonNull;
-import static vadl.error.Diagnostic.warning;
-import static vadl.iss.passes.TcgPassUtils.regInfo;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,10 +24,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
-import vadl.error.DeferredDiagnosticStore;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
@@ -97,19 +95,6 @@ public class IssGdbInfoExtractionPass extends AbstractIssPass {
     AtomicInteger i = new AtomicInteger();
     var res = new ArrayList<Result.Reg>();
     for (var reg : isa.registerTensors()) {
-      // Skip gVec registers - they can't be accessed directly via GDB
-      if (!regInfo(reg).isTcgScalar()) {
-        DeferredDiagnosticStore.add(
-            warning("Vector register excluded from GDB", reg)
-                .description(
-                    "Register '%s' is a vector register and will "
-                        + "not be included in GDB debug information.",
-                    reg.simpleName())
-                .note("Vector registers can currently not be accessed via GDB.")
-        );
-        continue;
-      }
-
       getRegTensor(reg, i.get(), pc).forEach(r -> {
         res.add(r);
         i.getAndIncrement();
@@ -123,11 +108,12 @@ public class IssGdbInfoExtractionPass extends AbstractIssPass {
     var idxDimSizes = reg.indexDimensions().stream().map(RegisterTensor.Dimension::size).toList();
     var regs = regIndexes(idxDimSizes);
     var isCodePtr = reg.equals(pc);
-    return regs.stream().map(regIndices -> {
+    return IntStream.range(0, regs.size()).mapToObj(j -> {
+      var regIndices = regs.get(j);
       var idxNames = regIndices.stream().map(ri -> "" + ri).collect(Collectors.joining("_"));
       return new Result.Reg(
           reg.simpleName().toLowerCase() + idxNames,
-          i,
+          i + j,
           reg.resultType(reg.maxNumberOfAccessIndices()).bitWidth(),
           isCodePtr ? "code_ptr" : "int",
           regIndices,
