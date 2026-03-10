@@ -29,6 +29,7 @@ import org.junit.jupiter.api.TestFactory;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.utils.GraphUtils;
+import vadl.viam.Constant;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;
@@ -91,6 +92,48 @@ public class IssOpDecompositionPassTest {
         lsrCplx(0b11110000, 4, 8, 0b1111, 3, 0, 2),  // High nibble
         lsrCplx(0b00001111, 4, 8, 0b0, 5, 0, 2),  // Low nibble
         lsrCplx(0b11111111, 0, 8, 0b1111, 6, 3, 2)   // No shift
+    );
+  }
+
+  @TestFactory
+  Stream<DynamicTest> logicSliceTests() {
+    return Stream.of(
+        DynamicTest.dynamicTest("NOT_16_cross_chunk", () -> {
+          var expr = BuiltInTable.NOT.call(bits(0xABCD, 16).toNode());
+          testSliceAgainstCanonical(expr, 11, 4, 8);
+        }),
+        DynamicTest.dynamicTest("SELECT_16_cross_chunk", () -> {
+          var expr = new SelectNode(
+              BuiltInTable.EQU.call(bits(1, 1).toNode(), bits(1, 1).toNode()),
+              bits(0xABCD, 16).toNode(),
+              bits(0x1234, 16).toNode()
+          );
+          testSliceAgainstCanonical(expr, 11, 4, 8);
+        }),
+        DynamicTest.dynamicTest("CTZ_256_nonzero_low_bits", () -> {
+          var value = Constant.Value.fromInteger(BigInteger.ONE.shiftLeft(130), Type.bits(256));
+          var expr = BuiltInTable.CTZ.call(value.toNode());
+          testSliceAgainstEvaluator(expr, 8, 0, 64);
+        }),
+        DynamicTest.dynamicTest("CTZ_256_zero_fallback", () -> {
+          var expr = BuiltInTable.CTZ.call(Constant.Value.zero(Type.bits(256)).toNode());
+          testSliceAgainstEvaluator(expr, 8, 0, 64);
+        }),
+        DynamicTest.dynamicTest("CLZ_256_nonzero_low_bits", () -> {
+          var value = Constant.Value.fromInteger(BigInteger.ONE.shiftLeft(130), Type.bits(256));
+          var expr = BuiltInTable.CLZ.call(value.toNode());
+          testSliceAgainstEvaluator(expr, 8, 0, 64);
+        }),
+        DynamicTest.dynamicTest("CLZ_256_zero_fallback", () -> {
+          var expr = BuiltInTable.CLZ.call(Constant.Value.zero(Type.bits(256)).toNode());
+          testSliceAgainstEvaluator(expr, 8, 0, 64);
+        }),
+        DynamicTest.dynamicTest("COB_256_all_ones", () -> {
+          var value = Constant.Value.fromInteger(BigInteger.ONE.shiftLeft(256).subtract(BigInteger.ONE),
+              Type.bits(256));
+          var expr = BuiltInTable.COB.call(value.toNode());
+          testSliceAgainstEvaluator(expr, 8, 0, 64);
+        })
     );
   }
 
@@ -229,6 +272,15 @@ public class IssOpDecompositionPassTest {
     assertThat(decompVal.longValue()).isEqualTo(expectedValue);
   }
 
+  private void testSliceAgainstEvaluator(ExpressionNode expr, int hi, int lo, int targetSize) {
+    var expectedValue = evalToConstant(expr.copy())
+        .slice(vadl.viam.Constant.BitSlice.of(hi, lo));
+    var decomposed = new Decomposer(targetSize).request(expr.copy(), hi, lo);
+    assertSubgraphWithinTarget(decomposed, targetSize);
+    var actualValue = evalToConstant(decomposed);
+    assertThat(actualValue.unsignedInteger()).isEqualTo(expectedValue.unsignedInteger());
+  }
+
   private void assertSubgraphWithinTarget(ExpressionNode root, int targetSize) {
     var nodes = new ArrayList<ExpressionNode>();
     root.collectInputsWithChildren(nodes, ExpressionNode.class);
@@ -337,6 +389,24 @@ public class IssOpDecompositionPassTest {
     }
     if (expr instanceof BuiltInCall call) {
       var a = evalToConstant(call.arg(0));
+      if (call.builtIn() == BuiltInTable.NOT) {
+        return a.not();
+      }
+      if (call.builtIn() == BuiltInTable.CTZ) {
+        var unsigned = a.unsignedInteger();
+        var trailingZeros = unsigned.signum() == 0 ? a.type().bitWidth() : unsigned.getLowestSetBit();
+        return Constant.Value.fromInteger(BigInteger.valueOf(trailingZeros), call.type().asDataType());
+      }
+      if (call.builtIn() == BuiltInTable.CLZ) {
+        var unsigned = a.unsignedInteger();
+        var leadingZeros = unsigned.signum() == 0 ? a.type().bitWidth() : a.type().bitWidth()
+            - unsigned.bitLength();
+        return Constant.Value.fromInteger(BigInteger.valueOf(leadingZeros), call.type().asDataType());
+      }
+      if (call.builtIn() == BuiltInTable.COB) {
+        return Constant.Value.fromInteger(BigInteger.valueOf(a.unsignedInteger().bitCount()),
+            call.type().asDataType());
+      }
       var b = evalToConstant(call.arg(1));
       if (call.builtIn() == BuiltInTable.ADD) {
         return a.add(b, false).get(0, vadl.viam.Constant.Value.class);
@@ -352,6 +422,9 @@ public class IssOpDecompositionPassTest {
       }
       if (call.builtIn() == BuiltInTable.ULTH) {
         return a.lth(b, false);
+      }
+      if (call.builtIn() == BuiltInTable.NEQ) {
+        return Constant.Value.fromBoolean(!a.equalValue(b));
       }
       if (call.builtIn() == BuiltInTable.CONCATENATE_BITS) {
         return a.concat(b);
