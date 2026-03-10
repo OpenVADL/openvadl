@@ -2,9 +2,15 @@ import aarch64::AArch64Base
 
 instruction set architecture AArch64SVEandSME extending AArch64Base = {
 
-  model VLConst () : Int = {128}          // vector length as macro to act as macro condition
+  constant VL128        = 128             // vector length 128
+  constant VL256        = 256             // vector length 256
+  constant VL512        = 512             // vector length 512
+  constant VL1024       = 1024            // vector length 1024
+  constant VL2048       = 2048            // vector length 2048
 
-  constant VL           = $VLConst        // vector length, number of bits in a vector register
+  model VLength () : Id = {VL128}         // default vector length is 128
+
+  constant VL           = $VLength        // vector length, number of bits in a vector register
   constant PL           = VL >> 3         // predicate length, number of elements in a predicate register
   constant NumBytesPL   = PL >> 3         // number of bytes in a predicate register
   constant NumElementsB = VL >> 3         // number of byte   sized elements in a vector register
@@ -13,24 +19,26 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   constant NumElementsW = VL >> 5         // number of single sized elements in a vector register
   constant NumElementsD = VL >> 6         // number of double sized elements in a vector register
 
-  constant PTrueB = 0xffff'ffff'ffff'ffff as BitsP // predicate true and false values for different vector sizes
-  constant PTrueH = 0x5555'5555'5555'5555 as BitsP // 
-  constant PTrueS = 0x1111'1111'1111'1111 as BitsP // 
-  constant PTrueD = 0x0101'0101'0101'0101 as BitsP // 
-  constant PFalse = 0                     as BitsP // 
+  // predicate true and false values for all the different vector sizes up to 2048
+
+  constant PTrueB = 0xffff'ffff'ffff'ffff'ffff'ffff'ffff'ffff'ffff'ffff'ffff'ffff'ffff'ffff'ffff'ffff as BitsP
+  constant PTrueH = 0x5555'5555'5555'5555'5555'5555'5555'5555'5555'5555'5555'5555'5555'5555'5555'5555 as BitsP
+  constant PTrueS = 0x1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111 as BitsP
+  constant PTrueD = 0x0101'0101'0101'0101'0101'0101'0101'0101'0101'0101'0101'0101'0101'0101'0101'0101 as BitsP
+  constant PFalse = 0 as BitsP
 
   constant LastActiveB = NumElementsB - 1 // predicate bit position of the last element 
   constant LastActiveH = NumElementsB - 2 // predicate bit position of the last element 
   constant LastActiveS = NumElementsB - 4 // predicate bit position of the last element 
   constant LastActiveD = NumElementsB - 8 // predicate bit position of the last element 
 
-  constant Log2ElemB =   8                // number of bits required for the biggest element index
-  constant NumZ = 32                      // number of vector registers in register file
-  constant VSize = if VL < 128            // size of the scalar view V on the vector registers
+  constant Log2ElemB = 8                  // number of bits required for the biggest element index
+  constant NumZ      = 32                 // number of vector registers in register file
+  constant VSize     = if VL < 128        // size of the scalar view V on the vector registers
     then VL else 128
 
   using IndexP = Bits4                    // index type for the 16 predicate register file
-  using IndexE = Bits<Log2ElemB>          // the biggest index type for element indices
+  using IndexE = Bits<64>                 // for all index type for element indices
   using BitsZ  = Bits<VL>                 // Bits type for vector register file
   using BitsP  = Bits<PL>                 // Boolean type for predicate register file ; Bits<PL><1> is not supported by ISS
   using BitsZB = Bits<NumElementsB>< 8>   // byte   vector register file
@@ -51,7 +59,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   alias register ZH : BitsZH<NumZ> = Z    // half   vector register file
   alias register ZS : BitsZS<NumZ> = Z    // single vector register file
   alias register ZD : BitsZD<NumZ> = Z    // double vector register file
-  alias register V = Z(*)(VSize-1..0)    // scalar view of the vector registers
+  alias register V = Z(*)(VSize-1..0)     // scalar view of the vector registers
 
   enumeration ElSize =                    // element size encoding
     { SizeB = 0                           // byte   size
