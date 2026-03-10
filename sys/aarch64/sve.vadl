@@ -268,7 +268,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     }
 
   model SVEAddExtReductionInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
-    [undefined when : size = 0b11]
+    [undefined when : match : Ex ($i.funct = SIntX => size = 0b11 ; _ => false)]
     instruction $i.id: SVEReductionFormat =
       let pred   = P(pg) in
       let elems  = Z(zn) as $BitsBHSD($elSize) in
