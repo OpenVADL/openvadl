@@ -1,0 +1,37 @@
+// INCLUDE-AST-DUMP
+// This file tests that the with target can be macro call
+
+model WithTarget(): Str = {
+  "num=two"
+}
+
+import base::numPlusOne with ($WithTarget())
+
+constant two = 2
+constant flo = $numPlusOne()
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    ImportDefinition
+//    . File
+//    . : Identifier name: "base" type: null
+//    . Import
+//    . : ' Identifier name: "numPlusOne" type: null
+//    . Args
+//    . : ' StringLiteral literal: "num=two" ("num=two") type: null
+//    . Module AST
+//    ConstantDefinition name: "two"
+//    . IntegerLiteral literal: 2 (2) type: Const<2>
+//    ConstantDefinition name: "flo"
+//    . BinaryExpr operator: + type: Const<3>
+//    . : Identifier name: "two" type: Const<2>
+//    . : IntegerLiteral literal: 1 (1) type: Const<1>
+//
+//
+// Part of the class vadl.ast.DiagnosticsTest

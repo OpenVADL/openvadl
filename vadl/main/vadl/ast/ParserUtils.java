@@ -595,6 +595,10 @@ class ParserUtils {
     return castOrDummy(p, n, Expr.class, DUMMY_EXPR, "Expr");
   }
 
+  static StringLiteral castForceStringLiteral(Parser p, Node n) {
+    return castOrDummy(p, n, StringLiteral.class, new StringLiteral(""), "Str");
+  }
+
   static IsEncs castEncs(Parser p, Node n) {
     return castOrDummy(p, n, IsEncs.class,
         new EncodingDefinition.EncodingField(DUMMY_ID, DUMMY_ID), "Encs");

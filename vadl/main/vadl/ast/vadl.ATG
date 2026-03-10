@@ -838,10 +838,12 @@ elements. A single annotation is described in the #annotation production rule.
     [
       WITH
       SYM_PAREN_OPEN
-      stringLiteral<out StringLiteral arg> (. args.add(arg); .)
+      ( stringLiteral<out StringLiteral arg>  (. args.add(arg); .)
+      | macroReplacement<out Node node>       (. args.add(castForceStringLiteral(this, node)); .)
+      )
       {
         SYM_COMMA
-        stringLiteral<out arg>             (. args.add(arg); .)
+        stringLiteral<out StringLiteral arg2>  (. args.add(arg2); .)
       }
       SYM_PAREN_CLOSE
     ]                                      (. def = importModules(this, fileId, filePath, importedSymbols(segments, symbolList), args, start.join(lastTokenLoc())); .)
