@@ -1,15 +1,6 @@
 model VLength () : Id = {VL128}         // default vector length is 128
 
-model VLengthStr () : Str = {match : Str
-  ( $VLength() = VL2048 => "VLength=VL2048"
-  ; $VLength() = VL1024 => "VLength=VL1024"
-  ; $VLength() = VL512  => "VLength=VL512" 
-  ; $VLength() = VL256  => "VLength=VL256" 
-  ; _                   => "VLength=VL128" 
-  )
-}
-
-import sve::AArch64SVEandSME with ($VLengthStr)
+import sve::AArch64SVEandSME with (AsStr("VLength=", $VLength))
 
 instruction set architecture A64 extending AArch64SVEandSME = { }
 

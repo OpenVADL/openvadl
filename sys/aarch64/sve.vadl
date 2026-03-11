@@ -268,7 +268,6 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     }
 
   model SVEAddExtReductionInstr (i: InstrWithFunct, elCount: Id, elSize: Id, elStr: Str): IsaDefs = {
-    [undefined when : match : Ex ($i.funct = SIntX => size = 0b11 ; _ => false)]
     instruction $i.id: SVEReductionFormat =
       let pred   = P(pg) in
       let elems  = Z(zn) as $BitsBHSD($elSize) in
@@ -1075,10 +1074,14 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
     $modelid ($ExtInstrStr ($i; "4D"); (Dt4D; NumElementsD; X4; SizeD; '.d'; "4d" ))
   }
 
-  model InstrBHSD (modelid: InstrWithFunctElemSizeType, i: InstrWithFunct): IsaDefs = {
+  model InstrBHS  (modelid: InstrWithFunctElemSizeType, i: InstrWithFunct): IsaDefs = {
     $modelid ($ExtInstrStr ($i; "B"); NumElementsB; SizeB; ".b")
     $modelid ($ExtInstrStr ($i; "H"); NumElementsH; SizeH; ".h")
     $modelid ($ExtInstrStr ($i; "S"); NumElementsS; SizeS; ".s")
+    }
+
+  model InstrBHSD (modelid: InstrWithFunctElemSizeType, i: InstrWithFunct): IsaDefs = {
+    $InstrBHS ($modelid; $i)
     $modelid ($ExtInstrStr ($i; "D"); NumElementsD; SizeD; ".d")
     }
 
@@ -1103,7 +1106,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprSUB    ; "sub"   ; 0b000'001        ; sub      ))
   $InstrBHSD        (SVEArithmeticUnprInstr    ; (SVEunprMUL    ; "mul"   ; 0b011'000        ; mul      ))
 
-  $InstrBHSD        (SVEAddExtReductionInstr   ; (SVEfoldSADD   ; "saddv" ; 0b0'0000'0001    ; SIntX    ))
+  $InstrBHS         (SVEAddExtReductionInstr   ; (SVEfoldSADD   ; "saddv" ; 0b0'0000'0001    ; SIntX    ))
   $InstrBHSD        (SVEAddExtReductionInstr   ; (SVEfoldUADD   ; "uaddv" ; 0b0'0000'1001    ; UIntX    ))
   $InstrBHSD        (SVEReductionInstr         ; (SVEfoldAND    ; "andv"  ; 0b0'1101'0001    ; and      ))
   $InstrBHSD        (SVEReductionInstr         ; (SVEfoldOR     ; "orv"   ; 0b0'1100'0001    ; or       ))
