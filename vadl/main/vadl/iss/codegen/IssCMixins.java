@@ -244,7 +244,9 @@ public interface IssCMixins {
     static void handle(CGenContext<Node> ctx, ReadMemNode node, boolean withGetPcRetAddr) {
       var bitWidth = node.readBitWidth();
       var ra = withGetPcRetAddr ? "GETPC()" : "0";
-      var endianSuffix = node.memory().hasAnnotation(BigEndianAnnotation.class) ? "_be" : "_le";
+      var endianSuffix = bitWidth == 8
+          ? "" // there are no le/be versions of single byte ops
+          : (node.memory().hasAnnotation(BigEndianAnnotation.class) ? "_be" : "_le");
       if (bitWidth <= 64) {
         var widthSuffix = switch (bitWidth) {
           case 8 -> "ub";
@@ -291,7 +293,9 @@ public interface IssCMixins {
     static void handle(CGenContext<Node> ctx, WriteMemNode node, boolean withGetPcRetAddr) {
       var bitWidth = node.writeBitWidth();
       var ra = withGetPcRetAddr ? "GETPC()" : "0";
-      var endianSuffix = node.memory().hasAnnotation(BigEndianAnnotation.class) ? "_be" : "_le";
+      var endianSuffix = bitWidth == 8
+          ? "" // there are no le/be versions of single byte ops
+          : (node.memory().hasAnnotation(BigEndianAnnotation.class) ? "_be" : "_le");
       if (bitWidth <= 64) {
         var widthSuffix = switch (bitWidth) {
           case 8 -> "b";
