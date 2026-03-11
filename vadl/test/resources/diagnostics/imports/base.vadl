@@ -11,6 +11,10 @@ model numPlusOne(): Ex = {
   $num + 1
 }
 
+model author(): Id = {
+  namedoesnotexist
+}
+
 
 //  Reported Diagnostics:
 //

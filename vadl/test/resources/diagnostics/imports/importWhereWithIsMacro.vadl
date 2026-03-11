@@ -5,7 +5,11 @@ model WithTarget(): Str = {
   "num=two"
 }
 
-import base::numPlusOne with ($WithTarget())
+model SetAuthorTarget(): Str = {
+  "author=flotschi"
+}
+
+import base::numPlusOne with ($WithTarget(), $SetAuthorTarget())
 
 constant two = 2
 constant flo = $numPlusOne()
@@ -25,6 +29,7 @@ constant flo = $numPlusOne()
 //    . : ' Identifier name: "numPlusOne" type: null
 //    . Args
 //    . : ' StringLiteral literal: "num=two" ("num=two") type: null
+//    . : ' StringLiteral literal: "author=flotschi" ("author=flotschi") type: null
 //    . Module AST
 //    ConstantDefinition name: "two"
 //    . IntegerLiteral literal: 2 (2) type: Const<2>
