@@ -807,46 +807,48 @@ elements. A single annotation is described in the #annotation production rule.
                                                macroTable.defineSymbol(def); .)
   .
 
-  importDefinition<out Definition def>     (. var start = nextTokenLoc(); var importPaths = new ArrayList<IsId>(); Identifier fileId = null; StringLiteral filePath = null; .)
+  importDefinition<out Definition def>          (. var start = nextTokenLoc(); var importPaths = new ArrayList<IsId>(); Identifier fileId = null; StringLiteral filePath = null; .)
   = IMPORT
     ( identifier<out fileId>
     | stringLiteral<out filePath>
-    )                                      (. var segments = new ArrayList<Identifier>(); .)
+    )                                           (. var segments = new ArrayList<Identifier>(); .)
     {
       IF (la.kind == _SYM_NAMESPACE && scanner.Peek().kind != _SYM_BRACE_OPEN)
       SYM_NAMESPACE
-      identifier<out Identifier segment>   (. segments.add(segment); .)
-    }                                      (. var symbolList = new ArrayList<List<Identifier>>(); .)
+      identifier<out Identifier segment>        (. segments.add(segment); .)
+    }                                           (. var symbolList = new ArrayList<List<Identifier>>(); .)
     [
       SYM_NAMESPACE
-      SYM_BRACE_OPEN                       (. var list = new ArrayList<Identifier>(); .)
-      identifier<out Identifier symbol>    (. list.add(symbol); .)
+      SYM_BRACE_OPEN                            (. var list = new ArrayList<Identifier>(); .)
+      identifier<out Identifier symbol>         (. list.add(symbol); .)
       {
         SYM_NAMESPACE
-        identifier<out symbol>             (. list.add(symbol); .)
-      }                                    (. symbolList.add(List.copyOf(list)); .)
+        identifier<out symbol>                  (. list.add(symbol); .)
+      }                                         (. symbolList.add(List.copyOf(list)); .)
       {
-        SYM_COMMA                          (. list.clear(); .)
-        identifier<out symbol>             (. list.add(symbol); .)
+        SYM_COMMA                               (. list.clear(); .)
+        identifier<out symbol>                  (. list.add(symbol); .)
         {
           SYM_NAMESPACE
-          identifier<out symbol>           (. list.add(symbol); .)
-        }                                  (. symbolList.add(List.copyOf(list)); .)
+          identifier<out symbol>                (. list.add(symbol); .)
+        }                                       (. symbolList.add(List.copyOf(list)); .)
       }
       SYM_BRACE_CLOSE
-    ]                                      (. var args = new ArrayList<StringLiteral>(); .)
+    ]                                           (. var args = new ArrayList<StringLiteral>(); .)
     [
       WITH
       SYM_PAREN_OPEN
-      ( stringLiteral<out StringLiteral arg>  (. args.add(arg); .)
-      | macroReplacement<out Node node>       (. args.add(castForceStringLiteral(this, node)); .)
+      ( stringLiteral<out StringLiteral arg>    (. args.add(arg); .)
+      | macroReplacement<out Node node>         (. args.add(castForceStringLiteral(this, node)); .)
       )
       {
         SYM_COMMA
-        stringLiteral<out StringLiteral arg2>  (. args.add(arg2); .)
+        ( stringLiteral<out StringLiteral arg>  (. args.add(arg); .)
+        | macroReplacement<out Node node>       (. args.add(castForceStringLiteral(this, node)); .)
+        )
       }
       SYM_PAREN_CLOSE
-    ]                                      (. def = importModules(this, fileId, filePath, importedSymbols(segments, symbolList), args, start.join(lastTokenLoc())); .)
+    ]                                           (. def = importModules(this, fileId, filePath, importedSymbols(segments, symbolList), args, start.join(lastTokenLoc())); .)
   .
 
   processDefinition<out Definition def>   (. var start = nextTokenLoc();
