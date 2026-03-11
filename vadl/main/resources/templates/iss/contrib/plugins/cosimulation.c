@@ -204,19 +204,12 @@ static BrokerSHMRingBuffer *shm_ring_buffer;
 
 #define ringbuf_idx(idx) ((idx) & RING_BUFFER_MASK)
 
-static void ringbuf_write(BrokerSHMData data) {
+static bool prev_was_mem = false;
+
+inline static void increment_count(void) {
   pthread_mutex_lock(&shm_ring_buffer->rb_mutex.mutex);
-
-  while (shm_ring_buffer->count == RING_BUFFER_SIZE - 1) {
-    pthread_cond_wait(&shm_ring_buffer->rb_mutex.cvar,
-                      &shm_ring_buffer->rb_mutex.mutex);
-  }
-
-  shm_ring_buffer->data[ringbuf_idx(shm_ring_buffer->write_idx)] = data;
-  shm_ring_buffer->write_idx++;
-
+  shm_ring_buffer->write_idx += 1;
   shm_ring_buffer->count += 1;
-
   pthread_cond_signal(&shm_ring_buffer->rb_mutex.cvar);
   pthread_mutex_unlock(&shm_ring_buffer->rb_mutex.mutex);
 }
@@ -249,39 +242,34 @@ static GPtrArray *registers_init(int vcpu_index) {
   return registers;
 }
 
-static SHMCPU get_cpu_state(unsigned int cpu_index) {
+static void get_cpu_state(unsigned int cpu_index, SHMCPU *cpu) {
   CPU *c = get_cpu(cpu_index);
 
-  SHMCPU shm_cpu = {};
-  shm_cpu.idx = cpu_index;
-  shm_cpu.registers_size = c->registers->len;
+  cpu->idx = cpu_index;
+  cpu->registers_size = c->registers->len;
 
   // NOTE: The register-count for each cpu is checked once at init. See:
   // vcpu_init
   for (int reg_idx = 0; reg_idx < c->registers->len; reg_idx++) {
     Register *reg = c->registers->pdata[reg_idx];
-    SHMRegister shm_reg = {};
+    SHMRegister *shm_reg = &cpu->registers[reg_idx];
     GByteArray *buf = g_byte_array_new();
 
-    shm_reg.size = qemu_plugin_read_register(reg->handle, buf);
-    PLUGIN_ASSERT(shm_reg.size != -1,
+    shm_reg->size = qemu_plugin_read_register(reg->handle, buf);
+    PLUGIN_ASSERT(shm_reg->size != -1,
                   "failed to read size of register at idx: %d", reg_idx);
 
-    if (reg->name != NULL) {
-      strncpy(shm_reg.name.value, reg->name, SHMSTRING_MAX_LEN - 1);
-      shm_reg.name.len = strlen(shm_reg.name.value);
+    if (shm_reg->name.len == 0 && reg->name != NULL) {
+      strncpy(shm_reg->name.value, reg->name, SHMSTRING_MAX_LEN - 1);
+      shm_reg->name.len = strlen(shm_reg->name.value);
     }
 
     if (buf->data != NULL) {
-      memcpy(shm_reg.data, buf->data, shm_reg.size);
+      memcpy(shm_reg->data, buf->data, shm_reg->size);
     }
 
     g_byte_array_unref(buf);
-
-    shm_cpu.registers[reg_idx] = shm_reg;
   }
-
-  return shm_cpu;
 };
 
 static void plugin_exit(qemu_plugin_id_t id, void *p) {
@@ -383,40 +371,58 @@ static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
   return tbinfo;
 }
 
-static BrokerSHMData combined_mem_data = {0};
+// static BrokerSHMData combined_mem_data = {0};
 
-inline static bool is_combined_mem_data_set(void) {
-  return combined_mem_data.shm_insn.insn_data_type == INSN_MEM;
+// inline static void clear_combined_mem_data(void) {
+//   combined_mem_data = (const BrokerSHMData){0};
+// }
+
+// inline static void write_combined_mem_data(void) {
+//   // ringbuf_write(combined_mem_data);
+//   increment_count();
+//   clear_combined_mem_data();
+// }
+
+inline static void wait_until_write_available(void) {
+  pthread_mutex_lock(&shm_ring_buffer->rb_mutex.mutex);
+
+  while (shm_ring_buffer->count == RING_BUFFER_SIZE - 1) {
+    pthread_cond_wait(&shm_ring_buffer->rb_mutex.cvar,
+                      &shm_ring_buffer->rb_mutex.mutex);
+  }
+
+  pthread_mutex_unlock(&shm_ring_buffer->rb_mutex.mutex);
 }
 
-inline static void clear_combined_mem_data(void) {
-  combined_mem_data = (const BrokerSHMData){0};
-}
-
-inline static void write_combined_mem_data(void) {
-  ringbuf_write(combined_mem_data);
-  clear_combined_mem_data();
+inline static BrokerSHMData *get_next_data(void) {
+  return &shm_ring_buffer->data[ringbuf_idx(shm_ring_buffer->write_idx)];
 }
 
 static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
-  if (is_combined_mem_data_set()) {
-    write_combined_mem_data();
+  if (prev_was_mem) {
+    wait_until_write_available();
+    increment_count();
+    prev_was_mem = false;
   }
+
+  wait_until_write_available();
+
+  BrokerSHMData *shm = get_next_data();
 
   TBInsnInfo *tbinsn_info = udata;
 
-  SHMCPU cpu = get_cpu_state(cpu_index);
+  get_cpu_state(cpu_index, &shm->shm_insn.cpus[0]);
 
-  BrokerSHMData shm = {0};
-  shm.shm_insn.insn_data_type = INSN_EXEC;
-  shm.shm_insn.cpus[cpu_index] = cpu;
+  shm->shm_insn.insn_data_type = INSN_EXEC;
 
   // TODO: needs a global init_mask to keep track of current state
   // NOTE: rather: refactor to just assign the cpu_index
-  shm.shm_insn.init_mask |= (1 << cpu_index);
-  shm.shm_insn.insn_info = *tbinsn_info;
+  shm->shm_insn.init_mask |= (1 << cpu_index);
+  shm->shm_insn.insn_info = *tbinsn_info;
 
-  ringbuf_write(shm);
+  increment_count();
+
+  // ringbuf_write(shm);
 
   // TODO: we cannot free here because the same callback might be used multiple
   // times when a tb gets reused g_free(tbinsn_info);
@@ -428,46 +434,51 @@ inline static bool is_consecutive_memory_region(uint64_t addr1,
   return addr1 + (1 << addr1_size) == addr2;
 }
 
+
 static void vcpu_mem_cb(unsigned int cpu_index, qemu_plugin_meminfo_t info,
                         uint64_t vaddr, void *udata) {
 
-  if (!is_combined_mem_data_set()) {
-    TBInsnInfo *tbinsn_info = udata;
-    BrokerSHMData shm = {0};
+  wait_until_write_available();
 
-    shm.shm_insn.insn_data_type = INSN_MEM;
-    shm.shm_insn.mem_access_info.vaddr = vaddr;
+  BrokerSHMData *shm = get_next_data();
+
+  if (!prev_was_mem) {
+    prev_was_mem = true;
+    TBInsnInfo *tbinsn_info = udata;
+
+    shm->shm_insn.insn_data_type = INSN_MEM;
+    shm->shm_insn.mem_access_info.vaddr = vaddr;
 
     qemu_plugin_mem_value data = qemu_plugin_mem_get_value(info);
-    shm.shm_insn.mem_access_info.is_store = qemu_plugin_mem_is_store(info);
+    shm->shm_insn.mem_access_info.is_store = qemu_plugin_mem_is_store(info);
 
-    shm.shm_insn.mem_access_info.size = data.type;
-    memcpy(&shm.shm_insn.mem_access_info.data, &data.data, 1 << data.type);
-    shm.shm_insn.insn_info = *tbinsn_info;
-
-    combined_mem_data = shm;
+    shm->shm_insn.mem_access_info.size = data.type;
+    memcpy(&shm->shm_insn.mem_access_info.data, &data.data, 1 << data.type);
+    shm->shm_insn.insn_info = *tbinsn_info;
   } else if (is_consecutive_memory_region(
-                 combined_mem_data.shm_insn.mem_access_info.vaddr,
-                 combined_mem_data.shm_insn.mem_access_info.size, vaddr)) {
+                 shm->shm_insn.mem_access_info.vaddr,
+                 shm->shm_insn.mem_access_info.size, vaddr)) {
     qemu_plugin_mem_value data = qemu_plugin_mem_get_value(info);
 
     // NOTE: only consecutive memory access of the same size is supported
     //       because the size has to be a power of two
     //       This also means that e.g. 4 1byte accesses cannot currently be
     //       grouped by this analysis
-    if (data.type != combined_mem_data.shm_insn.mem_access_info.size) {
-      write_combined_mem_data();
+    if (data.type != shm->shm_insn.mem_access_info.size) {
+      increment_count();
+      prev_was_mem = false;
       vcpu_mem_cb(cpu_index, info, vaddr, udata);
       return;
     }
 
     uint8_t data_offset =
-        (1 << combined_mem_data.shm_insn.mem_access_info.size);
-    memcpy(combined_mem_data.shm_insn.mem_access_info.data + data_offset,
+        (1 << shm->shm_insn.mem_access_info.size);
+    memcpy(shm->shm_insn.mem_access_info.data + data_offset,
            &data.data, 1 << data.type);
-    combined_mem_data.shm_insn.mem_access_info.size++;
+    shm->shm_insn.mem_access_info.size++;
   } else {
-    write_combined_mem_data();
+    increment_count();
+    prev_was_mem = false;
     vcpu_mem_cb(cpu_index, info, vaddr, udata);
   }
 }
@@ -495,19 +506,21 @@ static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
   // TB-Data is only returned (= written to the buffer) if a jump occurred,
   // otherwise the data is simply collected on the qemu-client
   if (is_jump(tb_info)) {
-    SHMCPU cpu = get_cpu_state(cpu_index);
-    BrokerSHMData shm = {0};
+    wait_until_write_available();
+    BrokerSHMData *shm = get_next_data();
+    get_cpu_state(cpu_index, &shm->shm_tb.cpus[0]);
 
-    shm.shm_tb.cpus[cpu_index] = cpu;
     // TODO: needs a global init_mask to keep track of current state
     // NOTE: rather: refactor to just assign the cpu_index
-    shm.shm_tb.init_mask |= (1 << cpu_index);
-    shm.shm_tb.tb_info = tb_info_collect;
+    shm->shm_tb.init_mask |= (1 << cpu_index);
+    shm->shm_tb.tb_info = tb_info_collect;
 
     tb_info_collect.pc = 0;
     tb_info_collect.insns_info_size = 0;
 
-    ringbuf_write(shm);
+    increment_count();
+
+    // ringbuf_write(shm);
   }
 
   // TODO: we cannot free here because the same callback might be used multiple
