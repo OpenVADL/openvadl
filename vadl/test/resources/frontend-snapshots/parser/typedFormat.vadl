@@ -1,0 +1,16 @@
+format I_TYPE : Bits<32> =
+{ funct6 : Bits<6>
+, shamt  : Bits<6>
+, rs1    : Bits<5>
+, funct3 : Bits<3>
+, rd     : Bits<5>
+, opcode : Bits<7>
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

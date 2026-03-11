@@ -1,0 +1,27 @@
+// INCLUDE-AST-DUMP
+
+constant a = 3
+constant b: SInt<a> = 1
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    ConstantDefinition name: "a"
+//    . IntegerLiteral literal: 3 (3) type: Const<3>
+//    ConstantDefinition name: "b"
+//    . TypeLiteral type: SInt<3>
+//    . : Identifier name: "SInt" type: null
+//    . : Identifier name: "a" type: Const<3>
+//    . CastExpr type: SInt<3>
+//    . : IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : TypeLiteral type: SInt<3>
+//    . : ' Identifier name: "SInt" type: null
+//    . : ' Identifier name: "a" type: Const<3>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

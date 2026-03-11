@@ -1,0 +1,35 @@
+// INCLUDE-PRETTY-PRINT
+
+instruction set architecture TEST = {
+  constant WORD = 16
+
+  model-type IsaDefsFactory = (Id) -> IsaDefs
+
+  model Constants(size: Ex): Defs = {
+    constant a = $size
+    constant b = $size / 2
+  }
+
+  model BitDefs(factory: IsaDefsFactory, size: Id): IsaDefs = {
+    $factory($size)
+  }
+
+  $BitDefs(Constants ; WORD)
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Pretty Print:
+//
+//  instruction set architecture TEST = {
+//    constant WORD = 16
+//    constant a = WORD
+//    constant b = WORD / 2
+//  }
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -1,0 +1,23 @@
+constant a = "kuchen"
+constant b = forall i: Bits<2> in 0..3 fold + with (4 as Bits<32>)
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid constant value
+//       ╭──[test/resources/frontend-snapshots/typechecker/invalidConstNotEvaluatable.vadl:1:14]
+//       │
+//     1 │ constant a = "kuchen"
+//       │              ^^^^^^^^ Cannot evaluate strings (yet).
+//       │
+//       All constants must be able to be evaluated
+//  error: Invalid constant value
+//       ╭──[test/resources/frontend-snapshots/typechecker/invalidConstNotEvaluatable.vadl:2:14]
+//       │
+//     2 │ constant b = forall i: Bits<2> in 0..3 fold + with (4 as Bits<32>)
+//       │              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ The constant evaluator cannot evaluate ForallExpr.
+//       │
+//       All constants must be able to be evaluated
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

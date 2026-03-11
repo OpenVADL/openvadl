@@ -1,0 +1,33 @@
+// INCLUDE-AST-DUMP
+
+constant a = 32 as Paul
+using Paul = Johannes
+using Johannes = Flo
+using Flo = SInt<32>
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    ConstantDefinition name: "a"
+//    . CastExpr type: SInt<32>
+//    . : IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : TypeLiteral type: SInt<32>
+//    . : ' Identifier name: "Paul" type: null
+//    UsingDefinition name: "Paul"
+//    . TypeLiteral type: SInt<32>
+//    . : Identifier name: "Johannes" type: null
+//    UsingDefinition name: "Johannes"
+//    . TypeLiteral type: SInt<32>
+//    . : Identifier name: "Flo" type: null
+//    UsingDefinition name: "Flo"
+//    . TypeLiteral type: SInt<32>
+//    . : Identifier name: "SInt" type: null
+//    . : IntegerLiteral literal: 32 (32) type: Const<32>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

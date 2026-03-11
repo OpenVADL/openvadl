@@ -1,0 +1,16 @@
+format BYTE : Bits<8> = { bits [7..0] }
+format WORD : Bits<16> = { high: BYTE, low: BYTE }
+format ADDRESS : Bits<64> =
+{ a: WORD
+, b: WORD
+, c: WORD
+, d: WORD
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

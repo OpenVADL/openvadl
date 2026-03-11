@@ -1,0 +1,22 @@
+// INCLUDE-AST-DUMP
+
+constant i = -----3
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    ConstantDefinition name: "i"
+//    . UnaryExpr operator: UnOp - type: Const<-3>
+//    . : UnaryExpr operator: UnOp - type: Const<3>
+//    . : ' UnaryExpr operator: UnOp - type: Const<-3>
+//    . : ' | UnaryExpr operator: UnOp - type: Const<3>
+//    . : ' | . UnaryExpr operator: UnOp - type: Const<-3>
+//    . : ' | . : IntegerLiteral literal: 3 (3) type: Const<3>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

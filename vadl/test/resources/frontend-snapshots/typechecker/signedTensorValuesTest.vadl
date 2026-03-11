@@ -1,0 +1,57 @@
+// INCLUDE-AST-DUMP
+
+constant a = (-3 as SInt<8>, 8, -9)  as SInt<3><8>
+constant b = a(0)
+constant c = a(1)
+constant d = a(2)
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    ConstantDefinition name: "a"
+//    . CastExpr type: SInt<3><8>
+//    . : GroupedExpr type: Bits<24>
+//    . : ' CastExpr type: SInt<8>
+//    . : ' | UnaryExpr operator: UnOp - type: Const<-3>
+//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | TypeLiteral type: SInt<8>
+//    . : ' | . Identifier name: "SInt" type: null
+//    . : ' | . IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : ' CastExpr type: SInt<8>
+//    . : ' | IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : ' | TypeLiteral type: SInt<8>
+//    . : ' | . Identifier name: "SInt" type: null
+//    . : ' | . IntegerLiteral literal: 8 (8) type: null
+//    . : ' CastExpr type: SInt<8>
+//    . : ' | UnaryExpr operator: UnOp - type: Const<-9>
+//    . : ' | . IntegerLiteral literal: 9 (9) type: Const<9>
+//    . : ' | TypeLiteral type: SInt<8>
+//    . : ' | . Identifier name: "SInt" type: null
+//    . : ' | . IntegerLiteral literal: 8 (8) type: null
+//    . : TypeLiteral type: SInt<3><8>
+//    . : ' Identifier name: "SInt" type: null
+//    . : ' IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    ConstantDefinition name: "b"
+//    . CallIndexExpr type: SInt<8>
+//    . : Identifier name: "a" type: null
+//    . : ArgsIndices
+//    . : ' IntegerLiteral literal: 0 (0) type: Const<0>
+//    ConstantDefinition name: "c"
+//    . CallIndexExpr type: SInt<8>
+//    . : Identifier name: "a" type: null
+//    . : ArgsIndices
+//    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    ConstantDefinition name: "d"
+//    . CallIndexExpr type: SInt<8>
+//    . : Identifier name: "a" type: null
+//    . : ArgsIndices
+//    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

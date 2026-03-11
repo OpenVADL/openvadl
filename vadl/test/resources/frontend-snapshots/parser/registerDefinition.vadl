@@ -1,0 +1,11 @@
+instruction set architecture FLO = {
+  register Y : Bits<32>
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

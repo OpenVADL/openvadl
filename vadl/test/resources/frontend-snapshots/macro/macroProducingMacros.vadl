@@ -1,0 +1,51 @@
+// INCLUDE-PRETTY-PRINT
+// SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: Apache-2.0
+
+instruction set architecture MacroProducingMacros = {
+
+  record BinOpParams (left: Ex, op: BinOp, right: Ex)
+  model-type BinOpModel = (BinOpParams) -> Ex
+
+  model TwiceAppliedBinOp(params: BinOpParams): Ex = {
+    $params.left $params.op $params.right $params.op $params.right
+  }
+
+  model LUTProducer(name: Id, cond1: Ex, cond2: Ex, params: BinOpParams): IsaDefs = {
+    model $name(candidate: Ex, res1: Ex, res2: Ex, defaultModel: BinOpModel): Ex = {
+      match $candidate as Bits<64> with
+      { $cond1 => $res1
+      , $cond2 => $res2
+      , _ => $defaultModel(( $params.left ; $params.op ; $params.right ))
+      }
+    }
+  }
+
+  model LUTInvoker(): IsaDefs = {
+    $LUTProducer(SimpleLut ; 7 ; 8 ; ( 9 ; * ; 4 ))
+    constant a = $SimpleLut(5+2 ; 1 ; 0 ; TwiceAppliedBinOp)
+  }
+
+  $LUTInvoker()
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Pretty Print:
+//
+//  instruction set architecture MacroProducingMacros = {
+//    constant a =
+//      match (5 + 2) as Bits<64> with
+//        { 7 => 1
+//        , 8 => 0
+//        , _ => (9 * 4) * 4
+//        }
+//
+//  }
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

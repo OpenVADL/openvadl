@@ -1,0 +1,31 @@
+// INCLUDE-AST-DUMP
+
+   format x: Bits<6> = {
+     a  [0, 5..4, 2],
+     b  [1, 3]
+   }
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    FormatDefinition name: "x"
+//    . TypeLiteral type: Bits<6>
+//    . : Identifier name: "Bits" type: null
+//    . : IntegerLiteral literal: 6 (6) type: Const<6>
+//    . RangeFormatField name: "a"
+//    . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : RangeExpr type: Bits<2>
+//    . : ' IntegerLiteral literal: 5 (5) type: Const<5>
+//    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : IntegerLiteral literal: 2 (2) type: Const<2>
+//    . RangeFormatField name: "b"
+//    . : IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : IntegerLiteral literal: 3 (3) type: Const<3>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

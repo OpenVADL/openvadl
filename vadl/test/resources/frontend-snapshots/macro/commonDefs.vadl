@@ -1,0 +1,32 @@
+// INCLUDE-PRETTY-PRINT
+model CastedOp(func: Id, op: Id, inType: Id, outType: Id): Defs = {
+  function $func(left: $inType, right: $inType) -> $outType =
+    VADL::$op(left, right) as $outType
+}
+
+using SInt16 = SInt<16>
+using SInt32 = SInt<32>
+using SInt64 = SInt<64>
+
+instruction set architecture ISA = {
+  $CastedOp(add1632 ; add ; SInt16 ; SInt32)
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Pretty Print:
+//
+//  using SInt16 = SInt<16>
+//  using SInt32 = SInt<32>
+//  using SInt64 = SInt<64>
+//
+//  instruction set architecture ISA = {
+//    function add1632(left : SInt16, right : SInt16) -> SInt32 = VADL::add(left, right) as SInt32
+//  }
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

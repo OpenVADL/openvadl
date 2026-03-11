@@ -1,0 +1,17 @@
+// There have been crashes before because a field was used before it was declared.
+// https://github.com/OpenVADL/openvadl/issues/323
+
+instruction set architecture TEST = {
+  format Format: Bits<32> =
+  { accFunc = field as SInt
+  , field   [31..0]
+  }
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

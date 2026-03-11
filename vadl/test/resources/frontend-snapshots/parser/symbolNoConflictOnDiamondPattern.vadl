@@ -1,0 +1,14 @@
+instruction set architecture Base = {
+  constant X = 3
+}
+instruction set architecture Base0 extending Base = { }
+instruction set architecture Base1 extending Base = { }
+instruction set architecture Sub extending Base0, Base1 = { }
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

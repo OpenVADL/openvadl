@@ -1,0 +1,26 @@
+// INCLUDE-PRETTY-PRINT
+
+model BinExpr(left: Ex, op: BinOp, right: Ex): Ex = {
+   $left $op $right
+}
+
+model UnExpr(op: UnOp, operand: Ex): Ex = {
+  $op $operand
+}
+
+constant fiveTimesNine = $BinExpr(5 ; * ; 9)
+constant minusTwelve = $UnExpr(- ; 12)
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Pretty Print:
+//
+//  constant fiveTimesNine = 5 * 9
+//  constant minusTwelve = -12
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

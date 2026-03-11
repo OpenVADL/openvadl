@@ -1,0 +1,18 @@
+// Previously the MT wouldn't be available in `B`.
+// https://github.com/OpenVADL/openvadl/issues/642
+
+instruction set architecture A = {
+  model-type MT = () -> IsaDefs
+}
+
+instruction set architecture B extending A = {
+  model mod (mt: MT) : IsaDefs = {}
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

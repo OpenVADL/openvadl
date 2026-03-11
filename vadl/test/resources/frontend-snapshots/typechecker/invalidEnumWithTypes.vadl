@@ -1,0 +1,18 @@
+enumeration ENUM: Bits<2> =
+{ A = 0b00 + 0b01
+, B = 0b0111111
+, C = 0b10
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Type Mismatch
+//       ╭──[test/resources/frontend-snapshots/typechecker/invalidEnumWithTypes.vadl:3:7]
+//       │
+//     3 │ , B = 0b0111111
+//       │       ^^^^^^^^^ Expected `Bits<2>` but got `Bits<6>`.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

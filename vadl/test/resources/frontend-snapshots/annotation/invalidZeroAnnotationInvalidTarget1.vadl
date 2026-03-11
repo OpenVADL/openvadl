@@ -1,0 +1,23 @@
+instruction set architecture TEST =
+{
+  memory M: Bits<5> -> Bits<64>
+
+  [ zero : M(1)]
+  register X : Bits<5> -> Bits<32>
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid zero annotation
+//       ╭──[test/resources/frontend-snapshots/annotation/invalidZeroAnnotationInvalidTarget1.vadl:5:12]
+//       │
+//     5 │   [ zero : M(1)]
+//       │            ^ Zero annotation target must be the annotated register.
+//       │
+//     6 │   register X : Bits<5> -> Bits<32>
+//       │   -------------------------------- note: This is the register to target.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

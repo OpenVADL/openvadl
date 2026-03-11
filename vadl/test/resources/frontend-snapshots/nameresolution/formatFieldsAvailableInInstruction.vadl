@@ -1,0 +1,24 @@
+instruction set architecture ISA = {
+  format Btype : Bits<32> = {
+    a [31..16],
+    b [15..8],
+    c [7..0]
+  }
+  instruction BEQ : Btype = {
+    a := (b * c) as Bits<16>
+  }
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Missing Assembly
+//       ╭──[test/resources/frontend-snapshots/nameresolution/formatFieldsAvailableInInstruction.vadl:7:15]
+//       │
+//     7 │   instruction BEQ : Btype = {
+//       │               ^^^
+//       │
+//       Every instruction needs an matching assembly definition.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

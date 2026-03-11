@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * A class to test the parser.
- * We only focus here on examples that couldn't be reasonable be implemented with the {@link DiagnosticsTest}
+ * We only focus here on examples that couldn't be reasonable be implemented with the {@link FrontendSnapshotTests}
  */
 public class ParserTest {
 

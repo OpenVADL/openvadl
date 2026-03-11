@@ -1,0 +1,10 @@
+function a(bits: Bits<32>) -> String = udec(bits)
+function b(bits: Bits<32>) -> String = sdec(bits)
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
