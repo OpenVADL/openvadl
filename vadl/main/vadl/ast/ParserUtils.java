@@ -796,7 +796,7 @@ class ParserUtils {
       return withAppendedExtension;
     }
     parser.diagnostics.add(Diagnostic.error("Import Error", location)
-        .description("Could not resolve module path: \"%s\"", name)
+        .description("Could not resolve file path: \"%s\"", name)
         .build());
     return null;
   }
