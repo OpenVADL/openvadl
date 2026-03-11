@@ -1,0 +1,18 @@
+model flo (id: Id): Ex = {
+  1 + 2
+}
+
+constant x = $flo(y; z)
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Model Invocation
+//       ╭──[test/resources/frontend-snapshots/parser/invalidModelWithTooManyArguments.vadl:5:22]
+//       │
+//     5 │ constant x = $flo(y; z)
+//       │                      ^ Model `flo` only expected 1 arguments but, you provided at least 2.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

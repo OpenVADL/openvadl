@@ -1,0 +1,29 @@
+// Code like that has been an issue before because
+// 1) Macros weren't supported for fold operators: https://github.com/OpenVADL/openvadl/issues/663
+// 2) The lowering only allowed add and mul for the operator: https://github.com/OpenVADL/openvadl/issues/662
+
+model TestOP (): BinOp = {+}
+
+model FoldStat (): Stat = {
+  X(0) := forall i: Bits<4> in 0 .. 3 fold $TestOP() with X(i)
+}
+
+instruction set architecture ISA = {
+  register X : Bits<16><32>
+  memory MEM : Bits<32> -> Bits<8>
+  format F: Bits<32> = {
+    r: Bits<32>
+  }
+
+  instruction ADD: F = $FoldStat()
+  assembly ADD = ""
+  encoding ADD = { r = 0 }
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

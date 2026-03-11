@@ -1,0 +1,21 @@
+instruction set architecture Tensor = {
+  using Index = Bits<4>
+  register X : Bits<32>
+  format F : Bits<16> = {opcode : Bits<4>, rs2: Index, rs1: Index, rd: Index}
+
+  instruction ReadIndex : F = forall i: Bits<4> in 0 .. 3 do X := X(i) as Bits<32>
+  encoding ReadIndex = {opcode = 0b1100}
+  assembly ReadIndex = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+
+  instruction WriteIndex : F = forall i: Bits<4> in 0 .. 3 do X(i) := 0
+  encoding WriteIndex = {opcode = 0b1000}
+  assembly WriteIndex = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

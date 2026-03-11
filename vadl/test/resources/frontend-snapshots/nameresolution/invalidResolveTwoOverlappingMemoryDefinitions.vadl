@@ -1,0 +1,21 @@
+instruction set architecture FLO = {
+  memory MEM: Bits<32> -> Bits<8>
+  memory MEM: Bits<6> -> Bits<2>
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Symbol name already used: MEM
+//       ╭──[test/resources/frontend-snapshots/nameresolution/invalidResolveTwoOverlappingMemoryDefinitions.vadl:3:10]
+//       │
+//     2 │   memory MEM: Bits<32> -> Bits<8>
+//       │          --- First defined here.
+//       │
+//     3 │   memory MEM: Bits<6> -> Bits<2>
+//       │          ^^^ Second definition here.
+//       │
+//       note: All symbols must have a unique name.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

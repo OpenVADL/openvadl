@@ -1,0 +1,35 @@
+// INCLUDE-AST-DUMP
+
+instruction set architecture TEST =
+{
+  [ current ]
+  program counter CURRENT : Bits<32>
+  [ next next ]
+  program counter NEXTNEXT : Bits<32>
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . CounterDefinition kind: PROGRAM name: "CURRENT"
+//    . : AnnotationDefinition
+//    . : ' Identifier name: "current" type: null
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . CounterDefinition kind: PROGRAM name: "NEXTNEXT"
+//    . : AnnotationDefinition
+//    . : ' Identifier name: "next" type: null
+//    . : ' Identifier name: "next" type: null
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

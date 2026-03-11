@@ -1,0 +1,16 @@
+constant i: SInt = 42
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Type Notation
+//       ╭──[test/resources/frontend-snapshots/typechecker/invalidSintType.vadl:1:13]
+//       │
+//     1 │ constant i: SInt = 42
+//       │             ^^^^
+//       │
+//       Unsized `SInt` can only be used in special places when it's obvious what the bit width should be.
+//       help: Try adding a size parameter here.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

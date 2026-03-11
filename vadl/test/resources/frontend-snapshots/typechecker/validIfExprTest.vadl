@@ -1,0 +1,30 @@
+// INCLUDE-AST-DUMP
+
+  constant x = if 4 = 7 then 3 as Bits<32> else 4 as Bits<32>
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    ConstantDefinition name: "x"
+//    . IfExpr type: Bits<32>
+//    . : BinaryExpr operator: = type: Bool
+//    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' IntegerLiteral literal: 7 (7) type: Const<7>
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' TypeLiteral type: Bits<32>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' TypeLiteral type: Bits<32>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 32 (32) type: Const<32>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

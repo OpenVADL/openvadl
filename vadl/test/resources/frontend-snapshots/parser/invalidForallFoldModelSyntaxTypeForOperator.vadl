@@ -1,0 +1,25 @@
+// The syntax type of any macro called for the operation in the forall-fold expression must be a BinOp but is here
+// a Ex.
+
+model TestOP (): Ex = {42}
+
+model FoldStat (): Stat = {
+  Reg := forall i: Bits<4> in 0 .. 3 fold $TestOP() with Reg(i)
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: SyntaxType Mismatch
+//       ╭──[test/resources/frontend-snapshots/parser/invalidForallFoldModelSyntaxTypeForOperator.vadl:4:24]
+//       │
+//     4 │ model TestOP (): Ex = {42}
+//       │                        ^^
+//       ⋮
+//     7 │   Reg := forall i: Bits<4> in 0 .. 3 fold $TestOP() with Reg(i)
+//       │                                           --------- from this model invocation
+//       │
+//       Expected node of type BinOp, received Ex - GroupedExpr
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

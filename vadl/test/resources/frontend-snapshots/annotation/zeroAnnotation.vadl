@@ -1,0 +1,37 @@
+// INCLUDE-AST-DUMP
+
+instruction set architecture TEST =
+{
+  [ zero : X(0) ]
+  register X : Bits<32> -> Bits<5>
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . RegisterDefinition name: "X"
+//    . : AnnotationDefinition
+//    . : ' Identifier name: "zero" type: null
+//    . : ' CallIndexExpr type: Bits<5>
+//    . : ' | Identifier name: "X" type: null
+//    . : ' | ArgsIndices
+//    . : ' | . CastExpr type: Bits<1>
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . : TypeLiteral type: Bits<1>
+//    . : ' | . : ' Identifier name: "Bits" type: null
+//    . : ' | . : ' IntegerLiteral literal: 1 (1) type: null
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : TypeLiteral type: Bits<5>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 5 (5) type: Const<5>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

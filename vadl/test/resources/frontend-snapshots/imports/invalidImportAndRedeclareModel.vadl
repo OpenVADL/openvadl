@@ -1,0 +1,23 @@
+import base::magicNumber
+
+model magicNumber(): Ex = {
+  13
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Macro name already used: magicNumber
+//       ╭──[test/resources/frontend-snapshots/imports/invalidImportAndRedeclareModel.vadl:3:7]
+//       │
+//     3 │ model magicNumber(): Ex = {
+//       │       ^^^^^^^^^^^ Second definition here.
+//       ⋮
+//       ╭─ test/resources/frontend-snapshots/imports/base.vadl:1:7
+//     1 │ model magicNumber(): Ex = {
+//       │       ----------- First defined here.
+//       │
+//       note: All macros must have a unique name.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

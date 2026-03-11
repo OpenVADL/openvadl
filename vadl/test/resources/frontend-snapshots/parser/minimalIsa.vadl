@@ -1,0 +1,12 @@
+instruction set architecture Flo = {
+constant jojo = 42
+constant paul = 40 + 4 * 8
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

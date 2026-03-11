@@ -1,0 +1,64 @@
+instruction set architecture ISA = {
+  register X : Bits<16><32>
+  memory MEM : Bits<32> -> Bits<8>
+  program counter PC: Bits<32>
+  register CSR : Bits<5> -> Bits<32>
+}
+
+micro architecture SingleStage implements ISA = {
+  logic [forwarding] bypass
+
+  stage FETCH -> ( fr : FetchResult ) =
+  {
+    fr := fetchNext
+  }
+
+  stage DECODE -> ( ir : Instruction ) =
+  {
+    let instr = decode( FETCH.fr ) in
+    {
+      instr.address( @X )
+      instr.readOrForward( @X, @bypass )
+      ir := instr
+    }
+  }
+
+  stage EXECUTE -> ( ir : Instruction ) =
+  {
+    let instr = DECODE.ir in
+    {
+      instr.read( @PC, @CSR )
+      instr.compute
+      instr.verify
+      instr.write( @PC, @CSR )
+      instr.results( @X, @bypass )
+      ir := instr
+    }
+  }
+
+  stage MEMORY -> ( ir : Instruction ) =
+  {
+    let instr = EXECUTE.ir in
+    {
+      instr.write( @MEM )
+      instr.read( @MEM )
+      ir := instr
+    }
+  }
+
+  stage WRITE_BACK =
+  {
+    let instr = MEMORY.ir in
+    {
+      instr.write( @X )
+    }
+  }
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

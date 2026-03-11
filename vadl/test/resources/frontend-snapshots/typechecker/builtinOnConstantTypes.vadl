@@ -1,0 +1,155 @@
+// INCLUDE-AST-DUMP
+
+constant a = 51                 // 0b110011
+constant b = 42                 // 0b101010
+
+//constant c = VADL::and(true, true)  // true
+//constant d = true || false          // true
+constant e = VADL::or(a,  b)          // 0b111011 = 59
+constant f = VADL::and(a, b)          // 0b100010 = 34
+constant g = VADL::xor(a, b)          // 0b011001 = 25
+constant h = VADL::equ(a, b)          // false
+constant i = VADL::neq(a, b)          // true
+constant j = VADL::sgeq(a, b)         // true
+constant k = VADL::sgth(a, b)         // true
+constant l = VADL::slth(a, b)         // false
+constant m = VADL::sleq(a, b)         // false
+constant n = VADL::lsl(b, 2)          // 0b10101000 = 168
+constant o = VADL::lsr(b, 2)          // 0b1010 = 10
+constant p = VADL::add(a, b)          // 93
+constant q = VADL::sub(a, b)          // 9
+constant r = VADL::mul(a, b)          // 2142
+constant s = VADL::div(a, 5)          // 5
+constant t = VADL::mod(b, 20)         // 2
+constant u = VADL::cob(0b110110)      // 4
+constant v = VADL::czb(0b110110)      // 2
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    ConstantDefinition name: "a"
+//    . IntegerLiteral literal: 51 (51) type: Const<51>
+//    ConstantDefinition name: "b"
+//    . IntegerLiteral literal: 42 (42) type: Const<42>
+//    ConstantDefinition name: "e"
+//    . CallIndexExpr type: Const<59>
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "f"
+//    . CallIndexExpr type: Const<34>
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "g"
+//    . CallIndexExpr type: Const<25>
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "h"
+//    . CallIndexExpr type: Bool
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "i"
+//    . CallIndexExpr type: Bool
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "j"
+//    . CallIndexExpr type: Bool
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "k"
+//    . CallIndexExpr type: Bool
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "l"
+//    . CallIndexExpr type: Bool
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "m"
+//    . CallIndexExpr type: Bool
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "n"
+//    . CallIndexExpr type: Const<168>
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "b" type: Const<42>
+//    . : ' CastExpr type: UInt<2>
+//    . : ' | IntegerLiteral literal: 2 (2) type: Const<2>
+//    . : ' | TypeLiteral type: UInt<2>
+//    . : ' | . Identifier name: "UInt" type: null
+//    . : ' | . IntegerLiteral literal: 2 (2) type: null
+//    ConstantDefinition name: "o"
+//    . CallIndexExpr type: Const<10>
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "b" type: Const<42>
+//    . : ' CastExpr type: UInt<2>
+//    . : ' | IntegerLiteral literal: 2 (2) type: Const<2>
+//    . : ' | TypeLiteral type: UInt<2>
+//    . : ' | . Identifier name: "UInt" type: null
+//    . : ' | . IntegerLiteral literal: 2 (2) type: null
+//    ConstantDefinition name: "p"
+//    . CallIndexExpr type: Const<93>
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "q"
+//    . CallIndexExpr type: Const<9>
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "r"
+//    . CallIndexExpr type: Const<2142>
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "s"
+//    . CallIndexExpr type: Const<10>
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' IntegerLiteral literal: 5 (5) type: Const<5>
+//    ConstantDefinition name: "t"
+//    . CallIndexExpr type: Const<2>
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "b" type: Const<42>
+//    . : ' IntegerLiteral literal: 20 (20) type: Const<20>
+//    ConstantDefinition name: "u"
+//    . CallIndexExpr type: Const<4>
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' BinaryLiteral literal: 0b110110 (54) type: Const<54>
+//    ConstantDefinition name: "v"
+//    . CallIndexExpr type: Const<2>
+//    . : IdentifierPath type: null
+//    . : ArgsIndices
+//    . : ' BinaryLiteral literal: 0b110110 (54) type: Const<54>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

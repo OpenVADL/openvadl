@@ -1,0 +1,13 @@
+constant size = 64
+using customBoolean = Bool
+constant a: customBoolean = 1
+constant b: Bits<size> = 1
+//constant c: SInt<1+2> = 1
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
