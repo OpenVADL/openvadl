@@ -1,3 +1,4 @@
+// INCLUDE-PRETTY-PRINT
 // SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: Apache-2.0
 
@@ -12,7 +13,7 @@ instruction set architecture MacroProducingMacros = {
 
   model LUTProducer(name: Id, cond1: Ex, cond2: Ex, params: BinOpParams): IsaDefs = {
     model $name(candidate: Ex, res1: Ex, res2: Ex, defaultModel: BinOpModel): Ex = {
-      match $candidate with
+      match $candidate as Bits<64> with
       { $cond1 => $res1
       , $cond2 => $res2
       , _ => $defaultModel(( $params.left ; $params.op ; $params.right ))
@@ -27,3 +28,24 @@ instruction set architecture MacroProducingMacros = {
 
   $LUTInvoker()
 }
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Pretty Print:
+//
+//  instruction set architecture MacroProducingMacros = {
+//    constant a =
+//      match (5 + 2) as Bits<64> with
+//        { 7 => 1
+//        , 8 => 0
+//        , _ => (9 * 4) * 4
+//        }
+//
+//  }
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

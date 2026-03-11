@@ -77,19 +77,38 @@ public class FrontendSnapshotTests {
     @Nullable Ast ast = null;
     @Nullable Specification spec = null;
     List<Diagnostic> diagnostics = List.of();
+    @Nullable String prettyPrint = null;
+
+    var input = Files.readString(path);
     try {
-      var result = Frontend.compileToAstAndViam(path, new DiskVirtualFileSystem());
-      ast = result.left();
-      spec = result.right();
+      ast = VadlParser.parse(path, new DiskVirtualFileSystem());
+
+      var remover = new ModelRemover();
+      remover.removeModels(ast);
+
+      var ungrouper = new Ungrouper();
+      ungrouper.ungroup(ast);
+
+      verifyPrettifiedAst(ast, new DiskVirtualFileSystem());
+      prettyPrint = generatePrettyPrint(input, ast);
+
+      var typechecker = new TypeChecker();
+      typechecker.verify(ast);
+
+      var lowering = new ViamLowering();
+      spec = lowering.generate(ast);
+
       ViamVerifier.verifyAllIn(spec);
       ViamLocationExistenceChecker.verify(spec);
 
-      // Some additional checks
-      verifyPrettifiedAst(ast, new DiskVirtualFileSystem());
     } catch (DiagnosticList d) {
       diagnostics = d.items;
     } catch (Diagnostic d) {
       diagnostics = List.of(d);
+    } finally {
+      if (prettyPrint == null) {
+        prettyPrint = generatePrettyPrint(input, null);
+      }
     }
 
     // FIXME: Maybe deferred diagnostic store here but add later because it might have problems
@@ -105,9 +124,8 @@ public class FrontendSnapshotTests {
         "No diagnostics were reported, the input was correctly parsed, typechecked and lowered.";
 
 
-    var input = Files.readString(path);
+    output += prettyPrint;
     output += generateAstDump(input, ast);
-    output += generatePrettyPrint(input, ast);
     output += generateViamDump(input, spec);
 
     output = "//  "
@@ -156,11 +174,11 @@ public class FrontendSnapshotTests {
   }
 
   private String generateViamDump(String input, @Nullable Specification spec) {
-    if (!includePrettyPrintPattern.matcher(input).find()) {
+    if (!includeViamDumpPattern.matcher(input).find()) {
       return "";
     }
 
-    var output = "\n\n\nPretty Print:\n\n";
+    var output = "\n\n\nVIAM Dump:\n\n";
     if (spec != null) {
       var dump = new ViamSnapshotDumper().dump(spec);
       output += dump.indent(2);

@@ -1,3 +1,5 @@
+// INCLUDE-PRETTY-PRINT
+
 constant a = 5
 constant b = 3
 
@@ -23,3 +25,20 @@ model HigherOrderBinOp(params: BinOpParams, binOpModel: BinOpModel) : Ex = {
 }
 
 constant e = $HigherOrderBinOp((a ; * ; b ) ; BinOpEx)
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Pretty Print:
+//
+//  constant a = 5
+//  constant b = 3
+//  constant c = a + b
+//  constant d = a / b
+//  constant e = a * b
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

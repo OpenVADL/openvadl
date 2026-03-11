@@ -1,0 +1,84 @@
+// INCLUDE-PRETTY-PRINT
+
+instruction set architecture IsaDefsTest = {
+
+  register X : Bits<5> -> Bits<32>
+
+  format Rtype : Bits<32> =
+    { rd: Bits<5>
+    , rs1: Bits<5>
+    , rs2: Bits<5>
+    , opcode: Bits<17>
+    }
+
+  model RTypeInstr(instrName: Id, instrFormat: Id, opcode: Bin, op: BinOp, type: Id, destReg: Id, srcReg1: Id, srcReg2: Id): IsaDefs = {
+    instruction $instrName: $instrFormat = {
+      X($destReg) := (X($srcReg1) $op X($srcReg2)) as $type
+    }
+    encoding $instrName = { opcode = $opcode }
+    assembly $instrName = (mnemonic, " ", register($destReg), ",", register($srcReg1), ",", register($srcReg2))
+  }
+
+  using SIntR = SInt<32>
+
+  $RTypeInstr(ADD ; Rtype ; 0b011'0011 ; + ; SIntR ; rd ; rs1 ; rs2)
+  $RTypeInstr(SUB ; Rtype ; 0b100'1100 ; - ; SIntR ; rd ; rs1 ; rs2)
+  $RTypeInstr(SQU ; Rtype ; 0b101'0101 ; * ; SIntR ; rd ; rs1 ; rs1)
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Pretty Print:
+//
+//  instruction set architecture IsaDefsTest = {
+//    register X: Bits<5> -> Bits<32>
+//
+//    format Rtype: Bits<32> =
+//    { rd : Bits<5>
+//    , rs1 : Bits<5>
+//    , rs2 : Bits<5>
+//    , opcode : Bits<17>
+//    }
+//
+//    using SIntR = SInt<32>
+//
+//    instruction ADD : Rtype =   {
+//      X(rd) := (X(rs1) + X(rs2)) as SIntR
+//    }
+//
+//
+//    encoding ADD =
+//    { opcode = 0b011'0011
+//    }
+//
+//    assembly ADD = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+//
+//    instruction SUB : Rtype =   {
+//      X(rd) := (X(rs1) - X(rs2)) as SIntR
+//    }
+//
+//
+//    encoding SUB =
+//    { opcode = 0b100'1100
+//    }
+//
+//    assembly SUB = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+//
+//    instruction SQU : Rtype =   {
+//      X(rd) := (X(rs1) * X(rs1)) as SIntR
+//    }
+//
+//
+//    encoding SQU =
+//    { opcode = 0b101'0101
+//    }
+//
+//    assembly SQU = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs1))
+//  }
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
