@@ -2,9 +2,9 @@ instruction set architecture AArch32 = {
 
 using Word = Bits<32>
 
-register file R: Bits<4> -> Word
-format   Status: Bits<1> = {Z : Bits<1>}
-register   APSR: Status
+register    R: Bits<4> -> Word
+format Status: Bits<1> = {Z : Bits<1>}
+register APSR: Status
 
 enumeration cond: Bits<4> =
   { EQ  // equal           Z == 1
@@ -32,7 +32,7 @@ model ALImmCondInstr (cond: Cond, instr: Instr) : IsaDefs = {
   encoding AsId ($instr.id, $cond.str) =
     {cc = cond::$cond.code, op = $instr.opcode, flags = 0}
   assembly AsId ($instr.id, $cond.str) =
-    ($instr.ass, $cond.str, ' ', register(rd), ',', register(rn), ',', decimal(imm12))
+    ($instr.ass, $cond.str, ' ', register(rd), ',', register(rn), ',', udec(imm12))
   }
 
 model-type CondInstrModel = (Cond, Instr) -> IsaDefs

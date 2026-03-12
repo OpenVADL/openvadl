@@ -1,4 +1,4 @@
-# VADL Tutorial {#tutorial}
+# VADL Language Tutorial {#tutorial}
 
 <!-- SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at> -->
 <!-- SPDX-License-Identifier: CC-BY-4.0                          -->
@@ -85,7 +85,7 @@ The \ac{ISA} section specifies basic architecture elements like registers, progr
 instructions with their behavior, encoding and assembly representation.
 In line 3 a constant with the decimal value `32` for the register size is defined.
 
-Lines 5 to 9 declare user defined types.
+Lines 5 to 9 declare user defined types (type aliases).
 \ac{VADL} supports bit vector types (for details see section \r{langref_type_system}).
 The basic type is `Bits`.
 There exist two subtypes representing signed (`SInt`) and unsigned (`UInt`) two's complement integers.
@@ -155,11 +155,11 @@ instruction set architecture RV64IM extending RV3264IM = {}
 
 application binary interface ABI for RV64IM = {}
 
-assembly description Assemble implements RV64IM for ABI = {}
+assembly description Assemble for RV64IM = {}
 
-micro architecture FiveStage for RV64IM = {}
+micro architecture FiveStage implements RV64IM = {}
 
-processor CPU implements RV64IM with FiveStage for ABI = {}
+processor CPU implements RV64IM with FiveStage = {}
 ~~~
 \endlisting
 
@@ -333,7 +333,7 @@ As long as functions do not read registers which have an effect when read, they 
 As VADL specifications have to be translated to specifications in a hardware description language or to patterns for the instruction selector of a compiler, neither recursive calls nor higher order functions are allowed.
 A function is defined by the keyword `function` followed by the function's name, optionally a parameter list in parentheses, the arrow symbol `"->"`, the return type of the function, the equality symbol `"="` and an expression.
 
-In line 1 of Listing \r{functions} shows the definition of the parameter less function `size` which always will return the value `32`.
+Line 1 of Listing \r{functions} shows the definition of the parameter less function `size` which always will return the value `32`.
 In line 17 a function with one argument of type `Bits<12>` is defined which maps two different enumerations to each other.
 
 ### Formats
@@ -595,9 +595,10 @@ A lexical macro acts on the abstraction level of token streams in contrast to an
 Two use-cases are supported using special syntax type converting functions.
 Firstly, templates generating instruction behavior and assembly often need the instruction name once in form of an
 identifier (`Id`) and again in form of a string (`Str`).
-This use case is covered by the `AsStr` function (will be renamed to `AsStr`).
-This function takes an `Id` typed syntax element and converts it to a `Str` typed syntax element.
-Secondly, the `AsId` function allows safe identifier manipulation (will be renamed to `AsId`).
+This use case is covered by the `AsStr` function.
+This function takes an arbitrary number of `Id` or `Str` typed syntax elements, converts `Id` typed elements to `Str`
+and concatenates them to a single `Str` typed syntax element.
+Secondly, the `AsId` function allows safe identifier manipulation.
 This function takes an arbitrary number of `Id` or `Str` typed syntax elements, converts `Id` typed elements to `Str`,
 concatenates them and returns a single `Id` typed syntax element.
 Listing \r{lexical_macros} shows a small example of both functions with their typed result as comment.
@@ -608,7 +609,7 @@ Therefore, it is not possible to define or refer to a model name or parameter us
 \listing{lexical_macros, Lexical Macro Examples}
 ~~~{.vadl}
 AsId( "", I, "Am", An, "Identifier" ) // --> IAmAnIdentifier : Id
-AsStr( IAmAString )                     // --> "IAmAString"    : Str
+AsStr( IAm, A, "String" )             // --> "IAmAString"    : Str
 ~~~
 \endlisting
 
@@ -708,9 +709,9 @@ instruction set architecture AArch32 = {
 
 using Word = Bits<32>
 
-register file R: Bits<4> -> Word
-format   Status: Bits<1> = {Z : Bits<1>}
-register   APSR: Status
+register    R: Bits<4> -> Word
+format Status: Bits<1> = {Z : Bits<1>}
+register APSR: Status
 
 enumeration cond: Bits<4> =
   { EQ  // equal           Z == 1
@@ -803,7 +804,10 @@ model Size() : Id = { Arch32 }
 ## Import of elements from other files
 
 Import declarations are used to include elements from other files in the current specification.
-Some examples for 
+Some examples for import declarations are shown in Listing \r{import}.
+In the first example the element `RV3264I` is imported from the file `rv3264im` with the file extension `.vadl`.
+It is possible to import multiple elements from a single file as demonstrated in the second example.
+A complex file path can also be specified as a string literal.
 
 \listing{import, Import Declaration}
 ~~~{.vadl}
@@ -815,8 +819,8 @@ import "../isa.vadl"::{RVI, RVIM}
 ~~~
 \endlisting
 
-Similarly to model passing in the command line it is possible to pass models as arguments to import declarations as
-demonstrated in Listing \r{macro_import}.
+Similarly to passing models in the command line it is possible to pass models as arguments to import declarations after
+the keyword `with` enclosed in parentheses as demonstrated in Listing \r{macro_import}.
 Instead of a single string literal also multiple string literals separated by the comma symbol `","` are allowed.
 Instead of a string literal also string macros like string model invocations or the lexical function `AsStr` are possible.
 
@@ -835,11 +839,13 @@ import sve::AArch64SVEandSME with (AsStr("VLength=", $VLength))
 
 \listing{lst_isa_definition, Instruction Set Architecture Definition with some common Definitions}
 ~~~{.vadl}
-instruction set architecture RV32base = {}
-
-instruction set architecture RV32I extending RV32base = {
+instruction set architecture RV32base = {
 
   constant Size = 32                     // architecture size is 32 bits
+
+}
+
+instruction set architecture RV32I extending RV32base = {
 
   using Inst    = Bits< 32 >             // instruction word type
   using Regs    = Bits<Size>             // register word type 
@@ -860,8 +866,7 @@ instruction set architecture RV32I extending RV32base = {
 
 An instruction set architecture definition is the main part of a processor specification.
 It starts with the three keywords `instruction set architecture` followed by the name of the \ac{ISA}, the equality symbol `"="` and the definition of the instruction set enclosed in braces (see line 1 of Listing \r{lst_isa_definition}).
-Optionally it is possible to extend an existing \ac{ISA} with the keyword `extending` followed by the list of names separated by the comma symbol `","` of the \acp{ISA} to extend (shown in line 3).
-<!-- Currently it is only possible to extend one \ac{ISA}. Discussions are ongoing how to support extending multiple \acp{ISA}. -->
+Optionally it is possible to extend an existing \ac{ISA} with the keyword `extending` followed by the list of names separated by the comma symbol `","` of the \acp{ISA} to extend (shown in line 7).
 
 At the beginning of an \ac{ISA} section usually there is a set of common definitions (`constant`, `enumeration`, `using`, `function` and `format`).
 These are followed by the definition of \ac{ISA} elements like registers or instructions, which are usually generated by macros.
