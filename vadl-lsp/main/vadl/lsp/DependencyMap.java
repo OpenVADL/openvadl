@@ -48,35 +48,30 @@ public class DependencyMap<T> {
    *                        an item never depends on itself.
    */
   public synchronized void setDependencies(T item, Set<T> newDependencies) {
-    Set<T> itemSet = dependencies.get(item);
-    if (itemSet == null) {
-      itemSet = new HashSet<>();
-      dependencies.put(item, itemSet);
+    Set<T> itemSet = dependencies.computeIfAbsent(item, k -> new HashSet<>());
 
-    } else {
-      // Remove all outdated dependencies
-      var iter = itemSet.iterator();
-      while (iter.hasNext()) {
-        T d = iter.next();
-        if (!newDependencies.contains(d)) {
-          iter.remove();
-          Set<T> ds = dependents.get(d);
-          if (ds != null) {
-            ds.remove(item);
-          }
+    // Remove all outdated dependencies
+    var iter = itemSet.iterator();
+    while (iter.hasNext()) {
+      T dependency = iter.next();
+      if (!newDependencies.contains(dependency)) {
+        iter.remove();
+        Set<T> dependencySet = dependents.get(dependency);
+        if (dependencySet != null) {
+          dependencySet.remove(item);
         }
       }
     }
 
     // Add new dependencies
-    for (T d : newDependencies) {
-      if (item.equals(d)) {
+    for (T dependency : newDependencies) {
+      if (item.equals(dependency)) {
         // Ignore self-dependencies
         continue;
       }
-      if (itemSet.add(d)) {
-        Set<T> ds = dependents.computeIfAbsent(d, k -> new HashSet<>());
-        ds.add(item);
+      if (itemSet.add(dependency)) {
+        Set<T> dependencySet = dependents.computeIfAbsent(dependency, k -> new HashSet<>());
+        dependencySet.add(item);
       }
     }
   }
