@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -500,8 +500,7 @@ public class AsmLL1CheckerTest {
     Assertions.assertEquals(1, diags.items.size());
   }
 
-  // FIXME: re-enable when parameters of asm built-in functions are correctly casted
-  // @Test
+  @Test
   void asmBuiltInUsage() {
     var prog = """
           grammar = {
@@ -530,8 +529,7 @@ public class AsmLL1CheckerTest {
     Assertions.assertEquals(1, diags.items.size());
   }
 
-  // FIXME: re-enable when parameters of asm built-in functions are correctly casted
-  // @Test
+  @Test
   void conflictInExpandedInstructionRuleResolvedByRewriting() {
     var prog = """
           grammar = {

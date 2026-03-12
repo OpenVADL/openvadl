@@ -1,0 +1,27 @@
+// Previously, this also threw an type error.
+// https://github.com/OpenVADL/openvadl/issues/787
+
+instruction set architecture ISA = {}
+
+// NOTE: This one error for the empty ABI cannot be avoided in an empty ISA spec.
+application binary interface ABI for ISA = {}
+
+assembly description AD for ABI = {
+  grammar  = {
+    Rule1 : ?( LaIdEq(1, "a") ) "a" | "a" ;
+    //         ^^^^^^^^^^^^^^ Previously, this threw an error.
+  }
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: No RETURN_ADDRESS registers were declared but one was expected
+//       ╭──[test/resources/frontend-snapshots/typechecker/assemblyBuiltinWithoutCast.vadl:7:1]
+//       │
+//     7 │ application binary interface ABI for ISA = {}
+//       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

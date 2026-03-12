@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -20,6 +20,7 @@ import com.google.errorprone.annotations.FormatMethod;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
@@ -173,6 +174,24 @@ public class DiagnosticBuilder extends Throwable {
     }
 
     return this.help("Did you maybe mean one of: %s", text);
+  }
+
+  /**
+   * A conditional application of further information to a diagnostic.
+   * The same can be archived by storring the builder in a variable and applying some items only
+   * conditionally but this interface is easier to read.
+   *
+   * @param condition that determines whether the function is applied or not.
+   * @param function to be applied if the condition is true.
+   * @return the builder itself.
+   */
+  public DiagnosticBuilder applyIf(boolean condition,
+                                   Function<DiagnosticBuilder, DiagnosticBuilder> function) {
+    if (condition) {
+      return function.apply(this);
+    } else {
+      return this;
+    }
   }
 
   public Diagnostic build() {
