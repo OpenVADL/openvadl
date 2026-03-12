@@ -17,13 +17,20 @@
 package vadl.lcb.template.clang.lib.CodeGen;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
+import vadl.gcb.passes.InstructionIntrinsicAttributesCtx;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
 /**
@@ -46,11 +53,11 @@ public class EmitCGBuiltinFilePass extends LcbTemplateRenderingPass {
     return "clang/lib/CodeGen/CGBuiltin.cpp";
   }
 
-  private record Intrinsic(String builtin, String intrinsic) implements Renderable {
+  private record Intrinsic(String builtin, String intrinsic, boolean writesMem) implements Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
-      return Map.of("builtin", builtin, "intrinsic", intrinsic);
+      return Map.of("builtin", builtin, "intrinsic", intrinsic, "writesMem", writesMem);
     }
   }
 
@@ -59,13 +66,21 @@ public class EmitCGBuiltinFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var output = (GenerateGcbIntrinsicsPass.Output) passResults.lastResultOf(
         GenerateGcbIntrinsicsPass.class);
+    var records = ((List<TableGenMachineInstruction>) passResults.lastResultOf(
+        GenerateTableGenMachineInstructionRecordPass.class)).stream().collect(Collectors.toMap(
+        TableGenMachineInstruction::instruction, x -> x));
     var namespace = lcbConfiguration().targetName().value().toLowerCase();
     return Map.of(CommonVarNames.NAMESPACE, namespace,
         "builtins",
         output.intrinsics()
             .stream()
-            .map(x -> new Intrinsic("BI" + namespace + "_" + x.builtinName(),
-                x.intrinsicName()))
+            .map(x -> {
+              Objects.requireNonNull(records.get(x.instruction()));
+              return new Intrinsic("BI" + namespace + "_" + x.builtinName(),
+                  x.intrinsicName(),
+                  x.intrinsicAttributes().contains(
+                      InstructionIntrinsicAttributesCtx.Attribute.WriteMem));
+            })
             .toList());
   }
 }

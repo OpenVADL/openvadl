@@ -36,7 +36,13 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
+import vadl.types.Type;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.Graph;
+import vadl.viam.graph.dependency.ReadMemNode;
+import vadl.viam.graph.dependency.WriteMemNode;
+import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 
 /**
  * This file contains the tablegen setup for builtins.
@@ -76,28 +82,46 @@ public class EmitBuiltinsTableGenPass extends LcbTemplateRenderingPass {
             GenerateTableGenMachineInstructionRecordPass.class);
     var output = (GenerateGcbIntrinsicsPass.Output) passResults.lastResultOf(
         GenerateGcbIntrinsicsPass.class);
+    var snapshots =
+        (Map<Instruction, Graph>) passResults.lastResultOf(SnapshotInstructionBehaviorPass.class);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
-        "builtins", createBuiltins(output, machineRecords));
+        "builtins", createBuiltins(output, machineRecords, snapshots));
   }
 
   private List<Builtin> createBuiltins(GenerateGcbIntrinsicsPass.Output output,
-                                       List<TableGenMachineInstruction> records) {
+                                       List<TableGenMachineInstruction> records,
+                                       Map<Instruction, Graph> snapshots) {
     var lookup = records.stream().collect(Collectors.toMap(
         TableGenMachineInstruction::instruction, x -> x));
     return output.intrinsics().stream()
         .map(intrinsic -> {
           var record = Objects.requireNonNull(lookup.get(intrinsic.instruction()));
+          var snapshot = Objects.requireNonNull(snapshots.get(intrinsic.instruction()));
           var returnTy = mapTy(record.getOutOperands().stream().findFirst());
-          var paramsTy = record.getInOperands().stream().map(this::mapTy).toList();
+          var paramsTy = record.getInOperands().stream()
+              .map(operand -> mapTy(Optional.of(operand)))
+              .collect(Collectors.toCollection(java.util.ArrayList::new));
+          pointerType(snapshot).ifPresent(pointerTy -> paramsTy.set(0, pointerTy));
           var prototype = new Prototype(returnTy, paramsTy);
           return new Builtin(intrinsic.builtinName(), prototype);
         })
         .toList();
   }
 
-  private String mapTy(GcbInstructionOperand operand) {
-    return mapTy(Optional.of(operand));
+  private Optional<String> pointerType(Graph snapshot) {
+    var readMem = snapshot.getNodes(ReadMemNode.class).findFirst();
+    if (readMem.isPresent()) {
+      return Optional.of(mapPointerTy(readMem.get().readBitWidth()));
+    }
+
+    var writeMem = snapshot.getNodes(WriteMemNode.class).findFirst();
+    return writeMem.map(write -> mapPointerTy(write.writeBitWidth()));
+  }
+
+  private String mapPointerTy(int bitWidth) {
+    return CppTypeMap.getCppBuiltinTypeNameByVadlType(ValueType.from(
+        Type.unsignedInt(bitWidth)).orElseThrow()) + "*";
   }
 
   private String mapTy(Optional<GcbInstructionOperand> operand) {
