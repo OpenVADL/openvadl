@@ -53,7 +53,8 @@ public class EmitCGBuiltinFilePass extends LcbTemplateRenderingPass {
     return "clang/lib/CodeGen/CGBuiltin.cpp";
   }
 
-  private record Intrinsic(String builtin, String intrinsic, boolean writesMem) implements Renderable {
+  private record Intrinsic(String builtin, String intrinsic, boolean writesMem)
+      implements Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
