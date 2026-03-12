@@ -52,7 +52,7 @@ instruction set architecture RV32I = {
     instruction $name : Itype =
        X(rd) := (X(rs1) as $type $op immS as $type) as Regs
     encoding $name = {opcode = 0b001'0011, funct3 = $funct3}
-    assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
+    assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", sdec(imm))
     }
 
   model BtypeInstr (name : Id, relOp : BinOp, funct3 : Bin, lhsTy : Id) : IsaDefs = {
@@ -60,7 +60,7 @@ instruction set architecture RV32I = {
       if X(rs1) as $lhsTy $relOp X(rs2) then
         PC := PC + immS
     encoding $name = {opcode = 0b110'0011, funct3 = $funct3}
-    assembly $name = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
+    assembly $name = (mnemonic, " ", register(rs1), ",", register(rs2), ",", sdec(imm))
     }
 
   $ItypeInstr (ADDI ; +  ; 0b000 ; SInt) // add immediate
@@ -496,7 +496,7 @@ The result of the model invocation in line 8 of Listing \r{macro_model_definitio
     instruction $name : Itype =
        X(rd) := (X(rs1) as $type $op immS as $type) as Regs
     encoding $name = {opcode = 0b001'0011, funct3 = $funct3}
-    assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
+    assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", sdec(imm))
     }
 
   $ItypeInstr (ADDI ; +  ; 0b000 ; SInt) // add immediate
@@ -508,7 +508,7 @@ The result of the model invocation in line 8 of Listing \r{macro_model_definitio
     instruction ADDI : Itype =
        X(rd) := (X(rs1) as SInt + immS as SInt) as Regs
     encoding ADDI = {opcode = 0b001'0011, funct3 = 0b000}
-    assembly ADDI = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
+    assembly ADDI = (mnemonic, " ", register(rd), ",", register(rs1), ",", sdec(imm))
 ~~~
 \endlisting
 
@@ -738,7 +738,7 @@ model ALImmCondInstr (cond: Cond, instr: Instr) : IsaDefs = {
   encoding AsId ($instr.id, $cond.str) =
     {cc = cond::$cond.code, op = $instr.opcode, flags = 0}
   assembly AsId ($instr.id, $cond.str) =
-    ($instr.ass, $cond.str, ' ', register(rd), ',', register(rn), ',', decimal(imm12))
+    ($instr.ass, $cond.str, ' ', register(rd), ',', register(rn), ',', udec(imm12))
   }
 
 model-type CondInstrModel = (Cond, Instr) -> IsaDefs
@@ -800,12 +800,32 @@ model Size() : Id = { Arch32 }
 ~~~
 \endlisting
 
-Similarly to model passing in the command line it is possible to pass models as an argument to import declarations as
+## Import of elements from other files
+
+Import declarations are used to include elements from other files in the current specification.
+Some examples for 
+
+\listing{import, Import Declaration}
+~~~{.vadl}
+import rv3264im::RV3264I
+
+import rv3264im::{RV3264I, RV3264M}
+
+import "../isa.vadl"::{RVI, RVIM}
+~~~
+\endlisting
+
+Similarly to model passing in the command line it is possible to pass models as arguments to import declarations as
 demonstrated in Listing \r{macro_import}.
+Instead of a single string literal also multiple string literals separated by the comma symbol `","` are allowed.
+Instead of a string literal also string macros like string model invocations or the lexical function `AsStr` are possible.
 
 \listing{macro_import, Import with Macro Argument}
 ~~~{.vadl}
 import rv3264im::RV3264I with ("Size=Arch64")
+
+model VLength () : Id = {VL128} // default vector length is 128
+import sve::AArch64SVEandSME with (AsStr("VLength=", $VLength))
 ~~~
 \endlisting
 
@@ -1286,7 +1306,7 @@ instruction set architecture A64 = {
     }
 
   function WReg (x: Index) -> String =  // 32 bit register name
-    if x = 31 then "wzr" else "w" + decimal(x)
+    if x = 31 then "wzr" else "w" + udec(x)
 
   instruction and : LogicImm =      // and immediate word
     X(rd) := (X(rn) as Word & immX as Word) as SInt<64>   // sign extend Word sized result
@@ -1296,7 +1316,7 @@ instruction set architecture A64 = {
   instruction ANDIX : LogicImm =    // and immediate double word
     X(rd) := X(rn) & immX
   encoding ANDIX = { op = 0b0010'0100, sf = SF::XReg, none }
-  assembly ANDIX = ( "and", ' ', register(rd), ', ', register(rn), ', ', decimal(immX) )
+  assembly ANDIX = ( "and", ' ', register(rd), ', ', register(rn), ', ', udec(immX) )
 }
 ~~~
 \endlisting
@@ -1316,10 +1336,10 @@ The builtin `mnemonic` converts the instruction name into a string.
 The argument of the builtin `register` is searched for a use in register indexing and the name of the indexed register is concatenated with the argument converted to a decimal number.
 If an alias for the indexed register element is defined, the alias name of the register is used instead.
 
-The builtins `decimal` and `hex` convert their argument into a string in decimal respective hexadecimal representation.
+The builtins `sdec`, `udec` and `hex` convert their argument into a string in signed decimal, unsigned decimal respective hexadecimal representation.
 As arguments both format fields (see line 30) and access functions (see line 35 with immX) can be used.
 In the second case the access function is applied before the string conversion.
-An explicit use of the decode function is allowed too (`decimal(decodeX(imm13))`).
+An explicit use of the decode function is allowed too (`udec(decodeX(imm13))`).
 The definition of a user defined string function is shown in line 24 to 25 with the definition of `WReg`.
 This function converts the argument to the string `"wzr"` or concatenates `"w"` with the decimal representation of the argument.
 
@@ -1339,7 +1359,7 @@ Every pseudo instruction requires a corresponding assembly definition.
 pseudo instruction BGTZ( rs : Index, offset : SIntR ) = {
   BLT{ rs1 = 0 as Bits5, rs2 = rs, immS = offset }
 }
-assembly BGTZ = ( mnemonic, " ", register(rs), ",", decimal(offset) )
+assembly BGTZ = ( mnemonic, " ", register(rs), ",", sdec(offset) )
 
 pseudo instruction LA( rd: Index, symbol: Bits<32> ) = {
   LUI { rd = rd, imm = hi(symbol) }
