@@ -16,6 +16,7 @@
 
 package vadl.lsp;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,6 +32,7 @@ import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SemanticTokens;
@@ -41,12 +43,8 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vadl.ast.Ast;
+import vadl.ast.Frontend;
 import vadl.ast.LspTokenizer;
-import vadl.ast.ModelRemover;
-import vadl.ast.TypeChecker;
-import vadl.ast.Ungrouper;
-import vadl.ast.VadlParser;
 import vadl.error.Diagnostic.MsgType;
 import vadl.error.DiagnosticList;
 import vadl.utils.DiskVirtualFileSystem;
@@ -190,71 +188,108 @@ public class VadlTextDocumentService implements TextDocumentService {
   }
 
   private void publishDiagnosticsForOneDocumentSnapshot(Document.Snapshot snapshot) {
-    List<Diagnostic> lspItems = new ArrayList<>();
-    Path path = snapshot.getPath();
-    try {
-      Ast ast = VadlParser.parse(snapshot.text(), snapshot.virtualFileSystem(), Map.of(), path);
-      new Ungrouper().ungroup(ast);
-      new ModelRemover().removeModels(ast);
-      new TypeChecker().verify(ast);
+    var unused = server.executor().submit(() -> {
+      List<Diagnostic> lspItems = new ArrayList<>();
+      Path path = snapshot.getPath();
+      try {
+        Frontend.compileToAst(path, snapshot.virtualFileSystem());
 
-    } catch (DiagnosticList dl) {
-      log.debug("Raw diagnostics ({}): {}", snapshot.uri(), dl.getMessage());
-      for (vadl.error.Diagnostic item : dl.items) {
-        // TODO Look into secondary locations too? Maybe as relatedInformation? Or to put a
-        //      diagnostic message there as well?
-        SourceLocation location = item.multiLocation.primaryLocation().location();
-        if (!Objects.equals(location.path(), path)) {
-          // Ignore errors for other files
-          // TODO this means that errors in included files are not reported unless that file is
-          //      opened in the client, even though the Parser gives us diagnostics for them
-          continue;
+      } catch (IOException e) {
+        log.error("Unexpected Exception occurred when parsing {}", snapshot.uri(), e);
+
+      } catch (DiagnosticList dl) {
+        log.debug("Raw diagnostics ({}): {}", snapshot.uri(), dl.getMessage());
+        List<String> importedFileErrors = new ArrayList<>();
+        for (vadl.error.Diagnostic item : dl.items) {
+          Path itemPath = item.multiLocation.primaryLocation().location().path();
+          if (!Objects.equals(itemPath, path)) {
+            if (itemPath == null) {
+              continue;
+            }
+            // Error in imported file
+            importedFileErrors.add(relativePath(itemPath, snapshot.getPath()));
+            continue;
+          }
+
+          lspItems.add(buildLspDiagnostic(item, snapshot));
         }
 
-        Diagnostic lspItem = new Diagnostic();
-        lspItem.setRange(new Range(
-            snapshot.calculateUtf16Position(location.begin(), false),
-            snapshot.calculateUtf16Position(location.end(), true)
-        ));
-        lspItem.setSeverity(
-            switch (item.level) {
-              case ERROR -> DiagnosticSeverity.Error;
-              case WARNING -> DiagnosticSeverity.Warning;
-            }
-        );
-        // labels (aka messages) per location
-        String labelsString = item.multiLocation.primaryLocation().labels().stream()
-            .map(vadl.error.Diagnostic.Message::content)
-            .collect(Collectors.joining("\n"));
-        // messages per Diagnostic - they may offer help or give additional notes
-        String messagesString = item.messages.stream()
-            .filter(m -> !m.type().equals(MsgType.PLAIN)
-                || !m.content().contains("parser got confused at this point"))
-            .map(vadl.error.Diagnostic.Message::content)
-            .collect(Collectors.joining("\n"));
+        if (!importedFileErrors.isEmpty()) {
+          // Putting one diagnostic at the top of the file, which points out which imported files
+          // have errors
+          Diagnostic importedFilesDiagnostic = new Diagnostic();
+          importedFilesDiagnostic.setRange(new Range(new Position(0, 0),
+              new Position(0, 0)));
+          // TODO Consider using different severity if all diagnostics represented by this are only
+          //      Warnings
+          importedFilesDiagnostic.setSeverity(DiagnosticSeverity.Error);
 
-        String fullMessage = item.reason + (!labelsString.isBlank() ? "\n" + labelsString : "")
-            + (!messagesString.isBlank() ? "\n" + messagesString : "");
-        lspItem.setMessage(fullMessage);
-        lspItems.add(lspItem);
+          String message = importedFileErrors.size() == 1
+              ? "Errors in imported file: \n" + importedFileErrors.getFirst()
+              : "Errors in imported files:\n- " + String.join("\n- ", importedFileErrors);
+          importedFilesDiagnostic.setMessage(message);
+          lspItems.addFirst(importedFilesDiagnostic);
+        }
       }
-    }
-    // TODO There may be diagnostics in DeferredDiagnosticStore, but that is a static list and
-    //      has no clear() method (i.e. outdated diagnostics remain visible)
+      // TODO There may be diagnostics in DeferredDiagnosticStore, but that is a static list and
+      //      has no clear() method (i.e. outdated diagnostics remain visible)
 
-    if (!documentVersionIsCurrent(snapshot)) {
-      log.debug(
-          "ABORT publishDiagnostics (after): outdated version {} of document {}",
-          snapshot.version(),
-          snapshot.uri()
-      );
-      return;
-    }
-    documentDependencies.setDependencies(snapshot.uri(),
-        snapshot.virtualFileSystem().getReadFiles());
-    var data = new PublishDiagnosticsParams(snapshot.uri(), lspItems, snapshot.version());
-    log.debug("<< publishDiagnostics ({}: {}", snapshot.uri(), data);
-    server.client().publishDiagnostics(data);
+      if (!documentVersionIsCurrent(snapshot)) {
+        log.debug(
+            "ABORT publishDiagnostics (after): outdated version {} of document {}",
+            snapshot.version(),
+            snapshot.uri()
+        );
+        return;
+      }
+      documentDependencies.setDependencies(snapshot.uri(),
+          snapshot.virtualFileSystem().getReadFiles());
+      var data = new PublishDiagnosticsParams(snapshot.uri(), lspItems, snapshot.version());
+      log.debug("<< publishDiagnostics ({}: {}", snapshot.uri(), data);
+      server.client().publishDiagnostics(data);
+    });
+  }
+
+  private Diagnostic buildLspDiagnostic(vadl.error.Diagnostic vadlDiagnostic,
+                                        Document.Snapshot snapshot) {
+    // TODO Look into secondary locations too? Maybe as relatedInformation? Or to put a
+    //      diagnostic message there as well?
+    SourceLocation location = vadlDiagnostic.multiLocation.primaryLocation().location();
+
+    Diagnostic lspDiagnostic = new Diagnostic();
+    lspDiagnostic.setRange(new Range(
+        snapshot.calculateUtf16Position(location.begin(), false),
+        snapshot.calculateUtf16Position(location.end(), true)
+    ));
+    lspDiagnostic.setSeverity(
+        switch (vadlDiagnostic.level) {
+          case ERROR -> DiagnosticSeverity.Error;
+          case WARNING -> DiagnosticSeverity.Warning;
+        }
+    );
+    // labels (aka messages) per location
+    String labelsString = vadlDiagnostic.multiLocation.primaryLocation().labels().stream()
+        .map(vadl.error.Diagnostic.Message::content)
+        .collect(Collectors.joining("\n"));
+    // messages per Diagnostic - they may offer help or give additional notes
+    String messagesString = vadlDiagnostic.messages.stream()
+        .filter(m -> !m.type().equals(MsgType.PLAIN)
+            || !m.content().contains("parser got confused at this point"))
+        .map(vadl.error.Diagnostic.Message::content)
+        .collect(Collectors.joining("\n"));
+
+    String fullMessage = vadlDiagnostic.reason
+        + (!labelsString.isBlank() ? "\n" + labelsString : "")
+        + (!messagesString.isBlank() ? "\n" + messagesString : "");
+    lspDiagnostic.setMessage(fullMessage);
+
+    return lspDiagnostic;
+  }
+
+  private String relativePath(Path path, Path relativeTo) {
+    // relativeTo is a file, but we need its directory as base
+    relativeTo = relativeTo.getParent() != null ? relativeTo.getParent() : relativeTo;
+    return relativeTo.relativize(path).toString();
   }
 
   private boolean documentVersionIsCurrent(Document.Snapshot snapshot) {
