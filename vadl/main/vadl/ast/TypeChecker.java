@@ -20,6 +20,7 @@ import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
 import static vadl.error.Diagnostic.warning;
 
+import com.google.common.collect.Streams;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -546,6 +547,37 @@ public class TypeChecker
   }
 
   /**
+   * Wraps the expr provided with an implicit cast if it is possible, and not useless.
+   *
+   * @param inner expression to wrap.
+   * @param to    which the expression should be casted.
+   * @return the original expression, possibly wrapped.
+   */
+  private static Expr wrapImplicitCastConstToTypeClass(Expr inner, Class<? extends Type> to) {
+    var innerType = requireNonNull(inner.type);
+
+    // Only for const types
+    if (!(innerType instanceof ConstantType innerConstType)) {
+      return inner;
+    }
+
+    if (to == BoolType.class) {
+      return wrapImplicitCast(inner, Type.bool());
+    }
+    if (to == SIntType.class) {
+      return wrapImplicitCast(inner, innerConstType.closestSInt());
+    }
+    if (to == UIntType.class) {
+      return wrapImplicitCast(inner, innerConstType.closestUInt());
+    }
+    if (to == BitsType.class) {
+      return wrapImplicitCast(inner, innerConstType.closestBits());
+    }
+
+    return inner;
+  }
+
+  /**
    * Wraps the expr provided with an explicit cast if it is possible, and not useless.
    * However, in comparison to {@link #wrapExplicitCast(Expr, Type)}, this will throw a
    * type mismatch exception,
@@ -613,6 +645,15 @@ public class TypeChecker
                                           WithLocation location) {
     // Check all incoming arguments
     args.forEach(this::check);
+
+    if (!(args.size() == builtIn.argTypeClasses().size() || (builtIn.signature().hasVarArgs()
+        && args.size() >= builtIn.argTypeClasses().size()))) {
+      throw addErrorAndStopChecking(
+          error("Type Mismatch", location)
+              .locationDescription(location,
+                  "Expected %d arguments but got %d.", builtIn.argTypeClasses().size(), args.size())
+              .build());
+    }
 
     if (args.size() == 1) {
       var innerType = args.getFirst().type();
@@ -824,23 +865,45 @@ public class TypeChecker
     }
 
     var argTypes = args.stream().map(Expr::type).toList();
-    var areAllArgs = argTypes.stream().allMatch(ConstantType.class::isInstance);
-    if (areAllArgs) {
+    var areAllConst = argTypes.stream().allMatch(ConstantType.class::isInstance);
+    if (areAllConst) {
       var type = constantEvaluator
           .evalBuiltin(builtIn, args.stream().map(constantEvaluator::eval).toList(), location)
           .type();
       return new BuiltInCheckResult(type, null);
     }
 
+    // There are vararg functions so let's assume the last type is used for all additional args like
+    // in Java.
+    var declaredTypes = builtIn.signature().hasVarArgs()
+        ? Streams.concat(
+            builtIn.argTypeClasses().stream(),
+            Stream.generate(() -> builtIn.argTypeClasses().getLast()))
+        : builtIn.argTypeClasses().stream();
+
+    // Inject implicit casts for constant types
+    // NOTE: There might be functions that operate on bit patterns where this implicit cast might
+    // not be intended and should be disallowed.
+    args = Streams.zip(args.stream(), declaredTypes, TypeChecker::wrapImplicitCastConstToTypeClass)
+        .toList();
+    var originalArgTypes = argTypes;
+    argTypes = args.stream().map(Expr::type).toList();
+
+
     if (!builtIn.takes(argTypes)) {
-      // FIXME: Better format that error
-      addErrorAndStopChecking(error("Type Mismatch", location)
-          .description("Expected %s but got `%s`", builtIn.signature().argTypeClasses(), argTypes)
+      // FIXME: Further improve these error messages.
+      var areSomeConst = originalArgTypes.stream().anyMatch(ConstantType.class::isInstance);
+      var calledTypes = String.join(", ", argTypes.stream().map(Type::toString).toList());
+      addErrorAndStopChecking(
+          error("Type Mismatch", location)
+          .locationDescription(location, "The builtin has the signature `%s` but got `%s`.",
+              builtIn.signature(), calledTypes)
+          .applyIf(areSomeConst, b -> b.locationHelp(location,
+              "Try casting some of the constant arguments to explicit types."))
           .build());
     }
 
-    // Note: cannot set the computed type because builtins aren't a definition.
-    return new BuiltInCheckResult(builtIn.returns(argTypes), null);
+    return new BuiltInCheckResult(builtIn.returns(argTypes), args);
   }
 
   @Override
@@ -1717,8 +1780,15 @@ public class TypeChecker
   public Void visit(ApplicationBinaryInterfaceDefinition definition) {
     definition.definitions.forEach(this::check);
 
+    // NOTE: The keys are sorted such that the test always produce the same errors if there
+    // are multiple errors.
+    var keys = SpecialPurposeRegisterDefinition.Purpose.numberOfOccurrencesAbi.entrySet()
+        .stream()
+        .sorted(Map.Entry.comparingByKey())
+        .toList();
+
     // Check the number of occurrences in the ABI.
-    for (var entry : SpecialPurposeRegisterDefinition.Purpose.numberOfOccurrencesAbi.entrySet()) {
+    for (var entry : keys) {
       var purpose = entry.getKey();
       var registers = definition.definitions.stream().filter(
               x -> x instanceof SpecialPurposeRegisterDefinition specialPurposeRegisterDefinition
@@ -2675,7 +2745,7 @@ public class TypeChecker
         // it returns the type of the function. This is only possible because we don't have
         // function overloading.
         errors.add(error("Invalid Function Call", expr)
-            .description("Expected `%s` arguments but got `%s`", functionDefinition.params.size(),
+            .description("Expected `%s` arguments but got `%s`.", functionDefinition.params.size(),
                 0)
             .build());
       }
@@ -2691,7 +2761,7 @@ public class TypeChecker
       if (!exceptionDef.params.isEmpty()) {
         // No need to stop evaluation we can still continue.
         errors.add(error("Invalid Exception Raise", expr)
-            .description("Expected `%s` arguments but got `%s`", exceptionDef.params.size(),
+            .description("Expected %s arguments but got %s.", exceptionDef.params.size(),
                 0)
             .build());
       }
@@ -4214,7 +4284,7 @@ public class TypeChecker
       var argCount = statement.unnamedArguments.size();
       if (paramCount != argCount) {
         addErrorAndStopChecking(error("Arguments Mismatch", statement.location())
-            .description("Expected %s arguments but got %s", paramCount, argCount)
+            .description("Expected %s arguments but got %s.", paramCount, argCount)
             .build());
       }
 
