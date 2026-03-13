@@ -92,7 +92,7 @@ public class VadlTextDocumentService implements TextDocumentService {
   @Override
   public void didOpen(DidOpenTextDocumentParams params) {
     log.debug(">> didOpen: {}", params);
-    var document = new Document(params.getTextDocument(), this);
+    var document = new Document(params.getTextDocument());
     synchronized (openDocuments) {
       openDocuments.put(params.getTextDocument().getUri(), document);
     }
@@ -191,8 +191,9 @@ public class VadlTextDocumentService implements TextDocumentService {
     var unused = server.executor().submit(() -> {
       List<Diagnostic> lspItems = new ArrayList<>();
       Path path = snapshot.getPath();
+      var fileSystem = new LspVirtualFileSystem(this);
       try {
-        Frontend.compileToAst(path, snapshot.virtualFileSystem());
+        Frontend.compileToAst(path, fileSystem);
 
       } catch (IOException e) {
         log.error("Unexpected Exception occurred when parsing {}", snapshot.uri(), e);
@@ -242,8 +243,7 @@ public class VadlTextDocumentService implements TextDocumentService {
         );
         return;
       }
-      documentDependencies.setDependencies(snapshot.uri(),
-          snapshot.virtualFileSystem().getReadFiles());
+      documentDependencies.setDependencies(snapshot.uri(), fileSystem.getReadFiles());
       var data = new PublishDiagnosticsParams(snapshot.uri(), lspItems, snapshot.version());
       log.debug("<< publishDiagnostics ({}: {}", snapshot.uri(), data);
       server.client().publishDiagnostics(data);
