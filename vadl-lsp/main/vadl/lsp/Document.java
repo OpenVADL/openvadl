@@ -16,25 +16,18 @@
 
 package vadl.lsp;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextDocumentItem;
 import vadl.utils.SourceLocation;
-import vadl.utils.VirtualFileSystem;
 
 /**
  * Represents one file currently owned by (i.e. opened in) the LSP Client.
@@ -52,7 +45,6 @@ public class Document {
   private static final Pattern EOL_REGEX = Pattern.compile("(\\r\\n|\\n|\\r)");
 
   public final String uri;
-  private final VadlTextDocumentService textService;
 
   private int version;
   @Nullable
@@ -67,9 +59,8 @@ public class Document {
   @Nullable
   private String fullTextCached = null;
 
-  private Document(String uri, int version, String text, VadlTextDocumentService textService) {
+  private Document(String uri, int version, String text) {
     this.uri = uri;
-    this.textService = textService;
     this.version = version;
     this.initTextLines(text);
     this.fullTextCached = text;
@@ -80,8 +71,8 @@ public class Document {
    *
    * @param tdi as provided by the LSP didOpen request
    */
-  public Document(TextDocumentItem tdi, VadlTextDocumentService textService) {
-    this(tdi.getUri(), tdi.getVersion(), tdi.getText(), textService);
+  public Document(TextDocumentItem tdi) {
+    this(tdi.getUri(), tdi.getVersion(), tdi.getText());
   }
 
   /**
@@ -100,11 +91,11 @@ public class Document {
     }
 
     currentSnapshot = new Snapshot(uri, getCurrentVersion(), getCurrentText(),
-        List.copyOf(textLines), new LspVirtualFileSystem(this.textService));
+        List.copyOf(textLines));
     return currentSnapshot;
   }
 
-  private synchronized String getCurrentText() {
+  synchronized String getCurrentText() {
     if (fullTextCached == null) {
       fullTextCached = String.join("\n", textLines);
     }
@@ -199,8 +190,7 @@ public class Document {
    *
    * @see Document#getSnapshot()
    */
-  public record Snapshot(String uri, int version, String text, List<String> textLines,
-                         Document.LspVirtualFileSystem virtualFileSystem) {
+  public record Snapshot(String uri, int version, String text, List<String> textLines) {
 
     public Path getPath() {
       return Paths.get(URI.create(uri()));
@@ -304,66 +294,4 @@ public class Document {
     }
   }
 
-  /**
-   * Virtual file system used by the language server. For all files currently open in the LSP client
-   * the client's file content is provided instead of data from the underlying file system.
-   *
-   * <p>One instance is used per {@link Document.Snapshot} so that it can be recorded which other
-   * (virtual) files are opened when parsing this document's current content.
-   */
-  static class LspVirtualFileSystem implements VirtualFileSystem {
-    private final VadlTextDocumentService textService;
-    private final Set<String> readFiles = new HashSet<>();
-
-    /**
-     * Creates a VirtualFileSystem backed by the documents data contained in the given
-     * {@code textService} and falling back to {@link VadlTextDocumentService#underlyingFileSystem}.
-     */
-    private LspVirtualFileSystem(VadlTextDocumentService textService) {
-      this.textService = textService;
-    }
-
-    @Override
-    public boolean exists(Path path) {
-      if (getDocument(path) != null) {
-        return true;
-      }
-      return textService.underlyingFileSystem.exists(path);
-    }
-
-    @Override
-    public InputStream getInputStream(Path path) throws IOException {
-      synchronized (this) {
-        readFiles.add(path.toUri().toString());
-      }
-
-      var document = getDocument(path);
-      if (document == null) {
-        return textService.underlyingFileSystem.getInputStream(path);
-      }
-
-      return new ByteArrayInputStream(document.getCurrentText().getBytes(StandardCharsets.UTF_8));
-    }
-
-    @Override
-    public Path toAbsolutePath(Path path) {
-      return textService.underlyingFileSystem.toAbsolutePath(path);
-    }
-
-    @Override
-    public Path toRelativePath(Path path) {
-      return textService.underlyingFileSystem.toRelativePath(path);
-    }
-
-    /**
-     * The URIs of all files that have been read via this virtual file system.
-     */
-    public synchronized Set<String> getReadFiles() {
-      return Set.copyOf(readFiles);
-    }
-
-    private @Nullable Document getDocument(Path path) {
-      return textService.getDocument(path.toUri().toString());
-    }
-  }
 }
