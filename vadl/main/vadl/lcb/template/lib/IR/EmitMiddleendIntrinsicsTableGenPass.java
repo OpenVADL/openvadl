@@ -46,6 +46,10 @@ import vadl.types.Type;
 import vadl.utils.SourceLocation;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.Graph;
+import vadl.viam.graph.dependency.ReadMemNode;
+import vadl.viam.graph.dependency.WriteMemNode;
+import vadl.viam.passes.SnapshotInstructionBehaviorPass;
 
 /**
  * Tablegen to generate middleend intrinsics.
@@ -68,11 +72,13 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
         (GenerateGcbIntrinsicsPass.Output) passResults
             .lastResultOf(
                 GenerateGcbIntrinsicsPass.class);
+    var snapshots =
+        (Map<Instruction, Graph>) passResults.lastResultOf(SnapshotInstructionBehaviorPass.class);
     var records = ((List<TableGenMachineInstruction>) passResults.lastResultOf(
         GenerateTableGenMachineInstructionRecordPass.class)).stream().collect(Collectors.toMap(
         TableGenMachineInstruction::instruction, x -> x));
 
-    var intrinsics = genIntrinsics(output, records);
+    var intrinsics = genIntrinsics(output, records, snapshots);
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
@@ -107,22 +113,26 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
 
   private List<Intrinsic> genIntrinsics(
       GenerateGcbIntrinsicsPass.Output output,
-      Map<Instruction, TableGenMachineInstruction> records) {
+      Map<Instruction, TableGenMachineInstruction> records,
+      Map<Instruction, Graph> snapshots) {
     var result = new ArrayList<Intrinsic>();
 
     for (var intrinsic : output.intrinsics()) {
       var instruction = intrinsic.instruction();
       var attrs = intrinsic.intrinsicAttributes();
       var record = ensureNonNull(records.get(instruction), "must not be null");
+      var snapshot = ensureNonNull(snapshots.get(instruction), "must not be null");
+      var paramTypes = record.getInOperands().stream().map(this::mapParam)
+          .filter(Optional::isPresent)
+          .map(Optional::get)
+          .collect(Collectors.toCollection(ArrayList::new));
+      pointerType(snapshot).ifPresent(pointerTy -> paramTypes.set(0, pointerTy));
 
       var lcbIntrinsic =
           new Intrinsic(
               intrinsic.intrinsicName(),
               List.of("llvm_any_ty"),
-              record.getInOperands().stream().map(this::mapParam)
-                  .filter(Optional::isPresent)
-                  .map(Optional::get)
-                  .collect(Collectors.toList()),
+              paramTypes,
               attrs);
       result.add(lcbIntrinsic);
     }
@@ -162,6 +172,18 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
 
     throw Diagnostic.error("Cannot map type: " + dataType, SourceLocation.INVALID_SOURCE_LOCATION)
         .build();
+  }
+
+  private Optional<String> pointerType(Graph snapshot) {
+    if (snapshot.getNodes(ReadMemNode.class).findFirst().isPresent()) {
+      return Optional.of("llvm_ptr_ty");
+    }
+
+    if (snapshot.getNodes(WriteMemNode.class).findFirst().isPresent()) {
+      return Optional.of("llvm_ptr_ty");
+    }
+
+    return Optional.empty();
   }
 
   @Override

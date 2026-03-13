@@ -6340,6 +6340,28 @@ Value *CodeGenFunction::Emit[(${namespace})]BuiltinExpr(unsigned BuiltinID,
     Ops.push_back(EmitScalarOrConstFoldImmArg(ICEArguments, i, E));
   }
 
+  switch (BuiltinID) {
+  [#th:block th:each="builtin : ${builtins}" ]
+  [# th:if="${builtin.writesMem}" ]
+  case [(${namespace})]::[(${builtin.builtin})]: {
+    QualType PointeeType = E->getArg(0)->getType()->getPointeeType();
+    auto *StoreAddress = Ops[0];
+    if (Ops.size() > 2) {
+      StoreAddress = Builder.CreateGEP(Builder.getInt8Ty(), StoreAddress, Ops[2]);
+    }
+
+    auto ValueType = ConvertType(PointeeType);
+    auto *StoreValue = Builder.CreateIntCast(
+        Ops[1], ValueType, E->getArg(1)->getType()->isSignedIntegerOrEnumerationType());
+    auto StoreLValue = MakeNaturalAlignPointeeAddrLValue(StoreAddress, PointeeType);
+    return Builder.CreateStore(StoreValue, StoreLValue.getAddress());
+  }
+  [/]
+  [/th:block]
+  default:
+    break;
+  }
+
   // Required for overloaded intrinsics.
   llvm::SmallVector<llvm::Type *, 2> IntrinsicTypes;
   switch (BuiltinID) {
