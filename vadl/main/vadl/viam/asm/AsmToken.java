@@ -19,8 +19,6 @@ package vadl.viam.asm;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.ast.AsmGrammarDefaultRules;
-import vadl.error.Diagnostic;
-import vadl.utils.SourceLocation;
 
 /**
  * Represents a token of the asm parser.
@@ -87,16 +85,16 @@ public class AsmToken {
 
   /**
    * Searches for the matching terminal rule in {@link AsmGrammarDefaultRules} and builds an
-   * AsmToken with the found terminal rule.
+   * AsmToken with the found terminal rule. If no terminal rule is found, return null.
    *
    * @param parseValue the value to match the terminal rule regular expression against
-   * @return the AsmToken with the inferred terminal rule
+   * @return the AsmToken with the inferred terminal rule or null if no rule could be inferred
    */
+  @Nullable
   public static AsmToken inferTerminalRule(String parseValue) {
     var inferredRule = AsmGrammarDefaultRules.getMatchingTerminalRule(parseValue);
     if (inferredRule == null) {
-      throw Diagnostic.error("Could not infer asm terminal rule for parse value: " + parseValue,
-          SourceLocation.INVALID_SOURCE_LOCATION).build();
+      return null;
     }
     return new AsmToken(inferredRule, parseValue);
   }

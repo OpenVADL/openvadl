@@ -124,10 +124,29 @@ public class AsmGrammarRuleGenerator {
   public void handle(AsmRuleContext ctx, ConstantNode node) {
     if (node.constant() instanceof Constant.Str str && !isWhitespace(str.value())) {
       var trimmedValue = str.value().trim();
-      var elem = new AsmStringLiteralUse(null, trimmedValue, StringAsmType.instance());
-      var tokens = Set.of(AsmToken.inferTerminalRule(trimmedValue));
+      var inferredRule = AsmToken.inferTerminalRule(trimmedValue);
 
-      ctx.addElementWithTokens(elem, tokens);
+      if (inferredRule != null) {
+        var elem = new AsmStringLiteralUse(null, trimmedValue, StringAsmType.instance());
+        ctx.addElementWithTokens(elem, Set.of(inferredRule));
+      } else {
+        // If no terminal rule can be inferred for a string it is likely because
+        // it consists of a combination of characters that are separate tokens.
+        // For example the string ":=" needs to be broken down to its parts ":" and "=",
+        // to be able to infer the terminal rules COLON and EQUAL.
+        for (int i = 0; i < trimmedValue.length(); i++) {
+          var partString = String.valueOf(trimmedValue.charAt(i));
+          inferredRule = AsmToken.inferTerminalRule(partString);
+          if (inferredRule == null) {
+            throw Diagnostic.error(
+                    "Assembly parser terminal rule cannot be inferred for symbol '%s'".formatted(
+                        partString), instruction.assembly())
+                .build();
+          }
+          var elem = new AsmStringLiteralUse(null, partString, StringAsmType.instance());
+          ctx.addElementWithTokens(elem, Set.of(inferredRule));
+        }
+      }
     }
   }
 
