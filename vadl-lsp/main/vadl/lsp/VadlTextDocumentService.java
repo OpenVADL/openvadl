@@ -16,7 +16,6 @@
 
 package vadl.lsp;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,8 +42,12 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vadl.ast.Frontend;
+import vadl.ast.Ast;
 import vadl.ast.LspTokenizer;
+import vadl.ast.ModelRemover;
+import vadl.ast.TypeChecker;
+import vadl.ast.Ungrouper;
+import vadl.ast.VadlParser;
 import vadl.error.Diagnostic.MsgType;
 import vadl.error.DiagnosticList;
 import vadl.utils.DiskVirtualFileSystem;
@@ -193,10 +196,10 @@ public class VadlTextDocumentService implements TextDocumentService {
       Path path = snapshot.getPath();
       var fileSystem = new LspVirtualFileSystem(this);
       try {
-        Frontend.compileToAst(path, fileSystem);
-
-      } catch (IOException e) {
-        log.error("Unexpected Exception occurred when parsing {}", snapshot.uri(), e);
+        Ast ast = VadlParser.parse(snapshot.text(), fileSystem, Map.of(), path);
+        new ModelRemover().removeModels(ast);
+        new Ungrouper().ungroup(ast);
+        new TypeChecker().verify(ast);
 
       } catch (DiagnosticList dl) {
         log.debug("Raw diagnostics ({}): {}", snapshot.uri(), dl.getMessage());
