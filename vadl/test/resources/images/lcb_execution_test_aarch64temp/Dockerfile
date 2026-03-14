@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM ghcr.io/openvadl/lcb-execution-test-aarch64-base-image@sha256:78d418708da2656805f7bac1204a1adc55f5a72f749b6d2100e275e176c816cf
 ARG TARGET
 ARG SCCACHE_REDIS_ENDPOINT
@@ -12,9 +13,10 @@ ENV LLVM_UPSTREAM_TARGETS=${UPSTREAM_BUILD_TARGET}
 ENV SCCACHE_REDIS_ENDPOINT=${SCCACHE_REDIS_ENDPOINT}
 ENV SPIKE_TARGET=${SPIKE_TARGET}
 ENV ABI=${ABI}
+ENV SCCACHE_DIR=/root/.cache/sccache
 ENV PATH=/opt/aarch64/bin:/opt/qemu/bin:$PATH
 COPY . /src
 WORKDIR /src
-RUN make && sccache -s
+RUN --mount=type=cache,target=/root/.cache/sccache make && sccache -s
 RUN mkdir /output
 CMD sh /work/compile.sh

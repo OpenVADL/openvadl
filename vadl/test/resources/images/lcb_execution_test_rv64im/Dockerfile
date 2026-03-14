@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM ghcr.io/openvadl/lcb-execution-test-rv64im-base-image@sha256:45115bb0a22747dd8d347051d2bcb5ee084f568c90afbdf71ef738b0849afb96
 ARG TARGET
 ARG SCCACHE_REDIS_ENDPOINT
@@ -12,9 +13,10 @@ ENV LLVM_UPSTREAM_TARGETS=${UPSTREAM_BUILD_TARGET}
 ENV SCCACHE_REDIS_ENDPOINT=${SCCACHE_REDIS_ENDPOINT}
 ENV SPIKE_TARGET=${SPIKE_TARGET}
 ENV ABI=${ABI}
+ENV SCCACHE_DIR=/root/.cache/sccache
 ENV PATH=/opt/riscv/bin:/opt/qemu/bin:$PATH
 COPY . /src
 WORKDIR /src
-RUN make && sccache -s
+RUN --mount=type=cache,target=/root/.cache/sccache make && sccache -s
 RUN mkdir /output
 CMD sh /work/compile.sh
