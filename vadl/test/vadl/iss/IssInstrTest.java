@@ -30,9 +30,9 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
-import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.com.google.common.collect.Streams;
 import org.testcontainers.utility.MountableFile;
+import vadl.BuildkitDockerImage;
 
 public abstract class IssInstrTest extends QemuIssTest {
 
@@ -109,7 +109,7 @@ public abstract class IssInstrTest extends QemuIssTest {
    * @param testCases the test cases passed to the container which runs the tests
    * @return the test result as DynamicTests as integration with JUnit
    */
-  protected Stream<DynamicTest> runQemuInstrTests(ImageFromDockerfile image,
+  protected Stream<DynamicTest> runQemuInstrTests(BuildkitDockerImage image,
                                                   Collection<IssTestUtils.TestCase> testCases)
       throws IOException {
 

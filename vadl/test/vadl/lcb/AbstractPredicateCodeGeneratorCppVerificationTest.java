@@ -31,7 +31,7 @@ import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import org.testcontainers.images.builder.ImageFromDockerfile;
+import vadl.BuildkitDockerImage;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.common.PredicateFunctionCodeGenerator;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
@@ -127,7 +127,7 @@ public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends 
     return output.predicates();
   }
 
-  private Pair<ImageFromDockerfile, TestSetup> setup(LcbConfiguration configuration,
+  private Pair<BuildkitDockerImage, TestSetup> setup(LcbConfiguration configuration,
                                                      String specification)
       throws IOException, DuplicatedPassKeyException {
 
@@ -147,7 +147,7 @@ public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends 
           Path.of(configuration.outputPath() + "/encoding/"));
     }
 
-    return Pair.of(new ImageFromDockerfile()
+    return Pair.of(new BuildkitDockerImage()
         .withDockerfile(Paths.get(configuration.outputPath() + "/encoding/Dockerfile")), setup);
   }
 

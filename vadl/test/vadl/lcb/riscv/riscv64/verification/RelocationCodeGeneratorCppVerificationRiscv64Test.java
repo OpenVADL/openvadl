@@ -27,7 +27,7 @@ import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import org.testcontainers.images.builder.ImageFromDockerfile;
+import vadl.BuildkitDockerImage;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.common.UpdateFieldRelocationFunctionCodeGenerator;
 import vadl.cppCodeGen.common.ValueRelocationFunctionCodeGenerator;
@@ -74,14 +74,14 @@ public class RelocationCodeGeneratorCppVerificationRiscv64Test extends AbstractL
           Path.of(configuration.outputPath() + "/encoding/"));
     }
 
-    var image = new ImageFromDockerfile()
+    var image = new BuildkitDockerImage()
         .withDockerfile(Paths.get(configuration.outputPath() + "/encoding/Dockerfile"));
 
     return generateInputs(testSetup, image, configuration.outputPath(), testSetup.specification());
   }
 
   private Collection<DynamicTest> generateInputs(TestSetup testSetup,
-                                                 ImageFromDockerfile image,
+                                                 BuildkitDockerImage image,
                                                  Path path,
                                                  Specification specification) throws IOException {
     var output = (GenerateLinkerComponentsPass.Output) testSetup.passManager().getPassResults()

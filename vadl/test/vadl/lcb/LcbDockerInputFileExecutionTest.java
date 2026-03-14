@@ -69,9 +69,8 @@ public abstract class LcbDockerInputFileExecutionTest extends LcbDockerExecution
     runLcb(configuration, specPath);
     copyIntoDockerContext(configuration);
 
-    var redisCache = getRunningRedisCache();
     var cachedImage =
-        DockerRiscvImageProvider.image(redisCache,
+        DockerRiscvImageProvider.image(
             configuration.outputPath() + "/lcb/Dockerfile",
             getImageName(),
             getTarget(),

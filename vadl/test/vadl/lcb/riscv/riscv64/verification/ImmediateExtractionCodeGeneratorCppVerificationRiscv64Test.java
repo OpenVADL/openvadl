@@ -29,7 +29,7 @@ import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import org.testcontainers.images.builder.ImageFromDockerfile;
+import vadl.BuildkitDockerImage;
 import org.testcontainers.shaded.com.google.common.collect.Streams;
 import vadl.cppCodeGen.common.GcbAccessFunctionCodeGenerator;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
@@ -65,7 +65,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationRiscv64Test extends 
           Path.of(configuration.outputPath() + "/encoding/"));
     }
 
-    var image = new ImageFromDockerfile()
+    var image = new BuildkitDockerImage()
         .withDockerfile(Paths.get(configuration.outputPath() + "/encoding/Dockerfile"));
 
     return generateInputs(testSetup, image, configuration.outputPath());
@@ -79,7 +79,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationRiscv64Test extends 
    * done in the container test with `set_bits` function.
    */
   private Collection<DynamicTest> generateInputs(TestSetup setup,
-                                                 ImageFromDockerfile image,
+                                                 BuildkitDockerImage image,
                                                  Path path) throws IOException {
     List<Pair<String, String>> copyMappings = new ArrayList<>();
     setup.specification()

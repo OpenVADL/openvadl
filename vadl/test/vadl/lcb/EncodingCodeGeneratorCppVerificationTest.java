@@ -27,7 +27,7 @@ import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import org.testcontainers.images.builder.ImageFromDockerfile;
+import vadl.BuildkitDockerImage;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.common.GcbAccessFunctionCodeGenerator;
@@ -64,7 +64,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractLcbTest {
           Path.of(configuration.outputPath() + "/encoding/"));
     }
 
-    var image = new ImageFromDockerfile()
+    var image = new BuildkitDockerImage()
         .withDockerfile(Paths.get(configuration.outputPath() + "/encoding/Dockerfile"));
 
     // Generate files and output them into the temporary directory.
@@ -72,7 +72,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractLcbTest {
   }
 
   private Collection<DynamicTest> generateInputs(TestSetup setup,
-                                                 ImageFromDockerfile image,
+                                                 BuildkitDockerImage image,
                                                  Path path) throws IOException {
     var passManager = setup.passManager();
 

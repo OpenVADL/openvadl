@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.testcontainers.images.builder.ImageFromDockerfile;
+import vadl.BuildkitDockerImage;
 import vadl.DockerExecutionTest;
 import vadl.configuration.RtlConfiguration;
 import vadl.pass.PassOrders;
@@ -30,10 +30,10 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 
 public abstract class RtlDockerTest extends DockerExecutionTest {
 
-  private static final ConcurrentHashMap<String, ImageFromDockerfile> imageCache =
+  private static final ConcurrentHashMap<String, BuildkitDockerImage> imageCache =
       new ConcurrentHashMap<>();
 
-  protected ImageFromDockerfile generateRtlImage(String specPath,
+  protected BuildkitDockerImage generateRtlImage(String specPath,
                                                  RtlConfiguration configuration) {
 
     final var cacheKey = String.valueOf(Set.of(specPath, configuration).hashCode());
@@ -51,7 +51,7 @@ public abstract class RtlDockerTest extends DockerExecutionTest {
     });
   }
 
-  private ImageFromDockerfile getImage(RtlConfiguration configuration
+  private BuildkitDockerImage getImage(RtlConfiguration configuration
   ) {
 
     // find output dir
@@ -60,10 +60,7 @@ public abstract class RtlDockerTest extends DockerExecutionTest {
       throw new IllegalStateException("RTL output path was not found (not generated?)");
     }
 
-    // Get redis cache for faster compilation using sccache
-    var redisCache = getRunningRedisCache();
-
-    var dockerImage = new ImageFromDockerfile()
+    return new BuildkitDockerImage()
         .withDockerfileFromBuilder(d -> {
               d.from(RTL_BASE_IMAGE);
 
@@ -82,9 +79,6 @@ public abstract class RtlDockerTest extends DockerExecutionTest {
         .withFileFromPath("/rtl", outputPath)
         // make scripts available to image builder
         .withFileFromClasspath("/scripts", "/scripts/rtl");
-
-    // As we have to use the same network as the redis cache, we have to build it there
-    return redisCache.setupEnv(dockerImage);
   }
 
 }

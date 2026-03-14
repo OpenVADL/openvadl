@@ -39,9 +39,8 @@ public abstract class AbstractLcbBenchmarkTest extends LcbDockerExecutionTest {
     runLcb(configuration, specPath);
     copyIntoDockerContext(configuration);
 
-    var redisCache = getRunningRedisCache();
     var cachedImage =
-        DockerRiscvImageProvider.image(redisCache,
+        DockerRiscvImageProvider.image(
             configuration.outputPath() + "/lcb/Dockerfile",
             getTarget(),
             getImageName(),
