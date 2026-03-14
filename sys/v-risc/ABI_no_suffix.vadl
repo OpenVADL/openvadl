@@ -99,7 +99,7 @@ assembly description AD for ABI = {
 
       RTypeInstruction :
         var mnemonicTmp = RTypeIds
-        ( ?(LaIdEq(3 as Bits<2>,","))
+        ( ?(LaIdEq(3,","))
           a = (
             mnemonic = mnemonicTmp @operand
             rd = Register @operand ","
@@ -121,7 +121,7 @@ assembly description AD for ABI = {
         var mnemonicTmp = ITypeIds
         var rdTmp = Reg @operand
         inst = (
-          ?(LaIdEq(1 as Bits<1>,","))
+          ?(LaIdEq(1,","))
           (
             var rs1Tmp = Reg @operand
 
@@ -163,7 +163,7 @@ assembly description AD for ABI = {
         var rdTmp = Reg @operand
         ( // normal version of instruction
           // e.g. LSRI r1, r2, 0x1
-          ?(LaIdEq(1 as Bits<1>,","))
+          ?(LaIdEq(1,","))
           a = (  
             mnemonic = mnemonicTmp @operand
             rd = rdTmp
@@ -255,7 +255,7 @@ assembly description AD for ABI = {
         var rdTmp = Reg @operand
         ( // normal version of instruction
           // e.g. SGTI r1, r2, 0x1
-          ?(LaIdEq(1 as Bits<1>,","))
+          ?(LaIdEq(1,","))
           a = (  
             mnemonic = mnemonicTmp @operand
             rd = rdTmp
