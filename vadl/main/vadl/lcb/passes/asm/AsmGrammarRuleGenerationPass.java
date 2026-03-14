@@ -17,28 +17,49 @@
 package vadl.lcb.passes.asm;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.types.BuiltInTable;
+import vadl.types.Type;
+import vadl.types.asmTypes.InstructionAsmType;
 import vadl.utils.Pair;
+import vadl.utils.SourceLocation;
 import vadl.viam.AssemblyDescription;
+import vadl.viam.Constant;
+import vadl.viam.Function;
+import vadl.viam.Identifier;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.Specification;
 import vadl.viam.annotations.AsmGenerateRulesAnno;
 import vadl.viam.asm.AsmToken;
 import vadl.viam.asm.elements.AsmAlternative;
+import vadl.viam.asm.elements.AsmAlternatives;
+import vadl.viam.asm.elements.AsmAssignToAttribute;
+import vadl.viam.asm.elements.AsmGroup;
 import vadl.viam.asm.elements.AsmRuleInvocation;
 import vadl.viam.asm.rules.AsmGrammarRule;
 import vadl.viam.asm.rules.AsmNonTerminalRule;
+import vadl.viam.graph.Graph;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.AsmBuiltInCall;
+import vadl.viam.graph.dependency.ConstantNode;
 
 /**
  * A pass that generates assembly grammar rules per instruction,
@@ -69,6 +90,8 @@ public class AsmGrammarRuleGenerationPass extends Pass {
   public PassName getName() {
     return PassName.of("AsmGrammarRuleGenerationPass");
   }
+
+  private int namingSequence = 0;
 
   @CheckForNull
   @Override
@@ -102,10 +125,12 @@ public class AsmGrammarRuleGenerationPass extends Pass {
         .filter(p -> !conflictingRules.contains(p))
         .toList();
 
+    var mergedRules = mergeOverlappingRules(nonConflictingRules);
+
     // Add invocations of the generated rules to the alternatives of the Instruction rule
     instructionRule.getAlternatives().alternatives().addAll(
-        nonConflictingRules.stream()
-            .map(r -> (AsmNonTerminalRule) r.right().builtRule)
+        mergedRules.stream()
+            .map(r -> (AsmNonTerminalRule) r)
             .map(rule -> ruleInvocationInAlternative(rule,
                 rule.getAlternatives().alternatives().getFirst()
                     .firstTokens()))
@@ -114,7 +139,7 @@ public class AsmGrammarRuleGenerationPass extends Pass {
 
     // Add the generated rules to the assembly description
     var allRules = new ArrayList<>(assemblyDescription.rules());
-    allRules.addAll(nonConflictingRules.stream().map(p -> p.right().builtRule).toList());
+    allRules.addAll(mergedRules);
     assemblyDescription.setRules(allRules);
 
     // Add the generated functions to the common definitions
@@ -221,5 +246,150 @@ public class AsmGrammarRuleGenerationPass extends Pass {
     var nonTerminal = ad.rules().stream().filter(rule -> rule.simpleName().equals(name)).findFirst()
         .orElseThrow();
     return (AsmNonTerminalRule) nonTerminal;
+  }
+
+  private List<AsmGrammarRule> mergeOverlappingRules(
+      List<Pair<PrintableInstruction, AsmRuleContext>> generated) {
+    var groupedByFirstToken =
+        new HashMap<AsmToken, List<Pair<PrintableInstruction, AsmRuleContext>>>();
+    // "ADD" -> ADD, ADD_S, ADD_L ---> "ADD" -> [ADD_S],[ADD,ADD_L]
+
+    generated.forEach(pair -> {
+      var inst = pair.left();
+      var builtCtx = pair.right();
+      if (builtCtx.firstTokens.size() != 1) {
+        throw Diagnostic.error("Instruction %s has multiple first tokens: [%s]".formatted(
+                inst.identifier().simpleName(),
+                builtCtx.firstTokens.stream().map(AsmToken::toString)
+                    .collect(Collectors.joining(","))),
+            inst.assembly()).build();
+      }
+      var token = pair.right().firstTokens.iterator().next();
+      groupedByFirstToken.putIfAbsent(token, new ArrayList<>());
+      groupedByFirstToken.get(token).add(pair);
+    });
+
+
+    var groupedByFirstTokenThenBySyntax = new HashMap<AsmToken,
+        HashMap<AsmSyntax, List<Pair<PrintableInstruction, AsmRuleContext>>>>();
+
+    groupedByFirstToken.forEach((token, pairs) -> {
+
+      var pairsGroupedBySyntax =
+          new HashMap<AsmSyntax, List<Pair<PrintableInstruction, AsmRuleContext>>>();
+
+      pairs.forEach(pair -> {
+        var syntax = syntaxOf(pair.right());
+        pairsGroupedBySyntax.putIfAbsent(syntax, new ArrayList<>());
+        pairsGroupedBySyntax.get(syntax).add(pair);
+      });
+
+      groupedByFirstTokenThenBySyntax.put(token, pairsGroupedBySyntax);
+    });
+
+    var rulesAfterMerging = new ArrayList<AsmGrammarRule>();
+
+    groupedByFirstTokenThenBySyntax.forEach((token, syntaxKinds) -> {
+
+      if (syntaxKinds.size() == 1) {
+        // TODO: Implement handling of cases where there is more than one generated instruction
+        //       per syntax kind
+        var generatedPairs = syntaxKinds.values().iterator().next();
+        if (generatedPairs.size() == 1) {
+          rulesAfterMerging.addAll(
+              generatedPairs.stream().map(pair -> pair.right().builtRule).toList());
+        }
+        return;
+      }
+
+      var sortedByTokenSetSizeDesc = syntaxKinds.entrySet().stream().sorted(
+          Comparator.comparingInt((Map.Entry<AsmSyntax, ?> e) -> e.getKey().numberOfTokenSets())
+              .reversed()).toList();
+
+      var alternatives = new ArrayList<AsmAlternative>();
+
+      for (int i = 0; i < sortedByTokenSetSizeDesc.size() - 1; i++) {
+        var currentKind = sortedByTokenSetSizeDesc.get(i);
+        var nextKind = sortedByTokenSetSizeDesc.get(i + 1);
+
+        var nonOverlapIndex = currentKind.getKey().firstNonOverlappingIndex(nextKind.getKey());
+        var nonOverlapTokens = currentKind.getKey().getTokenSets().get(nonOverlapIndex);
+
+        var laIdInArgs = nonOverlapTokens.stream().map(AsmToken::getStringLiteral)
+            .filter(Objects::nonNull).toList();
+
+        var semPredFunction = buildSemPredFunction(nonOverlapIndex - 1, laIdInArgs);
+
+        // TODO: Implement handling of cases where there is more than one generated instruction
+        //       per syntax kind
+        var builtRuleAlternative = ((AsmNonTerminalRule) currentKind.getValue().getFirst()
+            .right().builtRule).getAlternatives().alternatives().getFirst();
+
+        alternatives.add(
+            wrapInGroupWithCastToInstructionAsmType(builtRuleAlternative, semPredFunction));
+      }
+
+      // add last alternative without semantic predicate
+      var lastKind = sortedByTokenSetSizeDesc.getLast();
+      var lastBuiltAlternative =
+          ((AsmNonTerminalRule) lastKind.getValue().getFirst().right().builtRule).getAlternatives()
+              .alternatives().getFirst();
+
+      alternatives.add(wrapInGroupWithCastToInstructionAsmType(lastBuiltAlternative, null));
+
+
+      rulesAfterMerging.add(buildRuleWithMergedAlternatives(token, alternatives));
+    });
+
+    return rulesAfterMerging;
+  }
+
+  private AsmAlternative wrapInGroupWithCastToInstructionAsmType(AsmAlternative alternative,
+                                                                 @Nullable
+                                                                 Function semPredFunction) {
+    var group = new AsmGroup(
+        new AsmAssignToAttribute("inst", false),
+        new AsmAlternatives(List.of(alternative), alternative.asmType()),
+        false,
+        InstructionAsmType.instance()
+    );
+    return new AsmAlternative(semPredFunction, alternative.firstTokens(),
+        InstructionAsmType.instance(), false, List.of(group));
+  }
+
+  private AsmGrammarRule buildRuleWithMergedAlternatives(AsmToken firstToken,
+                                                         List<AsmAlternative> alternatives) {
+    return new AsmNonTerminalRule(
+        Identifier.noLocation(firstToken.getStringLiteral() + "_MERGED_RULE"),
+        new AsmAlternatives(alternatives, InstructionAsmType.instance()),
+        InstructionAsmType.instance(),
+        SourceLocation.INVALID_SOURCE_LOCATION
+    );
+  }
+
+  private Function buildSemPredFunction(int lookupIndex, List<String> args) {
+    var indexNode = new ConstantNode(
+        Constant.Value.fromInteger(BigInteger.valueOf(lookupIndex), Type.unsignedInt(64)));
+    var argNodes = Stream.concat(
+        Stream.of(indexNode),
+        args.stream().map(arg -> new ConstantNode(new Constant.Str(arg)))
+    ).toList();
+
+    var builtinCallNode =
+        new AsmBuiltInCall(BuiltInTable.LA_ID_IN, new NodeList<>(argNodes), Type.bool());
+
+    var graph = new Graph("generated_sem_pred_behavior" + namingSequence++);
+    graph.addWithInputs(new ReturnNode(builtinCallNode));
+
+    return new Function(Identifier.noLocation("sem_pred_" + namingSequence++),
+        new vadl.viam.Parameter[0], Type.bool(), graph);
+  }
+
+  private AsmSyntax syntaxOf(AsmRuleContext ctx) {
+    List<Set<AsmToken>> tokenSets = ctx.elements.stream()
+        .map(Pair::right)
+        .filter(set -> !set.isEmpty())
+        .toList();
+    return new AsmSyntax(tokenSets);
   }
 }
