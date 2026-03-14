@@ -94,7 +94,10 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
       List<TableGenPattern> patterns,
       Abi abi) {
     var storesWithoutImmediates = createStoreFromsWithoutImmediate(patterns);
-    var truncStores = createSuperRegisterTruncStores(patterns);
+
+    var allPatterns = new ArrayList<>(storesWithoutImmediates);
+    allPatterns.addAll(patterns);
+    var truncStores = createSuperRegisterTruncStores(allPatterns);
     
     var variations = new ArrayList<>(storesWithoutImmediates);
     variations.addAll(truncStores);
@@ -139,7 +142,51 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
   private Optional<TableGenPattern> createTruncStoreFromSubRegTruncStore(
     TableGenSelectionWithOutputPattern pattern
   ) {
-    return Optional.empty();
+    var selector = pattern.selector().copy();
+  
+    var storeNodeOpt = selector
+      .getNodes(LlvmTruncStore.class)
+      .filter(sn -> sn.value() instanceof LlvmReadArtificialResourceNode)
+      .findFirst();
+    if(storeNodeOpt.isEmpty()) {
+      return Optional.empty();
+    }
+
+    // selector pattern
+    var storeNode = storeNodeOpt.get();
+    var subregNode = (LlvmReadArtificialResourceNode) storeNode.value();
+    var subregOperand = (GcbDefaultInstructionOperand) subregNode.operand();
+    // TODO
+    var fieldRef = (FieldRefNode) subregNode.inputs().findFirst().get();
+    var baseReg = subregNode.getBaseTensor();
+    // TODO
+    var readBaseRegNode = (ReadRegTensorNode) new LlvmReadResourceFactory().create(
+        baseReg, fieldRef, baseReg.type().asDataType(), null);
+    subregNode.replaceAndDelete(readBaseRegNode);
+
+    // machine pattern
+    var machine = pattern.machine().copy();
+
+    String subRegIndexName = CompilerRegister.SubRegIndexEnum.SUB_32.name();
+    if(subregNode.type().bitWidth() == 64) {
+      subRegIndexName = CompilerRegister.SubRegIndexEnum.FULL_64.name();
+    }
+
+    var machineRegisterNode = machine
+      .getNodes(LcbMachineInstructionParameterNode.class)
+      .filter(x -> x.instructionOperand() instanceof GcbInstructionRegisterFileOperand)
+      .filter(x -> ((GcbInstructionRegisterFileOperand) x.instructionOperand()).name().equals(subregOperand.name()))
+      .findFirst()
+      .get();
+    var superMachineRegisterNode = new LcbMachineInstructionParameterNode(
+      new GcbInstructionRegisterFileOperand(readBaseRegNode, fieldRef.formatField())
+    );
+    var extractSubRegNode = new LcbMachineInstructionNode(
+        new NodeList<>(superMachineRegisterNode, new ConstantNode(new Constant.Str(subRegIndexName))), 
+        new OutputInstructionName("EXTRACT_SUBREG"));
+    machineRegisterNode.replaceAndDelete(extractSubRegNode);
+
+    return Optional.of(new TableGenSelectionWithOutputPattern(selector, machine));
   }
 
   private Optional<TableGenPattern> createTruncStoreFromSubRegStore(
@@ -151,13 +198,15 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
 
       var storeNodeOpt = selector
         .getNodes(LlvmStoreSD.class)
-        .findFirst()
-        .filter(sn -> sn.value() instanceof LlvmReadArtificialResourceNode);
+        // TODO this conditions should be ok, as we are only interested in stores
+        // using subregisters, which are always artifical-resources ?
+        .filter(sn -> sn.value() instanceof LlvmReadArtificialResourceNode)
+        .findFirst();
       if(storeNodeOpt.isEmpty()) {
         return Optional.empty();
       }
 
-      // selector
+      // selector pattern
       var storeNode = storeNodeOpt.get();
       var subregNode = (LlvmReadArtificialResourceNode) storeNode.value();
       var subregOperand = (GcbDefaultInstructionOperand) subregNode.operand();
@@ -177,8 +226,7 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
         truncateNode);
       storeNode.replaceAndDelete(truncStoreNode);
 
-      // machine
-      // TODO the base reg can be x levels above the subreg
+      // machine pattern
       var machine = pattern.machine().copy();
 
       String subRegIndexName = CompilerRegister.SubRegIndexEnum.SUB_32.name();
