@@ -206,7 +206,7 @@ static BrokerSHMRingBuffer *shm_ring_buffer;
 
 static bool prev_was_mem = false;
 
-inline static void increment_count(void) {
+inline static void commit_shm_write(void) {
   pthread_mutex_lock(&shm_ring_buffer->rb_mutex.mutex);
   shm_ring_buffer->write_idx += 1;
   shm_ring_buffer->count += 1;
@@ -314,48 +314,45 @@ static BrokerSHMRingBuffer *connect_to_broker_data(void) {
   return shm_ring_buffer;
 }
 
-static TBInsnInfo get_tbinsn_info(struct qemu_plugin_insn *insn) {
-  TBInsnInfo insn_info = {0};
-  insn_info.pc = qemu_plugin_insn_vaddr(insn);
-  insn_info.size = qemu_plugin_insn_size(insn);
+static void get_tbinsn_info(struct qemu_plugin_insn *insn,
+                            TBInsnInfo *insn_info) {
+  insn_info->pc = qemu_plugin_insn_vaddr(insn);
+  insn_info->size = qemu_plugin_insn_size(insn);
 
   const char *insn_symbol = qemu_plugin_insn_symbol(insn);
   if (insn_symbol != NULL) {
-    strncpy(insn_info.symbol.value, insn_symbol, SHMSTRING_MAX_LEN - 1);
-    insn_info.symbol.len = strlen(insn_info.symbol.value);
+    strncpy(insn_info->symbol.value, insn_symbol, SHMSTRING_MAX_LEN - 1);
+    insn_info->symbol.len = strlen(insn_info->symbol.value);
   }
 
   void *insn_hwaddr = qemu_plugin_insn_haddr(insn);
   if (insn_hwaddr != NULL) {
     char *hwaddrfmt = g_strdup_printf("%p", insn_hwaddr);
-    strncpy(insn_info.hwaddr.value, hwaddrfmt, SHMSTRING_MAX_LEN - 1);
-    insn_info.hwaddr.len = strlen(insn_info.hwaddr.value);
+    strncpy(insn_info->hwaddr.value, hwaddrfmt, SHMSTRING_MAX_LEN - 1);
+    insn_info->hwaddr.len = strlen(insn_info->hwaddr.value);
   }
 
   char *insn_disas = qemu_plugin_insn_disas(insn);
   if (insn_disas != NULL) {
-    strncpy(insn_info.disas.value, insn_disas, SHMSTRING_MAX_LEN - 1);
-    insn_info.disas.len = strlen(insn_info.disas.value);
+    strncpy(insn_info->disas.value, insn_disas, SHMSTRING_MAX_LEN - 1);
+    insn_info->disas.len = strlen(insn_info->disas.value);
   }
 
-  insn_info.data.size = qemu_plugin_insn_size(insn);
-  PLUGIN_ASSERT(insn_info.data.size <= MAX_INSN_DATA_SIZE,
+  insn_info->data.size = qemu_plugin_insn_size(insn);
+  PLUGIN_ASSERT(insn_info->data.size <= MAX_INSN_DATA_SIZE,
                 "Some instruction-data had a larger size than configured in "
                 "MAX_INSN_DATA_SIZE: %lu > %d",
-                insn_info.data.size, MAX_INSN_DATA_SIZE);
+                insn_info->data.size, MAX_INSN_DATA_SIZE);
 
-  qemu_plugin_insn_data(insn, &insn_info.data.buffer,
-                        sizeof(insn_info.data.buffer));
-
-  return insn_info;
+  qemu_plugin_insn_data(insn, &insn_info->data.buffer,
+                        sizeof(insn_info->data.buffer));
 }
 
-static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
+static void get_tb_info(struct qemu_plugin_tb *tb, TBInfo *tb_info) {
   uint64_t pc = qemu_plugin_tb_vaddr(tb);
   size_t insns = qemu_plugin_tb_n_insns(tb);
 
-  TBInfo tbinfo = {0};
-  tbinfo.pc = pc;
+  tb_info->pc = pc;
 
   PLUGIN_ASSERT(insns <= TBINSNINFO_ENTRIES,
                 "Too many instructions in a single translation-block: %lu > %d",
@@ -363,12 +360,10 @@ static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
   for (int i = 0; i < insns; i++) {
     struct qemu_plugin_insn *insn = qemu_plugin_tb_get_insn(tb, i);
     PLUGIN_ASSERT(insn != NULL, "insn must not be null: %d", i);
-    tbinfo.insns_info[i] = get_tbinsn_info(insn);
+    get_tbinsn_info(insn, &tb_info->insns_info[i]);
   }
 
-  tbinfo.insns_info_size = insns;
-
-  return tbinfo;
+  tb_info->insns_info_size = insns;
 }
 
 // static BrokerSHMData combined_mem_data = {0};
@@ -401,7 +396,7 @@ inline static BrokerSHMData *get_next_data(void) {
 static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
   if (prev_was_mem) {
     wait_until_write_available();
-    increment_count();
+    commit_shm_write();
     prev_was_mem = false;
   }
 
@@ -420,7 +415,7 @@ static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
   shm->shm_insn.init_mask |= (1 << cpu_index);
   shm->shm_insn.insn_info = *tbinsn_info;
 
-  increment_count();
+  commit_shm_write();
 
   // ringbuf_write(shm);
 
@@ -433,7 +428,6 @@ inline static bool is_consecutive_memory_region(uint64_t addr1,
                                                 uint64_t addr2) {
   return addr1 + (1 << addr1_size) == addr2;
 }
-
 
 static void vcpu_mem_cb(unsigned int cpu_index, qemu_plugin_meminfo_t info,
                         uint64_t vaddr, void *udata) {
@@ -455,9 +449,9 @@ static void vcpu_mem_cb(unsigned int cpu_index, qemu_plugin_meminfo_t info,
     shm->shm_insn.mem_access_info.size = data.type;
     memcpy(&shm->shm_insn.mem_access_info.data, &data.data, 1 << data.type);
     shm->shm_insn.insn_info = *tbinsn_info;
-  } else if (is_consecutive_memory_region(
-                 shm->shm_insn.mem_access_info.vaddr,
-                 shm->shm_insn.mem_access_info.size, vaddr)) {
+  } else if (is_consecutive_memory_region(shm->shm_insn.mem_access_info.vaddr,
+                                          shm->shm_insn.mem_access_info.size,
+                                          vaddr)) {
     qemu_plugin_mem_value data = qemu_plugin_mem_get_value(info);
 
     // NOTE: only consecutive memory access of the same size is supported
@@ -465,19 +459,18 @@ static void vcpu_mem_cb(unsigned int cpu_index, qemu_plugin_meminfo_t info,
     //       This also means that e.g. 4 1byte accesses cannot currently be
     //       grouped by this analysis
     if (data.type != shm->shm_insn.mem_access_info.size) {
-      increment_count();
+      commit_shm_write();
       prev_was_mem = false;
       vcpu_mem_cb(cpu_index, info, vaddr, udata);
       return;
     }
 
-    uint8_t data_offset =
-        (1 << shm->shm_insn.mem_access_info.size);
-    memcpy(shm->shm_insn.mem_access_info.data + data_offset,
-           &data.data, 1 << data.type);
+    uint8_t data_offset = (1 << shm->shm_insn.mem_access_info.size);
+    memcpy(shm->shm_insn.mem_access_info.data + data_offset, &data.data,
+           1 << data.type);
     shm->shm_insn.mem_access_info.size++;
   } else {
-    increment_count();
+    commit_shm_write();
     prev_was_mem = false;
     vcpu_mem_cb(cpu_index, info, vaddr, udata);
   }
@@ -518,7 +511,7 @@ static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
     tb_info_collect.pc = 0;
     tb_info_collect.insns_info_size = 0;
 
-    increment_count();
+    commit_shm_write();
 
     // ringbuf_write(shm);
   }
@@ -530,7 +523,7 @@ static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
 static void vcpu_tb_trans(qemu_plugin_id_t id, struct qemu_plugin_tb *tb) {
   if (args.mode == TB_MODE) {
     TBInfo *tbinfo = g_new0(TBInfo, 1);
-    *tbinfo = get_tb_info(tb);
+    get_tb_info(tb, tbinfo);
     qemu_plugin_register_vcpu_tb_exec_cb(tb, vcpu_tb_exec,
                                          QEMU_PLUGIN_CB_R_REGS, tbinfo);
   } else if (args.mode == INSN_MODE) {
@@ -538,7 +531,7 @@ static void vcpu_tb_trans(qemu_plugin_id_t id, struct qemu_plugin_tb *tb) {
     for (int i = 0; i < insns; i++) {
       struct qemu_plugin_insn *insn = qemu_plugin_tb_get_insn(tb, i);
       TBInsnInfo *tbinsn_info = g_new0(TBInsnInfo, 1);
-      *tbinsn_info = get_tbinsn_info(insn);
+      get_tbinsn_info(insn, tbinsn_info);
       qemu_plugin_register_vcpu_insn_exec_cb(
           insn, vcpu_insn_exec, QEMU_PLUGIN_CB_R_REGS, tbinsn_info);
 
