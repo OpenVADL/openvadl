@@ -63,7 +63,7 @@ pub struct DiffContextClient {
     pub client_run_count: u64,
     pub before_state: DiffContextClientState,
     pub error_instruction: DiffContextClientInstructions,
-    pub after_state: DiffContextClientState,
+    pub after_state: Option<DiffContextClientState>,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -123,7 +123,24 @@ impl DiffEntry {
 }
 
 impl DiffContextClient {
-    pub fn new<T: Into<DiffContextClientState>>(
+    pub fn new_without_after_state<T: Into<DiffContextClientState>>(
+        client_id: String,
+        client_name: Option<String>,
+        client_run_count: u64,
+        before_state: T,
+        error_instruction: DiffContextClientInstructions,
+    ) -> Self {
+        Self {
+            client_id,
+            client_name,
+            client_run_count,
+            before_state: before_state.into(),
+            error_instruction,
+            after_state: None,
+        }
+    }
+
+    pub fn new_with_after_state<T: Into<DiffContextClientState>>(
         client_id: String,
         client_name: Option<String>,
         client_run_count: u64,
@@ -137,7 +154,7 @@ impl DiffContextClient {
             client_run_count,
             before_state: before_state.into(),
             error_instruction,
-            after_state: after_state.into(),
+            after_state: Some(after_state.into()),
         }
     }
 }

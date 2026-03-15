@@ -1,14 +1,13 @@
-use std::{
-    mem::{self},
-    sync::atomic::{AtomicBool, AtomicUsize, Ordering},
-    time::Duration,
-};
+use std::{mem, time::Duration};
 
-use color_eyre::{eyre::bail, Result};
+use color_eyre::{Result, eyre::bail};
 use serde::{Serialize, ser::SerializeStruct};
-use tracing::{debug, warn};
+use tracing::debug;
 
-use crate::{config::{Config, Endian}, ipc::sem::Semaphore};
+use crate::{
+    config::{Config, Endian},
+    ipc::sem::Semaphore,
+};
 
 pub const SHMSTRING_MAX_LEN: usize = 256;
 pub const TBINSNINFO_ENTRIES: usize = 64;
@@ -97,11 +96,11 @@ impl SHMRegister {
             Endian::Little => {
                 buf[..self.size as usize].copy_from_slice(self.data_slice());
                 u64::from_le_bytes(buf)
-            },
+            }
             Endian::Big => {
                 buf[BUF_LEN - self.size as usize..].copy_from_slice(self.data_slice());
                 u64::from_be_bytes(buf)
-            },
+            }
         }
     }
 }
@@ -434,7 +433,12 @@ impl MemAccessInfo {
     const BUF_LEN: usize = 16;
 
     pub fn new(size: u8, data: [u8; Self::BUF_LEN], vaddr: u64, is_store: bool) -> Self {
-        Self { size, data, vaddr, is_store }
+        Self {
+            size,
+            data,
+            vaddr,
+            is_store,
+        }
     }
 
     pub fn data_slice(&self) -> &[u8] {
@@ -461,13 +465,13 @@ impl MemAccessInfo {
         let source_slice = self.data_slice();
         match endian {
             Endian::Little => {
-                buf[..source_slice.len() as usize].copy_from_slice(source_slice);
+                buf[..source_slice.len()].copy_from_slice(source_slice);
                 u128::from_le_bytes(buf)
-            },
+            }
             Endian::Big => {
-                buf[Self::BUF_LEN - source_slice.len() as usize..].copy_from_slice(source_slice);
+                buf[Self::BUF_LEN - source_slice.len()..].copy_from_slice(source_slice);
                 u128::from_be_bytes(buf)
-            },
+            }
         }
     }
 }
@@ -493,9 +497,9 @@ pub struct BrokerSHMRingBuffer<const SIZE: usize> {
     pub data: [BrokerSHMData; SIZE],
     pub read_idx: usize,
     pub write_idx: usize,
-    pub count: AtomicUsize,
-    pub write_end: AtomicBool,
-    pub notifier: Semaphore,
+    pub count: usize,
+    pub write_end: bool,
+    pub rb_mutex: Semaphore,
 }
 
 impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
@@ -507,9 +511,9 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
         self.data = unsafe { mem::zeroed() };
         self.read_idx = 0;
         self.write_idx = 0;
-        self.count = AtomicUsize::new(0);
-        self.write_end = AtomicBool::new(false);
-        self.notifier = Semaphore::create()?;
+        self.count = 0;
+        self.write_end = false;
+        self.rb_mutex = Semaphore::create()?;
         Ok(())
     }
 
@@ -534,37 +538,36 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
     /// NOTE: `end_read` has to be called once the reference is not needed anymore to free the
     /// index in the ringbuffer for new writes.
     pub fn start_read(&mut self) -> Result<Option<&BrokerSHMData>> {
-        if self.count.load(Ordering::SeqCst) == 0 {
-            let count_ref = &self.count;
-            let write_end_ref = &self.write_end;
-            let cond =
-                || write_end_ref.load(Ordering::SeqCst) || count_ref.load(Ordering::SeqCst) > 0;
-            let res = self.notifier.timedwait(Duration::from_millis(1000), cond);
-            match res {
-                Ok(res) => match res {
-                    crate::ipc::sem::TimedWaitState::Timeout => {
-                        if cond() {
-                            warn!("A timeout occurred while waiting for a qemu-client but the client did respond. This means a race-condition similar to https://stackoverflow.com/a/36130475 occurred. This scenario is handled such that the cosimulation still works correctly.");
+        // NOTE: Using manual pointer dereferencing seems to be necessary here since otherwise, due
+        // to the move semantics (usize and bool implementing Copy), rust only copies the initial
+        // value into the closure, which is not wanted. Using this unsafe deref ensures that always
+        // the current value is read - which is safe in this case because the read is guarded
+        // behind a mutex.
+        let wref = &self.write_end as *const _;
+        let cref = &self.count as *const _;
+        let waitres = self
+            .rb_mutex
+            .timedwait(Duration::from_secs(1), || unsafe { *wref || *cref > 0usize });
 
-                            return self.start_read();
-                        }
-
-                        bail!(
-                            "Failed to wait for a response from a qemu client. Please refer to the logs for more information."
-                        );
-                    }
-                    crate::ipc::sem::TimedWaitState::Success => {
-                        // If we successfully got a "response" from the writer, but the count is
-                        // still zero, then that means that the response was a write-end message.
-                        // Meaning all data was already read
-                        if self.count.load(Ordering::SeqCst) == 0 {
-                            return Ok(None);
-                        }
-                    }
-                },
-                Err(err) => {
-                    return Err(err);
+        match waitres {
+            Ok(res) => match res {
+                crate::ipc::sem::TimedWaitState::Timeout => {
+                    bail!(
+                        "Failed to wait for a response from a qemu client. Note that a timeout should *not* mean that the client crashed - it is more likely that the client is in an endless loop or that the cosimulator has a bug. If the test failure is noat repeatable, then it is most likely a cosimulator bug! Please refer to the logs for more information."
+                    );
                 }
+                crate::ipc::sem::TimedWaitState::Success => {
+                    // If we successfully got a "response" from the writer, but the count is
+                    // still zero, then that means that the response was a write-end message.
+                    // Meaning all data was already read
+                    if self.count == 0 {
+                        self.rb_mutex.unlock()?;
+                        return Ok(None);
+                    }
+                }
+            },
+            Err(err) => {
+                return Err(err);
             }
         }
 
@@ -572,6 +575,11 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
         let elem = &self.data[idx];
 
         Ok(Some(elem))
+    }
+
+    pub const fn read_this(&self) -> &BrokerSHMData {
+        let idx = self.ring_idx(self.read_idx);
+        &self.data[idx]
     }
 
     // NOTE: to ensure that the previous entry is still valid (i.e. not a new value) the function
@@ -584,9 +592,11 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
         &self.data[idx]
     }
 
-    pub fn end_read(&mut self) {
+    pub fn end_read(&mut self) -> Result<()> {
         self.read_idx += 1;
-        let _ = self.notifier.post();
-        self.count.fetch_sub(1, Ordering::SeqCst);
+        self.count -= 1;
+        self.rb_mutex.unlock()?;
+        self.rb_mutex.signal()?;
+        Ok(())
     }
 }

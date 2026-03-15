@@ -177,9 +177,9 @@ typedef struct {
   BrokerSHMData data[RING_BUFFER_SIZE];
   size_t read_idx;
   size_t write_idx;
-  atomic_size_t count;
-  atomic_bool write_end;
-  Semaphore notifier;
+  size_t count;
+  bool write_end;
+  Semaphore rb_mutex;
 } BrokerSHMRingBuffer;
 
 typedef enum {
@@ -204,25 +204,20 @@ static BrokerSHMRingBuffer *shm_ring_buffer;
 #define ringbuf_idx(idx) ((idx) & RING_BUFFER_MASK)
 
 static void ringbuf_write(BrokerSHMData data) {
-  size_t count = atomic_load(&shm_ring_buffer->count);
+  pthread_mutex_lock(&shm_ring_buffer->rb_mutex.mutex);
 
-  // The buffer keeps the previous value in reserve in case a diff-context needs
-  // to be built.
-  if (count == RING_BUFFER_SIZE - 1) {
-    pthread_mutex_lock(&shm_ring_buffer->notifier.mutex);
-    while (atomic_load(&shm_ring_buffer->count) == RING_BUFFER_SIZE - 1) {
-      pthread_cond_wait(&shm_ring_buffer->notifier.cvar,
-                        &shm_ring_buffer->notifier.mutex);
-    }
-    pthread_mutex_unlock(&shm_ring_buffer->notifier.mutex);
+  while (shm_ring_buffer->count == RING_BUFFER_SIZE - 1) {
+    pthread_cond_wait(&shm_ring_buffer->rb_mutex.cvar,
+                      &shm_ring_buffer->rb_mutex.mutex);
   }
 
   shm_ring_buffer->data[ringbuf_idx(shm_ring_buffer->write_idx)] = data;
   shm_ring_buffer->write_idx++;
 
-  atomic_fetch_add(&shm_ring_buffer->count, 1);
+  shm_ring_buffer->count += 1;
 
-  pthread_cond_signal(&shm_ring_buffer->notifier.cvar);
+  pthread_cond_signal(&shm_ring_buffer->rb_mutex.cvar);
+  pthread_mutex_unlock(&shm_ring_buffer->rb_mutex.mutex);
 }
 
 static CPU *get_cpu(int vcpu_index) {
@@ -290,8 +285,11 @@ static SHMCPU get_cpu_state(unsigned int cpu_index) {
 
 static void plugin_exit(qemu_plugin_id_t id, void *p) {
   PLUGIN_PRINTLN("plugin_exit");
-  atomic_store(&shm_ring_buffer->write_end, true);
-  pthread_cond_broadcast(&shm_ring_buffer->notifier.cvar);
+
+  pthread_mutex_lock(&shm_ring_buffer->rb_mutex.mutex);
+  shm_ring_buffer->write_end = true;
+  pthread_cond_signal(&shm_ring_buffer->rb_mutex.cvar);
+  pthread_mutex_unlock(&shm_ring_buffer->rb_mutex.mutex);
 }
 
 // Connects to the broker by accessing the assigned shared memory
@@ -451,11 +449,12 @@ static void vcpu_mem_cb(unsigned int cpu_index, qemu_plugin_meminfo_t info,
                  combined_mem_data.shm_insn.mem_access_info.vaddr,
                  combined_mem_data.shm_insn.mem_access_info.size, vaddr)) {
     qemu_plugin_mem_value data = qemu_plugin_mem_get_value(info);
-    
+
     // NOTE: only consecutive memory access of the same size is supported
     //       because the size has to be a power of two
-    //       This also means that e.g. 4 1byte accesses cannot currently be grouped by this analysis
-    if(data.type != combined_mem_data.shm_insn.mem_access_info.size){
+    //       This also means that e.g. 4 1byte accesses cannot currently be
+    //       grouped by this analysis
+    if (data.type != combined_mem_data.shm_insn.mem_access_info.size) {
       write_combined_mem_data();
       vcpu_mem_cb(cpu_index, info, vaddr, udata);
       return;

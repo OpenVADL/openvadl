@@ -102,7 +102,7 @@ fn main() -> Result<()> {
     let obj_test_file = object::File::parse(&*obj_test_file_data)?;
 
     if let Some(exit_on_exec) = &config.testing.exit_condition.on_label {
-        let addr = parse_exit_on_exec_argument(&exit_on_exec, &obj_test_file, obj_test_file_name)?;
+        let addr = parse_exit_on_exec_argument(exit_on_exec, &obj_test_file, obj_test_file_name)?;
         config.testing.exit_condition.on_address = Some(addr);
     }
 
@@ -191,7 +191,10 @@ fn run(config: Config) -> Result<()> {
 
 fn add_plain_report_summary(buf: &mut String, report: &Report) {
     buf.push_str("Cosimulation failed!\n");
-    let pc = report.diff_context[0].after_state.pc;
+    let pc = match &report.diff_context[0].after_state {
+        Some(s) => s.pc,
+        None => report.diff_context[0].before_state.pc
+    };
     buf.push_str(&format!("Failure at pc = 0x{pc:02X?} ({pc})\n\n"));
 
     buf.push_str("The following divergences were found:\n");
@@ -247,7 +250,7 @@ fn parse_exit_on_write_argument(
             Ok((dest_addr as u64, None))
         }
         [dest_addr_or_symbol, write_value] => {
-            let dest_addr = parse_address_or_symbol(*dest_addr_or_symbol, elf, elf_name)?;
+            let dest_addr = parse_address_or_symbol(dest_addr_or_symbol, elf, elf_name)?;
             let Some(write_addr) = parse_address(write_value) else {
                 bail!("expected valid write address");
             };
@@ -273,7 +276,7 @@ fn parse_address_or_symbol(input: &str, elf: &object::File<'_>, elf_name: &str) 
     if let Some(address) = parse_address(input) {
         address
     } else {
-        let Some(label_address) = get_address_of_symbol(&input, &elf) else {
+        let Some(label_address) = get_address_of_symbol(input, elf) else {
             bail!("could not find label {} in {}", input, elf_name,);
         };
         Ok(label_address as u128)
