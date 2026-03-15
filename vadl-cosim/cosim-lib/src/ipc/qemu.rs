@@ -1,12 +1,14 @@
 use std::{
-    fs::File, path::PathBuf, process::{Child, Command, Stdio}
+    fs::File,
+    path::PathBuf,
+    process::{Child, Command, Stdio},
 };
 
 use color_eyre::{Result, eyre::Context};
 use tracing::info;
 
 use crate::{
-    config::Config,
+    config::{self, Config},
     ipc::{cstructs::BrokerSHMRingBuffer, shm::SharedMemory},
 };
 
@@ -113,8 +115,17 @@ impl Client {
         let mut client_stderr = None;
 
         if config.logging.enable {
-            let stdout_path = config.logging.dir.join(format!("client-{client_id}-stdout.log"));
-            let stderr_path = config.logging.dir.join(format!("client-{client_id}-stderr.log"));
+            let stdout_path = config
+                .logging
+                .dir
+                .join(format!("client-{client_id}-stdout"))
+                .with_extension(config::COSIM_LOG_EXTENSION);
+
+            let stderr_path = config
+                .logging
+                .dir
+                .join(format!("client-{client_id}-stderr"))
+                .with_extension(config::COSIM_LOG_EXTENSION);
 
             client_stdout = Some(stdout_path.clone());
             client_stderr = Some(stderr_path.clone());
@@ -126,9 +137,7 @@ impl Client {
                 .stdout(stdout_file.try_clone()?)
                 .stderr(stderr_file.try_clone()?);
         } else {
-            client_process
-                .stdout(Stdio::null())
-                .stderr(Stdio::null());
+            client_process.stdout(Stdio::null()).stderr(Stdio::null());
         }
 
         let client_process = client_process.spawn().wrap_err_with(|| {

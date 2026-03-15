@@ -5,6 +5,8 @@ use serde::{
     de::{Unexpected, Visitor, value::SeqAccessDeserializer},
 };
 
+pub const COSIM_LOG_EXTENSION: &str = "cosim-log";
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
     pub qemu: Qemu,

@@ -257,7 +257,9 @@ level = "debug"
 
 # The directory will also contain files for the stdout and stderr of each client
 dir = "./cosim-run/log"
-file = "cosim.log"
+
+# NOTE: The broker will always set a predefined extension for all log-files.
+file = "cosim"
 
 # Clears the logfile every time the program is run
 clear_on_rerun = true

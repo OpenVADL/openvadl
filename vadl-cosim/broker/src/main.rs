@@ -17,7 +17,11 @@ use figment::{
 use object::{Object, ObjectSymbol};
 use tracing::{Level, info};
 
-use cosim_lib::{config::Config, cosim::Broker, diff::Report};
+use cosim_lib::{
+    config::{self, Config},
+    cosim::Broker,
+    diff::Report,
+};
 
 #[cfg(feature = "sqlite-tracing")]
 use cosim_lib::db::setup_database;
@@ -144,13 +148,18 @@ fn main() -> Result<()> {
             fs::create_dir_all(&config.logging.dir)?;
         }
 
+        // ensure the logfile has an appropriate extension
+        if let Some(ref mut logfile) = config.logging.file {
+            logfile.set_extension(config::COSIM_LOG_EXTENSION);
+        }
+
         if config.logging.clear_on_rerun {
             // NOTE: This deliberately does not delete the whole directory in case the path is
             // wrong!
             for entry in fs::read_dir(&config.logging.dir)? {
                 let path = entry?.path();
                 if let Some(extension) = path.extension()
-                    && extension == OsStr::new("log")
+                    && extension == OsStr::new(config::COSIM_LOG_EXTENSION)
                 {
                     fs::remove_file(path)?;
                 }
