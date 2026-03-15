@@ -366,18 +366,6 @@ static void get_tb_info(struct qemu_plugin_tb *tb, TBInfo *tb_info) {
   tb_info->insns_info_size = insns;
 }
 
-// static BrokerSHMData combined_mem_data = {0};
-
-// inline static void clear_combined_mem_data(void) {
-//   combined_mem_data = (const BrokerSHMData){0};
-// }
-
-// inline static void write_combined_mem_data(void) {
-//   // ringbuf_write(combined_mem_data);
-//   increment_count();
-//   clear_combined_mem_data();
-// }
-
 inline static void wait_until_write_available(void) {
   pthread_mutex_lock(&shm_ring_buffer->rb_mutex.mutex);
 
@@ -510,6 +498,7 @@ static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
 
     tb_info_collect.pc = 0;
     tb_info_collect.insns_info_size = 0;
+    insns_sum_collect = 0;
 
     commit_shm_write();
 
