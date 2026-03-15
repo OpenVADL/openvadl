@@ -216,6 +216,8 @@ interface DefinitionVisitor<R> {
 
   R visit(StageDefinition definition);
 
+  R visit(SyscallDefinition definition);
+
   R visit(UmeSequenceDefinition definition);
 
   R visit(UserModeEmulationDefinition definition);
@@ -2138,6 +2140,135 @@ class AliasDefinition extends Definition implements IdentifiableNode, TypedNode 
 
   enum AliasKind {
     REGISTER, PROGRAM_COUNTER
+  }
+}
+
+class SyscallDefinition extends Definition implements IdentifiableNode, TypedNode {
+  IdentifierOrPlaceholder id;
+  SyscallKind kind;
+  @Nullable
+  @Child
+  TypeLiteral syscallType;
+  @Nullable
+  @Child
+  TypeLiteral targetType;
+  @Child
+  Expr value;
+  SourceLocation loc;
+
+  @Nullable
+  Type type;
+
+  /**
+   * Set by the typechecker, the register file or register the alias points to.
+   */
+  @Nullable
+  Definition computedTarget;
+  /**
+   * Set by the typechecker, the arguments used to pre-access the computedTarget.
+   */
+  @Nullable
+  List<Expr> computedFixedArgs;
+
+  @Nullable
+  Constant.BitSlice slice;
+
+  SyscallDefinition(IdentifierOrPlaceholder id, SyscallKind kind,
+                  @Nullable TypeLiteral syscallType, @Nullable TypeLiteral targetType, Expr value,
+                  SourceLocation location) {
+    this.id = id;
+    this.kind = kind;
+    this.syscallType = syscallType;
+    this.targetType = targetType;
+    this.value = value;
+    this.loc = location;
+  }
+
+  @Override
+  public Identifier identifier() {
+    return (Identifier) id;
+  }
+
+  @Override
+  public Type type() {
+    return Objects.requireNonNull(type);
+  }
+
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.ISA_DEFS;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    prettyPrintAnnotations(indent, builder);
+    builder.append(prettyIndentString(indent)).append("alias ");
+    switch (kind) {
+      case INSTRUCTION -> builder.append("instruction ");
+      case REGISTER -> builder.append("register ");
+      case FIELD -> builder.append("field ");
+      case ARGUMENT -> builder.append("argument ");
+      case RETURN -> builder.append("return ");
+      default -> {
+      }
+    }
+    id.prettyPrint(0, builder);
+    if (syscallType != null) {
+      builder.append(" : ");
+      syscallType.prettyPrint(0, builder);
+      if (targetType != null) {
+        builder.append(" -> ");
+        targetType.prettyPrint(0, builder);
+      }
+    }
+    builder.append(" = ");
+    value.prettyPrint(0, builder);
+    builder.append("\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (AliasDefinition) o;
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(id, that.id)
+        && Objects.equals(kind, that.kind)
+        && Objects.equals(syscallType, that.aliasType)
+        && Objects.equals(targetType, that.targetType)
+        && Objects.equals(value, that.value);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(id);
+    result = 31 * result + Objects.hashCode(kind);
+    result = 31 * result + Objects.hashCode(syscallType);
+    result = 31 * result + Objects.hashCode(targetType);
+    result = 31 * result + Objects.hashCode(value);
+    return result;
+  }
+
+  enum SyscallKind {
+    INSTRUCTION, REGISTER, ARGUMENT, FIELD, RETURN
   }
 }
 

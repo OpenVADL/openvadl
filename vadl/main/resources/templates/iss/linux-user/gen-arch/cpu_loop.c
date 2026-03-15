@@ -54,7 +54,7 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
             cause = env->arg_exc_cause;
             switch (cause) {
             case [(${gen_arch_upper})]_EXC_ECALL:
-                env->[(${pc_reg.name_lower})] += [(${insn_width.bytes})]; //TODO check if bytes correct
+                env->[(${pc_reg.name_lower})] += [(${insn_width.short})]; //TODO find better tag?
                 if (env->x[[(${gen_arch_upper})]_REG_A7] == TARGET_NR_[(${gen_arch_lower})]_flush_icache) {
                     /* no-op in QEMU; TB invalidation is automatic */
                     ret = 0;

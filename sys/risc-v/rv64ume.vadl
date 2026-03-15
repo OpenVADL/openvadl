@@ -1,9 +1,24 @@
 // This is meant to be the temporary root specification during implementation
 // of the UME for RISC-V
-import rv64csr::{ RV64IMZicsr }
+import rv64csr::{ RV64IMZicsr, RV3264I, RV3264M } with ("ArchSize=Arch64")
+
 
 instruction set architecture RV64UME extending RV64IMZicsr = {}
 
+application binary interface ABI for RV64UME = {
+   alias register s0 = X(8)
+   alias register s1 = X(9)
+
+   alias register a0 = X(10)
+   alias register a1 = X(11)
+   alias register a2 = X(12)
+   alias register a3 = X(13)
+   alias register a4 = X(14)
+   alias register a5 = X(15)
+   alias register a6 = X(16)
+   alias register a7 = X(17)
+
+}
 
 // This is the system-mode entry point.
 // Once we have a user-mode definition, this should be removed.
@@ -34,5 +49,26 @@ processor Spike implements RV64UME = {
      // to keep the registers consistent with upstream
      MEM<4>(0x1020) := 0x87e00000  // lo32(fdt_addr)
      MEM<4>(0x1024) := 0x00000000  // hi32(fdt_addr)
+ }
+
+ // user mode emulation
+ // how to intercept syscalls & fwd them to host os
+
+ // choose os here (linux, bsd, ...)
+ [target os : linux] // annotation to user mode emulation
+ user mode emulation USER_MODE for ISA = { //TODO: readd "with ABI"?
+ //TODO: make new SyscallDef like AliasDefinition? or make new case within alias
+
+     syscall instruction = ecall // instr to trigger syscall, ignores full system behavior
+     syscall register = syscall_id // register to hold syscallID
+     syscall field = imm16 // format field of instr to hold syscall ID
+
+     syscall argument = [arg0, arg1, arg2, arg3, arg4, arg5] // registers to pass data to host os
+
+     //negative return commonly used in riscv
+     [error convention : negative_return] // annotation to syscall return
+     syscall return = [retval] // store result here
+
+     unhandled syscall = trap
  }
 }

@@ -247,6 +247,7 @@ TOKENS
   STAGE        = "stage".
   STARTUP      = "startup".
   STOP         = "stop".
+  SYSCALL      = "syscall".
   TENSOR       = "tensor".
   THEN         = "then".
   THREAD       = "thread".
@@ -505,6 +506,7 @@ elements. A single annotation is described in the #annotation production rule.
   | memoryDefinition<out def>
   | registerDefinition<out def>
   | aliasDefinition<out def>
+  | syscallDefinition<out def>
   | exceptionDefinition<out def>
   | processDefinition<out def>
   | operationDefinition<out def>
@@ -717,6 +719,51 @@ elements. A single annotation is described in the #annotation production rule.
     SYM_EQ
     callOrBinaryExpression<out Expr value, false, true>     (. def = new AliasDefinition(id, kind, aliasType, targetType, value, startLocation.join(lastTokenLoc())); .)
   .
+
+  syscallDefinition<out Definition def>                 (. var startLocation = nextTokenLoc(); SyscallDefinition.SyscallKind kind = null;
+                                                           TypeLiteral syscallType = null; TypeLiteral targetType = null;
+                                                           IdentifierOrPlaceholder id = null;
+                                                        .)
+    = ALIAS
+      (
+        REGISTER                                        (. kind = SyscallDefinition.SyscallKind.REGISTER; .)
+        identifierOrPlaceholder<out id>
+        [
+          SYM_COLON
+          typeLiteral<out syscallType>
+          [
+            SYM_ARROW
+            typeLiteral<out targetType>
+          ]
+        ]
+      | INSTRUCTION                                 (. kind = SyscallDefinition.SyscallKind.INSTRUCTION; .)
+        identifierOrPlaceholder<out id>
+        [
+          SYM_COLON
+          typeLiteral<out syscallType>
+        ]
+      | FIELD                                 (. kind = SyscallDefinition.SyscallKind.FIELD; .)
+        identifierOrPlaceholder<out id>
+        [
+          SYM_COLON
+          typeLiteral<out syscallType>
+        ]
+      | ARGUMENT                                 (. kind = SyscallDefinition.SyscallKind.ARGUMENT; .)
+        identifierOrPlaceholder<out id>
+        [
+          SYM_COLON
+          typeLiteral<out syscallType>
+        ]
+      | RETURN                                 (. kind = SyscallDefinition.SyscallKind.RETURN; .)
+        identifierOrPlaceholder<out id>
+        [
+          SYM_COLON
+          typeLiteral<out syscallType>
+        ]
+      )
+      SYM_EQ
+      callOrBinaryExpression<out Expr value, false, true>     (. def = new SyscallDefinition(id, kind, syscallType, targetType, value, startLocation.join(lastTokenLoc())); .)
+    .
 
   usingDefinition<out Definition def>                         (. var start = nextTokenLoc(); .)
   = USING
@@ -972,7 +1019,7 @@ elements. A single annotation is described in the #annotation production rule.
 
     umeElementDefinition<out Definition def> (. def = DUMMY_DEF; .)
     = annotations<.out List<AnnotationDefinition> annotations.> (. var peek = scanner.Peek(); .)
-      (
+      ( syscallDefinition<out def>
     )                                        (. def.withAnnotations(annotations); .)
       // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
     /* | macroReplacement<out Node n>           (. def = castCommonDef(this, n);
@@ -1140,6 +1187,7 @@ elements. A single annotation is described in the #annotation production rule.
     ( commonDefinition<out def>
     | memoryRegionDefinition<out def>
     | patchDefinition<out def>
+    | userModeEmulationDefinition<out def> //TODO: check if this belongs here
     | sourceDefinition<out def>
     | exceptionDefinition<out def>
     | cpuFunctionDefinition<out def>
