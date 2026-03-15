@@ -1,6 +1,6 @@
-use std::collections::HashSet;
 use std::fs;
-use std::path::Path;
+use std::path::PathBuf;
+use std::collections::HashSet;
 
 use color_eyre::{
     Result, Section,
@@ -130,13 +130,21 @@ impl Broker {
         &self.clients
     }
 
-    fn add_client_information_to_error(err: Error, client_id: &str, config: &Config) -> Error {
-        let base_path = Path::new(&config.logging.dir);
-        let stdout_path = base_path.join(format!("client-{client_id}-stdout.txt"));
-        let stderr_path = base_path.join(format!("client-{client_id}-stderr.txt"));
+    fn add_client_information_to_error(
+        err: Error,
+        client_stdout: &Option<PathBuf>,
+        client_stderr: &Option<PathBuf>,
+        config: &Config,
+    ) -> Error {
+        if !config.logging.enable {
+            return err;
+        }
 
+        let stdout_path = client_stdout.as_ref().expect("client stdout-file should exist");
         let stdout_content =
             fs::read_to_string(stdout_path).expect("client stdout-file should exist");
+
+        let stderr_path = client_stderr.as_ref().expect("client stderr-file should exist");
         let stderr_content =
             fs::read_to_string(stderr_path).expect("client stderr-file should exist");
 
@@ -196,7 +204,7 @@ impl Broker {
                         .shm
                         .read_buffer_new()
                         .map(|opt| opt.map(|i| i.as_insn()))
-                        .map_err(|e| Self::add_client_information_to_error(e, &client.id, config));
+                        .map_err(|err| Self::add_client_information_to_error(err, &client.stdout, &client.stderr, config));
                     client.run_count += 1;
                     res
                 });

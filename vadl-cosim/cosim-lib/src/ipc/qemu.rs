@@ -1,7 +1,5 @@
 use std::{
-    fs::File,
-    path::Path,
-    process::{Child, Command},
+    fs::File, path::PathBuf, process::{Child, Command, Stdio}
 };
 
 use color_eyre::{Result, eyre::Context};
@@ -21,6 +19,8 @@ pub struct Client {
     pub process: Child,
     pub name: Option<String>,
     pub run_count: u64,
+    pub stdout: Option<PathBuf>,
+    pub stderr: Option<PathBuf>,
 }
 
 impl Client {
@@ -107,21 +107,33 @@ impl Client {
 
         info!(executable_path, ?args, "starting client");
 
-        let base_path = Path::new(&config.logging.dir);
-        let stdout_path = base_path.join(format!("client-{client_id}-stdout.txt"));
-        let stderr_path = base_path.join(format!("client-{client_id}-stderr.txt"));
+        let mut client_process = Command::new(&executable_path);
+        let client_process = client_process.args(args);
+        let mut client_stdout = None;
+        let mut client_stderr = None;
 
-        let stdout_file = File::create(stdout_path)?;
-        let stderr_file = File::create(stderr_path)?;
+        if config.logging.enable {
+            let stdout_path = config.logging.dir.join(format!("client-{client_id}-stdout.log"));
+            let stderr_path = config.logging.dir.join(format!("client-{client_id}-stderr.log"));
 
-        let client_process = Command::new(&executable_path)
-            .args(args)
-            .stdout(stdout_file)
-            .stderr(stderr_file)
-            .spawn()
-            .wrap_err_with(|| {
-                format!("Failed to create client with idx: {client_id} and path: {executable_path}")
-            })?;
+            client_stdout = Some(stdout_path.clone());
+            client_stderr = Some(stderr_path.clone());
+
+            let stdout_file = File::create(stdout_path)?;
+            let stderr_file = File::create(stderr_path)?;
+
+            client_process
+                .stdout(stdout_file.try_clone()?)
+                .stderr(stderr_file.try_clone()?);
+        } else {
+            client_process
+                .stdout(Stdio::null())
+                .stderr(Stdio::null());
+        }
+
+        let client_process = client_process.spawn().wrap_err_with(|| {
+            format!("Failed to create client with idx: {client_id} and path: {executable_path}")
+        })?;
 
         Ok(Self {
             id: client_id,
@@ -130,6 +142,8 @@ impl Client {
             process: client_process,
             name: client_cfg.name.clone(),
             run_count: 0,
+            stdout: client_stdout,
+            stderr: client_stderr,
         })
     }
 
