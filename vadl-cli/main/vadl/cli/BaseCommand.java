@@ -314,7 +314,7 @@ public abstract class BaseCommand implements Callable<Integer> {
       return config;
     }
 
-    config = new GeneralConfiguration(output, dump);
+    config = new GeneralConfiguration(input, dump);
     config.setDecoderOptions(getDecoderOptions());
 
     return config;

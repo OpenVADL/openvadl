@@ -531,6 +531,12 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   }
 
   @Override
+  public Void visit(UserModeEmulationDefinition definition) {
+    //TODO: implement
+    return null;
+  }
+
+  @Override
   public Void visit(UsingDefinition definition) {
     beforeTravel(definition);
     definition.children().forEach(this::travel);
@@ -921,4 +927,11 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
     afterTravel(statement);
     return null;
   }
+
+  @Override
+  public Void visit(UmeSequenceDefinition definition) {
+    beforeTravel(definition);
+    definition.children().forEach(this::travel);
+    afterTravel(definition);
+    return null;  }
 }

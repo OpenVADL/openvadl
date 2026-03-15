@@ -56,6 +56,7 @@ import vadl.iss.passes.IssInfoRetrievalPass;
 import vadl.iss.passes.IssLoopUnrollPass;
 import vadl.iss.passes.IssMemoryAccessTransformationPass;
 import vadl.iss.passes.IssMemoryDetectionPass;
+import vadl.iss.passes.IssMyTargetConfigPass;
 import vadl.iss.passes.IssNormalizationPass;
 import vadl.iss.passes.IssPcAccessConversionPass;
 import vadl.iss.passes.IssSelectLoweringPass;
@@ -611,36 +612,39 @@ public class PassOrders {
         // plugin rendering
         .add(issDefault("/contrib/plugins/meson.build", config))
         // cosimulation plugin
-        .add(issDefault("/contrib/plugins/cosimulation.c", config))
+        .add(issDefault("/contrib/plugins/cosimulation.c", config));
 
 
 
-
+        /*if(config.targetName().equals("RV64IM")) {
+            
        // .add(issDefault("/configs/targets/mytarget-linux-user.mak", config))
+        order      
+            .add(issDefault("/linux-user/mytarget/cpu_loop.c", config))
+            .add(issDefault("/linux-user/mytarget/signal.c", config))
+            .add(issDefault("/linux-user/mytarget/syscall_nr.h", config))
+            
+            .add(issDefault("/linux-user/mytarget/target_syscall.h", config))
+            .add(issDefault("/linux-user/mytarget/target_cpu.h", config))
+            .add(issDefault("/linux-user/mytarget/target_structs.h", config))
+            .add(issDefault("/linux-user/mytarget/target_elf.h", config))
+            .add(issDefault("/linux-user/mytarget/target_errno_defs.h", config)) 
+            .add(issDefault("/linux-user/mytarget/sockbits.h", config))
+            .add(issDefault("/linux-user/mytarget/target_fcntl.h", config))
+            .add(issDefault("/linux-user/mytarget/target_mman.h", config))
+            .add(issDefault("/linux-user/mytarget/target_prctl.h", config))
+            .add(issDefault("/linux-user/mytarget/target_proc.h", config))
+            .add(issDefault("/linux-user/mytarget/target_resource.h", config))
+            .add(issDefault("/linux-user/mytarget/target_signal.h", config))
+            .add(issDefault("/linux-user/mytarget/termbits.h", config))
+            .add(issDefault("/linux-user/mytarget/vdso-asmoffset.h", config))
 
-        .add(issDefault("/linux-user/mytarget/cpu_loop.c", config))
-        .add(issDefault("/linux-user/mytarget/signal.c", config))
-        .add(issDefault("/linux-user/mytarget/syscall_nr.h", config))
-        
-        .add(issDefault("/linux-user/mytarget/target_syscall.h", config))
-        .add(issDefault("/linux-user/mytarget/target_cpu.h", config))
-        .add(issDefault("/linux-user/mytarget/target_structs.h", config))
-        .add(issDefault("/linux-user/mytarget/target_elf.h", config))
-        .add(issDefault("/linux-user/mytarget/target_errno_defs.h", config)) 
-        .add(issDefault("/linux-user/mytarget/sockbits.h", config))
-        .add(issDefault("/linux-user/mytarget/target_fcntl.h", config))
-        .add(issDefault("/linux-user/mytarget/target_mman.h", config))
-        .add(issDefault("/linux-user/mytarget/target_prctl.h", config))
-        .add(issDefault("/linux-user/mytarget/target_proc.h", config))
-        .add(issDefault("/linux-user/mytarget/target_resource.h", config))
-        .add(issDefault("/linux-user/mytarget/target_signal.h", config))
-        .add(issDefault("/linux-user/mytarget/termbits.h", config))
-        .add(issDefault("/linux-user/mytarget/vdso-asmoffset.h", config))
+            .add(issDefault("/linux-user/mytarget/meson.build", config))
+            
+            .add(issDefault("/linux-user/meson.build", config));
+        } */
 
-        .add(issDefault("/linux-user/mytarget/meson.build", config))
-        
-        .add(issDefault("/linux-user/meson.build", config))
-    ;
+        addUserModeEmitPasses(order, config);
   }
 
   /**
@@ -669,6 +673,40 @@ public class PassOrders {
     }
 
     order.add(new VdtLoweringPass(config));
+  }
+
+    private static void addUserModeEmitPasses(PassOrder order, IssConfiguration config) {
+    // right now, we only emit those passes if we generate the ISS for RV64UME
+    var inputPath = config.inputPath();
+    if (inputPath != null && inputPath.getFileName().endsWith("rv64ume.vadl")) {
+      order
+          .add(issDefault("/configs/targets/gen-arch-linux-user.mak", config))
+
+          .add(issDefault("/linux-user/meson.build", config))
+          .add(issDefault("/linux-user/elfload.c", config))
+          .add(issDefault("/linux-user/syscall_defs.h", config))
+
+          .add(issDefault("/linux-user/gen-arch/meson.build", config))
+          .add(issDefault("/linux-user/gen-arch/cpu_loop.c", config))
+          .add(issDefault("/linux-user/gen-arch/signal.c", config))
+          .add(issDefault("/linux-user/gen-arch/sockbits.h", config))
+          .add(issDefault("/linux-user/gen-arch/syscall.tbl", config))
+          //.add(issDefault("/linux-user/gen-arch/syscallhdr.sh", true, config))
+          .add(issDefault("/linux-user/gen-arch/syscallhdr.sh", config))
+          .add(issDefault("/linux-user/gen-arch/target_cpu.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_elf.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_errno_defs.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_fcntl.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_mman.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_prctl.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_proc.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_resource.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_signal.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_structs.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_syscall.h", config))
+          .add(issDefault("/linux-user/gen-arch/termbits.h", config))
+      ;
+    }
   }
 
   /**

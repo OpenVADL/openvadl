@@ -5,16 +5,7 @@
  * later version. See the COPYING file in the top-level directory.
  */
 
-#ifndef MYTARGET_TARGET_ELF_H
-#define MYTARGET_TARGET_ELF_H
-
-#define ELF_MACHINE  EM_RISCV
-
-#define ELF_CLASS    ELFCLASS64
-
-/* * for reporting CPU features to ELF loader
- * Set to 0 for now
- */
-#define HAVE_ELF_HWCAP 0
-
+#ifndef [(${gen_arch_upper})]_TARGET_FCNTL_H
+#define [(${gen_arch_upper})]_TARGET_FCNTL_H
+#include "../generic/fcntl.h"
 #endif

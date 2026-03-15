@@ -299,6 +299,12 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
+  public Definition visit(UserModeEmulationDefinition definition) {
+    //TODO: implement
+    return definition;
+  }
+
+  @Override
   public Definition visit(CacheDefinition definition) {
     return definition;
   }
@@ -362,5 +368,10 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
     return definition instanceof ModelDefinition
         || definition instanceof RecordTypeDefinition
         || definition instanceof ModelTypeDefinition;
+  }
+
+  @Override
+  public Definition visit(UmeSequenceDefinition definition) {
+    return definition;
   }
 }

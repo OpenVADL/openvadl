@@ -8,7 +8,7 @@ component register_file Regs {
 architecture mytarget {
 
     // physical properties
-    machine {
+    machine = {
         word_size = 64
         address_width = 64
     }
@@ -17,14 +17,14 @@ architecture mytarget {
 
     //program counter
     // keeps track of memory address of next instr taht CPU needs to execute
-    register pc {
+    register pc = {
         width = 64
         type = unsigned long
         is_pc = true
     }
 
     // how software progs use physical registers
-    application binary interface ABI {
+    application binary interface ABI = {
         
         alias register syscall_id = regs[17]
         
@@ -49,7 +49,7 @@ architecture mytarget {
     }
     
     // assembly instructions for CPU 
-    instruction set ISA {
+    instruction set ISA = {
         assembly nop = "nop"
         encoding nop = {opcode = 0x00000013 } // Standard RISC-V NOP
         instruction nop = { /* Do nothing */ }

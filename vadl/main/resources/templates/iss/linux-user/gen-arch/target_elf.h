@@ -5,7 +5,10 @@
  * later version. See the COPYING file in the top-level directory.
  */
 
-#ifndef MYTARGET_TARGET_FCNTL_H
-#define MYTARGET_TARGET_FCNTL_H
-#include "../generic/fcntl.h"
+#ifndef [(${gen_arch_upper})]_TARGET_ELF_H
+#define [(${gen_arch_upper})]_TARGET_ELF_H
+static inline const char *cpu_get_model(uint32_t eflags)
+{
+    return "max";
+}
 #endif

@@ -302,8 +302,8 @@
 
 244	or1k	or1k_atomic			sys_or1k_atomic
 
-258	my-target	riscv_hwprobe			sys_riscv_hwprobe
-259	my-target	riscv_flush_icache		sys_riscv_flush_icache
+258	[(${gen_arch_lower})]	[(${gen_arch_lower})]_hwprobe			sys_[(${gen_arch_lower})]_hwprobe
+259	[(${gen_arch_lower})]	[(${gen_arch_lower})]_flush_icache		sys_[(${gen_arch_lower})]_flush_icache
 
 260	time32	wait4				sys_wait4			compat_sys_wait4
 260	64	wait4				sys_wait4

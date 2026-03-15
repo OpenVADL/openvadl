@@ -45,7 +45,7 @@ public class IssMyTargetConfigPass extends AbstractIssPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
 
-        Abi abi = viam.abi().orElseThrow(() -> 
+   /*     Abi abi = viam.abi().orElseThrow(() -> 
             new RuntimeException("Error: 'application binary interface' block is missing")
         ); 
         
@@ -96,7 +96,7 @@ public class IssMyTargetConfigPass extends AbstractIssPass {
         } */ 
        //TODO load syscalls based on os env 
 
-        finalSyscalls.putAll(SyscallProfiles.LINUX_PROFILE.syscalls);
+      /*  finalSyscalls.putAll(SyscallProfiles.LINUX_PROFILE.syscalls);
 
         String archName = viam.simpleName();
 
@@ -116,7 +116,9 @@ public class IssMyTargetConfigPass extends AbstractIssPass {
         System.out.println("Generated MyTargetConfig for " + archName + 
                 ": OS=" + targetOs + ", SyscallsLoaded=" + finalSyscalls.size());
 
-        return config; 
+        return config; */
+
+        return null; 
     }
 
     // search for alias like "syscall_id" and return register index

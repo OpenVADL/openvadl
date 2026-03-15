@@ -95,6 +95,8 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     return templatePath
         .replaceAll("gen-arch", configuration().targetName())
         .replaceAll("gen-machine", configuration().machineName().toLowerCase());
+
+        //TODO: new template path gen-target 
   }
 
   @Override

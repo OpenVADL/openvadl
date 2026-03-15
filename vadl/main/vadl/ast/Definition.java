@@ -216,6 +216,8 @@ interface DefinitionVisitor<R> {
 
   R visit(StageDefinition definition);
 
+  R visit(UmeSequenceDefinition definition);
+
   R visit(UserModeEmulationDefinition definition);
 
   R visit(UsingDefinition definition);
@@ -3399,7 +3401,6 @@ class ApplicationBinaryInterfaceDefinition extends Definition implements Identif
   }
 }
 
-//TODO: add umesequencedefinition aswell? 
 class UserModeEmulationDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   @Child
@@ -3467,6 +3468,83 @@ class UserModeEmulationDefinition extends Definition implements IdentifiableNode
   @Override
   public Identifier identifier() {
     return id;
+  }
+}
+
+class UmeSequenceDefinition extends InstructionSequenceDefinition {
+  SeqKind umeKind;
+
+  UmeSequenceDefinition(SeqKind umeKind,
+                        List<Parameter> params,
+                        List<InstructionCallStatement> statements,
+                        SourceLocation loc) {
+    super(params, statements, loc);
+    this.umeKind = umeKind;
+  }
+
+  @Override
+  public List<Node> children() {
+    // Since this class has no @Child annotations the Annotationprocessor doesn't find it.
+    return NodeChildrenRegistry.unsafeGetChildrenDirect(this,
+        (Class<? extends Node>) getClass().getSuperclass());
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    prettyPrintAnnotations(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append(umeKind.keyword);
+    builder.append(" sequence ");
+    Parameter.prettyPrintMultiple(indent, params, builder);
+    builder.append(" = {\n");
+    for (InstructionCallStatement statement : statements) {
+      statement.prettyPrint(indent + 1, builder);
+    }
+    builder.append(prettyIndentString(indent)).append("}\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    UmeSequenceDefinition that = (UmeSequenceDefinition) o;
+    return umeKind == that.umeKind && Objects.equals(params, that.params)
+        && Objects.equals(statements, that.statements);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(umeKind, params, statements);
+  }
+
+  enum SeqKind {
+    CONSTANT("constant"),
+    REGISTER("register adjustment");
+
+    private final String keyword;
+
+    SeqKind(String keyword) {
+      this.keyword = keyword;
+    }
   }
 }
 

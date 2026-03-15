@@ -407,7 +407,7 @@ static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
 
   SHMCPU cpu = get_cpu_state(cpu_index);
 
-  BrokerSHMData shm;
+  BrokerSHMData shm = {0};
   shm.shm_insn.insn_data_type = INSN_EXEC;
   shm.shm_insn.cpus[cpu_index] = cpu;
 
@@ -433,7 +433,7 @@ static void vcpu_mem_cb(unsigned int cpu_index, qemu_plugin_meminfo_t info,
 
   if (!is_combined_mem_data_set()) {
     TBInsnInfo *tbinsn_info = udata;
-    BrokerSHMData shm;
+    BrokerSHMData shm = {0};
 
     shm.shm_insn.insn_data_type = INSN_MEM;
     shm.shm_insn.mem_access_info.vaddr = vaddr;
@@ -494,7 +494,7 @@ static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
   // otherwise the data is simply collected on the qemu-client
   if (is_jump(tb_info)) {
     SHMCPU cpu = get_cpu_state(cpu_index);
-    BrokerSHMData shm;
+    BrokerSHMData shm = {0};
 
     shm.shm_tb.cpus[cpu_index] = cpu;
     // TODO: needs a global init_mask to keep track of current state

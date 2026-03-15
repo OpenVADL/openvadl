@@ -17,20 +17,32 @@
 package vadl.configuration;
 
 import java.nio.file.Path;
+import javax.annotation.Nullable;
 
 /**
  * This configuration holds information for all passes.
  */
 public class GeneralConfiguration {
+  @Nullable
+  private final Path inputPath;
   private final Path outputPath;
   private final DumpMode dumpMode;
   private boolean dryRun = false;
   private DecoderOptions decoderOptions = new DecoderOptions();
 
 
-  public GeneralConfiguration(Path outputPath, DumpMode dumpMode) {
+  /**
+   * Constructs a new GeneralConfiguration object with the specified input path, output path,
+   * and dump mode.
+   */
+  public GeneralConfiguration(@Nullable Path inputPath, Path outputPath, DumpMode dumpMode) {
+    this.inputPath = inputPath;
     this.outputPath = outputPath;
     this.dumpMode = dumpMode;
+  }
+
+  public GeneralConfiguration(Path outputPath, DumpMode dumpMode) {
+    this(null, outputPath, dumpMode);
   }
 
   /**
@@ -39,9 +51,14 @@ public class GeneralConfiguration {
    * @param generalConfig the configuration to copy.
    */
   public GeneralConfiguration(GeneralConfiguration generalConfig) {
-    this(generalConfig.outputPath, generalConfig.dumpMode);
+    this(generalConfig.inputPath, generalConfig.outputPath, generalConfig.dumpMode);
     decoderOptions = generalConfig.getDecoderOptions();
     dryRun = generalConfig.isDryRun();
+  }
+
+  @Nullable
+  public Path inputPath() {
+    return inputPath;
   }
 
   public Path outputPath() {

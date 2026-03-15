@@ -577,6 +577,12 @@ public class Ungrouper
   }
 
   @Override
+  public Void visit(UserModeEmulationDefinition definition) {
+    //TODO: implement
+    return null;
+  }
+
+  @Override
   public Void visit(CacheDefinition definition) {
     ungroupAnnotations(definition);
     return null;
@@ -741,5 +747,10 @@ public class Ungrouper
 
   private void ungroupAnnotations(Definition definition) {
     definition.annotations.forEach(this::visit);
+  }
+
+  @Override
+  public Void visit(UmeSequenceDefinition definition) {
+    return null;
   }
 }

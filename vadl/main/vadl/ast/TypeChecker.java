@@ -2524,6 +2524,12 @@ public class TypeChecker
   }
 
   @Override
+  public Void visit(UserModeEmulationDefinition definition) {
+    //TODO: implement
+    return null;
+  }
+
+  @Override
   public Void visit(CacheDefinition definition) {
     throwUnimplemented(definition);
     return null;
@@ -4136,6 +4142,12 @@ public class TypeChecker
   @Override
   public Void visit(StatementList statement) {
     statement.items.forEach(this::check);
+    return null;
+  }
+
+  @Override
+  public Void visit(UmeSequenceDefinition definition) {
+    throwUnimplemented(definition);
     return null;
   }
 

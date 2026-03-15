@@ -463,6 +463,12 @@ class MacroExpander
     return new StringLiteral("\"" + nameBuilder.toString() + "\"", copyLoc(expr.location()));
   }
 
+  //TODO: what to do with this?  
+  @Override
+  public Definition visit(UmeSequenceDefinition definition) {
+    throw new UnsupportedOperationException("Unimplemented method 'visit for ume'");
+  }
+
   @Override
   public Expr visit(ExistsInExpr expr) {
     var operations = new ArrayList<>(expr.operations);
@@ -949,6 +955,12 @@ class MacroExpander
     return new StageDefinition(definition.id, expandStageOutputs(definition.outputs),
         definition.statement.accept(this), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(UserModeEmulationDefinition definition) {
+    //TODO: implement
+    throw new UnsupportedOperationException("Unimplemented method 'visit for ume def'");
   }
 
   @Override

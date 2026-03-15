@@ -967,10 +967,22 @@ elements. A single annotation is described in the #annotation production rule.
     {
       umeElementDefinition<out Definition elem> (. addDef(elements, elem); .)
     }
-    SYM_BRACE_CLOSE                             (. def = new userModeEmulationDefinition(id, isaPath, elements, start.join(lastTokenLoc())); .)
+    SYM_BRACE_CLOSE                             (. def = new UserModeEmulationDefinition(id, isaPath, elements, start.join(lastTokenLoc())); .)
   .
 
-  umeSequenceDef<out Definition def>                         (. var start = nextTokenLoc(); .)
+    umeElementDefinition<out Definition def> (. def = DUMMY_DEF; .)
+    = annotations<.out List<AnnotationDefinition> annotations.> (. var peek = scanner.Peek(); .)
+      (
+    )                                        (. def.withAnnotations(annotations); .)
+      // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
+    /* | macroReplacement<out Node n>           (. def = castCommonDef(this, n);
+                                                if (def instanceof DefinitionList list) {
+                                                  readMacroSymbols(macroTable, list.items);
+                                                } .) */
+
+    .
+
+  /*umeSequenceDef<out Definition def>                         (. var start = nextTokenLoc(); .)
   =                                                          (. UmeSequenceDefinition.SeqKind kind = null; .)
   (
     CONSTANT                                                 (. kind = UmeSequenceDefinition.SeqKind.CONSTANT; .)
@@ -984,7 +996,7 @@ elements. A single annotation is described in the #annotation production rule.
     instructionCallStmt<out InstructionCallStatement stmt>   (. stmts.add(stmt); .)
   }
   SYM_BRACE_CLOSE                                            (. def = new UmeSequenceDefinition(kind, params, stmts, start.join(lastTokenLoc())); .)
-  .
+  .*/
 
   // -- ABI DEFINITIONS-----------------------------------------------------------------------------------------------
 
