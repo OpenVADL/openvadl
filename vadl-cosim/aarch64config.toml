@@ -44,7 +44,7 @@ exec = "qemu-system-a64"
 
 # The path to the compiled file to use for testing
 # This file will be passed to all clients
-test_exec="./test-execs/aarch64/test_vadl"
+test_exec="./test-execs/embench/edn"
 
 # "bios" | "kernel": Defines where the test-executable is passed to when starting the QEMU-client
 pass_test_exec_to = "bios"
@@ -84,7 +84,7 @@ endian = "little"
 
 exec = "qemu-system-aarch64"
 
-test_exec="./test-execs/aarch64/test_upstream"
+test_exec="./test-execs/embench/edn"
 
 pass_test_exec_to = "kernel"
 
@@ -227,6 +227,9 @@ client2 = { name = "cpsr", slice = [ 28 ] }
 #			   The same as "tb" but without the synchronization logic. Meaning that equal translation-blocks are assumed.
 #			   This option is useful if the instructions of the ISS are already correct and the TB-Block generator needs to be tested.
 layer = "insn"
+
+# Whether reads/writes from/to memory should also be compared
+with_memory_checks = true
 
 # "lockstep": All clients are run and compared one *execution-step* at a time.
 # 			  This means that the test will exit on the first divergence (or at the end if no diffs where found) 

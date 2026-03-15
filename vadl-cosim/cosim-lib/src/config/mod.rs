@@ -127,6 +127,8 @@ pub struct Protocol {
 
     pub layer: ProtocolLayer,
 
+    pub with_memory_checks: bool,
+
     pub execute_all_remaining_instructions: bool,
 
     pub stop_after_n_instructions: u32,
