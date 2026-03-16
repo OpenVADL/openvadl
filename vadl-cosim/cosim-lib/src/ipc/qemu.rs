@@ -4,7 +4,7 @@ use std::{
     process::{Child, Command},
 };
 
-use color_eyre::{eyre::Context, Result};
+use color_eyre::{Result, eyre::Context};
 use tracing::info;
 
 use crate::{
@@ -52,6 +52,14 @@ impl Client {
         let mut plugin_args = vec![
             format!("client-id={client_id}"),
             format!("mode={client_mode}"),
+            format!(
+                "with-memory-checks={}",
+                if config.testing.protocol.with_memory_checks {
+                    1
+                } else {
+                    0
+                }
+            ),
         ];
         if let Some(client_name) = &client_cfg.name {
             plugin_args.push(format!("client-name={client_name}"));
@@ -72,9 +80,7 @@ impl Client {
                 crate::config::GDBTargetType::Chardev => {
                     vec![
                         "-chardev".into(),
-                        format!(
-                            "socket,path={remote_target},server=on,wait=off,id=gdb{client_id}"
-                        ),
+                        format!("socket,path={remote_target},server=on,wait=off,id=gdb{client_id}"),
                         "-gdb".into(),
                         format!("chardev:gdb{client_id}"),
                         "-S".into(),
@@ -113,7 +119,9 @@ impl Client {
             .stdout(stdout_file)
             .stderr(stderr_file)
             .spawn()
-            .wrap_err_with(|| format!("Failed to create client with idx: {client_id} and path: {executable_path}"))?;
+            .wrap_err_with(|| {
+                format!("Failed to create client with idx: {client_id} and path: {executable_path}")
+            })?;
 
         Ok(Self {
             id: client_id,
@@ -132,8 +140,6 @@ impl Client {
     }
 
     pub fn name_or_id(&self) -> String {
-        self.name
-            .clone()
-            .unwrap_or(self.id.to_string())
+        self.name.clone().unwrap_or(self.id.to_string())
     }
 }

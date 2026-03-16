@@ -193,6 +193,7 @@ typedef struct {
   ExecMode mode;
   const gchar *client_name;
   gboolean client_name_set;
+  gboolean with_memory_checks;
 } Arguments;
 
 static GArray *cpus;
@@ -527,9 +528,12 @@ static void vcpu_tb_trans(qemu_plugin_id_t id, struct qemu_plugin_tb *tb) {
       *tbinsn_info = get_tbinsn_info(insn);
       qemu_plugin_register_vcpu_insn_exec_cb(
           insn, vcpu_insn_exec, QEMU_PLUGIN_CB_R_REGS, tbinsn_info);
-      qemu_plugin_register_vcpu_mem_cb(insn, vcpu_mem_cb,
-                                       QEMU_PLUGIN_CB_NO_REGS,
-                                       QEMU_PLUGIN_MEM_RW, tbinsn_info);
+
+      if (args.with_memory_checks) {
+        qemu_plugin_register_vcpu_mem_cb(insn, vcpu_mem_cb,
+                                         QEMU_PLUGIN_CB_NO_REGS,
+                                         QEMU_PLUGIN_MEM_RW, tbinsn_info);
+      }
     }
   }
 }
@@ -585,6 +589,8 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
                     "illegally set client-name multiple times");
       args.client_name_set = true;
       args.client_name = strdup(argvalue);
+    } else if (g_strcmp0(argname, "with-memory-checks") == 0) {
+      args.with_memory_checks = atoi(argvalue);
     } else {
       PLUGIN_PRINTLN("option parsing failed: %s", p);
       return EXIT_FAILURE;
