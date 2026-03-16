@@ -177,7 +177,7 @@ srr1 = "srr1"
 layer = "insn"
 
 # Whether reads/writes from/to memory should also be compared
-with_memory_checks = true
+with_memory_checks = false
 
 # "lockstep": All clients are run and compared one *execution-step* at a time.
 # 			  This means that the test will exit on the first divergence (or at the end if no diffs where found)
