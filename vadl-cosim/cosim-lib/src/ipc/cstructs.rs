@@ -553,7 +553,7 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
             Ok(res) => match res {
                 crate::ipc::sem::TimedWaitState::Timeout => {
                     bail!(
-                        "Failed to wait for a response from a qemu client. Note that a timeout should *not* mean that the client crashed - it is more likely that the client is in an endless loop or that the cosimulator has a bug. If the test failure is noat repeatable, then it is most likely a cosimulator bug! Please refer to the logs for more information."
+                        "Failed to wait for a response from a qemu client. Note that a timeout should *not* mean that the client crashed - it is more likely that the client is in an endless loop or that the cosimulator has a bug. If the test failure is not repeatable, then it is most likely a cosimulator bug! Please refer to the logs for more information."
                     );
                 }
                 crate::ipc::sem::TimedWaitState::Success => {
