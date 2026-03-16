@@ -16,9 +16,8 @@
 
 package vadl.lsp;
 
-import java.net.URI;
+import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +32,7 @@ import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SemanticTokens;
@@ -43,21 +43,16 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vadl.ast.Ast;
+import vadl.ast.Frontend;
 import vadl.ast.LspTokenizer;
-import vadl.ast.ModelRemover;
-import vadl.ast.TypeChecker;
-import vadl.ast.Ungrouper;
-import vadl.ast.VadlParser;
 import vadl.error.Diagnostic.MsgType;
 import vadl.error.DiagnosticList;
-import vadl.utils.DiskVirtualFileSystem;
 import vadl.utils.SourceLocation;
 
 /**
  * Handles document-related features of the language server.
  */
-class VadlTextDocumentService implements TextDocumentService {
+public class VadlTextDocumentService implements TextDocumentService {
   /**
    * How many milliseconds to wait before providing diagnostics for the latest change. If a new
    * document version is pushed by the client within this time, the now outdated version will not
@@ -73,6 +68,7 @@ class VadlTextDocumentService implements TextDocumentService {
   private LspTokenizer tokenizer;
 
   private final Map<String, Document> openDocuments = new HashMap<>();
+  private final DependencyMap<String> documentDependencies = new DependencyMap<>();
 
   VadlTextDocumentService(VadlLanguageServer server) {
     this.server = server;
@@ -92,11 +88,14 @@ class VadlTextDocumentService implements TextDocumentService {
   @Override
   public void didOpen(DidOpenTextDocumentParams params) {
     log.debug(">> didOpen: {}", params);
-    var document = new Document(params.getTextDocument());
+
+    Document document = new Document(params.getTextDocument());
+    LspSnapshotFileSystem snapshots;
     synchronized (openDocuments) {
       openDocuments.put(params.getTextDocument().getUri(), document);
+      snapshots = new LspSnapshotFileSystem(openDocuments);
     }
-    publishDiagnostics(document);
+    publishDiagnostics(document, snapshots);
   }
 
   @Override
@@ -111,12 +110,18 @@ class VadlTextDocumentService implements TextDocumentService {
   public void didChange(DidChangeTextDocumentParams params) {
     log.debug(">> didChange: {}", params);
 
-    Document document = getDocument(params.getTextDocument().getUri());
+    Document document;
+    LspSnapshotFileSystem snapshots;
+    synchronized (openDocuments) {
+      document = openDocuments.computeIfPresent(params.getTextDocument().getUri(), (k, d) ->
+          d.withChanges(params.getTextDocument().getVersion(), params.getContentChanges()));
+      snapshots = new LspSnapshotFileSystem(openDocuments);
+    }
     if (document == null) {
       return;
     }
-    document.change(params.getTextDocument().getVersion(), params.getContentChanges());
-    publishDiagnostics(document);
+
+    publishDiagnostics(document, snapshots);
   }
 
   @Override
@@ -139,30 +144,29 @@ class VadlTextDocumentService implements TextDocumentService {
         ));
       }
 
-      List<Integer> tokens;
-      SemanticTokens result;
-      synchronized (document) {
-        tokens = tokenizer != null
+      List<Integer> tokens = tokenizer != null
             ? tokenizer.getTokens(document.getText())
             : new ArrayList<>();
-        result = new SemanticTokens(document.calculateUtf16Positions(tokens));
-      }
+      SemanticTokens result = new SemanticTokens(document.calculateUtf16Positions(tokens));
       log.debug("<<- semanticTokens/full: <omitted>({} tokens)", tokens.size() / 5);
       return result;
     });
   }
 
-  private void publishDiagnostics(Document document) {
+  /**
+   * Manages diagnostic publishing for a given document, incl. debouncing, version checking, and
+   * updating dependent documents.
+   *
+   * @param document  Must be contained in {@code snapshots}
+   * @param snapshots Must be fresh, i.e. not used in the VADL parser yet
+   */
+  private void publishDiagnostics(Document document, LspSnapshotFileSystem snapshots) {
     var capabilities = server.params().getCapabilities().getTextDocument();
     if (capabilities == null
         || capabilities.getPublishDiagnostics() == null) {
       // Don't push diagnostics if client doesn't support it
       return;
     }
-
-    // Work with current state of document
-    String text = document.getText();
-    int version = document.getVersion();
 
     var unused = server.executor().submit(() -> {
       try {
@@ -172,96 +176,150 @@ class VadlTextDocumentService implements TextDocumentService {
       } catch (InterruptedException e) {
         return;
       }
-      if (!documentVersionIsCurrent(document.getUri(), version)) {
+      if (!documentVersionIsCurrent(document)) {
         log.debug(
             "ABORT publishDiagnostics (before): outdated version {} of document {}",
-            version,
-            document.getUri()
+            document.version,
+            document.uri
         );
         return;
       }
 
+      publishDiagnosticsForOneDocument(document, snapshots);
+
+      // Update diagnostics for all dependent documents
+      for (String uri : documentDependencies.getDependents(document.uri)) {
+        Document d = snapshots.getDocument(uri);
+        if (d != null) {
+          publishDiagnosticsForOneDocument(d, new LspSnapshotFileSystem(snapshots));
+        }
+      }
+    });
+  }
+
+  /**
+   * Takes care of the actual diagnostic processing for one document.
+   *
+   * @param document  Must be contained in {@code snapshots}
+   * @param snapshots Must be fresh, i.e. not used in the VADL parser yet
+   */
+  private void publishDiagnosticsForOneDocument(Document document,
+                                                LspSnapshotFileSystem snapshots) {
+    var unused = server.executor().submit(() -> {
       List<Diagnostic> lspItems = new ArrayList<>();
-      Path path = Paths.get(URI.create(document.getUri()));
+      Path path = document.getPath();
       try {
-        Ast ast = VadlParser.parse(text, new DiskVirtualFileSystem(), Map.of(), path);
-        new Ungrouper().ungroup(ast);
-        new ModelRemover().removeModels(ast);
-        new TypeChecker().verify(ast);
+        Frontend.compileToAst(path, snapshots);
+      } catch (IOException e) {
+        log.error("Unexpected Exception occurred when parsing {}", document.uri, e);
 
       } catch (DiagnosticList dl) {
-        log.debug("Raw diagnostics: {}", dl.getMessage());
+        log.debug("Raw diagnostics ({}): {}", document.uri, dl.getMessage());
+        List<String> importedFileErrors = new ArrayList<>();
         for (vadl.error.Diagnostic item : dl.items) {
-          // TODO Look into secondary locations too? Maybe as relatedInformation? Or to put a
-          //      diagnostic message there as well?
-          SourceLocation location = item.multiLocation.primaryLocation().location();
-          if (!Objects.equals(location.path(), path)) {
-            // Ignore errors for other files
-            // TODO this means that errors in included files are not reported unless that file is
-            //      opened in the client, even though the Parser gives us diagnostics for them
-            //      (BUT: They are based on the file-system contents of that file, so maybe only
-            //      provide these diagnostics if the file in question isn't currently owned by
-            //      the client?)
+          Path itemPath = item.multiLocation.primaryLocation().location().path();
+          if (!Objects.equals(itemPath, path)) {
+            if (itemPath == null) {
+              continue;
+            }
+            // Error in imported file
+            importedFileErrors.add(relativePath(itemPath, document.getPath()));
             continue;
           }
 
-          Diagnostic lspItem = new Diagnostic();
-          try {
-            lspItem.setRange(new Range(
-                document.calculateUtf16Position(location.begin(), version, false),
-                document.calculateUtf16Position(location.end(), version, true)
-            ));
-          } catch (Document.ObsoleteDocumentVersionException e) {
-            return;
-          }
-          lspItem.setSeverity(
-              switch (item.level) {
-                case ERROR -> DiagnosticSeverity.Error;
-                case WARNING -> DiagnosticSeverity.Warning;
-              }
-          );
-          // labels (aka messages) per location
-          String labelsString = item.multiLocation.primaryLocation().labels().stream()
-              .map(vadl.error.Diagnostic.Message::content)
-              .collect(Collectors.joining("\n"));
-          // messages per Diagnostic - they may offer help or give additional notes
-          String messagesString = item.messages.stream()
-              .filter(m -> !m.type().equals(MsgType.PLAIN)
-                  || !m.content().contains("parser got confused at this point"))
-              .map(vadl.error.Diagnostic.Message::content)
-              .collect(Collectors.joining("\n"));
+          lspItems.add(buildLspDiagnostic(item, document));
+        }
 
-          String fullMessage = item.reason + (!labelsString.isBlank() ? "\n" + labelsString : "")
-              + (!messagesString.isBlank() ? "\n" + messagesString : "");
-          lspItem.setMessage(fullMessage);
-          lspItems.add(lspItem);
+        if (!importedFileErrors.isEmpty()) {
+          // Putting one diagnostic at the top of the file, which points out which imported files
+          // have errors
+          Diagnostic importedFilesDiagnostic = new Diagnostic();
+          importedFilesDiagnostic.setRange(new Range(new Position(0, 0),
+              new Position(0, 0)));
+          // TODO Consider using different severity if all diagnostics represented by this are only
+          //      Warnings
+          importedFilesDiagnostic.setSeverity(DiagnosticSeverity.Error);
+
+          String message = importedFileErrors.size() == 1
+              ? "Errors in imported file: \n" + importedFileErrors.getFirst()
+              : "Errors in imported files:\n- " + String.join("\n- ", importedFileErrors);
+          importedFilesDiagnostic.setMessage(message);
+          lspItems.addFirst(importedFilesDiagnostic);
         }
       }
       // TODO There may be diagnostics in DeferredDiagnosticStore, but that is a static list and
       //      has no clear() method (i.e. outdated diagnostics remain visible)
 
-      if (!documentVersionIsCurrent(document.getUri(), version)) {
+      if (!documentVersionIsCurrent(document)) {
         log.debug(
             "ABORT publishDiagnostics (after): outdated version {} of document {}",
-            version,
-            document.getUri()
+            document.version,
+            document.uri
         );
         return;
       }
-      var data = new PublishDiagnosticsParams(document.getUri(), lspItems, version);
-      log.debug("<< publishDiagnostics: {}", data);
+      documentDependencies.setDependencies(document.uri, snapshots.getReadFiles());
+      var data = new PublishDiagnosticsParams(document.uri, lspItems, document.version);
+      log.debug("<< publishDiagnostics ({}: {}", document.uri, data);
       server.client().publishDiagnostics(data);
     });
   }
 
-  private boolean documentVersionIsCurrent(String uri, int version) {
-    Document document = getDocument(uri);
-    if (document == null) {
-      return false;
-    }
-    return document.getVersion() == version;
+  private Diagnostic buildLspDiagnostic(vadl.error.Diagnostic vadlDiagnostic,
+                                        Document document) {
+    // TODO Look into secondary locations too? Maybe as relatedInformation? Or to put a
+    //      diagnostic message there as well?
+    SourceLocation location = vadlDiagnostic.multiLocation.primaryLocation().location();
+
+    Diagnostic lspDiagnostic = new Diagnostic();
+    lspDiagnostic.setRange(new Range(
+        document.calculateUtf16Position(location.begin(), false),
+        document.calculateUtf16Position(location.end(), true)
+    ));
+    lspDiagnostic.setSeverity(
+        switch (vadlDiagnostic.level) {
+          case ERROR -> DiagnosticSeverity.Error;
+          case WARNING -> DiagnosticSeverity.Warning;
+        }
+    );
+    // labels (aka messages) per location
+    String labelsString = vadlDiagnostic.multiLocation.primaryLocation().labels().stream()
+        .map(vadl.error.Diagnostic.Message::content)
+        .collect(Collectors.joining("\n"));
+    // messages per Diagnostic - they may offer help or give additional notes
+    String messagesString = vadlDiagnostic.messages.stream()
+        .filter(m -> !m.type().equals(MsgType.PLAIN)
+            || !m.content().contains("parser got confused at this point"))
+        .map(vadl.error.Diagnostic.Message::content)
+        .collect(Collectors.joining("\n"));
+
+    String fullMessage = vadlDiagnostic.reason
+        + (!labelsString.isBlank() ? "\n" + labelsString : "")
+        + (!messagesString.isBlank() ? "\n" + messagesString : "");
+    lspDiagnostic.setMessage(fullMessage);
+
+    return lspDiagnostic;
   }
 
+  private String relativePath(Path path, Path relativeTo) {
+    // relativeTo is a file, but we need its directory as base
+    relativeTo = relativeTo.getParent() != null ? relativeTo.getParent() : relativeTo;
+    return relativeTo.relativize(path).toString();
+  }
+
+  private boolean documentVersionIsCurrent(Document document) {
+    Document currentDocument = getDocument(document.uri);
+    if (currentDocument == null) {
+      return false;
+    }
+    return document.version == currentDocument.version;
+  }
+
+  /**
+   * Returns the open document identified by {@code uri}.
+   *
+   * @return Null if desired document is currently not opened in the client.
+   */
   private @Nullable Document getDocument(String uri) {
     synchronized (openDocuments) {
       return openDocuments.get(uri);

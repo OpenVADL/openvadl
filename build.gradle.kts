@@ -156,7 +156,7 @@ subprojects {
  *************/
 
 tasks.register<Test>("test-common") {
-    dependsOn(":vadl:test-others", ":vadl-cli:test", ":java-annotations:test")
+    dependsOn(":vadl:test-others", ":vadl-cli:test", ":vadl-lsp:test", ":java-annotations:test")
 }
 
 /**************
