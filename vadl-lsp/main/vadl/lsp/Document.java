@@ -21,20 +21,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextDocumentItem;
 import vadl.utils.SourceLocation;
 
 /**
- * Represents one file currently owned by (i.e. opened in) the LSP Client.
- *
- * <p>You can synchronize on this object to ensure it is not modified while performing an atomic
- * operation. For readonly operations consider using a {@link Document.Snapshot} (see
- * {@link Document#getSnapshot()}).
+ * Represents one version of a file currently owned by (i.e. opened in) the LSP Client. This
+ * effectively snapshots the file at one point in time.
  *
  * @see org.eclipse.lsp4j.TextDocumentItem
  */
@@ -45,25 +42,21 @@ public class Document {
   private static final Pattern EOL_REGEX = Pattern.compile("(\\r\\n|\\n|\\r)");
 
   public final String uri;
+  public final int version;
+  public final String text;
 
-  private int version;
-  @Nullable
-  private Snapshot currentSnapshot = null;
+  private final List<String> textLines;
 
-  /**
-   * The document text split into individual lines, using LSP end-of-line sequences. The eol
-   * sequences themselves are removed from these strings.
-   */
-  private List<String> textLines;
-
-  @Nullable
-  private String fullTextCached = null;
-
-  private Document(String uri, int version, String text) {
+  private Document(String uri, int version, String text, List<String> textLines) {
     this.uri = uri;
     this.version = version;
-    this.initTextLines(text);
-    this.fullTextCached = text;
+    this.text = text;
+    this.textLines = Collections.unmodifiableList(textLines);
+  }
+
+
+  public Document(String uri, int version, String text) {
+    this(uri, version, text, initTextLines(text));
   }
 
   /**
@@ -76,70 +69,45 @@ public class Document {
   }
 
   /**
-   * Returns this document's current LSP version.
+   * Provides an updated version of this document.
    */
-  public synchronized int getCurrentVersion() {
-    return version;
-  }
-
-  /**
-   * Returns a snapshot of this document's current state.
-   */
-  public synchronized Snapshot getSnapshot() {
-    if (currentSnapshot != null) {
-      return currentSnapshot;
-    }
-
-    currentSnapshot = new Snapshot(uri, getCurrentVersion(), getCurrentText(),
-        List.copyOf(textLines));
-    return currentSnapshot;
-  }
-
-  synchronized String getCurrentText() {
-    if (fullTextCached == null) {
-      fullTextCached = String.join("\n", textLines);
-    }
-    return fullTextCached;
-  }
-
-
-  /**
-   * Updates this document's version and text content.
-   */
-  public synchronized void change(
-      int newVersion, List<TextDocumentContentChangeEvent> contentChanges) {
+  public Document withChanges(int newVersion, List<TextDocumentContentChangeEvent> contentChanges) {
     if (newVersion <= this.version) {
       throw new RuntimeException(
-          "Cannot change LSP document to version " + newVersion
-          + " as current version is already " + this.version
+          "Cannot update LSP document to version " + newVersion
+              + " as current version is already " + this.version
       );
     }
 
-    this.version = newVersion;
-    this.currentSnapshot = null;
-
+    // Shortcuts
     if (contentChanges.isEmpty()) {
-      return;
+      return new Document(this.uri, newVersion, this.text, this.textLines);
+    }
+    if (contentChanges.size() == 1) {
+      var change = contentChanges.getFirst();
+      if (change.getRange() == null) {
+        // Single change which replaces entire document
+        return new Document(this.uri, newVersion, change.getText());
+      }
     }
 
+    List<String> newTextLines = new ArrayList<>(this.textLines);
     for (var change : contentChanges) {
-      fullTextCached = null;
       var range = change.getRange();
 
       if (range == null) {
         // Change replaces entire document
-        initTextLines(change.getText());
-        fullTextCached = change.getText();
+        newTextLines = initTextLines(change.getText());
         continue;
       }
 
       // Character offsets count UTF-16 words (see server capabilities)
-      int startLine = normalizeLineOffset(range.getStart().getLine());
-      String startLineText = textLines.get(startLine);
+      int startLine = normalizeLineOffset(range.getStart().getLine(), newTextLines);
+      String startLineText = newTextLines.get(startLine);
       int startCharacter = normalizeCharacterOffset(range.getStart().getCharacter(), startLineText);
 
-      int endLine = normalizeLineOffset(range.getEnd().getLine());
-      String endLineText = textLines.get(endLine);
+      int endLine = normalizeLineOffset(range.getEnd().getLine(), newTextLines);
+      String endLineText = newTextLines.get(endLine);
       int endCharacter = normalizeCharacterOffset(range.getEnd().getCharacter(), endLineText);
 
       if (endLine < startLine || (endLine == startLine && endCharacter < startCharacter)) {
@@ -147,151 +115,144 @@ public class Document {
         continue;
       }
 
-      var newTextLines = Arrays.asList(splitLines(
+      var insertTextLines = Arrays.asList(splitLines(
           startLineText.substring(0, startCharacter) + change.getText()
-          + endLineText.substring(endCharacter)
+              + endLineText.substring(endCharacter)
       ));
 
-      if (endLine == startLine && newTextLines.size() == 1) {
+      if (endLine == startLine && insertTextLines.size() == 1) {
         // Shortcut
-        textLines.set(startLine, newTextLines.getFirst());
+        newTextLines.set(startLine, insertTextLines.getFirst());
         continue;
       }
 
-      textLines.subList(startLine, endLine + 1).clear();
-      textLines.addAll(startLine, newTextLines);
+      newTextLines.subList(startLine, endLine + 1).clear();
+      newTextLines.addAll(startLine, insertTextLines);
     }
+
+    return new Document(uri, newVersion, String.join("\n", newTextLines), newTextLines);
   }
 
-  private int normalizeLineOffset(int lineOffset) {
+  public Path getPath() {
+    return Paths.get(URI.create(uri));
+  }
+
+  /**
+   * Calculates LSP UTF-16 position from given VADL compiler UTF-8 position (within this
+   * document).
+   *
+   * @param utf8Position VADL position, which is UTF-8 1-based
+   * @param endPosition true: this is an end position, i.e. it is inclusive in VADL but exclusive
+   *                    in LSP
+   * @return UTF-16 0-based position
+   */
+  public Position calculateUtf16Position(
+      SourceLocation.Position utf8Position, boolean endPosition) {
+    // Change from 1-based to 0-based ...
+    int line = Math.max(utf8Position.line() - 1, 0);
+    // ... but end positions are exclusive in LSP
+    int column = Math.max(utf8Position.column() - (endPosition ? 0 : 1), 0);
+
+    String lineText = textLines.get(line);
+    for (int i = 0; i < column; i++) {
+      column -= utf8Utf16LengthDifference(lineText.charAt(i));
+    }
+
+    return new Position(line, column);
+  }
+
+  /**
+   * Calculates LSP UTF-16 position from given VADL compiler UTF-8 position, which are given in
+   * the special optimized Semantic Tokens format.
+   *
+   * @param semanticTokens Token list encoded for a semanticTokens response, with UTF-8 positions,
+   *                       tokens do not span multiple lines.
+   * @return {@code semanticTokens} but with correct UTF-16 positions
+   */
+  public List<Integer> calculateUtf16Positions(
+      List<Integer> semanticTokens) {
+    if (semanticTokens.isEmpty()) {
+      return semanticTokens;
+    }
+
+    int line = 0;
+    String lineText = textLines.getFirst();
+    int linePos;
+    int previousTargetPos = 0;
+    int targetPos = semanticTokens.get(1);
+    for (int i = 0; i < semanticTokens.size(); i += 5) {
+      // semanticTokens: deltaLine, deltaStart, length, tokenType, tokenModifiers
+
+      int deltaLine = semanticTokens.get(i);
+      if (deltaLine != 0) {
+        line += deltaLine;
+        lineText = textLines.get(line);
+        previousTargetPos = 0;
+      }
+      linePos = previousTargetPos;
+      targetPos = semanticTokens.get(i + 1) + previousTargetPos;
+
+      // deltaStart
+      for (; linePos < targetPos; linePos++) {
+        targetPos -= utf8Utf16LengthDifference(lineText.charAt(linePos));
+      }
+      semanticTokens.set(i + 1, targetPos - previousTargetPos);
+      previousTargetPos = targetPos;
+
+      // length
+      targetPos = targetPos + semanticTokens.get(i + 2);
+      for (; linePos < targetPos; linePos++) {
+        targetPos -= utf8Utf16LengthDifference(lineText.charAt(linePos));
+      }
+      semanticTokens.set(i + 2, targetPos - previousTargetPos);
+      // No update of previousTargetPos - next token is calculated based on start pos of the
+      // current token
+    }
+
+    return semanticTokens;
+  }
+
+
+  private static List<String> initTextLines(String fullText) {
+    // Note: We don't distinguish between the different line endings; and as long as this server
+    //       doesn't make editing suggestions to the client (which may use different eol sequences
+    //       than the user) this should be fine.
+    return new ArrayList<>(Arrays.asList(splitLines(fullText)));
+  }
+
+  private static String[] splitLines(String text) {
+    return EOL_REGEX.split(text, -1);
+  }
+
+  private static int normalizeLineOffset(int lineOffset, List<String> textLines) {
     return Math.clamp(lineOffset, 0, textLines.size() - 1);
   }
 
-  private int normalizeCharacterOffset(int characterOffset, String textLine) {
+  private static int normalizeCharacterOffset(int characterOffset, String textLine) {
     // According to LSP spec, character offsets that are too large shall be interpreted as the
     // maximum value for the resp. text line.
     return Math.clamp(characterOffset, 0, textLine.length());
   }
 
-  private String[] splitLines(String text) {
-    return EOL_REGEX.split(text, -1);
+  private static int utf8Utf16LengthDifference(char character) {
+    // UTF-8 position counts bytes; UTF-16 position counts 16bit words
+    // E.g. if a character needs 2 bytes in UTF-8 and 16bit in UTF-16, the difference is 1
+
+    if (character < 128) {
+      // UTF-8: 1 byte
+      return 0;
+    }
+    if (character < 0x800) {
+      // UTF-8: 2 bytes
+      return 1;
+    }
+    if (character >= 0xD800 && character <= 0xDFFF) {
+      // UTF-16: 2 words (surrogate pair - above Basic Multilingual Plane)
+      // UTF-8: 4 bytes
+      // => 1 difference per UTF-16 word
+      return 1;
+    }
+    // UTF-8: 3 bytes
+    return 2;
   }
-
-  private void initTextLines(String fullText) {
-    // Note: We don't distinguish between the different line endings; and as long as this server
-    //       doesn't make editing suggestions to the client (which may use different eol sequences
-    //       than the user) this should be fine.
-    textLines = new ArrayList<>(Arrays.asList(splitLines(fullText)));
-  }
-
-  /**
-   * A snapshot of a {@link Document}. I.e. while the original document object is mutable, this
-   * snapshot does not change.
-   *
-   * @see Document#getSnapshot()
-   */
-  public record Snapshot(String uri, int version, String text, List<String> textLines) {
-
-    public Path getPath() {
-      return Paths.get(URI.create(uri()));
-    }
-
-    /**
-     * Calculates LSP UTF-16 position from given VADL compiler UTF-8 position (within this
-     * document).
-     *
-     * @param utf8Position VADL position, which is UTF-8 1-based
-     * @param endPosition true: this is an end position, i.e. it is inclusive in VADL but exclusive
-     *                    in LSP
-     * @return UTF-16 0-based position
-     */
-    public Position calculateUtf16Position(
-        SourceLocation.Position utf8Position, boolean endPosition) {
-      // Change from 1-based to 0-based ...
-      int line = Math.max(utf8Position.line() - 1, 0);
-      // ... but end positions are exclusive in LSP
-      int column = Math.max(utf8Position.column() - (endPosition ? 0 : 1), 0);
-
-      String lineText = textLines.get(line);
-      for (int i = 0; i < column; i++) {
-        column -= utf8Utf16LengthDifference(lineText.charAt(i));
-      }
-
-      return new Position(line, column);
-    }
-
-    /**
-     * Calculates LSP UTF-16 position from given VADL compiler UTF-8 position, which are given in
-     * the special optimized Semantic Tokens format.
-     *
-     * @param semanticTokens Token list encoded for a semanticTokens response, with UTF-8 positions,
-     *                       tokens do not span multiple lines.
-     * @return {@code semanticTokens} but with correct UTF-16 positions
-     */
-    public List<Integer> calculateUtf16Positions(
-        List<Integer> semanticTokens) {
-      if (semanticTokens.isEmpty()) {
-        return semanticTokens;
-      }
-
-      int line = 0;
-      String lineText = textLines.getFirst();
-      int linePos;
-      int previousTargetPos = 0;
-      int targetPos = semanticTokens.get(1);
-      for (int i = 0; i < semanticTokens.size(); i += 5) {
-        // semanticTokens: deltaLine, deltaStart, length, tokenType, tokenModifiers
-
-        int deltaLine = semanticTokens.get(i);
-        if (deltaLine != 0) {
-          line += deltaLine;
-          lineText = textLines.get(line);
-          previousTargetPos = 0;
-        }
-        linePos = previousTargetPos;
-        targetPos = semanticTokens.get(i + 1) + previousTargetPos;
-
-        // deltaStart
-        for (; linePos < targetPos; linePos++) {
-          targetPos -= utf8Utf16LengthDifference(lineText.charAt(linePos));
-        }
-        semanticTokens.set(i + 1, targetPos - previousTargetPos);
-        previousTargetPos = targetPos;
-
-        // length
-        targetPos = targetPos + semanticTokens.get(i + 2);
-        for (; linePos < targetPos; linePos++) {
-          targetPos -= utf8Utf16LengthDifference(lineText.charAt(linePos));
-        }
-        semanticTokens.set(i + 2, targetPos - previousTargetPos);
-        // No update of previousTargetPos - next token is calculated based on start pos of the
-        // current token
-      }
-
-      return semanticTokens;
-    }
-
-    private int utf8Utf16LengthDifference(char character) {
-      // UTF-8 position counts bytes; UTF-16 position counts 16bit words
-      // E.g. if a character needs 2 bytes in UTF-8 and 16bit in UTF-16, the difference is 1
-
-      if (character < 128) {
-        // UTF-8: 1 byte
-        return 0;
-      }
-      if (character < 0x800) {
-        // UTF-8: 2 bytes
-        return 1;
-      }
-      if (character >= 0xD800 && character <= 0xDFFF) {
-        // UTF-16: 2 words (surrogate pair - above Basic Multilingual Plane)
-        // UTF-8: 4 bytes
-        // => 1 difference per UTF-16 word
-        return 1;
-      }
-      // UTF-8: 3 bytes
-      return 2;
-    }
-  }
-
 }
