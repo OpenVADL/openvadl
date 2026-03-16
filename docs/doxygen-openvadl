@@ -5,7 +5,7 @@
 # and forwards all environment variables needed by the Makefile to configure Doxygen.
 set -euo pipefail
 
-VERSION=1.16.1-openvadl2
+VERSION=1.16.1-openvadl4
 IMAGE=ghcr.io/openvadl/doxygen:$VERSION
 
 # Get the project root (parent of docs/)
