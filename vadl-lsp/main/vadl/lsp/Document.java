@@ -43,20 +43,18 @@ public class Document {
 
   public final String uri;
   public final int version;
-  public final String text;
 
   private final List<String> textLines;
 
-  private Document(String uri, int version, String text, List<String> textLines) {
+  private Document(String uri, int version, List<String> textLines) {
     this.uri = uri;
     this.version = version;
-    this.text = text;
     this.textLines = Collections.unmodifiableList(textLines);
   }
 
 
   public Document(String uri, int version, String text) {
-    this(uri, version, text, initTextLines(text));
+    this(uri, version, splitLines(text));
   }
 
   /**
@@ -69,11 +67,11 @@ public class Document {
   }
 
   /**
-   * Provides an updated version of this document.
+   * Creates an updated version of this document.
    */
   public Document withChanges(int newVersion, List<TextDocumentContentChangeEvent> contentChanges) {
     if (newVersion <= this.version) {
-      throw new RuntimeException(
+      throw new IllegalStateException(
           "Cannot update LSP document to version " + newVersion
               + " as current version is already " + this.version
       );
@@ -81,7 +79,7 @@ public class Document {
 
     // Shortcuts
     if (contentChanges.isEmpty()) {
-      return new Document(this.uri, newVersion, this.text, this.textLines);
+      return new Document(this.uri, newVersion, this.textLines);
     }
     if (contentChanges.size() == 1) {
       var change = contentChanges.getFirst();
@@ -97,7 +95,7 @@ public class Document {
 
       if (range == null) {
         // Change replaces entire document
-        newTextLines = initTextLines(change.getText());
+        newTextLines = new ArrayList<>(splitLines(change.getText()));
         continue;
       }
 
@@ -115,10 +113,10 @@ public class Document {
         continue;
       }
 
-      var insertTextLines = Arrays.asList(splitLines(
+      var insertTextLines = splitLines(
           startLineText.substring(0, startCharacter) + change.getText()
               + endLineText.substring(endCharacter)
-      ));
+      );
 
       if (endLine == startLine && insertTextLines.size() == 1) {
         // Shortcut
@@ -130,7 +128,11 @@ public class Document {
       newTextLines.addAll(startLine, insertTextLines);
     }
 
-    return new Document(uri, newVersion, String.join("\n", newTextLines), newTextLines);
+    return new Document(uri, newVersion, newTextLines);
+  }
+
+  public String getText() {
+    return String.join("\n", textLines);
   }
 
   public Path getPath() {
@@ -213,15 +215,16 @@ public class Document {
   }
 
 
-  private static List<String> initTextLines(String fullText) {
+  /**
+   * Splits the given String into individual lines (as stored in {@code textLines}).
+   *
+   * @return text lines. This List has a fixed size! (see {@link Arrays#asList(Object[])})
+   */
+  private static List<String> splitLines(String text) {
     // Note: We don't distinguish between the different line endings; and as long as this server
     //       doesn't make editing suggestions to the client (which may use different eol sequences
     //       than the user) this should be fine.
-    return new ArrayList<>(Arrays.asList(splitLines(fullText)));
-  }
-
-  private static String[] splitLines(String text) {
-    return EOL_REGEX.split(text, -1);
+    return Arrays.asList(EOL_REGEX.split(text, -1));
   }
 
   private static int normalizeLineOffset(int lineOffset, List<String> textLines) {

@@ -81,7 +81,7 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
       return underlyingFileSystem.getInputStream(path);
     }
 
-    return new ByteArrayInputStream(document.text.getBytes(StandardCharsets.UTF_8));
+    return new ByteArrayInputStream(document.getText().getBytes(StandardCharsets.UTF_8));
   }
 
   @Override

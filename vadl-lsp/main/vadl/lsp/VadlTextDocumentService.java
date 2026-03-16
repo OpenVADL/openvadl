@@ -145,7 +145,7 @@ public class VadlTextDocumentService implements TextDocumentService {
       }
 
       List<Integer> tokens = tokenizer != null
-            ? tokenizer.getTokens(document.text)
+            ? tokenizer.getTokens(document.getText())
             : new ArrayList<>();
       SemanticTokens result = new SemanticTokens(document.calculateUtf16Positions(tokens));
       log.debug("<<- semanticTokens/full: <omitted>({} tokens)", tokens.size() / 5);
