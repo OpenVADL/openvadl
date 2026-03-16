@@ -20,17 +20,28 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.MachineInstructionLabel;
+import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
+import vadl.gcb.valuetypes.CompilerRegister;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValueNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.OutputInstructionName;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadArtificialResourceNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadResourceFactory;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandler;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerForMemoryInstructionsReplacement;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
@@ -42,8 +53,12 @@ import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 
 /**
@@ -79,7 +94,14 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
       List<TableGenPattern> patterns,
       Abi abi) {
     var storesWithoutImmediates = createStoreFromsWithoutImmediate(patterns);
-    return new ArrayList<>(storesWithoutImmediates);
+
+    var allPatterns = new ArrayList<>(storesWithoutImmediates);
+    allPatterns.addAll(patterns);
+    var truncStores = createSuperRegisterTruncStores(allPatterns);
+    
+    var variations = new ArrayList<>(storesWithoutImmediates);
+    variations.addAll(truncStores);
+    return variations;
   }
 
   @Override
@@ -102,6 +124,175 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
   @Override
   protected boolean rejectWhenWritingToMemory(Graph graph) {
     return false;
+  }
+
+  /**
+   * Given a list of possible 'store' patterns using sub-registers as values, create identical 
+   * truncating-stores for the relevant base-registers.
+   */
+  private List<TableGenPattern> createSuperRegisterTruncStores(List<TableGenPattern> patterns) {
+    return patterns
+      .stream()
+      .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+      .map(x -> {
+        var pattern = (TableGenSelectionWithOutputPattern) x;
+        return this.createTruncStoreFromSubregStore(pattern)
+          .or(() -> this.createTruncStoreFromSubregTruncStore(pattern));
+      })
+      .flatMap(Optional::stream)
+      .toList();
+  }
+
+  /**
+   * Given a possible truncating store pattern using a sub-register as value, create an identical 
+   * truncating store pattern for the sub-registers' base-register.
+   * This method will 
+   * - replace the sub-register node in the selector pattern with the appropriate base-register
+   * - replace the sub-register node in the machine pattern with an LLVM "EXTRACT_SUBREG" node,
+   *   using the base-register as operand
+   */
+  private Optional<TableGenPattern> createTruncStoreFromSubregTruncStore(
+      TableGenSelectionWithOutputPattern pattern
+  ) {
+    var selector = pattern.selector().copy();
+  
+    var truncStores = selector
+        .getNodes(LlvmTruncStore.class)
+        .filter(sn -> sn.value() instanceof LlvmReadArtificialResourceNode)
+        .toList();
+    if (truncStores.size() != 1) {
+      return Optional.empty();
+    }
+
+    var truncStoreNode = truncStores.getFirst();
+    var subRegNode = (LlvmReadArtificialResourceNode) truncStoreNode.value();
+
+    if (!(subRegNode.operand() instanceof GcbDefaultInstructionOperand)) {
+      return Optional.empty();
+    }
+
+    var fieldRefs = subRegNode.input(FieldRefNode.class).toList();
+    if (fieldRefs.size() != 1) {
+      return Optional.empty();
+    }
+    var fieldRef = (FieldRefNode) fieldRefs.getFirst();
+
+    var baseReg = subRegNode.getBaseTensor();
+    var readBaseRegNode = (ReadRegTensorNode) new LlvmReadResourceFactory().create(
+        baseReg, fieldRef, baseReg.type().asDataType(), null);
+    subRegNode.replaceAndDelete(readBaseRegNode);
+
+    var subRegOperandName = ((GcbDefaultInstructionOperand) subRegNode.operand()).name();
+    var machine = this.replaceSubregOperandWithSubregExtraction(
+        pattern.machine(), 
+        readBaseRegNode, 
+        fieldRef, 
+        subRegOperandName, 
+        subRegNode.type().bitWidth());
+
+    return Optional.of(new TableGenSelectionWithOutputPattern(selector, machine));
+  }
+
+  /**
+   * Given a possible store pattern using a sub-register as value, create an identical truncating
+   * store pattern for the sub-registers' base-register.
+   * This method will 
+   * - replace the sub-register node in the selector pattern with the appropiate base-register
+   * - replace the "LlvmStoreSD" with a "LlvmTruncStore" node
+   * - replace the sub-register node in the machine pattern with an LLVM "EXTRACT_SUBREG" node,
+   *   using the base-register as operand
+   */
+  private Optional<TableGenPattern> createTruncStoreFromSubregStore(
+      TableGenSelectionWithOutputPattern pattern
+  ) {
+    var selector = pattern.selector().copy();
+
+    var storeNodes = selector
+        .getNodes(LlvmStoreSD.class)
+        .filter(sn -> sn.value() instanceof LlvmReadArtificialResourceNode)
+        .toList();
+    if (storeNodes.size() != 1) {
+      return Optional.empty();
+    }
+
+    var storeNode = storeNodes.getFirst();
+    var subRegNode = (LlvmReadArtificialResourceNode) storeNode.value();
+
+    if (!(subRegNode.operand() instanceof GcbDefaultInstructionOperand)) {
+      return Optional.empty();
+    }
+
+    var fieldRefs = subRegNode.input(FieldRefNode.class).toList();
+    if (fieldRefs.size() != 1) {
+      return Optional.empty();
+    }
+    var fieldRef = (FieldRefNode) fieldRefs.getFirst();
+
+    var baseReg = subRegNode.getBaseTensor();
+    var readBaseRegNode = (ReadRegTensorNode) new LlvmReadResourceFactory().create(
+        baseReg, fieldRef, baseReg.type().asDataType(), null);
+    var truncateNode = new TruncateNode(
+        readBaseRegNode,
+        subRegNode.type());
+    var truncStoreNode = new LlvmTruncStore(
+        storeNode,
+        truncateNode);
+    storeNode.replaceAndDelete(truncStoreNode);
+
+    var subRegOperand = (GcbDefaultInstructionOperand) subRegNode.operand();
+    var machine = this.replaceSubregOperandWithSubregExtraction(
+        pattern.machine(), 
+        readBaseRegNode, 
+        fieldRef, 
+        subRegOperand.name(), 
+        subRegNode.type().bitWidth());
+
+    return Optional.of(new TableGenSelectionWithOutputPattern(selector, machine));
+  }
+
+  /**
+   * Replace the sub-register-operand with the given name with an operand extracting the 
+   * sub-register from the given base-register-node, using LLVMs 'EXTRACT_SUBREG'.
+   */
+  private Graph replaceSubregOperandWithSubregExtraction(
+      Graph machine,
+      ReadRegTensorNode baseRegisterNode,
+      FieldRefNode baseRegisterAddress,
+      String subRegOperandName,
+      int subRegBitWidth
+  ) {
+    machine = machine.copy();
+
+    String subRegIndexName = subRegBitWidth == 64 
+        ? CompilerRegister.SubRegIndexEnum.FULL_64.name()
+        : CompilerRegister.SubRegIndexEnum.SUB_32.name();
+
+    var subRegNode = ensurePresent(
+        machine
+          .getNodes(LcbMachineInstructionParameterNode.class)
+          .filter(x -> {
+            var operand = x.instructionOperand();
+            return operand instanceof GcbInstructionRegisterFileOperand op 
+              && op.name().equals(subRegOperandName);
+          })
+          .findFirst(), 
+        () -> Diagnostic.error(
+          "Expected operand from selector-pattern to be present in machine-pattern.", 
+          baseRegisterNode.location()));
+    var baseRegParameterNode = new LcbMachineInstructionParameterNode(
+        new GcbInstructionRegisterFileOperand(
+          baseRegisterNode, 
+          baseRegisterAddress.formatField())
+    );
+    var extractSubRegNode = new LcbMachineInstructionNode(
+        new NodeList<>(
+            baseRegParameterNode, 
+            new ConstantNode(new Constant.Str(subRegIndexName))), 
+        new OutputInstructionName("EXTRACT_SUBREG"));
+
+    subRegNode.replaceAndDelete(extractSubRegNode);
+
+    return machine;
   }
 
   /**
