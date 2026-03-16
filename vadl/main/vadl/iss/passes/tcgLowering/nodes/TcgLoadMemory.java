@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
+import vadl.iss.passes.tcgLowering.TcgEndianness;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.iss.passes.tcgLowering.Tcg_8_16_32_64;
 import vadl.javaannotations.viam.DataValue;
@@ -30,9 +31,9 @@ import vadl.viam.graph.Node;
 /**
  * Represents a TCG (Tiny Code Generation) operation node responsible for loading memory.
  *
- * <p>This class encapsulates the size, extension mode, and address of the memory to be loaded.
- * It extends the TcgOpNode class, inheriting common properties of TCG operation nodes like
- * result and width.
+ * <p>This class encapsulates the size, extension mode, endianness, and address of the memory to
+ * be loaded. It extends the TcgOpNode class, inheriting common properties of TCG operation nodes
+ * like result and width.
  */
 public class TcgLoadMemory extends TcgOpNode {
 
@@ -40,25 +41,30 @@ public class TcgLoadMemory extends TcgOpNode {
   Tcg_8_16_32_64 size;
   @DataValue
   TcgExtend extendMode;
+  @DataValue
+  TcgEndianness endianness;
   @Input
   TcgVRefNode addr;
 
   /**
    * Constructs a new TcgLoadMemory operation node.
    *
-   * @param size the size of the memory to be loaded, one of Tcg_8_16_32_64
-   *             values (i8, i16, i32, i64)
-   * @param mode the mode of an extension, one of TcgExtend values (SIGN, ZERO)
-   * @param dest the variable representing the result of the load operation
-   * @param addr the variable representing the address from where memory is to be loaded
+   * @param size       the size of the memory to be loaded, one of Tcg_8_16_32_64
+   *                   values (i8, i16, i32, i64)
+   * @param mode       the mode of an extension, one of TcgExtend values (SIGN, ZERO)
+   * @param endianness the endianness of the operation, one of TcgEndianness values (BIG, LITTLE)
+   * @param dest       the variable representing the result of the load operation
+   * @param addr       the variable representing the address from where memory is to be loaded
    */
   public TcgLoadMemory(Tcg_8_16_32_64 size,
                        TcgExtend mode,
+                       TcgEndianness endianness,
                        TcgVRefNode dest,
                        TcgVRefNode addr) {
     super(dest, dest.width());
     this.size = size;
     this.extendMode = mode;
+    this.endianness = endianness;
     this.addr = addr;
   }
 
@@ -68,6 +74,10 @@ public class TcgLoadMemory extends TcgOpNode {
 
   public TcgExtend mode() {
     return extendMode;
+  }
+
+  public TcgEndianness endianness() {
+    return endianness;
   }
 
   public TcgVRefNode addr() {
@@ -85,7 +95,7 @@ public class TcgLoadMemory extends TcgOpNode {
   public String cCode(Function<Node, String> nodeToCCode) {
     return "tcg_gen_qemu_ld_" + width()
         + "(" + firstDest().varName()
-        + "," + addr().varName()
+        + ", " + addr().varName()
         + ", 0"
         + ", " + tcgMemOp()
         + ");";
@@ -93,27 +103,31 @@ public class TcgLoadMemory extends TcgOpNode {
 
   @Override
   public Node copy() {
-    return new TcgLoadMemory(size, extendMode, firstDest(), addr);
+    return new TcgLoadMemory(size, extendMode, endianness, firstDest(), addr);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgLoadMemory(size, extendMode, firstDest(), addr);
+    return new TcgLoadMemory(size, extendMode, endianness, firstDest(), addr);
   }
 
   /**
    * Generates the memory operation string for a TCG (Tiny Code Generation) load operation.
    *
-   * <p>The method composes a memory operation string based on the size of the memory to be loaded
-   * and the extension mode.
+   * <p>The method composes a memory operation string based on the size of the memory to be loaded,
+   * the endianness of the memory to load from and the extension mode.
    * The format of the memory operation string varies depending on whether
    * the extension mode requires a sign extension or zero extension.
    *
-   * @return A string representing the memory operation flags. It includes the memory operation size
-   *     and, if applicable, the sign extension flag.
+   * @return A string representing the memory operation flags. It includes the memory operation
+   *     size, the memory endianness flag and, if applicable, the sign extension flag.
    */
   public String tcgMemOp() {
     var first = "MO_" + size.width;
+    first += switch (endianness) {
+      case LITTLE -> " | MO_LE"; // if host is big endian, default is also big endian
+      case BIG -> " | MO_BE";
+    };
     return switch (extendMode) {
       case SIGN -> "MO_SIGN | " + first;
       case ZERO -> first; // no second flag required
@@ -125,6 +139,7 @@ public class TcgLoadMemory extends TcgOpNode {
     super.collectData(collection);
     collection.add(size);
     collection.add(extendMode);
+    collection.add(endianness);
   }
 
   @Override

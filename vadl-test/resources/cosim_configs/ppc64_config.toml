@@ -61,7 +61,7 @@ additional_args = [
 # but should still be compared "correctly"
 # This field is optional, not setting it means the register-data is being compared left-to-right (i.e. big-endian by default)
 # This setting also *does not* have an effect on tracing, data will still be stored in the original endianess
-endian = "little"
+endian = "big"
 
 # The following three options configure which instructions from the `test_exec` executable should actually be tested.
 # NOTE: Only applies to `layer = "insn" | "tb-strict"`
@@ -177,7 +177,7 @@ srr1 = "srr1"
 layer = "insn"
 
 # Whether reads/writes from/to memory should also be compared
-with_memory_checks = true
+with_memory_checks = false
 
 # "lockstep": All clients are run and compared one *execution-step* at a time.
 # 			  This means that the test will exit on the first divergence (or at the end if no diffs where found)

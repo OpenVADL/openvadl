@@ -88,6 +88,7 @@ import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.ExceptionDef;
 import vadl.viam.Specification;
+import vadl.viam.annotations.BigEndianAnnotation;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
@@ -598,8 +599,11 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     var dest = singleDestOf(toHandle);
     var src = singleDestOf(toHandle.address());
 
+    var isBigEndian = toHandle.memory().hasAnnotation(BigEndianAnnotation.class);
+    var endianness = TcgEndianness.fromBoolean(isBigEndian);
+
     replaceCurrent(
-        new TcgLoadMemory(toHandle.loadSize(), toHandle.tcgExtend(), dest, src)
+        new TcgLoadMemory(toHandle.loadSize(), toHandle.tcgExtend(), endianness, dest, src)
     );
   }
 
@@ -655,8 +659,11 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     // doesn't matter (hopefully)
     var mode = TcgExtend.SIGN;
 
+    var isBigEndian = toHandle.memory().hasAnnotation(BigEndianAnnotation.class);
+    var endianness = TcgEndianness.fromBoolean(isBigEndian);
+
     replaceCurrent(
-        new TcgStoreMemory(storeSize, mode, value, addr)
+        new TcgStoreMemory(storeSize, mode, endianness, value, addr)
     );
   }
 

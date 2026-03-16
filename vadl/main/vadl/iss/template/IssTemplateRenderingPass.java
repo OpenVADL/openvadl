@@ -16,6 +16,8 @@
 
 package vadl.iss.template;
 
+import static vadl.error.Diagnostic.ensure;
+import static vadl.error.Diagnostic.error;
 import static vadl.iss.template.IssRenderUtils.mapRegTensors;
 
 import java.util.HashMap;
@@ -34,6 +36,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
+import vadl.viam.annotations.BigEndianAnnotation;
 
 /**
  * The template rendering pass all ISS (QEMU) rendering passes extend from.
@@ -127,6 +130,7 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     vars.put("target_size", configuration().targetSize().width);
     vars.put("mem_regions", memRegions(specification));
     vars.put("exc_info", getExceptionInfo(specification));
+    vars.put("mem_big_endian", memIsBigEndian(specification));
     return vars;
   }
 
@@ -145,5 +149,13 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
       throw new IllegalStateException("PC is null");
     }
     return pc.registerTensor().expectExtension(RegInfo.class);
+  }
+
+  private boolean memIsBigEndian(Specification viam) {
+    var isa = viam.isa().get();
+    var memories = isa.ownMemories();
+    ensure(memories.size() == 1,
+        () -> error("Only one memory definition is supported", isa));
+    return memories.getFirst().hasAnnotation(BigEndianAnnotation.class);
   }
 }

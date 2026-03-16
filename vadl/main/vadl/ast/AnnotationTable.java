@@ -54,6 +54,7 @@ import vadl.viam.Constant;
 import vadl.viam.Encoding;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
+import vadl.viam.Memory;
 import vadl.viam.MemoryRegion;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
@@ -62,6 +63,7 @@ import vadl.viam.annotations.AlignmentAnnotation;
 import vadl.viam.annotations.AsmGenerateRulesAnno;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
+import vadl.viam.annotations.BigEndianAnnotation;
 import vadl.viam.annotations.DefineOperandAnnotation;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.annotations.FieldAccessAnnotation;
@@ -187,6 +189,13 @@ public class AnnotationTable {
         () -> new EnumAnnotation(List.of("zero", "sign")))
         .check((def, annotation, lowering) -> {
           annotation.verifyValuesCnt(annotation.definition, 1);
+        })
+        .build();
+
+    annotationOn(MemoryDefinition.class, "bigEndian", EnableAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          var viamDef = (Memory) def;
+          viamDef.addAnnotation(new BigEndianAnnotation());
         })
         .build();
 
