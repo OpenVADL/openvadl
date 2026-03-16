@@ -232,6 +232,7 @@ public final class BuildkitDockerImage {
       if (exitCode != 0) {
         throw new IllegalStateException("docker load failed with exit code " + exitCode);
       }
+      logger.info("Loading image was successful.");
     } finally {
       Files.deleteIfExists(exportedArchive);
     }
@@ -243,7 +244,7 @@ public final class BuildkitDockerImage {
     @Override
     public void onVertex(BuildVertex vertex) {
       if (!vertex.name().isBlank()) {
-        logger.debug(vertex.name());
+        logger.info(vertex.name());
       }
     }
 
@@ -251,7 +252,7 @@ public final class BuildkitDockerImage {
     public void onLog(BuildLog log) {
       String message = log.utf8Message();
       if (!message.isBlank()) {
-        logger.debug(message);
+        logger.info(message);
       }
     }
 
