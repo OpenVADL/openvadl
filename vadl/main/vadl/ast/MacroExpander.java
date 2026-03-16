@@ -364,9 +364,10 @@ class MacroExpander
 
   @Override
   public Expr visit(LetExpr expr) {
+    var ids = expr.identifiers.stream().map(i -> (Identifier) expandId(i)).toList();
     var valueExpression = expandExpr(expr.valueExpr);
     var body = expandExpr(expr.body);
-    return new LetExpr(expr.identifiers, valueExpression, body, copyLoc(expr.location));
+    return new LetExpr(ids, valueExpression, body, copyLoc(expr.location));
   }
 
   @Override
@@ -500,19 +501,19 @@ class MacroExpander
   @Override
   public Expr visit(SequenceCallExpr expr) {
     return new SequenceCallExpr(expr.target, expr.range == null ? null : expr.range.accept(this),
-        expr.loc);
+        copyLoc(expr.loc));
   }
 
   @Override
   public Expr visit(ExpandedSequenceCallExpr expr) {
     return new ExpandedSequenceCallExpr(expr.target,
-        expr.loc);
+        copyLoc(expr.loc));
   }
 
   @Override
   public Expr visit(ExpandedAliasDefSequenceCallExpr expr) {
-    return new ExpandedSequenceCallExpr(expr.target,
-        expr.loc);
+    return new ExpandedSequenceCallExpr(expandExpr(expr.target),
+        copyLoc(expr.loc));
   }
 
   @Override
@@ -524,17 +525,20 @@ class MacroExpander
   @Override
   public Definition visit(ConstantDefinition definition) {
     var id = expandId(definition.identifier);
+    var typeLiteral =
+        definition.typeLiteral != null ? (TypeLiteral) expandExpr(definition.typeLiteral) : null;
     var value = expandExpr(definition.value);
-    return new ConstantDefinition(id, definition.typeLiteral, value, copyLoc(definition.loc))
+    return new ConstantDefinition(id, typeLiteral, value, copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(FormatDefinition definition) {
+    var id = expandId(definition.identifier);
+    var typeLiteral = (TypeLiteral) expandExpr(definition.typeLiteral);
     var fields = definition.fields.stream().map(f -> (FormatField) f.accept(this))
         .collect(Collectors.toCollection(ArrayList::new));
-    var id = expandId(definition.identifier);
-    return new FormatDefinition(id, definition.typeLiteral, fields,
+    return new FormatDefinition(id, typeLiteral, fields,
         copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
@@ -581,7 +585,8 @@ class MacroExpander
   @Override
   public Definition visit(CounterDefinition definition) {
     var id = expandId(definition.identifier);
-    return new CounterDefinition(definition.kind, id, definition.typeLiteral,
+    var typeLiteral = (TypeLiteral) expandExpr(definition.typeLiteral);
+    return new CounterDefinition(definition.kind, id, typeLiteral,
         copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
@@ -589,15 +594,20 @@ class MacroExpander
   @Override
   public Definition visit(MemoryDefinition definition) {
     var id = expandId(definition.identifier);
-    return new MemoryDefinition(id, definition.addressTypeLiteral, definition.dataTypeLiteral,
-        copyLoc(definition.loc))
+    var addressTypeLiteral = (TypeLiteral) expandExpr(definition.addressTypeLiteral);
+    var dataTypeLiteral = (TypeLiteral) expandExpr(definition.dataTypeLiteral);
+    return new MemoryDefinition(id, addressTypeLiteral, dataTypeLiteral, copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(RegisterDefinition definition) {
     var id = expandId(definition.identifier);
-    return new RegisterDefinition(id, definition.typeLiteral, copyLoc(definition.loc))
+    var typeLiteral = new RegisterDefinition.RelationTypeLiteral(
+         definition.typeLiteral.argTypes.stream().map(t -> (TypeLiteral) expandExpr(t)).toList(),
+        (TypeLiteral) expandExpr(definition.typeLiteral.resultType)
+    );
+    return new RegisterDefinition(id, typeLiteral, copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
 
@@ -624,8 +634,11 @@ class MacroExpander
 
   @Override
   public Definition visit(RelocationDefinition definition) {
-    return new RelocationDefinition(definition.identifier, expandParams(definition.params),
-        definition.resultTypeLiteral, expandExpr(definition.expr), copyLoc(definition.loc)
+    return new RelocationDefinition(definition.identifier,
+        expandParams(definition.params),
+        (TypeLiteral) expandExpr(definition.resultTypeLiteral),
+        expandExpr(definition.expr),
+        copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
@@ -650,7 +663,8 @@ class MacroExpander
   @Override
   public Definition visit(UsingDefinition definition) {
     var id = expandId(definition.id);
-    return new UsingDefinition(id, definition.typeLiteral, copyLoc(definition.loc))
+    return new UsingDefinition(id, (TypeLiteral) expandExpr(definition.typeLiteral),
+        copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
 
@@ -701,9 +715,12 @@ class MacroExpander
   public Definition visit(AliasDefinition definition) {
     var id = expandId(definition.id);
     var value = expandExpr(definition.value);
-    return new AliasDefinition(id, definition.kind, definition.aliasType,
-        definition.targetType,
-        value, copyLoc(definition.loc)).withAnnotations(definition.annotations);
+    var aliasType =
+        definition.aliasType != null ? (TypeLiteral) expandExpr(definition.aliasType) : null;
+    var targetType =
+        definition.targetType != null ? (TypeLiteral) expandExpr(definition.targetType) : null;
+    return new AliasDefinition(id, definition.kind, aliasType, targetType, value,
+        copyLoc(definition.loc)).withAnnotations(definition.annotations);
   }
 
   @Override
@@ -875,7 +892,8 @@ class MacroExpander
   @Override
   public Definition visit(ProcessorDefinition definition) {
     var definitions = expandDefinitions(definition.definitions);
-    return new ProcessorDefinition(definition.id, definition.implementedIsa, definition.abi,
+    var abi = definition.abi != null ? expandId(definition.abi) : null;
+    return new ProcessorDefinition(definition.id, expandId(definition.implementedIsa), abi,
         definitions, copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
@@ -1037,9 +1055,10 @@ class MacroExpander
 
   @Override
   public Statement visit(LetStatement letStatement) {
+    var ids = letStatement.identifiers.stream().map(i -> (Identifier) expandId(i)).toList();
     var valueExpression = expandExpr(letStatement.valueExpr);
     var body = letStatement.body.accept(this);
-    return new LetStatement(letStatement.identifiers, valueExpression, body,
+    return new LetStatement(ids, valueExpression, body,
         copyLoc(letStatement.location));
   }
 
