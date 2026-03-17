@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * recompilation between {@link LlvmRiscvAssemblyTest} and {@link SpikeRiscvSimulationTest}.
  */
 public class DockerRiscvImageProvider {
-  private static HashSet<String> images = new HashSet<>();
+  public static HashSet<String> images = new HashSet<>();
 
   static class PrintingListener implements BuildProgressListener {
     private final Logger logger = LoggerFactory.getLogger(PrintingListener.class);
