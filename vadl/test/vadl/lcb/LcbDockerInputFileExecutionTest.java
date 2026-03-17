@@ -63,7 +63,6 @@ public abstract class LcbDockerInputFileExecutionTest extends LcbDockerExecution
                                       String cmd)
       throws DuplicatedPassKeyException,
       IOException {
-    var doDebug = false;
     var configuration = getConfiguration();
 
     runLcb(configuration, specPath);
@@ -77,8 +76,7 @@ public abstract class LcbDockerInputFileExecutionTest extends LcbDockerExecution
             getUpstreamBuildTarget(),
             getUpstreamClangTarget(),
             getSpikeTarget(),
-            getAbi(),
-            doDebug);
+            getAbi());
 
     return sourceDirectories.stream()
         .map(sourceDirectory -> Pair.of(sourceDirectory, inputFiles(sourceDirectory))).flatMap(

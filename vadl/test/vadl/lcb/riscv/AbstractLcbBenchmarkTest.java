@@ -28,7 +28,6 @@ public abstract class AbstractLcbBenchmarkTest extends LcbDockerExecutionTest {
   @Override
   protected void run(String specPath, String cmd, Map<String, String> environments)
       throws DuplicatedPassKeyException, IOException {
-    var doDebug = enableDebug();
 
     var hostPath = System.getenv("EMBENCH_BENCHMARK_RESULT_HOST_PATH");
     var guestPath = System.getenv("EMBENCH_BENCHMARK_RESULT_GUEST_PATH");
@@ -47,8 +46,7 @@ public abstract class AbstractLcbBenchmarkTest extends LcbDockerExecutionTest {
             getUpstreamBuildTarget(),
             getUpstreamClangTarget(),
             getSpikeTarget(),
-            getAbi(),
-            doDebug);
+            getAbi());
 
     runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(cachedImage,
         List.of(),

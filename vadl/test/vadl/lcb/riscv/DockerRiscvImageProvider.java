@@ -79,7 +79,6 @@ public class DockerRiscvImageProvider {
    *                            compiler.
    * @param spikeTarget         is the ISA for spike to run the executable.
    * @param abi                 which should be chosen for the gcc linker.
-   * @param doDebug             if the flag is {@code true} then the image will not be deleted.
    * @return the name of the image.
    * @throws RuntimeException when the {@code isCI} environment variable and {@code doDebug} are
    *                          activated.
@@ -90,23 +89,17 @@ public class DockerRiscvImageProvider {
                              String upstreamBuildTarget,
                              String upstreamClangTarget,
                              String spikeTarget,
-                             String abi,
-                             boolean doDebug) throws IOException {
+                             String abi) throws IOException {
     var image = images.contains(imageName);
     if (!image) {
-
-      var deleteOnExit = !doDebug;
-
-      if ("true".equals(System.getenv("isCI")) && !deleteOnExit) {
-        throw new RuntimeException("It is not allowed to activate 'deleteOnExit' in the CI");
-      }
 
       try (var client = new BuildkitClient(
           BuildkitConnectionConfig.of("tcp://localhost:1234").withTimeout(
               Duration.ofHours(2)))) {
+        Path dockerfile = Path.of(pathDockerFile);
         var requestBuilder = DockerfileBuildRequest.builder(
-                Path.of(pathDockerFile).getParent(),
-                Path.of(pathDockerFile),
+                dockerfile.getParent(),
+                dockerfile,
                 "tc_spike_riscv_" + imageName
             )
             .buildArg("TARGET", target)
