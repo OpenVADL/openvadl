@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
  * recompilation between {@link LlvmRiscvAssemblyTest} and {@link SpikeRiscvSimulationTest}.
  */
 public class DockerRiscvImageProvider {
+  private final static Logger logger = LoggerFactory.getLogger(DockerRiscvImageProvider.class);
   public static HashSet<String> images = new HashSet<>();
 
   static class PrintingListener implements BuildProgressListener {
@@ -108,7 +109,8 @@ public class DockerRiscvImageProvider {
             .outputMode(BuildOutputMode.DOCKER);
 
         BuildResult result = client.buildImage(requestBuilder.build(), new PrintingListener());
-
+        logger.info("Image was built: {}", imageKey);
+        logger.info("Loading image: {}", imageKey);
         loadIntoDocker(result);
 
         images.add(imageKey);
@@ -117,6 +119,7 @@ public class DockerRiscvImageProvider {
         throw new RuntimeException(e);
       }
     } else {
+      logger.info("Image was already in the cache: {}", imageKey);
       return imageKey;
     }
   }
