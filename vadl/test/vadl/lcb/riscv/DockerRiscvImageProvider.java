@@ -29,10 +29,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,7 +87,8 @@ public class DockerRiscvImageProvider {
                              String upstreamClangTarget,
                              String spikeTarget,
                              String abi) throws IOException {
-    var image = images.contains(imageName);
+    var imageKey = "tc_spike_riscv_" + imageName;
+    var image = images.contains(imageKey);
     if (!image) {
 
       try (var client = new BuildkitClient(
@@ -100,7 +98,7 @@ public class DockerRiscvImageProvider {
         var requestBuilder = DockerfileBuildRequest.builder(
                 dockerfile.getParent(),
                 dockerfile,
-                "tc_spike_riscv_" + imageName
+                imageName
             )
             .buildArg("TARGET", target)
             .buildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget)
@@ -113,13 +111,13 @@ public class DockerRiscvImageProvider {
 
         loadIntoDocker(result);
 
-        images.add(imageName);
-        return imageName;
+        images.add(imageKey);
+        return imageKey;
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
     } else {
-      return imageName;
+      return imageKey;
     }
   }
 
