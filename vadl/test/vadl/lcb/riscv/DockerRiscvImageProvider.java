@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -40,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * recompilation between {@link LlvmRiscvAssemblyTest} and {@link SpikeRiscvSimulationTest}.
  */
 public class DockerRiscvImageProvider {
-  private static Map<String, String> images = new HashMap<>();
+  private static HashSet<String> images = new HashSet<>();
 
   static class PrintingListener implements BuildProgressListener {
     private final Logger logger = LoggerFactory.getLogger(PrintingListener.class);
@@ -79,6 +80,7 @@ public class DockerRiscvImageProvider {
    * @param spikeTarget         is the ISA for spike to run the executable.
    * @param abi                 which should be chosen for the gcc linker.
    * @param doDebug             if the flag is {@code true} then the image will not be deleted.
+   * @return the name of the image.
    * @throws RuntimeException when the {@code isCI} environment variable and {@code doDebug} are
    *                          activated.
    */
@@ -90,8 +92,8 @@ public class DockerRiscvImageProvider {
                              String spikeTarget,
                              String abi,
                              boolean doDebug) throws IOException {
-    var image = images.get(imageName);
-    if (image == null) {
+    var image = images.contains(imageName);
+    if (!image) {
 
       var deleteOnExit = !doDebug;
 
@@ -118,13 +120,13 @@ public class DockerRiscvImageProvider {
 
         loadIntoDocker(result);
 
-        images.put(imageName, result.imageDigest());
-        return result.imageDigest();
+        images.add(imageName);
+        return imageName;
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
     } else {
-      return image;
+      return imageName;
     }
   }
 
