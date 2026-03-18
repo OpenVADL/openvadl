@@ -2741,10 +2741,8 @@ public class TypeChecker
       check(functionDefinition);
 
       if (!functionDefinition.params.isEmpty()) {
-        // We can still continue after the error here, no need to stop checking. We simply assume
-        // it returns the type of the function. This is only possible because we don't have
-        // function overloading.
-        errors.add(error("Invalid Function Call", expr)
+        // We cannot continue here because it might get evaluated and confused.
+        addErrorAndStopChecking(error("Invalid Function Call", expr)
             .description("Expected `%s` arguments but got `%s`.", functionDefinition.params.size(),
                 0)
             .build());
