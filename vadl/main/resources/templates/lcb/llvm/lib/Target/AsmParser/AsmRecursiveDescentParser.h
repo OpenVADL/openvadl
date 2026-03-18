@@ -75,6 +75,7 @@ private:
 
     bool VADL_asmparser_laidin(uint64_t lookahead, const std::vector<std::string>& compareStrings);
     bool VADL_asmparser_laideq(uint64_t lookahead, const std::string compareString);
+    std::optional<AsmToken> VADL_asmparser_lookahead_token(uint64_t lookahead);
 
 public:
     [(${namespace})]AsmRecursiveDescentParser(MCAsmLexer &lexer, MCAsmParser &parser, OperandVector& operands)

@@ -507,7 +507,8 @@ public class AssemblyParserCodeGenerator {
         token -> token.getStringLiteral() != null
             ? "'" + token.getStringLiteral() + "'"
             : token.getRuleName()
-    ).collect(Collectors.joining(", "));
+    ).distinct().collect(Collectors.joining(", "));
+    // Use distinct() because tokens can overlap if alternatives have semantic predicates
     return "No alternative matched. Expected one of {" + expectedTokens + "}.";
   }
 
