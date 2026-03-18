@@ -16,15 +16,14 @@
 
 package vadl.lsp;
 
-import java.net.URI;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextDocumentItem;
 import vadl.utils.SourceLocation;
@@ -46,7 +45,12 @@ public class Document {
 
   private final List<String> textLines;
 
-  private Document(String uri, int version, List<String> textLines) {
+  /**
+   * Creates a new Document.
+   *
+   * @param textLines List of individual lines. Each item MUST NOT contain a newline character.
+   */
+  public Document(String uri, int version, List<String> textLines) {
     this.uri = uri;
     this.version = version;
     this.textLines = Collections.unmodifiableList(textLines);
@@ -136,16 +140,29 @@ public class Document {
   }
 
   public Path getPath() {
-    return Paths.get(URI.create(uri));
+    return LspUtils.toPath(uri);
   }
 
   /**
-   * Calculates LSP UTF-16 position from given VADL compiler UTF-8 position (within this
-   * document).
+   * Calculates LSP UTF-16 range from given VADL compiler UTF-8 location (within this document).
    *
+   * @param utf8Location VADL location, which is UTF-8 1-based (end inclusive)
+   * @return UTF-16 0-based (end exclusive) range
+   */
+  public Range calculateUtf16Range(SourceLocation utf8Location) {
+    return new Range(
+        calculateUtf16Position(utf8Location.begin(), false),
+        calculateUtf16Position(utf8Location.end(), true)
+      );
+  }
+
+  /**
+   * Calculates LSP UTF-16 position from given VADL compiler UTF-8 position (within this document).
+   *
+   * @see #calculateUtf8Position(Position, boolean)
    * @param utf8Position VADL position, which is UTF-8 1-based
-   * @param endPosition true: this is an end position, i.e. it is inclusive in VADL but exclusive
-   *                    in LSP
+   * @param endPosition true: this is an end position, i.e. it is inclusive in VADL but exclusive in
+   *                    LSP
    * @return UTF-16 0-based position
    */
   public Position calculateUtf16Position(
@@ -212,6 +229,34 @@ public class Document {
     }
 
     return semanticTokens;
+  }
+
+  /**
+   * Calculates VADL UTF-8 position from given LSP UTF-16 position (within this document).
+   *
+   * @see #calculateUtf16Position(SourceLocation.Position, boolean)
+   * @param utf16Position LSP position, which is UTF-16 0-based
+   * @param endPosition true: this is an end position, i.e. it is exclusive in LSP but inclusive in
+   *                    VADL
+   * @return UTF-8 1-based position
+   */
+  public SourceLocation.Position calculateUtf8Position(
+      Position utf16Position, boolean endPosition) {
+    int line = utf16Position.getLine();
+    int character = utf16Position.getCharacter();
+    int column = character;
+
+    String lineText = textLines.get(line);
+    for (int i = 0; i < character; i++) {
+      column += utf8Utf16LengthDifference(lineText.charAt(i));
+    }
+
+    // Change from 0-based to 1-based ...
+    line += 1;
+    // ... but end positions are inclusive in VADL
+    column += (endPosition ? 0 : 1);
+
+    return new SourceLocation.Position(line, column);
   }
 
 

@@ -244,6 +244,9 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
       textService.setTokenizer(new LspTokenizer(tokenTypesMap, tokenModifiersMap));
     }
 
+    // Goto Definition
+    c.setDefinitionProvider(true);
+
     this.serverCapabilities = c;
   }
 
