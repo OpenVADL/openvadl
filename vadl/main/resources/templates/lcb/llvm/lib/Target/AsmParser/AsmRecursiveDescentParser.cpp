@@ -61,24 +61,53 @@ namespace llvm {
   }
 
   bool [(${namespace})]AsmRecursiveDescentParser::VADL_asmparser_laidin(uint64_t lookahead, const std::vector<std::string>& compareStrings) {
-    std::vector<AsmToken> tokens(lookahead);
-    MutableArrayRef<AsmToken> Buf(tokens.data(), lookahead);
-    size_t ReadCount = Lexer.peekTokens(Buf, true);
+    std::optional<AsmToken> tok = VADL_asmparser_lookahead_token(lookahead);
+    if (!tok.has_value()) {
+      return false;
+    }
 
-    for (size_t i = 0; i < compareStrings.size(); i++) {
-      if (tokens[lookahead-1].getString().[(${compareFunction})](compareStrings[i])) {
-          return true;
+    StringRef s = tok->getString();
+    for (size_t i = 0; i < compareStrings.size(); ++i) {
+      if (s.[(${compareFunction})](compareStrings[i])) {
+        return true;
       }
     }
     return false;
   }
 
   bool [(${namespace})]AsmRecursiveDescentParser::VADL_asmparser_laideq(uint64_t lookahead, const std::string compareString) {
-      std::vector<AsmToken> tokens(lookahead);
-      MutableArrayRef<AsmToken> Buf(tokens.data() ,lookahead);
-      size_t ReadCount = Lexer.peekTokens(Buf, true);
+    std::optional<AsmToken> tok = VADL_asmparser_lookahead_token(lookahead);
+    if (!tok.has_value()) {
+      return false;
+    }
 
-      return tokens[lookahead-1].getString().[(${compareFunction})](compareString);
+    return tok->getString().[(${compareFunction})](compareString);
+  }
+
+  std::optional<AsmToken> [(${namespace})]AsmRecursiveDescentParser::VADL_asmparser_lookahead_token(uint64_t lookahead) {
+    if (lookahead == 0) {
+      return Lexer.getTok();
+    }
+
+    AsmToken current = Lexer.getTok();
+    AsmToken firstLookahead = Lexer.Lex();
+
+    std::optional<AsmToken> result;
+    if (lookahead == 1) {
+      result = firstLookahead;
+    } else {
+      std::vector<AsmToken> rest(lookahead - 1);
+      MutableArrayRef<AsmToken> buf(rest.data(), lookahead - 1);
+      size_t readCount = Lexer.peekTokens(buf, true);
+
+      size_t idx = lookahead - 2;
+      if (readCount > idx) {
+        result = rest[idx];
+      }
+    }
+
+    Lexer.UnLex(current);
+    return result;
   }
 
 [(${grammarRules})]

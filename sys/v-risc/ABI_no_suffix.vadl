@@ -159,25 +159,22 @@ assembly description AD for ABI = {
       ShiftImmediateIds: "ASRI" | "LSRI" | "LSLI";
 
       ShiftImmediateInstruction :
-        var mnemonicTmp = ShiftImmediateIds
-        var rdTmp = Reg @operand
-        ( // normal version of instruction
+          // normal version of instruction
           // e.g. LSRI r1, r2, 0x1
-          ?(LaIdEq(1,","))
-          a = (  
-            mnemonic = mnemonicTmp @operand
-            rd = rdTmp
+          ?(LaIdEq(4,","))
+          a = (
+            mnemonic = ShiftImmediateIds @operand
+            rd = Register @operand ","
             rs1 = Register @operand ","
             imm = ImmediateOperand
           ) @instruction
         | // short version of instruction with _S suffix
           // e.g. LSRI_S r1, 0x1
           b = (
-            mnemonic = s_suffix< mnemonicTmp > @operand
-            rd = rdTmp
+            mnemonic = s_suffix< ShiftImmediateIds > @operand
+            rd = Register @operand ","
             imm = ImmediateOperand
           ) @instruction
-        )
       ;
 
 
