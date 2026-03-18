@@ -99,7 +99,7 @@ public class DockerRiscvImageProvider {
         var requestBuilder = DockerfileBuildRequest.builder(
                 dockerfile.getParent(),
                 dockerfile,
-                imageName
+                imageKey
             )
             .buildArg("TARGET", target)
             .buildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget)
