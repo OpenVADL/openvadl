@@ -30,10 +30,11 @@ import vadl.error.DiagnosticList;
 import vadl.utils.SourceLocation;
 
 /**
- * Expands any usage of macro instances in the AST (including overrides passed via CLI).
- * Also, since binary expression reordering can depend on operator placeholders, this class also
+ * Expands macro invocations and placeholders with the expanded body of a macro.
+ * Id-returning macros can be overridden via CLI arguments or with import statements.
+ * Since binary expression reordering can depend on operator placeholders, this class also
  * reorders any encountered binary expressions.<br>
- * Before: An AST optionally containing macro instances, placeholders etc.
+ * Before: An AST optionally containing macro instances, placeholders, etc.
  * Any instances of BinaryExpr must be left-sided, as originally parsed.<br>
  * After: An AST containing no special nodes (macro instance, placeholder, node lists).
  * Any instances of BinaryExpr are ordered according to operator precedence.
@@ -59,14 +60,14 @@ class MacroExpander
    * Expands the given expr and, if applicable, performs binary expression reordering on it.
    * Since binary expression reordering is absolutely necessary to preserve the original semantics,
    * prefer this method to calling {@code expr.accept(this);} directly.
-   * However, to  prevent O(n²) performance, this should never be called during the macro expansion
+   * However, to prevent O(n²) performance, this should never be called during the macro expansion
    * of a binary expression itself.
    *
    * @param expr The expression to perform macro expansion on
    * @return An expanded and optionally reorder expression
    * @see BinaryExpr#reorder(BinaryExpr)
    */
-  public Expr expandExpr(Expr expr) {
+  private Expr expandExprRaw(Expr expr) {
     var result = expr.accept(this);
     if (!errors.isEmpty()) {
       throw new DiagnosticList(errors);
@@ -77,74 +78,24 @@ class MacroExpander
     return result;
   }
 
-  /**
-   * Expands the given {@link IsId} using {@link #expandExpr(Expr)}.
-   * This is just a helper function to avoid manual casting.
-   */
-  public IsId expandId(IsId id) {
-    return (IsId) expandExpr((Expr) id);
+  @SuppressWarnings("unchecked")
+  private <T> T expandExpr(T expr) {
+    return (T) expandExprRaw((Expr) expr);
   }
 
-  /**
-   * Expands the given {@link IdentifierOrPlaceholder} using {@link #expandExpr(Expr)}.
-   * This is just a helper function to avoid manual casting.
-   */
-  public IdentifierOrPlaceholder expandId(IdentifierOrPlaceholder id) {
-    return (IdentifierOrPlaceholder) expandExpr((Expr) id);
+  private <T> List<T> expandExprs(List<T> expressions) {
+    return expressions.stream()
+        .map(this::expandExpr)
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 
-  public List<IsId> expandIds(List<IsId> ids) {
-    return ids.stream().map(this::expandId).collect(Collectors.toList());
-  }
-
-  public CallIndexExpr.Arguments expandArgs(CallIndexExpr.Arguments args) {
-    return new CallIndexExpr.Arguments(
-        args.values.stream()
-            .map(this::expandExpr)
-            .collect(ArrayList::new, ArrayList::add, ArrayList::addAll),
-        copyLoc(args.location));
-  }
-
-  public List<Expr> expandExprs(List<Expr> expressions) {
-    var copy = new ArrayList<>(expressions);
-    copy.replaceAll(this::expandExpr);
-    return copy;
-  }
-
-  /**
-   * Expands all definitions in the given list.
-   * If a definition expands to a {@link DefinitionList}, its items are flattened into the result.
-   *
-   * @param definitions The list of definitions to expand
-   * @return A list of expanded and flattened definitions
-   */
-  public List<Definition> expandDefinitions(List<Definition> definitions) {
-    var defs = new ArrayList<Definition>(definitions.size());
-    for (var def : definitions) {
-      var expanded = expandDefinition(def);
-      if (expanded instanceof DefinitionList list) {
-        defs.addAll(list.items);
-      } else {
-        defs.add(expanded);
-      }
-    }
-    return defs;
-  }
-
-  public Definition expandDefinition(Definition def) {
-    var result = def.accept(this);
-    if (!errors.isEmpty()) {
-      throw new DiagnosticList(errors);
-    }
-    return result;
-  }
-
-  public Statement expandStatement(Statement statement) {
+  @SuppressWarnings("unchecked")
+  private <T extends Statement> T expandStatement(T statement) {
     var result = statement.accept(this);
     if (!errors.isEmpty()) {
       throw new DiagnosticList(errors);
     }
-    return result;
+    return (T) result;
   }
 
   /**
@@ -154,12 +105,13 @@ class MacroExpander
    * @param statements The list of statements to expand
    * @return A list of expanded and flattened statements
    */
-  public List<Statement> expandStatements(List<Statement> statements) {
-    var stmts = new ArrayList<Statement>(statements.size());
+  @SuppressWarnings("unchecked")
+  private <T extends Statement> List<T> expandStatements(List<T> statements) {
+    var stmts = new ArrayList<T>(statements.size());
     for (var statement : statements) {
       var expanded = expandStatement(statement);
       if (expanded instanceof StatementList list) {
-        stmts.addAll(list.items);
+        stmts.addAll((List<T>) list.items);
       } else {
         stmts.add(expanded);
       }
@@ -167,34 +119,69 @@ class MacroExpander
     return stmts;
   }
 
-  List<AnnotationDefinition> expandAnnotations(List<AnnotationDefinition> annotations) {
-    var list = new ArrayList<>(annotations);
-    list.replaceAll(a -> (AnnotationDefinition) a.accept(this));
-    return list;
+  @SuppressWarnings("unchecked")
+  private <T extends Definition> T expandDefinition(T def) {
+    var result = def.accept(this)
+        .withAnnotations(expandAnnotations(def.annotations));
+    if (!errors.isEmpty()) {
+      throw new DiagnosticList(errors);
+    }
+    return (T) result;
   }
 
-  public Node expandNode(Node node) {
-    if (node instanceof Expr expr) {
-      return expandExpr(expr);
-    } else if (node instanceof Definition definition) {
-      return expandDefinition(definition);
-    } else if (node instanceof Statement statement) {
-      return expandStatement(statement);
-    } else if (node instanceof RecordInstance recordInstance) {
-      var entries = new ArrayList<>(recordInstance.entries);
-      entries.replaceAll(this::expandNode);
-      return new RecordInstance(recordInstance.type, entries, recordInstance.sourceLocation);
-    } else if (node instanceof EncodingDefinition.EncsNode encs) {
-      return resolveEncs(encs);
-    } else if (node instanceof PlaceholderNode placeholderNode) {
-      return expand(placeholderNode);
-    } else if (node instanceof MacroInstanceNode macroInstanceNode) {
-      return expand(macroInstanceNode);
-    } else if (node instanceof MacroMatchNode macroMatchNode) {
-      return expand(macroMatchNode);
-    } else {
-      return node;
+  /**
+   * Expands all definitions in the given list.
+   * If a definition expands to a {@link DefinitionList}, its items are flattened into the result.
+   *
+   * @param definitions The list of definitions to expand
+   * @return A list of expanded and flattened definitions
+   */
+  @SuppressWarnings("unchecked")
+  private <T extends Definition> List<T> expandDefinitions(List<T> definitions) {
+    var defs = new ArrayList<Definition>(definitions.size());
+    for (var def : definitions) {
+      var expanded = expandDefinition(def);
+      if (expanded instanceof DefinitionList list) {
+        defs.addAll(list.items);
+      } else {
+        defs.add(expanded);
+      }
     }
+    return (List<T>) defs;
+  }
+
+  private CallIndexExpr.Arguments expandArgs(CallIndexExpr.Arguments args) {
+    return new CallIndexExpr.Arguments(
+        args.values.stream()
+            .map(this::expandExpr)
+            .collect(Collectors.toCollection(ArrayList::new)),
+        copyLoc(args.location));
+  }
+
+  List<AnnotationDefinition> expandAnnotations(List<AnnotationDefinition> annotations) {
+    return annotations.stream()
+        .map(a -> (AnnotationDefinition) a.accept(this))
+        .collect(Collectors.toCollection(ArrayList::new));
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T extends Node> T expandNode(T node) {
+    return (T) switch (node) {
+      case Expr expr -> expandExpr(expr);
+      case Definition definition -> expandDefinition(definition);
+      case Statement statement -> expandStatement(statement);
+      case RecordInstance recordInstance -> {
+        var entries = recordInstance.entries.stream()
+            .map(this::expandNode)
+            .collect(Collectors.toCollection(ArrayList::new));
+        yield new RecordInstance(recordInstance.type, entries, recordInstance.sourceLocation);
+      }
+      case EncodingDefinition.EncsNode encs -> resolveEncs(encs);
+      case PlaceholderNode placeholderNode -> expand(placeholderNode);
+      case MacroInstanceNode macroInstanceNode -> expand(macroInstanceNode);
+      case MacroMatchNode macroMatchNode -> expand(macroMatchNode);
+      case null, default -> node;
+    };
   }
 
   public List<Node> expandNodes(List<Node> nodes) {
@@ -216,9 +203,7 @@ class MacroExpander
             new ArrayList<>(List.of(identifier)),
             expandExpr(definition.expr),
             copyLoc(definition.loc)
-        )
-            .withAnnotations(expandAnnotations(definition.annotations)))
-        .map(def -> (AssemblyDefinition) def)
+        ))
         .collect(Collectors.toCollection(ArrayList::new));
   }
 
@@ -229,8 +214,12 @@ class MacroExpander
 
   @Override
   public Expr visit(BinaryExpr expr) {
-    var expanded = new BinaryExpr(expr.left.accept(this),
-        (IsBinOp) expandNode((Node) expr.operator), expr.right.accept(this));
+    var expanded = new BinaryExpr(
+        expandExpr(expr.left),
+        (IsBinOp) expandNode((Node) expr.operator),
+        expandExpr(expr.right)
+    );
+
     expanded.hasBeenReordered = expr.hasBeenReordered;
     return expanded;
   }
@@ -271,7 +260,7 @@ class MacroExpander
     if (!(arg instanceof Expr argExpr)) {
       return expr;
     }
-    return Objects.requireNonNullElse(argExpr, expr);
+    return argExpr;
   }
 
   @Override
@@ -294,6 +283,7 @@ class MacroExpander
         && macroOverrides.containsKey(macro.name().name)) {
       return macroOverrides.get(macro.name().name);
     }
+
     try {
       assertValidMacro(macro, expr.location());
       var arguments = collectMacroParameters(macro, expr.arguments, expr.location());
@@ -320,17 +310,15 @@ class MacroExpander
 
   @Override
   public Expr visit(TypeLiteral expr) {
-    var baseType = (IsId) expandExpr((Expr) expr.baseType);
-    var sizeIndices = new ArrayList<>(expr.sizeIndices);
-    sizeIndices.replaceAll(this::expandExpr);
-    return new TypeLiteral(baseType, sizeIndices, copyLoc(expr.location()));
+    return new TypeLiteral(
+        expandExpr(expr.baseType),
+        expandExprs(expr.sizeIndices),
+        copyLoc(expr.location()));
   }
 
   @Override
   public Expr visit(IdentifierPath expr) {
-    var segments = new ArrayList<>(expr.segments);
-    segments.replaceAll(this::expandId);
-    return new IdentifierPath(segments);
+    return new IdentifierPath(expandExprs(expr.segments));
   }
 
   @Override
@@ -340,16 +328,23 @@ class MacroExpander
 
   @Override
   public Expr visit(CallIndexExpr expr) {
-    var argsIndices = new ArrayList<>(expr.argsIndices);
-    argsIndices.replaceAll(this::expandArgs);
-    var subCalls = new ArrayList<>(expr.subCalls);
-    subCalls.replaceAll(subCall -> {
-      var subCallArgsIndices = new ArrayList<>(subCall.argsIndices);
-      subCallArgsIndices.replaceAll(this::expandArgs);
-      return new CallIndexExpr.SubCall(subCall.id, subCallArgsIndices);
-    });
-    var target = (IsSymExpr) expandExpr((Expr) expr.target);
-    return new CallIndexExpr(target, argsIndices, subCalls, copyLoc(expr.location));
+    var argsIndices = expr.argsIndices.stream()
+        .map(this::expandArgs)
+        .collect(Collectors.toCollection(ArrayList::new));
+    var subCalls = expr.subCalls.stream()
+        .map(subCall -> {
+          var subCallArgsIndices = new ArrayList<>(subCall.argsIndices);
+          subCallArgsIndices.replaceAll(this::expandArgs);
+          return new CallIndexExpr.SubCall(subCall.id, subCallArgsIndices);
+        })
+        .collect(Collectors.toCollection(ArrayList::new));
+
+    return new CallIndexExpr(
+        expandExpr(expr.target),
+        argsIndices,
+        subCalls,
+        copyLoc(expr.location)
+    );
   }
 
   @Override
@@ -364,24 +359,21 @@ class MacroExpander
 
   @Override
   public Expr visit(LetExpr expr) {
-    var ids = expr.identifiers.stream().map(i -> (Identifier) expandId(i)).toList();
-    var valueExpression = expandExpr(expr.valueExpr);
-    var body = expandExpr(expr.body);
-    return new LetExpr(ids, valueExpression, body, copyLoc(expr.location));
+    return new LetExpr(
+        expandExprs(expr.identifiers),
+        expandExpr(expr.valueExpr),
+        expandExpr(expr.body),
+        copyLoc(expr.location));
   }
 
   @Override
   public Expr visit(CastExpr expr) {
-    var value = expandExpr(expr.value);
-    var type = expandExpr(expr.typeLiteral);
-    return new CastExpr(value, (TypeLiteral) type);
+    return new CastExpr(expandExpr(expr.value), expandExpr(expr.typeLiteral));
   }
 
   @Override
   public Expr visit(SymbolExpr expr) {
-    var path = (IsId) expandExpr((Expr) expr.path);
-    var size = expr.size.accept(this);
-    return new SymbolExpr(path, size, copyLoc(expr.location));
+    return new SymbolExpr(expandExpr(expr.path), expandExpr(expr.size), copyLoc(expr.location));
   }
 
   @Override
@@ -397,18 +389,22 @@ class MacroExpander
 
   @Override
   public Expr visit(MatchExpr expr) {
-    var candidate = expandExpr(expr.candidate);
-    var defaultResult = expandExpr(expr.defaultResult);
-    var cases = new ArrayList<>(expr.cases);
-    cases.replaceAll(matchCase -> new MatchExpr.Case(expandExprs(matchCase.patterns),
-        expandExpr(matchCase.result)));
-    return new MatchExpr(candidate, cases, defaultResult, copyLoc(expr.loc));
+    var cases = expr.cases.stream()
+        .map(matchCase ->
+            new MatchExpr.Case(expandExprs(matchCase.patterns), expandExpr(matchCase.result)))
+        .collect(Collectors.toCollection(ArrayList::new));
+    return new MatchExpr(
+        expandExpr(expr.candidate),
+        cases,
+        expandExpr(expr.defaultResult),
+        copyLoc(expr.loc)
+    );
   }
 
   @Override
   public Expr visit(AsIdExpr expr) {
     var nameBuilder = new StringBuilder();
-    var expressions = (GroupedExpr) expr.expr.accept(this);
+    var expressions = expandExpr(expr.expr);
     for (var inner : expressions.expressions) {
       if (inner instanceof Identifier id) {
         nameBuilder.append(id.name);
@@ -445,8 +441,8 @@ class MacroExpander
   @Override
   public Expr visit(AsStrExpr expr) {
     var nameBuilder = new StringBuilder();
-    var expressions = (GroupedExpr) expr.expr.accept(this);
-    for (var inner : expressions.expressions) {
+    var groupedExpr = expandExpr(expr.expr);
+    for (var inner : groupedExpr.expressions) {
       if (inner instanceof Identifier id) {
         nameBuilder.append(id.name);
       } else if (inner instanceof StringLiteral string) {
@@ -454,42 +450,42 @@ class MacroExpander
       } else if (inner instanceof PlaceholderExpr
           || inner instanceof AsIdExpr || inner instanceof AsStrExpr) {
         // Will be expanded as soon as the used placeholders are bound
-        return new AsStrExpr(expressions, copyLoc(expr.location()));
+        return new AsStrExpr(groupedExpr, copyLoc(expr.location()));
       } else {
         reportError("Unsupported 'AsStr' parameter " + inner, inner.location());
         nameBuilder.append(inner);
       }
     }
 
-    return new StringLiteral("\"" + nameBuilder.toString() + "\"", copyLoc(expr.location()));
+    return new StringLiteral("\"" + nameBuilder + "\"", copyLoc(expr.location()));
   }
 
   @Override
   public Expr visit(ExistsInExpr expr) {
-    var operations = new ArrayList<>(expr.operations);
-    operations.replaceAll(id -> (IsId) expandExpr((Expr) id));
-    return new ExistsInExpr(operations, copyLoc(expr.loc));
+    return new ExistsInExpr(expandExprs(expr.operations), copyLoc(expr.loc));
   }
 
   @Override
   public Expr visit(ExistsInThenExpr expr) {
-    var conditions = new ArrayList<>(expr.conditions);
-    conditions.replaceAll(condition -> {
-      var operations = new ArrayList<>(condition.operations());
-      operations.replaceAll(id -> (IsId) expandExpr((Expr) id));
-      return new ExistsInThenExpr.Condition((IsId) expandExpr((Expr) condition.id()), operations);
-    });
+    var conditions = expr.conditions.stream()
+        .map(condition ->
+            new ExistsInThenExpr.Condition(
+                expandExpr(expandExpr(condition.id())),
+                expandExprs(condition.operations())))
+        .collect(Collectors.toCollection(ArrayList::new));
     return new ExistsInThenExpr(conditions, expandExpr(expr.thenExpr), copyLoc(expr.loc));
   }
 
 
   @Override
   public Expr visit(ForallExpr expr) {
-    var indices = new ArrayList<>(expr.indices);
-    indices.replaceAll(index -> new ForallIndex(
-        (IsId) expandExpr(index.identifier()),
-        index.typeLiteral == null ? null : (TypeLiteral) expandExpr(index.typeLiteral),
-        expandExpr(index.domain)));
+    var indices = expr.indices.stream()
+        .map(index -> new ForallIndex(
+            expandExpr(index.name),
+            index.typeLiteral == null ? null : expandExpr(index.typeLiteral),
+            expandExpr(index.domain)))
+        .collect(Collectors.toCollection(ArrayList::new));
+
     return new ForallExpr(
         indices,
         expr.operation,
@@ -500,172 +496,198 @@ class MacroExpander
 
   @Override
   public Expr visit(SequenceCallExpr expr) {
-    return new SequenceCallExpr(expr.target, expr.range == null ? null : expr.range.accept(this),
-        copyLoc(expr.loc));
+    return new SequenceCallExpr(
+        expandExpr(expr.target),
+        expr.range != null ? expandExpr(expr.range) : null,
+        copyLoc(expr.loc)
+    );
   }
 
   @Override
   public Expr visit(ExpandedSequenceCallExpr expr) {
-    return new ExpandedSequenceCallExpr(expr.target,
-        copyLoc(expr.loc));
+    return new ExpandedSequenceCallExpr(
+        expandExpr(expr.target),
+        copyLoc(expr.loc)
+    );
   }
 
   @Override
   public Expr visit(ExpandedAliasDefSequenceCallExpr expr) {
-    return new ExpandedSequenceCallExpr(expandExpr(expr.target),
-        copyLoc(expr.loc));
+    return new ExpandedSequenceCallExpr(
+        expandExpr(expr.target),
+        copyLoc(expr.loc)
+    );
   }
 
   @Override
   public Expr visit(ResourceReferenceExression expr) {
-    return new ResourceReferenceExression((Identifier) expandExpr(expr.resource),
-        copyLoc(expr.location));
+    return new ResourceReferenceExression(
+        expandExpr(expr.resource),
+        copyLoc(expr.location)
+    );
   }
 
   @Override
   public Definition visit(ConstantDefinition definition) {
-    var id = expandId(definition.identifier);
-    var typeLiteral =
-        definition.typeLiteral != null ? (TypeLiteral) expandExpr(definition.typeLiteral) : null;
-    var value = expandExpr(definition.value);
-    return new ConstantDefinition(id, typeLiteral, value, copyLoc(definition.loc))
-        .withAnnotations(expandAnnotations(definition.annotations));
+    return new ConstantDefinition(
+        expandExpr(definition.identifier),
+        definition.typeLiteral != null ? expandExpr(definition.typeLiteral) : null,
+        expandExpr(definition.value),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(FormatDefinition definition) {
-    var id = expandId(definition.identifier);
-    var typeLiteral = (TypeLiteral) expandExpr(definition.typeLiteral);
-    var fields = definition.fields.stream().map(f -> (FormatField) f.accept(this))
+    var fields = definition.fields.stream()
+        .map(this::expandDefinition)
         .collect(Collectors.toCollection(ArrayList::new));
-    return new FormatDefinition(id, typeLiteral, fields,
-        copyLoc(definition.loc))
-        .withAnnotations(expandAnnotations(definition.annotations));
+
+    return new FormatDefinition(
+        expandExpr(definition.identifier),
+        expandExpr(definition.typeLiteral),
+        fields,
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(DerivedFormatField definition) {
-    return new DerivedFormatField(definition.identifier,
-        expandExpr(definition.expr));
+    return new DerivedFormatField(
+        expandExpr(definition.identifier),
+        expandExpr(definition.expr)
+    );
   }
 
   @Override
   public Definition visit(RangeFormatField definition) {
     return new RangeFormatField(
-        definition.identifier,
-        definition.ranges.stream().map(e -> e.accept(this)).toList(),
-        definition.typeLiteral == null ? null : (TypeLiteral) definition.typeLiteral.accept(this)
+        expandExpr(definition.identifier),
+        definition.ranges.stream().map(this::expandExpr).toList(),
+        definition.typeLiteral == null ? null : expandExpr(definition.typeLiteral)
     );
   }
 
   @Override
   public Definition visit(TypedFormatField definition) {
-    return new TypedFormatField(definition.identifier,
-        (TypeLiteral) expandExpr(definition.typeLiteral));
+    return new TypedFormatField(
+        expandExpr(definition.identifier),
+        expandExpr(definition.typeLiteral)
+    );
   }
 
   @Override
   public Definition visit(EncodingFormatField definition) {
-    return new EncodingFormatField(definition.identifier, expandExpr(definition.expr));
+    return new EncodingFormatField(
+        expandExpr(definition.identifier),
+        expandExpr(definition.expr)
+    );
   }
 
   @Override
   public Definition visit(PredicateFormatField definition) {
-    return new PredicateFormatField(definition.identifier, expandExpr(definition.expr));
+    return new PredicateFormatField(
+        expandExpr(definition.identifier),
+        expandExpr(definition.expr)
+    );
   }
 
   @Override
   public Definition visit(InstructionSetDefinition definition) {
     return new InstructionSetDefinition(
-        expandId(definition.identifier),
-        expandIds(definition.extending),
-        expandDefinitions(definition.definitions), copyLoc(definition.location()));
+        expandExpr(definition.identifier),
+        expandExprs(definition.extending),
+        expandDefinitions(definition.definitions),
+        copyLoc(definition.location())
+    );
   }
 
   @Override
   public Definition visit(CounterDefinition definition) {
-    var id = expandId(definition.identifier);
-    var typeLiteral = (TypeLiteral) expandExpr(definition.typeLiteral);
-    return new CounterDefinition(definition.kind, id, typeLiteral,
-        copyLoc(definition.loc))
-        .withAnnotations(expandAnnotations(definition.annotations));
+    return new CounterDefinition(
+        definition.kind,
+        expandExpr(definition.identifier),
+        expandExpr(definition.typeLiteral),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(MemoryDefinition definition) {
-    var id = expandId(definition.identifier);
-    var addressTypeLiteral = (TypeLiteral) expandExpr(definition.addressTypeLiteral);
-    var dataTypeLiteral = (TypeLiteral) expandExpr(definition.dataTypeLiteral);
-    return new MemoryDefinition(id, addressTypeLiteral, dataTypeLiteral, copyLoc(definition.loc))
-        .withAnnotations(expandAnnotations(definition.annotations));
+    return new MemoryDefinition(
+        expandExpr(definition.identifier),
+        expandExpr(definition.addressTypeLiteral),
+        expandExpr(definition.dataTypeLiteral),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(RegisterDefinition definition) {
-    var id = expandId(definition.identifier);
-    var typeLiteral = new RegisterDefinition.RelationTypeLiteral(
-         definition.typeLiteral.argTypes.stream().map(t -> (TypeLiteral) expandExpr(t)).toList(),
-        (TypeLiteral) expandExpr(definition.typeLiteral.resultType)
+    return new RegisterDefinition(
+        expandExpr(definition.identifier),
+        expandExpr(definition.typeLiteral),
+        copyLoc(definition.loc)
     );
-    return new RegisterDefinition(id, typeLiteral, copyLoc(definition.loc))
-        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(InstructionDefinition definition) {
-    var identifier = expandId(definition.identifier);
-    var typeId = expandId(definition.typeIdentifier);
-    var behavior = definition.behavior.accept(this);
-
-    return new InstructionDefinition(identifier, typeId, behavior, copyLoc(definition.loc))
-        .withAnnotations(expandAnnotations(definition.annotations));
+    return new InstructionDefinition(
+        expandExpr(definition.identifier),
+        expandExpr(definition.typeIdentifier),
+        expandStatement(definition.behavior),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(PseudoInstructionDefinition definition) {
-    var identifier = expandId(definition.identifier);
-    var statements = new ArrayList<>(definition.statements);
-    statements.replaceAll(this::visit);
-
-    return new PseudoInstructionDefinition(identifier, definition.kind,
-        expandParams(definition.params), statements, copyLoc(definition.loc)
-    ).withAnnotations(expandAnnotations(definition.annotations));
+    return new PseudoInstructionDefinition(
+        expandExpr(definition.identifier),
+        definition.kind,
+        expandParams(definition.params),
+        expandStatements(definition.statements),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(RelocationDefinition definition) {
-    return new RelocationDefinition(definition.identifier,
+    return new RelocationDefinition(
+        expandExpr(definition.identifier),
         expandParams(definition.params),
-        (TypeLiteral) expandExpr(definition.resultTypeLiteral),
+        expandExpr(definition.resultTypeLiteral),
         expandExpr(definition.expr),
         copyLoc(definition.loc)
-    ).withAnnotations(expandAnnotations(definition.annotations));
+    );
   }
 
   @Override
   public Definition visit(EncodingDefinition definition) {
-    var instrId = expandId(definition.instrIdentifier);
-    var fieldEncodings = resolveEncs(definition.encodings);
-
-    return new EncodingDefinition(instrId, fieldEncodings, copyLoc(definition.loc))
-        .withAnnotations(expandAnnotations(definition.annotations));
+    return new EncodingDefinition(
+        expandExpr(definition.instrIdentifier),
+        resolveEncs(definition.encodings),
+        copyLoc(definition.loc)
+    );
   }
-
 
   @Override
   public Definition visit(AssemblyDefinition definition) {
-    var identifiers = new ArrayList<>(definition.identifiers);
-    identifiers.replaceAll(this::expandId);
-    return new AssemblyDefinition(identifiers, expandExpr(definition.expr), copyLoc(definition.loc))
-        .withAnnotations(expandAnnotations(definition.annotations));
+    return new AssemblyDefinition(
+        expandExprs(definition.identifiers),
+        expandExpr(definition.expr),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(UsingDefinition definition) {
-    var id = expandId(definition.id);
-    return new UsingDefinition(id, (TypeLiteral) expandExpr(definition.typeLiteral),
-        copyLoc(definition.loc))
-        .withAnnotations(expandAnnotations(definition.annotations));
+    return new UsingDefinition(
+        expandExpr(definition.id),
+        expandExpr(definition.typeLiteral),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
@@ -679,75 +701,87 @@ class MacroExpander
 
   @Override
   public Definition visit(AbiClangNumericTypeDefinition abiClangNumericTypeDefinition) {
-    var size = expandExpr(abiClangNumericTypeDefinition.size);
     return new AbiClangNumericTypeDefinition(
         abiClangNumericTypeDefinition.typeName,
-        size,
+        expandExpr(abiClangNumericTypeDefinition.size),
         copyLoc(abiClangNumericTypeDefinition.loc)
-    ).withAnnotations(expandAnnotations(abiClangNumericTypeDefinition.annotations));
+    );
   }
 
   @Override
   public Definition visit(StageOutputDefinition definition) {
-    var name = (Identifier) expandId(definition.identifier);
-    var type = (TypeLiteral) expandExpr(definition.typeLiteral);
-    return new StageOutputDefinition(name, type);
+    return new StageOutputDefinition(
+        expandExpr(definition.identifier),
+        expandExpr(definition.typeLiteral)
+    );
   }
 
   @Override
   public Definition visit(AbiSpecialPurposeInstructionDefinition definition) {
-    return new AbiSpecialPurposeInstructionDefinition(definition.kind,
-        expandId(definition.target),
+    return new AbiSpecialPurposeInstructionDefinition(
+        definition.kind,
+        expandExpr(definition.target),
         copyLoc(definition.loc)
-    ).withAnnotations(expandAnnotations(definition.annotations));
+    );
   }
 
   @Override
   public Definition visit(FunctionDefinition definition) {
-    var name = expandId(definition.name);
-    var retType = (TypeLiteral) expandExpr(definition.retType);
-    return new FunctionDefinition(name, expandParams(definition.params), retType,
-        expandExpr(definition.expr), copyLoc(definition.loc)
-    ).withAnnotations(expandAnnotations(definition.annotations));
+    return new FunctionDefinition(
+        expandExpr(definition.name),
+        expandParams(definition.params),
+        expandExpr(definition.retType),
+        expandExpr(definition.expr),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(AliasDefinition definition) {
-    var id = expandId(definition.id);
-    var value = expandExpr(definition.value);
-    var aliasType =
-        definition.aliasType != null ? (TypeLiteral) expandExpr(definition.aliasType) : null;
-    var targetType =
-        definition.targetType != null ? (TypeLiteral) expandExpr(definition.targetType) : null;
-    return new AliasDefinition(id, definition.kind, aliasType, targetType, value,
-        copyLoc(definition.loc)).withAnnotations(definition.annotations);
+    return new AliasDefinition(
+        expandExpr(definition.id),
+        definition.kind,
+        definition.aliasType != null ? expandExpr(definition.aliasType) : null,
+        definition.targetType != null ? expandExpr(definition.targetType) : null,
+        expandExpr(definition.value),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(AnnotationDefinition definition) {
     return new AnnotationDefinition(
-        definition.keywords.stream().map(this::expandId).toList(),
-        definition.values.stream().map(this::expandExpr)
+        definition.keywords.stream()
+            .map(this::expandExpr)
+            .toList(),
+        definition.values.stream()
+            .map(this::expandExpr)
             .collect(Collectors.toCollection(ArrayList::new)),
         copyLoc(definition.loc));
   }
 
   @Override
   public Definition visit(EnumerationDefinition definition) {
-    var id = expandId(definition.id);
-    var entries = new ArrayList<>(definition.entries);
-    entries.replaceAll(entry -> new EnumerationDefinition.Entry(entry.name,
-        entry.value == null ? null : expandExpr(entry.value)));
-    return new EnumerationDefinition(id, definition.enumType, entries, copyLoc(definition.loc))
-        .withAnnotations(definition.annotations);
+    var entries = definition.entries.stream()
+        .map(entry -> new EnumerationDefinition.Entry(
+            entry.name,
+            entry.value == null ? null : expandExpr(entry.value)))
+        .collect(Collectors.toCollection(ArrayList::new));
+
+    return new EnumerationDefinition(
+        expandExpr(definition.id),
+        definition.enumType != null ? expandExpr(definition.enumType) : null,
+        entries,
+        copyLoc(definition.loc));
   }
 
   @Override
   public Definition visit(ExceptionDefinition definition) {
-    var id = expandId(definition.id);
-    return new ExceptionDefinition(id, expandParams(definition.params),
-        definition.statement.accept(this), copyLoc(definition.loc))
-        .withAnnotations(definition.annotations);
+    return new ExceptionDefinition(
+        expandExpr(definition.id),
+        expandParams(definition.params),
+        expandStatement(definition.statement),
+        copyLoc(definition.loc));
   }
 
   @Override
@@ -795,15 +829,21 @@ class MacroExpander
 
   @Override
   public Definition visit(DefinitionList definition) {
-    var items = expandDefinitions(definition.items);
-    return new DefinitionList(items, definition.syntaxType, copyLoc(definition.location));
+    return new DefinitionList(
+        expandDefinitions(definition.items),
+        definition.syntaxType,
+        copyLoc(definition.location)
+    );
   }
 
   @Override
   public Definition visit(ModelDefinition definition) {
-    var id = expandId(definition.id);
-    var boundModel = new ModelDefinition(id, definition.params, definition.body,
-        definition.returnType, copyLoc(definition.loc));
+    var boundModel = new ModelDefinition(
+        expandExpr(definition.id),
+        definition.params,
+        definition.body,
+        definition.returnType,
+        copyLoc(definition.loc));
     boundModel.boundArguments = new HashMap<>(definition.boundArguments);
     boundModel.boundArguments.putAll(args);
     return boundModel;
@@ -811,13 +851,17 @@ class MacroExpander
 
   @Override
   public Definition visit(RecordTypeDefinition definition) {
-    return new RecordTypeDefinition(definition.name, definition.recordType,
+    return new RecordTypeDefinition(
+        expandExpr(definition.name),
+        definition.recordType,
         copyLoc(definition.loc));
   }
 
   @Override
   public Definition visit(ModelTypeDefinition definition) {
-    return new ModelTypeDefinition(definition.name, definition.projectionType,
+    return new ModelTypeDefinition(
+        expandExpr(definition.name),
+        definition.projectionType,
         copyLoc(definition.loc));
   }
 
@@ -828,259 +872,367 @@ class MacroExpander
 
   @Override
   public Definition visit(ProcessDefinition processDefinition) {
-    var id = expandId(processDefinition.name);
-    var templateParams = new ArrayList<>(processDefinition.templateParams);
-    templateParams.replaceAll(
-        templateParam -> new TemplateParam(templateParam.identifier(),
+    var templateParams = processDefinition.templateParams.stream()
+        .map(templateParam -> new TemplateParam(templateParam.identifier(),
             templateParam.type,
-            templateParam.value == null ? null : expandExpr(templateParam.value)));
-    return new ProcessDefinition(id, templateParams, expandParams(processDefinition.inputs),
-        expandParams(processDefinition.outputs), processDefinition.statement.accept(this),
-        copyLoc(processDefinition.loc)).withAnnotations(
-        expandAnnotations(processDefinition.annotations));
+            templateParam.value == null ? null : expandExpr(templateParam.value)))
+        .collect(Collectors.toCollection(ArrayList::new));
+
+    return new ProcessDefinition(
+        expandExpr(processDefinition.name),
+        templateParams,
+        expandParams(processDefinition.inputs),
+        expandParams(processDefinition.outputs),
+        expandStatement(processDefinition.statement),
+        copyLoc(processDefinition.loc));
   }
 
   @Override
   public Definition visit(OperationDefinition operationDefinition) {
-    var name = expandId(operationDefinition.name);
-    var resources = new ArrayList<>(operationDefinition.resources);
-    resources.replaceAll(id -> (IsId) expandExpr((Expr) id));
-    return new OperationDefinition(name, resources, copyLoc(operationDefinition.loc))
-        .withAnnotations(expandAnnotations(operationDefinition.annotations));
+    return new OperationDefinition(
+        expandExpr(operationDefinition.name),
+        expandExprs(operationDefinition.resources),
+        copyLoc(operationDefinition.loc)
+    );
   }
 
   @Override
   public Definition visit(Parameter definition) {
-    var name = (Identifier) expandId(definition.name);
-    var type = (TypeLiteral) expandExpr(definition.typeLiteral);
-    return new Parameter(name, type);
+    return new Parameter(expandExpr(definition.name), expandExpr(definition.typeLiteral));
   }
 
   @Override
   public Definition visit(GroupDefinition groupDefinition) {
     return new GroupDefinition(
-        expandId(groupDefinition.name),
-        groupDefinition.type == null ? null : (TypeLiteral) expandExpr(groupDefinition.type),
+        expandExpr(groupDefinition.name),
+        groupDefinition.type != null ? expandExpr(groupDefinition.type) : null,
         groupDefinition.groupSequence,
         copyLoc(groupDefinition.loc)
-    ).withAnnotations(expandAnnotations(groupDefinition.annotations));
+    );
   }
 
   @Override
   public Definition visit(ApplicationBinaryInterfaceDefinition definition) {
-    return new ApplicationBinaryInterfaceDefinition(definition.id, definition.isa,
-        expandDefinitions(definition.definitions), copyLoc(definition.loc)
-    ).withAnnotations(expandAnnotations(definition.annotations));
+    return new ApplicationBinaryInterfaceDefinition(
+        expandExpr(definition.id),
+        expandExpr(definition.isa),
+        expandDefinitions(definition.definitions),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(AbiSequenceDefinition definition) {
-    var statements = new ArrayList<>(definition.statements);
-    statements.replaceAll(stmt -> (InstructionCallStatement) expandStatement(stmt));
-    return new AbiSequenceDefinition(definition.kind, expandParams(definition.params), statements,
+    return new AbiSequenceDefinition(
+        definition.kind,
+        expandParams(definition.params),
+        expandStatements(definition.statements),
         copyLoc(definition.loc)
-    ).withAnnotations(expandAnnotations(definition.annotations));
+    );
   }
 
   @Override
   public Definition visit(SpecialPurposeRegisterDefinition definition) {
     return new SpecialPurposeRegisterDefinition(
-        definition.purpose, definition.exprs, copyLoc(definition.loc)
-    ).withAnnotations(expandAnnotations(definition.annotations));
+        definition.purpose,
+        definition.exprs,
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(ProcessorDefinition definition) {
-    var definitions = expandDefinitions(definition.definitions);
-    var abi = definition.abi != null ? expandId(definition.abi) : null;
-    return new ProcessorDefinition(definition.id, expandId(definition.implementedIsa), abi,
-        definitions, copyLoc(definition.loc)
-    ).withAnnotations(expandAnnotations(definition.annotations));
+    return new ProcessorDefinition(
+        expandExpr(definition.id),
+        expandExpr(definition.implementedIsa),
+        definition.abi != null ? expandExpr(definition.abi) : null,
+        expandDefinitions(definition.definitions),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(PatchDefinition definition) {
-    return new PatchDefinition(definition.generator, definition.handle, definition.reference,
-        definition.source, copyLoc(definition.loc)
-    ).withAnnotations(expandAnnotations(definition.annotations));
+    return new PatchDefinition(
+        expandExpr(definition.generator),
+        expandExpr(definition.handle),
+        definition.reference != null ? expandExpr(definition.reference) : null,
+        definition.source,
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(SourceDefinition definition) {
-    return new SourceDefinition(definition.id, definition.source, copyLoc(definition.loc))
-        .withAnnotations(expandAnnotations(definition.annotations));
+    return new SourceDefinition(
+        expandExpr(definition.id),
+        definition.source,
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(CpuFunctionDefinition definition) {
-    return new CpuFunctionDefinition(definition.id, definition.kind, definition.stopWithReference,
-        expandExpr(definition.expr), copyLoc(definition.loc)
-    ).withAnnotations(expandAnnotations(definition.annotations));
+    return new CpuFunctionDefinition(
+        expandExpr(definition.id),
+        definition.kind,
+        definition.stopWithReference != null ? expandExpr(definition.stopWithReference) : null,
+        expandExpr(definition.expr),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(CpuMemoryRegionDefinition definition) {
-    return new CpuMemoryRegionDefinition(definition.id, definition.kind, definition.memoryRef,
-        definition.stmt == null ? null : expandStatement(definition.stmt), copyLoc(definition.loc))
-        .withAnnotations(expandAnnotations(definition.annotations));
+    return new CpuMemoryRegionDefinition(
+        expandExpr(definition.id),
+        definition.kind,
+        expandExpr(definition.memoryRef),
+        definition.stmt == null ? null : expandStatement(definition.stmt),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(CpuProcessDefinition definition) {
-    return new CpuProcessDefinition(definition.kind, definition.startupOutputs,
-        definition.statement.accept(this), copyLoc(definition.loc)
-    ).withAnnotations(expandAnnotations(definition.annotations));
+    return new CpuProcessDefinition(
+        definition.kind,
+        expandParams(definition.startupOutputs),
+        expandStatement(definition.statement),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(MicroArchitectureDefinition definition) {
-    return new MicroArchitectureDefinition(definition.id, definition.isa,
-        expandDefinitions(definition.definitions), copyLoc(definition.loc)
-    ).withAnnotations(expandAnnotations(definition.annotations));
+    return new MicroArchitectureDefinition(
+        expandExpr(definition.id),
+        expandExpr(definition.isa),
+        expandDefinitions(definition.definitions),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(MacroInstructionDefinition definition) {
-    return new MacroInstructionDefinition(definition.kind, expandParams(definition.inputs),
-        expandParams(definition.outputs), definition.statement.accept(this),
+    return new MacroInstructionDefinition(
+        definition.kind,
+        expandParams(definition.inputs),
+        expandParams(definition.outputs),
+        expandStatement(definition.statement),
         copyLoc(definition.loc)
-    ).withAnnotations(expandAnnotations(definition.annotations));
+    );
   }
 
   @Override
   public Definition visit(PortBehaviorDefinition definition) {
-    return new PortBehaviorDefinition(definition.id, definition.kind,
-        expandParams(definition.inputs), expandParams(definition.outputs),
-        definition.statement.accept(this), copyLoc(definition.loc)
-    ).withAnnotations(expandAnnotations(definition.annotations));
+    return new PortBehaviorDefinition(
+        expandExpr(definition.id),
+        definition.kind,
+        expandParams(definition.inputs),
+        expandParams(definition.outputs),
+        expandStatement(definition.statement),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(PipelineDefinition definition) {
-    return new PipelineDefinition(definition.id, expandParams(definition.outputs),
-        definition.statement.accept(this), copyLoc(definition.loc)
-    ).withAnnotations(expandAnnotations(definition.annotations));
+    return new PipelineDefinition(
+        expandExpr(definition.id),
+        expandParams(definition.outputs),
+        expandStatement(definition.statement),
+        copyLoc(definition.loc)
+    );
   }
 
 
   @Override
   public Definition visit(StageDefinition definition) {
-    return new StageDefinition(definition.id, expandStageOutputs(definition.outputs),
-        definition.statement.accept(this), copyLoc(definition.loc)
-    ).withAnnotations(expandAnnotations(definition.annotations));
+    return new StageDefinition(
+        expandExpr(definition.id),
+        expandStageOutputs(definition.outputs),
+        expandStatement(definition.statement),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(CacheDefinition definition) {
-    return new CacheDefinition(definition.id, definition.sourceType, definition.targetType,
+    return new CacheDefinition(
+        expandExpr(definition.id),
+        expandExpr(definition.sourceType),
+        expandExpr(definition.targetType),
         copyLoc(definition.loc)
-    ).withAnnotations(definition.annotations);
+    );
   }
 
   @Override
   public Definition visit(LogicDefinition definition) {
-    return new LogicDefinition(definition.id, definition.logicTypeIdentifiers,
-        copyLoc(definition.loc))
-        .withAnnotations(expandAnnotations(definition.annotations));
+    return new LogicDefinition(
+        expandExpr(definition.id),
+        expandExprs(definition.logicTypeIdentifiers),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(SignalDefinition definition) {
-    return new SignalDefinition(definition.id, definition.type, copyLoc(definition.loc))
-        .withAnnotations(expandAnnotations(definition.annotations));
+    return new SignalDefinition(
+        expandExpr(definition.id),
+        expandExpr(definition.type),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(AsmDescriptionDefinition definition) {
-    return new AsmDescriptionDefinition(definition.id, definition.abi, definition.modifiers,
-        definition.directives, definition.rules, definition.commonDefinitions,
-        copyLoc(definition.loc)).withAnnotations(expandAnnotations(definition.annotations));
+    return new AsmDescriptionDefinition(
+        definition.id,
+        definition.abi,
+        definition.modifiers,
+        definition.directives,
+        definition.rules,
+        definition.commonDefinitions,
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(AsmModifierDefinition definition) {
-    return new AsmModifierDefinition(definition.stringLiteral, definition.isa,
-        definition.relocation, copyLoc(definition.loc));
+    return new AsmModifierDefinition(
+        expandExpr(definition.stringLiteral),
+        expandExpr(definition.isa),
+        expandExpr(definition.relocation),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(AsmDirectiveDefinition definition) {
-    return new AsmDirectiveDefinition(definition.stringLiteral, definition.builtinDirective,
-        copyLoc(definition.loc));
+    return new AsmDirectiveDefinition(
+        expandExpr(definition.stringLiteral),
+        expandExpr(definition.builtinDirective),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(AsmGrammarRuleDefinition definition) {
-    return new AsmGrammarRuleDefinition(definition.id, definition.asmTypeDefinition,
-        definition.alternatives,
+    return new AsmGrammarRuleDefinition(
+        expandExpr(definition.id),
+        definition.asmTypeDefinition != null
+            ? expandDefinition(definition.asmTypeDefinition)
+            : null,
+        expandDefinition(definition.alternatives),
         copyLoc(definition.loc));
   }
 
   @Override
   public Definition visit(AsmGrammarAlternativesDefinition definition) {
-    return new AsmGrammarAlternativesDefinition(definition.alternatives,
-        copyLoc(definition.loc));
+    return new AsmGrammarAlternativesDefinition(
+        definition.alternatives.stream()
+            .map(this::expandDefinitions)
+            .collect(Collectors.toCollection(ArrayList::new)),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(AsmGrammarElementDefinition definition) {
-    return new AsmGrammarElementDefinition(definition.localVar, definition.attribute,
-        definition.isPlusEqualsAttributeAssign, definition.asmLiteral, definition.groupAlternatives,
-        definition.optionAlternatives, definition.repetitionAlternatives,
-        definition.semanticPredicate, definition.groupAsmTypeDefinition, copyLoc(definition.loc));
-  }
-
-  @Override
-  public Definition visit(AsmGrammarLocalVarDefinition definition) {
-    return new AsmGrammarLocalVarDefinition(definition.id, definition.asmLiteral,
+    return new AsmGrammarElementDefinition(
+        definition.localVar != null ? expandDefinition(definition.localVar) : null,
+        definition.attribute != null ? expandExpr(definition.attribute) : null,
+        definition.isPlusEqualsAttributeAssign,
+        definition.asmLiteral != null ? expandDefinition(definition.asmLiteral) : null,
+        definition.groupAlternatives != null
+            ? expandDefinition(definition.groupAlternatives)
+            : null,
+        definition.optionAlternatives != null
+            ? expandDefinition(definition.optionAlternatives)
+            : null,
+        definition.repetitionAlternatives != null
+            ? expandDefinition(definition.repetitionAlternatives)
+            : null,
+        definition.semanticPredicate != null ? expandExpr(definition.semanticPredicate) : null,
+        definition.groupAsmTypeDefinition != null
+            ? expandDefinition(definition.groupAsmTypeDefinition)
+            : null,
         copyLoc(definition.loc));
   }
 
   @Override
+  public Definition visit(AsmGrammarLocalVarDefinition definition) {
+    return new AsmGrammarLocalVarDefinition(
+        expandExpr(definition.id),
+        expandDefinition(definition.asmLiteral),
+        copyLoc(definition.loc)
+    );
+  }
+
+  @Override
   public Definition visit(AsmGrammarLiteralDefinition definition) {
-    return new AsmGrammarLiteralDefinition(definition.id, definition.parameters,
-        definition.stringLiteral, definition.asmTypeDefinition, copyLoc(definition.loc));
+    return new AsmGrammarLiteralDefinition(
+        definition.id != null ? expandExpr(definition.id) : null,
+        expandDefinitions(definition.parameters),
+        definition.stringLiteral != null ? expandExpr(definition.stringLiteral) : null,
+        definition.asmTypeDefinition != null
+            ? expandDefinition(definition.asmTypeDefinition)
+            : null,
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public Definition visit(AsmGrammarTypeDefinition definition) {
-    return new AsmGrammarTypeDefinition(definition.id, copyLoc(definition.loc));
+    return new AsmGrammarTypeDefinition(
+        expandExpr(definition.id),
+        copyLoc(definition.loc)
+    );
   }
 
   @Override
   public BlockStatement visit(BlockStatement blockStatement) {
-    return new BlockStatement(expandStatements(blockStatement.statements),
-        copyLoc(blockStatement.location));
+    return new BlockStatement(
+        expandStatements(blockStatement.statements),
+        copyLoc(blockStatement.location)
+    );
   }
 
   @Override
   public Statement visit(LetStatement letStatement) {
-    var ids = letStatement.identifiers.stream().map(i -> (Identifier) expandId(i)).toList();
-    var valueExpression = expandExpr(letStatement.valueExpr);
-    var body = letStatement.body.accept(this);
-    return new LetStatement(ids, valueExpression, body,
-        copyLoc(letStatement.location));
+    return new LetStatement(
+        expandExprs(letStatement.identifiers),
+        expandExpr(letStatement.valueExpr),
+        expandStatement(letStatement.body),
+        copyLoc(letStatement.location)
+    );
   }
 
   @Override
   public Statement visit(IfStatement ifStatement) {
-    var condition = expandExpr(ifStatement.condition);
-    var thenStmt = ifStatement.thenStmt.accept(this);
-    var elseStmt = ifStatement.elseStmt == null ? null : ifStatement.elseStmt.accept(this);
-    return new IfStatement(condition, thenStmt, elseStmt, copyLoc(ifStatement.location));
+    return new IfStatement(
+        expandExpr(ifStatement.condition),
+        expandStatement(ifStatement.thenStmt),
+        ifStatement.elseStmt == null ? null : expandStatement(ifStatement.elseStmt),
+        copyLoc(ifStatement.location)
+    );
   }
 
   @Override
   public Statement visit(AssignmentStatement assignmentStatement) {
-    var target = expandExpr(assignmentStatement.target);
-    var valueExpr = expandExpr(assignmentStatement.valueExpression);
-    return new AssignmentStatement(target, valueExpr);
+    return new AssignmentStatement(
+        expandExpr(assignmentStatement.target),
+        expandExpr(assignmentStatement.valueExpression)
+    );
   }
 
   @Override
   public Statement visit(RaiseStatement raiseStatement) {
-    return new RaiseStatement(raiseStatement.statement.accept(this),
-        copyLoc(raiseStatement.location));
+    return new RaiseStatement(
+        expandStatement(raiseStatement.statement),
+        copyLoc(raiseStatement.location)
+    );
   }
 
   @Override
@@ -1133,30 +1285,40 @@ class MacroExpander
 
   @Override
   public Statement visit(MatchStatement matchStatement) {
-    var candidate = expandExpr(matchStatement.candidate);
-    var defaultResult =
-        matchStatement.defaultResult == null ? null : matchStatement.defaultResult.accept(this);
-    var cases = new ArrayList<>(matchStatement.cases);
-    cases.replaceAll(matchCase -> new MatchStatement.Case(expandExprs(matchCase.patterns),
-        matchCase.result.accept(this)));
-    return new MatchStatement(candidate, cases, defaultResult, copyLoc(matchStatement.loc));
+    var cases = matchStatement.cases.stream()
+        .map(matchCase -> new MatchStatement.Case(
+            expandExprs(matchCase.patterns),
+            expandStatement(matchCase.result)))
+        .collect(Collectors.toCollection(ArrayList::new));
+
+    return new MatchStatement(
+        expandExpr(matchStatement.candidate),
+        cases,
+        matchStatement.defaultResult == null ? null : expandStatement(matchStatement.defaultResult),
+        copyLoc(matchStatement.loc)
+    );
   }
 
   @Override
   public Statement visit(StatementList statementList) {
-    var items = expandStatements(statementList.items);
-    return new StatementList(items, copyLoc(statementList.location()));
+    return new StatementList(
+        expandStatements(statementList.items),
+        copyLoc(statementList.location())
+    );
   }
 
   @Override
   public InstructionCallStatement visit(InstructionCallStatement instructionCallStatement) {
-    var id = expandId(instructionCallStatement.id);
-    var namedArguments = new ArrayList<>(instructionCallStatement.namedArguments);
-    namedArguments.replaceAll(namedArgument ->
-        new InstructionCallStatement.NamedArgument(namedArgument.name,
-            expandExpr(namedArgument.value)));
-    var unnamedArguments = expandExprs(instructionCallStatement.unnamedArguments);
-    return new InstructionCallStatement(id, namedArguments, unnamedArguments,
+    var namedArguments = instructionCallStatement.namedArguments.stream()
+        .map(namedArgument -> new InstructionCallStatement.NamedArgument(
+            namedArgument.name,
+            expandExpr(namedArgument.value)))
+        .collect(Collectors.toCollection(ArrayList::new));
+
+    return new InstructionCallStatement(
+        expandExpr(instructionCallStatement.id),
+        namedArguments,
+        expandExprs(instructionCallStatement.unnamedArguments),
         copyLoc(instructionCallStatement.loc));
   }
 
@@ -1171,14 +1333,17 @@ class MacroExpander
 
   @Override
   public Statement visit(ForallStatement forallStatement) {
-    var indices = new ArrayList<>(forallStatement.indices);
-    indices.replaceAll(
-        index -> new ForallIndex(
-            index.identifier(),
-            index.typeLiteral == null ? null : (TypeLiteral) expandExpr(index.typeLiteral),
-            expandExpr(index.domain)));
-    var statement = expandStatement(forallStatement.body);
-    return new ForallStatement(indices, statement, copyLoc(forallStatement.loc));
+    var indices = forallStatement.indices.stream()
+        .map(index -> new ForallIndex(
+            expandExpr(index.name),
+            index.typeLiteral != null ? expandExpr(index.typeLiteral) : null,
+            expandExpr(index.domain)))
+        .collect(Collectors.toCollection(ArrayList::new));
+
+    return new ForallStatement(
+        indices,
+        expandStatement(forallStatement.body),
+        copyLoc(forallStatement.loc));
   }
 
   private void assertValidMacro(Macro macro, SourceLocation sourceLocation)
@@ -1289,7 +1454,7 @@ class MacroExpander
   }
 
   private @Nullable Node resolveArg(List<String> segments) {
-    Node arg = args.get(segments.get(0));
+    Node arg = args.get(segments.getFirst());
     if (arg == null) {
       return null;
     }
@@ -1357,14 +1522,14 @@ class MacroExpander
   private List<Parameter> expandParams(List<Parameter> params) {
     var expandedParams = new ArrayList<>(params);
     expandedParams.replaceAll(param ->
-        new Parameter(param.identifier(), (TypeLiteral) expandExpr(param.typeLiteral)));
+        new Parameter(param.identifier(), expandExpr(param.typeLiteral)));
     return expandedParams;
   }
 
   private List<StageOutputDefinition> expandStageOutputs(List<StageOutputDefinition> outputs) {
     var expanded = new ArrayList<>(outputs);
     expanded.replaceAll(param ->
-        new StageOutputDefinition(param.identifier(), (TypeLiteral) expandExpr(param.typeLiteral)));
+        new StageOutputDefinition(param.identifier(), expandExpr(param.typeLiteral)));
     return expanded;
   }
 
