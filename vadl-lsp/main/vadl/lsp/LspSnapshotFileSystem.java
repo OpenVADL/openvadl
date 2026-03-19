@@ -16,14 +16,19 @@
 
 package vadl.lsp;
 
+import static vadl.lsp.LspUtils.toPath;
+import static vadl.lsp.LspUtils.toUri;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.utils.DiskVirtualFileSystem;
 import vadl.utils.VirtualFileSystem;
@@ -65,7 +70,7 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
 
   @Override
   public boolean exists(Path path) {
-    if (documents.containsKey(path.toUri().toString())) {
+    if (documents.containsKey(toUri(path))) {
       return true;
     }
     return underlyingFileSystem.exists(path);
@@ -73,7 +78,7 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
 
   @Override
   public InputStream getInputStream(Path path) throws IOException {
-    String uri = path.toUri().toString();
+    String uri = toUri(path);
     readFiles.add(uri);
 
     var document = documents.get(uri);
@@ -82,6 +87,19 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
     }
 
     return new ByteArrayInputStream(document.getText().getBytes(StandardCharsets.UTF_8));
+  }
+
+  @Override
+  public Stream<String> readLines(Path path) throws IOException {
+    String uri = toUri(path);
+    readFiles.add(uri);
+
+    var document = documents.get(uri);
+    if (document == null) {
+      return underlyingFileSystem.readLines(path);
+    }
+
+    return document.textLines.stream();
   }
 
   @Override
@@ -99,7 +117,28 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
   }
 
   /**
+   * Attempts to always return a Document, even if it has to be read from the underlying filesystem.
+   */
+  public @Nullable Document getFileBasedDocument(String uri) {
+    var result = getDocument(uri);
+    if (result != null) {
+      return result;
+    }
+
+    List<String> textLines;
+    try {
+      textLines = underlyingFileSystem.readLines(toPath(uri)).toList();
+    } catch (IOException e) {
+      return null;
+    }
+    return new Document(uri, -1, textLines);
+  }
+
+  /**
    * The URIs of all files that have been read via this virtual file system so far.
+   *
+   * <p>Note: This is not affected by non-VFS methods like {@link #getDocument(String)} and
+   * {@link #getFileBasedDocument(String)}.
    *
    * <p>In order to "reset" this data, you can create a copy of this VFS instance by using the
    * copy constructor.
