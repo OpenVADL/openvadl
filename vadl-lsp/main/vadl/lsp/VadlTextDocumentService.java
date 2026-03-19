@@ -195,15 +195,6 @@ public class VadlTextDocumentService implements TextDocumentService {
       var position = document.calculateUtf8Position(params.getPosition(), false);
       SourceLocation location = AstFinderByPosition.findIdentifierTargetLocation(ast, toPath(uri),
           position);
-      // TODO AST doesn't provide all the data we would like to have:
-      //      - These Identifiers in ImportDefinition have no target set and are not visited
-      //        (missing @Child annotations): fileId; importedSymbols[x]
-      //      - Model usages appear to be applied, i.e. we don't know that the searched position is
-      //        on a model usage, hence we cannot Goto Definition to the model. (Except if we
-      //        analyze the expandedFrom data, but that is complex and/or points to only part of the
-      //        model.)
-      //      - References to Model parameters (within the model body) appear to not be an
-      //        identifier nor have a target
 
       if (location == null || location.path() == null) {
         return definitionResult(null);

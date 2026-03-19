@@ -43,7 +43,7 @@ public class Document {
   public final String uri;
   public final int version;
 
-  private final List<String> textLines;
+  public final List<String> textLines;
 
   /**
    * Creates a new Document.

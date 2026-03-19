@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.utils.DiskVirtualFileSystem;
 import vadl.utils.VirtualFileSystem;
@@ -89,6 +90,19 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
   }
 
   @Override
+  public Stream<String> readLines(Path path) throws IOException {
+    String uri = toUri(path);
+    readFiles.add(uri);
+
+    var document = documents.get(uri);
+    if (document == null) {
+      return underlyingFileSystem.readLines(path);
+    }
+
+    return document.textLines.stream();
+  }
+
+  @Override
   public Path toAbsolutePath(Path path) {
     return underlyingFileSystem.toAbsolutePath(path);
   }
@@ -113,7 +127,7 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
 
     List<String> textLines;
     try {
-      textLines = readLines(toPath(uri)).toList();
+      textLines = underlyingFileSystem.readLines(toPath(uri)).toList();
     } catch (IOException e) {
       return null;
     }
@@ -122,6 +136,9 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
 
   /**
    * The URIs of all files that have been read via this virtual file system so far.
+   *
+   * <p>Note: This is not affected by non-VFS methods like {@link #getDocument(String)} and
+   * {@link #getFileBasedDocument(String)}.
    *
    * <p>In order to "reset" this data, you can create a copy of this VFS instance by using the
    * copy constructor.

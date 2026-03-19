@@ -400,5 +400,17 @@ public record SourceLocation(
     public int hashCode() {
       return Objects.hash(line, column);
     }
+
+    /**
+     * Returns true if this Position is located within the given {@code location}.
+     *
+     * <p>Note: This check only makes sense if this Position is known to belong to the same file
+     * that {@code location} refers to.
+     */
+    public boolean isWithin(SourceLocation location) {
+      // Both begin and end are inclusive
+      return location.end().compareTo(this) >= 0
+          && location.begin().compareTo(this) <= 0;
+    }
   }
 }

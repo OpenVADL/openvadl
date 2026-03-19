@@ -23,6 +23,11 @@ import vadl.utils.SourceLocation;
 /**
  * Finds AST nodes based on their location in source code. This relies on the AST providing proper
  * location information.
+ *
+ * <p>Note: This search is performed in O(n) as the whole AST tree is traversed. It should be
+ * possible to optimize this if needed: SourceLocations in an AST are generally in sorted order
+ * (except model invocation edge cases), thus it is not necessary to traverse into all branches -
+ * this would improve performance to O(log n).
  */
 public class AstFinderByPosition extends RecursiveAstVisitor {
 
@@ -30,9 +35,9 @@ public class AstFinderByPosition extends RecursiveAstVisitor {
   private final SourceLocation.Position searchPosition;
 
   private static class FoundSignal extends RuntimeException {
-    Identifier identifier;
+    IsId identifier;
 
-    public FoundSignal(Identifier identifier) {
+    public FoundSignal(IsId identifier) {
       this.identifier = identifier;
     }
   }
@@ -42,13 +47,24 @@ public class AstFinderByPosition extends RecursiveAstVisitor {
     searchPosition = position;
   }
 
+  // TODO When using this class for the LSP Goto Definition feature, there are some limitations -
+  //      AST doesn't provide all the data we would like to have:
+  //      - These Identifiers in ImportDefinition have no target set and are not visited
+  //        (missing @Child annotations): fileId; importedSymbols[x]
+  //      - Model invocations are already applied, i.e. we don't know that the searched position is
+  //        on a model invocation, hence we cannot Goto Definition to the model. (Except if we
+  //        analyze the expandedFrom data, but that is complex and/or points to only part of the
+  //        model.)
+  //      - References to Model parameters (within the model body, i.e. Placeholders) do not have an
+  //        identifier nor a target
 
   /**
-   * Finds an Identifier at the given source code position, and returns it's target's location.
+   * Finds an Identifier or IdentifierPath at the given source code position, and returns it's
+   * target's location.
    *
    * @param path The source code file to search in
    * @param position The position to search for (within the file identified by {@code path})
-   * @return Null if no identifier found at {@code position} or it has no target
+   * @return Null if no Identifier or IdentifierPath found at {@code position} or it has no target
    */
   public static @Nullable SourceLocation findIdentifierTargetLocation(
       Ast ast, Path path, SourceLocation.Position position) {
@@ -64,13 +80,13 @@ public class AstFinderByPosition extends RecursiveAstVisitor {
   }
 
   /**
-   * Finds an Identifier at the given source code position.
+   * Finds an Identifier or IdentifierPath at the given source code position.
    *
    * @param path The source code file to search in
    * @param position The position to search for (within the file identified by {@code path})
-   * @return Null if no Identifier found at {@code position}
+   * @return Null if no Identifier or IdentifierPath found at {@code position}
    */
-  static @Nullable Identifier findIdentifier(Ast ast, Path path, SourceLocation.Position position) {
+  static @Nullable IsId findIdentifier(Ast ast, Path path, SourceLocation.Position position) {
     var visitor = new AstFinderByPosition(path, position);
     try {
       for (var definition : ast.definitions) {
@@ -85,13 +101,11 @@ public class AstFinderByPosition extends RecursiveAstVisitor {
 
   @Override
   protected void beforeTravel(Expr expr) {
-    if (expr instanceof Identifier identifier) {
+    if (expr instanceof IdentifierPath || expr instanceof Identifier) {
+      IsId identifier = (IsId) expr;
       var location = identifier.location();
 
-      if (searchPath.equals(location.path())
-          // Both begin and end position are inclusive
-          && location.end().compareTo(searchPosition) >= 0
-          && location.begin().compareTo(searchPosition) <= 0) {
+      if (searchPath.equals(location.path()) && searchPosition.isWithin(location)) {
         throw new FoundSignal(identifier);
       }
     }
