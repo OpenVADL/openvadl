@@ -18,9 +18,11 @@ package vadl.iss;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.commons.text.StringSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.DockerExecutionTest;
@@ -75,7 +77,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
    * This will generate the simulator image if it is not already contained in the provided
    * cache.
    */
-  private DockerImage generateSimulator(Map<String, DockerImage> cache,
+  private synchronized DockerImage generateSimulator(Map<String, DockerImage> cache,
                                         String specPath,
                                         IssConfiguration configuration) {
     return cache.computeIfAbsent(specPath, (path) -> {
@@ -118,31 +120,22 @@ public abstract class QemuIssTest extends DockerExecutionTest {
     var refTarget = refTargetString.isEmpty() ? "" : "," + refTargetString;
 
     return new DockerImage()
-        .withDockerfileFromBuilder(d -> {
-              d
-                  .from(QEMU_TEST_IMAGE)
-                  .copy("iss", "/qemu");
-
-              d.workDir("/qemu/build");
-              d.label("key", "VADL_TEST_CONTAINER");
-              // configure qemu with the new target from the specification
-              d.run("../configure --cc='gcc' -GNinja --target-list=" + softmmuTarget + refTarget);
-              d.run("ninja");
-              // validate existence of generated qemu iss
-              d.run(qemuBin + " --version");
-
-              d.workDir("/work");
-
-              d.copy("/scripts", "/scripts");
-              d.run("ls /scripts");
-              d.cmd("python3 /scripts/main.py test-suite.yaml");
-
-              d.build();
-            }
-        )
-        // make iss sources available to image builder
+        .withDockerfile(new StringSubstitutor(Map.of("qemu", QEMU_TEST_IMAGE,
+            "soft", softmmuTarget + refTarget,
+            "qemu-bin", qemuBin)).replace("""
+            FROM ${qemu}
+            COPY iss /qemu
+            WORKDIR /qemu/build
+            LABEL key=VADL_TEST_CONTAINER
+            RUN ../configure --cc='gcc' -GNinja --target-list=${soft}
+            RUN ninja
+            RUN ${qemu-bin} --version
+            WORKDIR /work
+            COPY scripts /scripts
+            RUN ls /scripts
+            CMD python3 /scripts/main.py test-suite.yaml
+            """))
         .withFileFromPath("iss", generatedIssSources)
-        // make iss_qemu scripts available to image builder
         .withFileFromClasspath("/scripts", "/scripts/iss_qemu");
   }
 

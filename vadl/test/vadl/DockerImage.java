@@ -75,11 +75,18 @@ public final class DockerImage {
     return this;
   }
 
+  @Deprecated
   public DockerImage withDockerfileFromBuilder(Consumer<DockerfileBuilder> consumer) {
     var builder = new DockerfileBuilder();
     consumer.accept(builder);
     this.dockerfileContents = builder.build();
     this.dockerfilePath = null;
+    return this;
+  }
+
+  public DockerImage withDockerfile(String content) {
+    this.dockerfilePath = null;
+    this.dockerfileContents = content;
     return this;
   }
 
