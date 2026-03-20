@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -94,22 +94,29 @@ public class AsmParserFunctionCodeGenerator extends FunctionCodeGenerator {
       ctx.wr(")");
     } else if (toHandle.asmBuiltIn() == BuiltInTable.LA_ID_IN) {
       ctx.wr("VADL_asmparser_laidin(");
-      var lookaheadArg = (ConstantNode) toHandle.arguments().get(0);
-      ctx.wr(lookaheadArg.constant().asVal().decimal());
-
-      // create vector from strings arguments
-      ctx.wr(", std::vector<std::string>{");
-      toHandle.arguments().stream().skip(1).forEach(
-          arg -> {
-            handle(ctx, (ConstantNode) arg);
-            if (arg != toHandle.arguments().get(toHandle.arguments().size() - 1)) {
-              ctx.wr(",");
-            }
-          }
-      );
-      ctx.wr("})");
+      writeLaInCall(ctx, toHandle);
+    } else if (toHandle.asmBuiltIn() == BuiltInTable.LA_KIND_IN) {
+      ctx.wr("VADL_asmparser_lakindin(");
+      writeLaInCall(ctx, toHandle);
     } else {
       throw Diagnostic.error("Unknown AsmBuiltin.", toHandle.location()).build();
     }
+  }
+
+  private void writeLaInCall(CGenContext<Node> ctx, AsmBuiltInCall toHandle) {
+    var lookaheadArg = (ConstantNode) toHandle.arguments().get(0);
+    ctx.wr(lookaheadArg.constant().asVal().decimal());
+
+    // create vector from strings arguments
+    ctx.wr(", std::vector<std::string>{");
+    toHandle.arguments().stream().skip(1).forEach(
+        arg -> {
+          handle(ctx, (ConstantNode) arg);
+          if (arg != toHandle.arguments().get(toHandle.arguments().size() - 1)) {
+            ctx.wr(",");
+          }
+        }
+    );
+    ctx.wr("})");
   }
 }

@@ -71,6 +71,60 @@ std::string AsmUtils::formatAsmTokenKind(AsmToken::TokenKind Kind)
     }
 }
 
+std::optional<AsmToken::TokenKind> AsmUtils::stringToAsmTokenKind(StringRef kindName)
+{
+    if (kindName == "ERROR")          return AsmToken::Error;
+    if (kindName == "IDENTIFIER")     return AsmToken::Identifier;
+    if (kindName == "INTEGER")        return AsmToken::Integer;
+    if (kindName == "REAL")           return AsmToken::Real;
+    if (kindName == "STRING")         return AsmToken::String;
+    if (kindName == "AMP")            return AsmToken::Amp;
+    if (kindName == "AMPAMP")         return AsmToken::AmpAmp;
+    if (kindName == "AT")             return AsmToken::At;
+    if (kindName == "BACKSLASH")      return AsmToken::BackSlash;
+    if (kindName == "BIGNUM")         return AsmToken::BigNum;
+    if (kindName == "CARET")          return AsmToken::Caret;
+    if (kindName == "COLON")          return AsmToken::Colon;
+    if (kindName == "COMMA")          return AsmToken::Comma;
+    if (kindName == "COMMENT")        return AsmToken::Comment;
+    if (kindName == "DOLLAR")         return AsmToken::Dollar;
+    if (kindName == "DOT")            return AsmToken::Dot;
+    if (kindName == "ENDOFSTATEMENT") return AsmToken::EndOfStatement;
+    if (kindName == "EOF")            return AsmToken::Eof;
+    if (kindName == "EQUAL")          return AsmToken::Equal;
+    if (kindName == "EQUALEQUAL")     return AsmToken::EqualEqual;
+    if (kindName == "EXCLAIM")        return AsmToken::Exclaim;
+    if (kindName == "EXCLAIMEQUAL")   return AsmToken::ExclaimEqual;
+    if (kindName == "GREATER")        return AsmToken::Greater;
+    if (kindName == "GREATEREQUAL")   return AsmToken::GreaterEqual;
+    if (kindName == "GREATERGREATER") return AsmToken::GreaterGreater;
+    if (kindName == "HASH")           return AsmToken::Hash;
+    if (kindName == "HASHDIRECTIVE")  return AsmToken::HashDirective;
+    if (kindName == "LBRAC")          return AsmToken::LBrac;
+    if (kindName == "LCURLY")         return AsmToken::LCurly;
+    if (kindName == "LPAREN")         return AsmToken::LParen;
+    if (kindName == "LESS")           return AsmToken::Less;
+    if (kindName == "LESSEQUAL")      return AsmToken::LessEqual;
+    if (kindName == "LESSGREATER")    return AsmToken::LessGreater;
+    if (kindName == "LESSLESS")       return AsmToken::LessLess;
+    if (kindName == "MINUS")          return AsmToken::Minus;
+    if (kindName == "MINUSGREATER")   return AsmToken::MinusGreater;
+    if (kindName == "PERCENT")        return AsmToken::Percent;
+    if (kindName == "PIPE")           return AsmToken::Pipe;
+    if (kindName == "PIPEPIPE")       return AsmToken::PipePipe;
+    if (kindName == "PLUS")           return AsmToken::Plus;
+    if (kindName == "RBRAC")          return AsmToken::RBrac;
+    if (kindName == "RCURLY")         return AsmToken::RCurly;
+    if (kindName == "RPAREN")         return AsmToken::RParen;
+    if (kindName == "SLASH")          return AsmToken::Slash;
+    if (kindName == "SPACE")          return AsmToken::Space;
+    if (kindName == "STAR")           return AsmToken::Star;
+    if (kindName == "TILDE")          return AsmToken::Tilde;
+
+    return std::nullopt;
+}
+
+
 std::string AsmUtils::formatImm(MCOperandWrapper Op, uint8_t Radix, const MCAsmInfo *MAI)
 {
     return formatImm(Op.getMCOp(), Radix, MAI);

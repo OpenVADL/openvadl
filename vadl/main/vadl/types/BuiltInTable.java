@@ -35,6 +35,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
+import vadl.ast.AsmGrammarDefaultRules;
 import vadl.utils.functionInterfaces.TriFunction;
 import vadl.viam.Constant;
 import vadl.viam.ViamError;
@@ -1138,6 +1139,21 @@ public class BuiltInTable {
           .returns(Type.bool())
           .build();
 
+  /**
+   * Checks if the token kind at lookahead {@code n} in the AsmParser
+   * is any of the kinds passed as strings in {@code s}.
+   * To see all possible token kinds refer to the terminal rules in {@link AsmGrammarDefaultRules}.
+   *
+   * <p>{@code function LaKindIn(n: UInt<N>,s: String...) -> Bool}
+   */
+  public static final BuiltIn LA_KIND_IN =
+      func("LaKindIn", null,
+          Type.relation(List.of(UIntType.class, StringType.class), true, BoolType.class))
+          .takesDefault()
+          .noCompute()
+          .returns(Type.bool())
+          .build();
+
 
   ///// MICRO ARCHITECTURE //////
 
@@ -1346,7 +1362,8 @@ public class BuiltInTable {
 
   public static final List<BuiltIn> ASM_PARSER_BUILT_INS_LIST = List.of(
       LA_ID_IN,
-      LA_ID_EQ
+      LA_ID_EQ,
+      LA_KIND_IN
   );
 
   public static final List<BuiltIn> MICRO_ARCHITECTURE_BUILT_INS = List.of(

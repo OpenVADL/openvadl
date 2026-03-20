@@ -233,7 +233,7 @@ public class AsmGrammarRuleGenerator {
           OperandAsmType.instance()
       );
 
-      var tokens = firstTokensOfNonTerminalRule(registerRule);
+      var tokens = firstTokensOfNonTerminalRule(immediateOperandRule);
       ctx.addElementWithTokens(elem, tokens);
     }
 
