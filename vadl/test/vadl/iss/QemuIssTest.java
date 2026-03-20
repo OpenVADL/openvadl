@@ -77,7 +77,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
    * This will generate the simulator image if it is not already contained in the provided
    * cache.
    */
-  private synchronized DockerImage generateSimulator(Map<String, DockerImage> cache,
+  private DockerImage generateSimulator(Map<String, DockerImage> cache,
                                         String specPath,
                                         IssConfiguration configuration) {
     return cache.computeIfAbsent(specPath, (path) -> {

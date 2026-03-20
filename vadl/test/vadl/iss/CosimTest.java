@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.commons.text.StringSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.DockerExecutionTest;
@@ -113,41 +114,34 @@ public abstract class CosimTest extends DockerExecutionTest {
     var refTarget = "," + withUpstreamTarget();
 
     return new DockerImage()
-        .withDockerfileFromBuilder(d -> {
-              d
-                  .from(QEMU_TEST_IMAGE)
-                  .copy("iss", "/qemu");
-
-              d.workDir("/qemu/build");
-              // configure qemu with the new target from the specification
-              d.run("../configure --cc='gcc' --target-list=" + softmmuTarget + refTarget);
-              d.run("ninja");
-              // validate existence of generated qemu iss
-              d.run(qemuBin + " --version");
-
-              d.workDir("/work");
-
-              // build the cosim broker
-              d.copy("/vadl-cosim", "/work/vadl-cosim");
-              d.workDir("/work/vadl-cosim");
-              d.label("key", "VADL_TEST_CONTAINER");
-              // use --frozen to ensure that cargo does not need to download any new dependencies
-              d.run("cargo build --release -p vadl-cosim-broker --frozen");
-
-              // add cosim broker to path
-              d.run("mkdir -p /opt/cosim && cp ./target/release/vadl-cosim-broker /opt/cosim/");
-              d.env("PATH", "/opt/cosim:$PATH");
-
-              d.workDir("/work");
-
-              d.copy("/cosim_configs", "/cosim_configs");
-              d.copy("/cosim_scripts", "/cosim_scripts");
-
-              d.cmd("python3 /cosim_scripts/main.py test-suite.yaml");
-
-              d.build();
-            }
-        )
+        .withDockerfile(new StringSubstitutor(Map.of("qemu", QEMU_TEST_IMAGE,
+            "soft", softmmuTarget + refTarget,
+            "qemu-bin", qemuBin)).replace("""
+            FROM ${qemu}
+            COPY iss /qemu
+            WORKDIR /qemu/build
+            LABEL key=VADL_TEST_CONTAINER
+            RUN ../configure --cc='sccache gcc' -GNinja --target-list=${soft}
+            RUN --mount=type=cache,target=/root/.cache/sccache ninja && sccache -s
+            RUN ${qemu-bin} --version
+            WORKDIR /work
+            
+            COPY vadl-cosim /work/vadl-cosim
+            WORKDIR /work/vadl-cosim
+            ENV RUSTC_WRAPPER "sccache"
+            # use --frozen to ensure that cargo does not need to download any new dependencies
+            RUN cargo build --release -p vadl-cosim-broker --frozen && sccache -s
+            
+            RUN mkdir -p /opt/cosim && cp ./target/release/vadl-cosim-broker /opt/cosim/
+            ENV PATH "/opt/cosim:$PATH"
+            
+            WORKDIR /work
+            
+            COPY cosim_configs /cosim_configs
+            COPY cosim_scripts /cosim_scripts
+            
+            CMD python3 /cosim_scripts/main.py test-suite.yaml
+            """))
         // make iss sources available to image builder
         .withFileFromPath("iss", generatedIssSources)
         // make cosim scripts and configs available to image builder
