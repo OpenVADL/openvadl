@@ -120,7 +120,7 @@ public abstract class CosimTest extends DockerExecutionTest {
 
               d.workDir("/qemu/build");
               // configure qemu with the new target from the specification
-              d.run("../configure --cc='gcc' --target-list=" + softmmuTarget + refTarget);
+              d.run("../configure --cc='sccache gcc' --target-list=" + softmmuTarget + refTarget);
               d.run("make -j$(nproc)");
               // validate existence of generated qemu iss
               d.run(qemuBin + " --version");
@@ -130,8 +130,10 @@ public abstract class CosimTest extends DockerExecutionTest {
               // build the cosim broker
               d.copy("/vadl-cosim", "/work/vadl-cosim");
               d.workDir("/work/vadl-cosim");
+              d.label("key", "VADL_TEST_CONTAINER");
+              d.env("RUSTC_WRAPPER", "sccache");
               // use --frozen to ensure that cargo does not need to download any new dependencies
-              d.run("cargo build --release -p vadl-cosim-broker --frozen");
+              d.run("sccache --start-server && cargo build --release -p vadl-cosim-broker --frozen && sccache -s");
 
               // add cosim broker to path
               d.run("mkdir -p /opt/cosim && cp ./target/release/vadl-cosim-broker /opt/cosim/");
