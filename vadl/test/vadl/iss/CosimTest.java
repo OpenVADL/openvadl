@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vadl.BuildkitDockerImage;
+import vadl.DockerImage;
 import vadl.DockerExecutionTest;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassOrders;
@@ -43,7 +43,7 @@ public abstract class CosimTest extends DockerExecutionTest {
       "ghcr.io/openvadl/iss-test-base@sha256:134d41337274a2f54790c13582e14a23a78617bb90554214f8a6f721c5287e85";
 
   // specification to image cache
-  private static final ConcurrentHashMap<String, BuildkitDockerImage> issImageCache =
+  private static final ConcurrentHashMap<String, DockerImage> issImageCache =
       new ConcurrentHashMap<>();
 
   private static final Logger log = LoggerFactory.getLogger(CosimTest.class);
@@ -62,7 +62,7 @@ public abstract class CosimTest extends DockerExecutionTest {
    * @param specPath path to VADL specification in testSource
    * @return the image containing the generated QEMU ISS
    */
-  protected BuildkitDockerImage generateIssSimulator(String specPath) {
+  protected DockerImage generateIssSimulator(String specPath) {
     var config = IssConfiguration.from(getConfiguration(false));
     return generateSimulator(issImageCache, specPath, config);
   }
@@ -71,9 +71,9 @@ public abstract class CosimTest extends DockerExecutionTest {
    * This will generate the simulator image if it is not already contained in the provided
    * cache.
    */
-  private BuildkitDockerImage generateSimulator(Map<String, BuildkitDockerImage> cache,
-                                                String specPath,
-                                                IssConfiguration configuration) {
+  private DockerImage generateSimulator(Map<String, DockerImage> cache,
+                                        String specPath,
+                                        IssConfiguration configuration) {
     return cache.computeIfAbsent(specPath, (path) -> {
       try {
         // run iss generation
@@ -103,8 +103,8 @@ public abstract class CosimTest extends DockerExecutionTest {
    * @param generatedIssSources the path to the generated ISS/QEMU sources.
    * @return a new image that builds the ISS at build time.
    */
-  private BuildkitDockerImage getIssImage(Path generatedIssSources,
-                                          IssConfiguration configuration
+  private DockerImage getIssImage(Path generatedIssSources,
+                                  IssConfiguration configuration
   ) {
 
     var targetName = configuration.targetName().toLowerCase();
@@ -112,7 +112,7 @@ public abstract class CosimTest extends DockerExecutionTest {
     var qemuBin = "qemu-system-" + targetName;
     var refTarget = "," + withUpstreamTarget();
 
-    return new BuildkitDockerImage()
+    return new DockerImage()
         .withDockerfileFromBuilder(d -> {
               d
                   .from(QEMU_TEST_IMAGE)

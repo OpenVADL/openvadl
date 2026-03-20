@@ -108,7 +108,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
    *                            be copied to the host.
    */
   protected void runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(
-      BuildkitDockerImage image,
+      DockerImage image,
       List<Pair<String, String>> copyMappings,
       String hostOutputPath,
       String containerResultPath) {
@@ -171,7 +171,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * @param cmd                 overwrites the command which will be executed on startup.
    */
   protected void runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(
-      BuildkitDockerImage image,
+      DockerImage image,
       List<Pair<String, String>> copyMappings,
       String hostOutputPath,
       String containerResultPath,
@@ -195,7 +195,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * @throws IOException when the temp file is writable.
    */
   protected void runContainerAndCopyInputIntoContainer(
-      BuildkitDockerImage image,
+      DockerImage image,
       String content,
       String containerPath) throws IOException {
     runContainer(image, (container) -> container
@@ -219,7 +219,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * @param cmd                 is the command which is executed.
    */
   protected void runContainerAndCopyInputIntoContainer(
-      BuildkitDockerImage image,
+      DockerImage image,
       List<Pair<Path, String>> copyMappings,
       Map<String, String> environmentMappings,
       String cmd) {
@@ -358,7 +358,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * @param containerModifier a consumer that allows modification of the container configuration
    * @param postExecution     a consumer that is called when the container successfully terminated
    */
-  protected void runContainer(BuildkitDockerImage image,
+  protected void runContainer(DockerImage image,
                               Function<GenericContainer<?>, GenericContainer<?>> containerModifier,
                               @Nullable Consumer<GenericContainer<?>> postExecution
   ) {

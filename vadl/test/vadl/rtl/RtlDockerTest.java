@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import vadl.BuildkitDockerImage;
+import vadl.DockerImage;
 import vadl.DockerExecutionTest;
 import vadl.configuration.RtlConfiguration;
 import vadl.pass.PassOrders;
@@ -30,11 +30,11 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 
 public abstract class RtlDockerTest extends DockerExecutionTest {
 
-  private static final ConcurrentHashMap<String, BuildkitDockerImage> imageCache =
+  private static final ConcurrentHashMap<String, DockerImage> imageCache =
       new ConcurrentHashMap<>();
 
-  protected BuildkitDockerImage generateRtlImage(String specPath,
-                                                 RtlConfiguration configuration) {
+  protected DockerImage generateRtlImage(String specPath,
+                                         RtlConfiguration configuration) {
 
     final var cacheKey = String.valueOf(Set.of(specPath, configuration).hashCode());
     return RtlDockerTest.imageCache.computeIfAbsent(cacheKey, (k) -> {
@@ -51,7 +51,7 @@ public abstract class RtlDockerTest extends DockerExecutionTest {
     });
   }
 
-  private BuildkitDockerImage getImage(RtlConfiguration configuration
+  private DockerImage getImage(RtlConfiguration configuration
   ) {
 
     // find output dir
@@ -60,7 +60,7 @@ public abstract class RtlDockerTest extends DockerExecutionTest {
       throw new IllegalStateException("RTL output path was not found (not generated?)");
     }
 
-    return new BuildkitDockerImage()
+    return new DockerImage()
         .withDockerfileFromBuilder(d -> {
               d.from(RTL_BASE_IMAGE);
 

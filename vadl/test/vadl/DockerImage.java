@@ -46,9 +46,9 @@ import org.testcontainers.images.builder.dockerfile.DockerfileBuilder;
  * A small test helper that preserves the subset of the {@code ImageFromDockerfile} API used in
  * this codebase while delegating image builds to buildkit.
  */
-public final class BuildkitDockerImage {
+public final class DockerImage {
 
-  private static final Logger logger = LoggerFactory.getLogger(BuildkitDockerImage.class);
+  private static final Logger logger = LoggerFactory.getLogger(DockerImage.class);
   private static final BuildkitConnectionConfig BUILDKIT_CONFIG =
       BuildkitConnectionConfig.of("tcp://localhost:1234");
 
@@ -61,21 +61,21 @@ public final class BuildkitDockerImage {
   private String dockerfileContents;
   private String resolvedImageName;
 
-  public BuildkitDockerImage() {
+  public DockerImage() {
     this("vadl-test-" + UUID.randomUUID());
   }
 
-  public BuildkitDockerImage(String imageName) {
+  public DockerImage(String imageName) {
     this.imageName = imageName;
   }
 
-  public BuildkitDockerImage withDockerfile(Path path) {
+  public DockerImage withDockerfile(Path path) {
     this.dockerfilePath = path.toAbsolutePath().normalize();
     this.dockerfileContents = null;
     return this;
   }
 
-  public BuildkitDockerImage withDockerfileFromBuilder(Consumer<DockerfileBuilder> consumer) {
+  public DockerImage withDockerfileFromBuilder(Consumer<DockerfileBuilder> consumer) {
     var builder = new DockerfileBuilder();
     consumer.accept(builder);
     this.dockerfileContents = builder.build();
@@ -83,17 +83,17 @@ public final class BuildkitDockerImage {
     return this;
   }
 
-  public BuildkitDockerImage withFileFromPath(String path, Path source) {
+  public DockerImage withFileFromPath(String path, Path source) {
     filesFromPath.put(normalizeContextPath(path), source.toAbsolutePath().normalize());
     return this;
   }
 
-  public BuildkitDockerImage withFileFromClasspath(String path, String resourcePath) {
+  public DockerImage withFileFromClasspath(String path, String resourcePath) {
     filesFromClasspath.put(normalizeContextPath(path), resourcePath);
     return this;
   }
 
-  public BuildkitDockerImage withBuildArg(String key, String value) {
+  public DockerImage withBuildArg(String key, String value) {
     buildArgs.put(key, value);
     return this;
   }
@@ -182,7 +182,7 @@ public final class BuildkitDockerImage {
 
   private static void copyClasspathResource(String resourcePath, Path destination)
       throws IOException {
-    URL resource = BuildkitDockerImage.class.getResource(resourcePath);
+    URL resource = DockerImage.class.getResource(resourcePath);
     if (resource == null) {
       throw new IllegalStateException("Could not find classpath resource " + resourcePath);
     }
