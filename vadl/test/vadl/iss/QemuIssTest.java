@@ -126,8 +126,8 @@ public abstract class QemuIssTest extends DockerExecutionTest {
               d.workDir("/qemu/build");
               d.label("key", "VADL_TEST_CONTAINER");
               // configure qemu with the new target from the specification
-              d.run("../configure --cc='sccache gcc' --target-list=" + softmmuTarget + refTarget);
-              d.run("make -j$(nproc)");
+              d.run("../configure --cc='gcc' -GNinja --target-list=" + softmmuTarget + refTarget);
+              d.run("ninja");
               // validate existence of generated qemu iss
               d.run(qemuBin + " --version");
 
