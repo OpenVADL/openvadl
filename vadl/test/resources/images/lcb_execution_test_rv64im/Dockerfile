@@ -17,6 +17,6 @@ ENV SCCACHE_DIR=/root/.cache/sccache
 ENV PATH=/opt/riscv/bin:/opt/qemu/bin:$PATH
 COPY . /src
 WORKDIR /src
-RUN --mount=type=cache,target=/root/.cache/sccache make && sccache -s
+RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && make && sccache -s
 RUN mkdir /output
 CMD sh /work/compile.sh

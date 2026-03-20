@@ -22,5 +22,5 @@ ENV ABI=${ABI}
 ENV SCCACHE_DIR=/root/.cache/sccache
 COPY . /src
 WORKDIR /src
-RUN --mount=type=cache,target=/root/.cache/sccache make && sccache -s
+RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && make && sccache -s
 RUN mkdir /output

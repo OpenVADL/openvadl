@@ -122,7 +122,7 @@ public abstract class CosimTest extends DockerExecutionTest {
             WORKDIR /qemu/build
             LABEL key=VADL_TEST_CONTAINER
             RUN ../configure --cc='sccache gcc' -GNinja --target-list=${soft}
-            RUN --mount=type=cache,target=/root/.cache/sccache ninja && sccache -s
+            RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && ninja && sccache -s
             RUN ${qemu-bin} --version
             WORKDIR /work
             
@@ -130,7 +130,7 @@ public abstract class CosimTest extends DockerExecutionTest {
             WORKDIR /work/vadl-cosim
             ENV RUSTC_WRAPPER "sccache"
             # use --frozen to ensure that cargo does not need to download any new dependencies
-            RUN cargo build --release -p vadl-cosim-broker --frozen && sccache -s
+            RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && cargo build --release -p vadl-cosim-broker --frozen && sccache -s
             
             RUN mkdir -p /opt/cosim && cp ./target/release/vadl-cosim-broker /opt/cosim/
             ENV PATH "/opt/cosim:$PATH"
