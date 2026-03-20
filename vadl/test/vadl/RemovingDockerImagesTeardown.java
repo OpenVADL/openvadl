@@ -45,7 +45,7 @@ public class RemovingDockerImagesTeardown
     var cachedImages = DockerRiscvImageProvider.images;
     var labelledImages = DockerClientFactory.instance().client().listImagesCmd()
         .withLabelFilter("key=VADL_TEST_CONTAINER").exec().stream().map(Image::getId);
-    var images = Stream.concat(cachedImages.stream(), labelledImages).toList();
+    var images = Stream.concat(cachedImages.stream(), labelledImages).distinct().toList();
 
     if (images.isEmpty()) {
       logger.info("No images to delete");
@@ -53,11 +53,16 @@ public class RemovingDockerImagesTeardown
 
     for (var imageName : images) {
       logger.info("Removing image: {}", imageName);
-      DockerClientFactory.instance().client()
-          .removeImageCmd(imageName)
-          .withForce(true)
-          .exec();
-      logger.info("Removing image completed: {}", imageName);
+      try {
+
+        DockerClientFactory.instance().client()
+            .removeImageCmd(imageName)
+            .withForce(true)
+            .exec();
+        logger.info("Removing image completed: {}", imageName);
+      } catch (Exception e) {
+        logger.error("Failed to remove image {}: {}", imageName, e.getMessage());
+      }
     }
   }
 }
