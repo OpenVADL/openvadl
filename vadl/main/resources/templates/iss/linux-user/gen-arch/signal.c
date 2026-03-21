@@ -1,5 +1,5 @@
 /*
- * Emulation of Linux signals for rv64ume user-mode.
+ * Emulation of Linux signals for [(${gen_arch_lower})] user-mode.
  */
 
 #include "qemu/osdep.h"
@@ -9,12 +9,12 @@
 #include "linux-user/trace.h"
 
 /*
- * Minimal sigcontext matching rv64ume state:
+ * Minimal sigcontext matching [(${gen_arch_lower})] state:
  * - pc
  * - x1..x31 (x0 is always zero and omitted)
  */
 struct target_sigcontext {
-    abi_long pc;
+    abi_long [(${pc_reg.name_lower})];
     abi_long gpr[31];
 };
 
@@ -33,7 +33,7 @@ struct target_rt_sigframe {
 };
 
 static abi_ulong get_sigframe(struct target_sigaction *ka,
-                              CPURV64UMEState *regs, size_t framesize)
+                              CPU[(${gen_arch_upper})]State *regs, size_t framesize)
 {
     abi_ulong sp = get_sp_from_cpustate(regs);
 
@@ -47,18 +47,18 @@ static abi_ulong get_sigframe(struct target_sigaction *ka,
     return sp;
 }
 
-static void setup_sigcontext(struct target_sigcontext *sc, CPURV64UMEState *env)
+static void setup_sigcontext(struct target_sigcontext *sc, CPU[(${gen_arch_upper})]State *env)
 {
     int i;
 
-    __put_user(env->pc, &sc->pc);
+    __put_user(env->[(${pc_reg.name_lower})], &sc->[(${pc_reg.name_lower})]);
     for (i = 1; i < 32; i++) {
         __put_user(env->x[i], &sc->gpr[i - 1]);
     }
 }
 
 static void setup_ucontext(struct target_ucontext *uc,
-                           CPURV64UMEState *env, target_sigset_t *set)
+                           CPU[(${gen_arch_upper})]State *env, target_sigset_t *set)
 {
     int i;
 
@@ -76,7 +76,7 @@ static void setup_ucontext(struct target_ucontext *uc,
 
 void setup_rt_frame(int sig, struct target_sigaction *ka,
                     target_siginfo_t *info,
-                    target_sigset_t *set, CPURV64UMEState *env)
+                    target_sigset_t *set, CPU[(${gen_arch_upper})]State *env)
 {
     abi_ulong frame_addr;
     struct target_rt_sigframe *frame;
@@ -91,12 +91,12 @@ void setup_rt_frame(int sig, struct target_sigaction *ka,
     setup_ucontext(&frame->uc, env, set);
     frame->info = *info;
 
-    env->pc = ka->_sa_handler;
-    env->x[RV64UME_REG_SP] = frame_addr;
-    env->x[RV64UME_REG_A0] = sig;
-    env->x[RV64UME_REG_A1] = frame_addr + offsetof(struct target_rt_sigframe, info);
-    env->x[RV64UME_REG_A2] = frame_addr + offsetof(struct target_rt_sigframe, uc);
-    env->x[RV64UME_REG_RA] = default_rt_sigreturn;
+    env->[(${pc_reg.name_lower})] = ka->_sa_handler;
+    env->x[[(${gen_arch_upper})]_REG_SP] = frame_addr;
+    env->x[[(${gen_arch_upper})]_REG_A0] = sig;
+    env->x[[(${gen_arch_upper})]_REG_A1] = frame_addr + offsetof(struct target_rt_sigframe, info);
+    env->x[[(${gen_arch_upper})]_REG_A2] = frame_addr + offsetof(struct target_rt_sigframe, uc);
+    env->x[[(${gen_arch_upper})]_REG_RA] = default_rt_sigreturn;
 
     return;
 
@@ -108,17 +108,17 @@ badframe:
     force_sig(TARGET_SIGSEGV);
 }
 
-static void restore_sigcontext(CPURV64UMEState *env, struct target_sigcontext *sc)
+static void restore_sigcontext(CPU[(${gen_arch_upper})]State *env, struct target_sigcontext *sc)
 {
     int i;
 
-    __get_user(env->pc, &sc->pc);
+    __get_user(env->[(${pc_reg.name_lower})], &sc->[(${pc_reg.name_lower})]);
     for (i = 1; i < 32; ++i) {
         __get_user(env->x[i], &sc->gpr[i - 1]);
     }
 }
 
-static void restore_ucontext(CPURV64UMEState *env, struct target_ucontext *uc)
+static void restore_ucontext(CPU[(${gen_arch_upper})]State *env, struct target_ucontext *uc)
 {
     sigset_t blocked;
     target_sigset_t target_set;
@@ -135,12 +135,12 @@ static void restore_ucontext(CPURV64UMEState *env, struct target_ucontext *uc)
     restore_sigcontext(env, &uc->uc_mcontext);
 }
 
-long do_rt_sigreturn(CPURV64UMEState *env)
+long do_rt_sigreturn(CPU[(${gen_arch_upper})]State *env)
 {
     struct target_rt_sigframe *frame;
     abi_ulong frame_addr;
 
-    frame_addr = env->x[RV64UME_REG_SP];
+    frame_addr = env->x[[(${gen_arch_upper})]_REG_SP];
     trace_user_do_sigreturn(env, frame_addr);
     if (!lock_user_struct(VERIFY_READ, frame, frame_addr, 1)) {
         goto badframe;

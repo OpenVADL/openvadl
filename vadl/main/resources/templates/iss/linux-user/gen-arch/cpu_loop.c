@@ -24,13 +24,15 @@
 #include "signal-common.h"
 #include "elf.h"
 
+
+//TODO get value
 enum {
-    RV64UME_EXC_ILLEGAL_INSTR = 2,
-    RV64UME_EXC_BREAKPOINT = 3,
-    RV64UME_EXC_ECALL = 11,
+  [# th:each="exc : ${exc_info.exceptions}"]
+      [(${exc.enum_name})] = ,
+  [/]
 };
 
-void cpu_loop(CPURV64UMEState *env)
+void cpu_loop(CPU[(${gen_arch_upper})]State *env)
 {
     CPUState *cs = env_cpu(env);
     int trapnr;
@@ -50,45 +52,45 @@ void cpu_loop(CPURV64UMEState *env)
         case EXCP_ATOMIC:
             cpu_exec_step_atomic(cs);
             break;
-        case RV64UME_EXCP_EXC:
+        case [(${gen_arch_upper})]_EXCP_EXC:
             cause = env->arg_exc_cause;
             switch (cause) {
-            case RV64UME_EXC_ECALL:
-                env->pc += 4;
-                if (env->x[RV64UME_REG_A7] == TARGET_NR_rv64ume_flush_icache) {
+            case [(${gen_arch_upper})]_EXC_ECALL:
+                env->[(${pc_reg.name_lower})] += [(${config.insn_width_bytes})];
+                if (env->[(${register_tensors[0].name_lower})][ [(${config.sysReg})] ] == TARGET_NR_[(${gen_arch_lower})]_flush_icache) {
                     /* no-op in QEMU; TB invalidation is automatic */
                     ret = 0;
                 } else {
                     ret = do_syscall(env,
-                                     env->x[RV64UME_REG_A7],
-                                     env->x[RV64UME_REG_A0],
-                                     env->x[RV64UME_REG_A1],
-                                     env->x[RV64UME_REG_A2],
-                                     env->x[RV64UME_REG_A3],
-                                     env->x[RV64UME_REG_A4],
-                                     env->x[RV64UME_REG_A5],
-                                     0, 0);
+                                      env->[(${register_tensors[0].name_lower})][ [(${config.sysReg})] ],
+                                      env->[(${register_tensors[0].name_lower})][ [(${config.args[0]})] ],
+                                      env->[(${register_tensors[0].name_lower})][ [(${config.args[1]})] ],
+                                      env->[(${register_tensors[0].name_lower})][ [(${config.args[2]})] ],
+                                      env->[(${register_tensors[0].name_lower})][ [(${config.args[3]})] ],
+                                      env->[(${register_tensors[0].name_lower})][ [(${config.args[4]})] ],
+                                      env->[(${register_tensors[0].name_lower})][ [(${config.args[5]})] ],
+                                      0, 0);
                 }
                 if (ret == -QEMU_ERESTARTSYS) {
-                    env->pc -= 4;
+                    env->[(${pc_reg.name_lower})] -= 4;
                 } else if (ret != -QEMU_ESIGRETURN) {
-                    env->x[RV64UME_REG_A0] = ret;
+                    env->[(${register_tensors[0].name_lower})][ [(${gen_arch_upper})]_REG_A0] = ret;
                 }
                 if (cs->singlestep_enabled) {
                     goto gdbstep;
                 }
                 break;
-            case RV64UME_EXC_ILLEGAL_INSTR:
-                force_sig_fault(TARGET_SIGILL, TARGET_ILL_ILLOPC, env->pc);
+            case [(${gen_arch_upper})]_EXC_ILLEGAL_INSTR:
+                force_sig_fault(TARGET_SIGILL, TARGET_ILL_ILLOPC, env->[(${pc_reg.name_lower})]);
                 break;
-            case RV64UME_EXC_BREAKPOINT:
+            case [(${gen_arch_upper})]_EXC_BREAKPOINT:
             case EXCP_DEBUG:
 gdbstep:
-                force_sig_fault(TARGET_SIGTRAP, TARGET_TRAP_BRKPT, env->pc);
+                force_sig_fault(TARGET_SIGTRAP, TARGET_TRAP_BRKPT, env->[(${pc_reg.name_lower})]);
                 break;
             default:
                 EXCP_DUMP(env,
-                          "\nqemu: unhandled rv64ume exception cause %#x - aborting\n",
+                          "\nqemu: unhandled [(${gen_arch_lower})] exception cause %#x - aborting\n",
                           cause);
                 exit(EXIT_FAILURE);
             }
@@ -109,8 +111,8 @@ void target_cpu_copy_regs(CPUArchState *env, struct target_pt_regs *regs)
     TaskState *ts = get_task_state(cpu);
     struct image_info *info = ts->info;
 
-    env->pc = regs->sepc;
-    env->x[RV64UME_REG_SP] = regs->sp;
+    env->[(${pc_reg.name_lower})] = regs->sepc;
+    env->[(${register_tensors[0].name_lower})][ [(${gen_arch_upper})]_REG_SP] = regs->sp;
 
     ts->stack_base = info->start_stack;
 }

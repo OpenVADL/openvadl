@@ -2,11 +2,11 @@
  * This struct defines the way the registers are stored on the
  *  stack during a system call.
  *
- * Reference: linux/arch/rv64ume/include/uapi/asm/ptrace.h
+ * Reference: linux/arch/[(${gen_arch_lower})]/include/uapi/asm/ptrace.h
  */
 
-#ifndef LINUX_USER_RV64UME_TARGET_SYSCALL_H
-#define LINUX_USER_RV64UME_TARGET_SYSCALL_H
+#ifndef LINUX_USER_[(${gen_arch_upper})]_TARGET_SYSCALL_H
+#define LINUX_USER_[(${gen_arch_upper})]_TARGET_SYSCALL_H
 
 struct target_pt_regs {
     abi_long sepc;
@@ -43,7 +43,7 @@ struct target_pt_regs {
     abi_long t6;
 };
 
-#define UNAME_MACHINE "rv64ume"
+#define UNAME_MACHINE "[(${gen_arch_lower})]"
 #define UNAME_MINIMUM_RELEASE "4.15.0"
 
 #define TARGET_MCL_CURRENT 1
