@@ -36,6 +36,7 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.BranchBeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
@@ -568,6 +569,26 @@ public class GraphUtils {
     var mergeNode = graph.addWithInputs(new MergeNode(new NodeList<>(trueEnd, falseEnd), next));
     mergeNode.setSourceLocationIfNotSet(location);
     return ifNode;
+  }
+
+  /**
+   * Finds the end node of the branch the given node is on.
+   *
+   * @param node the node from which to search from
+   * @return     the branch end node
+   */
+  public static AbstractEndNode branchEnd(DirectionalNode node) {
+    Node curr = node;
+    while (true) {
+      if (curr instanceof AbstractEndNode e) {
+        return e;
+      }
+      if (curr instanceof DirectionalNode d) {
+        curr = d.next();
+      } else {
+        throw new IllegalStateException("Control flow has no end node");
+      }
+    }
   }
 
 

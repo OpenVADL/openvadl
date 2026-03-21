@@ -39,6 +39,7 @@ import vadl.iss.passes.nodes.IssSelectNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssTempExprNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
+import vadl.iss.passes.nodes.ReadStaticRegTensorNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
 import vadl.iss.passes.opDecomposition.nodes.IssMulKind;
 import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
@@ -251,6 +252,11 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Handler
   void handle(IssStaticPcRegNode toHandle) {
+    // do nothing
+  }
+
+  @Handler
+  void handle(ReadStaticRegTensorNode toHandle) {
     // do nothing
   }
 

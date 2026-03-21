@@ -40,6 +40,7 @@ import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
+import vadl.viam.annotations.TinyBlockStateAnnotation;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -150,6 +151,13 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   }
 
   /**
+   * Returns whether the register is saved in the tiny code block state.
+   */
+  public boolean isExecutionState() {
+    return reg().hasAnnotation(TinyBlockStateAnnotation.class);
+  }
+
+  /**
    * Returns the execution class used for backend selection.
    */
   public ExecClass execClass() {
@@ -222,6 +230,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       renderObj.put("names", names());
       renderObj.put("is_tcg", isTcgScalar());
       renderObj.put("is_gvec", isGVec());
+      renderObj.put("is_exec_state", isExecutionState());
       renderObj.put("exec_class", execClass().name());
       renderObj.put("constraints", renderConstraints(dims));
       renderObj.put("getter_params", renderParamsComma);

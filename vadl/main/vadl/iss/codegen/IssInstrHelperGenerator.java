@@ -27,6 +27,7 @@ import vadl.iss.passes.extensions.InstrInfo;
 import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
+import vadl.iss.passes.nodes.ReadStaticRegTensorNode;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
@@ -182,6 +183,11 @@ public class IssInstrHelperGenerator extends IssProcGen
   @Handler
   void handle(CGenContext<Node> ctx, IssStaticPcRegNode toHandle) {
     throw new UnsupportedOperationException("Type IssStaticPcRegNode not yet implemented");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, ReadStaticRegTensorNode toHandle) {
+    throw new UnsupportedOperationException("Type ReadStaticRegTensorNode not yet implemented");
   }
 
   /**

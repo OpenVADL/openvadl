@@ -84,6 +84,7 @@ instruction set architecture PPC64SFS = {
 
   register CRF  : Nibble<8>                      // 8x4-bit condition register fields
 
+  [ execution state ]
   register MSR  : MSRFormat                      // machine state register
   register SRR0 : Reg64                          // machine status save/ restore register 1
   register SRR1 : Reg64                          // machine status save/ restore register 2

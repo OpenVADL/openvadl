@@ -69,9 +69,15 @@ static inline int cpu_interrupts_enabled(CPU[(${gen_arch_upper})]State *env)
 static inline void cpu_get_tb_cpu_state(CPU[(${gen_arch_upper})]State *env, vaddr *pc,
                                         uint64_t *cs_base, uint32_t *pflags)
 {
-    *pc = env->[(${gen_arch_upper})]_PC;
-    *cs_base = 0;
-    *pflags = 0;
+  *pc = env->[(${gen_arch_upper})]_PC;
+  *cs_base = 0;
+  *pflags = 0;
+
+  int off = 0;
+  [# th:each="reg, iterState : ${register_tensors}"][# th:if="${reg.is_exec_state}"]
+  *pflags |= (env->[(${reg.name_lower})] << off);
+  off += [(${reg.cpu_state_type_width})];
+  [/][/]
 }
 
 void [(${gen_arch_lower})]_tcg_init(void);

@@ -68,6 +68,7 @@ import vadl.viam.annotations.DefineOperandAnnotation;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.annotations.FieldAccessAnnotation;
 import vadl.viam.annotations.InstructionUndefinedAnno;
+import vadl.viam.annotations.TinyBlockStateAnnotation;
 
 /**
  * The annotation table defines how {@link Annotation} can be used for different elements in
@@ -141,6 +142,31 @@ public class AnnotationTable {
         })
         // this handled in the VIAM lowering when constructing the ArtificialResource
         .build();
+
+    annotationOn(RegisterDefinition.class, "execution state", EnableAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          var viamDef = (RegisterTensor) def;
+          viamDef.addAnnotation(new TinyBlockStateAnnotation());
+        })
+        .build();
+
+    /*
+    annotationOn(AliasDefinition.class, "execution state", EnableAnnotation::new)
+        .check((def, annotation, lowering) -> {
+          ensure(def.computedTarget instanceof RegisterDefinition,
+              () -> error("Invalid annotation target", annotation)
+                  .locationDescription(annotation,
+                      "Execution state annotation can only be applied on register aliases"));
+        })
+        .applyViam((def, annotation, lowering) -> {
+          var viamDef = (ArtificialResource) def;
+          var res = (RegisterTensor) viamDef.innerResourceRef();
+          var semantics = viamDef.semantics();
+          res.addAnnotation(new ExecutionStateAnnotation(semantics.aliasSlice()));
+        })
+        // this handled in the VIAM lowering when constructing the ArtificialResource
+        .build();
+     */
 
     groupOn(RelocationDefinition.class)
         .add("global offset", EnableAnnotation::new)
