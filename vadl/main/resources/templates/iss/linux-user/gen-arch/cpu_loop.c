@@ -83,9 +83,11 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
             case EXCP_DEBUG:
 gdbstep:
                 force_sig_fault(TARGET_SIGTRAP, TARGET_TRAP_BRKPT, env->[(${pc_reg.name_lower})]);
+                force_sig_fault(TARGET_SIGTRAP, TARGET_TRAP_BRKPT, env->[(${pc_reg.name_lower})]);
                 break;
             default:
                 EXCP_DUMP(env,
+                          "\nqemu: unhandled [(${gen_arch_lower})] exception cause %#x - aborting\n",
                           "\nqemu: unhandled [(${gen_arch_lower})] exception cause %#x - aborting\n",
                           cause);
                 exit(EXIT_FAILURE);

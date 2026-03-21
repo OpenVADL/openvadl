@@ -1,6 +1,7 @@
 #ifndef [(${gen_arch_upper})]_TARGET_CPU_H
 #define [(${gen_arch_upper})]_TARGET_CPU_H
 
+//TODO: check for correct interpolattions for regs & values
 enum {
     [(${gen_arch_upper})]_REG_RA  = [(${config.raReg})],
     [(${gen_arch_upper})]_REG_SP  = [(${config.spReg})],
