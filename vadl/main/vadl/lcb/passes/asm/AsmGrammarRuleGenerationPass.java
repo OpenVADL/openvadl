@@ -17,28 +17,51 @@
 package vadl.lcb.passes.asm;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.types.BuiltInTable;
+import vadl.types.Type;
+import vadl.types.asmTypes.InstructionAsmType;
 import vadl.utils.Pair;
+import vadl.utils.SourceLocation;
 import vadl.viam.AssemblyDescription;
+import vadl.viam.Constant;
+import vadl.viam.Function;
+import vadl.viam.Identifier;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.Specification;
 import vadl.viam.annotations.AsmGenerateRulesAnno;
 import vadl.viam.asm.AsmToken;
 import vadl.viam.asm.elements.AsmAlternative;
+import vadl.viam.asm.elements.AsmAlternatives;
+import vadl.viam.asm.elements.AsmAssignToAttribute;
+import vadl.viam.asm.elements.AsmGroup;
 import vadl.viam.asm.elements.AsmRuleInvocation;
 import vadl.viam.asm.rules.AsmGrammarRule;
 import vadl.viam.asm.rules.AsmNonTerminalRule;
+import vadl.viam.graph.Graph;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.AsmBuiltInCall;
+import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * A pass that generates assembly grammar rules per instruction,
@@ -69,6 +92,8 @@ public class AsmGrammarRuleGenerationPass extends Pass {
   public PassName getName() {
     return PassName.of("AsmGrammarRuleGenerationPass");
   }
+
+  private int namingSequence = 0;
 
   @CheckForNull
   @Override
@@ -102,10 +127,12 @@ public class AsmGrammarRuleGenerationPass extends Pass {
         .filter(p -> !conflictingRules.contains(p))
         .toList();
 
+    var mergedRules = mergeOverlappingRules(nonConflictingRules);
+
     // Add invocations of the generated rules to the alternatives of the Instruction rule
     instructionRule.getAlternatives().alternatives().addAll(
-        nonConflictingRules.stream()
-            .map(r -> (AsmNonTerminalRule) r.right().builtRule)
+        mergedRules.stream()
+            .map(r -> (AsmNonTerminalRule) r)
             .map(rule -> ruleInvocationInAlternative(rule,
                 rule.getAlternatives().alternatives().getFirst()
                     .firstTokens()))
@@ -114,7 +141,7 @@ public class AsmGrammarRuleGenerationPass extends Pass {
 
     // Add the generated rules to the assembly description
     var allRules = new ArrayList<>(assemblyDescription.rules());
-    allRules.addAll(nonConflictingRules.stream().map(p -> p.right().builtRule).toList());
+    allRules.addAll(mergedRules);
     assemblyDescription.setRules(allRules);
 
     // Add the generated functions to the common definitions
@@ -221,5 +248,241 @@ public class AsmGrammarRuleGenerationPass extends Pass {
     var nonTerminal = ad.rules().stream().filter(rule -> rule.simpleName().equals(name)).findFirst()
         .orElseThrow();
     return (AsmNonTerminalRule) nonTerminal;
+  }
+
+  /**
+   * Merge generated rules starting with the same {@link AsmToken} into a single rule,
+   * which contains semantic predicates to guide the parser which instruction to parse.
+   * <p>As example consider an ISA which allows the following three versions of an ADDI instruction:
+   * <pre>{@code
+   *  addi rd, imm      // ADDI_S (rd is src & dest)
+   *  addi rd, rs1, imm // ADDI   (11 bit immediate)
+   *  addi rd, rs1, imm // ADDI_L (32 bit immediate)
+   * }</pre></p>
+   * As all three start with the token "addi" they need to be merged into a single rule to
+   * avoid LL(1) conflicts.
+   */
+  private List<AsmGrammarRule> mergeOverlappingRules(
+      List<Pair<PrintableInstruction, AsmRuleContext>> generated) {
+
+    var groupedByFirstToken = groupByToken(generated);
+    var groupedByFirstTokenThenBySyntax = groupByTokenThenBySyntax(groupedByFirstToken);
+
+    return mergeRulesPerToken(groupedByFirstTokenThenBySyntax);
+  }
+
+  /**
+   * To know which rules to merge, we first need to analyze which generated rules start with
+   * the same {@link AsmToken}. This method groups generated rules on their first token
+   * and returns a mapping from {@link AsmToken} to the list of rules starting with this token.
+   * Illustrating on the example above this method conceptually creates the mapping
+   * {@code "addi" -> [ADDI_S,ADDI,ADDI_L]}.
+   */
+  private Map<AsmToken, List<Pair<PrintableInstruction, AsmRuleContext>>> groupByToken(
+      List<Pair<PrintableInstruction, AsmRuleContext>> generated) {
+    var groupedByFirstToken =
+        new HashMap<AsmToken, List<Pair<PrintableInstruction, AsmRuleContext>>>();
+
+    generated.forEach(pair -> {
+      var inst = pair.left();
+      var builtCtx = pair.right();
+      if (builtCtx.firstTokens.size() != 1) {
+        throw Diagnostic.error("Instruction %s has multiple first tokens: [%s]".formatted(
+                inst.identifier().simpleName(),
+                builtCtx.firstTokens.stream().map(AsmToken::toString)
+                    .collect(Collectors.joining(","))),
+            inst.assembly()).build();
+      }
+      var token = pair.right().firstTokens.iterator().next();
+      groupedByFirstToken.putIfAbsent(token, new ArrayList<>());
+      groupedByFirstToken.get(token).add(pair);
+    });
+    return groupedByFirstToken;
+  }
+
+  /**
+   * Within a token group we analyze the syntactic structure of rules and
+   * introduce a second level grouping on {@link AsmSyntax}. The difference in syntactic
+   * structure then serves as basis for the introduced semantic predicates.
+   * Illustrating on the example above this method conceptually creates the mapping
+   * {@code "addi" -> [[ADDI_S],[ADDI,ADDI_L]]} (Note: ADDI and ADDI_L are in the same subgroup,
+   * since they are syntactically equivalent).
+   */
+  private Map<AsmToken,
+      Map<AsmSyntax,
+          List<Pair<PrintableInstruction, AsmRuleContext>>>> groupByTokenThenBySyntax(
+      Map<AsmToken, List<Pair<PrintableInstruction, AsmRuleContext>>> groupedByFirstToken) {
+    var groupedByFirstTokenThenBySyntax = new HashMap<AsmToken,
+        Map<AsmSyntax, List<Pair<PrintableInstruction, AsmRuleContext>>>>();
+
+    groupedByFirstToken.forEach((token, pairs) -> {
+
+      var pairsGroupedBySyntax =
+          new HashMap<AsmSyntax, List<Pair<PrintableInstruction, AsmRuleContext>>>();
+
+      pairs.forEach(pair -> {
+        var syntax = syntaxOf(pair.right());
+        pairsGroupedBySyntax.putIfAbsent(syntax, new ArrayList<>());
+        pairsGroupedBySyntax.get(syntax).add(pair);
+      });
+
+      groupedByFirstTokenThenBySyntax.put(token, pairsGroupedBySyntax);
+    });
+    return groupedByFirstTokenThenBySyntax;
+  }
+
+  private AsmSyntax syntaxOf(AsmRuleContext ctx) {
+    List<Set<AsmToken>> tokenSets = ctx.elements.stream()
+        .map(Pair::right)
+        .filter(set -> !set.isEmpty())
+        .toList();
+    return new AsmSyntax(tokenSets);
+  }
+
+  /**
+   * Based on the grouping of generated rules, a single "_MERGED_RULE" per distinct
+   * first {@link AsmToken} is created. Within this merged rule semantic predicates are used
+   * to differentiate between the multiple syntax kinds per {@link AsmToken}.
+   */
+  private List<AsmGrammarRule> mergeRulesPerToken(
+      Map<AsmToken,
+          Map<AsmSyntax,
+              List<Pair<PrintableInstruction, AsmRuleContext>>>> groupedByFirstTokenThenBySyntax) {
+    var rulesAfterMerging = new ArrayList<AsmGrammarRule>();
+
+    groupedByFirstTokenThenBySyntax.forEach((token, syntaxKinds) -> {
+
+      if (syntaxKinds.size() == 1) {
+        // TODO: Implement handling of cases where there is more than one generated instruction
+        //       per syntax kind
+        var generatedPairs = syntaxKinds.values().iterator().next();
+        if (generatedPairs.size() == 1) {
+          rulesAfterMerging.addAll(
+              generatedPairs.stream().map(pair -> pair.right().builtRule).toList());
+        }
+        return;
+      }
+
+      var alternatives = buildAlternativePerSyntaxKind(syntaxKinds);
+      rulesAfterMerging.add(buildRuleWithMergedAlternatives(token, alternatives));
+    });
+
+    return rulesAfterMerging;
+  }
+
+  private List<AsmAlternative> buildAlternativePerSyntaxKind(
+      Map<AsmSyntax, List<Pair<PrintableInstruction, AsmRuleContext>>> syntaxKinds) {
+    var sortedByTokenSetSizeDesc = syntaxKinds.entrySet().stream().sorted(
+        Comparator.comparingInt((Map.Entry<AsmSyntax, ?> e) -> e.getKey().numberOfTokenSets())
+            .reversed()).toList();
+
+    var alternatives = new ArrayList<AsmAlternative>();
+
+    for (int i = 0; i < sortedByTokenSetSizeDesc.size() - 1; i++) {
+      var currentKind = sortedByTokenSetSizeDesc.get(i);
+      var nextKind = sortedByTokenSetSizeDesc.get(i + 1);
+
+      var nonOverlapIndex = currentKind.getKey().firstNonOverlappingIndex(nextKind.getKey());
+      var nonOverlapTokenSet = currentKind.getKey().getTokenSets().get(nonOverlapIndex);
+      var semPredFunction = buildSemPredFunction(nonOverlapIndex, nonOverlapTokenSet);
+
+      // TODO: Implement handling of cases where there is more than one generated instruction
+      //       per syntax kind
+      var builtRuleAlternative = ((AsmNonTerminalRule) currentKind.getValue().getFirst()
+          .right().builtRule).getAlternatives().alternatives().getFirst();
+
+      alternatives.add(
+          wrapAlternativeInGroupWithInstructionAsmType(builtRuleAlternative, semPredFunction));
+    }
+
+    // Add last alternative without semantic predicate
+    var lastKind = sortedByTokenSetSizeDesc.getLast();
+    var lastBuiltAlternative =
+        ((AsmNonTerminalRule) lastKind.getValue().getFirst().right().builtRule)
+            .getAlternatives().alternatives().getFirst();
+    alternatives.add(
+        wrapAlternativeInGroupWithInstructionAsmType(lastBuiltAlternative, null));
+
+    return alternatives;
+  }
+
+  private AsmAlternative wrapAlternativeInGroupWithInstructionAsmType(
+      AsmAlternative alternative, @Nullable Function semPredFunction) {
+    var group = new AsmGroup(
+        new AsmAssignToAttribute("inst", false),
+        new AsmAlternatives(List.of(alternative), alternative.asmType()),
+        false,
+        InstructionAsmType.instance()
+    );
+    return new AsmAlternative(semPredFunction, alternative.firstTokens(),
+        InstructionAsmType.instance(), false, List.of(group));
+  }
+
+  private AsmGrammarRule buildRuleWithMergedAlternatives(AsmToken firstToken,
+                                                         List<AsmAlternative> alternatives) {
+    return new AsmNonTerminalRule(
+        Identifier.noLocation(firstToken.getStringLiteral() + "_MERGED_RULE"),
+        new AsmAlternatives(alternatives, InstructionAsmType.instance()),
+        InstructionAsmType.instance(),
+        SourceLocation.INVALID_SOURCE_LOCATION
+    );
+  }
+
+  private Function buildSemPredFunction(int lookupIndex,
+                                        Set<AsmToken> nonOverlapTokens) {
+    var laIndexNode = new ConstantNode(
+        Constant.Value.fromInteger(BigInteger.valueOf(lookupIndex),
+            vadl.types.Type.unsignedInt(64)));
+
+    // Use the LA_ID_IN builtin for string literal tokens
+    var laIdInArgsList = nonOverlapTokens.stream().map(AsmToken::getStringLiteral)
+        .filter(Objects::nonNull).map(arg -> new ConstantNode(new Constant.Str(arg)))
+        .toList();
+
+    // Use the LA_KIND_IN builtin for tokens that refer to a terminal rule
+    var laKindInArgsList = nonOverlapTokens.stream().filter(t -> t.getStringLiteral() == null)
+        .map(AsmToken::getRuleName).map(arg -> new ConstantNode(new Constant.Str(arg)))
+        .toList();
+
+    var graph = new Graph("generated_sem_pred_behavior" + namingSequence++);
+
+    // Build the expression based on which token types are present
+    var returnExpression = buildSemPredExpression(laIndexNode, laIdInArgsList, laKindInArgsList);
+    graph.addWithInputs(new ReturnNode(returnExpression));
+
+    return new Function(Identifier.noLocation("sem_pred_" + namingSequence++),
+        new vadl.viam.Parameter[0], Type.bool(), graph);
+  }
+
+  // If there is only one type of arguments, use the corresponding builtin call as expression
+  // If there are both types of arguments use both builtins in an OR expression
+  private ExpressionNode buildSemPredExpression(ConstantNode laIndexNode,
+                                                List<ConstantNode> laIdInArgsList,
+                                                List<ConstantNode> laKindInArgsList) {
+    if (laKindInArgsList.isEmpty()) {
+      return buildStringLiteralBuiltinCall(laIndexNode, laIdInArgsList);
+    } else if (laIdInArgsList.isEmpty()) {
+      return buildKindBuiltinCall(laIndexNode, laKindInArgsList);
+    } else {
+      var stringCall = buildStringLiteralBuiltinCall(laIndexNode, laIdInArgsList);
+      var kindCall = buildKindBuiltinCall(laIndexNode, laKindInArgsList);
+      return new BuiltInCall(BuiltInTable.OR,
+          new NodeList<>(stringCall, kindCall), Type.bool());
+    }
+  }
+
+  private AsmBuiltInCall buildStringLiteralBuiltinCall(ConstantNode laIndexNode,
+                                                       List<ConstantNode> laIdInArgsList) {
+    var laIdInArgsNodes = Stream.concat(Stream.of(laIndexNode), laIdInArgsList.stream()).toList();
+    return new AsmBuiltInCall(BuiltInTable.LA_ID_IN, new NodeList<>(laIdInArgsNodes),
+        Type.bool());
+  }
+
+  private AsmBuiltInCall buildKindBuiltinCall(ConstantNode laIndexNode,
+                                              List<ConstantNode> laKindInArgsList) {
+    var laKindInArgsNodes =
+        Stream.concat(Stream.of(laIndexNode), laKindInArgsList.stream()).toList();
+    return new AsmBuiltInCall(BuiltInTable.LA_KIND_IN, new NodeList<>(laKindInArgsNodes),
+        Type.bool());
   }
 }

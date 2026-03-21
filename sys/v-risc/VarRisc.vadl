@@ -413,7 +413,8 @@ TYPE_R opcode 63 func9    16     17     18     19     20     21     22     23   
   pseudo instruction JMP ( rd: Index ) = {
     JAL{ rd = rd, rs1imm = 0 }
   }
-  assembly JMP = ( mnemonic )
+  assembly JMP = ( mnemonic, ' ', register(rd) )
+
   pseudo instruction RET = {
     JAL{ rd = LinkIdx, rs1imm = 0 }
   }

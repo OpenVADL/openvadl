@@ -60,6 +60,22 @@ namespace llvm {
     }
   }
 
+  bool [(${namespace})]AsmRecursiveDescentParser::VADL_asmparser_lakindin(uint64_t lookahead, const std::vector<std::string>& compareTokenKinds) {
+    std::optional<AsmToken> tok = VADL_asmparser_lookahead_token(lookahead);
+    if (!tok.has_value()) {
+      return false;
+    }
+
+    const AsmToken::TokenKind actualKind = tok->getKind();
+    for (const std::string &kindStr : compareTokenKinds) {
+      std::optional<AsmToken::TokenKind> expectedKind = AsmUtils::stringToAsmTokenKind(kindStr);
+      if (expectedKind.has_value() && actualKind == *expectedKind) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   bool [(${namespace})]AsmRecursiveDescentParser::VADL_asmparser_laidin(uint64_t lookahead, const std::vector<std::string>& compareStrings) {
     std::optional<AsmToken> tok = VADL_asmparser_lookahead_token(lookahead);
     if (!tok.has_value()) {

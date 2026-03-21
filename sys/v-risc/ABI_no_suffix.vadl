@@ -79,6 +79,7 @@ application binary interface ABI for VarRISC32 = {
 
 }
 
+[ generate rules ]
 assembly description AD for ABI = {
 
     function s_suffix(baseMnemonic: String) -> String = baseMnemonic + "_S"
@@ -93,27 +94,6 @@ assembly description AD for ABI = {
       Reg @register:
         reg = Register ","
       ;
-
-      RTypeIds: "ADD" | "SUB" | "MUL" | "DIV" | "REM" | "AND" | "OR" | "XOR"
-                    | "ASR" | "LSR" | "LSL";
-
-      RTypeInstruction :
-        var mnemonicTmp = RTypeIds
-        ( ?(LaIdEq(3,","))
-          a = (
-            mnemonic = mnemonicTmp @operand
-            rd = Register @operand ","
-            rs1 = Register @operand ","
-            rs2 = Register @operand
-          ) @instruction
-        | b = (
-            mnemonic = s_suffix< mnemonicTmp > @operand
-            rd = Register @operand ","
-            rs1 = Register @operand
-          ) @instruction
-        )
-      ;
-
 
       ITypeIds : "ADDI" | "SUBI" | "MULI" | "DIVI" | "REMI" | "ANDI" | "ORI" | "XORI" ;
 
@@ -153,28 +133,6 @@ assembly description AD for ABI = {
             imm = ImmediateOperand
           ) @instruction
         )
-      ;
-
-
-      ShiftImmediateIds: "ASRI" | "LSRI" | "LSLI";
-
-      ShiftImmediateInstruction :
-          // normal version of instruction
-          // e.g. LSRI r1, r2, 0x1
-          ?(LaIdEq(4,","))
-          a = (
-            mnemonic = ShiftImmediateIds @operand
-            rd = Register @operand ","
-            rs1 = Register @operand ","
-            imm = ImmediateOperand
-          ) @instruction
-        | // short version of instruction with _S suffix
-          // e.g. LSRI_S r1, 0x1
-          b = (
-            mnemonic = s_suffix< ShiftImmediateIds > @operand
-            rd = Register @operand ","
-            imm = ImmediateOperand
-          ) @instruction
       ;
 
 
@@ -234,66 +192,6 @@ assembly description AD for ABI = {
         )
       ;
 
-
-      CondIds : "SEQ" | "SNE" | "SLT" | "SLE" | "ULT" | "UGE";
-
-      CondInstruction @instruction:
-        mnemonic = CondIds @operand
-        rd = Register @operand ","
-        rs1 = Register @operand ","
-        rs2 = Register @operand
-      ;
-
-      CondImmIds: "SGTI" | "SGEI" | "UGTI" | "UGEI"
-                    | "SEQI" | "SNEI" | "SLTI" | "SLEI" | "ULTI" ;
-
-      CondImmInstruction :
-        var mnemonicTmp = CondImmIds
-        var rdTmp = Reg @operand
-        ( // normal version of instruction
-          // e.g. SGTI r1, r2, 0x1
-          ?(LaIdEq(1,","))
-          a = (  
-            mnemonic = mnemonicTmp @operand
-            rd = rdTmp
-            rs1 = Register @operand ","
-            imm = ImmediateOperand
-          ) @instruction
-        | // _L version of instruction
-          // e.g. SGTI_L r1, 0x1000
-          b = (
-            mnemonic = l_suffix< mnemonicTmp > @operand
-            rd = rdTmp
-            imm = ImmediateOperand
-          ) @instruction
-        )
-      ;
-
-
-      MoveInstruction @instruction:
-        mnemonic = "MOV" @operand
-        rd = Register @operand ":""=" // ':=' is split because of separate terminal rules
-        rs1 = Register @operand
-      ;
-
-      SBranchInstruction @instruction:
-          mnemonic = "BRA_S" @operand
-          offset = ImmediateOperand
-      ;
-
-      JalInstruction @instruction:
-        mnemonic = "JAL" @operand
-        rd = Register @operand ","
-        rs1 = Register @operand
-      ;
-
-      BalInstruction @instruction:
-        mnemonic = "BAL" @operand
-        rd = Register @operand ","
-        imm = ImmediateOperand
-      ;
-
-
       BranchPseudoIds: "BEQZ" | "BNEZ" | "BLTZ" | "BLEZ" | "BGEZ" | "BGTZ" ;
 
       BranchPseudoInstruction @instruction:
@@ -321,26 +219,6 @@ assembly description AD for ABI = {
             mnemonic = l_suffix< mnemonicTmp > @operand
             offset = Label @operand
         ) @instruction
-      ;
-      
-      JmpPseudoInstruction @instruction:
-        mnemonic = "JMP" @operand
-        rd = Register @operand
-      ;
-
-      RetPseudoInstruction @instruction:
-        mnemonic = "RET" @operand
-      ;
-
-      CallPseudoInstruction @instruction:
-        mnemonic = "CALL" @operand
-        symbol = Label @operand
-      ;
-
-      LaPseudoInstruction @instruction:
-        mnemonic = "LA" @operand
-        rd = Register @operand ","
-        symbol = Label @operand
       ;
     }
 }

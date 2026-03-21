@@ -22,6 +22,7 @@ namespace llvm
     {
         public:
             static std::string formatAsmTokenKind(AsmToken::TokenKind Kind);
+            static std::optional<AsmToken::TokenKind> stringToAsmTokenKind(StringRef kindName);
             static std::string formatImm(MCOperandWrapper Op, uint8_t Radix, const MCAsmInfo *MAI);
             static std::string formatImm(MCOperand Op, uint8_t Radix, const MCAsmInfo *MAI);
             static std::string formatImm(int64_t value, uint8_t Radix, const MCAsmInfo *MAI);

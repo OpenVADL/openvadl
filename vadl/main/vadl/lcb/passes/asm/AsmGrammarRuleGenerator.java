@@ -124,11 +124,29 @@ public class AsmGrammarRuleGenerator {
   public void handle(AsmRuleContext ctx, ConstantNode node) {
     if (node.constant() instanceof Constant.Str str && !isWhitespace(str.value())) {
       var trimmedValue = str.value().trim();
-      var elem = new AsmStringLiteralUse(null, trimmedValue, StringAsmType.instance());
-      ctx.addElement(elem);
+      var inferredRule = AsmToken.inferTerminalRule(trimmedValue);
 
-      var tokens = Set.of(AsmToken.inferTerminalRule(trimmedValue));
-      ctx.setFirstTokensIfNull(tokens);
+      if (inferredRule != null) {
+        var elem = new AsmStringLiteralUse(null, trimmedValue, StringAsmType.instance());
+        ctx.addElementWithTokens(elem, Set.of(inferredRule));
+      } else {
+        // If no terminal rule can be inferred for a string it is likely because
+        // it consists of a combination of characters that are separate tokens.
+        // For example the string ":=" needs to be broken down to its parts ":" and "=",
+        // to be able to infer the terminal rules COLON and EQUAL.
+        for (int i = 0; i < trimmedValue.length(); i++) {
+          var partString = String.valueOf(trimmedValue.charAt(i));
+          inferredRule = AsmToken.inferTerminalRule(partString);
+          if (inferredRule == null) {
+            throw Diagnostic.error(
+                    "Assembly parser terminal rule cannot be inferred for symbol '%s'".formatted(
+                        partString), instruction.assembly())
+                .build();
+          }
+          var elem = new AsmStringLiteralUse(null, partString, StringAsmType.instance());
+          ctx.addElementWithTokens(elem, Set.of(inferredRule));
+        }
+      }
     }
   }
 
@@ -155,8 +173,7 @@ public class AsmGrammarRuleGenerator {
       var elem = new AsmStringLiteralUse(
           new AsmAssignToAttribute("mnemonic", false),
           instructionName, OperandAsmType.instance());
-      ctx.addElement(elem);
-      ctx.setFirstTokensIfNull(Set.of(new AsmToken("IDENTIFIER", instructionName)));
+      ctx.addElementWithTokens(elem, Set.of(new AsmToken("IDENTIFIER", instructionName)));
       return;
     }
 
@@ -182,10 +199,9 @@ public class AsmGrammarRuleGenerator {
           List.of(),
           OperandAsmType.instance()
       );
-      ctx.addElement(elem);
 
       var tokens = firstTokensOfNonTerminalRule(registerRule);
-      ctx.setFirstTokensIfNull(tokens);
+      ctx.addElementWithTokens(elem, tokens);
       return;
     }
 
@@ -216,10 +232,9 @@ public class AsmGrammarRuleGenerator {
           List.of(),
           OperandAsmType.instance()
       );
-      ctx.addElement(elem);
 
-      var tokens = firstTokensOfNonTerminalRule(registerRule);
-      ctx.setFirstTokensIfNull(tokens);
+      var tokens = firstTokensOfNonTerminalRule(immediateOperandRule);
+      ctx.addElementWithTokens(elem, tokens);
     }
 
     if (node.builtIn() == BuiltInTable.INTEGRAL) {
@@ -271,9 +286,10 @@ public class AsmGrammarRuleGenerator {
 
     // TODO: only use relevant elements in this check for now all elements are relevant
     //       (e.g. semantic predicates are not supported yet)
-    if (ctx.currentElements.size() > 1) {
+    var elements = ctx.getElements();
+    if (elements.size() > 1) {
 
-      var subtypeMap = ctx.currentElements.stream()
+      var subtypeMap = elements.stream()
           .filter(e -> e instanceof HasAssignTo assignTo
               && assignTo.assignToElement() != null
               && assignTo.assignToElement() instanceof AsmAssignToAttribute)
@@ -286,13 +302,13 @@ public class AsmGrammarRuleGenerator {
           );
       ruleType = new GroupAsmType(subtypeMap);
     } else {
-      ruleType = ctx.currentElements.getFirst().getAsmType();
+      ruleType = elements.getFirst().getAsmType();
     }
 
     ctx.builtRule = new AsmNonTerminalRule(instruction.identifier(),
         new AsmAlternatives(List.of(
             new AsmAlternative(null, ctx.firstTokens, ruleType,
-                false, ctx.currentElements)
+                false, elements)
         ), ruleType), InstructionAsmType.instance(),
         SourceLocation.INVALID_SOURCE_LOCATION
     );
@@ -317,7 +333,7 @@ public class AsmGrammarRuleGenerator {
       var elem = new AsmFunctionInvocation(
           new AsmAssignToAttribute("mnemonic", false),
           instructionNameConstantFunction, List.of(), OperandAsmType.instance());
-      ctx.addElement(elem);
+      ctx.addElementWithTokens(elem, Set.of());
     }
   }
 
