@@ -3245,6 +3245,16 @@ public class TypeChecker
   }
 
   @Override
+  public Void visit(UmeSequenceDefinition definition) {
+    return null;
+  }
+
+  @Override
+  public Void visit(UserModeEmulationDefinition definition) {
+    return null;
+  }
+
+  @Override
   public Void visit(CacheDefinition definition) {
     throw addErrorAndStopChecking(unimplementedError(definition));
   }

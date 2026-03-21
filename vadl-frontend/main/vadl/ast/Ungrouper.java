@@ -729,6 +729,16 @@ public class Ungrouper
   }
 
   @Override
+  public Void visit(UmeSequenceDefinition definition) {
+    return null;
+  }
+
+  @Override
+  public Void visit(UserModeEmulationDefinition definition) {
+    return null;
+  }
+
+  @Override
   public Void visit(CacheDefinition definition) {
     ungroupAnnotations(definition);
     return null;

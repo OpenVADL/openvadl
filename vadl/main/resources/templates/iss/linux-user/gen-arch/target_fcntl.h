@@ -5,7 +5,7 @@
  * later version. See the COPYING file in the top-level directory.
  */
 
-#ifndef RV64UME_TARGET_FCNTL_H
-#define RV64UME_TARGET_FCNTL_H
+#ifndef [(${gen_arch_upper})]_TARGET_FCNTL_H
+#define [(${gen_arch_upper})]_TARGET_FCNTL_H
 #include "../generic/fcntl.h"
 #endif

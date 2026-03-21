@@ -3,8 +3,8 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
-#ifndef RV64UME_TARGET_PROC_H
-#define RV64UME_TARGET_PROC_H
+#ifndef [(${gen_arch_upper})]_TARGET_PROC_H
+#define [(${gen_arch_upper})]_TARGET_PROC_H
 
 static int open_cpuinfo(CPUArchState *cpu_env, int fd)
 {
@@ -20,4 +20,4 @@ static int open_cpuinfo(CPUArchState *cpu_env, int fd)
 }
 #define HAVE_ARCH_PROC_CPUINFO
 
-#endif /* RV64UME_TARGET_PROC_H */
+#endif /* [(${gen_arch_upper})]_TARGET_PROC_H */

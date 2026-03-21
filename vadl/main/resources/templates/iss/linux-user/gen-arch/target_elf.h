@@ -5,8 +5,8 @@
  * later version. See the COPYING file in the top-level directory.
  */
 
-#ifndef RV64UME_TARGET_ELF_H
-#define RV64UME_TARGET_ELF_H
+#ifndef [(${gen_arch_upper})]_TARGET_ELF_H
+#define [(${gen_arch_upper})]_TARGET_ELF_H
 static inline const char *cpu_get_model(uint32_t eflags)
 {
     return "max";
