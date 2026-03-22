@@ -16,9 +16,9 @@
 
 package vadl.utils;
 
+import static vadl.error.Diagnostic.error;
+
 import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -48,9 +48,9 @@ public class SingleFileVirtualFileSystem implements VirtualFileSystem {
   }
 
   @Override
-  public InputStream getInputStream(Path path) throws IOException {
+  public InputStream getInputStream(Path path) {
     if (!path.equals(this.path)) {
-      throw new FileNotFoundException("File not found: " + path);
+      throw error("File not found: " + path, SourceLocation.INVALID_SOURCE_LOCATION).build();
     }
     return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
   }

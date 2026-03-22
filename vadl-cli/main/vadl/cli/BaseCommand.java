@@ -178,17 +178,11 @@ public abstract class BaseCommand implements Callable<Integer> {
    * @return the AST.
    */
   private Ast parseToAst() {
-    try {
-      Ast ast = VadlParser.parse(input, new DiskVirtualFileSystem(),
-          Objects.requireNonNullElseGet(modelOverrides, Map::of));
-      new Ungrouper().ungroup(ast);
-      new ModelRemover().removeModels(ast);
-      return ast;
-    } catch (IOException e) {
-      throw Diagnostic.error("Cannot open file", SourceLocation.INVALID_SOURCE_LOCATION)
-          .description("%s", Objects.requireNonNullElse(e.getMessage(), ""))
-          .build();
-    }
+    Ast ast = VadlParser.parse(input, new DiskVirtualFileSystem(),
+        Objects.requireNonNullElseGet(modelOverrides, Map::of));
+    new Ungrouper().ungroup(ast);
+    new ModelRemover().removeModels(ast);
+    return ast;
   }
 
   /**

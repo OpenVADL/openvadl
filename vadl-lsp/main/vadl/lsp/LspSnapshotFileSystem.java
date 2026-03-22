@@ -77,7 +77,7 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
   }
 
   @Override
-  public InputStream getInputStream(Path path) throws IOException {
+  public InputStream getInputStream(Path path) {
     String uri = toUri(path);
     readFiles.add(uri);
 

@@ -16,8 +16,11 @@
 
 package vadl.ast;
 
-import java.io.IOException;
+import static java.util.Objects.requireNonNull;
+
 import java.nio.file.Path;
+import javax.annotation.Nullable;
+import vadl.error.DiagnosticList;
 import vadl.utils.Pair;
 import vadl.utils.SingleFileVirtualFileSystem;
 import vadl.utils.VirtualFileSystem;
@@ -47,12 +50,8 @@ public class Frontend {
    * @throws vadl.error.DiagnosticList  if the program isn't valid.
    */
   public static Ast compileToAst(String program) {
-    try {
-      return compileToAst(SingleFileVirtualFileSystem.DEFAULT_PATH,
-          new SingleFileVirtualFileSystem(program));
-    } catch (IOException e) {
-      throw new RuntimeException("This can never happen as the filesystem always succeeds here.");
-    }
+    return compileToAst(SingleFileVirtualFileSystem.DEFAULT_PATH,
+        new SingleFileVirtualFileSystem(program));
   }
 
   /**
@@ -64,8 +63,7 @@ public class Frontend {
    * @return  the parsed and checked AST.
    * @throws vadl.error.DiagnosticList  if the program isn't valid.
    */
-  public static Ast compileToAst(Path path, VirtualFileSystem fileSystem) throws
-      IOException {
+  public static Ast compileToAst(Path path, VirtualFileSystem fileSystem) {
     var ast = VadlParser.parse(path, fileSystem);
     var remover = new ModelRemover();
     remover.removeModels(ast);
@@ -84,12 +82,8 @@ public class Frontend {
    * @throws vadl.error.DiagnosticList  if the program isn't valid.
    */
   public static Specification compileToViam(String program) {
-    try {
-      return compileToViam(SingleFileVirtualFileSystem.DEFAULT_PATH,
-          new SingleFileVirtualFileSystem(program));
-    } catch (IOException e) {
-      throw new RuntimeException("This can never happen as the filesystem always succeeds here.");
-    }
+    return compileToViam(SingleFileVirtualFileSystem.DEFAULT_PATH,
+        new SingleFileVirtualFileSystem(program));
   }
 
   /**
@@ -100,8 +94,7 @@ public class Frontend {
    * @return  the parsed and checked VIAM spec.
    * @throws vadl.error.DiagnosticList  if the program isn't valid.
    */
-  public static Specification compileToViam(Path path, VirtualFileSystem fileSystem) throws
-      IOException {
+  public static Specification compileToViam(Path path, VirtualFileSystem fileSystem) {
     var ast = compileToAst(path, fileSystem);
     var lowering = new ViamLowering();
     return lowering.generate(ast);
@@ -117,8 +110,7 @@ public class Frontend {
    * @throws vadl.error.DiagnosticList  if the program isn't valid.
    */
   public static Pair<Ast, Specification> compileToAstAndViam(Path path,
-                                                             VirtualFileSystem fileSystem) throws
-      IOException {
+                                                             VirtualFileSystem fileSystem) {
     var ast = compileToAst(path, fileSystem);
     var lowering = new ViamLowering();
     var spec = lowering.generate(ast);
