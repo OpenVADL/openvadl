@@ -28,13 +28,13 @@ library ("sky130_fd_sc_hd__tt_025C_1v80") {
     default_arc_mode : "worst_edges";
     default_constraint_arc_mode : "worst";
     default_leakage_power_density : 0.0000000000;
-    default_operating_conditions : "tt_025C_1v80";
     operating_conditions ("tt_025C_1v80") {
         voltage : 1.8000000000;
         process : 1.0000000000;
         temperature : 25.000000000;
         tree_type : "balanced_tree";
     }
+    default_operating_conditions : "tt_025C_1v80";
     /* Wire load tables */
 
     wire_load("Small") {

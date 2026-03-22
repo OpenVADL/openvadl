@@ -1,8 +1,8 @@
 # read design
-read_verilog -sv build/Spike.sv
+read_verilog -sv build/TOP_MODULE.sv
 
 # elaborate design hierarchy
-hierarchy -check -top Spike
+hierarchy -check -top TOP_MODULE
 
 # the high-level stuff
 proc; opt; fsm; opt; memory; opt
@@ -23,4 +23,4 @@ stat -liberty /scripts/bench/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 clean
 
 # write synthesized design
-write_verilog build/Spike.v
+write_verilog build/TOP_MODULE.v
