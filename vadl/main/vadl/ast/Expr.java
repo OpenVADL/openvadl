@@ -228,6 +228,8 @@ sealed interface IsBinOp permits BinOp, PlaceholderNode, MacroInstanceNode, Macr
 
 sealed interface IsUnOp permits UnOp, PlaceholderNode, MacroInstanceNode, MacroMatchNode {
   void prettyPrint(int indent, StringBuilder builder);
+
+  SourceLocation location();
 }
 
 enum Precedence {
@@ -512,7 +514,7 @@ class UnaryExpr extends Expr {
 
   @Override
   public SourceLocation location() {
-    return operand.location().join(operand.location());
+    return operator.location().join(operand.location());
   }
 
   @Override

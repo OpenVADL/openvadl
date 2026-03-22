@@ -426,8 +426,9 @@ public class TypeChecker
       }
 
       if (to.getClass() == SIntType.class) {
+        var requiredWidth = fromConstant.closestSInt().bitWidth();
         var availableWidth = ((SIntType) to).bitWidth();
-        return availableWidth >= fromConstant.requiredBitWidth();
+        return availableWidth >= requiredWidth;
       }
 
       if (to.getClass() == UIntType.class) {
