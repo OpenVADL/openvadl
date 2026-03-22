@@ -61,6 +61,7 @@ import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.StringAsmType;
+import vadl.utils.Either;
 import vadl.utils.Levenshtein;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
@@ -77,11 +78,20 @@ import vadl.viam.Constant;
 public class TypeChecker
     implements DefinitionVisitor<Void>, StatementVisitor<Void>, ExprVisitor<Void> {
 
+  /**
+   * The expected type of the expression being checked.
+   * This is used for bidirectional typechecking, expressing the prefference for one type from
+   * further up the tree.
+   */
+  @Nullable
+  private Type expectedType = null;
+
   private BranchStrategy branchStrategy = BranchStrategy.ALL;
 
   /**
    * Describes whether all branches are checked and the result of all branches must be equal, or
    * if we must evaluate the condition and propagate the type from the chosen branch.
+   * FIXME: Reevaluate if bidirectional typechecking can remove this.
    */
   enum BranchStrategy {
     ALL,
@@ -135,7 +145,6 @@ public class TypeChecker
     constantEvaluator = new ConstantEvaluator();
   }
 
-
   /**
    * Typecheck the expression if not yet checked.
    *
@@ -143,6 +152,17 @@ public class TypeChecker
    * @return the type of the expression.
    */
   Type check(Expr expr) {
+    return checkWith(expr, null);
+  }
+
+  /**
+   * Typecheck the expression if not yet checked.
+   *
+   * @param expr to check.
+   * @param expectedType the expected type of the expression.
+   * @return the type of the expression.
+   */
+  Type checkWith(Expr expr, @Nullable Type expectedType) {
     // Expressions store their type so we can look at them to see if they were already evaluated.
     if (expr.type != null) {
       if (expr.type instanceof InternalErrorType) {
@@ -158,6 +178,8 @@ public class TypeChecker
           .build();
     }
 
+    var previousExpectedType = this.expectedType;
+    this.expectedType = expectedType;
     currentlyVisiting.add(nodeId);
     try {
       expr.accept(this);
@@ -177,6 +199,7 @@ public class TypeChecker
       }
       throw new StopPartialCheckingSignal();
     } finally {
+      this.expectedType = previousExpectedType;
       currentlyVisiting.pop();
     }
     return expr.type();
@@ -909,7 +932,9 @@ public class TypeChecker
 
   @Override
   public Void visit(ConstantDefinition definition) {
-    Type valType = withBranchingStrategy(BranchStrategy.ONE, () -> check(definition.value));
+    Type valType = withBranchingStrategy(
+        BranchStrategy.ONE,
+        () -> checkWith(definition.value, intermediateParseTypeLiteral(definition.typeLiteral)));
 
     if (definition.typeLiteral == null) {
       // Do nothing on purpose
@@ -1415,10 +1440,9 @@ public class TypeChecker
   @Override
   public Void visit(FunctionDefinition definition) {
     definition.params.forEach(param -> check(param.typeLiteral));
-    check(definition.retType);
-    check(definition.expr);
+    var retType = check(definition.retType);
+    checkWith(definition.expr, retType);
 
-    var retType = requireNonNull(definition.retType.type);
     definition.expr = wrapImplicitCast(definition.expr, retType);
     var exprType = requireNonNull(definition.expr.type);
 
@@ -2856,8 +2880,8 @@ public class TypeChecker
 
   @Override
   public Void visit(BinaryExpr expr) {
-    check(expr.left);
-    check(expr.right);
+    checkWith(expr.left, expectedType);
+    checkWith(expr.right, expectedType);
 
     var builtin =
         AstUtils.getOperatorBuiltIn(expr.operator(), List.of(expr.left.type(), expr.right.type()));
@@ -2883,7 +2907,7 @@ public class TypeChecker
   public Void visit(GroupedExpr expr) {
     // Arithmetic grouping
     if (expr.expressions.size() == 1) {
-      check(expr.expressions.get(0));
+      checkWith(expr.expressions.get(0), expectedType);
       expr.type = expr.expressions.get(0).type;
       return null;
     }
@@ -3027,6 +3051,50 @@ public class TypeChecker
    * @return the parsed type.
    */
   private Type parseTypeLiteral(TypeLiteral expr, @Nullable Integer preferredBitWidth) {
+    var result = internalParseTypeLiteral(expr, preferredBitWidth);
+    if (result.isRight()) {
+      throw addErrorAndStopChecking(result.right());
+    }
+    return result.left();
+  }
+
+  /**
+   * Parses the type literal to an actual type.
+   * This is not a final type literal checking, and after calling this method, the caller needs
+   * to still call @see parseTypeLiteral.
+   *
+   * <p>This method is usefull for bidirectional typechecking when it's necessary to let the type
+   * literal influence the type of another expression. However, the type of the actual expression
+   * can also influence the type of the type literal.
+   *
+   * <pre>
+   *   // Typeliteral influences expression.
+   *   constant a: SInt<32> = if cond then 1 else 0
+   *
+   *   // Expression influences type literal -> UInt doesn't have any bit widht so we take it from
+   *   // the expression.
+   *   constant a: UInt = 255
+   * </pre>
+   *
+   * @param expr the typeliteral.
+   * @return the parsed type.
+   */
+  @Nullable
+  private Type intermediateParseTypeLiteral(@Nullable TypeLiteral expr) {
+    if (expr == null) {
+      return null;
+    }
+
+    var result = internalParseTypeLiteral(expr, null);
+    return result.isLeft() ? result.left() : null;
+  }
+
+  /**
+   * Sometimes we want to throw when parsing a type literal and sometimes we want to ignore errors
+   * so this returns a either type and the caller can decide how to handle them.
+   */
+  private Either<Type, Diagnostic> internalParseTypeLiteral(TypeLiteral expr,
+                                                            @Nullable Integer preferredBitWidth) {
     var base = expr.baseType.pathToString();
 
     // 1. Check whether the base exists.
@@ -3042,26 +3110,36 @@ public class TypeChecker
       var suggestions =
           Levenshtein.suggestions(expr.baseType.pathToString(), candidateTypes);
 
-      addErrorAndStopChecking(error("Unknown Type `%s`".formatted(base), expr)
+      return new Either(null, error("Unknown Type `%s`".formatted(base), expr)
           .locationDescription(expr, "No type with that name exists.")
           .suggestions(suggestions)
           .build());
     }
 
     // 2. Calculate the sizes
-    var sizes = expr.sizeIndices.stream().map(sizeExpr -> {
+    var sizesOrErrors = expr.sizeIndices.stream().map(sizeExpr -> {
       check(sizeExpr);
       var size = constantEvaluator.eval(sizeExpr).value().intValueExact();
 
       if (size < 1) {
-        addErrorAndStopChecking(error("Invalid Type Notation", sizeExpr.location())
-            .locationDescription(sizeExpr.location(),
-                "Width must of a %s must be greater or equal 1 but was %d", base, size)
-            .build());
+        return new Either<Integer, Diagnostic>(null,
+            error("Invalid Type Notation", sizeExpr.location())
+                .locationDescription(sizeExpr.location(),
+                    "Width must of a %s must be greater or equal 1 but was %d", base, size)
+                .build());
       }
 
-      return size;
+      return new Either<Integer, Diagnostic>(size, null);
     }).toList();
+
+    // Check for errors and return early if found
+    for (var sizeOrError : sizesOrErrors) {
+      if (sizeOrError.isRight()) {
+        return new Either<>(null, sizeOrError.right());
+      }
+    }
+
+    var sizes = sizesOrErrors.stream().map(Either::left).toList();
 
 
     // For the builtin bits types we can infer the size (sometimes)
@@ -3082,12 +3160,12 @@ public class TypeChecker
 
     if (unSizedBuiltins.containsKey(base)) {
       if (!sizes.isEmpty()) {
-        addErrorAndStopChecking(error("Invalid Type Notation", expr.location())
+        return new Either(null, error("Invalid Type Notation", expr.location())
             .description("The %s type doesn't use the size notation.", base)
             .help("Try removing the size parameter here.")
             .build());
       }
-      return unSizedBuiltins.get(base).get();
+      return new Either(unSizedBuiltins.get(base).get(), null);
     }
 
     Map<String, Function<Integer, BitsType>> sizedBuiltins = Map.of(
@@ -3098,7 +3176,7 @@ public class TypeChecker
 
     if (sizedBuiltins.containsKey(base)) {
       if (sizes.isEmpty()) {
-        addErrorAndStopChecking(error("Invalid Type Notation", expr.location())
+        return new Either(null, error("Invalid Type Notation", expr.location())
             .description(
                 "Unsized `%s` can only be used in special places when it's obvious what the bit"
                     + " width should be.",
@@ -3108,11 +3186,11 @@ public class TypeChecker
       }
 
       if (sizes.size() == 1) {
-        return sizedBuiltins.get(base).apply(sizes.getFirst());
+        return new Either(sizedBuiltins.get(base).apply(sizes.getFirst()), null);
       }
 
-      return new TensorType(sizes.subList(0, sizes.size() - 1),
-          sizedBuiltins.get(base).apply(sizes.getLast()));
+      return new Either(new TensorType(sizes.subList(0, sizes.size() - 1),
+          sizedBuiltins.get(base).apply(sizes.getLast())), null);
     }
 
     // 4. Create the custom types
@@ -3126,19 +3204,19 @@ public class TypeChecker
     };
 
     if (sizes.isEmpty()) {
-      return customTargetType;
+      return new Either(customTargetType, null);
     }
 
     // Only some types can be used to create a tensor.
     if (customTargetType instanceof BitsType customBits) {
-      return new TensorType(sizes, customBits);
+      return new Either(new TensorType(sizes, customBits), null);
     }
 
     if (customTargetType instanceof TensorType customTensor) {
-      return new TensorType(sizes, customTensor);
+      return new Either(new TensorType(sizes, customTensor), null);
     }
 
-    throw addErrorAndStopChecking(error("Invalid Tensor Type", expr)
+    return new Either(null, error("Invalid Tensor Type", expr)
         .locationDescription(expr, "You can only create tensors from data types.")
         .build());
   }
@@ -3157,7 +3235,7 @@ public class TypeChecker
 
   @Override
   public Void visit(UnaryExpr expr) {
-    var innerType = check(expr.operand);
+    var innerType = checkWith(expr.operand, expectedType);
 
     var builtin = switch (expr.unOp().operator) {
       case NEGATIVE -> BuiltInTable.NEG;
@@ -3746,7 +3824,7 @@ public class TypeChecker
   @SuppressWarnings("UnusedVariable")
   @Override
   public Void visit(IfExpr expr) {
-    check(expr.condition);
+    checkWith(expr.condition, Type.bool());
     expr.condition = wrapImplicitCast(expr.condition, Type.bool());
     var condType = expr.condition.type();
     if (condType != Type.bool()) {
@@ -3754,8 +3832,8 @@ public class TypeChecker
       errors.add(typeMismatchError(expr, Type.bool(), condType));
     }
 
-    var thenType = check(expr.thenExpr);
-    var elseType = check(expr.elseExpr);
+    var thenType = checkWith(expr.thenExpr, expectedType);
+    var elseType = checkWith(expr.elseExpr, expectedType);
 
     // If only one branch should be checked, directly propergate the type, and don't check whether
     // the branches are compatible.
@@ -3766,14 +3844,18 @@ public class TypeChecker
       return null;
     }
 
-    // FIXME: Fix this with bidirectional checking in the future
+    // Use type pressure from above in the tree to resovle this.
     if (thenType instanceof ConstantType && elseType instanceof ConstantType
         && !thenType.equals(elseType)) {
-      addErrorAndStopChecking(error("Type Mismatch", expr)
-          .description("Both branches return different constant types.")
-          .help("Add an explicit cast on one of the branches.")
-          .note("In the future this will work without a cast.")
-          .build());
+      if (expectedType == null) {
+        throw addErrorAndStopChecking(error("Type Mismatch", expr)
+            .description("Both branches return different constant types.")
+            .help("Add an explicit cast on one of the branches, or wrap the if in an cast.")
+            .build());
+      }
+
+      expr.thenExpr = tryWrapImplicitCast(expr.thenExpr, expectedType);
+      expr.elseExpr = tryWrapImplicitCast(expr.elseExpr, expectedType);
     }
 
     // Apply general implicit casting rules after specialised once.
@@ -3822,13 +3904,13 @@ public class TypeChecker
       expr.identifiers.getFirst().type = valType;
     }
 
-    expr.type = check(expr.body);
+    expr.type = checkWith(expr.body, expectedType);
     return null;
   }
 
   @Override
   public Void visit(CastExpr expr) {
-    var valType = check(expr.value);
+    var valType = checkWith(expr.value, intermediateParseTypeLiteral(expr.typeLiteral));
 
     expr.typeLiteral.type = parseTypeLiteral(expr.typeLiteral, preferredBitWidthOf(valType));
     var litType = expr.typeLiteral.type();
@@ -3873,10 +3955,10 @@ public class TypeChecker
               .note("The type of the candidate and the pattern must be the same.")
               .build());
         }
-        check(kase.result);
+        checkWith(kase.result, expectedType);
       }
     }
-    check(expr.defaultResult);
+    checkWith(expr.defaultResult, expectedType);
 
     // If only one branch should be checked, directly propergate the type, and don't check whether
     // the branches are compatible.
@@ -3897,32 +3979,35 @@ public class TypeChecker
     }
 
     // Check that all branches have the same type
-    var firstResultType = check(expr.cases.get(0).result);
+    var targetResultType = check(expr.cases.get(0).result);
+    if (targetResultType instanceof ConstantType && expectedType != null) {
+      targetResultType = expectedType;
+    }
     for (var kase : expr.cases) {
-      kase.result = wrapImplicitCast(kase.result, firstResultType);
+      kase.result = wrapImplicitCast(kase.result, targetResultType);
       var resultType = kase.result.type();
-      if (!resultType.equals(firstResultType)) {
+      if (!resultType.equals(targetResultType)) {
         addErrorAndStopChecking(error("Type Mismatch", kase.result)
             .locationNote(kase.result, "All previous branches were of type `%s`, but this is `%s`",
-                firstResultType, resultType)
+                targetResultType, resultType)
             .description("All branches of a match must have the same type")
             .build());
       }
     }
 
-    expr.defaultResult = wrapImplicitCast(expr.defaultResult, firstResultType);
+    expr.defaultResult = wrapImplicitCast(expr.defaultResult, targetResultType);
     var defaultResultType = expr.defaultResult.type();
-    if (!defaultResultType.equals(firstResultType)) {
+    if (!defaultResultType.equals(targetResultType)) {
       addErrorAndStopChecking(error("Type Mismatch", expr.defaultResult)
           .locationNote(expr.defaultResult,
               "All previous branches were of type `%s`, but this is `%s`",
-              firstResultType, defaultResultType)
+              targetResultType, defaultResultType)
           .description("All branches of a match must have the same type")
           .build());
 
     }
 
-    expr.type = firstResultType;
+    expr.type = targetResultType;
     return null;
   }
 
@@ -4101,7 +4186,7 @@ public class TypeChecker
 
   @Override
   public Void visit(IfStatement statement) {
-    check(statement.condition);
+    checkWith(statement.condition, Type.bool());
     statement.condition = wrapImplicitCast(statement.condition, Type.bool());
     var condType = statement.condition.type();
     if (condType != Type.bool()) {
@@ -4118,11 +4203,8 @@ public class TypeChecker
 
   @Override
   public Void visit(AssignmentStatement statement) {
-    check(statement.target);
-    check(statement.valueExpression);
-
-    var targetType = statement.target.type();
-    var valueType = statement.valueExpression.type();
+    var targetType = check(statement.target);
+    var valueType = checkWith(statement.valueExpression, targetType);
 
     if (!targetType.equals(valueType) && canImplicitCast(valueType, targetType)) {
       statement.valueExpression =
