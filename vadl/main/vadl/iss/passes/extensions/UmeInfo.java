@@ -27,7 +27,11 @@ import vadl.template.Renderable;
 public record UmeInfo(
     int sysReg,          // e.g., 17 for RISC-V a7 (syscall number)
     int retReg,          // e.g., 10 for RISC-V a0 (return value)
-    List<Integer> args   // e.g., [10, 11, 12, 13, 14, 15] for a0-a5 (syscall arguments)
+    int spReg,           // Stack Pointer (e.g., 2 for RISC-V)
+    int raReg,           // Return Address (e.g., 1 for RISC-V)
+    int tpReg,
+    List<Integer> args,
+    Map<String, Integer> excIds
 ) implements Renderable {
 
   @Override
@@ -35,7 +39,11 @@ public record UmeInfo(
     return Map.of(
         "sysReg", sysReg,
         "retReg", retReg,
-        "args", args
+        "spReg", spReg,
+        "raReg", raReg,
+        "tpReg", tpReg,
+        "args", args,
+        "excIds", excIds
     );
   }
 }

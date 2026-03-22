@@ -54,10 +54,18 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
     //TODO remove hardcoded values (finish vadl with ume)
       int extractedSysReg = 17;
       int extractedRetReg = 10;
+      int extractedSpReg = 2;
+      int extractedRaReg = 1;
+      int extractedTpReg = 4;
       List<Integer> extractedArgs = List.of(10, 11, 12, 13, 14, 15);
+      Map<String, Integer> extractedExcIds = Map.of(
+          "ILLEGAL_INSTR", 2,
+          "BREAKPOINT", 3,
+          "ECALL", 11
+      );
 
-    vars.put("config", new UmeInfo(extractedSysReg, extractedRetReg, extractedArgs));
-    vars.put("insn_width_bytes", 4); //TODO make dynamic
+    vars.put("config", new UmeInfo(extractedSysReg, extractedRetReg, extractedSpReg, extractedRaReg, extractedTpReg, extractedArgs, extractedExcIds));
+    vars.put("insn_width_bytes", 4);
    // }
 
     return vars;
