@@ -25,11 +25,11 @@
 #include "elf.h"
 
 
-//TODO get value
+//TODO check for diff way to get exc+value
 enum {
-  [# th:each="exc : ${exc_info.exceptions}"]
-      [(${exc.enum_name})] = ,
-  [/]
+    [# th:each="exc : ${config.excIds}"]
+       [(${gen_arch_upper})]_EXC_[(${exc.key})] = [(${exc.value})],
+   [/]
 };
 
 void cpu_loop(CPU[(${gen_arch_upper})]State *env)
@@ -63,19 +63,15 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
                 } else {
                     ret = do_syscall(env,
                                       env->[(${register_tensors[0].name_lower})][ [(${config.sysReg})] ],
-                                      env->[(${register_tensors[0].name_lower})][ [(${config.args[0]})] ],
-                                      env->[(${register_tensors[0].name_lower})][ [(${config.args[1]})] ],
-                                      env->[(${register_tensors[0].name_lower})][ [(${config.args[2]})] ],
-                                      env->[(${register_tensors[0].name_lower})][ [(${config.args[3]})] ],
-                                      env->[(${register_tensors[0].name_lower})][ [(${config.args[4]})] ],
-                                      env->[(${register_tensors[0].name_lower})][ [(${config.args[5]})] ],
+                                       [# th:each="arg : ${config.args}"]
+                                        env->[(${register_tensors[0].name_lower})][ [(${arg})] ],
+                                       [/]
                                       0, 0);
                 }
                 if (ret == -QEMU_ERESTARTSYS) {
                     env->[(${pc_reg.name_lower})] -= 4;
                 } else if (ret != -QEMU_ESIGRETURN) {
-                    env->[(${register_tensors[0].name_lower})][ [(${gen_arch_upper})]_REG_A0] = ret;
-                }
+                    env->[(${register_tensors[0].name_lower})][ [(${config.retReg})] ] = ret;                }
                 if (cs->singlestep_enabled) {
                     goto gdbstep;
                 }
@@ -112,7 +108,7 @@ void target_cpu_copy_regs(CPUArchState *env, struct target_pt_regs *regs)
     struct image_info *info = ts->info;
 
     env->[(${pc_reg.name_lower})] = regs->sepc;
-    env->[(${register_tensors[0].name_lower})][ [(${gen_arch_upper})]_REG_SP] = regs->sp;
+    env->[(${register_tensors[0].name_lower})][ [(${config.spReg})] ] = regs->sp;
 
     ts->stack_base = info->start_stack;
 }

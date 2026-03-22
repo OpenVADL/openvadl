@@ -53,7 +53,7 @@ static void setup_sigcontext(struct target_sigcontext *sc, CPU[(${gen_arch_upper
 
     __put_user(env->[(${pc_reg.name_lower})], &sc->[(${pc_reg.name_lower})]);
     for (i = 1; i < 32; i++) {
-        __put_user(env->x[i], &sc->gpr[i - 1]);
+        __put_user(env->[(${register_tensors[0].name_lower})][i], &sc->gpr[i - 1]);
     }
 }
 
@@ -92,11 +92,11 @@ void setup_rt_frame(int sig, struct target_sigaction *ka,
     frame->info = *info;
 
     env->[(${pc_reg.name_lower})] = ka->_sa_handler;
-    env->x[[(${gen_arch_upper})]_REG_SP] = frame_addr;
-    env->x[[(${gen_arch_upper})]_REG_A0] = sig;
-    env->x[[(${gen_arch_upper})]_REG_A1] = frame_addr + offsetof(struct target_rt_sigframe, info);
-    env->x[[(${gen_arch_upper})]_REG_A2] = frame_addr + offsetof(struct target_rt_sigframe, uc);
-    env->x[[(${gen_arch_upper})]_REG_RA] = default_rt_sigreturn;
+    env->[(${register_tensors[0].name_lower})][ [(${config.spReg})] ] = frame_addr;
+    env->[(${register_tensors[0].name_lower})][ [(${config.args[0]})] ] = sig;
+    env->[(${register_tensors[0].name_lower})][ [(${config.args[1]})] ] = frame_addr + offsetof(struct target_rt_sigframe, info);
+    env->[(${register_tensors[0].name_lower})][ [(${config.args[2]})] ] = frame_addr + offsetof(struct target_rt_sigframe, uc);
+    env->[(${register_tensors[0].name_lower})][ [(${config.raReg})] ] = default_rt_sigreturn;
 
     return;
 
@@ -114,7 +114,7 @@ static void restore_sigcontext(CPU[(${gen_arch_upper})]State *env, struct target
 
     __get_user(env->[(${pc_reg.name_lower})], &sc->[(${pc_reg.name_lower})]);
     for (i = 1; i < 32; ++i) {
-        __get_user(env->x[i], &sc->gpr[i - 1]);
+        __get_user(env->[(${register_tensors[0].name_lower})][i], &sc->gpr[i - 1]);
     }
 }
 
@@ -140,7 +140,7 @@ long do_rt_sigreturn(CPU[(${gen_arch_upper})]State *env)
     struct target_rt_sigframe *frame;
     abi_ulong frame_addr;
 
-    frame_addr = env->x[[(${gen_arch_upper})]_REG_SP];
+    frame_addr = env->[(${register_tensors[0].name_lower})][ [(${gen_arch_upper})]_REG_SP];
     trace_user_do_sigreturn(env, frame_addr);
     if (!lock_user_struct(VERIFY_READ, frame, frame_addr, 1)) {
         goto badframe;
