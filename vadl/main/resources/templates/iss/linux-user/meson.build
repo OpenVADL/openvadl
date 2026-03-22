@@ -56,7 +56,7 @@ subdir('x86_64')
 subdir('xtensa')
 # VADL generated target
 [# th:if="${gen_arch_upper == 'RV64UME'}"]
-subdir('gen-arch')
+subdir('[(${gen_arch_lower})]')
 [/]
 
 specific_ss.add_all(when: 'CONFIG_LINUX_USER', if_true: linux_user_ss)
