@@ -1423,6 +1423,18 @@ final class TypeLiteral extends Expr {
     }
   }
 
+  /**
+   * For builtin types this won't return anything, but for custom types it returns the definition
+   * the type literal points to. For example users can introduce new custom types with
+   * using or format definitions.
+   *
+   * @return the target of the type literal
+   */
+  @Nullable
+  Node target() {
+    return this.baseType.target();
+  }
+
   @Override
   public SourceLocation location() {
     return loc;
