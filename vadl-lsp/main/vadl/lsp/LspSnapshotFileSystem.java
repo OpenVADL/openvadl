@@ -53,10 +53,21 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
    * Creates a VirtualFileSystem backed with the given documents.
    *
    * @param documents Maps URI string to corresponding document. This map is copied.
+   * @param underlyingFileSystem is used for all files for which this instance has no corresponding
+   *                             document.
+   */
+  LspSnapshotFileSystem(Map<String, Document> documents, VirtualFileSystem underlyingFileSystem) {
+    this.documents = Map.copyOf(documents);
+    this.underlyingFileSystem = underlyingFileSystem;
+  }
+
+  /**
+   * Creates a VirtualFileSystem backed with the given documents.
+   *
+   * @param documents Maps URI string to corresponding document. This map is copied.
    */
   LspSnapshotFileSystem(Map<String, Document> documents) {
-    this.documents = Map.copyOf(documents);
-    this.underlyingFileSystem = new DiskVirtualFileSystem();
+    this(documents, new DiskVirtualFileSystem());
   }
 
   /**

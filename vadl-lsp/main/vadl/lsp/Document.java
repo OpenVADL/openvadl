@@ -259,6 +259,12 @@ public class Document {
     return new SourceLocation.Position(line, column);
   }
 
+  @Override
+  public String toString() {
+    return "Document " + uri + " (version " + version + "):\n================\n  "
+        + getText().replace("\n", "\n  ") + "\n================";
+  }
+
 
   /**
    * Splits the given String into individual lines (as stored in {@code textLines}).
