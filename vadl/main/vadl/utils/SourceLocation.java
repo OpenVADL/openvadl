@@ -19,7 +19,6 @@ package vadl.utils;
 import static java.util.Objects.requireNonNull;
 import static vadl.utils.EditorUtils.isIntelliJIDE;
 
-import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -132,15 +131,31 @@ public record SourceLocation(
       return this;
     }
 
-    var locationPair = Streams.zip(this.expandedFromStack().reversed().stream(),
-            other.expandedFromStack().reversed().stream(),
-            (a, b) -> new Pair<>(a, b))
-        .filter(x -> !x.left().equals(x.right()))
-        .findFirst()
-        .orElseThrow();
+    var thisStack = this.expandedFromStack().reversed();
+    var otherStack = other.expandedFromStack().reversed();
 
-    var firstLocation = locationPair.left();
-    var secondLocation = locationPair.right();
+    var firstLocation = thisStack.getLast();
+    var secondLocation = otherStack.getLast();
+
+    int minSize = Math.min(thisStack.size(), otherStack.size());
+    for (int i = 0; i <= minSize; i++) {
+      if (i == minSize) {
+        // Reached end: use last of smaller, next of larger
+        if (thisStack.size() < otherStack.size()) {
+          secondLocation = otherStack.get(i);
+        } else if (thisStack.size() > otherStack.size()) {
+          firstLocation = thisStack.get(i);
+        }
+        break;
+      }
+
+      if (!thisStack.get(i).equals(otherStack.get(i))) {
+        firstLocation = thisStack.get(i);
+        secondLocation = otherStack.get(i);
+        break;
+      }
+    }
+
 
     if (!Objects.equals(firstLocation.path, secondLocation.path)) {
       throw new IllegalArgumentException(
