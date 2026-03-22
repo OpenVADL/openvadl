@@ -131,7 +131,7 @@ TOKENS
 /**     #T_STATS is referenced by \refFrom. */
   T_STATS       = "Stats".
 
-/// The #T_STR token is used as the name of the syntax type for a string literal like 'abc' or "abc" (#string, see type hierarchy \r{#syntax_type_hierarchy}).
+/// The #T_STR token is used as the name of the syntax type for a string literal like 'abc' or "abc" (#string, see type hierarchy \r{syntax_type_hierarchy}).
 /**     #T_STR is referenced by \refFrom. */
   T_STR         = "Str".
 
