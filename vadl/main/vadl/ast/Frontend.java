@@ -16,8 +16,12 @@
 
 package vadl.ast;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.nio.file.Path;
+import javax.annotation.Nullable;
+import vadl.error.DiagnosticList;
 import vadl.utils.Pair;
 import vadl.utils.SingleFileVirtualFileSystem;
 import vadl.utils.VirtualFileSystem;
@@ -66,14 +70,11 @@ public class Frontend {
    */
   public static Ast compileToAst(Path path, VirtualFileSystem fileSystem) throws
       IOException {
-    var ast = VadlParser.parse(path, fileSystem);
-    var remover = new ModelRemover();
-    remover.removeModels(ast);
-    var ungrouper = new Ungrouper();
-    ungrouper.ungroup(ast);
-    var typechecker = new TypeChecker();
-    typechecker.verify(ast);
-    return ast;
+    var result = compileToPotentiallyBrokenAst(path, fileSystem);
+    if (result.diagnostics != null) {
+      throw result.diagnostics;
+    }
+    return requireNonNull(result.ast);
   }
 
   /**
@@ -123,5 +124,53 @@ public class Frontend {
     var lowering = new ViamLowering();
     var spec = lowering.generate(ast);
     return Pair.of(ast, spec);
+  }
+
+
+  enum CompilationStage {
+    PARSING, REMOVAL, UNGROUPING, TYPE_CHECKING, VIAM_LOWERING
+  }
+
+  record PotentiallyBrokenAst(
+      @Nullable Ast ast,
+      @Nullable DiagnosticList diagnostics,
+      @Nullable CompilationStage failedIn) { }
+
+  /**
+   * USE WITH CAUTION!
+   * Compile a program from a provided path to an potentially broken AST.
+   *
+   * <p>This method is mostly intended for the LSP which might want to (carefully) do some
+   * processing on an AST well knowingly that it might be broken.
+   *
+   * @param path
+   * @param fileSystem
+   * @return
+   * @throws IOException
+   */
+  public static PotentiallyBrokenAst compileToPotentiallyBrokenAst(Path path, VirtualFileSystem fileSystem) throws IOException {
+    Ast ast = null;
+    CompilationStage failedIn = null;
+    try {
+      failedIn = CompilationStage.PARSING;
+      ast = VadlParser.parse(path, fileSystem);
+
+      failedIn = CompilationStage.REMOVAL;
+      var remover = new ModelRemover();
+      remover.removeModels(ast);
+
+      failedIn = CompilationStage.UNGROUPING;
+      var ungrouper = new Ungrouper();
+      ungrouper.ungroup(ast);
+
+      failedIn = CompilationStage.TYPE_CHECKING;
+      var typechecker = new TypeChecker();
+      typechecker.verify(ast);
+
+      return new PotentiallyBrokenAst(ast, null, null);
+    } catch (DiagnosticList diagnostics) {
+      return new PotentiallyBrokenAst(ast, diagnostics, failedIn);
+    }
+
   }
 }
