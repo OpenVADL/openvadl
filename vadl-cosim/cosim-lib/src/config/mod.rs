@@ -1,9 +1,11 @@
-use std::{fmt::Display, marker::PhantomData};
+use std::{fmt::Display, marker::PhantomData, path::PathBuf};
 
 use serde::{
     Deserialize, Deserializer, Serialize,
     de::{Unexpected, Visitor, value::SeqAccessDeserializer},
 };
+
+pub const COSIM_LOG_EXTENSION: &str = "cosim-log";
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -78,10 +80,10 @@ pub struct Logging {
     pub level: String,
 
     #[serde(default = "default_logging_file")]
-    pub file: String,
+    pub file: Option<PathBuf>,
 
     #[serde(default = "default_logging_dir")]
-    pub dir: String,
+    pub dir: PathBuf,
 
     #[serde(default = "default_true")]
     pub enable: bool,
@@ -90,11 +92,11 @@ pub struct Logging {
     pub clear_on_rerun: bool,
 }
 
-fn default_logging_file() -> String {
-    "cosim.json".into()
+fn default_logging_file() -> Option<PathBuf> {
+    Some("cosim.log".into())
 }
 
-fn default_logging_dir() -> String {
+fn default_logging_dir() -> PathBuf {
     "./logs".into()
 }
 

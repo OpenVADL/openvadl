@@ -1,4 +1,9 @@
-use std::{fs, path::Path, str::FromStr};
+use std::{
+    ffi::OsStr,
+    fs::{self, File},
+    path::Path,
+    str::FromStr,
+};
 
 use clap::Parser;
 use color_eyre::{
@@ -12,7 +17,11 @@ use figment::{
 use object::{Object, ObjectSymbol};
 use tracing::{Level, info};
 
-use cosim_lib::{config::Config, cosim::Broker, diff::Report};
+use cosim_lib::{
+    config::{self, Config},
+    cosim::Broker,
+    diff::Report,
+};
 
 #[cfg(feature = "sqlite-tracing")]
 use cosim_lib::db::setup_database;
@@ -129,18 +138,52 @@ fn main() -> Result<()> {
         config.testing.protocol.out.file = cli.output_file;
     }
 
-    if config.logging.enable {
-        let level = Level::from_str(&config.logging.level)?;
-        tracing_subscriber::fmt()
-            .pretty()
-            .with_max_level(level)
-            .with_writer(std::io::stderr)
-            .init();
-    }
-
     if config.dev.dry_run {
         info!(?config, "Dry-Run.");
         return Ok(());
+    }
+
+    if config.logging.enable {
+        if !config.logging.dir.is_dir() {
+            fs::create_dir_all(&config.logging.dir)?;
+        }
+
+        // ensure the logfile has an appropriate extension
+        if let Some(ref mut logfile) = config.logging.file {
+            logfile.set_extension(config::COSIM_LOG_EXTENSION);
+        }
+
+        if config.logging.clear_on_rerun {
+            // NOTE: This deliberately does not delete the whole directory in case the path is
+            // wrong!
+            for entry in fs::read_dir(&config.logging.dir)? {
+                let path = entry?.path();
+                if let Some(extension) = path.extension()
+                    && extension == OsStr::new(config::COSIM_LOG_EXTENSION)
+                {
+                    fs::remove_file(path)?;
+                }
+            }
+        }
+
+        let level = Level::from_str(&config.logging.level)?;
+
+        if let Some(ref logfile) = config.logging.file {
+            let logfile = config.logging.dir.join(logfile);
+            let logfile = File::create(logfile)?;
+            tracing_subscriber::fmt()
+                .pretty()
+                .with_ansi(false)
+                .with_writer(logfile)
+                .with_max_level(level)
+                .init();
+        } else {
+            tracing_subscriber::fmt()
+                .pretty()
+                .with_writer(std::io::stderr)
+                .with_max_level(level)
+                .init();
+        }
     }
 
     #[cfg(feature = "sqlite-tracing")]
@@ -193,7 +236,7 @@ fn add_plain_report_summary(buf: &mut String, report: &Report) {
     buf.push_str("Cosimulation failed!\n");
     let pc = match &report.diff_context[0].after_state {
         Some(s) => s.pc,
-        None => report.diff_context[0].before_state.pc
+        None => report.diff_context[0].before_state.pc,
     };
     buf.push_str(&format!("Failure at pc = 0x{pc:02X?} ({pc})\n\n"));
 
