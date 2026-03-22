@@ -88,7 +88,7 @@ TOKENS
   T_BIN_OP      = "BinOp".
 
 /// The #T_BOOL token is used as the name of the syntax type for the boolean literals 'true' and 'false' (see type hierarchy \r{syntax_type_hierarchy}).
-/**     #T_BT_BOOLIN is referenced by \refFrom. */
+/**     #T_BOOL is referenced by \refFrom. */
   T_BOOL        = "Bool".
 
 /// The #T_CALL_EX token is used as the name of the syntax type for a call expression (see type hierarchy \r{syntax_type_hierarchy}).

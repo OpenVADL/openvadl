@@ -595,10 +595,10 @@ A lexical macro acts on the abstraction level of token streams in contrast to an
 Two use-cases are supported using special syntax type converting functions.
 Firstly, templates generating instruction behavior and assembly often need the instruction name once in form of an
 identifier (`Id`) and again in form of a string (`Str`).
-This use case is covered by the `AsStr` function.
+This use case is covered by the `%AsStr` function.
 This function takes an arbitrary number of `Id` or `Str` typed syntax elements, converts `Id` typed elements to `Str`
 and concatenates them to a single `Str` typed syntax element.
-Secondly, the `AsId` function allows safe identifier manipulation.
+Secondly, the `%AsId` function allows safe identifier manipulation.
 This function takes an arbitrary number of `Id` or `Str` typed syntax elements, converts `Id` typed elements to `Str`,
 concatenates them and returns a single `Id` typed syntax element.
 Listing \r{lexical_macros} shows a small example of both functions with their typed result as comment.
@@ -769,7 +769,7 @@ The `Cond` record type definition consists of a string representing the extensio
 of the enumeration of the condition encoding and a boolean expression for condition evaluation.
 
 Now 15 different instructions with a unique identifier have to be created.
-This can be handled with the lexical macro function `AsId` by appending the extension string of the condition to the
+This can be handled with the lexical macro function `%AsId` by appending the extension string of the condition to the
 identifier.
 
 The final problem is that there is a set of models which describe different kinds of conditional instructions and all
@@ -805,7 +805,7 @@ model Size() : Id = { Arch32 }
 
 Import declarations are used to include elements from other files in the current specification.
 Some examples for import declarations are shown in Listing \r{import}.
-In the first example the element `RV3264I` is imported from the file `rv3264im` with the file extension `.vadl`.
+In the first example the element `RV3264I` is imported from the file `rv3264im` with the file extension `.%vadl`.
 It is possible to import multiple elements from a single file as demonstrated in the second example.
 A complex file path can also be specified as a string literal.
 
@@ -822,7 +822,7 @@ import "../isa.vadl"::{RVI, RVIM}
 Similarly to passing models in the command line it is possible to pass models as arguments to import declarations after
 the keyword `with` enclosed in parentheses as demonstrated in Listing \r{macro_import}.
 Instead of a single string literal also multiple string literals separated by the comma symbol `","` are allowed.
-Instead of a string literal also string macros like string model invocations or the lexical function `AsStr` are possible.
+Instead of a string literal also string macros like string model invocations or the lexical function `%AsStr` are possible.
 
 \listing{macro_import, Import with Macro Argument}
 ~~~{.vadl}
@@ -1620,7 +1620,7 @@ These special purposes are declared with the self explaining keywords.
 The `global pointer` is the register used to access data in a global memory area, the `frame pointer` register gives the access to the stack frame (activation record) of a function or method and the `thread pointer` register is used to acces thread local storage.
 
 Calling conventions describe rules which have to be obeyed during a function call.
-The specification contains information on which registers are used to pass arguments (`function argument`) or return values (`return value`), or which registers are managed by the caller or callee (`caller saved`, `callee saved`).
+The specification contains information on which registers are used to pass arguments (`function %argument`) or return values (`return value`), or which registers are managed by the caller or callee (`caller saved`, `callee saved`).
 Each definition has the same structure, i.e., a descriptive keyword that declares which register or register group will be specified, followed by the equality symbol `"="` and one or more references to the actual registers.
 To be more concise, \ac{VADL} provides a special syntax to address multiple registers with similar names.
 In the example, the compact expression `a{0..7}` evaluates to `[a0, a1, a2, a3, a4, a5, a6, a7]`. Note that the callee saved sequence contains the return address `ra` on purpose in the example even though the official RISC-V ABI documentation states it as caller saved. This is [required](https://discourse.llvm.org/t/why-is-return-address-x1-defined-as-callee-saved-register/84736) because a function call changes the register whereas the return won't restore the old value.
@@ -1889,10 +1889,10 @@ micro architecture FiveStage implements RV32IM = {
 }~~~
 \endlisting
 
-Listing \r{mia_definition} depicts the `FETCH` and `DECODE` stages of the pipeline.
+Listing \r{mia_definition} depicts the `%FETCH` and `DECODE` stages of the pipeline.
 All stages but the final stage have to specify the result of the stage.
 The order of stages is defined by accessing the result of a previous stage.
-The `FETCH` stage makes use of the `fetchNext` built-in.
+The `%FETCH` stage makes use of the `fetchNext` built-in.
 The result type of this operation (`FetchResult`) abstracts the fetch size while the built-in automatically determines the next program counter.
 The generator determines the fetch size by analyzing the instructions in the \ac{ISA}.
 In the future, VADL users may provide additional options for the fetch operation (e.g., buffers, multiple instructions).
@@ -1903,7 +1903,7 @@ The primary goal of this built-in is to represent a decoder for the implemented 
 The generator will synthesize a decoder automatically.
 It takes a `FetchResult` as input and produces an `Instruction` as output.
 This is the origin of the instruction abstraction, which was discussed in Section \r{tut_instruction_abstraction}.
-The `FetchResult` input is obtained from the preceding `FETCH` stage.
+The `FetchResult` input is obtained from the preceding `%FETCH` stage.
 Note that the generator can resolve the instruction abstraction because it has access to the \ac{ISA}.
 The decoded instruction then reads the source operands from the `X` register file.
 
@@ -1915,7 +1915,7 @@ If not, the stage raises an invalid instruction exception, thus redirecting the 
 If the instruction is valid, the stage computes arithmetic operations (line 20) and writes the new program counter (line 22).
 In addition, the stage verifies whether the instruction is on the correct program execution path (line 21).
 If this is not the case (branch misprediction), the control logic flushes the `EXECUTE` stage and all its predecessors.
-The `MEMORY` and `WRITE_BACK` stages in Listing \r{mia_definition} complete the 5-stage pipeline.
+The `%MEMORY` and `WRITE_BACK` stages in Listing \r{mia_definition} complete the 5-stage pipeline.
 The displayed definitions define a valid \ac{VADL} \ac{MiA} specification.
 
 ### Logic Elements
