@@ -19,7 +19,6 @@ package vadl.ast;
 import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -763,11 +762,6 @@ class ParserUtils {
       return new ImportDefinition(ast, importedSymbols, fileId, filePath, args, loc);
     } catch (DiagnosticList | Diagnostic e) {
       throw e;
-    } catch (IOException e) {
-      throw error("Import Failed", loc)
-          .description("The following error occurred: %s",
-              e.getMessage() != null ? e.getMessage() : e)
-          .build();
     }
   }
 

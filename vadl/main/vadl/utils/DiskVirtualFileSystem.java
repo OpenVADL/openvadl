@@ -16,6 +16,8 @@
 
 package vadl.utils;
 
+import static vadl.error.Diagnostic.error;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -39,9 +41,13 @@ public class DiskVirtualFileSystem implements VirtualFileSystem {
   }
 
   @Override
-  public InputStream getInputStream(Path path) throws IOException {
+  public InputStream getInputStream(Path path) {
     var file = new File(path.toUri());
-    return new FileInputStream(file);
+    try {
+      return new FileInputStream(file);
+    } catch (IOException e) {
+      throw error("File not found: " + path, SourceLocation.INVALID_SOURCE_LOCATION).build();
+    }
   }
 
   @Override

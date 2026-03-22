@@ -49,7 +49,7 @@ public interface VirtualFileSystem {
    * @return              an input stream to read from the file.
    * @throws IOException  if the file cannot be opened.
    */
-  InputStream getInputStream(Path path) throws IOException;
+  InputStream getInputStream(Path path);
 
 
   /**

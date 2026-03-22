@@ -17,7 +17,6 @@
 package vadl.ast;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,14 +40,14 @@ public class VadlParser {
   /**
    * Parses the VADL source program at the specified path into an AST.
    */
-  public static Ast parse(Path path) throws IOException {
+  public static Ast parse(Path path) {
     return parse(path, new DiskVirtualFileSystem(), Collections.emptyMap());
   }
 
   /**
    * Parses the VADL source program at the specified path into an AST.
    */
-  public static Ast parse(Path path, VirtualFileSystem fileSystem) throws IOException {
+  public static Ast parse(Path path, VirtualFileSystem fileSystem) {
     return parse(path, fileSystem, Collections.emptyMap());
   }
 
@@ -58,7 +57,7 @@ public class VadlParser {
    * except errors will have the proper file locations set.
    */
   public static Ast parse(Path path, VirtualFileSystem fileSystem,
-                          Map<String, String> macroOverrides) throws IOException {
+                          Map<String, String> macroOverrides) {
     final var startTime = System.nanoTime();
     var scanner = new Scanner(fileSystem.getInputStream(path));
     var parser = new Parser(scanner);

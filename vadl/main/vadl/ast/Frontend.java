@@ -18,7 +18,6 @@ package vadl.ast;
 
 import static java.util.Objects.requireNonNull;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
 import vadl.error.DiagnosticList;
@@ -51,12 +50,8 @@ public class Frontend {
    * @throws vadl.error.DiagnosticList  if the program isn't valid.
    */
   public static Ast compileToAst(String program) {
-    try {
-      return compileToAst(SingleFileVirtualFileSystem.DEFAULT_PATH,
-          new SingleFileVirtualFileSystem(program));
-    } catch (IOException e) {
-      throw new RuntimeException("This can never happen as the filesystem always succeeds here.");
-    }
+    return compileToAst(SingleFileVirtualFileSystem.DEFAULT_PATH,
+        new SingleFileVirtualFileSystem(program));
   }
 
   /**
@@ -68,8 +63,7 @@ public class Frontend {
    * @return  the parsed and checked AST.
    * @throws vadl.error.DiagnosticList  if the program isn't valid.
    */
-  public static Ast compileToAst(Path path, VirtualFileSystem fileSystem) throws
-      IOException {
+  public static Ast compileToAst(Path path, VirtualFileSystem fileSystem) {
     var result = compileToPotentiallyBrokenAst(path, fileSystem);
     if (result.diagnostics != null) {
       throw result.diagnostics;
@@ -85,12 +79,8 @@ public class Frontend {
    * @throws vadl.error.DiagnosticList  if the program isn't valid.
    */
   public static Specification compileToViam(String program) {
-    try {
-      return compileToViam(SingleFileVirtualFileSystem.DEFAULT_PATH,
-          new SingleFileVirtualFileSystem(program));
-    } catch (IOException e) {
-      throw new RuntimeException("This can never happen as the filesystem always succeeds here.");
-    }
+    return compileToViam(SingleFileVirtualFileSystem.DEFAULT_PATH,
+        new SingleFileVirtualFileSystem(program));
   }
 
   /**
@@ -101,8 +91,7 @@ public class Frontend {
    * @return  the parsed and checked VIAM spec.
    * @throws vadl.error.DiagnosticList  if the program isn't valid.
    */
-  public static Specification compileToViam(Path path, VirtualFileSystem fileSystem) throws
-      IOException {
+  public static Specification compileToViam(Path path, VirtualFileSystem fileSystem) {
     var ast = compileToAst(path, fileSystem);
     var lowering = new ViamLowering();
     return lowering.generate(ast);
@@ -118,8 +107,7 @@ public class Frontend {
    * @throws vadl.error.DiagnosticList  if the program isn't valid.
    */
   public static Pair<Ast, Specification> compileToAstAndViam(Path path,
-                                                             VirtualFileSystem fileSystem) throws
-      IOException {
+                                                             VirtualFileSystem fileSystem) {
     var ast = compileToAst(path, fileSystem);
     var lowering = new ViamLowering();
     var spec = lowering.generate(ast);
@@ -146,9 +134,8 @@ public class Frontend {
    * @param path
    * @param fileSystem
    * @return
-   * @throws IOException
    */
-  public static PotentiallyBrokenAst compileToPotentiallyBrokenAst(Path path, VirtualFileSystem fileSystem) throws IOException {
+  public static PotentiallyBrokenAst compileToPotentiallyBrokenAst(Path path, VirtualFileSystem fileSystem) {
     Ast ast = null;
     CompilationStage failedIn = null;
     try {
