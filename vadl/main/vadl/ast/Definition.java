@@ -80,7 +80,11 @@ abstract class Definition extends Node {
     for (Definition definition : definitions) {
       if (previousDefinition != null
           && (!definition.getClass().equals(previousDefinition.getClass())
-          || !definition.annotations.isEmpty())) {
+          || !definition.annotations.isEmpty())
+          && !(previousDefinition instanceof EnumerationDefinition)
+          && !(previousDefinition instanceof FormatDefinition)
+          && !(previousDefinition instanceof FunctionDefinition)
+          ) {
         builder.append("\n");
       }
       definition.prettyPrint(indent, builder);
@@ -875,22 +879,21 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
 
     builder.append(" =\n");
 
-    builder.append(prettyIndentString(indent));
+    builder.append(prettyIndentString(indent + 1));
     builder.append("{ ");
 
-    fields.get(0).prettyPrint(indent, builder);
+    fields.get(0).prettyPrint(indent + 1, builder);
     builder.append("\n");
 
     for (int i = 1; i < fields.size(); i++) {
-      builder.append(prettyIndentString(indent));
+      builder.append(prettyIndentString(indent + 1));
       builder.append(", ");
-      fields.get(i).prettyPrint(indent, builder);
+      fields.get(i).prettyPrint(indent + 1, builder);
       builder.append("\n");
-
     }
 
-    builder.append(prettyIndentString(indent));
-    builder.append("}\n");
+    builder.append(prettyIndentString(indent + 1));
+    builder.append("}\n\n");
   }
 
   @Override
@@ -1368,6 +1371,7 @@ class InstructionDefinition extends Definition implements IdentifiableNode {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("\n");
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("instruction ");
@@ -1375,8 +1379,10 @@ class InstructionDefinition extends Definition implements IdentifiableNode {
     builder.append(" : ");
     typeIdentifier.prettyPrint(indent, builder);
     builder.append(" = ");
-    behavior.prettyPrint(indent, builder);
-    builder.append("\n");
+    if (!(behavior instanceof BlockStatement)) {
+      builder.append("\n");
+    }
+    behavior.prettyPrint(indent + 1, builder);
   }
 
   @Override
@@ -1671,10 +1677,9 @@ class EncodingDefinition extends Definition {
     builder.append(prettyIndentString(indent));
     builder.append("encoding ");
     instrIdentifier.prettyPrint(0, builder);
-    builder.append(" =\n");
-    builder.append(prettyIndentString(indent)).append("{ ");
+    builder.append(" = {");
     encodings.prettyPrint(indent, builder);
-    builder.append(prettyIndentString(indent)).append("}\n");
+    builder.append("}\n");
   }
 
   @Override
@@ -1732,10 +1737,9 @@ class EncodingDefinition extends Definition {
       boolean first = true;
       for (var entry : items) {
         if (!first) {
-          builder.append(prettyIndentString(indent)).append(", ");
+          builder.append(", ");
         }
         entry.prettyPrint(0, builder);
-        builder.append("\n");
         first = false;
       }
     }
@@ -2008,7 +2012,7 @@ class FunctionDefinition extends Definition implements IdentifiableNode, TypedNo
       builder.append(" =\n");
     }
     expr.prettyPrint(indent + 1, builder);
-    builder.append("\n");
+    builder.append("\n\n");
   }
 
   @Override
@@ -2244,7 +2248,7 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
       }
       builder.append("\n");
     }
-    builder.append(prettyIndentString(indent + 1)).append("}\n");
+    builder.append(prettyIndentString(indent + 1)).append("}\n\n");
   }
 
   @Override

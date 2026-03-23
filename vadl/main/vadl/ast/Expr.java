@@ -2037,6 +2037,7 @@ class IfExpr extends Expr {
 
   @Override
   void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+    builder.append("\n");
     builder.append(prettyIndentString(indent));
     builder.append("if ");
     condition.prettyPrintExpr(indent, builder, Precedence.NoPrecedence);
@@ -2153,6 +2154,7 @@ class LetExpr extends Expr {
       builder.append(prettyIndentString(indent + 1));
     }
     body.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
+    builder.append(prettyIndentString(indent));
     builder.append(")");
   }
 
@@ -2296,7 +2298,7 @@ class MatchExpr extends Expr {
   @Override
   void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(prettyIndentString(indent)).append("match ");
-    candidate.prettyPrint(0, builder);
+    candidate.prettyPrint(indent, builder);
     builder.append(" with\n");
     builder.append(prettyIndentString(indent + 1)).append("{ ");
     var isFirst = true;
@@ -2306,7 +2308,7 @@ class MatchExpr extends Expr {
       }
       isFirst = false;
       if (matchCase.patterns.size() == 1) {
-        matchCase.patterns.get(0).prettyPrint(0, builder);
+        matchCase.patterns.get(0).prettyPrint(indent + 1, builder);
       } else {
         builder.append("{");
         var isFirstPattern = true;
@@ -2315,16 +2317,16 @@ class MatchExpr extends Expr {
             builder.append(", ");
           }
           isFirstPattern = false;
-          pattern.prettyPrint(0, builder);
+          pattern.prettyPrint(indent + 1, builder);
         }
         builder.append("}");
       }
       builder.append(" => ");
-      matchCase.result.prettyPrint(0, builder);
+      matchCase.result.prettyPrint(indent + 2, builder);
       builder.append("\n");
     }
     builder.append(prettyIndentString(indent + 1)).append(", _ => ");
-    defaultResult.prettyPrint(0, builder);
+    defaultResult.prettyPrint(indent + 2, builder);
     builder.append("\n").append(prettyIndentString(indent + 1)).append("}\n");
   }
 

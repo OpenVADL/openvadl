@@ -386,6 +386,7 @@ final class RaiseStatement extends Statement {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
     builder.append("raise ");
     statement.prettyPrint(indent + 1, builder);
   }
@@ -638,8 +639,9 @@ final class MatchStatement extends Statement {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
     builder.append("match ");
-    candidate.prettyPrint(0, builder);
+    candidate.prettyPrint(indent, builder);
     builder.append(" with\n");
     builder.append(prettyIndentString(indent + 1)).append("{ ");
     var isFirst = true;
@@ -649,7 +651,7 @@ final class MatchStatement extends Statement {
       }
       isFirst = false;
       if (matchCase.patterns.size() == 1) {
-        matchCase.patterns.get(0).prettyPrint(0, builder);
+        matchCase.patterns.get(0).prettyPrint(indent, builder);
       } else {
         builder.append("{");
         var isFirstPattern = true;
@@ -658,17 +660,17 @@ final class MatchStatement extends Statement {
             builder.append(", ");
           }
           isFirstPattern = false;
-          pattern.prettyPrint(0, builder);
+          pattern.prettyPrint(indent, builder);
         }
         builder.append("}");
       }
       builder.append(" => ");
-      matchCase.result.prettyPrint(0, builder);
+      matchCase.result.prettyPrint(indent, builder);
       builder.append("\n");
     }
     if (defaultResult != null) {
       builder.append(prettyIndentString(indent + 1)).append(", _ => ");
-      defaultResult.prettyPrint(0, builder);
+      defaultResult.prettyPrint(indent, builder);
       builder.append("\n");
     }
     builder.append(prettyIndentString(indent + 1)).append("}\n");
