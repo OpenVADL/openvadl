@@ -1,3 +1,5 @@
+// INCLUDE-VIAM-DUMP
+
 instruction set architecture ISA = {
   register X : Bits<16><32>
   memory Mem : Bits<32> -> Bits<8>
@@ -37,6 +39,96 @@ micro architecture SingleStage implements ISA = {
 //  Reported Diagnostics:
 //
 //  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  VIAM Dump:
+//
+//    Specification name: "threeStageMicroarchitecture"
+//    . Definitions: 1
+//    . MicroArchitecture name: "SingleStage"
+//    . : ISA: ISA
+//    . : StageCount: 3
+//    . : LogicCount: 1
+//    . : SignalCount: 0
+//    . : RegisterCount: 0
+//    . : MemoryCount: 0
+//    . : FunctionCount: 0
+//    . : Stage name: "IF"
+//    . : ' Outputs: [fr]
+//    . : ' Signals: []
+//    . : ' Registers: []
+//    . : ' Prev: -
+//    . : ' Next: []
+//    . : ' Behavior Graph:
+//    . : ' | n0 BuiltInCall      in: ()   succ: ()     type: FetchResult   builtin: fetchNext
+//    . : ' | n1 WriteStageOutput in: (n0) succ: ()     stageOutput: fr
+//    . : ' | n2 InstrEnd         in: (n1) succ: ()     effects: 1
+//    . : ' | n3 Start            in: ()   succ: (n2)   next: set
+//    . : ' StageOutput name: "fr"
+//    . : ' | Type: FetchResult
+//    . : Stage name: "ID"
+//    . : ' Outputs: [ir]
+//    . : ' Signals: []
+//    . : ' Registers: []
+//    . : ' Prev: -
+//    . : ' Next: []
+//    . : ' Behavior Graph:
+//    . : ' | n0 ReadStageOutput  in: ()         succ: ()     type: FetchResult   stageOutput: fr
+//    . : ' | n1 BuiltInCall      in: (n0)       succ: ()     type: Instruction   builtin: decode
+//    . : ' | n2 Let              in: (n1)       succ: ()     type: Instruction   name: instr
+//    . : ' | n3 MiaBuiltInCall   in: (n2)       succ: ()     type: Instruction   resources: [X]   logic: [bypass]
+//    . : ' | n4 StageEffect      in: (n3)       succ: ()     cond: -
+//    . : ' | n5 MiaBuiltInCall   in: (n2)       succ: ()     type: Instruction   resources: [X]   logic: []
+//    . : ' | n6 StageEffect      in: (n5)       succ: ()     cond: -
+//    . : ' | n7 WriteStageOutput in: (n2)       succ: ()     stageOutput: ir
+//    . : ' | n8 InstrEnd         in: (n4 n6 n7) succ: ()     effects: 3
+//    . : ' | n9 Start            in: ()         succ: (n8)   next: set
+//    . : ' StageOutput name: "ir"
+//    . : ' | Type: Instruction
+//    . : Stage name: "EX"
+//    . : ' Outputs: [ir]
+//    . : ' Signals: []
+//    . : ' Registers: []
+//    . : ' Prev: -
+//    . : ' Next: []
+//    . : ' Behavior Graph:
+//    . : ' | n0  ReadStageOutput  in: ()            succ: ()     type: Instruction   stageOutput: ir
+//    . : ' | n1  Let              in: (n0)          succ: ()     type: Instruction   name: instr
+//    . : ' | n2  MiaBuiltInCall   in: (n1)          succ: ()     type: Instruction   resources: [X]     logic: [bypass]
+//    . : ' | n3  StageEffect      in: (n2)          succ: ()     cond: -
+//    . : ' | n4  MiaBuiltInCall   in: (n1)          succ: ()     type: Instruction   resources: [Mem]   logic: []
+//    . : ' | n5  StageEffect      in: (n4)          succ: ()     cond: -
+//    . : ' | n6  MiaBuiltInCall   in: (n1)          succ: ()     type: Instruction   resources: [X]     logic: []
+//    . : ' | n7  StageEffect      in: (n6)          succ: ()     cond: -
+//    . : ' | n8  WriteStageOutput in: (n1)          succ: ()     stageOutput: ir
+//    . : ' | n9  InstrEnd         in: (n3 n5 n7 n8) succ: ()     effects: 4
+//    . : ' | n10 Start            in: ()            succ: (n9)   next: set
+//    . : ' StageOutput name: "ir"
+//    . : ' | Type: Instruction
+//    . : Forwarding name: "bypass"
+//    . : ' LogicClass: Forwarding
+//    . : ' Signals: []
+//    . : ' Registers: []
+//    . : ' Behavior Graph:
+//    . : InstructionSetArchitecture name: "ISA"
+//    . : ' PC: -
+//    . : ' InstructionCount: 0
+//    . : ' PseudoInstructionCount: 0
+//    . : ' FormatCount: 0
+//    . : ' FunctionCount: 0
+//    . : ' ExceptionCount: 0
+//    . : ' RelocationCount: 0
+//    . : ' RegisterCount: 1
+//    . : ' MemoryCount: 1
+//    . : ' ArtificialResourceCount: 0
+//    . : ' RegisterTensor name: "X"
+//    . : ' | Type: b32
+//    . : ' | Dimensions: [0:b4x16, 1:b5x32]
+//    . : ' | ConstraintCount: 0
+//    . : ' Memory name: "Mem"
+//    . : ' | AddressType: b32
+//    . : ' | ResultType: b8
+//    . : ' | WordSize: 8
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

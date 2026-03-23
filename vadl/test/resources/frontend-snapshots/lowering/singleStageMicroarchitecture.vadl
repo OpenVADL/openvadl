@@ -1,3 +1,5 @@
+// INCLUDE-VIAM-DUMP
+
 instruction set architecture ISA = {
   register X : Bits<16><32>
 }
@@ -16,6 +18,52 @@ micro architecture SingleStage implements ISA = {
 //  Reported Diagnostics:
 //
 //  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  VIAM Dump:
+//
+//    Specification name: "singleStageMicroarchitecture"
+//    . Definitions: 1
+//    . MicroArchitecture name: "SingleStage"
+//    . : ISA: ISA
+//    . : StageCount: 1
+//    . : LogicCount: 0
+//    . : SignalCount: 0
+//    . : RegisterCount: 0
+//    . : MemoryCount: 0
+//    . : FunctionCount: 0
+//    . : Stage name: "FETCH"
+//    . : ' Outputs: [ir]
+//    . : ' Signals: []
+//    . : ' Registers: []
+//    . : ' Prev: -
+//    . : ' Next: []
+//    . : ' Behavior Graph:
+//    . : ' | n0 BuiltInCall      in: ()      succ: ()     type: FetchResult   builtin: fetchNext
+//    . : ' | n1 BuiltInCall      in: (n0)    succ: ()     type: Instruction   builtin: decode
+//    . : ' | n2 Let              in: (n1)    succ: ()     type: Instruction   name: instr
+//    . : ' | n3 MiaBuiltInCall   in: (n2)    succ: ()     type: Instruction   resources: [X]   logic: []
+//    . : ' | n4 StageEffect      in: (n3)    succ: ()     cond: -
+//    . : ' | n5 WriteStageOutput in: (n2)    succ: ()     stageOutput: ir
+//    . : ' | n6 InstrEnd         in: (n4 n5) succ: ()     effects: 2
+//    . : ' | n7 Start            in: ()      succ: (n6)   next: set
+//    . : ' StageOutput name: "ir"
+//    . : ' | Type: Instruction
+//    . : InstructionSetArchitecture name: "ISA"
+//    . : ' PC: -
+//    . : ' InstructionCount: 0
+//    . : ' PseudoInstructionCount: 0
+//    . : ' FormatCount: 0
+//    . : ' FunctionCount: 0
+//    . : ' ExceptionCount: 0
+//    . : ' RelocationCount: 0
+//    . : ' RegisterCount: 1
+//    . : ' MemoryCount: 0
+//    . : ' ArtificialResourceCount: 0
+//    . : ' RegisterTensor name: "X"
+//    . : ' | Type: b32
+//    . : ' | Dimensions: [0:b4x16, 1:b5x32]
+//    . : ' | ConstraintCount: 0
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

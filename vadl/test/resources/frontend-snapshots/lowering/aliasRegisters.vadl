@@ -1,0 +1,17 @@
+// INCLUDE-VIAM-DUMP
+
+instruction set architecture ISA = {
+
+  // ----------- Expansion alias ----------
+  register R1: Bits<4><4>
+  alias register E1: Bits<4><2><2> = R1
+
+  format Instr: Bits<32> = {
+    op: Bits<32>
+  }
+
+  instruction ReadE1: Instr  = { R1(0) := E1(1)(2) as Bits<4> }
+  assembly ReadE1 = ""
+  encoding ReadE1 = {op = 0}
+
+}
