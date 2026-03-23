@@ -262,20 +262,23 @@ public abstract class BaseCommand implements Callable<Integer> {
    */
   private Specification parseToVIAM() {
     var ast = parseToAst();
-    ast.passTimings.forEach(t -> timings.add(new Timing(t.description(), t.durationMS())));
-    ast.passTimings.clear();
+    ast.timingRecorder.passTimings.forEach(
+        t -> timings.add(new Timing(t.description(), t.durationNS() / 1000_000)));
+    ast.timingRecorder.passTimings.clear();
     dumpExpaned(ast);
     dumpUntyped(ast);
 
     var typeChecker = new TypeChecker();
     typeChecker.verify(ast);
-    ast.passTimings.forEach(t -> timings.add(new Timing(t.description(), t.durationMS())));
-    ast.passTimings.clear();
+    ast.timingRecorder.passTimings.forEach(
+        t -> timings.add(new Timing(t.description(), t.durationNS() / 1000_000)));
+    ast.timingRecorder.passTimings.clear();
     dumpTyped(ast);
 
     var viamGenerator = new ViamLowering();
     var spec = viamGenerator.generate(ast);
-    ast.passTimings.forEach(t -> timings.add(new Timing(t.description(), t.durationMS())));
+    ast.timingRecorder.passTimings.forEach(
+        t -> timings.add(new Timing(t.description(), t.durationNS() / 1000_000)));
 
     return spec;
   }

@@ -632,11 +632,11 @@ class ParserUtils {
 
   static Node expandNode(Parser parser, Node node) {
     var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides, node.location());
-    var expanded = macroExpander.expandNode(node);
+    var expanded = macroExpander.expandNode(node, parser.ast);
     if (parser.macroContext.isEmpty()) {
       // TODO This is necessary to completely copy all nodes to not cause issues
       //  in symbol collection - find out why
-      return macroExpander.expandNode(expanded);
+      return macroExpander.expandNode(expanded, parser.ast);
     }
     return expanded;
   }
@@ -758,8 +758,11 @@ class ParserUtils {
       macroOverrides.put(keyValue[0], keyValue[1]);
     }
     try {
+      parser.ast.timingRecorder.pauseRecording();
       var ast = VadlParser.parse(modulePath, parser.fileSystem, macroOverrides);
       parser.macroTable.importFrom(ast, importedSymbols);
+      parser.ast.timingRecorder.importAllTimings(ast.timingRecorder);
+      parser.ast.timingRecorder.continueRecording();
       return new ImportDefinition(ast, importedSymbols, fileId, filePath, args, loc);
     } catch (DiagnosticList | Diagnostic e) {
       throw e;

@@ -158,14 +158,18 @@ class MacroExpander
         copyLoc(args.location));
   }
 
-  List<AnnotationDefinition> expandAnnotations(List<AnnotationDefinition> annotations) {
+  private List<AnnotationDefinition> expandAnnotations(List<AnnotationDefinition> annotations) {
     return annotations.stream()
         .map(a -> (AnnotationDefinition) a.accept(this))
         .collect(Collectors.toCollection(ArrayList::new));
   }
 
+  public <T extends Node> T expandNode(T node, Ast ast) {
+    return ast.withPassTiming("Macro Expanding", () -> expandNode(node));
+  }
+
   @SuppressWarnings("unchecked")
-  public <T extends Node> T expandNode(T node) {
+  private <T extends Node> T expandNode(T node) {
     return (T) switch (node) {
       case Expr expr -> expandExpr(expr);
       case Definition definition -> expandDefinition(definition);
@@ -184,7 +188,7 @@ class MacroExpander
     };
   }
 
-  public List<Node> expandNodes(List<Node> nodes) {
+  private List<Node> expandNodes(List<Node> nodes) {
     var copy = new ArrayList<>(nodes);
     copy.replaceAll(this::expandNode);
     return copy;

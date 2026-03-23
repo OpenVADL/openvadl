@@ -314,16 +314,15 @@ public class TypeChecker
    * @throws DiagnosticList if the program isn't well typed.
    */
   public void verify(Ast ast) {
-    var startTime = System.nanoTime();
-    try {
-      ast.definitions.forEach(this::check);
-    } catch (Diagnostic error) {
-      errors.add(error);
-    } catch (StopPartialCheckingSignal signal) {
-      // do nothing on purpose.
-    }
-    ast.passTimings.add(
-        new Ast.PassTimings("Type Checking", (System.nanoTime() - startTime) / 1_000_000));
+    ast.withPassTiming("Type Checking", () -> {
+      try {
+        ast.definitions.forEach(this::check);
+      } catch (Diagnostic error) {
+        errors.add(error);
+      } catch (StopPartialCheckingSignal signal) {
+        // do nothing on purpose.
+      }
+    });
 
     if (!errors.isEmpty()) {
       throw new DiagnosticList(errors);

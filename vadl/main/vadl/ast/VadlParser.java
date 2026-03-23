@@ -59,17 +59,14 @@ public class VadlParser {
    */
   public static Ast parse(Path path, VirtualFileSystem fileSystem,
                           Map<String, String> macroOverrides) throws IOException {
-    final var startTime = System.nanoTime();
     var scanner = new Scanner(fileSystem.getInputStream(path));
     var parser = new Parser(scanner);
     parser.sourceFile = fileSystem.toAbsolutePath(path);
     parser.fileSystem = fileSystem;
     macroOverrides.forEach((key, value) -> parser.macroOverrides.put(key,
         new Identifier(value, SourceLocation.INVALID_SOURCE_LOCATION)));
-    var ast = parse(parser);
+    var ast = parser.ast.withPassTiming("Parsing", () -> parse(parser));
     ast.filePath = fileSystem.toAbsolutePath(path);
-    ast.passTimings.add(
-        new Ast.PassTimings("Parsing", (System.nanoTime() - startTime) / 1_000_000));
     return ast;
   }
 
@@ -122,7 +119,7 @@ public class VadlParser {
     parser.fileSystem = fileSystem;
     macroOverrides.forEach((key, value) -> parser.macroOverrides.put(key,
         new Identifier(value, SourceLocation.INVALID_SOURCE_LOCATION)));
-    return parse(parser);
+    return parser.ast.withPassTiming("Parsing", () -> parse(parser));
   }
 
 
