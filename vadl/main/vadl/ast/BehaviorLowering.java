@@ -336,7 +336,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             Type.bits(BitsType.indexWidthFor(tensorType.indexDims().get(i))),
             0);
         params.add(param);
-        indices.add(new FuncParamNode(param));
+        var funcParam = new FuncParamNode(param);
+        funcParam.setSourceLocation(identifier.location());
+        indices.add(funcParam);
       }
       resultType = tensorType.innerType();
     } else {
@@ -403,6 +405,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // all branches.
       throw new IllegalStateException();
     }
+    regAccess.setSourceLocation(identifier.location());
 
     // Handle Zero Annotation on the alias register
     final var zeroConst = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
@@ -425,7 +428,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     var returnNode = graph.addWithInputs(new ReturnNode(regAccess));
-    graph.addWithInputs(new StartNode(returnNode));
+    returnNode.setSourceLocation(definition.location());
+    var startNode = graph.addWithInputs(new StartNode(returnNode));
+    startNode.setSourceLocation(definition.location());
 
     // FIXME: Modify based on annotations
     return new Function(
