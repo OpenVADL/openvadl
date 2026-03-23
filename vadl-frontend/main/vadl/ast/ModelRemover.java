@@ -380,16 +380,6 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
-  public Definition visit(UmeSequenceDefinition definition) {
-    return definition;
-  }
-
-  @Override
-  public Definition visit(UserModeEmulationDefinition definition) {
-    return definition;
-  }
-
-  @Override
   public Definition visit(CacheDefinition definition) {
     return definition;
   }

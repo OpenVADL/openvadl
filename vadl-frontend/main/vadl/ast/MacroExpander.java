@@ -1251,16 +1251,6 @@ class MacroExpander
   }
 
   @Override
-  public Definition visit(UmeSequenceDefinition definition) {
-    return new UmeSequenceDefinition(definition.umeKind, definition.params, definition.statements, definition.loc).withAnnotations(definition.annotations);
-  }
-
-  @Override
-  public Definition visit(UserModeEmulationDefinition definition) {
-    return new UserModeEmulationDefinition(definition.id, definition.isa, definition.definitions, definition.loc).withAnnotations(definition.annotations);
-  }
-
-  @Override
   public Definition visit(CacheDefinition definition) {
     return new CacheDefinition(
         expandExpr(definition.id),

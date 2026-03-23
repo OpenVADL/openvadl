@@ -2078,16 +2078,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   @Override
-  public Optional<vadl.viam.Definition> visit(UmeSequenceDefinition definition) {
-    return Optional.empty();
-  }
-
-  @Override
-  public Optional<vadl.viam.Definition> visit(UserModeEmulationDefinition definition) {
-    return Optional.empty();
-  }
-
-  @Override
   public Optional<vadl.viam.Definition> visit(UsingDefinition definition) {
     // Do nothing on purpose.
     // The typechecker already resolved all types they are no longer needed.

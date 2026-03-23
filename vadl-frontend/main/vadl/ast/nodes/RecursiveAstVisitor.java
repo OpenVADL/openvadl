@@ -540,16 +540,6 @@ public class RecursiveAstVisitor implements AstVisitor<Void> {
   }
 
   @Override
-  public Void visit(UmeSequenceDefinition definition) {
-    return null;
-  }
-
-  @Override
-  public Void visit(UserModeEmulationDefinition definition) {
-    return null;
-  }
-
-  @Override
   public Void visit(UsingDefinition definition) {
     beforeTravel(definition);
     definition.forEachChild(this::travel);
