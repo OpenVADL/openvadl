@@ -31,7 +31,7 @@ import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.extensions.InstrInfo;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
-import vadl.iss.passes.nodes.ReadStaticRegTensorNode;
+import vadl.iss.passes.nodes.IssStaticReadRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.javaannotations.DispatchFor;
@@ -195,7 +195,7 @@ class DefaultGenerator implements
   }
 
   @Handler
-  void impl(CGenContext<Node> ctx, ReadStaticRegTensorNode node) {
+  void impl(CGenContext<Node> ctx, IssStaticReadRegNode node) {
     ctx.wr("(ctx->env->" + node.regTensor().simpleName().toLowerCase() + ")");
   }
 

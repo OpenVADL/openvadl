@@ -71,13 +71,14 @@ static inline void cpu_get_tb_cpu_state(CPU[(${gen_arch_upper})]State *env, vadd
 {
   *pc = env->[(${gen_arch_upper})]_PC;
   *cs_base = 0;
-  *pflags = 0;
 
-  int off = 0;
-  [# th:each="reg, iterState : ${register_tensors}"][# th:if="${reg.is_exec_state}"]
-  *pflags |= (env->[(${reg.name_lower})] << off);
-  off += [(${reg.cpu_state_type_width})];
-  [/][/]
+  uint32_t flags = 0;
+  uint64_t off = 0;
+  [# th:each="reg, iterState : ${register_tensors}"][# th:if="${reg.is_tb_state}"][# th:each="part : ${reg.tb_state_parts}"]
+  flags |= ((env->[(${reg.name_lower})] >> [(${part.lsb})]) & [(${part.mask})]) << off;
+  off += [(${part.width})];
+  [/][/][/]
+  *pflags = flags;
 }
 
 void [(${gen_arch_lower})]_tcg_init(void);

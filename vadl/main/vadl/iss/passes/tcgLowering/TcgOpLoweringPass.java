@@ -40,11 +40,11 @@ import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssSelectNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
+import vadl.iss.passes.nodes.IssStaticReadRegNode;
 import vadl.iss.passes.nodes.IssStoreNode;
 import vadl.iss.passes.nodes.IssTempExprNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
-import vadl.iss.passes.nodes.ReadStaticRegTensorNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
 import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
@@ -273,7 +273,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     var containsJmps = graph.getNodes(InstrExitNode.class).findAny().isPresent();
 
     var containsWrites = graph.getNodes(WriteRegTensorNode.class).anyMatch(
-        WriteRegTensorNode::isExecutionStateAccess);
+        WriteRegTensorNode::writeAffectsTbState);
 
     if (!containsJmps && !containsWrites) {
       // if there are no jumps, we don't have to chain any instructions
@@ -289,7 +289,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
     // check if there is an unconditional write to a register that is part of the
     // tb state.
-    var unconditionalWrite = hasTBStateRegWrites(instrEnd);
+    var unconditionalWrite = hasTbStateWrites(instrEnd);
 
     if (!unconditionalJump && !unconditionalWrite) {
       // if there is no unconditional jump or write, we must chain the instruction
@@ -300,6 +300,12 @@ class TcgOpLoweringExecutor implements CfgTraverser {
       // if the jump or write is unconditional we must exit the tb loop anyway
       instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.NORETURN));
     }
+
+    // TODO: what if a write/jump is conditional, but the condition is statically evaluated
+    //  ie at TCG generation time? -> in that case the jmp/chain behaviour does not have
+    //  to be set at the end for all paths, but can be set per branch. Eg if a raise is only
+    //  executed if a tb-state reg bit is set (eg a privilege mode bit), then the decision
+    //  whether or not to raise is made at gen time (if raise, then end TB; if not, DISAS_NEXT)
   }
 
   /**
@@ -383,9 +389,9 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    * Returns whether any writes to registers that are part of the TB state are side
    * effects of the branch.
    */
-  private boolean hasTBStateRegWrites(AbstractEndNode node) {
+  private boolean hasTbStateWrites(AbstractEndNode node) {
     return node.sideEffects().stream()
-        .anyMatch(s -> s instanceof WriteRegTensorNode w && w.isExecutionStateAccess());
+        .anyMatch(s -> s instanceof WriteRegTensorNode w && w.writeAffectsTbState());
   }
 
   /**
@@ -396,7 +402,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   private boolean hasNonStaticTBStateRegWrites(AbstractEndNode node) {
     return node.sideEffects().stream()
         .anyMatch(s -> s instanceof WriteRegTensorNode w
-            && w.isExecutionStateAccess()
+            && w.writeAffectsTbState()
             && GraphUtils.hasDependencies(w, n -> n instanceof ReadResourceNode));
   }
 
@@ -733,7 +739,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   @Handler
-  void handle(ReadStaticRegTensorNode node) {
+  void handle(IssStaticReadRegNode node) {
     // nothing to do
   }
 

@@ -68,7 +68,7 @@ import vadl.viam.annotations.DefineOperandAnnotation;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.annotations.FieldAccessAnnotation;
 import vadl.viam.annotations.InstructionUndefinedAnno;
-import vadl.viam.annotations.TinyBlockStateAnnotation;
+import vadl.viam.annotations.TbStateRegisterAnnotation;
 
 /**
  * The annotation table defines how {@link Annotation} can be used for different elements in
@@ -144,13 +144,18 @@ public class AnnotationTable {
         .build();
 
     annotationOn(RegisterDefinition.class, "execution state", EnableAnnotation::new)
+        // TODO: check that the annotation is only applied to single registers
+        //  (not register files)
         .applyViam((def, annotation, lowering) -> {
           var viamDef = (RegisterTensor) def;
-          viamDef.addAnnotation(new TinyBlockStateAnnotation());
+          if (viamDef.hasAnnotation(TbStateRegisterAnnotation.class)) {
+            viamDef.expectAnnotation(TbStateRegisterAnnotation.class).addSlice(null);
+          } else {
+            viamDef.addAnnotation(new TbStateRegisterAnnotation(viamDef.totalWidth(), null));
+          }
         })
         .build();
 
-    /*
     annotationOn(AliasDefinition.class, "execution state", EnableAnnotation::new)
         .check((def, annotation, lowering) -> {
           ensure(def.computedTarget instanceof RegisterDefinition,
@@ -162,11 +167,16 @@ public class AnnotationTable {
           var viamDef = (ArtificialResource) def;
           var res = (RegisterTensor) viamDef.innerResourceRef();
           var semantics = viamDef.semantics();
-          res.addAnnotation(new ExecutionStateAnnotation(semantics.aliasSlice()));
+          if (res.hasAnnotation(TbStateRegisterAnnotation.class)) {
+            res.expectAnnotation(TbStateRegisterAnnotation.class)
+                .addSlice(semantics.aliasSlice());
+          } else {
+            res.addAnnotation(new TbStateRegisterAnnotation(
+                res.totalWidth(), semantics.aliasSlice()));
+          }
         })
         // this handled in the VIAM lowering when constructing the ArtificialResource
         .build();
-     */
 
     groupOn(RelocationDefinition.class)
         .add("global offset", EnableAnnotation::new)

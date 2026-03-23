@@ -67,7 +67,6 @@ import vadl.iss.passes.IssPcAccessConversionPass;
 import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
 import vadl.iss.passes.IssRegisterAccessLoweringPass;
 import vadl.iss.passes.IssSelectLoweringPass;
-import vadl.iss.passes.IssStaticAccessConversionPass;
 import vadl.iss.passes.IssTcgSchedulingPass;
 import vadl.iss.passes.IssTcgVAllocationPass;
 import vadl.iss.passes.opDecomposition.IssOpDecompositionPass;
@@ -533,7 +532,6 @@ public class PassOrders {
         .add(new IssLoopUnrollPass(config))
         .add(new SideEffectSchedulingPass(config))
         .add(new IssSafeResourceReadPass(config))
-        .add(new IssStaticAccessConversionPass(config))
         .add(new IssPcAccessConversionPass(config))
         .add(new IssTcgContextPass(config))
         .add(new IssSelectLoweringPass(config))

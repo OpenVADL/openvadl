@@ -24,27 +24,27 @@ import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * Represents a read in an expression tree from a register, whose value is known at
- * TCG generation time, because it is part of the TC state. Generating a read
- * instruction is thus not necessary.
+ * TCG generation time, because it is part of the translation block state. Generating a
+ * read instruction is thus not necessary.
  */
-public class ReadStaticRegTensorNode extends ExpressionNode {
+public class IssStaticReadRegNode extends ExpressionNode {
 
   @DataValue
   protected RegisterTensor regTensor;
 
-  public ReadStaticRegTensorNode(RegisterTensor regTensor) {
+  public IssStaticReadRegNode(RegisterTensor regTensor) {
     super(regTensor.resultType());
     this.regTensor = regTensor;
   }
 
   @Override
   public ExpressionNode copy() {
-    return new ReadStaticRegTensorNode(regTensor);
+    return new IssStaticReadRegNode(regTensor);
   }
 
   @Override
   public Node shallowCopy() {
-    return new ReadStaticRegTensorNode(regTensor);
+    return new IssStaticReadRegNode(regTensor);
   }
 
   @Override

@@ -39,7 +39,9 @@ import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
+import vadl.viam.annotations.TbStateRegisterAnnotation;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SliceNode;
@@ -79,6 +81,7 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
     checkMipExists(viam, diagnostics);
     checkProgramCounter(viam, diagnostics);
     checkRegisterTensors(viam, diagnostics);
+    checkTbStateBitSize(viam, diagnostics);
 
     // The following checks and emissions use InstrInfo.
     withIsa(viam, this::attachInstrInfo);
@@ -212,6 +215,33 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
           })
           .filter(Objects::nonNull)
           .forEach(diagnostics::add);
+    });
+  }
+
+  // checks that the number of translation block state saved register bits is not too high
+  private void checkTbStateBitSize(Specification viam, List<DiagnosticBuilder> diagnostics) {
+    withIsa(viam, isa -> {
+      var tbStateBits = isa.registerTensors().stream()
+          .map(reg -> reg.annotation(TbStateRegisterAnnotation.class))
+          .filter(Objects::nonNull)
+          .mapToInt(TbStateRegisterAnnotation::bitSize)
+          .sum();
+
+      // TODO: the maximum bit count may be larger if more fields of the tb state
+      //  are used as storage
+      final int maxTbStateBits = 32;
+
+      if (tbStateBits > maxTbStateBits) {
+        diagnostics.add(
+            // TODO: if the annotation name changes, change the diagnostics messages here
+            error(
+                "Too many execution state bits", isa.identifier.location()
+            ).description(
+                "The number of execution state bits (%d) may not exceed %d.",
+                tbStateBits, maxTbStateBits
+            ).help("Check `[execution state]` annotations and reduce the number of covered bits.")
+        );
+      }
     });
   }
 

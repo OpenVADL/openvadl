@@ -23,7 +23,7 @@ import vadl.javaannotations.viam.DataValue;
 import vadl.viam.Counter;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
-import vadl.viam.annotations.TinyBlockStateAnnotation;
+import vadl.viam.annotations.TbStateRegisterAnnotation;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -95,8 +95,8 @@ public class WriteRegTensorNode extends WriteResourceNode implements WritesRegis
   /**
    * Determines if the register is saved in the tiny code block state.
    */
-  public boolean isExecutionStateAccess() {
-    return registerTensor().hasAnnotation(TinyBlockStateAnnotation.class);
+  public boolean writeAffectsTbState() {
+    return registerTensor().hasAnnotation(TbStateRegisterAnnotation.class);
   }
 
   @Nullable
