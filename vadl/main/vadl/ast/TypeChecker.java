@@ -3098,7 +3098,7 @@ public class TypeChecker
     var base = expr.baseType.pathToString();
 
     // 1. Check whether the base exists.
-    var customTarget = expr.symbolTable().findAs(expr.baseType, Node.class);
+    var customTarget = expr.target();
     if (!(customTarget instanceof UsingDefinition) && !(customTarget instanceof FormatDefinition)) {
       customTarget = null;
     }

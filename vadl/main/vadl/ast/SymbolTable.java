@@ -982,7 +982,13 @@ class SymbolTable {
       // Skip the basetype of the expr and let the typechecker verify it's correct.
       beforeTravel(expr);
 
-      // Ignore the base on purpose, the typechecker will take care of it.
+      // Only visit the baseType if we are certain that we'll find it.
+      // Because the typechecker does the real resolution, checking and error reporting here, but
+      // it is nice for the lsp to already have some resolution if we can get to it easily.
+      if (expr.symbolTable().findAs(expr.baseType, Definition.class) != null) {
+        requireNonNull(expr.symbolTable).resolve(expr.baseType);
+      }
+
       expr.sizeIndices.forEach(index -> index.accept(this));
 
       afterTravel(expr);
