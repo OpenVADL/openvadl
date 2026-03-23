@@ -607,13 +607,6 @@ class SymbolTable {
       withSymbols(symbols, () -> definition.accept(this));
     }
 
-    void collectSymbols(SymbolTable symbols, Statement stmt) {
-      withSymbols(symbols, () -> stmt.accept(this));
-    }
-
-    void collectSymbols(SymbolTable symbols, Expr expr) {
-      withSymbols(symbols, () -> expr.accept(this));
-    }
 
     /**
      * In most cases the nodes in a definition are in their own scope but in rare cases that's not
@@ -903,12 +896,11 @@ class SymbolTable {
   static class SymbolResolver extends RecursiveAstVisitor {
 
     public List<Diagnostic> resolveSymbols(Ast ast) {
-      var resolveStartTime = System.nanoTime();
-      for (Definition definition : ast.definitions) {
-        definition.accept(this);
-      }
-      ast.passTimings.add(new Ast.PassTimings("Symbol resolution",
-          (System.nanoTime() - resolveStartTime) / 1000_000));
+      ast.withPassTiming("Symbol Resolving", () -> {
+        for (Definition definition : ast.definitions) {
+          definition.accept(this);
+        }
+      });
       return requireNonNull(ast.rootSymbolTable).errors;
     }
 

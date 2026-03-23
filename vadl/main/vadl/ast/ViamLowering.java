@@ -156,35 +156,33 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    */
   @SuppressWarnings("VariableDeclarationUsageDistance")
   public Specification generate(Ast ast) {
-    var startTime = System.nanoTime();
-    var name = ast.filePath != null ? ParserUtils.baseName(ast.filePath) : "unknown";
-    var spec = new Specification(
-        new vadl.viam.Identifier(name,
-            SourceLocation.INVALID_SOURCE_LOCATION));
-    this.currentSpecification = spec;
+    return ast.withPassTiming("Lowering to VIAM", () -> {
+      var name = ast.filePath != null ? ParserUtils.baseName(ast.filePath) : "unknown";
+      var spec = new Specification(
+          new vadl.viam.Identifier(name,
+              SourceLocation.INVALID_SOURCE_LOCATION));
+      this.currentSpecification = spec;
 
-    spec.addAll(ast.definitions.stream()
-        .map(this::fetch)
-        .flatMap(Optional::stream)
-        .collect(Collectors.toList()));
+      spec.addAll(ast.definitions.stream()
+          .map(this::fetch)
+          .flatMap(Optional::stream)
+          .collect(Collectors.toList()));
 
-    if (spec.isa().isEmpty()) {
-      // no ISA was fetched by some generator entry definition (such as processor)
-      // so we try to find some concrete ISA we can lower
-      var isa = findLeafIsa(ast);
-      if (isa != null) {
-        spec.add(isa);
+      if (spec.isa().isEmpty()) {
+        // no ISA was fetched by some generator entry definition (such as processor)
+        // so we try to find some concrete ISA we can lower
+        var isa = findLeafIsa(ast);
+        if (isa != null) {
+          spec.add(isa);
+        }
       }
-    }
 
-    ast.passTimings.add(
-        new Ast.PassTimings("Lowering to VIAM", (System.nanoTime() - startTime) / 1_000_000));
+      if (errors.size() > 0) {
+        throw new DiagnosticList(errors);
+      }
 
-    if (errors.size() > 0) {
-      throw new DiagnosticList(errors);
-    }
-
-    return spec;
+      return spec;
+    });
   }
 
   /**

@@ -30,11 +30,10 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
    * @param ast to be modified.
    */
   public void removeModels(Ast ast) {
-    var startTime = System.nanoTime();
-    ast.definitions.removeIf(this::shouldRemove);
-    ast.definitions.replaceAll(definition -> definition.accept(this));
-    ast.passTimings.add(
-        new Ast.PassTimings("Model Removing", (System.nanoTime() - startTime) / 1_000_000));
+    ast.withPassTiming("Model Removing", () -> {
+      ast.definitions.removeIf(this::shouldRemove);
+      ast.definitions.replaceAll(definition -> definition.accept(this));
+    });
   }
 
   @Override

@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
@@ -34,23 +35,23 @@ public class Ast {
   @Nullable
   Path filePath = null;
 
-  public List<PassTimings> passTimings = new ArrayList<>();
+  public InterleavedTimingRecorder timingRecorder = new InterleavedTimingRecorder();
 
 
   @Nullable
   SymbolTable rootSymbolTable;
 
-  /**
-   * A simple record to hold the timings of passes in the frontend.
-   *
-   * @param description of the pass.
-   * @param durationMS  of the pass.
-   */
-  public record PassTimings(String description, long durationMS) {
-  }
 
   SymbolTable rootSymbolTable() {
     return Objects.requireNonNull(rootSymbolTable, "Symbol collector has not been applied");
+  }
+
+  public <T> T withPassTiming(String name, Supplier<T> pass) {
+    return timingRecorder.withPassTiming(name, pass);
+  }
+
+  public void withPassTiming(String name, Runnable pass) {
+    timingRecorder.withPassTiming(name, pass);
   }
 
   /**
