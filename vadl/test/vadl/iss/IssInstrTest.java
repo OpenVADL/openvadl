@@ -134,6 +134,8 @@ public abstract class IssInstrTest extends QemuIssTest {
     // run the container and copy the test cases into the container
     // and after execution, copy the results from the container
     runContainer(image, container -> container
+            .withCreateContainerCmdModifier(
+                createContainerCmd -> createContainerCmd.withTty(true).withStdinOpen(true))
             .withCopyToContainer(MountableFile.forHostPath(testSuiteYaml.getPath()),
                 "/work/test-suite.yaml"),
         container -> copyPathFromContainer(container, "/work/results/", resultDirectory)
