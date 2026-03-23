@@ -315,19 +315,19 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
       let elCount = VL as BitsX >> (3 + ElSize::$elSize) in
         match pattern with
           { 0b00000 => elCount // elCount is always a power of 2
-          , 0b00001 => if elCount >=   1 then   1 as BitsX else 0
-          , 0b00010 => if elCount >=   2 then   2 as BitsX else 0
-          , 0b00011 => if elCount >=   3 then   3 as BitsX else 0
-          , 0b00100 => if elCount >=   4 then   4 as BitsX else 0
-          , 0b00101 => if elCount >=   5 then   5 as BitsX else 0
-          , 0b00110 => if elCount >=   6 then   6 as BitsX else 0
-          , 0b00111 => if elCount >=   7 then   7 as BitsX else 0
-          , 0b01000 => if elCount >=   8 then   8 as BitsX else 0
-          , 0b01001 => if elCount >=  16 then  16 as BitsX else 0
-          , 0b01010 => if elCount >=  32 then  32 as BitsX else 0
-          , 0b01011 => if elCount >=  64 then  64 as BitsX else 0
-          , 0b01100 => if elCount >= 128 then 128 as BitsX else 0
-          , 0b01101 => if elCount >= 256 then 256 as BitsX else 0
+          , 0b00001 => if elCount >=   1 then   1 else 0
+          , 0b00010 => if elCount >=   2 then   2 else 0
+          , 0b00011 => if elCount >=   3 then   3 else 0
+          , 0b00100 => if elCount >=   4 then   4 else 0
+          , 0b00101 => if elCount >=   5 then   5 else 0
+          , 0b00110 => if elCount >=   6 then   6 else 0
+          , 0b00111 => if elCount >=   7 then   7 else 0
+          , 0b01000 => if elCount >=   8 then   8 else 0
+          , 0b01001 => if elCount >=  16 then  16 else 0
+          , 0b01010 => if elCount >=  32 then  32 else 0
+          , 0b01011 => if elCount >=  64 then  64 else 0
+          , 0b01100 => if elCount >= 128 then 128 else 0
+          , 0b01101 => if elCount >= 256 then 256 else 0
           , 0b11101 => elCount - elCount % 4
           , 0b11110 => elCount - elCount % 3
           , 0b11111 => elCount

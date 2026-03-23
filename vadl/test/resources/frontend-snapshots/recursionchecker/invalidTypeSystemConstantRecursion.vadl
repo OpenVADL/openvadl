@@ -5,12 +5,12 @@ constant b: Bits<a> = 3
 //  Reported Diagnostics:
 //
 //  error: Infinite Recursion
-//       ╭──[test/resources/frontend-snapshots/recursionchecker/invalidTypeSystemConstantRecursion.vadl:1:14]
+//       ╭──[test/resources/frontend-snapshots/recursionchecker/invalidTypeSystemConstantRecursion.vadl:1:1]
 //       │
 //     1 │ constant a = b
-//       │              ^
+//       │ ^^^^^^^^^^^^^^
 //       │
-//       The node is defined by itself.
+//       Definition `a` is defined by itself.
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

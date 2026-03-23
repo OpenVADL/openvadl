@@ -578,7 +578,7 @@ instruction set architecture AArch64Base = {
     else if val(15.. 8) != val( 7..0) then 16
     else if val( 7.. 4) != val( 3..0) then  8
     else if val( 3.. 2) != val( 1..0) then  4
-    else 2 as SIntW
+    else 2
 
   // nImmrImms returns the concatenated values for N, immr and imms
 
