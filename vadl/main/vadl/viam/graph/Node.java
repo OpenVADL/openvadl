@@ -98,6 +98,27 @@ public abstract class Node implements WithLocation {
   }
 
   /**
+   * Recursively sets the source location on this node and all its input (dependency) nodes
+   * that do not yet have a location.
+   *
+   * <p>The recursion only traverses inputs (dependencies), not successor/control nodes.
+   * If a node already has a location set, the recursion stops for that branch —
+   * its inputs are left unchanged.
+   *
+   * @param sourceLocation the location to apply to nodes without an existing location.
+   */
+  public void setSourceLocationRecursively(SourceLocation sourceLocation) {
+    if (!this.sourceLocation.equals(SourceLocation.INVALID_SOURCE_LOCATION)) {
+      // This node already has a location; stop recursion for this branch.
+      return;
+    }
+    this.sourceLocation = sourceLocation;
+    for (Node input : inputList()) {
+      input.setSourceLocationRecursively(sourceLocation);
+    }
+  }
+
+  /**
    * Checks if the node is a leaf node, such that it a {@link DependencyNode} and
    * has no further inputs.
    *
