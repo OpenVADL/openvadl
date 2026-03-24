@@ -33,6 +33,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -49,8 +50,11 @@ import org.testcontainers.images.builder.dockerfile.DockerfileBuilder;
 public final class DockerImage {
 
   private static final Logger logger = LoggerFactory.getLogger(DockerImage.class);
-  private static final BuildkitConnectionConfig BUILDKIT_CONFIG =
-      BuildkitConnectionConfig.of("tcp://localhost:1234");
+
+  private static BuildkitConnectionConfig getConfig(int port) {
+    return BuildkitConnectionConfig.of("tcp://localhost:" + port)
+        .withTimeout(Duration.ofHours(3));
+  }
 
   private final String imageName;
   private final Map<String, Path> filesFromPath = new LinkedHashMap<>();
@@ -105,7 +109,7 @@ public final class DockerImage {
     return this;
   }
 
-  public synchronized String getDockerImageName() {
+  public synchronized String getDockerImageName(int buildKitDaemonPort) {
     if (resolvedImageName != null) {
       return resolvedImageName;
     }
@@ -136,7 +140,7 @@ public final class DockerImage {
         throw new IllegalStateException("No Dockerfile configured for image " + imageName);
       }
 
-      buildImage(contextDir, dockerfile);
+      buildImage(buildKitDaemonPort, contextDir, dockerfile);
       resolvedImageName = imageName;
       return resolvedImageName;
     } catch (IOException | InterruptedException e) {
@@ -152,13 +156,13 @@ public final class DockerImage {
     }
   }
 
-  private void buildImage(Path contextDir, Path dockerfile)
+  private void buildImage(int buildkitDaemonPort, Path contextDir, Path dockerfile)
       throws IOException, InterruptedException {
     var requestBuilder = DockerfileBuildRequest.builder(contextDir, dockerfile, imageName)
         .outputMode(BuildOutputMode.DOCKER);
     buildArgs.forEach(requestBuilder::buildArg);
 
-    try (var client = new BuildkitClient(BUILDKIT_CONFIG)) {
+    try (var client = new BuildkitClient(getConfig(buildkitDaemonPort))) {
       var result = client.buildImage(requestBuilder.build(), new PrintingListener());
       loadIntoDocker(result);
     } catch (BuildkitException e) {
