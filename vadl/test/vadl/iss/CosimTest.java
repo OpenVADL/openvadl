@@ -20,10 +20,11 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.commons.text.StringSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.DockerExecutionTest;
+import vadl.DockerImage;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -43,7 +44,7 @@ public abstract class CosimTest extends DockerExecutionTest {
       "ghcr.io/openvadl/iss-test-base@sha256:134d41337274a2f54790c13582e14a23a78617bb90554214f8a6f721c5287e85";
 
   // specification to image cache
-  private static final ConcurrentHashMap<String, ImageFromDockerfile> issImageCache =
+  private static final ConcurrentHashMap<String, DockerImage> issImageCache =
       new ConcurrentHashMap<>();
 
   private static final Logger log = LoggerFactory.getLogger(CosimTest.class);
@@ -62,7 +63,7 @@ public abstract class CosimTest extends DockerExecutionTest {
    * @param specPath path to VADL specification in testSource
    * @return the image containing the generated QEMU ISS
    */
-  protected ImageFromDockerfile generateIssSimulator(String specPath) {
+  protected DockerImage generateIssSimulator(String specPath) {
     var config = IssConfiguration.from(getConfiguration(false));
     return generateSimulator(issImageCache, specPath, config);
   }
@@ -71,9 +72,9 @@ public abstract class CosimTest extends DockerExecutionTest {
    * This will generate the simulator image if it is not already contained in the provided
    * cache.
    */
-  private ImageFromDockerfile generateSimulator(Map<String, ImageFromDockerfile> cache,
-                                                String specPath,
-                                                IssConfiguration configuration) {
+  private DockerImage generateSimulator(Map<String, DockerImage> cache,
+                                        String specPath,
+                                        IssConfiguration configuration) {
     return cache.computeIfAbsent(specPath, (path) -> {
       try {
         // run iss generation
@@ -103,63 +104,44 @@ public abstract class CosimTest extends DockerExecutionTest {
    * @param generatedIssSources the path to the generated ISS/QEMU sources.
    * @return a new image that builds the ISS at build time.
    */
-  private ImageFromDockerfile getIssImage(Path generatedIssSources,
-                                          IssConfiguration configuration
+  private DockerImage getIssImage(Path generatedIssSources,
+                                  IssConfiguration configuration
   ) {
-
-    // get redis cache for faster compilation using sccache
-    var redisCache = getRunningRedisCache();
 
     var targetName = configuration.targetName().toLowerCase();
     var softmmuTarget = targetName + "-softmmu";
     var qemuBin = "qemu-system-" + targetName;
     var refTarget = "," + withUpstreamTarget();
 
-    var dockerImage = new ImageFromDockerfile()
-        .withDockerfileFromBuilder(d -> {
-              d
-                  .from(QEMU_TEST_IMAGE)
-                  .copy("iss", "/qemu");
-
-              // use redis cache for building (sccache allows remote caching)
-              var cc = "sccache gcc";
-
-              d.workDir("/qemu/build");
-              // configure qemu with the new target from the specification
-              d.run("../configure --cc='" + cc + "' --target-list=" + softmmuTarget + refTarget);
-              // setup redis cache endpoint environment variablef
-              redisCache.setupEnv(d);
-              // build qemu with all cpu cores and print if cache was used.
-              // the sccache --start-server is required,
-              // otherwise we get a deadlock after the last make step.
-              // see https://github.com/mozilla/sccache/issues/2145
-              d.run("sccache --start-server && make -j$(nproc) && sccache -s");
-              // validate existence of generated qemu iss
-              d.run(qemuBin + " --version");
-
-              d.workDir("/work");
-
-              // build the cosim broker
-              d.copy("/vadl-cosim", "/work/vadl-cosim");
-              d.workDir("/work/vadl-cosim");
-              d.env("RUSTC_WRAPPER", "sccache");
-              // use --frozen to ensure that cargo does not need to download any new dependencies
-              d.run("sccache --start-server && cargo build --release -p vadl-cosim-broker --frozen && sccache -s");
-
-              // add cosim broker to path
-              d.run("mkdir -p /opt/cosim && cp ./target/release/vadl-cosim-broker /opt/cosim/");
-              d.env("PATH", "/opt/cosim:$PATH");
-
-              d.workDir("/work");
-
-              d.copy("/cosim_configs", "/cosim_configs");
-              d.copy("/cosim_scripts", "/cosim_scripts");
-
-              d.cmd("python3 /cosim_scripts/main.py test-suite.yaml");
-
-              d.build();
-            }
-        )
+    return new DockerImage()
+        .withDockerfile(new StringSubstitutor(Map.of("qemu", QEMU_TEST_IMAGE,
+            "soft", softmmuTarget + refTarget,
+            "qemu-bin", qemuBin)).replace("""
+            FROM ${qemu}
+            COPY iss /qemu
+            WORKDIR /qemu/build
+            LABEL key=VADL_TEST_CONTAINER
+            RUN ../configure --cc='sccache gcc' --target-list=${soft}
+            RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && make -j$(nproc) && sccache -s
+            RUN ${qemu-bin} --version
+            WORKDIR /work
+            
+            COPY vadl-cosim /work/vadl-cosim
+            WORKDIR /work/vadl-cosim
+            ENV RUSTC_WRAPPER "sccache"
+            # use --frozen to ensure that cargo does not need to download any new dependencies
+            RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && cargo build --release -p vadl-cosim-broker --frozen && sccache -s
+            
+            RUN mkdir -p /opt/cosim && cp ./target/release/vadl-cosim-broker /opt/cosim/
+            ENV PATH "/opt/cosim:$PATH"
+            
+            WORKDIR /work
+            
+            COPY cosim_configs /cosim_configs
+            COPY cosim_scripts /cosim_scripts
+            
+            CMD python3 /cosim_scripts/main.py test-suite.yaml
+            """))
         // make iss sources available to image builder
         .withFileFromPath("iss", generatedIssSources)
         // make cosim scripts and configs available to image builder
@@ -167,9 +149,6 @@ public abstract class CosimTest extends DockerExecutionTest {
         .withFileFromClasspath("/cosim_scripts", "/cosim_scripts/" + getScriptFolder())
         // add vadl-cosim to image builder
         .withFileFromPath("/vadl-cosim", Path.of("..", "vadl-cosim"));
-
-    // as we have to use the same network as the redis cache, we have to build it there
-    return redisCache.setupEnv(dockerImage);
   }
 
 }

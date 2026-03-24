@@ -63,23 +63,20 @@ public abstract class LcbDockerInputFileExecutionTest extends LcbDockerExecution
                                       String cmd)
       throws DuplicatedPassKeyException,
       IOException {
-    var doDebug = false;
     var configuration = getConfiguration();
 
     runLcb(configuration, specPath);
     copyIntoDockerContext(configuration);
 
-    var redisCache = getRunningRedisCache();
     var cachedImage =
-        DockerRiscvImageProvider.image(redisCache,
+        DockerRiscvImageProvider.image(
             configuration.outputPath() + "/lcb/Dockerfile",
             getImageName(),
             getTarget(),
             getUpstreamBuildTarget(),
             getUpstreamClangTarget(),
             getSpikeTarget(),
-            getAbi(),
-            doDebug);
+            getAbi());
 
     return sourceDirectories.stream()
         .map(sourceDirectory -> Pair.of(sourceDirectory, inputFiles(sourceDirectory))).flatMap(

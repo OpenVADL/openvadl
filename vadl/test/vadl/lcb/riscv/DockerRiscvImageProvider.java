@@ -16,23 +16,59 @@
 
 package vadl.lcb.riscv;
 
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import org.testcontainers.images.builder.ImageFromDockerfile;
-import vadl.DockerExecutionTest;
+import io.github.kper.buildkitcli.lib.BuildLog;
+import io.github.kper.buildkitcli.lib.BuildOutputMode;
+import io.github.kper.buildkitcli.lib.BuildProgressListener;
+import io.github.kper.buildkitcli.lib.BuildResult;
+import io.github.kper.buildkitcli.lib.BuildVertex;
+import io.github.kper.buildkitcli.lib.BuildWarning;
+import io.github.kper.buildkitcli.lib.BuildkitClient;
+import io.github.kper.buildkitcli.lib.BuildkitConnectionConfig;
+import io.github.kper.buildkitcli.lib.DockerfileBuildRequest;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.HashSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * A singleton implementation to keep the reference to a {@link ImageFromDockerfile} to avoid
+ * A singleton implementation to keep the reference to the generated docker image to avoid
  * recompilation between {@link LlvmRiscvAssemblyTest} and {@link SpikeRiscvSimulationTest}.
  */
 public class DockerRiscvImageProvider {
-  private static Map<String, ImageFromDockerfile> images = new HashMap<>();
+  private static final Logger logger = LoggerFactory.getLogger(DockerRiscvImageProvider.class);
+  public static HashSet<String> images = new HashSet<>();
+
+  static class PrintingListener implements BuildProgressListener {
+    private final Logger logger = LoggerFactory.getLogger(PrintingListener.class);
+
+    @Override
+    public void onVertex(BuildVertex vertex) {
+      if (!vertex.name().isBlank()) {
+        logger.info(vertex.name());
+      }
+    }
+
+    @Override
+    public void onLog(BuildLog log) {
+      String message = log.utf8Message();
+      if (!message.isBlank()) {
+        logger.info(message);
+      }
+    }
+
+    @Override
+    public void onWarning(BuildWarning warning) {
+      logger.warn("warning: {}", warning.shortMessage());
+    }
+  }
+
 
   /**
-   * Create an {@link ImageFromDockerfile} or return an already existing image.
+   * Create a docker image or return an already existing image.
    *
-   * @param redisCache          is the cache for building LLVM.
    * @param pathDockerFile      is the path to the dockerfile which should be built.
    * @param imageName           is the name of the generated and cached docker image
    * @param target              is the name of the processor.
@@ -41,40 +77,68 @@ public class DockerRiscvImageProvider {
    *                            compiler.
    * @param spikeTarget         is the ISA for spike to run the executable.
    * @param abi                 which should be chosen for the gcc linker.
-   * @param doDebug             if the flag is {@code true} then the image will not be deleted.
+   * @return the name of the image.
    * @throws RuntimeException when the {@code isCI} environment variable and {@code doDebug} are
    *                          activated.
    */
-  public static ImageFromDockerfile image(DockerExecutionTest.RedisCache redisCache,
-                                          String pathDockerFile,
-                                          String imageName,
-                                          String target,
-                                          String upstreamBuildTarget,
-                                          String upstreamClangTarget,
-                                          String spikeTarget,
-                                          String abi,
-                                          boolean doDebug) {
-    var image = images.get(imageName);
-    if (image == null) {
+  public static String image(String pathDockerFile,
+                             String imageName,
+                             String target,
+                             String upstreamBuildTarget,
+                             String upstreamClangTarget,
+                             String spikeTarget,
+                             String abi) throws IOException {
+    var imageKey = "tc_spike_riscv_" + imageName;
+    var image = images.contains(imageKey);
+    if (!image) {
 
-      var deleteOnExit = !doDebug;
+      try (var client = new BuildkitClient(
+          BuildkitConnectionConfig.of("tcp://localhost:1234").withTimeout(
+              Duration.ofHours(2)))) {
+        Path dockerfile = Path.of(pathDockerFile);
+        var requestBuilder = DockerfileBuildRequest.builder(
+                dockerfile.getParent(),
+                dockerfile,
+                imageKey
+            )
+            .buildArg("TARGET", target)
+            .buildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget)
+            .buildArg("UPSTREAM_CLANG_TARGET", upstreamClangTarget)
+            .buildArg("ABI", abi)
+            .buildArg("SPIKE_TARGET", spikeTarget)
+            .outputMode(BuildOutputMode.DOCKER);
 
-      if ("true".equals(System.getenv("isCI")) && !deleteOnExit) {
-        throw new RuntimeException("It is not allowed to activate 'deleteOnExit' in the CI");
+        BuildResult result = client.buildImage(requestBuilder.build(), new PrintingListener());
+        logger.info("Image was built: {}", imageKey);
+        logger.info("Loading image: {}", imageKey);
+        loadIntoDocker(result);
+
+        images.add(imageKey);
+        return imageKey;
+      } catch (Exception e) {
+        throw new RuntimeException(e);
       }
-
-      var img = redisCache.setupEnv(new ImageFromDockerfile("tc_spike_riscv_"
-          + imageName, deleteOnExit)
-          .withDockerfile(Paths.get(pathDockerFile))
-          .withBuildArg("TARGET", target)
-          .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget)
-          .withBuildArg("UPSTREAM_CLANG_TARGET", upstreamClangTarget)
-          .withBuildArg("ABI", abi)
-          .withBuildArg("SPIKE_TARGET", spikeTarget));
-      images.put(imageName, img);
-      return img;
     } else {
-      return image;
+      logger.info("Image was already in the cache: {}", imageKey);
+      return imageKey;
+    }
+  }
+
+  private static void loadIntoDocker(BuildResult result) throws Exception {
+    Path exportedArchive = result.exportedArchive();
+    if (exportedArchive == null) {
+      throw new IllegalStateException("Build result did not include a docker archive");
+    }
+    try {
+      Process process = new ProcessBuilder("docker", "load", "-i", exportedArchive.toString())
+          .inheritIO()
+          .start();
+      int exitCode = process.waitFor();
+      if (exitCode != 0) {
+        throw new IllegalStateException("docker load failed with exit code " + exitCode);
+      }
+    } finally {
+      Files.deleteIfExists(exportedArchive);
     }
   }
 }

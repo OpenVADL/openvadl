@@ -29,8 +29,8 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
-import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.utility.MountableFile;
+import vadl.DockerImage;
 
 public abstract class CosimInstrTest extends CosimTest {
 
@@ -61,7 +61,7 @@ public abstract class CosimInstrTest extends CosimTest {
     return runQemuInstrTests(image, testCases);
   }
 
-  protected Stream<DynamicTest> runQemuInstrTests(ImageFromDockerfile image,
+  protected Stream<DynamicTest> runQemuInstrTests(DockerImage image,
                                                   Collection<CosimTestUtils.TestCase> testCases)
       throws IOException {
 

@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM ghcr.io/openvadl/llvm19-base@sha256:743dc3df521b6721ee4a74126aff198f40b6fc585d2c06b76869cabbb3d2c015
 
 WORKDIR /work
@@ -9,16 +10,17 @@ ARG UPSTREAM_BUILD_TARGET
 ARG UPSTREAM_CLANG_TARGET
 ARG SPIKE_TARGET
 ARG ABI
+LABEL key=VADL_TEST_CONTAINER
 
 WORKDIR /llvm/build
 
 ENV TARGET=${TARGET}
 ENV UPSTREAM_CLANG_TARGET=${UPSTREAM_CLANG_TARGET}
 ENV LLVM_UPSTREAM_TARGETS=${UPSTREAM_BUILD_TARGET}
-ENV SCCACHE_REDIS_ENDPOINT=${SCCACHE_REDIS_ENDPOINT}
 ENV SPIKE_TARGET=${SPIKE_TARGET}
 ENV ABI=${ABI}
+ENV SCCACHE_DIR=/root/.cache/sccache
 COPY . /src
 WORKDIR /src
-RUN make && sccache -s
+RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && make && sccache -s
 RUN mkdir /output

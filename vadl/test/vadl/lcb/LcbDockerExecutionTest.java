@@ -33,10 +33,6 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 
 public abstract class LcbDockerExecutionTest extends AbstractLcbTest {
-  protected boolean enableDebug() {
-    return false;
-  }
-
   protected abstract String getTarget();
 
   protected abstract String getUpstreamBuildTarget();
@@ -96,23 +92,20 @@ public abstract class LcbDockerExecutionTest extends AbstractLcbTest {
 
   protected void run(String specPath, String cmd, Map<String, String> environments)
       throws DuplicatedPassKeyException, IOException {
-    var doDebug = enableDebug();
     var configuration = getConfiguration();
 
     runLcb(configuration, specPath);
     copyIntoDockerContext(configuration);
 
-    var redisCache = getRunningRedisCache();
     var cachedImage =
-        DockerRiscvImageProvider.image(redisCache,
+        DockerRiscvImageProvider.image(
             configuration.outputPath() + "/lcb/Dockerfile",
             getImageName(),
             getTarget(),
             getUpstreamBuildTarget(),
             getUpstreamClangTarget(),
             getSpikeTarget(),
-            getAbi(),
-            doDebug);
+            getAbi());
 
     runContainerAndCopyInputIntoContainer(cachedImage,
         List.of(Pair.of(Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
@@ -121,4 +114,3 @@ public abstract class LcbDockerExecutionTest extends AbstractLcbTest {
         cmd);
   }
 }
-

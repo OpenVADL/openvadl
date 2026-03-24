@@ -29,8 +29,8 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.DockerExecutionTest;
+import vadl.DockerImage;
 import vadl.pass.PassResults;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
@@ -47,7 +47,7 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
 
   private static final String MOUNT_PATH = "/app/main.py";
 
-  private static final ImageFromDockerfile DOCKER_IMAGE = new ImageFromDockerfile()
+  private static final DockerImage DOCKER_IMAGE = new DockerImage()
       .withDockerfileFromBuilder(builder ->
           builder
               .from("python:3.8")

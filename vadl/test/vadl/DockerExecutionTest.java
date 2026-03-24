@@ -20,8 +20,6 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.model.Mount;
-import com.github.dockerjava.api.model.MountType;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -35,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -51,9 +48,7 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.images.builder.Transferable;
-import org.testcontainers.images.builder.dockerfile.DockerfileBuilder;
 import org.testcontainers.utility.MountableFile;
 import org.testcontainers.utility.ThrowingFunction;
 import vadl.utils.Pair;
@@ -65,9 +60,6 @@ public abstract class DockerExecutionTest extends AbstractTest {
   @LazyInit
   private static Network testNetwork;
 
-  @Nullable
-  private static RedisCache redisCache;
-
   @BeforeAll
   public static void beforeAll() {
     testNetwork = Network.newNetwork();
@@ -76,11 +68,6 @@ public abstract class DockerExecutionTest extends AbstractTest {
 
   @AfterAll
   public static void afterAll() {
-    if (redisCache != null) {
-      // this call will also persist the data cached in this test run
-      redisCache.stop();
-    }
-
     testNetwork.close();
   }
 
@@ -121,12 +108,49 @@ public abstract class DockerExecutionTest extends AbstractTest {
    *                            be copied to the host.
    */
   protected void runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(
-      ImageFromDockerfile image,
+      DockerImage image,
       List<Pair<String, String>> copyMappings,
       String hostOutputPath,
       String containerResultPath) {
     runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(image, copyMappings, hostOutputPath,
         containerResultPath, null);
+  }
+
+
+  /**
+   * Starts a container and checks the status code for the exited container.
+   * It will copy the copy mappings into the container. After the container was
+   * executed it will copy a file back to read the result.
+   * It will assert that the status code is zero. If the check takes longer
+   * than 10 seconds or the status code is not zero then it will throw an
+   * exception.
+   *
+   * @param image               is the docker image for the {@link GenericContainer}.
+   * @param copyMappings        are mappings from the host to the container for the files which should
+   *                            be copied.
+   * @param hostOutputPath      is the path where the {@code containerResultPath} should be copied
+   *                            to.
+   * @param containerResultPath is the path of a file which the container has computed and should
+   *                            be copied to the host.
+   * @param cmd                 overwrites the command which will be executed on startup.
+   */
+  protected void runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(
+      String image,
+      List<Pair<String, String>> copyMappings,
+      String hostOutputPath,
+      String containerResultPath,
+      @Nullable String cmd) {
+    runContainer(image, (container) -> {
+          if (cmd != null) {
+            container.setCommand(cmd);
+          }
+          for (var mapping : copyMappings) {
+            container.withCopyToContainer(MountableFile.forHostPath(mapping.left()), mapping.right());
+          }
+          return container;
+        },
+        (container) -> container.copyFileFromContainer(containerResultPath, hostOutputPath)
+    );
   }
 
   /**
@@ -147,22 +171,13 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * @param cmd                 overwrites the command which will be executed on startup.
    */
   protected void runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(
-      ImageFromDockerfile image,
+      DockerImage image,
       List<Pair<String, String>> copyMappings,
       String hostOutputPath,
       String containerResultPath,
       @Nullable String cmd) {
-    runContainer(image, (container) -> {
-          if (cmd != null) {
-            container.setCommand(cmd);
-          }
-          for (var mapping : copyMappings) {
-            container.withCopyToContainer(MountableFile.forHostPath(mapping.left()), mapping.right());
-          }
-          return container;
-        },
-        (container) -> container.copyFileFromContainer(containerResultPath, hostOutputPath)
-    );
+    runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(image.getDockerImageName(),
+        copyMappings, hostOutputPath, containerResultPath, cmd);
   }
 
   /**
@@ -180,7 +195,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * @throws IOException when the temp file is writable.
    */
   protected void runContainerAndCopyInputIntoContainer(
-      ImageFromDockerfile image,
+      DockerImage image,
       String content,
       String containerPath) throws IOException {
     runContainer(image, (container) -> container
@@ -204,7 +219,34 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * @param cmd                 is the command which is executed.
    */
   protected void runContainerAndCopyInputIntoContainer(
-      ImageFromDockerfile image,
+      DockerImage image,
+      List<Pair<Path, String>> copyMappings,
+      Map<String, String> environmentMappings,
+      String cmd) {
+    runContainerAndCopyInputIntoContainerAndCopyFromContainerToHost(image.getDockerImageName(),
+        copyMappings,
+        environmentMappings,
+        Collections.emptyList(),
+        cmd);
+  }
+
+
+  /**
+   * Starts a container and checks the status code for the exited container.
+   * It will write the given {@code content} into a temporary file. The
+   * temporary file requires a {@code prefix} and {@code suffix}.
+   * Copies the data from {@code copyMappings}. Additionally, it will
+   * set environment variables based on {@code environmentMappings}.
+   *
+   * @param image               is the docker image for the {@link GenericContainer}.
+   * @param copyMappings        is a list where each {@link Pair} indicates what should be copied
+   *                            from the host to the container.
+   * @param environmentMappings is a list where each entry defines an environment variable which
+   *                            will be set in the container.
+   * @param cmd                 is the command which is executed.
+   */
+  protected void runContainerAndCopyInputIntoContainer(
+      String image,
       List<Pair<Path, String>> copyMappings,
       Map<String, String> environmentMappings,
       String cmd) {
@@ -232,7 +274,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * @param cmd                     is the command which is executed.
    */
   protected void runContainerAndCopyInputIntoContainerAndCopyFromContainerToHost(
-      ImageFromDockerfile image,
+      String image,
       List<Pair<Path, String>> copyMappings,
       Map<String, String> environmentMappings,
       List<Pair<String, String>> copyFromContainerToHost,
@@ -272,7 +314,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * @param containerModifier a consumer that allows modification of the container configuration
    * @param postExecution     a consumer that is called when the container successfully terminated
    */
-  protected void runContainer(ImageFromDockerfile image,
+  protected void runContainer(String image,
                               Function<GenericContainer<?>, GenericContainer<?>> containerModifier,
                               @Nullable Consumer<GenericContainer<?>> postExecution
   ) {
@@ -306,23 +348,25 @@ public abstract class DockerExecutionTest extends AbstractTest {
     }
   }
 
-  public static Network testNetwork() {
-    return testNetwork;
+  /**
+   * Starts a container and checks the status code for the exited container.
+   * It will assert that the status code is zero. If the check takes longer
+   * than 10 seconds or the status code is not zero then it will throw an
+   * exception.
+   *
+   * @param image             is the docker image for the {@link GenericContainer}.
+   * @param containerModifier a consumer that allows modification of the container configuration
+   * @param postExecution     a consumer that is called when the container successfully terminated
+   */
+  protected void runContainer(DockerImage image,
+                              Function<GenericContainer<?>, GenericContainer<?>> containerModifier,
+                              @Nullable Consumer<GenericContainer<?>> postExecution
+  ) {
+    runContainer(image.getDockerImageName(), containerModifier, postExecution);
   }
 
-  /**
-   * Returns a running redis cache. If no redis cache exists yet, it will be created.
-   *
-   * @return an object containing redis cache information
-   */
-  protected static synchronized RedisCache getRunningRedisCache() {
-    if (redisCache != null && redisCache.redisContainer.isRunning()) {
-      return redisCache;
-    }
-
-    redisCache = new RedisCache("redis", testNetwork());
-    redisCache.start();
-    return redisCache;
+  public static Network testNetwork() {
+    return testNetwork;
   }
 
   /**
@@ -424,111 +468,4 @@ public abstract class DockerExecutionTest extends AbstractTest {
       throw new RuntimeException(e);
     }
   }
-
-
-  /**
-   * A containerized redis cache that persists the cached data across runs.
-   * If your test container should use the cache (e.g. via sccache) you must run the container
-   * (or build step) in the same network as the redis cache.
-   * The easiest way to do is by using the {@link RedisCache#setupEnv(ImageFromDockerfile)}
-   * and {@link RedisCache#setupEnv(DockerfileBuilder)}.
-   * While you must use the first method, the second one is only useful if you use
-   * the {@link DockerfileBuilder}.
-   */
-  public record RedisCache(
-      String host,
-      int port,
-      GenericContainer<?> redisContainer,
-      Network network
-  ) {
-
-    private static final Logger log = LoggerFactory.getLogger(RedisCache.class);
-
-    private static final String SCCACHE_REDIS_ENDPOINT = "SCCACHE_REDIS_ENDPOINT";
-
-    RedisCache(String hostName, Network network) {
-      this(hostName, 6379, constructContainer(hostName, network), network);
-    }
-
-
-    private void start() {
-      redisContainer.start();
-    }
-
-    /**
-     * This will stop the redis cache if it is still running.
-     * It will also persist the data cached during this run, so it is available in
-     * the next run.
-     */
-    private void stop() {
-      try {
-        if (!redisContainer.isRunning()) {
-          log.info("Redis container isn't running anymore. Skipping shutdown.");
-          return;
-        }
-        // persist cache before shutting down
-        log.info("Persist redis cache data before shutdown...");
-        redisContainer.execInContainer("redis-cli", "shutdown", "save");
-
-        redisContainer.stop();
-        log.info("Stopped redis cache container.");
-      } catch (IOException | InterruptedException e) {
-        redisContainer.stop();
-        throw new RuntimeException(e);
-      }
-    }
-
-    /**
-     * Sets an environment variable to indicate to the distributed cache to use the redis
-     * docker instance as cache.
-     */
-    public DockerfileBuilder setupEnv(DockerfileBuilder d) {
-      logger.info("Using redis cache: {}", redisCache);
-      d.env(SCCACHE_REDIS_ENDPOINT, tcpAddress());
-
-      // check if redis cache is available
-      d.run(
-          "timeout 5 bash -c '</dev/tcp/" + redisCache.host() + "/" + redisCache.port() + "'");
-      return d;
-    }
-
-    /**
-     * Sets the sccache redis endpoint argument and configures the used build network to be
-     * the same as the one of the redis container.
-     */
-    public ImageFromDockerfile setupEnv(ImageFromDockerfile image) {
-      image.withBuildArg(SCCACHE_REDIS_ENDPOINT, tcpAddress())
-          .withBuildImageCmdModifier(modifier -> modifier.withNetworkMode(network.getId()));
-
-      return image;
-    }
-
-    private String tcpAddress() {
-      return "tcp://" + host + ":" + port;
-    }
-
-    /**
-     * Constructs a redis container that is mount to a cache volume.
-     * And exposed to the given network and the given hostName.
-     */
-    private static GenericContainer<?> constructContainer(String hostName,
-                                                          Network network) {
-      return new GenericContainer<>("redis:7.4")
-          .withCreateContainerCmdModifier(cmd -> {
-            var mount = new Mount()
-                .withType(MountType.VOLUME)
-                .withSource("open-vadl-redis-cache")
-                .withTarget("/data");
-
-            Objects.requireNonNull(cmd.getHostConfig())
-                .withMounts(List.of(mount));
-          })
-          // we need this custom network, because other containers must access
-          // the redis cache with the given hostname/alias
-          // (which is only available on custom networks)
-          .withNetwork(network)
-          .withNetworkAliases(hostName);
-    }
-  }
-
 }

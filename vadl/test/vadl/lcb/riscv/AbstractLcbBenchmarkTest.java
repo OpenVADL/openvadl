@@ -28,7 +28,6 @@ public abstract class AbstractLcbBenchmarkTest extends LcbDockerExecutionTest {
   @Override
   protected void run(String specPath, String cmd, Map<String, String> environments)
       throws DuplicatedPassKeyException, IOException {
-    var doDebug = enableDebug();
 
     var hostPath = System.getenv("EMBENCH_BENCHMARK_RESULT_HOST_PATH");
     var guestPath = System.getenv("EMBENCH_BENCHMARK_RESULT_GUEST_PATH");
@@ -39,17 +38,15 @@ public abstract class AbstractLcbBenchmarkTest extends LcbDockerExecutionTest {
     runLcb(configuration, specPath);
     copyIntoDockerContext(configuration);
 
-    var redisCache = getRunningRedisCache();
     var cachedImage =
-        DockerRiscvImageProvider.image(redisCache,
+        DockerRiscvImageProvider.image(
             configuration.outputPath() + "/lcb/Dockerfile",
             getTarget(),
             getImageName(),
             getUpstreamBuildTarget(),
             getUpstreamClangTarget(),
             getSpikeTarget(),
-            getAbi(),
-            doDebug);
+            getAbi());
 
     runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(cachedImage,
         List.of(),

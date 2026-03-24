@@ -36,9 +36,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.containers.output.OutputFrame;
-import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.utility.MountableFile;
 import vadl.DockerExecutionTest;
+import vadl.DockerImage;
 import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
@@ -1803,7 +1803,7 @@ public class BuiltinCTest extends DockerExecutionTest {
       try (var in = BuiltInTable.class.getResourceAsStream("/templates/common/vadl-builtins.h")) {
         Files.write(builtinLib, Objects.requireNonNull(in).readAllBytes());
       }
-      var gccImage = new ImageFromDockerfile().withDockerfileFromBuilder(builder -> builder
+      var gccImage = new DockerImage().withDockerfileFromBuilder(builder -> builder
           .from("gcc:latest"));
 
 

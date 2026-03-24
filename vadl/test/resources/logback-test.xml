@@ -9,6 +9,7 @@
 
     <!-- Testcontainers recommended logging profile -->
     <logger name="org.testcontainers" level="INFO"/>
+    <logger name="io.github.kper.buildkitcli" level="DEBUG"/>
     <logger name="tc" level="DEBUG"/>
 
     <root level="${LOG_LEVEL}">
