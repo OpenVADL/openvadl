@@ -33,6 +33,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -51,7 +52,8 @@ public final class DockerImage {
   private static final Logger logger = LoggerFactory.getLogger(DockerImage.class);
 
   private static BuildkitConnectionConfig getConfig(int port) {
-    return BuildkitConnectionConfig.of("tcp://localhost:" + port);
+    return BuildkitConnectionConfig.of("tcp://localhost:" + port)
+        .withTimeout(Duration.ofHours(3));
   }
 
   private final String imageName;
