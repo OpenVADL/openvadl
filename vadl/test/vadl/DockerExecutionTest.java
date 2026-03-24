@@ -61,8 +61,8 @@ public abstract class DockerExecutionTest extends AbstractTest {
   @LazyInit
   private static Network testNetwork;
 
-  private final static int BUILDKIT_DAEMON_PORT = 1334;
-  private final static GenericContainer<?> buildkitDaemon =
+  private static final int BUILDKIT_DAEMON_PORT = 1334;
+  private static final GenericContainer<?> buildkitDaemon =
       new GenericContainer(DockerImageName.parse("moby/buildkit:latest"))
           .withPrivilegedMode(true)
           .withExposedPorts(BUILDKIT_DAEMON_PORT)
