@@ -49,6 +49,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.Transferable;
+import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 import org.testcontainers.utility.ThrowingFunction;
 import vadl.utils.Pair;
@@ -60,10 +61,19 @@ public abstract class DockerExecutionTest extends AbstractTest {
   @LazyInit
   private static Network testNetwork;
 
+  private final static int BUILDKIT_DAEMON_PORT = 1334;
+  private final static GenericContainer<?> buildkitDaemon =
+      new GenericContainer(DockerImageName.parse("moby/buildkit:latest"))
+          .withPrivilegedMode(true)
+          .withExposedPorts(BUILDKIT_DAEMON_PORT)
+          .withReuse(true)
+          .withCommand("--addr tcp://0.0.0.0:" + BUILDKIT_DAEMON_PORT);
+
   @BeforeAll
   public static void beforeAll() {
     testNetwork = Network.newNetwork();
     logger.info("Created test network with id {}", testNetwork.getId());
+    buildkitDaemon.start();
   }
 
   @AfterAll
@@ -176,7 +186,9 @@ public abstract class DockerExecutionTest extends AbstractTest {
       String hostOutputPath,
       String containerResultPath,
       @Nullable String cmd) {
-    runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(image.getDockerImageName(),
+    int mappedPort = buildkitDaemon.getMappedPort(BUILDKIT_DAEMON_PORT);
+    runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(
+        image.getDockerImageName(mappedPort),
         copyMappings, hostOutputPath, containerResultPath, cmd);
   }
 
@@ -223,7 +235,8 @@ public abstract class DockerExecutionTest extends AbstractTest {
       List<Pair<Path, String>> copyMappings,
       Map<String, String> environmentMappings,
       String cmd) {
-    runContainerAndCopyInputIntoContainerAndCopyFromContainerToHost(image.getDockerImageName(),
+    var mappedPort = buildkitDaemon.getMappedPort(BUILDKIT_DAEMON_PORT);
+    runContainerAndCopyInputIntoContainerAndCopyFromContainerToHost(image.getDockerImageName(mappedPort),
         copyMappings,
         environmentMappings,
         Collections.emptyList(),
@@ -362,7 +375,8 @@ public abstract class DockerExecutionTest extends AbstractTest {
                               Function<GenericContainer<?>, GenericContainer<?>> containerModifier,
                               @Nullable Consumer<GenericContainer<?>> postExecution
   ) {
-    runContainer(image.getDockerImageName(), containerModifier, postExecution);
+    var mapedPort = buildkitDaemon.getMappedPort(BUILDKIT_DAEMON_PORT);
+    runContainer(image.getDockerImageName(mapedPort), containerModifier, postExecution);
   }
 
   public static Network testNetwork() {
