@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,7 @@ package vadl.iss;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.text.StringSubstitutor;
@@ -148,7 +149,7 @@ public abstract class CosimTest extends DockerExecutionTest {
         .withFileFromClasspath("/cosim_configs", "/cosim_configs")
         .withFileFromClasspath("/cosim_scripts", "/cosim_scripts/" + getScriptFolder())
         // add vadl-cosim to image builder
-        .withFileFromPath("/vadl-cosim", Path.of("..", "vadl-cosim"));
+        .withFileFromPathExcluding("/vadl-cosim", Path.of("..", "vadl-cosim"), List.of("target"));
   }
 
 }

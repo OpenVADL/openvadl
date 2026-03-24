@@ -39,15 +39,16 @@ RUN mkdir build
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH=/root/.cargo/bin:$PATH
 
-# download cosim dependencies
+# install cargo-chef to prebuild cosim dependencies into the base image
+RUN cargo install cargo-chef --locked
+
+# prebuild cosim dependencies
 COPY vadl-cosim /work/vadl-cosim
 WORKDIR /work/vadl-cosim
-RUN cargo fetch 
+RUN cargo chef prepare --recipe-path recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
 
 WORKDIR /work
-
-# cleanup cosim setup
-RUN rm -r ./vadl-cosim
 
 # install sccache for cloud build cache
 ENV PATH=/opt/sccache:$PATH
