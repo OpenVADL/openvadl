@@ -121,8 +121,8 @@ public abstract class CosimTest extends DockerExecutionTest {
             COPY iss /qemu
             WORKDIR /qemu/build
             LABEL key=VADL_TEST_CONTAINER
-            RUN ../configure --cc='sccache gcc' -GNinja --target-list=${soft}
-            RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && ninja && sccache -s
+            RUN ../configure --cc='sccache gcc' --target-list=${soft}
+            RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && make -j$(nproc) && sccache -s
             RUN ${qemu-bin} --version
             WORKDIR /work
             
