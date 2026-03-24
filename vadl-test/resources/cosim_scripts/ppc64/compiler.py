@@ -85,12 +85,21 @@ def build_linker_script(id: str) -> Path:
 
   content = """
   ENTRY(_start)
+
+  PHDRS
+  {
+    text_seg  PT_LOAD FLAGS(5);   /* R + X = 4 + 1 */
+    data_seg  PT_LOAD FLAGS(6);   /* R + W = 4 + 2 */
+  }
+
   SECTIONS
   {
       . = 0x00000000000000FC;
-      .text : { *(.text) }
+      .text : { *(.text) }  :text_seg
       . = 0x0000000000000700;
-      .data : { *(.data) }
+      .data : { *(.data) } :data_seg
+      . = ALIGN(0x1000);  /* page-align the boundary */
+      .bss    : { *(.bss*)    } :data_seg
   }
   """
   with open(linker_out, "w") as f:
