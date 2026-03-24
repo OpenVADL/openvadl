@@ -25,6 +25,8 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 /* Tests ppc64.vadl instructions against the QEMU ppc64 simulator.
  * Some instructions are defined in the VADL specification but are not covered by these tests:
@@ -34,6 +36,7 @@ import org.junit.jupiter.api.TestMethodOrder;
  */
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Execution(ExecutionMode.CONCURRENT)
 public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
 
   private static final long BASE_ADDRESS_LOAD_STORE = 0x1000L;
@@ -797,11 +800,11 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrc1 = b.anyReg().sample();
-      var regSrc2 = b.anyReg().sample();
+      var regSrc1 = b.sampleAnyReg();
+      var regSrc2 = b.sampleAnyReg();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2);
-      b.add("%s %s, %s, %s", instruction, b.anyReg().sample(), regSrc1, regSrc2);
+      b.add("%s %s, %s, %s", instruction, b.sampleAnyReg(), regSrc1, regSrc2);
       return b.toTestCase();
     });
   }
@@ -810,11 +813,11 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrc1 = b.anyReg().sample();
-      var regSrc2 = b.anyReg().sample();
+      var regSrc1 = b.sampleAnyReg();
+      var regSrc2 = b.sampleAnyReg();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2);
-      b.add("%s %s, %s, %s, %s", instruction, b.anyReg().sample(), regSrc1, regSrc2, ext);
+      b.add("%s %s, %s, %s, %s", instruction, b.sampleAnyReg(), regSrc1, regSrc2, ext);
       return b.toTestCase();
     });
   }
@@ -823,11 +826,11 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrc1 = b.anyReg().sample();
-      var regSrc2 = b.anyReg().sample();
+      var regSrc1 = b.sampleAnyReg();
+      var regSrc2 = b.sampleAnyReg();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2);
-      b.add("%s %s, %s, %s", instruction, b.anyCRField().sample(), regSrc1, regSrc2);
+      b.add("%s %s, %s, %s", instruction, b.sampleAnyCRField(), regSrc1, regSrc2);
       return b.toTestCase();
     });
   }
@@ -837,7 +840,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
       b.fillCR();
-      b.add("%s %s, %s", instruction, b.anyCRField().sample(), b.anyCRField().sample());
+      b.add("%s %s, %s", instruction, b.sampleAnyCRField(), b.sampleAnyCRField());
       return b.toTestCase();
     });
   }
@@ -847,8 +850,8 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
       b.fillCR();
-      b.add("%s %s, %s, %s", instruction, b.anyCRBit().sample(), b.anyCRBit().sample(),
-          b.anyCRBit().sample());
+      b.add("%s %s, %s, %s", instruction, b.sampleAnyCRBit(), b.sampleAnyCRBit(),
+          b.sampleAnyCRBit());
       return b.toTestCase();
     });
   }
@@ -857,9 +860,9 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrc = b.anyReg().sample();
+      var regSrc = b.sampleAnyReg();
       b.fillReg(regSrc);
-      b.add("%s %s, %s, %s", instruction, b.anyReg().sample(), regSrc, b.getImmS(16));
+      b.add("%s %s, %s, %s", instruction, b.sampleAnyReg(), regSrc, b.getImmS(16));
       return b.toTestCase();
     });
   }
@@ -868,9 +871,9 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrc = b.anyReg().sample();
+      var regSrc = b.sampleAnyReg();
       b.fillReg(regSrc);
-      b.add("%s %s, %s, %s", instruction, b.anyReg().sample(), regSrc, b.getImmU(16));
+      b.add("%s %s, %s, %s", instruction, b.sampleAnyReg(), regSrc, b.getImmU(16));
       return b.toTestCase();
     });
   }
@@ -879,9 +882,9 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrc = b.anyReg().sample();
+      var regSrc = b.sampleAnyReg();
       b.fillReg(regSrc);
-      b.add("%s %s, %s", instruction, b.anyReg().sample(), regSrc);
+      b.add("%s %s, %s", instruction, b.sampleAnyReg(), regSrc);
       return b.toTestCase();
     });
   }
@@ -891,7 +894,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
       b.fillCR();
-      b.add("%s %s, %s", instruction, b.anyReg().sample(), b.anyCRField().sample());
+      b.add("%s %s, %s", instruction, b.sampleAnyReg(), b.sampleAnyCRField());
       return b.toTestCase();
     });
   }
@@ -901,7 +904,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
       b.fillCR();
-      b.add("%s %s, %s", instruction, b.anyReg().sample(), b.anyCRBit().sample());
+      b.add("%s %s, %s", instruction, b.sampleAnyReg(), b.sampleAnyCRBit());
       return b.toTestCase();
     });
   }
@@ -911,7 +914,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
       b.fillCR();
-      b.add("%s %s, %s", instruction, b.anyReg().sample(), b.getSelectImmU(8));
+      b.add("%s %s, %s", instruction, b.sampleAnyReg(), b.getSelectImmU(8));
       return b.toTestCase();
     });
   }
@@ -920,7 +923,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrc = b.anyReg().sample();
+      var regSrc = b.sampleAnyReg();
       b.fillCR();
       b.fillReg(regSrc);
       b.add("%s %s, %s", instruction, b.getImmU(8), regSrc);
@@ -932,7 +935,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrc = b.anyReg().sample();
+      var regSrc = b.sampleAnyReg();
       b.fillCR();
       b.fillReg(regSrc);
       b.add("%s %s, %s", instruction, b.getSelectImmU(8), regSrc);
@@ -944,7 +947,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      b.add("%s %s, %s", instruction, b.anyReg().sample(), b.getImmS(16));
+      b.add("%s %s, %s", instruction, b.sampleAnyReg(), b.getImmS(16));
       return b.toTestCase();
     });
   }
@@ -954,7 +957,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
       b.fillCR();
-      b.add("%s %s", instruction, b.anyReg().sample());
+      b.add("%s %s", instruction, b.sampleAnyReg());
       return b.toTestCase();
     });
   }
@@ -963,11 +966,11 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrc1 = b.anyReg().sample();
-      var regSrc2 = b.anyReg().sample();
+      var regSrc1 = b.sampleAnyReg();
+      var regSrc2 = b.sampleAnyReg();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2);
-      b.add("%s %s, %s, %s, %s", instruction, b.anyCRField().sample(), b.getImmU(1), regSrc1,
+      b.add("%s %s, %s, %s, %s", instruction, b.sampleAnyCRField(), b.getImmU(1), regSrc1,
           regSrc2);
       return b.toTestCase();
     });
@@ -977,9 +980,9 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrc = b.anyReg().sample();
+      var regSrc = b.sampleAnyReg();
       b.fillReg(regSrc);
-      b.add("%s %s, %s, %s, %s", instruction, b.anyCRField().sample(), b.getImmU(1), regSrc,
+      b.add("%s %s, %s, %s, %s", instruction, b.sampleAnyCRField(), b.getImmU(1), regSrc,
           b.getImmS(16));
       return b.toTestCase();
     });
@@ -989,11 +992,11 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrc = b.anyReg().sample();
-      var regSrcOrImm5 = b.anyReg().sample();
+      var regSrc = b.sampleAnyReg();
+      var regSrcOrImm5 = b.sampleAnyReg();
       b.fillReg(regSrc);
       b.fillReg(regSrcOrImm5);
-      b.add("%s %s, %s, %s, %s, %s", instruction, b.anyReg().sample(), regSrc, regSrcOrImm5,
+      b.add("%s %s, %s, %s, %s, %s", instruction, b.sampleAnyReg(), regSrc, regSrcOrImm5,
           b.getImmU(5), b.getImmU(5));
       return b.toTestCase();
     });
@@ -1003,11 +1006,11 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrcOrImm5 = b.anyReg().sample();
-      var regSrc = b.anyReg().sample();
+      var regSrcOrImm5 = b.sampleAnyReg();
+      var regSrc = b.sampleAnyReg();
       b.fillReg(regSrcOrImm5);
       b.fillReg(regSrc);
-      b.add("%s %s, %s, %s", instruction, b.anyReg().sample(), regSrcOrImm5, regSrc);
+      b.add("%s %s, %s, %s", instruction, b.sampleAnyReg(), regSrcOrImm5, regSrc);
       return b.toTestCase();
     });
   }
@@ -1016,13 +1019,13 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrc1 = b.anyReg().sample();
-      var regSrc2 = b.anyReg().sample();
+      var regSrc1 = b.sampleAnyReg();
+      var regSrc2 = b.sampleAnyReg();
       b.fillCR();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2);
-      b.add("addco %s, %s, %s", b.anyReg().sample(), regSrc1, regSrc2); // Sets XER
-      b.add("%s %s", instruction, b.anyCRField().sample());
+      b.add("addco %s, %s, %s", b.sampleAnyReg(), regSrc1, regSrc2); // Sets XER
+      b.add("%s %s", instruction, b.sampleAnyCRField());
       return b.toTestCase();
     });
   }
@@ -1032,9 +1035,8 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrc = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
-      var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc)).sample() :
-          b.anyReg().sample();
+      var regSrc = update ? b.sampleAnyRegExceptZero() : b.sampleAnyReg();
+      var regDest = update ? b.sampleAnyRegExcluding(regSrc) : b.sampleAnyReg();
       BigInteger val1 = b.getImmU(15);
       BigInteger val2 = b.getImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE));
       b.fillMem(Objects.equals(regSrc, "0") ? val2 : val1.add(val2));
@@ -1049,10 +1051,9 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrc1 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
-      var regSrc2 = b.anyReg().filter(r -> !Objects.equals(r, regSrc1)).sample();
-      var regDest = update ? b.anyReg().filter(r -> !Objects.equals(r, regSrc1)).sample() :
-          b.anyReg().sample();
+      var regSrc1 = update ? b.sampleAnyRegExceptZero() : b.sampleAnyReg();
+      var regSrc2 = b.sampleAnyRegExcluding(regSrc1);
+      var regDest = update ? b.sampleAnyRegExcluding(regSrc1) : b.sampleAnyReg();
       BigInteger val1 = b.getImmU(15);
       BigInteger val2 = b.getImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE));
       b.fillMem(Objects.equals(regSrc1, "0") ? val2 : val1.add(val2));
@@ -1068,8 +1069,8 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrc1 = b.anyReg().sample();
-      var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
+      var regSrc1 = b.sampleAnyReg();
+      var regSrc2 = update ? b.sampleAnyRegExceptZero() : b.sampleAnyReg();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2, b.getImmU(15));
       b.add("%s %s, %s(%s)", instruction, regSrc1, b.getImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE)), regSrc2);
@@ -1082,9 +1083,9 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder(name, id);
-      var regSrc1 = b.anyReg().sample();
-      var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
-      var regSrc3 = b.anyReg().sample();
+      var regSrc1 = b.sampleAnyReg();
+      var regSrc2 = update ? b.sampleAnyRegExceptZero() : b.sampleAnyReg();
+      var regSrc3 = b.sampleAnyReg();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2, b.getImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE)));
       b.fillReg(regSrc3, b.getImmU(15));

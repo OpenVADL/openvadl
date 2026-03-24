@@ -45,7 +45,7 @@ public class IssCustomTests extends QemuIssTest {
 
     // Find test source directory and results directory
     var testSources = getTestSourcePath("iss/riscv/custom");
-    var resultsDir = getTestDirectory().resolve("results");
+    var resultsDir = getTestDirectoryThreadUnsafe().resolve("results");
 
     // Run the QEMU container to execute the tests and collect results
     runContainer(qemuImage, container ->

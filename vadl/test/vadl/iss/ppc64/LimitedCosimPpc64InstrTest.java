@@ -39,9 +39,9 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
   Stream<DynamicTest> mtspr() throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder("MTSPR", id);
-      var regSrc = b.anyReg().sample();
+      var regSrc = b.sampleAnyReg();
       b.fillReg(regSrc);
-      b.add("mtspr %s, %s", b.anyImplementedSpecialReg().sample(), regSrc);
+      b.add("mtspr %s, %s", b.sampleAnyImplementedSpecialReg(), regSrc);
       return b.toTestCase();
     });
   }
@@ -51,11 +51,11 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
   Stream<DynamicTest> mfspr() throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder("MFSPR", id);
-      var regSrc = b.anyReg().sample();
-      var spr = b.anyImplementedSpecialReg().sample();
+      var regSrc = b.sampleAnyReg();
+      var spr = b.sampleAnyImplementedSpecialReg();
       b.fillReg(regSrc);
       b.add("mtspr %s, %s", spr, regSrc);
-      b.add("mfspr %s, %s", b.anyReg().sample(), spr);
+      b.add("mfspr %s, %s", b.sampleAnyReg(), spr);
       return b.toTestCase();
     });
   }
@@ -65,7 +65,7 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
   Stream<DynamicTest> mtmsr() throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder("MTMSR", id);
-      var regSrc = b.anyReg().sample();
+      var regSrc = b.sampleAnyReg();
       var val = b.getImmS(32)
           .clearBit(5)                 // disable IR
           .clearBit(9).clearBit(10) // set TE to 0b00
@@ -82,7 +82,7 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
   Stream<DynamicTest> mfmsr() throws IOException {
     return runTests3264With(id -> {
       var b = getBuilder("MFMSR", id);
-      var regSrc = b.anyReg().sample();
+      var regSrc = b.sampleAnyReg();
       var val = b.getImmS(32)
           .clearBit(5)                 // disable IR
           .clearBit(9).clearBit(10) // set TE to 0b00
@@ -90,7 +90,7 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
           .clearBit(15);               // disable EE
       b.fillReg(regSrc, val);
       b.add("mtmsr %s, %s", regSrc, 0);
-      b.add("mfmsr %s", b.anyReg().sample());
+      b.add("mfmsr %s", b.sampleAnyReg());
       return b.toTestCase();
     });
   }
@@ -184,7 +184,7 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       b.fillCR();
       b.fillReg("0");
       b.add("mtspr 9, 0");
-      b.add("%s %s, %s, %s", instruction, b.getBOField(), b.anyCRBit().sample(), target);
+      b.add("%s %s, %s, %s", instruction, b.getBOField(), b.sampleAnyCRBit(), target);
       b.add("li 0, 1");
       return b.toTestCase();
     });
@@ -197,7 +197,7 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       b.fillCR();
       b.fillReg("0", BigInteger.valueOf(252));
       b.add("mtspr 9, 0");
-      b.add("%s %s, %s, 0", instruction, b.getLimitedBOField(), b.anyCRBit().sample());
+      b.add("%s %s, %s, 0", instruction, b.getLimitedBOField(), b.sampleAnyCRBit());
       b.add("li 0, 1");
       return b.toTestCase();
     });
@@ -212,7 +212,7 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       b.add("mtspr 8, 0");
       b.fillReg("0");
       b.add("mtspr 9, 0");
-      b.add("%s %s, %s, 0", instruction, b.getBOField(), b.anyCRBit().sample());
+      b.add("%s %s, %s, 0", instruction, b.getBOField(), b.sampleAnyCRBit());
       b.add("li 0, 1");
       return b.toTestCase();
     });
@@ -227,7 +227,7 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       b.add("mtspr 815, 0");
       b.fillReg("0");
       b.add("mtspr 9, 0");
-      b.add("%s %s, %s, 0", instruction, b.getBOField(), b.anyCRBit().sample());
+      b.add("%s %s, %s, 0", instruction, b.getBOField(), b.sampleAnyCRBit());
       b.add("li 0, 1");
       return b.toTestCase();
     });

@@ -381,9 +381,9 @@ public abstract class AbstractTest {
   }
 
   /**
-   * Returns the path to the current test directory.
+   * Returns the path to the current test directory. This method works as singleton.
    */
-  public synchronized Path getTestDirectory() {
+  public synchronized Path getTestDirectoryThreadUnsafe() {
     if (testDirectory == null) {
       try {
         testDirectory = createDirectory();
@@ -394,8 +394,19 @@ public abstract class AbstractTest {
     return testDirectory;
   }
 
+  /**
+   * Returns the path to the current test directory.
+   */
+  public Path getFreshTestDirectory() {
+    try {
+      return createDirectory();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public GeneralConfiguration getConfiguration(boolean doDump) {
-    var directory = getTestDirectory();
+    var directory = getTestDirectoryThreadUnsafe();
     return new GeneralConfiguration(directory.toAbsolutePath(),
         doDump ? DumpMode.ALWAYS : DumpMode.NONE);
   }

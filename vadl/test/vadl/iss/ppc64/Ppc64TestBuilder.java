@@ -24,9 +24,12 @@ import java.util.List;
 import java.util.stream.IntStream;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
+import net.jqwik.api.Provide;
 import vadl.iss.CosimTestUtils;
 
 public class Ppc64TestBuilder {
+
+  private static final Object JQWIK_SAMPLE_LOCK = new Object();
 
   private static final int[] implementedSPRs = {
       0b00000_00001, // XER [  1]
@@ -82,51 +85,76 @@ public class Ppc64TestBuilder {
     return value;
   }
 
+  @Provide
   public Arbitrary<String> anyReg() {
     return Arbitraries.of(IntStream.range(0, 32).mapToObj(Integer::toString).toList());
   }
 
+  public String sampleAnyReg() {
+    return sample(anyReg());
+  }
+
+  @Provide
   public Arbitrary<String> anyRegExceptZero() {
     return Arbitraries.of(IntStream.range(1, 32).mapToObj(Integer::toString).toList());
   }
 
+  public String sampleAnyRegExceptZero() {
+    return sample(anyRegExceptZero());
+  }
+
+  @Provide
   public Arbitrary<String> anyImplementedSpecialReg() {
     return Arbitraries.of(Arrays.stream(implementedSPRs)
         .mapToObj(String::valueOf).toArray(String[]::new));
   }
 
+  public String sampleAnyImplementedSpecialReg() {
+    return sample(anyImplementedSpecialReg());
+  }
+
+  @Provide
   public Arbitrary<String> anyCRField() {
     return Arbitraries.integers().between(0, 7).map(String::valueOf);
   }
 
+  public String sampleAnyCRField() {
+    return sample(anyCRField());
+  }
+
+  @Provide
   public Arbitrary<String> anyCRBit() {
     return Arbitraries.integers().between(0, 31).map(String::valueOf);
   }
 
+  public String sampleAnyCRBit() {
+    return sample(anyCRBit());
+  }
+
   public BigInteger getImmS(int bits) {
     var b = BigInteger.ONE.shiftLeft(bits - 1);
-    return Arbitraries.bigIntegers()
+    return sample(Arbitraries.bigIntegers()
         .greaterOrEqual(b.negate())
         .lessOrEqual(b.subtract(BigInteger.ONE))
-        .sample();
+    );
   }
 
   public BigInteger getImmU(int bits) {
-    return Arbitraries.bigIntegers()
+    return sample(Arbitraries.bigIntegers()
         .greaterOrEqual(BigInteger.ZERO)
         .lessOrEqual(BigInteger.ONE.shiftLeft(bits).subtract(BigInteger.ONE))
-        .sample();
+    );
   }
 
   public BigInteger getImmUFrom(int bits, BigInteger min) {
-    return Arbitraries.bigIntegers()
+    return sample(Arbitraries.bigIntegers()
         .greaterOrEqual(min)
         .lessOrEqual(BigInteger.ONE.shiftLeft(bits).subtract(BigInteger.ONE))
-        .sample();
+    );
   }
 
   public BigInteger getSelectImmU(int bits) {
-    int bitPosition = Arbitraries.integers().between(0, bits - 1).sample();
+    int bitPosition = sample(Arbitraries.integers().between(0, bits - 1));
     return BigInteger.ONE.shiftLeft(bitPosition);
   }
 
@@ -142,7 +170,7 @@ public class Ppc64TestBuilder {
         "18", "26", "27", // 1a01t
         "20"              // 1z1zz
     };
-    return Arbitraries.of(validPatterns).sample();
+    return sample(Arbitraries.of(validPatterns));
   }
 
   public String getLimitedBOField() {
@@ -151,7 +179,7 @@ public class Ppc64TestBuilder {
         "12", "14", "15", // 011at
         "20"              // 1z1zz
     };
-    return Arbitraries.of(validPatterns).sample();
+    return sample(Arbitraries.of(validPatterns));
   }
 
   @FormatMethod
@@ -171,6 +199,16 @@ public class Ppc64TestBuilder {
   private static String getLoadedValueString(BigInteger value) {
     long signed64 = value.intValue();
     return "0x" + String.format("%016X", signed64) + " (" + signed64 + ")";
+  }
+
+  public String sampleAnyRegExcluding(String excludedReg) {
+    return sample(anyReg().filter(r -> !r.equals(excludedReg)));
+  }
+
+  private static <T> T sample(Arbitrary<T> arbitrary) {
+    synchronized (JQWIK_SAMPLE_LOCK) {
+      return arbitrary.sample();
+    }
   }
 
 }

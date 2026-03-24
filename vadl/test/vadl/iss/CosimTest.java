@@ -65,20 +65,21 @@ public abstract class CosimTest extends DockerExecutionTest {
    */
   protected DockerImage generateIssSimulator(String specPath) {
     var config = IssConfiguration.from(getConfiguration(false));
-    return generateSimulator(issImageCache, specPath, config);
+    return generateSimulator(specPath, config);
   }
 
   /**
    * This will generate the simulator image if it is not already contained in the provided
    * cache.
    */
-  private DockerImage generateSimulator(Map<String, DockerImage> cache,
-                                        String specPath,
+  private DockerImage generateSimulator(String specPath,
                                         IssConfiguration configuration) {
-    return cache.computeIfAbsent(specPath, (path) -> {
+    return issImageCache.computeIfAbsent(specPath, (path) -> {
+      log.info("Image was not cached for {}", specPath);
       try {
         // run iss generation
         setupPassManagerAndRunSpec(path, PassOrders.iss(configuration));
+        log.info("Generated for {}", specPath);
 
         // find iss output path
         var issOutputPath = Path.of(configuration.outputPath() + "/iss").toAbsolutePath();

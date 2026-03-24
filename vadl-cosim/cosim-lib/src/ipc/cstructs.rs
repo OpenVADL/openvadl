@@ -547,7 +547,7 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
         let cref = &self.count as *const _;
         let waitres = self
             .rb_mutex
-            .timedwait(Duration::from_secs(1), || unsafe { *wref || *cref > 0usize });
+            .timedwait(Duration::from_secs(30), || unsafe { *wref || *cref > 0usize });
 
         match waitres {
             Ok(res) => match res {

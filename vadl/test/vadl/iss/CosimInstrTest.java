@@ -70,7 +70,7 @@ public abstract class CosimInstrTest extends CosimTest {
 
     // resolve file that contains all test specifications.
     // it is a yaml file that gets mapped to `/work/test-suite.yaml` of the container.
-    var testDirectory = getTestDirectory();
+    var testDirectory = getFreshTestDirectory();
     var testSuiteYaml = testDirectory.resolve("test-suite.yaml").toFile();
     var resultDirectory = testDirectory.resolve("results").toAbsolutePath();
     // write the test cases to this yaml file
