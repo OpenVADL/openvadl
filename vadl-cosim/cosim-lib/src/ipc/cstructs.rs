@@ -545,32 +545,28 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
         // behind a mutex.
         let wref = &self.write_end as *const _;
         let cref = &self.count as *const _;
-        let waitres = self
-            .rb_mutex
-            .timedwait(Duration::from_secs(1), || unsafe { *wref || *cref > 0usize });
+        let waitres = self.rb_mutex.timedwait(Duration::from_secs(1), || unsafe {
+            *wref || *cref > 0usize
+        })?;
 
         match waitres {
-            Ok(res) => match res {
-                crate::ipc::sem::TimedWaitState::Timeout => {
-                    bail!(
-                        "Failed to wait for a response from a qemu client. Note that a timeout should *not* mean that the client crashed - it is more likely that the client is in an endless loop or that the cosimulator has a bug. If the test failure is noat repeatable, then it is most likely a cosimulator bug! Please refer to the logs for more information."
-                    );
+            crate::ipc::sem::TimedWaitState::Timeout => {
+                bail!(
+                    "Failed to wait for a response from a qemu client. Note that a timeout should *not* mean that the client crashed - it is more likely that the client is in an endless loop or that the cosimulator has a bug. If the test failure is not repeatable, then it is most likely a cosimulator bug! Please refer to the logs for more information."
+                );
+            }
+            crate::ipc::sem::TimedWaitState::Success => {
+                // If we successfully got a "response" from the writer, but the count is
+                // still zero, then that means that the response was a write-end message.
+                // Meaning all data was already read
+                if self.count == 0 {
+                    self.rb_mutex.unlock()?;
+                    return Ok(None);
                 }
-                crate::ipc::sem::TimedWaitState::Success => {
-                    // If we successfully got a "response" from the writer, but the count is
-                    // still zero, then that means that the response was a write-end message.
-                    // Meaning all data was already read
-                    if self.count == 0 {
-                        self.rb_mutex.unlock()?;
-                        return Ok(None);
-                    }
-                }
-            },
-            Err(err) => {
-                return Err(err);
             }
         }
 
+        self.rb_mutex.unlock()?;
         let idx = self.ring_idx(self.read_idx);
         let elem = &self.data[idx];
 
@@ -594,6 +590,7 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
 
     pub fn end_read(&mut self) -> Result<()> {
         self.read_idx += 1;
+        self.rb_mutex.lock()?;
         self.count -= 1;
         self.rb_mutex.unlock()?;
         self.rb_mutex.signal()?;
