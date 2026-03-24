@@ -62,6 +62,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
   private static Network testNetwork;
 
   private static final int BUILDKIT_DAEMON_PORT = 1334;
+  private static final boolean isCi = Boolean.parseBoolean(System.getenv("isCI"));
   private static final GenericContainer<?> buildkitDaemon =
       new GenericContainer(DockerImageName.parse("moby/buildkit:latest"))
           .withPrivilegedMode(true)
@@ -73,12 +74,23 @@ public abstract class DockerExecutionTest extends AbstractTest {
   public static void beforeAll() {
     testNetwork = Network.newNetwork();
     logger.info("Created test network with id {}", testNetwork.getId());
-    buildkitDaemon.start();
+    if (!isCi) {
+      buildkitDaemon.start();
+    }
   }
 
   @AfterAll
   public static void afterAll() {
     testNetwork.close();
+  }
+
+  /**
+   * Resolve the BuildKit daemon port for the current environment.
+   * Local runs use the random Testcontainers port mapping, while CI connects to the shared daemon
+   * on its fixed host port.
+   */
+  private static int getBuildKitDaemonPort() {
+    return isCi ? BUILDKIT_DAEMON_PORT : buildkitDaemon.getMappedPort(BUILDKIT_DAEMON_PORT);
   }
 
   /**
@@ -186,7 +198,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
       String hostOutputPath,
       String containerResultPath,
       @Nullable String cmd) {
-    int mappedPort = buildkitDaemon.getMappedPort(BUILDKIT_DAEMON_PORT);
+    int mappedPort = getBuildKitDaemonPort();
     runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(
         image.getDockerImageName(mappedPort),
         copyMappings, hostOutputPath, containerResultPath, cmd);
@@ -235,7 +247,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
       List<Pair<Path, String>> copyMappings,
       Map<String, String> environmentMappings,
       String cmd) {
-    var mappedPort = buildkitDaemon.getMappedPort(BUILDKIT_DAEMON_PORT);
+    var mappedPort = getBuildKitDaemonPort();
     runContainerAndCopyInputIntoContainerAndCopyFromContainerToHost(image.getDockerImageName(mappedPort),
         copyMappings,
         environmentMappings,
@@ -375,7 +387,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
                               Function<GenericContainer<?>, GenericContainer<?>> containerModifier,
                               @Nullable Consumer<GenericContainer<?>> postExecution
   ) {
-    var mapedPort = buildkitDaemon.getMappedPort(BUILDKIT_DAEMON_PORT);
+    var mapedPort = getBuildKitDaemonPort();
     runContainer(image.getDockerImageName(mapedPort), containerModifier, postExecution);
   }
 
