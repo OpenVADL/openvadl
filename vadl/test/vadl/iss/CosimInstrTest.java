@@ -21,19 +21,17 @@ import static vadl.iss.CosimTestUtils.writeTestSuiteConfigYaml;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.DynamicTest;
 import org.testcontainers.utility.MountableFile;
 import vadl.DockerImage;
 
 public abstract class CosimInstrTest extends CosimTest {
-
   public abstract int getTestPerInstruction();
 
   public abstract String getVadlSpec();
@@ -41,28 +39,32 @@ public abstract class CosimInstrTest extends CosimTest {
   public abstract String getCosimConfigFileName();
 
   @SafeVarargs
-  protected final Stream<DynamicTest> runTestsWith(
+  protected final void runTestsWith(
       Function<Integer, CosimTestUtils.TestCase>... generators) throws IOException {
-    return runTestsWith(getTestPerInstruction(), List.of(generators));
+    runTestsWith(getTestPerInstruction(), List.of(generators));
   }
 
-  protected final Stream<DynamicTest> runTestsWith(
+  protected final void runTestsWith(
       int runs,
       List<Function<Integer, CosimTestUtils.TestCase>> generators) throws IOException {
+    var testCases = buildTestCases(runs, generators);
+    var image = generateIssSimulator(getVadlSpec());
+    runQemuInstrTests(image, testCases);
+  }
+
+  protected final List<CosimTestUtils.TestCase> buildTestCases(
+      int runs,
+      List<Function<Integer, CosimTestUtils.TestCase>> generators) {
     if (generators.isEmpty()) {
       throw new IllegalArgumentException("No generators specified");
     }
-    var image = generateIssSimulator(getVadlSpec());
-    var testCases = generators.stream()
-        .flatMap(genFunc -> IntStream.range(0, runs)
-            .mapToObj(genFunc::apply)
-        )
+    return generators.stream()
+        .flatMap(genFunc -> IntStream.range(0, runs).mapToObj(genFunc::apply))
         .toList();
-    return runQemuInstrTests(image, testCases);
   }
 
-  protected Stream<DynamicTest> runQemuInstrTests(DockerImage image,
-                                                  Collection<CosimTestUtils.TestCase> testCases)
+  protected void runQemuInstrTests(DockerImage image,
+                                   Collection<CosimTestUtils.TestCase> testCases)
       throws IOException {
 
     var testConfig =
@@ -95,21 +97,29 @@ public abstract class CosimInstrTest extends CosimTest {
       Assertions.fail("Failed to load test results.", e);
     }
 
-    return testCases.stream()
-        .map(e -> DynamicTest.dynamicTest(e.id(),
-            () -> {
-              if (!resultFiles.containsKey(e.id())) {
-                Assertions.fail("Result file is missing for test: " + e.id() + "asm:\n" + e.asmCore());
-              }
-              var file = resultFiles.get(e.id());
-              var parsed = CosimTestUtils.yamlToTestResult(file);
-              if (!parsed.passed()) {
-                var sb = new StringBuilder();
-                appendFailureDetails(sb, e, parsed);
-                Assertions.fail(sb.toString());
-              }
-            }
-        ));
+    var failures = testCases.stream()
+        .sorted(Comparator.comparing(CosimTestUtils.TestCase::id))
+        .map(testCase -> validateResult(resultFiles, testCase))
+        .filter(failure -> failure != null && !failure.isBlank())
+        .toList();
+
+    if (!failures.isEmpty()) {
+      Assertions.fail(String.join("\n\n", failures));
+    }
+  }
+
+  private String validateResult(Map<String, File> resultFiles, CosimTestUtils.TestCase testCase) {
+    if (!resultFiles.containsKey(testCase.id())) {
+      return "Result file is missing for test: " + testCase.id();
+    }
+    var file = resultFiles.get(testCase.id());
+    var parsed = CosimTestUtils.yamlToTestResult(file);
+    if (!parsed.passed()) {
+      var sb = new StringBuilder();
+      appendFailureDetails(sb, testCase, parsed);
+      return sb.toString();
+    }
+    return null;
   }
 
   private void appendFailureDetails(StringBuilder sb,

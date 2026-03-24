@@ -18,12 +18,10 @@ package vadl.iss.ppc64;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.stream.Stream;
-import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.TestFactory;
-import org.junit.jupiter.api.TestMethodOrder;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import vadl.iss.CosimTestUtils;
 
 /* Tests ppc64.vadl instructions against the QEMU ppc64 simulator.
  * Covers all instructions not tested in CosimPpc64InstrTest.java.
@@ -31,13 +29,44 @@ import org.junit.jupiter.api.TestMethodOrder;
  * not tested in all available modes.
  */
 
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
 
-  @TestFactory
-  @Order(1)
-  Stream<DynamicTest> mtspr() throws IOException {
-    return runTests3264With(id -> {
+  @Test
+  void instructions() throws IOException {
+    runQemuInstrTests(
+        generateIssSimulator(getVadlSpec()),
+        buildInstructionTests());
+  }
+
+  private List<CosimTestUtils.TestCase> buildInstructionTests() throws IOException {
+    return concatInstructionTests(List.of(
+        this::mtspr,
+        this::mfspr,
+        this::mtmsr,
+        this::mfmsr,
+        () -> testBranchInstruction_LA("b", "B"),
+        () -> testBranchConditionalInstruction_LA("bc", "BC"),
+        () -> testBranchConditionalToCTRInstruction_L("bcctr", "BCCTR"),
+        () -> testBranchConditionalToLRInstruction_L("bclr", "BCLR"),
+        () -> testBranchConditionalToTARInstruction_L("bctar", "BCTAR")));
+  }
+
+  private List<CosimTestUtils.TestCase> concatInstructionTests(List<InstructionTestFactory> testFactories)
+      throws IOException {
+    List<CosimTestUtils.TestCase> tests = new ArrayList<>();
+    for (var testFactory : testFactories) {
+      tests.addAll(testFactory.create());
+    }
+    return tests;
+  }
+
+  @FunctionalInterface
+  private interface InstructionTestFactory {
+    List<CosimTestUtils.TestCase> create() throws IOException;
+  }
+
+  private List<CosimTestUtils.TestCase> mtspr() throws IOException {
+    return buildTests3264With(id -> {
       var b = getBuilder("MTSPR", id);
       var regSrc = b.anyReg().sample();
       b.fillReg(regSrc);
@@ -46,10 +75,8 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     });
   }
 
-  @TestFactory
-  @Order(2)
-  Stream<DynamicTest> mfspr() throws IOException {
-    return runTests3264With(id -> {
+  private List<CosimTestUtils.TestCase> mfspr() throws IOException {
+    return buildTests3264With(id -> {
       var b = getBuilder("MFSPR", id);
       var regSrc = b.anyReg().sample();
       var spr = b.anyImplementedSpecialReg().sample();
@@ -60,10 +87,8 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     });
   }
 
-  @TestFactory
-  @Order(3)
-  Stream<DynamicTest> mtmsr() throws IOException {
-    return runTests3264With(id -> {
+  private List<CosimTestUtils.TestCase> mtmsr() throws IOException {
+    return buildTests3264With(id -> {
       var b = getBuilder("MTMSR", id);
       var regSrc = b.anyReg().sample();
       var val = b.getImmS(32)
@@ -77,10 +102,8 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     });
   }
 
-  @TestFactory
-  @Order(4)
-  Stream<DynamicTest> mfmsr() throws IOException {
-    return runTests3264With(id -> {
+  private List<CosimTestUtils.TestCase> mfmsr() throws IOException {
+    return buildTests3264With(id -> {
       var b = getBuilder("MFMSR", id);
       var regSrc = b.anyReg().sample();
       var val = b.getImmS(32)
@@ -95,79 +118,63 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     });
   }
 
-  @SuppressWarnings("MethodName")
-  @TestFactory
-  @Order(5)
-  Stream<DynamicTest> b() throws IOException {
-    return testBranchInstruction_LA("b", "B");
-  }
-
-  @TestFactory
-  @Order(6)
-  Stream<DynamicTest> bc() throws IOException {
-    return testBranchConditionalInstruction_LA("bc", "BC");
-  }
-
-  @TestFactory
-  @Order(7)
-  Stream<DynamicTest> bcctr() throws IOException {
-    return testBranchConditionalToCTRInstruction_L("bcctr", "BCCTR");
-  }
-
-  @TestFactory
-  @Order(8)
-  Stream<DynamicTest> bclr() throws IOException {
-    return testBranchConditionalToLRInstruction_L("bclr", "BCLR");
-  }
-
-  @TestFactory
-  @Order(9)
-  Stream<DynamicTest> bctar() throws IOException {
-    return testBranchConditionalToTARInstruction_L("bctar", "BCTAR");
-  }
-
-  private Stream<DynamicTest> testBranchInstruction_LA(String instruction, String name)
+  private List<CosimTestUtils.TestCase> testBranchInstruction_LA(String instruction, String name)
       throws IOException {
-    var s1 = testBranchInstruction(instruction, name);
-    var s2 = testBranchInstruction(instruction + "a", name + "A");
-    var s3 = testBranchInstruction(instruction + "l", name + "L");
-    var s4 = testBranchInstruction(instruction + "la", name + "LA");
-    return Stream.concat(Stream.concat(s1, s2), Stream.concat(s3, s4));
+    return List.of(
+        testBranchInstruction(instruction, name),
+        testBranchInstruction(instruction + "a", name + "A"),
+        testBranchInstruction(instruction + "l", name + "L"),
+        testBranchInstruction(instruction + "la", name + "LA"))
+        .stream()
+        .flatMap(List::stream)
+        .toList();
   }
 
-  private Stream<DynamicTest> testBranchConditionalInstruction_LA(String instruction, String name)
+  private List<CosimTestUtils.TestCase> testBranchConditionalInstruction_LA(String instruction, String name)
       throws IOException {
-    var s1 = testBranchConditionalInstruction(instruction, name);
-    var s2 = testBranchConditionalInstruction(instruction + "a", name + "A");
-    var s3 = testBranchConditionalInstruction(instruction + "l", name + "L");
-    var s4 = testBranchConditionalInstruction(instruction + "la", name + "LA");
-    return Stream.concat(Stream.concat(s1, s2), Stream.concat(s3, s4));
+    return List.of(
+        testBranchConditionalInstruction(instruction, name),
+        testBranchConditionalInstruction(instruction + "a", name + "A"),
+        testBranchConditionalInstruction(instruction + "l", name + "L"),
+        testBranchConditionalInstruction(instruction + "la", name + "LA"))
+        .stream()
+        .flatMap(List::stream)
+        .toList();
   }
 
-  private Stream<DynamicTest> testBranchConditionalToCTRInstruction_L(String instruction, String name)
+  private List<CosimTestUtils.TestCase> testBranchConditionalToCTRInstruction_L(String instruction, String name)
       throws IOException {
-    var s1 = testBranchConditionalToCTRInstruction(instruction, name);
-    var s2 = testBranchConditionalToCTRInstruction(instruction + "l", name + "L");
-    return Stream.concat(s1, s2);
+    return List.of(
+        testBranchConditionalToCTRInstruction(instruction, name),
+        testBranchConditionalToCTRInstruction(instruction + "l", name + "L"))
+        .stream()
+        .flatMap(List::stream)
+        .toList();
   }
 
-  private Stream<DynamicTest> testBranchConditionalToLRInstruction_L(String instruction, String name)
+  private List<CosimTestUtils.TestCase> testBranchConditionalToLRInstruction_L(String instruction, String name)
       throws IOException {
-    var s1 = testBranchConditionalToLRInstruction(instruction, name);
-    var s2 = testBranchConditionalToLRInstruction(instruction + "l", name + "L");
-    return Stream.concat(s1, s2);
+    return List.of(
+        testBranchConditionalToLRInstruction(instruction, name),
+        testBranchConditionalToLRInstruction(instruction + "l", name + "L"))
+        .stream()
+        .flatMap(List::stream)
+        .toList();
   }
 
-  private Stream<DynamicTest> testBranchConditionalToTARInstruction_L(String instruction, String name)
+  private List<CosimTestUtils.TestCase> testBranchConditionalToTARInstruction_L(String instruction, String name)
       throws IOException {
-    var s1 = testBranchConditionalToTARInstruction(instruction, name);
-    var s2 = testBranchConditionalToTARInstruction(instruction + "l", name + "L");
-    return Stream.concat(s1, s2);
+    return List.of(
+        testBranchConditionalToTARInstruction(instruction, name),
+        testBranchConditionalToTARInstruction(instruction + "l", name + "L"))
+        .stream()
+        .flatMap(List::stream)
+        .toList();
   }
 
-  private Stream<DynamicTest> testBranchInstruction(String instruction, String name)
+  private List<CosimTestUtils.TestCase> testBranchInstruction(String instruction, String name)
       throws IOException {
-    return runTests3264With(id -> {
+    return buildTests3264With(id -> {
       var b = getBuilder(name, id);
       var target = instruction.contains("a") ? "252" : "-4";
       b.add("%s %s", instruction, target);
@@ -176,9 +183,9 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     });
   }
 
-  private Stream<DynamicTest> testBranchConditionalInstruction(String instruction, String name)
+  private List<CosimTestUtils.TestCase> testBranchConditionalInstruction(String instruction, String name)
       throws IOException {
-    return runTests3264With(id -> {
+    return buildTests3264With(id -> {
       var b = getBuilder(name, id);
       var target = instruction.contains("a") ? "252" : "-28";
       b.fillCR();
@@ -190,9 +197,9 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     });
   }
 
-  private Stream<DynamicTest> testBranchConditionalToCTRInstruction(String instruction, String name)
+  private List<CosimTestUtils.TestCase> testBranchConditionalToCTRInstruction(String instruction, String name)
       throws IOException {
-    return runTests3264With(id -> {
+    return buildTests3264With(id -> {
       var b = getBuilder(name, id);
       b.fillCR();
       b.fillReg("0", BigInteger.valueOf(252));
@@ -203,9 +210,9 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     });
   }
 
-  private Stream<DynamicTest> testBranchConditionalToLRInstruction(String instruction, String name)
+  private List<CosimTestUtils.TestCase> testBranchConditionalToLRInstruction(String instruction, String name)
       throws IOException {
-    return runTests3264With(id -> {
+    return buildTests3264With(id -> {
       var b = getBuilder(name, id);
       b.fillCR();
       b.fillReg("0", BigInteger.valueOf(252));
@@ -218,9 +225,9 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     });
   }
 
-  private Stream<DynamicTest> testBranchConditionalToTARInstruction(String instruction, String name)
+  private List<CosimTestUtils.TestCase> testBranchConditionalToTARInstruction(String instruction, String name)
       throws IOException {
-    return runTests3264With(id -> {
+    return buildTests3264With(id -> {
       var b = getBuilder(name, id);
       b.fillCR();
       b.fillReg("0", BigInteger.valueOf(252));
