@@ -79,7 +79,8 @@ def main(testsuite_path: Path):
         for future in as_completed(futures):
             future.result()
             completed += 1
-            report_progress(completed, total_tests)
+            if completed % 100 == 0:
+              report_progress(completed, total_tests)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
