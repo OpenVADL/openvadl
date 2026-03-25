@@ -14,24 +14,18 @@ fi
 cd /rtl
 
 # Replace module name in scripts
-sed -i "s/TOP_MODULE/${TOP_MODULE}/g" /scripts/bench/yosys/bench_core_asic_cmos.ys
 sed -i "s/TOP_MODULE/${TOP_MODULE}/g" /scripts/bench/yosys/bench_core_asic_sky130.ys
-sed -i "s/TOP_MODULE/${TOP_MODULE}/g" /scripts/bench/yosys/bench_core_fpga_ice40.ys
-
-sed -i "s/TOP_MODULE/${TOP_MODULE}/g" /scripts/bench/opensta/time_core.tcl
+sed -i "s/TOP_MODULE/${TOP_MODULE}/g" /scripts/bench/openroad/bench_core_asic_sky130.tcl
 
 # Translate Chisel to Verilog, writes the result to build/*
 sbt "testOnly CoreEmit -- -z emit"
 
-# Synthesize against Cmos cell library
-yosys -s /scripts/bench/yosys/bench_core_asic_cmos.ys | tee build/core_asic_cmos.log
-
 # Synthesize against SkyWater 130nm cell library
-yosys -s /scripts/bench/yosys/bench_core_asic_sky130.ys | tee build/core_asic_sky130.log
+yosys -s /scripts/bench/yosys/bench_core_asic_sky130.ys | tee build/yosys_asic_sky130.log
 
-# Synthesize against ice40 FPGA
-yosys -s /scripts/bench/yosys/bench_core_fpga_ice40.ys | tee build/core_fpga_ice40.log
+# Placement for more realistic area & timing estimates
+openroad /scripts/bench/openroad/bench_core_asic_sky130.tcl | tee build/openroad_asic_sky130.log
 
-# Timing analysis with OpenSTA
-sta < /scripts/bench/opensta/time_core.tcl | tee build/time_core.log
-
+# Reset module name in scripts
+sed -i "s/${TOP_MODULE}/TOP_MODULE/g" /scripts/bench/yosys/bench_core_asic_sky130.ys
+sed -i "s/${TOP_MODULE}/TOP_MODULE/g" /scripts/bench/openroad/bench_core_asic_sky130.tcl

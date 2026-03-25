@@ -59,6 +59,41 @@ ENV PATH=/opt/riscv/bin:$PATH
 COPY --from=firtool /opt/circt /opt/circt
 ENV CHISEL_FIRTOOL_PATH=/opt/circt
 
+# Build OpenROAD from source
+WORKDIR /opt
+RUN git clone --recursive https://github.com/The-OpenROAD-Project/OpenROAD.git
+
+WORKDIR /opt/OpenROAD
+
+# Install OpenROAD dependencies locally where possible
+RUN ./etc/DependencyInstaller.sh -base
+RUN ./etc/DependencyInstaller.sh -all
+
+# Build OpenROAD (default is RELEASE)
+RUN ./etc/Build.sh #-threads=1
+
+# Expose the binary
+RUN ln -s /opt/OpenROAD/build/bin/openroad /usr/local/bin/openroad
+
+# TODO: Fix PDK build (& magic)
+
+# Build magic
+#WORKDIR /opt
+#RUN apt install -y tk8.6-dev
+#RUN git clone https://github.com/RTimothyEdwards/magic.git
+#WORKDIR /opt/magic
+#RUN ./configure
+#RUN make
+#RUN make install
+
+# Build Skywater 130 PDK
+#WORKDIR /opt
+#RUN git clone https://github.com/RTimothyEdwards/open_pdks.git
+#WORKDIR /opt/open_pdks
+#RUN ./configure --enable-sky130-pdk --with-sky130-variants=A --prefix=$HOME/pdk
+#RUN make
+#RUN make install
+
 # ####
 # Check out & build RISC-V test suite at /riscv-tests
 # ####
