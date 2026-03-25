@@ -111,32 +111,38 @@ public abstract class CosimTest extends DockerExecutionTest {
     var refTarget = "," + withUpstreamTarget();
 
     return new DockerImage()
-        .withDockerfile(new StringSubstitutor(Map.of("qemu", TestConstants.TEST_BASE_IMAGE,
+        .withDockerfile(new StringSubstitutor(Map.of(
+            "qemu", TestConstants.TEST_BASE_IMAGE,
             "soft", softmmuTarget + refTarget,
-            "qemu-bin", qemuBin)).replace("""
-            FROM ${qemu}
+            "qemu-bin", qemuBin)
+        ).replace("""
+            FROM ${qemu} as builder
             COPY iss /qemu
             WORKDIR /qemu/build
             LABEL key=VADL_TEST_CONTAINER
-            RUN ../configure --cc='sccache gcc' --target-list=${soft}
+            RUN ../configure --prefix=/opt/qemu --cc='sccache gcc' --target-list=${soft}
             RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && make -j$(nproc) && sccache -s
+            RUN make install DESTDIR=/qemu-install
             RUN ${qemu-bin} --version
             WORKDIR /work
             
             COPY vadl-cosim /work/vadl-cosim
             WORKDIR /work/vadl-cosim
             ENV RUSTC_WRAPPER "sccache"
-            # use --frozen to ensure that cargo does not need to download any new dependencies
-            RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && cargo build --release -p vadl-cosim-broker --frozen && sccache -s
+            # use --locked to ensure that cargo does not need to download unnecessary dependencies
+            RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && cargo build --release -p vadl-cosim-broker --locked && sccache -s
             
-            RUN mkdir -p /opt/cosim && cp ./target/release/vadl-cosim-broker /opt/cosim/
-            ENV PATH "/opt/cosim:$PATH"
-            
+            FROM ${qemu} AS runtime
+            LABEL key=VADL_TEST_CONTAINER
             WORKDIR /work
+            COPY --from=builder /qemu-install/ /
+            COPY --from=builder /qemu/build/contrib/plugins/libcosimulation.so /opt/qemu/lib/qemu/libcosimulation.so
+            COPY --from=builder /qemu/build/contrib/plugins/libstoptrigger.so /opt/qemu/lib/qemu/libstoptrigger.so
+            COPY --from=builder /work/vadl-cosim/target/release/vadl-cosim-broker /opt/cosim/
+            ENV PATH "/opt/cosim:$PATH"
             
             COPY cosim_configs /cosim_configs
             COPY cosim_scripts /cosim_scripts
-            
             CMD python3 /cosim_scripts/main.py test-suite.yaml
             """))
         // make iss sources available to image builder

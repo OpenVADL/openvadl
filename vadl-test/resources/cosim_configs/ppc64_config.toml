@@ -18,7 +18,7 @@
 [qemu]
 
 # The path to the compiled cosimulation qemu-plugin
-plugin="/qemu/build/contrib/plugins/libcosimulation.so"
+plugin="/opt/qemu/lib/qemu/libcosimulation.so"
 
 # Whether to ignore registers that are not defined by a [qemu.gdb_reg_map] mapping
 # This option is useful to test the current implementation of a simulator which might not yet have all registers implemented against another (complete) implementation
@@ -40,7 +40,7 @@ ignore_registers = [ "x3" ]
 name = "VADL"
 
 # The executable of the ISS
-exec = "/qemu/build/qemu-system-ppc64sfs"
+exec = "/opt/qemu/bin/qemu-system-ppc64sfs"
 
 # The path to the compiled file to use for testing
 test_exec="./test-execs/test_vadl"
@@ -51,7 +51,7 @@ pass_test_exec_to = "bios"
 # Applies additional arguments to the ISS-executable, e.g. `qemu-system-riscv64 -nographic -d plugin`
 additional_args = [
     "-plugin",
-    "/qemu/build/contrib/plugins/libstoptrigger.so,addr=0xFC",
+    "/opt/qemu/lib/qemu/libstoptrigger.so,addr=0xFC",
     "-nographic",
     "-d", "plugin"
 ]
@@ -86,7 +86,7 @@ remote_target = "/tmp/gdb-cosim-VADL"
 [[qemu.clients]]
 name = "UPSTREAM"
 
-exec = "/qemu/build/qemu-system-ppc64"
+exec = "/opt/qemu/bin/qemu-system-ppc64"
 
 test_exec="./test-execs/test_upstream"
 
@@ -94,7 +94,7 @@ pass_test_exec_to = "bios"
 
 additional_args = [
     "-plugin",
-    "/qemu/build/contrib/plugins/libstoptrigger.so,addr=0xFC",
+    "/opt/qemu/lib/qemu/libstoptrigger.so,addr=0xFC",
     "-nographic",
     "-M", "pseries",
     "-cpu", "POWER10",
