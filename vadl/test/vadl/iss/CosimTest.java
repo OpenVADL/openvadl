@@ -130,7 +130,7 @@ public abstract class CosimTest extends DockerExecutionTest {
             WORKDIR /work/vadl-cosim
             ENV RUSTC_WRAPPER "sccache"
             # use --frozen to ensure that cargo does not need to download any new dependencies
-            RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && cargo build --release -p vadl-cosim-broker --frozen && sccache -s
+            RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && cargo build --release -p vadl-cosim-broker --locked && sccache -s
             
             RUN mkdir -p /opt/cosim && cp ./target/release/vadl-cosim-broker /opt/cosim/
             ENV PATH "/opt/cosim:$PATH"
