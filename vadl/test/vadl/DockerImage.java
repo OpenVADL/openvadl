@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -57,7 +58,7 @@ public final class DockerImage {
   }
 
   private final String imageName;
-  private final Map<String, Path> filesFromPath = new LinkedHashMap<>();
+  private final Map<String, PathCopySpec> filesFromPath = new LinkedHashMap<>();
   private final Map<String, String> filesFromClasspath = new LinkedHashMap<>();
   private final Map<String, String> buildArgs = new LinkedHashMap<>();
 
@@ -95,7 +96,20 @@ public final class DockerImage {
   }
 
   public DockerImage withFileFromPath(String path, Path source) {
-    filesFromPath.put(normalizeContextPath(path), source.toAbsolutePath().normalize());
+    filesFromPath.put(
+        normalizeContextPath(path),
+        new PathCopySpec(source.toAbsolutePath().normalize(), List.of()));
+    return this;
+  }
+
+  public DockerImage withFileFromPathExcluding(String path,
+                                               Path source,
+                                               List<String> excludedRelativePaths) {
+    filesFromPath.put(
+        normalizeContextPath(path),
+        new PathCopySpec(
+            source.toAbsolutePath().normalize(),
+            excludedRelativePaths.stream().map(DockerImage::normalizeContextPath).toList()));
     return this;
   }
 
@@ -170,9 +184,11 @@ public final class DockerImage {
     }
   }
 
+  private record PathCopySpec(Path source, List<String> excludedPaths) {}
+
   private void stageSupplementalFiles(Path contextDir) throws IOException {
     for (var entry : filesFromPath.entrySet()) {
-      copyPath(entry.getValue(), contextDir.resolve(entry.getKey()));
+      copyPath(entry.getValue().source(), contextDir.resolve(entry.getKey()), entry.getValue().excludedPaths());
     }
     for (var entry : filesFromClasspath.entrySet()) {
       copyClasspathResource(entry.getValue(), contextDir.resolve(entry.getKey()));
@@ -180,8 +196,13 @@ public final class DockerImage {
   }
 
   private static void copyPath(Path source, Path destination) throws IOException {
+    copyPath(source, destination, List.of());
+  }
+
+  private static void copyPath(Path source, Path destination, List<String> excludedPaths)
+      throws IOException {
     if (Files.isDirectory(source)) {
-      FileUtils.copyDirectory(source.toFile(), destination.toFile());
+      copyDirectory(source, destination, excludedPaths);
       return;
     }
 
@@ -189,6 +210,30 @@ public final class DockerImage {
       Files.createDirectories(destination.getParent());
     }
     Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+  }
+
+  private static void copyDirectory(Path source, Path destination, List<String> excludedPaths)
+      throws IOException {
+    Files.createDirectories(destination);
+    try (var stream = Files.list(source)) {
+      for (var child : stream.toList()) {
+        Path relativeChild = source.relativize(child);
+        if (isExcluded(relativeChild, excludedPaths)) {
+          continue;
+        }
+        copyPath(child, destination.resolve(child.getFileName()), excludedPaths);
+      }
+    }
+  }
+
+  private static boolean isExcluded(Path relativePath, List<String> excludedPaths) {
+    String normalized = normalizeContextPath(relativePath.toString());
+    for (String excludedPath : excludedPaths) {
+      if (normalized.equals(excludedPath) || normalized.startsWith(excludedPath + "/")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void copyClasspathResource(String resourcePath, Path destination)

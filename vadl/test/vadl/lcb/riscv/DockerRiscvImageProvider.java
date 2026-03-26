@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -32,6 +32,7 @@ import java.time.Duration;
 import java.util.HashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.DockerBuildKitDaemon;
 
 /**
  * A singleton implementation to keep the reference to the generated docker image to avoid
@@ -92,9 +93,11 @@ public class DockerRiscvImageProvider {
     var image = images.contains(imageKey);
     if (!image) {
 
+      var daemon = DockerBuildKitDaemon.getRunningInstance();
+      var port = daemon.getMappedPort(DockerBuildKitDaemon.BUILDKIT_DAEMON_PORT);
       try (var client = new BuildkitClient(
-          BuildkitConnectionConfig.of("tcp://localhost:1234").withTimeout(
-              Duration.ofHours(2)))) {
+          BuildkitConnectionConfig.of("tcp://localhost:" + port)
+              .withTimeout(Duration.ofHours(2)))) {
         Path dockerfile = Path.of(pathDockerFile);
         var requestBuilder = DockerfileBuildRequest.builder(
                 dockerfile.getParent(),

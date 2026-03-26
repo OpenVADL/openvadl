@@ -18,6 +18,7 @@ package vadl;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static vadl.DockerBuildKitDaemon.BUILDKIT_DAEMON_PORT;
 
 import com.github.dockerjava.api.DockerClient;
 import com.google.errorprone.annotations.concurrent.LazyInit;
@@ -45,11 +46,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.Transferable;
-import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 import org.testcontainers.utility.ThrowingFunction;
 import vadl.utils.Pair;
@@ -60,20 +61,13 @@ public abstract class DockerExecutionTest extends AbstractTest {
 
   @LazyInit
   private static Network testNetwork;
-
-  private static final int BUILDKIT_DAEMON_PORT = 1334;
-  private static final GenericContainer<?> buildkitDaemon =
-      new GenericContainer(DockerImageName.parse("moby/buildkit:latest"))
-          .withPrivilegedMode(true)
-          .withExposedPorts(BUILDKIT_DAEMON_PORT)
-          .withReuse(true)
-          .withCommand("--addr tcp://0.0.0.0:" + BUILDKIT_DAEMON_PORT);
+  private static DockerBuildKitDaemon buildkitDaemon;
 
   @BeforeAll
   public static void beforeAll() {
     testNetwork = Network.newNetwork();
     logger.info("Created test network with id {}", testNetwork.getId());
-    buildkitDaemon.start();
+    buildkitDaemon = DockerBuildKitDaemon.getRunningInstance();
   }
 
   @AfterAll
@@ -236,7 +230,8 @@ public abstract class DockerExecutionTest extends AbstractTest {
       Map<String, String> environmentMappings,
       String cmd) {
     var mappedPort = buildkitDaemon.getMappedPort(BUILDKIT_DAEMON_PORT);
-    runContainerAndCopyInputIntoContainerAndCopyFromContainerToHost(image.getDockerImageName(mappedPort),
+    runContainerAndCopyInputIntoContainerAndCopyFromContainerToHost(
+        image.getDockerImageName(mappedPort),
         copyMappings,
         environmentMappings,
         Collections.emptyList(),
@@ -481,5 +476,20 @@ public abstract class DockerExecutionTest extends AbstractTest {
       }
       throw new RuntimeException(e);
     }
+  }
+
+  private static boolean startBuildkitDaemon() {
+    var client = DockerClientFactory.instance().client();
+
+    if (client == null) {
+      throw new IllegalStateException("Docker client is not available");
+    }
+
+    var containers = client.listContainersCmd().exec();
+    for (var container : containers) {
+
+    }
+
+    return true;
   }
 }

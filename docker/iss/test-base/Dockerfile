@@ -39,15 +39,8 @@ RUN mkdir build
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH=/root/.cargo/bin:$PATH
 
-# download cosim dependencies
-COPY vadl-cosim /work/vadl-cosim
-WORKDIR /work/vadl-cosim
-RUN cargo fetch 
-
-WORKDIR /work
-
-# cleanup cosim setup
-RUN rm -r ./vadl-cosim
+# install cargo-chef to prebuild cosim dependencies into the base image
+RUN cargo install cargo-chef --locked
 
 # install sccache for cloud build cache
 ENV PATH=/opt/sccache:$PATH
@@ -62,8 +55,21 @@ RUN set -ex; \
     curl -L https://github.com/mozilla/sccache/releases/download/v0.8.2/sccache-v0.8.2-$SUFFIX.tar.gz \
     | tar -xz -C /opt/sccache --strip-components=1
 
+WORKDIR /work
+
+FROM base AS cosim-chef-planner
+COPY vadl-cosim /work/vadl-cosim
+WORKDIR /work/vadl-cosim
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM base AS cosim-chef-deps
+WORKDIR /work/vadl-cosim
+COPY --from=cosim-chef-planner /work/vadl-cosim/recipe.json recipe.json
+
 # The QEMU ISS Test Base image, which contains the QEMU source code, toolchains and sccache
-FROM base AS iss-test-base
+RUN cargo chef cook --release --recipe-path recipe.json
+
+FROM cosim-chef-deps AS iss-test-base
 COPY --from=toolchains /opt/riscv /opt/riscv
 COPY --from=toolchains /opt/ppc64 /opt/ppc64
 COPY --from=toolchains /opt/aarch64-linux /opt/aarch64-linux
