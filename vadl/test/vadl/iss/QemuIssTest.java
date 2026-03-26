@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,6 @@ package vadl.iss;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,10 +39,6 @@ import vadl.pass.exception.DuplicatedPassKeyException;
  * <p>The class also provides functions to automatically run tests in the container.</p>
  */
 public abstract class QemuIssTest extends DockerExecutionTest {
-
-  // config of qemu test image
-  private static final String QEMU_TEST_IMAGE =
-      "ghcr.io/openvadl/iss-test-base@sha256:c0963539e557db0024554abe4d391648e48b58f79b0a97e74357bc11af7ed0b8";
 
   // specification to image cache
   // we must separate CAS and ISS, otherwise the CAS test would use the ISS image
@@ -120,7 +115,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
     var refTarget = refTargetString.isEmpty() ? "" : "," + refTargetString;
 
     return new DockerImage()
-        .withDockerfile(new StringSubstitutor(Map.of("qemu", QEMU_TEST_IMAGE,
+        .withDockerfile(new StringSubstitutor(Map.of("qemu", TestConstants.TEST_BASE_IMAGE,
             "soft", softmmuTarget + refTarget,
             "qemu-bin", qemuBin)).replace("""
             FROM ${qemu}

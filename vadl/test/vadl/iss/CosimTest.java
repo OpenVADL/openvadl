@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,7 @@ package vadl.iss;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.text.StringSubstitutor;
@@ -38,10 +39,6 @@ import vadl.pass.exception.DuplicatedPassKeyException;
  * <p>The class also provides functions to automatically run tests in the container.</p>
  */
 public abstract class CosimTest extends DockerExecutionTest {
-
-  // config of qemu test image
-  private static final String QEMU_TEST_IMAGE =
-      "ghcr.io/openvadl/iss-test-base@sha256:134d41337274a2f54790c13582e14a23a78617bb90554214f8a6f721c5287e85";
 
   // specification to image cache
   private static final ConcurrentHashMap<String, DockerImage> issImageCache =
@@ -114,32 +111,38 @@ public abstract class CosimTest extends DockerExecutionTest {
     var refTarget = "," + withUpstreamTarget();
 
     return new DockerImage()
-        .withDockerfile(new StringSubstitutor(Map.of("qemu", QEMU_TEST_IMAGE,
+        .withDockerfile(new StringSubstitutor(Map.of(
+            "qemu", TestConstants.TEST_BASE_IMAGE,
             "soft", softmmuTarget + refTarget,
-            "qemu-bin", qemuBin)).replace("""
-            FROM ${qemu}
+            "qemu-bin", qemuBin)
+        ).replace("""
+            FROM ${qemu} as builder
             COPY iss /qemu
             WORKDIR /qemu/build
             LABEL key=VADL_TEST_CONTAINER
-            RUN ../configure --cc='sccache gcc' --target-list=${soft}
+            RUN ../configure --prefix=/opt/qemu --cc='sccache gcc' --target-list=${soft}
             RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && make -j$(nproc) && sccache -s
+            RUN make install DESTDIR=/qemu-install
             RUN ${qemu-bin} --version
             WORKDIR /work
             
             COPY vadl-cosim /work/vadl-cosim
             WORKDIR /work/vadl-cosim
             ENV RUSTC_WRAPPER "sccache"
-            # use --frozen to ensure that cargo does not need to download any new dependencies
-            RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && cargo build --release -p vadl-cosim-broker --frozen && sccache -s
+            # use --locked to ensure that cargo does not need to download unnecessary dependencies
+            RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && cargo build --release -p vadl-cosim-broker --locked && sccache -s
             
-            RUN mkdir -p /opt/cosim && cp ./target/release/vadl-cosim-broker /opt/cosim/
-            ENV PATH "/opt/cosim:$PATH"
-            
+            FROM ${qemu} AS runtime
+            LABEL key=VADL_TEST_CONTAINER
             WORKDIR /work
+            COPY --from=builder /qemu-install/ /
+            COPY --from=builder /qemu/build/contrib/plugins/libcosimulation.so /opt/qemu/lib/qemu/libcosimulation.so
+            COPY --from=builder /qemu/build/contrib/plugins/libstoptrigger.so /opt/qemu/lib/qemu/libstoptrigger.so
+            COPY --from=builder /work/vadl-cosim/target/release/vadl-cosim-broker /opt/cosim/
+            ENV PATH "/opt/cosim:$PATH"
             
             COPY cosim_configs /cosim_configs
             COPY cosim_scripts /cosim_scripts
-            
             CMD python3 /cosim_scripts/main.py test-suite.yaml
             """))
         // make iss sources available to image builder
@@ -148,7 +151,7 @@ public abstract class CosimTest extends DockerExecutionTest {
         .withFileFromClasspath("/cosim_configs", "/cosim_configs")
         .withFileFromClasspath("/cosim_scripts", "/cosim_scripts/" + getScriptFolder())
         // add vadl-cosim to image builder
-        .withFileFromPath("/vadl-cosim", Path.of("..", "vadl-cosim"));
+        .withFileFromPathExcluding("/vadl-cosim", Path.of("..", "vadl-cosim"), List.of("target"));
   }
 
 }
