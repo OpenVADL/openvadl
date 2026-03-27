@@ -12,19 +12,16 @@ def dump_debug_info(tid: str, results: Path, comp: dict):
     os.makedirs(debug_dir, exist_ok=True)
     shutil.copy(comp["asm"], debug_dir)
     shutil.copy(comp["lnscript"], debug_dir)
-    shutil.copy(comp["elf_le"], debug_dir)
-    shutil.copy(comp["elf_be"], debug_dir)
-    shutil.copy(comp["objdump_be"], debug_dir)
-    shutil.copy(comp["objdump_le"], debug_dir)
+    shutil.copy(comp["elf"], debug_dir)
+    shutil.copy(comp["objdump"], debug_dir)
 
-def run_cosim(le: str, be: str, out: Path, cosim_config: Path):
+def run_cosim(elf: str, out: Path, cosim_config: Path):
     e = os.environ.copy()
     e["RUST_BACKTRACE"] = "1"
     subprocess.run([
         "vadl-cosim-broker",
         "--config", cosim_config,
-        # "--test-exec", le, # ppc64sfs now takes big-endian
-        "--test-exec", be,
+        "--test-exec", elf,
         "--output-file", str(out)
         ],
         env=e,
@@ -39,12 +36,12 @@ def compile_test(t: dict, results: Path) -> dict:
     return comp
 
 def run_test(t: dict, results: Path, cosim_config: Path):
-        tid = t["id"]
-        comp = compile_test(t, results)
-        try:
-            run_cosim(str(comp["elf_le"]), str(comp["elf_be"]), results / f"result-{tid}", cosim_config)
-        except Exception as e:
-            print(f"error for test=\"{tid}\": ", e)
+    tid = t["id"]
+    comp = compile_test(t, results)
+    try:
+        run_cosim(str(comp["elf"]), results / f"result-{tid}", cosim_config)
+    except Exception as e:
+        print(f"error for test=\"{tid}\": ", e)
 
 def main(testsuite_path: Path):
     config = yaml.safe_load(testsuite_path.read_text())

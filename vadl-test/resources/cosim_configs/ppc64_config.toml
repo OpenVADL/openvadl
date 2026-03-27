@@ -56,13 +56,6 @@ additional_args = [
     "-d", "plugin"
 ]
 
-# A hint for the cosimulator whether the client uses little or big endian
-# This setting does not change the execution in any way and is only used in case clients have differing endianess 
-# but should still be compared "correctly"
-# This field is optional, not setting it means the register-data is being compared left-to-right (i.e. big-endian by default)
-# This setting also *does not* have an effect on tracing, data will still be stored in the original endianess
-endian = "big"
-
 # The following three options configure which instructions from the `test_exec` executable should actually be tested.
 # NOTE: Only applies to `layer = "insn" | "tb-strict"`
 # NOTE: This option is must be set per client to be able to account for different setup-codes per ISS

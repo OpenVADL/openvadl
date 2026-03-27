@@ -592,7 +592,6 @@ instruction set architecture PPC64SFS = {
       }
   }
 
-  // TODO: rev is inverted, should be $rev = true, requires big endian support
   // reads Byte/ Halfword/ Word from memory into X(dst)
   model ReadMem (ea : Id, unit : SymEx, dst : Ex, rev : Bool, type : Id) : Stat = {
     match : Stat
@@ -608,7 +607,6 @@ instruction set architecture PPC64SFS = {
     )
   }
 
-  // TODO: rev is inverted, should be $rev = true, requires big endian support
   // writes Byte/ Halfword/ Word from X(src) into memory
   model WriteMem (ea : Id, unit : SymEx, src : Id, rev : Bool) : Stat = {
     match : Stat
