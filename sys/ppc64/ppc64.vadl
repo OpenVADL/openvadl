@@ -34,11 +34,11 @@ instruction set architecture PPC64SFS = {
   constant maxS32E : Bits<64> = 0x0000'0000'7FFF'FFFF      // largest 32-bit signed value sign extended to 64 bits
   constant minS64  : Bits<64> = 0x8000'0000'0000'0000      // smallest 64-bit signed value
   constant maxS64  : Bits<64> = 0x7FFF'FFFF'FFFF'FFFF      // largest 64-bit signed value
-  constant maxU32  : Bits<32> = 0xFFFF'FFFF                // largest 32-bit unsigned value
-  constant maxU32E : Bits<64> = 0x0000'0000'FFFF'FFFF      // largest 32-bit unsigned value zero extended to 64 bits
-  constant oneU64  : Bits<64> = 0x0000'0000'0000'0001      // one as 64-bit unsigned value
-  constant zeroU64 : Bits<64> = 0x0000'0000'0000'0000      // zero as 64-bit unsigned value
-  constant maxU64  : Bits<64> = 0xFFFF'FFFF'FFFF'FFFF      // largest 64-bit unsigned value
+  constant maxU32             = -1 as Bits<32>             // largest 32-bit unsigned value
+  constant maxU32E            = -1 as Bits<32> as Bits<64> // largest 32-bit unsigned value zero extended to 64 bits
+  constant oneU64             =  1 as Bits<64>             // one as 64-bit unsigned value
+  constant zeroU64            =  0 as Bits<64>             // zero as 64-bit unsigned value
+  constant maxU64             = -1 as Bits<64>             // largest 64-bit unsigned value
 
   using Bit     = Bits<1>
   using Nibble  = Bits<4>
