@@ -39,7 +39,7 @@ dependencies {
     implementation("org.apache.commons:commons-text:1.10.0")
 
     implementation("io.github.rascmatt:z3-bootstrap:1.0.0")
-    testImplementation("io.github.kper:buildkitcli:0.12.0")
+    testImplementation("io.github.kper:buildkitcli:0.14.0")
 
     testCompileOnly(project(":java-annotations"))
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
