@@ -26,6 +26,7 @@ import io.github.kper.buildkitcli.lib.BuildkitClient;
 import io.github.kper.buildkitcli.lib.BuildkitConnectionConfig;
 import io.github.kper.buildkitcli.lib.BuildkitException;
 import io.github.kper.buildkitcli.lib.DockerfileBuildRequest;
+import io.github.kper.buildkitcli.lib.PrintingListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
@@ -291,30 +292,6 @@ public final class DockerImage {
       logger.info("Loading image was successful.");
     } finally {
       Files.deleteIfExists(exportedArchive);
-    }
-  }
-
-  static class PrintingListener implements BuildProgressListener {
-    private final Logger logger = LoggerFactory.getLogger(PrintingListener.class);
-
-    @Override
-    public void onVertex(BuildVertex vertex) {
-      if (!vertex.name().isBlank()) {
-        logger.info(vertex.name());
-      }
-    }
-
-    @Override
-    public void onLog(BuildLog log) {
-      String message = log.utf8Message();
-      if (!message.isBlank()) {
-        logger.info(message);
-      }
-    }
-
-    @Override
-    public void onWarning(BuildWarning warning) {
-      logger.warn("warning: {}", warning.shortMessage());
     }
   }
 }
