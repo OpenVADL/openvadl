@@ -16,12 +16,22 @@
 
 package vadl.iss.ppc64;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.TestFactory;
 import vadl.iss.CosimTestUtils;
 
 /* Tests ppc64.vadl instructions against the QEMU ppc64 simulator.
@@ -31,18 +41,38 @@ import vadl.iss.CosimTestUtils;
  *   0x0000'0000'0000'1000 - 0x0000'0000'0000'FFFF
  */
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
 
   private static final long BASE_ADDRESS_LOAD_STORE = 0x1000L;
 
+  private static List<CosimTestUtils.TestCase> testCases;
+  private static Map<String, TestResult> failures;
+
+  // We cannot use @BeforeAll here because it runs before AbstractTest.beforeEach initializes
+  // the frontend required by generateIssSimulator().
   @Test
-  void instructions() throws IOException {
-    runQemuInstrTests(
-        generateIssSimulator(getVadlSpec()),
-        buildInstructionTests());
+  @Order(1)
+  void setupInstructionTests() throws IOException {
+    testCases = buildInstructionTestCases();
+    failures = runQemuInstrTestsAndCollectFailures(generateIssSimulator(getVadlSpec()), testCases);
   }
 
-  private List<CosimTestUtils.TestCase> buildInstructionTests() throws IOException {
+  @TestFactory
+  @Order(2)
+  Stream<DynamicTest> buildInstructionTests() {
+    return testCases.stream()
+        .map(testCase -> DynamicTest.dynamicTest(
+            testCase.id(),
+            () -> {
+              var failure = failures.get(testCase.id());
+              if (failure != null && !failure.passed()) {
+                fail(failure.failureMessage());
+              }
+            }));
+  }
+
+  private List<CosimTestUtils.TestCase> buildInstructionTestCases() throws IOException {
     return concatInstructionTests(List.of(
         () -> testTRegImmS16Instruction("addpcis", "ADDPCIS"),
         () -> testTSSRegInstruction_OR("add", "ADD"),
@@ -163,7 +193,8 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
         () -> testTSRegInstruction_R("cnttzw", "CNTTZW")));
   }
 
-  private List<CosimTestUtils.TestCase> concatInstructionTests(List<InstructionTestFactory> testFactories)
+  private List<CosimTestUtils.TestCase> concatInstructionTests(
+      List<InstructionTestFactory> testFactories)
       throws IOException {
     List<CosimTestUtils.TestCase> tests = new ArrayList<>();
     for (var testFactory : testFactories) {
@@ -180,10 +211,10 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
   private List<CosimTestUtils.TestCase> testTSSRegInstruction_OR(String instruction, String name)
       throws IOException {
     return List.of(
-        testTSSRegInstruction(instruction, name),
-        testTSSRegInstruction(instruction + ".", name + "."),
-        testTSSRegInstruction(instruction + "o", name + "O"),
-        testTSSRegInstruction(instruction + "o.", name + "O."))
+            testTSSRegInstruction(instruction, name),
+            testTSSRegInstruction(instruction + ".", name + "."),
+            testTSSRegInstruction(instruction + "o", name + "O"),
+            testTSSRegInstruction(instruction + "o.", name + "O."))
         .stream()
         .flatMap(List::stream)
         .toList();
@@ -192,8 +223,8 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
   private List<CosimTestUtils.TestCase> testTSSRegInstruction_R(String instruction, String name)
       throws IOException {
     return List.of(
-        testTSSRegInstruction(instruction, name),
-        testTSSRegInstruction(instruction + ".", name + "."))
+            testTSSRegInstruction(instruction, name),
+            testTSSRegInstruction(instruction + ".", name + "."))
         .stream()
         .flatMap(List::stream)
         .toList();
@@ -202,8 +233,8 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
   private List<CosimTestUtils.TestCase> testTSRegInstruction_R(String instruction, String name)
       throws IOException {
     return List.of(
-        testTSRegInstruction(instruction, name),
-        testTSRegInstruction(instruction + ".", name + "."))
+            testTSRegInstruction(instruction, name),
+            testTSRegInstruction(instruction + ".", name + "."))
         .stream()
         .flatMap(List::stream)
         .toList();
@@ -212,30 +243,32 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
   private List<CosimTestUtils.TestCase> testTSRegInstruction_OR(String instruction, String name)
       throws IOException {
     return List.of(
-        testTSRegInstruction(instruction, name),
-        testTSRegInstruction(instruction + ".", name + "."),
-        testTSRegInstruction(instruction + "o", name + "O"),
-        testTSRegInstruction(instruction + "o.", name + "O."))
+            testTSRegInstruction(instruction, name),
+            testTSRegInstruction(instruction + ".", name + "."),
+            testTSRegInstruction(instruction + "o", name + "O"),
+            testTSRegInstruction(instruction + "o.", name + "O."))
         .stream()
         .flatMap(List::stream)
         .toList();
   }
 
-  private List<CosimTestUtils.TestCase> testTSRegImmS16Instruction_R(String instruction, String name)
+  private List<CosimTestUtils.TestCase> testTSRegImmS16Instruction_R(String instruction,
+                                                                     String name)
       throws IOException {
     return List.of(
-        testTSRegImmS16Instruction(instruction, name),
-        testTSRegImmS16Instruction(instruction + ".", name + "."))
+            testTSRegImmS16Instruction(instruction, name),
+            testTSRegImmS16Instruction(instruction + ".", name + "."))
         .stream()
         .flatMap(List::stream)
         .toList();
   }
 
-  private List<CosimTestUtils.TestCase> testMFormRotateInstruction_R(String instruction, String name)
+  private List<CosimTestUtils.TestCase> testMFormRotateInstruction_R(String instruction,
+                                                                     String name)
       throws IOException {
     return List.of(
-        testMFormRotateInstruction(instruction, name),
-        testMFormRotateInstruction(instruction + ".", name + "."))
+            testMFormRotateInstruction(instruction, name),
+            testMFormRotateInstruction(instruction + ".", name + "."))
         .stream()
         .flatMap(List::stream)
         .toList();
@@ -244,8 +277,8 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
   private List<CosimTestUtils.TestCase> testXFormShiftInstruction_R(String instruction, String name)
       throws IOException {
     return List.of(
-        testXFormShiftInstruction(instruction, name),
-        testXFormShiftInstruction(instruction + ".", name + "."))
+            testXFormShiftInstruction(instruction, name),
+            testXFormShiftInstruction(instruction + ".", name + "."))
         .stream()
         .flatMap(List::stream)
         .toList();
@@ -264,7 +297,8 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     });
   }
 
-  private List<CosimTestUtils.TestCase> testTSSRegInstructionExt(String instruction, String name, String ext)
+  private List<CosimTestUtils.TestCase> testTSSRegInstructionExt(String instruction, String name,
+                                                                 String ext)
       throws IOException {
     return buildTests3264With(id -> {
       var b = getBuilder(name, id);
@@ -277,7 +311,8 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     });
   }
 
-  private List<CosimTestUtils.TestCase> testTCRFieldSSRegInstruction(String instruction, String name)
+  private List<CosimTestUtils.TestCase> testTCRFieldSSRegInstruction(String instruction,
+                                                                     String name)
       throws IOException {
     return buildTests3264With(id -> {
       var b = getBuilder(name, id);
@@ -417,7 +452,8 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     });
   }
 
-  private List<CosimTestUtils.TestCase> testTCRFieldModeSSRegInstruction(String instruction, String name)
+  private List<CosimTestUtils.TestCase> testTCRFieldModeSSRegInstruction(String instruction,
+                                                                         String name)
       throws IOException {
     return buildTests3264With(id -> {
       var b = getBuilder(name, id);
@@ -470,7 +506,8 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
     });
   }
 
-  private List<CosimTestUtils.TestCase> testXFormMoveXERCRFieldInstruction(String instruction, String name)
+  private List<CosimTestUtils.TestCase> testXFormMoveXERCRFieldInstruction(String instruction,
+                                                                           String name)
       throws IOException {
     return buildTests3264With(id -> {
       var b = getBuilder(name, id);
@@ -486,7 +523,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
   }
 
   private List<CosimTestUtils.TestCase> testDFormLoadInstruction(String instruction, String name,
-                                                       boolean update)
+                                                                 boolean update)
       throws IOException {
     return buildTests3264With(id -> {
       var b = getBuilder(name, id);
@@ -503,7 +540,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
   }
 
   private List<CosimTestUtils.TestCase> testXFormLoadInstruction(String instruction, String name,
-                                                       boolean update)
+                                                                 boolean update)
       throws IOException {
     return buildTests3264With(id -> {
       var b = getBuilder(name, id);
@@ -522,7 +559,7 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
   }
 
   private List<CosimTestUtils.TestCase> testDFormStoreInstruction(String instruction, String name,
-                                                        boolean update)
+                                                                  boolean update)
       throws IOException {
     return buildTests3264With(id -> {
       var b = getBuilder(name, id);
@@ -530,13 +567,14 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
       var regSrc2 = update ? b.anyRegExceptZero().sample() : b.anyReg().sample();
       b.fillReg(regSrc1);
       b.fillReg(regSrc2, b.getImmU(15));
-      b.add("%s %s, %s(%s)", instruction, regSrc1, b.getImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE)), regSrc2);
+      b.add("%s %s, %s(%s)", instruction, regSrc1,
+          b.getImmUFrom(15, BigInteger.valueOf(BASE_ADDRESS_LOAD_STORE)), regSrc2);
       return b.toTestCase();
     });
   }
 
   private List<CosimTestUtils.TestCase> testXFormStoreInstruction(String instruction, String name,
-                                                        boolean update)
+                                                                  boolean update)
       throws IOException {
     return buildTests3264With(id -> {
       var b = getBuilder(name, id);

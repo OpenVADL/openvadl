@@ -66,7 +66,21 @@ public abstract class CosimInstrTest extends CosimTest {
   protected void runQemuInstrTests(DockerImage image,
                                    Collection<CosimTestUtils.TestCase> testCases)
       throws IOException {
+    var failures = runQemuInstrTestsAndCollectFailures(image, testCases);
+    if (!failures.isEmpty()) {
+      Assertions.fail(
+          String.join("\n\n", failures.values().stream().map(x -> x.failureMessage).toList()));
+    }
+  }
 
+  public record TestResult(boolean passed, String failureMessage) {
+
+  }
+
+  protected Map<String, TestResult> runQemuInstrTestsAndCollectFailures(
+      DockerImage image,
+      Collection<CosimTestUtils.TestCase> testCases)
+      throws IOException {
     var testConfig =
         new CosimTestUtils.TestConfig("/cosim_configs/" + getCosimConfigFileName(), testCases);
 
@@ -97,29 +111,30 @@ public abstract class CosimInstrTest extends CosimTest {
       Assertions.fail("Failed to load test results.", e);
     }
 
-    var failures = testCases.stream()
+    return testCases.stream()
         .sorted(Comparator.comparing(CosimTestUtils.TestCase::id))
-        .map(testCase -> validateResult(resultFiles, testCase))
-        .filter(failure -> failure != null && !failure.isBlank())
-        .toList();
-
-    if (!failures.isEmpty()) {
-      Assertions.fail(String.join("\n\n", failures));
-    }
+        .map(testCase -> Map.entry(testCase.id(), validateResult(resultFiles, testCase)))
+        .filter(entry -> entry.getValue() != null && !entry.getValue().passed)
+        .collect(java.util.stream.Collectors.toMap(
+            Map.Entry::getKey,
+            Map.Entry::getValue,
+            (left, right) -> left,
+            java.util.LinkedHashMap::new));
   }
 
-  private String validateResult(Map<String, File> resultFiles, CosimTestUtils.TestCase testCase) {
+  private TestResult validateResult(Map<String, File> resultFiles,
+                                    CosimTestUtils.TestCase testCase) {
     if (!resultFiles.containsKey(testCase.id())) {
-      return "Result file is missing for test: " + testCase.id();
+      throw new RuntimeException("Result file is missing for test: " + testCase.id());
     }
     var file = resultFiles.get(testCase.id());
     var parsed = CosimTestUtils.yamlToTestResult(file);
     if (!parsed.passed()) {
       var sb = new StringBuilder();
       appendFailureDetails(sb, testCase, parsed);
-      return sb.toString();
+      return new TestResult(false, sb.toString());
     }
-    return null;
+    return new TestResult(true, "");
   }
 
   private void appendFailureDetails(StringBuilder sb,

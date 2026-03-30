@@ -7,6 +7,7 @@ import os
 import compiler
 import shutil
 import sys
+import threading
 
 def dump_debug_info(tid: str, results: Path, comp: dict):
     debug_dir = results / f"{tid}_debug"
@@ -76,11 +77,13 @@ def main(testsuite_path: Path):
 
         report_progress(0, total_tests)
         completed = 0
+        lock = threading.Lock()
         for future in as_completed(futures):
             future.result()
-            completed += 1
-            if completed % 100 == 0:
-              report_progress(completed, total_tests)
+            with lock:
+              completed += 1
+              if completed % 100 == 0:
+                report_progress(completed, total_tests)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
