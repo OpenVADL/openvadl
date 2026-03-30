@@ -49,8 +49,7 @@ def report_progress(completed: int, total: int):
     width = 30
     filled = width if total == 0 else int(width * completed / total)
     bar = "#" * filled + "-" * (width - filled)
-    end = "\n" if completed == total else "\r"
-    print(f"[{bar}] {completed}/{total}", end=end, file=sys.stderr, flush=True)
+    print(f"[{bar}] {completed}/{total}", file=sys.stderr, flush=True)
 
 def main(testsuite_path: Path):
     config = yaml.safe_load(testsuite_path.read_text())
