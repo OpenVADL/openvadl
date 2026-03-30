@@ -74,6 +74,8 @@ public interface DefinitionVisitor {
 
   void visit(Abi abi);
 
+  void visit(UserModeEmulation userModeEmulation);
+
   void visit(Processor processor);
 
   void visit(MicroArchitecture microArchitecture);
@@ -323,6 +325,12 @@ public interface DefinitionVisitor {
     }
 
     @Override
+    public void visit(UserModeEmulation userModeEmulation) {
+      beforeTraversal(userModeEmulation);
+      afterTraversal(userModeEmulation);
+    }
+
+    @Override
     public void visit(Processor processor) {
       beforeTraversal(processor);
       var stop = processor.stop();
@@ -566,6 +574,11 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(Abi abi) {
+
+    }
+
+    @Override
+    public void visit(UserModeEmulation userModeEmulation) {
 
     }
 
