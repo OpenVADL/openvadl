@@ -56,13 +56,6 @@ additional_args = [
     "-d", "plugin"
 ]
 
-# A hint for the cosimulator whether the client uses little or big endian
-# This setting does not change the execution in any way and is only used in case clients have differing endianess 
-# but should still be compared "correctly"
-# This field is optional, not setting it means the register-data is being compared left-to-right (i.e. big-endian by default)
-# This setting also *does not* have an effect on tracing, data will still be stored in the original endianess
-endian = "big"
-
 # The following three options configure which instructions from the `test_exec` executable should actually be tested.
 # NOTE: Only applies to `layer = "insn" | "tb-strict"`
 # NOTE: This option is must be set per client to be able to account for different setup-codes per ISS
@@ -144,7 +137,6 @@ r29 = "x29"
 r30 = "x30"
 r31 = "x31"
 
-cr = "cr"
 msr = "msr"
 xer = "xer"
 lr = "lr"
@@ -153,6 +145,31 @@ ctr = "ctr"
 tar = "tar"
 srr0 = "srr0"
 srr1 = "srr1"
+
+[[qemu.sliced_reg_map]]
+client1 = { name = "crf0", slice = [ [ 0,  3] ] }
+client2 = { name = "cr"  , slice = [ [28, 31] ] }
+[[qemu.sliced_reg_map]]
+client1 = { name = "crf1", slice = [ [ 0,  3] ] }
+client2 = { name = "cr"  , slice = [ [24, 27] ] }
+[[qemu.sliced_reg_map]]
+client1 = { name = "crf2", slice = [ [ 0,  3] ] }
+client2 = { name = "cr"  , slice = [ [20, 23] ] }
+[[qemu.sliced_reg_map]]
+client1 = { name = "crf3", slice = [ [ 0,  3] ] }
+client2 = { name = "cr"  , slice = [ [16, 19] ] }
+[[qemu.sliced_reg_map]]
+client1 = { name = "crf4", slice = [ [ 0,  3] ] }
+client2 = { name = "cr"  , slice = [ [12, 15] ] }
+[[qemu.sliced_reg_map]]
+client1 = { name = "crf5", slice = [ [ 0,  3] ] }
+client2 = { name = "cr"  , slice = [ [ 8, 11] ] }
+[[qemu.sliced_reg_map]]
+client1 = { name = "crf6", slice = [ [ 0,  3] ] }
+client2 = { name = "cr"  , slice = [ [ 4,  7] ] }
+[[qemu.sliced_reg_map]]
+client1 = { name = "crf7", slice = [ [ 0,  3] ] }
+client2 = { name = "cr"  , slice = [ [ 0,  3] ] }
 
 # Defines the test-source and how to test
 [testing]
