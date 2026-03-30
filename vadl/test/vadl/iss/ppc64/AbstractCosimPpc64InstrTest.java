@@ -17,9 +17,8 @@
 package vadl.iss.ppc64;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Stream;
-import org.junit.jupiter.api.DynamicTest;
 import vadl.iss.CosimInstrTest;
 import vadl.iss.CosimTestUtils;
 
@@ -55,7 +54,7 @@ public class AbstractCosimPpc64InstrTest extends CosimInstrTest {
   }
 
   // runs tests in 32- and 64-bit mode
-  public Stream<DynamicTest> runTests3264With(
+  public List<CosimTestUtils.TestCase> buildTests3264With(
       Function<Integer, CosimTestUtils.TestCase> generators)
       throws IOException {
     Function<Integer, CosimTestUtils.TestCase> tests32 = id -> {
@@ -66,9 +65,9 @@ public class AbstractCosimPpc64InstrTest extends CosimInstrTest {
       CosimTestUtils.TestCase test = generators.apply(id);
       return new CosimTestUtils.TestCase(test.id() + " (64-bit)", false, "trap\n" + test.asmCore());
     };
-    Stream<DynamicTest> dynamicTests32 = runTestsWith(tests32);
-    Stream<DynamicTest> dynamicTests64 = runTestsWith(tests64);
-    return Stream.concat(dynamicTests32, dynamicTests64);
+    return buildTestCases(
+        getTestPerInstruction(),
+        List.of(tests32, tests64));
   }
 
 }

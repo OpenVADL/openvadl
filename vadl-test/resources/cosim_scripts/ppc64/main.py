@@ -1,11 +1,13 @@
 import argparse
 from pathlib import Path
 import subprocess
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import yaml
 import os
 import compiler
 import shutil
+import sys
+import threading
 
 def dump_debug_info(tid: str, results: Path, comp: dict):
     debug_dir = results / f"{tid}_debug"
@@ -43,6 +45,12 @@ def run_test(t: dict, results: Path, cosim_config: Path):
     except Exception as e:
         print(f"error for test=\"{tid}\": ", e)
 
+def report_progress(completed: int, total: int):
+    width = 30
+    filled = width if total == 0 else int(width * completed / total)
+    bar = "#" * filled + "-" * (width - filled)
+    print(f"[{bar}] {completed}/{total}", file=sys.stderr, flush=True)
+
 def main(testsuite_path: Path):
     config = yaml.safe_load(testsuite_path.read_text())
     results = Path(config.get("result_dir", "/work/results"))
@@ -53,11 +61,28 @@ def main(testsuite_path: Path):
         num_cores = 1 # safe fallback
 
     cosim_config = config.get("cosim_config", "/cosim_config/ppc64_config.toml")
+    tests = config.get("tests", [])
+    total_tests = len(tests)
+
+    if total_tests == 0:
+        report_progress(0, 0)
+        return
 
     with ProcessPoolExecutor(num_cores) as executor:
-        for t in config.get("tests", []):
+        futures = [
             executor.submit(run_test, t, results, cosim_config)
-    executor.shutdown(wait=True)
+            for t in tests
+        ]
+
+        report_progress(0, total_tests)
+        completed = 0
+        lock = threading.Lock()
+        for future in as_completed(futures):
+            future.result()
+            with lock:
+              completed += 1
+              if completed % 100 == 0:
+                report_progress(completed, total_tests)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
