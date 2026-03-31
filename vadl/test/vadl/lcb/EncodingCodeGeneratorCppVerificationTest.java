@@ -53,9 +53,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractLcbTest {
     // Move files into Docker Context
     {
       VadlFileUtils.createDirectories(configuration, "encoding", "inputs");
-      VadlFileUtils.copyFile(Path.of(
-              "main/resources/templates/common/vadl-builtins.h"
-          ),
+      VadlFileUtils.copyResource("templates/common/vadl-builtins.h",
           Path.of(configuration.outputPath() + "/vadl-builtins.h")
       );
       VadlFileUtils.copyDirectory(

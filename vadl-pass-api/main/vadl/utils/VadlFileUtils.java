@@ -23,6 +23,7 @@ import com.google.common.collect.Iterables;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
 import java.net.URI;
@@ -67,6 +68,19 @@ public class VadlFileUtils {
    */
   public static void copyFile(Path source, Path target) throws IOException {
     Files.copy(source, target);
+  }
+
+  /**
+   * Copy a classpath resource to {@code target}.
+   */
+  public static void copyResource(String resourcePath, Path target) throws IOException {
+    var resource = resourcePath.startsWith("/") ? resourcePath : "/" + resourcePath;
+    try (InputStream in = Objects.requireNonNull(
+        VadlFileUtils.class.getResourceAsStream(resource),
+        "Resource not found: " + resource
+    )) {
+      Files.copy(in, target);
+    }
   }
 
   /**
@@ -324,5 +338,4 @@ public class VadlFileUtils {
   }
 
 }
-
 
