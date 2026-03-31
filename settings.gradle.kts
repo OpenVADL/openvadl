@@ -1,10 +1,20 @@
 pluginManagement {
-    plugins {
-        kotlin("jvm") version "2.3.0"
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+
+    includeBuild("gradle-conventions")
+}
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
     }
 }
+
 plugins {
-    // Apply the foojay-resolver plugin to allow automatic download of JDKs
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.7.0"
 }
 
