@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import vadl.GenerateCocoParserTask
 import java.util.*
 
 plugins {
@@ -13,6 +11,7 @@ dependencies {
     compileOnly(project(":java-annotations"))
     implementation(project(":vadl-core"))
     implementation(project(":vadl-pass-api"))
+    implementation(project(":vadl-frontend"))
     implementation(libs.thymeleaf)
     implementation(libs.guava)
     implementation(libs.commons.io)
@@ -39,36 +38,11 @@ kotlin {
 }
 
 sourceSets {
-    main {
-        java {
-            srcDir("build/generated/sources/coco/java/main")
-        }
-    }
     test {
         resources {
             srcDir(project(":vadl-test").layout.projectDirectory.dir("resources"))
         }
     }
-}
-
-tasks.matching { it is KotlinCompile || it is JavaCompile }.configureEach {
-    dependsOn("generateCocoParser")
-}
-
-tasks.withType<Checkstyle>().configureEach {
-    doFirst {
-        exclude { fileTreeElement ->
-            fileTreeElement.file.absolutePath.contains("build/generated/")
-        }
-    }
-}
-
-tasks.register<GenerateCocoParserTask>("generateCocoParser") {
-    group = "build"
-    inputFiles.from("main/vadl/ast/vadl.ATG")
-    parserFrame.set(project.file("main/vadl/ast/Parser.frame"))
-    outputDir.set(outputDir.get().dir("vadl/ast"))
-    cocoJar.set(project.file("libs/Coco.jar"))
 }
 
 val createProperties by tasks.registering {

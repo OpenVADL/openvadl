@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
-import vadl.gcb.annotations.OnlyNegativeNumbersAnnotation;
+import vadl.viam.annotations.OnlyNegativeNumbersAnnotation;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.template.Renderable;
 import vadl.types.BitsType;

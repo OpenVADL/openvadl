@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,19 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.gcb.annotations;
-
-import vadl.gcb.passes.InstructionPatternPruningPass;
-import vadl.viam.Annotation;
-import vadl.viam.Instruction;
+package vadl.ast;
 
 /**
- * This annotation defines that an {@link Instruction} should not be pruned in
- * {@link InstructionPatternPruningPass}.
+ * Defines how often an item may occur.
  */
-public class SkipPruningAnnotation extends Annotation<Instruction> {
-  @Override
-  public Class<Instruction> parentDefinitionClass() {
-    return Instruction.class;
-  }
+public enum Occurrence {
+  OPTIONAL,
+  ONE,
+  AT_LEAST_ONE
 }

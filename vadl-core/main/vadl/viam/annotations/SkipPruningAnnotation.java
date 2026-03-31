@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,31 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.viam.annotations;
 
-import java.util.List;
-import java.util.Map;
+import vadl.viam.Annotation;
+import vadl.viam.Instruction;
 
-record Macro(Identifier name, List<MacroParam> params, Node body, SyntaxType returnType,
-             Map<String, Node> boundArguments)
-    implements MacroOrPlaceholder {
-}
-
-record MacroParam(Identifier name, SyntaxType type) {
-}
-
-interface IsMacroInstance {
-  MacroOrPlaceholder macroOrPlaceholder();
-}
-
-sealed interface MacroOrPlaceholder permits Macro, MacroPlaceholder {
-  SyntaxType returnType();
-}
-
-record MacroPlaceholder(ProjectionType syntaxType, List<String> segments)
-    implements MacroOrPlaceholder {
+/**
+ * This annotation marks instructions that should be retained during pruning.
+ */
+public class SkipPruningAnnotation extends Annotation<Instruction> {
   @Override
-  public SyntaxType returnType() {
-    return syntaxType.resultType;
+  public Class<Instruction> parentDefinitionClass() {
+    return Instruction.class;
   }
 }

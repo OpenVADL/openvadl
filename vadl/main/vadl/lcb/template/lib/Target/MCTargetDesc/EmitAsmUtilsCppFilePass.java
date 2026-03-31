@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
-import vadl.gcb.annotations.RelocationSyntaxAnnotation;
 import vadl.gcb.passes.relocation.model.ImplementedUserSpecifiedRelocation;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
@@ -42,6 +41,7 @@ import vadl.viam.Definition;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.annotations.AsmParserCaseSensitive;
+import vadl.viam.annotations.RelocationSyntaxAnnotation;
 
 /**
  * This file includes the util functions for asm.

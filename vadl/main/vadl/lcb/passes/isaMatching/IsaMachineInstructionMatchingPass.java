@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -73,7 +73,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
 import vadl.error.Diagnostic;
-import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.gcb.passes.IsaMatchingUtils;
 import vadl.gcb.passes.MachineInstructionCtx;
 import vadl.gcb.passes.MachineInstructionLabel;
@@ -90,6 +89,7 @@ import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
+import vadl.viam.annotations.StatusRegisterAnnotation;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;

@@ -37,10 +37,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
-import vadl.gcb.annotations.OnlyNegativeNumbersAnnotation;
-import vadl.gcb.annotations.RelocationSyntaxAnnotation;
-import vadl.gcb.annotations.SkipPruningAnnotation;
-import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.Pair;
@@ -68,6 +64,10 @@ import vadl.viam.annotations.DefineOperandAnnotation;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.annotations.FieldAccessAnnotation;
 import vadl.viam.annotations.InstructionUndefinedAnno;
+import vadl.viam.annotations.OnlyNegativeNumbersAnnotation;
+import vadl.viam.annotations.RelocationSyntaxAnnotation;
+import vadl.viam.annotations.SkipPruningAnnotation;
+import vadl.viam.annotations.StatusRegisterAnnotation;
 
 /**
  * The annotation table defines how {@link Annotation} can be used for different elements in
