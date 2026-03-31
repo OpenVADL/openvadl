@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":vadl-core"))
     implementation(project(":vadl-pass-api"))
     implementation(project(":vadl-frontend"))
+    implementation(project(":vadl-rtl"))
     implementation(project(":vadl"))
     implementation(project(":vadl-lsp"))
     implementation(libs.picocli)

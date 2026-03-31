@@ -17,22 +17,20 @@
 package vadl.dump;
 
 import java.util.List;
-import vadl.dump.infoEnrichers.IssEnricherCollection;
-import vadl.dump.infoEnrichers.LcbEnricherCollection;
+import vadl.dump.infoEnrichers.RtlEnricherCollection;
 
 /**
- * Registers backend-specific HTML dump extensions that still live in :vadl.
+ * Registers RTL-specific HTML dump extensions.
  */
-public class VadlHtmlDumpExtensionProvider implements HtmlDumpExtensionProvider {
+public class RtlHtmlDumpExtensionProvider implements HtmlDumpExtensionProvider {
 
   @Override
   public int priority() {
-    return 200;
+    return 150;
   }
 
   @Override
   public void addInfoEnrichers(List<InfoEnricher> enrichers) {
-    enrichers.addAll(LcbEnricherCollection.all);
-    enrichers.addAll(IssEnricherCollection.all);
+    enrichers.addAll(RtlEnricherCollection.all);
   }
 }
