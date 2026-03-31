@@ -1,0 +1,34 @@
+instruction set architecture ISA = {
+  format Byte : Bits<8> = {
+    bits: Bits<8>
+  }
+
+  format Short : Bits<16> = {
+    byte1: Byte,
+    byte2: Byte
+  }
+
+  format Btype : Bits<32> = {
+    a [31..0]
+  }
+
+  register X : Short
+
+  instruction BEQ : Btype = {
+    X.byte1 := X.byte2.bits + X.byte1.bits
+  }
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Missing Assembly
+//       ╭──[resources/frontend-snapshots/nameresolution/nestedFormatFieldsResolve.vadl:17:15]
+//       │
+//    17 │   instruction BEQ : Btype = {
+//       │               ^^^
+//       │
+//       Every instruction needs an matching assembly definition.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

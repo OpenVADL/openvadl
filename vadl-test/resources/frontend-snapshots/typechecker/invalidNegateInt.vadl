@@ -1,0 +1,15 @@
+constant b = !5
+
+
+//  Reported Diagnostics:
+//
+//  error: Type Mismatch: expected `Bool`, got `Const<5>`
+//       ╭──[resources/frontend-snapshots/typechecker/invalidNegateInt.vadl:1:14]
+//       │
+//     1 │ constant b = !5
+//       │              ^^
+//       │
+//       help: For numerical types you can negate them with a minus `-`
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

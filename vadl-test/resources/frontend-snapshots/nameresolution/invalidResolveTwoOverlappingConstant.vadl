@@ -1,0 +1,19 @@
+constant a = 13
+constant a = 13
+
+
+//  Reported Diagnostics:
+//
+//  error: Symbol name already used: a
+//       ╭──[resources/frontend-snapshots/nameresolution/invalidResolveTwoOverlappingConstant.vadl:2:10]
+//       │
+//     1 │ constant a = 13
+//       │          - First defined here.
+//       │
+//     2 │ constant a = 13
+//       │          ^ Second definition here.
+//       │
+//       note: All symbols must have a unique name.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

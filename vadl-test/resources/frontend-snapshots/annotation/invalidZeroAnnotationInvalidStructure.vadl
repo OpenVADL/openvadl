@@ -1,0 +1,20 @@
+instruction set architecture TEST =
+{
+
+
+  [ zero : 2 + 3 - 1]
+  register X : Bits<5> -> Bits<32>
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid zero annotation
+//       ╭──[resources/frontend-snapshots/annotation/invalidZeroAnnotationInvalidStructure.vadl:5:3]
+//       │
+//     5 │   [ zero : 2 + 3 - 1]
+//       │   ^^^^^^^^^^^^^^^^^^^ Zero annotation must be of form [ zero : <register>( <expr> ) ].
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

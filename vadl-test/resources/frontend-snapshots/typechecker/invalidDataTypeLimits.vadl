@@ -1,0 +1,62 @@
+constant maxSInt8: SInt<8> = 127
+constant minSInt8: SInt<8> = -128
+constant invalidMaxSInt8: SInt<8> = 128
+constant invalidMinSInt8: SInt<8> = -129
+
+constant maxUInt8: UInt<8> = 255
+constant minUInt8: UInt<8> = 0
+constant invalidMaxUInt8: UInt<8> = 256
+constant invalidMinUInt8: UInt<8> = -1
+
+constant maxBits8: Bits<8> = 255
+constant minBits8: Bits<8> = 0
+constant invalidMaxBits8: Bits<8> = 256
+constant invalidMinBits8: Bits<8> = -1
+
+
+//  Reported Diagnostics:
+//
+//  error: Type Mismatch
+//       ╭──[resources/frontend-snapshots/typechecker/invalidDataTypeLimits.vadl:3:37]
+//       │
+//     3 │ constant invalidMaxSInt8: SInt<8> = 128
+//       │                                     ^^^ Expected `SInt<8>` but got `Const<128>`.
+//       │
+//
+//  error: Type Mismatch
+//       ╭──[resources/frontend-snapshots/typechecker/invalidDataTypeLimits.vadl:4:37]
+//       │
+//     4 │ constant invalidMinSInt8: SInt<8> = -129
+//       │                                     ^^^^ Expected `SInt<8>` but got `Const<-129>`.
+//       │
+//
+//  error: Type Mismatch
+//       ╭──[resources/frontend-snapshots/typechecker/invalidDataTypeLimits.vadl:8:37]
+//       │
+//     8 │ constant invalidMaxUInt8: UInt<8> = 256
+//       │                                     ^^^ Expected `UInt<8>` but got `Const<256>`.
+//       │
+//
+//  error: Type Mismatch
+//       ╭──[resources/frontend-snapshots/typechecker/invalidDataTypeLimits.vadl:9:37]
+//       │
+//     9 │ constant invalidMinUInt8: UInt<8> = -1
+//       │                                     ^^ Expected `UInt<8>` but got `Const<-1>`.
+//       │
+//
+//  error: Type Mismatch
+//       ╭──[resources/frontend-snapshots/typechecker/invalidDataTypeLimits.vadl:13:37]
+//       │
+//    13 │ constant invalidMaxBits8: Bits<8> = 256
+//       │                                     ^^^ Expected `Bits<8>` but got `Const<256>`.
+//       │
+//
+//  error: Type Mismatch
+//       ╭──[resources/frontend-snapshots/typechecker/invalidDataTypeLimits.vadl:14:37]
+//       │
+//    14 │ constant invalidMinBits8: Bits<8> = -1
+//       │                                     ^^ Expected `Bits<8>` but got `Const<-1>`.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

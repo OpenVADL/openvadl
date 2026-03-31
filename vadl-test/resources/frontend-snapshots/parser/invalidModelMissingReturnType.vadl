@@ -1,0 +1,18 @@
+// This was an error previously because the parser got confused but still continued into a state that it didn't expected
+// ending up in which caused in a crash.
+// https://github.com/OpenVADL/openvadl/issues/628
+
+model XYZ() = { }
+
+
+//  Reported Diagnostics:
+//
+//  error: Parsing Error
+//       ╭──[resources/frontend-snapshots/parser/invalidModelMissingReturnType.vadl:5:13]
+//       │
+//     5 │ model XYZ() = { }
+//       │             ^ The parser expected `:` here.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

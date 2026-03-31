@@ -27,7 +27,7 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.pass.PassOrder;
-import vadl.pass.PassOrders;
+import vadl.pipeline.LcbGcbPassOrders;
 
 /**
  * The Command does provide the lcb subcommand.
@@ -51,7 +51,7 @@ public class LcbCommand extends BaseCommand {
   @Override
   PassOrder passOrder(GeneralConfiguration configuration) throws IOException {
     var lcbConfig = new LcbConfiguration(configuration, targetName(), skipPatternGeneration);
-    return PassOrders.lcb(lcbConfig);
+    return LcbGcbPassOrders.lcb(lcbConfig);
   }
 
   @Nullable

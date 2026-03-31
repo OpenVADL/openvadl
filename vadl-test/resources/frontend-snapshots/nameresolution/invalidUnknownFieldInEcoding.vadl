@@ -1,0 +1,23 @@
+// https://github.com/OpenVADL/openvadl/issues/478
+instruction set architecture ISA = {
+  register X : Bits<32>
+  format Btype : Bits<32> = {
+    bits [31..0]
+  }
+  instruction BEQ : Btype = { X := 0 }
+  encoding BEQ = { bit = 8 }
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Unknown Field: "bit"
+//       ╭──[resources/frontend-snapshots/nameresolution/invalidUnknownFieldInEcoding.vadl:8:20]
+//       │
+//     8 │   encoding BEQ = { bit = 8 }
+//       │                    ^^^ No field with this name exists.
+//       │
+//       help: Did you maybe mean: bits
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

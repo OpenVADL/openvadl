@@ -1,0 +1,192 @@
+// This has been an error before where the model expander crashed
+// https://github.com/OpenVADL/openvadl/issues/659
+// FIXME: Investigate the other errors reported and improve the invalid model types.
+
+instruction set architecture AArch64SVEandSME  = {
+
+  constant VL        = 128              // vector length, number of bits in a vector register
+  constant PL        = VL >> 3          // predicate length, number of elements in a predicate register
+  constant ElementsB = VL >> 3          // number of byte   sized elements in a vector register
+  constant ElementsH = VL >> 4          // number of half   sized elements in a vector register
+  constant ElementsS = VL >> 5          // number of single sized elements in a vector register
+  constant ElementsD = VL >> 6          // number of double sized elements in a vector register
+
+  constant PTrueB = 0b1111'1111'1111'1111
+  constant PTrueH = 0b0101'0101'0101'0101
+  constant PTrueS = 0b0001'0001'0001'0001
+  constant PTrueD = 0b0000'0001'0000'0001
+  constant PFalse = 0b0000'0000'0000'0000
+
+  constant LastActiveB = ElementsB - 1
+  constant LastActiveH = ElementsB - 2
+  constant LastActiveS = ElementsB - 4
+  constant LastActiveD = ElementsB - 8
+
+  constant Log2ElemB = 8                // number of bits required for the biggest element index
+  constant NumZ = 32                    // number of vector registers in register file
+
+  using IndexP = Bits4                  // index type for the 16 predicate register file
+  using IndexE = Bits<Log2ElemB>        // the biggest index type for element indices
+  using BitsZ  = Bits<VL>               // Bits type for vector register file
+  using BitsP  = Bits<PL><1>            // Boolean type for predicate register file
+  using BitsZB = Bits<ElementsB>< 8>    // byte   vector register file
+  using BitsZH = Bits<ElementsH><16>    // half   vector register file
+  using BitsZS = Bits<ElementsS><32>    // single vector register file
+  using BitsZD = Bits<ElementsD><64>    // double vector register file
+
+
+  register   P : IndexP -> BitsP        // predicate register file
+
+  register   Z : Index  -> BitsZ        // vector    register file
+  alias register ZB : BitsZB<NumZ> = Z  // byte   vector register file
+  alias register ZH : BitsZH<NumZ> = Z  // half   vector register file
+  alias register ZS : BitsZS<NumZ> = Z  // single vector register file
+  alias register ZD : BitsZD<NumZ> = Z  // double vector register file
+
+  enumeration ElSize =                  // element size encoding, do not reorder
+    { SizeB                             // byte   size
+    , SizeH                             // half   size
+    , SizeS                             // single size
+    , SizeD                             // double size
+    , SizeW = 2                         // word   size
+    }
+
+  record InstrWithFunct (id: Id, mnemo: Str, opcode: Ex, funct: Id)
+
+  // higher order model enriched with operation size
+  model-type InstrWithFunctElemSizeType = (InstrWithFunct, Id, Id, Str) -> IsaDefs
+
+  model PtrueBHSD (size: Id): Id = {
+    match: Id ($size = SizeB => PTrueB ; $size = SizeH => PTrueH ; $size = SizeD => PTrueD ; _ => PTrueS)
+  }
+
+  model LastActiveBHSD (size: Id): Id = {
+    match: Id ($size = SizeB => LastActiveB ; $size = SizeH => LastActiveH ; $size = SizeD => LastActiveD ; _ => LastActiveS)
+  }
+
+// SVE while models ************************************************************
+
+  constant MaxUIntX : UIntX = 0xffff'ffff'ffff'ffff
+  constant MaxUIntW : UIntW = 0xffff'ffff
+
+
+  model UMax (size: Id): Id = {
+    match: Id ($size = WSize => MaxUIntW ; _ => MaxUIntX)
+  }
+
+  enumeration CondSVE : Bits<3> =          // SVE condition code encodings
+    { GE = 0b000                           // Greater or Equal signed   U == 0   LT == 0   EQ == 0
+    , GT = 0b001                           // Greater Than     signed   U == 0   LT == 0   EQ == 1
+    , LT = 0b010                           // Less Than        signed   U == 0   LT == 1   EQ == 0
+    , LE = 0b011                           // Less or Equal    signed   U == 0   LT == 1   EQ == 1
+    , HS = 0b100                           // Higer or Same  unsigned   U == 1   LT == 0   EQ == 0
+    , HI = 0b101                           // HIgher         unsigned   U == 1   LT == 0   EQ == 1
+    , LO = 0b110                           // LOwer than     unsigned   U == 1   LT == 1   EQ == 0
+    , LS = 0b111                           // Lower or Same  unsigned   U == 1   LT == 1   EQ == 1
+    }
+
+  format SVEWhileFormat: Instr =           // SVE while predicate format
+    { op       [31..24,21]     : Bits9     // opcode
+    , size     [23..22]        : Bits2     // elements size (ElSize)
+    , rm       [20..16]        : Index     // 2nd source counter register
+    , opc      [15..13]        : Bits3     // opcode second part
+    , sf       [12]            : Bits1     // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , cond     [11,10,4]       : Bits3     // condition (enum CondSVE)
+    , rn       [9..5]          : Index     // 1st source counter register
+    , pd       [3..0]          : IndexP    // destination predicate register
+    }
+
+  record WhileRec  (cond: Id, max: Id, ptrue: Id, notcmp: Id, elements: Id, elSize: Id, elStr: Str)
+
+  model WXR (size: Id): Id = {
+    match: Id ($size = WSize => W ; _ => X)
+  }
+
+  model SetFlagsSVE (lastActive: Id) : Stats = {
+        P(pd)  := pred as BitsP
+        NZCV_N := pred(0)
+        NZCV_Z := pred = 0
+        NZCV_C := pred($lastActive) = 0
+        NZCV_V := false
+  }
+  model WhileStatLSLE (w: WhileRec, regSize: Id): Stat = {
+    let left  = $WXR($regSize)(rn) in
+    let right = $WXR($regSize)(rm) in
+    let pred  =
+      if right = $w.max
+        then $w.ptrue
+        else
+        if VADL::$w.notcmp(left, right)
+        then PFalse
+        else let diff = (right - left) as IndexE in
+          if diff >= $w.elements
+          then $w.ptrue
+          else let shift = ($w.elements as IndexE - diff) * (1 + ElSize::$w.elSize) in
+            $w.ptrue as Bits<PL> << shift
+      in { $SetFlagsSVE($LastActiveBHSD($w.elSize)) }
+  }
+
+model-type SVEWhileStatModel = (WhileRec, Id) -> Stat
+
+  model SVEWhileBaseInstr (m: SVEWhileStatModel, i: InstrWithFunct, w: WhileRec, regSize: Id): IsaDefs = {
+    instruction $i.id: SVEWhileFormat = $m ($w ; $regSize)
+    encoding $i.id = { op = 0b0010'0101'1, opc = $i.opcode, size = ElSize::$w.elSize, sf = SF::$regSize, cond = CondSVE::$w.cond }
+    assembly $i.id = ( $i.mnemo, ' ', register(pd), $w.elStr, ', ', $regSize(rn), ', ', $regSize(rm))
+    }
+
+  model ExtInstrIdStr (i: InstrWithFunct, id: Id, mnemo: Str): InstrWithFunct = {
+    (AsId ($i.id, $id); AsStr ($i.mnemo, $mnemo); $i.opcode; $i.funct)
+    }
+
+  model SVEWhileCondInstr (i: InstrWithFunct, regSize: Id, elements: Id, elSize: Id): IsaDefs = {
+    $SVEWhileBaseInstr (WhileStatLSLE ; $ExtInstrIdStr($i ; LS ; "ls"); (LS ; $UMax($regSize) ; $PtrueBHSD($elSize) ; ugth ; $elements ; $elSize ; $elStr) ; $regSize)
+
+    }
+
+  model SVEWhileXWInstr (i: InstrWithFunct, elements: Id, elSize: Id, elStr: Str): IsaDefs = {
+    $SVEWhileCondInstr ($ExtInstrStr ($i;  "W"); WSize ; $elements ; $elSize ; $elStr)
+    }
+
+// instruction enriching models ************************************************
+
+  model InstrBHSD (modelid: InstrWithFunctElemSizeType, i: InstrWithFunct): IsaDefs = {
+    $modelid ($ExtInstrStr ($i; "B"); ElementsB; SizeB; ".b")
+    }
+
+// common sve and sme instructions *********************************************
+  $InstrBHSD        (SVEWhileXWInstr           ; (SVEWHILE      ; "while" ; 0b000            ; unused   ))
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: The macro `SVEWhileCondInstr` expects 4 arguments but 1 were provided.
+//       ╭──[resources/frontend-snapshots/parser/invalidHigherOrderModelWrongArgumentCount.vadl:147:5]
+//       │
+//   147 │     $SVEWhileCondInstr ($ExtInstrStr ($i;  "W"); WSize ; $elements ; $elSize ; $elStr)
+//       │     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//       │
+//
+//  error: SyntaxType Mismatch
+//       ╭──[resources/frontend-snapshots/parser/invalidHigherOrderModelWrongArgumentCount.vadl:142:148]
+//       │
+//   142 │     $SVEWhileBaseInstr (WhileStatLSLE ; $ExtInstrIdStr($i ; LS ; "ls"); (LS ; $UMax($regSize) ; $PtrueBHSD($elSize) ; ugth ; $elements ; $elSize ; $elStr) ; $regSize)
+//       │                                                                                                                                                    ^^^^^^
+//       │
+//       Mismatched node type: Required `STR`, but got `INVALID`
+//  error: SyntaxType Mismatch
+//       ╭──[resources/frontend-snapshots/parser/invalidHigherOrderModelWrongArgumentCount.vadl:147:25]
+//       │
+//   147 │     $SVEWhileCondInstr ($ExtInstrStr ($i;  "W"); WSize ; $elements ; $elSize ; $elStr)
+//       │                         ^^^^^^^^^^^^
+//       │
+//       Mismatched node type: Required `InstrWithFunct (ID,STR,EX,ID)`, but got `INVALID`
+//  error: Parsing Error
+//       ╭──[resources/frontend-snapshots/parser/invalidHigherOrderModelWrongArgumentCount.vadl:147:38]
+//       │
+//   147 │     $SVEWhileCondInstr ($ExtInstrStr ($i;  "W"); WSize ; $elements ; $elSize ; $elStr)
+//       │                                      ^ The parser expected `)` here.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

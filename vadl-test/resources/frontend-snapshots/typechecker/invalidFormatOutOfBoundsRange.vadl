@@ -1,0 +1,19 @@
+instruction set architecture TEST = {
+  format Format: Bits<32> =
+  { field   [32..0]             // wrong higher offset
+  , accFunc = field as SInt
+  }
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Range
+//       ╭──[resources/frontend-snapshots/typechecker/invalidFormatOutOfBoundsRange.vadl:3:14]
+//       │
+//     3 │   { field   [32..0]             // wrong higher offset
+//       │              ^^^^^ Provided range `32..0` out of bounds for available range `31..0`
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

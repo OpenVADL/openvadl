@@ -1,0 +1,301 @@
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package vadl.dump;
+
+import java.nio.file.Path;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.ServiceLoader;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import vadl.configuration.DumpMode;
+import vadl.configuration.GeneralConfiguration;
+import vadl.dump.entitySuppliers.ViamEntitySupplier;
+import vadl.dump.infoEnrichers.ViamEnricherCollection;
+import vadl.pass.Pass;
+import vadl.pass.PassKey;
+import vadl.pass.PassName;
+import vadl.pass.PassResults;
+import vadl.template.AbstractTemplateRenderingPass;
+import vadl.viam.Specification;
+
+
+/**
+ * The HTML dump pass emits a debug dump of the VIAM specification in HTML form.
+ * The main information source comes from registered {@link DumpEntitySupplier}s that
+ * produce {@link DumpEntity}s that get rendered as boxes.
+ * The registered {@link InfoEnricher}s enrich the entities by {@link Info} objects.
+ * Those info objects are rendered in the entity box depending on their concrete type (e.g.
+ * {@link Info.Tag}.
+ *
+ * <p>The shared pass always registers the VIAM-owned defaults directly. Additional dump
+ * features from optional modules are discovered through {@link ServiceLoader} using the
+ * {@link HtmlDumpExtensionProvider} interface. That keeps this pass in {@code :vadl-pass-api}
+ * without introducing compile-time dependencies back to backend modules.</p>
+ *
+ * <p>To add your own entity supplier or info enricher from another module:</p>
+ * <ol>
+ *   <li>Implement {@link HtmlDumpExtensionProvider} in the owning module.</li>
+ *   <li>Create a resource file named
+ *       {@code META-INF/services/vadl.dump.HtmlDumpExtensionProvider}.</li>
+ *   <li>Add the provider's fully qualified class name to that file.</li>
+ * </ol>
+ *
+ * <p>Take a look at {@link ViamEnricherCollection} to see an example on how to implement
+ * new info enrichers.</p>
+ *
+ * <p>Note that infos are rendered in the same order as the info enrichers are registered.</p>
+ *
+ * <p>Also note that we use tailwind css, so all tailwind css classes are available
+ * to produced HTML bodies.</p>
+ *
+ * @see DumpEntitySupplier
+ * @see InfoEnricher
+ * @see Info
+ * @see ViamEntitySupplier
+ * @see ViamEnricherCollection
+ */
+public class HtmlDumpPass extends AbstractTemplateRenderingPass {
+
+  private static final Logger log = LoggerFactory.getLogger(HtmlDumpPass.class);
+
+  private static final List<HtmlDumpExtensionProvider> extensionProviders =
+      ServiceLoader.load(HtmlDumpExtensionProvider.class, HtmlDumpPass.class.getClassLoader())
+          .stream()
+          .map(ServiceLoader.Provider::get)
+          .sorted(Comparator.comparingInt(HtmlDumpExtensionProvider::priority)
+              .thenComparing(provider -> provider.getClass().getName()))
+          .toList();
+
+
+  /**
+   * The config of the HtmlDumpPass.
+   * It requires the name of the phase the dump happens in and the output path
+   * where the dump should be written to.
+   *
+   * <p>It holds a dump description that explains what happened since the last dump.</p>
+   */
+  public static class Config extends GeneralConfiguration {
+    private final String phase;
+    private final String description;
+
+    /**
+     * Construct a configuration.
+     *
+     * @param generalConfiguration the base configuration
+     * @param phase                the phase name used for the emitted file name
+     * @param description          the description what happened since the last dump
+     */
+    public Config(GeneralConfiguration generalConfiguration, String phase, String description) {
+      super(generalConfiguration.outputPath(), DumpMode.ALWAYS);
+      this.phase = phase;
+      this.description = description;
+    }
+
+    public static Config from(GeneralConfiguration generalConfiguration, String phase,
+                              String description) {
+      return new Config(generalConfiguration, phase, description);
+    }
+  }
+
+  /**
+   * The result of the HTML dump pass.
+   * Beside the emitted file path, it also holds the key of the previous pass.
+   */
+  public static class Result extends AbstractTemplateRenderingPass.Result {
+    public final @Nullable PassKey lastPass;
+
+    protected Result(Path emittedFile, @Nullable PassKey lastPass) {
+      super(emittedFile);
+      this.lastPass = lastPass;
+    }
+  }
+
+  private final Config config;
+  private final int count;
+  @Nullable
+  private PassKey lastPass = null;
+
+  private static final AtomicInteger dumpCounter = new AtomicInteger();
+
+  /**
+   * Constructs the {@link HtmlDumpPass}.
+   */
+  public HtmlDumpPass(Config config) {
+    super(config, "dump");
+    this.config = config;
+    this.count = dumpCounter.getAndIncrement();
+  }
+
+  @Override
+  public PassName getName() {
+    return new PassName("HTML Dump at phase " + config.phase);
+  }
+
+  @Override
+  protected boolean enableCopyright() {
+    return false;
+  }
+
+  @Override
+  protected String getTemplatePath() {
+    return "htmlDump/index.html";
+  }
+
+  @Override
+  protected String getOutputPath() {
+    return count + "_" + config.phase.replace(" ", "_") + ".html";
+  }
+
+  @Override
+  protected Result constructResult(Path emittedFile) {
+    return new Result(emittedFile, lastPass);
+  }
+
+  @Override
+  protected Map<String, Object> createVariables(PassResults passResults,
+                                                Specification specification) {
+    // find last pass for the result
+    lastPass = getLastPass(passResults);
+
+    log.info("HTML dump of phase '{}' at {}dump/{}", config.phase,
+        config.outputPath().toUri(),
+        getOutputPath());
+    // collect suppliers
+    var suppliers = new ArrayList<DumpEntitySupplier<?>>();
+    suppliers.add(new ViamEntitySupplier());
+    extensionProviders.forEach(provider -> provider.addEntitySuppliers(suppliers));
+
+    // get all top-level entities from all suppliers
+    var entities = suppliers.stream()
+        .flatMap(e -> e.getEntities(specification, passResults).stream())
+        .toList();
+
+
+    // collect all info enrichers
+    var enrichers = new ArrayList<InfoEnricher>();
+    enrichers.addAll(ViamEnricherCollection.all);
+    extensionProviders.forEach(provider -> provider.addInfoEnrichers(enrichers));
+
+    // apply all enrichers to all entities (also sub entities)
+    for (var entity : entities) {
+      applyOnThisAndSubEntities(entity, enrichers, passResults);
+    }
+
+    var tocMapList = entities.stream()
+        .collect(Collectors.groupingBy(DumpEntity::tocKey))
+        .entrySet().stream()
+        .sorted(Comparator.comparingInt(a -> a.getKey().rank()))
+        .map(e -> Map.of(
+            "key", e.getKey().renderObj(),
+            "value", e.getValue().stream().map(DumpEntity::renderObj).toList()
+        ))
+        .toList();
+
+    var renderEntities = entities.stream()
+        .map(DumpEntity::renderObj)
+        .toList();
+
+    var passDumps = findAllPassDumps(passResults);
+
+    AtomicInteger i = new AtomicInteger(1);
+    var passList = passResults.executedPasses().stream()
+        .filter(p -> !(p.pass() instanceof CollectBehaviorDotGraphPass))
+        .map(e -> mapPassResult(e, i.getAndIncrement(), passDumps.containsKey(e.passKey().value())))
+        .toList();
+
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        .withZone(ZoneId.systemDefault());
+    var renderDate = formatter.format(Instant.now());
+
+    return Map.of(
+        "title",
+        "Specification (%s) - at %s".formatted(specification.identifier.name(), config.phase),
+        "description", config.description,
+        "passes", passList,
+        "passDumps", passDumps,
+        "entries", renderEntities,
+        "toc", tocMapList,
+        "renderDatetime", renderDate
+    );
+  }
+
+  /**
+   * Applies the given info enrichers to the given entity and all sub entities
+   * of the entity recursively.
+   */
+  private static void applyOnThisAndSubEntities(DumpEntity entity,
+                                                List<InfoEnricher> infoEnrichers,
+                                                PassResults passResults) {
+    for (var subEntity : entity.subEntities()) {
+      applyOnThisAndSubEntities(subEntity.subEntity, infoEnrichers, passResults);
+    }
+    for (var infoEnricher : infoEnrichers) {
+      infoEnricher.enrich(entity, passResults);
+    }
+  }
+
+  private static @Nullable PassKey getLastPass(PassResults passResults) {
+    var passes = passResults.executedPasses();
+    if (passes.isEmpty()) {
+      return null;
+    }
+    return passes.get(passes.size() - 1)
+        .passKey();
+  }
+
+  /**
+   * Find all pass keys that were dumped directly after execution.
+   */
+  private static Map<String, String> findAllPassDumps(PassResults passResults) {
+    return passResults.executedPasses().stream()
+        .filter(p -> p.pass() instanceof HtmlDumpPass)
+        .map(p -> (Result) p.result())
+        .filter(Objects::nonNull)
+        .collect(Collectors.toMap((r) -> r.lastPass != null ? r.lastPass.value() : null,
+            (r) -> r.emittedFile().toString()));
+  }
+
+  private static Map<String, Object> mapPassResult(PassResults.SingleResult singleResult, int nr,
+                                                   boolean hasLink) {
+    return Map.of(
+        "nr", nr,
+        "passKey", singleResult.passKey().value(),
+        "pass", mapPass(singleResult.pass()),
+        "duration", singleResult.durationMs(),
+        "hasLink", hasLink,
+        "skipped", singleResult.skipped()
+    );
+  }
+
+  private static Map<String, Object> mapPass(Pass pass) {
+    return Map.of(
+        "name", pass.getName().value(),
+        "className", pass.getClass().getName()
+    );
+  }
+
+}

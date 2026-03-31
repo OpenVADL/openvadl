@@ -1,0 +1,20 @@
+function x(n: SInt<8>) -> Bits<64> = (match n with
+{ 1 => 2 as Bits<16>
+, 2 => 4 as Bits<32>
+, 3 => 6 as Bits<8>
+, _ => 42 as Bits<64>
+} ) as Bits<64>
+
+
+//  Reported Diagnostics:
+//
+//  error: Type Mismatch
+//       ╭──[resources/frontend-snapshots/typechecker/invalidMatchExprBranchesDifferentTypeInFunction.vadl:3:8]
+//       │
+//     3 │ , 2 => 4 as Bits<32>
+//       │        ^^^^^^^^^ note: All previous branches were of type `Bits<16>`, but this is `Bits<32>`
+//       │
+//       All branches of a match must have the same type
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -50,6 +50,7 @@ import vadl.configuration.DecoderOptions;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.ArtifactTracker;
+import vadl.dump.PassFailureDumpHandler;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
@@ -347,7 +348,7 @@ public abstract class BaseCommand implements Callable<Integer> {
       final var totalStartTime = System.nanoTime();
       var viam = parseToVIAM();
       var passOrder = passOrder(getConfig());
-      var passManager = new PassManager();
+      var passManager = new PassManager(new PassFailureDumpHandler());
       passManager.add(passOrder);
       passManager.run(viam);
       var result = passManager.getPassResults();

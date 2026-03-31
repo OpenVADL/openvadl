@@ -1,0 +1,16 @@
+import base::magicNumber with ("magicNunberNoSpace")
+
+constant flo = $magicNumber()
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Import
+//       ╭──[resources/frontend-snapshots/imports/invalidImportwrongMacroOverrideFormat.vadl:1:32]
+//       │
+//     1 │ import base::magicNumber with ("magicNunberNoSpace")
+//       │                                ^^^^^^^^^^^^^^^^^^^^ Macro overrides must have the form `<macro-name>=<substitute>`.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

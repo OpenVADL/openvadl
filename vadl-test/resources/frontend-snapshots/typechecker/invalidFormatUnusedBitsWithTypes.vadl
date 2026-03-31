@@ -1,0 +1,21 @@
+format f : Bits<8> =
+{ first: Bits<3>
+, second: Bits<4>
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Format
+//       ╭──[resources/frontend-snapshots/typechecker/invalidFormatUnusedBitsWithTypes.vadl:1:1]
+//       │
+//     1 │> format f : Bits<8> =
+//     2 │> { first: Bits<3>
+//     3 │> , second: Bits<4>
+//     4 │> }
+//       │    
+//       │
+//       Declared as bitwidth of size 8 but actually size is 7
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

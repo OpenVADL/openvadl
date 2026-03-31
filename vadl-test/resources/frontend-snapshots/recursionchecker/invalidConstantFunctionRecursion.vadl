@@ -1,0 +1,16 @@
+constant a = b (1)
+function b (x : SInt<32>) -> SInt<32> = a
+
+
+//  Reported Diagnostics:
+//
+//  error: Infinite Recursion
+//       ╭──[resources/frontend-snapshots/recursionchecker/invalidConstantFunctionRecursion.vadl:2:41]
+//       │
+//     2 │ function b (x : SInt<32>) -> SInt<32> = a
+//       │                                         ^
+//       │
+//       The node is defined by itself.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

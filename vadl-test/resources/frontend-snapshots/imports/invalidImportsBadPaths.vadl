@@ -1,0 +1,75 @@
+// The locations of the imports have been wrong in the past
+// https://github.com/OpenVADL/openvadl/issues/731
+
+import doesnotexist::{alsoNotExisting}
+import doesnotexist
+import does::not::exist
+import sys::does::not::exist::{this, also, not}
+
+import "doesnotexist"::{alsoNotExisting}
+import "doesnotexist"
+import "does/not/exist"
+import "sys/does/not/exist"::{this, also, not}
+
+
+//  Reported Diagnostics:
+//
+//  error: Import Error
+//       ╭──[resources/frontend-snapshots/imports/invalidImportsBadPaths.vadl:4:8]
+//       │
+//     4 │ import doesnotexist::{alsoNotExisting}
+//       │        ^^^^^^^^^^^^
+//       │
+//       Could not resolve file path: "doesnotexist"
+//  error: Import Error
+//       ╭──[resources/frontend-snapshots/imports/invalidImportsBadPaths.vadl:5:8]
+//       │
+//     5 │ import doesnotexist
+//       │        ^^^^^^^^^^^^
+//       │
+//       Could not resolve file path: "doesnotexist"
+//  error: Import Error
+//       ╭──[resources/frontend-snapshots/imports/invalidImportsBadPaths.vadl:6:8]
+//       │
+//     6 │ import does::not::exist
+//       │        ^^^^
+//       │
+//       Could not resolve file path: "does"
+//  error: Import Error
+//       ╭──[resources/frontend-snapshots/imports/invalidImportsBadPaths.vadl:7:8]
+//       │
+//     7 │ import sys::does::not::exist::{this, also, not}
+//       │        ^^^
+//       │
+//       Could not resolve file path: "sys"
+//  error: Import Error
+//       ╭──[resources/frontend-snapshots/imports/invalidImportsBadPaths.vadl:9:8]
+//       │
+//     9 │ import "doesnotexist"::{alsoNotExisting}
+//       │        ^^^^^^^^^^^^^^
+//       │
+//       Could not resolve file path: "doesnotexist"
+//  error: Import Error
+//       ╭──[resources/frontend-snapshots/imports/invalidImportsBadPaths.vadl:10:8]
+//       │
+//    10 │ import "doesnotexist"
+//       │        ^^^^^^^^^^^^^^
+//       │
+//       Could not resolve file path: "doesnotexist"
+//  error: Import Error
+//       ╭──[resources/frontend-snapshots/imports/invalidImportsBadPaths.vadl:11:8]
+//       │
+//    11 │ import "does/not/exist"
+//       │        ^^^^^^^^^^^^^^^^
+//       │
+//       Could not resolve file path: "does/not/exist"
+//  error: Import Error
+//       ╭──[resources/frontend-snapshots/imports/invalidImportsBadPaths.vadl:12:8]
+//       │
+//    12 │ import "sys/does/not/exist"::{this, also, not}
+//       │        ^^^^^^^^^^^^^^^^^^^^
+//       │
+//       Could not resolve file path: "sys/does/not/exist"
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

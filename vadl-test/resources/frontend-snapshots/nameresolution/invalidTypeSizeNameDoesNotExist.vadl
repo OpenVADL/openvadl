@@ -1,0 +1,15 @@
+constant b: SInt<a> = 1
+
+
+//  Reported Diagnostics:
+//
+//  error: Unknown Symbol: "a"
+//       ╭──[resources/frontend-snapshots/nameresolution/invalidTypeSizeNameDoesNotExist.vadl:1:18]
+//       │
+//     1 │ constant b: SInt<a> = 1
+//       │                  ^ No symbol with this name exists.
+//       │
+//       help: Did you maybe mean: b
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -1,0 +1,27 @@
+// This isn't really a parsing test but rather one for SourceLocations.
+// When joining source locations we sometimes don't want to use the top level location (the 42 literal) in this
+// example but the model invocation instead.
+// This has been a problem previously that even lead to crashes in the past.
+// https://github.com/OpenVADL/openvadl/issues/643
+
+model apfelstrudel(): Ex = {
+  42
+}
+
+constant first = true
+
+constant second = false + $apfelstrudel()
+
+
+//  Reported Diagnostics:
+//
+//  error: Type Mismatch
+//       ╭──[resources/frontend-snapshots/parser/invalidModelInvocationUsesRightLocation.vadl:13:19]
+//       │
+//    13 │ constant second = false + $apfelstrudel()
+//       │                   ^^^^^^^^^^^^^^^^^^^^^^^ note: The left type is Bits<1> while right is Bits<6>
+//       │
+//       Both types on the left and right side of an binary operation should be equal.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

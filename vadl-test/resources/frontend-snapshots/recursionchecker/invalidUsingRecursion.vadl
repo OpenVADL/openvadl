@@ -1,0 +1,16 @@
+using a = b
+using b = a
+
+
+//  Reported Diagnostics:
+//
+//  error: Infinite Recursion
+//       ╭──[resources/frontend-snapshots/recursionchecker/invalidUsingRecursion.vadl:1:11]
+//       │
+//     1 │ using a = b
+//       │           ^
+//       │
+//       The node is defined by itself.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

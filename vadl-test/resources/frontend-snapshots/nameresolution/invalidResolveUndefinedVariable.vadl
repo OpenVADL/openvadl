@@ -1,0 +1,15 @@
+constant a = b
+
+
+//  Reported Diagnostics:
+//
+//  error: Unknown Symbol: "b"
+//       ╭──[resources/frontend-snapshots/nameresolution/invalidResolveUndefinedVariable.vadl:1:14]
+//       │
+//     1 │ constant a = b
+//       │              ^ No symbol with this name exists.
+//       │
+//       help: Did you maybe mean: a
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

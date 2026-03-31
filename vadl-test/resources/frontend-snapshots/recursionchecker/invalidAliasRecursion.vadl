@@ -1,0 +1,18 @@
+instruction set architecture ISA = {
+  alias register a = b
+  alias register b = a
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Infinite Recursion
+//       ╭──[resources/frontend-snapshots/recursionchecker/invalidAliasRecursion.vadl:2:3]
+//       │
+//     2 │   alias register a = b
+//       │   ^^^^^^^^^^^^^^^^^^^^
+//       │
+//       Definition `a` is defined by itself.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -1,6 +1,7 @@
 plugins {
     id("conventions-idea")
     alias(libs.plugins.git.versioning)
+    alias(libs.plugins.kotlin.jvm) apply false
 }
 
 group = "openvadl"
@@ -23,7 +24,7 @@ gitVersioning.apply {
 
 tasks.register<Test>("test-common") {
     dependsOn(
-        ":vadl:test-others",
+        ":vadl-test:test-others",
         ":vadl-cli:test",
         ":vadl-lsp:test",
         ":java-annotations:test",

@@ -10,7 +10,13 @@ group = "vadl"
 version = "unspecified"
 
 dependencies {
-    implementation(project(":vadl"))
+    implementation(project(":vadl-core"))
+    implementation(project(":vadl-pass-api"))
+    implementation(project(":vadl-frontend"))
+    implementation(project(":vadl-vdt"))
+    implementation(project(":vadl-rtl"))
+    implementation(project(":vadl-iss"))
+    implementation(project(":vadl-lcb-gcb"))
     implementation(project(":vadl-lsp"))
     implementation(libs.picocli)
     implementation(libs.commons.compress)

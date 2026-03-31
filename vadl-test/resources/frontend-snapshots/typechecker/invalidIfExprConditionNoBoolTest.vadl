@@ -1,0 +1,14 @@
+constant x = if 4 then 3 as Bits<32> else 4 as Bits<32>
+
+
+//  Reported Diagnostics:
+//
+//  error: Type Mismatch
+//       ╭──[resources/frontend-snapshots/typechecker/invalidIfExprConditionNoBoolTest.vadl:1:14]
+//       │
+//     1 │ constant x = if 4 then 3 as Bits<32> else 4 as Bits<32>
+//       │              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected `Bool` but got `Bits<3>`.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

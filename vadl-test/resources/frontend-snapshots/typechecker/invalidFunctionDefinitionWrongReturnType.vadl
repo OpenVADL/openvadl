@@ -1,0 +1,17 @@
+function addOne(n: SInt<8>) -> SInt<8> = false
+
+
+//  Reported Diagnostics:
+//
+//  error: Type Mismatch
+//       ╭──[resources/frontend-snapshots/typechecker/invalidFunctionDefinitionWrongReturnType.vadl:1:42]
+//       │
+//     1 │ function addOne(n: SInt<8>) -> SInt<8> = false
+//       │                                ------- Return type defined here as `SInt<8>`
+//       ⋮
+//     1 │ function addOne(n: SInt<8>) -> SInt<8> = false
+//       │                                          ^^^^^ Expected `SInt<8>` but got `Bool`
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
