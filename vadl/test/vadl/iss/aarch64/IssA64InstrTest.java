@@ -34,7 +34,7 @@ import vadl.TestUtils;
 import vadl.iss.AsmTestBuilder;
 import vadl.iss.AutoAssembler;
 import vadl.iss.IssTestUtils;
-import vadl.pass.PassOrders;
+import vadl.pipeline.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Disassembler;
 import vadl.utils.ViamUtils;

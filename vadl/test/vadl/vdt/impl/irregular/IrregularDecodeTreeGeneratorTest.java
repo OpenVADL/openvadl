@@ -43,6 +43,7 @@ import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.Pass;
+import vadl.dump.PassFailureDumpHandler;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.AbstractDecisionTreeTest;
@@ -376,7 +377,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     var spec = TestUtils.compileToViam(TEST_ISA);
     var config = new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
 
-    var passManager = new PassManager();
+    var passManager = new PassManager(new PassFailureDumpHandler());
     passManager.add(new VdtInputPreparationPass(config));
     passManager.add(new VdtConstraintSynthesisPass(config));
     passManager.add(new VdtLoweringPass(config));
@@ -429,7 +430,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         """);
     var config = new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
 
-    var passManager = new PassManager();
+    var passManager = new PassManager(new PassFailureDumpHandler());
     passManager.add(new VdtInputPreparationPass(config));
     passManager.add(new VdtConstraintSynthesisPass(config));
     passManager.add(new VdtLoweringPass(config));
@@ -480,7 +481,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         """.formatted(constraint, fixedEncoding));
     var config = new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
 
-    var passManager = new PassManager();
+    var passManager = new PassManager(new PassFailureDumpHandler());
     passManager.add(new VdtInputPreparationPass(config));
     passManager.add(new VdtConstraintSynthesisPass(config));
     passManager.add(new VdtLoweringPass(config));
@@ -552,7 +553,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
     var spec = TestUtils.compileToViam(vadl);
 
-    var manager = new PassManager();
+    var manager = new PassManager(new PassFailureDumpHandler());
     manager.add(new VdtEncodingConstraintValidationPass(config));
     manager.add(new VdtInputPreparationPass(config));
     manager.add(new VdtEncodingSemanticVerificationPass(config));
@@ -611,7 +612,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
     var spec = TestUtils.compileToViam(vadl);
 
-    var manager = new PassManager();
+    var manager = new PassManager(new PassFailureDumpHandler());
     manager.add(new VdtEncodingConstraintValidationPass(config));
     manager.add(new VdtInputPreparationPass(config));
     manager.add(new VdtEncodingSemanticVerificationPass(config));

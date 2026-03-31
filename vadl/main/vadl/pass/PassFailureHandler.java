@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,26 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.cli;
+package vadl.pass;
 
-import java.util.concurrent.Callable;
-import picocli.CommandLine.Command;
-import vadl.configuration.GeneralConfiguration;
-import vadl.pass.PassOrder;
-import vadl.pipeline.PassOrders;
+import java.io.IOException;
+import java.util.List;
+import vadl.viam.Specification;
 
 /**
- * The Command does provide the check subcommand.
+ * Handles pass execution failures.
  */
-@Command(
-    name = "check",
-    description = "Verify the correctness of a VADL file without generating anything.",
-    mixinStandardHelpOptions = true
-)
-public class CheckCommand extends BaseCommand implements Callable<Integer> {
+@FunctionalInterface
+public interface PassFailureHandler {
+  PassFailureHandler NO_OP = (pipeline, passResults, failedPass, viam, exception) -> {
+  };
 
-  @Override
-  PassOrder passOrder(GeneralConfiguration configuration) {
-    return PassOrders.check(configuration);
-  }
+  void onPassFailure(List<PassStep> pipeline,
+                     PassResults passResults,
+                     Pass failedPass,
+                     Specification viam,
+                     Exception exception) throws IOException;
 }

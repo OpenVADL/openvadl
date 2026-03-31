@@ -29,6 +29,7 @@ import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.error.Diagnostic;
+import vadl.dump.PassFailureDumpHandler;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.model.Node;
@@ -79,7 +80,7 @@ public class VdtEncodingSemanticVerificationPassTest extends AbstractTest {
         new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
     var spec = TestUtils.compileToViam(vadl);
 
-    var manager = new PassManager();
+    var manager = new PassManager(new PassFailureDumpHandler());
     manager.add(new VdtEncodingConstraintValidationPass(config));
     manager.add(new VdtInputPreparationPass(config));
     manager.add(new VdtEncodingSemanticVerificationPass(config));
@@ -124,7 +125,7 @@ public class VdtEncodingSemanticVerificationPassTest extends AbstractTest {
         new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
     var spec = TestUtils.compileToViam(vadl);
 
-    var manager = new PassManager();
+    var manager = new PassManager(new PassFailureDumpHandler());
     manager.add(new VdtEncodingConstraintValidationPass(config));
     manager.add(new VdtInputPreparationPass(config));
     manager.add(new VdtEncodingSemanticVerificationPass(config));

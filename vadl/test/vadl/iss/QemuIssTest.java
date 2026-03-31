@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import vadl.DockerExecutionTest;
 import vadl.DockerImage;
 import vadl.configuration.IssConfiguration;
-import vadl.pass.PassOrders;
+import vadl.pipeline.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
 /**

@@ -49,6 +49,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.PassKey;
+import vadl.dump.PassFailureDumpHandler;
 import vadl.pass.PassManager;
 import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -354,7 +355,7 @@ public abstract class AbstractTest {
       throws IOException, DuplicatedPassKeyException {
     var spec = runAndGetViamSpecification(specPath);
 
-    var passManager = new PassManager();
+    var passManager = new PassManager(new PassFailureDumpHandler());
     passManager.add(passes);
     passManager.run(spec);
 
@@ -373,7 +374,7 @@ public abstract class AbstractTest {
       throws IOException, DuplicatedPassKeyException {
     var spec = runAndGetViamSpecification(specPath);
 
-    var passManager = new PassManager();
+    var passManager = new PassManager(new PassFailureDumpHandler());
     passManager.add(passes);
     passManager.runUntilInclusive(spec, until);
 

@@ -27,6 +27,7 @@ import vadl.TestUtils;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
+import vadl.dump.PassFailureDumpHandler;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
@@ -80,7 +81,7 @@ public class VdtConstraintSynthesisPassTest {
     var spec = TestUtils.compileToViam(ISA);
     var config = new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
 
-    var passManager = new PassManager();
+    var passManager = new PassManager(new PassFailureDumpHandler());
     passManager.add(new VdtInputPreparationPass(config));
     passManager.add(new VdtConstraintSynthesisPass(config));
 

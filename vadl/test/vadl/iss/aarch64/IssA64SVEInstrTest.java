@@ -28,7 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.iss.IssTestUtils;
-import vadl.pass.PassOrders;
+import vadl.pipeline.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.ViamUtils;
 import vadl.viam.InstructionSetArchitecture;

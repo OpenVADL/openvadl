@@ -31,7 +31,7 @@ import vadl.dump.HtmlDumpPass;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassOrder;
-import vadl.pass.PassOrders;
+import vadl.pipeline.PassOrders;
 import vadl.pass.PassResults;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.rtl.passes.InstructionProgressGraphCreationPass;

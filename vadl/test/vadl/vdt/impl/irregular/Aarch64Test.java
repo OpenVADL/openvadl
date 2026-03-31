@@ -29,6 +29,7 @@ import vadl.AbstractTest;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
+import vadl.dump.PassFailureDumpHandler;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.model.Node;
@@ -56,7 +57,7 @@ class Aarch64Test extends AbstractTest {
 
     var spec = runAndGetViamSpecification("sys/aarch64/virt.vadl");
 
-    var manager = new PassManager();
+    var manager = new PassManager(new PassFailureDumpHandler());
     manager.add(new VdtInputPreparationPass(config));
     manager.add(new VdtConstraintSynthesisPass(config));
     manager.add(new VdtLoweringPass(config));
@@ -85,7 +86,7 @@ class Aarch64Test extends AbstractTest {
 
     var spec = runAndGetViamSpecification("sys/aarch64/virt.vadl");
 
-    var manager = new PassManager();
+    var manager = new PassManager(new PassFailureDumpHandler());
     manager.add(new VdtInputPreparationPass(config));
     manager.add(new VdtConstraintSynthesisPass(config));
     manager.add(new VdtLoweringPass(config));

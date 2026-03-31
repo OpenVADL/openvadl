@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import vadl.AbstractTest;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
+import vadl.dump.PassFailureDumpHandler;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.model.Node;
@@ -49,7 +50,7 @@ class VarRiscTest extends AbstractTest {
     var config = new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
     var spec = runAndGetViamSpecification("sys/v-risc/VarRisc.vadl");
 
-    var manager = new PassManager();
+    var manager = new PassManager(new PassFailureDumpHandler());
     manager.add(new VdtEncodingConstraintValidationPass(config));
     manager.add(new VdtInputPreparationPass(config));
     manager.add(new VdtConstraintSynthesisPass(config));

@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import vadl.TestUtils;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
+import vadl.dump.PassFailureDumpHandler;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
@@ -62,7 +63,7 @@ public class VdtInputPreparationPassTest {
     var spec = TestUtils.compileToViam(wrapProg(formula));
     var config = new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
 
-    var passManager = new PassManager();
+    var passManager = new PassManager(new PassFailureDumpHandler());
     passManager.add(new VdtInputPreparationPass(config));
 
     /* WHEN */

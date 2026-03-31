@@ -26,7 +26,7 @@ import vadl.cppCodeGen.AbstractCppCodeGenTest;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.pass.PassKey;
 import vadl.pass.PassOrder;
-import vadl.pass.PassOrders;
+import vadl.pipeline.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Format;
 import vadl.viam.Instruction;

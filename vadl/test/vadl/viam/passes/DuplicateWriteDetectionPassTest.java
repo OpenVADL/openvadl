@@ -29,7 +29,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.AbstractTest;
 import vadl.error.DiagnosticList;
-import vadl.pass.PassOrders;
+import vadl.dump.PassOrderDumps;
+import vadl.pipeline.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
 public class DuplicateWriteDetectionPassTest extends AbstractTest {
@@ -82,9 +83,10 @@ public class DuplicateWriteDetectionPassTest extends AbstractTest {
   void validTest(String test) throws IOException, DuplicatedPassKeyException {
     setupPassManagerAndRunSpec(
         test,
-        PassOrders.viam(getConfiguration(false))
-            .untilFirst(DuplicateWriteDetectionPass.class)
-            .addDump("test-weird")
+        PassOrderDumps.addDump(
+            PassOrders.viam(getConfiguration(false))
+                .untilFirst(DuplicateWriteDetectionPass.class),
+            "test-weird")
     );
   }
 

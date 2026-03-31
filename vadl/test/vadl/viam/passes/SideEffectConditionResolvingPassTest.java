@@ -31,7 +31,7 @@ import vadl.AbstractTest;
 import vadl.TestUtils;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
-import vadl.pass.PassOrders;
+import vadl.pipeline.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;

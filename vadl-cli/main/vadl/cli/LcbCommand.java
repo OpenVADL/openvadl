@@ -27,7 +27,7 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.pass.PassOrder;
-import vadl.pass.PassOrders;
+import vadl.pipeline.PassOrders;
 
 /**
  * The Command does provide the lcb subcommand.

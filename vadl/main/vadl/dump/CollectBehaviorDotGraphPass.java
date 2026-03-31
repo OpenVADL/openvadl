@@ -66,10 +66,10 @@ public class CollectBehaviorDotGraphPass extends Pass {
      * the rendering. It returns a list where each entry is separate pass result which contains
      * the dot graph.
      */
-    public List<PassResults.DotGraphResult> map() {
+    public List<DotGraphResult> map() {
       return behaviors.entrySet().stream()
           .flatMap(x -> x.getValue().stream()
-              .map(behaviorDotGraph -> new PassResults.DotGraphResult(
+              .map(behaviorDotGraph -> new DotGraphResult(
                   prevPass.passKey(),
                   prevPass().pass(),
                   prevPass().durationMs(),

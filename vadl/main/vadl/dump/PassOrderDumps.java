@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,26 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.cli;
+package vadl.dump;
 
-import java.util.concurrent.Callable;
-import picocli.CommandLine.Command;
+import java.nio.file.Path;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.PassOrder;
-import vadl.pipeline.PassOrders;
 
 /**
- * The Command does provide the check subcommand.
+ * Utilities for adding dump passes to pass orders.
  */
-@Command(
-    name = "check",
-    description = "Verify the correctness of a VADL file without generating anything.",
-    mixinStandardHelpOptions = true
-)
-public class CheckCommand extends BaseCommand implements Callable<Integer> {
+public final class PassOrderDumps {
+  private PassOrderDumps() {
+  }
 
-  @Override
-  PassOrder passOrder(GeneralConfiguration configuration) {
-    return PassOrders.check(configuration);
+  public static PassOrder addDump(PassOrder passOrder, String outPath) {
+    var passSteps = passOrder.passSteps();
+    var last = passSteps.get(passSteps.size() - 1);
+    var config = new GeneralConfiguration(Path.of(outPath), DumpMode.ALWAYS);
+    var dumpPass = new HtmlDumpPass(HtmlDumpPass.Config.from(config,
+        last.pass().getName().value(),
+        "This is a dump right after the pass " + last.key().value() + "."
+    ));
+    passOrder.add(dumpPass);
+    return passOrder;
   }
 }

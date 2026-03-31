@@ -28,7 +28,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
-import vadl.pass.PassOrders;
+import vadl.pipeline.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Definition;
 

@@ -24,11 +24,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vadl.configuration.DumpMode;
-import vadl.dump.CollectBehaviorDotGraphPass;
-import vadl.dump.HtmlDumpPass;
-import vadl.error.Diagnostic;
-import vadl.error.DiagnosticList;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Specification;
 
@@ -45,6 +40,15 @@ public class PassManager {
    */
   private final PassResults passResults = new PassResults();
   private final List<PassStep> pipeline = new ArrayList<>();
+  private final PassFailureHandler failureHandler;
+
+  public PassManager() {
+    this(PassFailureHandler.NO_OP);
+  }
+
+  public PassManager(PassFailureHandler failureHandler) {
+    this.failureHandler = failureHandler;
+  }
 
   private boolean hasDuplicatedPassKey(PassKey needle) {
     var keys = pipeline.stream().map(PassStep::key).collect(Collectors.toSet());
@@ -176,31 +180,7 @@ public class PassManager {
     try {
       return pass.execute(passResults, viam);
     } catch (Exception e) {
-      var config = pipeline.get(0).pass().configuration();
-
-      if (config.dumpMode() == DumpMode.NONE) {
-        // if we are not dumping at all, we just propagate the error
-        throw e;
-      }
-
-      if (config.dumpMode() == DumpMode.ON_FAILURE
-          && (e instanceof Diagnostic || e instanceof DiagnosticList)) {
-        // if we are only dumping failures and the error is a diagnostic, we don't generate an
-        // exception dump.
-        throw e;
-      }
-      var passClassName = pass.getClass().getSimpleName();
-      // collect latest graphs
-      var graphCollectPass = new CollectBehaviorDotGraphPass(pass.configuration());
-      var graphCollectResult = graphCollectPass.execute(passResults, viam);
-      passResults.add(PassKey.of("BehaviorCollectionOnException"), graphCollectPass, 0,
-          graphCollectResult);
-      // on an exception, we do an emergency dump
-      var htmlDumpPass = new HtmlDumpPass(HtmlDumpPass.Config
-          .from(config, "Exception During " + passClassName,
-              "This is a dump after exception occurred during the %s pass."
-                  .formatted(passClassName)));
-      htmlDumpPass.execute(passResults, viam);
+      failureHandler.onPassFailure(List.copyOf(pipeline), passResults, pass, viam, e);
       throw e;
     }
   }

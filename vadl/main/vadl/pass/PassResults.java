@@ -18,12 +18,9 @@ package vadl.pass;
 
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import vadl.dump.BehaviorTimelineDisplay;
 import vadl.pass.exception.PassError;
-import vadl.viam.Definition;
 
 /**
  * Holds and maintains the pass results of all executed passes.
@@ -169,8 +166,7 @@ public final class PassResults {
     return store.size();
   }
 
-  // this is only visible on package level to ensure that passes can't manipulate pass results
-  void add(PassKey key, Pass pass, long durationMs, @Nullable Object result) {
+  public void add(PassKey key, Pass pass, long durationMs, @Nullable Object result) {
     if (store.containsKey(key)) {
       // The pipeline's steps should be deterministic.
       // If we overwrite an already existing result then it is very likely
@@ -182,7 +178,7 @@ public final class PassResults {
     store.put(key, new SingleResult(key, pass, durationMs, result, false));
   }
 
-  void addSkipped(PassKey key, Pass pass) {
+  public void addSkipped(PassKey key, Pass pass) {
     store.put(key, new SingleResult(key, pass, 0, null, true));
   }
 
@@ -234,48 +230,6 @@ public final class PassResults {
 
     public boolean skipped() {
       return skipped;
-    }
-  }
-
-  /**
-   * This class is a {@link SingleResult} but indicates that the {@code result} is a dot graph
-   * which renderable for the behavior timeline in the dump.
-   */
-  public static class DotGraphResult extends SingleResult implements BehaviorTimelineDisplay {
-    // VIAM definition of the graph.
-    private final Definition definition;
-
-    /**
-     * Constructor.
-     */
-    public DotGraphResult(PassKey passKey,
-                          Pass pass,
-                          long durationMs,
-                          String result,
-                          boolean skipped,
-                          Definition definition) {
-      super(passKey, pass, durationMs, result, skipped);
-      this.definition = definition;
-    }
-
-    @Override
-    public String passId() {
-      return passKey.value();
-    }
-
-    @Override
-    public String passName() {
-      return pass.getClass().getSimpleName();
-    }
-
-    @Override
-    public String dotGraph() {
-      // We know that the cast is ok because the constructor also expects a string.
-      return (String) Objects.requireNonNull(result);
-    }
-
-    public Definition definition() {
-      return definition;
     }
   }
 }

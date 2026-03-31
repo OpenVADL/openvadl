@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.AbstractTest;
-import vadl.pass.PassOrders;
+import vadl.pipeline.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.TupleGetFieldNode;

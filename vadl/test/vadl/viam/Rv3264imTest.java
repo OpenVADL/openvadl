@@ -28,7 +28,7 @@ import org.junit.jupiter.api.TestFactory;
 import org.opentest4j.AssertionFailedError;
 import vadl.AbstractTest;
 import vadl.TestUtils;
-import vadl.pass.PassOrders;
+import vadl.pipeline.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.Type;
 

@@ -35,7 +35,7 @@ import picocli.CommandLine.Command;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassOrder;
-import vadl.pass.PassOrders;
+import vadl.pipeline.PassOrders;
 
 /**
  * The Command does provide the iss subcommand.

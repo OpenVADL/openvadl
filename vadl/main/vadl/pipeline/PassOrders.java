@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.pass;
+package vadl.pipeline;
 
 import static vadl.configuration.DecoderOptions.Generator.RTL_TABLE;
 import static vadl.configuration.DecoderOptions.OptionToSkip.OPT_CONSTRAINT_SYNTHESIS;
@@ -122,6 +122,7 @@ import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
 import vadl.lcb.template.lld.ELF.Arch.EmitLldVadlBuiltinsHeaderFilePass;
+import vadl.pass.Pass;
 import vadl.rtl.passes.CleanupEmitDirectoryPass;
 import vadl.rtl.passes.ControlLogicPass;
 import vadl.rtl.passes.DebugOutputPass;
@@ -149,6 +150,9 @@ import vadl.rtl.passes.MiaMappingInlinePass;
 import vadl.rtl.passes.MiaMappingOptimizePass;
 import vadl.rtl.passes.RtlConfigurationPass;
 import vadl.rtl.passes.StageOrderingPass;
+import vadl.pass.PassName;
+import vadl.pass.PassOrder;
+import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.vdt.passes.VdtConstraintSynthesisPass;
 import vadl.vdt.passes.VdtEncodingConstraintValidationPass;

@@ -20,7 +20,7 @@ import java.io.IOException;
 import vadl.DockerExecutionTest;
 import vadl.configuration.GcbConfiguration;
 import vadl.gcb.valuetypes.TargetName;
-import vadl.pass.PassOrders;
+import vadl.pipeline.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
 public class AbstractCppCodeGenTest extends DockerExecutionTest {
