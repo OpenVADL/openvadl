@@ -1,5 +1,6 @@
 import net.ltgt.gradle.errorprone.CheckSeverity
 import net.ltgt.gradle.errorprone.errorprone
+import util.libs
 
 plugins {
     java
@@ -22,15 +23,15 @@ checkstyle {
 }
 
 dependencies {
-    add("errorprone", "com.uber.nullaway:nullaway:0.10.25")
-    add("compileOnly", "com.google.code.findbugs:jsr305:3.0.2")
-    add("errorprone", "com.google.errorprone:error_prone_core:2.43.0")
-    add("compileOnly", "com.google.errorprone:error_prone_annotations:2.43.0")
-    add("compileOnly", "org.jetbrains:annotations:24.0.1")
-    add("implementation", "ch.qos.logback:logback-classic:1.5.24")
-    add("testImplementation", platform("org.junit:junit-bom:5.11.4"))
-    add("testImplementation", "org.junit.jupiter:junit-jupiter")
-    add("testRuntimeOnly", "org.junit.platform:junit-platform-launcher")
+    errorprone(libs.nullaway)
+    compileOnly(libs.jsr305)
+    errorprone(libs.errorprone.core)
+    compileOnly(libs.errorprone.annotations)
+    compileOnly(libs.jetbrains.annotations)
+    implementation(libs.logback.classic)
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 sourceSets {

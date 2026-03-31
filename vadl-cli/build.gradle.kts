@@ -1,9 +1,9 @@
 plugins {
     id("conventions-jvm")
     application
-    id("io.github.rascmatt.z3")
-    id("org.graalvm.buildtools.native")
-    id("org.beryx.jlink")
+    alias(libs.plugins.z3)
+    alias(libs.plugins.graalvm.native)
+    alias(libs.plugins.jlink)
 }
 
 group = "vadl"
@@ -12,9 +12,9 @@ version = "unspecified"
 dependencies {
     implementation(project(":vadl"))
     implementation(project(":vadl-lsp"))
-    implementation("info.picocli:picocli:4.7.6")
-    implementation("org.apache.commons:commons-compress:1.27.1")
-    annotationProcessor("info.picocli:picocli-codegen:4.7.6")
+    implementation(libs.picocli)
+    implementation(libs.commons.compress)
+    annotationProcessor(libs.picocli.codegen)
 }
 
 application {

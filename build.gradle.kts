@@ -1,6 +1,6 @@
 plugins {
     id("conventions-idea")
-    id("me.qoomon.git-versioning")
+    alias(libs.plugins.git.versioning)
 }
 
 group = "openvadl"

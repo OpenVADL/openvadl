@@ -8,7 +8,8 @@ repositories {
 }
 
 dependencies {
-    implementation("net.ltgt.gradle:gradle-errorprone-plugin:4.3.0")
-    implementation("com.adarshr:gradle-test-logger-plugin:4.0.0")
-    implementation("org.jetbrains.gradle.plugin.idea-ext:org.jetbrains.gradle.plugin.idea-ext.gradle.plugin:1.1.10")
+    implementation(libs.gradle.errorprone.plugin)
+    implementation(libs.gradle.test.logger.plugin)
+    implementation(libs.idea.ext.gradle.plugin)
+    implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
 }
