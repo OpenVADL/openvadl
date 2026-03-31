@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,22 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.pass;
+package vadl.pass.exception;
+
+import vadl.pass.Pass;
+import vadl.pass.PassKey;
 
 /**
- * This the typed name of an identifier of a {@link Pass}.
- * Note that the difference between {@link PassName} and {@link PassKey} is that {@link PassKey}
- * must be unique in the {@link PassManager}. However, it should be possible to schedule the same
- * {@link Pass} with the same {@link PassName} multiple times.
+ * Indicates that a {@link Pass} with the {@link PassKey} was added multiple times.
+ * This is not allowed because key has to be unique.
  */
-public record PassKey(String value) {
-
-  public static PassKey of(String value) {
-    return new PassKey(value);
-  }
-
-  @Override
-  public String toString() {
-    return value;
+public class DuplicatedPassKeyException extends Exception {
+  public DuplicatedPassKeyException(PassKey passKey) {
+    super("Pass with the key '" + passKey.value() + "' is duplicated.");
   }
 }

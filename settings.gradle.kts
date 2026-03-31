@@ -22,6 +22,7 @@ rootProject.name = "open-vadl"
 
 include("vadl")
 include("vadl-core")
+include("vadl-pass-api")
 include("java-annotations")
 include("vadl-cli")
 include("vadl-lsp")

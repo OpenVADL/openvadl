@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -81,7 +81,7 @@ public class DecoderOptions {
         "encoding-verification"),
 
     OPT_DECODER_VERIFICATION("Skip the correctness verification of the decode tree, default: "
-                                 + "enabled", "decoder-verification");
+        + "enabled", "decoder-verification");
 
     private final String selector;
     private final String desc;
