@@ -28,7 +28,6 @@ import vadl.error.Diagnostic;
 import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
-import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
@@ -120,8 +119,8 @@ public class EmitBuiltinsTableGenPass extends LcbTemplateRenderingPass {
   }
 
   private String mapPointerTy(int bitWidth) {
-    return CppTypeMap.getCppBuiltinTypeNameByVadlType(ValueType.from(
-        Type.unsignedInt(bitWidth)).orElseThrow()) + "*";
+    return CppTypeMap.getCppBuiltinTypeNameByVadlType(Type.unsignedInt(bitWidth).asDataType())
+        + "*";
   }
 
   private String mapTy(Optional<GcbInstructionOperand> operand) {
@@ -139,7 +138,7 @@ public class EmitBuiltinsTableGenPass extends LcbTemplateRenderingPass {
             .build();
       }
 
-      return CppTypeMap.getCppBuiltinTypeNameByVadlType(ValueType.from(ty).get());
+      return CppTypeMap.getCppBuiltinTypeNameByVadlType(ty);
     } else if (o instanceof TableGenInstructionImmediateOperand immediateOperand) {
       var ty = immediateOperand.immediateOperand().llvmType();
 
@@ -148,7 +147,7 @@ public class EmitBuiltinsTableGenPass extends LcbTemplateRenderingPass {
             .build();
       }
 
-      return CppTypeMap.getCppBuiltinTypeNameByVadlType(ty);
+      return CppTypeMap.getCppBuiltinTypeName(ty.getBitwidth(), ty.isSigned());
     }
 
     throw Diagnostic.error("Operand not supported for builtin generation",

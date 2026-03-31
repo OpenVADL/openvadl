@@ -60,7 +60,7 @@ import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
-import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
+import vadl.viam.graph.control.InstrExitNode;
 
 /**
  * A collection of default mixins for C code generation.

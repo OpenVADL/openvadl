@@ -28,7 +28,7 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
-import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
+import vadl.viam.graph.control.InstrExitNode;
 
 /**
  * Determines if a {@link InstrExitNode.PcChange PC change instr exit}

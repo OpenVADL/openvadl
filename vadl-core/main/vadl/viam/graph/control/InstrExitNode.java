@@ -14,14 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.viam.passes.sideEffectScheduling.nodes;
+package vadl.viam.graph.control;
 
 import java.util.List;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;

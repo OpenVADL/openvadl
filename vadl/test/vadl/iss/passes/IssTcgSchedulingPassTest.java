@@ -35,8 +35,8 @@ import vadl.viam.Instruction;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.control.InstrExitNode;
 import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
-import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
 /**
  * We need this tests as there is no occurrence of the tested problems in the RISC-V specification.

@@ -25,7 +25,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
-import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
+import vadl.viam.graph.control.InstrExitNode;
 
 /**
  * Generates the code for the {@link vadl.viam.Processor#reset()} definition.

@@ -3,7 +3,10 @@ plugins {
 }
 
 dependencies {
+    annotationProcessor(project(":java-annotations"))
+    compileOnly(project(":java-annotations"))
     implementation(project(":vadl-core"))
+    implementation(libs.commons.io)
     implementation(libs.thymeleaf)
     implementation(libs.commons.lang3)
 }

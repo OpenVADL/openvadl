@@ -41,7 +41,7 @@ import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
-import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
+import vadl.viam.graph.control.InstrExitNode;
 
 /**
  * Generates helper function implementations for instructions in {@code target/gen-arch/helper.c}.

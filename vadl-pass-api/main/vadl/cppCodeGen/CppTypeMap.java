@@ -17,7 +17,7 @@
 package vadl.cppCodeGen;
 
 import vadl.cppCodeGen.model.CppType;
-import vadl.gcb.valuetypes.ValueType;
+import vadl.types.DataType;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.SIntType;
@@ -34,19 +34,25 @@ public class CppTypeMap {
    * Returns the cpp type given the {@link Type}. The builtin tablegen tool does not support
    * {@code uint8} or {@code uint16}. Therefore, we added a customization.
    */
-  public static String getCppBuiltinTypeNameByVadlType(ValueType type) {
-    var width = type.getBitwidth();
-    if (type.isSigned() && width == 8) {
+  public static String getCppBuiltinTypeNameByVadlType(DataType type) {
+    return getCppBuiltinTypeName(type.bitWidth(), type.isSigned());
+  }
+
+  /**
+   * Returns the cpp builtin type name for a bit width and signedness pair.
+   */
+  public static String getCppBuiltinTypeName(int width, boolean signed) {
+    if (signed && width == 8) {
       return "char";
-    } else if (!type.isSigned() && width == 8) {
+    } else if (!signed && width == 8) {
       return "unsigned char";
-    } else if (type.isSigned() && width == 16) {
+    } else if (signed && width == 16) {
       return "short";
-    } else if (!type.isSigned() && width == 16) {
+    } else if (!signed && width == 16) {
       return "unsigned short";
     }
     return getCppTypeNameByVadlType(
-        type.isSigned() ? SIntType.bits(width) : Type.unsignedInt(width)
+        signed ? SIntType.bits(width) : Type.unsignedInt(width)
     );
   }
 

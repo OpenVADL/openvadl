@@ -44,7 +44,7 @@ import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
+import vadl.viam.graph.control.InstrExitNode;
 
 /**
  * A pass that schedules side effects within the control flow graph (CFG) of instructions.

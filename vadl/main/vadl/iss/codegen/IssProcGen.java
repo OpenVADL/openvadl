@@ -35,7 +35,7 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
+import vadl.viam.graph.control.InstrExitNode;
 
 /**
  * A node dispatcher for procedure c code rendering in the ISS.

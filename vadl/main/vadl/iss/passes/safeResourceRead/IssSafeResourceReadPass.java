@@ -53,7 +53,7 @@ import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
+import vadl.viam.graph.control.InstrExitNode;
 
 /**
  * A pass that ensures safe resource reads in the Instruction Set Simulator (ISS).

@@ -29,8 +29,12 @@ import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.extensions.InstrInfo;
+import vadl.iss.passes.nodes.IssLoadNode;
+import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
+import vadl.iss.passes.nodes.IssStoreNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.javaannotations.DispatchFor;
@@ -223,6 +227,26 @@ class DefaultGenerator implements
   @Handler
   void handle(CGenContext<Node> ctx, IssRegBitfieldWriteNode toHandle) {
     throwNotAllowed(toHandle, "bitfield register writes should be lowered to TCG before codegen");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, IssReadRegNode toHandle) {
+    throwNotAllowed(toHandle, "Register reads");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, IssWriteRegNode toHandle) {
+    throwNotAllowed(toHandle, "Register writes");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, IssLoadNode toHandle) {
+    throwNotAllowed(toHandle, "Memory reads");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, IssStoreNode toHandle) {
+    throwNotAllowed(toHandle, "Memory writes");
   }
 }
 
