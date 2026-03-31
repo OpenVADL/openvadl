@@ -13,7 +13,6 @@ dependencies {
     implementation(project(":vadl-pass-api"))
     implementation(project(":vadl-frontend"))
     implementation(project(":vadl-vdt"))
-    implementation(libs.thymeleaf)
     implementation(libs.guava)
     implementation(libs.commons.io)
     implementation(libs.commons.lang3)

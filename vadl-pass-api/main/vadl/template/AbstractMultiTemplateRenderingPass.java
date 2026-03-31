@@ -46,7 +46,6 @@ import vadl.OpenVadlProperties;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.formatting.CodeFormatter;
 import vadl.dump.ArtifactTracker;
-import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.Pass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -147,7 +146,7 @@ public abstract class AbstractMultiTemplateRenderingPass extends Pass {
 
   /**
    * Allows a subclass defining a code formatter that formats the emitted file.
-   * See {@link IssTemplateRenderingPass#getFormatter()} for an example.
+   * For example, target-specific renderers may return a formatter for generated C or Scala files.
    */
   public @Nullable CodeFormatter getFormatter() {
     return null;
