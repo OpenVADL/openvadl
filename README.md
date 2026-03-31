@@ -36,7 +36,7 @@ It covers everything you need to install OpenVADL, write a specification, and us
 simulator or compiler.
 
 For working VADL specifications examples, check out
-our [reference specifications](https://github.com/OpenVADL/openvadl/tree/master/vadl/test/resources/testSource/sys).  
+our [reference specifications](https://github.com/OpenVADL/openvadl/tree/master/vadl-test/resources/testSource/sys).  
 These are tested and kept up to date with the current OpenVADL version.
 
 ## Contribution
@@ -156,4 +156,3 @@ With this, IntelliJ uses the code style rules as specified in the Checkstyle con
 Note that Checkstyle and code style are not 100% compatible,
 so IntelliJ will eventually generate some invalid formatted code (such as Java docs
 paragraph separation).
-

@@ -39,5 +39,5 @@ tasks.register<GenerateCocoParserTask>("generateCocoParser") {
     inputFiles.from("main/vadl/ast/vadl.ATG")
     parserFrame.set(project.file("main/vadl/ast/Parser.frame"))
     outputDir.set(outputDir.get().dir("vadl/ast"))
-    cocoJar.set(rootProject.file("vadl/libs/Coco.jar"))
+    cocoJar.set(project.file("libs/Coco.jar"))
 }

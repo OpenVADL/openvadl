@@ -20,7 +20,6 @@ plugins {
 
 rootProject.name = "open-vadl"
 
-include("vadl")
 include("vadl-core")
 include("vadl-pass-api")
 include("vadl-frontend")
