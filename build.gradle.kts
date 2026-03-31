@@ -1,6 +1,7 @@
 plugins {
     id("conventions-idea")
     alias(libs.plugins.git.versioning)
+    alias(libs.plugins.kotlin.jvm) apply false
 }
 
 group = "openvadl"

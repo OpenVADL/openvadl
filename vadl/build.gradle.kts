@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":vadl-frontend"))
     implementation(project(":vadl-vdt"))
     implementation(project(":vadl-rtl"))
+    implementation(project(":vadl-iss"))
     implementation(libs.guava)
     implementation(libs.commons.io)
     implementation(libs.commons.lang3)
