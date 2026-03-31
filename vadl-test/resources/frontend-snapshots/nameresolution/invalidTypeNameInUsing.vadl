@@ -6,7 +6,7 @@ instruction set architecture ISA = {
 //  Reported Diagnostics:
 //
 //  error: Unknown Symbol: "XSize"
-//       ╭──[test/resources/frontend-snapshots/nameresolution/invalidTypeNameInUsing.vadl:2:28]
+//       ╭──[resources/frontend-snapshots/nameresolution/invalidTypeNameInUsing.vadl:2:28]
 //       │
 //     2 │   using Word        = SInt<XSize>
 //       │                            ^^^^^ No symbol with this name exists.

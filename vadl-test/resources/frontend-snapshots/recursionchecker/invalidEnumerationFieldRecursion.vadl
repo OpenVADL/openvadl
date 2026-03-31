@@ -7,7 +7,7 @@ enumeration rec : SInt<32> =
 //  Reported Diagnostics:
 //
 //  error: Infinite Recursion
-//       ╭──[test/resources/frontend-snapshots/recursionchecker/invalidEnumerationFieldRecursion.vadl:2:9]
+//       ╭──[resources/frontend-snapshots/recursionchecker/invalidEnumerationFieldRecursion.vadl:2:9]
 //       │
 //     2 │   { a = rec::b
 //       │         ^^^^^^

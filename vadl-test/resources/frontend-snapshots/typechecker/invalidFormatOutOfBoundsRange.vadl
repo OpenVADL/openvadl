@@ -9,7 +9,7 @@ instruction set architecture TEST = {
 //  Reported Diagnostics:
 //
 //  error: Invalid Range
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidFormatOutOfBoundsRange.vadl:3:14]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidFormatOutOfBoundsRange.vadl:3:14]
 //       │
 //     3 │   { field   [32..0]             // wrong higher offset
 //       │              ^^^^^ Provided range `32..0` out of bounds for available range `31..0`

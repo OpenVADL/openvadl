@@ -8,7 +8,7 @@ constant flo = $magicNumber()
 //  Reported Diagnostics:
 //
 //  error: Invalid Import
-//       ╭──[test/resources/frontend-snapshots/imports/invalidImportBareImport.vadl:3:8]
+//       ╭──[resources/frontend-snapshots/imports/invalidImportBareImport.vadl:3:8]
 //       │
 //     3 │ import base
 //       │        ^^^^ The import only describes the file to import from but not what to import.

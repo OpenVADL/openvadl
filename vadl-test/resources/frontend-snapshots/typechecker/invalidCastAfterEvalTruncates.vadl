@@ -5,7 +5,7 @@ constant b: UInt<a> = 3
 //  Reported Diagnostics:
 //
 //  error: Type Mismatch
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidCastAfterEvalTruncates.vadl:2:23]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidCastAfterEvalTruncates.vadl:2:23]
 //       │
 //     2 │ constant b: UInt<a> = 3
 //       │                       ^ Expected `UInt<1>` but got `Const<3>`.

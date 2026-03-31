@@ -1792,11 +1792,9 @@ public class BuiltinCTest extends DockerExecutionTest {
   private Stream<DynamicTest> runTests(Function... functions) {
     try {
 
-      var testDir = Path.of("build/test-builtin-c-test");
+      var testDir = Files.createTempDirectory(Path.of("build"), "test-builtin-c-test-");
       var mainC = testDir.resolve("main.c");
       var builtinLib = testDir.resolve("vadl-builtins.h");
-
-      Files.createDirectories(mainC.getParent());
 
       produceMain(mainC, List.of(functions));
 

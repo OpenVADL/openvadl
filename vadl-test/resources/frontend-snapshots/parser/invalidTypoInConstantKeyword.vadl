@@ -7,7 +7,7 @@ const flo = 78
 //  Reported Diagnostics:
 //
 //  error: Parsing Error
-//       ╭──[test/resources/frontend-snapshots/parser/invalidTypoInConstantKeyword.vadl:4:1]
+//       ╭──[resources/frontend-snapshots/parser/invalidTypoInConstantKeyword.vadl:4:1]
 //       │
 //     4 │ const flo = 78
 //       │ ^^^^^ this symbol not expected in vadl

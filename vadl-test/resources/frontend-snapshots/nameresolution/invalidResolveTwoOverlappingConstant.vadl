@@ -5,7 +5,7 @@ constant a = 13
 //  Reported Diagnostics:
 //
 //  error: Symbol name already used: a
-//       ╭──[test/resources/frontend-snapshots/nameresolution/invalidResolveTwoOverlappingConstant.vadl:2:10]
+//       ╭──[resources/frontend-snapshots/nameresolution/invalidResolveTwoOverlappingConstant.vadl:2:10]
 //       │
 //     1 │ constant a = 13
 //       │          - First defined here.

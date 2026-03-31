@@ -42,7 +42,7 @@ class ViamSnapshotTest {
 
   @TestFactory
   Stream<DynamicTest> snapshotTests() throws IOException {
-    return Files.walk(Paths.get("test/resources/viam-snapshots"))
+    return Files.walk(Paths.get("resources/viam-snapshots"))
         .filter(path -> path.toString().endsWith(".vadl"))
         .map(path -> DynamicTest.dynamicTest(path.toString(), () -> runSnapshotTest(path)));
   }

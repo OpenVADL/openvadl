@@ -12,7 +12,7 @@ constant second = $apfelstrudel
 //  Reported Diagnostics:
 //
 //  error: Type Mismatch
-//       ╭──[test/resources/frontend-snapshots/parser/invalidModelWithErrorInModel.vadl:4:3]
+//       ╭──[resources/frontend-snapshots/parser/invalidModelWithErrorInModel.vadl:4:3]
 //       │
 //     4 │   false + 42
 //       │   ^^^^^^^^^^ note: The left type is Bits<1> while right is Bits<6>

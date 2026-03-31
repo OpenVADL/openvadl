@@ -17,6 +17,7 @@
 package vadl.ast;
 
 import static vadl.TestUtils.assertEqualsFileLines;
+import static vadl.ast.AstTestUtils.getResourcePath;
 import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
 import java.io.IOException;
@@ -37,7 +38,7 @@ import vadl.viam.Specification;
 import vadl.viam.ViamSnapshotDumper;
 import vadl.viam.passes.verification.ViamVerifier;
 
-/// Runs all files in the test/resources/frontend/snapshots directory.
+/// Runs all files in the resources/frontend-snapshots directory.
 /// The files are fed into the compilation pipeline and the thrown diagnostics are stored.
 /// Then the original file is read again and compared if it reported the same diagnostics.
 ///
@@ -49,13 +50,13 @@ import vadl.viam.passes.verification.ViamVerifier;
 /// large block at the bottom and the convention is to include them at the top. Here are some
 /// examples:
 /// - `INCLUDE-AST-DUMP` will also insert the whole AST dump
-/// - `INCLUDE-PRETTY-PRINT` will also insert the a pretty printed AST (in it all macros are
+/// - `INCLUDE-PRETTY-PRINT` will also insert a pretty printed AST (in it all macros are
 /// expanded)
 /// - `INCLUDE-VIAM-DUMP` will also insert the whole VIAM dump
 public class FrontendSnapshotTests {
   @TestFactory
-  Stream<DynamicTest> snapshotTests() throws IOException {
-    return Files.walk(Paths.get("test/resources/frontend-snapshots"))
+  Stream<DynamicTest> snapshotTests() throws IOException, java.net.URISyntaxException {
+    return Files.walk(getResourcePath("frontend-snapshots"))
         .filter(path -> path.toString().endsWith(".vadl"))
         .map(path -> DynamicTest.dynamicTest(
             path.toString(),
@@ -199,7 +200,7 @@ public class FrontendSnapshotTests {
   /// You just have to call it in the original test and it will create a matching diagnostic test.
   static void convertTest(String prog, String name, String folder, Boolean isNegative,
                           Boolean includeAst) {
-    String dir = "test/resources/diagnostics/" + folder;
+    String dir = "resources/diagnostics/" + folder;
     String fileName = name.replaceAll("Text$", "") + ".vadl";
     if (isNegative) {
       fileName = "invalid" + fileName.substring(0, 1).toUpperCase() + fileName.substring(1);

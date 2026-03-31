@@ -11,7 +11,7 @@ model FoldStat (): Stat = {
 //  Reported Diagnostics:
 //
 //  error: SyntaxType Mismatch
-//       ╭──[test/resources/frontend-snapshots/parser/invalidForallFoldModelSyntaxTypeForOperator.vadl:4:24]
+//       ╭──[resources/frontend-snapshots/parser/invalidForallFoldModelSyntaxTypeForOperator.vadl:4:24]
 //       │
 //     4 │ model TestOP (): Ex = {42}
 //       │                        ^^

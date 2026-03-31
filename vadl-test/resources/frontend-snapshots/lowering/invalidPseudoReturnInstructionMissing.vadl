@@ -30,7 +30,7 @@ instruction set architecture ISA = {
 //  Reported Diagnostics:
 //
 //  error: Unknown Symbol: "DOESNOTEXIST"
-//       ╭──[test/resources/frontend-snapshots/lowering/invalidPseudoReturnInstructionMissing.vadl:12:36]
+//       ╭──[resources/frontend-snapshots/lowering/invalidPseudoReturnInstructionMissing.vadl:12:36]
 //       │
 //    12 │       special return instruction = DOESNOTEXIST
 //       │                                    ^^^^^^^^^^^^ No symbol with this name exists.

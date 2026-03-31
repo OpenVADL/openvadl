@@ -65,7 +65,8 @@ public class AstTestUtils {
   static Path getResourcePath(String directory) throws URISyntaxException {
     var dir = Objects.requireNonNull(AstTestUtils.class.getClassLoader().getResource(directory));
     var sourceDir = Path.of(dir.toURI()).toAbsolutePath().toString()
-        .replace("/build/resources/test", "/test/resources");
+        .replace("/build/resources/test", "/resources")
+        .replace("/build/resources/main", "/resources");
     return Path.of(sourceDir);
   }
 

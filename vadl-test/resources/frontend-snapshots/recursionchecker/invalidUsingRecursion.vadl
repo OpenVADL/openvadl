@@ -5,7 +5,7 @@ using b = a
 //  Reported Diagnostics:
 //
 //  error: Infinite Recursion
-//       ╭──[test/resources/frontend-snapshots/recursionchecker/invalidUsingRecursion.vadl:1:11]
+//       ╭──[resources/frontend-snapshots/recursionchecker/invalidUsingRecursion.vadl:1:11]
 //       │
 //     1 │ using a = b
 //       │           ^

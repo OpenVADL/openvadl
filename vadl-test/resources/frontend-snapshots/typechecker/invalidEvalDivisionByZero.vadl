@@ -13,70 +13,70 @@ constant j = VADL::umods(10, 0)
 //  Reported Diagnostics:
 //
 //  error: Constant value required
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:1:14]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:1:14]
 //       │
 //     1 │ constant a = 10 / 0
 //       │              ^^^^^^ Division by zero cannot be computed.
 //       │
 //
 //  error: Constant value required
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:2:14]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:2:14]
 //       │
 //     2 │ constant b = 10 % 0
 //       │              ^^^^^^ Division by zero cannot be computed.
 //       │
 //
 //  error: Constant value required
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:3:14]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:3:14]
 //       │
 //     3 │ constant c = VADL::sdiv(10, 0)
 //       │              ^^^^^^^^^^^^^^^^^ Division by zero cannot be computed.
 //       │
 //
 //  error: Constant value required
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:4:14]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:4:14]
 //       │
 //     4 │ constant d = VADL::udiv(10, 0)
 //       │              ^^^^^^^^^^^^^^^^^ Division by zero cannot be computed.
 //       │
 //
 //  error: Constant value required
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:5:14]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:5:14]
 //       │
 //     5 │ constant e = VADL::sdivs(10, 0)
 //       │              ^^^^^^^^^^^^^^^^^^ Division by zero cannot be computed.
 //       │
 //
 //  error: Constant value required
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:6:14]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:6:14]
 //       │
 //     6 │ constant f = VADL::udivs(10, 0)
 //       │              ^^^^^^^^^^^^^^^^^^ Division by zero cannot be computed.
 //       │
 //
 //  error: Constant value required
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:7:14]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:7:14]
 //       │
 //     7 │ constant g = VADL::smod(10, 0)
 //       │              ^^^^^^^^^^^^^^^^^ Division by zero cannot be computed.
 //       │
 //
 //  error: Constant value required
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:8:14]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:8:14]
 //       │
 //     8 │ constant h = VADL::umod(10, 0)
 //       │              ^^^^^^^^^^^^^^^^^ Division by zero cannot be computed.
 //       │
 //
 //  error: Constant value required
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:9:14]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:9:14]
 //       │
 //     9 │ constant i = VADL::smods(10, 0)
 //       │              ^^^^^^^^^^^^^^^^^^ Division by zero cannot be computed.
 //       │
 //
 //  error: Constant value required
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:10:14]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidEvalDivisionByZero.vadl:10:14]
 //       │
 //    10 │ constant j = VADL::umods(10, 0)
 //       │              ^^^^^^^^^^^^^^^^^^ Division by zero cannot be computed.

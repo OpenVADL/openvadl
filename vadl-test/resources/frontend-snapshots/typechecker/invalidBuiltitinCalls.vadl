@@ -11,21 +11,21 @@ function abc(x: Bits<8>) -> Bits<8> = VADL::adds(1, x)
 //  Reported Diagnostics:
 //
 //  error: Type Mismatch
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidBuiltitinCalls.vadl:2:14]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidBuiltitinCalls.vadl:2:14]
 //       │
 //     2 │ constant a = VADL::add(1)
 //       │              ^^^^^^^^^^^^ Expected 2 arguments but got 1.
 //       │
 //
 //  error: Type Mismatch
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidBuiltitinCalls.vadl:3:14]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidBuiltitinCalls.vadl:3:14]
 //       │
 //     3 │ constant b = VADL::add(1, 2, 3)
 //       │              ^^^^^^^^^^^^^^^^^^ Expected 2 arguments but got 3.
 //       │
 //
 //  error: Type Mismatch
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidBuiltitinCalls.vadl:8:39]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidBuiltitinCalls.vadl:8:39]
 //       │
 //     8 │ function abc(x: Bits<8>) -> Bits<8> = VADL::adds(1, x)
 //       │                                       ^^^^^^^^^^^^^^^^ The builtin has the signature `(BitsType, BitsType) -> TupleType` but got `Bits<1>, Bits<8>`.

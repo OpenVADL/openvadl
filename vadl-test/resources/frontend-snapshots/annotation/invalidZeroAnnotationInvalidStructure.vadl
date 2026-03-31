@@ -10,7 +10,7 @@ instruction set architecture TEST =
 //  Reported Diagnostics:
 //
 //  error: Invalid zero annotation
-//       ╭──[test/resources/frontend-snapshots/annotation/invalidZeroAnnotationInvalidStructure.vadl:5:3]
+//       ╭──[resources/frontend-snapshots/annotation/invalidZeroAnnotationInvalidStructure.vadl:5:3]
 //       │
 //     5 │   [ zero : 2 + 3 - 1]
 //       │   ^^^^^^^^^^^^^^^^^^^ Zero annotation must be of form [ zero : <register>( <expr> ) ].

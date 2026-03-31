@@ -14,7 +14,7 @@ instruction set architecture ISA = {
 //  Reported Diagnostics:
 //
 //  error: Type Mismatch
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidShiftLeftConstRightExplicit.vadl:8:28]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidShiftLeftConstRightExplicit.vadl:8:28]
 //       │
 //     8 │    instruction I: T = A := 6 >> a
 //       │                            ^^^^^^

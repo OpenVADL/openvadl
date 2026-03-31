@@ -6,7 +6,7 @@ constant a: Bits2 = 0b111
 //  Reported Diagnostics:
 //
 //  error: Unknown Type `Bits2`
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidTypoInCustomType.vadl:3:13]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidTypoInCustomType.vadl:3:13]
 //       │
 //     3 │ constant a: Bits2 = 0b111
 //       │             ^^^^^ No type with that name exists.

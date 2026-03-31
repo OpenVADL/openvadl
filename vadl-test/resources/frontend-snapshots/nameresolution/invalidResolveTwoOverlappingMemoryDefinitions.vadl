@@ -7,7 +7,7 @@ instruction set architecture FLO = {
 //  Reported Diagnostics:
 //
 //  error: Symbol name already used: MEM
-//       ╭──[test/resources/frontend-snapshots/nameresolution/invalidResolveTwoOverlappingMemoryDefinitions.vadl:3:10]
+//       ╭──[resources/frontend-snapshots/nameresolution/invalidResolveTwoOverlappingMemoryDefinitions.vadl:3:10]
 //       │
 //     2 │   memory MEM: Bits<32> -> Bits<8>
 //       │          --- First defined here.

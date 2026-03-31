@@ -21,7 +21,7 @@ constant flo = $numPlusOne()
 //       │
 //
 //  error: SyntaxType Mismatch
-//       ╭──[test/resources/frontend-snapshots/imports/invalidImportWhereWithIsMacroOfWrongType.vadl:4:3]
+//       ╭──[resources/frontend-snapshots/imports/invalidImportWhereWithIsMacroOfWrongType.vadl:4:3]
 //       │
 //     4 │   42
 //       │   ^^

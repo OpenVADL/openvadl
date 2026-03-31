@@ -9,7 +9,7 @@ constant x = match 4 as Bits<32> with
 //  Reported Diagnostics:
 //
 //  error: Type Mismatch
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidMatchExprPatternDifferentType.vadl:3:3]
+//       ╭──[resources/frontend-snapshots/typechecker/invalidMatchExprPatternDifferentType.vadl:3:3]
 //       │
 //     3 │ , 2 as Bits<8> => 4 as Bits<16>
 //       │   ^^^^^^^^^ Expected `Bits<32>`, but got `Bits<8>`

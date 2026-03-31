@@ -11,7 +11,7 @@ instruction set architecture Sub extending Base1, Base2 = { }
 //  Reported Diagnostics:
 //
 //  error: Symbol name already used: PC
-//       ╭──[test/resources/frontend-snapshots/parser/invalidSymbolConflictIsaMultiInheritance.vadl:6:14]
+//       ╭──[resources/frontend-snapshots/parser/invalidSymbolConflictIsaMultiInheritance.vadl:6:14]
 //       │
 //     2 │     program counter PC: Bits<32>
 //       │                     -- First defined here.
