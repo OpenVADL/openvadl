@@ -39,6 +39,7 @@ import vadl.viam.graph.control.ForallEndNode;
 import vadl.viam.graph.control.ForallNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrEndNode;
+import vadl.viam.graph.control.InstrExitNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.NewLabelNode;
 import vadl.viam.graph.control.ProcEndNode;
@@ -60,7 +61,6 @@ import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
-import vadl.viam.graph.control.InstrExitNode;
 
 /**
  * A collection of default mixins for C code generation.

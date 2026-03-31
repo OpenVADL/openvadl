@@ -49,6 +49,9 @@ public final class RtlPassOrders {
     return extendRtl(ViamPassOrders.viam(config), config);
   }
 
+  /**
+   * Extends a shared VIAM pipeline with RTL-specific lowering and emission passes.
+   */
   public static PassOrder extendRtl(PassOrder order, RtlConfiguration config) {
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
     order.skip(vadl.gcb.passes.RenamingConflictingRegistersPass.class);

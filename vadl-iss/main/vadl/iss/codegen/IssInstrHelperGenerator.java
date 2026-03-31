@@ -32,6 +32,7 @@ import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.control.InstrExitNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
@@ -41,7 +42,6 @@ import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
-import vadl.viam.graph.control.InstrExitNode;
 
 /**
  * Generates helper function implementations for instructions in {@code target/gen-arch/helper.c}.

@@ -166,6 +166,9 @@ public final class PassResults {
     return store.size();
   }
 
+  /**
+   * Stores the result of an executed pass.
+   */
   public void add(PassKey key, Pass pass, long durationMs, @Nullable Object result) {
     if (store.containsKey(key)) {
       // The pipeline's steps should be deterministic.
@@ -178,6 +181,9 @@ public final class PassResults {
     store.put(key, new SingleResult(key, pass, durationMs, result, false));
   }
 
+  /**
+   * Stores that a pass was skipped.
+   */
   public void addSkipped(PassKey key, Pass pass) {
     store.put(key, new SingleResult(key, pass, 0, null, true));
   }

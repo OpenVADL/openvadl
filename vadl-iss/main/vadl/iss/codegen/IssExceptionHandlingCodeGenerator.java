@@ -23,11 +23,11 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.iss.passes.extensions.ExceptionInfo;
 import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.control.InstrExitNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
-import vadl.viam.graph.control.InstrExitNode;
 
 /**
  * Generates the exception handling functions in {@code /target/gen-arch/do_exception.c.inc}

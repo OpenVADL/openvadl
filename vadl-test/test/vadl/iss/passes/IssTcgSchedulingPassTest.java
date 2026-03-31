@@ -28,14 +28,14 @@ import vadl.AbstractTest;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
-import vadl.pipeline.IssPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.pipeline.IssPassOrders;
 import vadl.types.BuiltInTable;
 import vadl.viam.Instruction;
 import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.control.InstrExitNode;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.control.InstrExitNode;
 import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
 
 /**

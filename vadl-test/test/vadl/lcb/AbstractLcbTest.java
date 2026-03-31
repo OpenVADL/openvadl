@@ -24,8 +24,8 @@ import vadl.gcb.valuetypes.TargetName;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassOrder;
-import vadl.pipeline.LcbGcbPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.pipeline.LcbGcbPassOrders;
 
 public abstract class AbstractLcbTest extends AbstractCppCodeGenTest {
 

@@ -28,6 +28,9 @@ public final class PassOrderDumps {
   private PassOrderDumps() {
   }
 
+  /**
+   * Appends a final HTML dump pass to the given pass order.
+   */
   public static PassOrder addDump(PassOrder passOrder, String outPath) {
     var passSteps = passOrder.passSteps();
     var last = passSteps.get(passSteps.size() - 1);

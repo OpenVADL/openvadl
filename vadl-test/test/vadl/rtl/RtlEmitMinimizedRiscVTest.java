@@ -24,9 +24,9 @@ import vadl.AbstractTest;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
+import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.pipeline.RtlPassOrders;
 import vadl.pipeline.ViamCreationPass;
-import vadl.pass.exception.DuplicatedPassKeyException;
 
 /**
  * Simple test of the MiA synthesis and emitting RTL.

@@ -20,6 +20,9 @@ public final class PassOrderPipelineUtils {
   private PassOrderPipelineUtils() {
   }
 
+  /**
+   * Appends the standard HTML dump passes for a pipeline phase when dumping is enabled.
+   */
   public static PassOrder addHtmlDump(PassOrder order,
                                       GeneralConfiguration config,
                                       String phase,
@@ -34,6 +37,9 @@ public final class PassOrderPipelineUtils {
     return order;
   }
 
+  /**
+   * Inserts behavior collection passes between pipeline steps when dumping is enabled.
+   */
   public static PassOrder addDumpBehaviorCollectionPasses(PassOrder order,
                                                           GeneralConfiguration config,
                                                           Class<?>... exceptions) {

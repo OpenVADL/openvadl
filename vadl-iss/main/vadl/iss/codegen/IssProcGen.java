@@ -30,12 +30,12 @@ import vadl.utils.functionInterfaces.TriConsumer;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.control.InstrExitNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.control.InstrExitNode;
 
 /**
  * A node dispatcher for procedure c code rendering in the ISS.

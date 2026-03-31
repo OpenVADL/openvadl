@@ -17,9 +17,9 @@
 package vadl.cppCodeGen;
 
 import vadl.cppCodeGen.model.CppType;
-import vadl.types.DataType;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
+import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.StringType;
 import vadl.types.Type;

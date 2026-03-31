@@ -28,8 +28,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
-import vadl.pipeline.LcbGcbPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.pipeline.LcbGcbPassOrders;
 import vadl.viam.Definition;
 
 public class IsaMachineInstructionMatchingRiscv32PassTest extends AbstractLcbTest {

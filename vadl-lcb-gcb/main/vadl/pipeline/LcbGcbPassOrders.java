@@ -163,6 +163,9 @@ public final class LcbGcbPassOrders {
     return extendLcb(gcbAndCppCodeGen(config), config);
   }
 
+  /**
+   * Extends a shared VIAM pipeline with GCB lowering and shared C/C++ generation passes.
+   */
   public static PassOrder extendGcbAndCppCodeGen(PassOrder order, GcbConfiguration config) {
     order.add(new SetMissingConfigurationValuesPass(config));
     order.skip(StatusBuiltInInlinePass.class);
@@ -187,6 +190,9 @@ public final class LcbGcbPassOrders {
             + "and normalized VIAM types to Cpp types.");
   }
 
+  /**
+   * Extends a GCB pipeline with LCB lowering and LLVM/Clang/LLD emission passes.
+   */
   public static PassOrder extendLcb(PassOrder order, LcbConfiguration config) throws IOException {
     order.skip(FieldAccessInlinerPass.class);
 

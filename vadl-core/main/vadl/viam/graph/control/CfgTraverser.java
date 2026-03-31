@@ -80,6 +80,9 @@ public interface CfgTraverser {
     return dirNode.next();
   }
 
+  /**
+   * Traverses all branches of a control split and returns the merge node reached afterward.
+   */
   default ControlNode traverseControlSplit(ControlSplitNode splitNode) {
     @Nullable AbstractEndNode someEnd = null;
     for (var branch : splitNode.branches()) {

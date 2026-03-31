@@ -22,10 +22,10 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.viam.Procedure;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.control.InstrExitNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
-import vadl.viam.graph.control.InstrExitNode;
 
 /**
  * Generates the code for the {@link vadl.viam.Processor#reset()} definition.

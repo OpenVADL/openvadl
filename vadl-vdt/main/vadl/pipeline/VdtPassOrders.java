@@ -24,6 +24,9 @@ public final class VdtPassOrders {
   private VdtPassOrders() {
   }
 
+  /**
+   * Creates the frontend-plus-VDT verification pipeline.
+   */
   public static PassOrder check(GeneralConfiguration configuration) {
     var order = new PassOrder();
     order.add(new ViamCreationPass(configuration));
@@ -41,6 +44,9 @@ public final class VdtPassOrders {
     return order;
   }
 
+  /**
+   * Appends the shared decode-tree passes to an existing pipeline.
+   */
   public static void addDecodePasses(PassOrder order, GeneralConfiguration config) {
     order
         .add(new VdtEncodingConstraintValidationPass(config))

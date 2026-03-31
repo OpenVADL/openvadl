@@ -28,10 +28,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.AbstractTest;
-import vadl.error.DiagnosticList;
 import vadl.dump.PassOrderDumps;
-import vadl.pipeline.ViamPassOrders;
+import vadl.error.DiagnosticList;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.pipeline.ViamPassOrders;
 
 public class DuplicateWriteDetectionPassTest extends AbstractTest {
 

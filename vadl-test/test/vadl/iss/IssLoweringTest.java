@@ -28,8 +28,8 @@ import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.dump.HtmlDumpPass;
-import vadl.pipeline.IssPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.pipeline.IssPassOrders;
 
 public class IssLoweringTest extends AbstractTest {
 

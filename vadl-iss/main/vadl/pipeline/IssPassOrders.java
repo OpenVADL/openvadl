@@ -69,6 +69,9 @@ public final class IssPassOrders {
     return extendIss(ViamPassOrders.viam(config), config);
   }
 
+  /**
+   * Extends a shared VIAM pipeline with ISS-specific lowering, decode, and emission passes.
+   */
   public static PassOrder extendIss(PassOrder order, IssConfiguration config) {
     order.skip(ArtificialResInlinerPass.class);
     order.skip(FieldAccessInlinerPass.class);

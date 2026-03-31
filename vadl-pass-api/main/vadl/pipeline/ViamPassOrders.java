@@ -32,6 +32,9 @@ public final class ViamPassOrders {
   private ViamPassOrders() {
   }
 
+  /**
+   * Creates the shared VIAM base pipeline used by backend-specific pipelines.
+   */
   public static PassOrder viam(GeneralConfiguration configuration) throws IOException {
     var order = new PassOrder();
 

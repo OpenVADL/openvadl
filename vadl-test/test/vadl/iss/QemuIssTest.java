@@ -27,8 +27,8 @@ import org.slf4j.LoggerFactory;
 import vadl.DockerExecutionTest;
 import vadl.DockerImage;
 import vadl.configuration.IssConfiguration;
-import vadl.pipeline.IssPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.pipeline.IssPassOrders;
 
 /**
  * The test class to build and run tests on the QEMU ISS.

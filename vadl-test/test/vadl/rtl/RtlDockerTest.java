@@ -25,8 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import vadl.DockerExecutionTest;
 import vadl.DockerImage;
 import vadl.configuration.RtlConfiguration;
-import vadl.pipeline.RtlPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.pipeline.RtlPassOrders;
 
 public abstract class RtlDockerTest extends DockerExecutionTest {
 

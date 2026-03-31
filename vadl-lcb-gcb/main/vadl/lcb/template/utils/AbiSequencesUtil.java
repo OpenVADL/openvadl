@@ -22,12 +22,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
-import vadl.viam.annotations.OnlyNegativeNumbersAnnotation;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.template.Renderable;
 import vadl.types.BitsType;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.Specification;
+import vadl.viam.annotations.OnlyNegativeNumbersAnnotation;
 
 /**
  * Utility class.
