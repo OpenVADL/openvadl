@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,7 @@ package vadl.rtl.passes;
 
 import com.google.common.collect.Streams;
 import java.io.IOException;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -47,9 +48,9 @@ import vadl.utils.GraphUtils;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.InstructionWordOrderExtension;
 import vadl.viam.MicroArchitecture;
 import vadl.viam.RegisterResource;
-import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
@@ -123,6 +124,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
     // Attach IPG to ISA
     var ipgExt = new InstructionProgressGraphExtension(ipg);
     optIsa.get().attachExtension(ipgExt);
+    optIsa.get().attachExtension(new InstructionWordOrderExtension(ByteOrder.BIG_ENDIAN));
 
     return ipg;
   }
@@ -325,7 +327,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
   }
 
   private ExpressionNode newIndicesNeq(NodeList<ExpressionNode> indices,
-                               List<Constant.Value> constrValues) {
+                                       List<Constant.Value> constrValues) {
     return Streams.zip(
             indices.stream(), constrValues.stream(),
             (index, constr) -> GraphUtils.neq(index, constr.toNode())
