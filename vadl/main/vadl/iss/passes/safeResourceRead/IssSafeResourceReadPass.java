@@ -42,6 +42,7 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.BranchEndNode;
+import vadl.viam.graph.control.CfgTraverser;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
@@ -52,7 +53,6 @@ import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.passes.CfgTraverser;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
 /**

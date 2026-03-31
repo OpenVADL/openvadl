@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -38,9 +38,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 import vadl.cppCodeGen.FunctionCodeGenerator;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.context.CGenContext;
@@ -79,6 +77,7 @@ import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.control.CfgTraverser;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.InstrCallNode;
@@ -99,7 +98,6 @@ import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.TensorNode;
-import vadl.viam.passes.CfgTraverser;
 
 /**
  * A {@link PseudoInstruction} contains one or multiple {@link Instruction}. This generator

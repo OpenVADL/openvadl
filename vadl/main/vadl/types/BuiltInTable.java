@@ -35,7 +35,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
-import vadl.ast.AsmGrammarDefaultRules;
 import vadl.utils.functionInterfaces.TriFunction;
 import vadl.viam.Constant;
 import vadl.viam.ViamError;
@@ -1142,7 +1141,6 @@ public class BuiltInTable {
   /**
    * Checks if the token kind at lookahead {@code n} in the AsmParser
    * is any of the kinds passed as strings in {@code s}.
-   * To see all possible token kinds refer to the terminal rules in {@link AsmGrammarDefaultRules}.
    *
    * <p>{@code function LaKindIn(n: UInt<N>,s: String...) -> Bool}
    */

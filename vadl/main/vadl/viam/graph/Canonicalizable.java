@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,6 @@
 
 package vadl.viam.graph;
 
-import vadl.viam.passes.canonicalization.Canonicalizer;
-
 /**
  * Marks nodes that provide a canonical form via the {@link Canonicalizable#canonical()} method.
  */
@@ -32,7 +30,7 @@ public interface Canonicalizable {
    * <li>must not modify the graph in any way (add or delete nodes)</li>
    * <li>must not call {@code canonical()} on any other nodes</li>
    * <li>may return a new uninitialized node that must be added to the graph by the
-   * {@link Canonicalizer}</li>
+   * {@link vadl.viam.passes.canonicalization.Canonicalizer}</li>
    * <li>may return {@code this} or already existing nodes (active in same graph)</li>
    * <li>should probably call {@code super.canonical()} and check if it is not this </li>
    * </ul>

@@ -28,6 +28,7 @@ import vadl.utils.GraphUtils;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractEndNode;
+import vadl.viam.graph.control.CfgTraverser;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.ForallEndNode;
@@ -36,7 +37,6 @@ import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.SideEffectNode;
-import vadl.viam.passes.CfgTraverser;
 
 /**
  * Loop unroller pass for VIAM graphs. Unrolls forall statements in the control flow graph.

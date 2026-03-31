@@ -92,6 +92,7 @@ import vadl.viam.annotations.BigEndianAnnotation;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
+import vadl.viam.graph.control.CfgTraverser;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.InstrEndNode;
@@ -127,7 +128,6 @@ import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteSignalNode;
 import vadl.viam.graph.dependency.WriteStageOutputNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
-import vadl.viam.passes.CfgTraverser;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
 /**

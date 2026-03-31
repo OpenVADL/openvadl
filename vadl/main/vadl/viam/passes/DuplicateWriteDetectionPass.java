@@ -33,13 +33,11 @@ import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.DiagnosticBuilder;
 import vadl.error.DiagnosticList;
-import vadl.iss.passes.extensions.RegInfo;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
 import vadl.viam.Definition;
-import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -156,20 +154,6 @@ class DuplicateWriteDetector {
   }
 
   private boolean skipCheck() {
-    var hasHelperOnlyRegAccess = behavior.getNodes(ReadResourceNode.class).anyMatch(n ->
-        n.resourceDefinition() instanceof RegisterTensor reg
-            && reg.hasExtension(RegInfo.class)
-            && reg.expectExtension(RegInfo.class).execClass() == RegInfo.ExecClass.HELPER_ONLY
-    ) || behavior.getNodes(WriteRegTensorNode.class).anyMatch(n ->
-        n.regTensor().hasExtension(RegInfo.class)
-            && n.regTensor().expectExtension(RegInfo.class).execClass()
-            == RegInfo.ExecClass.HELPER_ONLY
-    );
-    if (hasHelperOnlyRegAccess) {
-      return true;
-    }
-
-    // fallback for non-ISS pipelines where RegInfo is not attached
     return behavior.getNodes(ReadResourceNode.class).anyMatch(n -> n.type().bitWidth() > 64)
         || behavior.getNodes(WriteRegTensorNode.class).anyMatch(n -> n.writeBitWidth() > 64);
   }

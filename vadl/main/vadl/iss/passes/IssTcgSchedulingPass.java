@@ -42,6 +42,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.BranchBeginNode;
+import vadl.viam.graph.control.CfgTraverser;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
@@ -55,7 +56,6 @@ import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
-import vadl.viam.passes.CfgTraverser;
 import vadl.viam.passes.GraphProcessor;
 
 /**

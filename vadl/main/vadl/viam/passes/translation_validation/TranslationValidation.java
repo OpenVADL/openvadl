@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
-import vadl.cppCodeGen.SymbolTable;
 import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.SIntType;
@@ -183,8 +182,8 @@ public class TranslationValidation {
 
   @Nonnull
   private static String generateFormula(List<TranslationResult> matchings) {
-    var symbolTableBeforeMatching = new SymbolTable();
-    var symbolTableAfterMatching = new SymbolTable(matchings.size());
+    var symbolTableBeforeMatching = new NameGenerator();
+    var symbolTableAfterMatching = new NameGenerator(matchings.size());
 
     return IntStream.range(0, matchings.size())
         .mapToObj(i -> {
@@ -197,15 +196,15 @@ public class TranslationValidation {
   }
 
   private String getPredicates(List<TranslationResult> matchings) {
-    var symbolTableBefore = new SymbolTable();
-    var symbolTableAfter = new SymbolTable(matchings.size());
+    var symbolTableBefore = new NameGenerator();
+    var symbolTableAfter = new NameGenerator(matchings.size());
     return matchings.stream()
         .map(matching -> lowerSideEffect(matching, symbolTableBefore, symbolTableAfter))
         .collect(Collectors.joining("\n"));
   }
 
-  private String lowerSideEffect(TranslationResult matching, SymbolTable symbolTableBefore,
-                                 SymbolTable symbolTableAfter) {
+  private String lowerSideEffect(TranslationResult matching, NameGenerator symbolTableBefore,
+                                 NameGenerator symbolTableAfter) {
     var beforeTranslationSymbol = symbolTableBefore.getNextVariable();
     var afterTranslationSymbol = symbolTableAfter.getNextVariable();
 
@@ -215,6 +214,26 @@ public class TranslationValidation {
             %s = %s
             """, beforeTranslationSymbol, matching.before.value(),
         afterTranslationSymbol, matching.after.value());
+  }
+
+  private static final class NameGenerator {
+    private int state;
+
+    NameGenerator() {
+      this(0);
+    }
+
+    NameGenerator(int state) {
+      this.state = state;
+    }
+
+    String getNextVariable() {
+      return getVariableBasedOnState(state++);
+    }
+
+    private static String getVariableBasedOnState(int i) {
+      return i < 0 ? "" : getVariableBasedOnState((i / 26) - 1) + (char) (97 + i % 26);
+    }
   }
 
   private String getVariableDefinitions(Specification specification, Instruction before) {
