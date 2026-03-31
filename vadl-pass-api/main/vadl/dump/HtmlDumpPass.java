@@ -25,20 +25,15 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
-import vadl.dump.entitySuppliers.VdtEntitySupplier;
 import vadl.dump.entitySuppliers.ViamEntitySupplier;
-import vadl.dump.infoEnrichers.IssEnricherCollection;
-import vadl.dump.infoEnrichers.LcbEnricherCollection;
-import vadl.dump.infoEnrichers.RtlEnricherCollection;
-import vadl.dump.infoEnrichers.VdtEnricherCollection;
 import vadl.dump.infoEnrichers.ViamEnricherCollection;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
@@ -56,9 +51,20 @@ import vadl.viam.Specification;
  * Those info objects are rendered in the entity box depending on their concrete type (e.g.
  * {@link Info.Tag}.
  *
- * <p>To add your own entity supplier, add yours to the {@code entitySuppliers} field.
- * To add a new info enricher, add it to the {@code infoEnrichers} field.
- * Take a look at {@link ViamEnricherCollection} to see an example on how to implement
+ * <p>The shared pass always registers the VIAM-owned defaults directly. Additional dump
+ * features from optional modules are discovered through {@link ServiceLoader} using the
+ * {@link HtmlDumpExtensionProvider} interface. That keeps this pass in {@code :vadl-pass-api}
+ * without introducing compile-time dependencies back to backend modules.</p>
+ *
+ * <p>To add your own entity supplier or info enricher from another module:</p>
+ * <ol>
+ *   <li>Implement {@link HtmlDumpExtensionProvider} in the owning module.</li>
+ *   <li>Create a resource file named
+ *       {@code META-INF/services/vadl.dump.HtmlDumpExtensionProvider}.</li>
+ *   <li>Add the provider's fully qualified class name to that file.</li>
+ * </ol>
+ *
+ * <p>Take a look at {@link ViamEnricherCollection} to see an example on how to implement
  * new info enrichers.</p>
  *
  * <p>Note that infos are rendered in the same order as the info enrichers are registered.</p>
@@ -76,26 +82,13 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
 
   private static final Logger log = LoggerFactory.getLogger(HtmlDumpPass.class);
 
-  /**
-   * A function that collects all available entity suppliers.
-   * Add your supplier to activate it.
-   */
-  static Consumer<List<DumpEntitySupplier<?>>> entitySuppliers = suppliers -> {
-    suppliers.add(new ViamEntitySupplier());
-    suppliers.add(new VdtEntitySupplier());
-  };
-
-  /**
-   * A function to collect all information enrichers.
-   * Add your enricher to activate it.
-   */
-  static Consumer<List<InfoEnricher>> infoEnrichers = enrichers -> {
-    enrichers.addAll(ViamEnricherCollection.all);
-    enrichers.addAll(LcbEnricherCollection.all);
-    enrichers.addAll(IssEnricherCollection.all);
-    enrichers.addAll(VdtEnricherCollection.all);
-    enrichers.addAll(RtlEnricherCollection.all);
-  };
+  private static final List<HtmlDumpExtensionProvider> extensionProviders =
+      ServiceLoader.load(HtmlDumpExtensionProvider.class, HtmlDumpPass.class.getClassLoader())
+          .stream()
+          .map(ServiceLoader.Provider::get)
+          .sorted(Comparator.comparingInt(HtmlDumpExtensionProvider::priority)
+              .thenComparing(provider -> provider.getClass().getName()))
+          .toList();
 
 
   /**
@@ -193,7 +186,8 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         getOutputPath());
     // collect suppliers
     var suppliers = new ArrayList<DumpEntitySupplier<?>>();
-    entitySuppliers.accept(suppliers);
+    suppliers.add(new ViamEntitySupplier());
+    extensionProviders.forEach(provider -> provider.addEntitySuppliers(suppliers));
 
     // get all top-level entities from all suppliers
     var entities = suppliers.stream()
@@ -203,7 +197,8 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
 
     // collect all info enrichers
     var enrichers = new ArrayList<InfoEnricher>();
-    infoEnrichers.accept(enrichers);
+    enrichers.addAll(ViamEnricherCollection.all);
+    extensionProviders.forEach(provider -> provider.addInfoEnrichers(enrichers));
 
     // apply all enrichers to all entities (also sub entities)
     for (var entity : entities) {
