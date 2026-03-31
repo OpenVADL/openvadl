@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":vadl-core"))
     implementation(project(":vadl"))
     implementation(libs.lsp4j)
 

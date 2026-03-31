@@ -10,6 +10,7 @@ group = "vadl"
 version = "unspecified"
 
 dependencies {
+    implementation(project(":vadl-core"))
     implementation(project(":vadl"))
     implementation(project(":vadl-lsp"))
     implementation(libs.picocli)

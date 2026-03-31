@@ -11,6 +11,7 @@ plugins {
 dependencies {
     annotationProcessor(project(":java-annotations"))
     compileOnly(project(":java-annotations"))
+    implementation(project(":vadl-core"))
     implementation(libs.thymeleaf)
     implementation(libs.guava)
     implementation(libs.commons.io)
