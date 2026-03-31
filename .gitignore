@@ -5,6 +5,8 @@ build/
 !vadl/src/test/**/build/
 docs/obj
 
+**/.kotlin/
+
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml

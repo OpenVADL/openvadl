@@ -1,32 +1,11 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
-// SPDX-License-Identifier: GPL-3.0-or-later
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import vadl.CocoR_gradle
+import vadl.GenerateCocoParserTask
 import java.util.*
 
 plugins {
-    id("vadl.CocoR")
-    id("io.github.rascmatt.z3") version "1.0.2"
+    id("conventions-jvm")
     kotlin("jvm")
-}
-
-
-repositories {
-    mavenCentral()
+    id("io.github.rascmatt.z3")
 }
 
 dependencies {
@@ -39,22 +18,18 @@ dependencies {
     implementation("org.apache.commons:commons-text:1.10.0")
 
     implementation("io.github.rascmatt:z3-bootstrap:1.0.0")
-    testImplementation("io.github.kper:buildkitcli:0.14.0")
+    implementation(kotlin("stdlib-jdk8"))
 
     testCompileOnly(project(":java-annotations"))
-    testImplementation(platform("org.junit:junit-bom:5.11.4"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testAnnotationProcessor(project(":java-annotations"))
+    testImplementation("io.github.kper:buildkitcli:0.14.0")
     testImplementation("org.assertj:assertj-core:3.26.3")
     testImplementation("org.awaitility:awaitility:4.2.1")
     testImplementation("org.testcontainers:testcontainers:2.0.3")
     testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
-    testAnnotationProcessor(project(":java-annotations"))
-    // Helps getting test files small and concise
     testImplementation("org.apache.velocity:velocity-engine-core:2.3")
     testImplementation("net.jqwik:jqwik:1.9.0")
     testImplementation("org.yaml:snakeyaml:2.2")
-    implementation(kotlin("stdlib-jdk8"))
 }
 
 kotlin {
@@ -78,18 +53,15 @@ tasks.matching { it is KotlinCompile || it is JavaCompile }.configureEach {
     dependsOn("generateCocoParser")
 }
 
-tasks.withType<Checkstyle> {
+tasks.withType<Checkstyle>().configureEach {
     doFirst {
-        exclude { f ->
-            // NOTE: we cannot exclude all tests here but we could disable the checkstyleTest target.
-            val absolute = f.file.absolutePath
-            absolute.contains("build/generated/")
+        exclude { fileTreeElement ->
+            fileTreeElement.file.absolutePath.contains("build/generated/")
         }
     }
 }
 
-// Register the custom task with your configuration
-tasks.register<CocoR_gradle.GenerateCocoParserTask>("generateCocoParser") {
+tasks.register<GenerateCocoParserTask>("generateCocoParser") {
     group = "build"
     inputFiles.from("main/vadl/ast/vadl.ATG")
     parserFrame.set(project.file("main/vadl/ast/Parser.frame"))
@@ -97,13 +69,6 @@ tasks.register<CocoR_gradle.GenerateCocoParserTask>("generateCocoParser") {
     cocoJar.set(project.file("libs/Coco.jar"))
 }
 
-// add the generated open-vadl.properties file to the JAR package.
-tasks.processResources {
-    from(createProperties)
-}
-
-// generates an open-vadl properties file at build time.
-// this includes the version of open-vadl
 val createProperties by tasks.registering {
     val outputDir = layout.buildDirectory.dir("generated/resources")
     val versionFile = outputDir.map { it.file("open-vadl.properties") }
@@ -119,8 +84,11 @@ val createProperties by tasks.registering {
     }
 }
 
+tasks.processResources {
+    from(createProperties)
+}
 
-tasks.withType<Test> {
+tasks.withType<Test>().configureEach {
     environment("PROJECT_ROOT", rootDir.absolutePath)
     useJUnitPlatform {
         val include = System.getProperty("tags.include")
@@ -129,7 +97,6 @@ tasks.withType<Test> {
         if (include != null) {
             includeTags(include)
         } else {
-            // Default: exclude fast
             excludeTags("BenchmarkTest")
         }
 
@@ -143,13 +110,11 @@ tasks.withType<Test> {
     }
 }
 
-// generators to be tested separately
 val generators = listOf("iss", "lcb", "rtl")
 
 for (gen in generators) {
     tasks.register<Test>("test-$gen") {
         group = "verification"
-        // fail fast, so we don't try to rebuild all failing images over and over
         failFast = true
         val pkg = "vadl.$gen"
         description = "Runs tests for the $pkg package"
@@ -161,19 +126,16 @@ for (gen in generators) {
     }
 }
 
-
 tasks.register<Test>("test-others") {
     group = "verification"
-    val exclPkgs = generators.joinToString(", ") { "vadl.$it" }
-    description = "Runs tests for vadl.* packages excluding $exclPkgs"
+    val excludedPackages = generators.joinToString(", ") { "vadl.$it" }
+    description = "Runs tests for vadl.* packages excluding $excludedPackages"
     testClassesDirs = sourceSets["test"].output.classesDirs
     classpath = sourceSets["test"].runtimeClasspath
-
     filter {
         includeTestsMatching("vadl.*")
         for (gen in generators) {
-            val pkg = "vadl.$gen"
-            excludeTestsMatching("$pkg.*")
+            excludeTestsMatching("vadl.$gen.*")
         }
     }
 }
