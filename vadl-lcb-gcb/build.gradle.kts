@@ -6,8 +6,7 @@ dependencies {
     annotationProcessor(project(":java-annotations"))
     compileOnly(project(":java-annotations"))
     implementation(project(":vadl-core"))
+    implementation(project(":vadl-pass-api"))
     implementation(libs.guava)
-    implementation(libs.commons.io)
-    implementation(libs.thymeleaf)
-    implementation(libs.commons.lang3)
+    implementation(libs.commons.text)
 }

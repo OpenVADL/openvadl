@@ -20,9 +20,9 @@ import java.util.List;
 import vadl.dump.infoEnrichers.LcbEnricherCollection;
 
 /**
- * Registers backend-specific HTML dump extensions that still live in :vadl.
+ * Registers LCB/GCB-specific HTML dump extensions.
  */
-public class VadlHtmlDumpExtensionProvider implements HtmlDumpExtensionProvider {
+public class LcbHtmlDumpExtensionProvider implements HtmlDumpExtensionProvider {
 
   @Override
   public int priority() {
