@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -253,7 +253,7 @@ public class HandlerProcessor extends AbstractProcessor {
     // Collect methods from the current class
     for (Element elem : clazz.getEnclosedElements()) {
       if (elem.getKind() == ElementKind.METHOD
-          && elem.getAnnotation(Handler.class) != null) {
+          && hasAnnotation(elem, Handler.class.getCanonicalName())) {
 
         ExecutableElement method = (ExecutableElement) elem;
         List<? extends VariableElement> parameters = method.getParameters();
@@ -321,6 +321,12 @@ public class HandlerProcessor extends AbstractProcessor {
       collectHandlerMethodsRecursive(superClassElement, baseType, handlerMethods, processedClasses,
           returnType, contextTypes);
     }
+  }
+
+  private static boolean hasAnnotation(Element element, String annotationClassName) {
+    return element.getAnnotationMirrors().stream()
+        .anyMatch(annotation ->
+            annotation.getAnnotationType().toString().equals(annotationClassName));
   }
 
   private boolean isVoid(TypeMirror type) {

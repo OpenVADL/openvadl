@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -142,7 +142,7 @@ import java.lang.annotation.Target;
  *
  * @see DispatchFor
  */
-@Retention(java.lang.annotation.RetentionPolicy.SOURCE)
+@Retention(java.lang.annotation.RetentionPolicy.CLASS)
 @Target(ElementType.METHOD)
 public @interface Handler {
 }
