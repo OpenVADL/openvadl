@@ -31,7 +31,7 @@ import vadl.AbstractTest;
 import vadl.TestUtils;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.ViamPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
@@ -188,7 +188,7 @@ public class SideEffectConditionResolvingPassTest extends AbstractTest {
     var config = new GeneralConfiguration(Path.of("build/test-out"), DumpMode.ALWAYS);
     var setup = setupPassManagerAndRunSpec(
         "passes/sideEffectConditionResolving/valid_test_cases.vadl",
-        PassOrders.viam(config)
+        ViamPassOrders.viam(config)
             .untilFirst(SideEffectConditionResolvingPass.class)
             .add(new ViamVerificationPass(config))
     );

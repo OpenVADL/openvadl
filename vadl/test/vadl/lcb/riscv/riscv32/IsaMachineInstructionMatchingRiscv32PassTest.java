@@ -28,7 +28,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.LcbGcbPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Definition;
 
@@ -80,7 +80,7 @@ public class IsaMachineInstructionMatchingRiscv32PassTest extends AbstractLcbTes
     var config = getConfiguration(false);
     var setup = setupPassManagerAndRunSpec(
         "sys/risc-v/rv32im.vadl",
-        PassOrders.lcb(config)
+        LcbGcbPassOrders.lcb(config)
             .untilFirst(IsaMachineInstructionMatchingPass.class)
     );
     var passManager = setup.passManager();

@@ -30,7 +30,7 @@ import vadl.gcb.passes.MachineInstructionCtx;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.LcbGcbPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.BitsType;
 import vadl.types.DataType;
@@ -112,7 +112,7 @@ public class IsaMachineInstructionMatchingRiscv64PassTest extends AbstractLcbTes
     var config = getConfiguration(false);
     var setup = setupPassManagerAndRunSpec(
         "sys/risc-v/rv64im.vadl",
-        PassOrders.lcb(config)
+        LcbGcbPassOrders.lcb(config)
             .untilFirst(IsaMachineInstructionMatchingPass.class)
     );
     var passManager = setup.passManager();
@@ -141,7 +141,7 @@ public class IsaMachineInstructionMatchingRiscv64PassTest extends AbstractLcbTes
     var config = getConfiguration(false);
     var setup = setupPassManagerAndRunSpec(
         "sys/risc-v/rv64im.vadl",
-        PassOrders.lcb(config)
+        LcbGcbPassOrders.lcb(config)
             .untilFirst(IsaMachineInstructionMatchingPass.class)
     );
 

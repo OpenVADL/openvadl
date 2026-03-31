@@ -28,7 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.iss.IssTestUtils;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.IssPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.ViamUtils;
 import vadl.viam.InstructionSetArchitecture;
@@ -87,7 +87,7 @@ public class IssA64SVEInstrTest extends AbstractIssAarch64InstrTest {
       return;
     }
 
-    var setup = setupPassManagerAndRunSpec(getVadlSpec(), PassOrders.iss(getConfiguration(false)));
+    var setup = setupPassManagerAndRunSpec(getVadlSpec(), IssPassOrders.iss(getConfiguration(false)));
     isa = setup.specification().isa().orElseThrow(() ->
         new IllegalStateException("Specification has no ISA."));
 

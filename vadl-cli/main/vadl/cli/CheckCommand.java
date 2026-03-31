@@ -20,7 +20,7 @@ import java.util.concurrent.Callable;
 import picocli.CommandLine.Command;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.PassOrder;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.VdtPassOrders;
 
 /**
  * The Command does provide the check subcommand.
@@ -34,6 +34,6 @@ public class CheckCommand extends BaseCommand implements Callable<Integer> {
 
   @Override
   PassOrder passOrder(GeneralConfiguration configuration) {
-    return PassOrders.check(configuration);
+    return VdtPassOrders.check(configuration);
   }
 }

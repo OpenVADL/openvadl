@@ -155,6 +155,14 @@ public final class LcbGcbPassOrders {
   private LcbGcbPassOrders() {
   }
 
+  public static PassOrder gcbAndCppCodeGen(GcbConfiguration config) throws IOException {
+    return extendGcbAndCppCodeGen(ViamPassOrders.viam(config), config);
+  }
+
+  public static PassOrder lcb(LcbConfiguration config) throws IOException {
+    return extendLcb(gcbAndCppCodeGen(config), config);
+  }
+
   public static PassOrder extendGcbAndCppCodeGen(PassOrder order, GcbConfiguration config) {
     order.add(new SetMissingConfigurationValuesPass(config));
     order.skip(StatusBuiltInInlinePass.class);

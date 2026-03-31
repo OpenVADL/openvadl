@@ -34,7 +34,7 @@ import vadl.TestUtils;
 import vadl.iss.AsmTestBuilder;
 import vadl.iss.AutoAssembler;
 import vadl.iss.IssTestUtils;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.IssPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Disassembler;
 import vadl.utils.ViamUtils;
@@ -72,7 +72,7 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
   void setup() throws IOException, DuplicatedPassKeyException {
     if (isa == null) {
       var setup =
-          setupPassManagerAndRunSpec(getVadlSpec(), PassOrders.iss(getConfiguration(false)));
+          setupPassManagerAndRunSpec(getVadlSpec(), IssPassOrders.iss(getConfiguration(false)));
       isa = setup.specification().isa().get();
       // For auto-generating assembly code, endianness doesn't really matter, as long as assembler
       // and disassembler use the same encoding format.

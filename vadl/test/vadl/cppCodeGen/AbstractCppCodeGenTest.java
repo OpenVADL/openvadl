@@ -20,7 +20,7 @@ import java.io.IOException;
 import vadl.DockerExecutionTest;
 import vadl.configuration.GcbConfiguration;
 import vadl.gcb.valuetypes.TargetName;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.LcbGcbPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
 public class AbstractCppCodeGenTest extends DockerExecutionTest {
@@ -41,6 +41,6 @@ public class AbstractCppCodeGenTest extends DockerExecutionTest {
   public TestSetup runGcbAndCppCodeGen(GcbConfiguration configuration,
                                        String specPath)
       throws IOException, DuplicatedPassKeyException {
-    return setupPassManagerAndRunSpec(specPath, PassOrders.gcbAndCppCodeGen(configuration));
+    return setupPassManagerAndRunSpec(specPath, LcbGcbPassOrders.gcbAndCppCodeGen(configuration));
   }
 }

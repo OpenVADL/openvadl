@@ -28,7 +28,7 @@ import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.dump.HtmlDumpPass;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.IssPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
 public class IssLoweringTest extends AbstractTest {
@@ -48,7 +48,7 @@ public class IssLoweringTest extends AbstractTest {
             new GeneralConfiguration(Path.of("build/test-output"), DumpMode.ALWAYS));
 
     setupPassManagerAndRunSpec("sys/risc-v/rv64im.vadl",
-        PassOrders.iss(config)
+        IssPassOrders.iss(config)
     );
   }
 
@@ -58,7 +58,7 @@ public class IssLoweringTest extends AbstractTest {
         new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
 
     setupPassManagerAndRunSpec("sys/aarch64/virt.vadl",
-        PassOrders.iss(config)
+        IssPassOrders.iss(config)
     );
   }
 }

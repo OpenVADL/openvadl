@@ -30,7 +30,7 @@ import org.junit.jupiter.api.TestFactory;
 import vadl.AbstractTest;
 import vadl.dump.PassFailureDumpHandler;
 import vadl.pass.PassManager;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.ViamPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.VadlFileUtils;
 import vadl.viam.Constant;
@@ -73,7 +73,7 @@ public class BuiltInConstantEvaluationTest extends AbstractTest {
     // get and run spec
     var spec = runAndGetViamSpecification(processedSource);
     var passManager = new PassManager(new PassFailureDumpHandler());
-    passManager.add(PassOrders.viam(config)
+    passManager.add(ViamPassOrders.viam(config)
         .untilFirst(CanonicalizationPass.class)
         .add(new ViamVerificationPass(config)));
     passManager.run(spec);

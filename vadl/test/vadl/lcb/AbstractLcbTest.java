@@ -24,7 +24,7 @@ import vadl.gcb.valuetypes.TargetName;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassOrder;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.LcbGcbPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
 public abstract class AbstractLcbTest extends AbstractCppCodeGenTest {
@@ -47,7 +47,7 @@ public abstract class AbstractLcbTest extends AbstractCppCodeGenTest {
                           PassKey until)
       throws IOException, DuplicatedPassKeyException {
     return setupPassManagerAndRunSpecUntil(specPath,
-        PassOrders.lcb(configuration), until);
+        LcbGcbPassOrders.lcb(configuration), until);
   }
 
 
@@ -55,7 +55,7 @@ public abstract class AbstractLcbTest extends AbstractCppCodeGenTest {
                           String specPath)
       throws IOException, DuplicatedPassKeyException {
     return setupPassManagerAndRunSpec(specPath,
-        PassOrders.lcb(configuration));
+        LcbGcbPassOrders.lcb(configuration));
   }
 
   /**
@@ -82,7 +82,7 @@ public abstract class AbstractLcbTest extends AbstractCppCodeGenTest {
                           PassKey until,
                           List<TemporaryTestPassInjection> temporaryPasses)
       throws IOException, DuplicatedPassKeyException {
-    var passOrder = PassOrders.lcb(configuration);
+    var passOrder = LcbGcbPassOrders.lcb(configuration);
     for (var tempPass : temporaryPasses) {
       passOrder.addAfterLast(tempPass.after, tempPass.pass);
     }

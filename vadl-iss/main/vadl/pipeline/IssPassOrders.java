@@ -5,6 +5,7 @@ package vadl.pipeline;
 
 import static vadl.iss.template.IssDefaultRenderingPass.issDefault;
 
+import java.io.IOException;
 import java.util.Optional;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
@@ -62,6 +63,10 @@ import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
  */
 public final class IssPassOrders {
   private IssPassOrders() {
+  }
+
+  public static PassOrder iss(IssConfiguration config) throws IOException {
+    return extendIss(ViamPassOrders.viam(config), config);
   }
 
   public static PassOrder extendIss(PassOrder order, IssConfiguration config) {

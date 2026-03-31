@@ -24,7 +24,8 @@ import vadl.AbstractTest;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.RtlPassOrders;
+import vadl.pipeline.ViamCreationPass;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
 /**
@@ -46,8 +47,8 @@ public class RtlEmitMinimizedRiscVTest extends AbstractTest {
     config.setMemory(RtlConfiguration.Memory.async);
     config.setEmitDebugPrint(false);
 
-    var order = PassOrders.rtl(config);
-    order.addAfterFirst(PassOrders.ViamCreationPass.class, new PruneIsaPass(config, instructions));
+    var order = RtlPassOrders.rtl(config);
+    order.addAfterFirst(ViamCreationPass.class, new PruneIsaPass(config, instructions));
 
     setupPassManagerAndRunSpec("sys/risc-v/mia/rv_5stage.vadl", order);
   }

@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import vadl.DockerExecutionTest;
 import vadl.DockerImage;
 import vadl.configuration.RtlConfiguration;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.RtlPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
 public abstract class RtlDockerTest extends DockerExecutionTest {
@@ -41,7 +41,7 @@ public abstract class RtlDockerTest extends DockerExecutionTest {
 
       try {
         // Generate RTL core
-        setupPassManagerAndRunSpec(specPath, PassOrders.rtl(configuration));
+        setupPassManagerAndRunSpec(specPath, RtlPassOrders.rtl(configuration));
 
         // Return image with generated files
         return getImage(configuration);

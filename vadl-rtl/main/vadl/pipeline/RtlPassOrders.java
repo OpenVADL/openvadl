@@ -5,6 +5,7 @@ package vadl.pipeline;
 
 import static vadl.configuration.DecoderOptions.Generator.RTL_TABLE;
 
+import java.io.IOException;
 import vadl.configuration.RtlConfiguration;
 import vadl.lcb.passes.OverwriteInputOperandsPass;
 import vadl.pass.PassOrder;
@@ -42,6 +43,10 @@ import vadl.viam.passes.NormalizeFieldsToFieldAccessFunctionsPass;
  */
 public final class RtlPassOrders {
   private RtlPassOrders() {
+  }
+
+  public static PassOrder rtl(RtlConfiguration config) throws IOException {
+    return extendRtl(ViamPassOrders.viam(config), config);
   }
 
   public static PassOrder extendRtl(PassOrder order, RtlConfiguration config) {

@@ -31,7 +31,8 @@ import vadl.dump.HtmlDumpPass;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassOrder;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.RtlPassOrders;
+import vadl.pipeline.ViamCreationPass;
 import vadl.pass.PassResults;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.rtl.passes.InstructionProgressGraphCreationPass;
@@ -61,8 +62,8 @@ public class RtlLoweringTest extends AbstractTest {
     decoderOptions.setGenerator(DecoderOptions.Generator.REGULAR);
     config.setDecoderOptions(decoderOptions);
 
-    var order = PassOrders.rtl(config);
-    order.addAfterFirst(PassOrders.ViamCreationPass.class,
+    var order = RtlPassOrders.rtl(config);
+    order.addAfterFirst(ViamCreationPass.class,
         new PruneIsaPass(config, instructions, false));
 
     addDumpAndCheck(config, order, InstructionProgressGraphCreationPass.class);

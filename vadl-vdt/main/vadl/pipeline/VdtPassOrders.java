@@ -24,6 +24,23 @@ public final class VdtPassOrders {
   private VdtPassOrders() {
   }
 
+  public static PassOrder check(GeneralConfiguration configuration) {
+    var order = new PassOrder();
+    order.add(new ViamCreationPass(configuration));
+
+    PassOrderPipelineUtils.addHtmlDump(order, configuration, "VIAM Creation",
+        "Dump directly after frontend generated VIAM.");
+
+    order.add(new vadl.viam.passes.verification.ViamVerificationPass(configuration));
+    addDecodePasses(order, configuration);
+
+    PassOrderPipelineUtils.addHtmlDump(order, configuration,
+        "VDT Creation",
+        "Dump directly after VDT generation.");
+
+    return order;
+  }
+
   public static void addDecodePasses(PassOrder order, GeneralConfiguration config) {
     order
         .add(new VdtEncodingConstraintValidationPass(config))

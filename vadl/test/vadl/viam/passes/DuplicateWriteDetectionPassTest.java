@@ -30,7 +30,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import vadl.AbstractTest;
 import vadl.error.DiagnosticList;
 import vadl.dump.PassOrderDumps;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.ViamPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
 public class DuplicateWriteDetectionPassTest extends AbstractTest {
@@ -67,7 +67,7 @@ public class DuplicateWriteDetectionPassTest extends AbstractTest {
 
     var err = assertThrows(DiagnosticList.class, () -> setupPassManagerAndRunSpec(
         "passes/singleResourceWriteValidation/invalid_" + name + ".vadl",
-        PassOrders.viam(getConfiguration(false))
+        ViamPassOrders.viam(getConfiguration(false))
             .untilFirst(DuplicateWriteDetectionPass.class)
     ));
 
@@ -84,7 +84,7 @@ public class DuplicateWriteDetectionPassTest extends AbstractTest {
     setupPassManagerAndRunSpec(
         test,
         PassOrderDumps.addDump(
-            PassOrders.viam(getConfiguration(false))
+            ViamPassOrders.viam(getConfiguration(false))
                 .untilFirst(DuplicateWriteDetectionPass.class),
             "test-weird")
     );

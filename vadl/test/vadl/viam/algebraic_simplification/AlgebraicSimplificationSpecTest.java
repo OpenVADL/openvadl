@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.AbstractTest;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.ViamPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
@@ -42,7 +42,7 @@ public class AlgebraicSimplificationSpecTest extends AbstractTest {
     var config = getConfiguration(false);
     var setup = setupPassManagerAndRunSpec(
         "passes/algebraicSimplification/algebraic_simplification.vadl",
-        PassOrders.viam(config)
+        ViamPassOrders.viam(config)
             .untilFirst(AlgebraicSimplificationPass.class)
             .skip(StatusBuiltInInlinePass.class)
             .add(new ViamVerificationPass(config))

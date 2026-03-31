@@ -25,7 +25,7 @@ import picocli.CommandLine.Command;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
 import vadl.pass.PassOrder;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.RtlPassOrders;
 
 /**
  * The Command does provide the rtl subcommand.
@@ -100,6 +100,6 @@ public class RtlCommand extends BaseCommand {
     rtlConfig.setProjectName(projectName);
     rtlConfig.setEmitRVFI(emitRVFI);
     rtlConfig.setDryRun(dryRun);
-    return PassOrders.rtl(rtlConfig);
+    return RtlPassOrders.rtl(rtlConfig);
   }
 }

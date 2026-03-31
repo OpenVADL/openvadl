@@ -35,7 +35,7 @@ import picocli.CommandLine.Command;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassOrder;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.IssPassOrders;
 
 /**
  * The Command does provide the iss subcommand.
@@ -77,7 +77,7 @@ public class IssCommand extends BaseCommand {
     var issConfig = new IssConfiguration(configuration);
     issConfig.setDryRun(dryRun);
     issConfig.setOptsToSkip(skipOpts);
-    return PassOrders.iss(issConfig);
+    return IssPassOrders.iss(issConfig);
   }
 
   @Override

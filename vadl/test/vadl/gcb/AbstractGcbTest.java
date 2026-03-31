@@ -26,7 +26,7 @@ import vadl.cppCodeGen.AbstractCppCodeGenTest;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.pass.PassKey;
 import vadl.pass.PassOrder;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.LcbGcbPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
@@ -52,7 +52,7 @@ public abstract class AbstractGcbTest extends AbstractCppCodeGenTest {
                           PassKey until)
       throws IOException, DuplicatedPassKeyException {
     return setupPassManagerAndRunSpecUntil(specPath,
-        PassOrders.gcbAndCppCodeGen(configuration), until);
+        LcbGcbPassOrders.gcbAndCppCodeGen(configuration), until);
   }
 
   /**

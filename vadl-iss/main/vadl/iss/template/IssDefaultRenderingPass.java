@@ -25,7 +25,7 @@ import vadl.configuration.IssConfiguration;
  * readable, especially when using the {@link #issDefault(String, IssConfiguration)}
  * constructor.
  *
- * @see vadl.pipeline.PassOrders#iss(IssConfiguration)
+ * @see vadl.pipeline.IssPassOrders#iss(IssConfiguration)
  */
 public class IssDefaultRenderingPass extends IssTemplateRenderingPass {
 

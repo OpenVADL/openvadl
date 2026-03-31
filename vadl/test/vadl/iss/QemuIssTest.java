@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import vadl.DockerExecutionTest;
 import vadl.DockerImage;
 import vadl.configuration.IssConfiguration;
-import vadl.pipeline.PassOrders;
+import vadl.pipeline.IssPassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
 /**
@@ -78,7 +78,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
     return cache.computeIfAbsent(specPath, (path) -> {
       try {
         // run iss generation
-        setupPassManagerAndRunSpec(path, PassOrders.iss(configuration));
+        setupPassManagerAndRunSpec(path, IssPassOrders.iss(configuration));
 
         // find iss output path
         var issOutputPath = Path.of(configuration.outputPath() + "/iss").toAbsolutePath();
