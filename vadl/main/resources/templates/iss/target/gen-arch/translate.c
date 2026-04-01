@@ -27,6 +27,7 @@ static TCGv cpu_[(${reg.name_lower})][(${reg.c_array_def})];
    the next instruction PC.
  */
 #define DISAS_CHAIN  DISAS_TARGET_0
+#define DISAS_EXIT   DISAS_TARGET_1
 
 typedef struct DisasContext {
   DisasContextBase base;
@@ -242,6 +243,11 @@ static void [(${gen_arch_lower})]_tr_tb_stop(DisasContextBase *db, CPUState *cpu
     			// jump to subsequent instruction
     			gen_goto_tb(ctx, 0, db->pc_next);
     			break;
+    		case DISAS_EXIT:
+    			// force tb exit
+          gen_update_pc(ctx, db->pc_next);
+          tcg_gen_exit_tb(NULL, 0);
+          break;
     		case DISAS_NORETURN:
     			// default behavior
     			break;

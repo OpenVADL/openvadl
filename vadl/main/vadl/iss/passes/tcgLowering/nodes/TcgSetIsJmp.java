@@ -41,7 +41,8 @@ public class TcgSetIsJmp extends TcgNode {
   public enum Type {
     NORETURN,
     NEXT,
-    CHAIN;
+    CHAIN,
+    EXIT;
 
     @SuppressWarnings("MethodName")
     public String cCode() {

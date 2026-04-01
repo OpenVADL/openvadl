@@ -287,12 +287,16 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     var unconditionalJump = instrEnd.sideEffects().stream()
         .anyMatch(s -> s.usages().anyMatch(u -> u instanceof InstrExitNode));
 
-    if (unconditionalJump || containsWrites) {
+    if (unconditionalJump) {
       // if the jump is unconditional we must exit the tb loop
-      //   goto_tb or tb lookup is inserted after PcChange
-      // if any writes to the tb state exist, we cannot chain, because they may write
-      //   data that is not statically known at TCG gen time (eg writes from registers)
+      // goto_tb or tb lookup is inserted after PcChange
       instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.NORETURN));
+    } else if (containsWrites) {
+      // if any writes to the tb state exist, we cannot chain, because they may write
+      // data that is not statically known at TCG gen time (eg writes from registers)
+
+      // if there is no jump beforehand, we must exit the tb
+      instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.EXIT));
     } else {
       // if there is no unconditional jump or non-static write, we must chain
       // the instruction with the next one by setting the jmp type to chain.
