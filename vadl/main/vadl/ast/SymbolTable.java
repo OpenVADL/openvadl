@@ -99,7 +99,7 @@ class SymbolTable {
       var location = importedSymbolSegments.get(0).location()
           .join(importedSymbolSegments.get(importedSymbolSegments.size() - 1).location());
       if (symbol == null && macroSymbol == null) {
-        reportError("Unresolved symbol " + name, location);
+        errors.add(error("Unresolved symbol " + name, location).build());
       } else {
         if (symbol != null) {
           symbols.put(name, symbol);
@@ -553,11 +553,6 @@ class SymbolTable {
     errors.add(diagnostic.build());
   }
 
-  private void reportError(String error, SourceLocation location) {
-    errors.add(error(error, location)
-        .build());
-  }
-
   private void reportAlreadyDefined(String error, SourceLocation location,
                                     SourceLocation firstOccurence) {
     errors.add(Diagnostic.error(error, location)
@@ -580,7 +575,12 @@ class SymbolTable {
     private Deque<String> viamPath = new ArrayDeque<>();
     private Deque<SymbolTable> symbolTables = new ArrayDeque<>();
 
-    public SymbolCollector() {
+    public static void collectSymbols(SymbolTable symbols, Definition definition) {
+      var collector = new SymbolCollector();
+      collector.withSymbols(symbols, () -> definition.accept(collector));
+    }
+
+    private SymbolCollector() {
     }
 
     private SymbolTable currentSymbols() {
@@ -602,11 +602,6 @@ class SymbolTable {
         this.symbolTables.pollLast();
       }
     }
-
-    void collectSymbols(SymbolTable symbols, Definition definition) {
-      withSymbols(symbols, () -> definition.accept(this));
-    }
-
 
     /**
      * In most cases the nodes in a definition are in their own scope but in rare cases that's not
@@ -895,15 +890,18 @@ class SymbolTable {
    */
   static class SymbolResolver extends RecursiveAstVisitor {
 
-    public List<Diagnostic> resolveSymbols(Ast ast) {
+    public static List<Diagnostic> resolveSymbols(Ast ast) {
       ast.withPassTiming("Symbol Resolving", () -> {
+        var resolver = new SymbolResolver();
         for (Definition definition : ast.definitions) {
-          definition.accept(this);
+          definition.accept(resolver);
         }
       });
       return requireNonNull(ast.rootSymbolTable).errors;
     }
 
+    private SymbolResolver() {
+    }
 
     @Override
     public Void visit(Identifier expr) {
