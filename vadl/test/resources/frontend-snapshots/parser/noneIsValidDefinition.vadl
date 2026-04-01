@@ -1,0 +1,36 @@
+// INCLUDE-AST-DUMP
+
+// This has been requested to improve the readability of macros.
+// https://github.com/OpenVADL/openvadl/issues/812
+
+model noneIsa(): IsaDefs = {
+  none
+}
+
+model normalNone(): Defs = {
+  none
+}
+
+
+instruction set architecture TEST = {
+  register A: Bits<64>
+  $noneIsa
+  $normalNone()
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . RegisterDefinition name: "A"
+//    . : TypeLiteral type: Bits<64>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 64 (64) type: Const<64>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
