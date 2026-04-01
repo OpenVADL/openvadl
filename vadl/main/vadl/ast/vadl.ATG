@@ -410,6 +410,8 @@ The #commonDefinitionList production rule lists (beside macro definitions) all c
                                                                 readMacroSymbols(macroTable, list.items);
                                                               }
                                                               addDef(definitions, def); .)
+
+  | NONE
   }
   .
 
@@ -455,6 +457,7 @@ The #commonDefinitionList production rule lists (beside macro definitions) all c
                                                              readMacroSymbols(macroTable, list.items);
                                                            }
                                                            addDef(definitions, def); .)
+  | NONE
   }
   .
 
