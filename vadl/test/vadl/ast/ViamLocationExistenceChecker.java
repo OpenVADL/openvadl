@@ -16,7 +16,9 @@
 
 package vadl.ast;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import vadl.utils.SourceLocation;
 import vadl.viam.DefProp;
@@ -37,9 +39,12 @@ public class ViamLocationExistenceChecker {
   public static void verify(Specification spec) {
     var visitor = new LocationCheckingVisitor();
     spec.accept(visitor);
+    visitor.throwIfNodesWithoutLocation();
   }
 
   private static class LocationCheckingVisitor extends DefinitionVisitor.Recursive {
+
+    private final List<Node> nodesWithoutLocation = new ArrayList<>();
 
     @Override
     public void beforeTraversal(Definition definition) {
@@ -66,9 +71,7 @@ public class ViamLocationExistenceChecker {
 
       SourceLocation location = node.location();
       if (location == null || location.equals(SourceLocation.INVALID_SOURCE_LOCATION)) {
-        throw new IllegalStateException(
-            "Node " + node + " (type: " + node.getClass().getSimpleName()
-                + ") does not have a valid source location");
+        nodesWithoutLocation.add(node);
       }
 
       // Recursively check all input nodes
@@ -76,6 +79,22 @@ public class ViamLocationExistenceChecker {
 
       // Recursively check all successor nodes
       node.successors().forEach(succ -> verifyNode(succ, visited));
+    }
+
+    private void throwIfNodesWithoutLocation() {
+      if (!nodesWithoutLocation.isEmpty()) {
+        var sb = new StringBuilder();
+        sb.append("Found ").append(nodesWithoutLocation.size())
+            .append(" node(s) without valid source location:\n");
+
+        for (Node node : nodesWithoutLocation) {
+          sb.append("  - ").append(node)
+              .append(" (type: ").append(node.getClass().getSimpleName())
+              .append(")\n");
+        }
+
+        throw new IllegalStateException(sb.toString());
+      }
     }
   }
 }

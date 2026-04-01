@@ -159,7 +159,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     graph.setSourceLocation(stmt.location());
     currentGraph = graph;
 
-    var stmtCtx = stmt.accept(this);
+    var stmtCtx = fetch(stmt);
     var sideEffects = stmtCtx.sideEffectsOrEmptyList();
 
     var end = graph.addWithInputs(new ProcEndNode(sideEffects));
@@ -183,7 +183,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
-    var stmtCtx = definition.behavior.accept(this);
+    var stmtCtx = fetch(definition.behavior);
     var sideEffects = stmtCtx.sideEffectsOrEmptyList();
 
     var end = graph.addWithInputs(new InstrEndNode(sideEffects));
@@ -212,7 +212,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     end.setSourceLocation(definition.location());
 
     var calls = definition.statements.stream()
-        .map(s -> (InstrCallNode) requireNonNull(s.accept(this).controlBlock()).firstNode())
+        .map(s -> (InstrCallNode) requireNonNull(fetch(s).controlBlock()).firstNode())
         .toList();
 
     ControlNode curr = end;
@@ -238,7 +238,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     isInsideMia = true;
     try {
-      var stmtCtx = stmt.accept(this);
+      var stmtCtx = fetch(stmt);
       var sideEffects = stmtCtx.sideEffectsOrEmptyList();
 
       var end = graph.addWithInputs(new InstrEndNode(sideEffects));
@@ -336,7 +336,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             Type.bits(BitsType.indexWidthFor(tensorType.indexDims().get(i))),
             0);
         params.add(param);
-        indices.add(new FuncParamNode(param));
+        var funcParam = new FuncParamNode(param);
+        funcParam.setSourceLocation(identifier.location());
+        indices.add(funcParam);
       }
       resultType = tensorType.innerType();
     } else {
@@ -346,7 +348,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     final var regFileDef = (RegisterDefinition) requireNonNull(definition.computedTarget);
     var reg = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
     var regReadType = regFileDef.type() instanceof TensorType tensorType
-        ? tensorType.innerType() : resultType;
+        ? tensorType.innerType() : regFileDef.type();
 
     ExpressionNode regAccess;
     var fixedArgsCount = requireNonNull(definition.computedFixedArgs).size();
@@ -403,6 +405,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // all branches.
       throw new IllegalStateException();
     }
+    regAccess.setSourceLocation(identifier.location());
 
     // Handle Zero Annotation on the alias register
     final var zeroConst = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
@@ -425,7 +428,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     var returnNode = graph.addWithInputs(new ReturnNode(regAccess));
-    graph.addWithInputs(new StartNode(returnNode));
+    returnNode.setSourceLocation(definition.value.location());
+    var startNode = graph.addWithInputs(new StartNode(returnNode));
+    startNode.setSourceLocation(definition.value.location());
 
     // FIXME: Modify based on annotations
     return new Function(
@@ -737,7 +742,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return new Pair<>(beginNode, endNode);
     }
 
-    var branchCtx = stmt.accept(this);
+    var branchCtx = fetch(stmt);
     return buildBranch(branchCtx, stmt);
   }
 
@@ -765,6 +770,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         "Tensor types must not exist in the VIAM");
     return result;
   }
+
+  private SubgraphContext fetch(Statement stmt) {
+    var result = stmt.accept(this);
+    result.sideEffectsOrEmptyList().forEach(s -> s.setSourceLocationIfNotSet(stmt.location()));
+    return result;
+  }
+
 
 
   /// This utility function can be used to fill in missing indexes of a tensor.
@@ -1613,14 +1625,16 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var rightParam =
           new vadl.viam.Parameter(new vadl.viam.Identifier("AnonymousRightParam", expr.loc), type,
               1);
-      var params = new vadl.viam.Parameter[] {leftParam, rightParam};
-
 
       var operation = new BuiltInCall(requireNonNull(expr.computedFoldBuiltin),
           new NodeList<>(new FuncParamNode(leftParam), new FuncParamNode(rightParam)), type);
+      operation.setSourceLocation(expr.body.location());
       var graph = new Graph("Combiner Graph");
       var returnNode = graph.addWithInputs(new ReturnNode(operation));
-      graph.addWithInputs(new StartNode(returnNode));
+      returnNode.setSourceLocation(expr.body.location());
+      var startNode = graph.addWithInputs(new StartNode(returnNode));
+      startNode.setSourceLocation(expr.body.location());
+      var params = new vadl.viam.Parameter[] {leftParam, rightParam};
 
       var combiner =
           new Function(new vadl.viam.Identifier("AnonymousCombinerFunc", expr.loc), params, type,
@@ -1844,7 +1858,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     @Nullable DirectionalNode lastNode = null;
 
     for (var stmt : statement.statements) {
-      var stmtCtx = stmt.accept(this);
+      var stmtCtx = fetch(stmt);
 
       if (stmtCtx.hasControlBlock()) {
         if (firstNode == null) {
@@ -1888,7 +1902,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(ForallStatement statement) {
-    var bodyGraph = statement.body.accept(this);
+    var bodyGraph = fetch(statement.body);
 
     var branchEnd = addToGraph(new BranchEndNode(bodyGraph.sideEffectsOrEmptyList()));
     branchEnd.setSourceLocation(statement.body.location());
@@ -1993,7 +2007,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public SubgraphContext visit(LetStatement statement) {
     // The bounded variable is already resolved and it's usages will be turned into a let-node.
     // So just return the body.
-    return statement.body.accept(this);
+    return fetch(statement.body);
   }
 
   @Override

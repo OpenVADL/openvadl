@@ -1,3 +1,5 @@
+// INCLUDE-VIAM-DUMP
+
 // This was a bug before
 // https://github.com/OpenVADL/openvadl/issues/616
 
@@ -13,6 +15,35 @@ instruction set architecture ISA = {
 //  Reported Diagnostics:
 //
 //  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  VIAM Dump:
+//
+//    Specification name: "exceptionWithConstantValue"
+//    . Definitions: 1
+//    . InstructionSetArchitecture name: "ISA"
+//    . : PC: -
+//    . : InstructionCount: 0
+//    . : PseudoInstructionCount: 0
+//    . : FormatCount: 0
+//    . : FunctionCount: 0
+//    . : ExceptionCount: 1
+//    . : RelocationCount: 0
+//    . : RegisterCount: 1
+//    . : MemoryCount: 0
+//    . : ArtificialResourceCount: 0
+//    . : ExceptionDef name: "Trap"
+//    . : ' Kind: DECLARED
+//    . : ' Parameters: 0
+//    . : ' Behavior Graph:
+//    . : ' | n0 Constant             in: ()   succ: ()     type: b64   const: 0x8000000000001000: Bits<64>
+//    . : ' | n1 WritesRegisterTensor in: (n0) succ: ()     reg: MSR
+//    . : ' | n2 ProcEnd              in: (n1) succ: ()     effects: 1
+//    . : ' | n3 Start                in: ()   succ: (n2)   next: set
+//    . : RegisterTensor name: "MSR"
+//    . : ' Type: b64
+//    . : ' Dimensions: [0:b6x64]
+//    . : ' ConstraintCount: 0
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

@@ -648,6 +648,16 @@ class WildcardLiteral extends Expr {
   public SourceLocation location() {
     return loc;
   }
+
+  @Override
+  public final boolean equals(Object o) {
+    return o instanceof WildcardLiteral;
+  }
+
+  @Override
+  public int hashCode() {
+    return "*".hashCode();
+  }
 }
 
 /**
