@@ -201,7 +201,7 @@ public class FrontendSnapshotTests {
   /// You just have to call it in the original test and it will create a matching diagnostic test.
   static void convertTest(String prog, String name, String folder, Boolean isNegative,
                           Boolean includeAst) {
-    String dir = "test/resources/diagnostics/" + folder;
+    String dir = "test/resources/frontend-snapshots/" + folder;
     String fileName = name.replaceAll("Text$", "") + ".vadl";
     if (isNegative) {
       fileName = "invalid" + fileName.substring(0, 1).toUpperCase() + fileName.substring(1);
