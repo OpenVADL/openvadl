@@ -7,19 +7,19 @@ ImportDefinition
 . : ' StringLiteral literal: "ArchSize=Arch64" ("ArchSize=Arch64") type: null
 . Module AST
 . : InstructionSetDefinition name: "RV3264I"
-. : ' ConstantDefinition name: "Arch32"
+. : ' ConstantDefinition name: "Arch32" evaluatedValue: null
 . : ' | IntegerLiteral literal: 32 (32) type: null
-. : ' ConstantDefinition name: "Arch64"
+. : ' ConstantDefinition name: "Arch64" evaluatedValue: null
 . : ' | IntegerLiteral literal: 64 (64) type: null
-. : ' ConstantDefinition name: "MLen"
+. : ' ConstantDefinition name: "MLen" evaluatedValue: null
 . : ' | Identifier name: "Arch64" type: null
-. : ' ConstantDefinition name: "SftLen"
+. : ' ConstantDefinition name: "SftLen" evaluatedValue: null
 . : ' | BinaryExpr operator: + type: null
 . : ' | . BinaryExpr operator: / type: null
 . : ' | . : Identifier name: "MLen" type: null
 . : ' | . : IntegerLiteral literal: 32 (32) type: null
 . : ' | . IntegerLiteral literal: 4 (4) type: null
-. : ' ConstantDefinition name: "WLen"
+. : ' ConstantDefinition name: "WLen" evaluatedValue: null
 . : ' | IntegerLiteral literal: 32 (32) type: null
 . : ' UsingDefinition name: "Byte"
 . : ' | TypeLiteral type: null
@@ -3562,11 +3562,11 @@ ImportDefinition
 . : ' | . : ' Identifier name: "symbol" type: null
 . : InstructionSetDefinition name: "RV3264IM"
 . : ' Identifier name: "RV3264I" type: null
-. : ' ConstantDefinition name: "MLen2"
+. : ' ConstantDefinition name: "MLen2" evaluatedValue: null
 . : ' | BinaryExpr operator: * type: null
 . : ' | . Identifier name: "MLen" type: null
 . : ' | . IntegerLiteral literal: 2 (2) type: null
-. : ' ConstantDefinition name: "MLen2_1"
+. : ' ConstantDefinition name: "MLen2_1" evaluatedValue: null
 . : ' | BinaryExpr operator: - type: null
 . : ' | . Identifier name: "MLen2" type: null
 . : ' | . IntegerLiteral literal: 1 (1) type: null

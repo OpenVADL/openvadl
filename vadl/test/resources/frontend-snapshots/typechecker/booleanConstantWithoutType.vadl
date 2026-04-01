@@ -10,7 +10,7 @@ constant b = true
 //
 //  Dumped AST:
 //
-//    ConstantDefinition name: "b"
+//    ConstantDefinition name: "b" evaluatedValue: 1
 //    . BoolLiteral literal: true type: Bool
 //
 //

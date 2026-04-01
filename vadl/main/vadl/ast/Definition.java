@@ -319,6 +319,12 @@ class ConstantDefinition extends Definition implements IdentifiableNode, TypedNo
   Expr value;
   SourceLocation loc;
 
+  /**
+   * Set by the typechecker, the actual value that will be used here.
+   */
+  @Nullable
+  Object evaluatedValue;
+
   ConstantDefinition(IdentifierOrPlaceholder identifier, @Nullable TypeLiteral typeLiteral,
                      Expr value,
                      SourceLocation location) {

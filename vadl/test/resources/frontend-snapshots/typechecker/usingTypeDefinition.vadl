@@ -15,7 +15,7 @@ constant a: Flo = 32
 //    . TypeLiteral type: SInt<32>
 //    . : Identifier name: "SInt" type: null
 //    . : IntegerLiteral literal: 32 (32) type: Const<32>
-//    ConstantDefinition name: "a"
+//    ConstantDefinition name: "a" evaluatedValue: 32
 //    . TypeLiteral type: SInt<32>
 //    . : Identifier name: "Flo" type: null
 //    . CastExpr type: SInt<32>

@@ -13,7 +13,7 @@ using Flo = SInt<32>
 //
 //  Dumped AST:
 //
-//    ConstantDefinition name: "a"
+//    ConstantDefinition name: "a" evaluatedValue: 32
 //    . CastExpr type: SInt<32>
 //    . : IntegerLiteral literal: 32 (32) type: Const<32>
 //    . : TypeLiteral type: SInt<32>

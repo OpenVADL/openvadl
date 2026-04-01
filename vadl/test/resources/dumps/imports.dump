@@ -15,7 +15,7 @@ ImportDefinition
 . : ' | . Identifier name: "A" type: null
 . : ' Module AST
 . : ' | InstructionSetDefinition name: "A"
-. : ' | . ConstantDefinition name: "a"
+. : ' | . ConstantDefinition name: "a" evaluatedValue: null
 . : ' | . : IntegerLiteral literal: 1 (1) type: null
 . : ImportDefinition
 . : ' File
@@ -24,7 +24,7 @@ ImportDefinition
 . : ' | . Identifier name: "TopLevelModel" type: null
 . : ' Module AST
 . : ' | InstructionSetDefinition name: "A"
-. : ' | . ConstantDefinition name: "a"
+. : ' | . ConstantDefinition name: "a" evaluatedValue: null
 . : ' | . : IntegerLiteral literal: 1 (1) type: null
 . : ImportDefinition
 . : ' File
@@ -33,12 +33,12 @@ ImportDefinition
 . : ' | . Identifier name: "B" type: null
 . : ' Module AST
 . : ' | InstructionSetDefinition name: "B"
-. : ' | . ConstantDefinition name: "b"
+. : ' | . ConstantDefinition name: "b" evaluatedValue: null
 . : ' | . : IntegerLiteral literal: 2 (2) type: null
 . : InstructionSetDefinition name: "C"
-. : ' ConstantDefinition name: "c"
+. : ' ConstantDefinition name: "c" evaluatedValue: null
 . : ' | IntegerLiteral literal: 3 (3) type: null
-ConstantDefinition name: "topLevelConstant"
+ConstantDefinition name: "topLevelConstant" evaluatedValue: null
 . BinaryExpr operator: + type: null
 . : IntegerLiteral literal: 456 (456) type: null
 . : IntegerLiteral literal: 789 (789) type: null
@@ -46,5 +46,5 @@ InstructionSetDefinition name: "ISA_A"
 . Identifier name: "A" type: null
 InstructionSetDefinition name: "ISA_B"
 . Identifier name: "B" type: null
-. ConstantDefinition name: "modelInIsa"
+. ConstantDefinition name: "modelInIsa" evaluatedValue: null
 . : IntegerLiteral literal: 123 (123) type: null
