@@ -19,7 +19,6 @@ package vadl;
 import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
 
 import com.github.dockerjava.api.model.Image;
-import java.util.Collections;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -43,6 +42,10 @@ public class RemovingDockerImagesTeardown
     logger.info("All tests finished!");
 
     var cachedImages = DockerRiscvImageProvider.images;
+    if (!DockerClientFactory.instance().isDockerAvailable()) {
+      logger.info("No docker available, so no images to delete.");
+      return;
+    }
     var labelledImages = DockerClientFactory.instance().client().listImagesCmd()
         .withLabelFilter("key=VADL_TEST_CONTAINER").exec().stream().map(Image::getId);
     var images = Stream.concat(cachedImages.stream(), labelledImages).distinct().toList();
