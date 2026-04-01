@@ -21,42 +21,44 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
+import vadl.utils.OverlayVirtualFileSystem;
+import vadl.utils.SingleFileVirtualFileSystem;
 import vadl.utils.VirtualFileSystem;
 
 public class AstTestUtils {
 
-  private static final ModelRemover MODEL_REMOVER = new ModelRemover();
-  private static final Ungrouper UNGROUPER = new Ungrouper();
 
   static void verifyPrettifiedAst(Ast ast) {
-    MODEL_REMOVER.removeModels(ast);
-    UNGROUPER.ungroup(ast);
+    ModelRemover.removeModels(ast);
+    Ungrouper.ungroup(ast);
     var progPretty = ast.prettyPrintToString();
     var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty, ast.filePath),
         "Cannot parse prettified input \n" + progPretty);
-    UNGROUPER.ungroup(astPretty);
+    Ungrouper.ungroup(astPretty);
     assertAstEquality(astPretty, ast);
   }
 
   static void verifyPrettifiedAst(Ast ast, VirtualFileSystem fileSystem) {
-    MODEL_REMOVER.removeModels(ast);
-    UNGROUPER.ungroup(ast);
+    ModelRemover.removeModels(ast);
+    Ungrouper.ungroup(ast);
     var progPretty = ast.prettyPrintToString();
-    var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty, fileSystem, Map.of(), ast.filePath),
+    var injectedFileSystem = new OverlayVirtualFileSystem(new SingleFileVirtualFileSystem(progPretty,
+        ast.filePath), fileSystem);
+    var astPretty =
+        Assertions.assertDoesNotThrow(() -> VadlParser.parse(ast.filePath, injectedFileSystem),
         "Cannot parse prettified input \n" + progPretty);
-    UNGROUPER.ungroup(astPretty);
+    Ungrouper.ungroup(astPretty);
     assertAstEquality(astPretty, ast);
   }
 
   static void assertAstEquality(Ast actual, Ast expected) {
-    MODEL_REMOVER.removeModels(actual);
-    MODEL_REMOVER.removeModels(expected);
-    UNGROUPER.ungroup(actual);
-    UNGROUPER.ungroup(expected);
+    ModelRemover.removeModels(actual);
+    ModelRemover.removeModels(expected);
+    Ungrouper.ungroup(actual);
+    Ungrouper.ungroup(expected);
     if (!actual.equals(expected)) {
       Assertions.assertEquals(actual, expected, AstDiffPrinter.printDiff(actual, expected));
     }

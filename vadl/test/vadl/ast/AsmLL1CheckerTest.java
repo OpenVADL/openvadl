@@ -78,8 +78,7 @@ public class AsmLL1CheckerTest {
    */
   void hasToWork() {
     var ast = Assertions.assertDoesNotThrow((() -> VadlParser.parse(base)));
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
+    Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast));
   }
 
   @Test
@@ -92,8 +91,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -107,8 +105,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -122,8 +119,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -137,8 +133,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -152,8 +147,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -167,8 +161,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -206,8 +199,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -249,8 +241,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(prog), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -264,8 +255,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -281,8 +271,7 @@ public class AsmLL1CheckerTest {
     var x = inputWrappedByValidAsmDescription(prog);
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(x), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -296,8 +285,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
+    Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast));
   }
 
   @Test
@@ -310,8 +298,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
+    Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast));
   }
 
   @Test
@@ -324,8 +311,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
+    Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast));
   }
 
   @Test
@@ -338,8 +324,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
+    Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast));
   }
 
   @Test
@@ -355,8 +340,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
+    Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast));
   }
 
   @Test
@@ -369,8 +353,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -384,8 +367,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -399,8 +381,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -414,8 +395,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -429,8 +409,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -444,8 +423,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -461,8 +439,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -480,8 +457,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -495,8 +471,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -509,8 +484,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
+    Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast));
   }
 
   @Test
@@ -524,8 +498,7 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diags = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
 
@@ -544,7 +517,6 @@ public class AsmLL1CheckerTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
+    Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast));
   }
 }

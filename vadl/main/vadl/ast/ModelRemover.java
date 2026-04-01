@@ -29,11 +29,15 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
    *
    * @param ast to be modified.
    */
-  public void removeModels(Ast ast) {
+  public static void removeModels(Ast ast) {
+    var remover = new ModelRemover();
     ast.withPassTiming("Model Removing", () -> {
-      ast.definitions.removeIf(this::shouldRemove);
-      ast.definitions.replaceAll(definition -> definition.accept(this));
+      ast.definitions.removeIf(remover::shouldRemove);
+      ast.definitions.replaceAll(definition -> definition.accept(remover));
     });
+  }
+
+  private ModelRemover() {
   }
 
   @Override

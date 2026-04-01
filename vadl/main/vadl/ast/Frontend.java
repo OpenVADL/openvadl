@@ -16,11 +16,7 @@
 
 package vadl.ast;
 
-import static java.util.Objects.requireNonNull;
-
 import java.nio.file.Path;
-import javax.annotation.Nullable;
-import vadl.error.DiagnosticList;
 import vadl.utils.Pair;
 import vadl.utils.SingleFileVirtualFileSystem;
 import vadl.utils.VirtualFileSystem;
@@ -65,12 +61,9 @@ public class Frontend {
    */
   public static Ast compileToAst(Path path, VirtualFileSystem fileSystem) {
     var ast = VadlParser.parse(path, fileSystem);
-    var remover = new ModelRemover();
-    remover.removeModels(ast);
-    var ungrouper = new Ungrouper();
-    ungrouper.ungroup(ast);
-    var typechecker = new TypeChecker();
-    typechecker.verify(ast);
+    ModelRemover.removeModels(ast);
+    Ungrouper.ungroup(ast);
+    TypeChecker.verify(ast);
     return ast;
   }
 
@@ -96,8 +89,7 @@ public class Frontend {
    */
   public static Specification compileToViam(Path path, VirtualFileSystem fileSystem) {
     var ast = compileToAst(path, fileSystem);
-    var lowering = new ViamLowering();
-    return lowering.generate(ast);
+    return ViamLowering.generate(ast);
   }
 
   /**
@@ -112,8 +104,7 @@ public class Frontend {
   public static Pair<Ast, Specification> compileToAstAndViam(Path path,
                                                              VirtualFileSystem fileSystem) {
     var ast = compileToAst(path, fileSystem);
-    var lowering = new ViamLowering();
-    var spec = lowering.generate(ast);
+    var spec = ViamLowering.generate(ast);
     return Pair.of(ast, spec);
   }
 }

@@ -59,10 +59,8 @@ public class AstDumpTests {
 
   private void assertDumpEquality(Path vadlPath, Path expectedDumpPath) throws IOException {
     var ast = VadlParser.parse(vadlPath.toAbsolutePath());
-    ModelRemover remover = new ModelRemover();
-    remover.removeModels(ast);
-    Ungrouper ungrouper = new Ungrouper();
-    ungrouper.ungroup(ast);
+    ModelRemover.removeModels(ast);
+    Ungrouper.ungroup(ast);
     //verifyPrettifiedAst(ast);
 
     var actualDumpPath = actualDumpPath(expectedDumpPath);

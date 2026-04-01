@@ -128,7 +128,7 @@ import vadl.viam.passes.functionInliner.Inliner;
 @SuppressWarnings("OverloadMethodsDeclarationOrder")
 public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Definition>> {
 
-  private final ConstantEvaluator constantEvaluator = new ConstantEvaluator();
+  final ConstantEvaluator constantEvaluator;
 
   private final IdentityHashMap<Definition, Optional<vadl.viam.Definition>> definitionCache =
       new IdentityHashMap<>();
@@ -145,6 +145,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @LazyInit
   private Specification currentSpecification;
 
+  private ViamLowering(Ast ast) {
+    this.constantEvaluator = new ConstantEvaluator(ast.timingRecorder);
+  }
+
   /**
    * Generates a VIAM specification from an AST.
    *
@@ -155,30 +159,31 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * @throws Diagnostic if something goes wrong.
    */
   @SuppressWarnings("VariableDeclarationUsageDistance")
-  public Specification generate(Ast ast) {
+  public static Specification generate(Ast ast) {
     return ast.withPassTiming("Lowering to VIAM", () -> {
+      var lowering = new ViamLowering(ast);
       var name = ast.filePath != null ? ParserUtils.baseName(ast.filePath) : "unknown";
       var spec = new Specification(
           new vadl.viam.Identifier(name,
               SourceLocation.INVALID_SOURCE_LOCATION));
-      this.currentSpecification = spec;
+      lowering.currentSpecification = spec;
 
       spec.addAll(ast.definitions.stream()
-          .map(this::fetch)
+          .map(lowering::fetch)
           .flatMap(Optional::stream)
           .collect(Collectors.toList()));
 
       if (spec.isa().isEmpty()) {
         // no ISA was fetched by some generator entry definition (such as processor)
         // so we try to find some concrete ISA we can lower
-        var isa = findLeafIsa(ast);
+        var isa = lowering.findLeafIsa(ast);
         if (isa != null) {
           spec.add(isa);
         }
       }
 
-      if (errors.size() > 0) {
-        throw new DiagnosticList(errors);
+      if (lowering.errors.size() > 0) {
+        throw new DiagnosticList(lowering.errors);
       }
 
       return spec;

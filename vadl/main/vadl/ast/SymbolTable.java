@@ -561,9 +561,11 @@ class SymbolTable {
   }
 
   /**
+   * In VADL symbol resolution has to be done in two passes, collection and resolution.
+   * This method makes it easy to run both at once.
    *
-   * @param ast
-   * @return
+   * @param ast for which all symbols should be resolved.
+   * @return a list with diagnostics of violations.
    */
   static List<Diagnostic> collectAndResolveSymbols(Ast ast) {
     return ast.timingRecorder.withPassTiming("Symbol Resolution", () -> {
@@ -590,7 +592,8 @@ class SymbolTable {
     private static void collectSymbols(Ast ast) {
       var collector = new SymbolCollector();
       ast.definitions.forEach(
-          definition -> collector.withSymbols(ast.rootSymbolTable(), () -> definition.accept(collector))
+          definition -> collector.withSymbols(ast.rootSymbolTable(),
+              () -> definition.accept(collector))
       );
     }
 

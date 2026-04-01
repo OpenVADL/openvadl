@@ -16,8 +16,6 @@
 
 package vadl.ast;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -28,7 +26,7 @@ import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 import vadl.utils.DiskVirtualFileSystem;
-import vadl.utils.EmptyVirtualFileSystem;
+import vadl.utils.SingleFileVirtualFileSystem;
 import vadl.utils.SourceLocation;
 import vadl.utils.VirtualFileSystem;
 
@@ -93,32 +91,9 @@ public class VadlParser {
    */
   public static Ast parse(String program, Map<String, String> macroOverrides,
                           @Nullable Path resolutionPath) {
-    return parse(program, new EmptyVirtualFileSystem(), macroOverrides, resolutionPath);
-  }
-
-
-  /**
-   * Parses a source program into an AST.
-   *
-   *
-   * @param program         a source code file to parse
-   * @param fileSystem      an abstraction layer over the filesystem
-   * @param macroOverrides  The overrides to perform in the macro evaluation
-   * @param resolutionPath  The path from which imports should be started
-   * @return                The parsed syntax tree.
-   * @throws DiagnosticList if there are any parsing errors.
-   */
-  public static Ast parse(String program, VirtualFileSystem fileSystem,
-                          Map<String, String> macroOverrides,
-                          @Nullable Path resolutionPath) {
-    var scanner = new Scanner(new ByteArrayInputStream(program.getBytes(StandardCharsets.UTF_8)));
-    var parser = new Parser(scanner);
-    parser.resolutionPath = resolutionPath;
-    parser.sourceFile = resolutionPath;
-    parser.fileSystem = fileSystem;
-    macroOverrides.forEach((key, value) -> parser.macroOverrides.put(key,
-        new Identifier(value, SourceLocation.INVALID_SOURCE_LOCATION)));
-    return parser.ast.withPassTiming("Parsing", () -> parse(parser));
+    var path = Paths.get("virtualFile.vadl");
+    var fileSystem = new SingleFileVirtualFileSystem(program, path);
+    return parse(path, fileSystem, macroOverrides);
   }
 
 

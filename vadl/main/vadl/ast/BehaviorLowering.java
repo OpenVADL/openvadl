@@ -128,7 +128,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 @SuppressWarnings("OverloadMethodsDeclarationOrder")
 class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor<ExpressionNode> {
   private final ViamLowering viamLowering;
-  private final ConstantEvaluator constantEvaluator = new ConstantEvaluator();
+  private final ConstantEvaluator constantEvaluator;
 
   private final IdentityHashMap<Expr, ExpressionNode> expressionCache = new IdentityHashMap<>();
   //private IdentityHashMap<Statement, SubgraphContext> statementCache = new IdentityHashMap<>();
@@ -138,6 +138,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   BehaviorLowering(ViamLowering generator) {
     this.viamLowering = generator;
+    constantEvaluator = viamLowering.constantEvaluator;
   }
 
   Graph getFunctionGraph(Expr expr, String name) {

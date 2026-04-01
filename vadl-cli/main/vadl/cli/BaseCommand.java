@@ -180,8 +180,8 @@ public abstract class BaseCommand implements Callable<Integer> {
   private Ast parseToAst() {
     Ast ast = VadlParser.parse(input, new DiskVirtualFileSystem(),
         Objects.requireNonNullElseGet(modelOverrides, Map::of));
-    new Ungrouper().ungroup(ast);
-    new ModelRemover().removeModels(ast);
+    Ungrouper.ungroup(ast);
+    ModelRemover.removeModels(ast);
     return ast;
   }
 
@@ -262,15 +262,13 @@ public abstract class BaseCommand implements Callable<Integer> {
     dumpExpaned(ast);
     dumpUntyped(ast);
 
-    var typeChecker = new TypeChecker();
-    typeChecker.verify(ast);
+    TypeChecker.verify(ast);
     ast.timingRecorder.passTimings.forEach(
         t -> timings.add(new Timing(t.description(), t.durationNS() / 1000_000)));
     ast.timingRecorder.passTimings.clear();
     dumpTyped(ast);
 
-    var viamGenerator = new ViamLowering();
-    var spec = viamGenerator.generate(ast);
+    var spec = ViamLowering.generate(ast);
     ast.timingRecorder.passTimings.forEach(
         t -> timings.add(new Timing(t.description(), t.durationNS() / 1000_000)));
 
