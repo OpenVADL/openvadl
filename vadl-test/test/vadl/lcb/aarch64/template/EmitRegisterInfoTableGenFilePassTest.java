@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,6 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.io.Files;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.AbstractLcbTest;
-import vadl.lcb.template.lib.Target.EmitRegisterInfoCppFilePass;
 import vadl.lcb.template.lib.Target.EmitRegisterInfoTableGenFilePass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -51,7 +50,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
     var output = trimmed.lines().map(String::trim);
 
     var fs = new File(
-        "test/resources/snapshots/aarch64/RegisterInfo.td");
+        "resources/snapshots/aarch64/RegisterInfo.td");
     var expected = FileUtils.readFileToString(fs, "UTF-8");
 
     Assertions.assertLinesMatch(expected.trim().lines().map(String::trim), output);

@@ -28,7 +28,7 @@ public class AsmGenRiscv32SimulationTest extends LcbDockerInputFileExecutionTest
   @TestFactory
   List<DynamicTest> exec() throws DuplicatedPassKeyException, IOException {
     return runEach("sys/risc-v/rv32imAsmGen.vadl",
-        "test/resources/llvm/riscv/asm/rv32im/qemu_asm",
+        "resources/llvm/riscv/asm/rv32im/qemu_asm",
         0,
         "sh /work/asm.sh"
     );

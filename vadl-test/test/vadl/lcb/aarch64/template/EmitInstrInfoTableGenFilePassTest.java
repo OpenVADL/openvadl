@@ -48,7 +48,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
     var output = trimmed.lines();
 
     var fs = new File(
-        "test/resources/snapshots/aarch64/InstrInfoTableGen.td");
+        "resources/snapshots/aarch64/InstrInfoTableGen.td");
     var expected = FileUtils.readFileToString(fs, "UTF-8");
 
     Assertions.assertLinesMatch(expected.trim().lines(), output);

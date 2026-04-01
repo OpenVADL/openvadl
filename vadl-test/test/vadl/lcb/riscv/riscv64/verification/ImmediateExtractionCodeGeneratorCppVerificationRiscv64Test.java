@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -61,7 +61,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationRiscv64Test extends 
       VadlFileUtils.createDirectories(configuration, "encoding", "inputs");
       VadlFileUtils.copyDirectory(
           Path.of(
-              "test/resources/images/encodingCodeGeneratorCppVerification/"),
+              "resources/images/encodingCodeGeneratorCppVerification/"),
           Path.of(configuration.outputPath() + "/encoding/"));
     }
 

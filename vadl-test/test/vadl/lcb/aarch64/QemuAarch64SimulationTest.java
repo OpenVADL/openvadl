@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -58,7 +58,7 @@ public class QemuAarch64SimulationTest extends LcbDockerInputFileExecutionTest {
   @TestFactory
   List<DynamicTest> optLevel0() throws DuplicatedPassKeyException, IOException {
     return runEach(getSpecPath(),
-        List.of("test/resources/llvm/riscv/qemu_nolibc/"
+        List.of("resources/llvm/riscv/qemu_nolibc/"
         ),
         0,
         "sh /work/compile.sh");
@@ -67,7 +67,7 @@ public class QemuAarch64SimulationTest extends LcbDockerInputFileExecutionTest {
   @TestFactory
   List<DynamicTest> optLevel3() throws DuplicatedPassKeyException, IOException {
     return runEach(getSpecPath(),
-        List.of("test/resources/llvm/riscv/qemu_nolibc/"),
+        List.of("resources/llvm/riscv/qemu_nolibc/"),
         3,
         "sh /work/compile.sh");
   }

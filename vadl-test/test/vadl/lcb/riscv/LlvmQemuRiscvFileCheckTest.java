@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -43,7 +43,7 @@ public abstract class LlvmQemuRiscvFileCheckTest extends LcbDockerInputFileExecu
   @TestFactory
   List<DynamicTest> optLevel0() throws DuplicatedPassKeyException, IOException {
     return runEach(getSpecPath(),
-        "test/resources/llvm/riscv/llvmIR/" + getTarget() + "/O0",
+        "resources/llvm/riscv/llvmIR/" + getTarget() + "/O0",
         0,
         "sh /work/filecheck.sh");
   }
@@ -51,7 +51,7 @@ public abstract class LlvmQemuRiscvFileCheckTest extends LcbDockerInputFileExecu
   @TestFactory
   List<DynamicTest> optLevel3() throws DuplicatedPassKeyException, IOException {
     return runEach(getSpecPath(),
-        "test/resources/llvm/riscv/llvmIR/" + getTarget() + "/O3",
+        "resources/llvm/riscv/llvmIR/" + getTarget() + "/O3",
         3,
         "sh /work/filecheck.sh");
   }

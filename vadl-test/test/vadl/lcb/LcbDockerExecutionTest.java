@@ -47,7 +47,7 @@ public abstract class LcbDockerExecutionTest extends AbstractLcbTest {
       throws IOException {
     Files.createDirectories(Path.of(configuration.outputPath() + "/lcb/embench"));
     var inputStream = new FileInputStream(
-        "test/resources/images/lcb_execution_test_" + getTarget() + "/Dockerfile");
+        "resources/images/lcb_execution_test_" + getTarget() + "/Dockerfile");
     var outputStream =
         new FileOutputStream(configuration.outputPath() + "/lcb/Dockerfile");
     inputStream.transferTo(outputStream);
@@ -56,7 +56,7 @@ public abstract class LcbDockerExecutionTest extends AbstractLcbTest {
 
   private void copyEmbenchIntoDockerContext(LcbConfiguration configuration) throws IOException {
     var input = new File(
-        "test/resources/embench");
+        "resources/embench");
     var output = new File(configuration.outputPath() + "/lcb/embench");
     FileUtils.copyDirectory(input, output);
   }

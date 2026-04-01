@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -65,7 +65,7 @@ public class AsmParserVarRiscNoSuffixFileCheckTest extends LcbDockerInputFileExe
 
   private void copyFileCheckScript(LcbConfiguration configuration) throws IOException {
     var inputStream = new FileInputStream(
-        "test/resources/images/lcb_execution_test_" + getTarget() + "/filecheck.sh");
+        "resources/images/lcb_execution_test_" + getTarget() + "/filecheck.sh");
     var outputStream =
         new FileOutputStream(configuration.outputPath() + "/lcb/filecheck.sh");
     inputStream.transferTo(outputStream);
@@ -81,7 +81,7 @@ public class AsmParserVarRiscNoSuffixFileCheckTest extends LcbDockerInputFileExe
   @TestFactory
   List<DynamicTest> testAsm() throws DuplicatedPassKeyException, IOException {
     return runEach("sys/v-risc/ABI_no_suffix.vadl",
-        "test/resources/llvm/varrisc/asm_no_suffix",
+        "resources/llvm/varrisc/asm_no_suffix",
         0,
         "sh /work/filecheck.sh");
   }

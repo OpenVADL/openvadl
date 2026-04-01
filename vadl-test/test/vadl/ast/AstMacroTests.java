@@ -36,8 +36,8 @@ public class AstMacroTests {
   private static final String MACRO_REPLACEMENTS_MARKER = "/// MACRO REPLACEMENTS";
 
   /**
-   * Compares the computed expanded AST of files in "test/resources/macros/*.vadl" with the
-   * corresponding expected dump in "test/resources/macros/*.expanded.vadl".
+   * Compares the computed expanded AST of files in "resources/macros/*.vadl" with the
+   * corresponding expected dump in "resources/macros/*.expanded.vadl".
    * If a change in the code changes the AST representation, the expanded AST file needs to be
    * adapted as well.
    * In this case, a file "*.actual.expanded.vadl" will be generated.

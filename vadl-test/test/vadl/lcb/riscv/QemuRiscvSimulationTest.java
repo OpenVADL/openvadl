@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -40,10 +40,10 @@ public abstract class QemuRiscvSimulationTest extends LcbDockerInputFileExecutio
   @TestFactory
   List<DynamicTest> optLevel0() throws DuplicatedPassKeyException, IOException {
     return runEach(getSpecPath(),
-        List.of("test/resources/llvm/riscv/qemu_libc/",
-            "test/resources/llvm/riscv/qemu_libc/fp/",
-            "test/resources/llvm/riscv/qemu_libc/" + getTarget(),
-            "test/resources/llvm/riscv/qemu_nolibc/"
+        List.of("resources/llvm/riscv/qemu_libc/",
+            "resources/llvm/riscv/qemu_libc/fp/",
+            "resources/llvm/riscv/qemu_libc/" + getTarget(),
+            "resources/llvm/riscv/qemu_nolibc/"
         ),
         0,
         "sh /work/compile.sh");
@@ -52,10 +52,10 @@ public abstract class QemuRiscvSimulationTest extends LcbDockerInputFileExecutio
   @TestFactory
   List<DynamicTest> optLevel3() throws DuplicatedPassKeyException, IOException {
     return runEach(getSpecPath(),
-        List.of("test/resources/llvm/riscv/qemu_libc/",
-            "test/resources/llvm/riscv/qemu_libc/fp/",
-            "test/resources/llvm/riscv/qemu_libc/" + getTarget(),
-            "test/resources/llvm/riscv/qemu_nolibc/"
+        List.of("resources/llvm/riscv/qemu_libc/",
+            "resources/llvm/riscv/qemu_libc/fp/",
+            "resources/llvm/riscv/qemu_libc/" + getTarget(),
+            "resources/llvm/riscv/qemu_nolibc/"
         ),
         3,
         "sh /work/compile.sh");

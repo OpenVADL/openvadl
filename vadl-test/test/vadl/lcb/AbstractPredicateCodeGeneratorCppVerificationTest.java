@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -141,7 +141,7 @@ public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends 
       );
       VadlFileUtils.copyDirectory(
           Path.of(
-              "test/resources/images/encodingCodeGeneratorCppVerification/"),
+              "resources/images/encodingCodeGeneratorCppVerification/"),
           Path.of(configuration.outputPath() + "/encoding/"));
     }
 
@@ -214,7 +214,7 @@ public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends 
   }
 
   protected String renderNegative(GcbCppFunctionWithBody record, Format.FieldAccess fieldAccess,
-                               int sample) {
+                                  int sample) {
     var predicateFunctionGenerator =
         new PredicateFunctionCodeGenerator(record.header(), fieldAccess,
             record.header().functionName().lower());

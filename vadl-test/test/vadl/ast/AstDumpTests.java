@@ -32,8 +32,8 @@ import vadl.utils.Pair;
 public class AstDumpTests {
 
   /**
-   * Compares the computed dump of files in "test/resources/dumps/*.vadl" with the corresponding
-   * expected dump in "test/resources/dumps/*.dump".
+   * Compares the computed dump of files in "resources/dumps/*.vadl" with the corresponding
+   * expected dump in "resources/dumps/*.dump".
    * If a change in the code changes the dump representation, the expected dump file needs to be
    * adapted as well.
    * In this case, a file "*.dump.actual" will be generated.
