@@ -203,7 +203,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * @param cmd            overwrites the command which will be executed on startup.
    */
   protected void runContainerWithInAndOutput(
-      ImageFromDockerfile image,
+      DockerImage image,
       List<Pair<String, String>> inputMappings,
       List<Pair<String, String>> outputMappings,
       @Nullable String... cmd) {
