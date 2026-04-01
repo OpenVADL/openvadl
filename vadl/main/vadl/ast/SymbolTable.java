@@ -561,6 +561,18 @@ class SymbolTable {
   }
 
   /**
+   *
+   * @param ast
+   * @return
+   */
+  static List<Diagnostic> collectAndResolveSymbols(Ast ast) {
+    return ast.timingRecorder.withPassTiming("Symbol Resolution", () -> {
+      SymbolCollector.collectSymbols(ast);
+      return SymbolResolver.resolveSymbols(ast);
+    });
+  }
+
+  /**
    * Distributes "SymbolTable" instances across the nodes in the AST.
    * For "let" expressions and statements, symbols for the declared variables are created here.
    * For "instruction" and "assembly" definitions, only an empty child table is created,
@@ -575,9 +587,11 @@ class SymbolTable {
     private Deque<String> viamPath = new ArrayDeque<>();
     private Deque<SymbolTable> symbolTables = new ArrayDeque<>();
 
-    public static void collectSymbols(SymbolTable symbols, Definition definition) {
+    private static void collectSymbols(Ast ast) {
       var collector = new SymbolCollector();
-      collector.withSymbols(symbols, () -> definition.accept(collector));
+      ast.definitions.forEach(
+          definition -> collector.withSymbols(ast.rootSymbolTable(), () -> definition.accept(collector))
+      );
     }
 
     private SymbolCollector() {

@@ -146,10 +146,7 @@ public class VadlParser {
 
     var ast = parser.ast;
 
-    ast.definitions.forEach(definition -> {
-      SymbolTable.SymbolCollector.collectSymbols(ast.rootSymbolTable(), definition);
-    });
-    errors.addAll(SymbolTable.SymbolResolver.resolveSymbols(ast));
+    errors.addAll(SymbolTable.collectAndResolveSymbols(ast));
 
     if (!errors.isEmpty()) {
       throw new DiagnosticList(errors.stream().distinct().toList());
