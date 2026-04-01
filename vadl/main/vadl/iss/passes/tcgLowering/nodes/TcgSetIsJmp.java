@@ -34,9 +34,11 @@ public class TcgSetIsJmp extends TcgNode {
   /**
    * Defines the behavior done by the translator.
    * NEXT is the default case and tells the translator that the TB has not ended.
-   * NORETURN is tells the translator to stop the translation block.
+   * NORETURN tells the translator to stop the translation block.
    * CHAIN tells the tb_stop function to end the TB but also emit a jump to the next PC address,
    * as it is possible that the next instruction should be executed.
+   * EXIT tells the tb_stop function to end the TB but also emit a PC update (not a jump)
+   * and a tb_exit instruction.
    */
   public enum Type {
     NORETURN,

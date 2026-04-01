@@ -176,7 +176,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     return Map.of(
         "lsb", Integer.toString(lsb),
         "width", Integer.toString(width),
-        "mask", "0x" + Long.toHexString(~0L >>> (64 - width))
+        "mask", "0x" + Long.toHexString(~0L >>> (64 - width)) + "ULL"
     );
   }
 

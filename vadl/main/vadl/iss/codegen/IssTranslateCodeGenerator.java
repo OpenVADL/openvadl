@@ -196,7 +196,7 @@ class DefaultGenerator implements
 
   @Handler
   void impl(CGenContext<Node> ctx, IssStaticReadRegNode node) {
-    ctx.wr("(ctx->env->" + node.regTensor().simpleName().toLowerCase() + ")");
+    ctx.wr("(ctx->tb_state." + node.regTensor().simpleName().toLowerCase() + ")");
   }
 
   @Handler

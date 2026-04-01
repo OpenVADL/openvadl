@@ -1139,7 +1139,7 @@ class FormatFieldAnnotation extends Annotation {
           error(err, field).description("Must be one of: %s",
               format.fields.stream()
                   .filter(f -> !(f instanceof DerivedFormatField))
-                  .map(f -> f.identifier.name)
+                  .map(f -> f.identifier().name)
                   .collect(Collectors.joining(", "))
           );
       Diagnostic.ensure(format.hasField(field.name),
@@ -1166,57 +1166,6 @@ class FormatFieldAnnotation extends Annotation {
   @Override
   public String usageString() {
     return "[ " + name + " : <ident>, ... ]";
-  }
-}
-
-/**
- * Provides the annotation {@code [ upcast access to : <ident>, <ex> ]} on an instruction that
- * treats the field access of {@code <ident>} as being of type {@code <ex>}. {@code <ex>} has to
- * evaluate to a positive integer.
- * This is useful when there is a type mismatch between the field access and an LLVM type.
- */
-class UpcastAnnotation extends Annotation {
-
-  @LazyInit
-  ConstantValue bitSize;
-
-  @LazyInit
-  Definition targetDef;
-
-  public UpcastAnnotation() {
-    super();
-  }
-
-  @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
-    verifyValuesCnt(definition, 2);
-    for (var val : definition.values) {
-      val.accept(resolver);
-    }
-  }
-
-  @Override
-  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-
-    var def = definition.values.getFirst();
-    Diagnostic.ensure(def instanceof Identifier, () -> error("Invalid annotation value", def)
-        .description("A single identifier was expected.")
-    );
-    var target = ((Identifier) def).target();
-    Diagnostic.ensure(target instanceof Definition, () -> error("Invalid annotation value", def)
-        .description("The identifier must reference a definition."));
-    targetDef = ((Definition) target);
-
-    var valueExpr = definition.values.get(1);
-    typeChecker.check(valueExpr);
-    bitSize = typeChecker.constantEvaluator.eval(valueExpr);
-    Diagnostic.ensure(bitSize.value().signum() > 0,
-        () -> error("Bit size of type has to be bigger than zero", valueExpr));
-  }
-
-  @Override
-  public String usageString() {
-    return "[ " + name + " : <ident>, <int> ]";
   }
 }
 
