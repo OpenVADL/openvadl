@@ -348,7 +348,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     final var regFileDef = (RegisterDefinition) requireNonNull(definition.computedTarget);
     var reg = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
     var regReadType = regFileDef.type() instanceof TensorType tensorType
-        ? tensorType.innerType() : resultType;
+        ? tensorType.innerType() : regFileDef.type();
 
     ExpressionNode regAccess;
     var fixedArgsCount = requireNonNull(definition.computedFixedArgs).size();
@@ -1625,8 +1625,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var rightParam =
           new vadl.viam.Parameter(new vadl.viam.Identifier("AnonymousRightParam", expr.loc), type,
               1);
-      var params = new vadl.viam.Parameter[] {leftParam, rightParam};
-
 
       var operation = new BuiltInCall(requireNonNull(expr.computedFoldBuiltin),
           new NodeList<>(new FuncParamNode(leftParam), new FuncParamNode(rightParam)), type);
@@ -1636,6 +1634,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       returnNode.setSourceLocation(expr.body.location());
       var startNode = graph.addWithInputs(new StartNode(returnNode));
       startNode.setSourceLocation(expr.body.location());
+      var params = new vadl.viam.Parameter[] {leftParam, rightParam};
 
       var combiner =
           new Function(new vadl.viam.Identifier("AnonymousCombinerFunc", expr.loc), params, type,
