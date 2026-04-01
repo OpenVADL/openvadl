@@ -12,21 +12,21 @@ constant c = ! (true)
 //
 //  Dumped AST:
 //
-//    ConstantDefinition name: "a"
+//    ConstantDefinition name: "a" evaluatedValue: -8
 //    . UnaryExpr operator: UnOp - type: SInt<8>
 //    . : CastExpr type: SInt<8>
 //    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
 //    . : ' TypeLiteral type: SInt<8>
 //    . : ' | Identifier name: "SInt" type: null
 //    . : ' | IntegerLiteral literal: 8 (8) type: Const<8>
-//    ConstantDefinition name: "b"
+//    ConstantDefinition name: "b" evaluatedValue: 85
 //    . UnaryExpr operator: UnOp ~ type: UInt<8>
 //    . : CastExpr type: UInt<8>
 //    . : ' BinaryLiteral literal: 0b10101010 (170) type: Const<170>
 //    . : ' TypeLiteral type: UInt<8>
 //    . : ' | Identifier name: "UInt" type: null
 //    . : ' | IntegerLiteral literal: 8 (8) type: Const<8>
-//    ConstantDefinition name: "c"
+//    ConstantDefinition name: "c" evaluatedValue: 0
 //    . UnaryExpr operator: UnOp ! type: Bool
 //    . : BoolLiteral literal: true type: Bool
 //

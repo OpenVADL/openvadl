@@ -10,7 +10,7 @@ constant i: SInt<32> = 42
 //
 //  Dumped AST:
 //
-//    ConstantDefinition name: "i"
+//    ConstantDefinition name: "i" evaluatedValue: 42
 //    . TypeLiteral type: SInt<32>
 //    . : Identifier name: "SInt" type: null
 //    . : IntegerLiteral literal: 32 (32) type: Const<32>

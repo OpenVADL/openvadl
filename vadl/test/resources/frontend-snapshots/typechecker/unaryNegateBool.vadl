@@ -11,7 +11,7 @@ constant b = !false
 //
 //  Dumped AST:
 //
-//    ConstantDefinition name: "b"
+//    ConstantDefinition name: "b" evaluatedValue: 1
 //    . UnaryExpr operator: UnOp ! type: Bool
 //    . : BoolLiteral literal: false type: Bool
 //

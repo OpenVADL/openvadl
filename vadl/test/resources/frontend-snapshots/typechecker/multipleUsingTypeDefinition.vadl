@@ -23,7 +23,7 @@ constant a: Paul = 32
 //    UsingDefinition name: "Paul"
 //    . TypeLiteral type: SInt<32>
 //    . : Identifier name: "Johannes" type: null
-//    ConstantDefinition name: "a"
+//    ConstantDefinition name: "a" evaluatedValue: 32
 //    . TypeLiteral type: SInt<32>
 //    . : Identifier name: "Paul" type: null
 //    . CastExpr type: SInt<32>

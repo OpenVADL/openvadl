@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -120,6 +120,20 @@ public class AstDumper extends RecursiveAstVisitor {
   @Override
   protected void afterTravel(Definition definition) {
     indent--;
+  }
+
+  @Override
+  public Void visit(ConstantDefinition definition) {
+    builder.append(indentString());
+    builder.append(definition.toString());
+    builder.append(" name: \"%s\"".formatted(definition.identifier().name));
+
+    builder.append(" evaluatedValue: %s".formatted(definition.evaluatedValue));
+    builder.append('\n');
+
+    dumpChildren(definition.children());
+
+    return null;
   }
 
   @Override

@@ -31,9 +31,9 @@ constant flo = $numPlusOne()
 //    . : ' StringLiteral literal: "num=two" ("num=two") type: null
 //    . : ' StringLiteral literal: "author=flotschi" ("author=flotschi") type: null
 //    . Module AST
-//    ConstantDefinition name: "two"
+//    ConstantDefinition name: "two" evaluatedValue: 2
 //    . IntegerLiteral literal: 2 (2) type: Const<2>
-//    ConstantDefinition name: "flo"
+//    ConstantDefinition name: "flo" evaluatedValue: 3
 //    . BinaryExpr operator: + type: Const<3>
 //    . : Identifier name: "two" type: Const<2>
 //    . : IntegerLiteral literal: 1 (1) type: Const<1>

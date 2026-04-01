@@ -30,55 +30,55 @@ constant t = b % 20             // 2
 //
 //  Dumped AST:
 //
-//    ConstantDefinition name: "a"
+//    ConstantDefinition name: "a" evaluatedValue: 51
 //    . IntegerLiteral literal: 51 (51) type: Const<51>
-//    ConstantDefinition name: "b"
+//    ConstantDefinition name: "b" evaluatedValue: 42
 //    . IntegerLiteral literal: 42 (42) type: Const<42>
-//    ConstantDefinition name: "c"
+//    ConstantDefinition name: "c" evaluatedValue: 1
 //    . BinaryExpr operator: && type: Bool
 //    . : BoolLiteral literal: true type: Bool
 //    . : BoolLiteral literal: true type: Bool
-//    ConstantDefinition name: "d"
+//    ConstantDefinition name: "d" evaluatedValue: 1
 //    . BinaryExpr operator: || type: Bool
 //    . : BoolLiteral literal: true type: Bool
 //    . : BoolLiteral literal: false type: Bool
-//    ConstantDefinition name: "e"
+//    ConstantDefinition name: "e" evaluatedValue: 59
 //    . BinaryExpr operator: | type: Const<59>
 //    . : Identifier name: "a" type: Const<51>
 //    . : Identifier name: "b" type: Const<42>
-//    ConstantDefinition name: "f"
+//    ConstantDefinition name: "f" evaluatedValue: 34
 //    . BinaryExpr operator: & type: Const<34>
 //    . : Identifier name: "a" type: Const<51>
 //    . : Identifier name: "b" type: Const<42>
-//    ConstantDefinition name: "g"
+//    ConstantDefinition name: "g" evaluatedValue: 25
 //    . BinaryExpr operator: ^ type: Const<25>
 //    . : Identifier name: "a" type: Const<51>
 //    . : Identifier name: "b" type: Const<42>
-//    ConstantDefinition name: "h"
+//    ConstantDefinition name: "h" evaluatedValue: 0
 //    . BinaryExpr operator: = type: Bool
 //    . : Identifier name: "a" type: Const<51>
 //    . : Identifier name: "b" type: Const<42>
-//    ConstantDefinition name: "i"
+//    ConstantDefinition name: "i" evaluatedValue: 1
 //    . BinaryExpr operator: != type: Bool
 //    . : Identifier name: "a" type: Const<51>
 //    . : Identifier name: "b" type: Const<42>
-//    ConstantDefinition name: "j"
+//    ConstantDefinition name: "j" evaluatedValue: 1
 //    . BinaryExpr operator: >= type: Bool
 //    . : Identifier name: "a" type: Const<51>
 //    . : Identifier name: "b" type: Const<42>
-//    ConstantDefinition name: "k"
+//    ConstantDefinition name: "k" evaluatedValue: 1
 //    . BinaryExpr operator: > type: Bool
 //    . : Identifier name: "a" type: Const<51>
 //    . : Identifier name: "b" type: Const<42>
-//    ConstantDefinition name: "l"
+//    ConstantDefinition name: "l" evaluatedValue: 0
 //    . BinaryExpr operator: < type: Bool
 //    . : Identifier name: "a" type: Const<51>
 //    . : Identifier name: "b" type: Const<42>
-//    ConstantDefinition name: "m"
+//    ConstantDefinition name: "m" evaluatedValue: 0
 //    . BinaryExpr operator: <= type: Bool
 //    . : Identifier name: "a" type: Const<51>
 //    . : Identifier name: "b" type: Const<42>
-//    ConstantDefinition name: "n"
+//    ConstantDefinition name: "n" evaluatedValue: 168
 //    . BinaryExpr operator: << type: Const<168>
 //    . : Identifier name: "b" type: Const<42>
 //    . : CastExpr type: UInt<2>
@@ -86,7 +86,7 @@ constant t = b % 20             // 2
 //    . : ' TypeLiteral type: UInt<2>
 //    . : ' | Identifier name: "UInt" type: null
 //    . : ' | IntegerLiteral literal: 2 (2) type: null
-//    ConstantDefinition name: "o"
+//    ConstantDefinition name: "o" evaluatedValue: 10
 //    . BinaryExpr operator: >> type: Const<10>
 //    . : Identifier name: "b" type: Const<42>
 //    . : CastExpr type: UInt<2>
@@ -94,23 +94,23 @@ constant t = b % 20             // 2
 //    . : ' TypeLiteral type: UInt<2>
 //    . : ' | Identifier name: "UInt" type: null
 //    . : ' | IntegerLiteral literal: 2 (2) type: null
-//    ConstantDefinition name: "p"
+//    ConstantDefinition name: "p" evaluatedValue: 93
 //    . BinaryExpr operator: + type: Const<93>
 //    . : Identifier name: "a" type: Const<51>
 //    . : Identifier name: "b" type: Const<42>
-//    ConstantDefinition name: "q"
+//    ConstantDefinition name: "q" evaluatedValue: 9
 //    . BinaryExpr operator: - type: Const<9>
 //    . : Identifier name: "a" type: Const<51>
 //    . : Identifier name: "b" type: Const<42>
-//    ConstantDefinition name: "r"
+//    ConstantDefinition name: "r" evaluatedValue: 2142
 //    . BinaryExpr operator: * type: Const<2142>
 //    . : Identifier name: "a" type: Const<51>
 //    . : Identifier name: "b" type: Const<42>
-//    ConstantDefinition name: "s"
+//    ConstantDefinition name: "s" evaluatedValue: 10
 //    . BinaryExpr operator: / type: Const<10>
 //    . : Identifier name: "a" type: Const<51>
 //    . : IntegerLiteral literal: 5 (5) type: Const<5>
-//    ConstantDefinition name: "t"
+//    ConstantDefinition name: "t" evaluatedValue: 2
 //    . BinaryExpr operator: % type: Const<2>
 //    . : Identifier name: "b" type: Const<42>
 //    . : IntegerLiteral literal: 20 (20) type: Const<20>

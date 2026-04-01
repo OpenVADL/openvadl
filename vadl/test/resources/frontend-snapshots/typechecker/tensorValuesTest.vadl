@@ -32,7 +32,7 @@ constant j = i as Dim_2_a
 //
 //  Dumped AST:
 //
-//    ConstantDefinition name: "x"
+//    ConstantDefinition name: "x" evaluatedValue: 3
 //    . LetExpr type: Bits<6>
 //    . : Identifier name: "a" type: Bits<6>
 //    . : CastExpr type: Bits<6>
@@ -74,7 +74,7 @@ constant j = i as Dim_2_a
 //    . : IntegerLiteral literal: 2 (2) type: Const<2>
 //    . : IntegerLiteral literal: 4 (4) type: Const<4>
 //    . : IntegerLiteral literal: 16 (16) type: Const<16>
-//    ConstantDefinition name: "d2"
+//    ConstantDefinition name: "d2" evaluatedValue: 844433520132096
 //    . CastExpr type: Bits<4><16>
 //    . : GroupedExpr type: Bits<64>
 //    . : ' CastExpr type: Bits<16>
@@ -98,7 +98,7 @@ constant j = i as Dim_2_a
 //    . : ' | . IntegerLiteral literal: 16 (16) type: null
 //    . : TypeLiteral type: Bits<4><16>
 //    . : ' Identifier name: "Dim_2_a" type: null
-//    ConstantDefinition name: "d3"
+//    ConstantDefinition name: "d3" evaluatedValue: 36346553384763581871632909800112128
 //    . CastExpr type: Bits<2><4><16>
 //    . : GroupedExpr type: Bits<128>
 //    . : ' CastExpr type: Bits<4><16>
@@ -151,31 +151,31 @@ constant j = i as Dim_2_a
 //    . : ' | . Identifier name: "Dim_2_a" type: null
 //    . : TypeLiteral type: Bits<2><4><16>
 //    . : ' Identifier name: "Dim_3_a" type: null
-//    ConstantDefinition name: "a"
+//    ConstantDefinition name: "a" evaluatedValue: 3
 //    . CallIndexExpr type: Bits<16>
 //    . : Identifier name: "d2" type: null
 //    . : ArgsIndices
 //    . : ' IntegerLiteral literal: 3 (3) type: Const<3>
-//    ConstantDefinition name: "b"
+//    ConstantDefinition name: "b" evaluatedValue: 0
 //    . CallIndexExpr type: Bits<1>
 //    . : Identifier name: "d2" type: null
 //    . : ArgsIndices
 //    . : ' IntegerLiteral literal: 3 (3) type: Const<3>
 //    . : ArgsIndices
 //    . : ' IntegerLiteral literal: 15 (15) type: Const<15>
-//    ConstantDefinition name: "c"
+//    ConstantDefinition name: "c" evaluatedValue: 844433520132096
 //    . CallIndexExpr type: Bits<4><16>
 //    . : Identifier name: "d3" type: null
 //    . : ArgsIndices
 //    . : ' IntegerLiteral literal: 0 (0) type: Const<0>
-//    ConstantDefinition name: "d"
+//    ConstantDefinition name: "d" evaluatedValue: 3
 //    . CallIndexExpr type: Bits<16>
 //    . : Identifier name: "d3" type: null
 //    . : ArgsIndices
 //    . : ' IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ArgsIndices
 //    . : ' IntegerLiteral literal: 3 (3) type: Const<3>
-//    ConstantDefinition name: "e"
+//    ConstantDefinition name: "e" evaluatedValue: 0
 //    . CallIndexExpr type: Bits<1>
 //    . : Identifier name: "d3" type: null
 //    . : ArgsIndices
@@ -184,7 +184,7 @@ constant j = i as Dim_2_a
 //    . : ' IntegerLiteral literal: 3 (3) type: Const<3>
 //    . : ArgsIndices
 //    . : ' IntegerLiteral literal: 15 (15) type: Const<15>
-//    ConstantDefinition name: "f"
+//    ConstantDefinition name: "f" evaluatedValue: 0
 //    . LetExpr type: Bits<16>
 //    . : Identifier name: "x" type: Bits<64>
 //    . : CastExpr type: Bits<64>
@@ -201,7 +201,7 @@ constant j = i as Dim_2_a
 //    . : ' | RangeExpr type: null
 //    . : ' | . IntegerLiteral literal: 15 (15) type: Const<15>
 //    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
-//    ConstantDefinition name: "g"
+//    ConstantDefinition name: "g" evaluatedValue: 3
 //    . LetExpr type: Bits<16>
 //    . : Identifier name: "x" type: Bits<64>
 //    . : CastExpr type: Bits<64>
@@ -218,7 +218,7 @@ constant j = i as Dim_2_a
 //    . : ' | RangeExpr type: null
 //    . : ' | . IntegerLiteral literal: 63 (63) type: Const<63>
 //    . : ' | . IntegerLiteral literal: 48 (48) type: Const<48>
-//    ConstantDefinition name: "h"
+//    ConstantDefinition name: "h" evaluatedValue: 7
 //    . LetExpr type: Bits<16>
 //    . : Identifier name: "x" type: Bits<64>
 //    . : CastExpr type: Bits<64>
@@ -235,13 +235,13 @@ constant j = i as Dim_2_a
 //    . : ' | RangeExpr type: null
 //    . : ' | . IntegerLiteral literal: 63 (63) type: Const<63>
 //    . : ' | . IntegerLiteral literal: 48 (48) type: Const<48>
-//    ConstantDefinition name: "i"
+//    ConstantDefinition name: "i" evaluatedValue: 18364793728865153552
 //    . CastExpr type: Bits<64>
 //    . : BinaryLiteral literal: 0xfedc'da98'7654'3210 (18364793728865153552) type: Const<18364793728865153552>
 //    . : TypeLiteral type: Bits<64>
 //    . : ' Identifier name: "Bits" type: null
 //    . : ' IntegerLiteral literal: 64 (64) type: Const<64>
-//    ConstantDefinition name: "j"
+//    ConstantDefinition name: "j" evaluatedValue: 18364793728865153552
 //    . CastExpr type: Bits<4><16>
 //    . : Identifier name: "i" type: Bits<64>
 //    . : TypeLiteral type: Bits<4><16>

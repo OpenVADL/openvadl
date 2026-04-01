@@ -15,7 +15,7 @@
 //
 //  Dumped AST:
 //
-//    ConstantDefinition name: "x"
+//    ConstantDefinition name: "x" evaluatedValue: 42
 //    . MatchExpr type: Bits<16>
 //    . : CastExpr type: Bits<32>
 //    . : ' IntegerLiteral literal: 4 (4) type: Const<4>

@@ -11,9 +11,9 @@ constant b = a
 //
 //  Dumped AST:
 //
-//    ConstantDefinition name: "a"
+//    ConstantDefinition name: "a" evaluatedValue: 3
 //    . IntegerLiteral literal: 3 (3) type: Const<3>
-//    ConstantDefinition name: "b"
+//    ConstantDefinition name: "b" evaluatedValue: 3
 //    . Identifier name: "a" type: Const<3>
 //
 //

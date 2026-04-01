@@ -10,7 +10,7 @@
 //
 //  Dumped AST:
 //
-//    ConstantDefinition name: "x"
+//    ConstantDefinition name: "x" evaluatedValue: 4
 //    . IfExpr type: Bits<32>
 //    . : BinaryExpr operator: = type: Bool
 //    . : ' IntegerLiteral literal: 4 (4) type: Const<4>

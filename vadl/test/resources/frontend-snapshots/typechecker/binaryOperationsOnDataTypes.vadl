@@ -30,7 +30,7 @@ constant t = b % 20               // 2
 //
 //  Dumped AST:
 //
-//    ConstantDefinition name: "a"
+//    ConstantDefinition name: "a" evaluatedValue: 51
 //    . TypeLiteral type: Bits<32>
 //    . : Identifier name: "Bits" type: null
 //    . : IntegerLiteral literal: 32 (32) type: Const<32>
@@ -39,7 +39,7 @@ constant t = b % 20               // 2
 //    . : TypeLiteral type: Bits<32>
 //    . : ' Identifier name: "Bits" type: null
 //    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
-//    ConstantDefinition name: "b"
+//    ConstantDefinition name: "b" evaluatedValue: 42
 //    . TypeLiteral type: Bits<32>
 //    . : Identifier name: "Bits" type: null
 //    . : IntegerLiteral literal: 32 (32) type: Const<32>
@@ -48,51 +48,51 @@ constant t = b % 20               // 2
 //    . : TypeLiteral type: Bits<32>
 //    . : ' Identifier name: "Bits" type: null
 //    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
-//    ConstantDefinition name: "c"
+//    ConstantDefinition name: "c" evaluatedValue: 1
 //    . BinaryExpr operator: && type: Bool
 //    . : BoolLiteral literal: true type: Bool
 //    . : BoolLiteral literal: true type: Bool
-//    ConstantDefinition name: "d"
+//    ConstantDefinition name: "d" evaluatedValue: 1
 //    . BinaryExpr operator: || type: Bool
 //    . : BoolLiteral literal: true type: Bool
 //    . : BoolLiteral literal: false type: Bool
-//    ConstantDefinition name: "e"
+//    ConstantDefinition name: "e" evaluatedValue: 59
 //    . BinaryExpr operator: | type: Bits<32>
 //    . : Identifier name: "a" type: Bits<32>
 //    . : Identifier name: "b" type: Bits<32>
-//    ConstantDefinition name: "f"
+//    ConstantDefinition name: "f" evaluatedValue: 34
 //    . BinaryExpr operator: & type: Bits<32>
 //    . : Identifier name: "a" type: Bits<32>
 //    . : Identifier name: "b" type: Bits<32>
-//    ConstantDefinition name: "g"
+//    ConstantDefinition name: "g" evaluatedValue: 25
 //    . BinaryExpr operator: ^ type: Bits<32>
 //    . : Identifier name: "a" type: Bits<32>
 //    . : Identifier name: "b" type: Bits<32>
-//    ConstantDefinition name: "h"
+//    ConstantDefinition name: "h" evaluatedValue: 0
 //    . BinaryExpr operator: = type: Bool
 //    . : Identifier name: "a" type: Bits<32>
 //    . : Identifier name: "b" type: Bits<32>
-//    ConstantDefinition name: "i"
+//    ConstantDefinition name: "i" evaluatedValue: 1
 //    . BinaryExpr operator: != type: Bool
 //    . : Identifier name: "a" type: Bits<32>
 //    . : Identifier name: "b" type: Bits<32>
-//    ConstantDefinition name: "j"
+//    ConstantDefinition name: "j" evaluatedValue: 1
 //    . BinaryExpr operator: >= type: Bool
 //    . : Identifier name: "a" type: Bits<32>
 //    . : Identifier name: "b" type: Bits<32>
-//    ConstantDefinition name: "k"
+//    ConstantDefinition name: "k" evaluatedValue: 1
 //    . BinaryExpr operator: > type: Bool
 //    . : Identifier name: "a" type: Bits<32>
 //    . : Identifier name: "b" type: Bits<32>
-//    ConstantDefinition name: "l"
+//    ConstantDefinition name: "l" evaluatedValue: 0
 //    . BinaryExpr operator: < type: Bool
 //    . : Identifier name: "a" type: Bits<32>
 //    . : Identifier name: "b" type: Bits<32>
-//    ConstantDefinition name: "m"
+//    ConstantDefinition name: "m" evaluatedValue: 0
 //    . BinaryExpr operator: <= type: Bool
 //    . : Identifier name: "a" type: Bits<32>
 //    . : Identifier name: "b" type: Bits<32>
-//    ConstantDefinition name: "n"
+//    ConstantDefinition name: "n" evaluatedValue: 168
 //    . BinaryExpr operator: << type: Bits<32>
 //    . : Identifier name: "b" type: Bits<32>
 //    . : CastExpr type: UInt<2>
@@ -100,7 +100,7 @@ constant t = b % 20               // 2
 //    . : ' TypeLiteral type: UInt<2>
 //    . : ' | Identifier name: "UInt" type: null
 //    . : ' | IntegerLiteral literal: 2 (2) type: null
-//    ConstantDefinition name: "o"
+//    ConstantDefinition name: "o" evaluatedValue: 10
 //    . BinaryExpr operator: >> type: Bits<32>
 //    . : Identifier name: "b" type: Bits<32>
 //    . : CastExpr type: UInt<2>
@@ -108,19 +108,19 @@ constant t = b % 20               // 2
 //    . : ' TypeLiteral type: UInt<2>
 //    . : ' | Identifier name: "UInt" type: null
 //    . : ' | IntegerLiteral literal: 2 (2) type: null
-//    ConstantDefinition name: "p"
+//    ConstantDefinition name: "p" evaluatedValue: 93
 //    . BinaryExpr operator: + type: Bits<32>
 //    . : Identifier name: "a" type: Bits<32>
 //    . : Identifier name: "b" type: Bits<32>
-//    ConstantDefinition name: "q"
+//    ConstantDefinition name: "q" evaluatedValue: 9
 //    . BinaryExpr operator: - type: Bits<32>
 //    . : Identifier name: "a" type: Bits<32>
 //    . : Identifier name: "b" type: Bits<32>
-//    ConstantDefinition name: "r"
+//    ConstantDefinition name: "r" evaluatedValue: 2142
 //    . BinaryExpr operator: * type: Bits<32>
 //    . : Identifier name: "a" type: Bits<32>
 //    . : Identifier name: "b" type: Bits<32>
-//    ConstantDefinition name: "s"
+//    ConstantDefinition name: "s" evaluatedValue: 10
 //    . BinaryExpr operator: / type: Bits<32>
 //    . : Identifier name: "a" type: Bits<32>
 //    . : CastExpr type: Bits<32>
@@ -128,7 +128,7 @@ constant t = b % 20               // 2
 //    . : ' TypeLiteral type: Bits<32>
 //    . : ' | Identifier name: "Bits" type: null
 //    . : ' | IntegerLiteral literal: 32 (32) type: null
-//    ConstantDefinition name: "t"
+//    ConstantDefinition name: "t" evaluatedValue: 2
 //    . BinaryExpr operator: % type: Bits<32>
 //    . : Identifier name: "b" type: Bits<32>
 //    . : CastExpr type: Bits<32>
