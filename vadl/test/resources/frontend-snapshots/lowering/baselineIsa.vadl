@@ -1,0 +1,50 @@
+// INCLUDE-AST-DUMP
+
+instruction set architecture TEST = {
+
+  register X: Bits<5><8>
+
+  format Frmt : Bits<8> = { a: Bits<8> }
+  instruction Instr : Frmt = { }
+  assembly Instr = ''
+  encoding Instr = { a = 1 }
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . RegisterDefinition name: "X"
+//    . : TypeLiteral type: Bits<5><8>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 5 (5) type: Const<5>
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    . FormatDefinition name: "Frmt"
+//    . : TypeLiteral type: Bits<8>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : TypedFormatField name: "a"
+//    . : ' TypeLiteral type: Bits<8>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 8 (8) type: Const<8>
+//    . InstructionDefinition name: "Instr"
+//    . : Identifier name: "Frmt" type: null
+//    . : BlockStatement
+//    . AssemblyDefinition
+//    . : StringLiteral literal: "" ('') type: String
+//    . EncodingDefinition
+//    . : Identifier name: "Instr" type: null
+//    . : Identifier name: "a" type: null
+//    . : CastExpr type: Bits<8>
+//    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : ' TypeLiteral type: Bits<8>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 8 (8) type: null
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

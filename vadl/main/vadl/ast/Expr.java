@@ -2093,18 +2093,22 @@ class IfExpr extends Expr {
 }
 
 class LetExpr extends Expr {
-  List<Identifier> identifiers;
+  List<IsId> identifiers;
   @Child
   Expr valueExpr;
   @Child
   Expr body;
   SourceLocation location;
 
-  LetExpr(List<Identifier> identifiers, Expr valueExpr, Expr body, SourceLocation location) {
+  LetExpr(List<IsId> identifiers, Expr valueExpr, Expr body, SourceLocation location) {
     this.identifiers = identifiers;
     this.valueExpr = valueExpr;
     this.body = body;
     this.location = location;
+  }
+
+  List<Identifier> identifiers() {
+    return identifiers.stream().map( id -> (Identifier) id).toList();
   }
 
   /**
@@ -2113,7 +2117,7 @@ class LetExpr extends Expr {
    * @return the type of the name provided.
    */
   int getIndexOf(String name) {
-    return identifiers.stream().map(i -> i.name).toList().indexOf(name);
+    return identifiers().stream().map(i -> i.name).toList().indexOf(name);
   }
 
   /**

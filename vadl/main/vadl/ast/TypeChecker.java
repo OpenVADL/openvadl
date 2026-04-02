@@ -3884,14 +3884,14 @@ public class TypeChecker
 
     if (expr.identifiers.size() > 1) {
       if (!(valType instanceof TupleType valTupleType)) {
-        var loc = expr.identifiers.get(0).loc.join(expr.valueExpr.location());
+        var loc = expr.identifiers().get(0).loc.join(expr.valueExpr.location());
         throw addErrorAndStopChecking(error("Type Mismatch", loc)
             .description("Tuple unpacking only works on tuples but the type was `%s`", valType)
             .build());
       }
 
       if (expr.identifiers.size() != valTupleType.size()) {
-        var loc = expr.identifiers.get(0).loc.join(expr.valueExpr.location());
+        var loc = expr.identifiers().get(0).loc.join(expr.valueExpr.location());
         addErrorAndStopChecking(error("Invalid Tuple Unpacking", loc)
             .description("Cannot unpack %d values form a `%s`.", expr.identifiers.size(),
                 valType)
@@ -3899,10 +3899,10 @@ public class TypeChecker
       }
 
       for (int i = 0; i < expr.identifiers.size(); i++) {
-        expr.identifiers.get(i).type = valTupleType.get(i);
+        expr.identifiers().get(i).type = valTupleType.get(i);
       }
     } else {
-      expr.identifiers.getFirst().type = valType;
+      expr.identifiers().getFirst().type = valType;
     }
 
     expr.type = checkWith(expr.body, expectedType);
@@ -4160,14 +4160,14 @@ public class TypeChecker
 
     if (statement.identifiers.size() > 1) {
       if (!(valType instanceof TupleType valTupleType)) {
-        var loc = statement.identifiers.get(0).loc.join(statement.valueExpr.location());
+        var loc = statement.identifiers().get(0).loc.join(statement.valueExpr.location());
         throw addErrorAndStopChecking(error("Type Mismatch", loc)
             .description("Tuple unpacking only works on tuples but the type was `%s`", valType)
             .build());
       }
 
       if (statement.identifiers.size() != valTupleType.size()) {
-        var loc = statement.identifiers.get(0).loc.join(statement.valueExpr.location());
+        var loc = statement.identifiers().get(0).loc.join(statement.valueExpr.location());
         addErrorAndStopChecking(error("Invalid Tuple Unpacking", loc)
             .description("Cannot unpack %d values form a `%s`.", statement.identifiers.size(),
                 valType)
@@ -4175,10 +4175,10 @@ public class TypeChecker
       }
 
       for (int i = 0; i < statement.identifiers.size(); i++) {
-        statement.identifiers.get(i).type = valTupleType.get(i);
+        statement.identifiers().get(i).type = valTupleType.get(i);
       }
     } else {
-      statement.identifiers.getFirst().type = valType;
+      statement.identifiers().getFirst().type = valType;
     }
 
     check(statement.body);

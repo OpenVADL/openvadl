@@ -1603,14 +1603,14 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     ]                                                         (. statement = new InstructionCallStatement(id, namedArguments, unnamedArguments, start.join(lastTokenLoc())); .)
   .
 
-  letStatement<out Statement letStatement> (. var start = nextTokenLoc(); var identifiers = new ArrayList<Identifier>(); .)
+  letStatement<out Statement letStatement>        (. var start = nextTokenLoc(); var identifiers = new ArrayList<IsId>(); .)
   = LET
-    identifier<out Identifier id>       (. identifiers.add(id); .)
+    identifierOrPlaceholder<out IsId id>          (. identifiers.add(id); .)
     {
       SYM_COMMA
-      identifier<out Identifier nextId> (. identifiers.add(nextId); .)
+      identifierOrPlaceholder<out IsId nextId>    (. identifiers.add(nextId); .)
     }
-    SYM_EQ                              (. Expr valueExpr = DUMMY_EXPR; .)
+    SYM_EQ                                        (. Expr valueExpr = DUMMY_EXPR; .)
     ( IF (la.kind == _IF_KW)
       ifExpression<out valueExpr, BIN_OPS_EXCEPT_IN>
     | IF (la.kind == _FORALL)
@@ -1618,7 +1618,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     | expression<out valueExpr, BIN_OPS_EXCEPT_IN>
     )
     SYM_IN
-    statement<out Statement body>       (. letStatement = new LetStatement(identifiers, valueExpr, body, start.join(lastTokenLoc())); .)
+    statement<out Statement body>                 (. letStatement = new LetStatement(identifiers, valueExpr, body, start.join(lastTokenLoc())); .)
   .
 
   ifStatement<out Statement ifStatement> (. Statement elseStmt = null; var start = nextTokenLoc(); .)
@@ -1928,14 +1928,14 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     [ SYM_RANGE expression<out Expr to, BIN_OPS> (. expr = new RangeExpr(expr, to); .) ]
   .
 
-  letExpression<out Expr expr, boolean[] allowedOps>          (. var start = nextTokenLoc(); var identifiers = new ArrayList<Identifier>(); .)
+  letExpression<out Expr expr, boolean[] allowedOps>          (. var start = nextTokenLoc(); var identifiers = new ArrayList<IsId>(); .)
   = LET
-    identifier<out Identifier id>       (. identifiers.add(id); .)
+    identifierOrPlaceholder<out IsId id>                      (. identifiers.add(id); .)
     {
       SYM_COMMA
-      identifier<out Identifier nextId> (. identifiers.add(nextId); .)
+      identifierOrPlaceholder<out IsId nextId>                (. identifiers.add(nextId); .)
     }
-    SYM_EQ                              (. Expr valueExpr = DUMMY_EXPR; .)
+    SYM_EQ                                                    (. Expr valueExpr = DUMMY_EXPR; .)
     ( IF (la.kind == _IF_KW)
       ifExpression<out valueExpr, BIN_OPS_EXCEPT_IN>
     | IF (la.kind == _FORALL)
@@ -1943,7 +1943,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     | expression<out valueExpr, BIN_OPS_EXCEPT_IN>
     )
     SYM_IN
-    expression<out Expr body, allowedOps>  (. expr = new LetExpr(identifiers, valueExpr, body, start.join(lastTokenLoc())); .)
+    expression<out Expr body, allowedOps>                     (. expr = new LetExpr(identifiers, valueExpr, body, start.join(lastTokenLoc())); .)
   .
 
   ifExpression<out Expr expr, boolean[] allowedElseOps>   (. var startLoc = nextTokenLoc(); .)

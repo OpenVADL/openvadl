@@ -202,9 +202,8 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
       // FIXME: implement tuple unpacking
       if (letExpr.identifiers.size() > 1) {
         throw new EvaluationError("Cannot evaluate tuple unpacking yet",
-            letExpr.identifiers.getFirst().loc.join(
-                letExpr.identifiers.getLast()
-                    .loc));
+            letExpr.identifiers().getFirst().loc.join(
+                letExpr.identifiers().getLast().loc));
       }
 
       return eval(letExpr.valueExpr);

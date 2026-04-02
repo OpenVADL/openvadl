@@ -822,7 +822,7 @@ class SymbolTable {
       // The identifiers of the let must be visible in it's children
       var childTable = currentSymbols().createChild();
       statement.symbolTable = childTable;
-      statement.identifiers.forEach(identifier -> {
+      statement.identifiers().forEach(identifier -> {
         childTable.defineSymbol(identifier.name, statement);
       });
       withSymbols(childTable, () -> statement.children().forEach(this::travel));
@@ -867,7 +867,7 @@ class SymbolTable {
       // The identifiers of the let must be visible in it's children
       var childTable = currentSymbols().createChild();
       expr.symbolTable = childTable;
-      expr.identifiers.forEach(identifier -> {
+      expr.identifiers().forEach(identifier -> {
         childTable.defineSymbol(identifier.name, expr);
       });
       withSymbols(childTable, () -> expr.children().forEach(this::travel));

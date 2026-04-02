@@ -212,7 +212,7 @@ public class AstDumper extends RecursiveAstVisitor {
   @Override
   public Void visit(LetExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.identifiers);
+    dumpChildren(expr.identifiers());
     dumpChildren(expr.valueExpr, expr.body);
     return null;
   }
@@ -220,7 +220,7 @@ public class AstDumper extends RecursiveAstVisitor {
   @Override
   public Void visit(LetStatement stmt) {
     dumpNode(stmt);
-    dumpChildren(stmt.identifiers);
+    dumpChildren(stmt.identifiers());
     dumpChildren(stmt.valueExpr, stmt.body);
     return null;
   }

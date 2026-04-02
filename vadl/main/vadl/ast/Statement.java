@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -126,19 +126,23 @@ final class BlockStatement extends Statement {
  * If multiple identifiers are provided, they are used to unpack a tuple.
  */
 final class LetStatement extends Statement {
-  List<Identifier> identifiers;
+  List<IsId> identifiers;
   @Child
   Expr valueExpr;
   @Child
   Statement body;
   SourceLocation location;
 
-  LetStatement(List<Identifier> identifiers, Expr valueExpr, Statement body,
+  LetStatement(List<IsId> identifiers, Expr valueExpr, Statement body,
                SourceLocation location) {
     this.identifiers = identifiers;
     this.valueExpr = valueExpr;
     this.body = body;
     this.location = location;
+  }
+
+  List<Identifier> identifiers() {
+    return identifiers.stream().map(id -> (Identifier) id).toList();
   }
 
   /**
@@ -147,7 +151,7 @@ final class LetStatement extends Statement {
    * @return the index/offset of the name provided.
    */
   int getIndexOf(String name) {
-    return identifiers.stream().map(i -> i.name).toList().indexOf(name);
+    return identifiers().stream().map(i -> i.name).toList().indexOf(name);
   }
 
   /**
