@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 import vadl.utils.DiskVirtualFileSystem;
@@ -129,4 +130,79 @@ public class VadlParser {
     return ast;
   }
 
+  /**
+   * A structure to hold an ast and the errors that might have been produced during its creation.
+   *
+   * @param ast that was parsed.
+   * @param diagnostics null if everything went ok, otherwise a non-empty list.
+   */
+  record PotentiallyBrokenAst(
+      Ast ast,
+      @Nullable DiagnosticList diagnostics) {
+    public boolean isBroken() {
+      return diagnostics != null;
+    }
+  }
+
+  /**
+   * Parses the VADL source program at the specified path into an AST that might not have succeeded
+   * parsing. Even if parsing fails all symbols tried to be resolved. The errors returned are from
+   * the first stage that fails to avoid follow-up errors.
+   *
+   * <p>USE WITH EXTREME CAUTION! There are no guarantees about the state in which the AST might
+   * be in. This includes, but is not limited to, dummy statements that don't appear in the input
+   * but are inserted as placeholders and still contained as macro expansion has gone wrong, only
+   * halfway parsed inputs as faulty macro invocation prevents the parser from continuing.
+   *
+   * @param path           to load the file from.
+   * @param fileSystem     to load the file from.
+   * @param macroOverrides which are either specified from an import or the CLI.
+   */
+  public static PotentiallyBrokenAst unsafeParseToPotentiallyBrokenAst(
+      // FIXME: This is really similar to the normal parse method and so in the future if this
+      // stays that similar we can reabse them on a common core.
+      // https://github.com/OpenVADL/openvadl/pull/867#discussion_r3037098145
+      Path path,
+      VirtualFileSystem fileSystem, Map<String, String> macroOverrides) {
+
+    var scanner = new Scanner(fileSystem.getInputStream(path));
+    var parser = new Parser(scanner);
+    parser.sourceFile = fileSystem.toAbsolutePath(path);
+    parser.fileSystem = fileSystem;
+    macroOverrides.forEach((key, value) -> parser.macroOverrides.put(key,
+        new Identifier(value, SourceLocation.INVALID_SOURCE_LOCATION)));
+    var potentialBrokenAst =
+        parser.ast.withPassTiming("Parsing", () -> unsafeParseToPotentiallyBrokenAst(parser));
+    potentialBrokenAst.ast.filePath = fileSystem.toAbsolutePath(path);
+    return potentialBrokenAst;
+  }
+
+  private static PotentiallyBrokenAst unsafeParseToPotentiallyBrokenAst(Parser parser) {
+    List<Diagnostic> errors = new ArrayList<>();
+
+    try {
+      parser.Parse();
+    } catch (Diagnostic e) {
+      errors.add(e);
+    } catch (DiagnosticList e) {
+      errors.addAll(e.items);
+    }
+
+    errors.addAll(parser.diagnostics);
+
+
+    // during parsing there might be errors in the macro table (e.g. conflicting macro definitions)
+    if (errors.isEmpty()) {
+      errors = parser.macroTable.errors.stream().distinct().toList();
+    }
+
+    var ast = parser.ast;
+
+    var symbolErrors = SymbolTable.collectAndResolveSymbols(ast);
+    if (errors.isEmpty()) {
+      errors = symbolErrors;
+    }
+
+    return new PotentiallyBrokenAst(ast, !errors.isEmpty() ? new DiagnosticList(errors) : null);
+  }
 }
