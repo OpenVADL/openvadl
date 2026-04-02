@@ -405,9 +405,13 @@ class ConstantDefinition extends Definition implements IdentifiableNode, TypedNo
 }
 
 abstract class FormatField extends Definition {
-  Identifier identifier;
+  IsId identifier;
 
-  public FormatField(Identifier identifier) {
+  Identifier identifier() {
+    return (Identifier) identifier;
+  }
+
+  public FormatField(IsId identifier) {
     this.identifier = identifier;
   }
 }
@@ -430,7 +434,7 @@ class RangeFormatField extends FormatField implements IdentifiableNode {
   @Nullable
   List<FormatDefinition.BitRange> computedRanges;
 
-  public RangeFormatField(Identifier identifier, List<Expr> ranges,
+  public RangeFormatField(IsId identifier, List<Expr> ranges,
                           @Nullable TypeLiteral typeLiteral) {
     super(identifier);
     this.ranges = ranges;
@@ -439,7 +443,7 @@ class RangeFormatField extends FormatField implements IdentifiableNode {
 
   @Override
   public Identifier identifier() {
-    return identifier;
+    return (Identifier) identifier;
   }
 
   @Override
@@ -504,14 +508,14 @@ class TypedFormatField extends FormatField implements IdentifiableNode {
   @Nullable
   FormatDefinition.BitRange range;
 
-  public TypedFormatField(Identifier identifier, TypeLiteral typeLiteral) {
+  public TypedFormatField(IsId identifier, TypeLiteral typeLiteral) {
     super(identifier);
     this.typeLiteral = typeLiteral;
   }
 
   @Override
   public Identifier identifier() {
-    return identifier;
+    return (Identifier) identifier;
   }
 
   @Override
@@ -577,14 +581,9 @@ class DerivedFormatField extends FormatField implements IdentifiableNode {
   @Child
   Expr expr;
 
-  public DerivedFormatField(Identifier identifier, Expr expr) {
+  public DerivedFormatField(IsId identifier, Expr expr) {
     super(identifier);
     this.expr = expr;
-  }
-
-  @Override
-  public Identifier identifier() {
-    return identifier;
   }
 
   @Override
@@ -630,6 +629,11 @@ class DerivedFormatField extends FormatField implements IdentifiableNode {
   <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
+
+  @Override
+  public Identifier identifier() {
+    return (Identifier) identifier;
+  }
 }
 
 /**
@@ -639,7 +643,7 @@ class EncodingFormatField extends FormatField {
   @Child
   Expr expr;
 
-  public EncodingFormatField(Identifier identifier, Expr expr) {
+  public EncodingFormatField(IsId identifier, Expr expr) {
     super(identifier);
     this.identifier = identifier;
     this.expr = expr;
@@ -658,7 +662,7 @@ class EncodingFormatField extends FormatField {
   List<Node> children() {
     // This has to be hardcoded here because for this format field it's a child but for some it's
     // the identfiyable name.
-    return List.of(identifier, expr);
+    return List.of((Node) identifier, expr);
   }
 
   @Override
@@ -707,7 +711,7 @@ class PredicateFormatField extends FormatField {
   @Child
   Expr expr;
 
-  public PredicateFormatField(Identifier identifier, Expr expr) {
+  public PredicateFormatField(IsId identifier, Expr expr) {
     super(identifier);
     this.expr = expr;
   }
@@ -725,7 +729,7 @@ class PredicateFormatField extends FormatField {
   List<Node> children() {
     // This has to be hardcoded here because for this format field it's a child but for some it's
     // the identfiyable name.
-    return List.of(identifier, expr);
+    return List.of((Node) identifier, expr);
   }
 
   @Override
@@ -802,12 +806,12 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
 
   boolean hasField(String name) {
     return fieldsWithoutEncodingPredicate().stream()
-        .anyMatch(f -> f.identifier.name.equals(name));
+        .anyMatch(f -> f.identifier().name.equals(name));
   }
 
   FormatField getField(String name) {
     return fieldsWithoutEncodingPredicate().stream()
-        .filter(f -> f.identifier.name.equals(name)).findFirst()
+        .filter(f -> f.identifier().name.equals(name)).findFirst()
         .orElseThrow();
   }
 

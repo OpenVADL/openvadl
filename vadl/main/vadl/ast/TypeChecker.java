@@ -1128,7 +1128,7 @@ public class TypeChecker
         addErrorAndStopChecking(error("Conflicting field access predicates", field.target())
             .locationDescription(field.target(),
                 "A predicate for the field access `%s` already exists.",
-                field.target().identifier.name)
+                field.target().identifier().name)
             .locationHelp(conflict, "Predicate already defined here.")
             .build());
       }
@@ -3524,7 +3524,7 @@ public class TypeChecker
           var suggestions = Levenshtein.suggestions(
               fieldName,
               formatType.format.fieldsWithoutEncodingPredicate().stream()
-                  .map(f -> f.identifier.name).toList());
+                  .map(f -> f.identifier().name).toList());
 
           addErrorAndStopChecking(error("Unknown format field `%s`".formatted(fieldName), expr)
               .description("Format `%s` doesn't have any field with this name", formatName)

@@ -533,7 +533,7 @@ elements. A single annotation is described in the #annotation production rule.
   .
 
   formatField<out FormatField field>                            (. field = null; .)
-  = identifier<out Identifier id>
+  = identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     ( formatFieldRange<out field, id>
     | formatFieldType<out field, id>
     | formatFieldDerived<out field, id>
@@ -542,7 +542,7 @@ elements. A single annotation is described in the #annotation production rule.
     )
   .
 
-  formatFieldRange<out FormatField field, Identifier id>
+  formatFieldRange<out FormatField field, IsId id>
   = SYM_BRACK_OPEN                                              (. List<Expr> ranges = new ArrayList<>();.)
     rangeExpression<out Expr e1>                                (. ranges.add(e1); .)
     {
@@ -556,22 +556,22 @@ elements. A single annotation is described in the #annotation production rule.
     ]                                                           (. field = new RangeFormatField(id, ranges, type); .)
   .
 
-  formatFieldType<out FormatField field, Identifier id>
+  formatFieldType<out FormatField field, IsId id>
   = SYM_COLON
     typeLiteral<out TypeLiteral type>                           (. field = new TypedFormatField(id, type); .)
   .
 
-  formatFieldDerived<out FormatField field, Identifier id>
+  formatFieldDerived<out FormatField field, IsId id>
   = SYM_EQ
     expression<out Expr expr, BIN_OPS>                          (. field = new DerivedFormatField(id, expr); .)
   .
 
-  formatFieldEncoding<out FormatField field, Identifier id>
+  formatFieldEncoding<out FormatField field, IsId id>
   = SYM_ASSIGN
     expression<out Expr expr, BIN_OPS>                          (. field = new EncodingFormatField(id, expr); .)
   .
 
-  formatFieldPredicate<out FormatField field, Identifier id>
+  formatFieldPredicate<out FormatField field, IsId id>
   = SYM_PREDICATE
     expression<out Expr expr, BIN_OPS>                          (. field = new PredicateFormatField(id, expr); .)
   .

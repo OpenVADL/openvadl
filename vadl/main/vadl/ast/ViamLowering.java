@@ -1162,7 +1162,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .filter(f -> !(f instanceof DerivedFormatField))
         .map(fieldDefinition -> {
           var fieldIdent =
-              generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier.name,
+              generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
                   fieldDefinition.identifier);
 
           var field = switch (fieldDefinition) {
@@ -1220,7 +1220,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .map(f -> (EncodingFormatField) f)
         .map(field -> getFieldEncoding(
             format.identifier.append("encoding",
-                    field.identifier.name + "_" + cnt.getAndIncrement())
+                    field.identifier().name + "_" + cnt.getAndIncrement())
                 .withSourceLocation(field.location()),
             field)
         ).toList());

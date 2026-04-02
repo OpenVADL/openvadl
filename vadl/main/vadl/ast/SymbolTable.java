@@ -1112,7 +1112,7 @@ class SymbolTable {
             var suggestions = Levenshtein.suggestions(
                 field.name,
                 format.fields.stream()
-                    .map(f -> f.identifier.name).toList());
+                    .map(f -> f.identifier().name).toList());
 
             definition.symbolTable()
                 .reportUnkownError("Field", field.name, field.location(), suggestions);
@@ -1207,7 +1207,7 @@ class SymbolTable {
         for (var namedArgument : statement.namedArguments) {
           FormatField foundField = null;
           for (var field : format.fieldsWithoutEncodingPredicate()) {
-            if (field.identifier.name.equals(namedArgument.name.name)) {
+            if (field.identifier().name.equals(namedArgument.name.name)) {
               foundField = field;
               break;
             }
@@ -1215,7 +1215,7 @@ class SymbolTable {
           if (foundField == null) {
             var suggestions = Levenshtein.suggestions(namedArgument.name.name,
                 format.fieldsWithoutEncodingPredicate().stream()
-                    .map(f -> f.identifier.name).toList());
+                    .map(f -> f.identifier().name).toList());
 
             statement.symbolTable()
                 .reportUnkownError("Field", namedArgument.name.name, namedArgument.location(),
