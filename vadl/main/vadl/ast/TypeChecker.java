@@ -956,7 +956,8 @@ public class TypeChecker
 
     // Evaluate the constant (like all constants must be able to be evaluated)
     try {
-      constantEvaluator.eval(definition.value);
+      var value = constantEvaluator.eval(definition.value);
+      definition.evaluatedValue = value.value();
     } catch (EvaluationError e) {
       addErrorAndStopChecking(error("Invalid constant value", definition.value)
           .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))

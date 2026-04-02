@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import vadl.TestUtils;
 import vadl.utils.Pair;
 
 public class AstDumpTests {
@@ -78,8 +79,7 @@ public class AstDumpTests {
       writeDump(actualDumpPath, actualDump);
     }
 
-    Assertions.assertEquals(expectedDump, actualDump,
-        "Expected dump does not match actual dump.");
+    TestUtils.assertEqualsFileLines(expectedDumpPath, actualDump);
   }
 
   private void writeDump(Path dumpPath, String dump) throws IOException {

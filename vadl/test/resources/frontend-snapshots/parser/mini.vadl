@@ -53,9 +53,9 @@ instruction set architecture RV3264I = {
 //  Dumped AST:
 //
 //    InstructionSetDefinition name: "RV3264I"
-//    . ConstantDefinition name: "Arch32"
+//    . ConstantDefinition name: "Arch32" evaluatedValue: 32
 //    . : IntegerLiteral literal: 32 (32) type: Const<32>
-//    . ConstantDefinition name: "MLen"
+//    . ConstantDefinition name: "MLen" evaluatedValue: 32
 //    . : Identifier name: "Arch32" type: Const<32>
 //    . UsingDefinition name: "Inst"
 //    . : TypeLiteral type: Bits<32>

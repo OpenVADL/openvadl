@@ -17,7 +17,7 @@ enumeration Nums : Bits<4> =
 //
 //  Dumped AST:
 //
-//    ConstantDefinition name: "friday"
+//    ConstantDefinition name: "friday" evaluatedValue: 5
 //    . TypeLiteral type: Bits<11>
 //    . : Identifier name: "Bits" type: null
 //    . : IdentifierPath type: Bits<4>

@@ -11,13 +11,13 @@ constant b: UInt<a> = 1
 //
 //  Dumped AST:
 //
-//    ConstantDefinition name: "a"
+//    ConstantDefinition name: "a" evaluatedValue: 1
 //    . CastExpr type: UInt<3>
 //    . : IntegerLiteral literal: 9 (9) type: Const<9>
 //    . : TypeLiteral type: UInt<3>
 //    . : ' Identifier name: "UInt" type: null
 //    . : ' IntegerLiteral literal: 3 (3) type: Const<3>
-//    ConstantDefinition name: "b"
+//    ConstantDefinition name: "b" evaluatedValue: 1
 //    . TypeLiteral type: UInt<1>
 //    . : Identifier name: "UInt" type: null
 //    . : Identifier name: "a" type: UInt<3>

@@ -14,7 +14,7 @@ function inner(a: Bits<32>) -> Bits<32> = a + 1
 //
 //  Dumped AST:
 //
-//    ConstantDefinition name: "universe"
+//    ConstantDefinition name: "universe" evaluatedValue: 12
 //    . CallIndexExpr type: Bits<32>
 //    . : Identifier name: "outer" type: null
 //    . : ArgsIndices

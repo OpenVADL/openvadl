@@ -267,7 +267,7 @@ function DecodePredCount (pattern: Bits5) -> BitsX =
 //    . : ' | . : ' | TypeLiteral type: SInt<32>
 //    . : ' | . : ' | . Identifier name: "SInt" type: null
 //    . : ' | . : ' | . IntegerLiteral literal: 32 (32) type: null
-//    ConstantDefinition name: "VL"
+//    ConstantDefinition name: "VL" evaluatedValue: 128
 //    . IntegerLiteral literal: 128 (128) type: Const<128>
 //    UsingDefinition name: "Bits5"
 //    . TypeLiteral type: Bits<5>

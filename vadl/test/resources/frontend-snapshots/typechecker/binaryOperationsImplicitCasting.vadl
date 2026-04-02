@@ -38,7 +38,7 @@ constant l = b32 + cn
 //
 //  Dumped AST:
 //
-//    ConstantDefinition name: "u32"
+//    ConstantDefinition name: "u32" evaluatedValue: 2
 //    . TypeLiteral type: UInt<32>
 //    . : Identifier name: "UInt" type: null
 //    . : IntegerLiteral literal: 32 (32) type: Const<32>
@@ -47,7 +47,7 @@ constant l = b32 + cn
 //    . : TypeLiteral type: UInt<32>
 //    . : ' Identifier name: "UInt" type: null
 //    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
-//    ConstantDefinition name: "s32"
+//    ConstantDefinition name: "s32" evaluatedValue: 4
 //    . TypeLiteral type: SInt<32>
 //    . : Identifier name: "SInt" type: null
 //    . : IntegerLiteral literal: 32 (32) type: Const<32>
@@ -56,7 +56,7 @@ constant l = b32 + cn
 //    . : TypeLiteral type: SInt<32>
 //    . : ' Identifier name: "SInt" type: null
 //    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
-//    ConstantDefinition name: "b32"
+//    ConstantDefinition name: "b32" evaluatedValue: 8
 //    . TypeLiteral type: Bits<32>
 //    . : Identifier name: "Bits" type: null
 //    . : IntegerLiteral literal: 32 (32) type: Const<32>
@@ -65,16 +65,16 @@ constant l = b32 + cn
 //    . : TypeLiteral type: Bits<32>
 //    . : ' Identifier name: "Bits" type: null
 //    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
-//    ConstantDefinition name: "cp"
+//    ConstantDefinition name: "cp" evaluatedValue: 16
 //    . IntegerLiteral literal: 16 (16) type: Const<16>
-//    ConstantDefinition name: "cn"
+//    ConstantDefinition name: "cn" evaluatedValue: -32
 //    . UnaryExpr operator: UnOp - type: Const<-32>
 //    . : IntegerLiteral literal: 32 (32) type: Const<32>
-//    ConstantDefinition name: "a"
+//    ConstantDefinition name: "a" evaluatedValue: 4
 //    . BinaryExpr operator: + type: UInt<32>
 //    . : Identifier name: "u32" type: UInt<32>
 //    . : Identifier name: "u32" type: UInt<32>
-//    ConstantDefinition name: "b"
+//    ConstantDefinition name: "b" evaluatedValue: 18
 //    . BinaryExpr operator: + type: UInt<32>
 //    . : Identifier name: "u32" type: UInt<32>
 //    . : CastExpr type: UInt<32>
@@ -82,7 +82,7 @@ constant l = b32 + cn
 //    . : ' TypeLiteral type: UInt<32>
 //    . : ' | Identifier name: "UInt" type: null
 //    . : ' | IntegerLiteral literal: 32 (32) type: null
-//    ConstantDefinition name: "c"
+//    ConstantDefinition name: "c" evaluatedValue: 18
 //    . BinaryExpr operator: + type: UInt<32>
 //    . : CastExpr type: UInt<32>
 //    . : ' Identifier name: "cp" type: Const<16>
@@ -90,11 +90,11 @@ constant l = b32 + cn
 //    . : ' | Identifier name: "UInt" type: null
 //    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . : Identifier name: "u32" type: UInt<32>
-//    ConstantDefinition name: "d"
+//    ConstantDefinition name: "d" evaluatedValue: 8
 //    . BinaryExpr operator: + type: SInt<32>
 //    . : Identifier name: "s32" type: SInt<32>
 //    . : Identifier name: "s32" type: SInt<32>
-//    ConstantDefinition name: "e"
+//    ConstantDefinition name: "e" evaluatedValue: 20
 //    . BinaryExpr operator: + type: SInt<32>
 //    . : CastExpr type: SInt<32>
 //    . : ' Identifier name: "cp" type: Const<16>
@@ -102,7 +102,7 @@ constant l = b32 + cn
 //    . : ' | Identifier name: "SInt" type: null
 //    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . : Identifier name: "s32" type: SInt<32>
-//    ConstantDefinition name: "f"
+//    ConstantDefinition name: "f" evaluatedValue: -28
 //    . BinaryExpr operator: + type: SInt<32>
 //    . : Identifier name: "s32" type: SInt<32>
 //    . : CastExpr type: SInt<32>
@@ -110,7 +110,7 @@ constant l = b32 + cn
 //    . : ' TypeLiteral type: SInt<32>
 //    . : ' | Identifier name: "SInt" type: null
 //    . : ' | IntegerLiteral literal: 32 (32) type: null
-//    ConstantDefinition name: "g"
+//    ConstantDefinition name: "g" evaluatedValue: 10
 //    . BinaryExpr operator: + type: UInt<32>
 //    . : Identifier name: "u32" type: UInt<32>
 //    . : CastExpr type: UInt<32>
@@ -118,7 +118,7 @@ constant l = b32 + cn
 //    . : ' TypeLiteral type: UInt<32>
 //    . : ' | Identifier name: "UInt" type: null
 //    . : ' | IntegerLiteral literal: 32 (32) type: null
-//    ConstantDefinition name: "h"
+//    ConstantDefinition name: "h" evaluatedValue: 10
 //    . BinaryExpr operator: + type: UInt<32>
 //    . : CastExpr type: UInt<32>
 //    . : ' Identifier name: "b32" type: Bits<32>
@@ -126,7 +126,7 @@ constant l = b32 + cn
 //    . : ' | Identifier name: "UInt" type: null
 //    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . : Identifier name: "u32" type: UInt<32>
-//    ConstantDefinition name: "i"
+//    ConstantDefinition name: "i" evaluatedValue: 12
 //    . BinaryExpr operator: + type: SInt<32>
 //    . : Identifier name: "s32" type: SInt<32>
 //    . : CastExpr type: SInt<32>
@@ -134,7 +134,7 @@ constant l = b32 + cn
 //    . : ' TypeLiteral type: SInt<32>
 //    . : ' | Identifier name: "SInt" type: null
 //    . : ' | IntegerLiteral literal: 32 (32) type: null
-//    ConstantDefinition name: "j"
+//    ConstantDefinition name: "j" evaluatedValue: -24
 //    . BinaryExpr operator: + type: SInt<32>
 //    . : CastExpr type: SInt<32>
 //    . : ' Identifier name: "cn" type: Const<-32>
@@ -146,7 +146,7 @@ constant l = b32 + cn
 //    . : ' TypeLiteral type: SInt<32>
 //    . : ' | Identifier name: "SInt" type: null
 //    . : ' | IntegerLiteral literal: 32 (32) type: null
-//    ConstantDefinition name: "k"
+//    ConstantDefinition name: "k" evaluatedValue: 12
 //    . BinaryExpr operator: + type: SInt<32>
 //    . : CastExpr type: SInt<32>
 //    . : ' Identifier name: "b32" type: Bits<32>
@@ -154,7 +154,7 @@ constant l = b32 + cn
 //    . : ' | Identifier name: "SInt" type: null
 //    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . : Identifier name: "s32" type: SInt<32>
-//    ConstantDefinition name: "l"
+//    ConstantDefinition name: "l" evaluatedValue: -24
 //    . BinaryExpr operator: + type: SInt<32>
 //    . : CastExpr type: SInt<32>
 //    . : ' Identifier name: "b32" type: Bits<32>

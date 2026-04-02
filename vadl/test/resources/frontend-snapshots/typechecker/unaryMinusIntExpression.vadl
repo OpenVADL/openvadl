@@ -10,7 +10,7 @@ constant i = -3
 //
 //  Dumped AST:
 //
-//    ConstantDefinition name: "i"
+//    ConstantDefinition name: "i" evaluatedValue: -3
 //    . UnaryExpr operator: UnOp - type: Const<-3>
 //    . : IntegerLiteral literal: 3 (3) type: Const<3>
 //
