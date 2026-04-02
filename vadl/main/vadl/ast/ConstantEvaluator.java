@@ -49,102 +49,114 @@ import vadl.viam.Constant;
  */
 class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
+  private final InterleavedTimingRecorder timingRecorder;
   private final IdentityHashMap<Expr, ConstantValue> cache = new IdentityHashMap<>();
   private final Deque<FunctionFrame> functionStack = new ArrayDeque<>();
 
+  public ConstantEvaluator(InterleavedTimingRecorder timingRecorder) {
+    this.timingRecorder = timingRecorder;
+  }
+
   public boolean isConstant(Expr expr) {
-    try {
-      eval(expr);
-      return true;
-    } catch (EvaluationError e) {
-      return false;
-    }
+    return timingRecorder.withPassTiming("Constant Evaluation", () -> {
+      try {
+        eval(expr);
+        return true;
+      } catch (EvaluationError e) {
+        return false;
+      }
+    });
   }
 
   public ConstantValue eval(Expr expr) {
-    // A simple optimization that avoids unneeded traversing the tree.
-    if (expr.type instanceof ConstantType) {
-      return new ConstantValue(((ConstantType) expr.type).getValue(), expr.type);
-    }
+    return timingRecorder.withPassTiming("Constant Evaluation", () -> {
+      // A simple optimization that avoids unneeded traversing the tree.
+      if (expr.type instanceof ConstantType) {
+        return new ConstantValue(((ConstantType) expr.type).getValue(), expr.type);
+      }
 
-    if (cache.containsKey(expr)) {
-      return cache.get(expr);
-    }
+      if (cache.containsKey(expr)) {
+        return cache.get(expr);
+      }
 
-    var result = expr.accept(this);
-    cache.put(expr, result);
-    return result;
+      var result = expr.accept(this);
+      cache.put(expr, result);
+      return result;
+    });
   }
 
   public ConstantValue evalBuiltin(BuiltInTable.BuiltIn builtin, List<ConstantValue> args,
                                    WithLocation loc) {
-
-    if (args.size() == 1) {
-      var innerVal = args.getFirst();
-      if (innerVal.type() instanceof ConstantType) {
-        if (builtin == BuiltInTable.NEG) {
-          return innerVal.withValue(innerVal.value().negate());
-        } else if (builtin == BuiltInTable.NOT) {
-          return innerVal.withValue(innerVal.value().not());
+    return timingRecorder.withPassTiming("Constant Evaluation", () -> {
+      if (args.size() == 1) {
+        var innerVal = args.getFirst();
+        if (innerVal.type() instanceof ConstantType) {
+          if (builtin == BuiltInTable.NEG) {
+            return innerVal.withValue(innerVal.value().negate());
+          } else if (builtin == BuiltInTable.NOT) {
+            return innerVal.withValue(innerVal.value().not());
+          }
         }
       }
-    }
 
-    // Logical operations
-    // And shifts with the left side constant
-    // And all other operations with both side constant
-    // ... are handled directly.
-    if (args.size() == 2) {
-      var leftVal = args.getFirst();
-      var rightVal = args.getLast();
+      // Logical operations
+      // And shifts with the left side constant
+      // And all other operations with both side constant
+      // ... are handled directly.
+      if (args.size() == 2) {
+        var leftVal = args.getFirst();
+        var rightVal = args.getLast();
 
-      // Some general checks that cannot be evaluated
-      checkDivisionByZero(builtin, leftVal, rightVal, loc);
+        // Some general checks that cannot be evaluated
+        checkDivisionByZero(builtin, leftVal, rightVal, loc);
 
-      if (BuiltInTable.logicalComparisons.contains(builtin)
-          || (BuiltInTable.SHIFTING_BUILT_INS.contains(builtin) && args.getFirst()
-          .type() instanceof ConstantType)
-          || (leftVal.type() instanceof ConstantType && rightVal.type() instanceof ConstantType)) {
+        if (BuiltInTable.logicalComparisons.contains(builtin)
+            || (BuiltInTable.SHIFTING_BUILT_INS.contains(builtin) && args.getFirst()
+            .type() instanceof ConstantType)
+            || (leftVal.type() instanceof ConstantType
+            && rightVal.type() instanceof ConstantType)) {
 
-        var func = BinOpFuncs.get(builtin);
-        if (func != null) {
-          var val = func.apply(leftVal.value(), rightVal.value());
-          var type = BuiltInTable.arithmeticOperators.contains(builtin) ? new ConstantType(val) :
-              Type.bool();
+          var func = BinOpFuncs.get(builtin);
+          if (func != null) {
+            var val = func.apply(leftVal.value(), rightVal.value());
+            var type = BuiltInTable.arithmeticOperators.contains(builtin) ? new ConstantType(val) :
+                Type.bool();
 
-          return new ConstantValue(val, type);
+            return new ConstantValue(val, type);
+          }
         }
       }
-    }
 
-    // NOTE: If you are seeing this issue, someone forgot to add the `compute` method for a
-    // built-in function. Look to into BuiltInTable.
-    var val = builtin
-        .compute(args.stream().map(c -> (Constant) c.toViamConstant()).toList())
-        .orElseThrow(() -> new EvaluationError(
-            "Built-in function `%s` cannot be constant evaluated (yet).".formatted(builtin.name()),
-            loc));
+      // NOTE: If you are seeing this issue, someone forgot to add the `compute` method for a
+      // built-in function. Look to into BuiltInTable.
+      var val = builtin
+          .compute(args.stream().map(c -> (Constant) c.toViamConstant()).toList())
+          .orElseThrow(() -> new EvaluationError(
+              "Built-in function `%s` cannot be constant evaluated (yet).".formatted(
+                  builtin.name()),
+              loc));
 
-    var areAllArgsConst = args.stream().allMatch(a -> a.type() instanceof ConstantType);
-    Type type;
-    if (BuiltInTable.arithmeticOperators.contains(builtin)) {
-      type = areAllArgsConst ? new ConstantType(val.asVal().integer()) : args.getFirst().type();
-    } else if (BuiltInTable.arithmeticComparisons.contains(builtin)) {
-      type = Type.bool();
-    } else if (args.size() == 1) {
-      type = areAllArgsConst ? new ConstantType(val.asVal().integer()) : args.getFirst().type();
-    } else {
-      // Just throw so that we now we need to implement something, should never happen if we are
-      // done.
-      throw new IllegalStateException("Cannot find result type for builtin " + builtin.name());
-    }
+      var areAllArgsConst = args.stream().allMatch(a -> a.type() instanceof ConstantType);
+      Type type;
+      if (BuiltInTable.arithmeticOperators.contains(builtin)) {
+        type = areAllArgsConst ? new ConstantType(val.asVal().integer()) : args.getFirst().type();
+      } else if (BuiltInTable.arithmeticComparisons.contains(builtin)) {
+        type = Type.bool();
+      } else if (args.size() == 1) {
+        type = areAllArgsConst ? new ConstantType(val.asVal().integer()) : args.getFirst().type();
+      } else {
+        // Just throw so that we now we need to implement something, should never happen if we are
+        // done.
+        throw new IllegalStateException("Cannot find result type for builtin " + builtin.name());
+      }
 
-    var finalVal = val.asVal();
-    if (!val.type().equals(type) && type instanceof DataType dataType) {
-      finalVal = finalVal.castTo(dataType);
-    }
+      var finalVal = val.asVal();
+      if (!val.type().equals(type) && type instanceof DataType dataType) {
+        finalVal = finalVal.castTo(dataType);
+      }
 
-    return new ConstantValue(finalVal.integer(), type);
+      return new ConstantValue(finalVal.integer(), type);
+    });
   }
 
   @SuppressWarnings("UnusedVariable")

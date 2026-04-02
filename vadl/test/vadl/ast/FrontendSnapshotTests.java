@@ -82,21 +82,14 @@ public class FrontendSnapshotTests {
     var input = Files.readString(path);
     try {
       ast = VadlParser.parse(path, new DiskVirtualFileSystem());
-
-      var remover = new ModelRemover();
-      remover.removeModels(ast);
-
-      var ungrouper = new Ungrouper();
-      ungrouper.ungroup(ast);
+      ModelRemover.removeModels(ast);
+      Ungrouper.ungroup(ast);
 
       verifyPrettifiedAst(ast, new DiskVirtualFileSystem());
       prettyPrint = generatePrettyPrint(input, ast);
 
-      var typechecker = new TypeChecker();
-      typechecker.verify(ast);
-
-      var lowering = new ViamLowering();
-      spec = lowering.generate(ast);
+      TypeChecker.verify(ast);
+      spec = ViamLowering.generate(ast);
 
       ViamVerifier.verifyAllIn(spec);
 

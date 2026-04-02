@@ -107,7 +107,13 @@ public class InterleavedTimingRecorder {
    * This method records the timing of a pass and handles the timing lifecycle.
    */
   public <T> T withPassTiming(String name, Supplier<T> pass) {
+
     if (!activeStack.isEmpty()) {
+      if  (activeStack.peek().equals(name)) {
+        // Do nothing if we are already in the correct pass
+        return pass.get();
+      }
+
       pauseRecording();
     }
     startRecording(name);
@@ -125,6 +131,11 @@ public class InterleavedTimingRecorder {
    */
   public void withPassTiming(String name, Runnable pass) {
     if (!activeStack.isEmpty()) {
+      if  (activeStack.peek().equals(name)) {
+        // Do nothing if we are already in the correct pass
+        pass.run();
+      }
+
       pauseRecording();
     }
     startRecording(name);

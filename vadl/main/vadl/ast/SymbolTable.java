@@ -99,7 +99,7 @@ class SymbolTable {
       var location = importedSymbolSegments.get(0).location()
           .join(importedSymbolSegments.get(importedSymbolSegments.size() - 1).location());
       if (symbol == null && macroSymbol == null) {
-        reportError("Unresolved symbol " + name, location);
+        errors.add(error("Unresolved symbol " + name, location).build());
       } else {
         if (symbol != null) {
           symbols.put(name, symbol);
@@ -553,16 +553,25 @@ class SymbolTable {
     errors.add(diagnostic.build());
   }
 
-  private void reportError(String error, SourceLocation location) {
-    errors.add(error(error, location)
-        .build());
-  }
-
   private void reportAlreadyDefined(String error, SourceLocation location,
                                     SourceLocation firstOccurence) {
     errors.add(Diagnostic.error(error, location)
         .locationNote(firstOccurence, "Already defined here.")
         .build());
+  }
+
+  /**
+   * In VADL symbol resolution has to be done in two passes, collection and resolution.
+   * This method makes it easy to run both at once.
+   *
+   * @param ast for which all symbols should be resolved.
+   * @return a list with diagnostics of violations.
+   */
+  static List<Diagnostic> collectAndResolveSymbols(Ast ast) {
+    return ast.timingRecorder.withPassTiming("Symbol Resolution", () -> {
+      SymbolCollector.collectSymbols(ast);
+      return SymbolResolver.resolveSymbols(ast);
+    });
   }
 
   /**
@@ -580,7 +589,15 @@ class SymbolTable {
     private Deque<String> viamPath = new ArrayDeque<>();
     private Deque<SymbolTable> symbolTables = new ArrayDeque<>();
 
-    public SymbolCollector() {
+    private static void collectSymbols(Ast ast) {
+      var collector = new SymbolCollector();
+      ast.definitions.forEach(
+          definition -> collector.withSymbols(ast.rootSymbolTable(),
+              () -> definition.accept(collector))
+      );
+    }
+
+    private SymbolCollector() {
     }
 
     private SymbolTable currentSymbols() {
@@ -602,11 +619,6 @@ class SymbolTable {
         this.symbolTables.pollLast();
       }
     }
-
-    void collectSymbols(SymbolTable symbols, Definition definition) {
-      withSymbols(symbols, () -> definition.accept(this));
-    }
-
 
     /**
      * In most cases the nodes in a definition are in their own scope but in rare cases that's not
@@ -895,15 +907,18 @@ class SymbolTable {
    */
   static class SymbolResolver extends RecursiveAstVisitor {
 
-    public List<Diagnostic> resolveSymbols(Ast ast) {
+    public static List<Diagnostic> resolveSymbols(Ast ast) {
       ast.withPassTiming("Symbol Resolving", () -> {
+        var resolver = new SymbolResolver();
         for (Definition definition : ast.definitions) {
-          definition.accept(this);
+          definition.accept(resolver);
         }
       });
       return requireNonNull(ast.rootSymbolTable).errors;
     }
 
+    private SymbolResolver() {
+    }
 
     @Override
     public Void visit(Identifier expr) {

@@ -141,8 +141,8 @@ public class TypeChecker
       Collections.newSetFromMap(new IdentityHashMap<>());
 
 
-  public TypeChecker() {
-    constantEvaluator = new ConstantEvaluator();
+  public TypeChecker(Ast ast) {
+    constantEvaluator = new ConstantEvaluator(ast.timingRecorder);
   }
 
   /**
@@ -313,19 +313,20 @@ public class TypeChecker
    * @param ast to verify
    * @throws DiagnosticList if the program isn't well typed.
    */
-  public void verify(Ast ast) {
+  public static void verify(Ast ast) {
+    var checker = new TypeChecker(ast);
     ast.withPassTiming("Type Checking", () -> {
       try {
-        ast.definitions.forEach(this::check);
+        ast.definitions.forEach(checker::check);
       } catch (Diagnostic error) {
-        errors.add(error);
+        checker.errors.add(error);
       } catch (StopPartialCheckingSignal signal) {
         // do nothing on purpose.
       }
     });
 
-    if (!errors.isEmpty()) {
-      throw new DiagnosticList(errors);
+    if (!checker.errors.isEmpty()) {
+      throw new DiagnosticList(checker.errors);
     }
   }
 

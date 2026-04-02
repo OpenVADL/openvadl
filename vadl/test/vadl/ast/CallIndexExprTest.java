@@ -152,8 +152,7 @@ public class CallIndexExprTest {
   void invalidReads(String input, String error) {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(wrapProg(input)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
     assertThat(diagnostic).hasMessageContaining(error);

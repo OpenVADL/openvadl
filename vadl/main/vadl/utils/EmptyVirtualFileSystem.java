@@ -16,8 +16,8 @@
 
 package vadl.utils;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import static vadl.error.Diagnostic.error;
+
 import java.io.InputStream;
 import java.nio.file.Path;
 
@@ -31,8 +31,8 @@ public class EmptyVirtualFileSystem implements VirtualFileSystem {
   }
 
   @Override
-  public InputStream getInputStream(Path path) throws IOException {
-    throw new FileNotFoundException();
+  public InputStream getInputStream(Path path) {
+    throw error("File not found: " + path, SourceLocation.INVALID_SOURCE_LOCATION).build();
   }
 
   @Override

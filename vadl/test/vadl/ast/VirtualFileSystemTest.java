@@ -52,7 +52,7 @@ public class VirtualFileSystemTest {
     }
 
     @Override
-    public InputStream getInputStream(Path path) throws IOException {
+    public InputStream getInputStream(Path path) {
       return new ByteArrayInputStream(files.get(path.toString()).toString().getBytes(
           StandardCharsets.UTF_8));
     }

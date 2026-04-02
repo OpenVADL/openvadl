@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -55,12 +55,6 @@ class AstFinder extends RecursiveAstVisitor {
     }
     throw new RuntimeException(
         "No %s with the name %s found.".formatted(type.getSimpleName(), name));
-  }
-
-  ConstantValue getConstantValue(Ast ast, String name) {
-    var evaluator = new ConstantEvaluator();
-    var constDef = findDefinition(ast, name, ConstantDefinition.class);
-    return evaluator.eval(constDef.value);
   }
 
   @Nullable

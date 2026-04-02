@@ -331,18 +331,11 @@ ISA section (#instructionsetDefinition). It is also possible to define macros (#
   vadl
   = {
     SYNC
-    topLevelDefinition<out Definition def>     (. addDef(ast.definitions, def);
-                                                  // Only call the symbol resolver if there were no errors, because other
-                                                  // wise the AST might be invalid, causing a crash.
-                                                  if (!hasErrors()) {
-                                                    new SymbolTable.SymbolCollector().collectSymbols(ast.rootSymbolTable(), def);
-                                                  }
-                                                .)
+    topLevelDefinition<out Definition def>     (. addDef(ast.definitions, def); .)
     | macroDefinition<out ModelDefinition def> (. addDef(ast.definitions, def);
-                                                  // Only call the symbol resolver if there were no errors, because other
-                                                  // wise the AST might be invalid, causing a crash.
                                                   if (!hasErrors()) {
-                                                    new SymbolTable.SymbolCollector().collectSymbols(ast.rootSymbolTable(), def); macroTable.addModelDefinition(def);
+                                                    //SymbolTable.SymbolCollector.collectSymbols(ast.rootSymbolTable(), def);
+                                                    macroTable.addModelDefinition(def);
                                                   }
                                             .)
   }SYNC.

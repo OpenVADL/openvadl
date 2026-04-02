@@ -19,7 +19,6 @@ package vadl.lsp;
 import static vadl.lsp.LspUtils.toPath;
 import static vadl.lsp.LspUtils.toUri;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -184,9 +183,6 @@ public class VadlTextDocumentService implements TextDocumentService {
       try {
         ast = VadlParser.parse(toPath(uri), snapshots);
 
-      } catch (IOException e) {
-        log.error("Unexpected Exception occurred when parsing {}", uri, e);
-        return definitionResult(null);
       } catch (DiagnosticList dl) {
         log.debug("UNABLE definition: Parser produced diagnostics instead of AST for {}", uri);
         return definitionResult(null);
@@ -274,9 +270,6 @@ public class VadlTextDocumentService implements TextDocumentService {
       Path path = document.getPath();
       try {
         Frontend.compileToAst(path, snapshots);
-      } catch (IOException e) {
-        log.error("Unexpected Exception occurred when parsing {}", document.uri, e);
-
       } catch (DiagnosticList dl) {
         log.debug("Raw diagnostics ({}): {}", document.uri, dl.getMessage());
         List<String> importedFileErrors = new ArrayList<>();

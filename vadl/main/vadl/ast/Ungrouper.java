@@ -36,10 +36,14 @@ public class Ungrouper
    *
    * @param ast to be modified.
    */
-  public void ungroup(Ast ast) {
+  public static void ungroup(Ast ast) {
     ast.withPassTiming("Ungrouping", () -> {
-      ast.definitions.forEach(def -> def.accept(this));
+      var ungrouper = new Ungrouper();
+      ast.definitions.forEach(def -> def.accept(ungrouper));
     });
+  }
+
+  private Ungrouper() {
   }
 
   @Override
