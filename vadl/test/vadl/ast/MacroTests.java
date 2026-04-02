@@ -26,6 +26,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
+import vadl.utils.SingleFileVirtualFileSystem;
 
 public class MacroTests {
 
@@ -308,8 +309,10 @@ public class MacroTests {
         constant a = $x()
         """;
 
+    var path = Paths.get("hardcoded");
+    var fileSystem = new SingleFileVirtualFileSystem(prog, path);
     var exception = Assertions.assertThrows(DiagnosticList.class,
-        () -> VadlParser.parse(prog, Paths.get("hardcoded")));
+        () -> VadlParser.parse(path, fileSystem));
     var location = exception.items.get(0).multiLocation.primaryLocation().location();
     Assertions.assertNotNull(location.expandedFrom());
     Assertions.assertEquals(5, location.expandedFrom().begin().line());

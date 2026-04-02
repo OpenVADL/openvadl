@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
+import vadl.utils.EmptyVirtualFileSystem;
 import vadl.utils.OverlayVirtualFileSystem;
 import vadl.utils.SingleFileVirtualFileSystem;
 import vadl.utils.VirtualFileSystem;
@@ -32,13 +33,7 @@ public class AstTestUtils {
 
 
   static void verifyPrettifiedAst(Ast ast) {
-    ModelRemover.removeModels(ast);
-    Ungrouper.ungroup(ast);
-    var progPretty = ast.prettyPrintToString();
-    var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty, ast.filePath),
-        "Cannot parse prettified input \n" + progPretty);
-    Ungrouper.ungroup(astPretty);
-    assertAstEquality(astPretty, ast);
+    verifyPrettifiedAst(ast, new EmptyVirtualFileSystem());
   }
 
   static void verifyPrettifiedAst(Ast ast, VirtualFileSystem fileSystem) {

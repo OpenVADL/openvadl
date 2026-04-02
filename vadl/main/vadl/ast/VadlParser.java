@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 import vadl.utils.DiskVirtualFileSystem;
@@ -37,6 +36,11 @@ public class VadlParser {
 
   /**
    * Parses the VADL source program at the specified path into an AST.
+   * The returned AST is already macro expanded and all symbols are resolved.
+   * This method loads the file always from disk.
+   *
+   * @param path to load the file from.
+   * @throws DiagnosticList if the file cannot be loaded or not correctly parsed.
    */
   public static Ast parse(Path path) {
     return parse(path, new DiskVirtualFileSystem(), Collections.emptyMap());
@@ -44,6 +48,12 @@ public class VadlParser {
 
   /**
    * Parses the VADL source program at the specified path into an AST.
+   * The returned AST is already macro expanded and all symbols are resolved.
+   * The file will be loaded from the specified filesystem.
+   *
+   * @param path to load the file from.
+   * @param fileSystem to load the file from.
+   * @throws DiagnosticList if the file cannot be loaded or not correctly parsed.
    */
   public static Ast parse(Path path, VirtualFileSystem fileSystem) {
     return parse(path, fileSystem, Collections.emptyMap());
@@ -51,8 +61,27 @@ public class VadlParser {
 
   /**
    * Parses the VADL source program at the specified path into an AST.
-   * Works just like {@link VadlParser#parse(String, Map, Path)},
-   * except errors will have the proper file locations set.
+   * The returned AST is already macro expanded and all symbols are resolved.
+   * This method is most useful for testing.
+   *
+   * @param program to parse.
+   * @throws DiagnosticList if the file cannot be loaded or not correctly parsed.
+   */
+  public static Ast parse(String program) {
+    var path = Paths.get("memory");
+    var fileSystem = new SingleFileVirtualFileSystem(program, path);
+    return parse(path, fileSystem);
+  }
+
+  /**
+   * Parses the VADL source program at the specified path into an AST.
+   * The returned AST is already macro expanded and all symbols are resolved.
+   * The file will be loaded from the specified filesystem.
+   *
+   * @param path to load the file from.
+   * @param fileSystem to load the file from.
+   * @param macroOverrides which are either specified from an import or the CLI.
+   * @throws DiagnosticList if the file cannot be loaded or not correctly parsed.
    */
   public static Ast parse(Path path, VirtualFileSystem fileSystem,
                           Map<String, String> macroOverrides) {
@@ -66,36 +95,6 @@ public class VadlParser {
     ast.filePath = fileSystem.toAbsolutePath(path);
     return ast;
   }
-
-  /**
-   * Convenience overload for {@link VadlParser#parse(String, Map, Path)} without any overrides.
-   */
-  public static Ast parse(String program) {
-    return parse(program, Map.of(), Paths.get("memory"));
-  }
-
-  /**
-   * Convenience overload for {@link VadlParser#parse(String, Map, Path)} without any overrides.
-   */
-  public static Ast parse(String program, Path resolutionPath) {
-    return parse(program, Map.of(), resolutionPath);
-  }
-
-  /**
-   * Parses a source program into an AST.
-   *
-   * @param program         a source code file to parse
-   * @param macroOverrides  The overrides to perform in the macro evaluation
-   * @return                The parsed syntax tree.
-   * @throws DiagnosticList if there are any parsing errors.
-   */
-  public static Ast parse(String program, Map<String, String> macroOverrides,
-                          @Nullable Path resolutionPath) {
-    var path = Paths.get("virtualFile.vadl");
-    var fileSystem = new SingleFileVirtualFileSystem(program, path);
-    return parse(path, fileSystem, macroOverrides);
-  }
-
 
   private static Ast parse(Parser parser) {
     List<Diagnostic> errors = new ArrayList<>();
