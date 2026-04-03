@@ -337,7 +337,7 @@ ISA section (#instructionsetDefinition). It is also possible to define macros (#
                                                     //SymbolTable.SymbolCollector.collectSymbols(ast.rootSymbolTable(), def);
                                                     macroTable.addModelDefinition(def);
                                                   }
-                                            .)
+                                               .)
   }SYNC.
 
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------
@@ -375,16 +375,24 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 
 #topLevelDefinition is referenced by \refFrom.
 */
-  topLevelDefinition<out Definition def> (. def = DUMMY_DEF; .)
-  = annotations<.out List<AnnotationDefinition> annotations.>
-  ( instructionsetDefinition<out def>
-  | applicationBinaryInterfaceDefinition<out def>
-  | processorDefinition<out def>
-  | microArchitectureDefinition<out def>
-  | commonDefinition<out def>
-  | importDefinition<out def>
-  | assemblyDescriptionDefinition<out def>
-  )                                      (. def.withAnnotations(annotations); .)
+  topLevelDefinition<out Definition def>                         (. def = DUMMY_DEF; .)
+  =
+  (
+    annotations<.out List<AnnotationDefinition> annotations.>
+    ( instructionsetDefinition<out def>
+    | applicationBinaryInterfaceDefinition<out def>
+    | processorDefinition<out def>
+    | microArchitectureDefinition<out def>
+    | commonDefinition<out def>
+    | importDefinition<out def>
+    | assemblyDescriptionDefinition<out def>
+    )                                                            (. def.withAnnotations(annotations); .)
+  )
+  | macroReplacement<out Node n>                                 (. def = castCommonDef(this, n);
+                                                                    if (def instanceof DefinitionList list) {
+                                                                      readMacroSymbols(macroTable, list.items);
+                                                                    }
+                                                                 .)
   .
 
 /**  \brief
@@ -397,7 +405,6 @@ The #commonDefinitionList production rule lists (beside macro definitions) all c
     annotations<.out List<AnnotationDefinition> annotations.>
     commonDefinition<out Definition def>                   (. def.withAnnotations(annotations); definitions.add(def); .)
   | macroDefinition<out ModelDefinition def>               (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
-    // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
   | macroReplacement<out Node n>                           (. var def = castCommonDef(this, n);
                                                               if (def instanceof DefinitionList list) {
                                                                 readMacroSymbols(macroTable, list.items);
