@@ -16,14 +16,13 @@
 
 package vadl.iss.passes;
 
-import java.util.List;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.extensions.UmeInfo;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
+import vadl.viam.UserModeEmulation;
 
 public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
 
@@ -52,7 +51,7 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
     //  var umeDef = specification.userModeEmulation().get();
 
     //TODO remove hardcoded values (finish vadl with ume)
-      int extractedSysReg = 17;
+     /* int extractedSysReg = 17;
       int extractedRetReg = 10;
       int extractedSpReg = 2;
       int extractedRaReg = 1;
@@ -65,8 +64,21 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
       );
 
     vars.put("config", new UmeInfo(extractedSysReg, extractedRetReg, extractedSpReg, extractedRaReg, extractedTpReg, extractedArgs, extractedExcIds));
-    vars.put("insn_width_bytes", 4);
+    vars.put("insn_width_bytes", 4); */
    // }
+
+    /*specification.definitions()
+        .filter(UserModeEmulation.class::isInstance)
+        .map(UserModeEmulation.class::cast)
+        .findFirst()
+        .ifPresent(ume -> {
+          vars.put("config", ume);
+          vars.put("insn_width_bytes", 4); // or get from elsewhere if needed
+        });*/
+
+    UserModeEmulation ume = UserModeEmulation.createDefault();
+    vars.put("config", ume.asMap());
+    vars.put("insn_width_bytes", 4); // or get from elsewhere if needed
 
     return vars;
   }
