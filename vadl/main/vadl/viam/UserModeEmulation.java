@@ -18,29 +18,61 @@ package vadl.viam;
 
 import java.util.List;
 import java.util.Map;
+import vadl.utils.SourceLocation;
 
 public class UserModeEmulation extends Definition {
-  private final int sysReg;          // e.g., 17 for RISC-V a7 (syscall number)
-  private final int retReg;          // e.g., 10 for RISC-V a0 (return value)
-  private final int spReg;           // Stack Pointer (e.g., 2 for RISC-V)
-  private final int raReg;           // Return Address (e.g., 1 for RISC-V)
-  private final int tpReg;           // Thread Pointer
-  private final List<Integer> args;  // Argument registers (e.g., [10, 11, 12, 13, 14, 15])
-  private final Map<String, Integer> excIds; // Exception IDs mapping
+    /**
+     * Returns a map representation of this UserModeEmulation for template rendering.
+     */
+    public Map<String, Object> asMap() {
+      return Map.ofEntries(
+          Map.entry("sysReg", sysReg),
+          Map.entry("retReg", retReg),
+          Map.entry("spReg", spReg),
+          Map.entry("raReg", raReg),
+          Map.entry("tpReg", tpReg),
+          Map.entry("args", args),
+          Map.entry("excIds", excIds),
+          Map.entry("SYSCALL_NAME", syscallExcName),
+          Map.entry("BREAKPOINT_NAME", breakpointExcName),
+          Map.entry("ILLEGAL_INSTR_NAME", illegalInstrExcName),
+          // NEW FIELDS FOR CPU_LOOP.C:
+          Map.entry("ptRegPc", ptRegPc),
+          Map.entry("ptRegSp", ptRegSp),
+          Map.entry("excCauseVar", excCauseVar),
+          Map.entry("hasIcacheFlush", hasIcacheFlush)
+      );
+    }
+
+  private final int sysReg;
+  private final int retReg;
+  private final int spReg;
+  private final int raReg;
+  private final int tpReg;
+  private final List<Integer> args;
+  private final Map<String, Integer> excIds;
+  private final String syscallExcName;
+  private final String breakpointExcName;
+  private final String illegalInstrExcName;
+  // NEW FIELDS:
+  private final String ptRegPc;
+  private final String ptRegSp;
+  private final String excCauseVar;
+  private final boolean hasIcacheFlush;
 
   /**
    * Constructs a UserModeEmulation configuration.
    */
   public UserModeEmulation(
       Identifier identifier,
-      int sysReg,
-      int retReg,
-      int spReg,
-      int raReg,
-      int tpReg,
-      List<Integer> args,
-      Map<String, Integer> excIds) {
+      int sysReg, int retReg, int spReg, int raReg, int tpReg,
+      List<Integer> args, Map<String, Integer> excIds,
+      String syscallExcName, String breakpointExcName, String illegalInstrExcName,
+      String ptRegPc, String ptRegSp, String excCauseVar, boolean hasIcacheFlush) {
     super(identifier);
+    if (args == null || args.isEmpty()) throw new IllegalArgumentException("args must not be null/empty");
+    if (excIds == null || excIds.isEmpty()) throw new IllegalArgumentException("excIds must not be null/empty");
+
     this.sysReg = sysReg;
     this.retReg = retReg;
     this.spReg = spReg;
@@ -48,33 +80,82 @@ public class UserModeEmulation extends Definition {
     this.tpReg = tpReg;
     this.args = args;
     this.excIds = excIds;
+    this.syscallExcName = syscallExcName;
+    this.breakpointExcName = breakpointExcName;
+    this.illegalInstrExcName = illegalInstrExcName;
+    this.ptRegPc = ptRegPc;
+    this.ptRegSp = ptRegSp;
+    this.excCauseVar = excCauseVar;
+    this.hasIcacheFlush = hasIcacheFlush;
   }
 
-  public int sysReg() {
+  public static UserModeEmulation createDefault() {
+    Identifier identifier = new Identifier(new String[]{"ume"}, SourceLocation.INVALID_SOURCE_LOCATION);
+    Map<String, Integer> excIds = Map.of("ILLEGAL_INSTR", 2, "BREAKPOINT", 3, "ECALL", 11);
+
+    return new UserModeEmulation(
+        identifier,
+        17, 10, 2, 1, 4,
+        List.of(10, 11, 12, 13, 14, 15),
+        excIds,
+        "ECALL", "BREAKPOINT", "ILLEGAL_INSTR",
+        "sepc", "sp", "arg_exc_cause", true
+    );
+  }
+
+  public String getPtRegPc() {
+    return ptRegPc;
+  }
+
+  public String getPtRegSp() {
+    return ptRegSp;
+  }
+
+  public String getExcCauseVar() {
+    return excCauseVar;
+  }
+
+  public boolean hasIcacheFlush() {
+    return hasIcacheFlush;
+  }
+
+  public String getSyscallExcName() {
+    return syscallExcName;
+  }
+
+  public String getBreakpointExcName() {
+    return breakpointExcName;
+  }
+
+  public String getIllegalInstrExcName() {
+    return illegalInstrExcName;
+  }
+
+  public int getSysReg() {
     return sysReg;
   }
 
-  public int retReg() {
+  public int getRetReg() {
     return retReg;
   }
 
-  public int spReg() {
+  public int getSpReg() {
     return spReg;
   }
 
-  public int raReg() {
+  public int getRaReg() {
     return raReg;
   }
 
-  public int tpReg() {
+  public int getTpReg() {
     return tpReg;
   }
 
-  public List<Integer> args() {
+  public List<Integer> getArgs() {
     return args;
   }
 
-  public Map<String, Integer> excIds() {
+  public Map<String, Integer> getExcIds() {
     return excIds;
   }
 

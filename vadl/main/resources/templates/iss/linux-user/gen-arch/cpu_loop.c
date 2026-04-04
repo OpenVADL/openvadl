@@ -53,33 +53,37 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
             cpu_exec_step_atomic(cs);
             break;
         case [(${gen_arch_upper})]_EXCP_EXC:
-            cause = env->arg_exc_cause;
+            cause = env->[(${config.excCauseVar})];
             switch (cause) {
-            case [(${gen_arch_upper})]_EXC_ECALL:
+            case [(${gen_arch_upper})]_EXC_[(${config.SYSCALL_NAME})]:
                 env->[(${pc_reg.name_lower})] += [(${config.insn_width_bytes})];
+                [# th:if="${config.hasIcacheFlush}"]
                 if (env->[(${register_tensors[0].name_lower})][ [(${config.sysReg})] ] == TARGET_NR_[(${gen_arch_lower})]_flush_icache) {
                     /* no-op in QEMU; TB invalidation is automatic */
                     ret = 0;
                 } else {
+                [/]
                     ret = do_syscall(env,
                                       env->[(${register_tensors[0].name_lower})][ [(${config.sysReg})] ],
                                        [# th:each="arg : ${config.args}"]
                                         env->[(${register_tensors[0].name_lower})][ [(${arg})] ],
                                        [/]
                                       0, 0);
+                [# th:if="${config.hasIcacheFlush}"]
                 }
+                [/]
                 if (ret == -QEMU_ERESTARTSYS) {
-                    env->[(${pc_reg.name_lower})] -= 4;
+                    env->[(${pc_reg.name_lower})] -= [(${config.insn_width_bytes})];;
                 } else if (ret != -QEMU_ESIGRETURN) {
                     env->[(${register_tensors[0].name_lower})][ [(${config.retReg})] ] = ret;                }
                 if (cs->singlestep_enabled) {
                     goto gdbstep;
                 }
                 break;
-            case [(${gen_arch_upper})]_EXC_ILLEGAL_INSTR:
+            case [(${gen_arch_upper})]_EXC_[(${config.ILLEGAL_INSTR_NAME})]:
                 force_sig_fault(TARGET_SIGILL, TARGET_ILL_ILLOPC, env->[(${pc_reg.name_lower})]);
                 break;
-            case [(${gen_arch_upper})]_EXC_BREAKPOINT:
+            case [(${gen_arch_upper})]_EXC_[(${config.BREAKPOINT_NAME})]:
             case EXCP_DEBUG:
 gdbstep:
                 force_sig_fault(TARGET_SIGTRAP, TARGET_TRAP_BRKPT, env->[(${pc_reg.name_lower})]);
@@ -109,8 +113,8 @@ void target_cpu_copy_regs(CPUArchState *env, struct target_pt_regs *regs)
     TaskState *ts = get_task_state(cpu);
     struct image_info *info = ts->info;
 
-    env->[(${pc_reg.name_lower})] = regs->sepc;
-    env->[(${register_tensors[0].name_lower})][ [(${config.spReg})] ] = regs->sp;
+    env->[(${pc_reg.name_lower})] = regs->[(${config.ptRegPc})];
+    env->[(${register_tensors[0].name_lower})][ [(${config.spReg})] ] = regs->[(${config.ptRegSp})];
 
     ts->stack_base = info->start_stack;
 }
