@@ -2097,14 +2097,15 @@ class IfExpr extends Expr {
 }
 
 class LetExpr extends Expr {
-  List<IsId> identifiers;
+  List<IdentifierOrPlaceholder> identifiers;
   @Child
   Expr valueExpr;
   @Child
   Expr body;
   SourceLocation location;
 
-  LetExpr(List<IsId> identifiers, Expr valueExpr, Expr body, SourceLocation location) {
+  LetExpr(List<IdentifierOrPlaceholder> identifiers, Expr valueExpr, Expr body,
+          SourceLocation location) {
     this.identifiers = identifiers;
     this.valueExpr = valueExpr;
     this.body = body;
@@ -2661,10 +2662,10 @@ class ForallExpr extends Expr {
 
 class ResourceReferenceExression extends Expr {
   @Child
-  Identifier resource;
+  IdentifierOrPlaceholder resource;
   SourceLocation location;
 
-  public ResourceReferenceExression(Identifier resource, SourceLocation location) {
+  public ResourceReferenceExression(IdentifierOrPlaceholder resource, SourceLocation location) {
     this.resource = resource;
     this.location = location;
   }

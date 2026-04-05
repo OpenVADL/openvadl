@@ -1394,7 +1394,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var subcall = expr.subCalls.get(0);
     var output = (StageOutput) viamLowering.fetch(
         stageDef.outputs.stream()
-            .filter(o -> o.identifier.name.equals(subcall.identifier().name))
+            .filter(o -> o.identifier().name.equals(subcall.identifier().name))
             .findFirst()
             .get()
         ).get();
@@ -1983,15 +1983,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var fieldsOrAccesses = new ArrayList<Either<Format.Field, Format.FieldAccess>>();
 
     for (var arg : statement.namedArguments) {
-      var field = fieldMap.get(arg.name.name);
+      var field = fieldMap.get(arg.identifier().name);
       var fieldAccess = target.encoding().format().fieldAccesses().stream()
-          .filter(access -> access.simpleName().equals(arg.name.name))
+          .filter(access -> access.simpleName().equals(arg.identifier().name))
           .findFirst().orElse(null);
 
       ensure(!(field == null && fieldAccess == null),
           () -> error(
               String.format("Cannot find a field or field access for this argument '%s'.",
-                  arg.name.name),
+                  arg.identifier().name),
               target.location())
               .locationNote(statement.location(), "Expanded from here."));
       ensure(!(field != null && fieldAccess != null),

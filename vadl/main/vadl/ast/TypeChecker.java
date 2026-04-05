@@ -1372,7 +1372,7 @@ public class TypeChecker
       check(encodingField.value);
       var fieldType = requireNonNull(
           requireNonNull(definition.formatNode)
-              .getFieldType(encodingField.field.name));
+              .getFieldType(encodingField.identifier().name));
 
       encodingField.value = wrapImplicitCast(encodingField.value, fieldType);
       var valueType = requireNonNull(encodingField.value.type);
@@ -2646,8 +2646,9 @@ public class TypeChecker
 
   @Override
   public Void visit(LogicDefinition definition) {
-    var logicTypeString = definition.logicTypeIdentifiers.stream().map(i -> i.name).collect(
-        Collectors.joining(" "));
+    var logicTypeString = definition.logicTypeIdentifiers.stream()
+        .map(i -> ((Identifier) i).name)
+        .collect(Collectors.joining(" "));
     var logicTypeMapping = Map.of(
         "branch prediction", LogicDefinition.LogicType.BranchPrediction,
         "control", LogicDefinition.LogicType.Control,
@@ -3584,10 +3585,10 @@ public class TypeChecker
       } else if (expr.target instanceof Identifier id
           && id.target() instanceof StageDefinition stageDef) {
         var output = stageDef.outputs.stream()
-            .filter(o -> o.identifier.name.equals(subCall.identifier().name))
+            .filter(o -> o.identifier().name.equals(subCall.identifier().name))
             .findFirst();
         if (output.isEmpty()) {
-          var availableOutputs = stageDef.outputs.stream().map(o -> o.identifier.name).toList();
+          var availableOutputs = stageDef.outputs.stream().map(o -> o.identifier().name).toList();
           addErrorAndStopChecking(error("Unknown stage output", subCall.identifier())
               .suggestions(Levenshtein.sortAll(subCall.identifier().name, availableOutputs))
               .build());
@@ -3676,7 +3677,7 @@ public class TypeChecker
   private void processStageCall(CallIndexExpr expr, StageDefinition callTarget) {
     check(callTarget);
 
-    var availableOutputs = callTarget.outputs.stream().map(o -> o.identifier.name).toList();
+    var availableOutputs = callTarget.outputs.stream().map(o -> o.identifier().name).toList();
     if (expr.subCalls.isEmpty()) {
       addErrorAndStopChecking(error("Missing stage output", expr)
           .description(
@@ -3696,7 +3697,7 @@ public class TypeChecker
     var subCall = expr.subCalls.getFirst();
     var subCallName = subCall.identifier().name;
 
-    var output = callTarget.outputs.stream().filter(o -> o.identifier.name.equals(subCallName))
+    var output = callTarget.outputs.stream().filter(o -> o.identifier().name.equals(subCallName))
         .findFirst();
 
     if (output.isEmpty()) {
@@ -4337,7 +4338,7 @@ public class TypeChecker
 
         var arg = statement.namedArguments.get(i);
         // FIXME: better error
-        var targetType = requireNonNull(format.getFieldType(arg.name.name));
+        var targetType = requireNonNull(format.getFieldType(arg.identifier().name));
 
         check(arg.value);
 

@@ -1,5 +1,5 @@
 model name(): Id = {
-  marillenmamelade
+  marillenmarmelade
 }
 
 format rec : Bits<16> = { $name() : Bits<16> }

@@ -837,15 +837,18 @@ final class InstructionCallStatement extends Statement {
 
   static final class NamedArgument extends Node {
     @Child
-    Identifier name;
+    IdentifierOrPlaceholder name;
     @Child
     Expr value;
 
-    NamedArgument(Identifier name, Expr value) {
+    NamedArgument(IdentifierOrPlaceholder name, Expr value) {
       this.name = name;
       this.value = value;
     }
 
+    Identifier identifier() {
+      return (Identifier) name;
+    }
 
     @Override
     SyntaxType syntaxType() {

@@ -200,7 +200,7 @@ public class AstDumper extends RecursiveAstVisitor {
     dumpNode(definition);
     indent++;
     for (var entry : definition.entries) {
-      entry.name.accept(this);
+      entry.identifier().accept(this);
       if (entry.value != null) {
         entry.value.accept(this);
       }

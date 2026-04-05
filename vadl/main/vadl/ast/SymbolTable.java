@@ -797,8 +797,8 @@ class SymbolTable {
         definition.enumType.accept(this);
       }
       for (EnumerationDefinition.Entry entry : definition.entries) {
-        entry.name.symbolTable = currentSymbols();
-        currentSymbols().defineSymbol(entry.name.name, entry);
+        entry.identifier().symbolTable = currentSymbols();
+        currentSymbols().defineSymbol(entry.identifier().name, entry);
         if (entry.value != null) {
           entry.value.accept(this);
         }
@@ -908,12 +908,10 @@ class SymbolTable {
   static class SymbolResolver extends RecursiveAstVisitor {
 
     public static List<Diagnostic> resolveSymbols(Ast ast) {
-      ast.withPassTiming("Symbol Resolving", () -> {
-        var resolver = new SymbolResolver();
-        for (Definition definition : ast.definitions) {
-          definition.accept(resolver);
-        }
-      });
+      var resolver = new SymbolResolver();
+      for (Definition definition : ast.definitions) {
+        definition.accept(resolver);
+      }
       return requireNonNull(ast.rootSymbolTable).errors;
     }
 
@@ -1107,7 +1105,7 @@ class SymbolTable {
           var fieldEncoding = (EncodingDefinition.EncodingField) item;
 
           // Verify that the field specified really is a field in the encoding
-          var field = fieldEncoding.field;
+          var field = fieldEncoding.identifier();
           if (!format.hasField(field.name)) {
             var suggestions = Levenshtein.suggestions(
                 field.name,
@@ -1207,19 +1205,21 @@ class SymbolTable {
         for (var namedArgument : statement.namedArguments) {
           FormatField foundField = null;
           for (var field : format.fieldsWithoutEncodingPredicate()) {
-            if (field.identifier().name.equals(namedArgument.name.name)) {
+            if (field.identifier().name.equals(namedArgument.identifier().name)) {
               foundField = field;
               break;
             }
           }
           if (foundField == null) {
-            var suggestions = Levenshtein.suggestions(namedArgument.name.name,
+            var suggestions = Levenshtein.suggestions(namedArgument.identifier().name,
                 format.fieldsWithoutEncodingPredicate().stream()
                     .map(f -> f.identifier().name).toList());
 
-            statement.symbolTable()
-                .reportUnkownError("Field", namedArgument.name.name, namedArgument.location(),
-                    suggestions);
+            statement.symbolTable().reportUnkownError(
+                "Field",
+                namedArgument.identifier().name,
+                namedArgument.location(),
+                suggestions);
           }
           namedArgument.value.accept(this);
         }
@@ -1232,17 +1232,17 @@ class SymbolTable {
           for (var namedArgument : statement.namedArguments) {
             Parameter foundParam = null;
             for (var param : pseudoInstr.params) {
-              if (param.identifier().name.equals(namedArgument.name.name)) {
+              if (param.identifier().name.equals(namedArgument.identifier().name)) {
                 foundParam = param;
                 break;
               }
             }
             if (foundParam == null) {
               var suggestions =
-                  Levenshtein.suggestions(namedArgument.name.name,
+                  Levenshtein.suggestions(namedArgument.identifier().name,
                       pseudoInstr.params.stream().map(p -> p.identifier().name).toList());
               statement.symbolTable()
-                  .reportUnkownError("Instruction Parameter", namedArgument.name.name,
+                  .reportUnkownError("Instruction Parameter", namedArgument.identifier().name,
                       namedArgument.name, suggestions);
             }
             namedArgument.value.accept(this);

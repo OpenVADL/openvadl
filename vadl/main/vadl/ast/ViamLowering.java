@@ -1479,9 +1479,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     for (var item : definition.encodings.items) {
       var encodingDef = (EncodingDefinition.EncodingField) item;
       var formatField = (Format.Field) fetch(requireNonNull(definition.formatNode)
-          .getField(encodingDef.field.name)).orElseThrow();
+          .getField(encodingDef.identifier().name)).orElseThrow();
       var identifier =
-          generateIdentifier(definition.viamId + "::encoding::" + encodingDef.field.name,
+          generateIdentifier(definition.viamId + "::encoding::" + encodingDef.identifier().name,
               encodingDef.field);
 
       // FIXME: Maybe cache it in the AST after typechecking?
