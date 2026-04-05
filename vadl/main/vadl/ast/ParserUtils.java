@@ -612,8 +612,24 @@ class ParserUtils {
   }
 
   static Definition castCommonDef(Parser p, Node n) {
-    return (n instanceof Definition d && d.syntaxType().isSubTypeOf(BasicSyntaxType.COMMON_DEFS))
-        ? d : castOrDummy(p, n, Definition.class, DUMMY_DEF, "CommonDefs");
+    if (n instanceof Definition d && d.syntaxType().isSubTypeOf(BasicSyntaxType.COMMON_DEFS)) {
+      return d;
+    }
+
+    // Only here is a special syntax type check required because the syntax type
+    // Isa Def is not allowed here but doesn't really exist in the AST and therefore castOrDummy
+    // doesn't really handle them.
+    var casted = castOrDummy(p, n, Definition.class, DUMMY_DEF, "CommonDefs");
+    if (!casted.syntaxType().isSubTypeOf(BasicSyntaxType.COMMON_DEFS)) {
+      var message =
+          "Expected node of type Defs, received "
+              + casted.syntaxType().print();
+      p.diagnostics.add(
+          Diagnostic.error("SyntaxType Mismatch", n)
+              .description("%s", message)
+              .build());
+    }
+    return casted;
   }
 
   static Definition castIsaDef(Parser p, Node n) {

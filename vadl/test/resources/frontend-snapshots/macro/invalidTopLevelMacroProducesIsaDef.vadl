@@ -1,0 +1,24 @@
+// This program should not suceed because instructions must always be defined within an ISA.
+
+model instr(): IsaDefs = {
+  instruction ABC: X = { }
+}
+
+$instr()
+
+
+//  Reported Diagnostics:
+//
+//  error: SyntaxType Mismatch
+//       ╭──[test/resources/frontend-snapshots/macro/invalidTopLevelMacroProducesIsaDef.vadl:4:3]
+//       │
+//     4 │   instruction ABC: X = { }
+//       │   ^^^^^^^^^^^^^^^^^^^^^^^^
+//       ⋮
+//     7 │ $instr()
+//       │ -------- from this model invocation
+//       │
+//       Expected node of type Defs, received IsaDefs
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

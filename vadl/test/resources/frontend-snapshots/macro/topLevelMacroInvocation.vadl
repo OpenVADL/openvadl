@@ -1,0 +1,21 @@
+// INCLUDE-AST-DUMP
+
+model constFlo(): Defs = {
+  constant flo = 42
+}
+
+$constFlo()
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    ConstantDefinition name: "flo" evaluatedValue: 42
+//    . IntegerLiteral literal: 42 (42) type: Const<42>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
