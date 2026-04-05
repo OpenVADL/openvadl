@@ -1282,7 +1282,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       } else if (exprBeforeSubcall.type() == MicroArchitectureType.instruction()) {
         // There is weired way to call functions on instructions
         var builtin =
-            BuiltInTable.builtIns().filter(b -> b.name().equals(subCall.id.name)).findFirst().get();
+            BuiltInTable.builtIns()
+                .filter(b -> b.name().equals(subCall.identifier().name))
+                .findFirst()
+                .get();
         var call = new MiaBuiltInCall(builtin, new NodeList<>(exprBeforeSubcall),
             builtin.returns(List.of(MicroArchitectureType.instruction())));
         call.setSourceLocation(subCall.location());
@@ -1321,7 +1324,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           // FIXME: Handle slicing and format subcall propperly
           int offset = 0;
           for (var subcall : expr.subCalls) {
-            var subcallName = subcall.id.name;
+            var subcallName = subcall.identifier().name;
             if (subcallName.equals("next")) {
               offset += instrWidthInByte;
             } else {
@@ -1390,8 +1393,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public ExpressionNode visitStageCall(CallIndexExpr expr, StageDefinition stageDef) {
     var subcall = expr.subCalls.get(0);
     var output = (StageOutput) viamLowering.fetch(
-        stageDef.outputs.stream().filter(o -> o.identifier.name.equals(subcall.id.name)).findFirst()
-            .get()).get();
+        stageDef.outputs.stream()
+            .filter(o -> o.identifier.name.equals(subcall.identifier().name))
+            .findFirst()
+            .get()
+        ).get();
     return new ReadStageOutputNode(output);
   }
 

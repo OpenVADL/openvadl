@@ -237,18 +237,18 @@ interface DefinitionVisitor<R> {
  * type The declared type of this parameter.
  */
 class Parameter extends Definition implements IdentifiableNode, TypedNode {
-  Identifier name;
+  IdentifierOrPlaceholder name;
   @Child
   TypeLiteral typeLiteral;
 
-  public Parameter(Identifier name, TypeLiteral typeLiteral) {
+  public Parameter(IdentifierOrPlaceholder name, TypeLiteral typeLiteral) {
     this.name = name;
     this.typeLiteral = typeLiteral;
   }
 
   @Override
   public Identifier identifier() {
-    return name;
+    return (Identifier) name;
   }
 
   @Override

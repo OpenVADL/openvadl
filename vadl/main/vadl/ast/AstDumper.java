@@ -156,7 +156,7 @@ public class AstDumper extends RecursiveAstVisitor {
     }
     for (CallIndexExpr.SubCall subCall : expr.subCalls) {
       builder.append(indentString()).append("SubCall\n");
-      dumpChildren(subCall.id);
+      dumpChildren(subCall.identifier());
       for (var args : subCall.argsIndices) {
         builder.append(indentString()).append("ArgsIndices\n");
         dumpChildren(args.values);

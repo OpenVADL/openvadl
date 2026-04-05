@@ -3499,9 +3499,12 @@ public class TypeChecker
               .locationDescription(expr, "Only a single sub-call expected.").build());
         }
         var subCall = expr.subCalls.getFirst();
-        if (!validSubCalls.contains(subCall.id.name)) {
-          addErrorAndStopChecking(error("Invalid counter sub-call", subCall.id)
-              .locationDescription(expr, "Counter has no sub-call named `%s`", subCall.id.name)
+        if (!validSubCalls.contains(subCall.identifier().name)) {
+          addErrorAndStopChecking(error("Invalid counter sub-call", subCall.identifier())
+              .locationDescription(
+                  expr,
+                  "Counter has no sub-call named `%s`",
+                  subCall.identifier().name)
               .build());
         }
         return;
@@ -3514,7 +3517,7 @@ public class TypeChecker
     // Might be a format or status access
     Type type = typeBeforeSubCall;
     for (var subCall : expr.subCalls) {
-      var fieldName = subCall.id.name;
+      var fieldName = subCall.identifier().name;
       if (type instanceof FormatType formatType) {
         check(formatType.format);
 
@@ -3580,13 +3583,13 @@ public class TypeChecker
         }
       } else if (expr.target instanceof Identifier id
           && id.target() instanceof StageDefinition stageDef) {
-        var output =
-            stageDef.outputs.stream().filter(o -> o.identifier.name.equals(subCall.id.name))
-                .findFirst();
+        var output = stageDef.outputs.stream()
+            .filter(o -> o.identifier.name.equals(subCall.identifier().name))
+            .findFirst();
         if (output.isEmpty()) {
           var availableOutputs = stageDef.outputs.stream().map(o -> o.identifier.name).toList();
-          addErrorAndStopChecking(error("Unknown stage output", subCall.id)
-              .suggestions(Levenshtein.sortAll(subCall.id.name, availableOutputs))
+          addErrorAndStopChecking(error("Unknown stage output", subCall.identifier())
+              .suggestions(Levenshtein.sortAll(subCall.identifier().name, availableOutputs))
               .build());
         }
 
@@ -3690,15 +3693,15 @@ public class TypeChecker
           .build());
     }
 
-    var subcall = expr.subCalls.getFirst();
-    var subcallName = subcall.id.name;
+    var subCall = expr.subCalls.getFirst();
+    var subCallName = subCall.identifier().name;
 
-    var output = callTarget.outputs.stream().filter(o -> o.identifier.name.equals(subcallName))
+    var output = callTarget.outputs.stream().filter(o -> o.identifier.name.equals(subCallName))
         .findFirst();
 
     if (output.isEmpty()) {
-      addErrorAndStopChecking(error("Unknown stage output", subcall.id)
-          .suggestions(Levenshtein.sortAll(subcallName, availableOutputs))
+      addErrorAndStopChecking(error("Unknown stage output", subCall.identifier())
+          .suggestions(Levenshtein.sortAll(subCallName, availableOutputs))
           .build());
     }
 

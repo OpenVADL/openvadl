@@ -1,0 +1,36 @@
+// INCLUDE-AST-DUMP
+
+// The parameter and function should all be able to be expanded from a macro
+
+model echo(id: Id): Id = {
+  $id
+}
+
+function $echo(hello)($echo(first): Bits<8>, $echo(second): Bits<8>) -> Bits<8> = first + second
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    FunctionDefinition name: "hello"
+//    . Parameter name: "first"
+//    . : TypeLiteral type: Bits<8>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    . Parameter name: "second"
+//    . : TypeLiteral type: Bits<8>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    . TypeLiteral type: Bits<8>
+//    . : Identifier name: "Bits" type: null
+//    . : IntegerLiteral literal: 8 (8) type: Const<8>
+//    . BinaryExpr operator: + type: Bits<8>
+//    . : Identifier name: "first" type: Bits<8>
+//    . : Identifier name: "second" type: Bits<8>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

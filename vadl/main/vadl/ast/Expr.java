@@ -1961,7 +1961,7 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
   }
 
   static final class SubCall implements WithLocation {
-    Identifier id;
+    IdentifierOrPlaceholder id;
     List<Arguments> argsIndices;
 
     /**
@@ -1985,9 +1985,13 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     @Nullable
     public Integer computedStatusIndex;
 
-    SubCall(Identifier id, List<Arguments> argsIndices) {
+    SubCall(IdentifierOrPlaceholder id, List<Arguments> argsIndices) {
       this.id = id;
       this.argsIndices = argsIndices;
+    }
+
+    Identifier identifier() {
+      return (Identifier) id;
     }
 
     @Override
@@ -2108,7 +2112,7 @@ class LetExpr extends Expr {
   }
 
   List<Identifier> identifiers() {
-    return identifiers.stream().map( id -> (Identifier) id).toList();
+    return identifiers.stream().map(id -> (Identifier) id).toList();
   }
 
   /**

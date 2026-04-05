@@ -750,7 +750,7 @@ elements. A single annotation is described in the #annotation production rule.
   .
 
   parameter<out Parameter param>
-  = identifier<out Identifier name>
+  = identifierOrPlaceholder<out IdentifierOrPlaceholder name>
     SYM_COLON
     typeLiteral<out TypeLiteral type> (. param = new Parameter(name, type); .)
   .
@@ -1754,7 +1754,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     {
       IF (la.kind == _SYM_DOT && expr instanceof IsSymExpr)
       SYM_DOT                                                   (. var subCallArgsIndices = new ArrayList<CallIndexExpr.Arguments>(); .)
-      identifier<out Identifier id>
+      identifierOrPlaceholder<out IdentifierOrPlaceholder id>
       {
         IF (la.kind == _SYM_PAREN_OPEN)
         arguments<out CallIndexExpr.Arguments args, false>      (. subCallArgsIndices.add(args); .)
