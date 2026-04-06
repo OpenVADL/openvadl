@@ -8,7 +8,7 @@ read_verilog /rtl/build/TOP_MODULE_netlist.v
 link_design TOP_MODULE
 
 # timing constraints
-create_clock -name core_clk -period 5.0 [get_ports clock]
+create_clock -name core_clk -period CLOCK_PERIOD [get_ports clock]
 set_input_delay  1.0 -clock [get_clocks core_clk] [all_inputs]
 set_output_delay 1.0 -clock [get_clocks core_clk] [all_outputs]
 
