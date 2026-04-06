@@ -28,6 +28,9 @@ import javax.annotation.Nullable;
 import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.ProcEndNode;
+import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteSignalNode;
@@ -55,7 +58,13 @@ public abstract class Logic extends Definition implements DefProp.WithBehavior {
     super(identifier);
     this.signals = new ArrayList<>();
     this.registers = new ArrayList<>();
-    this.behavior = new Graph(identifier.simpleName());
+    this.behavior = new Graph(identifier.simpleName(), this);
+
+    // dummy graph with minimal control flow
+    var end = new ProcEndNode(new NodeList<>());
+    var start = new StartNode(end);
+    this.behavior.add(end);
+    this.behavior.add(start);
   }
 
   public MicroArchitecture mia() {

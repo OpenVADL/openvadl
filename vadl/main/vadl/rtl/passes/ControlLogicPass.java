@@ -282,7 +282,7 @@ public class ControlLogicPass extends AbstractLogicPass {
     var reads = stage.behavior().getNodes(ReadResourceNode.class).toList();
     for (ReadResourceNode read : reads) {
       var res = read.resourceDefinition();
-      if (!isa.registerTensors().contains(res) && !mia.ownMemories().contains(res)) {
+      if (!isa.registerTensors().contains(res) && !isa.ownMemories().contains(res)) {
         continue;
       }
       if (excludePc && res.equals(Objects.requireNonNull(isa.pc()).registerTensor())) {

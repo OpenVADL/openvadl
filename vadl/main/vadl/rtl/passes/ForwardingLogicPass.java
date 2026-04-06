@@ -19,6 +19,7 @@ package vadl.rtl.passes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 import vadl.configuration.RtlConfiguration;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -72,12 +73,22 @@ public class ForwardingLogicPass extends AbstractLogicPass {
         .orElseGet(() -> new Logic.Forwarding(mia.identifier.append("bypass")));
     var behavior = forwarding.behavior();
 
+    // no forwarding to instruction fetch and pc read in fetch
+    var ignore = Stream.of(
+            inline.mapping().ipg().fetch()
+        // inline.mapping().ipg().pcRead()
+        )
+        .map(inline.inlineMap()::get).toList();
+
     for (Stage stage : mia.stages()) {
       var i = 0;
       var reads = stage.behavior().getNodes(RtlConditionalReadNode.class).toList();
       for (RtlConditionalReadNode read : reads) {
+        if (ignore.contains(read.asReadNode())) {
+          continue;
+        }
         var res = read.asReadNode().resourceDefinition();
-        if (!isa.registerTensors().contains(res) && !mia.ownMemories().contains(res)) {
+        if (!isa.registerTensors().contains(res) && !isa.ownMemories().contains(res)) {
           continue;
         }
         var analysis = res.expectExtension(HazardAnalysis.class);
@@ -96,6 +107,10 @@ public class ForwardingLogicPass extends AbstractLogicPass {
               var fwd = analysis.forwardWriteFromStage(wr.node(), curStage);
               if (fwd == null) {
                 break; // not further forward paths
+              }
+              if (!fwd.active()) { // forwarding on this path not specified in MiA
+                curStage = curStage.prev();
+                continue;
               }
 
               // forwarding enable conditions

@@ -67,10 +67,12 @@ public class HazardAnalysis extends DefinitionExtension<Resource> {
    * @param conditions condition to determine if forwarding value is available (pairs of equalities)
    * @param address address node to compare
    * @param value value node to forward
+   * @param active MiA spec enables forwarding
    */
   public record ForwardAnalysis(WriteResourceNode node, Stage writeStage, Stage fromStage,
                                 List<Pair<ExpressionNode, ExpressionNode>> conditions,
-                                @Nullable ExpressionNode address, ExpressionNode value) {
+                                @Nullable ExpressionNode address, ExpressionNode value,
+                                boolean active) {
 
     /**
      * Forwarding is always possible if the forwarding condition is just the write enable condition.
