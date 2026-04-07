@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -553,13 +553,20 @@ public class GraphUtils {
   public static IfNode ifElseSideEffect(Graph graph, ExpressionNode condition,
                                         List<SideEffectNode> trueCaseEffects,
                                         List<SideEffectNode> falseCaseEffects,
-                                        ControlNode next) {
+                                        ControlNode next,
+                                        SourceLocation location) {
     var trueEnd = graph.addWithInputs(new BranchEndNode(new NodeList<>(trueCaseEffects)));
+    trueEnd.setSourceLocationRecursively(location);
     var trueBegin = graph.addWithInputs(new BranchBeginNode(trueEnd));
+    trueBegin.setSourceLocationIfNotSet(location);
     var falseEnd = graph.addWithInputs(new BranchEndNode(new NodeList<>(falseCaseEffects)));
+    falseEnd.setSourceLocationRecursively(location);
     var falseBegin = graph.addWithInputs(new BranchBeginNode(falseEnd));
+    falseBegin.setSourceLocationIfNotSet(location);
     var ifNode = graph.addWithInputs(new IfNode(condition, trueBegin, falseBegin));
-    graph.addWithInputs(new MergeNode(new NodeList<>(trueEnd, falseEnd), next));
+    ifNode.setSourceLocationRecursively(location);
+    var mergeNode = graph.addWithInputs(new MergeNode(new NodeList<>(trueEnd, falseEnd), next));
+    mergeNode.setSourceLocationIfNotSet(location);
     return ifNode;
   }
 
