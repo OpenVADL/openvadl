@@ -11,13 +11,13 @@ proc; opt; fsm; opt; memory; opt
 techmap; opt
 
 # mapping flip-flops to sky130_fd_sc_hd__tt_025C_1v80.lib
-dfflibmap -liberty /scripts/bench/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+dfflibmap -liberty /opt/pdk/sky130_fd_sc_hd__tt_025C_1v80.lib
 
 # mapping logic to sky130_fd_sc_hd__tt_025C_1v80.lib
-abc -liberty /scripts/bench/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+abc -liberty /opt/pdk/sky130_fd_sc_hd__tt_025C_1v80.lib
 
 # print stats
-stat -liberty /scripts/bench/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+stat -liberty /opt/pdk/sky130_fd_sc_hd__tt_025C_1v80.lib
 
 # cleanup
 clean

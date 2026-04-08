@@ -1,7 +1,7 @@
 # tech + cells
-read_lef /scripts/bench/lib/sky130_fd_sc_hd__nom.tlef
-read_lef /scripts/bench/lib/sky130_fd_sc_hd.lef
-read_liberty /scripts/bench/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+read_lef /opt/pdk/sky130_fd_sc_hd__nom.tlef
+read_lef /opt/pdk/sky130_fd_sc_hd.lef
+read_liberty /opt/pdk/sky130_fd_sc_hd__tt_025C_1v80.lib
 
 # synthesized gate netlist
 read_verilog /rtl/build/TOP_MODULE_netlist.v

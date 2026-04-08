@@ -20,3 +20,4 @@ RUN ./etc/DependencyInstaller.sh -all
 # Build OpenROAD (default is RELEASE)
 RUN ./etc/Build.sh #-threads=1
 
+ENV PATH=/opt/OpenROAD/build/bin:$PATH

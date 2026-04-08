@@ -1,4 +1,4 @@
-read_liberty /scripts/bench/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+read_liberty /opt/pdk/sky130_fd_sc_hd__tt_025C_1v80.lib
 read_verilog /rtl/build/DECODE.v
 link_design DECODE
 

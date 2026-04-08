@@ -24,7 +24,7 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
 import vadl.rtl.RtlDockerTest;
 
-public class RtlRiscVInstructionTest extends RtlDockerTest {
+class RtlRiscVInstructionTest extends RtlDockerTest {
 
     @Test
     void rv64imFiveTest() {
