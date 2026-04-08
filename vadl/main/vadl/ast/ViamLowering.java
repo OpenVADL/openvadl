@@ -1162,7 +1162,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .filter(f -> !(f instanceof DerivedFormatField))
         .map(fieldDefinition -> {
           var fieldIdent =
-              generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier.name,
+              generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
                   fieldDefinition.identifier);
 
           var field = switch (fieldDefinition) {
@@ -1220,7 +1220,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .map(f -> (EncodingFormatField) f)
         .map(field -> getFieldEncoding(
             format.identifier.append("encoding",
-                    field.identifier.name + "_" + cnt.getAndIncrement())
+                    field.identifier().name + "_" + cnt.getAndIncrement())
                 .withSourceLocation(field.location()),
             field)
         ).toList());
@@ -1479,9 +1479,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     for (var item : definition.encodings.items) {
       var encodingDef = (EncodingDefinition.EncodingField) item;
       var formatField = (Format.Field) fetch(requireNonNull(definition.formatNode)
-          .getField(encodingDef.field.name)).orElseThrow();
+          .getField(encodingDef.identifier().name)).orElseThrow();
       var identifier =
-          generateIdentifier(definition.viamId + "::encoding::" + encodingDef.field.name,
+          generateIdentifier(definition.viamId + "::encoding::" + encodingDef.identifier().name,
               encodingDef.field);
 
       // FIXME: Maybe cache it in the AST after typechecking?
@@ -1727,7 +1727,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Override
   public Optional<vadl.viam.Definition> visit(Parameter definition) {
     return Optional.of(new vadl.viam.Parameter(
-        generateIdentifier(definition.name.name, definition.name.location()),
+        generateIdentifier(definition.identifier().name, definition.name.location()),
         getViamType(definition.typeLiteral.type()),
         -1));
     // FIXME: we need to know the parent to know the index (-1)
@@ -1789,7 +1789,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     for (int i = 0; i < definition.size(); i++) {
       var parameter = definition.get(i);
       var viamParam = new vadl.viam.Parameter(
-          generateIdentifier(parameter.name.name, parameter.name.location()),
+          generateIdentifier(parameter.identifier().name, parameter.name.location()),
           getViamType(parameter.typeLiteral.type()),
           i);
       parameterCache.put(parameter, viamParam);

@@ -337,9 +337,10 @@ class MacroExpander
         .collect(Collectors.toCollection(ArrayList::new));
     var subCalls = expr.subCalls.stream()
         .map(subCall -> {
-          var subCallArgsIndices = new ArrayList<>(subCall.argsIndices);
-          subCallArgsIndices.replaceAll(this::expandArgs);
-          return new CallIndexExpr.SubCall(subCall.id, subCallArgsIndices);
+          var subCallArgsIndices = subCall.argsIndices.stream()
+              .map(this::expandArgs)
+              .collect(Collectors.toCollection(ArrayList::new));
+          return new CallIndexExpr.SubCall(expandExpr(subCall.id), subCallArgsIndices);
         })
         .collect(Collectors.toCollection(ArrayList::new));
 
@@ -768,7 +769,7 @@ class MacroExpander
   public Definition visit(EnumerationDefinition definition) {
     var entries = definition.entries.stream()
         .map(entry -> new EnumerationDefinition.Entry(
-            entry.name,
+            expandExpr(entry.name),
             entry.value == null ? null : expandExpr(entry.value)))
         .collect(Collectors.toCollection(ArrayList::new));
 
@@ -1315,7 +1316,7 @@ class MacroExpander
   public InstructionCallStatement visit(InstructionCallStatement instructionCallStatement) {
     var namedArguments = instructionCallStatement.namedArguments.stream()
         .map(namedArgument -> new InstructionCallStatement.NamedArgument(
-            namedArgument.name,
+            expandExpr(namedArgument.name),
             expandExpr(namedArgument.value)))
         .collect(Collectors.toCollection(ArrayList::new));
 

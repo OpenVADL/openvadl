@@ -237,18 +237,18 @@ interface DefinitionVisitor<R> {
  * type The declared type of this parameter.
  */
 class Parameter extends Definition implements IdentifiableNode, TypedNode {
-  Identifier name;
+  IdentifierOrPlaceholder name;
   @Child
   TypeLiteral typeLiteral;
 
-  public Parameter(Identifier name, TypeLiteral typeLiteral) {
+  public Parameter(IdentifierOrPlaceholder name, TypeLiteral typeLiteral) {
     this.name = name;
     this.typeLiteral = typeLiteral;
   }
 
   @Override
   public Identifier identifier() {
-    return name;
+    return (Identifier) name;
   }
 
   @Override
@@ -405,9 +405,13 @@ class ConstantDefinition extends Definition implements IdentifiableNode, TypedNo
 }
 
 abstract class FormatField extends Definition {
-  Identifier identifier;
+  IdentifierOrPlaceholder identifier;
 
-  public FormatField(Identifier identifier) {
+  Identifier identifier() {
+    return (Identifier) identifier;
+  }
+
+  public FormatField(IdentifierOrPlaceholder identifier) {
     this.identifier = identifier;
   }
 }
@@ -430,7 +434,7 @@ class RangeFormatField extends FormatField implements IdentifiableNode {
   @Nullable
   List<FormatDefinition.BitRange> computedRanges;
 
-  public RangeFormatField(Identifier identifier, List<Expr> ranges,
+  public RangeFormatField(IdentifierOrPlaceholder identifier, List<Expr> ranges,
                           @Nullable TypeLiteral typeLiteral) {
     super(identifier);
     this.ranges = ranges;
@@ -439,7 +443,7 @@ class RangeFormatField extends FormatField implements IdentifiableNode {
 
   @Override
   public Identifier identifier() {
-    return identifier;
+    return (Identifier) identifier;
   }
 
   @Override
@@ -504,14 +508,14 @@ class TypedFormatField extends FormatField implements IdentifiableNode {
   @Nullable
   FormatDefinition.BitRange range;
 
-  public TypedFormatField(Identifier identifier, TypeLiteral typeLiteral) {
+  public TypedFormatField(IdentifierOrPlaceholder identifier, TypeLiteral typeLiteral) {
     super(identifier);
     this.typeLiteral = typeLiteral;
   }
 
   @Override
   public Identifier identifier() {
-    return identifier;
+    return (Identifier) identifier;
   }
 
   @Override
@@ -577,14 +581,9 @@ class DerivedFormatField extends FormatField implements IdentifiableNode {
   @Child
   Expr expr;
 
-  public DerivedFormatField(Identifier identifier, Expr expr) {
+  public DerivedFormatField(IdentifierOrPlaceholder identifier, Expr expr) {
     super(identifier);
     this.expr = expr;
-  }
-
-  @Override
-  public Identifier identifier() {
-    return identifier;
   }
 
   @Override
@@ -630,6 +629,11 @@ class DerivedFormatField extends FormatField implements IdentifiableNode {
   <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
+
+  @Override
+  public Identifier identifier() {
+    return (Identifier) identifier;
+  }
 }
 
 /**
@@ -639,9 +643,8 @@ class EncodingFormatField extends FormatField {
   @Child
   Expr expr;
 
-  public EncodingFormatField(Identifier identifier, Expr expr) {
+  public EncodingFormatField(IdentifierOrPlaceholder identifier, Expr expr) {
     super(identifier);
-    this.identifier = identifier;
     this.expr = expr;
   }
 
@@ -658,7 +661,7 @@ class EncodingFormatField extends FormatField {
   List<Node> children() {
     // This has to be hardcoded here because for this format field it's a child but for some it's
     // the identfiyable name.
-    return List.of(identifier, expr);
+    return List.of((Node) identifier, expr);
   }
 
   @Override
@@ -707,7 +710,7 @@ class PredicateFormatField extends FormatField {
   @Child
   Expr expr;
 
-  public PredicateFormatField(Identifier identifier, Expr expr) {
+  public PredicateFormatField(IdentifierOrPlaceholder identifier, Expr expr) {
     super(identifier);
     this.expr = expr;
   }
@@ -725,7 +728,7 @@ class PredicateFormatField extends FormatField {
   List<Node> children() {
     // This has to be hardcoded here because for this format field it's a child but for some it's
     // the identfiyable name.
-    return List.of(identifier, expr);
+    return List.of((Node) identifier, expr);
   }
 
   @Override
@@ -802,12 +805,12 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
 
   boolean hasField(String name) {
     return fieldsWithoutEncodingPredicate().stream()
-        .anyMatch(f -> f.identifier.name.equals(name));
+        .anyMatch(f -> f.identifier().name.equals(name));
   }
 
   FormatField getField(String name) {
     return fieldsWithoutEncodingPredicate().stream()
-        .filter(f -> f.identifier.name.equals(name)).findFirst()
+        .filter(f -> f.identifier().name.equals(name)).findFirst()
         .orElseThrow();
   }
 
@@ -1537,7 +1540,7 @@ class PseudoInstructionDefinition extends InstructionSequenceDefinition
 }
 
 class RelocationDefinition extends Definition implements IdentifiableNode, TypedNode {
-  Identifier identifier;
+  IdentifierOrPlaceholder identifier;
   @Child
   List<Parameter> params;
   @Child
@@ -1549,7 +1552,7 @@ class RelocationDefinition extends Definition implements IdentifiableNode, Typed
   @Nullable
   ConcreteRelationType type;
 
-  RelocationDefinition(Identifier identifier, List<Parameter> params,
+  RelocationDefinition(IdentifierOrPlaceholder identifier, List<Parameter> params,
                        TypeLiteral resultTypeLiteral,
                        Expr expr, SourceLocation loc) {
     this.identifier = identifier;
@@ -1561,7 +1564,7 @@ class RelocationDefinition extends Definition implements IdentifiableNode, Typed
 
   @Override
   public Identifier identifier() {
-    return identifier;
+    return (Identifier) identifier;
   }
 
   @Override
@@ -1766,13 +1769,17 @@ class EncodingDefinition extends Definition {
 
   static final class EncodingField extends Node implements IsEncs {
     @Child
-    final Identifier field;
+    final IdentifierOrPlaceholder field;
     @Child
     Expr value;
 
-    EncodingField(Identifier field, Expr value) {
+    EncodingField(IdentifierOrPlaceholder field, Expr value) {
       this.field = field;
       this.value = value;
+    }
+
+    Identifier identifier() {
+      return (Identifier) field;
     }
 
     @Override
@@ -2201,7 +2208,7 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
   }
 
   Entry getEntry(String name) {
-    return entries.stream().filter(e -> e.name.name.equals(name)).findFirst().orElseThrow();
+    return entries.stream().filter(e -> e.identifier().name.equals(name)).findFirst().orElseThrow();
   }
 
   Expr getEntryValue(String name) {
@@ -2287,7 +2294,7 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
   // FIXME: this should be a definition.
   static class Entry extends Node implements IdentifiableNode {
 
-    Identifier name;
+    IdentifierOrPlaceholder name;
 
     /**
      * Potentially set by the typechecker if no value was explicitly assigned.
@@ -2305,7 +2312,7 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
     EnumerationDefinition enumDef;
 
 
-    public Entry(Identifier name, @Nullable Expr value) {
+    public Entry(IdentifierOrPlaceholder name, @Nullable Expr value) {
       this.name = name;
       this.value = value;
     }
@@ -2352,7 +2359,7 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
 
     @Override
     public Identifier identifier() {
-      return name;
+      return (Identifier) name;
     }
   }
 }
@@ -3070,13 +3077,13 @@ final class ModelTypeDefinition extends Definition implements IdentifiableNode {
 }
 
 class TemplateParam extends Node implements IdentifiableNode {
-  Identifier name;
+  IdentifierOrPlaceholder name;
   TypeLiteral type;
 
   @Nullable
   Expr value;
 
-  public TemplateParam(Identifier name, TypeLiteral type, @Nullable Expr value) {
+  public TemplateParam(IdentifierOrPlaceholder name, TypeLiteral type, @Nullable Expr value) {
     this.name = name;
     this.type = type;
     this.value = value;
@@ -3084,7 +3091,7 @@ class TemplateParam extends Node implements IdentifiableNode {
 
   @Override
   public Identifier identifier() {
-    return name;
+    return (Identifier) name;
   }
 
   @Override
@@ -3373,7 +3380,7 @@ class GroupDefinition extends Definition implements IdentifiableNode {
 }
 
 class ApplicationBinaryInterfaceDefinition extends Definition implements IdentifiableNode {
-  Identifier id;
+  IdentifierOrPlaceholder id;
   @Child
   IsId isa;
   @Child
@@ -3383,7 +3390,9 @@ class ApplicationBinaryInterfaceDefinition extends Definition implements Identif
   @Nullable
   InstructionSetDefinition isaNode;
 
-  ApplicationBinaryInterfaceDefinition(Identifier id, IsId isa, List<Definition> definitions,
+  ApplicationBinaryInterfaceDefinition(IdentifierOrPlaceholder id,
+                                       IsId isa,
+                                       List<Definition> definitions,
                                        SourceLocation loc) {
     this.id = id;
     this.isa = isa;
@@ -3438,7 +3447,7 @@ class ApplicationBinaryInterfaceDefinition extends Definition implements Identif
 
   @Override
   public Identifier identifier() {
-    return id;
+    return (Identifier) id;
   }
 }
 
@@ -3886,7 +3895,7 @@ class AbiClangTypeDefinition extends Definition {
 }
 
 class ProcessorDefinition extends Definition implements IdentifiableNode {
-  Identifier id;
+  IdentifierOrPlaceholder id;
   @Child
   IsId implementedIsa;
   @Nullable
@@ -3896,7 +3905,7 @@ class ProcessorDefinition extends Definition implements IdentifiableNode {
   List<Definition> definitions;
   SourceLocation loc;
 
-  ProcessorDefinition(Identifier id, IsId implementedIsa, @Nullable IsId abi,
+  ProcessorDefinition(IdentifierOrPlaceholder id, IsId implementedIsa, @Nullable IsId abi,
                       List<Definition> definitions, SourceLocation loc) {
     this.id = id;
     this.implementedIsa = implementedIsa;
@@ -3912,7 +3921,7 @@ class ProcessorDefinition extends Definition implements IdentifiableNode {
 
   @Override
   public Identifier identifier() {
-    return id;
+    return (Identifier) id;
   }
 
   InstructionSetDefinition implementedIsaNode() {
@@ -4405,14 +4414,14 @@ class CpuProcessDefinition extends Definition {
 }
 
 class MicroArchitectureDefinition extends Definition implements IdentifiableNode {
-  Identifier id;
+  IdentifierOrPlaceholder id;
   @Child
   IsId isa;
   @Child
   List<Definition> definitions;
   SourceLocation loc;
 
-  MicroArchitectureDefinition(Identifier id, IsId isa, List<Definition> definitions,
+  MicroArchitectureDefinition(IdentifierOrPlaceholder id, IsId isa, List<Definition> definitions,
                               SourceLocation loc) {
     this.id = id;
     this.isa = isa;
@@ -4422,7 +4431,7 @@ class MicroArchitectureDefinition extends Definition implements IdentifiableNode
 
   @Override
   public Identifier identifier() {
-    return id;
+    return (Identifier) id;
   }
 
   InstructionSetDefinition isaNode() {
@@ -4642,14 +4651,14 @@ class PortBehaviorDefinition extends Definition implements IdentifiableNode {
 }
 
 class PipelineDefinition extends Definition implements IdentifiableNode {
-  Identifier id;
+  IdentifierOrPlaceholder id;
   @Child
   List<Parameter> outputs;
   @Child
   Statement statement;
   SourceLocation loc;
 
-  PipelineDefinition(Identifier id, List<Parameter> outputs, Statement statement,
+  PipelineDefinition(IdentifierOrPlaceholder id, List<Parameter> outputs, Statement statement,
                      SourceLocation loc) {
     this.id = id;
     this.outputs = outputs;
@@ -4707,16 +4716,16 @@ class PipelineDefinition extends Definition implements IdentifiableNode {
 
   @Override
   public Identifier identifier() {
-    return id;
+    return (Identifier) id;
   }
 }
 
 class StageOutputDefinition extends Definition implements IdentifiableNode, TypedNode {
-  Identifier identifier;
+  IdentifierOrPlaceholder identifier;
   @Child
   TypeLiteral typeLiteral;
 
-  public StageOutputDefinition(Identifier identifier, TypeLiteral typeLiteral) {
+  public StageOutputDefinition(IdentifierOrPlaceholder identifier, TypeLiteral typeLiteral) {
     this.identifier = identifier;
     this.typeLiteral = typeLiteral;
   }
@@ -4728,7 +4737,7 @@ class StageOutputDefinition extends Definition implements IdentifiableNode, Type
 
   @Override
   public Identifier identifier() {
-    return identifier;
+    return (Identifier) identifier;
   }
 
   @Override
@@ -4786,14 +4795,16 @@ class StageOutputDefinition extends Definition implements IdentifiableNode, Type
 ///   }
 /// ```
 class StageDefinition extends Definition implements IdentifiableNode {
-  Identifier id;
+  IdentifierOrPlaceholder id;
   @Child
   List<StageOutputDefinition> outputs;
   @Child
   Statement statement;
   SourceLocation loc;
 
-  StageDefinition(Identifier id, List<StageOutputDefinition> outputs, Statement statement,
+  StageDefinition(IdentifierOrPlaceholder id,
+                  List<StageOutputDefinition> outputs,
+                  Statement statement,
                   SourceLocation loc) {
     this.id = id;
     this.outputs = outputs;
@@ -4851,19 +4862,19 @@ class StageDefinition extends Definition implements IdentifiableNode {
 
   @Override
   public Identifier identifier() {
-    return id;
+    return (Identifier) id;
   }
 }
 
 class CacheDefinition extends Definition implements IdentifiableNode {
-  Identifier id;
+  IdentifierOrPlaceholder id;
   @Child
   TypeLiteral sourceType;
   @Child
   TypeLiteral targetType;
   SourceLocation loc;
 
-  CacheDefinition(Identifier id, TypeLiteral sourceType, TypeLiteral targetType,
+  CacheDefinition(IdentifierOrPlaceholder id, TypeLiteral sourceType, TypeLiteral targetType,
                   SourceLocation loc) {
     this.id = id;
     this.sourceType = sourceType;
@@ -4920,21 +4931,22 @@ class CacheDefinition extends Definition implements IdentifiableNode {
 
   @Override
   public Identifier identifier() {
-    return id;
+    return (Identifier) id;
   }
 }
 
 class LogicDefinition extends Definition implements IdentifiableNode {
-  Identifier id;
+  IdentifierOrPlaceholder id;
   SourceLocation loc;
-  List<Identifier> logicTypeIdentifiers;
+  List<IdentifierOrPlaceholder> logicTypeIdentifiers;
 
   /// Set by the typechecker and inferred from the logicType identifiers.
   /// This cannot be directly set by the parser because of possible macro expansion.
   @Nullable
   LogicType logicType;
 
-  LogicDefinition(Identifier id, List<Identifier> logicTypeIdentifiers, SourceLocation loc) {
+  LogicDefinition(IdentifierOrPlaceholder id, List<IdentifierOrPlaceholder> logicTypeIdentifiers,
+                  SourceLocation loc) {
     this.id = id;
     this.logicTypeIdentifiers = logicTypeIdentifiers;
     this.loc = loc;
@@ -4975,8 +4987,9 @@ class LogicDefinition extends Definition implements IdentifiableNode {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("logic [ ");
-    for (Identifier logicTypeId : logicTypeIdentifiers) {
-      builder.append(logicTypeId.name).append(" ");
+    for (var logicTypeId : logicTypeIdentifiers) {
+      var name = ((Identifier) logicTypeId).name;
+      builder.append(name).append(" ");
     }
     builder.append("] ");
     id.prettyPrint(0, builder);
@@ -5002,7 +5015,7 @@ class LogicDefinition extends Definition implements IdentifiableNode {
 
   @Override
   public Identifier identifier() {
-    return id;
+    return (Identifier) id;
   }
 }
 

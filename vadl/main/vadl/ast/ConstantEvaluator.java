@@ -202,9 +202,8 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
       // FIXME: implement tuple unpacking
       if (letExpr.identifiers.size() > 1) {
         throw new EvaluationError("Cannot evaluate tuple unpacking yet",
-            letExpr.identifiers.getFirst().loc.join(
-                letExpr.identifiers.getLast()
-                    .loc));
+            letExpr.identifiers().getFirst().loc.join(
+                letExpr.identifiers().getLast().loc));
       }
 
       return eval(letExpr.valueExpr);
@@ -214,7 +213,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
       if (functionStack.isEmpty()) {
         throw new IllegalStateException("There cannot be parameters outside of functions");
       }
-      return requireNonNull(functionStack.peek().arguments.get(parameter.name.name));
+      return requireNonNull(functionStack.peek().arguments.get(parameter.identifier().name));
     }
 
     if (origin instanceof EnumerationDefinition.Entry entry) {
@@ -442,7 +441,9 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     if (computedTarget instanceof FunctionDefinition functionDef) {
       var arguments = new HashMap<String, ConstantValue>();
       for (var i = 0; i < expr.args().size(); i++) {
-        arguments.put(functionDef.params.get(i).name.name, eval(expr.args().get(i).values.get(0)));
+        arguments.put(
+            functionDef.params.get(i).identifier().name,
+            eval(expr.args().get(i).values.get(0)));
       }
       functionStack.push(new FunctionFrame(functionDef, arguments));
       try {

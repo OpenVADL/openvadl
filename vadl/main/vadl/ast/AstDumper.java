@@ -156,7 +156,7 @@ public class AstDumper extends RecursiveAstVisitor {
     }
     for (CallIndexExpr.SubCall subCall : expr.subCalls) {
       builder.append(indentString()).append("SubCall\n");
-      dumpChildren(subCall.id);
+      dumpChildren(subCall.identifier());
       for (var args : subCall.argsIndices) {
         builder.append(indentString()).append("ArgsIndices\n");
         dumpChildren(args.values);
@@ -200,7 +200,7 @@ public class AstDumper extends RecursiveAstVisitor {
     dumpNode(definition);
     indent++;
     for (var entry : definition.entries) {
-      entry.name.accept(this);
+      entry.identifier().accept(this);
       if (entry.value != null) {
         entry.value.accept(this);
       }
@@ -212,7 +212,7 @@ public class AstDumper extends RecursiveAstVisitor {
   @Override
   public Void visit(LetExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.identifiers);
+    dumpChildren(expr.identifiers());
     dumpChildren(expr.valueExpr, expr.body);
     return null;
   }
@@ -220,7 +220,7 @@ public class AstDumper extends RecursiveAstVisitor {
   @Override
   public Void visit(LetStatement stmt) {
     dumpNode(stmt);
-    dumpChildren(stmt.identifiers);
+    dumpChildren(stmt.identifiers());
     dumpChildren(stmt.valueExpr, stmt.body);
     return null;
   }

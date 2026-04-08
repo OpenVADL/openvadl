@@ -1961,7 +1961,7 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
   }
 
   static final class SubCall implements WithLocation {
-    Identifier id;
+    IdentifierOrPlaceholder id;
     List<Arguments> argsIndices;
 
     /**
@@ -1985,9 +1985,13 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     @Nullable
     public Integer computedStatusIndex;
 
-    SubCall(Identifier id, List<Arguments> argsIndices) {
+    SubCall(IdentifierOrPlaceholder id, List<Arguments> argsIndices) {
       this.id = id;
       this.argsIndices = argsIndices;
+    }
+
+    Identifier identifier() {
+      return (Identifier) id;
     }
 
     @Override
@@ -2093,18 +2097,23 @@ class IfExpr extends Expr {
 }
 
 class LetExpr extends Expr {
-  List<Identifier> identifiers;
+  List<IdentifierOrPlaceholder> identifiers;
   @Child
   Expr valueExpr;
   @Child
   Expr body;
   SourceLocation location;
 
-  LetExpr(List<Identifier> identifiers, Expr valueExpr, Expr body, SourceLocation location) {
+  LetExpr(List<IdentifierOrPlaceholder> identifiers, Expr valueExpr, Expr body,
+          SourceLocation location) {
     this.identifiers = identifiers;
     this.valueExpr = valueExpr;
     this.body = body;
     this.location = location;
+  }
+
+  List<Identifier> identifiers() {
+    return identifiers.stream().map(id -> (Identifier) id).toList();
   }
 
   /**
@@ -2113,7 +2122,7 @@ class LetExpr extends Expr {
    * @return the type of the name provided.
    */
   int getIndexOf(String name) {
-    return identifiers.stream().map(i -> i.name).toList().indexOf(name);
+    return identifiers().stream().map(i -> i.name).toList().indexOf(name);
   }
 
   /**
@@ -2653,10 +2662,10 @@ class ForallExpr extends Expr {
 
 class ResourceReferenceExression extends Expr {
   @Child
-  Identifier resource;
+  IdentifierOrPlaceholder resource;
   SourceLocation location;
 
-  public ResourceReferenceExression(Identifier resource, SourceLocation location) {
+  public ResourceReferenceExression(IdentifierOrPlaceholder resource, SourceLocation location) {
     this.resource = resource;
     this.location = location;
   }

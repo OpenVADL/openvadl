@@ -1128,7 +1128,7 @@ public class TypeChecker
         addErrorAndStopChecking(error("Conflicting field access predicates", field.target())
             .locationDescription(field.target(),
                 "A predicate for the field access `%s` already exists.",
-                field.target().identifier.name)
+                field.target().identifier().name)
             .locationHelp(conflict, "Predicate already defined here.")
             .build());
       }
@@ -1372,7 +1372,7 @@ public class TypeChecker
       check(encodingField.value);
       var fieldType = requireNonNull(
           requireNonNull(definition.formatNode)
-              .getFieldType(encodingField.field.name));
+              .getFieldType(encodingField.identifier().name));
 
       encodingField.value = wrapImplicitCast(encodingField.value, fieldType);
       var valueType = requireNonNull(encodingField.value.type);
@@ -2646,8 +2646,9 @@ public class TypeChecker
 
   @Override
   public Void visit(LogicDefinition definition) {
-    var logicTypeString = definition.logicTypeIdentifiers.stream().map(i -> i.name).collect(
-        Collectors.joining(" "));
+    var logicTypeString = definition.logicTypeIdentifiers.stream()
+        .map(i -> ((Identifier) i).name)
+        .collect(Collectors.joining(" "));
     var logicTypeMapping = Map.of(
         "branch prediction", LogicDefinition.LogicType.BranchPrediction,
         "control", LogicDefinition.LogicType.Control,
@@ -3499,9 +3500,12 @@ public class TypeChecker
               .locationDescription(expr, "Only a single sub-call expected.").build());
         }
         var subCall = expr.subCalls.getFirst();
-        if (!validSubCalls.contains(subCall.id.name)) {
-          addErrorAndStopChecking(error("Invalid counter sub-call", subCall.id)
-              .locationDescription(expr, "Counter has no sub-call named `%s`", subCall.id.name)
+        if (!validSubCalls.contains(subCall.identifier().name)) {
+          addErrorAndStopChecking(error("Invalid counter sub-call", subCall.identifier())
+              .locationDescription(
+                  expr,
+                  "Counter has no sub-call named `%s`",
+                  subCall.identifier().name)
               .build());
         }
         return;
@@ -3514,7 +3518,7 @@ public class TypeChecker
     // Might be a format or status access
     Type type = typeBeforeSubCall;
     for (var subCall : expr.subCalls) {
-      var fieldName = subCall.id.name;
+      var fieldName = subCall.identifier().name;
       if (type instanceof FormatType formatType) {
         check(formatType.format);
 
@@ -3524,7 +3528,7 @@ public class TypeChecker
           var suggestions = Levenshtein.suggestions(
               fieldName,
               formatType.format.fieldsWithoutEncodingPredicate().stream()
-                  .map(f -> f.identifier.name).toList());
+                  .map(f -> f.identifier().name).toList());
 
           addErrorAndStopChecking(error("Unknown format field `%s`".formatted(fieldName), expr)
               .description("Format `%s` doesn't have any field with this name", formatName)
@@ -3580,13 +3584,13 @@ public class TypeChecker
         }
       } else if (expr.target instanceof Identifier id
           && id.target() instanceof StageDefinition stageDef) {
-        var output =
-            stageDef.outputs.stream().filter(o -> o.identifier.name.equals(subCall.id.name))
-                .findFirst();
+        var output = stageDef.outputs.stream()
+            .filter(o -> o.identifier().name.equals(subCall.identifier().name))
+            .findFirst();
         if (output.isEmpty()) {
-          var availableOutputs = stageDef.outputs.stream().map(o -> o.identifier.name).toList();
-          addErrorAndStopChecking(error("Unknown stage output", subCall.id)
-              .suggestions(Levenshtein.sortAll(subCall.id.name, availableOutputs))
+          var availableOutputs = stageDef.outputs.stream().map(o -> o.identifier().name).toList();
+          addErrorAndStopChecking(error("Unknown stage output", subCall.identifier())
+              .suggestions(Levenshtein.sortAll(subCall.identifier().name, availableOutputs))
               .build());
         }
 
@@ -3673,7 +3677,7 @@ public class TypeChecker
   private void processStageCall(CallIndexExpr expr, StageDefinition callTarget) {
     check(callTarget);
 
-    var availableOutputs = callTarget.outputs.stream().map(o -> o.identifier.name).toList();
+    var availableOutputs = callTarget.outputs.stream().map(o -> o.identifier().name).toList();
     if (expr.subCalls.isEmpty()) {
       addErrorAndStopChecking(error("Missing stage output", expr)
           .description(
@@ -3690,15 +3694,15 @@ public class TypeChecker
           .build());
     }
 
-    var subcall = expr.subCalls.getFirst();
-    var subcallName = subcall.id.name;
+    var subCall = expr.subCalls.getFirst();
+    var subCallName = subCall.identifier().name;
 
-    var output = callTarget.outputs.stream().filter(o -> o.identifier.name.equals(subcallName))
+    var output = callTarget.outputs.stream().filter(o -> o.identifier().name.equals(subCallName))
         .findFirst();
 
     if (output.isEmpty()) {
-      addErrorAndStopChecking(error("Unknown stage output", subcall.id)
-          .suggestions(Levenshtein.sortAll(subcallName, availableOutputs))
+      addErrorAndStopChecking(error("Unknown stage output", subCall.identifier())
+          .suggestions(Levenshtein.sortAll(subCallName, availableOutputs))
           .build());
     }
 
@@ -3884,14 +3888,14 @@ public class TypeChecker
 
     if (expr.identifiers.size() > 1) {
       if (!(valType instanceof TupleType valTupleType)) {
-        var loc = expr.identifiers.get(0).loc.join(expr.valueExpr.location());
+        var loc = expr.identifiers().get(0).loc.join(expr.valueExpr.location());
         throw addErrorAndStopChecking(error("Type Mismatch", loc)
             .description("Tuple unpacking only works on tuples but the type was `%s`", valType)
             .build());
       }
 
       if (expr.identifiers.size() != valTupleType.size()) {
-        var loc = expr.identifiers.get(0).loc.join(expr.valueExpr.location());
+        var loc = expr.identifiers().get(0).loc.join(expr.valueExpr.location());
         addErrorAndStopChecking(error("Invalid Tuple Unpacking", loc)
             .description("Cannot unpack %d values form a `%s`.", expr.identifiers.size(),
                 valType)
@@ -3899,10 +3903,10 @@ public class TypeChecker
       }
 
       for (int i = 0; i < expr.identifiers.size(); i++) {
-        expr.identifiers.get(i).type = valTupleType.get(i);
+        expr.identifiers().get(i).type = valTupleType.get(i);
       }
     } else {
-      expr.identifiers.getFirst().type = valType;
+      expr.identifiers().getFirst().type = valType;
     }
 
     expr.type = checkWith(expr.body, expectedType);
@@ -4160,14 +4164,14 @@ public class TypeChecker
 
     if (statement.identifiers.size() > 1) {
       if (!(valType instanceof TupleType valTupleType)) {
-        var loc = statement.identifiers.get(0).loc.join(statement.valueExpr.location());
+        var loc = statement.identifiers().get(0).loc.join(statement.valueExpr.location());
         throw addErrorAndStopChecking(error("Type Mismatch", loc)
             .description("Tuple unpacking only works on tuples but the type was `%s`", valType)
             .build());
       }
 
       if (statement.identifiers.size() != valTupleType.size()) {
-        var loc = statement.identifiers.get(0).loc.join(statement.valueExpr.location());
+        var loc = statement.identifiers().get(0).loc.join(statement.valueExpr.location());
         addErrorAndStopChecking(error("Invalid Tuple Unpacking", loc)
             .description("Cannot unpack %d values form a `%s`.", statement.identifiers.size(),
                 valType)
@@ -4175,10 +4179,10 @@ public class TypeChecker
       }
 
       for (int i = 0; i < statement.identifiers.size(); i++) {
-        statement.identifiers.get(i).type = valTupleType.get(i);
+        statement.identifiers().get(i).type = valTupleType.get(i);
       }
     } else {
-      statement.identifiers.getFirst().type = valType;
+      statement.identifiers().getFirst().type = valType;
     }
 
     check(statement.body);
@@ -4334,7 +4338,7 @@ public class TypeChecker
 
         var arg = statement.namedArguments.get(i);
         // FIXME: better error
-        var targetType = requireNonNull(format.getFieldType(arg.name.name));
+        var targetType = requireNonNull(format.getFieldType(arg.identifier().name));
 
         check(arg.value);
 
