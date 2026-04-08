@@ -1,0 +1,18 @@
+# read design
+read_verilog -sv build/TOP_MODULE.sv
+
+# elaborate design hierarchy
+hierarchy -check -top TOP_MODULE
+
+synth
+
+# mapping flip-flops to cmos_cells.lib
+dfflibmap -liberty /scripts/bench/lib/cmos_cells.lib
+
+# mapping logic to cmos_cells.lib
+abc -liberty /scripts/bench/lib/cmos_cells.lib -dff
+
+clean
+
+# print stats
+stat -liberty /scripts/bench/lib/cmos_cells.lib

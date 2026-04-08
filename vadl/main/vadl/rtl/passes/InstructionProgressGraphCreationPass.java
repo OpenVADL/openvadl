@@ -353,8 +353,8 @@ public class InstructionProgressGraphCreationPass extends Pass {
         .of(pcInc, Type.bits(BitsType.minimalRequiredWidthFor(pcInc))).asVal();
 
     // read pc address
-    var readPc = new ReadRegTensorNode(pc.registerTensor(), new NodeList<>(),
-        pc.resultType(), pc);
+    var readPc = new RtlReadRegTensorNode(pc.registerTensor(), new NodeList<>(),
+        pc.resultType(), Constant.Value.of(true).toNode(), pc);
     readPc = ipg.addWithInputs(readPc, ipg.instructions());
     ipg.setPcRead(readPc);
 

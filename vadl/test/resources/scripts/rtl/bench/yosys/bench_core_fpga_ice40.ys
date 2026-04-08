@@ -1,0 +1,12 @@
+# read design
+read_verilog -sv build/TOP_MODULE.sv
+
+# elaborate design hierarchy
+hierarchy -check -top TOP_MODULE
+
+# fpga placement
+synth_ice40 -nobram
+
+# print stats
+stat
+

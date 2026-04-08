@@ -32,8 +32,10 @@ import vadl.rtl.analysis.HazardAnalysis;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
 import vadl.rtl.ipg.nodes.RtlSelectByInstructionNode;
 import vadl.rtl.map.MiaMapping;
+import vadl.types.BuiltInTable;
 import vadl.utils.Pair;
 import vadl.viam.Constant;
+import vadl.viam.Logic;
 import vadl.viam.MicroArchitecture;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
@@ -43,6 +45,7 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -156,7 +159,8 @@ public class HazardAnalysisPass extends Pass {
 
     // add forward from write stage (always possible)
     result.add(new HazardAnalysis.ForwardAnalysis(write, analysis.effect(), stage,
-        new ArrayList<>(conditions), address, value));
+        new ArrayList<>(conditions), address, value,
+        forwardActive(mapping, write.resourceDefinition(), stage)));
 
     // stop if we passed the stage where address or condition are available
     var stop = Stream.of(analysis.condition(), analysis.address()).filter(Objects::nonNull)
@@ -170,11 +174,22 @@ public class HazardAnalysisPass extends Pass {
         break; // can not resolve anymore (provide value and condition for forwarding)
       }
       result.add(new HazardAnalysis.ForwardAnalysis(write, analysis.effect(), stage,
-          new ArrayList<>(conditions), address, value));
+          new ArrayList<>(conditions), address, value,
+          forwardActive(mapping, write.resourceDefinition(), stage)));
       stage = stage.prev();
     }
 
     return result.stream();
+  }
+
+  private boolean forwardActive(MiaMapping mapping, Resource resource, Stage stage) {
+    if (mapping.mia().logic().stream().noneMatch(Logic.Forwarding.class::isInstance)) {
+      return true; // MiA does not define forwarding paths
+    }
+    // TODO this does not support multiple forwarding logic elements
+    return stage.behavior().getNodes(MiaBuiltInCall.class)
+        .anyMatch(call -> call.builtIn().equals(BuiltInTable.INSTRUCTION_RESULTS)
+            && call.matchResource(resource));
   }
 
   // resolve select-by-instruction and select nodes and collect condition

@@ -110,6 +110,8 @@ micro architecture SingleStage implements ISA = {
 //    . : ' Signals: []
 //    . : ' Registers: []
 //    . : ' Behavior Graph:
+//    . : ' | n0 ProcEnd in: () succ: ()     effects: 0
+//    . : ' | n1 Start   in: () succ: (n0)   next: set
 //    . : InstructionSetArchitecture name: "ISA"
 //    . : ' PC: -
 //    . : ' InstructionCount: 0

@@ -42,6 +42,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicTest;
 import org.slf4j.Logger;
@@ -184,6 +185,48 @@ public abstract class DockerExecutionTest extends AbstractTest {
     runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(
         image.getDockerImageName(mappedPort),
         copyMappings, hostOutputPath, containerResultPath, cmd);
+  }
+
+  /**
+   * Starts a container and checks the status code for the exited container.
+   * It will copy the copy mappings into the container. After the container was
+   * executed it will copy the specified mappings back.
+   * It will assert that the status code is zero. If the check takes longer
+   * than 10 seconds or the status code is not zero then it will throw an
+   * exception.
+   *
+   * @param image          is the docker image for the {@link GenericContainer}.
+   * @param inputMappings  are mappings from the host to the container for the files which
+   *                       should be copied.
+   * @param outputMappings are mappings from the container to the host for the files which
+   *                       should be copied back after running the container.
+   * @param cmd            overwrites the command which will be executed on startup.
+   */
+  protected void runContainerWithInAndOutput(
+      DockerImage image,
+      List<Pair<String, String>> inputMappings,
+      List<Pair<String, String>> outputMappings,
+      @Nullable String... cmd) {
+    runContainer(image, (container) -> {
+          if (cmd != null) {
+            container.setCommand(cmd);
+          }
+          for (var mapping : inputMappings) {
+            container.withCopyToContainer(MountableFile.forHostPath(mapping.left()), mapping.right());
+          }
+          return container;
+        },
+        (container) -> {
+          for (var mapping : outputMappings) {
+            try {
+              Files.createDirectories(new File(mapping.right()).getParentFile().toPath());
+            } catch (IOException e) {
+              Assertions.fail(e);
+            }
+            container.copyFileFromContainer(mapping.left(), mapping.right());
+          }
+        }
+    );
   }
 
   /**
