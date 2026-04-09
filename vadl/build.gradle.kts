@@ -21,6 +21,7 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
 
     testCompileOnly(project(":java-annotations"))
+    testCompileOnly(libs.jsr305)
     testAnnotationProcessor(project(":java-annotations"))
     testImplementation(libs.buildkitcli)
     testImplementation(libs.assertj.core)

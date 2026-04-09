@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -20,8 +20,8 @@ import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import vadl.viam.Format.FieldAccess;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -147,14 +147,14 @@ public class Instruction extends Definition implements DefProp.WithBehavior, Pri
   /**
    * Used by the {@link vadl.viam.passes.InstructionResourceAccessAnalysisPass}.
    */
-  public void setWrittenResources(@NonNull Set<Resource> writtenResources) {
+  public void setWrittenResources(@Nonnull Set<Resource> writtenResources) {
     this.writtenResources = writtenResources;
   }
 
   /**
    * Used by the {@link vadl.viam.passes.InstructionResourceAccessAnalysisPass}.
    */
-  public void setReadResources(@NonNull Set<Resource> readResources) {
+  public void setReadResources(@Nonnull Set<Resource> readResources) {
     this.readResources = readResources;
   }
 
