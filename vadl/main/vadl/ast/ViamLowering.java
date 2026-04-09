@@ -429,8 +429,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       List<RegisterTensor.Dimension> dimensions = switch (definition.type()) {
         case TensorType tensorType -> Streams.mapWithIndex(
                 tensorType.indexDims().stream(),
-                (dim, index) -> new RegisterTensor.Dimension((int) index,
-                    Type.bits(BitsType.indexWidthFor((long) dim)), dim))
+                (dim, index) -> {
+                  requireNonNull(dim);
+                  return new RegisterTensor.Dimension((int) index,
+                      Type.bits(BitsType.indexWidthFor((long) dim)), dim);
+                })
             .toList();
         default -> new ArrayList<>();
       };
@@ -1055,7 +1058,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   public Optional<vadl.viam.Definition> visit(CpuMemoryRegionDefinition definition) {
     var behavior = definition.stmt != null
         ? new BehaviorLowering(this)
-        .getProcedureGraph(definition.stmt, definition.identifier().name)
+          .getProcedureGraph(definition.stmt, definition.identifier().name)
         : emptyProcedureGraph(definition.identifier().name, definition);
 
     var kind = switch (definition.kind) {

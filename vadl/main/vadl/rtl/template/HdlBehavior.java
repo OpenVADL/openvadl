@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,6 +16,7 @@
 
 package vadl.rtl.template;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.viam.Constant.Value.fromInteger;
 
 import com.google.common.collect.Streams;
@@ -405,7 +406,11 @@ public class HdlBehavior {
         throw new ViamGraphError("Missing selection input").addContext(node);
       }
       return "MuxLookup[Bits](" + dispatch(sel) + ", 0.U)(Seq("
-          + Streams.mapWithIndex(vals, (val, i) -> i + ".U -> " + dispatch(val))
+          + Streams.mapWithIndex(vals, (val, i) -> {
+            requireNonNull(val);
+            return i + ".U -> " + dispatch(val);
+          }
+          )
           .collect(Collectors.joining(", ")) + "))";
     }
 
