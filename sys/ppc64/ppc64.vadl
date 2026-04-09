@@ -526,11 +526,11 @@ instruction set architecture PPC64SFS = {
       $CS($oe; {
         XER_SO   := so
         XER_OV   := ov
-        XER_OV32 := $ov32 && 0b1 // TODO
+        XER_OV32 := $ov32
       })
       $CS($ce; {
         XER_CA   := (flags64.carry && MSR.sf) || (flags32.carry && ~MSR.sf)
-        XER_CA32 := flags32.carry && 0b1 // TODO
+        XER_CA32 := flags32.carry
       })
     }
   }
@@ -1319,7 +1319,7 @@ instruction set architecture PPC64SFS = {
         let result, flags64 = VADL::addc(X(ra) , X(rb) , XER_OV) in {
           X(rs) := result
           XER_OV   := (flags64.carry && MSR.sf) || (flags32.carry && ~MSR.sf)
-          XER_OV32 := flags32.carry && 0b1 // TODO
+          XER_OV32 := flags32.carry
         }
     encoding AsId($asm) = {opcd = 0b011111, cy = 0b00, extopcd = 0b101'01010, rsv = 0b0}
     assembly AsId($asm) = ($asm, " ", udec(rs), ",", udec(ra), ",", udec(rb), ",", udec(cy))
