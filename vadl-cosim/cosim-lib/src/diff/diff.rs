@@ -272,6 +272,7 @@ fn sliced_register_mappings<'a, 'b>(
             for mapping in &mappings {
                 if mapping.client2.name == reg.name.as_str() {
                     register_mappings.push((sub_reg, &mapping.client1, reg, &mapping.client2));
+                    return register_mappings;
                 }
             }
         }
@@ -280,6 +281,7 @@ fn sliced_register_mappings<'a, 'b>(
             for mapping in &mappings {
                 if mapping.client1.name == reg.name.as_str() {
                     register_mappings.push((sub_reg, &mapping.client2, reg, &mapping.client1));
+                    return register_mappings;
                 }
             }
         }

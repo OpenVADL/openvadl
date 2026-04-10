@@ -21,7 +21,7 @@
  * _L : set the link register to PC.next (PC + 4)
  * _A : use absolute addressing in branch instructions
  * _O : set the overflow flags
- * _. : set the condition register 
+ * _. : set the condition register
  *
  * Note: in instruction identifiers, "." is written as "_", since dots are not allowed in identifiers
  */
@@ -88,7 +88,13 @@ instruction set architecture PPC64SFS = {
   register SRR0 : Reg64                          // machine status save/ restore register 1
   register SRR1 : Reg64                          // machine status save/ restore register 2
 
-  register XER  : XERFormat                      // exception/ status register
+  register XER_BASE   : Reg32                    // exception/ status register (non-flag fields only)
+  register XER_SO     : Bit                      // summary overflow, is set whenever ov is set: so = so | ov
+  register XER_OV     : Bit                      // overflow, is equal to ov32 in 32-bit mode
+  register XER_CA     : Bit                      // carry, is equal to ca32 in 32-bit mode
+  register XER_OV32   : Bit                      // overflow32, overflow when using 32-bit operands
+  register XER_CA32   : Bit                      // carry32, carry when using 32-bit operands
+
   register LR   : Reg64                          // link register
   register CTR  : Reg64                          // count register
   register TB   : Reg64                          // time base register
@@ -107,17 +113,6 @@ instruction set architecture PPC64SFS = {
   { Byte
   , Half
   , Word
-  }
-
-  format XERFormat : Reg32 =
-  { so     : Bit                                 // summary overflow, is set whenever ov is set: so = so | ov
-  , ov     : Bit                                 // overflow, is equal to ov32 in 32-bit mode
-  , ca     : Bit                                 // carry, is equal to ca32 in 32-bit mode
-  , rsv1   : Bits<9>
-  , ov32   : Bit                                 // overflow32, overflow when using 32-bit operands
-  , ca32   : Bit                                 // carry32, carry when using 32-bit operands
-  , rsv2   : Bits<11>
-  , nbytes : Bits<7>                             // number of bytes to be transferred by string indexed instructions (not implemented)
   }
 
   // note: most of the functionality here is not implemented, because it is not a part of the subset
@@ -523,35 +518,34 @@ instruction set architecture PPC64SFS = {
     $SetCRBase(crft;
     ( $a.arg1 as $ctype
     ; $a.arg2 as $ctype
-    ); XER.so)
+    ); XER_SO)
   }
 
   model SetXERBase (oe : Bool, ce : Bool, ov32 : Ex) : Stat = {
-    match : Stat
-    ( $ce = true  => let mca = (flags64.carry && MSR.sf) || (flags32.carry && ~MSR.sf) in
-      match : Stat
-      ( $oe = true  => XER := (so    , ov    , mca   , XER.rsv1, $ov32   , flags32.carry, XER.rsv2, XER.nbytes)
-      ; _           => XER := (XER.so, XER.ov, mca   , XER.rsv1, XER.ov32, flags32.carry, XER.rsv2, XER.nbytes)
-      )
-    ; _           =>
-      match : Stat
-      ( $oe = true  => XER := (so    , ov    , XER.ca, XER.rsv1, $ov32   , XER.ca32     , XER.rsv2, XER.nbytes)
-      ; _           => {}
-      )
-    )
+    {
+      $CS($oe; {
+        XER_SO   := so
+        XER_OV   := ov
+        XER_OV32 := $ov32
+      })
+      $CS($ce; {
+        XER_CA   := (flags64.carry && MSR.sf) || (flags32.carry && ~MSR.sf)
+        XER_CA32 := flags32.carry
+      })
+    }
   }
 
   // sets fixed-point exception register and condition register
   model SetFlags (oe : Bool, ce : Bool, rc : Bool, ov32 : Ex, ov : Ex) : Stat = {
     match : Stat
     ( $oe = true => let ov = $ov in
-                      let so = XER.so | ov in {
+                      let so = XER_SO | ov in {
                         $SetXERBase(true; $ce; $ov32)
                         $SetCR0($rc; so)
                       }
     ; _          => {
                       $SetXERBase(false; $ce; $ov32)
-                      $SetCR0($rc; XER.so)
+                      $SetCR0($rc; XER_SO)
                     }
     )
   }
@@ -560,7 +554,7 @@ instruction set architecture PPC64SFS = {
   model ReadSPR () : Stat = {
     let rspr = (spr(4..0), spr(9..5)) in
       match rspr with
-      { SPRIndex::XER => X(rs) := XER as DWord
+      { SPRIndex::XER => X(rs) := (XER_SO, XER_OV, XER_CA, XER_BASE(28..20), XER_OV32, XER_CA32, XER_BASE(17..0)) as DWord
       , SPRIndex::LR  => X(rs) := LR
       , SPRIndex::CTR => X(rs) := CTR
       , SPRIndex::TBL => X(rs) := TB
@@ -579,7 +573,14 @@ instruction set architecture PPC64SFS = {
   model WriteSPR () : Stat = {
     let rspr = (spr(4..0), spr(9..5)) in
       match rspr with
-      { SPRIndex::XER => XER := XW(rs)
+      { SPRIndex::XER => {
+                           XER_SO   := X(rs)(31)
+                           XER_OV   := X(rs)(30)
+                           XER_CA   := X(rs)(29)
+                           XER_OV32 := X(rs)(19)
+                           XER_CA32 := X(rs)(18)
+                           XER_BASE := XW(rs)
+                         }
       , SPRIndex::LR  => LR  := X(rs)
       , SPRIndex::CTR => CTR := X(rs)
       , 0b11001'01000 => {}
@@ -678,7 +679,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($x.asm, $rId($rc)) : DFormA =
       let result = VADL::$x.op(X(rs), $arg2) in {
         X(ra) := result
-        $SetCR0($rc; XER.so)
+        $SetCR0($rc; XER_SO)
       }
     encoding AsId($x.asm, $rId($rc)) =
       {opcd = $x.opcd}
@@ -792,7 +793,7 @@ instruction set architecture PPC64SFS = {
         let m = mask (31 - me6, 31 - mb6) in
           let result = $r.res in {
             X(ra) := result
-            $SetCR0($rc; XER.so)
+            $SetCR0($rc; XER_SO)
           }
     encoding AsId($r.x.asm, $rId($rc)) =
       {opcd = $r.x.opcd, rc = $rc}
@@ -822,8 +823,9 @@ instruction set architecture PPC64SFS = {
         let result = $r.res in
           let ca = if $r.shift > 31 then X(rs)(31) else X(rs)(31) & (r(31..0) != 0) in {
             X(ra) := result
-            XER := (XER.so, XER.ov, ca, XER.rsv1, XER.ov32, ca, XER.rsv2, XER.nbytes)
-            $SetCR0($rc; XER.so)
+            XER_CA   := ca
+            XER_CA32 := ca
+            $SetCR0($rc; XER_SO)
           }
     encoding AsId($r.x.asm, $rId($rc)) =
       {opcd = 0b011111, extopcd = $r.x.ext, rc = $rc}
@@ -871,7 +873,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($r.x.asm, $rId($rc)) : XFormA =
       let result = $r.res in {
         X(ra) := result
-        $SetCR0($rc; XER.so)
+        $SetCR0($rc; XER_SO)
       }
     encoding AsId($r.x.asm, $rId($rc)) =
       {opcd = 0b011111, rb = 0b00000, extopcd = $r.x.ext, rc = $rc}
@@ -904,7 +906,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($r.x.asm, $rId($rc)) : XFormA =
       let result = $r.x.op(X(rs), $r.arg2) in {
         X(ra) := result
-        $SetCR0($rc; XER.so)
+        $SetCR0($rc; XER_SO)
       }
     encoding AsId($r.x.asm, $rId($rc)) =
       {opcd = 0b011111, extopcd = $r.x.ext, rc = $rc}
@@ -922,7 +924,7 @@ instruction set architecture PPC64SFS = {
     instruction AsId($x.asm, $rId($rc)) : XFormA =
       let result = if X(rb)(5) = 0 then VADL::$x.op(XW(rs), X(rb)(4..0)) as DWord else 0 in {
         X(ra) := result
-        $SetCR0($rc; XER.so)
+        $SetCR0($rc; XER_SO)
       }
     encoding AsId($x.asm, $rId($rc)) =
       {opcd = 0b011111, extopcd = $x.ext, rc = $rc}
@@ -1071,7 +1073,7 @@ instruction set architecture PPC64SFS = {
   // instructions: mcrxrx
   model XFormMoveXERCRFInstr (asm : Str) : IsaDefs = {
     instruction AsId($asm) : XFormE =
-      CRF(crft) := (XER.ov, XER.ov32, XER.ca, XER.ca32)
+      CRF(crft) := (XER_OV, XER_OV32, XER_CA, XER_CA32)
     encoding AsId($asm) = {opcd = 0b011111, rsv1 = 0b00, ra = 0b00000, rb = 0b00000, extopcd = 0b10010'00000, rsv2 = 0b0}
     assembly AsId($asm) = ($asm, " ", udec(crft))
   }
@@ -1313,11 +1315,11 @@ instruction set architecture PPC64SFS = {
   // instructions: addex
   model Z23FormAddInstr (asm : Str) : IsaDefs = {
     instruction AsId($asm) : Z23Form =
-      let result32, flags32 = VADL::addc(XW(ra), XW(rb), XER.ov) in
-        let result, flags64 = VADL::addc(X(ra) , X(rb) , XER.ov) in {
+      let result32, flags32 = VADL::addc(XW(ra), XW(rb), XER_OV) in
+        let result, flags64 = VADL::addc(X(ra) , X(rb) , XER_OV) in {
           X(rs) := result
-          let mca = (flags64.carry && MSR.sf) || (flags32.carry && ~MSR.sf) in
-            XER := (XER.so, mca, XER.ca, XER.rsv1, flags32.carry, XER.ca32, XER.rsv2, XER.nbytes)
+          XER_OV   := (flags64.carry && MSR.sf) || (flags32.carry && ~MSR.sf)
+          XER_OV32 := flags32.carry
         }
     encoding AsId($asm) = {opcd = 0b011111, cy = 0b00, extopcd = 0b101'01010, rsv = 0b0}
     assembly AsId($asm) = ($asm, " ", udec(rs), ",", udec(ra), ",", udec(rb), ",", udec(cy))
@@ -1328,14 +1330,14 @@ instruction set architecture PPC64SFS = {
 
   $XOFormAddSubInstr((("ADD"   ; addc; 0b1000'01010); (X(ra)  ; X(rb)  ); none         ; false ; false; (",", udec(rb))))
   $XOFormAddSubInstr((("ADDC"  ; addc; 0b0000'01010); (X(ra)  ; X(rb)  ); none         ; false ; true ; (",", udec(rb))))
-  $XOFormAddSubInstr((("ADDE"  ; addc; 0b0100'01010); (X(ra)  ; X(rb)  ); none         ; XER.ca; true ; (",", udec(rb))))
+  $XOFormAddSubInstr((("ADDE"  ; addc; 0b0100'01010); (X(ra)  ; X(rb)  ); none         ; XER_CA; true ; (",", udec(rb))))
   $XOFormAddSubInstr((("SUBF"  ; subc; 0b0001'01000); (X(rb)  ; X(ra)  ); none         ; true  ; false; (",", udec(rb))))
   $XOFormAddSubInstr((("SUBFC" ; subc; 0b0000'01000); (X(rb)  ; X(ra)  ); none         ; true  ; true ; (",", udec(rb))))
-  $XOFormAddSubInstr((("SUBFE" ; subc; 0b0100'01000); (X(rb)  ; X(ra)  ); none         ; XER.ca; true ; (",", udec(rb))))
-  $XOFormAddSubInstr((("ADDME" ; addc; 0b0111'01010); (X(ra)  ; maxU64 ); rb = 0b00000 ; XER.ca; true ; ""             ))
-  $XOFormAddSubInstr((("ADDZE" ; addc; 0b0110'01010); (X(ra)  ; zeroU64); rb = 0b00000 ; XER.ca; true ; ""             ))
-  $XOFormAddSubInstr((("SUBFME"; subc; 0b0111'01000); (maxU64 ; X(ra)  ); rb = 0b00000 ; XER.ca; true ; ""             ))
-  $XOFormAddSubInstr((("SUBFZE"; subc; 0b0110'01000); (zeroU64; X(ra)  ); rb = 0b00000 ; XER.ca; true ; ""             ))
+  $XOFormAddSubInstr((("SUBFE" ; subc; 0b0100'01000); (X(rb)  ; X(ra)  ); none         ; XER_CA; true ; (",", udec(rb))))
+  $XOFormAddSubInstr((("ADDME" ; addc; 0b0111'01010); (X(ra)  ; maxU64 ); rb = 0b00000 ; XER_CA; true ; ""             ))
+  $XOFormAddSubInstr((("ADDZE" ; addc; 0b0110'01010); (X(ra)  ; zeroU64); rb = 0b00000 ; XER_CA; true ; ""             ))
+  $XOFormAddSubInstr((("SUBFME"; subc; 0b0111'01000); (maxU64 ; X(ra)  ); rb = 0b00000 ; XER_CA; true ; ""             ))
+  $XOFormAddSubInstr((("SUBFZE"; subc; 0b0110'01000); (zeroU64; X(ra)  ); rb = 0b00000 ; XER_CA; true ; ""             ))
 
   $DFormAddSubInstr(("ADDI"  ; adds ; 0b001110; ADDI  ); (XZ(ra); immS  ); false; false)
   $DFormAddSubInstr(("ADDIC" ; adds ; 0b001100; ADDIC ); (X(ra) ; immS  ); false; true )

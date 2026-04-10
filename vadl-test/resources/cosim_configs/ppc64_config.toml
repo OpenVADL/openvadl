@@ -138,7 +138,6 @@ r30 = "x30"
 r31 = "x31"
 
 msr = "msr"
-xer = "xer"
 lr = "lr"
 ctr = "ctr"
 #tb = "tb"
@@ -170,6 +169,28 @@ client2 = { name = "cr"  , slice = [ [ 4,  7] ] }
 [[qemu.sliced_reg_map]]
 client1 = { name = "crf7", slice = [ [ 0,  3] ] }
 client2 = { name = "cr"  , slice = [ [ 0,  3] ] }
+
+[[qemu.sliced_reg_map]]
+client1 = { name = "xer_so", slice = [ [0, 0] ] }
+client2 = { name = "xer"   , slice = [ [31, 31] ] }
+[[qemu.sliced_reg_map]]
+client1 = { name = "xer_ov", slice = [ [0, 0] ] }
+client2 = { name = "xer"   , slice = [ [30, 30] ] }
+[[qemu.sliced_reg_map]]
+client1 = { name = "xer_ca", slice = [ [0, 0] ] }
+client2 = { name = "xer"   , slice = [ [29, 29] ] }
+[[qemu.sliced_reg_map]]
+client1 = { name = "xer_ov32", slice = [ [0, 0] ] }
+client2 = { name = "xer"     , slice = [ [19, 19] ] }
+[[qemu.sliced_reg_map]]
+client1 = { name = "xer_ca32", slice = [ [0, 0] ] }
+client2 = { name = "xer"     , slice = [ [18, 18] ] }
+[[qemu.sliced_reg_map]]
+client1 = { name = "xer_base", slice = [ [20, 28] ] }
+client2 = { name = "xer"     , slice = [ [20, 28] ] }
+[[qemu.sliced_reg_map]]
+client1 = { name = "xer_base", slice = [ [0, 17] ] }
+client2 = { name = "xer"     , slice = [ [0, 17] ] }
 
 # Defines the test-source and how to test
 [testing]
