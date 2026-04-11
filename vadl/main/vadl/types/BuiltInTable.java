@@ -511,6 +511,47 @@ public class BuiltInTable {
           .returnsFirstBitWidthAndStatus(UIntType.class)
           .build();
 
+  /**
+   * {@code function smin ( a : SInt<N>, b : SInt<N> ) -> SInt<N>}
+   */
+  public static final BuiltIn SMIN =
+      func("VADL::smin", null, Type.relation(SIntType.class, SIntType.class, SIntType.class))
+          .compute((Constant.Value a, Constant.Value b) -> a.min(b, true))
+          .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(SIntType.class)
+          .build();
+
+  /**
+   * {@code function umin ( a : UInt<N>, b : UInt<N> ) -> UInt<N>}
+   */
+  public static final BuiltIn UMIN =
+      func("VADL::umin", null, Type.relation(UIntType.class, UIntType.class, UIntType.class))
+          .compute((Constant.Value a, Constant.Value b) -> a.min(b, false))
+          .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(SIntType.class)
+          .build();
+
+
+  /**
+   * {@code function smax ( a : SInt<N>, b : SInt<N> ) -> SInt<N>}
+   */
+  public static final BuiltIn SMAX =
+      func("VADL::smax", null, Type.relation(SIntType.class, SIntType.class, SIntType.class))
+          .compute((Constant.Value a, Constant.Value b) -> a.max(b, true))
+          .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(SIntType.class)
+          .build();
+
+  /**
+   * {@code function umax( a : UInt<N>, b : UInt<N> ) -> UInt<N>}
+   */
+  public static final BuiltIn UMAX =
+      func("VADL::umax", null, Type.relation(UIntType.class, UIntType.class, UIntType.class))
+          .compute((Constant.Value a, Constant.Value b) -> a.max(b, false))
+          .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(SIntType.class)
+          .build();
+
 
   ///// LOGICAL //////
 
@@ -1293,7 +1334,12 @@ public class BuiltInTable {
       SDIV,
       UDIV,
       SDIVS,
-      UDIVS
+      UDIVS,
+
+      SMIN,
+      UMIN,
+      SMAX,
+      UMAX
   );
 
   public static final List<BuiltIn> LOGICAL_BUILT_INS = List.of(
@@ -1399,6 +1445,8 @@ public class BuiltInTable {
       SDIV, UDIV,
       SMOD, UMOD,
       SMULL, UMULL, SUMULL,
+      SMIN, UMIN,
+      SMAX, UMAX,
       CONCATENATE_STRINGS
   );
 

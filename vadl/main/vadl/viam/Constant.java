@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -509,6 +509,28 @@ public abstract class Constant {
       var newIntegerValue = a.integer()
           .mod(b.integer());
       return fromInteger(newIntegerValue, divType);
+    }
+
+    /**
+     * Return the min value. If both are equal, the first will be returned.
+     */
+    public Constant.Value min(Constant.Value other, boolean signed) {
+      ensure(type().isTrivialCastTo(other.type()),
+          "Min must be of same type, but other was %s",
+          other.type());
+
+      return this.leq(other, signed).bool() ? this : other;
+    }
+
+    /**
+     * Return the max value. If both are equal, the first will be returned.
+     */
+    public Constant.Value max(Constant.Value other, boolean signed) {
+      ensure(type().isTrivialCastTo(other.type()),
+          "Max must be of same type, but other was %s",
+          other.type());
+
+      return this.geq(other, signed).bool() ? this : other;
     }
 
     /**
