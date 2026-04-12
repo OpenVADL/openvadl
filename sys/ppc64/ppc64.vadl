@@ -668,8 +668,7 @@ instruction set architecture PPC64SFS = {
       let result32, flags32 = VADL::$x.op($a.arg1 as Word, $a.arg2 as Word) in
         let result, flags64 = VADL::$x.op($a.arg1        , $a.arg2        ) in {
           X(rs) := result
-          $SetFlags(false; $ce; $rc; flags32.overflow;
-            (flags64.overflow && MSR.sf) || (flags32.overflow && ~MSR.sf))
+          $SetFlags(false; $ce; $rc; false; false)
         }
     encoding $x.id = {opcd = $x.opcd}
     assembly $x.id = ($x.asm, $rStr($rc), " ", udec(rs), ",", udec(ra), ",", sdec(imm))
