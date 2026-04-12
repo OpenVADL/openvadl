@@ -31,8 +31,6 @@ import vadl.viam.UserModeEmulation;
  * required for Linux user-mode emulation, such as register mappings for system calls,
  * stack alignment, and exception handling indices.
  * </p>
- * * @see IssTemplateRenderingPass
- * @see UserModeEmulation
  */
 public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
 
@@ -50,11 +48,13 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
 
   @Override
   public PassName getName() {
-    return PassName.of("Rendering UME template: " + templateFilename);
+    return PassName.of("Rendering UME template: "
+        + templateFilename);
   }
 
   @Override
-  protected Map<String, Object> createVariables(PassResults passResults, Specification specification) {
+  protected Map<String, Object> createVariables(PassResults passResults,
+                                                Specification specification) {
     var vars = super.createVariables(passResults, specification);
 
     UserModeEmulation ume = UserModeEmulation.createDefault();

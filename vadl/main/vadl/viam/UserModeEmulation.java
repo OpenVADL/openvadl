@@ -29,9 +29,9 @@ import vadl.utils.SourceLocation;
  * </p>
  */
 public class UserModeEmulation extends Definition {
-    /**
-     * Returns a map representation of this UserModeEmulation for template rendering.
-     */
+  /**
+   * Returns a map representation of this UserModeEmulation for template rendering.
+   */
   public Map<String, Object> asMap() {
     return Map.ofEntries(
       Map.entry("sysReg", sysReg),
@@ -53,7 +53,7 @@ public class UserModeEmulation extends Definition {
       Map.entry("sigtrampLoadSyscallInstr", sigtrampLoadSyscallInstr),
       Map.entry("sigtrampTrapInstr", sigtrampTrapInstr)
       );
-    }
+  }
 
   private final int sysReg;
   private final int retReg;
@@ -78,13 +78,13 @@ public class UserModeEmulation extends Definition {
    * Constructs a UserModeEmulation configuration.
    */
   public UserModeEmulation(
-    Identifier identifier,
-    int sysReg, int retReg, int spReg, int raReg, int tpReg,
-    List<Integer> args, Map<String, Integer> excIds,
-    String syscallExcName, String breakpointExcName, String illegalInstrExcName,
-    String ptRegPc, String ptRegSp, String excCauseVar, boolean hasIcacheFlush,
-    int insnWidthBytes, int stackAlignMask, int sigtrampLoadSyscallInstr,
-    int sigtrampTrapInstr) {
+      Identifier identifier,
+      int sysReg, int retReg, int spReg, int raReg, int tpReg,
+      List<Integer> args, Map<String, Integer> excIds,
+      String syscallExcName, String breakpointExcName, String illegalInstrExcName,
+      String ptRegPc, String ptRegSp, String excCauseVar, boolean hasIcacheFlush,
+      int insnWidthBytes, int stackAlignMask, int sigtrampLoadSyscallInstr,
+      int sigtrampTrapInstr) {
 
     super(identifier);
     if (args == null || args.isEmpty()) {
@@ -121,8 +121,10 @@ public class UserModeEmulation extends Definition {
    * * @return a standard RISC-V user-mode emulation setup.
    */
   public static UserModeEmulation createDefault() {
-    Identifier identifier = new Identifier(new String[]{"ume"}, SourceLocation.INVALID_SOURCE_LOCATION);
-    Map<String, Integer> excIds = Map.of("ILLEGAL_INSTR", 2, "BREAKPOINT", 3, "ECALL", 11);
+    Identifier identifier = new Identifier(new String[]{"ume"},
+        SourceLocation.INVALID_SOURCE_LOCATION);
+    Map<String, Integer> excIds = Map.of("ILLEGAL_INSTR",
+        2, "BREAKPOINT", 3, "ECALL", 11);
 
     return new UserModeEmulation(
         identifier,
