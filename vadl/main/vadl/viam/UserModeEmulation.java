@@ -20,30 +20,38 @@ import java.util.List;
 import java.util.Map;
 import vadl.utils.SourceLocation;
 
+/**
+ * Represents the configuration for QEMU user-mode emulation.
+ * <p>
+ * This class defines architecture-specific parameters required for Linux-user emulation,
+ * including system call register mappings, signal trampoline instructions, stack
+ * alignment requirements, and exception IDs.
+ * </p>
+ */
 public class UserModeEmulation extends Definition {
     /**
      * Returns a map representation of this UserModeEmulation for template rendering.
      */
-    public Map<String, Object> asMap() {
-      return Map.ofEntries(
-          Map.entry("sysReg", sysReg),
-          Map.entry("retReg", retReg),
-          Map.entry("spReg", spReg),
-          Map.entry("raReg", raReg),
-          Map.entry("tpReg", tpReg),
-          Map.entry("args", args),
-          Map.entry("excIds", excIds),
-          Map.entry("SYSCALL_NAME", syscallExcName),
-          Map.entry("BREAKPOINT_NAME", breakpointExcName),
-          Map.entry("ILLEGAL_INSTR_NAME", illegalInstrExcName),
-          Map.entry("ptRegPc", ptRegPc),
-          Map.entry("ptRegSp", ptRegSp),
-          Map.entry("excCauseVar", excCauseVar),
-          Map.entry("hasIcacheFlush", hasIcacheFlush),
-          Map.entry("insn_width_bytes", insnWidthBytes),
-          Map.entry("stack_align_mask", stackAlignMask),
-          Map.entry("sigtrampLoadSyscallInstr", sigtrampLoadSyscallInstr),
-          Map.entry("sigtrampTrapInstr", sigtrampTrapInstr)
+  public Map<String, Object> asMap() {
+    return Map.ofEntries(
+      Map.entry("sysReg", sysReg),
+      Map.entry("retReg", retReg),
+      Map.entry("spReg", spReg),
+      Map.entry("raReg", raReg),
+      Map.entry("tpReg", tpReg),
+      Map.entry("args", args),
+      Map.entry("excIds", excIds),
+      Map.entry("SYSCALL_NAME", syscallExcName),
+      Map.entry("BREAKPOINT_NAME", breakpointExcName),
+      Map.entry("ILLEGAL_INSTR_NAME", illegalInstrExcName),
+      Map.entry("ptRegPc", ptRegPc),
+      Map.entry("ptRegSp", ptRegSp),
+      Map.entry("excCauseVar", excCauseVar),
+      Map.entry("hasIcacheFlush", hasIcacheFlush),
+      Map.entry("insn_width_bytes", insnWidthBytes),
+      Map.entry("stack_align_mask", stackAlignMask),
+      Map.entry("sigtrampLoadSyscallInstr", sigtrampLoadSyscallInstr),
+      Map.entry("sigtrampTrapInstr", sigtrampTrapInstr)
       );
     }
 
@@ -70,16 +78,22 @@ public class UserModeEmulation extends Definition {
    * Constructs a UserModeEmulation configuration.
    */
   public UserModeEmulation(
-      Identifier identifier,
-      int sysReg, int retReg, int spReg, int raReg, int tpReg,
-      List<Integer> args, Map<String, Integer> excIds,
-      String syscallExcName, String breakpointExcName, String illegalInstrExcName,
-      String ptRegPc, String ptRegSp, String excCauseVar, boolean hasIcacheFlush,
-      int insnWidthBytes, int stackAlignMask, int sigtrampLoadSyscallInstr,
-      int sigtrampTrapInstr) {
+    Identifier identifier,
+    int sysReg, int retReg, int spReg, int raReg, int tpReg,
+    List<Integer> args, Map<String, Integer> excIds,
+    String syscallExcName, String breakpointExcName, String illegalInstrExcName,
+    String ptRegPc, String ptRegSp, String excCauseVar, boolean hasIcacheFlush,
+    int insnWidthBytes, int stackAlignMask, int sigtrampLoadSyscallInstr,
+    int sigtrampTrapInstr) {
+
     super(identifier);
-    if (args == null || args.isEmpty()) throw new IllegalArgumentException("args must not be null/empty");
-    if (excIds == null || excIds.isEmpty()) throw new IllegalArgumentException("excIds must not be null/empty");
+    if (args == null || args.isEmpty()) {
+      throw new IllegalArgumentException("args must not be null/empty");
+    }
+
+    if (excIds == null || excIds.isEmpty()) {
+      throw new IllegalArgumentException("excIds must not be null/empty");
+    }
 
     this.sysReg = sysReg;
     this.retReg = retReg;
@@ -101,6 +115,11 @@ public class UserModeEmulation extends Definition {
     this.sigtrampTrapInstr = sigtrampTrapInstr;
   }
 
+  /**
+   * Creates a default {@link UserModeEmulation} configuration,
+   * pre-configured for the RISC-V architecture.
+   * * @return a standard RISC-V user-mode emulation setup.
+   */
   public static UserModeEmulation createDefault() {
     Identifier identifier = new Identifier(new String[]{"ume"}, SourceLocation.INVALID_SOURCE_LOCATION);
     Map<String, Integer> excIds = Map.of("ILLEGAL_INSTR", 2, "BREAKPOINT", 3, "ECALL", 11);
