@@ -73,12 +73,11 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
         .findFirst()
         .ifPresent(ume -> {
           vars.put("config", ume);
-          vars.put("insn_width_bytes", 4); // or get from elsewhere if needed
+          vars.put("insn_width_bytes", 4);
         });*/
 
     UserModeEmulation ume = UserModeEmulation.createDefault();
     vars.put("config", ume.asMap());
-    vars.put("insn_width_bytes", 4); // or get from elsewhere if needed
 
     return vars;
   }

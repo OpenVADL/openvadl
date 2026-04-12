@@ -36,11 +36,14 @@ public class UserModeEmulation extends Definition {
           Map.entry("SYSCALL_NAME", syscallExcName),
           Map.entry("BREAKPOINT_NAME", breakpointExcName),
           Map.entry("ILLEGAL_INSTR_NAME", illegalInstrExcName),
-          // NEW FIELDS FOR CPU_LOOP.C:
           Map.entry("ptRegPc", ptRegPc),
           Map.entry("ptRegSp", ptRegSp),
           Map.entry("excCauseVar", excCauseVar),
-          Map.entry("hasIcacheFlush", hasIcacheFlush)
+          Map.entry("hasIcacheFlush", hasIcacheFlush),
+          Map.entry("insn_width_bytes", insnWidthBytes),
+          Map.entry("stack_align_mask", stackAlignMask),
+          Map.entry("sigtrampLoadSyscallInstr", sigtrampLoadSyscallInstr),
+          Map.entry("sigtrampTrapInstr", sigtrampTrapInstr)
       );
     }
 
@@ -54,11 +57,14 @@ public class UserModeEmulation extends Definition {
   private final String syscallExcName;
   private final String breakpointExcName;
   private final String illegalInstrExcName;
-  // NEW FIELDS:
   private final String ptRegPc;
   private final String ptRegSp;
   private final String excCauseVar;
   private final boolean hasIcacheFlush;
+  private final int insnWidthBytes;
+  private final int stackAlignMask;
+  private final int sigtrampLoadSyscallInstr;
+  private final int sigtrampTrapInstr;
 
   /**
    * Constructs a UserModeEmulation configuration.
@@ -68,7 +74,9 @@ public class UserModeEmulation extends Definition {
       int sysReg, int retReg, int spReg, int raReg, int tpReg,
       List<Integer> args, Map<String, Integer> excIds,
       String syscallExcName, String breakpointExcName, String illegalInstrExcName,
-      String ptRegPc, String ptRegSp, String excCauseVar, boolean hasIcacheFlush) {
+      String ptRegPc, String ptRegSp, String excCauseVar, boolean hasIcacheFlush,
+      int insnWidthBytes, int stackAlignMask, int sigtrampLoadSyscallInstr,
+      int sigtrampTrapInstr) {
     super(identifier);
     if (args == null || args.isEmpty()) throw new IllegalArgumentException("args must not be null/empty");
     if (excIds == null || excIds.isEmpty()) throw new IllegalArgumentException("excIds must not be null/empty");
@@ -87,6 +95,10 @@ public class UserModeEmulation extends Definition {
     this.ptRegSp = ptRegSp;
     this.excCauseVar = excCauseVar;
     this.hasIcacheFlush = hasIcacheFlush;
+    this.insnWidthBytes = insnWidthBytes;
+    this.stackAlignMask = stackAlignMask;
+    this.sigtrampLoadSyscallInstr = sigtrampLoadSyscallInstr;
+    this.sigtrampTrapInstr = sigtrampTrapInstr;
   }
 
   public static UserModeEmulation createDefault() {
@@ -99,8 +111,25 @@ public class UserModeEmulation extends Definition {
         List.of(10, 11, 12, 13, 14, 15),
         excIds,
         "ECALL", "BREAKPOINT", "ILLEGAL_INSTR",
-        "sepc", "sp", "arg_exc_cause", true
+        "sepc", "sp", "arg_exc_cause", true,
+        4, 0xf, 0x08b00893, 0x00000073
     );
+  }
+
+  public int getSigtrampLoadSyscallInstr() {
+    return sigtrampLoadSyscallInstr;
+  }
+
+  public int getSigtrampTrapInstr() {
+    return sigtrampTrapInstr;
+  }
+
+  public int getStackAlignMask() {
+    return stackAlignMask;
+  }
+
+  public int getInsnWidthBytes() {
+    return insnWidthBytes;
   }
 
   public String getPtRegPc() {

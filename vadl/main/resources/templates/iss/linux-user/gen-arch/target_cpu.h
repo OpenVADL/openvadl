@@ -19,7 +19,7 @@ static inline void cpu_clone_regs_child(CPU[(${gen_arch_upper})]State *env, targ
         env->[(${register_tensors[0].name_lower})][ [(${gen_arch_upper})]_REG_SP] = newsp;
     }
 
-    env->[(${register_tensors[0].name_lower})][ [(${gen_arch_upper})]_REG_A0] = 0;
+    env->[(${register_tensors[0].name_lower})][ [(${config.retReg})] ] = 0;
 }
 
 static inline void cpu_clone_regs_parent(CPU[(${gen_arch_upper})]State *env, unsigned flags)

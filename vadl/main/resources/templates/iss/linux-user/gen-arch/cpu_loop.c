@@ -65,15 +65,18 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
                 [/]
                     ret = do_syscall(env,
                                       env->[(${register_tensors[0].name_lower})][ [(${config.sysReg})] ],
-                                       [# th:each="arg : ${config.args}"]
-                                        env->[(${register_tensors[0].name_lower})][ [(${arg})] ],
-                                       [/]
-                                      0, 0);
+                                                       [(${config.args.size() > 0 ? 'env->' + register_tensors[0].name_lower + '[' + config.args.get(0) + ']' : '0'})],
+                                                       [(${config.args.size() > 1 ? 'env->' + register_tensors[0].name_lower + '[' + config.args.get(1) + ']' : '0'})],
+                                                       [(${config.args.size() > 2 ? 'env->' + register_tensors[0].name_lower + '[' + config.args.get(2) + ']' : '0'})],
+                                                       [(${config.args.size() > 3 ? 'env->' + register_tensors[0].name_lower + '[' + config.args.get(3) + ']' : '0'})],
+                                                       [(${config.args.size() > 4 ? 'env->' + register_tensors[0].name_lower + '[' + config.args.get(4) + ']' : '0'})],
+                                                       [(${config.args.size() > 5 ? 'env->' + register_tensors[0].name_lower + '[' + config.args.get(5) + ']' : '0'})],
+                                                       0, 0);
                 [# th:if="${config.hasIcacheFlush}"]
                 }
                 [/]
                 if (ret == -QEMU_ERESTARTSYS) {
-                    env->[(${pc_reg.name_lower})] -= [(${config.insn_width_bytes})];;
+                    env->[(${pc_reg.name_lower})] -= [(${config.insn_width_bytes})];
                 } else if (ret != -QEMU_ESIGRETURN) {
                     env->[(${register_tensors[0].name_lower})][ [(${config.retReg})] ] = ret;                }
                 if (cs->singlestep_enabled) {
@@ -85,8 +88,7 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
                 break;
             case [(${gen_arch_upper})]_EXC_[(${config.BREAKPOINT_NAME})]:
             case EXCP_DEBUG:
-gdbstep:
-                force_sig_fault(TARGET_SIGTRAP, TARGET_TRAP_BRKPT, env->[(${pc_reg.name_lower})]);
+            gdbstep:
                 force_sig_fault(TARGET_SIGTRAP, TARGET_TRAP_BRKPT, env->[(${pc_reg.name_lower})]);
                 break;
             default:
