@@ -94,7 +94,6 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
             default:
                 EXCP_DUMP(env,
                           "\nqemu: unhandled [(${gen_arch_lower})] exception cause %#x - aborting\n",
-                          "\nqemu: unhandled [(${gen_arch_lower})] exception cause %#x - aborting\n",
                           cause);
                 exit(EXIT_FAILURE);
             }
