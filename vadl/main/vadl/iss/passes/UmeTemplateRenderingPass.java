@@ -24,6 +24,16 @@ import vadl.pass.PassResults;
 import vadl.viam.Specification;
 import vadl.viam.UserModeEmulation;
 
+/**
+ * A specialized template rendering pass for QEMU User-Mode Emulation (UME) source files.
+ * <p>
+ * This pass populates the template context with architecture-specific configurations
+ * required for Linux user-mode emulation, such as register mappings for system calls,
+ * stack alignment, and exception handling indices.
+ * </p>
+ * * @see IssTemplateRenderingPass
+ * @see UserModeEmulation
+ */
 public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
 
   private final String templateFilename;
@@ -46,35 +56,6 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(PassResults passResults, Specification specification) {
     var vars = super.createVariables(passResults, specification);
-
-    //if (specification.userModeEmulation().isPresent()) {
-    //  var umeDef = specification.userModeEmulation().get();
-
-    //TODO remove hardcoded values (finish vadl with ume)
-     /* int extractedSysReg = 17;
-      int extractedRetReg = 10;
-      int extractedSpReg = 2;
-      int extractedRaReg = 1;
-      int extractedTpReg = 4;
-      List<Integer> extractedArgs = List.of(10, 11, 12, 13, 14, 15);
-      Map<String, Integer> extractedExcIds = Map.of(
-          "ILLEGAL_INSTR", 2,
-          "BREAKPOINT", 3,
-          "ECALL", 11
-      );
-
-    vars.put("config", new UmeInfo(extractedSysReg, extractedRetReg, extractedSpReg, extractedRaReg, extractedTpReg, extractedArgs, extractedExcIds));
-    vars.put("insn_width_bytes", 4); */
-   // }
-
-    /*specification.definitions()
-        .filter(UserModeEmulation.class::isInstance)
-        .map(UserModeEmulation.class::cast)
-        .findFirst()
-        .ifPresent(ume -> {
-          vars.put("config", ume);
-          vars.put("insn_width_bytes", 4);
-        });*/
 
     UserModeEmulation ume = UserModeEmulation.createDefault();
     vars.put("config", ume.asMap());
