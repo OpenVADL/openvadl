@@ -15,7 +15,7 @@
  */
 struct target_sigcontext {
     abi_long [(${pc_reg.name_lower})];
-    abi_long gpr[31];
+    abi_long gpr[ [(${register_tensors[0].size - 1})] ];
 };
 
 struct target_ucontext {
@@ -42,7 +42,7 @@ static abi_ulong get_sigframe(struct target_sigaction *ka,
     }
 
     sp = target_sigsp(sp, ka) - framesize;
-    sp &= ~0xf;
+    sp &= ~[(${config.stack_align_mask} ?: '0xf')];
 
     return sp;
 }
@@ -52,7 +52,7 @@ static void setup_sigcontext(struct target_sigcontext *sc, CPU[(${gen_arch_upper
     int i;
 
     __put_user(env->[(${pc_reg.name_lower})], &sc->[(${pc_reg.name_lower})]);
-    for (i = 1; i < 32; i++) {
+    for (i = 1; i < [(${register_tensors[0].size})]; i++) {
         __put_user(env->[(${register_tensors[0].name_lower})][i], &sc->gpr[i - 1]);
     }
 }
@@ -113,7 +113,7 @@ static void restore_sigcontext(CPU[(${gen_arch_upper})]State *env, struct target
     int i;
 
     __get_user(env->[(${pc_reg.name_lower})], &sc->[(${pc_reg.name_lower})]);
-    for (i = 1; i < 32; ++i) {
+    for (i = 1; i < [(${register_tensors[0].size})]; ++i) {
         __get_user(env->[(${register_tensors[0].name_lower})][i], &sc->gpr[i - 1]);
     }
 }
@@ -140,7 +140,7 @@ long do_rt_sigreturn(CPU[(${gen_arch_upper})]State *env)
     struct target_rt_sigframe *frame;
     abi_ulong frame_addr;
 
-    frame_addr = env->[(${register_tensors[0].name_lower})][ [(${gen_arch_upper})]_REG_SP];
+    frame_addr = env->[(${register_tensors[0].name_lower})][ [(${config.spReg})] ];
     trace_user_do_sigreturn(env, frame_addr);
     if (!lock_user_struct(VERIFY_READ, frame, frame_addr, 1)) {
         goto badframe;
@@ -163,8 +163,8 @@ void setup_sigtramp(abi_ulong sigtramp_page)
     uint32_t *tramp = lock_user(VERIFY_WRITE, sigtramp_page, 8, 0);
     assert(tramp != NULL);
 
-    __put_user(0x08b00893, tramp + 0);  /* li a7, 139 = __NR_rt_sigreturn */
-    __put_user(0x00000073, tramp + 1);  /* ecall */
+    __put_user([(${config.sigtrampLoadSyscallInstr})], tramp + 0);  /* load rt_sigreturn syscall number */
+    __put_user([(${config.sigtrampTrapInstr})], tramp + 1);  /* syscall/trap instruction */
 
     default_rt_sigreturn = sigtramp_page;
     unlock_user(tramp, sigtramp_page, 8);

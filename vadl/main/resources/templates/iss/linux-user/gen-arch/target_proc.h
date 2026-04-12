@@ -12,7 +12,7 @@ static int open_cpuinfo(CPUArchState *cpu_env, int fd)
 
     dprintf(fd, "processor\t: 0\n");
     dprintf(fd, "hart\t\t: 0\n");
-    dprintf(fd, "isa\t\t: rv64im\n");
+    dprintf(fd, "isa\t\t: [(${gen_arch_lower})]\n");
     dprintf(fd, "mmu\t\t: none\n");
     dprintf(fd, "uarch\t\t: qemu\n\n");
 
