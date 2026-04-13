@@ -25,6 +25,7 @@ refman/tutorial.md \
 refman/refmanual.md \
 handbook/iss.md \
 handbook/lcb.md \
+handbook/cosim.md \
 ../vadl/main/vadl/ast/vadl.ATG \
 refman/acronyms.md
 
