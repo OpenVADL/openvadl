@@ -93,8 +93,7 @@ public class FrontendSnapshotTests {
 
       ViamVerifier.verifyAllIn(spec);
 
-      // FIXME: Reenable once #843 is resolved
-      //ViamLocationExistenceChecker.verify(spec);
+      ViamLocationExistenceChecker.verify(spec);
 
     } catch (DiagnosticList d) {
       diagnostics = d.items;

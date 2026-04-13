@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -62,7 +62,9 @@ public abstract class Logic extends Definition implements DefProp.WithBehavior {
 
     // dummy graph with minimal control flow
     var end = new ProcEndNode(new NodeList<>());
+    end.setSourceLocation(identifier.location());
     var start = new StartNode(end);
+    start.setSourceLocation(identifier.location());
     this.behavior.add(end);
     this.behavior.add(start);
   }

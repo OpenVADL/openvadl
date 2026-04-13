@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
+import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.dependency.DependencyNode;
 
 /**
@@ -115,6 +116,12 @@ public abstract class Node implements WithLocation {
     this.sourceLocation = sourceLocation;
     for (Node input : inputList()) {
       input.setSourceLocationRecursively(sourceLocation);
+    }
+    if (this instanceof ControlNode controlNode) {
+      var predecessor = controlNode.predecessor();
+      if (predecessor != null) {
+        predecessor.setSourceLocationRecursively(sourceLocation);
+      }
     }
   }
 

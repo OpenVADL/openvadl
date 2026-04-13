@@ -16,7 +16,6 @@
 
 package vadl.ast;
 
-import java.io.IOException;
 import java.nio.file.Paths;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -44,10 +43,10 @@ public class FrontendIntegrationTest {
       "../sys/risc-v/mia/rv_5stage.vadl",
       "../sys/v-risc/ABI.vadl"
   })
-  public void testFrontendPassingOnSysSpecs(String filename) throws IOException {
+  public void testFrontendPassingOnSysSpecs(String filename) {
     var spec = Frontend.compileToViam(Paths.get(filename), new DiskVirtualFileSystem());
     ViamVerifier.verifyAllIn(spec);
-    //ViamLocationExistenceChecker.verify(spec);
+    ViamLocationExistenceChecker.verify(spec);
   }
 
 }

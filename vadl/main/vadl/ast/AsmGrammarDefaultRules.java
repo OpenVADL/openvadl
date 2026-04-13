@@ -32,6 +32,7 @@ import vadl.types.asmTypes.StringAsmType;
 import vadl.types.asmTypes.SymbolAsmType;
 import vadl.types.asmTypes.VoidAsmType;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithLocation;
 
 /**
  * Defines default rules for the assembly grammar.
@@ -160,23 +161,24 @@ public class AsmGrammarDefaultRules {
    *
    * @return a function definition that negates a 64-bit integer
    */
-  public static FunctionDefinition asmNegFunctionDefinition() {
+  public static FunctionDefinition asmNegFunctionDefinition(WithLocation locatable) {
+    var loc = locatable.location();
     return new FunctionDefinition(
-        new Identifier(BUILTIN_ASM_NEG, SourceLocation.INVALID_SOURCE_LOCATION),
+        new Identifier(BUILTIN_ASM_NEG, loc),
         new ArrayList<>(List.of(
             new Parameter(
-                new Identifier("x", SourceLocation.INVALID_SOURCE_LOCATION),
-                new TypeLiteral(new Identifier("SInt", SourceLocation.INVALID_SOURCE_LOCATION),
-                    List.of(new IntegerLiteral("64", SourceLocation.INVALID_SOURCE_LOCATION)),
-                    SourceLocation.INVALID_SOURCE_LOCATION)
+                new Identifier("x", loc),
+                new TypeLiteral(new Identifier("SInt", loc),
+                    List.of(new IntegerLiteral("64", loc)),
+                    loc)
             )
         )),
-        new TypeLiteral(new Identifier("SInt", SourceLocation.INVALID_SOURCE_LOCATION),
-            List.of(new IntegerLiteral("64", SourceLocation.INVALID_SOURCE_LOCATION)),
-            SourceLocation.INVALID_SOURCE_LOCATION),
-        new UnaryExpr(new UnOp(UnaryOperator.NEGATIVE, SourceLocation.INVALID_SOURCE_LOCATION),
-            new Identifier("x", SourceLocation.INVALID_SOURCE_LOCATION)),
-        SourceLocation.INVALID_SOURCE_LOCATION
+        new TypeLiteral(new Identifier("SInt", loc),
+            List.of(new IntegerLiteral("64", loc)),
+            loc),
+        new UnaryExpr(new UnOp(UnaryOperator.NEGATIVE, loc),
+            new Identifier("x", loc)),
+        loc
     );
   }
 

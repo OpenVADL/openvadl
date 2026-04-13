@@ -712,7 +712,8 @@ class SymbolTable {
           def -> def instanceof FunctionDefinition functionDef
               && functionDef.name.path().pathToString()
               .equals(AsmGrammarDefaultRules.BUILTIN_ASM_NEG))) {
-        definition.commonDefinitions.add(AsmGrammarDefaultRules.asmNegFunctionDefinition());
+        definition.commonDefinitions.add(
+            AsmGrammarDefaultRules.asmNegFunctionDefinition(definition.location()));
       }
       definition.commonDefinitions.forEach(
           commonDef -> commonDef.accept(this));

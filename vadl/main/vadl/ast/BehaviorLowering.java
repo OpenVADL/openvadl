@@ -338,7 +338,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             0);
         params.add(param);
         var funcParam = new FuncParamNode(param);
-        funcParam.setSourceLocation(identifier.location());
         indices.add(funcParam);
       }
       resultType = tensorType.innerType();
@@ -406,7 +405,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // all branches.
       throw new IllegalStateException();
     }
-    regAccess.setSourceLocation(identifier.location());
 
     // Handle Zero Annotation on the alias register
     final var zeroConst = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
@@ -429,7 +427,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     var returnNode = graph.addWithInputs(new ReturnNode(regAccess));
-    returnNode.setSourceLocation(definition.value.location());
+    returnNode.setSourceLocationRecursively(definition.value.location());
     var startNode = graph.addWithInputs(new StartNode(returnNode));
     startNode.setSourceLocation(definition.value.location());
 
@@ -588,17 +586,21 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // If there is no zero constraint on the artifical resource
       // we attach the side effect to the proc end node
       nextOfStart = graph.addWithInputs(new ProcEndNode(new NodeList<>(regfileWrite)));
+      nextOfStart.setSourceLocationRecursively(definition.value.location());
     } else {
       // If there is a zero constraint, we must build an if-else control flow
       // and apply the side effect on the true branch of the if
       // (so in the case that the indices don't match the constraint values).
       var dontMatch = buildConstraintDontMatchCheck(indices, zeroConst.indices);
       var end = graph.addWithInputs(new ProcEndNode(new NodeList<>()));
+      end.setSourceLocationRecursively(definition.value.location());
       nextOfStart =
-          ifElseSideEffect(graph, dontMatch, List.of(regfileWrite), List.of(), end);
+          ifElseSideEffect(graph, dontMatch, List.of(regfileWrite), List.of(), end,
+              definition.value.location());
     }
 
-    graph.addWithInputs(new StartNode(nextOfStart));
+    var startNode = graph.addWithInputs(new StartNode(nextOfStart));
+    startNode.setSourceLocationRecursively(definition.value.location());
 
     return new Procedure(
         identifier,
@@ -2071,7 +2073,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
       end = addToGraph(
           new MergeNode(new NodeList<>(consequencePair.right(), contradictionPair.right())));
+      end.setSourceLocationRecursively(statement.location());
       start = addToGraph(new IfNode(condition, consequencePair.left(), contradictionPair.left()));
+      start.setSourceLocationRecursively(statement.location());
     }
 
 
