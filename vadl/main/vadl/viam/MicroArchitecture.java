@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -38,6 +38,7 @@ public class MicroArchitecture extends Definition {
   private final List<Memory> memories;
 
   private final List<Function> functions;
+  private final List<Operation> operations;
 
   /**
    * Create a micro architecture definition.
@@ -52,8 +53,7 @@ public class MicroArchitecture extends Definition {
                            List<Stage> stages,
                            List<Logic> logic) {
     this(identifier, instructionSetArchitecture, stages, logic, new ArrayList<>(),
-        new ArrayList<>(),
-        new ArrayList<>(), new ArrayList<>());
+        new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
   }
 
   /**
@@ -67,12 +67,14 @@ public class MicroArchitecture extends Definition {
    * @param registers                  list of registers (tensors)
    * @param memories                   list of memories
    * @param functions                  list of functions
+   * @param operations                 list of operations
    */
   public MicroArchitecture(Identifier identifier,
                            InstructionSetArchitecture instructionSetArchitecture,
                            List<Stage> stages,
                            List<Logic> logic, List<Signal> signals, List<RegisterTensor> registers,
-                           List<Memory> memories, List<Function> functions) {
+                           List<Memory> memories, List<Function> functions,
+                           List<Operation> operations) {
     super(identifier);
     this.instructionSetArchitecture = instructionSetArchitecture;
     this.stages = stages;
@@ -81,6 +83,7 @@ public class MicroArchitecture extends Definition {
     this.registers = registers;
     this.memories = memories;
     this.functions = functions;
+    this.operations = operations;
 
     for (Stage stage : stages) {
       stage.setMia(this);
@@ -134,6 +137,10 @@ public class MicroArchitecture extends Definition {
 
   public List<Function> ownFunctions() {
     return functions;
+  }
+
+  public List<Operation> ownOperations() {
+    return operations;
   }
 
   @Override

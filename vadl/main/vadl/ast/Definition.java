@@ -3237,7 +3237,17 @@ class ProcessDefinition extends Definition implements IdentifiableNode {
 
 class OperationDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder name;
+
+  @Child
   List<IsId> resources;
+
+  /**
+   * This is the actual set of instructions this operation set contains.
+   * The resources might contain other operations, however here they are expaned.
+   * Populated by the Typechecker.
+   */
+  Set<InstructionDefinition> instructions = new HashSet<>();
+
   SourceLocation loc;
 
   OperationDefinition(IdentifierOrPlaceholder name, List<IsId> resources, SourceLocation loc) {

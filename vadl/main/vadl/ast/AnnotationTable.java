@@ -185,6 +185,17 @@ public class AnnotationTable {
         })
         .build();
 
+    annotationOn(InstructionDefinition.class, "operation",
+        () -> new IdentifersAnnotation(OperationDefinition.class))
+        .check((def, annotation, lowering) -> {
+          // Add the definition to the operation defined
+          annotation.identifiers.forEach(identifier -> {
+            var operation = (OperationDefinition) requireNonNull(identifier.target());
+            operation.instructions.add(def);
+          });
+        })
+        .build();
+
     annotationOn(AliasDefinition.class, "overwrite source",
         () -> new EnumAnnotation(List.of("zero", "sign")))
         .check((def, annotation, lowering) -> {
@@ -1265,6 +1276,125 @@ class EnumAnnotation extends Annotation {
     return "[ " + name + " : " + options + " ]";
   }
 }
+
+/**
+ * A simple annotation that stores a single Identifier.
+ *
+ * <p>Examples for such annotations:
+ * <pre>
+ * [ relatedInstr : ADDI ]
+ * </pre>
+ */
+class IdentiferAnnotation extends Annotation {
+  @LazyInit
+  Identifier identifier;
+
+  @Nullable
+  final Class<? extends Definition> targetClass;
+
+  public IdentiferAnnotation() {
+    super();
+    targetClass = null;
+  }
+
+  public IdentiferAnnotation(Class<? extends Definition> targetClass) {
+    super();
+    this.targetClass = targetClass;
+  }
+
+  @Override
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+    verifyValuesCnt(definition, 1);
+    var firstValue = definition.values.getFirst();
+
+    if (!(firstValue instanceof Identifier identifier)) {
+      throw error("Invalid Annotation Argument", firstValue)
+          .locationDescription(firstValue, "Expected an identifier but got %s",
+              firstValue.getClass().getSimpleName())
+          .build();
+    }
+    this.identifier = identifier;
+
+    if (targetClass != null) {
+      definition.symbolTable().requireAs(identifier, targetClass);
+    } else {
+      definition.symbolTable().requireAs(identifier, Node.class);
+    }
+  }
+
+  @Override
+  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+    // Only typecheck expressions
+    if (targetClass != null && Expr.class.isAssignableFrom(targetClass)) {
+      typeChecker.check(identifier);
+    }
+  }
+
+  @Override
+  public String usageString() {
+    return "[ " + name + " : <Id> ]";
+  }
+}
+
+/**
+ * A simple annotation that stores a one or more Identifiers.
+ *
+ * <p>Examples for such annotations:
+ * <pre>
+ * [ relatedInstr : ADDI ADDU ]
+ * </pre>
+ */
+class IdentifersAnnotation extends Annotation {
+  List<Identifier> identifiers = new ArrayList<>();
+
+  @Nullable
+  final Class<? extends Definition> targetClass;
+
+  public IdentifersAnnotation() {
+    super();
+    targetClass = null;
+  }
+
+  public IdentifersAnnotation(Class<? extends Definition> targetClass) {
+    super();
+    this.targetClass = targetClass;
+  }
+
+  @Override
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+    verifyValuesNonEmpty(definition);
+
+    for (var value : definition.values) {
+      if (!(value instanceof Identifier identifier)) {
+        throw error("Invalid Annotation Argument", value)
+            .locationDescription(value, "Expected an identifier but got %s",
+                value.getClass().getSimpleName())
+            .build();
+      }
+      identifiers.add(identifier);
+
+      if (targetClass != null) {
+        definition.symbolTable().requireAs(identifier, targetClass);
+      } else {
+        definition.symbolTable().requireAs(identifier, Node.class);
+      }
+    }
+  }
+
+  @Override
+  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+    // Only typecheck expressions
+    if (targetClass != null && Expr.class.isAssignableFrom(targetClass)) {
+      identifiers.forEach(typeChecker::check);
+    }
+  }
+
+  @Override
+  public String usageString() {
+    return "[ " + name + " : <Id>... ]";
+  }
+}
+
 
 /**
  * A annotation that holds a single expression. Used for more complex annotations.

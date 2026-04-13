@@ -1786,7 +1786,24 @@ public class TypeChecker
 
   @Override
   public Void visit(OperationDefinition operationDefinition) {
-    throwUnimplemented(operationDefinition);
+    operationDefinition.resources.forEach(resource -> {
+      switch (requireNonNull(resource.target())) {
+        case InstructionDefinition instr -> operationDefinition.instructions.add(instr);
+        case OperationDefinition op -> {
+          // Add all other operations
+          check(op);
+          operationDefinition.instructions.addAll(op.instructions);
+        }
+
+        // We don't need to stop checking we can continue after an error.
+        default -> errors.add(
+            error("Invalid Operation Member", resource)
+                .locationNote(resource, "Operation members must be instructions but this was '%s'",
+                    requireNonNull(resource.target()).getClass().getSimpleName())
+                .build());
+      }
+    });
+
     return null;
   }
 

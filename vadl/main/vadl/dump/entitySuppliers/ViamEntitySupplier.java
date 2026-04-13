@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -29,6 +29,8 @@ import vadl.viam.DefinitionVisitor;
 import vadl.viam.Encoding;
 import vadl.viam.Format;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.MicroArchitecture;
+import vadl.viam.Operation;
 import vadl.viam.Parameter;
 import vadl.viam.Specification;
 import vadl.viam.asm.AsmDirectiveMapping;
@@ -144,6 +146,18 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
     replaceAsSubEntityOfParent(encodingField);
   }
 
+
+  @Override
+  public void visit(Operation operation) {
+    // Operations should be displayed in the TOC if they are at ISA level
+    // or at MicroArchitecture level.
+    var entity = entityOf(operation);
+    Objects.requireNonNull(entity.parent());
+    if (!(entity.parent().origin() instanceof InstructionSetArchitecture)
+        && !(entity.parent().origin() instanceof MicroArchitecture)) {
+      replaceAsSubEntityOfParent(operation);
+    }
+  }
 
   @Override
   public void visit(Format.FieldAccess fieldAccess) {

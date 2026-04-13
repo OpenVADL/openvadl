@@ -159,11 +159,21 @@ public class ViamSnapshotDumper extends DefinitionVisitor.Empty {
       lineAt(atIndent, "PseudoInstructionCount: %d".formatted(isa.ownPseudoInstructions().size()));
       lineAt(atIndent, "FormatCount: %d".formatted(isa.ownFormats().size()));
       lineAt(atIndent, "FunctionCount: %d".formatted(isa.ownFunctions().size()));
+      lineAt(atIndent, "OperationCount: %d".formatted(isa.ownOperations().size()));
       lineAt(atIndent, "ExceptionCount: %d".formatted(isa.exceptions().size()));
       lineAt(atIndent, "RelocationCount: %d".formatted(isa.ownRelocations().size()));
       lineAt(atIndent, "RegisterCount: %d".formatted(isa.registerTensors().size()));
       lineAt(atIndent, "MemoryCount: %d".formatted(isa.ownMemories().size()));
       lineAt(atIndent, "ArtificialResourceCount: %d".formatted(isa.artificialResources().size()));
+    }
+
+    @Override
+    public void visit(Operation operation) {
+      lineAt(atIndent, "Instructions: %s".formatted(
+          operation.getInstructions().stream()
+              .map(Instruction::simpleName)
+              .sorted()
+              .toList()));
     }
 
     @Override
@@ -344,6 +354,7 @@ public class ViamSnapshotDumper extends DefinitionVisitor.Empty {
       lineAt(atIndent, "RegisterCount: %d".formatted(microArchitecture.ownRegisters().size()));
       lineAt(atIndent, "MemoryCount: %d".formatted(microArchitecture.ownMemories().size()));
       lineAt(atIndent, "FunctionCount: %d".formatted(microArchitecture.ownFunctions().size()));
+      lineAt(atIndent, "OperationCount: %d".formatted(microArchitecture.ownOperations().size()));
     }
 
     @Override

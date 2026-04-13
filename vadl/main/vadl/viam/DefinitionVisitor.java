@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -39,6 +39,8 @@ public interface DefinitionVisitor {
   void visit(Encoding encoding);
 
   void visit(Encoding.Field encodingField);
+
+  void visit(Operation operation);
 
   void visit(Format format);
 
@@ -127,6 +129,7 @@ public interface DefinitionVisitor {
       // do not visit PC as it is included as register in registers()
       isa.ownFormats().forEach(e -> e.accept(this));
       isa.ownFunctions().forEach(e -> e.accept(this));
+      isa.ownOperations().forEach(e -> e.accept(this));
       isa.exceptions().forEach(e -> e.accept(this));
       isa.ownRelocations().forEach(e -> e.accept(this));
       isa.registerTensors().forEach(e -> e.accept(this));
@@ -175,6 +178,12 @@ public interface DefinitionVisitor {
     public void visit(Encoding.Field encodingField) {
       beforeTraversal(encodingField);
       afterTraversal(encodingField);
+    }
+
+    @Override
+    public void visit(Operation operation) {
+      beforeTraversal(operation);
+      afterTraversal(operation);
     }
 
     @Override
@@ -314,6 +323,7 @@ public interface DefinitionVisitor {
       microArchitecture.ownRegisters().forEach(register -> register.accept(this));
       microArchitecture.ownMemories().forEach(memory -> memory.accept(this));
       microArchitecture.ownFunctions().forEach(function -> function.accept(this));
+      microArchitecture.ownOperations().forEach(operation -> operation.accept(this));
       microArchitecture.isa().accept(this);
       afterTraversal(microArchitecture);
     }
@@ -448,6 +458,11 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(Encoding.Field encodingField) {
+
+    }
+
+    @Override
+    public void visit(Operation operation) {
 
     }
 

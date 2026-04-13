@@ -73,6 +73,7 @@ import vadl.viam.Logic;
 import vadl.viam.Memory;
 import vadl.viam.MemoryRegion;
 import vadl.viam.MicroArchitecture;
+import vadl.viam.Operation;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.Procedure;
 import vadl.viam.Processor;
@@ -1539,6 +1540,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
             .toList();
     var formats = filterAndCastToInstance(allDefinitions, Format.class);
     var functions = filterAndCastToInstance(allDefinitions, Function.class);
+    var operations = filterAndCastToInstance(allDefinitions, Operation.class);
     var relocations = filterAndCastToInstance(allDefinitions, Relocation.class);
     // TODO: @flofriday include anonymous exceptions as definitions
     var exceptions = filterAndCastToInstance(allDefinitions, ExceptionDef.class);
@@ -1564,6 +1566,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         currentSpecification,
         formats,
         functions,
+        operations,
         exceptions,
         relocations,
         instructions,
@@ -1641,6 +1644,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var registers = filterAndCastToInstance(children, RegisterTensor.class);
     var memories = filterAndCastToInstance(children, Memory.class);
     var functions = filterAndCastToInstance(children, Function.class);
+    var operations = filterAndCastToInstance(children, Operation.class);
 
     return Optional.of(new MicroArchitecture(
             identifier,
@@ -1650,7 +1654,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
             signals,
             registers,
             memories,
-            functions
+            functions,
+            operations
         )
     );
   }
@@ -1723,8 +1728,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(OperationDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    return Optional.of(new vadl.viam.Operation(
+        generateIdentifier(definition.identifier().name, definition.identifier()),
+        definition.instructions.stream()
+            .map(def -> (Instruction) fetch(def).get())
+            .collect(Collectors.toSet())
+    ));
   }
 
   @Override

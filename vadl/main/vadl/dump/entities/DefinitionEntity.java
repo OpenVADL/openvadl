@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -30,6 +30,7 @@ import vadl.viam.ExceptionDef;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.Operation;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Relocation;
 import vadl.viam.Resource;
@@ -133,6 +134,7 @@ public class DefinitionEntity extends DumpEntity {
       is(Instruction.class),
       is(PseudoInstruction.class),
       is(Relocation.class),
+      is(Operation.class),
       isAndISALevel(vadl.viam.Function.class),
       is(Encoding.class),
       is(Format.FieldAccess.class)

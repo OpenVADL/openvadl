@@ -48,6 +48,7 @@ assembly Test = ""
 //    . : PseudoInstructionCount: 0
 //    . : FormatCount: 1
 //    . : FunctionCount: 1
+//    . : OperationCount: 0
 //    . : ExceptionCount: 0
 //    . : RelocationCount: 0
 //    . : RegisterCount: 4

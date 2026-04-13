@@ -31,6 +31,7 @@ instruction set architecture Tensor = {
 //    . : PseudoInstructionCount: 0
 //    . : FormatCount: 1
 //    . : FunctionCount: 0
+//    . : OperationCount: 0
 //    . : ExceptionCount: 0
 //    . : RelocationCount: 0
 //    . : RegisterCount: 1
