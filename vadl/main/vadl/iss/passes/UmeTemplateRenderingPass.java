@@ -19,6 +19,7 @@ package vadl.iss.passes;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.template.IssTemplateRenderingPass;
+import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -57,8 +58,33 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
 
-    UserModeEmulation ume = UserModeEmulation.createDefault();
-    vars.put("config", ume.asMap());
+    UserModeEmulation ume = specification.userModeEmulation()
+        .orElseThrow(() -> new IllegalStateException("No UserModeEmulation defined"));
+
+    vars.put("config", Map.ofEntries(
+        Map.entry("sysReg", ume.getSysReg().index()),
+        Map.entry("retReg", ume.getRetReg().index()),
+        Map.entry("spReg", ume.getSpReg().index()),
+        Map.entry("raReg", ume.getRaReg().index()),
+        Map.entry("tpReg", ume.getTpReg().index()),
+        Map.entry("args", ume.getArgs().stream()
+            .map(RegisterUtils.Register::index)
+            .toList()),
+        Map.entry("excIds", ume.getExcIds()),
+        Map.entry("syscallInstr", ume.getSyscallInstr().simpleName()),
+        Map.entry("syscallException", ume.getSyscallException().simpleName()),
+        Map.entry("breakpointExcName", ume.getBreakpointExcName().simpleName()),
+        Map.entry("illegalInstrExcName", ume.getIllegalInstrExcName().simpleName()),
+        Map.entry("ptRegPc", ume.getPtRegPc()),
+        Map.entry("ptRegSp", ume.getPtRegSp()),
+        Map.entry("excCauseVar", ume.getExcCauseVar().simpleName()),
+        Map.entry("hasIcacheFlush", ume.hasIcacheFlush()),
+        Map.entry("insn_width_bytes", ume.getInsnWidthBytes()),
+        Map.entry("stack_align_mask", ume.getStackAlignMask()),
+        Map.entry("sigtrampLoadSyscallInstr", ume.getSigtrampLoadSyscallInstr()),
+        Map.entry("sigtrampTrapInstr", ume.getSigtrampTrapInstr()),
+        Map.entry("mainRegisterFile", ume.getMainRegisterFile().simpleName().toLowerCase())
+    ));
 
     return vars;
   }

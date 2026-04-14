@@ -16,9 +16,16 @@
 
 package vadl.viam;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
+import vadl.lcb.templateUtils.RegisterUtils;
+import vadl.types.BitsType;
+import vadl.types.Type;
+import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
+import vadl.viam.graph.Graph;
 
 /**
  * Represents the configuration for QEMU user-mode emulation.
@@ -29,45 +36,22 @@ import vadl.utils.SourceLocation;
  * </p>
  */
 public class UserModeEmulation extends Definition {
-  /**
-   * Returns a map representation of this UserModeEmulation for template rendering.
-   */
-  public Map<String, Object> asMap() {
-    return Map.ofEntries(
-      Map.entry("sysReg", sysReg),
-      Map.entry("retReg", retReg),
-      Map.entry("spReg", spReg),
-      Map.entry("raReg", raReg),
-      Map.entry("tpReg", tpReg),
-      Map.entry("args", args),
-      Map.entry("excIds", excIds),
-      Map.entry("SYSCALL_NAME", syscallExcName),
-      Map.entry("BREAKPOINT_NAME", breakpointExcName),
-      Map.entry("ILLEGAL_INSTR_NAME", illegalInstrExcName),
-      Map.entry("ptRegPc", ptRegPc),
-      Map.entry("ptRegSp", ptRegSp),
-      Map.entry("excCauseVar", excCauseVar),
-      Map.entry("hasIcacheFlush", hasIcacheFlush),
-      Map.entry("insn_width_bytes", insnWidthBytes),
-      Map.entry("stack_align_mask", stackAlignMask),
-      Map.entry("sigtrampLoadSyscallInstr", sigtrampLoadSyscallInstr),
-      Map.entry("sigtrampTrapInstr", sigtrampTrapInstr)
-      );
-  }
 
-  private final int sysReg;
-  private final int retReg;
-  private final int spReg;
-  private final int raReg;
-  private final int tpReg;
-  private final List<Integer> args;
+  private final Identifier excCauseVar;
+  private final RegisterTensor mainRegisterFile;
+  private final RegisterUtils.Register sysReg;
+  private final RegisterUtils.Register retReg;
+  private final RegisterUtils.Register spReg;
+  private final RegisterUtils.Register raReg;
+  private final RegisterUtils.Register tpReg;
+  private final List<RegisterUtils.Register> args;
   private final Map<String, Integer> excIds;
-  private final String syscallExcName;
-  private final String breakpointExcName;
-  private final String illegalInstrExcName;
+  private final Instruction syscallInstr;
+  private final ExceptionDef syscallException;
+  private final ExceptionDef breakpointExcName;
+  private final ExceptionDef illegalInstrExcName;
   private final String ptRegPc;
   private final String ptRegSp;
-  private final String excCauseVar;
   private final boolean hasIcacheFlush;
   private final int insnWidthBytes;
   private final int stackAlignMask;
@@ -78,15 +62,20 @@ public class UserModeEmulation extends Definition {
    * Constructs a UserModeEmulation configuration.
    */
   public UserModeEmulation(
-      Identifier identifier,
-      int sysReg, int retReg, int spReg, int raReg, int tpReg,
-      List<Integer> args, Map<String, Integer> excIds,
-      String syscallExcName, String breakpointExcName, String illegalInstrExcName,
-      String ptRegPc, String ptRegSp, String excCauseVar, boolean hasIcacheFlush,
+      Identifier identifier, ExceptionDef syscallException,
+      RegisterTensor mainRegisterFile,
+      RegisterUtils.Register sysReg, RegisterUtils.Register retReg,
+      RegisterUtils.Register spReg, RegisterUtils.Register raReg, RegisterUtils.Register tpReg,
+      List<RegisterUtils.Register> args, Map<String, Integer> excIds,
+      Instruction syscallInstr, ExceptionDef breakpointExcName,
+      ExceptionDef illegalInstrExcName,
+      String ptRegPc, String ptRegSp, Identifier excCauseVar, boolean hasIcacheFlush,
       int insnWidthBytes, int stackAlignMask, int sigtrampLoadSyscallInstr,
       int sigtrampTrapInstr) {
 
     super(identifier);
+    this.syscallException = syscallException;
+    this.mainRegisterFile = mainRegisterFile;
     if (args == null || args.isEmpty()) {
       throw new IllegalArgumentException("args must not be null/empty");
     }
@@ -102,7 +91,7 @@ public class UserModeEmulation extends Definition {
     this.tpReg = tpReg;
     this.args = args;
     this.excIds = excIds;
-    this.syscallExcName = syscallExcName;
+    this.syscallInstr = syscallInstr;
     this.breakpointExcName = breakpointExcName;
     this.illegalInstrExcName = illegalInstrExcName;
     this.ptRegPc = ptRegPc;
@@ -123,17 +112,118 @@ public class UserModeEmulation extends Definition {
   public static UserModeEmulation createDefault() {
     Identifier identifier = new Identifier(new String[]{"ume"},
         SourceLocation.INVALID_SOURCE_LOCATION);
-    Map<String, Integer> excIds = Map.of("ILLEGAL_INSTR",
-        2, "BREAKPOINT", 3, "ECALL", 11);
+
+    RegisterTensor.Dimension regDim = new RegisterTensor.Dimension(
+        0,
+        Type.bits(5),
+        32
+    );
+
+    RegisterTensor.Dimension dummyDim = new RegisterTensor.Dimension(
+        1,
+        Type.bits(1),
+        1
+    );
+
+    List<RegisterTensor.Dimension> dimensions = List.of(regDim, dummyDim);
+    RegisterTensor mainFile = new RegisterTensor(
+        new Identifier(new String[]{"x"},
+            SourceLocation.INVALID_SOURCE_LOCATION),
+        dimensions
+    );
+
+    var dummyMap = new HashMap<Pair<RegisterResource, Integer>, List<Abi.RegisterAlias>>();
+
+    RegisterUtils.RegisterClass gprClass = RegisterUtils.getRegisterClass(mainFile, dummyMap);
+
+    RegisterUtils.Register sp = gprClass.registers().get(2);
+    RegisterUtils.Register ra = gprClass.registers().get(1);
+    RegisterUtils.Register tp = gprClass.registers().get(4);
+    RegisterUtils.Register sys = gprClass.registers().get(17);
+    RegisterUtils.Register ret = gprClass.registers().get(10);
+
+    List<RegisterUtils.Register> args = IntStream.range(10, 16)
+        .mapToObj(i -> gprClass.registers().get(i))
+        .toList();
+
+    Parameter[] emptyParams = new Parameter[0];
+    Graph emptyGraph = new Graph("empty_graph");
+
+    ExceptionDef mockSyscallExc = new ExceptionDef(
+        new Identifier(new String[]{"EXC"},
+            SourceLocation.INVALID_SOURCE_LOCATION),
+        emptyParams,
+        emptyGraph,
+        ExceptionDef.Kind.DECLARED
+    );
+
+    ExceptionDef mockBreakpointExc = new ExceptionDef(
+        new Identifier(new String[]{"BREAKPOINT"},
+            SourceLocation.INVALID_SOURCE_LOCATION),
+        emptyParams,
+        emptyGraph,
+        ExceptionDef.Kind.DECLARED
+    );
+
+    ExceptionDef mockIllegalExc = new ExceptionDef(
+        new Identifier(new String[]{"ILLEGAL_INSTR"},
+            SourceLocation.INVALID_SOURCE_LOCATION),
+        emptyParams,
+        emptyGraph,
+        ExceptionDef.Kind.DECLARED
+    );
+
+    BitsType mockType = BitsType.bits(32);
+
+    Function mockFunc = new Function(
+        new Identifier(new String[]{"dummy_function"},
+            SourceLocation.INVALID_SOURCE_LOCATION),
+        new Parameter[0],
+        Type.string(),
+        emptyGraph
+    );
+
+    Assembly emptyAssembly = new Assembly(new Identifier(new String[]{"dummy_assembly"},
+        SourceLocation.INVALID_SOURCE_LOCATION), mockFunc);
+
+    Format dummyFormat = new Format(new Identifier(new String[]{"dummy_format"},
+        SourceLocation.INVALID_SOURCE_LOCATION), mockType);
+
+    Encoding emptyEncoding = new Encoding(
+        new Identifier(new String[]{"dummy_encoding"},
+            SourceLocation.INVALID_SOURCE_LOCATION),
+        dummyFormat, new Encoding.Field[0]);
+
+    Instruction mockSyscallInsn = new Instruction(
+        new Identifier(new String[]{"ECALL"},
+            SourceLocation.INVALID_SOURCE_LOCATION),
+        emptyGraph, emptyAssembly, emptyEncoding
+    );
+
+
+    Identifier riscvCauseVar = new Identifier(new String[]{"cause"},
+        SourceLocation.INVALID_SOURCE_LOCATION);
+
+    Map<String, Integer> excIds = Map.of(
+        "ILLEGAL_INSTR", 2,
+        "BREAKPOINT", 3,
+        "ECALL", 11
+    );
+
 
     return new UserModeEmulation(
         identifier,
-        17, 10, 2, 1, 4,
-        List.of(10, 11, 12, 13, 14, 15),
+        mockSyscallExc,
+        mainFile,
+        sys, ret, sp, ra, tp,
+        args,
         excIds,
-        "ECALL", "BREAKPOINT", "ILLEGAL_INSTR",
-        "sepc", "sp", "arg_exc_cause", true,
-        4, 0xf, 0x08b00893, 0x00000073
+        mockSyscallInsn,
+        mockBreakpointExc,
+        mockIllegalExc,
+        "sepc", "sp", riscvCauseVar,
+        true, 4, 0xf,
+        0x08b00893, 0x00000073
     );
   }
 
@@ -161,7 +251,7 @@ public class UserModeEmulation extends Definition {
     return ptRegSp;
   }
 
-  public String getExcCauseVar() {
+  public Identifier getExcCauseVar() {
     return excCauseVar;
   }
 
@@ -169,44 +259,52 @@ public class UserModeEmulation extends Definition {
     return hasIcacheFlush;
   }
 
-  public String getSyscallExcName() {
-    return syscallExcName;
+  public Instruction getSyscallInstr() {
+    return syscallInstr;
   }
 
-  public String getBreakpointExcName() {
+  public ExceptionDef getBreakpointExcName() {
     return breakpointExcName;
   }
 
-  public String getIllegalInstrExcName() {
+  public ExceptionDef getIllegalInstrExcName() {
     return illegalInstrExcName;
   }
 
-  public int getSysReg() {
+  public RegisterUtils.Register getSysReg() {
     return sysReg;
   }
 
-  public int getRetReg() {
+  public RegisterUtils.Register getRetReg() {
     return retReg;
   }
 
-  public int getSpReg() {
+  public RegisterUtils.Register getSpReg() {
     return spReg;
   }
 
-  public int getRaReg() {
+  public RegisterUtils.Register getRaReg() {
     return raReg;
   }
 
-  public int getTpReg() {
+  public RegisterUtils.Register getTpReg() {
     return tpReg;
   }
 
-  public List<Integer> getArgs() {
+  public List<RegisterUtils.Register> getArgs() {
     return args;
   }
 
   public Map<String, Integer> getExcIds() {
     return excIds;
+  }
+
+  public ExceptionDef getSyscallException() {
+    return syscallException;
+  }
+
+  public RegisterTensor getMainRegisterFile() {
+    return mainRegisterFile;
   }
 
   @Override
