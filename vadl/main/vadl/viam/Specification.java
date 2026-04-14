@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -135,6 +135,16 @@ public class Specification extends Definition {
     ).orElse(Stream.empty());
 
     return Stream.concat(formats(), innerFormats);
+  }
+
+  /**
+   * Returns the ume of the specification.
+   */
+  public Optional<UserModeEmulation> userModeEmulation() {
+    return definitions()
+        .filter(UserModeEmulation.class::isInstance)
+        .map(UserModeEmulation.class::cast)
+        .findFirst();
   }
 
   public void add(Definition definition) {
