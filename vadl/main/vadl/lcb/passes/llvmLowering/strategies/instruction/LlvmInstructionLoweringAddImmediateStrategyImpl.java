@@ -29,6 +29,7 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.types.DataType;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
@@ -42,8 +43,8 @@ public class LlvmInstructionLoweringAddImmediateStrategyImpl
   private final Set<MachineInstructionLabel> supported = Set.of(ADDI_32, ADDI_64);
 
   public LlvmInstructionLoweringAddImmediateStrategyImpl(
-      ValueType architectureType) {
-    super(architectureType);
+      ValueType architectureType, ValueType smallestRegisterWidth) {
+    super(architectureType, smallestRegisterWidth);
   }
 
   @Override

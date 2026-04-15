@@ -23,17 +23,22 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.error.Diagnostic;
 import vadl.gcb.valuetypes.ValueType;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
+import vadl.types.DataType;
 import vadl.viam.Instruction;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.annotations.FieldAccessAnnotation;
 import vadl.viam.graph.Graph;
@@ -63,6 +68,23 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
     var snapshots =
         (Map<Instruction, Graph>) passResults.lastResultOf(SnapshotInstructionBehaviorPass.class);
     var immediates = new ArrayList<TableGenImmediateRecord>();
+    var generateTableGenRegistersPassOutput =
+        ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
+            GenerateTableGenRegistersPass.class));
+    var registerFiles =
+        Stream.concat(generateTableGenRegistersPassOutput.registerClasses().stream(),
+            generateTableGenRegistersPassOutput.aliasRegisterClasses().stream()).toList();
+    var smallestRegisterWidth = registerFiles
+      .stream()
+      .flatMap(r -> r.regTypes().stream())
+      .min(new Comparator<>() {
+        @Override
+        public int compare(ValueType o1, ValueType o2) {
+          return o1.getBitwidth() - o2.getBitwidth();
+        }
+      })
+      // TODO
+      .get();
 
     // We do it first for machine instructions.
     snapshots.entrySet().stream().sorted(
@@ -92,10 +114,13 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
                 var type = (BitsType) fieldAccessRefNode.type().asDataType();
                 var upcastedType = CppTypeMap.upcast(type.makeSigned());
                 var upcastedValueType =
-                    ensurePresent(ValueType.from(upcastedType), () -> Diagnostic.error(
-                        "Compiler generator was not able to change the type to the architecture's "
-                            + "bit width: " + upcastedType.toString(),
-                        fieldAccess.location()));
+                    ensurePresent(
+                        ValueType.from(upcastedType), 
+                        () -> Diagnostic.error("Compiler generator was not able to change the type to the architecture's " + "bit width: " + upcastedType.toString(),
+                          fieldAccess.location()));
+                upcastedValueType = upcastedValueType.getBitwidth() < smallestRegisterWidth.getBitwidth()
+                    ? smallestRegisterWidth
+                    : upcastedValueType;
                 var upcastAnnotation = instruction.annotation(FieldAccessAnnotation.class);
                 if (upcastAnnotation != null) {
                   var upcastedCppType = CppTypeMap.upcast(upcastAnnotation.resultBitWidth());

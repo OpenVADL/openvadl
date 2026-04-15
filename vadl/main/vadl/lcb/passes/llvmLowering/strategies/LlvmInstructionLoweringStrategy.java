@@ -70,6 +70,8 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPa
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
 import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
+import vadl.types.DataType;
+import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
@@ -111,9 +113,11 @@ import vadl.viam.passes.canonicalization.Canonicalizer;
  */
 public abstract class LlvmInstructionLoweringStrategy {
   protected final ValueType architectureType;
+  protected final ValueType smallestRegisterWidth;
 
-  public LlvmInstructionLoweringStrategy(ValueType architectureType) {
+  public LlvmInstructionLoweringStrategy(ValueType architectureType, ValueType smallestRegisterWidth) {
     this.architectureType = architectureType;
+    this.smallestRegisterWidth = smallestRegisterWidth;
   }
 
   /**
@@ -240,6 +244,7 @@ public abstract class LlvmInstructionLoweringStrategy {
             () -> Diagnostic.error("There is no lowered field access",
                 instruction.location().join(immediateOperand.fieldAccess().location())));
         var upcastAnnotation = instruction.annotation(FieldAccessAnnotation.class);
+        // TODO
         if (upcastAnnotation != null) {
           var upcastedCppType = CppTypeMap.upcast(upcastAnnotation.resultBitWidth());
           var upcastedType = ValueType.from(upcastedCppType)
@@ -252,13 +257,31 @@ public abstract class LlvmInstructionLoweringStrategy {
                   immediateOperand.fieldAccess().type(),
                   upcastedType,
                   LlvmFieldAccessRefNode.Usage.Immediate);
+        } else {
+          llvmNode = 
+            new LlvmFieldAccessRefNode(
+              instruction,
+              immediateOperand.fieldAccess(),
+              immediateOperand.fieldAccess().type(),
+              llvmNode.type().asDataType().bitWidth() < this.smallestRegisterWidth.getBitwidth()
+                ? this.smallestRegisterWidth
+                : ValueType.from(llvmNode.type().asDataType()).get(),
+              LlvmFieldAccessRefNode.Usage.Immediate);
         }
+
         operands.set(i, new TableGenInstructionImmediateOperand(llvmNode));
       } else if (operand instanceof GcbInstructionImmediateOperand immediateOperand
           && basicBlocks.containsKey(immediateOperand.fieldAccess())) {
         var llvmNode = ensureNonNull(basicBlocks.get(immediateOperand.fieldAccess()),
             () -> Diagnostic.error("There is no lowered field access",
                 instruction.location().join(immediateOperand.fieldAccess().location())));
+        
+        /*
+        TODO
+        llvmNode.setType(llvmNode.type().asDataType().bitWidth() < this.smallestRegisterWidth.getBitwidth()
+            ? this.smallestRegisterWidth
+            : llvmNode.type());
+        */
 
         operands.set(i, new TableGenInstructionLabelOperand(llvmNode));
       } else if (operand instanceof GcbInstructionImmediateOperand immediateOperand
@@ -269,9 +292,12 @@ public abstract class LlvmInstructionLoweringStrategy {
         // because of optimisations. However, we still need to replace this operand.
         var fieldAccess = immediateOperand.fieldAccess();
         var upcastedType =
-            ValueType.from(CppTypeMap.upcast(fieldAccess.accessFunction().returnType()))
+            (ValueType) ValueType.from(CppTypeMap.upcast(fieldAccess.accessFunction().returnType()))
                 .orElseThrow(
                     () -> Diagnostic.error("Cannot cast type", fieldAccess.location()).build());
+        upcastedType = upcastedType.getBitwidth() < this.smallestRegisterWidth.getBitwidth()
+            ? this.smallestRegisterWidth
+            : upcastedType;
         var llvmNode =
             new LlvmFieldAccessRefNode(instruction,
                 fieldAccess,
@@ -303,7 +329,7 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   protected LcbNodeReplacementHandler getReplacementHandler(PrintableInstruction instruction) {
-    return new LcbNodeReplacementHandler(instruction, architectureType);
+    return new LcbNodeReplacementHandler(instruction, architectureType, this.smallestRegisterWidth);
   }
 
   /**

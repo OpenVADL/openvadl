@@ -36,6 +36,7 @@ import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.types.BuiltInTable;
+import vadl.types.DataType;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
@@ -54,8 +55,8 @@ public class LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl
       Set.of(MachineInstructionLabel.LTU);
 
   public LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl(
-      ValueType architectureType) {
-    super(architectureType);
+      ValueType architectureType, ValueType smallestRegisterWidth) {
+    super(architectureType, smallestRegisterWidth);
   }
 
   @Override

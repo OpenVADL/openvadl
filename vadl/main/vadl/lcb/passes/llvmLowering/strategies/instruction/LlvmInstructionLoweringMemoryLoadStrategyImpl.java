@@ -39,6 +39,7 @@ import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHa
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
+import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
@@ -54,8 +55,8 @@ import vadl.viam.graph.dependency.WriteMemNode;
  */
 public class LlvmInstructionLoweringMemoryLoadStrategyImpl
     extends LlvmInstructionLoweringFrameIndexHelper {
-  public LlvmInstructionLoweringMemoryLoadStrategyImpl(ValueType architectureType) {
-    super(architectureType);
+  public LlvmInstructionLoweringMemoryLoadStrategyImpl(ValueType architectureType, ValueType smallestRegisterWidth) {
+    super(architectureType, smallestRegisterWidth);
   }
 
   @Override
@@ -89,7 +90,7 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
   @Override
   protected LcbNodeReplacementHandler getReplacementHandler(PrintableInstruction instruction) {
     return new LcbNodeReplacementHandlerForMemoryInstructionsReplacement(instruction,
-        architectureType);
+        architectureType, this.smallestRegisterWidth);
   }
 
   /**

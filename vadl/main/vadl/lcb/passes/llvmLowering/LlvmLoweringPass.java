@@ -22,6 +22,7 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,7 @@ import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInst
 import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -71,6 +73,7 @@ import vadl.viam.CompilerInstruction;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -284,31 +287,49 @@ public class LlvmLoweringPass extends Pass {
         (DetermineRegisterUsesAndDefsPass.Output) passResults.lastResultOf(
             DetermineRegisterUsesAndDefsPass.class);
     var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().orElseThrow();
+    var generateTableGenRegistersPassOutput =
+        ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
+            GenerateTableGenRegistersPass.class));
+    var registerFiles =
+        Stream.concat(generateTableGenRegistersPassOutput.registerClasses().stream(),
+            generateTableGenRegistersPassOutput.aliasRegisterClasses().stream()).toList();
 
     var architectureType =
         ensurePresent(ValueType.from(abi.stackPointer().registerFile().resultType()),
             "Architecture type is required.");
+    var smallestRegisterWidth = registerFiles
+      .stream()
+      .flatMap(r -> r.regTypes().stream())
+      .min(new Comparator<>() {
+        @Override
+        public int compare(ValueType o1, ValueType o2) {
+          return o1.getBitwidth() - o2.getBitwidth();
+        }
+      })
+      // TODO
+      .get();
+
     var machineStrategies =
-        List.of(new LlvmInstructionLoweringAddImmediateStrategyImpl(architectureType),
-            new LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl(architectureType),
-            new LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl(architectureType),
+        List.of(new LlvmInstructionLoweringAddImmediateStrategyImpl(architectureType, smallestRegisterWidth),
+            new LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl(architectureType, smallestRegisterWidth),
+            new LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl(architectureType, smallestRegisterWidth),
             new LlvmInstructionLoweringLessThanImmediateUnsignedConditionalsStrategyImpl(
-                architectureType),
+                architectureType, smallestRegisterWidth),
             new LlvmInstructionLoweringUnconditionalJumpWithoutLinkRegistersStrategyImpl(
-                architectureType),
+                architectureType, smallestRegisterWidth),
             new LlvmInstructionLoweringUnconditionalJumpWithLinkRegistersStrategyImpl(
-                architectureType),
+                architectureType, smallestRegisterWidth),
             new LlvmInstructionLoweringUnconditionalIndirectJumpWithoutLinkRegistersStrategyImpl(
-                architectureType),
-            new LlvmInstructionLoweringConditionalBranchesStrategyImpl(architectureType),
+                architectureType, smallestRegisterWidth),
+            new LlvmInstructionLoweringConditionalBranchesStrategyImpl(architectureType, smallestRegisterWidth),
             new LlvmInstructionLoweringConditionalBranchesWithStatusRegistersStrategyImpl(
-                architectureType),
-            new LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl(architectureType),
-            new LlvmInstructionLoweringMemoryStoreStrategyImpl(architectureType),
-            new LlvmInstructionLoweringMemoryLoadStrategyImpl(architectureType),
-            new LlvmInstructionLoweringXoriAndOriStrategyImpl(architectureType),
-            new LlvmInstructionLoweringLoadUpperImmediateStrategyImpl(architectureType),
-            new LlvmInstructionLoweringDefaultStrategyImpl(architectureType));
+                architectureType, smallestRegisterWidth),
+            new LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl(architectureType, smallestRegisterWidth),
+            new LlvmInstructionLoweringMemoryStoreStrategyImpl(architectureType, smallestRegisterWidth),
+            new LlvmInstructionLoweringMemoryLoadStrategyImpl(architectureType, smallestRegisterWidth),
+            new LlvmInstructionLoweringXoriAndOriStrategyImpl(architectureType, smallestRegisterWidth),
+            new LlvmInstructionLoweringLoadUpperImmediateStrategyImpl(architectureType, smallestRegisterWidth),
+            new LlvmInstructionLoweringDefaultStrategyImpl(architectureType, smallestRegisterWidth));
     var pseudoStrategies =
         List.of(new LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl(machineStrategies),
             new LlvmPseudoInstructionLoweringLoadGlobalAddressStrategyImpl(machineStrategies,

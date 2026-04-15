@@ -121,11 +121,13 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 public class LcbNodeReplacementHandler {
   protected final PrintableInstruction printableInstruction;
   protected final ValueType architectureType;
+  protected final ValueType smallestRegisterWidth;
 
   public LcbNodeReplacementHandler(PrintableInstruction printableInstruction,
-                                   ValueType architectureType) {
+                                   ValueType architectureType, ValueType smallestRegisterWidth) {
     this.printableInstruction = printableInstruction;
     this.architectureType = architectureType;
+    this.smallestRegisterWidth = smallestRegisterWidth;
   }
 
   @Handler
@@ -441,6 +443,10 @@ public class LcbNodeReplacementHandler {
 
       llvmType = ValueType.from(CppTypeMap.upcast(annotation.resultBitWidth())).orElseThrow(() ->
           Diagnostic.error("Cannot construct LLVM type", fieldAccessRefNode.location()).build());
+    } else {
+      llvmType = llvmType.getBitwidth() < this.smallestRegisterWidth.getBitwidth() 
+        ? this.smallestRegisterWidth
+        : llvmType;
     }
 
     fieldAccessRefNode.replaceAndDelete(

@@ -32,6 +32,7 @@ import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionConstraint;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.types.DataType;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
@@ -44,8 +45,8 @@ import vadl.viam.graph.dependency.WriteResourceNode;
 public class LlvmInstructionLoweringUnconditionalJumpWithLinkRegistersStrategyImpl
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringUnconditionalJumpWithLinkRegistersStrategyImpl(
-      ValueType architectureType) {
-    super(architectureType);
+      ValueType architectureType, ValueType smallestRegisterWidth) {
+    super(architectureType, smallestRegisterWidth);
   }
 
   @Override
