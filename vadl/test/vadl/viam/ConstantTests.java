@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -515,6 +515,45 @@ public class ConstantTests {
     );
   }
 
+  @ParameterizedTest
+  @MethodSource("minTestSource")
+  void constantMin_shouldYieldCorrectValue(Constant.Value a, Constant.Value b,
+                                              Constant.Value expected) {
+    var actual = a.min(b, a.type().isSigned());
+    assertEquals(expected, actual);
+  }
+
+  static Stream<Arguments> minTestSource() {
+    return Stream.of(
+        Arguments.of(intU(1, 32), intU(2, 32), intU(1, 32)),
+        Arguments.of(intS(1, 32), intS(2, 32), intS(1, 32)),
+
+        Arguments.of(intS(-1, 32), intS(-2, 32), intS(-2, 32)),
+        Arguments.of(intS(-1, 32), intS(2, 32), intS(-1, 32)),
+
+        Arguments.of(intU(0, 32), intU(0xFFFFFFFFL, 32), intU(0, 32))
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("maxTestSource")
+  void constantMax_shouldYieldCorrectValue(Constant.Value a, Constant.Value b,
+                                           Constant.Value expected) {
+    var actual = a.max(b, a.type().isSigned());
+    assertEquals(expected, actual);
+  }
+
+  static Stream<Arguments> maxTestSource() {
+    return Stream.of(
+        Arguments.of(intU(1, 32), intU(2, 32), intU(2, 32)),
+        Arguments.of(intS(1, 32), intS(2, 32), intS(2, 32)),
+
+        Arguments.of(intS(-1, 32), intS(-2, 32), intS(-1, 32)),
+        Arguments.of(intS(-1, 32), intS(2, 32), intS(2, 32)),
+
+        Arguments.of(intU(0, 32), intU(0xFFFFFFFFL, 32), intU(0xFFFFFFFFL, 32))
+    );
+  }
 
   @ParameterizedTest
   @MethodSource("truncateFailTestSource")

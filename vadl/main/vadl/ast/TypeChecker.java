@@ -736,7 +736,7 @@ public class TypeChecker
       // Shifts and rotates require that the right type is uint and the left can be anything.
       var requireRightUInt =
           List.of("<<", ">>", "<<>", "<>>");
-      if (requireRightUInt.contains(builtIn.operator())) {
+      if (builtIn.operator() != null && requireRightUInt.contains(builtIn.operator())) {
 
         Type closestUIntType;
         if (right.type() instanceof BitsType bitsRightType) {

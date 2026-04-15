@@ -326,6 +326,10 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     BinOpFuncs.put(BuiltInTable.SMULL, BigInteger::multiply);
     BinOpFuncs.put(BuiltInTable.UMULL, BigInteger::multiply);
     BinOpFuncs.put(BuiltInTable.SUMULL, BigInteger::multiply);
+    BinOpFuncs.put(BuiltInTable.SMIN, BigInteger::min);
+    BinOpFuncs.put(BuiltInTable.UMIN, BigInteger::min);
+    BinOpFuncs.put(BuiltInTable.SMAX, BigInteger::max);
+    BinOpFuncs.put(BuiltInTable.UMAX, BigInteger::max);
   }
 
   @Override

@@ -1603,6 +1603,10 @@ final class IdentifierPath extends Expr implements IsId {
     return visitor.visit(this);
   }
 
+  @Override
+  public String toString() {
+    return "%s name: \"%s\"".formatted(this.getClass().getSimpleName(), pathToString());
+  }
 
   @Override
   public boolean equals(Object o) {
