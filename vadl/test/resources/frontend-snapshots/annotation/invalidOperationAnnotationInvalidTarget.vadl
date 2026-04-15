@@ -1,0 +1,32 @@
+// Every operation must have a target, they are not implicitly defined
+
+instruction set architecture ISA = {
+  program counter PC : Bits<32>                 // program counter
+
+  format B_Type : Bits<32> =                    // branch format
+    { offset : SInt<24>                         // PC relative offset
+    , opcode : Bits<8>                          // operation code
+    }
+
+  [operation: BranchOp]
+  instruction Branch : B_Type =                 // PC relative branch
+    PC := PC + offset as SInt<32> << 2          // set new PC relative to the old value
+  encoding Branch = {opcode = 0}
+  assembly Branch = ""
+
+  // WITHOUT THIS THE CODE IS WRONG
+  // operation BranchOp   = {}                // empty branch set, elements added by annotation
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Unknown OperationDefinition: "BranchOp"
+//       ╭──[test/resources/frontend-snapshots/annotation/invalidOperationAnnotationInvalidTarget.vadl:11:15]
+//       │
+//    11 │   [operation: BranchOp]
+//       │               ^^^^^^^^ No operationdefinition with this name exists.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

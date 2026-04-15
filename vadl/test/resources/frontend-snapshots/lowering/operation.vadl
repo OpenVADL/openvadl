@@ -1,0 +1,103 @@
+// INCLUDE-VIAM-DUMP
+// This example is from the VADL documentation.
+
+instruction set architecture ISA = {
+  program counter PC : Bits<32>                 // program counter
+
+  format B_Type : Bits<32> =                    // branch format
+    { offset : SInt<24>                         // PC relative offset
+    , opcode : Bits<8>                          // operation code
+    }
+
+  instruction Branch : B_Type =                 // PC relative branch
+    PC := PC + offset as SInt<32> << 2          // set new PC relative to the old value
+  encoding Branch = {opcode = 0}
+  assembly Branch = ""
+
+  operation BranchOp   = {Branch}                     // empty branch set, elements added by annotation
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  VIAM Dump:
+//
+//    Specification name: "operation"
+//    . Definitions: 1
+//    . InstructionSetArchitecture name: "ISA"
+//    . : PC: PC
+//    . : InstructionCount: 1
+//    . : PseudoInstructionCount: 0
+//    . : FormatCount: 1
+//    . : FunctionCount: 0
+//    . : OperationCount: 1
+//    . : ExceptionCount: 0
+//    . : RelocationCount: 0
+//    . : RegisterCount: 1
+//    . : MemoryCount: 0
+//    . : ArtificialResourceCount: 0
+//    . : Format name: "B_Type"
+//    . : ' Type: b32
+//    . : ' FieldCount: 2
+//    . : ' FieldAccessCount: 0
+//    . : ' FieldEncodingCount: 0
+//    . : ' Field name: "offset"
+//    . : ' | Type: i24
+//    . : ' | BitSlice: [31..8]
+//    . : ' | RefFormat: -
+//    . : ' Field name: "opcode"
+//    . : ' | Type: b8
+//    . : ' | BitSlice: [7..0]
+//    . : ' | RefFormat: -
+//    . : Operation name: "BranchOp"
+//    . : ' Instructions: [Branch]
+//    . : RegisterTensor name: "PC"
+//    . : ' Type: b32
+//    . : ' Dimensions: [0:b5x32]
+//    . : ' ConstraintCount: 0
+//    . : Instruction name: "Branch" format: "B_Type"
+//    . : ' Inputs: PC
+//    . : ' Outputs: PC
+//    . : ' Encoding: encoding
+//    . : ' Assembly: ISA::Branch::assembly
+//    . : ' Behavior Graph:
+//    . : ' | n0 ReadsRegisterTensor  in: ()      succ: ()     type: b32   reg: PC
+//    . : ' | n1 FieldRef             in: ()      succ: ()     type: i24   field: offset   format: B_Type
+//    . : ' | n2 SignExtend           in: (n1)    succ: ()     type: i32   fromWidth: 24
+//    . : ' | n3 BuiltInCall          in: (n0 n2) succ: ()     type: i32   builtin: VADL::add   operator: +
+//    . : ' | n4 Constant             in: ()      succ: ()     type: u2    const: 0x2: UInt<2>
+//    . : ' | n5 BuiltInCall          in: (n3 n4) succ: ()     type: b32   builtin: VADL::lsl   operator: <<
+//    . : ' | n6 WritesRegisterTensor in: (n5)    succ: ()     reg: PC
+//    . : ' | n7 InstrEnd             in: (n6)    succ: ()     effects: 1
+//    . : ' | n8 Start                in: ()      succ: (n7)   next: set
+//    . : ' Assembly name: "ISA::Branch::assembly"
+//    . : ' | Function: ISA::Branch::assembly::func
+//    . : ' | FieldAccesses: []
+//    . : ' | Function name: "ISA::Branch::assembly::func"
+//    . : ' | . Type: ()->String
+//    . : ' | . Signature: () -> String
+//    . : ' | . Parameters: []
+//    . : ' | . Behavior Graph:
+//    . : ' | . : n0 Constant in: ()   succ: ()     type: String   const: ""
+//    . : ' | . : n1 Return   in: (n0) succ: ()     retType: String
+//    . : ' | . : n2 Start    in: ()   succ: (n1)   next: set
+//    . : ' Encoding name: "encoding"
+//    . : ' | Type: b32
+//    . : ' | Format: B_Type
+//    . : ' | FieldEncodings: 1
+//    . : ' | NonEncodedFields: [offset]
+//    . : ' | HasConstraint: false
+//    . : ' | Field name: "opcode"
+//    . : ' | . Field: opcode
+//    . : ' | . Type: b8
+//    . : ' | . Constant: 0x0: Bits<8>
+//    . : Counter name: "PC"
+//    . : ' RegisterTensor: PC
+//    . : ' Indices: []
+//    . : ' ResultType: b32
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

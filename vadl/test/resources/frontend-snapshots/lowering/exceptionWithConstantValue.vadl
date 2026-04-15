@@ -27,6 +27,7 @@ instruction set architecture ISA = {
 //    . : PseudoInstructionCount: 0
 //    . : FormatCount: 0
 //    . : FunctionCount: 0
+//    . : OperationCount: 0
 //    . : ExceptionCount: 1
 //    . : RelocationCount: 0
 //    . : RegisterCount: 1

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -35,6 +35,8 @@ import vadl.viam.Encoding;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
+import vadl.viam.MicroArchitecture;
+import vadl.viam.Operation;
 import vadl.viam.Parameter;
 import vadl.viam.Stage;
 import vadl.viam.ViamError;
@@ -338,6 +340,59 @@ public class ViamEnricherCollection {
       });
 
   /**
+   * A {@link InfoEnricher} that adds an expandable table to {@link Operation} definitions
+   * listing all instructions it contains with links to their definitions.
+   */
+  public static InfoEnricher OPERATION_INSTRUCTIONS_SUPPLIER_EXPANDABLE =
+      forType(DefinitionEntity.class, (entity, passResult) -> {
+        if (entity.origin() instanceof Operation operation) {
+          var instructions = operation.getInstructions().stream()
+              .map(instr -> "<a href=\"#" + DefinitionEntity.cssIdFor(instr) + "\">"
+                  + instr.simpleName() + "</a>")
+              .sorted()
+              .toList();
+
+          if (instructions.isEmpty()) {
+            return;
+          }
+
+          var info = InfoUtils.createTableExpandable(
+              "Instructions",
+              List.of(instructions)
+          );
+          entity.addInfo(info);
+        }
+      });
+
+  /**
+   * A {@link InfoEnricher} that adds a {@link vadl.dump.Info.Tag} to instructions
+   * if they are part of an {@link Operation}, providing a link to that operation.
+   */
+  public static InfoEnricher INSTRUCTION_OPERATION_SUPPLIER_TAG =
+      forType(DefinitionEntity.class, (entity, passResult) -> {
+        if (entity.origin() instanceof Instruction instruction) {
+          var isa = instruction.parentArchitecture();
+          if (isa != null) {
+            for (var op : isa.ownOperations()) {
+              if (op.getInstructions().contains(instruction)) {
+                entity.addInfo(Info.Tag.of("Operation", op.simpleName(),
+                    "#" + DefinitionEntity.cssIdFor(op)));
+              }
+            }
+          }
+
+          if (instruction.behavior().parentDefinition() instanceof MicroArchitecture mia) {
+            for (var op : mia.ownOperations()) {
+              if (op.getInstructions().contains(instruction)) {
+                entity.addInfo(Info.Tag.of("Operation", op.simpleName(),
+                    "#" + DefinitionEntity.cssIdFor(op)));
+              }
+            }
+          }
+        }
+      });
+
+  /**
    * A list of all info enrichers for the default VIAM specification.
    */
   public static List<InfoEnricher> all = List.of(
@@ -351,7 +406,9 @@ public class ViamEnricherCollection {
       SOURCE_CODE_SUPPLIER_EXPANDABLE,
       RESOURCE_ACCESS_SUPPLIER_EXPANDABLE,
       BEHAVIOR_NO_LOCATION_EXPANDABLE,
-      STAGE_ORDER_SUPPLIER
+      STAGE_ORDER_SUPPLIER,
+      OPERATION_INSTRUCTIONS_SUPPLIER_EXPANDABLE,
+      INSTRUCTION_OPERATION_SUPPLIER_TAG
   );
 
 }

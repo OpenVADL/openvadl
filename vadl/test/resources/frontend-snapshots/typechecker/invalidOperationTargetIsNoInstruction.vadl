@@ -1,0 +1,17 @@
+instruction set architecture ISA = {
+  program counter PC : Bits<32>                 // program counter
+  operation BranchOp   = {PC}                   // empty branch set, elements added by annotation
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Operation Member
+//       ╭──[test/resources/frontend-snapshots/typechecker/invalidOperationTargetIsNoInstruction.vadl:3:27]
+//       │
+//     3 │   operation BranchOp   = {PC}                   // empty branch set, elements added by annotation
+//       │                           ^^ note: Operation members must be instructions but this was 'CounterDefinition'
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -185,6 +185,17 @@ public class AnnotationTable {
         })
         .build();
 
+    annotationOn(InstructionDefinition.class, "operation",
+        () -> new IdentifersAnnotation(OperationDefinition.class))
+        .check((def, annotation, lowering) -> {
+          // Add the definition to the operation defined
+          annotation.identifiers.forEach(identifier -> {
+            var operation = (OperationDefinition) requireNonNull(identifier.target());
+            operation.instructions.add(def);
+          });
+        })
+        .build();
+
     annotationOn(AliasDefinition.class, "overwrite source",
         () -> new EnumAnnotation(List.of("zero", "sign")))
         .check((def, annotation, lowering) -> {
@@ -290,12 +301,14 @@ public class AnnotationTable {
           }
         }).build();
 
-    annotationOn(InstructionDefinition.class, "add operands", DefinitionRefAnnotation::new)
+    annotationOn(InstructionDefinition.class, "add operands",
+        () -> new IdentifersAnnotation(Definition.class))
         .applyViam((def, annotation, lowering) -> {
           var fields =
-              annotation.def.stream()
-                  .map(x -> (Format.Field) ensurePresent(lowering.fetch((FormatField) x),
-                      () -> Diagnostic.error("Cannot find field", x.location()))).toList();
+              annotation.identifiers.stream()
+                  .map(x -> (Format.Field) ensurePresent(
+                      lowering.fetch((FormatField) requireNonNull(x.target())),
+                      () -> error("Cannot find field", x.location()))).toList();
 
           def.addAnnotation(new DefineOperandAnnotation(fields));
         }).build();
@@ -1003,6 +1016,8 @@ abstract class Annotation implements AnnotationDeclaration, WithLocation {
   }
 }
 
+// ---------- GENERAL ANNOTATION CLASSES ----------
+
 /**
  * A simple annotation that just stores a boolean value, true by default but an optional argument
  * can be provided.
@@ -1048,57 +1063,6 @@ class EnableAnnotation extends Annotation {
   @Override
   public String usageString() {
     return "[ " + name + " ]";
-  }
-}
-
-/**
- * Provides the annotation {@code [ upcast access to : <ident>, <ex> ]} on an instruction that
- * treats the field access of {@code <ident>} as being of type {@code <ex>}. {@code <ex>} has to
- * evaluate to a positive integer.
- * This is useful when there is a type mismatch between the field access and an LLVM type.
- */
-class UpcastAnnotation extends Annotation {
-
-  @LazyInit
-  ConstantValue bitSize;
-
-  @LazyInit
-  Definition targetDef;
-
-  public UpcastAnnotation() {
-    super();
-  }
-
-  @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
-    verifyValuesCnt(definition, 2);
-    for (var val : definition.values) {
-      val.accept(resolver);
-    }
-  }
-
-  @Override
-  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-
-    var def = definition.values.getFirst();
-    Diagnostic.ensure(def instanceof Identifier, () -> error("Invalid annotation value", def)
-        .description("A single identifier was expected.")
-    );
-    var target = ((Identifier) def).target();
-    Diagnostic.ensure(target instanceof Definition, () -> error("Invalid annotation value", def)
-        .description("The identifier must reference a definition."));
-    targetDef = ((Definition) target);
-
-    var valueExpr = definition.values.get(1);
-    typeChecker.check(valueExpr);
-    bitSize = typeChecker.constantEvaluator.eval(valueExpr);
-    Diagnostic.ensure(bitSize.value().signum() > 0,
-        () -> error("Bit size of type has to be bigger than zero", valueExpr));
-  }
-
-  @Override
-  public String usageString() {
-    return "[ " + name + " : <ident>, <int> ]";
   }
 }
 
@@ -1267,6 +1231,99 @@ class EnumAnnotation extends Annotation {
 }
 
 /**
+ * A simple annotation that stores a one or more Identifiers.
+ * The creator can also specify the node class to which the identifiers have to point.
+ * The identifiers have to point to some node in the AST and will be resolved.
+ *
+ * <p>Examples for such annotations:
+ * <pre>
+ * [ relatedInstr : ADDI ADDU ]
+ * </pre>
+ */
+class IdentifersAnnotation extends Annotation {
+
+  /**
+   * If set to true, the annotation only allows one argument.
+   */
+  private boolean singleMode = false;
+
+  List<Identifier> identifiers = new ArrayList<>();
+
+  @Nullable
+  final Class<? extends Definition> targetClass;
+
+  public IdentifersAnnotation() {
+    super();
+    targetClass = null;
+  }
+
+  public IdentifersAnnotation(Class<? extends Definition> targetClass) {
+    super();
+    this.targetClass = targetClass;
+  }
+
+  /**
+   * Creates an IdentifersAnnotation that only allows one argument.
+   */
+  public static IdentifersAnnotation single() {
+    var annotation = new IdentifersAnnotation();
+    annotation.singleMode = true;
+    return annotation;
+  }
+
+  /**
+   * Creates an IdentifersAnnotation that only allows one argument.
+   */
+  public static IdentifersAnnotation single(Class<? extends Definition> targetClass) {
+    var annotation = new IdentifersAnnotation(targetClass);
+    annotation.singleMode = true;
+    return annotation;
+  }
+
+  @Override
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+    if (singleMode) {
+      verifyValuesCnt(definition, 1);
+    } else {
+      verifyValuesNonEmpty(definition);
+    }
+
+    for (var value : definition.values) {
+      if (!(value instanceof Identifier identifier)) {
+        throw error("Invalid Annotation Argument", value)
+            .locationDescription(value, "Expected an identifier but got %s",
+                value.getClass().getSimpleName())
+            .build();
+      }
+      identifiers.add(identifier);
+
+      if (targetClass != null) {
+        definition.symbolTable().requireAs(identifier, targetClass);
+      } else {
+        definition.symbolTable().requireAs(identifier, Node.class);
+      }
+    }
+  }
+
+  @Override
+  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+    // Only typecheck expressions
+    if (targetClass != null && Expr.class.isAssignableFrom(targetClass)) {
+      identifiers.forEach(typeChecker::check);
+    }
+  }
+
+  @Override
+  public String usageString() {
+    if (singleMode) {
+      return "[ " + name + " : <Id>]";
+    }
+    return "[ " + name + " : <Id>... ]";
+  }
+}
+
+
+/**
  * A annotation that holds a single expression. Used for more complex annotations.
  *
  * <p>Examples for such annotations:
@@ -1306,6 +1363,8 @@ class ExprAnnotation extends Annotation {
         .locationDescription(expr, "Expression must be a %s", type));
   }
 }
+
+// ---------- SPECIFIC ANNOTATION CLASSES ----------
 
 /**
  * The {@code [ zero : <register>(<expr>) ]} annotation.
@@ -1392,49 +1451,53 @@ class InstructionUndefinedAnnotation extends ExprAnnotation {
   }
 }
 
-class DefinitionRefAnnotation extends Annotation {
-  List<Definition> def = new ArrayList<>();
+/**
+ * Provides the annotation {@code [ upcast access to : <ident>, <ex> ]} on an instruction that
+ * treats the field access of {@code <ident>} as being of type {@code <ex>}. {@code <ex>} has to
+ * evaluate to a positive integer.
+ * This is useful when there is a type mismatch between the field access and an LLVM type.
+ */
+class UpcastAnnotation extends Annotation {
 
-  private Expr firstVal() {
-    return definition.values.getFirst();
+  @LazyInit
+  ConstantValue bitSize;
+
+  @LazyInit
+  Definition targetDef;
+
+  public UpcastAnnotation() {
+    super();
   }
 
   @Override
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
-    // resolve the symbol of the value
-    for (var v : definition.values) {
-      v.accept(resolver);
+    verifyValuesCnt(definition, 2);
+    for (var val : definition.values) {
+      val.accept(resolver);
     }
   }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    for (var v : definition.values) {
-      Diagnostic.ensure(v instanceof Identifier, () -> error("Invalid annotation value", v)
-          .description("A single identifier was expected.")
-      );
-      var target = ((Identifier) v).target();
-      Diagnostic.ensure(target instanceof Definition, () -> error("Invalid annotation value", v)
-          .description("The identifier must reference a definition."));
-      def.add((Definition) target);
-    }
+
+    var def = definition.values.getFirst();
+    Diagnostic.ensure(def instanceof Identifier, () -> error("Invalid annotation value", def)
+        .description("A single identifier was expected.")
+    );
+    var target = ((Identifier) def).target();
+    Diagnostic.ensure(target instanceof Definition, () -> error("Invalid annotation value", def)
+        .description("The identifier must reference a definition."));
+    targetDef = ((Definition) target);
+
+    var valueExpr = definition.values.get(1);
+    typeChecker.check(valueExpr);
+    bitSize = typeChecker.constantEvaluator.eval(valueExpr);
+    Diagnostic.ensure(bitSize.value().signum() > 0,
+        () -> error("Bit size of type has to be bigger than zero", valueExpr));
   }
 
   @Override
   public String usageString() {
-    return "[ " + name + " : <ident> ]";
-  }
-
-  /**
-   * Utility method to check if the referenced definition is of this definition type.
-   *
-   * @return the casted definition.
-   */
-  public <T extends Definition> T verifyDefinitionType(Class<T> defClass) {
-    Diagnostic.ensure(defClass.isInstance(def), () -> error("Invalid annotation value", firstVal())
-        .locationDescription(firstVal(), "The identifier must reference a %s, but was %s",
-            defClass.getSimpleName(),
-            def));
-    return defClass.cast(def);
+    return "[ " + name + " : <ident>, <int> ]";
   }
 }

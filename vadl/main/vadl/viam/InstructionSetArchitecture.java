@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -36,6 +36,8 @@ public class InstructionSetArchitecture extends Definition {
 
   private final List<Format> formats;
   private final List<Function> functions;
+  private final List<Operation> operations;
+
   // contains declared and anonymous exceptions
   private final List<ExceptionDef> exceptions;
   private final List<Relocation> relocations;
@@ -58,6 +60,7 @@ public class InstructionSetArchitecture extends Definition {
                                     Specification specification,
                                     List<Format> formats,
                                     List<Function> functions,
+                                    List<Operation> operations,
                                     List<ExceptionDef> exceptions,
                                     List<Relocation> relocations,
                                     List<Instruction> instructions,
@@ -71,6 +74,7 @@ public class InstructionSetArchitecture extends Definition {
     this.specification = specification;
     this.formats = formats;
     this.functions = functions;
+    this.operations = operations;
     this.exceptions = exceptions;
     this.relocations = relocations;
     this.registers = registers;
@@ -114,6 +118,15 @@ public class InstructionSetArchitecture extends Definition {
   public List<Function> ownFunctions() {
     return functions;
   }
+
+  /**
+   * Returns the {@link Operation}s <b>owned</b> by this ISA.
+   * So it might not include definitions accessible through the super ISA.
+   */
+  public List<Operation> ownOperations() {
+    return operations;
+  }
+
 
   public List<ExceptionDef> exceptions() {
     return exceptions;

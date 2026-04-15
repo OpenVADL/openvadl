@@ -282,7 +282,7 @@ class SymbolTable {
    * @return the resolved node, or null if it could not be resolved with the given type
    */
   // FIXME: I don't like how it's called require but still returns null
-  private <T extends Node> @Nullable T requireAs(IsId usage, Class<T> type) {
+  <T extends Node> @Nullable T requireAs(IsId usage, Class<T> type) {
     var origin = findAs(usage, type);
     if (origin != null) {
       return origin;
@@ -302,18 +302,6 @@ class SymbolTable {
     var suggestions = Levenshtein.suggestions(usage.pathToString(), allSymbolNamesOf(type));
     reportUnkownError(definitionName, usage.pathToString(), usage, suggestions);
     return null;
-  }
-
-  /**
-   * Finds the node for the given Id and throws the error provided by the error builder
-   * if the node could not be found.
-   */
-  Node require(IsId name, Supplier<DiagnosticBuilder> errorBuilder) {
-    var node = requireAs(name, Node.class);
-    if (node == null) {
-      throw errorBuilder.get().build();
-    }
-    return node;
   }
 
   /**

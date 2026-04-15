@@ -32,6 +32,7 @@ micro architecture SingleStage implements ISA = {
 //    . : RegisterCount: 0
 //    . : MemoryCount: 0
 //    . : FunctionCount: 0
+//    . : OperationCount: 0
 //    . : Stage name: "FETCH"
 //    . : ' Outputs: [ir]
 //    . : ' Signals: []
@@ -55,6 +56,7 @@ micro architecture SingleStage implements ISA = {
 //    . : ' PseudoInstructionCount: 0
 //    . : ' FormatCount: 0
 //    . : ' FunctionCount: 0
+//    . : ' OperationCount: 0
 //    . : ' ExceptionCount: 0
 //    . : ' RelocationCount: 0
 //    . : ' RegisterCount: 1
