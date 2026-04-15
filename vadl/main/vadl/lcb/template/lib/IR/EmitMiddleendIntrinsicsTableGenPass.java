@@ -126,12 +126,13 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
           .filter(Optional::isPresent)
           .map(Optional::get)
           .collect(Collectors.toCollection(ArrayList::new));
+      var resultTypes = record.getOutOperands().stream().map(x -> "llvm_any_ty").toList();
       pointerType(snapshot).ifPresent(pointerTy -> paramTypes.set(0, pointerTy));
 
       var lcbIntrinsic =
           new Intrinsic(
               intrinsic.intrinsicName(),
-              List.of("llvm_any_ty"),
+              resultTypes,
               paramTypes,
               attrs);
       result.add(lcbIntrinsic);
