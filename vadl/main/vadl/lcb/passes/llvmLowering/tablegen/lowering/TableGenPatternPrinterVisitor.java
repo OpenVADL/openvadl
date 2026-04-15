@@ -344,6 +344,22 @@ public class TableGenPatternPrinterVisitor
 
   @Override
   public void visit(ZeroExtendNode node) {
+    // do not emit unnecessary 'zext' (immediate width == extended width)
+    // as tablegen will throw an error
+    if (node.value() instanceof LlvmFieldAccessRefNode far) {
+      var extendedType = node.type();
+      var extendedLlvmType = ValueType.from(extendedType).get();
+      var extendedBitwidth = extendedLlvmType.getBitwidth();
+      var immediateBitwidth = far.llvmType().getBitwidth();
+
+      if (extendedBitwidth == immediateBitwidth) {
+        writer.write("(");
+        visit(node.value());
+        writer.write(")");
+        return;
+      }
+    }
+
     writer.write("(zext ");
     visit(node.value());
     writer.write(")");
